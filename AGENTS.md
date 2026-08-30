@@ -19,6 +19,25 @@ Run `git-<person> whoami` to confirm before pushing.
 
 If the matching wrapper is not on `PATH`, fall back to the configured git identity and authenticated `gh` account. Confirm `git config user.name`, `git config user.email`, and `git remote -v` before pushing. Do not invent a wrapper identity.
 
+## Progressive commit and final push workflow (mandatory)
+
+- **ROOT-GIT-001** Commit progressively at coherent, reviewable checkpoints as work advances. Each commit SHALL represent one understandable outcome and SHOULD pass the verification relevant to its changed surface. Do not hold a large completed body of work for one final catch-all commit, and do not manufacture noisy micro-commits with no independently useful meaning.
+- **ROOT-GIT-002** Before an agent handoff, likely context loss, or interruption, commit every completed coherent checkpoint. Never include secrets, ignored build output, unrelated pre-existing changes, or another agent's unfinished work merely to obtain a clean tree.
+- **ROOT-GIT-003** When the requested work is complete and final verification passes, synchronize safely and push all task commits to the current tracked branch using the required identity wrapper. This standing instruction is authorization to push; do not ask for an additional confirmation unless the human requested a pause, review-before-push, local-only work, or no push.
+- **ROOT-GIT-004** Inspect status and diffs before every commit and before the final push. Do not bypass hooks, force-push, rewrite published history, discard work, or resolve another contributor's conflicting change without explicit authority. If the remote advanced, integrate it safely, rerun affected verification, then push normally.
+- **ROOT-GIT-005** For submodule work, commit and push the submodule repository first, then commit the verified parent pointer update. The final parent push MUST NOT reference an unavailable submodule commit.
+
+Required sequence:
+
+1. Confirm identity, remote, branch, status, and applicable instructions.
+2. Synchronize before editing when the tree is clean; never use a destructive pull to erase local work.
+3. Implement one coherent slice, run proportionate verification, inspect its diff, and commit it with the repository's commit-message format.
+4. Repeat step 3 as additional independently meaningful slices become complete.
+5. Run the final full-scope verification required by the applicable `AGENTS.md` files.
+6. Fetch and reconcile any remote advance without rewriting published work; reverify if reconciliation changed the tested tree.
+7. Push all accumulated task commits through the required wrapper or documented fallback.
+8. Verify the remote branch contains the local HEAD, confirm the worktree is clean, and report the branch and commit identifiers.
+
 ## Source of truth
 
 Inherited from `/Users/mike/Projects/BriarForge/AGENTS.md`. When this file and the parent conflict, the parent wins until this file is updated to match. Product behavior is defined by `product-contract/`, not by parent workspace rules.
