@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xerahs.com/schemas/setting-disposition-v1.json",
+  "title": "Approved XerahS setting disposition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ledger_id", "name", "value_family", "default", "validation", "scope", "privacy", "migration", "effect", "platforms", "status"],
+  "properties": {
+    "ledger_id": { "type": "string", "pattern": "^SET-[A-Z0-9-]+-[0-9]{3}$" },
+    "name": { "type": "string", "minLength": 1 },
+    "value_family": { "enum": ["boolean", "integer", "number", "string", "enum", "color", "geometry", "duration", "path", "url", "secret-reference", "collection", "dictionary", "object", "runtime-only"] },
+    "default": {},
+    "validation": { "type": "string", "minLength": 1 },
+    "scope": { "enum": ["global", "profile", "workflow", "task", "provider", "device", "window", "runtime"] },
+    "privacy": { "enum": ["public-preference", "private-local", "personal-data", "secret"] },
+    "migration": { "type": "string", "minLength": 1 },
+    "effect": { "type": "string", "minLength": 1 },
+    "platforms": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["windows", "macos", "linux"],
+      "properties": {
+        "windows": { "$ref": "#/$defs/disposition" },
+        "macos": { "$ref": "#/$defs/disposition" },
+        "linux": { "$ref": "#/$defs/disposition" }
+      }
+    },
+    "status": { "enum": ["draft", "approved", "retired"] }
+  },
+  "$defs": {
+    "disposition": { "enum": ["required", "equivalent", "degraded", "unavailable", "not-applicable"] }
+  }
+}

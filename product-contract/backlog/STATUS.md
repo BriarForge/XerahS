@@ -4,14 +4,14 @@
 
 Baseline: `kova-0.29.0` · Tracker: `1.0.0` · Census: `open` · Manifest: `draft`
 
-**501 of 1,592 parity rows linked (31.5%); 1,091 remain.**
+**1,323 of 1,592 parity rows linked (83.1%); 269 remain.**
 
 ## Ledger coverage
 
 | Ledger | Total | Linked | Open | Coverage |
 |---|---:|---:|---:|---:|
 | capability | 44 | 11 | 33 | 25.0% |
-| settings | 922 | 100 | 822 | 10.8% |
+| settings | 922 | 922 | 0 | 100.0% |
 | workflow | 436 | 348 | 88 | 79.8% |
 | interface | 174 | 37 | 137 | 21.3% |
 | compatibility | 16 | 5 | 11 | 31.2% |
@@ -19,8 +19,8 @@ Baseline: `kova-0.29.0` · Tracker: `1.0.0` · Census: `open` · Manifest: `draf
 ## Governance gates
 
 - Baseline census: `open`
-- Manifest lifecycle: `draft` (draft 10)
-- Open parity rows with an assigned package: `1,091` of `1,091`
+- Manifest lifecycle: `draft` (draft 11)
+- Open parity rows with an assigned package: `269` of `269`
 
 ## Daily waves
 
@@ -33,7 +33,7 @@ Baseline: `kova-0.29.0` · Tracker: `1.0.0` · Census: `open` · Manifest: `draf
 | D05 — Uploads and destinations | 2026-09-05 | `planned` | 18 | Define transfer behavior, destination surfaces, credentials, and compatible uploader data. |
 | D06 — History and indexing | 2026-09-06 | `planned` | 5 | Define task history, search, retention, thumbnails, and compatible history data. |
 | D07 — Automation interfaces | 2026-09-07 | `planned` | 57 | Define automation, CLI, MCP, and compatibility boundaries together. |
-| D08 — Settings catalog | 2026-09-08 | `planned` | 826 | Resolve the complete settings inventory and configuration compatibility policy. |
+| D08 — Settings catalog | 2026-09-08 | `planned` | 4 | Resolve the complete settings inventory and configuration compatibility policy. |
 | D09 — Workflow catalog | 2026-09-09 | `planned` | 88 | Resolve every inventoried workflow and action surface against stable behavior. |
 | D10 — GUI surfaces | 2026-09-10 | `planned` | 74 | Resolve all remaining user-facing GUI surfaces, accessibility, and platform disposition. |
 | D11 — Operations and edge domains | 2026-09-11 | `planned` | 4 | Close diagnostics, distribution, experimental mobile, and image-effect compatibility decisions. |
@@ -59,7 +59,7 @@ Baseline: `kova-0.29.0` · Tracker: `1.0.0` · Census: `open` · Manifest: `draf
 | `PC-CLI-SURFACES-001` — Command-line interfaces | D07 / 2026-09-07 | P0 | `planned` | 46 | product-owner | interface-reviewer |
 | `PC-MCP-SURFACES-001` — Agent-native MCP interfaces | D07 / 2026-09-07 | P0 | `planned` | 5 | product-owner | interface-reviewer |
 | `PC-COMPAT-AUTOMATION-001` — Automation compatibility | D07 / 2026-09-07 | P1 | `planned` | 1 | product-owner | compatibility-reviewer |
-| `PC-SETTINGS-CATALOG-001` — Complete settings inventory | D08 / 2026-09-08 | P0 | `planned` | 822 | product-owner | contract-author |
+| `PC-SETTINGS-CATALOG-001` — Complete settings inventory | D08 / 2026-09-08 | P0 | `planned` | 0 | product-owner | contract-author |
 | `PC-COMPAT-CONFIG-001` — Configuration compatibility | D08 / 2026-09-08 | P0 | `planned` | 4 | product-owner | compatibility-reviewer |
 | `PC-WORKFLOW-CATALOG-001` — Complete workflow and action inventory | D09 / 2026-09-09 | P0 | `planned` | 88 | product-owner | contract-author |
 | `PC-GUI-SURFACES-001` — Complete GUI and accessibility surfaces | D10 / 2026-09-10 | P1 | `planned` | 74 | product-owner | interface-reviewer |
