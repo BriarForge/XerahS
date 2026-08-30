@@ -1,0 +1,198 @@
+{
+  "$schema": "../schemas/backlog.schema.json",
+  "schema_version": 1,
+  "tracker_version": "1.0.0",
+  "baseline": "kova-0.29.0",
+  "objective": "Resolve every pinned-baseline parity row into an approved, evidenced, cross-platform Product Contract disposition without treating the reference implementation as the specification.",
+  "completion_definition": [
+    "The pinned baseline census is reviewed, signed, and closed.",
+    "Every parity-ledger row links to a stable Product Contract requirement; no contract field remains null.",
+    "Every manifest capability is approved or active and declares accepted Windows, macOS, and Linux dispositions.",
+    "Persisted formats and integrations have compatibility policy, fixtures, and runtime-observation evidence where applicable.",
+    "Conformance coverage traces normative requirements to independent evidence and all required human approvals are recorded.",
+    "No unresolved deviation, waiver, security review, privacy review, accessibility review, or product-owner decision remains unowned."
+  ],
+  "waves": [
+    { "id": "D01", "sequence": 1, "target_date": "2026-09-01", "title": "Governance and baseline", "goal": "Approve the census boundary, contract-writing rules, and existing draft disposition.", "package_ids": ["PC-GOVERNANCE-001"] },
+    { "id": "D02", "sequence": 2, "target_date": "2026-09-02", "title": "Application and configuration", "goal": "Specify application lifecycle, settings ownership, identity, secrets, and security behavior.", "package_ids": ["PC-APP-SHELL-001", "PC-CONFIG-SECURITY-001"] },
+    { "id": "D03", "sequence": 3, "target_date": "2026-09-03", "title": "Capture and workflow engine", "goal": "Complete capture families and the execution semantics that compose them.", "package_ids": ["PC-CAPTURE-001", "PC-WORKFLOW-ENGINE-001"] },
+    { "id": "D04", "sequence": 4, "target_date": "2026-09-04", "title": "Recording and media", "goal": "Specify recording, encoding, playback, and media-editor behavior.", "package_ids": ["PC-RECORDING-001", "PC-MEDIA-001"] },
+    { "id": "D05", "sequence": 5, "target_date": "2026-09-05", "title": "Uploads and destinations", "goal": "Define transfer behavior, destination surfaces, credentials, and compatible uploader data.", "package_ids": ["PC-UPLOADS-001", "PC-DESTINATION-SURFACES-001", "PC-COMPAT-DESTINATIONS-001"] },
+    { "id": "D06", "sequence": 6, "target_date": "2026-09-06", "title": "History and indexing", "goal": "Define task history, search, retention, thumbnails, and compatible history data.", "package_ids": ["PC-HISTORY-001", "PC-COMPAT-HISTORY-001"] },
+    { "id": "D07", "sequence": 7, "target_date": "2026-09-07", "title": "Automation interfaces", "goal": "Define automation, CLI, MCP, and compatibility boundaries together.", "package_ids": ["PC-AUTOMATION-001", "PC-CLI-SURFACES-001", "PC-MCP-SURFACES-001", "PC-COMPAT-AUTOMATION-001"] },
+    { "id": "D08", "sequence": 8, "target_date": "2026-09-08", "title": "Settings catalog", "goal": "Resolve the complete settings inventory and configuration compatibility policy.", "package_ids": ["PC-SETTINGS-CATALOG-001", "PC-COMPAT-CONFIG-001"] },
+    { "id": "D09", "sequence": 9, "target_date": "2026-09-09", "title": "Workflow catalog", "goal": "Resolve every inventoried workflow and action surface against stable behavior.", "package_ids": ["PC-WORKFLOW-CATALOG-001"] },
+    { "id": "D10", "sequence": 10, "target_date": "2026-09-10", "title": "GUI surfaces", "goal": "Resolve all remaining user-facing GUI surfaces, accessibility, and platform disposition.", "package_ids": ["PC-GUI-SURFACES-001"] },
+    { "id": "D11", "sequence": 11, "target_date": "2026-09-11", "title": "Operations and edge domains", "goal": "Close diagnostics, distribution, experimental mobile, and image-effect compatibility decisions.", "package_ids": ["PC-DIAGNOSTICS-001", "PC-DISTRIBUTION-001", "PC-MOBILE-DISPOSITION-001", "PC-COMPAT-IMAGE-EFFECTS-001"] },
+    { "id": "D12", "sequence": 12, "target_date": "2026-09-12", "title": "Conformance and closure", "goal": "Prove full traceability, cross-platform disposition, runtime compatibility, and approval closure.", "package_ids": ["PC-CONFORMANCE-001"] }
+  ],
+  "packages": [
+    {
+      "id": "PC-GOVERNANCE-001", "title": "Baseline review and contract governance", "kind": "manual", "status": "in_progress", "priority": "P0", "wave": "D01", "owner_role": "contract-steward", "approval": "product-owner", "depends_on": [],
+      "deliverables": ["Signed baseline provenance and census review", "Recorded disposition for all existing draft capability packages", "Named reviewers for security, privacy, accessibility, compatibility, and platform questions"],
+      "exit_criteria": ["The baseline census status is closed with product-owner evidence", "Contract-writing and approval responsibilities are unambiguous", "Existing draft packages are approved, revised, or explicitly returned to backlog"]
+    },
+    {
+      "id": "PC-APP-SHELL-001", "title": "Application shell and lifecycle", "kind": "ledger", "status": "planned", "priority": "P0", "wave": "D02", "owner_role": "contract-author", "approval": "product-owner", "depends_on": ["PC-GOVERNANCE-001"],
+      "deliverables": ["Application lifecycle and single-instance capability package", "Tray, hotkey, notification, update, and shutdown behavior evidence"],
+      "exit_criteria": ["All assigned capability rows link to stable requirements", "Windows, macOS, and Linux dispositions and accessibility behavior are accepted"]
+    },
+    {
+      "id": "PC-CONFIG-SECURITY-001", "title": "Configuration, identity, secrets, and security", "kind": "ledger", "status": "planned", "priority": "P0", "wave": "D02", "owner_role": "security-reviewer", "approval": "product-owner", "depends_on": ["PC-GOVERNANCE-001"],
+      "deliverables": ["Configuration ownership and migration capability package", "Credential storage, secret redaction, permission, and product-identity requirements"],
+      "exit_criteria": ["All assigned capability rows link to stable requirements", "Security and privacy review is recorded", "All supported platforms have accepted secure-storage dispositions"]
+    },
+    {
+      "id": "PC-CAPTURE-001", "title": "Capture families and permissions", "kind": "ledger", "status": "planned", "priority": "P0", "wave": "D03", "owner_role": "contract-author", "approval": "product-owner", "depends_on": ["PC-GOVERNANCE-001"],
+      "deliverables": ["Full-screen, window, monitor, scrolling, text, and extended capture packages", "Permission, cancellation, cursor, delay, DPI, and multi-display test vectors"],
+      "exit_criteria": ["All assigned capability rows link to stable requirements", "All capture permission and degraded-mode paths are accepted per platform"]
+    },
+    {
+      "id": "PC-WORKFLOW-ENGINE-001", "title": "Workflow engine semantics", "kind": "ledger", "status": "planned", "priority": "P0", "wave": "D03", "owner_role": "contract-author", "approval": "product-owner", "depends_on": ["PC-GOVERNANCE-001"],
+      "deliverables": ["Workflow composition, ordering, failure, cancellation, and result semantics", "Deterministic workflow execution scenarios"],
+      "exit_criteria": ["All assigned capability rows link to stable requirements", "Execution and failure semantics are accepted independently of any platform implementation"]
+    },
+    {
+      "id": "PC-RECORDING-001", "title": "Screen recording and encoding", "kind": "ledger", "status": "planned", "priority": "P0", "wave": "D04", "owner_role": "contract-author", "approval": "product-owner", "depends_on": ["PC-CAPTURE-001", "PC-WORKFLOW-ENGINE-001"],
+      "deliverables": ["Screen, GIF, and device recording capability packages", "Codec, audio, frame timing, pause, cancellation, and failure evidence"],
+      "exit_criteria": ["All assigned capability rows link to stable requirements", "Encoder availability and degraded platform dispositions are accepted"]
+    },
+    {
+      "id": "PC-MEDIA-001", "title": "Video editor and media utilities", "kind": "ledger", "status": "planned", "priority": "P1", "wave": "D04", "owner_role": "contract-author", "approval": "product-owner", "depends_on": ["PC-RECORDING-001"],
+      "deliverables": ["Video editing, playback, conversion, and media utility packages", "Format, quality, cancellation, and round-trip fixtures"],
+      "exit_criteria": ["All assigned capability rows link to stable requirements", "Media format and dependency dispositions are accepted on every platform"]
+    },
+    {
+      "id": "PC-UPLOADS-001", "title": "Upload execution and destination behavior", "kind": "ledger", "status": "planned", "priority": "P0", "wave": "D05", "owner_role": "integration-reviewer", "approval": "product-owner", "depends_on": ["PC-CONFIG-SECURITY-001", "PC-WORKFLOW-ENGINE-001"],
+      "deliverables": ["Upload transport, retry, cancellation, progress, result, and error packages", "Credential and privacy requirements for destination execution"],
+      "exit_criteria": ["All assigned capability rows link to stable requirements", "Secret handling and network failure scenarios have accepted evidence"]
+    },
+    {
+      "id": "PC-DESTINATION-SURFACES-001", "title": "Destination provider surfaces", "kind": "ledger", "status": "planned", "priority": "P1", "wave": "D05", "owner_role": "integration-reviewer", "approval": "product-owner", "depends_on": ["PC-UPLOADS-001"],
+      "deliverables": ["Provider configuration and capability profiles", "Authentication, validation, testing, and removal surface requirements"],
+      "exit_criteria": ["All assigned interface rows link to stable requirements", "Provider availability and substitute behavior are accepted per platform"]
+    },
+    {
+      "id": "PC-COMPAT-DESTINATIONS-001", "title": "Uploader and plugin compatibility", "kind": "ledger", "status": "planned", "priority": "P0", "wave": "D05", "owner_role": "compatibility-reviewer", "approval": "product-owner", "depends_on": ["PC-UPLOADS-001"],
+      "deliverables": ["Uploader configuration compatibility schema and fixtures", "Plugin-host compatibility and isolation policy"],
+      "exit_criteria": ["All assigned compatibility rows link to stable requirements", "Round-trip, import, rejection, secret, and unknown-field behavior has runtime-observation evidence"]
+    },
+    {
+      "id": "PC-HISTORY-001", "title": "History, indexing, search, and retention", "kind": "ledger", "status": "planned", "priority": "P1", "wave": "D06", "owner_role": "contract-author", "approval": "product-owner", "depends_on": ["PC-CONFIG-SECURITY-001"],
+      "deliverables": ["History storage, indexing, search, thumbnail, retention, and deletion packages", "Privacy, corruption, recovery, and scale scenarios"],
+      "exit_criteria": ["All assigned capability rows link to stable requirements", "Privacy and data lifecycle behavior is accepted on every platform"]
+    },
+    {
+      "id": "PC-COMPAT-HISTORY-001", "title": "History data compatibility", "kind": "ledger", "status": "planned", "priority": "P1", "wave": "D06", "owner_role": "compatibility-reviewer", "approval": "product-owner", "depends_on": ["PC-HISTORY-001"],
+      "deliverables": ["History import and migration schemas", "Representative, corrupt, partial, and version-skew fixtures"],
+      "exit_criteria": ["All assigned compatibility rows link to stable requirements", "Import, migration, rejection, and recovery behavior has runtime-observation evidence"]
+    },
+    {
+      "id": "PC-AUTOMATION-001", "title": "Automation and external integration", "kind": "ledger", "status": "planned", "priority": "P0", "wave": "D07", "owner_role": "integration-reviewer", "approval": "product-owner", "depends_on": ["PC-WORKFLOW-ENGINE-001", "PC-CONFIG-SECURITY-001"],
+      "deliverables": ["Automation, IPC, hot-folder, command, and integration packages", "Authentication, authorization, consent, concurrency, and failure scenarios"],
+      "exit_criteria": ["All assigned capability rows link to stable requirements", "External-control security and privacy review is recorded"]
+    },
+    {
+      "id": "PC-CLI-SURFACES-001", "title": "Command-line interfaces", "kind": "ledger", "status": "planned", "priority": "P0", "wave": "D07", "owner_role": "interface-reviewer", "approval": "product-owner", "depends_on": ["PC-AUTOMATION-001"],
+      "deliverables": ["CLI command, argument, output, exit-code, and error contracts", "Headless, cancellation, permission, and compatibility scenarios"],
+      "exit_criteria": ["All assigned CLI interface rows link to stable requirements", "Machine-readable output and failure behavior is stable and accepted"]
+    },
+    {
+      "id": "PC-MCP-SURFACES-001", "title": "Agent-native MCP interfaces", "kind": "ledger", "status": "planned", "priority": "P0", "wave": "D07", "owner_role": "interface-reviewer", "approval": "product-owner", "depends_on": ["PC-AUTOMATION-001"],
+      "deliverables": ["MCP tool, resource, schema, consent, progress, and error contracts", "Least-authority and human-review scenarios"],
+      "exit_criteria": ["All assigned MCP interface rows link to stable requirements", "Agent authority, consent, redaction, and destructive-action rules pass security review"]
+    },
+    {
+      "id": "PC-COMPAT-AUTOMATION-001", "title": "Automation compatibility", "kind": "ledger", "status": "planned", "priority": "P1", "wave": "D07", "owner_role": "compatibility-reviewer", "approval": "product-owner", "depends_on": ["PC-AUTOMATION-001"],
+      "deliverables": ["Automation import and invocation compatibility policy", "Version-skew, unsupported-action, and security-boundary fixtures"],
+      "exit_criteria": ["All assigned compatibility rows link to stable requirements", "Legacy automation has an explicit import, rejection, or migration disposition"]
+    },
+    {
+      "id": "PC-SETTINGS-CATALOG-001", "title": "Complete settings inventory", "kind": "ledger", "status": "planned", "priority": "P0", "wave": "D08", "owner_role": "contract-author", "approval": "product-owner", "depends_on": ["PC-CONFIG-SECURITY-001"],
+      "deliverables": ["Stable requirement mapping for every inventoried setting", "Defaults, validation, persistence, scope, migration, privacy, and platform-disposition evidence"],
+      "exit_criteria": ["All assigned settings rows link to stable requirements", "Every setting is retained, transformed, replaced, or explicitly rejected by approved product intent"]
+    },
+    {
+      "id": "PC-COMPAT-CONFIG-001", "title": "Configuration compatibility", "kind": "ledger", "status": "planned", "priority": "P0", "wave": "D08", "owner_role": "compatibility-reviewer", "approval": "product-owner", "depends_on": ["PC-CONFIG-SECURITY-001", "PC-SETTINGS-CATALOG-001"],
+      "deliverables": ["Configuration import, export, migration, and unknown-field policy", "Versioned fixtures with secrets removed or represented safely"],
+      "exit_criteria": ["All assigned compatibility rows link to stable requirements", "Round-trip, upgrade, downgrade, malformed, partial, and secret behavior has runtime-observation evidence"]
+    },
+    {
+      "id": "PC-WORKFLOW-CATALOG-001", "title": "Complete workflow and action inventory", "kind": "ledger", "status": "planned", "priority": "P0", "wave": "D09", "owner_role": "contract-author", "approval": "product-owner", "depends_on": ["PC-WORKFLOW-ENGINE-001", "PC-SETTINGS-CATALOG-001"],
+      "deliverables": ["Stable requirement mapping for every inventoried workflow and action", "Inputs, outputs, ordering, cancellation, failure, side-effect, and platform evidence"],
+      "exit_criteria": ["All assigned workflow rows link to stable requirements", "Every workflow surface has deterministic acceptance evidence or an approved explicit disposition"]
+    },
+    {
+      "id": "PC-GUI-SURFACES-001", "title": "Complete GUI and accessibility surfaces", "kind": "ledger", "status": "planned", "priority": "P1", "wave": "D10", "owner_role": "interface-reviewer", "approval": "product-owner", "depends_on": ["PC-APP-SHELL-001", "PC-SETTINGS-CATALOG-001", "PC-WORKFLOW-CATALOG-001"],
+      "deliverables": ["Stable requirement mapping for every inventoried GUI surface", "Keyboard, focus, screen-reader, scaling, localization, permission, empty, loading, and error states"],
+      "exit_criteria": ["All assigned GUI interface rows link to stable requirements", "Accessibility review and Windows, macOS, and Linux surface dispositions are recorded"]
+    },
+    {
+      "id": "PC-DIAGNOSTICS-001", "title": "Diagnostics, logging, and recovery", "kind": "ledger", "status": "planned", "priority": "P1", "wave": "D11", "owner_role": "operations-reviewer", "approval": "product-owner", "depends_on": ["PC-CONFIG-SECURITY-001"],
+      "deliverables": ["Logging, crash, diagnostic export, redaction, and recovery package", "Corruption, disk-full, permission, and support-bundle scenarios"],
+      "exit_criteria": ["All assigned capability rows link to stable requirements", "Privacy, redaction, retention, and recovery behavior is accepted"]
+    },
+    {
+      "id": "PC-DISTRIBUTION-001", "title": "Distribution, updates, and release quality", "kind": "ledger", "status": "planned", "priority": "P1", "wave": "D11", "owner_role": "release-reviewer", "approval": "product-owner", "depends_on": ["PC-APP-SHELL-001", "PC-CONFIG-SECURITY-001"],
+      "deliverables": ["Install, update, rollback, packaging, signing, and release-quality requirements", "Offline, interrupted, downgrade, and unsupported-system scenarios"],
+      "exit_criteria": ["All assigned capability rows link to stable requirements", "Every supported platform has accepted packaging, update, and recovery evidence"]
+    },
+    {
+      "id": "PC-MOBILE-DISPOSITION-001", "title": "Experimental mobile disposition", "kind": "ledger", "status": "planned", "priority": "P2", "wave": "D11", "owner_role": "product-owner", "approval": "product-owner", "depends_on": ["PC-GOVERNANCE-001"],
+      "deliverables": ["Explicit retain, replace, defer, or reject decision for each inventoried mobile surface", "Scope and compatibility impact record"],
+      "exit_criteria": ["All assigned capability rows link to stable disposition requirements", "The decision does not silently expand or weaken supported native platform commitments"]
+    },
+    {
+      "id": "PC-COMPAT-IMAGE-EFFECTS-001", "title": "Image effects compatibility", "kind": "ledger", "status": "planned", "priority": "P1", "wave": "D11", "owner_role": "compatibility-reviewer", "approval": "product-owner", "depends_on": ["PC-GOVERNANCE-001"],
+      "deliverables": ["Effect preset and document compatibility schema", "Representative, legacy, unknown-effect, missing-asset, and numeric-boundary fixtures"],
+      "exit_criteria": ["All assigned compatibility rows link to stable requirements", "Round-trip and degraded rendering behavior has deterministic evidence"]
+    },
+    {
+      "id": "PC-CONFORMANCE-001", "title": "Full traceability, conformance, and approval closure", "kind": "manual", "status": "planned", "priority": "P0", "wave": "D12", "owner_role": "conformance-lead", "approval": "product-owner",
+      "depends_on": ["PC-APP-SHELL-001", "PC-CONFIG-SECURITY-001", "PC-CAPTURE-001", "PC-WORKFLOW-ENGINE-001", "PC-RECORDING-001", "PC-MEDIA-001", "PC-UPLOADS-001", "PC-DESTINATION-SURFACES-001", "PC-COMPAT-DESTINATIONS-001", "PC-HISTORY-001", "PC-COMPAT-HISTORY-001", "PC-AUTOMATION-001", "PC-CLI-SURFACES-001", "PC-MCP-SURFACES-001", "PC-COMPAT-AUTOMATION-001", "PC-SETTINGS-CATALOG-001", "PC-COMPAT-CONFIG-001", "PC-WORKFLOW-CATALOG-001", "PC-GUI-SURFACES-001", "PC-DIAGNOSTICS-001", "PC-DISTRIBUTION-001", "PC-MOBILE-DISPOSITION-001", "PC-COMPAT-IMAGE-EFFECTS-001"],
+      "deliverables": ["Requirement-to-evidence traceability matrix", "Cross-platform disposition and parity review", "Runtime-observation record for compatibility promises", "Approval, deviation, waiver, security, privacy, and accessibility closure record"],
+      "exit_criteria": ["Every completion-definition gate is evidenced", "The backlog tracker reports zero open parity rows", "The manifest and contract linter pass", "The human product owner records final approval"]
+    }
+  ],
+  "routing": {
+    "capability": {
+      "field": "domain",
+      "values": {
+        "application-shell": "PC-APP-SHELL-001",
+        "configuration-security": "PC-CONFIG-SECURITY-001",
+        "capture": "PC-CAPTURE-001",
+        "workflow-engine": "PC-WORKFLOW-ENGINE-001",
+        "recording": "PC-RECORDING-001",
+        "video-editor-media": "PC-MEDIA-001",
+        "upload-destinations": "PC-UPLOADS-001",
+        "history-indexing": "PC-HISTORY-001",
+        "automation-integration": "PC-AUTOMATION-001",
+        "diagnostics-recovery": "PC-DIAGNOSTICS-001",
+        "distribution-quality": "PC-DISTRIBUTION-001",
+        "mobile-experimental": "PC-MOBILE-DISPOSITION-001"
+      }
+    },
+    "settings": { "field": "domain", "default": "PC-SETTINGS-CATALOG-001" },
+    "workflow": { "field": "domain", "default": "PC-WORKFLOW-CATALOG-001" },
+    "interface": {
+      "field": "domain",
+      "values": {
+        "gui": "PC-GUI-SURFACES-001",
+        "cli": "PC-CLI-SURFACES-001",
+        "mcp": "PC-MCP-SURFACES-001",
+        "destination": "PC-DESTINATION-SURFACES-001"
+      }
+    },
+    "compatibility": {
+      "field": "domain",
+      "values": {
+        "configuration": "PC-COMPAT-CONFIG-001",
+        "history": "PC-COMPAT-HISTORY-001",
+        "uploader": "PC-COMPAT-DESTINATIONS-001",
+        "plugin": "PC-COMPAT-DESTINATIONS-001",
+        "image-effects": "PC-COMPAT-IMAGE-EFFECTS-001",
+        "automation": "PC-COMPAT-AUTOMATION-001"
+      }
+    }
+  }
+}

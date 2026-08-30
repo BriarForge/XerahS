@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xerahs.dev/schemas/product-contract-backlog-v1.json",
+  "title": "XerahS Product Contract completion backlog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "tracker_version",
+    "baseline",
+    "objective",
+    "completion_definition",
+    "waves",
+    "packages",
+    "routing"
+  ],
+  "properties": {
+    "$schema": { "type": "string", "minLength": 1 },
+    "schema_version": { "const": 1 },
+    "tracker_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "baseline": { "type": "string", "minLength": 1 },
+    "objective": { "type": "string", "minLength": 1 },
+    "completion_definition": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "waves": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/wave" }
+    },
+    "packages": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/package" }
+    },
+    "routing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability", "settings", "workflow", "interface", "compatibility"],
+      "properties": {
+        "capability": { "$ref": "#/$defs/route" },
+        "settings": { "$ref": "#/$defs/route" },
+        "workflow": { "$ref": "#/$defs/route" },
+        "interface": { "$ref": "#/$defs/route" },
+        "compatibility": { "$ref": "#/$defs/route" }
+      }
+    }
+  },
+  "$defs": {
+    "wave": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sequence", "target_date", "title", "goal", "package_ids"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^D[0-9]{2}$" },
+        "sequence": { "type": "integer", "minimum": 1 },
+        "target_date": { "type": "string", "format": "date" },
+        "title": { "type": "string", "minLength": 1 },
+        "goal": { "type": "string", "minLength": 1 },
+        "package_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/packageId" }
+        }
+      }
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "kind",
+        "status",
+        "priority",
+        "wave",
+        "owner_role",
+        "approval",
+        "depends_on",
+        "deliverables",
+        "exit_criteria"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/packageId" },
+        "title": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["ledger", "manual"] },
+        "status": { "enum": ["planned", "in_progress", "blocked", "complete"] },
+        "priority": { "enum": ["P0", "P1", "P2"] },
+        "wave": { "type": "string", "pattern": "^D[0-9]{2}$" },
+        "owner_role": { "type": "string", "minLength": 1 },
+        "approval": { "enum": ["product-owner", "contract-steward"] },
+        "depends_on": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/packageId" }
+        },
+        "deliverables": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "exit_criteria": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field"],
+      "properties": {
+        "field": { "const": "domain" },
+        "values": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/packageId" }
+        },
+        "default": { "$ref": "#/$defs/packageId" }
+      },
+      "anyOf": [
+        { "required": ["values"] },
+        { "required": ["default"] }
+      ]
+    },
+    "packageId": {
+      "type": "string",
+      "pattern": "^PC-[A-Z0-9-]+-[0-9]{3}$"
+    }
+  }
+}

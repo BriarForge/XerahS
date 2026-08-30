@@ -15,6 +15,18 @@ Generate and verify it with `tools/baseline-census/census.py`. Inventoried rows
 are the contract-writing queue. They are not normative until an approved
 capability package supplies stable requirement IDs and acceptance evidence.
 
+## Progressive completion backlog
+
+The maintained work plan is [`backlog/backlog.json`](backlog/backlog.json). It
+routes every currently uncontracted parity row to an owned package across
+twelve dependency-ordered daily waves. The generated
+[`backlog/STATUS.md`](backlog/STATUS.md) is the review-friendly progress view.
+
+Run `python tools/contract-backlog/tracker.py --check` to prove that no parity
+row is orphaned and the status view matches the current ledgers. Planning
+status and dates do not make behavior normative; Product Contract requirements
+and the required human approvals do.
+
 ## Qualification capabilities (Wave 1)
 
 These packages are selected as the first contract-writing tranche.
