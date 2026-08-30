@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xerahs.com/schemas/capability-disposition-v1.json",
+  "title": "XerahS capability disposition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ledger_id", "capability_id", "outcome", "authority", "inputs", "outputs", "cancellation", "failures", "privacy", "accessibility", "platforms", "status"],
+  "properties": {
+    "ledger_id": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]+-[0-9]{3}$" },
+    "capability_id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$" },
+    "outcome": { "type": "string", "minLength": 1 },
+    "authority": { "type": "string", "minLength": 1 },
+    "inputs": { "type": "string", "minLength": 1 },
+    "outputs": { "type": "string", "minLength": 1 },
+    "cancellation": { "type": "string", "minLength": 1 },
+    "failures": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "privacy": { "enum": ["none", "private-local", "personal-data", "secret", "captured-content"] },
+    "accessibility": { "type": "string", "minLength": 1 },
+    "platforms": {
+      "type": "object",
+      "required": ["windows", "macos", "linux"],
+      "additionalProperties": false,
+      "properties": {
+        "windows": { "$ref": "#/$defs/disposition" },
+        "macos": { "$ref": "#/$defs/disposition" },
+        "linux": { "$ref": "#/$defs/disposition" }
+      }
+    },
+    "status": { "enum": ["draft", "approved", "retired"] }
+  },
+  "$defs": { "disposition": { "enum": ["required", "equivalent", "degraded", "unavailable", "not-applicable"] } }
+}

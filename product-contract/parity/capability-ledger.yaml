@@ -10,7 +10,7 @@ items:
       - path: "src/desktop/app/XerahS.App/Program.cs"
         symbol: "Program.Main"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -29,7 +29,7 @@ items:
       - path: "src/desktop/app/XerahS.UI/TrayIconHelper.cs"
         symbol: "TrayIconHelper"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -48,7 +48,7 @@ items:
       - path: "src/desktop/app/XerahS.UI/Onboarding/OnboardingWizardWindow.axaml"
         symbol: "OnboardingWizardWindow"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -67,7 +67,7 @@ items:
       - path: "src/desktop/app/XerahS.UI/Views/ToastWindow.axaml"
         symbol: "ToastWindow"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -86,7 +86,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
         symbol: "ApplicationConfig.Language"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -105,7 +105,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
         symbol: "ApplicationConfig.AutoCheckUpdate"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -124,7 +124,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Managers/SettingsManager.cs"
         symbol: "SettingsManager"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -143,7 +143,7 @@ items:
       - path: "src/desktop/core/XerahS.Common/Settings/DPAPIEncryptedStringValueProvider.cs"
         symbol: "DPAPIEncryptedStringValueProvider"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -162,7 +162,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "CaptureType.Fullscreen"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -181,7 +181,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "CaptureType.Monitor"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -200,7 +200,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "CaptureType.Window"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -238,7 +238,7 @@ items:
       - path: "src/desktop/app/XerahS.UI/Views/ScrollingCaptureWindow.axaml"
         symbol: "ScrollingCaptureWindow"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -257,7 +257,7 @@ items:
       - path: "src/desktop/app/XerahS.UI/Views/AutoCaptureWindow.axaml"
         symbol: "AutoCaptureWindow"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -276,7 +276,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Hotkeys/HotkeySettings.cs"
         symbol: "WorkflowSettings"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -333,7 +333,7 @@ items:
       - path: "src/desktop/app/XerahS.RegionCapture/ScreenRecording/ScreenRecorderService.cs"
         symbol: "ScreenRecorderService"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -352,7 +352,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ScreenRecorderGIF"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -371,7 +371,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Models/TaskSettingsOptions.cs"
         symbol: "FFmpegOptions.AudioSource"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -542,7 +542,7 @@ items:
       - path: "ShareX.VideoEditor/backend/ShareX.VideoEditor.csproj"
         symbol: "ShareX.VideoEditor"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -561,7 +561,7 @@ items:
       - path: "src/desktop/app/XerahS.UI/Views/ToolsView.axaml"
         symbol: "ToolsView"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -580,7 +580,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Tasks/Processors/UploadJobProcessor.cs"
         symbol: "UploadJobProcessor"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -599,7 +599,7 @@ items:
       - path: "src/desktop/core/XerahS.Uploaders/CustomUploader/CustomUploaderProvider.cs"
         symbol: "CustomUploaderProvider"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -618,7 +618,7 @@ items:
       - path: "src/desktop/plugins"
         symbol: "First-party uploader projects"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -637,7 +637,7 @@ items:
       - path: "src/desktop/core/XerahS.Uploaders/PluginSystem/PluginLoader.cs"
         symbol: "PluginLoader"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -656,7 +656,7 @@ items:
       - path: "src/desktop/core/XerahS.History/HistoryManager.cs"
         symbol: "HistoryManager"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -675,7 +675,7 @@ items:
       - path: "src/desktop/app/XerahS.UI/Views/HistoryView.axaml"
         symbol: "HistoryView"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -694,7 +694,7 @@ items:
       - path: "src/desktop/cli/XerahS.CLI/Program.cs"
         symbol: "Program.BuildRootCommand"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -713,7 +713,7 @@ items:
       - path: "src/tools/XerahS.McpServer/Server/XerahSMcpServer.cs"
         symbol: "XerahSMcpServer"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -732,7 +732,7 @@ items:
       - path: "src/desktop/app/XerahS.Assistant"
         symbol: "XerahS.Assistant"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -751,7 +751,7 @@ items:
       - path: "src/desktop/tools/XerahS.WatchFolder.Daemon"
         symbol: "XerahS.WatchFolder.Daemon"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -770,7 +770,7 @@ items:
       - path: "src/desktop/app/XerahS.UI/ViewModels/SettingsViewModel.Integration.cs"
         symbol: "SettingsViewModel integration settings"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -789,7 +789,7 @@ items:
       - path: "src/desktop/cli/XerahS.CLI/Commands/DoctorCommand.cs"
         symbol: "DoctorCommand"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -808,7 +808,7 @@ items:
       - path: "build"
         symbol: "Packaging definitions"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -827,7 +827,7 @@ items:
       - path: "src/mobile-experimental"
         symbol: "Experimental mobile projects"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/CORE-PLATFORM-001"
     platforms:
       windows: "not-applicable"
       macos: "not-applicable"

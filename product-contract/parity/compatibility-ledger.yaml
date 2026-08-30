@@ -10,7 +10,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Managers/SettingsManager.cs"
         symbol: "SettingsManager.ApplicationConfigFilePath"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/COMPATIBILITY-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -29,7 +29,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Managers/SettingsManager.cs"
         symbol: "SettingsManager.HotkeysConfigFilePath"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/COMPATIBILITY-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -48,7 +48,7 @@ items:
       - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfigImporter.cs"
         symbol: "UploadersConfigImporter"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/COMPATIBILITY-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -67,7 +67,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Managers/SettingsManager.cs"
         symbol: "SecretsStore"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/COMPATIBILITY-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -86,7 +86,7 @@ items:
       - path: "src/desktop/core/XerahS.History/HistoryManagerSQLite.cs"
         symbol: "HistoryManagerSQLite"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/COMPATIBILITY-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -105,7 +105,7 @@ items:
       - path: "src/desktop/core/XerahS.History/HistoryManagerJSON.cs"
         symbol: "HistoryManagerJSON"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/COMPATIBILITY-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -124,7 +124,7 @@ items:
       - path: "src/desktop/core/XerahS.History/HistoryManagerXML.cs"
         symbol: "HistoryManagerXML"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/COMPATIBILITY-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -238,7 +238,7 @@ items:
       - path: "src/desktop/core/XerahS.Uploaders/CustomUploader/CustomUploaderSettingsSerializer.cs"
         symbol: "CustomUploaderSettingsSerializer"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/COMPATIBILITY-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -257,7 +257,7 @@ items:
       - path: "src/desktop/app/XerahS.UI"
         symbol: ".sxie importer"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/COMPATIBILITY-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -276,7 +276,7 @@ items:
       - path: "src/desktop/core/XerahS.Uploaders/PluginSystem/PluginPackager.cs"
         symbol: "PluginPackager"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/COMPATIBILITY-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -295,7 +295,7 @@ items:
       - path: "src/tools/XerahS.McpServer/JsonRpc/JsonRpcRequest.cs"
         symbol: "JsonRpcRequest"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/COMPATIBILITY-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
