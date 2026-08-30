@@ -34,6 +34,7 @@ The root `AGENTS.md` SHALL be short, stable, and non-overridable. It defines rul
 - Security, privacy, accessibility, licensing, and data-compatibility invariants.
 - The authority and precedence model for instructions.
 - Required planning, review, verification, and evidence.
+- Standing authority for bounded, behavior-preserving restructuring that removes material agentic-development friction.
 - Prohibited actions, including silently weakening contracts or waiving a platform.
 - The process for escalating contradictory or infeasible requirements.
 - Links to each first-level child instruction scope.
@@ -74,6 +75,9 @@ Planning, implementation, and review steps for this subtree.
 
 # Verification
 Commands, test environments, and evidence required before completion.
+
+# Improvement Authority
+Locally owned structures agents may change without separate permission, protected boundaries, and required validation.
 
 # Prohibited Changes
 Actions that are unsafe or architecturally invalid in this subtree.
@@ -174,3 +178,45 @@ Native implementation agents MUST NOT weaken the contract merely to make an impl
 - A proposal to change supported platform scope.
 
 Contract changes that alter user-visible behavior require product review. Mechanical clarifications that do not alter behavior may use the normal documentation review path.
+
+## 6.4 Agent-directed restructuring and pain-point removal
+
+Agents are explicitly authorized and expected to improve the repository while delivering contracted work. They do not need a separate issue, proposal, or human permission for a bounded restructuring that preserves governed behavior and removes a material development pain point.
+
+Examples of material pain points include:
+
+- oversized or mixed-responsibility files that make safe changes difficult
+- unclear ownership, misleading names, hidden coupling, circular dependencies, or fragile initialization order
+- duplicated logic or platform boundaries that repeatedly drift
+- slow, flaky, opaque, or unnecessarily broad build and test feedback loops
+- brittle scripts, manual synchronization, hard-coded environment assumptions, or poor diagnostics
+- repository layouts, interfaces, or generated artifacts that force agents to load irrelevant context
+- stale, ambiguous, missing, or overly duplicated scoped instructions
+- obsolete compatibility scaffolding or dead code whose safe removal is demonstrated
+
+The standing authority covers internal module extraction or consolidation, directory and package organization, dependency direction, adapter boundaries, types and interfaces, test architecture, build and developer tooling, diagnostic improvements, and scoped `AGENTS.md` refinements. It applies across adjacent repository scopes when a coherent fix requires them; directory boundaries are not a reason to preserve a known structural defect.
+
+An agent exercising this authority SHALL:
+
+1. State the pain point and the intended structural outcome in its plan or change record.
+2. Prefer the smallest coherent change that removes the cause rather than masking a symptom.
+3. Preserve Product Contract behavior, accepted compatibility, and requirement traceability.
+4. Keep the change incremental and reviewable, with migration or compatibility adapters where an atomic transition is unsafe.
+5. Update affected tests, documentation, architecture maps, effective instructions, build tooling, and traceability manifests in the same change.
+6. Run verification proportional to the complete changed surface, not only the originally requested file.
+7. Return to and complete the original requested outcome unless the restructuring exposes a protected decision that requires escalation.
+8. Record a repeated or cross-cutting pain point and its durable remedy in the nearest governed lesson, decision, instruction, or tooling check so later agents do not rediscover it.
+
+Agents MUST NOT use this authority for speculative rewrites, stylistic churn, unbounded cleanup, or architecture astronautics. Refactoring is not successful merely because code moved; it must reduce a named cost, risk, ambiguity, or feedback delay.
+
+Prior human approval remains required when the proposed restructuring changes or risks changing:
+
+- user-visible Product Contract behavior or an approved platform disposition
+- public protocols, persisted data, migrations, file formats, or compatibility guarantees
+- security, privacy, permissions, credential handling, or trust boundaries
+- licensing posture or a major third-party dependency commitment
+- supported platforms, binding native framework decisions, shared-runtime policy, or repository boundaries
+- release identity, signing, distribution, or another protected architecture decision
+- the root `AGENTS.md` constitution or its non-overridable rule meanings
+
+When the pain point originates in governance itself, an agent MAY improve a child `AGENTS.md`, instruction index, linter, or effective-instructions report without separate approval if the change clarifies or strengthens inherited policy. Weakening or changing a protected root rule follows [D-REV-001](08-decisions.md#d-rev-001-human-review-boundaries).

@@ -35,6 +35,7 @@ Review of the proposal before closing the architecture decisions found the follo
 13. **The proposal ended after four pilot features**, while the intended outcome is a fully functional native XerahS. [Section 20](11-reference-baseline.md) now pins KovaForge `v0.29.0`; [section 21](12-full-parity-delivery.md) requires exhaustive census, full delivery waves, and a zero-unresolved-ID release gate.
 14. **The reference tree was ambiguous.** The primary discovery baseline is now explicitly KovaForge/XerahS commit `5c7e36de`; ShareX Team XerahS remains historical proposal context.
 15. **VideoEditor had no native ownership decision.** [D-VID-001](08-decisions.md#d-vid-001-native-videoeditor-and-media-tools) now makes it a native platform feature and prohibits the legacy submodule as a production dependency.
+16. **Agents could preserve known structural pain because refactoring authority was implicit.** [D-REF-001](08-decisions.md#d-ref-001-agent-directed-restructuring-authority) and [section 6.4](04-governance.md#64-agent-directed-restructuring-and-pain-point-removal) now grant standing authority for bounded behavior-preserving restructuring, encode it in `ROOT-IMPROVE-*`, and retain human review for protected boundaries.
 16. **Plugins and packaging were residual follow-ups**, which allowed an incomplete product to claim parity. They may use child specifications but are now release-required deliverables.
 
 Residual risks that remain acceptable for a proposed architecture:
@@ -55,3 +56,4 @@ Residual risks that remain acceptable for a proposed architecture:
 | 2026-08-30 | Closed open decisions as pilot-binding architecture choices | Record ownership, contract format, platform baselines, monorepo, sharing, plugins, release, review, AGENTS.md, goldens, and kernel threshold so the pilot can start without a second architecture proposal |
 | 2026-08-30 | Split the proposal into this directory | The single-file XIP exceeded a useful review size; BXIP001 is now the canonical split document set |
 | 2026-08-30 | Converted pilot into full-parity implementation program | Pin KovaForge v0.29.0, require exhaustive capability ledgers, add native VideoEditor ownership, and authorize delivery through a zero-unresolved-ID release gate |
+| 2026-08-30 | Authorized agent-directed restructuring | Let agents remove material development pain points without case-by-case permission while protecting product behavior, compatibility, security, licensing, platform/framework decisions, repository boundaries, and the root constitution |

@@ -18,6 +18,7 @@ Under the proposed target architecture:
 6. The existing Avalonia application remains supported while the greenfield implementation is developed and validated. This proposal does not authorize removal of the existing application before full-parity release evidence.
 7. [Architecture decisions](08-decisions.md) bind the implementation for ownership, baseline, contract format, platform baselines, repository shape, sharing, plugins, release, review, instruction hierarchy, golden-image tolerances, editors, and the rendering-kernel evidence bar.
 8. The baseline census and parity ledgers make every KovaForge desktop capability, setting, workflow, command, integration, and compatibility format accountable.
+9. Agents have standing authority to improve internal structure and remove material development pain points as they encounter them, within contract-preserving and reviewable boundaries.
 9. The qualification tranche flows directly into the [full-parity delivery program](12-full-parity-delivery.md); it is not a four-feature stopping point.
 
 The proposal is therefore not "rewrite XerahS three times and trust AI." It is "inventory the complete reference product, specify XerahS once, implement it natively three times, and prove that no functionality was silently lost."

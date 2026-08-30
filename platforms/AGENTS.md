@@ -11,6 +11,7 @@ Owns native realizations of the Product Contract on Windows, macOS, and Linux. D
 - **PLATFORM-TRACE-001** Publish a machine-readable mapping from requirement IDs to implementation and evidence.
 - **PLATFORM-NATIVE-001** Use the pilot framework defaults in BXIP001 (D-WIN-001, D-MAC-001, D-LIN-001) unless a later proposal supersedes them.
 - **PLATFORM-IDENTITY-001** Package identity is `com.xerahs.native` (or the platform equivalent) until a later proposal collapses identity with Avalonia XerahS.
+- **PLATFORM-STRUCTURE-001** Under ROOT-IMPROVE-001, platform agents MAY reshape internal modules, solution or package boundaries, adapters, build tooling, and tests when doing so removes a material development pain point. Preserve contract IDs and externally governed boundaries, keep traceability navigable, and validate every affected platform surface.
 
 # Required Workflow
 1. Read the relevant capability contract and scenarios.

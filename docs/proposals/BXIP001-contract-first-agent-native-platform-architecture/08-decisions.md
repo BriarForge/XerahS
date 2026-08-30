@@ -124,7 +124,7 @@ Human review is not required before landing:
 - patch-level contract clarifications that do not change behavior
 - additional tests and fixtures
 - platform-idiomatic layout or control changes that preserve contracted semantics
-- non-behavior refactors inside one platform tree
+- bounded behavior-preserving restructuring under [D-REF-001](#d-ref-001-agent-directed-restructuring-authority), including coherent changes across adjacent internal scopes
 
 The same agent SHOULD NOT be the sole author, implementer, verifier, and approver of a material contract change. The product owner is the only authority that can accept Unavailable or an expired-waiver extension.
 
@@ -137,6 +137,25 @@ The same agent SHOULD NOT be the sole author, implementer, verifier, and approve
 - **Maximum depth:** four levels (root, first-level scope, platform, feature module such as `platforms/macos/image-editor`). Deeper files require a governance-owner exception recorded in `product-contract/decisions/`.
 - **Child files** add constraints only; they reference parent IDs and MUST NOT copy parent rule text.
 - **CI:** the contract linter is blocking on broken parent/child links, missing or duplicate IDs, child override of protected root rules, directories that declare a scope but are absent from the parent index, and contract or platform changes that lack traceability updates. CI SHALL publish an effective-instructions report for every changed path.
+
+## D-REF-001 Agent-directed restructuring authority
+
+**Decision.** Agents have standing authority to restructure internal code, tests, tooling, repository organization, and scoped instructions when they encounter a material pain point that hinders reliable agentic development. A separate feature request, refactoring ticket, or case-by-case human permission is not required for behavior-preserving work inside the protected boundaries below.
+
+The authority is proactive, not merely permissive. When an agent can remove a recurring source of ambiguity, duplication, fragile coupling, excessive context, slow feedback, flaky verification, manual synchronization, or poor diagnostics with a bounded and verifiable change, it SHOULD do so as part of the current work rather than knowingly passing the cost to later agents.
+
+Every self-directed restructuring SHALL:
+
+- name the pain point and measurable or observable improvement
+- preserve the Product Contract and accepted compatibility outcomes
+- remain incremental, reviewable, and proportional to the encountered problem
+- update affected tests, documentation, architecture maps, `AGENTS.md`, tooling, and traceability where applicable
+- validate the full affected surface and complete the original requested outcome
+- leave a durable rule, test, diagnostic, decision, or lesson when the pain point is likely to recur
+
+This standing authority does not cover changes to user-visible behavior, public or persisted compatibility, security/privacy/trust boundaries, licensing, supported platforms, binding framework decisions, shared-runtime policy, repository boundaries, release identity, or the root constitution. Those remain governed by D-REV-001 and the relevant architecture decision.
+
+The root `AGENTS.md` SHALL encode this grant as protected `ROOT-IMPROVE-*` rules. Child `AGENTS.md` files MAY identify locally owned restructuring zones, stronger verification, and protected interfaces; they MUST NOT reduce the root grant merely to preserve a convenient but painful internal structure.
 
 ## D-GOLD-001 Golden-image tolerances
 
