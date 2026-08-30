@@ -1,6 +1,16 @@
 # 14. Architecture Decisions
 
-These decisions bind the greenfield pilot. Each may be superseded only by a later approved proposal, or by a time-bound waiver under [D-REL-001](#d-rel-001-release-policy-when-a-platform-cannot-implement-a-capability). They are judgments for approval, not observations from a completed pilot.
+These decisions bind the greenfield implementation through the full-parity release. Each may be superseded only by a later approved proposal, or by a time-bound waiver under [D-REL-001](#d-rel-001-release-policy-when-a-platform-cannot-implement-a-capability). They are judgments for approval, not observations from completed implementation.
+
+## D-BASE-001 Reference baseline and full parity
+
+**Decision.** Full desktop functional parity SHALL be measured against [KovaForge/XerahS](https://github.com/KovaForge/XerahS) commit `5c7e36dea77ab131fe0f5e2101e5d578ccde0306`, application version `0.29.0`, with ImageEditor `651b1d8de4bc1f874790870560314670cd038684` and VideoEditor `0482ee322a3086d5af135aa9b54a37803241cb0d`.
+
+The reference is a discovery and compatibility baseline, not product truth and not a code-structure template. Implementation follows [section 20](11-reference-baseline.md) and [section 21](12-full-parity-delivery.md).
+
+Approval of this decision authorizes work beyond the four qualification capabilities through all full-parity delivery waves. A second architecture proposal is not required to continue. The baseline advances only through the human-approved moving-baseline process.
+
+The final parity release requires every in-scope baseline ledger row to be contracted and release-verified or to have a human-approved intrinsic platform disposition. Experimental mobile is inventoried but classified `OutOfScope-BXIP001`.
 
 ## D-OWN-001 Product Contract ownership and approval authority
 
@@ -18,18 +28,18 @@ Agents MAY author contracts, implementations, and tests. Agents MUST NOT be the 
 
 ## D-CON-001 Contract schema, versioning, and tooling
 
-**Decision.** The pilot contract format is the directory layout in [§4.1](03-product-contract.md#41-proposed-repository-structure).
+**Decision.** The implementation contract format is the directory layout in [§4.1](03-product-contract.md#41-proposed-repository-structure), including the reference-baseline and parity ledgers.
 
 - Each capability is a directory named `<AREA>-<SLUG>-<NNN>/` containing `SPEC.md`, `SCENARIOS.feature`, and any of `STATE_MACHINE.md`, `*.schema.json`, `test-vectors.json`, `fixtures/`, and `platforms/*.md` that the capability requires.
 - `product-contract/manifest.yaml` lists every capability, its SemVer, and its requirement IDs. The manifest schema SHALL be published as JSON Schema.
 - Normative prose uses RFC 2119 keywords. Requirement IDs are stable (`PCC-001`, `FN-004`) and never reused for a different meaning.
 - Versioning follows [§7.4](05-conformance.md#74-compatibility). The contract version is the product version the native apps claim.
-- Tooling: a `tools/contract-linter` validates manifests, IDs, parent/child `AGENTS.md` links, and required files. The conformance runner in `conformance/runner` is a pinned Python 3.12-or-later CLI for the pilot; platform adapters are thin executables invoked by that runner.
-- English remains the primary human interface. Machine-readable artifacts are mandatory wherever [§4.4](03-product-contract.md#44-exact-behavior-requires-exact-evidence) says they SHOULD exist; for the four pilot slices they SHALL exist.
+- Tooling: a `tools/contract-linter` validates manifests, IDs, parent/child `AGENTS.md` links, parity ledgers, source provenance, and required files. The conformance runner in `conformance/runner` starts as a pinned Python 3.12-or-later CLI; platform adapters are thin executables invoked by that runner.
+- English remains the primary human interface. Machine-readable artifacts are mandatory wherever [§4.4](03-product-contract.md#44-exact-behavior-requires-exact-evidence) says they SHOULD exist; for qualification and every deterministic baseline behavior they SHALL exist.
 
 ## D-WIN-001 Windows framework and OS baseline
 
-**Decision.** Windows App SDK with WinUI 3 for settings, history, and editor chrome. Win32 and WinRT for region-capture overlay, DXGI Desktop Duplication, global hotkeys, notify-icon tray, startup, and file-type association. Language: C# with CsWin32 or equivalent projections. Packaging for the pilot: unpackaged desktop first (ShareX-class capture and hotkeys are simpler unpackaged). MSIX is a later packaging proposal.
+**Decision.** Windows App SDK with WinUI 3 for settings, history, and editor chrome. Win32 and WinRT for region-capture overlay, DXGI Desktop Duplication, global hotkeys, notify-icon tray, startup, and file-type association. Language: C# with CsWin32 or equivalent projections. Early development is unpackaged desktop first; the full-parity gate requires a signed installable Windows artifact. MSIX/store publication may be specified separately.
 
 **OS baseline:** Windows 11 version 23H2 and later. Windows 10 is out of scope for greenfield native apps because it is past mainstream support as of this proposal; Avalonia XerahS remains the Windows 10 vehicle.
 
@@ -41,18 +51,18 @@ Agents MAY author contracts, implementations, and tests. Agents MUST NOT be the 
 
 **OS baseline:** macOS 14 Sonoma and later. macOS 12.3 remains the historical ScreenCaptureKit floor for Avalonia XerahS; it is not a greenfield SwiftUI baseline.
 
-**Rationale.** SwiftUI is production-ready on 14+ and matches the agent-native, declarative implementation style. AppKit remains mandatory for overlay windows and menu-bar-only operation. Raising the floor from 12.3 avoids spending the pilot on SwiftUI backports.
+**Rationale.** SwiftUI is production-ready on 14+ and matches the agent-native, declarative implementation style. AppKit remains mandatory for overlay windows and menu-bar-only operation. Raising the floor from 12.3 avoids spending the implementation on SwiftUI backports.
 
 ## D-LIN-001 Linux toolkit, desktop, display-server, portal, distro, and packaging
 
 **Decision.**
 
-- **Toolkit:** Qt 6, dynamically linked (LGPL), GPL v3 application. Qt Widgets for overlay, tray, and global input. Qt Quick MAY be used for settings and history chrome. GTK4/libadwaita is rejected for the pilot because ShareX-class overlay and power-user density fights the GNOME HIG, while Flameshot, Spectacle, and Ksnip already prove this product shape on Qt.
+- **Toolkit:** Qt 6, dynamically linked (LGPL), GPL v3 application. Qt Widgets for overlay, tray, and global input. Qt Quick MAY be used for settings and history chrome. GTK4/libadwaita is rejected for the implementation because ShareX-class overlay and power-user density fights the GNOME HIG, while Flameshot, Spectacle, and Ksnip already prove this product shape on Qt.
 - **Desktops:** GNOME 46+ and KDE Plasma 6 are first-class. wlroots compositors (Sway, Hyprland) are best-effort through portals.
 - **Display server:** Wayland first. X11 is a documented fallback, not the design center.
 - **Portals:** xdg-desktop-portal is required for Screenshot, ScreenCast, GlobalShortcuts, Notification, FileChooser, and Inhibit. Direct protocols are fallbacks when a portal is absent, and they MUST be diagnosed in the UI rather than failing silently.
 - **Distros:** Ubuntu 24.04 LTS is the documentation and developer target. Fedora current Workstation (SELinux enforcing, Flatpak-first) is the acceptance gate, matching XIP0082. Arch is the tertiary smoke target. NixOS is out of scope.
-- **Packaging:** `.tar.gz`, `.deb`, and `.rpm` are first-class. AUR packaging continues. Flatpak is the intended store path but is not a pilot publication gate. AppImage is deferred, matching XIP0079.
+- **Packaging:** `.tar.gz`, `.deb`, and `.rpm` are first-class full-parity artifacts. AUR packaging continues. Flatpak is the intended store path but is not required to prove the first parity release. AppImage is deferred, matching XIP0079.
 - **Filesystem:** XDG Base Directory Specification, matching XIP0075. No home-directory litter.
 - **Language:** C++17.
 
@@ -66,7 +76,7 @@ This proposal (BXIP001) is the canonical architecture document and lives in this
 
 ## D-SHARE-001 Shared binaries
 
-**Decision.** The pilot ships no shared product runtime binary and no common UI or capture library.
+**Decision.** The implementation ships no shared product runtime binary and no common UI or capture library unless a later approved exception meets its evidence bar.
 
 Shared artifacts are limited to:
 
@@ -84,7 +94,7 @@ A later proposal MAY add a shared library only for (a) the headless rendering ke
 
 - **Automation:** CLI and MCP remain the language-neutral automation surface (XIP0063, XIP0064). Their contracts are part of the Product Contract, with stable subcommands, JSON output, and exit codes.
 - **Configuration, history, and annotation documents:** versioned JSON Schema, UTF-8, language-neutral. Custom uploader HTTP templates stay first-class because they are already data, not code.
-- **Plugins:** out-of-process, capability-declared, stdio JSON-RPC, settings as JSON Schema. This proposal locks that direction. A follow-up proposal specifies the handshake, sandbox, secret-passing, and packaging. Until that proposal lands, built-in uploaders and custom HTTP uploaders are the only destinations the native apps MUST implement.
+- **Plugins:** out-of-process, capability-declared, stdio JSON-RPC, settings as JSON Schema. This proposal locks that direction. A child proposal MAY specify the handshake, sandbox, secret-passing, and packaging, but the protocol, SDK, host, diagnostics, and packaging are required before the full-parity gate. Built-in uploaders and custom HTTP uploaders are delivered earlier, not treated as the final destination scope.
 - **Migration:** Avalonia/ShareX plugin settings that can be expressed as custom HTTP uploaders MUST import. Arbitrary in-process .NET plugin code is compatibility-best-effort through the Avalonia app, not through the native apps.
 
 ## D-REL-001 Release policy when a platform cannot implement a capability
@@ -161,17 +171,30 @@ Rules:
 
 Convenience, one platform falling behind, or a preference for a common DLL is not sufficient. Any kernel remains bound by [§8.6](06-architecture-boundaries.md#86-shared-rendering-kernel-exception).
 
-## D-ID-001 Pilot application identity
+## D-VID-001 Native VideoEditor and media tools
+
+**Decision.** VideoEditor and media tools reachable from the pinned baseline are internal native feature modules in each platform solution. Production builds SHALL NOT embed or require the legacy `ShareX.VideoEditor` React UI, .NET backend, or Git submodule checkout.
+
+- Windows uses native Windows UI with an approved media adapter.
+- macOS uses SwiftUI/AppKit with AVFoundation where appropriate.
+- Linux uses Qt with FFmpeg or approved native multimedia facilities.
+- FFmpeg MAY be a packaged third-party processing engine behind a language- and platform-appropriate adapter.
+- Timeline semantics, trim boundaries, frame/time rounding, audio behavior, quality settings, progress, cancellation, recovery, metadata, and export are Product Contract behavior.
+- Approved fixtures from the pinned submodule provide compatibility and conformance evidence with provenance.
+
+The full parity gate requires every baseline-reachable VideoEditor and media outcome in the ledger. A child proposal may refine native UX and codec packaging but cannot defer the whole feature beyond parity.
+
+## D-ID-001 Development application identity
 
 **Decision.** Recorded in [§8.7](06-architecture-boundaries.md#87-coexistence-with-the-avalonia-application). Greenfield apps use `com.xerahs.native` (or the platform equivalent) and the display name "XerahS Native" until a later proposal authorizes identity collapse.
 
 # 15. Residual follow-ups
 
-These are intentionally not decided here and do not block approval of this proposal:
+These require focused delivery specifications but do not block approval of the architecture. Items marked release-required cannot remain incomplete at the full-parity gate:
 
-- Plugin handshake, sandbox, secret-passing, and package format (follow-up proposal after [D-PLUG-001](#d-plug-001-cross-language-plugin-automation-and-configuration)).
-- MSIX, Apple notarized DMG/App Store, and Flathub publication of the *native* apps.
+- Plugin handshake, sandbox, secret-passing, SDK, and package format: **release-required** under [D-PLUG-001](#d-plug-001-cross-language-plugin-automation-and-configuration).
+- Signed Windows installer, notarized macOS artifact, and first-class Linux packages: **release-required**. Store publication remains separate.
 - Shared rendering kernel (only if [D-KERN-001](#d-kern-001-shared-headless-rendering-kernel-threshold) is met).
-- Avalonia retirement or identity collapse (only after Phase 4 evidence).
+- Avalonia retirement or identity collapse (only after the full-parity attestation).
 - Windows 10 or macOS 13 support for native apps.
 - Exact Windows App SDK and Qt 6 minor versions, which are pinned in platform `AGENTS.md` at implementation time.

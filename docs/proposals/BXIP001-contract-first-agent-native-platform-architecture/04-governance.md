@@ -28,6 +28,8 @@ Root constitution
 The root `AGENTS.md` SHALL be short, stable, and non-overridable. It defines rules that apply to every agent and every directory, including:
 
 - The Product Contract is the source of product truth.
+- The pinned KovaForge snapshot is the discovery baseline for full desktop functional parity.
+- Every baseline capability must remain traceable through census, contract, implementation, conformance, and release evidence.
 - Supported platforms and release parity requirements.
 - Security, privacy, accessibility, licensing, and data-compatibility invariants.
 - The authority and precedence model for instructions.
@@ -110,6 +112,8 @@ CI SHALL validate the instruction hierarchy. At minimum, the governance linter S
 - Directories that declare an instruction scope but are absent from the root scope index.
 - Invalid verification commands or references where they can be checked statically.
 - Contract or platform changes that lack the required traceability updates.
+- Baseline ledger rows with missing source evidence, contracts, platform dispositions, owners, or evidence.
+- User-reachable surfaces discovered by census tooling but absent from every ledger.
 
 The linter SHOULD generate an effective-instructions report for any repository path. An agent and reviewer can then see exactly which root-to-leaf rules governed a change.
 
@@ -130,17 +134,20 @@ Executable architecture tests, CI gates, schemas, and conformance tests remain s
 
 ## 6.1 Feature workflow
 
-Every product behavior change SHOULD follow this sequence:
+Every product behavior change and baseline-parity implementation SHOULD follow this sequence:
 
-1. **Contract change**: Create or update the relevant capability contract and acceptance evidence.
-2. **Impact analysis**: Identify affected requirements, data formats, integrations, and platforms.
-3. **Platform planning**: Produce a platform-specific implementation plan for Windows, macOS, and Linux.
-4. **Native implementation**: Implement the feature independently using the platform's native framework and conventions.
-5. **Conformance**: Run shared scenarios, deterministic vectors, and platform-specific integration tests.
-6. **Parity review**: Compare outcomes and document any deviation.
-7. **Release decision**: Release only when the parity gate passes or an authorized waiver exists.
+1. **Baseline evidence**: Link the capability, setting, workflow, command, integration, or format to the pinned source snapshot and ledger.
+2. **Contract change**: Create or update the relevant capability contract and acceptance evidence.
+3. **Impact analysis**: Identify affected requirements, data formats, integrations, migrations, and platforms.
+4. **Platform planning**: Produce a platform-specific implementation plan for Windows, macOS, and Linux.
+5. **Native implementation**: Implement the feature independently using the platform's native framework and conventions.
+6. **Conformance**: Run shared scenarios, deterministic vectors, migration fixtures, and platform-specific integration tests.
+7. **Parity review**: Compare outcomes, update ledger lifecycle state, and document any deviation.
+8. **Release decision**: Release only when the parity gate passes or an authorized waiver exists.
 
 A feature is not complete because one implementation has landed. It is complete when the contracted product behavior has an accepted disposition on every supported platform.
+
+During the full-parity program, agents SHALL draw implementation work from unresolved ledger IDs. They MUST NOT substitute a self-selected feature list, declare a domain complete from source inspection alone, or stop after the qualification tranche.
 
 ## 6.2 Separation of agent responsibilities
 

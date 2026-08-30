@@ -29,7 +29,7 @@ Greenfield applications SHALL NOT load in-process .NET plugins. Decision [D-PLUG
 
 ## 8.3 Reference implementations are informative, not normative
 
-During greenfield development, the Avalonia application and the original ShareX implementation are valuable behavioral references and test oracles. They SHALL NOT override an approved Product Contract or dictate the new repository structure. If code and contract disagree, the discrepancy must be resolved explicitly rather than silently copying the code.
+During greenfield development, the pinned KovaForge baseline is the primary discovery source and compatibility oracle. The ShareX Team tree, original ShareX, and related submodules remain valuable historical references. They SHALL NOT override an approved Product Contract or dictate the new repository structure. If code and contract disagree, the discrepancy must be classified explicitly rather than silently copying the code or silently omitting the behavior.
 
 ## 8.4 ImageEditor module boundary
 
@@ -83,7 +83,7 @@ The greenfield repository SHOULD import approved schemas, fixtures, and golden i
 
 The initial architecture SHALL implement editor state, UI, and rendering within each native solution. A shared rendering submodule or common DLL SHALL NOT be introduced by default.
 
-Image processing is nevertheless an exactness-sensitive domain. If pilot evidence shows that independently implementing complex effects causes unacceptable pixel drift, security risk, or maintenance cost, a follow-up proposal MAY propose a small headless rendering kernel with a stable language-neutral ABI.
+Image processing is nevertheless an exactness-sensitive domain. If qualification or implementation evidence shows that independently implementing complex effects causes unacceptable pixel drift, security risk, or maintenance cost, a follow-up proposal MAY propose a small headless rendering kernel with a stable language-neutral ABI.
 
 Any approved kernel:
 
@@ -97,12 +97,30 @@ The evidence bar for proposing a kernel is [D-KERN-001](08-decisions.md#d-kern-0
 
 ## 8.7 Coexistence with the Avalonia application
 
-The greenfield applications SHALL NOT replace or reuse the production Avalonia application identity during the pilot.
+The greenfield applications SHALL NOT replace or reuse the production Avalonia application identity during development and parity validation.
 
 - Avalonia XerahS keeps the existing product identity (`com.xerahs.app` and current installers).
 - Greenfield applications SHALL use a distinct application identifier, window title suffix, and package name, for example `com.xerahs.native` and the display name "XerahS Native".
 - Greenfield applications MUST be able to import contract-defined configuration, history, and annotation documents produced by Avalonia XerahS and ShareX, but MUST NOT write over the Avalonia application's live settings without an explicit user action.
-- Side-by-side installation MUST be supported for the duration of the pilot.
+- Side-by-side installation MUST be supported through the full-parity attestation and any later identity decision.
 - Only a subsequent approved proposal may collapse the two identities or retire the Avalonia package.
 
-See [D-ID-001](08-decisions.md#d-id-001-pilot-application-identity).
+See [D-ID-001](08-decisions.md#d-id-001-development-application-identity).
+
+## 8.8 VideoEditor and media boundary
+
+Each native solution SHALL expose VideoEditor and media tools through a platform-idiomatic internal feature boundary:
+
+- The host owns file selection, workflow continuation, history, upload, naming, and permissions outside media processing.
+- The feature owns native editing UI, timeline/selection state, preview, edit operations, encode/export requests, cancellation, progress, and recoverable diagnostics.
+- Media operations use contract-defined time bases, frame rounding, audio behavior, codecs, quality settings, metadata handling, and failure semantics.
+- FFmpeg or another approved third-party engine MAY execute media operations behind an adapter. The adapter and native UI remain separately testable.
+- Native products MUST NOT require the legacy `ShareX.VideoEditor` checkout, React UI, or .NET backend at build or runtime.
+
+The legacy submodule supplies fixture and compatibility evidence under recorded provenance. See [D-VID-001](08-decisions.md#d-vid-001-native-videoeditor-and-media-tools).
+
+## 8.9 Reference isolation
+
+The KovaForge checkout and its pinned submodules are read-only discovery inputs. BriarForge builds, tests, packages, and releases SHALL succeed when those checkouts are absent.
+
+Imported fixtures, schemas, screenshots, and golden outputs MUST record source repository, commit, source path, license, transformation, and hash. Agents MAY study legacy algorithms but SHALL implement from the approved contract and native platform plan.

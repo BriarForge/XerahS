@@ -34,7 +34,7 @@ The greenfield repository will contain three independently buildable platform ap
 | macOS | SwiftUI for chrome; AppKit for overlay, status item, and capture surfaces SwiftUI cannot host | Language: Swift. OS baseline: macOS 14 Sonoma and later. [D-MAC-001](08-decisions.md#d-mac-001-macos-swiftuiappkit-boundary-and-os-baseline) |
 | Linux | Qt 6 (Widgets for overlay, tray, and input; Qt Quick optional for settings chrome) plus xdg-desktop-portal | Language: C++17. Wayland first, X11 fallback. [D-LIN-001](08-decisions.md#d-lin-001-linux-toolkit-desktop-display-server-portal-distro-and-packaging) |
 
-The Product Contract SHALL remain independent of these choices. Replacing a platform framework must not require redefining product behavior. The table records pilot-binding defaults from [architecture decisions](08-decisions.md); a later proposal may change a framework after measured evidence, without rewriting contracted product outcomes.
+The Product Contract SHALL remain independent of these choices. Replacing a platform framework must not require redefining product behavior. The table records implementation-binding defaults from [architecture decisions](08-decisions.md); a later proposal may change a framework after measured evidence, without rewriting contracted product outcomes.
 
 ## 3.4 Permit native adaptation without permitting silent divergence
 
@@ -68,3 +68,19 @@ ImageEditor Product Contract
 Each native ImageEditor SHALL live in the same repository as its native XerahS application so a behavior change can update the contract, all affected implementations, fixtures, and traceability evidence atomically.
 
 The existing [KovaForge/ShareX.ImageEditor](https://github.com/KovaForge/ShareX.ImageEditor) repository will continue to serve ShareX and the existing Avalonia XerahS. For the greenfield project it is a legacy reference implementation and source of compatibility evidence, not a component of the target runtime architecture.
+
+## 3.6 Deliver full desktop functional parity
+
+The four qualification capabilities establish that the architecture works; they do not define the product scope. Implementation SHALL continue through the complete [full-parity delivery program](12-full-parity-delivery.md) until every in-scope item discovered from the pinned KovaForge baseline has a contract and a release-verified disposition on Windows, macOS, and Linux.
+
+The parity unit is the user outcome, setting, workflow choice, command, integration, format, or recovery behavior recorded in the ledgers from [section 20](11-reference-baseline.md). Project counts, source-file counts, UI-screen counts, and percentages without unresolved ledger IDs are not evidence of completion.
+
+Known baseline defects MAY be corrected. Features MAY be expressed differently through native conventions. Neither is permission to omit the capability: the contract records the intended outcome and the ledger records the decision.
+
+## 3.7 Integrate VideoEditor and media tools natively
+
+VideoEditor and media utilities reachable from the desktop product SHALL follow the same ownership rule as ImageEditor. Each platform solution owns its native editor UI, media workflow integration, lifecycle, accessibility, and platform acceleration.
+
+The existing `ShareX.VideoEditor` submodule is a legacy behavior and fixture source, not a production dependency of the native applications. FFmpeg and other license-compatible third-party media engines MAY be packaged or invoked behind platform-native adapters; a third-party codec engine does not become product truth.
+
+The binding decision is [D-VID-001](08-decisions.md#d-vid-001-native-videoeditor-and-media-tools).

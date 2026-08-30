@@ -10,11 +10,11 @@ This maximizes native freedom but creates unacceptable drift risk. AI makes code
 
 ## 10.3 Shared engine DLL with three native shells
 
-This retains exact shared business logic while allowing native UI. It is a credible intermediate or permanent architecture after the pilot. Its limitation is that a shared binary and language runtime can constrain native application design and can again become an undocumented behavioral source. Under this proposal, the pilot ships no shared product runtime ([D-SHARE-001](08-decisions.md#d-share-001-shared-binaries)). A shared engine remains subordinate to the Product Contract and requires [D-KERN-001](08-decisions.md#d-kern-001-shared-headless-rendering-kernel-threshold) or a later topology proposal.
+This retains exact shared business logic while allowing native UI. It is a possible later optimization. Its limitation is that a shared binary and language runtime can constrain native application design and can again become an undocumented behavioral source. Under this proposal, implementation ships no shared product runtime by default ([D-SHARE-001](08-decisions.md#d-share-001-shared-binaries)). A shared engine remains subordinate to the Product Contract and requires [D-KERN-001](08-decisions.md#d-kern-001-shared-headless-rendering-kernel-threshold) or a later topology proposal.
 
 ## 10.4 Contract-first native applications
 
-This is the proposed strategic direction. It maximizes platform independence and makes product behavior explicit. It also has the highest governance, validation, packaging, and operational burden, which is why a measured pilot is required before committing to a broader native rollout.
+This is the proposed strategic direction. It maximizes platform independence and makes product behavior explicit. It also has the highest governance, validation, packaging, and operational burden. The qualification tranche measures and corrects the method; the pinned baseline and parity gate prevent that measurement step from becoming permanent partial scope.
 
 # 11. Risks and Mitigations
 
@@ -22,14 +22,19 @@ This is the proposed strategic direction. It maximizes platform independence and
 |---|---|---|
 | Natural-language ambiguity | Three plausible but inconsistent implementations | Normative keywords, stable requirement IDs, examples, state machines, and executable vectors |
 | Correlated AI mistakes | Spec, code, and tests repeat the same misunderstanding | Separate contract, implementation, and conformance roles; require product review for behavior decisions |
-| Validation cost exceeds authoring savings | Native strategy becomes slower or less reliable | Measure the pilot end to end, including testing and release work rather than code generation alone |
+| Validation cost exceeds authoring savings | Native strategy becomes slower or less reliable | Measure every wave end to end, including testing and release work rather than code generation alone; amend architecture explicitly if evidence requires |
 | Platform drift | Features ship on one OS and remain absent elsewhere | Traceability manifests, parity dashboards, release gates, and expiring waivers |
 | Linux fragmentation | "Native Linux" behaves differently across desktops and packaging systems | [D-LIN-001](08-decisions.md#d-lin-001-linux-toolkit-desktop-display-server-portal-distro-and-packaging): Qt 6, GNOME 46+ and Plasma 6 first-class, Wayland first, Ubuntu 24.04 / Fedora current / Arch, XDG portals required |
 | Duplicate security-sensitive logic | Inconsistent or vulnerable implementations | Exact test vectors, security review, protocol standards, and approved shared libraries where appropriate |
 | Contract bureaucracy | Small changes become slow | Scale evidence and review requirements according to risk; allow patch-level clarifications without full product approval |
-| Premature rewrite | Working functionality is lost while architecture is unproven | Keep Avalonia production paths during the pilot and require an evidence-based follow-up proposal |
+| Premature replacement | Working functionality is lost before native parity is proven | Keep Avalonia production paths and identities until the signed full-parity attestation |
 | Native ecosystem churn | Three SDK and packaging stacks create operational load | Explicit platform ownership, supported OS baselines, automated builds, and dependency policies |
 | Instruction sprawl | Agents miss rules or encounter conflicts | Root constitution, scoped deltas, stable rule IDs, hierarchy linting, and effective-instructions reports |
 | Stale local guidance | Child rules preserve obsolete framework or command assumptions | Assigned scope owners, link checks, periodic validation, and removal of duplicated rules |
 | ImageEditor submodule version skew | Editor behavior and host integration move on different revisions | Keep native editor modules in the monorepo and land contract, implementation, and evidence atomically |
 | Renderer drift | Effects produce materially different images across platforms | Deterministic vectors, golden images, explicit tolerances, and a separately approved headless-kernel option if evidence requires it |
+| Incomplete baseline census | Agents deliver an attractive subset while missing settings, commands, integrations, or recovery paths | Independent source and user-journey censuses, reproducible inventory, unresolved-ID reports, and product-owner census closure |
+| Moving KovaForge target | Parity never converges or silently changes | Pin commit and submodule SHAs; advance only through a reviewed baseline delta |
+| False parity by percentage | A high aggregate hides a critical missing workflow | Release on zero unresolved required IDs, not percentage alone |
+| Legacy code becomes specification | Bugs and internal architecture are copied into all native apps | Treat KovaForge as discovery evidence; classify behavior and contract desired outcomes before implementation |
+| VideoEditor is silently deferred | Native product lacks a baseline-reachable media workflow | D-VID-001, dedicated ledger domain, Wave 4, and release-blocking evidence |

@@ -6,7 +6,7 @@ This does not make cross-platform consistency automatic. It moves the primary en
 
 This proposal asks that XerahS treat a version-controlled **Product Contract** as the conceptual replacement for the common cross-platform DLL. The Product Contract is written primarily in precise plain English so that humans and AI agents can understand it. It is strengthened by executable scenarios, schemas, state machines, fixtures, and test vectors wherever prose alone would be ambiguous.
 
-Implementation will occur as a greenfield project in the [BriarForge/XerahS](https://github.com/BriarForge/XerahS) repository. The existing ShareX Team XerahS repository remains a behavioral reference and source of lessons, fixtures, compatibility requirements, and migration evidence; it is not the codebase from which the new native applications must inherit their structure.
+Implementation will occur as a greenfield project in the [BriarForge/XerahS](https://github.com/BriarForge/XerahS) repository. Full desktop functional parity is measured against the clean [KovaForge/XerahS](https://github.com/KovaForge/XerahS) baseline pinned in [section 20](11-reference-baseline.md). The ShareX Team repository remains historical and architectural reference material. Neither reference tree dictates the new repository structure or becomes a production dependency.
 
 Under the proposed target architecture:
 
@@ -15,10 +15,12 @@ Under the proposed target architecture:
 3. A shared conformance system proves that the three implementations remain one product.
 4. Platform-specific differences are explicit, justified, reviewable, and time-bound where appropriate.
 5. A hierarchy of scoped `AGENTS.md` files communicates the applicable governance to each agent at the point of implementation.
-6. The existing Avalonia application remains supported while the greenfield implementation is developed and validated. This proposal does not authorize removal of the existing application.
-7. [Architecture decisions](08-decisions.md) record the pilot-binding defaults for ownership, contract format, platform baselines, repository shape, sharing, plugins, release, review, instruction hierarchy, golden-image tolerances, and the rendering-kernel evidence bar.
+6. The existing Avalonia application remains supported while the greenfield implementation is developed and validated. This proposal does not authorize removal of the existing application before full-parity release evidence.
+7. [Architecture decisions](08-decisions.md) bind the implementation for ownership, baseline, contract format, platform baselines, repository shape, sharing, plugins, release, review, instruction hierarchy, golden-image tolerances, editors, and the rendering-kernel evidence bar.
+8. The baseline census and parity ledgers make every KovaForge desktop capability, setting, workflow, command, integration, and compatibility format accountable.
+9. The qualification tranche flows directly into the [full-parity delivery program](12-full-parity-delivery.md); it is not a four-feature stopping point.
 
-The proposal is therefore not "rewrite XerahS three times and trust AI." It is "specify XerahS once, implement it natively three times, and verify it continuously."
+The proposal is therefore not "rewrite XerahS three times and trust AI." It is "inventory the complete reference product, specify XerahS once, implement it natively three times, and prove that no functionality was silently lost."
 
 # 2. Motivation
 

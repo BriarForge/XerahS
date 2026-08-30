@@ -40,11 +40,14 @@ CI SHALL produce a capability report such as:
 
 The release gate SHALL fail when:
 
+- An in-scope baseline ledger row is unclassified, uncontracted, or missing source evidence.
 - A required platform has no disposition for a new or changed requirement.
 - A deterministic conformance vector fails.
 - A required scenario fails.
 - A deviation or waiver has expired.
 - A platform targets a contract version incompatible with the release.
+- A claimed implementation has no matching conformance or native integration evidence.
+- A baseline-compatible data format or setting lacks migration evidence.
 
 ## 7.3 Platform capability matrix
 
@@ -67,3 +70,20 @@ Contract versions SHOULD follow semantic compatibility principles:
 - Major: incompatible behavior, persistence, plugin, automation, or integration change.
 
 User data, configuration, history, automation, and plugin compatibility MUST be explicitly addressed when a contract version changes.
+
+## 7.5 Baseline coverage report
+
+CI SHALL publish a baseline coverage report grouped by the capability domains in [section 21.2](12-full-parity-delivery.md). For every domain and platform it reports counts and the unresolved IDs for:
+
+- discovered and inventoried
+- contracted
+- implemented
+- conformant
+- release-verified
+- corrected defects
+- approved retirements or intrinsic limitations
+- expired or active waivers
+
+The report fails closed on unknown or empty states. A percentage is informational only; the unresolved ID list is the actionable source.
+
+The first full-parity release additionally requires the signed parity attestation defined in [section 21.3 Wave 8](12-full-parity-delivery.md#wave-8---full-parity-release-candidate).

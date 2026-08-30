@@ -2,7 +2,7 @@
 
 ## 4.1 Proposed repository structure
 
-The pilot SHOULD use a structure similar to:
+The implementation SHALL use a structure similar to:
 
 ```text
 AGENTS.md
@@ -12,6 +12,16 @@ product-contract/
   README.md
   manifest.yaml
   glossary.md
+  reference-baselines/
+    kova-0.29.0.yaml
+    provenance/
+  parity/
+    capability-ledger.yaml
+    settings-ledger.yaml
+    workflow-ledger.yaml
+    interface-ledger.yaml
+    compatibility-ledger.yaml
+    baseline-deltas.yaml
   capabilities/
     capture/
       REGION-CAPTURE-001/
@@ -37,6 +47,14 @@ product-contract/
       test-vectors/
       compatibility/
         xann-v1.md
+    video-editor/
+      AGENTS.md
+      VIDEO-EDITOR-SESSION-001/
+      MEDIA-OPERATIONS-001/
+      schemas/
+      scenarios/
+      fixtures/
+      test-vectors/
   schemas/
   decisions/
   waivers/
@@ -47,13 +65,19 @@ platforms/
     AGENTS.md
     image-editor/
       AGENTS.md
+    video-editor/
+      AGENTS.md
   macos/
     AGENTS.md
     image-editor/
       AGENTS.md
+    video-editor/
+      AGENTS.md
   linux/
     AGENTS.md
     image-editor/
+      AGENTS.md
+    video-editor/
       AGENTS.md
 
 conformance/
@@ -67,6 +91,10 @@ conformance/
     AGENTS.md
     golden-images/
     compatibility-fixtures/
+  video-editor/
+    AGENTS.md
+    media-fixtures/
+    compatibility-fixtures/
   reports/
 
 tools/
@@ -74,7 +102,7 @@ tools/
     AGENTS.md
 ```
 
-This layout is the pilot format ([D-CON-001](08-decisions.md#d-con-001-contract-schema-versioning-and-tooling)). The pilot SHALL validate it before expanding beyond the four named Phase 1 capabilities.
+This layout is the implementation format ([D-CON-001](08-decisions.md#d-con-001-contract-schema-versioning-and-tooling)). The first four capabilities validate the format; passing that qualification expands the same structure across every baseline-ledger domain without requiring a second architecture approval.
 
 ## 4.2 Required contents of a capability contract
 
@@ -94,6 +122,8 @@ Each capability contract SHALL contain:
 12. Deterministic schemas, fixtures, or test vectors where applicable.
 13. Known platform limitations and approved deviations.
 14. Compatibility expectations between contract versions.
+15. Baseline-ledger IDs and pinned source evidence from which the capability was discovered.
+16. A statement covering known KovaForge behavior differences: preserve, native equivalent, corrected defect, or approved retirement.
 
 ## 4.3 Example contract excerpt
 
@@ -160,3 +190,14 @@ Example:
 ```
 
 Shared code MAY remain where a single exact implementation is safer or materially more economical. Such code is an implementation choice, not the definition of product behavior. The contract and conformance evidence remain authoritative.
+
+## 4.5 Baseline traceability
+
+Every contract capability SHALL map bidirectionally to the parity ledgers in [section 20](11-reference-baseline.md):
+
+- a baseline ledger row cannot reach `contracted` without a valid contract path and requirement IDs
+- a contract cannot become release-active without one or more ledger rows or an explicit greenfield-only classification
+- deletion or retirement of a contract fails CI while a baseline row still depends on it
+- changes to source evidence, classifications, or supported-platform dispositions require product-owner review
+
+This makes completeness enforceable without treating legacy source code as normative.
