@@ -1,0 +1,26 @@
+name: Product Contract
+
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "**/AGENTS.md"
+      - "product-contract/**"
+      - "tools/contract-linter/**"
+  push:
+    paths:
+      - "AGENTS.md"
+      - "**/AGENTS.md"
+      - "product-contract/**"
+      - "tools/contract-linter/**"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python tools/contract-linter/lint.py
+      - run: python -m unittest discover tools/contract-linter/tests -v
