@@ -515,6 +515,25 @@ items:
       linux: []
     compatibility: []
     status: "inventoried"
+  - id: "EDITOR-EASTER-EGG-001"
+    domain: "image-editor"
+    user_outcome: "Resolve the product disposition of the hidden Konami-code shader animation."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/EasterEggs/EditorEasterEggController.cs"
+        symbol: "EditorEasterEggController"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-UTILITIES-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
   - id: "VIDEO-EDITOR-001"
     domain: "video-editor-media"
     user_outcome: "Open media in the native video editor and save edited output."

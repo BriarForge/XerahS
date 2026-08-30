@@ -22010,6 +22010,13 @@
         "ShareX.ImageEditor/src/ShareX.ImageEditor/Assets/openhand.cur",
         "ShareX.ImageEditor/src/ShareX.ImageEditor/Assets/Sample.png"
       ],
+      "hidden_features": [
+        {
+          "id": "konami-shader",
+          "trigger": "KonamiCodeDetector",
+          "path": "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/EasterEggs/EditorEasterEggController.cs"
+        }
+      ],
       "test_sources": [],
       "documentation": [
         "ShareX.ImageEditor/docs/CHANGELOG.md"
@@ -22027,6 +22034,7 @@
         "commands": 85,
         "settings": 100,
         "assets": 8,
+        "hidden_features": 1,
         "test_sources": 0,
         "documentation": 1
       },
@@ -22064,6 +22072,7 @@
       "commands": 85,
       "settings": 100,
       "assets": 8,
+      "hidden_features": 1,
       "test_sources": 0,
       "documentation": 1
     }

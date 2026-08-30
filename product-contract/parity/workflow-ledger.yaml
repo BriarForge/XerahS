@@ -8267,3 +8267,22 @@ items:
       linux: []
     compatibility: []
     status: "inventoried"
+  - id: "WF-EDITOR-HIDDEN-KONAMI-SHADER-001"
+    domain: "image-editor-hidden"
+    user_outcome: "Resolve whether the hidden konami-shader interaction is preserved, corrected, or omitted."
+    classification: "product-owner-decision-required"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/EasterEggs/EditorEasterEggController.cs"
+        symbol: "KonamiCodeDetector"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-UTILITIES-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried-unresolved"

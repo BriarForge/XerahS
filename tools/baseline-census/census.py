@@ -225,6 +225,13 @@ def extract_image_editor_inventory(reference: Path, enums: list[dict[str, Any]],
     ]
     option_settings = [item for item in settings if item["path"].startswith("ShareX.ImageEditor/")]
     assets = sorted(path for path in source_root.rglob("*") if path.is_file() and "Assets" in path.parts)
+    hidden_features = [
+        {
+            "id": "konami-shader",
+            "trigger": "KonamiCodeDetector",
+            "path": rel(source_root / "Presentation" / "EasterEggs" / "EditorEasterEggController.cs", reference),
+        }
+    ]
     return {
         "commit": IMAGE_EDITOR_COMMIT,
         "projects": [rel(path, reference) for path in projects],
@@ -238,6 +245,7 @@ def extract_image_editor_inventory(reference: Path, enums: list[dict[str, Any]],
         "commands": sorted(commands, key=lambda item: (item["owner"], item["method"], item["path"])),
         "settings": option_settings,
         "assets": [rel(path, reference) for path in assets],
+        "hidden_features": hidden_features,
         "test_sources": [rel(path, reference) for path in tests],
         "documentation": [rel(path, reference) for path in docs],
         "counts": {
@@ -253,6 +261,7 @@ def extract_image_editor_inventory(reference: Path, enums: list[dict[str, Any]],
             "commands": len(commands),
             "settings": len(option_settings),
             "assets": len(assets),
+            "hidden_features": len(hidden_features),
             "test_sources": len(tests),
             "documentation": len(docs),
         },
@@ -360,6 +369,7 @@ def capability_rows() -> list[dict[str, Any]]:
         ("EDITOR-OUTPUT-ACTIONS-001", "image-editor", "Copy, save, save as, upload, print, pin, set wallpaper, continue, or cancel an edited image.", "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/ViewModels/MainViewModel.cs", "MainViewModel commands", "product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001"),
         ("EDITOR-SETTINGS-001", "image-editor", "Configure editor appearance, defaults, tool styling, background, toolbar, recent items, and favorite effects.", "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs", "ImageEditorOptions", "product-contract/capabilities/EDITOR-SETTINGS-001"),
         ("EDITOR-UTILITIES-001", "image-editor", "Use the shipped color picker, QR, hash, icon, comparison, background-removal, and video-conversion utilities.", "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/StartScreenDialogView.axaml", "StartScreenDialogView", "product-contract/capabilities/EDITOR-UTILITIES-001"),
+        ("EDITOR-EASTER-EGG-001", "image-editor", "Resolve the product disposition of the hidden Konami-code shader animation.", "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/EasterEggs/EditorEasterEggController.cs", "EditorEasterEggController", "product-contract/capabilities/EDITOR-UTILITIES-001"),
         ("VIDEO-EDITOR-001", "video-editor-media", "Open media in the native video editor and save edited output.", "ShareX.VideoEditor/backend/ShareX.VideoEditor.csproj", "ShareX.VideoEditor", None),
         ("MEDIA-UTILITIES-001", "video-editor-media", "Combine, split, thumbnail, analyze, convert, index, and inspect supported media.", "src/desktop/app/XerahS.UI/Views/ToolsView.axaml", "ToolsView", None),
         ("UPLOAD-PIPELINE-001", "upload-destinations", "Upload image, text, or file content and retain result URLs and diagnostics.", "src/desktop/core/XerahS.Core/Tasks/Processors/UploadJobProcessor.cs", "UploadJobProcessor", None),
@@ -434,6 +444,10 @@ def workflow_rows(enums: list[dict[str, Any]], image_editor: dict[str, Any]) -> 
         else:
             contract = "product-contract/capabilities/EDITOR-CANVAS-001"
         rows.append(row(f"WF-EDITOR-COMMAND-{slug(command['owner'])}-{slug(method)}-001", "image-editor-command", f"Invoke {command['owner']}.{method} through its available native editor surface.", Evidence(command["path"], f"{command['owner']}.{method}"), contract=contract))
+    for hidden in image_editor["hidden_features"]:
+        hidden_row = row(f"WF-EDITOR-HIDDEN-{slug(hidden['id'])}-001", "image-editor-hidden", f"Resolve whether the hidden {hidden['id']} interaction is preserved, corrected, or omitted.", Evidence(hidden["path"], hidden["trigger"]), contract="product-contract/capabilities/EDITOR-UTILITIES-001", classification="product-owner-decision-required")
+        hidden_row["status"] = "inventoried-unresolved"
+        rows.append(hidden_row)
     return rows
 
 

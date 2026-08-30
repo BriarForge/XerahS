@@ -26,6 +26,23 @@ These packages are selected as the first contract-writing tranche.
 | `REGION-CAPTURE-001` | Interactive region selection, permissions, DPI/monitor mapping, confirm/cancel |
 | `EDITOR-SESSION-001` | Source-image load, rectangle annotation, selection, undo/redo, export, document round-trip |
 
+## ImageEditor expansion (draft)
+
+The pinned `ShareX.ImageEditor` submodule now has a dedicated static census of
+its tools, concrete annotations, effect types and parameters, operations,
+commands, settings, assets, and UI surfaces. The following draft packages turn
+that discovery evidence into proposed cross-platform behavior. They require
+product-owner approval before becoming normative.
+
+| ID | Intent |
+|---|---|
+| `EDITOR-ANNOTATIONS-001` | Complete annotation-tool families, styling, selection, ordering, clipboard, and history |
+| `EDITOR-EFFECTS-001` | Effect discovery, parameters, preview/apply/cancel, favorites, determinism, and failures |
+| `EDITOR-CANVAS-001` | New/open/insert, zoom/pan, crop/resize/rotate/flip, backgrounds, comparison, and flatten |
+| `EDITOR-OUTPUT-ACTIONS-001` | Copy, save, upload, print, pin, wallpaper, task continuation, and cancellation |
+| `EDITOR-SETTINGS-001` | Persisted editor, tool, toolbar, appearance, recent-item, and effect preferences |
+| `EDITOR-UTILITIES-001` | Color picker, QR, hashing, icon conversion, comparison, background removal, and video conversion |
+
 ## Format
 
 See BXIP001 [product contract design](../docs/proposals/BXIP001-contract-first-agent-native-platform-architecture/03-product-contract.md) and [D-CON-001](../docs/proposals/BXIP001-contract-first-agent-native-platform-architecture/08-decisions.md#d-con-001-contract-schema-versioning-and-tooling).

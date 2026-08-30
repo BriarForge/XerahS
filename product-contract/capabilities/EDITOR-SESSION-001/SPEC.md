@@ -11,8 +11,9 @@ undo and redo edits predictably, export the rendered result, and later reopen
 the re-editable annotation document without losing the source or edit state.
 
 This qualification contract covers the session foundation and rectangle tool.
-The full annotation/effect inventory remains in `EDITOR-ANNOTATIONS-001` and
-`EDITOR-EFFECTS-001` ledger work.
+The complete draft editor surface is expanded by `EDITOR-ANNOTATIONS-001`,
+`EDITOR-EFFECTS-001`, `EDITOR-CANVAS-001`, `EDITOR-OUTPUT-ACTIONS-001`,
+`EDITOR-SETTINGS-001`, and `EDITOR-UTILITIES-001`.
 
 ## Data model
 

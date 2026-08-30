@@ -23,3 +23,33 @@ capabilities:
     version: 0.1.0
     status: draft
     requirements: [ES-001, ES-002, ES-003, ES-004, ES-005, ES-006, ES-007, ES-008, ES-009, ES-010, ES-011, ES-012, ES-013, ES-014, ES-015, ES-016, ES-017, ES-018, ES-019, ES-020, ES-021, ES-022]
+  - id: EDITOR-ANNOTATIONS-001
+    path: capabilities/EDITOR-ANNOTATIONS-001
+    version: 0.1.0
+    status: draft
+    requirements: [EA-001, EA-002, EA-003, EA-004, EA-005, EA-006, EA-007, EA-008, EA-009, EA-010, EA-011, EA-012, EA-013, EA-014, EA-015, EA-016, EA-017, EA-018, EA-019, EA-020]
+  - id: EDITOR-EFFECTS-001
+    path: capabilities/EDITOR-EFFECTS-001
+    version: 0.1.0
+    status: draft
+    requirements: [EE-001, EE-002, EE-003, EE-004, EE-005, EE-006, EE-007, EE-008, EE-009, EE-010, EE-011, EE-012, EE-013, EE-014, EE-015, EE-016, EE-017, EE-018]
+  - id: EDITOR-CANVAS-001
+    path: capabilities/EDITOR-CANVAS-001
+    version: 0.1.0
+    status: draft
+    requirements: [EC-001, EC-002, EC-003, EC-004, EC-005, EC-006, EC-007, EC-008, EC-009, EC-010, EC-011, EC-012, EC-013, EC-014, EC-015, EC-016, EC-017]
+  - id: EDITOR-OUTPUT-ACTIONS-001
+    path: capabilities/EDITOR-OUTPUT-ACTIONS-001
+    version: 0.1.0
+    status: draft
+    requirements: [EO-001, EO-002, EO-003, EO-004, EO-005, EO-006, EO-007, EO-008, EO-009, EO-010, EO-011, EO-012, EO-013, EO-014, EO-015, EO-016]
+  - id: EDITOR-SETTINGS-001
+    path: capabilities/EDITOR-SETTINGS-001
+    version: 0.1.0
+    status: draft
+    requirements: [ESET-001, ESET-002, ESET-003, ESET-004, ESET-005, ESET-006, ESET-007, ESET-008, ESET-009, ESET-010, ESET-011, ESET-012, ESET-013, ESET-014, ESET-015, ESET-016]
+  - id: EDITOR-UTILITIES-001
+    path: capabilities/EDITOR-UTILITIES-001
+    version: 0.1.0
+    status: draft
+    requirements: [EU-001, EU-002, EU-003, EU-004, EU-005, EU-006, EU-007, EU-008, EU-009, EU-010, EU-011, EU-012, EU-013, EU-014, EU-015, EU-016, EU-017, EU-018, EU-019]
