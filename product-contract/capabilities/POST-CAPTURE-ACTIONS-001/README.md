@@ -1,5 +1,5 @@
 # POST-CAPTURE-ACTIONS-001
 
-Planned Phase 1 capability. Contract package not yet written.
-
-Intent: ordered post-capture actions, independent failure continuation, and task-result recording.
+Draft contract package for ordered post-capture execution, independent failure
+continuation, cancellation, and task-result recording. See `SPEC.md`,
+`STATE_MACHINE.md`, `SCENARIOS.feature`, and `test-vectors.json`.

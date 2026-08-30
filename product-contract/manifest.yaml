@@ -6,13 +6,13 @@ capabilities:
   - id: FILENAME-GENERATION-001
     path: capabilities/FILENAME-GENERATION-001
     version: 0.1.0
-    status: planned
-    requirements: []
+    status: draft
+    requirements: [FN-001, FN-002, FN-003, FN-004, FN-005, FN-006, FN-007, FN-008, FN-009, FN-010, FN-011, FN-012, FN-013, FN-014, FN-015, FN-016, FN-017]
   - id: POST-CAPTURE-ACTIONS-001
     path: capabilities/POST-CAPTURE-ACTIONS-001
     version: 0.1.0
-    status: planned
-    requirements: []
+    status: draft
+    requirements: [PCA-001, PCA-002, PCA-003, PCA-004, PCA-005, PCA-006, PCA-007, PCA-008, PCA-009, PCA-010, PCA-011, PCA-012, PCA-013, PCA-014, PCA-015, PCA-016]
   - id: REGION-CAPTURE-001
     path: capabilities/REGION-CAPTURE-001
     version: 0.1.0
