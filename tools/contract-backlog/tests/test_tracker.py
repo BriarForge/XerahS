@@ -53,6 +53,12 @@ class ContractBacklogTrackerTests(unittest.TestCase):
 
     def test_completed_package_cannot_own_open_rows(self):
         backlog = copy.deepcopy(self.backlog)
+        rows = copy.deepcopy(self.rows)
+        rows["capability"].append(
+            tracker.LedgerRow(
+                "capability", "CAPTURE-SYNTHETIC-999", "capture", None
+            )
+        )
         capture = next(
             package for package in backlog["packages"]
             if package["id"] == "PC-CAPTURE-001"
@@ -63,9 +69,9 @@ class ContractBacklogTrackerTests(unittest.TestCase):
             if package["id"] == "PC-GOVERNANCE-001"
         )
         governance["status"] = "complete"
-        findings = tracker.validate(backlog, self.rows)
+        findings = tracker.validate(backlog, rows)
         self.assertIn(
-            "completed package PC-CAPTURE-001 still owns 5 open rows",
+            "completed package PC-CAPTURE-001 still owns 1 open rows",
             findings,
         )
 
