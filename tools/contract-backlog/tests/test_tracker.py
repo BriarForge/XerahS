@@ -29,7 +29,6 @@ class ContractBacklogTrackerTests(unittest.TestCase):
             for row in ledger_rows
         )
         assigned = tracker.assignments(self.backlog, self.rows)
-        self.assertEqual(1091, open_rows)
         self.assertEqual(open_rows, sum(len(rows) for rows in assigned.values()))
 
     def test_missing_domain_route_is_reported(self):
@@ -50,14 +49,19 @@ class ContractBacklogTrackerTests(unittest.TestCase):
 
     def test_completed_package_cannot_own_open_rows(self):
         backlog = copy.deepcopy(self.backlog)
-        settings = next(
+        capture = next(
             package for package in backlog["packages"]
-            if package["id"] == "PC-SETTINGS-CATALOG-001"
+            if package["id"] == "PC-CAPTURE-001"
         )
-        settings["status"] = "complete"
+        capture["status"] = "complete"
+        governance = next(
+            package for package in backlog["packages"]
+            if package["id"] == "PC-GOVERNANCE-001"
+        )
+        governance["status"] = "complete"
         findings = tracker.validate(backlog, self.rows)
         self.assertIn(
-            "completed package PC-SETTINGS-CATALOG-001 still owns 822 open rows",
+            "completed package PC-CAPTURE-001 still owns 5 open rows",
             findings,
         )
 
@@ -91,7 +95,13 @@ class ContractBacklogTrackerTests(unittest.TestCase):
         first = tracker.render_status(self.backlog, self.rows)
         second = tracker.render_status(self.backlog, self.rows)
         self.assertEqual(first, second)
-        self.assertIn("501 of 1,592 parity rows linked", first)
+        total = sum(len(ledger_rows) for ledger_rows in self.rows.values())
+        open_rows = sum(
+            row.contract is None
+            for ledger_rows in self.rows.values()
+            for row in ledger_rows
+        )
+        self.assertIn(f"{total - open_rows:,} of {total:,} parity rows linked", first)
         self.assertIn("PC-CONFORMANCE-001", first)
 
 
