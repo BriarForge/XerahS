@@ -7,12 +7,14 @@ on:
       - "**/AGENTS.md"
       - "product-contract/**"
       - "tools/contract-linter/**"
+      - "tools/contract-backlog/**"
   push:
     paths:
       - "AGENTS.md"
       - "**/AGENTS.md"
       - "product-contract/**"
       - "tools/contract-linter/**"
+      - "tools/contract-backlog/**"
 
 jobs:
   lint:
@@ -24,3 +26,5 @@ jobs:
           python-version: "3.12"
       - run: python tools/contract-linter/lint.py
       - run: python -m unittest discover tools/contract-linter/tests -v
+      - run: python tools/contract-backlog/tracker.py --check
+      - run: python -m unittest discover tools/contract-backlog/tests -v
