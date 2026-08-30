@@ -157,6 +157,27 @@ This standing authority does not cover changes to user-visible behavior, public 
 
 The root `AGENTS.md` SHALL encode this grant as protected `ROOT-IMPROVE-*` rules. Child `AGENTS.md` files MAY identify locally owned restructuring zones, stronger verification, and protected interfaces; they MUST NOT reduce the root grant merely to preserve a convenient but painful internal structure.
 
+## D-GIT-001 Progressive commit and final push policy
+
+**Decision.** Agents SHALL commit progressively at coherent, verified checkpoints and SHALL push the accumulated task commits after final verification. Completion of an authorized implementation task includes its final normal push; an agent does not request a redundant push confirmation unless the human explicitly imposed a pause or no-push boundary.
+
+Checkpoint commits are units of reasoning, recovery, review, bisectability, and handoff. They SHALL be large enough to express one meaningful outcome and small enough to understand independently. Relevant implementation, tests, documentation, instructions, and traceability SHOULD land together. Agents MUST NOT replace useful boundaries with one oversized catch-all commit or with noisy micro-commits that have no independent meaning.
+
+Each checkpoint SHOULD leave the changed surface buildable and verified. Agents SHALL use additive or disabled intermediate structures when necessary so progressive history does not expose active partial behavior or violate branch invariants. Known-broken checkpoints, secrets, ignored artifacts, unrelated pre-existing changes, and another agent's unfinished work are prohibited.
+
+The final push gate requires:
+
+- all requested outcomes and authorized restructuring are committed
+- applicable final build, test, conformance, documentation, and governance checks pass
+- hooks remain enabled
+- remote advances are integrated safely and affected verification is rerun
+- the push uses the configured identity wrapper or documented fallback and does not force
+- the remote branch is verified to contain local `HEAD`
+
+Checkpoint commits remain local until the final gate by default. Early publication is reserved for explicit collaboration, handoff, long-running-work preservation, or a more specific repository workflow. Submodule commits are pushed before their parent pointer so no published parent references an unavailable object.
+
+The root `AGENTS.md` SHALL encode this policy as protected `ROOT-GIT-*` rules and a concrete sequence. Child scopes MAY strengthen commit boundaries, required checks, or release controls, but MUST NOT silently disable progressive commits or the final push.
+
 ## D-GOLD-001 Golden-image tolerances
 
 **Decision.** Conformance distinguishes exact and perceptual comparisons. The conformance owner maintains `conformance/image-editor/tolerances.yaml`. Missing tolerances fail closed.

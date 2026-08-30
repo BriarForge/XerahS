@@ -36,6 +36,7 @@ Work proceeds in dependency-aware waves. Domains within a wave MAY run in parall
 - Commit the artifacts from [section 20](11-reference-baseline.md).
 - Make the contract linter, instruction resolver, provenance checks, and parity dashboard blocking.
 - Encode D-REF-001 in the root constitution and require scoped instructions to identify locally protected interfaces and verification.
+- Encode D-GIT-001 in the root constitution and make progressive checkpoint plus final-push behavior part of every agent workflow.
 - Establish platform build/test skeletons and contract adapter protocols.
 - Assign product, contract, platform, conformance, security, and release owners.
 
@@ -114,6 +115,7 @@ Every implementation task generated from the ledger SHALL include:
 9. Manual journey evidence where automation cannot prove the outcome.
 10. Product-owner decisions for any deviation or intentional correction.
 11. Any material development pain point encountered, the bounded restructuring chosen, and the verification or durable guard that prevents recurrence.
+12. Planned coherent commit boundaries and the final verification/push responsibility for the packet.
 
 An agent cannot close a packet merely because code compiles or the happy path works.
 
@@ -146,5 +148,6 @@ After parity is reached:
 - The parity dashboard reports domain completion and regressions; percentages never replace the list of unresolved IDs.
 - A released capability cannot regress to an earlier lifecycle state without failing the branch and release gates.
 - Agents continuously remove material structural and tooling pain points under D-REF-001; parity governance protects behavior without freezing internal design.
+- Completed work is preserved through D-GIT-001 checkpoints and is not considered handed off until the verified final revision exists on the intended remote branch.
 
 Full parity is therefore a maintained invariant, not a one-time migration milestone.

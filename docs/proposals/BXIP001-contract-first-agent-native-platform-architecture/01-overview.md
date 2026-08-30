@@ -19,6 +19,7 @@ Under the proposed target architecture:
 7. [Architecture decisions](08-decisions.md) bind the implementation for ownership, baseline, contract format, platform baselines, repository shape, sharing, plugins, release, review, instruction hierarchy, golden-image tolerances, editors, and the rendering-kernel evidence bar.
 8. The baseline census and parity ledgers make every KovaForge desktop capability, setting, workflow, command, integration, and compatibility format accountable.
 9. Agents have standing authority to improve internal structure and remove material development pain points as they encounter them, within contract-preserving and reviewable boundaries.
+10. Agents preserve recoverable, reviewable progress through coherent local commits and perform a verified final push without requiring a second authorization.
 9. The qualification tranche flows directly into the [full-parity delivery program](12-full-parity-delivery.md); it is not a four-feature stopping point.
 
 The proposal is therefore not "rewrite XerahS three times and trust AI." It is "inventory the complete reference product, specify XerahS once, implement it natively three times, and prove that no functionality was silently lost."

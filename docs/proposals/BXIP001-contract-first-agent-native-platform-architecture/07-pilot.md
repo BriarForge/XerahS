@@ -13,6 +13,7 @@ The detailed reference protocol is [section 20](11-reference-baseline.md). The d
 - Assign the named roles in [D-OWN-001](08-decisions.md#d-own-001-product-contract-ownership-and-approval-authority).
 - Establish the scoped `AGENTS.md` hierarchy using [D-AGT-001](08-decisions.md#d-agt-001-agentsmd-hierarchy).
 - Encode the standing restructuring authority and protected boundaries from [D-REF-001](08-decisions.md#d-ref-001-agent-directed-restructuring-authority) as root and scoped agent rules.
+- Encode the progressive checkpoint and final-push workflow from [D-GIT-001](08-decisions.md#d-git-001-progressive-commit-and-final-push-policy) as protected root Git rules.
 - Preserve side-by-side operation with the existing Avalonia application.
 
 ## Phase 1: Census and contract foundation
@@ -50,6 +51,8 @@ Within a wave, bounded platform and domain work SHOULD be delegated to independe
 
 Agents MAY restructure internal code, tooling, tests, directories, and scoped instructions as pain points surface under D-REF-001. These improvements are part of delivery capacity, not deferred cleanup, provided they preserve contracted outcomes, remain reviewable, and complete the wave objective that exposed the pain point.
 
+Each implementation wave SHALL be preserved through coherent local checkpoint commits under D-GIT-001. The coordinating agent performs the final cross-scope verification and pushes the complete checkpoint sequence; it does not collapse delegated or independently meaningful outcomes into one opaque commit.
+
 ## Phase 4: Full-parity release candidate
 
 Execute Wave 8 and the gate in [section 21.5](12-full-parity-delivery.md#215-full-parity-release-gate). Publish the parity attestation and unresolved-ID count.
@@ -71,6 +74,7 @@ BXIP001 implementation succeeds when:
 9. The parity attestation identifies the exact baseline, contract, builds, ledger hashes, approved corrections, and intrinsic platform limitations.
 10. BriarForge builds and releases without the KovaForge checkout or legacy editor submodules.
 11. Repeated agentic-development pain points have durable structural, tooling, test, diagnostic, or instruction remedies rather than accumulating as accepted friction.
+12. Material implementation history is recoverable and reviewable through verified progressive commits, and every completed task's final local revision is present on its intended remote branch.
 
 Compiling three applications, completing only the qualification tranche, or reporting a high percentage while unresolved IDs remain does not satisfy this proposal.
 
@@ -100,5 +104,6 @@ The out-of-process plugin protocol and platform packaging details MAY be specifi
 - Full delivery Waves 2 through 8 and the release gate are authorized.
 - Contract, product, platform, conformance, security, governance, and release roles are assigned.
 - The root and scoped `AGENTS.md` hierarchy grants and bounds self-directed restructuring under D-REF-001.
+- The root `AGENTS.md` requires progressive verified commits and a final push under D-GIT-001.
 - No production implementation step depends on modifying the KovaForge reference checkout.
 - A later proposal is required to retire Avalonia or collapse application identities, not to continue from qualification into full implementation.

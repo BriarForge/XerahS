@@ -35,6 +35,7 @@ The root `AGENTS.md` SHALL be short, stable, and non-overridable. It defines rul
 - The authority and precedence model for instructions.
 - Required planning, review, verification, and evidence.
 - Standing authority for bounded, behavior-preserving restructuring that removes material agentic-development friction.
+- Progressive, coherent Git checkpoints followed by final verification and push.
 - Prohibited actions, including silently weakening contracts or waiving a platform.
 - The process for escalating contradictory or infeasible requirements.
 - Links to each first-level child instruction scope.
@@ -220,3 +221,38 @@ Prior human approval remains required when the proposed restructuring changes or
 - the root `AGENTS.md` constitution or its non-overridable rule meanings
 
 When the pain point originates in governance itself, an agent MAY improve a child `AGENTS.md`, instruction index, linter, or effective-instructions report without separate approval if the change clarifies or strengthens inherited policy. Weakening or changing a protected root rule follows [D-REV-001](08-decisions.md#d-rev-001-human-review-boundaries).
+
+## 6.5 Progressive commit and final push protocol
+
+Git history is part of agentic-development memory and recovery. Agents SHALL preserve progress as coherent commits while work proceeds, then push the complete verified sequence at the end of the task. They MUST NOT accumulate an entire multi-step change as an opaque final commit merely because one agent performed it in one session.
+
+A useful checkpoint is independently understandable and leaves the repository in a valid state for its affected surface. Typical boundaries include:
+
+- a contract or schema foundation that does not activate incomplete behavior
+- a behavior-preserving preparation or restructuring with its own tests
+- one native capability slice with tests and traceability
+- a conformance adapter or fixture set with validation
+- a tooling, diagnostic, build, or governance improvement
+- final integration and activation after all required platforms and evidence are ready
+
+Code and the tests that prove it belong in the same checkpoint. Agents SHOULD use disabled registration, compatible adapters, additive schemas, or other safe sequencing when a large change cannot become active in one step. A checkpoint SHALL NOT knowingly break the build, weaken branch invariants, expose secrets, or leave active contracted behavior in a silently partial state.
+
+Progressive does not mean microscopic. Formatting-only fragments, arbitrary time-based snapshots, incomplete statements, and commits that exist only because a tool touched a file add noise rather than recovery value. The agent chooses boundaries based on reviewability, reversibility, bisectability, verification, and handoff value.
+
+The default task sequence is:
+
+1. Inspect identity, branch, remote, worktree, applicable instructions, and pre-existing changes.
+2. Synchronize safely before editing when the worktree is clean.
+3. Plan likely commit boundaries alongside implementation and verification steps.
+4. Complete, verify, inspect, and commit each coherent checkpoint locally.
+5. Commit completed checkpoints before delegation, handoff, likely context loss, or interruption.
+6. Complete the requested outcome and run final verification across the whole changed surface.
+7. Fetch and reconcile remote advances without force or destructive history changes, then rerun affected verification.
+8. Push all accumulated task commits to the current tracked branch using the required identity mechanism.
+9. Confirm the remote contains local `HEAD`, confirm no requested work remains uncommitted, and report the branch and commit identifiers.
+
+Final push is part of normal task completion and does not require a second human prompt. An agent pauses before push only when the human explicitly requests review-before-push, local-only work, no push, or a pause; when required credentials or approvals are unavailable; or when final verification cannot pass.
+
+Checkpoint commits remain local until the final push by default. Earlier pushes are permitted only when required for an explicit remote collaboration or handoff, to preserve unusually long-running work, or by repository-specific release workflow. Once a commit is published, agents SHALL NOT rewrite it through force push or published-history rebasing.
+
+Agents SHALL stage only owned, understood changes. They do not absorb another contributor's unfinished files to make the tree clean. For submodules, the submodule commit is verified, committed, and pushed before the parent pointer is committed and included in the final parent push.
