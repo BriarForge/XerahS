@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "coordinate_convention": "half-open desktop physical pixels",
+  "vectors": [
+    {
+      "id": "reverse-drag",
+      "topology": [{ "id": "display-a", "physical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "logical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "scale": 1.0 }],
+      "input": { "start_physical": [900, 700], "end_physical": [100, 200] },
+      "expected": { "rectangle": { "left": 100, "top": 200, "right": 900, "bottom": 700 }, "output_size": [800, 500] }
+    },
+    {
+      "id": "negative-origin-monitor",
+      "topology": [{ "id": "display-left", "physical": { "left": -1280, "top": 0, "right": 0, "bottom": 1024 }, "logical": { "left": -1280, "top": 0, "right": 0, "bottom": 1024 }, "scale": 1.0 }],
+      "input": { "start_physical": [-1200, 100], "end_physical": [-200, 900] },
+      "expected": { "rectangle": { "left": -1200, "top": 100, "right": -200, "bottom": 900 }, "output_size": [1000, 800] }
+    },
+    {
+      "id": "mixed-scale-cross-monitor",
+      "topology": [
+        { "id": "display-a", "physical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "logical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "scale": 1.0 },
+        { "id": "display-b", "physical": { "left": 1920, "top": 0, "right": 4480, "bottom": 1440 }, "logical": { "left": 1920, "top": 0, "right": 3626.6666667, "bottom": 960 }, "scale": 1.5 }
+      ],
+      "input": { "start": { "display": "display-a", "logical": [1800, 100] }, "end": { "display": "display-b", "logical": [2120, 500] } },
+      "expected": { "rectangle": { "left": 1800, "top": 100, "right": 2220, "bottom": 750 }, "output_size": [420, 650] }
+    },
+    {
+      "id": "zero-area-not-confirmable",
+      "topology": [{ "id": "display-a", "physical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "logical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "scale": 1.0 }],
+      "input": { "start_physical": [400, 400], "end_physical": [400, 400], "confirm": true },
+      "expected": { "state": "idle", "result": null }
+    },
+    {
+      "id": "cancel-selected",
+      "input": { "state": "selected", "event": "escape" },
+      "expected": { "state": "cancelled", "result": null, "last_region_updated": false }
+    }
+  ]
+}

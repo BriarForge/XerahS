@@ -16,10 +16,10 @@ capabilities:
   - id: REGION-CAPTURE-001
     path: capabilities/REGION-CAPTURE-001
     version: 0.1.0
-    status: planned
-    requirements: []
+    status: draft
+    requirements: [RC-001, RC-002, RC-003, RC-004, RC-005, RC-006, RC-007, RC-008, RC-009, RC-010, RC-011, RC-012, RC-013, RC-014, RC-015, RC-016, RC-017, RC-018, RC-019, RC-020, RC-021]
   - id: EDITOR-SESSION-001
     path: capabilities/EDITOR-SESSION-001
     version: 0.1.0
-    status: planned
-    requirements: []
+    status: draft
+    requirements: [ES-001, ES-002, ES-003, ES-004, ES-005, ES-006, ES-007, ES-008, ES-009, ES-010, ES-011, ES-012, ES-013, ES-014, ES-015, ES-016, ES-017, ES-018, ES-019, ES-020, ES-021, ES-022]

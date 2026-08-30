@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xerahs.com/schemas/xann-v1.schema.json",
+  "title": "XerahS annotation document payload version 1",
+  "type": "object",
+  "required": ["version", "imagePath", "imageHash", "canvasWidth", "canvasHeight", "createdAt", "modifiedAt", "sourceImagePngBase64", "embeddedImages", "annotations"],
+  "properties": {
+    "version": { "const": 1 },
+    "imagePath": { "type": "string" },
+    "imageHash": { "type": "string", "pattern": "^(|sha256:[0-9a-f]{64})$" },
+    "canvasWidth": { "type": "integer", "minimum": 1, "maximum": 100000 },
+    "canvasHeight": { "type": "integer", "minimum": 1, "maximum": 100000 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "modifiedAt": { "type": "string", "format": "date-time" },
+    "sourceImagePngBase64": { "type": "string", "contentEncoding": "base64", "contentMediaType": "image/png" },
+    "embeddedImages": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "contentEncoding": "base64", "contentMediaType": "image/png" }
+    },
+    "annotations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/annotation" }
+    },
+    "extensions": { "type": "object" }
+  },
+  "unevaluatedProperties": true,
+  "$defs": {
+    "point": {
+      "type": "object",
+      "required": ["x", "y"],
+      "properties": { "x": { "type": "number" }, "y": { "type": "number" } },
+      "additionalProperties": false
+    },
+    "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{8}$" },
+    "annotation": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "type": { "type": "string" },
+        "zIndex": { "type": "integer" },
+        "visible": { "type": "boolean" },
+        "opacity": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "rectangle" } }, "required": ["type"] },
+          "then": { "$ref": "#/$defs/rectangle" }
+        }
+      ],
+      "unevaluatedProperties": true
+    },
+    "rectangle": {
+      "type": "object",
+      "required": ["start", "end", "strokeColor", "fillColor", "strokeWidth", "rotationDegrees"],
+      "properties": {
+        "start": { "$ref": "#/$defs/point" },
+        "end": { "$ref": "#/$defs/point" },
+        "strokeColor": { "$ref": "#/$defs/color" },
+        "fillColor": { "$ref": "#/$defs/color" },
+        "strokeWidth": { "type": "number", "exclusiveMinimum": 0, "maximum": 10000 },
+        "rotationDegrees": { "type": "number" }
+      }
+    }
+  }
+}

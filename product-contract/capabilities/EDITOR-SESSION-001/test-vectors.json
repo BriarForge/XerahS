@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "vectors": [
+    {
+      "id": "reverse-drag-rectangle",
+      "source_size": [800, 600],
+      "operations": [{ "op": "create-rectangle", "start": [500, 400], "end": [100, 150] }],
+      "expected": { "annotation_count": 1, "rectangle_bounds": [100, 150, 500, 400], "undo_count": 1, "redo_count": 0, "dirty": true }
+    },
+    {
+      "id": "undo-redo-move",
+      "source_size": [800, 600],
+      "operations": [
+        { "op": "create-rectangle", "start": [100, 150], "end": [500, 400] },
+        { "op": "move-selection", "delta": [20, -10] },
+        { "op": "undo" },
+        { "op": "redo" }
+      ],
+      "expected": { "rectangle_bounds": [120, 140, 520, 390], "undo_count": 2, "redo_count": 0, "dirty": true }
+    },
+    {
+      "id": "branch-clears-redo",
+      "source_size": [800, 600],
+      "operations": [
+        { "op": "create-rectangle", "start": [100, 150], "end": [500, 400] },
+        { "op": "move-selection", "delta": [20, -10] },
+        { "op": "undo" },
+        { "op": "set-stroke-width", "value": 8 }
+      ],
+      "expected": { "rectangle_bounds": [100, 150, 500, 400], "stroke_width": 8, "redo_count": 0, "dirty": true }
+    },
+    {
+      "id": "empty-document-removes-sidecar",
+      "existing_sidecar": true,
+      "annotations": [],
+      "operation": "save-sidecar",
+      "expected": { "sidecar_exists": false, "sidecar_path": null, "raster_untouched": true }
+    },
+    {
+      "id": "newer-version-read-only-failure",
+      "document": { "version": 2 },
+      "expected": { "error": "document-version-unsupported", "document_rewritten": false }
+    }
+  ]
+}

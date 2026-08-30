@@ -1,5 +1,5 @@
 # REGION-CAPTURE-001
 
-Planned Phase 1 capability. Contract package not yet written.
-
-Intent: interactive region selection, permission prompts, DPI/monitor mapping, and confirm/cancel.
+Draft contract package for interactive region selection, permission handling,
+multi-monitor coordinate mapping, confirmation, and cancellation. See `SPEC.md`,
+`STATE_MACHINE.md`, `SCENARIOS.feature`, and `test-vectors.json`.
