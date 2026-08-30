@@ -26,10 +26,13 @@ If the matching wrapper is not on `PATH`, fall back to the configured git identi
 - **ROOT-GIT-003** When the requested work is complete and final verification passes, synchronize safely and push all task commits to the current tracked branch using the required identity wrapper. This standing instruction is authorization to push; do not ask for an additional confirmation unless the human requested a pause, review-before-push, local-only work, or no push.
 - **ROOT-GIT-004** Inspect status and diffs before every commit and before the final push. Do not bypass hooks, force-push, rewrite published history, discard work, or resolve another contributor's conflicting change without explicit authority. If the remote advanced, integrate it safely, rerun affected verification, then push normally.
 - **ROOT-GIT-005** For submodule work, commit and push the submodule repository first, then commit the verified parent pointer update. The final parent push MUST NOT reference an unavailable submodule commit.
+- **ROOT-BRANCH-001** Continue all development on the branch that is active when the task begins. Agents MUST NOT create or switch to another branch, create a branch-backed worktree, or move into a detached-HEAD workflow unless the human explicitly requests that branch action.
+- **ROOT-BRANCH-002** Do not invent `feature/*`, `fix/*`, `chore/*`, `codex/*`, `cursor/*`, personal, temporary, backup, or recovery branches. If the current branch is protected, unsuitable, lacks an upstream, or cannot be synchronized safely, stop and report the exact condition rather than creating or switching branches.
+- **ROOT-BRANCH-003** When a human explicitly requests a new or different branch, use the exact requested branch or ask for its name if none was supplied. After switching, that branch becomes the current branch for progressive commits and final push; do not branch again without another explicit request.
 
 Required sequence:
 
-1. Confirm identity, remote, branch, status, and applicable instructions.
+1. Confirm identity, remote, current branch, status, and applicable instructions; preserve that branch unless the human explicitly directs otherwise.
 2. Synchronize before editing when the tree is clean; never use a destructive pull to erase local work.
 3. Implement one coherent slice, run proportionate verification, inspect its diff, and commit it with the repository's commit-message format.
 4. Repeat step 3 as additional independently meaningful slices become complete.
