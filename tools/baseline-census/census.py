@@ -387,7 +387,16 @@ def capability_rows() -> list[dict[str, Any]]:
         ("DISTRIBUTION-NATIVE-001", "distribution-quality", "Install, update, run, and uninstall a native package without losing user data.", "build", "Packaging definitions", None),
         ("MOBILE-EXPERIMENTAL-001", "mobile-experimental", "Keep experimental mobile surfaces visible to the census without including them in BXIP001 desktop parity.", "src/mobile-experimental", "Experimental mobile projects", None),
     ]
-    rows = [row(identifier, domain, outcome, Evidence(path, symbol), contract=contract) for identifier, domain, outcome, path, symbol, contract in entries]
+    rows = [
+        row(
+            identifier,
+            domain,
+            outcome,
+            Evidence(path, symbol),
+            contract=contract or "product-contract/capabilities/CORE-PLATFORM-001",
+        )
+        for identifier, domain, outcome, path, symbol, contract in entries
+    ]
     rows[-1]["classification"] = "out-of-scope-bxip001"
     rows[-1]["platforms"] = platform_map("not-applicable")
     rows[-1]["approval"] = "product-owner-recorded-by-D-BASE-001"
@@ -402,7 +411,11 @@ def settings_rows(settings: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "settings",
             f"Preserve {item['declaring_type']}.{item['member']} semantics, default, validation, migration, and downstream effect.",
             Evidence(item["path"], f"{item['declaring_type']}.{item['member']}"),
-            contract="product-contract/capabilities/EDITOR-SETTINGS-001" if item["path"].startswith("ShareX.ImageEditor/") else None,
+            contract=(
+                "product-contract/capabilities/EDITOR-SETTINGS-001"
+                if item["path"].startswith("ShareX.ImageEditor/")
+                else "product-contract/capabilities/SETTINGS-CATALOG-001"
+            ),
         )
         result["value_type"] = item["type"]
         result["source_declaration"] = item["declaration"]
@@ -419,7 +432,15 @@ def workflow_rows(enums: list[dict[str, Any]], image_editor: dict[str, Any]) -> 
     ]
     for prefix, enum_name, template in groups:
         for name, evidence in enum_members(enums, enum_name):
-            rows.append(row(f"WF-{prefix}-{slug(name)}-001", "workflow", template.format(name=name), evidence))
+            rows.append(
+                row(
+                    f"WF-{prefix}-{slug(name)}-001",
+                    "workflow",
+                    template.format(name=name),
+                    evidence,
+                    contract="product-contract/capabilities/WORKFLOW-CATALOG-001",
+                )
+            )
     tool_path = next(item["path"] for item in enums if item["name"] == "EditorTool" and item["path"].startswith("ShareX.ImageEditor/"))
     for name in image_editor["editor_tools"]:
         rows.append(row(f"WF-EDITOR-TOOL-{slug(name)}-001", "image-editor-tool", f"Select and operate the {name} editor tool.", Evidence(tool_path, f"EditorTool.{name}"), contract="product-contract/capabilities/EDITOR-ANNOTATIONS-001"))
@@ -456,21 +477,21 @@ def interface_rows(reference: Path, image_editor: dict[str, Any]) -> list[dict[s
     view_root = reference / "src" / "desktop" / "app" / "XerahS.UI"
     for path in sorted((view_root / "Views").rglob("*.axaml")) + sorted((view_root / "Onboarding").rglob("*.axaml")):
         name = path.stem
-        rows.append(row(f"IF-GUI-{slug(name)}-001", "gui", f"Reach and operate the {name} user interface surface.", Evidence(rel(path, reference), name), classification="native-equivalent"))
+        rows.append(row(f"IF-GUI-{slug(name)}-001", "gui", f"Reach and operate the {name} user interface surface.", Evidence(rel(path, reference), name), contract="product-contract/capabilities/INTERFACE-CATALOG-001", classification="native-equivalent"))
     cli_root = reference / "src" / "desktop" / "cli" / "XerahS.CLI" / "Commands"
     command_pattern = re.compile(r"new\s+Command(?:<[^>]+>)?\s*\(\s*\"([^\"]+)\"")
     for path in sorted(cli_root.glob("*Command.cs")):
         text = path.read_text(encoding="utf-8-sig", errors="replace")
         names = sorted(set(command_pattern.findall(text))) or [path.stem.removesuffix("Command").lower()]
         for name in names:
-            rows.append(row(f"IF-CLI-{slug(path.stem.removesuffix('Command'))}-{slug(name)}-001", "cli", f"Invoke the '{name}' CLI command with stable output and exit behavior.", Evidence(rel(path, reference), name)))
+            rows.append(row(f"IF-CLI-{slug(path.stem.removesuffix('Command'))}-{slug(name)}-001", "cli", f"Invoke the '{name}' CLI command with stable output and exit behavior.", Evidence(rel(path, reference), name), contract="product-contract/capabilities/INTERFACE-CATALOG-001"))
     mcp_root = reference / "src" / "tools" / "XerahS.McpServer" / "Tools"
     for path in sorted(mcp_root.glob("*Tools.cs")):
         name = path.stem
-        rows.append(row(f"IF-MCP-{slug(name)}-001", "mcp", f"Use the {name} MCP tool family through the supported transports.", Evidence(rel(path, reference), name)))
+        rows.append(row(f"IF-MCP-{slug(name)}-001", "mcp", f"Use the {name} MCP tool family through the supported transports.", Evidence(rel(path, reference), name), contract="product-contract/capabilities/INTERFACE-CATALOG-001"))
     for path in sorted((reference / "src" / "desktop" / "plugins").glob("*.Plugin/*.csproj")):
         name = path.parent.name.removesuffix(".Plugin")
-        rows.append(row(f"IF-DESTINATION-{slug(name)}-001", "destination", f"Configure and invoke the shipped {name} destination provider.", Evidence(rel(path, reference), path.stem)))
+        rows.append(row(f"IF-DESTINATION-{slug(name)}-001", "destination", f"Configure and invoke the shipped {name} destination provider.", Evidence(rel(path, reference), path.stem), contract="product-contract/capabilities/INTERFACE-CATALOG-001"))
     image_editor_root = "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/"
     for relative in image_editor["ui_surfaces"]:
         if not relative.startswith(image_editor_root) or not any(segment in relative for segment in ("/Views/", "/Controls/")):
@@ -521,6 +542,8 @@ def compatibility_rows() -> list[dict[str, Any]]:
     for item in rows:
         if item["id"] in editor_contracts:
             item["contract"] = editor_contracts[item["id"]]
+        else:
+            item["contract"] = "product-contract/capabilities/COMPATIBILITY-CATALOG-001"
     return rows
 
 
@@ -534,6 +557,8 @@ def validate_ledgers(reference: Path, ledgers: dict[str, dict[str, Any]]) -> Non
             if identifier in seen:
                 raise SystemExit(f"Duplicate parity ledger ID: {identifier}")
             seen.add(identifier)
+            if not item.get("contract"):
+                raise SystemExit(f"Unlinked parity ledger ID: {identifier}")
             for evidence in item["source_evidence"]:
                 if not (reference / evidence["path"]).exists():
                     raise SystemExit(f"Missing source evidence path for {identifier}: {evidence['path']}")

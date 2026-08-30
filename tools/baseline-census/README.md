@@ -24,6 +24,11 @@ artifact differs. The tool does not decide product behavior. It records source
 evidence and creates the queue that contract authors and product reviewers must
 resolve.
 
+Every generated ledger row is routed to a draft capability owner. Adding an
+inventory family therefore requires an explicit contract route; generation
+fails rather than silently emitting an unowned row. The route records review
+ownership and does not make reference-source behavior normative or approved.
+
 Owned generated artifacts:
 
 - `product-contract/reference-baselines/kova-0.29.0.yaml`
