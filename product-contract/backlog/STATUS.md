@@ -41,39 +41,39 @@ Baseline: `kova-0.29.0` · Tracker: `1.0.0` · Census: `open` · Manifest: `draf
 
 ## Work packages
 
-| Package | Wave | Priority | Maintained status | Open rows | Approval | Owner role |
-|---|---|---|---|---:|---|---|
-| `PC-GOVERNANCE-001` — Baseline review and contract governance | D01 / 2026-09-01 | P0 | `in_progress` | 0 | product-owner | contract-steward |
-| `PC-APP-SHELL-001` — Application shell and lifecycle | D02 / 2026-09-02 | P0 | `planned` | 0 | product-owner | contract-author |
-| `PC-CONFIG-SECURITY-001` — Configuration, identity, secrets, and security | D02 / 2026-09-02 | P0 | `planned` | 0 | product-owner | security-reviewer |
-| `PC-CAPTURE-001` — Capture families and permissions | D03 / 2026-09-03 | P0 | `planned` | 0 | product-owner | contract-author |
-| `PC-WORKFLOW-ENGINE-001` — Workflow engine semantics | D03 / 2026-09-03 | P0 | `planned` | 0 | product-owner | contract-author |
-| `PC-RECORDING-001` — Screen recording and encoding | D04 / 2026-09-04 | P0 | `planned` | 0 | product-owner | contract-author |
-| `PC-MEDIA-001` — Video editor and media utilities | D04 / 2026-09-04 | P1 | `planned` | 0 | product-owner | contract-author |
-| `PC-UPLOADS-001` — Upload execution and destination behavior | D05 / 2026-09-05 | P0 | `planned` | 0 | product-owner | integration-reviewer |
-| `PC-DESTINATION-SURFACES-001` — Destination provider surfaces | D05 / 2026-09-05 | P1 | `planned` | 0 | product-owner | integration-reviewer |
-| `PC-COMPAT-DESTINATIONS-001` — Uploader and plugin compatibility | D05 / 2026-09-05 | P0 | `planned` | 0 | product-owner | compatibility-reviewer |
-| `PC-HISTORY-001` — History, indexing, search, and retention | D06 / 2026-09-06 | P1 | `planned` | 0 | product-owner | contract-author |
-| `PC-COMPAT-HISTORY-001` — History data compatibility | D06 / 2026-09-06 | P1 | `planned` | 0 | product-owner | compatibility-reviewer |
-| `PC-AUTOMATION-001` — Automation and external integration | D07 / 2026-09-07 | P0 | `planned` | 0 | product-owner | integration-reviewer |
-| `PC-CLI-SURFACES-001` — Command-line interfaces | D07 / 2026-09-07 | P0 | `planned` | 0 | product-owner | interface-reviewer |
-| `PC-MCP-SURFACES-001` — Agent-native MCP interfaces | D07 / 2026-09-07 | P0 | `planned` | 0 | product-owner | interface-reviewer |
-| `PC-COMPAT-AUTOMATION-001` — Automation compatibility | D07 / 2026-09-07 | P1 | `planned` | 0 | product-owner | compatibility-reviewer |
-| `PC-SETTINGS-CATALOG-001` — Complete settings inventory | D08 / 2026-09-08 | P0 | `planned` | 0 | product-owner | contract-author |
-| `PC-COMPAT-CONFIG-001` — Configuration compatibility | D08 / 2026-09-08 | P0 | `planned` | 0 | product-owner | compatibility-reviewer |
-| `PC-WORKFLOW-CATALOG-001` — Complete workflow and action inventory | D09 / 2026-09-09 | P0 | `planned` | 0 | product-owner | contract-author |
-| `PC-GUI-SURFACES-001` — Complete GUI and accessibility surfaces | D10 / 2026-09-10 | P1 | `planned` | 0 | product-owner | interface-reviewer |
-| `PC-DIAGNOSTICS-001` — Diagnostics, logging, and recovery | D11 / 2026-09-11 | P1 | `planned` | 0 | product-owner | operations-reviewer |
-| `PC-DISTRIBUTION-001` — Distribution, updates, and release quality | D11 / 2026-09-11 | P1 | `planned` | 0 | product-owner | release-reviewer |
-| `PC-MOBILE-DISPOSITION-001` — Experimental mobile disposition | D11 / 2026-09-11 | P2 | `planned` | 0 | product-owner | product-owner |
-| `PC-COMPAT-IMAGE-EFFECTS-001` — Image effects compatibility | D11 / 2026-09-11 | P1 | `planned` | 0 | product-owner | compatibility-reviewer |
-| `PC-CONFORMANCE-001` — Full traceability, conformance, and approval closure | D12 / 2026-09-12 | P0 | `planned` | 0 | product-owner | conformance-lead |
+| Package | Wave | Priority | Maintained status | Linked / routed | Open | Approval | Owner role |
+|---|---|---|---|---:|---:|---|---|
+| `PC-GOVERNANCE-001` — Baseline review and contract governance | D01 / 2026-09-01 | P0 | `in_progress` | 0 / 0 | 0 | product-owner | contract-steward |
+| `PC-APP-SHELL-001` — Application shell and lifecycle | D02 / 2026-09-02 | P0 | `planned` | 6 / 6 | 0 | product-owner | contract-author |
+| `PC-CONFIG-SECURITY-001` — Configuration, identity, secrets, and security | D02 / 2026-09-02 | P0 | `planned` | 2 / 2 | 0 | product-owner | security-reviewer |
+| `PC-CAPTURE-001` — Capture families and permissions | D03 / 2026-09-03 | P0 | `planned` | 6 / 6 | 0 | product-owner | contract-author |
+| `PC-WORKFLOW-ENGINE-001` — Workflow engine semantics | D03 / 2026-09-03 | P0 | `planned` | 3 / 3 | 0 | product-owner | contract-author |
+| `PC-RECORDING-001` — Screen recording and encoding | D04 / 2026-09-04 | P0 | `planned` | 3 / 3 | 0 | product-owner | contract-author |
+| `PC-MEDIA-001` — Video editor and media utilities | D04 / 2026-09-04 | P1 | `planned` | 2 / 2 | 0 | product-owner | contract-author |
+| `PC-UPLOADS-001` — Upload execution and destination behavior | D05 / 2026-09-05 | P0 | `planned` | 4 / 4 | 0 | product-owner | integration-reviewer |
+| `PC-DESTINATION-SURFACES-001` — Destination provider surfaces | D05 / 2026-09-05 | P1 | `planned` | 12 / 12 | 0 | product-owner | integration-reviewer |
+| `PC-COMPAT-DESTINATIONS-001` — Uploader and plugin compatibility | D05 / 2026-09-05 | P0 | `planned` | 2 / 2 | 0 | product-owner | compatibility-reviewer |
+| `PC-HISTORY-001` — History, indexing, search, and retention | D06 / 2026-09-06 | P1 | `planned` | 2 / 2 | 0 | product-owner | contract-author |
+| `PC-COMPAT-HISTORY-001` — History data compatibility | D06 / 2026-09-06 | P1 | `planned` | 3 / 3 | 0 | product-owner | compatibility-reviewer |
+| `PC-AUTOMATION-001` — Automation and external integration | D07 / 2026-09-07 | P0 | `planned` | 5 / 5 | 0 | product-owner | integration-reviewer |
+| `PC-CLI-SURFACES-001` — Command-line interfaces | D07 / 2026-09-07 | P0 | `planned` | 46 / 46 | 0 | product-owner | interface-reviewer |
+| `PC-MCP-SURFACES-001` — Agent-native MCP interfaces | D07 / 2026-09-07 | P0 | `planned` | 5 / 5 | 0 | product-owner | interface-reviewer |
+| `PC-COMPAT-AUTOMATION-001` — Automation compatibility | D07 / 2026-09-07 | P1 | `planned` | 1 / 1 | 0 | product-owner | compatibility-reviewer |
+| `PC-SETTINGS-CATALOG-001` — Complete settings inventory | D08 / 2026-09-08 | P0 | `planned` | 922 / 922 | 0 | product-owner | contract-author |
+| `PC-COMPAT-CONFIG-001` — Configuration compatibility | D08 / 2026-09-08 | P0 | `planned` | 4 / 4 | 0 | product-owner | compatibility-reviewer |
+| `PC-WORKFLOW-CATALOG-001` — Complete workflow and action inventory | D09 / 2026-09-09 | P0 | `planned` | 436 / 436 | 0 | product-owner | contract-author |
+| `PC-GUI-SURFACES-001` — Complete GUI and accessibility surfaces | D10 / 2026-09-10 | P1 | `planned` | 74 / 74 | 0 | product-owner | interface-reviewer |
+| `PC-DIAGNOSTICS-001` — Diagnostics, logging, and recovery | D11 / 2026-09-11 | P1 | `planned` | 1 / 1 | 0 | product-owner | operations-reviewer |
+| `PC-DISTRIBUTION-001` — Distribution, updates, and release quality | D11 / 2026-09-11 | P1 | `planned` | 1 / 1 | 0 | product-owner | release-reviewer |
+| `PC-MOBILE-DISPOSITION-001` — Experimental mobile disposition | D11 / 2026-09-11 | P2 | `planned` | 1 / 1 | 0 | product-owner | product-owner |
+| `PC-COMPAT-IMAGE-EFFECTS-001` — Image effects compatibility | D11 / 2026-09-11 | P1 | `planned` | 1 / 1 | 0 | product-owner | compatibility-reviewer |
+| `PC-CONFORMANCE-001` — Full traceability, conformance, and approval closure | D12 / 2026-09-12 | P0 | `planned` | 0 / 0 | 0 | product-owner | conformance-lead |
 
 ## Next actions
 
 Advance **D01 — Governance and baseline** (target 2026-09-01):
 
-- `PC-GOVERNANCE-001`: Baseline review and contract governance — 0 routed open rows; exit when The baseline census status is closed with product-owner evidence; Contract-writing and approval responsibilities are unambiguous; Existing draft packages are approved, revised, or explicitly returned to backlog.
+- `PC-GOVERNANCE-001`: Baseline review and contract governance — 0 of 0 routed rows linked; exit when The baseline census status is closed with product-owner evidence; Contract-writing and approval responsibilities are unambiguous; Existing draft packages are approved, revised, or explicitly returned to backlog.
 
 ## Completion definition
 

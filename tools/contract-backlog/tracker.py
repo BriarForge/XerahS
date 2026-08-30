@@ -91,15 +91,25 @@ def route_row(backlog: dict[str, Any], row: LedgerRow) -> str | None:
     return values.get(row.domain, route.get("default"))
 
 
-def assignments(backlog: dict[str, Any], rows: dict[str, list[LedgerRow]]) -> dict[str, list[LedgerRow]]:
+def routed_rows(
+    backlog: dict[str, Any],
+    rows: dict[str, list[LedgerRow]],
+    *,
+    open_only: bool,
+) -> dict[str, list[LedgerRow]]:
     result: dict[str, list[LedgerRow]] = defaultdict(list)
     for ledger_rows in rows.values():
         for row in ledger_rows:
-            if row.contract is None:
-                package_id = route_row(backlog, row)
-                if package_id is not None:
-                    result[package_id].append(row)
+            if open_only and row.contract is not None:
+                continue
+            package_id = route_row(backlog, row)
+            if package_id is not None:
+                result[package_id].append(row)
     return dict(result)
+
+
+def assignments(backlog: dict[str, Any], rows: dict[str, list[LedgerRow]]) -> dict[str, list[LedgerRow]]:
+    return routed_rows(backlog, rows, open_only=True)
 
 
 def validate(
@@ -275,6 +285,7 @@ def render_status(
     root: Path = ROOT,
 ) -> str:
     assigned = assignments(backlog, rows)
+    routed = routed_rows(backlog, rows, open_only=False)
     packages = backlog["packages"]
     package_by_id = {package["id"]: package for package in packages}
     overall_status, manifest_statuses = _manifest_summary(root / "product-contract" / "manifest.yaml")
@@ -343,14 +354,17 @@ def render_status(
         "",
         "## Work packages",
         "",
-        "| Package | Wave | Priority | Maintained status | Open rows | Approval | Owner role |",
-        "|---|---|---|---|---:|---|---|",
+        "| Package | Wave | Priority | Maintained status | Linked / routed | Open | Approval | Owner role |",
+        "|---|---|---|---|---:|---:|---|---|",
     ])
     wave_by_id = {wave["id"]: wave for wave in backlog["waves"]}
     for package in packages:
         wave = wave_by_id[package["wave"]]
+        package_rows = routed.get(package["id"], [])
+        package_open = assigned.get(package["id"], [])
+        package_linked = len(package_rows) - len(package_open)
         lines.append(
-            f"| `{package['id']}` — {_escape(package['title'])} | {package['wave']} / {wave['target_date']} | {package['priority']} | `{package['status']}` | {len(assigned.get(package['id'], [])):,} | {package['approval']} | {package['owner_role']} |"
+            f"| `{package['id']}` — {_escape(package['title'])} | {package['wave']} / {wave['target_date']} | {package['priority']} | `{package['status']}` | {package_linked:,} / {len(package_rows):,} | {len(package_open):,} | {package['approval']} | {package['owner_role']} |"
         )
 
     first_open_wave = next(
@@ -366,8 +380,10 @@ def render_status(
         for identifier in first_open_wave["package_ids"]:
             package = package_by_id[identifier]
             if package["status"] != "complete":
+                package_rows = routed.get(identifier, [])
+                package_open = assigned.get(identifier, [])
                 lines.append(
-                    f"- `{identifier}`: {package['title']} — {len(assigned.get(identifier, [])):,} routed open rows; exit when "
+                    f"- `{identifier}`: {package['title']} — {len(package_rows) - len(package_open):,} of {len(package_rows):,} routed rows linked; exit when "
                     + "; ".join(package["exit_criteria"])
                     + "."
                 )
@@ -401,7 +417,11 @@ def render_package(backlog: dict[str, Any], rows: dict[str, list[LedgerRow]], pa
     package = package_by_id.get(package_id)
     if package is None:
         raise KeyError(package_id)
-    owned = sorted(assignments(backlog, rows).get(package_id, []), key=lambda row: (row.ledger, row.row_id))
+    owned = sorted(
+        routed_rows(backlog, rows, open_only=False).get(package_id, []),
+        key=lambda row: (row.ledger, row.row_id),
+    )
+    open_count = sum(row.contract is None for row in owned)
     lines = [
         f"{package_id}: {package['title']}",
         f"wave={package['wave']} priority={package['priority']} status={package['status']} owner={package['owner_role']} approval={package['approval']}",
@@ -410,8 +430,11 @@ def render_package(backlog: dict[str, Any], rows: dict[str, list[LedgerRow]], pa
         *[f"  - {item}" for item in package["deliverables"]],
         "exit criteria:",
         *[f"  - {item}" for item in package["exit_criteria"]],
-        f"open rows ({len(owned)}):",
-        *[f"  - {row.ledger}:{row.row_id} [{row.domain}]" for row in owned],
+        f"routed rows ({len(owned) - open_count} linked, {open_count} open):",
+        *[
+            f"  - {row.ledger}:{row.row_id} [{row.domain}] -> {row.contract or 'OPEN'}"
+            for row in owned
+        ],
     ]
     return "\n".join(lines) + "\n"
 

@@ -31,6 +31,12 @@ class ContractBacklogTrackerTests(unittest.TestCase):
         assigned = tracker.assignments(self.backlog, self.rows)
         self.assertEqual(open_rows, sum(len(rows) for rows in assigned.values()))
 
+    def test_linked_rows_remain_visible_to_their_review_package(self):
+        routed = tracker.routed_rows(self.backlog, self.rows, open_only=False)
+        settings = routed["PC-SETTINGS-CATALOG-001"]
+        self.assertEqual(922, len(settings))
+        self.assertTrue(all(row.contract is not None for row in settings))
+
     def test_missing_domain_route_is_reported(self):
         backlog = copy.deepcopy(self.backlog)
         del backlog["routing"]["interface"]["values"]["gui"]
