@@ -27,6 +27,11 @@ row is orphaned and the status view matches the current ledgers. Planning
 status and dates do not make behavior normative; Product Contract requirements
 and the required human approvals do.
 
+The current human review packet is
+[`reviews/DRAFT-COVERAGE-REVIEW-2026-08-31.md`](reviews/DRAFT-COVERAGE-REVIEW-2026-08-31.md).
+It summarizes all draft packages, high-impact decisions, and evidence still
+required. The packet is not itself an approval record.
+
 ## Qualification capabilities (Wave 1)
 
 These packages are selected as the first contract-writing tranche.
