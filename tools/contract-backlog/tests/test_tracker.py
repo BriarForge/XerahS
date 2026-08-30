@@ -113,6 +113,11 @@ class ContractBacklogTrackerTests(unittest.TestCase):
         )
         self.assertIn(f"{total - open_rows:,} of {total:,} parity rows linked", first)
         self.assertIn("PC-CONFORMANCE-001", first)
+        expected_mark = "x" if open_rows == 0 else " "
+        self.assertIn(
+            f"- [{expected_mark}] Every parity-ledger row links to a stable Product Contract requirement",
+            first,
+        )
 
 
 if __name__ == "__main__":

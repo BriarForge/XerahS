@@ -375,8 +375,19 @@ def render_status(
         lines.append("All maintained packages are complete; verify every completion gate before closure.")
 
     lines.extend(["", "## Completion definition", ""])
-    for criterion in backlog["completion_definition"]:
-        lines.append(f"- [ ] {criterion}")
+    capability_lifecycle_complete = (
+        overall_status == "active"
+        and bool(manifest_statuses)
+        and all(status in {"approved", "active"} for status in manifest_statuses)
+    )
+    machine_checks = [
+        census_status == "closed",
+        open_count == 0,
+        capability_lifecycle_complete,
+    ]
+    for index, criterion in enumerate(backlog["completion_definition"]):
+        checked = index < len(machine_checks) and machine_checks[index]
+        lines.append(f"- [{'x' if checked else ' '}] {criterion}")
     lines.extend([
         "",
         "Use `python tools/contract-backlog/tracker.py --package PC-…-001` to list a package's deliverables, dependencies, exit criteria, and currently assigned parity rows.",

@@ -78,7 +78,7 @@ Advance **D01 — Governance and baseline** (target 2026-09-01):
 ## Completion definition
 
 - [ ] The pinned baseline census is reviewed, signed, and closed.
-- [ ] Every parity-ledger row links to a stable Product Contract requirement; no contract field remains null.
+- [x] Every parity-ledger row links to a stable Product Contract requirement; no contract field remains null.
 - [ ] Every manifest capability is approved or active and declares accepted Windows, macOS, and Linux dispositions.
 - [ ] Persisted formats and integrations have compatibility policy, fixtures, and runtime-observation evidence where applicable.
 - [ ] Conformance coverage traces normative requirements to independent evidence and all required human approvals are recorded.
