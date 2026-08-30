@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xerahs.com/schemas/workflow-action-v1.json",
+  "title": "XerahS workflow action disposition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ledger_id", "action_id", "purpose", "input_schema", "result_schema", "side_effect", "authority", "cancellation", "failure_policy", "concurrency", "platforms", "status"],
+  "properties": {
+    "ledger_id": { "type": "string", "pattern": "^WF-[A-Z0-9-]+-[0-9]{3}$" },
+    "action_id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$" },
+    "purpose": { "type": "string", "minLength": 1 },
+    "input_schema": { "type": "string", "minLength": 1 },
+    "result_schema": { "type": "string", "minLength": 1 },
+    "side_effect": { "enum": ["none", "local-read", "local-write", "clipboard", "capture", "recording", "network", "external-process", "destructive"] },
+    "authority": { "enum": ["ordinary", "permission", "credential", "confirmation", "human-review"] },
+    "cancellation": { "type": "string", "minLength": 1 },
+    "failure_policy": { "enum": ["continue", "stop", "retry", "compensate", "request-user"] },
+    "concurrency": { "enum": ["independent", "serialize", "coalesce", "reject"] },
+    "platforms": {
+      "type": "object",
+      "required": ["windows", "macos", "linux"],
+      "additionalProperties": false,
+      "properties": {
+        "windows": { "$ref": "#/$defs/disposition" },
+        "macos": { "$ref": "#/$defs/disposition" },
+        "linux": { "$ref": "#/$defs/disposition" }
+      }
+    },
+    "status": { "enum": ["draft", "approved", "retired"] }
+  },
+  "$defs": { "disposition": { "enum": ["required", "equivalent", "degraded", "unavailable", "not-applicable"] } }
+}

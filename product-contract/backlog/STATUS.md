@@ -4,7 +4,7 @@
 
 Baseline: `kova-0.29.0` · Tracker: `1.0.0` · Census: `open` · Manifest: `draft`
 
-**1,323 of 1,592 parity rows linked (83.1%); 269 remain.**
+**1,548 of 1,592 parity rows linked (97.2%); 44 remain.**
 
 ## Ledger coverage
 
@@ -12,15 +12,15 @@ Baseline: `kova-0.29.0` · Tracker: `1.0.0` · Census: `open` · Manifest: `draf
 |---|---:|---:|---:|---:|
 | capability | 44 | 11 | 33 | 25.0% |
 | settings | 922 | 922 | 0 | 100.0% |
-| workflow | 436 | 348 | 88 | 79.8% |
-| interface | 174 | 37 | 137 | 21.3% |
+| workflow | 436 | 436 | 0 | 100.0% |
+| interface | 174 | 174 | 0 | 100.0% |
 | compatibility | 16 | 5 | 11 | 31.2% |
 
 ## Governance gates
 
 - Baseline census: `open`
-- Manifest lifecycle: `draft` (draft 11)
-- Open parity rows with an assigned package: `269` of `269`
+- Manifest lifecycle: `draft` (draft 13)
+- Open parity rows with an assigned package: `44` of `44`
 
 ## Daily waves
 
@@ -30,12 +30,12 @@ Baseline: `kova-0.29.0` · Tracker: `1.0.0` · Census: `open` · Manifest: `draf
 | D02 — Application and configuration | 2026-09-02 | `planned` | 8 | Specify application lifecycle, settings ownership, identity, secrets, and security behavior. |
 | D03 — Capture and workflow engine | 2026-09-03 | `planned` | 6 | Complete capture families and the execution semantics that compose them. |
 | D04 — Recording and media | 2026-09-04 | `planned` | 5 | Specify recording, encoding, playback, and media-editor behavior. |
-| D05 — Uploads and destinations | 2026-09-05 | `planned` | 18 | Define transfer behavior, destination surfaces, credentials, and compatible uploader data. |
+| D05 — Uploads and destinations | 2026-09-05 | `planned` | 6 | Define transfer behavior, destination surfaces, credentials, and compatible uploader data. |
 | D06 — History and indexing | 2026-09-06 | `planned` | 5 | Define task history, search, retention, thumbnails, and compatible history data. |
-| D07 — Automation interfaces | 2026-09-07 | `planned` | 57 | Define automation, CLI, MCP, and compatibility boundaries together. |
+| D07 — Automation interfaces | 2026-09-07 | `planned` | 6 | Define automation, CLI, MCP, and compatibility boundaries together. |
 | D08 — Settings catalog | 2026-09-08 | `planned` | 4 | Resolve the complete settings inventory and configuration compatibility policy. |
-| D09 — Workflow catalog | 2026-09-09 | `planned` | 88 | Resolve every inventoried workflow and action surface against stable behavior. |
-| D10 — GUI surfaces | 2026-09-10 | `planned` | 74 | Resolve all remaining user-facing GUI surfaces, accessibility, and platform disposition. |
+| D09 — Workflow catalog | 2026-09-09 | `planned` | 0 | Resolve every inventoried workflow and action surface against stable behavior. |
+| D10 — GUI surfaces | 2026-09-10 | `planned` | 0 | Resolve all remaining user-facing GUI surfaces, accessibility, and platform disposition. |
 | D11 — Operations and edge domains | 2026-09-11 | `planned` | 4 | Close diagnostics, distribution, experimental mobile, and image-effect compatibility decisions. |
 | D12 — Conformance and closure | 2026-09-12 | `planned` | 0 | Prove full traceability, cross-platform disposition, runtime compatibility, and approval closure. |
 
@@ -51,18 +51,18 @@ Baseline: `kova-0.29.0` · Tracker: `1.0.0` · Census: `open` · Manifest: `draf
 | `PC-RECORDING-001` — Screen recording and encoding | D04 / 2026-09-04 | P0 | `planned` | 3 | product-owner | contract-author |
 | `PC-MEDIA-001` — Video editor and media utilities | D04 / 2026-09-04 | P1 | `planned` | 2 | product-owner | contract-author |
 | `PC-UPLOADS-001` — Upload execution and destination behavior | D05 / 2026-09-05 | P0 | `planned` | 4 | product-owner | integration-reviewer |
-| `PC-DESTINATION-SURFACES-001` — Destination provider surfaces | D05 / 2026-09-05 | P1 | `planned` | 12 | product-owner | integration-reviewer |
+| `PC-DESTINATION-SURFACES-001` — Destination provider surfaces | D05 / 2026-09-05 | P1 | `planned` | 0 | product-owner | integration-reviewer |
 | `PC-COMPAT-DESTINATIONS-001` — Uploader and plugin compatibility | D05 / 2026-09-05 | P0 | `planned` | 2 | product-owner | compatibility-reviewer |
 | `PC-HISTORY-001` — History, indexing, search, and retention | D06 / 2026-09-06 | P1 | `planned` | 2 | product-owner | contract-author |
 | `PC-COMPAT-HISTORY-001` — History data compatibility | D06 / 2026-09-06 | P1 | `planned` | 3 | product-owner | compatibility-reviewer |
 | `PC-AUTOMATION-001` — Automation and external integration | D07 / 2026-09-07 | P0 | `planned` | 5 | product-owner | integration-reviewer |
-| `PC-CLI-SURFACES-001` — Command-line interfaces | D07 / 2026-09-07 | P0 | `planned` | 46 | product-owner | interface-reviewer |
-| `PC-MCP-SURFACES-001` — Agent-native MCP interfaces | D07 / 2026-09-07 | P0 | `planned` | 5 | product-owner | interface-reviewer |
+| `PC-CLI-SURFACES-001` — Command-line interfaces | D07 / 2026-09-07 | P0 | `planned` | 0 | product-owner | interface-reviewer |
+| `PC-MCP-SURFACES-001` — Agent-native MCP interfaces | D07 / 2026-09-07 | P0 | `planned` | 0 | product-owner | interface-reviewer |
 | `PC-COMPAT-AUTOMATION-001` — Automation compatibility | D07 / 2026-09-07 | P1 | `planned` | 1 | product-owner | compatibility-reviewer |
 | `PC-SETTINGS-CATALOG-001` — Complete settings inventory | D08 / 2026-09-08 | P0 | `planned` | 0 | product-owner | contract-author |
 | `PC-COMPAT-CONFIG-001` — Configuration compatibility | D08 / 2026-09-08 | P0 | `planned` | 4 | product-owner | compatibility-reviewer |
-| `PC-WORKFLOW-CATALOG-001` — Complete workflow and action inventory | D09 / 2026-09-09 | P0 | `planned` | 88 | product-owner | contract-author |
-| `PC-GUI-SURFACES-001` — Complete GUI and accessibility surfaces | D10 / 2026-09-10 | P1 | `planned` | 74 | product-owner | interface-reviewer |
+| `PC-WORKFLOW-CATALOG-001` — Complete workflow and action inventory | D09 / 2026-09-09 | P0 | `planned` | 0 | product-owner | contract-author |
+| `PC-GUI-SURFACES-001` — Complete GUI and accessibility surfaces | D10 / 2026-09-10 | P1 | `planned` | 0 | product-owner | interface-reviewer |
 | `PC-DIAGNOSTICS-001` — Diagnostics, logging, and recovery | D11 / 2026-09-11 | P1 | `planned` | 1 | product-owner | operations-reviewer |
 | `PC-DISTRIBUTION-001` — Distribution, updates, and release quality | D11 / 2026-09-11 | P1 | `planned` | 1 | product-owner | release-reviewer |
 | `PC-MOBILE-DISPOSITION-001` — Experimental mobile disposition | D11 / 2026-09-11 | P2 | `planned` | 1 | product-owner | product-owner |

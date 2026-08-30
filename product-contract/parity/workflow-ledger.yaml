@@ -10,7 +10,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.None"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -29,7 +29,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.FileUpload"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -48,7 +48,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ClipboardUpload"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -67,7 +67,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ClipboardUploadWithContentViewer"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -86,7 +86,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.PrintScreen"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -105,7 +105,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ActiveWindow"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -124,7 +124,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.CustomWindow"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -143,7 +143,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ActiveMonitor"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -162,7 +162,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.RectangleRegion"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -181,7 +181,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.RectangleTransparent"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -200,7 +200,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.CustomRegion"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -219,7 +219,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.LastRegion"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -238,7 +238,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ScrollingCapture"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -257,7 +257,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.AutoCapture"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -276,7 +276,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.StartAutoCapture"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -295,7 +295,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.StopAutoCapture"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -314,7 +314,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ScreenRecorder"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -333,7 +333,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ScreenRecorderActiveWindow"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -352,7 +352,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ScreenRecorderCustomRegion"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -371,7 +371,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.StartScreenRecorder"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -390,7 +390,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ScreenRecorderGIF"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -409,7 +409,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ScreenRecorderGIFActiveWindow"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -428,7 +428,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ScreenRecorderGIFCustomRegion"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -447,7 +447,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.StartScreenRecorderGIF"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -466,7 +466,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.StopScreenRecording"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -485,7 +485,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.PauseScreenRecording"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -504,7 +504,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.AbortScreenRecording"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -523,7 +523,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ColorPicker"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -542,7 +542,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ScreenColorPicker"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -561,7 +561,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.Ruler"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -580,7 +580,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.PinToScreen"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -599,7 +599,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.PinToScreenFromScreen"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -618,7 +618,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.PinToScreenFromClipboard"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -637,7 +637,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.PinToScreenFromFile"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -656,7 +656,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.PinToScreenCloseAll"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -675,7 +675,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ImageEditor"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -694,7 +694,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.VideoEditor"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -713,7 +713,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ImageCombiner"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -732,7 +732,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ImageSplitter"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -751,7 +751,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ImageThumbnailer"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -770,7 +770,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.VideoConverter"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -789,7 +789,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.VideoThumbnailer"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -808,7 +808,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.AnalyzeImage"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -827,7 +827,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.OCR"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -846,7 +846,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.QRCode"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -865,7 +865,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.QRCodeDecodeFromScreen"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -884,7 +884,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.QRCodeScanRegion"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -903,7 +903,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.HashCheck"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -922,7 +922,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.IndexFolder"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -941,7 +941,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ClipboardViewer"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -960,7 +960,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.MonitorTest"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -979,7 +979,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.NetworkMonitor"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -998,7 +998,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.DisableHotkeys"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1017,7 +1017,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.OpenMainWindow"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1036,7 +1036,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.OpenScreenshotsFolder"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1055,7 +1055,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.OpenHistory"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1074,7 +1074,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.OpenImageHistory"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1093,7 +1093,7 @@ items:
       - path: "src/desktop/core/XerahS.Core/Enums.cs"
         symbol: "WorkflowType.ExitShareX"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1112,7 +1112,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.None"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1131,7 +1131,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.ShowQuickTaskMenu"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1150,7 +1150,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.ShowAfterCaptureWindow"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1169,7 +1169,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.AddImageEffects"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1188,7 +1188,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.AnnotateMedia"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1207,7 +1207,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.AnnotateImage"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1226,7 +1226,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.CopyImageToClipboard"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1245,7 +1245,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.PinToScreen"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1264,7 +1264,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.SendImageToPrinter"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1283,7 +1283,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.SaveImageToFile"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1302,7 +1302,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.SaveImageToFileWithDialog"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1321,7 +1321,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.SaveThumbnailImageToFile"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1340,7 +1340,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.PerformActions"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1359,7 +1359,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.CopyFileToClipboard"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1378,7 +1378,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.CopyFilePathToClipboard"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1397,7 +1397,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.ShowInExplorer"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1416,7 +1416,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.AnalyzeImage"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1435,7 +1435,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.ScanQRCode"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1454,7 +1454,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.DoOCR"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1473,7 +1473,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.ShowBeforeUploadWindow"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1492,7 +1492,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.UploadImageToHost"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1511,7 +1511,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.DeleteFile"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1530,7 +1530,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterCaptureTasks.CopyOcrTextToClipboard"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1549,7 +1549,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterUploadTasks.None"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1568,7 +1568,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterUploadTasks.ShowAfterUploadWindow"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1587,7 +1587,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterUploadTasks.UseURLShortener"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1606,7 +1606,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterUploadTasks.ShareURL"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1625,7 +1625,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterUploadTasks.CopyURLToClipboard"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1644,7 +1644,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterUploadTasks.OpenURL"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -1663,7 +1663,7 @@ items:
       - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
         symbol: "AfterUploadTasks.ShowQRCode"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/WORKFLOW-CATALOG-001"
     platforms:
       windows: "required"
       macos: "required"
