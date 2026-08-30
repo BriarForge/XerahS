@@ -37,6 +37,7 @@ Work proceeds in dependency-aware waves. Domains within a wave MAY run in parall
 - Make the contract linter, instruction resolver, provenance checks, and parity dashboard blocking.
 - Encode D-REF-001 in the root constitution and require scoped instructions to identify locally protected interfaces and verification.
 - Encode D-GIT-001 in the root constitution and make progressive checkpoint plus final-push behavior part of every agent workflow.
+- Encode D-BRANCH-001 in the root constitution and disable automatic branch/worktree creation in agent tooling.
 - Establish platform build/test skeletons and contract adapter protocols.
 - Assign product, contract, platform, conformance, security, and release owners.
 
@@ -116,6 +117,7 @@ Every implementation task generated from the ledger SHALL include:
 10. Product-owner decisions for any deviation or intentional correction.
 11. Any material development pain point encountered, the bounded restructuring chosen, and the verification or durable guard that prevents recurrence.
 12. Planned coherent commit boundaries and the final verification/push responsibility for the packet.
+13. The current branch and confirmation that no branch creation or switching is required; any human-approved exception is recorded explicitly.
 
 An agent cannot close a packet merely because code compiles or the happy path works.
 
@@ -149,5 +151,6 @@ After parity is reached:
 - A released capability cannot regress to an earlier lifecycle state without failing the branch and release gates.
 - Agents continuously remove material structural and tooling pain points under D-REF-001; parity governance protects behavior without freezing internal design.
 - Completed work is preserved through D-GIT-001 checkpoints and is not considered handed off until the verified final revision exists on the intended remote branch.
+- Agents remain on the current branch under D-BRANCH-001; parallel delivery does not create implicit branch-per-agent policy.
 
 Full parity is therefore a maintained invariant, not a one-time migration milestone.

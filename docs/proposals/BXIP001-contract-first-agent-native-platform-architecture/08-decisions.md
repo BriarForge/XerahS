@@ -178,6 +178,20 @@ Checkpoint commits remain local until the final gate by default. Early publicati
 
 The root `AGENTS.md` SHALL encode this policy as protected `ROOT-GIT-*` rules and a concrete sequence. Child scopes MAY strengthen commit boundaries, required checks, or release controls, but MUST NOT silently disable progressive commits or the final push.
 
+## D-BRANCH-001 Current branch continuity
+
+**Decision.** Agents SHALL develop, commit progressively, and finally push on the branch active when the task begins. They MUST NOT create or switch branches, create branch-backed worktrees, or use detached `HEAD` unless the human explicitly requests the branch operation.
+
+This policy prevents agent tooling from multiplying feature, fix, temporary, personal, `codex/*`, or `cursor/*` branches and then leaving partially synchronized histories. The current branch is an input to the task, not an implementation choice for the agent to optimize independently.
+
+An unsuitable or protected current branch is a reportable blocking condition, not implicit authorization to branch. Agents preserve existing work, state the exact branch or synchronization problem, and wait for human direction when ordinary non-destructive synchronization cannot resolve it.
+
+An explicit human request may authorize creating or switching to a branch. The agent uses the requested name and starting state; if a required name is absent, it asks rather than inventing one. That explicitly selected branch then becomes the current branch, and no additional branch action is authorized by implication.
+
+Parallel platform and domain work remains on the current branch by default. Coordination uses non-overlapping ownership, progressive commits, and handoffs rather than branches per agent or work packet.
+
+The root `AGENTS.md` SHALL encode this decision as protected `ROOT-BRANCH-*` rules. Child scopes and tools MUST NOT weaken it or automatically generate branches. A repository workflow may use branches only after a human explicitly selects that workflow for the task.
+
 ## D-GOLD-001 Golden-image tolerances
 
 **Decision.** Conformance distinguishes exact and perceptual comparisons. The conformance owner maintains `conformance/image-editor/tolerances.yaml`. Missing tolerances fail closed.

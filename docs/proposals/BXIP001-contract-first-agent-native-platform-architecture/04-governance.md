@@ -36,6 +36,7 @@ The root `AGENTS.md` SHALL be short, stable, and non-overridable. It defines rul
 - Required planning, review, verification, and evidence.
 - Standing authority for bounded, behavior-preserving restructuring that removes material agentic-development friction.
 - Progressive, coherent Git checkpoints followed by final verification and push.
+- Current-branch continuity unless a human explicitly requests branch creation or switching.
 - Prohibited actions, including silently weakening contracts or waiving a platform.
 - The process for escalating contradictory or infeasible requirements.
 - Links to each first-level child instruction scope.
@@ -256,3 +257,21 @@ Final push is part of normal task completion and does not require a second human
 Checkpoint commits remain local until the final push by default. Earlier pushes are permitted only when required for an explicit remote collaboration or handoff, to preserve unusually long-running work, or by repository-specific release workflow. Once a commit is published, agents SHALL NOT rewrite it through force push or published-history rebasing.
 
 Agents SHALL stage only owned, understood changes. They do not absorb another contributor's unfinished files to make the tree clean. For submodules, the submodule commit is verified, committed, and pushed before the parent pointer is committed and included in the final parent push.
+
+## 6.6 Current branch continuity
+
+The branch active when an agent begins a task is the authorized development lane for that task. Agents SHALL continue progressive commits and the final push on that branch. They MUST NOT create or switch to another branch, create a branch-backed worktree, detach `HEAD`, or move work to an automatically named agent branch unless the human explicitly requests that action.
+
+Prohibited automatic branch patterns include `feature/*`, `fix/*`, `chore/*`, `codex/*`, `cursor/*`, personal names, task identifiers, temporary branches, backup branches, and recovery branches. A tool's preference for isolation, a desire for a clean diff, parallel agent work, branch protection, or uncertainty about the current branch is not permission to create one.
+
+If the active branch is protected, unsuitable for direct commits, missing an upstream, behind a conflicting remote change, or otherwise cannot be used safely, the agent SHALL preserve the worktree and report the exact condition. It does not solve the problem by silently branching, switching to the default branch, or creating a worktree.
+
+When the human explicitly requests a different or new branch:
+
+1. Use the exact requested branch name and starting state.
+2. If no name was supplied and a name is required, ask rather than inventing one.
+3. Verify the switch preserved all owned work and did not absorb unrelated changes.
+4. Treat the explicitly selected branch as the new current branch for all later checkpoints and final push.
+5. Do not create or switch again without another explicit human instruction.
+
+Multi-agent delivery does not change this rule. Agents coordinate through non-overlapping path ownership, coherent progressive commits, and explicit handoffs on the current branch. They do not create one branch per platform, feature, agent, or work packet unless the human specifically chooses that workflow.

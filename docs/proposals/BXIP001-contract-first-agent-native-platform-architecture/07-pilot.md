@@ -14,6 +14,7 @@ The detailed reference protocol is [section 20](11-reference-baseline.md). The d
 - Establish the scoped `AGENTS.md` hierarchy using [D-AGT-001](08-decisions.md#d-agt-001-agentsmd-hierarchy).
 - Encode the standing restructuring authority and protected boundaries from [D-REF-001](08-decisions.md#d-ref-001-agent-directed-restructuring-authority) as root and scoped agent rules.
 - Encode the progressive checkpoint and final-push workflow from [D-GIT-001](08-decisions.md#d-git-001-progressive-commit-and-final-push-policy) as protected root Git rules.
+- Encode current-branch continuity from [D-BRANCH-001](08-decisions.md#d-branch-001-current-branch-continuity) and prohibit automatic agent, feature, fix, temporary, and worktree branches.
 - Preserve side-by-side operation with the existing Avalonia application.
 
 ## Phase 1: Census and contract foundation
@@ -53,6 +54,8 @@ Agents MAY restructure internal code, tooling, tests, directories, and scoped in
 
 Each implementation wave SHALL be preserved through coherent local checkpoint commits under D-GIT-001. The coordinating agent performs the final cross-scope verification and pushes the complete checkpoint sequence; it does not collapse delegated or independently meaningful outcomes into one opaque commit.
 
+All coordinating and delegated agents remain on the current branch under D-BRANCH-001. Non-overlapping path ownership and progressive handoffs provide isolation; agents do not create branches per platform, feature, agent, or packet unless the human explicitly requests that model.
+
 ## Phase 4: Full-parity release candidate
 
 Execute Wave 8 and the gate in [section 21.5](12-full-parity-delivery.md#215-full-parity-release-gate). Publish the parity attestation and unresolved-ID count.
@@ -75,6 +78,7 @@ BXIP001 implementation succeeds when:
 10. BriarForge builds and releases without the KovaForge checkout or legacy editor submodules.
 11. Repeated agentic-development pain points have durable structural, tooling, test, diagnostic, or instruction remedies rather than accumulating as accepted friction.
 12. Material implementation history is recoverable and reviewable through verified progressive commits, and every completed task's final local revision is present on its intended remote branch.
+13. Agentic development stays on the human-supplied current branch, with no unrequested branch or worktree proliferation.
 
 Compiling three applications, completing only the qualification tranche, or reporting a high percentage while unresolved IDs remain does not satisfy this proposal.
 
@@ -105,5 +109,6 @@ The out-of-process plugin protocol and platform packaging details MAY be specifi
 - Contract, product, platform, conformance, security, governance, and release roles are assigned.
 - The root and scoped `AGENTS.md` hierarchy grants and bounds self-directed restructuring under D-REF-001.
 - The root `AGENTS.md` requires progressive verified commits and a final push under D-GIT-001.
+- The root `AGENTS.md` prohibits creating or switching branches without explicit human instruction under D-BRANCH-001.
 - No production implementation step depends on modifying the KovaForge reference checkout.
 - A later proposal is required to retire Avalonia or collapse application identities, not to continue from qualification into full implementation.

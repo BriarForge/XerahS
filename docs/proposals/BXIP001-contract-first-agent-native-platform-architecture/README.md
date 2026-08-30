@@ -48,6 +48,7 @@ These IDs bind the greenfield implementation. Full text is in [08-decisions.md](
 | [D-AGT-001](08-decisions.md#d-agt-001-agentsmd-hierarchy) | `AGENTS.md` hierarchy |
 | [D-REF-001](08-decisions.md#d-ref-001-agent-directed-restructuring-authority) | Agent-directed restructuring authority |
 | [D-GIT-001](08-decisions.md#d-git-001-progressive-commit-and-final-push-policy) | Progressive commit and final push policy |
+| [D-BRANCH-001](08-decisions.md#d-branch-001-current-branch-continuity) | Current branch continuity |
 | [D-GOLD-001](08-decisions.md#d-gold-001-golden-image-tolerances) | Golden-image tolerances |
 | [D-KERN-001](08-decisions.md#d-kern-001-shared-headless-rendering-kernel-threshold) | Shared rendering-kernel threshold |
 | [D-VID-001](08-decisions.md#d-vid-001-native-videoeditor-and-media-tools) | Native VideoEditor and media tools |
