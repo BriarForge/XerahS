@@ -143,7 +143,83 @@ items:
       - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Core/Persistence/XannProjectFileService.cs"
         symbol: "XannProjectFileService"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/EDITOR-SESSION-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "COMPAT-IMAGE-EDITOR-OPTIONS-001"
+    domain: "image-editor-settings"
+    user_outcome: "Read, validate, migrate, and preserve supported ImageEditorOptions fields without silent loss."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "COMPAT-IMAGE-EDITOR-HOST-001"
+    domain: "image-editor-host"
+    user_outcome: "Preserve host-provided editor options, service callbacks, session outcomes, and ownership boundaries."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/AvaloniaIntegration.cs"
+        symbol: "AvaloniaIntegration"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "COMPAT-IMAGE-EDITOR-RASTER-001"
+    domain: "image-editor-raster"
+    user_outcome: "Decode and encode supported raster formats with explicit format, quality, alpha, orientation, and color handling."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/EditorImageFileWriter.cs"
+        symbol: "EditorImageFileWriter"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "COMPAT-IMAGE-EDITOR-CLIPBOARD-001"
+    domain: "image-editor-clipboard"
+    user_outcome: "Exchange supported image and annotation payloads through native clipboards without leaking private data."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/IClipboardService.cs"
+        symbol: "IClipboardService"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
     platforms:
       windows: "required"
       macos: "required"

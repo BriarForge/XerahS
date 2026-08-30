@@ -611,6 +611,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool UsePathStyle { get; set; }"
+  - id: "SET-APPLICATION-CONFIG-ACTIONS-TOOLBAR-LIST-001"
+    domain: "settings"
+    user_outcome: "Preserve ApplicationConfig.ActionsToolbarList semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.ActionsToolbarList"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<WorkflowType>"
+    source_declaration: "public List<WorkflowType> ActionsToolbarList = new List<WorkflowType>()"
   - id: "SET-APPLICATION-CONFIG-ACTIONS-TOOLBAR-LOCK-POSITION-001"
     domain: "settings"
     user_outcome: "Preserve ApplicationConfig.ActionsToolbarLockPosition semantics, default, validation, migration, and downstream effect."
@@ -737,6 +758,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool AssistantEnabled { get; set; } = true;"
+  - id: "SET-APPLICATION-CONFIG-ASSISTANT-HOTKEY-001"
+    domain: "settings"
+    user_outcome: "Preserve ApplicationConfig.AssistantHotkey semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.AssistantHotkey"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "HotkeyInfo"
+    source_declaration: "public HotkeyInfo AssistantHotkey { get; set; } = new HotkeyInfo(Key.Space, KeyModifiers.Control | KeyModifiers.Shift);"
   - id: "SET-APPLICATION-CONFIG-ASSISTANT-PROMPT-HISTORY-ENABLED-001"
     domain: "settings"
     user_outcome: "Preserve ApplicationConfig.AssistantPromptHistoryEnabled semantics, default, validation, migration, and downstream effect."
@@ -758,6 +800,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool AssistantPromptHistoryEnabled { get; set; }"
+  - id: "SET-APPLICATION-CONFIG-ASSISTANT-PROVIDERS-001"
+    domain: "settings"
+    user_outcome: "Preserve ApplicationConfig.AssistantProviders semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.AssistantProviders"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<AssistantProviderConfig>"
+    source_declaration: "public List<AssistantProviderConfig> AssistantProviders { get; set; } = new();"
   - id: "SET-APPLICATION-CONFIG-AUTO-CAPTURE-MINIMIZE-TO-TRAY-001"
     domain: "settings"
     user_outcome: "Preserve ApplicationConfig.AutoCaptureMinimizeToTray semantics, default, validation, migration, and downstream effect."
@@ -1010,6 +1073,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool CaptureCommandPaletteEnabled { get; set; } = true;"
+  - id: "SET-APPLICATION-CONFIG-CAPTURE-COMMAND-PALETTE-HOTKEY-001"
+    domain: "settings"
+    user_outcome: "Preserve ApplicationConfig.CaptureCommandPaletteHotkey semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.CaptureCommandPaletteHotkey"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "HotkeyInfo"
+    source_declaration: "public HotkeyInfo CaptureCommandPaletteHotkey { get; set; } = new HotkeyInfo(Key.Space, KeyModifiers.Control | KeyModifiers.Alt);"
   - id: "SET-APPLICATION-CONFIG-CLEANUP-KEEP-FILE-COUNT-001"
     domain: "settings"
     user_outcome: "Preserve ApplicationConfig.CleanupKeepFileCount semantics, default, validation, migration, and downstream effect."
@@ -1031,6 +1115,27 @@ items:
     status: "inventoried"
     value_type: "int"
     source_declaration: "public int CleanupKeepFileCount = 10;"
+  - id: "SET-APPLICATION-CONFIG-CLIPBOARD-CONTENT-FORMATS-001"
+    domain: "settings"
+    user_outcome: "Preserve ApplicationConfig.ClipboardContentFormats semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.ClipboardContentFormats"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<ClipboardFormat>"
+    source_declaration: "public List<ClipboardFormat> ClipboardContentFormats = new List<ClipboardFormat>();"
   - id: "SET-APPLICATION-CONFIG-CUSTOM-PRE-RELEASE-UPDATE-SOURCE-001"
     domain: "settings"
     user_outcome: "Preserve ApplicationConfig.CustomPreReleaseUpdateSource semantics, default, validation, migration, and downstream effect."
@@ -1808,6 +1913,48 @@ items:
     status: "inventoried"
     value_type: "int"
     source_declaration: "public int PreviewSplitterDistance = 335;"
+  - id: "SET-APPLICATION-CONFIG-PRINT-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve ApplicationConfig.PrintSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.PrintSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "PrintSettings"
+    source_declaration: "public PrintSettings PrintSettings = new PrintSettings();"
+  - id: "SET-APPLICATION-CONFIG-PROXY-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve ApplicationConfig.ProxySettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.ProxySettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "ProxyInfo"
+    source_declaration: "public ProxyInfo ProxySettings = new ProxyInfo();"
   - id: "SET-APPLICATION-CONFIG-QUICK-TASK-PRESETS-001"
     domain: "settings"
     user_outcome: "Preserve ApplicationConfig.QuickTaskPresets semantics, default, validation, migration, and downstream effect."
@@ -1829,6 +1976,27 @@ items:
     status: "inventoried"
     value_type: "List<QuickTaskInfo>"
     source_declaration: "public List<QuickTaskInfo> QuickTaskPresets = QuickTaskInfo.DefaultPresets;"
+  - id: "SET-APPLICATION-CONFIG-RECENT-COLORS-001"
+    domain: "settings"
+    user_outcome: "Preserve ApplicationConfig.RecentColors semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.RecentColors"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<Color>"
+    source_declaration: "public List<Color> RecentColors = new List<Color>();"
   - id: "SET-APPLICATION-CONFIG-RECENT-TASKS-001"
     domain: "settings"
     user_outcome: "Preserve ApplicationConfig.RecentTasks semantics, default, validation, migration, and downstream effect."
@@ -2144,6 +2312,69 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool ScreenshotContentSearchEnabled { get; set; } = true;"
+  - id: "SET-APPLICATION-CONFIG-SECONDARY-FILE-UPLOADERS-001"
+    domain: "settings"
+    user_outcome: "Preserve ApplicationConfig.SecondaryFileUploaders semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.SecondaryFileUploaders"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<FileDestination>"
+    source_declaration: "public List<FileDestination> SecondaryFileUploaders = new List<FileDestination>();"
+  - id: "SET-APPLICATION-CONFIG-SECONDARY-IMAGE-UPLOADERS-001"
+    domain: "settings"
+    user_outcome: "Preserve ApplicationConfig.SecondaryImageUploaders semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.SecondaryImageUploaders"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<ImageDestination>"
+    source_declaration: "public List<ImageDestination> SecondaryImageUploaders = new List<ImageDestination>();"
+  - id: "SET-APPLICATION-CONFIG-SECONDARY-TEXT-UPLOADERS-001"
+    domain: "settings"
+    user_outcome: "Preserve ApplicationConfig.SecondaryTextUploaders semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.SecondaryTextUploaders"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<TextDestination>"
+    source_declaration: "public List<TextDestination> SecondaryTextUploaders = new List<TextDestination>();"
   - id: "SET-APPLICATION-CONFIG-SELECTED-THEME-001"
     domain: "settings"
     user_outcome: "Preserve ApplicationConfig.SelectedTheme semantics, default, validation, migration, and downstream effect."
@@ -2228,6 +2459,27 @@ items:
     status: "inventoried"
     value_type: "SendToFolderPolicy"
     source_declaration: "public SendToFolderPolicy SendToFolderPolicy = SendToFolderPolicy.IncludeTopLevelFiles;"
+  - id: "SET-APPLICATION-CONFIG-SEND-TO-REMEMBERED-CHOICES-001"
+    domain: "settings"
+    user_outcome: "Preserve ApplicationConfig.SendToRememberedChoices semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.SendToRememberedChoices"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<SendToRememberedChoice>"
+    source_declaration: "public List<SendToRememberedChoice> SendToRememberedChoices = new();"
   - id: "SET-APPLICATION-CONFIG-SHOW-CLIPBOARD-CONTENT-VIEWER-001"
     domain: "settings"
     user_outcome: "Preserve ApplicationConfig.ShowClipboardContentViewer semantics, default, validation, migration, and downstream effect."
@@ -2438,6 +2690,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool SilentRun = false;"
+  - id: "SET-APPLICATION-CONFIG-TASK-LIST-VIEW-COLUMN-WIDTHS-001"
+    domain: "settings"
+    user_outcome: "Preserve ApplicationConfig.TaskListViewColumnWidths semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.TaskListViewColumnWidths"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<int>"
+    source_declaration: "public List<int> TaskListViewColumnWidths = new List<int>();"
   - id: "SET-APPLICATION-CONFIG-TASK-VIEW-MODE-001"
     domain: "settings"
     user_outcome: "Preserve ApplicationConfig.TaskViewMode semantics, default, validation, migration, and downstream effect."
@@ -2501,6 +2774,27 @@ items:
     status: "inventoried"
     value_type: "AppThemeMode"
     source_declaration: "public AppThemeMode ThemeMode = AppThemeMode.System;"
+  - id: "SET-APPLICATION-CONFIG-THEMES-001"
+    domain: "settings"
+    user_outcome: "Preserve ApplicationConfig.Themes semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.Themes"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<ShareXTheme>"
+    source_declaration: "public List<ShareXTheme> Themes = ShareXTheme.GetDefaultThemes();"
   - id: "SET-APPLICATION-CONFIG-THUMBNAIL-CLICK-ACTION-001"
     domain: "settings"
     user_outcome: "Preserve ApplicationConfig.ThumbnailClickAction semantics, default, validation, migration, and downstream effect."
@@ -2522,6 +2816,27 @@ items:
     status: "inventoried"
     value_type: "ThumbnailViewClickAction"
     source_declaration: "public ThumbnailViewClickAction ThumbnailClickAction = ThumbnailViewClickAction.Default;"
+  - id: "SET-APPLICATION-CONFIG-THUMBNAIL-SIZE-001"
+    domain: "settings"
+    user_outcome: "Preserve ApplicationConfig.ThumbnailSize semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.ThumbnailSize"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Size"
+    source_declaration: "public Size ThumbnailSize = new Size(200, 150);"
   - id: "SET-APPLICATION-CONFIG-THUMBNAIL-TITLE-LOCATION-001"
     domain: "settings"
     user_outcome: "Preserve ApplicationConfig.ThumbnailTitleLocation semantics, default, validation, migration, and downstream effect."
@@ -3110,6 +3425,48 @@ items:
     status: "inventoried"
     value_type: "long"
     source_declaration: "public long Timestamp { get; }"
+  - id: "SET-BACKGROUND-REMOVER-OPTIONS-SELECTED-DEVICE-001"
+    domain: "settings"
+    user_outcome: "Preserve BackgroundRemoverOptions.SelectedDevice semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/BackgroundRemoverOptions.cs"
+        symbol: "BackgroundRemoverOptions.SelectedDevice"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "BackgroundRemovalDevice"
+    source_declaration: "public BackgroundRemovalDevice SelectedDevice { get; set; } = BackgroundRemovalDevice.Auto;"
+  - id: "SET-BACKGROUND-REMOVER-OPTIONS-SELECTED-MODEL-FILE-NAME-001"
+    domain: "settings"
+    user_outcome: "Preserve BackgroundRemoverOptions.SelectedModelFileName semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/BackgroundRemoverOptions.cs"
+        symbol: "BackgroundRemoverOptions.SelectedModelFileName"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string SelectedModelFileName { get; set; } = \"\";"
   - id: "SET-BORDERLESS-WINDOW-SETTINGS-AUTO-CLOSE-WINDOW-001"
     domain: "settings"
     user_outcome: "Preserve BorderlessWindowSettings.AutoCloseWindow semantics, default, validation, migration, and downstream effect."
@@ -3194,6 +3551,48 @@ items:
     status: "inventoried"
     value_type: "string"
     source_declaration: "public string WindowTitle { get; set; } = string.Empty;"
+  - id: "SET-CUSTOM-UPLOADER-CONFIG-ID-001"
+    domain: "settings"
+    user_outcome: "Preserve CustomUploaderConfig.Id semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/Configuration/CustomUploaderConfig.cs"
+        symbol: "CustomUploaderConfig.Id"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Guid"
+    source_declaration: "public Guid Id { get; set; } = Guid.NewGuid();"
+  - id: "SET-CUSTOM-UPLOADER-CONFIG-ITEM-001"
+    domain: "settings"
+    user_outcome: "Preserve CustomUploaderConfig.Item semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/Configuration/CustomUploaderConfig.cs"
+        symbol: "CustomUploaderConfig.Item"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "CustomUploaderItem"
+    source_declaration: "public CustomUploaderItem Item { get; set; } = CustomUploaderItem.Init();"
   - id: "SET-CUSTOM-UPLOADER-CONFIG-NAME-001"
     domain: "settings"
     user_outcome: "Preserve CustomUploaderConfig.Name semantics, default, validation, migration, and downstream effect."
@@ -3257,6 +3656,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool AutoCreateShareableLink { get; set; } = true;"
+  - id: "SET-DROPBOX-CONFIG-ID-001"
+    domain: "settings"
+    user_outcome: "Preserve DropboxConfig.Id semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/Configuration/DropboxConfig.cs"
+        symbol: "DropboxConfig.Id"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Guid"
+    source_declaration: "public Guid Id { get; set; } = Guid.NewGuid();"
   - id: "SET-DROPBOX-CONFIG-NAME-001"
     domain: "settings"
     user_outcome: "Preserve DropboxConfig.Name semantics, default, validation, migration, and downstream effect."
@@ -3677,6 +4097,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool IsAnimatedImage => VideoCodec == FFmpegVideoCodec.gif || VideoCodec == FFmpegVideoCodec.libwebp || VideoCodec == FFmpegVideoCodec.apng;"
+  - id: "SET-FFMPEG-OPTIONS-IS-AUDIO-SOURCE-SELECTED-001"
+    domain: "settings"
+    user_outcome: "Preserve FFmpegOptions.IsAudioSourceSelected semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettingsOptions.cs"
+        symbol: "FFmpegOptions.IsAudioSourceSelected"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool IsAudioSourceSelected => !string.IsNullOrEmpty(AudioSource) && (!IsVideoSourceSelected || !IsAnimatedImage);"
   - id: "SET-FFMPEG-OPTIONS-IS-EVEN-SIZE-REQUIRED-001"
     domain: "settings"
     user_outcome: "Preserve FFmpegOptions.IsEvenSizeRequired semantics, default, validation, migration, and downstream effect."
@@ -3719,6 +4160,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool IsSourceSelected => IsVideoSourceSelected || IsAudioSourceSelected;"
+  - id: "SET-FFMPEG-OPTIONS-IS-VIDEO-SOURCE-SELECTED-001"
+    domain: "settings"
+    user_outcome: "Preserve FFmpegOptions.IsVideoSourceSelected semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettingsOptions.cs"
+        symbol: "FFmpegOptions.IsVideoSourceSelected"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool IsVideoSourceSelected => !string.IsNullOrEmpty(VideoSource);"
   - id: "SET-FFMPEG-OPTIONS-MP3-QSCALE-001"
     domain: "settings"
     user_outcome: "Preserve FFmpegOptions.MP3_QScale semantics, default, validation, migration, and downstream effect."
@@ -4139,6 +4601,48 @@ items:
     status: "inventoried"
     value_type: "FrameData"
     source_declaration: "public FrameData Frame { get; }"
+  - id: "SET-FTP-CONFIG-ACCOUNT-LIST-001"
+    domain: "settings"
+    user_outcome: "Preserve FtpConfig.AccountList semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/Configuration/FtpConfig.cs"
+        symbol: "FtpConfig.AccountList"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<FTPAccount>"
+    source_declaration: "public List<FTPAccount> AccountList { get; set; } = new();"
+  - id: "SET-FTP-CONFIG-ID-001"
+    domain: "settings"
+    user_outcome: "Preserve FtpConfig.Id semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/Configuration/FtpConfig.cs"
+        symbol: "FtpConfig.Id"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Guid"
+    source_declaration: "public Guid Id { get; set; } = Guid.NewGuid();"
   - id: "SET-FTP-CONFIG-NAME-001"
     domain: "settings"
     user_outcome: "Preserve FtpConfig.Name semantics, default, validation, migration, and downstream effect."
@@ -4433,6 +4937,27 @@ items:
     status: "inventoried"
     value_type: "int"
     source_declaration: "public int SplitterDistance { get; set; } = 550;"
+  - id: "SET-HISTORY-SETTINGS-WINDOW-STATE-001"
+    domain: "settings"
+    user_outcome: "Preserve HistorySettings.WindowState semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.History/HistorySettings.cs"
+        symbol: "HistorySettings.WindowState"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "WindowPlacementState"
+    source_declaration: "public WindowPlacementState WindowState { get; set; } = new WindowPlacementState();"
   - id: "SET-IMAGE-BEAUTIFIER-OPTIONS-BACKGROUND-COLOR-001"
     domain: "settings"
     user_outcome: "Preserve ImageBeautifierOptions.BackgroundColor semantics, default, validation, migration, and downstream effect."
@@ -4811,6 +5336,2106 @@ items:
     status: "inventoried"
     value_type: "int"
     source_declaration: "public int WrapAfter { get; set; } = 0;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-ACCENT-COLOR-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.AccentColor semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.AccentColor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Color"
+    source_declaration: "public Color AccentColor { get => HexToColor(AccentColorHex); set => AccentColorHex = ColorToHex(value); }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-ACCENT-COLOR-HEX-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.AccentColorHex semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.AccentColorHex"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string AccentColorHex { get; set; } = \"#3E83F2\";"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-ARROW-STYLE-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.ArrowStyle semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.ArrowStyle"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "ArrowStyle"
+    source_declaration: "public ArrowStyle ArrowStyle { get; set; } = ArrowStyle.Classic;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-AUTO-CLOSE-EDITOR-ON-TASK-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.AutoCloseEditorOnTask semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.AutoCloseEditorOnTask"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool AutoCloseEditorOnTask { get; set; } = false;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-AUTO-COPY-IMAGE-TO-CLIPBOARD-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.AutoCopyImageToClipboard semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.AutoCopyImageToClipboard"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool AutoCopyImageToClipboard { get; set; } = false;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-COLOR-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BackgroundColor semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BackgroundColor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Color"
+    source_declaration: "public Color BackgroundColor { get => HexToColor(BackgroundColorHex); set => BackgroundColorHex = ColorToHex(value); }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-COLOR-HEX-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BackgroundColorHex semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BackgroundColorHex"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string BackgroundColorHex { get; set; } = ColorToHex(Color.FromArgb(255, 34, 34, 34));"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-GRADIENT-COLOR1-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BackgroundGradientColor1 semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BackgroundGradientColor1"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Color"
+    source_declaration: "public Color BackgroundGradientColor1 { get => HexToColor(BackgroundGradientColor1Hex); set => BackgroundGradientColor1Hex = ColorToHex(value); }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-GRADIENT-COLOR1-HEX-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BackgroundGradientColor1Hex semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BackgroundGradientColor1Hex"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string BackgroundGradientColor1Hex { get; set; } = ColorToHex(Color.FromArgb(255, 221, 36, 118));"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-GRADIENT-COLOR2-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BackgroundGradientColor2 semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BackgroundGradientColor2"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Color"
+    source_declaration: "public Color BackgroundGradientColor2 { get => HexToColor(BackgroundGradientColor2Hex); set => BackgroundGradientColor2Hex = ColorToHex(value); }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-GRADIENT-COLOR2-HEX-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BackgroundGradientColor2Hex semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BackgroundGradientColor2Hex"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string BackgroundGradientColor2Hex { get; set; } = ColorToHex(Color.FromArgb(255, 255, 81, 47));"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-IMAGE-PATH-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BackgroundImagePath semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BackgroundImagePath"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string BackgroundImagePath { get; set; } = \"\";"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-MARGIN-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BackgroundMargin semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BackgroundMargin"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "double"
+    source_declaration: "public double BackgroundMargin { get; set; } = 80;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-PADDING-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BackgroundPadding semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BackgroundPadding"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "double"
+    source_declaration: "public double BackgroundPadding { get; set; } = 40;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-ROUNDED-CORNER-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BackgroundRoundedCorner semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BackgroundRoundedCorner"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "double"
+    source_declaration: "public double BackgroundRoundedCorner { get; set; } = 20;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-SHADOW-RADIUS-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BackgroundShadowRadius semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BackgroundShadowRadius"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "double"
+    source_declaration: "public double BackgroundShadowRadius { get; set; } = 30;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-SMART-PADDING-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BackgroundSmartPadding semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BackgroundSmartPadding"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool BackgroundSmartPadding { get; set; } = true;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BACKGROUND-TYPE-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BackgroundType semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BackgroundType"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string BackgroundType { get; set; } = \"Transparent\";"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BLUR-STRENGTH-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BlurStrength semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BlurStrength"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "float"
+    source_declaration: "public float BlurStrength { get; set; } = 30;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BORDER-COLOR-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BorderColor semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BorderColor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Color"
+    source_declaration: "public Color BorderColor { get => HexToColor(BorderColorHex); set => BorderColorHex = ColorToHex(value); }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BORDER-COLOR-HEX-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BorderColorHex semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BorderColorHex"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string BorderColorHex { get; set; } = ColorToHex(PrimaryColor);"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-BORDER-STYLE-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.BorderStyle semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.BorderStyle"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "BorderStyle"
+    source_declaration: "public BorderStyle BorderStyle { get; set; } = BorderStyle.Solid;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-CORNER-RADIUS-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.CornerRadius semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.CornerRadius"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "int"
+    source_declaration: "public int CornerRadius { get; set; } = 4;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-CURSOR-TYPE-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.CursorType semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.CursorType"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "CursorType"
+    source_declaration: "public CursorType CursorType { get; set; } = CursorType.Default;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-FAVORITE-EFFECTS-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.FavoriteEffects semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.FavoriteEffects"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<string>"
+    source_declaration: "public List<string> FavoriteEffects { get; set; } = new List<string>(DefaultFavoriteEffects);"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-FILL-COLOR-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.FillColor semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.FillColor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Color"
+    source_declaration: "public Color FillColor { get => HexToColor(FillColorHex); set => FillColorHex = ColorToHex(value); }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-FILL-COLOR-HEX-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.FillColorHex semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.FillColorHex"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string FillColorHex { get; set; } = ColorToHex(Colors.Transparent);"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-HIGHLIGHT-FILL-COLOR-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.HighlightFillColor semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.HighlightFillColor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Color"
+    source_declaration: "public Color HighlightFillColor { get => HexToColor(HighlightFillColorHex); set => HighlightFillColorHex = ColorToHex(value); }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-HIGHLIGHT-FILL-COLOR-HEX-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.HighlightFillColorHex semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.HighlightFillColorHex"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string HighlightFillColorHex { get; set; } = ColorToHex(Colors.Yellow);"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-IS-WINDOW-MAXIMIZED-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.IsWindowMaximized semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.IsWindowMaximized"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool IsWindowMaximized { get; set; } = true;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-LAST-USED-ANNOTATION-TOOL-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.LastUsedAnnotationTool semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.LastUsedAnnotationTool"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "EditorTool"
+    source_declaration: "public EditorTool LastUsedAnnotationTool { get; set; } = EditorTool.Rectangle;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-MAGNIFIER-ELLIPSE-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.MagnifierEllipse semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.MagnifierEllipse"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool MagnifierEllipse { get; set; }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-MAGNIFIER-STRENGTH-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.MagnifierStrength semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.MagnifierStrength"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "float"
+    source_declaration: "public float MagnifierStrength { get; set; } = 2;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-MAX-RECENT-IMAGE-FILES-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.MaxRecentImageFiles semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.MaxRecentImageFiles"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "int"
+    source_declaration: "public int MaxRecentImageFiles { get; set; } = 10;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-PIXELATE-STRENGTH-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.PixelateStrength semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.PixelateStrength"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "float"
+    source_declaration: "public float PixelateStrength { get; set; } = 20;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-QUICK-CROP-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.QuickCrop semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.QuickCrop"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool QuickCrop { get; set; } = true;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-RECENT-EFFECTS-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.RecentEffects semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.RecentEffects"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<string>"
+    source_declaration: "public List<string> RecentEffects { get; set; } = new List<string>();"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-RECENT-IMAGE-FILES-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.RecentImageFiles semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.RecentImageFiles"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<string>"
+    source_declaration: "public List<string> RecentImageFiles { get; set; } = new List<string>();"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-REMEMBER-WINDOW-STATE-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.RememberWindowState semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.RememberWindowState"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool RememberWindowState { get; set; } = true;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SHADOW-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.Shadow semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.Shadow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool Shadow { get; set; } = false;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SHADOW-BLUR-RADIUS-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.ShadowBlurRadius semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.ShadowBlurRadius"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "double"
+    source_declaration: "public double ShadowBlurRadius { get; set; } = Annotation.DefaultShadowBlurRadius;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SHADOW-COLOR-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.ShadowColor semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.ShadowColor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Color"
+    source_declaration: "public Color ShadowColor { get => HexToColor(ShadowColorHex); set => ShadowColorHex = ColorToHex(value); }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SHADOW-COLOR-HEX-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.ShadowColorHex semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.ShadowColorHex"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string ShadowColorHex { get; set; } = Annotation.DefaultShadowColorHex;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SHADOW-OFFSET-X-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.ShadowOffsetX semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.ShadowOffsetX"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "double"
+    source_declaration: "public double ShadowOffsetX { get; set; } = Annotation.DefaultShadowOffsetX;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SHADOW-OFFSET-Y-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.ShadowOffsetY semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.ShadowOffsetY"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "double"
+    source_declaration: "public double ShadowOffsetY { get; set; } = Annotation.DefaultShadowOffsetY;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SHADOW-OPACITY-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.ShadowOpacity semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.ShadowOpacity"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "double"
+    source_declaration: "public double ShadowOpacity { get; set; } = Annotation.DefaultShadowOpacity;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SHOW-EXIT-CONFIRMATION-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.ShowExitConfirmation semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.ShowExitConfirmation"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool ShowExitConfirmation { get; set; } = true;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SHOW-INSERT-IMAGE-DIALOG-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.ShowInsertImageDialog semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.ShowInsertImageDialog"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool ShowInsertImageDialog { get; set; } = true;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SHOW-NOTIFICATIONS-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.ShowNotifications semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.ShowNotifications"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool ShowNotifications { get; set; } = true;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-BORDER-COLOR-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.SpeechBalloonBorderColor semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.SpeechBalloonBorderColor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Color"
+    source_declaration: "public Color SpeechBalloonBorderColor { get => HexToColor(SpeechBalloonBorderColorHex); set => SpeechBalloonBorderColorHex = ColorToHex(value); }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-BORDER-COLOR-HEX-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.SpeechBalloonBorderColorHex semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.SpeechBalloonBorderColorHex"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string SpeechBalloonBorderColorHex { get; set; } = ColorToHex(Colors.Transparent);"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-FILL-COLOR-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.SpeechBalloonFillColor semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.SpeechBalloonFillColor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Color"
+    source_declaration: "public Color SpeechBalloonFillColor { get => HexToColor(SpeechBalloonFillColorHex); set => SpeechBalloonFillColorHex = ColorToHex(value); }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-FILL-COLOR-HEX-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.SpeechBalloonFillColorHex semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.SpeechBalloonFillColorHex"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string SpeechBalloonFillColorHex { get; set; } = ColorToHex(PrimaryColor);"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-FONT-FAMILY-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.SpeechBalloonFontFamily semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.SpeechBalloonFontFamily"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string SpeechBalloonFontFamily { get; set; } = \"Segoe UI\";"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-FONT-SIZE-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.SpeechBalloonFontSize semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.SpeechBalloonFontSize"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "float"
+    source_declaration: "public float SpeechBalloonFontSize { get; set; } = 48;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-TAIL-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.SpeechBalloonTail semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.SpeechBalloonTail"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool SpeechBalloonTail { get; set; } = true;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-TEXT-BOLD-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.SpeechBalloonTextBold semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.SpeechBalloonTextBold"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool SpeechBalloonTextBold { get; set; } = true;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-TEXT-COLOR-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.SpeechBalloonTextColor semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.SpeechBalloonTextColor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Color"
+    source_declaration: "public Color SpeechBalloonTextColor { get => HexToColor(SpeechBalloonTextColorHex); set => SpeechBalloonTextColorHex = ColorToHex(value); }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-TEXT-COLOR-HEX-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.SpeechBalloonTextColorHex semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.SpeechBalloonTextColorHex"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string SpeechBalloonTextColorHex { get; set; } = ColorToHex(SecondaryColor);"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-TEXT-HORIZONTAL-ALIGNMENT-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.SpeechBalloonTextHorizontalAlignment semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.SpeechBalloonTextHorizontalAlignment"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "TextHorizontalAlignment"
+    source_declaration: "public TextHorizontalAlignment SpeechBalloonTextHorizontalAlignment { get; set; } = TextHorizontalAlignment.Center;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-TEXT-ITALIC-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.SpeechBalloonTextItalic semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.SpeechBalloonTextItalic"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool SpeechBalloonTextItalic { get; set; } = false;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SPEECH-BALLOON-THICKNESS-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.SpeechBalloonThickness semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.SpeechBalloonThickness"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "int"
+    source_declaration: "public int SpeechBalloonThickness { get; set; } = 4;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SPOTLIGHT-BLUR-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.SpotlightBlur semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.SpotlightBlur"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "float"
+    source_declaration: "public float SpotlightBlur { get; set; } = 0;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SPOTLIGHT-ELLIPSE-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.SpotlightEllipse semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.SpotlightEllipse"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool SpotlightEllipse { get; set; }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-SPOTLIGHT-STRENGTH-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.SpotlightStrength semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.SpotlightStrength"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "float"
+    source_declaration: "public float SpotlightStrength { get; set; } = 30;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-STEP-BORDER-COLOR-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.StepBorderColor semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.StepBorderColor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Color"
+    source_declaration: "public Color StepBorderColor { get => HexToColor(StepBorderColorHex); set => StepBorderColorHex = ColorToHex(value); }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-STEP-BORDER-COLOR-HEX-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.StepBorderColorHex semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.StepBorderColorHex"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string StepBorderColorHex { get; set; } = ColorToHex(Colors.Transparent);"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-STEP-FILL-COLOR-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.StepFillColor semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.StepFillColor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Color"
+    source_declaration: "public Color StepFillColor { get => HexToColor(StepFillColorHex); set => StepFillColorHex = ColorToHex(value); }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-STEP-FILL-COLOR-HEX-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.StepFillColorHex semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.StepFillColorHex"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string StepFillColorHex { get; set; } = ColorToHex(PrimaryColor);"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-STEP-FONT-SIZE-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.StepFontSize semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.StepFontSize"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "float"
+    source_declaration: "public float StepFontSize { get; set; } = 30;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-STEP-TAIL-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.StepTail semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.StepTail"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool StepTail { get; set; } = true;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-STEP-TEXT-BOLD-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.StepTextBold semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.StepTextBold"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool StepTextBold { get; set; } = true;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-STEP-TEXT-COLOR-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.StepTextColor semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.StepTextColor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Color"
+    source_declaration: "public Color StepTextColor { get => HexToColor(StepTextColorHex); set => StepTextColorHex = ColorToHex(value); }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-STEP-TEXT-COLOR-HEX-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.StepTextColorHex semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.StepTextColorHex"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string StepTextColorHex { get; set; } = ColorToHex(SecondaryColor);"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-STEP-THICKNESS-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.StepThickness semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.StepThickness"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "int"
+    source_declaration: "public int StepThickness { get; set; } = 4;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-STEP-TYPE-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.StepType semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.StepType"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "StepType"
+    source_declaration: "public StepType StepType { get; set; } = StepType.Numeric;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-TEXT-BOLD-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.TextBold semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.TextBold"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool TextBold { get; set; } = true;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-TEXT-BORDER-COLOR-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.TextBorderColor semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.TextBorderColor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Color"
+    source_declaration: "public Color TextBorderColor { get => HexToColor(TextBorderColorHex); set => TextBorderColorHex = ColorToHex(value); }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-TEXT-BORDER-COLOR-HEX-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.TextBorderColorHex semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.TextBorderColorHex"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string TextBorderColorHex { get; set; } = ColorToHex(PrimaryColor);"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-TEXT-FONT-FAMILY-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.TextFontFamily semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.TextFontFamily"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string TextFontFamily { get; set; } = \"Segoe UI\";"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-TEXT-FONT-SIZE-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.TextFontSize semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.TextFontSize"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "float"
+    source_declaration: "public float TextFontSize { get; set; } = 48;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-TEXT-HORIZONTAL-ALIGNMENT-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.TextHorizontalAlignment semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.TextHorizontalAlignment"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "TextHorizontalAlignment"
+    source_declaration: "public TextHorizontalAlignment TextHorizontalAlignment { get; set; } = TextHorizontalAlignment.Center;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-TEXT-ITALIC-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.TextItalic semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.TextItalic"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool TextItalic { get; set; } = false;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-TEXT-TEXT-COLOR-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.TextTextColor semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.TextTextColor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Color"
+    source_declaration: "public Color TextTextColor { get => HexToColor(TextTextColorHex); set => TextTextColorHex = ColorToHex(value); }"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-TEXT-TEXT-COLOR-HEX-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.TextTextColorHex semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.TextTextColorHex"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string TextTextColorHex { get; set; } = ColorToHex(SecondaryColor);"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-TEXT-THICKNESS-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.TextThickness semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.TextThickness"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "int"
+    source_declaration: "public int TextThickness { get; set; } = 8;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-THEME-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.Theme semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.Theme"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string Theme { get; set; } = \"Dark\";"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-THICKNESS-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.Thickness semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.Thickness"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "int"
+    source_declaration: "public int Thickness { get; set; } = 4;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-TOOLBAR-ITEMS-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.ToolbarItems semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.ToolbarItems"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<ImageEditorToolbarItemOptions>"
+    source_declaration: "public List<ImageEditorToolbarItemOptions> ToolbarItems { get; set; } = new List<ImageEditorToolbarItemOptions>();"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-USE-SYSTEM-ACCENT-COLOR-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.UseSystemAccentColor semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.UseSystemAccentColor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool UseSystemAccentColor { get; set; } = true;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-USE-SYSTEM-THEME-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.UseSystemTheme semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.UseSystemTheme"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool UseSystemTheme { get; set; } = true;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-WINDOW-HEIGHT-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.WindowHeight semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.WindowHeight"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "double"
+    source_declaration: "public double WindowHeight { get; set; } = 720;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-WINDOW-WIDTH-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.WindowWidth semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.WindowWidth"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "double"
+    source_declaration: "public double WindowWidth { get; set; } = 1280;"
+  - id: "SET-IMAGE-EDITOR-OPTIONS-ZOOM-TO-FIT-ON-OPEN-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorOptions.ZoomToFitOnOpen semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions.ZoomToFitOnOpen"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool ZoomToFitOnOpen { get; set; } = false;"
+  - id: "SET-IMAGE-EDITOR-TOOLBAR-ITEM-OPTIONS-BEGIN-GROUP-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorToolbarItemOptions.BeginGroup semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorToolbarItemOptions.cs"
+        symbol: "ImageEditorToolbarItemOptions.BeginGroup"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool?"
+    source_declaration: "public bool? BeginGroup { get; set; }"
+  - id: "SET-IMAGE-EDITOR-TOOLBAR-ITEM-OPTIONS-HOTKEY-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorToolbarItemOptions.Hotkey semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorToolbarItemOptions.cs"
+        symbol: "ImageEditorToolbarItemOptions.Hotkey"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string Hotkey { get; set; } = \"\";"
+  - id: "SET-IMAGE-EDITOR-TOOLBAR-ITEM-OPTIONS-ID-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorToolbarItemOptions.Id semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorToolbarItemOptions.cs"
+        symbol: "ImageEditorToolbarItemOptions.Id"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string Id { get; set; } = \"\";"
+  - id: "SET-IMAGE-EDITOR-TOOLBAR-ITEM-OPTIONS-IS-VISIBLE-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEditorToolbarItemOptions.IsVisible semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorToolbarItemOptions.cs"
+        symbol: "ImageEditorToolbarItemOptions.IsVisible"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "bool"
+    source_declaration: "public bool IsVisible { get; set; } = true;"
+  - id: "SET-IMAGE-EFFECT-PRESET-EFFECTS-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEffectPreset.Effects semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettingsOptions.cs"
+        symbol: "ImageEffectPreset.Effects"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<ImageEffect>"
+    source_declaration: "public List<ImageEffect> Effects { get; set; } = new();"
+  - id: "SET-IMAGE-EFFECT-PRESET-MAPPED-EFFECTS-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageEffectPreset.MappedEffects semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettingsOptions.cs"
+        symbol: "ImageEffectPreset.MappedEffects"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<MappedEffectData>"
+    source_declaration: "public List<MappedEffectData> MappedEffects { get; set; } = new();"
   - id: "SET-IMAGE-EFFECT-PRESET-NAME-001"
     domain: "settings"
     user_outcome: "Preserve ImageEffectPreset.Name semantics, default, validation, migration, and downstream effect."
@@ -5000,6 +7625,48 @@ items:
     status: "inventoried"
     value_type: "string"
     source_declaration: "public string SearchText { get; set; } = \"\";"
+  - id: "SET-IMAGE-HISTORY-SETTINGS-THUMBNAIL-SIZE-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageHistorySettings.ThumbnailSize semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.History/ImageHistorySettings.cs"
+        symbol: "ImageHistorySettings.ThumbnailSize"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Size"
+    source_declaration: "public Size ThumbnailSize { get; set; } = new Size(250, 150);"
+  - id: "SET-IMAGE-HISTORY-SETTINGS-WINDOW-STATE-001"
+    domain: "settings"
+    user_outcome: "Preserve ImageHistorySettings.WindowState semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.History/ImageHistorySettings.cs"
+        symbol: "ImageHistorySettings.WindowState"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "WindowPlacementState"
+    source_declaration: "public WindowPlacementState WindowState { get; set; } = new WindowPlacementState();"
   - id: "SET-IMGUR-CONFIG-ACCOUNT-TYPE-001"
     domain: "settings"
     user_outcome: "Preserve ImgurConfig.AccountType semantics, default, validation, migration, and downstream effect."
@@ -5063,6 +7730,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool DirectLink { get; set; } = true;"
+  - id: "SET-IMGUR-CONFIG-ID-001"
+    domain: "settings"
+    user_outcome: "Preserve ImgurConfig.Id semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/Configuration/ImgurConfig.cs"
+        symbol: "ImgurConfig.Id"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Guid"
+    source_declaration: "public Guid Id { get; set; } = Guid.NewGuid();"
   - id: "SET-IMGUR-CONFIG-NAME-001"
     domain: "settings"
     user_outcome: "Preserve ImgurConfig.Name semantics, default, validation, migration, and downstream effect."
@@ -5210,6 +7898,48 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool UseGIFV { get; set; } = true;"
+  - id: "SET-IMPORT-RESULT-IMPORTED-CUSTOM-UPLOADERS-001"
+    domain: "settings"
+    user_outcome: "Preserve ImportResult.ImportedCustomUploaders semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfigImporter.cs"
+        symbol: "ImportResult.ImportedCustomUploaders"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<CustomUploaderItem>"
+    source_declaration: "public List<CustomUploaderItem> ImportedCustomUploaders { get; } = new List<CustomUploaderItem>();"
+  - id: "SET-IMPORT-RESULT-IMPORTED-UPLOADERS-001"
+    domain: "settings"
+    user_outcome: "Preserve ImportResult.ImportedUploaders semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfigImporter.cs"
+        symbol: "ImportResult.ImportedUploaders"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<string>"
+    source_declaration: "public List<string> ImportedUploaders { get; } = new List<string>();"
   - id: "SET-IMPORT-RESULT-TOTAL-IMPORTED-001"
     domain: "settings"
     user_outcome: "Preserve ImportResult.TotalImported semantics, default, validation, migration, and downstream effect."
@@ -5651,6 +8381,69 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool UseCustomCSSFile { get; set; }"
+  - id: "SET-INSTANCE-CONFIGURATION-DEFAULT-INSTANCES-001"
+    domain: "settings"
+    user_outcome: "Preserve InstanceConfiguration.DefaultInstances semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/PluginSystem/InstanceConfiguration.cs"
+        symbol: "InstanceConfiguration.DefaultInstances"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Dictionary<UploaderCategory, string>"
+    source_declaration: "public Dictionary<UploaderCategory, string> DefaultInstances { get; set; } = new();"
+  - id: "SET-INSTANCE-CONFIGURATION-INSTANCES-001"
+    domain: "settings"
+    user_outcome: "Preserve InstanceConfiguration.Instances semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/PluginSystem/InstanceConfiguration.cs"
+        symbol: "InstanceConfiguration.Instances"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<UploaderInstance>"
+    source_declaration: "public List<UploaderInstance> Instances { get; set; } = new();"
+  - id: "SET-MAPPED-EFFECT-DATA-PROPERTIES-001"
+    domain: "settings"
+    user_outcome: "Preserve MappedEffectData.Properties semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettingsOptions.cs"
+        symbol: "MappedEffectData.Properties"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Dictionary<string, object?>"
+    source_declaration: "public Dictionary<string, object?> Properties { get; set; } = new();"
   - id: "SET-MAPPED-EFFECT-DATA-TARGET-TYPE-NAME-001"
     domain: "settings"
     user_outcome: "Preserve MappedEffectData.TargetTypeName semantics, default, validation, migration, and downstream effect."
@@ -5735,6 +8528,27 @@ items:
     status: "inventoried"
     value_type: "string"
     source_declaration: "public string Language { get; set; } = \"en\";"
+  - id: "SET-OCROPTIONS-PREFERRED-LANGUAGES-001"
+    domain: "settings"
+    user_outcome: "Preserve OCROptions.PreferredLanguages semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettingsOptions.cs"
+        symbol: "OCROptions.PreferredLanguages"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<string>"
+    source_declaration: "public List<string> PreferredLanguages { get; set; } = new();"
   - id: "SET-OCROPTIONS-SCALE-FACTOR-001"
     domain: "settings"
     user_outcome: "Preserve OCROptions.ScaleFactor semantics, default, validation, migration, and downstream effect."
@@ -6008,6 +8822,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool KeepCenterLocation { get; set; } = true;"
+  - id: "SET-PIN-TO-SCREEN-OPTIONS-MINIMIZE-SIZE-001"
+    domain: "settings"
+    user_outcome: "Preserve PinToScreenOptions.MinimizeSize semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettingsOptions.cs"
+        symbol: "PinToScreenOptions.MinimizeSize"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Size"
+    source_declaration: "public Size MinimizeSize { get; set; } = new Size(100, 100);"
   - id: "SET-PIN-TO-SCREEN-OPTIONS-OPACITY-STEP-001"
     domain: "settings"
     user_outcome: "Preserve PinToScreenOptions.OpacityStep semantics, default, validation, migration, and downstream effect."
@@ -6155,6 +8990,27 @@ items:
     status: "inventoried"
     value_type: "int"
     source_declaration: "public int FileCount { get; set; }"
+  - id: "SET-PLUGIN-VERIFICATION-RESULT-ISSUES-001"
+    domain: "settings"
+    user_outcome: "Preserve PluginVerificationResult.Issues semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/PluginSystem/PluginConfigurationVerifier.cs"
+        symbol: "PluginVerificationResult.Issues"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<string>"
+    source_declaration: "public List<string> Issues { get; set; } = new();"
   - id: "SET-PLUGIN-VERIFICATION-RESULT-MESSAGE-001"
     domain: "settings"
     user_outcome: "Preserve PluginVerificationResult.Message semantics, default, validation, migration, and downstream effect."
@@ -6176,6 +9032,27 @@ items:
     status: "inventoried"
     value_type: "string"
     source_declaration: "public string Message { get; set; } = string.Empty;"
+  - id: "SET-PLUGIN-VERIFICATION-RESULT-PROBLEMATIC-FILES-001"
+    domain: "settings"
+    user_outcome: "Preserve PluginVerificationResult.ProblematicFiles semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/PluginSystem/PluginConfigurationVerifier.cs"
+        symbol: "PluginVerificationResult.ProblematicFiles"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<string>"
+    source_declaration: "public List<string> ProblematicFiles { get; set; } = new();"
   - id: "SET-PLUGIN-VERIFICATION-RESULT-STATUS-001"
     domain: "settings"
     user_outcome: "Preserve PluginVerificationResult.Status semantics, default, validation, migration, and downstream effect."
@@ -6848,6 +9725,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool ActiveMonitorMode { get; set; } = false;"
+  - id: "SET-REGION-CAPTURE-OPTIONS-ANNOTATION-OPTIONS-001"
+    domain: "settings"
+    user_outcome: "Preserve RegionCaptureOptions.AnnotationOptions semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettingsOptions.cs"
+        symbol: "RegionCaptureOptions.AnnotationOptions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "ImageEditorOptions"
+    source_declaration: "public ImageEditorOptions AnnotationOptions { get; set; } = new ImageEditorOptions();"
   - id: "SET-REGION-CAPTURE-OPTIONS-AUTO-CLOSE-EDITOR-ON-TASK-001"
     domain: "settings"
     user_outcome: "Preserve RegionCaptureOptions.AutoCloseEditorOnTask semantics, default, validation, migration, and downstream effect."
@@ -6890,6 +9788,27 @@ items:
     status: "inventoried"
     value_type: "int"
     source_declaration: "public int BackgroundDimStrength { get; set; } = 20;"
+  - id: "SET-REGION-CAPTURE-OPTIONS-COLOR-PICKER-OPTIONS-001"
+    domain: "settings"
+    user_outcome: "Preserve RegionCaptureOptions.ColorPickerOptions semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettingsOptions.cs"
+        symbol: "RegionCaptureOptions.ColorPickerOptions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "ColorPickerOptions"
+    source_declaration: "public ColorPickerOptions ColorPickerOptions { get; set; } = new ColorPickerOptions();"
   - id: "SET-REGION-CAPTURE-OPTIONS-CUSTOM-INFO-TEXT-001"
     domain: "settings"
     user_outcome: "Preserve RegionCaptureOptions.CustomInfoText semantics, default, validation, migration, and downstream effect."
@@ -7016,6 +9935,27 @@ items:
     status: "inventoried"
     value_type: "Color"
     source_declaration: "public Color EditorNewImageBackgroundColor { get; set; } = Color.White;"
+  - id: "SET-REGION-CAPTURE-OPTIONS-EDITOR-NEW-IMAGE-SIZE-001"
+    domain: "settings"
+    user_outcome: "Preserve RegionCaptureOptions.EditorNewImageSize semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettingsOptions.cs"
+        symbol: "RegionCaptureOptions.EditorNewImageSize"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Size"
+    source_declaration: "public Size EditorNewImageSize { get; set; } = new Size(800, 600);"
   - id: "SET-REGION-CAPTURE-OPTIONS-EDITOR-NEW-IMAGE-TRANSPARENT-001"
     domain: "settings"
     user_outcome: "Preserve RegionCaptureOptions.EditorNewImageTransparent semantics, default, validation, migration, and downstream effect."
@@ -7079,6 +10019,27 @@ items:
     status: "inventoried"
     value_type: "int"
     source_declaration: "public int FPSLimit { get; set; } = 100;"
+  - id: "SET-REGION-CAPTURE-OPTIONS-FIXED-SIZE-001"
+    domain: "settings"
+    user_outcome: "Preserve RegionCaptureOptions.FixedSize semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettingsOptions.cs"
+        symbol: "RegionCaptureOptions.FixedSize"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Size"
+    source_declaration: "public Size FixedSize { get; set; } = new Size(250, 250);"
   - id: "SET-REGION-CAPTURE-OPTIONS-IMAGE-EDITOR-RESIZE-INTERPOLATION-MODE-001"
     domain: "settings"
     user_outcome: "Preserve RegionCaptureOptions.ImageEditorResizeInterpolationMode semantics, default, validation, migration, and downstream effect."
@@ -7121,6 +10082,48 @@ items:
     status: "inventoried"
     value_type: "ImageEditorStartMode"
     source_declaration: "public ImageEditorStartMode ImageEditorStartMode { get; set; } = ImageEditorStartMode.AutoSize;"
+  - id: "SET-REGION-CAPTURE-OPTIONS-IMAGE-EDITOR-WINDOW-STATE-001"
+    domain: "settings"
+    user_outcome: "Preserve RegionCaptureOptions.ImageEditorWindowState semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettingsOptions.cs"
+        symbol: "RegionCaptureOptions.ImageEditorWindowState"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "EditorWindowStateOptions"
+    source_declaration: "public EditorWindowStateOptions ImageEditorWindowState { get; set; } = new EditorWindowStateOptions();"
+  - id: "SET-REGION-CAPTURE-OPTIONS-IMAGE-EFFECT-PRESETS-001"
+    domain: "settings"
+    user_outcome: "Preserve RegionCaptureOptions.ImageEffectPresets semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettingsOptions.cs"
+        symbol: "RegionCaptureOptions.ImageEffectPresets"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<ImageEffectPreset>"
+    source_declaration: "public List<ImageEffectPreset> ImageEffectPresets { get; set; } = new List<ImageEffectPreset>();"
   - id: "SET-REGION-CAPTURE-OPTIONS-INPUT-DELAY-001"
     domain: "settings"
     user_outcome: "Preserve RegionCaptureOptions.InputDelay semantics, default, validation, migration, and downstream effect."
@@ -7646,6 +10649,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool ShowMagnifier { get; set; } = true;"
+  - id: "SET-REGION-CAPTURE-OPTIONS-SNAP-SIZES-001"
+    domain: "settings"
+    user_outcome: "Preserve RegionCaptureOptions.SnapSizes semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettingsOptions.cs"
+        symbol: "RegionCaptureOptions.SnapSizes"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<SnapSize>"
+    source_declaration: "public List<SnapSize> SnapSizes { get; set; } = new List<SnapSize>()"
   - id: "SET-REGION-CAPTURE-OPTIONS-SWITCH-TO-DRAWING-TOOL-AFTER-SELECTION-001"
     domain: "settings"
     user_outcome: "Preserve RegionCaptureOptions.SwitchToDrawingToolAfterSelection semantics, default, validation, migration, and downstream effect."
@@ -7793,6 +10817,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool ZoomToFitOnOpen { get; set; } = false;"
+  - id: "SET-S3-CONFIG-ID-001"
+    domain: "settings"
+    user_outcome: "Preserve S3Config.Id semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/Configuration/S3Config.cs"
+        symbol: "S3Config.Id"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Guid"
+    source_declaration: "public Guid Id { get; set; } = Guid.NewGuid();"
   - id: "SET-S3-CONFIG-NAME-001"
     domain: "settings"
     user_outcome: "Preserve S3Config.Name semantics, default, validation, migration, and downstream effect."
@@ -7814,6 +10859,27 @@ items:
     status: "inventoried"
     value_type: "string"
     source_declaration: "public string Name { get; set; } = \"Amazon S3\";"
+  - id: "SET-S3-CONFIG-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve S3Config.Settings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/Configuration/S3Config.cs"
+        symbol: "S3Config.Settings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "AmazonS3Settings"
+    source_declaration: "public AmazonS3Settings Settings { get; set; } = new()"
   - id: "SET-S3-CONFIG-TYPE-001"
     domain: "settings"
     user_outcome: "Preserve S3Config.Type semantics, default, validation, migration, and downstream effect."
@@ -8381,6 +11447,27 @@ items:
     status: "inventoried"
     value_type: "string"
     source_declaration: "public string URL { get; set; }"
+  - id: "SET-TASK-SETTINGS-ADVANCED-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettings.AdvancedSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettings.AdvancedSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "TaskSettingsAdvanced"
+    source_declaration: "public TaskSettingsAdvanced AdvancedSettings = new TaskSettingsAdvanced();"
   - id: "SET-TASK-SETTINGS-AFTER-CAPTURE-JOB-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettings.AfterCaptureJob semantics, default, validation, migration, and downstream effect."
@@ -8423,6 +11510,27 @@ items:
     status: "inventoried"
     value_type: "AfterUploadTasks"
     source_declaration: "public AfterUploadTasks AfterUploadJob = AfterUploadTasks.CopyURLToClipboard;"
+  - id: "SET-TASK-SETTINGS-CAPTURE-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettings.CaptureSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettings.CaptureSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "TaskSettingsCapture"
+    source_declaration: "public TaskSettingsCapture CaptureSettings = new TaskSettingsCapture();"
   - id: "SET-TASK-SETTINGS-CUSTOM-UPLOADER-INDEX-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettings.CustomUploaderIndex semantics, default, validation, migration, and downstream effect."
@@ -8486,6 +11594,27 @@ items:
     status: "inventoried"
     value_type: "string?"
     source_declaration: "public string? DestinationInstanceId { get; set; }"
+  - id: "SET-TASK-SETTINGS-EXTERNAL-PROGRAMS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettings.ExternalPrograms semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettings.ExternalPrograms"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<ExternalProgram>"
+    source_declaration: "public List<ExternalProgram> ExternalPrograms = new List<ExternalProgram>();"
   - id: "SET-TASK-SETTINGS-FTPINDEX-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettings.FTPIndex semantics, default, validation, migration, and downstream effect."
@@ -8507,6 +11636,48 @@ items:
     status: "inventoried"
     value_type: "int"
     source_declaration: "public int FTPIndex = 0;"
+  - id: "SET-TASK-SETTINGS-GENERAL-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettings.GeneralSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettings.GeneralSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "TaskSettingsGeneral"
+    source_declaration: "public TaskSettingsGeneral GeneralSettings = new TaskSettingsGeneral();"
+  - id: "SET-TASK-SETTINGS-IMAGE-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettings.ImageSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettings.ImageSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "TaskSettingsImage"
+    source_declaration: "public TaskSettingsImage ImageSettings = new TaskSettingsImage();"
   - id: "SET-TASK-SETTINGS-IS-SAFE-TASK-SETTINGS-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettings.IsSafeTaskSettings semantics, default, validation, migration, and downstream effect."
@@ -8654,6 +11825,27 @@ items:
     status: "inventoried"
     value_type: "TaskSettings?"
     source_declaration: "public TaskSettings? TaskSettingsReference { get; private set; }"
+  - id: "SET-TASK-SETTINGS-TOOLS-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettings.ToolsSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettings.ToolsSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "TaskSettingsTools"
+    source_declaration: "public TaskSettingsTools ToolsSettings = new TaskSettingsTools();"
   - id: "SET-TASK-SETTINGS-URLSHARING-SERVICE-DESTINATION-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettings.URLSharingServiceDestination semantics, default, validation, migration, and downstream effect."
@@ -8696,6 +11888,27 @@ items:
     status: "inventoried"
     value_type: "UrlShortenerType"
     source_declaration: "public UrlShortenerType URLShortenerDestination = UrlShortenerType.BITLY;"
+  - id: "SET-TASK-SETTINGS-UPLOAD-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettings.UploadSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettings.UploadSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "TaskSettingsUpload"
+    source_declaration: "public TaskSettingsUpload UploadSettings = new TaskSettingsUpload();"
   - id: "SET-TASK-SETTINGS-URL-SHORTENER-DESTINATION-INSTANCE-ID-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettings.UrlShortenerDestinationInstanceId semantics, default, validation, migration, and downstream effect."
@@ -8738,6 +11951,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool WatchFolderEnabled = false;"
+  - id: "SET-TASK-SETTINGS-WATCH-FOLDER-LIST-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettings.WatchFolderList semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettings.WatchFolderList"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<WatchFolderSettings>"
+    source_declaration: "public List<WatchFolderSettings> WatchFolderList = new List<WatchFolderSettings>();"
   - id: "SET-TASK-SETTINGS-WORKFLOW-ID-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettings.WorkflowId semantics, default, validation, migration, and downstream effect."
@@ -8885,6 +12119,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool EarlyCopyURL { get; set; }"
+  - id: "SET-TASK-SETTINGS-ADVANCED-IMAGE-EXTENSIONS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsAdvanced.ImageExtensions semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsAdvanced.ImageExtensions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<string>"
+    source_declaration: "public List<string> ImageExtensions { get; set; } = new();"
   - id: "SET-TASK-SETTINGS-ADVANCED-NAME-PATTERN-MAX-LENGTH-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettingsAdvanced.NamePatternMaxLength semantics, default, validation, migration, and downstream effect."
@@ -9095,6 +12350,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool TextCustomEncodeInput { get; set; }"
+  - id: "SET-TASK-SETTINGS-ADVANCED-TEXT-EXTENSIONS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsAdvanced.TextExtensions semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsAdvanced.TextExtensions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<string>"
+    source_declaration: "public List<string> TextExtensions { get; set; } = new();"
   - id: "SET-TASK-SETTINGS-ADVANCED-TEXT-FILE-EXTENSION-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettingsAdvanced.TextFileExtension semantics, default, validation, migration, and downstream effect."
@@ -9242,6 +12518,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool CaptureClientArea = false;"
+  - id: "SET-TASK-SETTINGS-CAPTURE-CAPTURE-CUSTOM-REGION-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsCapture.CaptureCustomRegion semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsCapture.CaptureCustomRegion"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Rectangle"
+    source_declaration: "public Rectangle CaptureCustomRegion = new Rectangle(0, 0, 0, 0);"
   - id: "SET-TASK-SETTINGS-CAPTURE-CAPTURE-CUSTOM-WINDOW-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettingsCapture.CaptureCustomWindow semantics, default, validation, migration, and downstream effect."
@@ -9326,6 +12623,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool CaptureTransparent = false;"
+  - id: "SET-TASK-SETTINGS-CAPTURE-FFMPEG-OPTIONS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsCapture.FFmpegOptions semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsCapture.FFmpegOptions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "FFmpegOptions"
+    source_declaration: "public FFmpegOptions FFmpegOptions { get; set; } = new FFmpegOptions();"
   - id: "SET-TASK-SETTINGS-CAPTURE-GIFFPS-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettingsCapture.GIFFPS semantics, default, validation, migration, and downstream effect."
@@ -9452,6 +12770,48 @@ items:
     status: "inventoried"
     value_type: "MacOSInteractiveRegionSelectorPreference"
     source_declaration: "public MacOSInteractiveRegionSelectorPreference MacOSRegionSelectorPreference { get; set; } ="
+  - id: "SET-TASK-SETTINGS-CAPTURE-OCROPTIONS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsCapture.OCROptions semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsCapture.OCROptions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "OCROptions"
+    source_declaration: "public OCROptions OCROptions = new OCROptions();"
+  - id: "SET-TASK-SETTINGS-CAPTURE-REGION-CAPTURE-OPTIONS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsCapture.RegionCaptureOptions semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsCapture.RegionCaptureOptions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "RegionCaptureOptions"
+    source_declaration: "public RegionCaptureOptions RegionCaptureOptions = new RegionCaptureOptions();"
   - id: "SET-TASK-SETTINGS-CAPTURE-SCREEN-RECORD-ASK-CONFIRMATION-ON-ABORT-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettingsCapture.ScreenRecordAskConfirmationOnAbort semantics, default, validation, migration, and downstream effect."
@@ -9641,6 +13001,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool ScreenRecordTwoPassEncoding = false;"
+  - id: "SET-TASK-SETTINGS-CAPTURE-SCREEN-RECORDING-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsCapture.ScreenRecordingSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsCapture.ScreenRecordingSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "ScreenRecordingSettings"
+    source_declaration: "public ScreenRecordingSettings ScreenRecordingSettings = new ScreenRecordingSettings();"
   - id: "SET-TASK-SETTINGS-CAPTURE-SCREENSHOT-DELAY-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettingsCapture.ScreenshotDelay semantics, default, validation, migration, and downstream effect."
@@ -9662,6 +13043,27 @@ items:
     status: "inventoried"
     value_type: "decimal"
     source_declaration: "public decimal ScreenshotDelay = 0;"
+  - id: "SET-TASK-SETTINGS-CAPTURE-SCROLLING-CAPTURE-OPTIONS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsCapture.ScrollingCaptureOptions semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsCapture.ScrollingCaptureOptions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "ScrollingCaptureOptions"
+    source_declaration: "public ScrollingCaptureOptions ScrollingCaptureOptions = new ScrollingCaptureOptions();"
   - id: "SET-TASK-SETTINGS-CAPTURE-SHOW-CURSOR-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettingsCapture.ShowCursor semantics, default, validation, migration, and downstream effect."
@@ -10040,6 +13442,27 @@ items:
     status: "inventoried"
     value_type: "ToastClickAction"
     source_declaration: "public ToastClickAction ToastWindowRightClickAction = ToastClickAction.CloseNotification;"
+  - id: "SET-TASK-SETTINGS-GENERAL-TOAST-WINDOW-SIZE-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsGeneral.ToastWindowSize semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsGeneral.ToastWindowSize"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "SizeI"
+    source_declaration: "public SizeI ToastWindowSize = new SizeI(400, 300);"
   - id: "SET-TASK-SETTINGS-GENERAL-USE-CUSTOM-ACTION-COMPLETED-SOUND-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettingsGeneral.UseCustomActionCompletedSound semantics, default, validation, migration, and downstream effect."
@@ -10229,6 +13652,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool ImageEffectOnlyRegionCapture = false;"
+  - id: "SET-TASK-SETTINGS-IMAGE-IMAGE-EFFECTS-PRESET-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsImage.ImageEffectsPreset semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsImage.ImageEffectsPreset"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "ImageEffectPreset"
+    source_declaration: "public ImageEffectPreset ImageEffectsPreset = ImageEffectPreset.GetDefaultPreset();"
   - id: "SET-TASK-SETTINGS-IMAGE-IMAGE-FORMAT-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettingsImage.ImageFormat semantics, default, validation, migration, and downstream effect."
@@ -10418,6 +13862,90 @@ items:
     status: "inventoried"
     value_type: "int"
     source_declaration: "public int ThumbnailWidth = 200;"
+  - id: "SET-TASK-SETTINGS-TOOLS-AIOPTIONS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsTools.AIOptions semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsTools.AIOptions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "AIOptions"
+    source_declaration: "public AIOptions AIOptions = new AIOptions();"
+  - id: "SET-TASK-SETTINGS-TOOLS-BORDERLESS-WINDOW-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsTools.BorderlessWindowSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsTools.BorderlessWindowSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "BorderlessWindowSettings"
+    source_declaration: "public BorderlessWindowSettings BorderlessWindowSettings = new BorderlessWindowSettings();"
+  - id: "SET-TASK-SETTINGS-TOOLS-IMAGE-BEAUTIFIER-OPTIONS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsTools.ImageBeautifierOptions semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsTools.ImageBeautifierOptions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "ImageBeautifierOptions"
+    source_declaration: "public ImageBeautifierOptions ImageBeautifierOptions = new ImageBeautifierOptions();"
+  - id: "SET-TASK-SETTINGS-TOOLS-IMAGE-COMBINER-OPTIONS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsTools.ImageCombinerOptions semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsTools.ImageCombinerOptions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "ImageCombinerOptions"
+    source_declaration: "public ImageCombinerOptions ImageCombinerOptions = new ImageCombinerOptions();"
   - id: "SET-TASK-SETTINGS-TOOLS-INDEXER-FOLDER-PATH-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettingsTools.IndexerFolderPath semantics, default, validation, migration, and downstream effect."
@@ -10439,6 +13967,48 @@ items:
     status: "inventoried"
     value_type: "string"
     source_declaration: "public string IndexerFolderPath = \"\";"
+  - id: "SET-TASK-SETTINGS-TOOLS-INDEXER-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsTools.IndexerSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsTools.IndexerSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "IndexerSettings"
+    source_declaration: "public IndexerSettings IndexerSettings = new IndexerSettings();"
+  - id: "SET-TASK-SETTINGS-TOOLS-PIN-TO-SCREEN-OPTIONS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsTools.PinToScreenOptions semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsTools.PinToScreenOptions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "PinToScreenOptions"
+    source_declaration: "public PinToScreenOptions PinToScreenOptions = new PinToScreenOptions();"
   - id: "SET-TASK-SETTINGS-TOOLS-SCREEN-COLOR-PICKER-FORMAT-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettingsTools.ScreenColorPickerFormat semantics, default, validation, migration, and downstream effect."
@@ -10502,6 +14072,48 @@ items:
     status: "inventoried"
     value_type: "string"
     source_declaration: "public string ScreenColorPickerInfoText = \"RGB: $r255, $g255, $b255$nHex: $hex$nX: $x Y: $y\";"
+  - id: "SET-TASK-SETTINGS-TOOLS-VIDEO-CONVERTER-OPTIONS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsTools.VideoConverterOptions semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsTools.VideoConverterOptions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "VideoConverterOptions"
+    source_declaration: "public VideoConverterOptions VideoConverterOptions = new VideoConverterOptions();"
+  - id: "SET-TASK-SETTINGS-TOOLS-VIDEO-THUMBNAIL-OPTIONS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsTools.VideoThumbnailOptions semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsTools.VideoThumbnailOptions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "VideoThumbnailOptions"
+    source_declaration: "public VideoThumbnailOptions VideoThumbnailOptions = new VideoThumbnailOptions();"
   - id: "SET-TASK-SETTINGS-UPLOAD-CLIPBOARD-UPLOAD-AUTO-INDEX-FOLDER-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettingsUpload.ClipboardUploadAutoIndexFolder semantics, default, validation, migration, and downstream effect."
@@ -10712,6 +14324,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool URLRegexReplace = false;"
+  - id: "SET-TASK-SETTINGS-UPLOAD-URLREGEX-REPLACE-PATTERN-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsUpload.URLRegexReplacePattern semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsUpload.URLRegexReplacePattern"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "string"
+    source_declaration: "public string URLRegexReplacePattern = \"^https?://(.+)$\";"
   - id: "SET-TASK-SETTINGS-UPLOAD-URLREGEX-REPLACE-REPLACEMENT-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettingsUpload.URLRegexReplaceReplacement semantics, default, validation, migration, and downstream effect."
@@ -10733,6 +14366,27 @@ items:
     status: "inventoried"
     value_type: "string"
     source_declaration: "public string URLRegexReplaceReplacement = \"https://$1\";"
+  - id: "SET-TASK-SETTINGS-UPLOAD-UPLOADER-FILTERS-001"
+    domain: "settings"
+    user_outcome: "Preserve TaskSettingsUpload.UploaderFilters semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsUpload.UploaderFilters"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<UploaderFilter>"
+    source_declaration: "public List<UploaderFilter> UploaderFilters = new List<UploaderFilter>();"
   - id: "SET-TASK-SETTINGS-UPLOAD-USE-CUSTOM-TIME-ZONE-001"
     domain: "settings"
     user_outcome: "Preserve TaskSettingsUpload.UseCustomTimeZone semantics, default, validation, migration, and downstream effect."
@@ -11048,6 +14702,27 @@ items:
     status: "inventoried"
     value_type: "ToastClickAction"
     source_declaration: "public ToastClickAction RightClickAction { get; set; } = ToastClickAction.CloseNotification;"
+  - id: "SET-TOAST-CONFIG-SIZE-001"
+    domain: "settings"
+    user_outcome: "Preserve ToastConfig.Size semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/ToastConfig.cs"
+        symbol: "ToastConfig.Size"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "SizeI"
+    source_declaration: "public SizeI Size { get; set; } = new SizeI(400, 300);"
   - id: "SET-TOAST-CONFIG-TEXT-001"
     domain: "settings"
     user_outcome: "Preserve ToastConfig.Text semantics, default, validation, migration, and downstream effect."
@@ -11237,6 +14912,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool Required { get; init; }"
+  - id: "SET-UPLOADER-CONFIG-SCHEMA-FIELDS-001"
+    domain: "settings"
+    user_outcome: "Preserve UploaderConfigSchema.Fields semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.UploaderPluginSdk/UploaderConfigSchema.cs"
+        symbol: "UploaderConfigSchema.Fields"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "IReadOnlyList<UploaderConfigField>"
+    source_declaration: "public IReadOnlyList<UploaderConfigField> Fields { get; init; } = Array.Empty<UploaderConfigField>();"
   - id: "SET-UPLOADER-CONFIG-SCHEMA-TITLE-001"
     domain: "settings"
     user_outcome: "Preserve UploaderConfigSchema.Title semantics, default, validation, migration, and downstream effect."
@@ -11258,6 +14954,27 @@ items:
     status: "inventoried"
     value_type: "string?"
     source_declaration: "public string? Title { get; init; }"
+  - id: "SET-UPLOADERS-CONFIG-AMAZON-S3-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve UploadersConfig.AmazonS3Settings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfig.cs"
+        symbol: "UploadersConfig.AmazonS3Settings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "AmazonS3Settings"
+    source_declaration: "public AmazonS3Settings AmazonS3Settings { get; set; } = new AmazonS3Settings()"
   - id: "SET-UPLOADERS-CONFIG-AZURE-STORAGE-ACCOUNT-ACCESS-KEY-001"
     domain: "settings"
     user_outcome: "Preserve UploadersConfig.AzureStorageAccountAccessKey semantics, default, validation, migration, and downstream effect."
@@ -11762,6 +15479,48 @@ items:
     status: "inventoried"
     value_type: "int"
     source_declaration: "public int CustomURLShortenerSelected { get; set; } = 0;"
+  - id: "SET-UPLOADERS-CONFIG-CUSTOM-UPLOADERS-001"
+    domain: "settings"
+    user_outcome: "Preserve UploadersConfig.CustomUploaders semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfig.cs"
+        symbol: "UploadersConfig.CustomUploaders"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<CustomUploaderConfig>"
+    source_declaration: "public List<CustomUploaderConfig> CustomUploaders { get; set; } = new List<CustomUploaderConfig>();"
+  - id: "SET-UPLOADERS-CONFIG-CUSTOM-UPLOADERS-LIST-001"
+    domain: "settings"
+    user_outcome: "Preserve UploadersConfig.CustomUploadersList semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfig.cs"
+        symbol: "UploadersConfig.CustomUploadersList"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<CustomUploaderItem>"
+    source_declaration: "public List<CustomUploaderItem> CustomUploadersList { get; set; } = new List<CustomUploaderItem>();"
   - id: "SET-UPLOADERS-CONFIG-DROPBOX-AUTO-CREATE-SHAREABLE-LINK-001"
     domain: "settings"
     user_outcome: "Preserve UploadersConfig.DropboxAutoCreateShareableLink semantics, default, validation, migration, and downstream effect."
@@ -12056,6 +15815,27 @@ items:
     status: "inventoried"
     value_type: "string"
     source_declaration: "public string EmailSmtpServer { get; set; } = \"smtp.gmail.com\";"
+  - id: "SET-UPLOADERS-CONFIG-FTPACCOUNT-LIST-001"
+    domain: "settings"
+    user_outcome: "Preserve UploadersConfig.FTPAccountList semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfig.cs"
+        symbol: "UploadersConfig.FTPAccountList"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<FTPAccount>"
+    source_declaration: "public List<FTPAccount> FTPAccountList { get; set; } = new List<FTPAccount>();"
   - id: "SET-UPLOADERS-CONFIG-FTPSELECTED-FILE-001"
     domain: "settings"
     user_outcome: "Preserve UploadersConfig.FTPSelectedFile semantics, default, validation, migration, and downstream effect."
@@ -12203,6 +15983,27 @@ items:
     status: "inventoried"
     value_type: "OAuthInfo?"
     source_declaration: "public OAuthInfo? FlickrOAuthInfo { get; set; }"
+  - id: "SET-UPLOADERS-CONFIG-FLICKR-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve UploadersConfig.FlickrSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfig.cs"
+        symbol: "UploadersConfig.FlickrSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "FlickrSettings"
+    source_declaration: "public FlickrSettings FlickrSettings { get; set; } = new FlickrSettings();"
   - id: "SET-UPLOADERS-CONFIG-GIST-CUSTOM-URL-001"
     domain: "settings"
     user_outcome: "Preserve UploadersConfig.GistCustomURL semantics, default, validation, migration, and downstream effect."
@@ -12686,6 +16487,27 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool HastebinUseFileExtension { get; set; } = true;"
+  - id: "SET-UPLOADERS-CONFIG-IMAGE-SHACK-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve UploadersConfig.ImageShackSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfig.cs"
+        symbol: "UploadersConfig.ImageShackSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "ImageShackOptions"
+    source_declaration: "public ImageShackOptions ImageShackSettings { get; set; } = new ImageShackOptions();"
   - id: "SET-UPLOADERS-CONFIG-IMGUR-ACCOUNT-TYPE-001"
     domain: "settings"
     user_outcome: "Preserve UploadersConfig.ImgurAccountType semantics, default, validation, migration, and downstream effect."
@@ -12854,6 +16676,90 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool ImgurUseGIFV { get; set; } = true;"
+  - id: "SET-UPLOADERS-CONFIG-KUTT-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve UploadersConfig.KuttSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfig.cs"
+        symbol: "UploadersConfig.KuttSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "KuttSettings"
+    source_declaration: "public KuttSettings KuttSettings { get; set; } = new KuttSettings();"
+  - id: "SET-UPLOADERS-CONFIG-LAMBDA-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve UploadersConfig.LambdaSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfig.cs"
+        symbol: "UploadersConfig.LambdaSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "LambdaSettings"
+    source_declaration: "public LambdaSettings LambdaSettings { get; set; } = new LambdaSettings();"
+  - id: "SET-UPLOADERS-CONFIG-LITHIIO-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve UploadersConfig.LithiioSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfig.cs"
+        symbol: "UploadersConfig.LithiioSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "LobFileSettings"
+    source_declaration: "public LobFileSettings LithiioSettings { get; set; } = new LobFileSettings();"
+  - id: "SET-UPLOADERS-CONFIG-LOCALHOST-ACCOUNT-LIST-001"
+    domain: "settings"
+    user_outcome: "Preserve UploadersConfig.LocalhostAccountList semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfig.cs"
+        symbol: "UploadersConfig.LocalhostAccountList"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<LocalhostAccount>"
+    source_declaration: "public List<LocalhostAccount> LocalhostAccountList { get; set; } = new List<LocalhostAccount>();"
   - id: "SET-UPLOADERS-CONFIG-LOCALHOST-SELECTED-FILES-001"
     domain: "settings"
     user_outcome: "Preserve UploadersConfig.LocalhostSelectedFiles semantics, default, validation, migration, and downstream effect."
@@ -13505,6 +17411,27 @@ items:
     status: "inventoried"
     value_type: "string"
     source_declaration: "public string Paste_eeUserKey { get; set; } = \"\";"
+  - id: "SET-UPLOADERS-CONFIG-PASTEBIN-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve UploadersConfig.PastebinSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfig.cs"
+        symbol: "UploadersConfig.PastebinSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "PastebinSettings"
+    source_declaration: "public PastebinSettings PastebinSettings { get; set; } = new PastebinSettings();"
   - id: "SET-UPLOADERS-CONFIG-PASTIE-IS-PUBLIC-001"
     domain: "settings"
     user_outcome: "Preserve UploadersConfig.PastieIsPublic semantics, default, validation, migration, and downstream effect."
@@ -13568,6 +17495,27 @@ items:
     status: "inventoried"
     value_type: "OAuthInfo?"
     source_declaration: "public OAuthInfo? PhotobucketOAuthInfo { get; set; }"
+  - id: "SET-UPLOADERS-CONFIG-PLIK-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve UploadersConfig.PlikSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfig.cs"
+        symbol: "UploadersConfig.PlikSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "PlikSettings"
+    source_declaration: "public PlikSettings PlikSettings { get; set; } = new PlikSettings();"
   - id: "SET-UPLOADERS-CONFIG-POLR-APIHOSTNAME-001"
     domain: "settings"
     user_outcome: "Preserve UploadersConfig.PolrAPIHostname semantics, default, validation, migration, and downstream effect."
@@ -13652,6 +17600,48 @@ items:
     status: "inventoried"
     value_type: "bool"
     source_declaration: "public bool PolrUseAPIv1 { get; set; } = false;"
+  - id: "SET-UPLOADERS-CONFIG-POMF-UPLOADER-001"
+    domain: "settings"
+    user_outcome: "Preserve UploadersConfig.PomfUploader semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfig.cs"
+        symbol: "UploadersConfig.PomfUploader"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "PomfUploader"
+    source_declaration: "public PomfUploader PomfUploader { get; set; } = new PomfUploader();"
+  - id: "SET-UPLOADERS-CONFIG-PUSHBULLET-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve UploadersConfig.PushbulletSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfig.cs"
+        symbol: "UploadersConfig.PushbulletSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "PushbulletSettings"
+    source_declaration: "public PushbulletSettings PushbulletSettings { get; set; } = new PushbulletSettings();"
   - id: "SET-UPLOADERS-CONFIG-PUUSH-APIKEY-001"
     domain: "settings"
     user_outcome: "Preserve UploadersConfig.PuushAPIKey semantics, default, validation, migration, and downstream effect."
@@ -13988,6 +17978,27 @@ items:
     status: "inventoried"
     value_type: "string"
     source_declaration: "public string SendSpaceUsername { get; set; } = \"\";"
+  - id: "SET-UPLOADERS-CONFIG-SERVICE-SETTINGS-001"
+    domain: "settings"
+    user_outcome: "Preserve UploadersConfig.ServiceSettings semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfig.cs"
+        symbol: "UploadersConfig.ServiceSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "Dictionary<UploaderType, IUploaderConfig>"
+    source_declaration: "public Dictionary<UploaderType, IUploaderConfig> ServiceSettings { get; set; } = new Dictionary<UploaderType, IUploaderConfig>();"
   - id: "SET-UPLOADERS-CONFIG-STREAMABLE-PASSWORD-001"
     domain: "settings"
     user_outcome: "Preserve UploadersConfig.StreamablePassword semantics, default, validation, migration, and downstream effect."
@@ -15332,3 +19343,24 @@ items:
     status: "inventoried"
     value_type: "TaskSettings"
     source_declaration: "public TaskSettings DefaultTaskSettings { get; set; } = new TaskSettings { Job = WorkflowType.None };"
+  - id: "SET-WORKFLOWS-CONFIG-HOTKEYS-001"
+    domain: "settings"
+    user_outcome: "Preserve WorkflowsConfig.Hotkeys semantics, default, validation, migration, and downstream effect."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/HotkeySettings.cs"
+        symbol: "WorkflowsConfig.Hotkeys"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    value_type: "List<WorkflowSettings>"
+    source_declaration: "public List<WorkflowSettings> Hotkeys { get; set; } = GetDefaultWorkflowList();"

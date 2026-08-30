@@ -409,7 +409,7 @@ items:
       - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Core/Annotations"
         symbol: "Annotation tools"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
     platforms:
       windows: "required"
       macos: "required"
@@ -422,13 +422,89 @@ items:
     status: "inventoried"
   - id: "EDITOR-EFFECTS-001"
     domain: "image-editor"
-    user_outcome: "Preview and apply supported image effects."
+    user_outcome: "Discover, preview, parameterize, apply, cancel, favorite, and repeat supported image effects."
     classification: "preserve"
     source_evidence:
       - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Core/ImageEffects"
         symbol: "Image effects"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: null
+    contract: "product-contract/capabilities/EDITOR-EFFECTS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "EDITOR-CANVAS-001"
+    domain: "image-editor"
+    user_outcome: "Create, open, insert, crop, resize, zoom, pan, compare, flatten, and manage the editor canvas."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controllers/EditorInputController.cs"
+        symbol: "EditorInputController"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-CANVAS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "EDITOR-OUTPUT-ACTIONS-001"
+    domain: "image-editor"
+    user_outcome: "Copy, save, save as, upload, print, pin, set wallpaper, continue, or cancel an edited image."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/ViewModels/MainViewModel.cs"
+        symbol: "MainViewModel commands"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "EDITOR-SETTINGS-001"
+    domain: "image-editor"
+    user_outcome: "Configure editor appearance, defaults, tool styling, background, toolbar, recent items, and favorite effects."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Hosting/ImageEditorOptions.cs"
+        symbol: "ImageEditorOptions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "EDITOR-UTILITIES-001"
+    domain: "image-editor"
+    user_outcome: "Use the shipped color picker, QR, hash, icon, comparison, background-removal, and video-conversion utilities."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/StartScreenDialogView.axaml"
+        symbol: "StartScreenDialogView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-UTILITIES-001"
     platforms:
       windows: "required"
       macos: "required"

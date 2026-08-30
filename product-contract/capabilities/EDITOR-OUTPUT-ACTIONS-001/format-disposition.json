@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "status": "draft-selection-pending-product-owner-approval",
+  "user_facing_save_as": [
+    { "format": "png", "disposition": "preserve", "alpha": true, "quality_control": false },
+    { "format": "jpeg", "disposition": "preserve", "alpha": false, "quality_control": true },
+    { "format": "webp", "disposition": "preserve", "alpha": true, "quality_control": true }
+  ],
+  "not_selected_from_static_evidence": [
+    { "format": "avif", "reason": "encoder/changelog evidence conflicts with reachable Save As evidence" },
+    { "format": "gif", "reason": "helper encoder is not proof of the still-image Save As surface" },
+    { "format": "bmp", "reason": "helper encoder is not proof of the still-image Save As surface" }
+  ]
+}

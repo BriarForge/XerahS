@@ -19,6 +19,7 @@ rows, but nobody may claim baseline closure or full parity yet.
 | CLI, MCP, assistant, daemon, Send To and automation | Static entry-point inventory complete; behavior review pending | Interface and capability ledgers |
 | Formats, schemas, databases and protocols | Seeded; fixture-level review pending | Compatibility ledger |
 | Tests, docs, XIPs, issues and release notes | Hashed and indexed; semantic review pending | Census input hashes |
+| ImageEditor tools, annotations, effects, parameters, operations, commands, options, surfaces and assets | Automated; semantic and runtime review pending | `inventory.image_editor` in the census JSON and editor parity rows |
 | Runtime observation on each baseline platform | Not started | Required manual evidence |
 
 ## Closure work still required
@@ -40,6 +41,21 @@ rows, but nobody may claim baseline closure or full parity yet.
    `contracted`.
 7. The product owner MUST sign census closure. The generated files do not and
    cannot provide that approval.
+
+## ImageEditor-specific findings
+
+The pinned static inventory identifies 20 tool modes, 19 concrete annotation
+classes (18 persisted polymorphic discriminators), 232 reflection-discovered
+effect implementations with 963 parameter-control declarations, ten routed
+image operations, 85 generated view-model commands, and no dedicated test
+project. Runtime reachability and semantic correctness remain open gates.
+
+Documentation is not treated as higher-authority evidence where it conflicts
+with source reachability. At this baseline, ImageEditor documentation mentions a
+nonexistent Loader project and integration overloads that are not present in the
+public integration surface. The changelog claims AVIF save support while the
+reachable still-image Save As evidence exposes PNG, JPEG, and WebP. These are
+recorded as review items rather than silently promoted into the Product Contract.
 
 The checked-in graph report in KovaForge was built from commit `5bbdb7db`, not
 the pinned `5c7e36d` baseline. It is useful navigation evidence but MUST NOT be

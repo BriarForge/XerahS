@@ -21,15 +21,15 @@ scope:
       authority: "D-BASE-001"
 inventory_tool:
   name: "baseline-census"
-  version: "1.0.0"
+  version: "1.1.0"
 input_hashes:
-  projects: "511923414a99a8ad60fd9d56fa759bcae08c45c23b29efba245479e357c39ead"
+  projects: "37878a90c2a2f5620761724482e3739fb78c4d1c656c634af8dc46f2c6e25c61"
   registries_and_source: "5cf6e272fd27768734f11493fa6e76e8a4e4a865c2d02868a25e3276a05d5e6e"
-  settings: "a299965341c0fbaf5770cabe45ed567559541046d4f6dd95ca1e296204a9f61f"
+  settings: "dd457bae5cf212e2829d14b56af39c053738fcb87573d68800653a5f92398ffd"
   ui: "d8c45c1515100955faa1931afb181e9808f6ceeb67c622626b10d00d6e4c984f"
   tests: "ae5e31324fca48446cd5cf431ba06abf48611f7c08839a4b8c0bf78ba344416b"
   documentation: "4986d3fb0c6f1d26698e2915e539027fc92a27e10e082222e4284833d9e60d0a"
-  image_editor: "651b1d8de4bc1f874790870560314670cd038684"
+  image_editor: "594b76b1d166a9a0d5d0da8d4b3130953689dfe08783511e4c28757391d2fb22"
   video_editor: "0482ee322a3086d5af135aa9b54a37803241cb0d"
 census_status: "open"
 closure_requirements:

@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "status": "draft-selection-pending-product-owner-approval",
+  "tools": [
+    { "id": "Select", "family": "selection", "document_type": null },
+    { "id": "Rectangle", "family": "shape", "document_type": "rectangle" },
+    { "id": "Ellipse", "family": "shape", "document_type": "ellipse" },
+    { "id": "Line", "family": "line", "document_type": "line" },
+    { "id": "Arrow", "family": "line", "document_type": "arrow" },
+    { "id": "Freehand", "family": "path", "document_type": "freehand" },
+    { "id": "Text", "family": "text", "document_type": "text" },
+    { "id": "SpeechBalloon", "family": "text", "document_type": "speech-balloon" },
+    { "id": "Step", "family": "text", "document_type": "step" },
+    { "id": "Image", "family": "asset", "document_type": "image" },
+    { "id": "Emoji", "family": "asset", "document_type": "emoji" },
+    { "id": "Cursor", "family": "asset", "document_type": "cursor" },
+    { "id": "Highlight", "family": "emphasis", "document_type": "highlight" },
+    { "id": "SmartEraser", "family": "redaction", "document_type": "smart-eraser" },
+    { "id": "Blur", "family": "redaction", "document_type": "blur" },
+    { "id": "Pixelate", "family": "redaction", "document_type": "pixelate" },
+    { "id": "Magnify", "family": "emphasis", "document_type": "magnify" },
+    { "id": "Spotlight", "family": "emphasis", "document_type": "spotlight" },
+    { "id": "Crop", "family": "canvas", "document_type": "crop" },
+    { "id": "CutOut", "family": "canvas", "document_type": "cut-out" }
+  ]
+}

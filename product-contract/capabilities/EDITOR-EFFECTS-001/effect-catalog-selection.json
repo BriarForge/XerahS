@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "status": "draft-selection-pending-product-owner-approval",
+  "baseline": "kova-0.29.0",
+  "image_editor_commit": "651b1d8de4bc1f874790870560314670cd038684",
+  "source_pointer": "product-contract/reference-baselines/provenance/kova-0.29.0-census.json#/inventory/image_editor/effect_types",
+  "selection_rule": "all unique non-null effect IDs in the pinned source pointer",
+  "exclusions": [],
+  "expected": {
+    "total": 232,
+    "categories": {
+      "Adjustments": 32,
+      "Drawings": 16,
+      "Filters": 149,
+      "Manipulations": 35
+    },
+    "execution_modes": {
+      "Previewable": 219,
+      "Immediate": 13
+    },
+    "declared_parameter_controls": 963
+  }
+}

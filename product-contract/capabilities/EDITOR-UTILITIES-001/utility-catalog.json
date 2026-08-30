@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "status": "draft-selection-pending-product-owner-approval",
+  "utilities": [
+    { "id": "screen-color-picker", "surface": "ScreenColorPickerWindow" },
+    { "id": "qr-code", "surface": "QrCodeWindow", "scan_modes": ["Screen", "Region", "ImageFile"] },
+    { "id": "hash-checker", "surface": "HashCheckerWindow", "algorithms": ["Crc32", "Md5", "Sha1", "Sha256", "Sha384", "Sha512"] },
+    { "id": "icon-converter", "surface": "IconConverterWindow", "sizes": [16, 32, 48, 64, 128, 256], "bit_depths": ["Palette8", "TrueColor32"] },
+    { "id": "image-comparer", "surface": "ImageComparerWindow" },
+    { "id": "background-remover", "surface": "BackgroundRemoverWindow", "devices": ["Auto", "CPU", "GPU"] },
+    { "id": "video-converter", "surface": "VideoConverterWindow", "codecs": ["X264", "X265", "H264Nvenc", "HevcNvenc", "H264Amf", "HevcAmf", "H264Qsv", "HevcQsv", "Vp8", "Vp9", "Av1", "Xvid", "Gif", "Webp", "Apng"] }
+  ]
+}

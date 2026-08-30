@@ -5,6 +5,13 @@ BXIP001 section 20. It verifies the exact parent and editor commits before it
 writes evidence, then derives the initial parity ledgers from independent source
 categories.
 
+The ImageEditor submodule is a first-class census boundary. Its inventory covers
+projects, all C# and AXAML sources, editor tools, concrete annotation models,
+reflection-discovered effects and parameter controls, browser operations,
+generated view-model commands, persisted options, UI surfaces, assets, tests,
+documentation, and a content hash. This prevents a pinned submodule commit from
+standing in for an actual functionality inventory.
+
 Run from the BriarForge/XerahS repository root:
 
 ```powershell

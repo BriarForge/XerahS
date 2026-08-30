@@ -2605,3 +2605,706 @@ items:
       linux: []
     compatibility: []
     status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-ANNOTATION-TOOLBAR-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the AnnotationToolbar native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/AnnotationToolbar.axaml"
+        symbol: "AnnotationToolbar"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-ARROW-STYLE-PICKER-DROPDOWN-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the ArrowStylePickerDropdown native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/ArrowStylePickerDropdown.axaml"
+        symbol: "ArrowStylePickerDropdown"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-BORDER-STYLE-PICKER-DROPDOWN-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the BorderStylePickerDropdown native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/BorderStylePickerDropdown.axaml"
+        symbol: "BorderStylePickerDropdown"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-COLOR-PICKER-DROPDOWN-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the ColorPickerDropdown native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/ColorPickerDropdown.axaml"
+        symbol: "ColorPickerDropdown"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-COLOR-PICKER-PANEL-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the ColorPickerPanel native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/ColorPickerPanel.axaml"
+        symbol: "ColorPickerPanel"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-CORNER-RADIUS-PICKER-DROPDOWN-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the CornerRadiusPickerDropdown native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/CornerRadiusPickerDropdown.axaml"
+        symbol: "CornerRadiusPickerDropdown"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-CURSOR-TYPE-PICKER-DROPDOWN-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the CursorTypePickerDropdown native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/CursorTypePickerDropdown.axaml"
+        symbol: "CursorTypePickerDropdown"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-EDITOR-OPTIONS-PANEL-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the EditorOptionsPanel native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/EditorOptionsPanel.axaml"
+        symbol: "EditorOptionsPanel"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-EFFECT-BROWSER-PANEL-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the EffectBrowserPanel native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/EffectBrowserPanel.axaml"
+        symbol: "EffectBrowserPanel"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-EFFECTS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-EFFECT-SLIDER-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the EffectSlider native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/EffectSlider.axaml"
+        symbol: "EffectSlider"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-EFFECTS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-FONT-FAMILY-PICKER-DROPDOWN-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the FontFamilyPickerDropdown native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/FontFamilyPickerDropdown.axaml"
+        symbol: "FontFamilyPickerDropdown"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-FONT-SIZE-PICKER-DROPDOWN-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the FontSizePickerDropdown native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/FontSizePickerDropdown.axaml"
+        symbol: "FontSizePickerDropdown"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-LABELED-TOGGLE-SWITCH-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the LabeledToggleSwitch native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/LabeledToggleSwitch.axaml"
+        symbol: "LabeledToggleSwitch"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-NUMBER-PICKER-DROPDOWN-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the NumberPickerDropdown native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/NumberPickerDropdown.axaml"
+        symbol: "NumberPickerDropdown"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-STEP-TYPE-PICKER-DROPDOWN-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the StepTypePickerDropdown native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/StepTypePickerDropdown.axaml"
+        symbol: "StepTypePickerDropdown"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-STRENGTH-SLIDER-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the StrengthSlider native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/StrengthSlider.axaml"
+        symbol: "StrengthSlider"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-TAIL-STYLE-PICKER-DROPDOWN-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the TailStylePickerDropdown native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/TailStylePickerDropdown.axaml"
+        symbol: "TailStylePickerDropdown"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-TEXT-HORIZONTAL-ALIGNMENT-PICKER-DROPDOWN-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the TextHorizontalAlignmentPickerDropdown native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/TextHorizontalAlignmentPickerDropdown.axaml"
+        symbol: "TextHorizontalAlignmentPickerDropdown"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-WIDTH-PICKER-DROPDOWN-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the WidthPickerDropdown native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/WidthPickerDropdown.axaml"
+        symbol: "WidthPickerDropdown"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-CONTROLS-ZOOM-PICKER-DROPDOWN-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the ZoomPickerDropdown native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Controls/ZoomPickerDropdown.axaml"
+        symbol: "ZoomPickerDropdown"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-ANNOTATIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-BACKGROUND-REMOVER-WINDOW-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the BackgroundRemoverWindow native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/BackgroundRemoverWindow.axaml"
+        symbol: "BackgroundRemoverWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-UTILITIES-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-CONFIRMATION-DIALOG-VIEW-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the ConfirmationDialogView native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/ConfirmationDialogView.axaml"
+        symbol: "ConfirmationDialogView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-UTILITIES-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-DIALOGS-SCHEMA-DRIVEN-EFFECT-DIALOG-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the SchemaDrivenEffectDialog native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/Dialogs/SchemaDrivenEffectDialog.axaml"
+        symbol: "SchemaDrivenEffectDialog"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-EFFECTS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-EDITOR-BUILT-IN-TOOLBARS-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the EditorBuiltInToolbars native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/EditorBuiltInToolbars.axaml"
+        symbol: "EditorBuiltInToolbars"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-CANVAS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-EDITOR-VIEW-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the EditorView native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/EditorView.axaml"
+        symbol: "EditorView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-CANVAS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-EDITOR-WINDOW-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the EditorWindow native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/EditorWindow.axaml"
+        symbol: "EditorWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-CANVAS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-EMOJI-PICKER-DIALOG-VIEW-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the EmojiPickerDialogView native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/EmojiPickerDialogView.axaml"
+        symbol: "EmojiPickerDialogView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-UTILITIES-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-HASH-CHECKER-WINDOW-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the HashCheckerWindow native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/HashCheckerWindow.axaml"
+        symbol: "HashCheckerWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-UTILITIES-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-ICON-CONVERTER-WINDOW-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the IconConverterWindow native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/IconConverterWindow.axaml"
+        symbol: "IconConverterWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-UTILITIES-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-IMAGE-COMPARER-WINDOW-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the ImageComparerWindow native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/ImageComparerWindow.axaml"
+        symbol: "ImageComparerWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-UTILITIES-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-INSERT-IMAGE-DIALOG-VIEW-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the InsertImageDialogView native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/InsertImageDialogView.axaml"
+        symbol: "InsertImageDialogView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-CANVAS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-NEW-IMAGE-DIALOG-VIEW-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the NewImageDialogView native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/NewImageDialogView.axaml"
+        symbol: "NewImageDialogView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-CANVAS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-QR-CODE-WINDOW-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the QrCodeWindow native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/QrCodeWindow.axaml"
+        symbol: "QrCodeWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-UTILITIES-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-SCREEN-COLOR-PICKER-WINDOW-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the ScreenColorPickerWindow native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/ScreenColorPickerWindow.axaml"
+        symbol: "ScreenColorPickerWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-UTILITIES-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-START-SCREEN-DIALOG-VIEW-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the StartScreenDialogView native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/StartScreenDialogView.axaml"
+        symbol: "StartScreenDialogView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-CANVAS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-TOOLBAR-CUSTOMIZATION-DIALOG-VIEW-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the ToolbarCustomizationDialogView native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/ToolbarCustomizationDialogView.axaml"
+        symbol: "ToolbarCustomizationDialogView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SETTINGS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-IMAGE-EDITOR-VIEWS-VIDEO-CONVERTER-WINDOW-001"
+    domain: "image-editor-gui"
+    user_outcome: "Reach and operate the VideoConverterWindow native-equivalent image editor surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Presentation/Views/VideoConverterWindow.axaml"
+        symbol: "VideoConverterWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-UTILITIES-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
