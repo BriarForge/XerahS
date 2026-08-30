@@ -34,7 +34,11 @@ class ContractBacklogTrackerTests(unittest.TestCase):
     def test_missing_domain_route_is_reported(self):
         backlog = copy.deepcopy(self.backlog)
         del backlog["routing"]["interface"]["values"]["gui"]
-        findings = tracker.validate(backlog, self.rows)
+        rows = copy.deepcopy(self.rows)
+        rows["interface"].append(
+            tracker.LedgerRow("interface", "IF-GUI-SYNTHETIC-999", "gui", None)
+        )
+        findings = tracker.validate(backlog, rows)
         self.assertTrue(any("unassigned open row interface:" in item for item in findings))
 
     def test_dependency_cycle_is_reported(self):
