@@ -1,0 +1,2607 @@
+schema_version: 1
+baseline: "kova-0.29.0"
+ledger: "interface"
+items:
+  - id: "IF-GUI-ABOUT-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the AboutView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/AboutView.axaml"
+        symbol: "AboutView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-AFTER-CAPTURE-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the AfterCaptureWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/AfterCaptureWindow.axaml"
+        symbol: "AfterCaptureWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-AFTER-UPLOAD-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the AfterUploadWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/AfterUploadWindow.axaml"
+        symbol: "AfterUploadWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-APPLICATION-SETTINGS-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ApplicationSettingsView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ApplicationSettingsView.axaml"
+        symbol: "ApplicationSettingsView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-ASSISTANT-OVERLAY-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the AssistantOverlayWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/AssistantOverlayWindow.axaml"
+        symbol: "AssistantOverlayWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-AUTO-CAPTURE-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the AutoCaptureWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/AutoCaptureWindow.axaml"
+        symbol: "AutoCaptureWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-CAPTURE-COMMAND-PALETTE-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the CaptureCommandPaletteWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/CaptureCommandPaletteWindow.axaml"
+        symbol: "CaptureCommandPaletteWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-COLOR-PICKER-DIALOG-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ColorPickerDialog user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ColorPickerDialog.axaml"
+        symbol: "ColorPickerDialog"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-HOTKEY-SELECTION-CONTROL-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the HotkeySelectionControl user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/Controls/HotkeySelectionControl.axaml"
+        symbol: "HotkeySelectionControl"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-CUSTOM-UPLOADER-EDITOR-DIALOG-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the CustomUploaderEditorDialog user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/CustomUploaderEditorDialog.axaml"
+        symbol: "CustomUploaderEditorDialog"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-CUSTOM-UPLOADER-EDITOR-FORM-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the CustomUploaderEditorFormView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/CustomUploaderEditorFormView.axaml"
+        symbol: "CustomUploaderEditorFormView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-DEBUG-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the DebugView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/DebugView.axaml"
+        symbol: "DebugView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-DESTINATION-SETTINGS-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the DestinationSettingsView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/DestinationSettingsView.axaml"
+        symbol: "DestinationSettingsView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-CONFIRMATION-DIALOG-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ConfirmationDialog user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/Dialogs/ConfirmationDialog.axaml"
+        symbol: "ConfirmationDialog"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-OPEN-IMAGE-CHOICE-DIALOG-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the OpenImageChoiceDialog user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/Dialogs/OpenImageChoiceDialog.axaml"
+        symbol: "OpenImageChoiceDialog"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-DOWNLOADER-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the DownloaderWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/DownloaderWindow.axaml"
+        symbol: "DownloaderWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-EDITOR-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the EditorWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/EditorWindow.axaml"
+        symbol: "EditorWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-FFMPEG-OPTIONS-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the FFmpegOptionsWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/FFmpegOptionsWindow.axaml"
+        symbol: "FFmpegOptionsWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-HASH-CHECK-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the HashCheckWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/HashCheckWindow.axaml"
+        symbol: "HashCheckWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-HISTORY-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the HistoryView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/HistoryView.axaml"
+        symbol: "HistoryView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-HOTKEY-SETTINGS-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the HotkeySettingsView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/HotkeySettingsView.axaml"
+        symbol: "HotkeySettingsView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-IMAGE-ANALYZER-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ImageAnalyzerWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ImageAnalyzerWindow.axaml"
+        symbol: "ImageAnalyzerWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-IMAGE-COMBINER-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ImageCombinerWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ImageCombinerWindow.axaml"
+        symbol: "ImageCombinerWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-IMAGE-EFFECTS-BROWSER-DIALOG-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ImageEffectsBrowserDialog user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ImageEffectsBrowserDialog.axaml"
+        symbol: "ImageEffectsBrowserDialog"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-IMAGE-SPLITTER-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ImageSplitterWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ImageSplitterWindow.axaml"
+        symbol: "ImageSplitterWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-IMAGE-THUMBNAILER-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ImageThumbnailerWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ImageThumbnailerWindow.axaml"
+        symbol: "ImageThumbnailerWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-INDEX-FOLDER-PANEL-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the IndexFolderPanel user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/IndexFolderPanel.axaml"
+        symbol: "IndexFolderPanel"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-INDEX-FOLDER-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the IndexFolderView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/IndexFolderView.axaml"
+        symbol: "IndexFolderView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-MAIN-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the MainWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/MainWindow.axaml"
+        symbol: "MainWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-MONITOR-TEST-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the MonitorTestWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/MonitorTestWindow.axaml"
+        symbol: "MonitorTestWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-NETWORK-MONITOR-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the NetworkMonitorWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/NetworkMonitorWindow.axaml"
+        symbol: "NetworkMonitorWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-OCR-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the OcrWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/OcrWindow.axaml"
+        symbol: "OcrWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-PINNED-IMAGE-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the PinnedImageWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/PinnedImageWindow.axaml"
+        symbol: "PinnedImageWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-PIN-TO-SCREEN-STARTUP-DIALOG-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the PinToScreenStartupDialog user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/PinToScreenStartupDialog.axaml"
+        symbol: "PinToScreenStartupDialog"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-PLUGIN-INSTALLER-DIALOG-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the PluginInstallerDialog user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/PluginInstallerDialog.axaml"
+        symbol: "PluginInstallerDialog"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-PROVIDER-CATALOG-DIALOG-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ProviderCatalogDialog user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ProviderCatalogDialog.axaml"
+        symbol: "ProviderCatalogDialog"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-PROVIDER-CATALOG-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ProviderCatalogView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ProviderCatalogView.axaml"
+        symbol: "ProviderCatalogView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-PROVIDER-EXPLORER-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ProviderExplorerView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ProviderExplorerView.axaml"
+        symbol: "ProviderExplorerView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-PROVIDER-EXPLORER-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ProviderExplorerWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ProviderExplorerWindow.axaml"
+        symbol: "ProviderExplorerWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-QR-CODE-DECODE-RESULTS-DIALOG-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the QrCodeDecodeResultsDialog user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/QrCodeDecodeResultsDialog.axaml"
+        symbol: "QrCodeDecodeResultsDialog"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-QR-CODE-GENERATOR-DIALOG-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the QrCodeGeneratorDialog user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/QrCodeGeneratorDialog.axaml"
+        symbol: "QrCodeGeneratorDialog"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-RECORDING-BORDER-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the RecordingBorderWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/RecordingBorderWindow.axaml"
+        symbol: "RecordingBorderWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-RECORDING-TOOLBAR-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the RecordingToolbarView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/RecordingToolbarView.axaml"
+        symbol: "RecordingToolbarView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-RECORDING-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the RecordingView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/RecordingView.axaml"
+        symbol: "RecordingView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-SCHEMA-CONFIG-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the SchemaConfigView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/SchemaConfigView.axaml"
+        symbol: "SchemaConfigView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-SCROLLING-CAPTURE-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ScrollingCaptureWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ScrollingCaptureWindow.axaml"
+        symbol: "ScrollingCaptureWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-SEND-TO-PROMPT-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the SendToPromptWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/SendToPromptWindow.axaml"
+        symbol: "SendToPromptWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-TASK-IMAGE-SETTINGS-PANEL-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the TaskImageSettingsPanel user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/TaskImageSettingsPanel.axaml"
+        symbol: "TaskImageSettingsPanel"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-TASK-SETTINGS-PANEL-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the TaskSettingsPanel user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/TaskSettingsPanel.axaml"
+        symbol: "TaskSettingsPanel"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-TASK-VIDEO-SETTINGS-PANEL-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the TaskVideoSettingsPanel user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/TaskVideoSettingsPanel.axaml"
+        symbol: "TaskVideoSettingsPanel"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-THEME-SHOWCASE-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ThemeShowcaseView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ThemeShowcaseView.axaml"
+        symbol: "ThemeShowcaseView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-TOAST-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ToastWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ToastWindow.axaml"
+        symbol: "ToastWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-TOOLS-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ToolsView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ToolsView.axaml"
+        symbol: "ToolsView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-UPDATE-MESSAGE-BOX-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the UpdateMessageBox user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/UpdateMessageBox.axaml"
+        symbol: "UpdateMessageBox"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-UPLOAD-CONTENT-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the UploadContentWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/UploadContentWindow.axaml"
+        symbol: "UploadContentWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-VIDEO-CONVERTER-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the VideoConverterWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/VideoConverterWindow.axaml"
+        symbol: "VideoConverterWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-VIDEO-THUMBNAILER-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the VideoThumbnailerWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/VideoThumbnailerWindow.axaml"
+        symbol: "VideoThumbnailerWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-WATCH-FOLDER-DIALOG-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the WatchFolderDialog user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/WatchFolderDialog.axaml"
+        symbol: "WatchFolderDialog"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-WINDOW-SELECTOR-DIALOG-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the WindowSelectorDialog user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/WindowSelectorDialog.axaml"
+        symbol: "WindowSelectorDialog"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-WORKFLOW-EDITOR-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the WorkflowEditorView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/WorkflowEditorView.axaml"
+        symbol: "WorkflowEditorView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-WORKFLOWS-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the WorkflowsView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/WorkflowsView.axaml"
+        symbol: "WorkflowsView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-DIRECTORY-PICKER-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the DirectoryPicker user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Onboarding/Controls/DirectoryPicker.axaml"
+        symbol: "DirectoryPicker"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-HOTKEY-RECORDER-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the HotkeyRecorder user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Onboarding/Controls/HotkeyRecorder.axaml"
+        symbol: "HotkeyRecorder"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-PROGRESS-INDICATOR-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the ProgressIndicator user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Onboarding/Controls/ProgressIndicator.axaml"
+        symbol: "ProgressIndicator"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-ONBOARDING-UPLOADER-CONFIG-DIALOG-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the OnboardingUploaderConfigDialog user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Onboarding/OnboardingUploaderConfigDialog.axaml"
+        symbol: "OnboardingUploaderConfigDialog"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-ONBOARDING-WIZARD-WINDOW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the OnboardingWizardWindow user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Onboarding/OnboardingWizardWindow.axaml"
+        symbol: "OnboardingWizardWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-COMPLETE-STEP-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the CompleteStepView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Onboarding/Steps/CompleteStepView.axaml"
+        symbol: "CompleteStepView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-HOTKEY-STEP-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the HotkeyStepView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Onboarding/Steps/HotkeyStepView.axaml"
+        symbol: "HotkeyStepView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-OCR-STEP-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the OcrStepView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Onboarding/Steps/OcrStepView.axaml"
+        symbol: "OcrStepView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-SAVE-LOCATION-STEP-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the SaveLocationStepView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Onboarding/Steps/SaveLocationStepView.axaml"
+        symbol: "SaveLocationStepView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-UPLOAD-STEP-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the UploadStepView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Onboarding/Steps/UploadStepView.axaml"
+        symbol: "UploadStepView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-WELCOME-STEP-VIEW-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the WelcomeStepView user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Onboarding/Steps/WelcomeStepView.axaml"
+        symbol: "WelcomeStepView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-ONBOARDING-DESIGN-TOKENS-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the OnboardingDesignTokens user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Onboarding/Styles/OnboardingDesignTokens.axaml"
+        symbol: "OnboardingDesignTokens"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-GUI-ONBOARDING-STYLES-001"
+    domain: "gui"
+    user_outcome: "Reach and operate the OnboardingStyles user interface surface."
+    classification: "native-equivalent"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Onboarding/Styles/OnboardingStyles.axaml"
+        symbol: "OnboardingStyles"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-BACKUP-SETTINGS-BACKUPSETTINGS-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'backupsettings' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/BackupSettingsCommand.cs"
+        symbol: "backupsettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-BOOTSTRAP-BOOTSTRAP-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'bootstrap' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/BootstrapCommand.cs"
+        symbol: "bootstrap"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-BOOTSTRAP-UPLOADERS-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'uploaders' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/BootstrapCommand.cs"
+        symbol: "uploaders"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-CAPTURE-CAPTURE-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'capture' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/CaptureCommand.cs"
+        symbol: "capture"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-CAPTURE-REGION-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'region' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/CaptureCommand.cs"
+        symbol: "region"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-CAPTURE-SCREEN-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'screen' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/CaptureCommand.cs"
+        symbol: "screen"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-CAPTURE-TRANSPARENT-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'transparent' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/CaptureCommand.cs"
+        symbol: "transparent"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-CAPTURE-WINDOW-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'window' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/CaptureCommand.cs"
+        symbol: "window"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-CLOUD-CLOUD-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'cloud' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/CloudCommand.cs"
+        symbol: "cloud"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-CLOUD-COMPLETE-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'complete' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/CloudCommand.cs"
+        symbol: "complete"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-CLOUD-SIGN-IN-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'sign-in' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/CloudCommand.cs"
+        symbol: "sign-in"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-CLOUD-SIGN-OUT-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'sign-out' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/CloudCommand.cs"
+        symbol: "sign-out"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-CLOUD-STATUS-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'status' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/CloudCommand.cs"
+        symbol: "status"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-COMPARE-CAPTURE-COMPARE-CAPTURE-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'compare-capture' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/CompareCaptureCommand.cs"
+        symbol: "compare-capture"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-CONFIG-CONFIG-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'config' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/ConfigCommand.cs"
+        symbol: "config"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-CONFIG-PATH-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'path' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/ConfigCommand.cs"
+        symbol: "path"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-CONFIG-SHOW-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'show' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/ConfigCommand.cs"
+        symbol: "show"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-DOCTOR-DOCTOR-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'doctor' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/DoctorCommand.cs"
+        symbol: "doctor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-DOCTOR-UPLOADERS-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'uploaders' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/DoctorCommand.cs"
+        symbol: "uploaders"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-INDEX-INDEX-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'index' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/IndexCommand.cs"
+        symbol: "index"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-LIST-LIST-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'list' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/ListCommand.cs"
+        symbol: "list"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-LIST-WORKFLOWS-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'workflows' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/ListCommand.cs"
+        symbol: "workflows"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-OPEN-CLAW-EXPORT-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'export' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/OpenClawCommand.cs"
+        symbol: "export"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-OPEN-CLAW-MANIFEST-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'manifest' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/OpenClawCommand.cs"
+        symbol: "manifest"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-OPEN-CLAW-OPENCLAW-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'openclaw' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/OpenClawCommand.cs"
+        symbol: "openclaw"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-OPEN-CLAW-PLUGIN-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'plugin' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/OpenClawCommand.cs"
+        symbol: "plugin"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-OPEN-VIDEO-EDITOR-OPEN-VIDEO-EDITOR-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'open-video-editor' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/OpenVideoEditorCommand.cs"
+        symbol: "open-video-editor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-RE-CLIP-RECLIP-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'reclip' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/ReClipCommand.cs"
+        symbol: "reclip"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-RE-CLIP-SET-WATCH-FOLDER-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'set-watch-folder' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/ReClipCommand.cs"
+        symbol: "set-watch-folder"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-RE-CLIP-STATUS-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'status' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/ReClipCommand.cs"
+        symbol: "status"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-RE-CLIP-USE-DEFAULT-WATCH-FOLDER-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'use-default-watch-folder' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/ReClipCommand.cs"
+        symbol: "use-default-watch-folder"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-RECORD-ABORT-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'abort' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/RecordCommand.cs"
+        symbol: "abort"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-RECORD-RECORD-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'record' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/RecordCommand.cs"
+        symbol: "record"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-RECORD-START-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'start' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/RecordCommand.cs"
+        symbol: "start"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-RECORD-STOP-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'stop' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/RecordCommand.cs"
+        symbol: "stop"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-UPLOAD-UPLOAD-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'upload' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/UploadCommand.cs"
+        symbol: "upload"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-VERIFY-GIF-RECORDING-VERIFY-GIF-RECORDING-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'verify-gif-recording' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/VerifyGifRecordingCommand.cs"
+        symbol: "verify-gif-recording"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-VERIFY-MAC-OSNATIVE-CROSSHAIR-VERIFY-MACOS-NATIVE-CROSSHAIR-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'verify-macos-native-crosshair' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/VerifyMacOSNativeCrosshairCommand.cs"
+        symbol: "verify-macos-native-crosshair"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-VERIFY-RECORDING-VERIFY-RECORDING-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'verify-recording' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/VerifyRecordingCommand.cs"
+        symbol: "verify-recording"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-VERIFY-REGION-CAPTURE-VERIFY-REGION-CAPTURE-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'verify-region-capture' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/VerifyRegionCaptureCommand.cs"
+        symbol: "verify-region-capture"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-VERIFY-VIDEO-EDITOR-VERIFY-VIDEO-EDITOR-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'verify-video-editor' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/VerifyVideoEditorCommand.cs"
+        symbol: "verify-video-editor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-WATCH-FOLDER-DAEMON-START-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'start' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/WatchFolderDaemonCommand.cs"
+        symbol: "start"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-WATCH-FOLDER-DAEMON-STATUS-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'status' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/WatchFolderDaemonCommand.cs"
+        symbol: "status"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-WATCH-FOLDER-DAEMON-STOP-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'stop' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/WatchFolderDaemonCommand.cs"
+        symbol: "stop"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-WATCH-FOLDER-DAEMON-WATCHFOLDER-DAEMON-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'watchfolder-daemon' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/WatchFolderDaemonCommand.cs"
+        symbol: "watchfolder-daemon"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-CLI-WORKFLOW-RUN-001"
+    domain: "cli"
+    user_outcome: "Invoke the 'run' CLI command with stable output and exit behavior."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/WorkflowCommand.cs"
+        symbol: "run"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-MCP-ANNOTATION-TOOLS-001"
+    domain: "mcp"
+    user_outcome: "Use the AnnotationTools MCP tool family through the supported transports."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/tools/XerahS.McpServer/Tools/AnnotationTools.cs"
+        symbol: "AnnotationTools"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-MCP-CAPTURE-TOOLS-001"
+    domain: "mcp"
+    user_outcome: "Use the CaptureTools MCP tool family through the supported transports."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/tools/XerahS.McpServer/Tools/CaptureTools.cs"
+        symbol: "CaptureTools"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-MCP-HISTORY-TOOLS-001"
+    domain: "mcp"
+    user_outcome: "Use the HistoryTools MCP tool family through the supported transports."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/tools/XerahS.McpServer/Tools/HistoryTools.cs"
+        symbol: "HistoryTools"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-MCP-SETTINGS-TOOLS-001"
+    domain: "mcp"
+    user_outcome: "Use the SettingsTools MCP tool family through the supported transports."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/tools/XerahS.McpServer/Tools/SettingsTools.cs"
+        symbol: "SettingsTools"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-MCP-UPLOAD-TOOLS-001"
+    domain: "mcp"
+    user_outcome: "Use the UploadTools MCP tool family through the supported transports."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/tools/XerahS.McpServer/Tools/UploadTools.cs"
+        symbol: "UploadTools"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-DESTINATION-AMAZON-S3-001"
+    domain: "destination"
+    user_outcome: "Configure and invoke the shipped AmazonS3 destination provider."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/plugins/AmazonS3.Plugin/XerahS.AmazonS3.Plugin.csproj"
+        symbol: "XerahS.AmazonS3.Plugin"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-DESTINATION-AUTO-001"
+    domain: "destination"
+    user_outcome: "Configure and invoke the shipped Auto destination provider."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/plugins/Auto.Plugin/XerahS.Auto.Plugin.csproj"
+        symbol: "XerahS.Auto.Plugin"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-DESTINATION-BITLY-001"
+    domain: "destination"
+    user_outcome: "Configure and invoke the shipped Bitly destination provider."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/plugins/Bitly.Plugin/XerahS.Bitly.Plugin.csproj"
+        symbol: "XerahS.Bitly.Plugin"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-DESTINATION-DROPBOX-001"
+    domain: "destination"
+    user_outcome: "Configure and invoke the shipped Dropbox destination provider."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/plugins/Dropbox.Plugin/XerahS.Dropbox.Plugin.csproj"
+        symbol: "XerahS.Dropbox.Plugin"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-DESTINATION-FTP-001"
+    domain: "destination"
+    user_outcome: "Configure and invoke the shipped Ftp destination provider."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/plugins/Ftp.Plugin/XerahS.Ftp.Plugin.csproj"
+        symbol: "XerahS.Ftp.Plugin"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-DESTINATION-GIT-HUB-GIST-001"
+    domain: "destination"
+    user_outcome: "Configure and invoke the shipped GitHubGist destination provider."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/plugins/GitHubGist.Plugin/XerahS.GitHubGist.Plugin.csproj"
+        symbol: "XerahS.GitHubGist.Plugin"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-DESTINATION-IMGUR-001"
+    domain: "destination"
+    user_outcome: "Configure and invoke the shipped Imgur destination provider."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/plugins/Imgur.Plugin/XerahS.Imgur.Plugin.csproj"
+        symbol: "XerahS.Imgur.Plugin"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-DESTINATION-IMMICH-001"
+    domain: "destination"
+    user_outcome: "Configure and invoke the shipped Immich destination provider."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/plugins/Immich.Plugin/XerahS.Immich.Plugin.csproj"
+        symbol: "XerahS.Immich.Plugin"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-DESTINATION-NEXTCLOUD-001"
+    domain: "destination"
+    user_outcome: "Configure and invoke the shipped Nextcloud destination provider."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/plugins/Nextcloud.Plugin/XerahS.Nextcloud.Plugin.csproj"
+        symbol: "XerahS.Nextcloud.Plugin"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-DESTINATION-PASTE2-001"
+    domain: "destination"
+    user_outcome: "Configure and invoke the shipped Paste2 destination provider."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/plugins/Paste2.Plugin/XerahS.Paste2.Plugin.csproj"
+        symbol: "XerahS.Paste2.Plugin"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-DESTINATION-PASTEBIN-001"
+    domain: "destination"
+    user_outcome: "Configure and invoke the shipped Pastebin destination provider."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/plugins/Pastebin.Plugin/XerahS.Pastebin.Plugin.csproj"
+        symbol: "XerahS.Pastebin.Plugin"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "IF-DESTINATION-XBACK-BONE-001"
+    domain: "destination"
+    user_outcome: "Configure and invoke the shipped XBackBone destination provider."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/plugins/XBackBone.Plugin/XerahS.XBackBone.Plugin.csproj"
+        symbol: "XerahS.XBackBone.Plugin"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"

@@ -1,0 +1,1676 @@
+schema_version: 1
+baseline: "kova-0.29.0"
+ledger: "workflow"
+items:
+  - id: "WF-WORKFLOW-NONE-001"
+    domain: "workflow"
+    user_outcome: "Invoke the None workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.None"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-FILE-UPLOAD-001"
+    domain: "workflow"
+    user_outcome: "Invoke the FileUpload workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.FileUpload"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-CLIPBOARD-UPLOAD-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ClipboardUpload workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ClipboardUpload"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-CLIPBOARD-UPLOAD-WITH-CONTENT-VIEWER-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ClipboardUploadWithContentViewer workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ClipboardUploadWithContentViewer"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-PRINT-SCREEN-001"
+    domain: "workflow"
+    user_outcome: "Invoke the PrintScreen workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.PrintScreen"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-ACTIVE-WINDOW-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ActiveWindow workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ActiveWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-CUSTOM-WINDOW-001"
+    domain: "workflow"
+    user_outcome: "Invoke the CustomWindow workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.CustomWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-ACTIVE-MONITOR-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ActiveMonitor workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ActiveMonitor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-RECTANGLE-REGION-001"
+    domain: "workflow"
+    user_outcome: "Invoke the RectangleRegion workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.RectangleRegion"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-RECTANGLE-TRANSPARENT-001"
+    domain: "workflow"
+    user_outcome: "Invoke the RectangleTransparent workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.RectangleTransparent"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-CUSTOM-REGION-001"
+    domain: "workflow"
+    user_outcome: "Invoke the CustomRegion workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.CustomRegion"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-LAST-REGION-001"
+    domain: "workflow"
+    user_outcome: "Invoke the LastRegion workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.LastRegion"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-SCROLLING-CAPTURE-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ScrollingCapture workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ScrollingCapture"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-AUTO-CAPTURE-001"
+    domain: "workflow"
+    user_outcome: "Invoke the AutoCapture workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.AutoCapture"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-START-AUTO-CAPTURE-001"
+    domain: "workflow"
+    user_outcome: "Invoke the StartAutoCapture workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.StartAutoCapture"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-STOP-AUTO-CAPTURE-001"
+    domain: "workflow"
+    user_outcome: "Invoke the StopAutoCapture workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.StopAutoCapture"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-SCREEN-RECORDER-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ScreenRecorder workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ScreenRecorder"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-SCREEN-RECORDER-ACTIVE-WINDOW-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ScreenRecorderActiveWindow workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ScreenRecorderActiveWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-SCREEN-RECORDER-CUSTOM-REGION-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ScreenRecorderCustomRegion workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ScreenRecorderCustomRegion"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-START-SCREEN-RECORDER-001"
+    domain: "workflow"
+    user_outcome: "Invoke the StartScreenRecorder workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.StartScreenRecorder"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-SCREEN-RECORDER-GIF-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ScreenRecorderGIF workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ScreenRecorderGIF"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-SCREEN-RECORDER-GIFACTIVE-WINDOW-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ScreenRecorderGIFActiveWindow workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ScreenRecorderGIFActiveWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-SCREEN-RECORDER-GIFCUSTOM-REGION-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ScreenRecorderGIFCustomRegion workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ScreenRecorderGIFCustomRegion"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-START-SCREEN-RECORDER-GIF-001"
+    domain: "workflow"
+    user_outcome: "Invoke the StartScreenRecorderGIF workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.StartScreenRecorderGIF"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-STOP-SCREEN-RECORDING-001"
+    domain: "workflow"
+    user_outcome: "Invoke the StopScreenRecording workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.StopScreenRecording"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-PAUSE-SCREEN-RECORDING-001"
+    domain: "workflow"
+    user_outcome: "Invoke the PauseScreenRecording workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.PauseScreenRecording"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-ABORT-SCREEN-RECORDING-001"
+    domain: "workflow"
+    user_outcome: "Invoke the AbortScreenRecording workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.AbortScreenRecording"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-COLOR-PICKER-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ColorPicker workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ColorPicker"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-SCREEN-COLOR-PICKER-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ScreenColorPicker workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ScreenColorPicker"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-RULER-001"
+    domain: "workflow"
+    user_outcome: "Invoke the Ruler workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.Ruler"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-PIN-TO-SCREEN-001"
+    domain: "workflow"
+    user_outcome: "Invoke the PinToScreen workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.PinToScreen"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-PIN-TO-SCREEN-FROM-SCREEN-001"
+    domain: "workflow"
+    user_outcome: "Invoke the PinToScreenFromScreen workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.PinToScreenFromScreen"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-PIN-TO-SCREEN-FROM-CLIPBOARD-001"
+    domain: "workflow"
+    user_outcome: "Invoke the PinToScreenFromClipboard workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.PinToScreenFromClipboard"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-PIN-TO-SCREEN-FROM-FILE-001"
+    domain: "workflow"
+    user_outcome: "Invoke the PinToScreenFromFile workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.PinToScreenFromFile"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-PIN-TO-SCREEN-CLOSE-ALL-001"
+    domain: "workflow"
+    user_outcome: "Invoke the PinToScreenCloseAll workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.PinToScreenCloseAll"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-IMAGE-EDITOR-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ImageEditor workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ImageEditor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-VIDEO-EDITOR-001"
+    domain: "workflow"
+    user_outcome: "Invoke the VideoEditor workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.VideoEditor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-IMAGE-COMBINER-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ImageCombiner workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ImageCombiner"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-IMAGE-SPLITTER-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ImageSplitter workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ImageSplitter"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-IMAGE-THUMBNAILER-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ImageThumbnailer workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ImageThumbnailer"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-VIDEO-CONVERTER-001"
+    domain: "workflow"
+    user_outcome: "Invoke the VideoConverter workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.VideoConverter"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-VIDEO-THUMBNAILER-001"
+    domain: "workflow"
+    user_outcome: "Invoke the VideoThumbnailer workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.VideoThumbnailer"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-ANALYZE-IMAGE-001"
+    domain: "workflow"
+    user_outcome: "Invoke the AnalyzeImage workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.AnalyzeImage"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-OCR-001"
+    domain: "workflow"
+    user_outcome: "Invoke the OCR workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.OCR"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-QRCODE-001"
+    domain: "workflow"
+    user_outcome: "Invoke the QRCode workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.QRCode"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-QRCODE-DECODE-FROM-SCREEN-001"
+    domain: "workflow"
+    user_outcome: "Invoke the QRCodeDecodeFromScreen workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.QRCodeDecodeFromScreen"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-QRCODE-SCAN-REGION-001"
+    domain: "workflow"
+    user_outcome: "Invoke the QRCodeScanRegion workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.QRCodeScanRegion"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-HASH-CHECK-001"
+    domain: "workflow"
+    user_outcome: "Invoke the HashCheck workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.HashCheck"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-INDEX-FOLDER-001"
+    domain: "workflow"
+    user_outcome: "Invoke the IndexFolder workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.IndexFolder"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-CLIPBOARD-VIEWER-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ClipboardViewer workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ClipboardViewer"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-MONITOR-TEST-001"
+    domain: "workflow"
+    user_outcome: "Invoke the MonitorTest workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.MonitorTest"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-NETWORK-MONITOR-001"
+    domain: "workflow"
+    user_outcome: "Invoke the NetworkMonitor workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.NetworkMonitor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-DISABLE-HOTKEYS-001"
+    domain: "workflow"
+    user_outcome: "Invoke the DisableHotkeys workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.DisableHotkeys"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-OPEN-MAIN-WINDOW-001"
+    domain: "workflow"
+    user_outcome: "Invoke the OpenMainWindow workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.OpenMainWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-OPEN-SCREENSHOTS-FOLDER-001"
+    domain: "workflow"
+    user_outcome: "Invoke the OpenScreenshotsFolder workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.OpenScreenshotsFolder"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-OPEN-HISTORY-001"
+    domain: "workflow"
+    user_outcome: "Invoke the OpenHistory workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.OpenHistory"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-OPEN-IMAGE-HISTORY-001"
+    domain: "workflow"
+    user_outcome: "Invoke the OpenImageHistory workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.OpenImageHistory"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-WORKFLOW-EXIT-SHARE-X-001"
+    domain: "workflow"
+    user_outcome: "Invoke the ExitShareX workflow outcome."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ExitShareX"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-NONE-001"
+    domain: "workflow"
+    user_outcome: "Run the None post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.None"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-SHOW-QUICK-TASK-MENU-001"
+    domain: "workflow"
+    user_outcome: "Run the ShowQuickTaskMenu post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.ShowQuickTaskMenu"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-SHOW-AFTER-CAPTURE-WINDOW-001"
+    domain: "workflow"
+    user_outcome: "Run the ShowAfterCaptureWindow post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.ShowAfterCaptureWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-ADD-IMAGE-EFFECTS-001"
+    domain: "workflow"
+    user_outcome: "Run the AddImageEffects post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.AddImageEffects"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-ANNOTATE-MEDIA-001"
+    domain: "workflow"
+    user_outcome: "Run the AnnotateMedia post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.AnnotateMedia"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-ANNOTATE-IMAGE-001"
+    domain: "workflow"
+    user_outcome: "Run the AnnotateImage post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.AnnotateImage"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-COPY-IMAGE-TO-CLIPBOARD-001"
+    domain: "workflow"
+    user_outcome: "Run the CopyImageToClipboard post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.CopyImageToClipboard"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-PIN-TO-SCREEN-001"
+    domain: "workflow"
+    user_outcome: "Run the PinToScreen post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.PinToScreen"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-SEND-IMAGE-TO-PRINTER-001"
+    domain: "workflow"
+    user_outcome: "Run the SendImageToPrinter post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.SendImageToPrinter"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-SAVE-IMAGE-TO-FILE-001"
+    domain: "workflow"
+    user_outcome: "Run the SaveImageToFile post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.SaveImageToFile"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-SAVE-IMAGE-TO-FILE-WITH-DIALOG-001"
+    domain: "workflow"
+    user_outcome: "Run the SaveImageToFileWithDialog post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.SaveImageToFileWithDialog"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-SAVE-THUMBNAIL-IMAGE-TO-FILE-001"
+    domain: "workflow"
+    user_outcome: "Run the SaveThumbnailImageToFile post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.SaveThumbnailImageToFile"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-PERFORM-ACTIONS-001"
+    domain: "workflow"
+    user_outcome: "Run the PerformActions post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.PerformActions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-COPY-FILE-TO-CLIPBOARD-001"
+    domain: "workflow"
+    user_outcome: "Run the CopyFileToClipboard post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.CopyFileToClipboard"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-COPY-FILE-PATH-TO-CLIPBOARD-001"
+    domain: "workflow"
+    user_outcome: "Run the CopyFilePathToClipboard post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.CopyFilePathToClipboard"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-SHOW-IN-EXPLORER-001"
+    domain: "workflow"
+    user_outcome: "Run the ShowInExplorer post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.ShowInExplorer"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-ANALYZE-IMAGE-001"
+    domain: "workflow"
+    user_outcome: "Run the AnalyzeImage post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.AnalyzeImage"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-SCAN-QRCODE-001"
+    domain: "workflow"
+    user_outcome: "Run the ScanQRCode post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.ScanQRCode"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-DO-OCR-001"
+    domain: "workflow"
+    user_outcome: "Run the DoOCR post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.DoOCR"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-SHOW-BEFORE-UPLOAD-WINDOW-001"
+    domain: "workflow"
+    user_outcome: "Run the ShowBeforeUploadWindow post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.ShowBeforeUploadWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-UPLOAD-IMAGE-TO-HOST-001"
+    domain: "workflow"
+    user_outcome: "Run the UploadImageToHost post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.UploadImageToHost"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-DELETE-FILE-001"
+    domain: "workflow"
+    user_outcome: "Run the DeleteFile post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.DeleteFile"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-CAPTURE-COPY-OCR-TEXT-TO-CLIPBOARD-001"
+    domain: "workflow"
+    user_outcome: "Run the CopyOcrTextToClipboard post-capture action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks.CopyOcrTextToClipboard"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-UPLOAD-NONE-001"
+    domain: "workflow"
+    user_outcome: "Run the None post-upload action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterUploadTasks.None"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-UPLOAD-SHOW-AFTER-UPLOAD-WINDOW-001"
+    domain: "workflow"
+    user_outcome: "Run the ShowAfterUploadWindow post-upload action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterUploadTasks.ShowAfterUploadWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-UPLOAD-USE-URLSHORTENER-001"
+    domain: "workflow"
+    user_outcome: "Run the UseURLShortener post-upload action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterUploadTasks.UseURLShortener"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-UPLOAD-SHARE-URL-001"
+    domain: "workflow"
+    user_outcome: "Run the ShareURL post-upload action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterUploadTasks.ShareURL"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-UPLOAD-COPY-URLTO-CLIPBOARD-001"
+    domain: "workflow"
+    user_outcome: "Run the CopyURLToClipboard post-upload action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterUploadTasks.CopyURLToClipboard"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-UPLOAD-OPEN-URL-001"
+    domain: "workflow"
+    user_outcome: "Run the OpenURL post-upload action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterUploadTasks.OpenURL"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WF-AFTER-UPLOAD-SHOW-QRCODE-001"
+    domain: "workflow"
+    user_outcome: "Run the ShowQRCode post-upload action when selected."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterUploadTasks.ShowQRCode"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"

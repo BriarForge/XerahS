@@ -1,0 +1,40 @@
+schema_version: 1
+id: "kova-0.29.0"
+repository: "https://github.com/KovaForge/XerahS"
+branch_when_pinned: "develop"
+commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+application_version: "0.29.0"
+observed_on: "2026-08-30"
+working_tree_when_pinned: "clean-and-synchronized"
+submodules:
+  ShareX.ImageEditor: "651b1d8de4bc1f874790870560314670cd038684"
+  ShareX.VideoEditor: "0482ee322a3086d5af135aa9b54a37803241cb0d"
+scope:
+  included:
+    - "windows-desktop"
+    - "macos-desktop"
+    - "linux-desktop"
+    - "shipped-companion-tools"
+  excluded:
+    - path: "src/mobile-experimental"
+      classification: "out-of-scope-bxip001"
+      authority: "D-BASE-001"
+inventory_tool:
+  name: "baseline-census"
+  version: "1.0.0"
+input_hashes:
+  projects: "511923414a99a8ad60fd9d56fa759bcae08c45c23b29efba245479e357c39ead"
+  registries_and_source: "5cf6e272fd27768734f11493fa6e76e8a4e4a865c2d02868a25e3276a05d5e6e"
+  settings: "a299965341c0fbaf5770cabe45ed567559541046d4f6dd95ca1e296204a9f61f"
+  ui: "d8c45c1515100955faa1931afb181e9808f6ceeb67c622626b10d00d6e4c984f"
+  tests: "ae5e31324fca48446cd5cf431ba06abf48611f7c08839a4b8c0bf78ba344416b"
+  documentation: "4986d3fb0c6f1d26698e2915e539027fc92a27e10e082222e4284833d9e60d0a"
+  image_editor: "651b1d8de4bc1f874790870560314670cd038684"
+  video_editor: "0482ee322a3086d5af135aa9b54a37803241cb0d"
+census_status: "open"
+closure_requirements:
+  - "source-structure-review"
+  - "user-journey-review"
+  - "runtime-observation"
+  - "unresolved-symbol-review"
+  - "product-owner-signature"

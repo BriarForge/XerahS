@@ -1,0 +1,232 @@
+schema_version: 1
+baseline: "kova-0.29.0"
+ledger: "compatibility"
+items:
+  - id: "COMPAT-APPLICATION-CONFIG-JSON-001"
+    domain: "configuration"
+    user_outcome: "Read and migrate ApplicationConfig JSON without silent data loss."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Managers/SettingsManager.cs"
+        symbol: "SettingsManager.ApplicationConfigFilePath"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "COMPAT-WORKFLOWS-CONFIG-JSON-001"
+    domain: "configuration"
+    user_outcome: "Read and migrate independent workflow configuration JSON."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Managers/SettingsManager.cs"
+        symbol: "SettingsManager.HotkeysConfigFilePath"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "COMPAT-UPLOADERS-CONFIG-JSON-001"
+    domain: "configuration"
+    user_outcome: "Import supported legacy ShareX and XerahS uploader configuration."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/LegacySupport/UploadersConfigImporter.cs"
+        symbol: "UploadersConfigImporter"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "COMPAT-SECRETS-STORE-001"
+    domain: "configuration"
+    user_outcome: "Migrate protected secrets without exposing plaintext credentials."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Managers/SettingsManager.cs"
+        symbol: "SecretsStore"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "COMPAT-HISTORY-SQLITE-001"
+    domain: "history"
+    user_outcome: "Read, migrate, and preserve SQLite task history."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.History/HistoryManagerSQLite.cs"
+        symbol: "HistoryManagerSQLite"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "COMPAT-HISTORY-JSON-001"
+    domain: "history"
+    user_outcome: "Read supported JSON task history."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.History/HistoryManagerJSON.cs"
+        symbol: "HistoryManagerJSON"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "COMPAT-HISTORY-XML-001"
+    domain: "history"
+    user_outcome: "Read supported legacy XML task history."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.History/HistoryManagerXML.cs"
+        symbol: "HistoryManagerXML"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "COMPAT-XANN-001"
+    domain: "annotation"
+    user_outcome: "Round-trip versioned compressed .xann annotation sidecars and detect source mismatch."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Core/Persistence/XannProjectFileService.cs"
+        symbol: "XannProjectFileService"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "COMPAT-SXCU-001"
+    domain: "uploader"
+    user_outcome: "Import, edit, validate, and export ShareX custom uploader .sxcu definitions."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/CustomUploader/CustomUploaderSettingsSerializer.cs"
+        symbol: "CustomUploaderSettingsSerializer"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "COMPAT-SXIE-001"
+    domain: "image-effects"
+    user_outcome: "Import supported legacy .sxie image-effect presets."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI"
+        symbol: ".sxie importer"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "COMPAT-XSDP-001"
+    domain: "plugin"
+    user_outcome: "Validate and install signed or trusted .xsdp destination packages safely."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/PluginSystem/PluginPackager.cs"
+        symbol: "PluginPackager"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "COMPAT-MCP-JSON-001"
+    domain: "automation"
+    user_outcome: "Preserve MCP JSON request, response, resource, and error semantics."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/tools/XerahS.McpServer/JsonRpc/JsonRpcRequest.cs"
+        symbol: "JsonRpcRequest"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"

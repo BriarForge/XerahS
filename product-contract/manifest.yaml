@@ -1,17 +1,25 @@
-# Product Contract manifest. Schema will be published as JSON Schema (D-CON-001).
+# Product Contract manifest. Schema: schemas/manifest.schema.json.
 # Contract version is the product version native apps may claim.
-contract_version: 0.0.0
-status: seed
+contract_version: 0.1.0
+status: draft
 capabilities:
   - id: FILENAME-GENERATION-001
     path: capabilities/FILENAME-GENERATION-001
+    version: 0.1.0
     status: planned
+    requirements: []
   - id: POST-CAPTURE-ACTIONS-001
     path: capabilities/POST-CAPTURE-ACTIONS-001
+    version: 0.1.0
     status: planned
+    requirements: []
   - id: REGION-CAPTURE-001
     path: capabilities/REGION-CAPTURE-001
+    version: 0.1.0
     status: planned
+    requirements: []
   - id: EDITOR-SESSION-001
     path: capabilities/EDITOR-SESSION-001
+    version: 0.1.0
     status: planned
+    requirements: []

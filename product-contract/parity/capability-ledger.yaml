@@ -1,0 +1,746 @@
+schema_version: 1
+baseline: "kova-0.29.0"
+ledger: "capability"
+items:
+  - id: "APP-LAUNCH-001"
+    domain: "application-shell"
+    user_outcome: "Launch one native application instance and activate the existing instance on repeated launch."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.App/Program.cs"
+        symbol: "Program.Main"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "APP-TRAY-001"
+    domain: "application-shell"
+    user_outcome: "Control capture, upload, tools, history, settings, and lifecycle from the system tray."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/TrayIconHelper.cs"
+        symbol: "TrayIconHelper"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "APP-ONBOARDING-001"
+    domain: "application-shell"
+    user_outcome: "Complete first-run save-location, hotkey, OCR, and upload setup."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Onboarding/OnboardingWizardWindow.axaml"
+        symbol: "OnboardingWizardWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "APP-NOTIFICATIONS-001"
+    domain: "application-shell"
+    user_outcome: "Receive native task completion, action, and error notifications."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ToastWindow.axaml"
+        symbol: "ToastWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "APP-THEME-LOCALIZATION-001"
+    domain: "application-shell"
+    user_outcome: "Select theme and language while retaining native accessibility semantics."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.Language"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "APP-UPDATES-001"
+    domain: "application-shell"
+    user_outcome: "Check the selected update channel and present update results safely."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/ApplicationConfig.cs"
+        symbol: "ApplicationConfig.AutoCheckUpdate"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "CONFIG-LIFECYCLE-001"
+    domain: "configuration-security"
+    user_outcome: "Load, validate, back up, reset, import, and migrate application configuration."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Managers/SettingsManager.cs"
+        symbol: "SettingsManager"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "SECRETS-STORAGE-001"
+    domain: "configuration-security"
+    user_outcome: "Store uploader and service secrets using protected platform storage."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Common/Settings/DPAPIEncryptedStringValueProvider.cs"
+        symbol: "DPAPIEncryptedStringValueProvider"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "CAPTURE-FULLSCREEN-001"
+    domain: "capture"
+    user_outcome: "Capture the complete virtual desktop."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "CaptureType.Fullscreen"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "CAPTURE-MONITOR-001"
+    domain: "capture"
+    user_outcome: "Capture a selected or active monitor."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "CaptureType.Monitor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "CAPTURE-WINDOW-001"
+    domain: "capture"
+    user_outcome: "Capture a selected or active window."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "CaptureType.Window"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "CAPTURE-REGION-001"
+    domain: "capture"
+    user_outcome: "Select and capture an arbitrary screen region."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.RectangleRegion"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/REGION-CAPTURE-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "CAPTURE-SCROLLING-001"
+    domain: "capture"
+    user_outcome: "Capture scrollable content into a combined result."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ScrollingCaptureWindow.axaml"
+        symbol: "ScrollingCaptureWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "CAPTURE-AUTO-001"
+    domain: "capture"
+    user_outcome: "Capture a region repeatedly at a configured interval."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/AutoCaptureWindow.axaml"
+        symbol: "AutoCaptureWindow"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WORKFLOW-INDEPENDENT-001"
+    domain: "workflow-engine"
+    user_outcome: "Create independent workflows with their own hotkeys, capture choices, tasks, and destinations."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Hotkeys/HotkeySettings.cs"
+        symbol: "WorkflowSettings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "WORKFLOW-ACTIONS-001"
+    domain: "workflow-engine"
+    user_outcome: "Execute selected post-capture actions in a deterministic recoverable pipeline."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/platform/XerahS.Platform.Abstractions/TaskEnums.cs"
+        symbol: "AfterCaptureTasks"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/POST-CAPTURE-ACTIONS-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "FILENAME-GENERATION-001"
+    domain: "workflow-engine"
+    user_outcome: "Generate valid deterministic output names from configured tokens."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettings.cs"
+        symbol: "TaskSettingsGeneral.NameFormatPattern"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/FILENAME-GENERATION-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "RECORD-VIDEO-001"
+    domain: "recording"
+    user_outcome: "Record a selected screen area or window to video with pause, stop, abort, and recovery."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.RegionCapture/ScreenRecording/ScreenRecorderService.cs"
+        symbol: "ScreenRecorderService"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "RECORD-GIF-001"
+    domain: "recording"
+    user_outcome: "Record a selected screen area or window to animated GIF."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Enums.cs"
+        symbol: "WorkflowType.ScreenRecorderGIF"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "RECORD-AUDIO-001"
+    domain: "recording"
+    user_outcome: "Select and record supported audio sources with screen video."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Models/TaskSettingsOptions.cs"
+        symbol: "FFmpegOptions.AudioSource"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "EDITOR-SESSION-001"
+    domain: "image-editor"
+    user_outcome: "Open, annotate, undo or redo, export, and round-trip an editor session."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Core/Editor/EditorCore.cs"
+        symbol: "EditorCore"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: "product-contract/capabilities/EDITOR-SESSION-001"
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "EDITOR-ANNOTATIONS-001"
+    domain: "image-editor"
+    user_outcome: "Create, select, transform, style, order, and delete supported annotations."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Core/Annotations"
+        symbol: "Annotation tools"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "EDITOR-EFFECTS-001"
+    domain: "image-editor"
+    user_outcome: "Preview and apply supported image effects."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.ImageEditor/src/ShareX.ImageEditor/Core/ImageEffects"
+        symbol: "Image effects"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "VIDEO-EDITOR-001"
+    domain: "video-editor-media"
+    user_outcome: "Open media in the native video editor and save edited output."
+    classification: "preserve"
+    source_evidence:
+      - path: "ShareX.VideoEditor/backend/ShareX.VideoEditor.csproj"
+        symbol: "ShareX.VideoEditor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "MEDIA-UTILITIES-001"
+    domain: "video-editor-media"
+    user_outcome: "Combine, split, thumbnail, analyze, convert, index, and inspect supported media."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/ToolsView.axaml"
+        symbol: "ToolsView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "UPLOAD-PIPELINE-001"
+    domain: "upload-destinations"
+    user_outcome: "Upload image, text, or file content and retain result URLs and diagnostics."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Core/Tasks/Processors/UploadJobProcessor.cs"
+        symbol: "UploadJobProcessor"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "UPLOAD-CUSTOM-001"
+    domain: "upload-destinations"
+    user_outcome: "Import, edit, validate, and execute custom HTTP uploader definitions."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/CustomUploader/CustomUploaderProvider.cs"
+        symbol: "CustomUploaderProvider"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "UPLOAD-FIRST-PARTY-001"
+    domain: "upload-destinations"
+    user_outcome: "Configure and use every shipped first-party destination provider."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/plugins"
+        symbol: "First-party uploader projects"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "PLUGIN-EXTENSIBILITY-001"
+    domain: "upload-destinations"
+    user_outcome: "Discover, validate, install, diagnose, and remove destination extensions."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.Uploaders/PluginSystem/PluginLoader.cs"
+        symbol: "PluginLoader"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "HISTORY-TASKS-001"
+    domain: "history-indexing"
+    user_outcome: "Persist, browse, filter, search, reopen, and clean up task history."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/core/XerahS.History/HistoryManager.cs"
+        symbol: "HistoryManager"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "HISTORY-MEDIA-001"
+    domain: "history-indexing"
+    user_outcome: "Browse indexed media with thumbnails and re-edit supported items."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/Views/HistoryView.axaml"
+        symbol: "HistoryView"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "AUTOMATION-CLI-001"
+    domain: "automation-integration"
+    user_outcome: "Run capture, recording, upload, configuration, recovery, and diagnostic workflows from a stable CLI."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Program.cs"
+        symbol: "Program.BuildRootCommand"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "AUTOMATION-MCP-001"
+    domain: "automation-integration"
+    user_outcome: "Expose capture, annotation, upload, history, settings, and workflow operations through MCP."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/tools/XerahS.McpServer/Server/XerahSMcpServer.cs"
+        symbol: "XerahSMcpServer"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "AUTOMATION-ASSISTANT-001"
+    domain: "automation-integration"
+    user_outcome: "Invoke configured assistant providers from UI and headless entry points."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.Assistant"
+        symbol: "XerahS.Assistant"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "INTEGRATION-WATCH-FOLDER-001"
+    domain: "automation-integration"
+    user_outcome: "Watch configured folders and process new files in foreground or daemon mode."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/tools/XerahS.WatchFolder.Daemon"
+        symbol: "XerahS.WatchFolder.Daemon"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "INTEGRATION-SHELL-001"
+    domain: "automation-integration"
+    user_outcome: "Use Send To, context-menu, startup, and supported file associations."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/app/XerahS.UI/ViewModels/SettingsViewModel.Integration.cs"
+        symbol: "SettingsViewModel integration settings"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "DIAGNOSTICS-RECOVERY-001"
+    domain: "diagnostics-recovery"
+    user_outcome: "Diagnose permissions and dependencies, retain logs, and recover safely from partial failures."
+    classification: "preserve"
+    source_evidence:
+      - path: "src/desktop/cli/XerahS.CLI/Commands/DoctorCommand.cs"
+        symbol: "DoctorCommand"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "DISTRIBUTION-NATIVE-001"
+    domain: "distribution-quality"
+    user_outcome: "Install, update, run, and uninstall a native package without losing user data."
+    classification: "preserve"
+    source_evidence:
+      - path: "build"
+        symbol: "Packaging definitions"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "required"
+      macos: "required"
+      linux: "required"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+  - id: "MOBILE-EXPERIMENTAL-001"
+    domain: "mobile-experimental"
+    user_outcome: "Keep experimental mobile surfaces visible to the census without including them in BXIP001 desktop parity."
+    classification: "out-of-scope-bxip001"
+    source_evidence:
+      - path: "src/mobile-experimental"
+        symbol: "Experimental mobile projects"
+    baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
+    contract: null
+    platforms:
+      windows: "not-applicable"
+      macos: "not-applicable"
+      linux: "not-applicable"
+    evidence:
+      windows: []
+      macos: []
+      linux: []
+    compatibility: []
+    status: "inventoried"
+    approval: "product-owner-recorded-by-D-BASE-001"
