@@ -207,6 +207,66 @@ def lint_json(repo: Path, findings: Findings) -> None:
             findings.require(isinstance(value, dict) and "$schema" in value, path, "JSON Schema missing $schema")
 
 
+def lint_editor_catalogs(repo: Path, findings: Findings) -> None:
+    contract = repo / "product-contract"
+    paths = {
+        "census": contract / "reference-baselines" / "provenance" / "kova-0.29.0-census.json",
+        "annotations": contract / "capabilities" / "EDITOR-ANNOTATIONS-001" / "annotation-tools.json",
+        "effects": contract / "capabilities" / "EDITOR-EFFECTS-001" / "effect-catalog-selection.json",
+        "utilities": contract / "capabilities" / "EDITOR-UTILITIES-001" / "utility-catalog.json",
+    }
+    values: dict[str, dict] = {}
+    for name, path in paths.items():
+        if not path.is_file():
+            findings.add(path, f"missing ImageEditor {name} evidence")
+            return
+        try:
+            value = json.loads(path.read_text(encoding="utf-8-sig"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as error:
+            findings.add(path, f"cannot validate ImageEditor catalog: {error}")
+            return
+        if not isinstance(value, dict):
+            findings.add(path, "ImageEditor catalog root must be an object")
+            return
+        values[name] = value
+
+    try:
+        inventory = values["census"]["inventory"]
+        editor = inventory["image_editor"]
+        selected_tools = [item["id"] for item in values["annotations"]["tools"]]
+        findings.require(selected_tools == editor["editor_tools"], paths["annotations"], "tool selection differs from pinned census")
+
+        effects = editor["effect_types"]
+        categories: dict[str, int] = {}
+        modes: dict[str, int] = {}
+        for effect in effects:
+            categories[effect["category"]] = categories.get(effect["category"], 0) + 1
+            modes[effect["execution_mode"]] = modes.get(effect["execution_mode"], 0) + 1
+        expected = values["effects"]["expected"]
+        findings.require(expected["total"] == len(effects), paths["effects"], "effect total differs from pinned census")
+        findings.require(expected["categories"] == categories, paths["effects"], "effect category counts differ from pinned census")
+        findings.require(expected["execution_modes"] == modes, paths["effects"], "effect execution-mode counts differ from pinned census")
+        findings.require(expected["declared_parameter_controls"] == sum(len(effect["parameters"]) for effect in effects), paths["effects"], "effect parameter count differs from pinned census")
+
+        utility_by_id = {item["id"]: item for item in values["utilities"]["utilities"]}
+        enum_by_name = {
+            item["name"]: item["members"]
+            for item in inventory["public_enums"]
+            if item["path"].startswith("ShareX.ImageEditor/")
+        }
+        exact_enums = {
+            ("qr-code", "scan_modes"): "QrCodeScanMode",
+            ("hash-checker", "algorithms"): "HashCheckerAlgorithm",
+            ("icon-converter", "bit_depths"): "IconBitDepth",
+            ("background-remover", "devices"): "BackgroundRemovalDevice",
+            ("video-converter", "codecs"): "VideoConverterCodec",
+        }
+        for (utility_id, field), enum_name in exact_enums.items():
+            findings.require(set(utility_by_id[utility_id][field]) == set(enum_by_name[enum_name]), paths["utilities"], f"{utility_id}.{field} differs from pinned census")
+    except (KeyError, TypeError) as error:
+        findings.add(contract, f"malformed ImageEditor catalog evidence: missing or invalid {error}")
+
+
 def ledger_blocks(text: str) -> list[str]:
     starts = [match.start() for match in re.finditer(r'^  - id: ', text, re.MULTILINE)]
     return [text[start : starts[index + 1] if index + 1 < len(starts) else len(text)] for index, start in enumerate(starts)]
@@ -254,6 +314,7 @@ def lint_repository(repo: Path) -> list[str]:
     lint_agents(repo, findings)
     lint_manifest(repo, findings)
     lint_json(repo, findings)
+    lint_editor_catalogs(repo, findings)
     lint_parity(repo, findings)
     return findings.items
 

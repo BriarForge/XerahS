@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import tempfile
 import unittest
@@ -49,6 +50,34 @@ class ContractLintTests(unittest.TestCase):
             self.assertEqual("draft", status)
             self.assertEqual(["SAM-001", "SAM-002"], capabilities[0].requirements)
             self.assertEqual([], findings.items)
+
+    def test_image_editor_catalogs_match_pinned_census(self) -> None:
+        repo = Path(__file__).resolve().parents[3]
+        findings = LINT.Findings()
+        LINT.lint_editor_catalogs(repo, findings)
+        self.assertEqual([], findings.items)
+
+    def test_image_editor_catalog_drift_is_reported(self) -> None:
+        source = Path(__file__).resolve().parents[3] / "product-contract"
+        relatives = [
+            Path("reference-baselines/provenance/kova-0.29.0-census.json"),
+            Path("capabilities/EDITOR-ANNOTATIONS-001/annotation-tools.json"),
+            Path("capabilities/EDITOR-EFFECTS-001/effect-catalog-selection.json"),
+            Path("capabilities/EDITOR-UTILITIES-001/utility-catalog.json"),
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            for relative in relatives:
+                destination = repo / "product-contract" / relative
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes((source / relative).read_bytes())
+            tools_path = repo / "product-contract" / relatives[1]
+            tools = json.loads(tools_path.read_text(encoding="utf-8-sig"))
+            tools["tools"].pop()
+            tools_path.write_text(json.dumps(tools), encoding="utf-8")
+            findings = LINT.Findings()
+            LINT.lint_editor_catalogs(repo, findings)
+            self.assertTrue(any("tool selection differs" in item for item in findings.items))
 
 
 if __name__ == "__main__":
