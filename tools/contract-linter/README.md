@@ -15,6 +15,8 @@ The linter checks:
 - the root-to-leaf `AGENTS.md` parent chain, maximum depth, and unique rule IDs;
 - manifest SemVer, capability paths, lifecycle files, and exact requirement-ID
   agreement between the manifest and each `SPEC.md`;
+- human product-owner approval records covering every approved or active
+  capability at the manifest contract version;
 - JSON syntax and the presence of JSON Schema dialect declarations;
 - all required baseline/parity artifacts, row fields, unique ledger IDs, source
   evidence, platform dispositions, and valid contract links;

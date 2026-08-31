@@ -207,6 +207,42 @@ def lint_json(repo: Path, findings: Findings) -> None:
             findings.require(isinstance(value, dict) and "$schema" in value, path, "JSON Schema missing $schema")
 
 
+def lint_approval_records(repo: Path, findings: Findings) -> None:
+    contract_root = repo / "product-contract"
+    manifest_path = contract_root / "manifest.yaml"
+    contract_version, _, capabilities = parse_manifest(manifest_path, findings)
+    capability_by_id = {capability.identifier: capability for capability in capabilities}
+    requires_approval = {
+        capability.identifier
+        for capability in capabilities
+        if capability.status in {"approved", "active"}
+    }
+    covered: set[str] = set()
+    for path in sorted((contract_root / "reviews").glob("APPROVAL-*.json")):
+        try:
+            record = json.loads(path.read_text(encoding="utf-8-sig"))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            continue
+        if record.get("decision") != "approved":
+            continue
+        findings.require(record.get("schema_version") == 1, path, "approval record schema_version must be 1")
+        authority = record.get("authority", {})
+        findings.require(authority.get("role") == "human-product-owner", path, "approval authority must be human-product-owner")
+        scope = record.get("scope", {})
+        findings.require(scope.get("contract_version") == contract_version, path, "approval contract version does not match manifest")
+        effects = record.get("effects", {})
+        findings.require(effects.get("normative_contract") is True, path, "approved record must make its contract scope normative")
+        packages = scope.get("packages", [])
+        findings.require(isinstance(packages, list), path, "approval scope packages must be a list")
+        for package_id in packages if isinstance(packages, list) else []:
+            if package_id not in capability_by_id:
+                findings.add(path, f"approval references unknown capability {package_id}")
+            else:
+                covered.add(package_id)
+    for package_id in sorted(requires_approval - covered):
+        findings.add(manifest_path, f"approved capability lacks human product-owner approval record: {package_id}")
+
+
 def lint_editor_catalogs(repo: Path, findings: Findings) -> None:
     contract = repo / "product-contract"
     paths = {
@@ -314,6 +350,7 @@ def lint_repository(repo: Path) -> list[str]:
     lint_agents(repo, findings)
     lint_manifest(repo, findings)
     lint_json(repo, findings)
+    lint_approval_records(repo, findings)
     lint_editor_catalogs(repo, findings)
     lint_parity(repo, findings)
     return findings.items

@@ -51,6 +51,29 @@ class ContractLintTests(unittest.TestCase):
             self.assertEqual(["SAM-001", "SAM-002"], capabilities[0].requirements)
             self.assertEqual([], findings.items)
 
+    def test_approved_capability_requires_human_approval_record(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            contract = repo / "product-contract"
+            contract.mkdir()
+            (contract / "manifest.yaml").write_text(
+                "contract_version: 1.2.3\nstatus: draft\ncapabilities:\n"
+                "  - id: SAMPLE-CAPABILITY-001\n"
+                "    path: capabilities/SAMPLE-CAPABILITY-001\n"
+                "    version: 1.0.0\n    status: approved\n"
+                "    requirements: [SAM-001]\n",
+                encoding="utf-8",
+            )
+            findings = LINT.Findings()
+            LINT.lint_approval_records(repo, findings)
+            self.assertTrue(
+                any(
+                    "approved capability lacks human product-owner approval record: SAMPLE-CAPABILITY-001"
+                    in item
+                    for item in findings.items
+                )
+            )
+
     def test_image_editor_catalogs_match_pinned_census(self) -> None:
         repo = Path(__file__).resolve().parents[3]
         findings = LINT.Findings()
