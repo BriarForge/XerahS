@@ -238,9 +238,9 @@ Convenience, one platform falling behind, or a preference for a common DLL is no
 
 The full parity gate requires every baseline-reachable VideoEditor and media outcome in the ledger. A child proposal may refine native UX and codec packaging but cannot defer the whole feature beyond parity.
 
-## D-ID-001 Development application identity
+## D-ID-001 Application identity and replacement
 
-**Decision.** Recorded in [§8.7](06-architecture-boundaries.md#87-coexistence-with-the-avalonia-application). Greenfield apps use `com.xerahs.native` (or the platform equivalent) and the display name "XerahS Native" until a later proposal authorizes identity collapse.
+**Decision.** Recorded in [§8.7](06-architecture-boundaries.md#87-replacement-of-the-avalonia-application). Native apps use `com.xerahs.app` (or the platform equivalent) and the display name "XerahS". They replace Avalonia XerahS after full-parity acceptance. The shared release identity does not waive explicit, recoverable settings migration or the release gates.
 
 # 15. Residual follow-ups
 
@@ -249,6 +249,6 @@ These require focused delivery specifications but do not block approval of the a
 - Plugin handshake, sandbox, secret-passing, SDK, and package format: **release-required** under [D-PLUG-001](#d-plug-001-cross-language-plugin-automation-and-configuration).
 - Signed Windows installer, notarized macOS artifact, and first-class Linux packages: **release-required**. Store publication remains separate.
 - Shared rendering kernel (only if [D-KERN-001](#d-kern-001-shared-headless-rendering-kernel-threshold) is met).
-- Avalonia retirement or identity collapse (only after the full-parity attestation).
+- Replacement cutover, migration, and rollback evidence for Avalonia XerahS: **release-required** after the full-parity attestation.
 - Windows 10 or macOS 13 support for native apps.
 - Exact Windows App SDK and Qt 6 minor versions, which are pinned in platform `AGENTS.md` at implementation time.

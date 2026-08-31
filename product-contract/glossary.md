@@ -8,4 +8,4 @@ Domain terms used in capability contracts. Add a term here instead of redefining
 | Disposition | Required, Equivalent, Degraded, Unavailable, or Not applicable for a requirement on one platform |
 | Waiver | Time-bound, owned exception to a required disposition; expires in at most 90 days |
 | Avalonia XerahS | Production application in ShareX/XerahS; behavioral reference, not this repository |
-| XerahS Native | Pilot identity for applications in this repository (`com.xerahs.native`) |
+| XerahS | Product display name for applications in this repository (`com.xerahs.app`) |

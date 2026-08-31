@@ -15,7 +15,7 @@ The detailed reference protocol is [section 20](11-reference-baseline.md). The d
 - Encode the standing restructuring authority and protected boundaries from [D-REF-001](08-decisions.md#d-ref-001-agent-directed-restructuring-authority) as root and scoped agent rules.
 - Encode the progressive checkpoint and final-push workflow from [D-GIT-001](08-decisions.md#d-git-001-progressive-commit-and-final-push-policy) as protected root Git rules.
 - Encode current-branch continuity from [D-BRANCH-001](08-decisions.md#d-branch-001-current-branch-continuity) and prohibit automatic agent, feature, fix, temporary, and worktree branches.
-- Preserve side-by-side operation with the existing Avalonia application.
+- Preserve the existing Avalonia installation and live settings until an explicit replacement test or release migration.
 
 ## Phase 1: Census and contract foundation
 
@@ -60,7 +60,7 @@ All coordinating and delegated agents remain on the current branch under D-BRANC
 
 Execute Wave 8 and the gate in [section 21.5](12-full-parity-delivery.md#215-full-parity-release-gate). Publish the parity attestation and unresolved-ID count.
 
-The greenfield applications remain side-by-side products until this phase passes. Identity collapse or retirement of Avalonia requires a later product decision, but completion of the native applications does not.
+The greenfield applications remain non-production replacements until this phase passes. Production replacement of Avalonia requires the full-parity attestation and release acceptance.
 
 # 12. Success Criteria
 
@@ -73,7 +73,7 @@ BXIP001 implementation succeeds when:
 5. Configuration, workflow, uploader, history, annotation, and media compatibility migrations pass.
 6. Native GUI, capture, recording, editors, destinations, history, CLI, MCP, assistant, daemon, and integration surfaces satisfy the same compatible contract.
 7. The four-feature qualification tranche and all full-delivery waves meet their conformance, native integration, accessibility, security, and performance gates.
-8. Installable native packages pass install, side-by-side import, update, rollback, and uninstall journeys.
+8. Installable native packages pass clean install, Avalonia replacement migration, update, rollback, recovery, and uninstall journeys.
 9. The parity attestation identifies the exact baseline, contract, builds, ledger hashes, approved corrections, and intrinsic platform limitations.
 10. BriarForge builds and releases without the KovaForge checkout or legacy editor submodules.
 11. Repeated agentic-development pain points have durable structural, tooling, test, diagnostic, or instruction remedies rather than accumulating as accepted friction.

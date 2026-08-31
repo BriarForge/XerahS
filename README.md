@@ -10,7 +10,7 @@ This repository is **not a fork** of [ShareX/XerahS](https://github.com/ShareX/X
 | Platform truth | `platforms/windows`, `platforms/macos`, `platforms/linux` |
 | Conformance truth | `conformance/` |
 
-Pilot application identity: `com.xerahs.native` / "XerahS Native". It installs side by side with Avalonia XerahS. This repository does not retire Avalonia.
+Application identity: `com.xerahs.app` / "XerahS". The native application replaces Avalonia XerahS after full-parity acceptance, with explicit settings migration and recovery safeguards.
 
 ## Architecture
 

@@ -27,8 +27,8 @@
       "id": "window-metadata",
       "mode": "filename",
       "pattern": "%pn_%t",
-      "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "process_name": "XerahS Native", "window_title": "Draft/one" },
-      "expected": { "value": "XerahS_Native_Draft_one", "next_counter": 0 }
+      "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "process_name": "XerahS", "window_title": "Draft/one" },
+      "expected": { "value": "XerahS_Draft_one", "next_counter": 0 }
     },
     {
       "id": "portable-invalid-characters",

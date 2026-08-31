@@ -52,7 +52,7 @@ These rules apply everywhere and cannot be weakened by a child file.
 - **ROOT-CONTRACT-001** The Product Contract is the source of product truth. No platform implementation becomes the specification by being first or most complete.
 - **ROOT-NOT-FORK-001** This repository is not a fork of ShareX/XerahS. Do not copy that tree's structure as product definition. Treat it as a behavioral reference and fixture source with recorded provenance.
 - **ROOT-PLATFORMS-001** Supported native targets are Windows, macOS, and Linux. A feature is complete when every supported platform has an accepted disposition.
-- **ROOT-IDENTITY-001** Pilot apps use `com.xerahs.native` and the display name "XerahS Native". Do not reuse the Avalonia product identity or overwrite its live settings without an explicit user action.
+- **ROOT-IDENTITY-001** Applications use `com.xerahs.app` (or the platform equivalent) and the display name "XerahS". They replace Avalonia XerahS at release; migration of existing live settings MUST require explicit user action and preserve rollback or recovery.
 - **ROOT-LICENSE-001** This repository is GNU GPL v3. Dynamically link LGPL Qt. Do not add a dependency that conflicts with GPL v3.
 - **ROOT-SECURITY-001** Security, privacy, accessibility, and data-compatibility invariants are not optional. Capture permission flows, credential storage, uploader secrets, and plugin hosts require human review.
 - **ROOT-AUTHORITY-001** Child `AGENTS.md` files inherit ancestors, may add stricter local rules, and MUST NOT duplicate or contradict parent rule IDs. Conflict stops work for the governance owner.

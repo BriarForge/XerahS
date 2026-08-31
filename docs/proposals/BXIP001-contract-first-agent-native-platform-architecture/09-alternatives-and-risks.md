@@ -27,7 +27,7 @@ This is the proposed strategic direction. It maximizes platform independence and
 | Linux fragmentation | "Native Linux" behaves differently across desktops and packaging systems | [D-LIN-001](08-decisions.md#d-lin-001-linux-toolkit-desktop-display-server-portal-distro-and-packaging): Qt 6, GNOME 46+ and Plasma 6 first-class, Wayland first, Ubuntu 24.04 / Fedora current / Arch, XDG portals required |
 | Duplicate security-sensitive logic | Inconsistent or vulnerable implementations | Exact test vectors, security review, protocol standards, and approved shared libraries where appropriate |
 | Contract bureaucracy | Small changes become slow | Scale evidence and review requirements according to risk; allow patch-level clarifications without full product approval |
-| Premature replacement | Working functionality is lost before native parity is proven | Keep Avalonia production paths and identities until the signed full-parity attestation |
+| Premature replacement | Working functionality is lost before native parity is proven | Do not distribute native builds as production replacements until the signed full-parity attestation; require recoverable migration and rollback |
 | Native ecosystem churn | Three SDK and packaging stacks create operational load | Explicit platform ownership, supported OS baselines, automated builds, and dependency policies |
 | Instruction sprawl | Agents miss rules or encounter conflicts | Root constitution, scoped deltas, stable rule IDs, hierarchy linting, and effective-instructions reports |
 | Stale local guidance | Child rules preserve obsolete framework or command assumptions | Assigned scope owners, link checks, periodic validation, and removal of duplicated rules |

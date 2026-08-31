@@ -23,7 +23,7 @@ The capability ledger SHALL cover at least these domains. The examples are disco
 | History and indexing | Task results, SQLite/data migration, thumbnails, search/filter, media explorer, cleanup, reopen/re-edit |
 | Automation and integration | CLI, JSON output, exit codes, MCP, assistant, Send To, watch folder, shell/file associations, headless execution |
 | Diagnostics and recovery | Logging, support bundles, permission diagnostics, degraded-mode reporting, crash/startup recovery, data corruption handling |
-| Distribution quality | Native packaging, signing/notarization, installation, side-by-side import, updates, uninstall safety, accessibility and performance gates |
+| Distribution quality | Native packaging, signing/notarization, installation, replacement migration, updates, rollback, uninstall safety, accessibility and performance gates |
 
 Known first-party destination projects in the baseline include Amazon S3, Auto, Bitly, Dropbox, FTP/SFTP, GitHub Gist, Imgur, Immich, Nextcloud, Paste2, Pastebin, and XBackBone. The census, rather than this sentence, is authoritative if the baseline contains more.
 
@@ -91,7 +91,7 @@ Architecture changes discovered here require an approved BXIP amendment; ordinar
 - Every baseline settings surface and user-visible command
 - Onboarding, diagnostics, permission education, keyboard navigation, screen-reader coverage, localization
 - Signed/notarized installable artifacts for the supported platform baselines
-- Update, side-by-side migration, rollback, and uninstall verification
+- Update, Avalonia replacement migration, rollback, recovery, and uninstall verification
 - Performance, memory, battery, startup, capture-latency, and long-running recording acceptance
 
 ### Wave 8 - Full-parity release candidate
@@ -135,7 +135,7 @@ The first release claiming KovaForge-baseline parity SHALL satisfy all of the fo
 - Every first-party destination has contract tests and at least one approved integration-evidence path.
 - GUI, CLI, MCP, assistant, daemon, and plugin surfaces claim the same compatible contract version.
 - Native accessibility, security, privacy, permissions, recovery, and performance gates pass.
-- Install, side-by-side import, upgrade, rollback, and uninstall are verified on each supported OS.
+- Clean install, Avalonia replacement migration, upgrade, rollback, recovery, and uninstall are verified on each supported OS.
 - No production build depends on the local KovaForge checkout or the legacy ImageEditor/VideoEditor submodules.
 
 A product-owner-approved intrinsic platform limitation may remain only when the KovaForge baseline itself cannot provide an equivalent outcome on that platform or the operating system makes it impossible. The parity attestation must state it prominently.

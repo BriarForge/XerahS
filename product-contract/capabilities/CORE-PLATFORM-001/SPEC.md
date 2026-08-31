@@ -1,6 +1,6 @@
 # CORE-PLATFORM-001 Native platform capability foundation
 
-Version: 0.1.0
+Version: 0.2.0
 
 Status: Approved by the human product owner on 2026-08-31; conformance required before activation
 
@@ -11,10 +11,11 @@ Status: Approved by the human product owner on 2026-08-31; conformance required 
   authority model, inputs, outputs, cancellation and failure behavior,
   accessibility impact, privacy classification, persistence impact, and
   Windows, macOS, and Linux disposition before activation.
-- **CORE-002:** The application MUST use the pilot identity
-  `com.xerahs.native` and display name `XerahS Native`, MUST NOT overwrite the
-  reference application's live settings, and MUST require explicit user action
-  for imports or migrations.
+- **CORE-002:** The application MUST use the identity `com.xerahs.app` (or the
+  platform equivalent) and display name `XerahS` as the replacement for the
+  reference application. Migration of the reference application's live settings
+  MUST require explicit user action, create a recoverable backup before mutation,
+  and preserve source data when conversion is unsupported or fails.
 - **CORE-003:** Native adapters MAY differ in presentation and OS mechanism but
   MUST return shared semantic results and stable error categories. Degraded,
   unavailable, and substitute behavior requires an accepted disposition.
@@ -124,9 +125,10 @@ Status: Approved by the human product owner on 2026-08-31; conformance required 
   user-reviewed diagnostic export, detect corrupt state, and offer recovery
   without silently deleting valid configuration or user outputs.
 - **CORE-028:** Native distribution MUST use platform-appropriate signed packages,
-  honor the GPLv3 and dynamic LGPL Qt obligations, preserve the pilot identity,
-  support clean install, update, rollback or recovery, uninstall, and coexistence,
-  and publish verified build provenance for Windows, macOS, and Linux.
+  honor the GPLv3 and dynamic LGPL Qt obligations, preserve the product identity,
+  support clean install, replacement migration, update, rollback or recovery,
+  and uninstall, and publish verified build provenance for Windows, macOS, and
+  Linux.
 - **CORE-029:** The pinned experimental mobile row is outside the BXIP001 native
   desktop scope. It MUST remain an explicit product-owner disposition and MUST
   NOT silently add a supported target, weaken desktop requirements, or be

@@ -64,10 +64,11 @@ complete.
    remain equivalent.
 6. Experimental mobile remains outside the BXIP001 desktop target set unless the
    product owner explicitly changes scope.
-7. Native XerahS retains `com.xerahs.native` / `XerahS Native` identity and does
-   not overwrite the reference application's settings without explicit import.
+7. Superseded by `APPROVAL-2026-08-31-PRODUCT-IDENTITY`: XerahS uses
+   `com.xerahs.app` / `XerahS` as the replacement product identity. Live
+   settings migration remains explicit, backed up, recoverable, and non-destructive.
 8. Distribution remains GPLv3 and dynamically links LGPL Qt; signed provenance,
-   update recovery, coexistence, and platform-native packages are required.
+   update recovery, replacement migration, and platform-native packages are required.
 
 ## Evidence still required before activation
 

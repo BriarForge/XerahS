@@ -20,7 +20,7 @@ This directory is the canonical proposal. It was originally a single markdown fi
 | [03-product-contract.md](03-product-contract.md) | Contract layout, required contents, examples, evidence |
 | [04-governance.md](04-governance.md) | Hierarchical `AGENTS.md` and the agentic development protocol |
 | [05-conformance.md](05-conformance.md) | Traceability, CI parity, capability matrix, compatibility |
-| [06-architecture-boundaries.md](06-architecture-boundaries.md) | Product vs platform, ImageEditor host boundary, coexistence |
+| [06-architecture-boundaries.md](06-architecture-boundaries.md) | Product vs platform, ImageEditor host boundary, replacement |
 | [07-pilot.md](07-pilot.md) | Full-parity implementation strategy, success criteria, non-goals, definition of done |
 | [08-decisions.md](08-decisions.md) | Implementation-binding architecture decisions and required follow-ups |
 | [09-alternatives-and-risks.md](09-alternatives-and-risks.md) | Alternatives considered, risks, and mitigations |
@@ -52,6 +52,6 @@ These IDs bind the greenfield implementation. Full text is in [08-decisions.md](
 | [D-GOLD-001](08-decisions.md#d-gold-001-golden-image-tolerances) | Golden-image tolerances |
 | [D-KERN-001](08-decisions.md#d-kern-001-shared-headless-rendering-kernel-threshold) | Shared rendering-kernel threshold |
 | [D-VID-001](08-decisions.md#d-vid-001-native-videoeditor-and-media-tools) | Native VideoEditor and media tools |
-| [D-ID-001](08-decisions.md#d-id-001-development-application-identity) | Development application identity |
+| [D-ID-001](08-decisions.md#d-id-001-application-identity-and-replacement) | Application identity and replacement |
 
 Section numbers in the split files match the original XIP0086 numbering so existing references remain stable.

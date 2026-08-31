@@ -95,17 +95,17 @@ Any approved kernel:
 
 The evidence bar for proposing a kernel is [D-KERN-001](08-decisions.md#d-kern-001-shared-headless-rendering-kernel-threshold).
 
-## 8.7 Coexistence with the Avalonia application
+## 8.7 Replacement of the Avalonia application
 
-The greenfield applications SHALL NOT replace or reuse the production Avalonia application identity during development and parity validation.
+The greenfield applications SHALL replace the production Avalonia application after full-parity acceptance.
 
-- Avalonia XerahS keeps the existing product identity (`com.xerahs.app` and current installers).
-- Greenfield applications SHALL use a distinct application identifier, window title suffix, and package name, for example `com.xerahs.native` and the display name "XerahS Native".
-- Greenfield applications MUST be able to import contract-defined configuration, history, and annotation documents produced by Avalonia XerahS and ShareX, but MUST NOT write over the Avalonia application's live settings without an explicit user action.
-- Side-by-side installation MUST be supported through the full-parity attestation and any later identity decision.
-- Only a subsequent approved proposal may collapse the two identities or retire the Avalonia package.
+- Native XerahS SHALL use the existing product identifier `com.xerahs.app` (or the platform equivalent) and the display name "XerahS".
+- Replacement packages MUST NOT be distributed as production upgrades until the full-parity attestation and release gates pass.
+- Native XerahS MUST be able to migrate contract-defined configuration, history, and annotation documents produced by Avalonia XerahS and ShareX.
+- Migration of live settings MUST require explicit user action, create a recoverable backup before mutation, and report unsupported or failed conversions without discarding the source data.
+- Update, rollback, recovery, and uninstall journeys MUST explicitly cover replacement of the Avalonia package; side-by-side installation is not required.
 
-See [D-ID-001](08-decisions.md#d-id-001-development-application-identity).
+See [D-ID-001](08-decisions.md#d-id-001-application-identity-and-replacement).
 
 ## 8.8 VideoEditor and media boundary
 
