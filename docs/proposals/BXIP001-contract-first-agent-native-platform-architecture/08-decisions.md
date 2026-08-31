@@ -45,6 +45,20 @@ Agents MAY author contracts, implementations, and tests. Agents MUST NOT be the 
 
 **Rationale.** WinUI 3 is the current Windows desktop UI stack and gives native Windows 11 accessibility and controls. Capture overlays, DXGI, and tray behavior still live in Win32/WinRT, so a hybrid is required rather than a pure WinUI app. WPF is in maintenance. MAUI and Avalonia would reintroduce a cross-platform UI layer, which this proposal exists to leave. C# is the language agents and the current Windows platform layer already use well; C++ is not required for native Windows behavior.
 
+## D-NUGET-001 Latest-stable NuGet authority
+
+**Decision.** Agents have standing authority and responsibility to discover and adopt the latest stable release of every repository-owned NuGet dependency without requesting case-by-case approval. This authority includes major-version upgrades and all compatible code, project, central package-management, lockfile, test, conformance, and documentation changes needed to complete the upgrade.
+
+- Query the authoritative configured package source; use NuGet.org v3 metadata for public packages.
+- Check whenever a NuGet dependency is touched, before release qualification, and whenever the last recorded repository-wide check is more than 30 days old.
+- Select the latest published stable release. Prerelease, preview, release-candidate, unlisted, or locally substituted builds do not satisfy the latest-stable requirement.
+- Record the source, check time, previous version, latest stable version, selected version, and verification result in repository evidence.
+- Run applicable restore, build, unit, integration, conformance, security, licensing, and packaging checks. Commit authoritative project, central-version, and lock files together.
+- A major version number alone is not an escalation condition. Human review remains required only when adoption would change a protected Product Contract behavior, persistence or compatibility guarantee, security/privacy/trust boundary, license posture, supported platform, binding framework, repository boundary, or release decision.
+- When the latest stable release cannot restore or build on the approved toolchain baseline, violates a protected boundary, or has a confirmed unresolved security defect, an agent MAY temporarily retain the newest conforming version only by recording the exact rejected version, evidence, reason, owner, remediation, and a next-review date no more than 30 days away. Silent long-term pinning is prohibited.
+
+The root `AGENTS.md` encodes this authority as `ROOT-NUGET-*`. `CORE-PLATFORM-001` supplies the normative freshness and evidence requirements. This decision authorizes repository maintenance; it does not create an unattended release authority or waive D-REV-001.
+
 ## D-MAC-001 macOS SwiftUI/AppKit boundary and OS baseline
 
 **Decision.** SwiftUI for settings, history, onboarding, and editor chrome that SwiftUI can host. AppKit for the capture overlay, `NSStatusItem`, panel-style utility windows, and any ScreenCaptureKit preview surface SwiftUI cannot host with acceptable latency. Notifications: `UNUserNotificationCenter`. Login item: `SMAppService`. Hotkeys: Carbon `RegisterEventHotKey` as the primary path so Accessibility is not a prerequisite; it remains the supported hotkey API on macOS 14+ despite the broader Carbon deprecation. Capture: ScreenCaptureKit, with `SCScreenshotManager` on macOS 14+. Language: Swift.
@@ -125,6 +139,7 @@ Human review is not required before landing:
 - additional tests and fixtures
 - platform-idiomatic layout or control changes that preserve contracted semantics
 - bounded behavior-preserving restructuring under [D-REF-001](#d-ref-001-agent-directed-restructuring-authority), including coherent changes across adjacent internal scopes
+- latest-stable updates to existing NuGet dependencies under [D-NUGET-001](#d-nuget-001-latest-stable-nuget-authority), including major versions, when protected boundaries remain unchanged
 
 The same agent SHOULD NOT be the sole author, implementer, verifier, and approver of a material contract change. The product owner is the only authority that can accept Unavailable or an expired-waiver extension.
 

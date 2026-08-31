@@ -28,7 +28,7 @@ This is the proposed strategic direction. It maximizes platform independence and
 | Duplicate security-sensitive logic | Inconsistent or vulnerable implementations | Exact test vectors, security review, protocol standards, and approved shared libraries where appropriate |
 | Contract bureaucracy | Small changes become slow | Scale evidence and review requirements according to risk; allow patch-level clarifications without full product approval |
 | Premature replacement | Working functionality is lost before native parity is proven | Do not distribute native builds as production replacements until the signed full-parity attestation; require recoverable migration and rollback |
-| Native ecosystem churn | Three SDK and packaging stacks create operational load | Explicit platform ownership, supported OS baselines, automated builds, and dependency policies |
+| Native ecosystem churn | Three SDK and packaging stacks create operational load | Explicit platform ownership, supported OS baselines, automated builds, and the latest-stable NuGet cadence in [D-NUGET-001](08-decisions.md#d-nuget-001-latest-stable-nuget-authority) |
 | Instruction sprawl | Agents miss rules or encounter conflicts | Root constitution, scoped deltas, stable rule IDs, hierarchy linting, and effective-instructions reports |
 | Stale local guidance | Child rules preserve obsolete framework or command assumptions | Assigned scope owners, link checks, periodic validation, and removal of duplicated rules |
 | ImageEditor submodule version skew | Editor behavior and host integration move on different revisions | Keep native editor modules in the monorepo and land contract, implementation, and evidence atomically |

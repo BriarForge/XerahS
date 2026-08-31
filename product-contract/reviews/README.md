@@ -9,7 +9,10 @@ manifest lifecycle and evidence are updated accordingly.
 `APPROVAL-2026-08-31-PRODUCT-IDENTITY.json` records the subsequent product-owner
 identity amendment to `CORE-PLATFORM-001` version `0.2.0` within contract version
 `0.1.0`.
-Both records explicitly withhold activation, census closure, and release
+`APPROVAL-2026-08-31-NUGET-FRESHNESS.json` records standing agent authority and
+the latest-stable maintenance requirements in `CORE-PLATFORM-001` version
+`0.3.0`.
+All records explicitly withhold activation, census closure, and release
 authorization.
 
 Review packets MUST distinguish:

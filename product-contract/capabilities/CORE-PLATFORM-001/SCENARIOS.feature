@@ -35,3 +35,19 @@ Feature: Native platform capability invariants
     When recovery runs
     Then it rebuilds or quarantines the index according to policy
     And does not silently delete valid task records or media
+
+  Scenario: A newer stable NuGet package is available
+    Given a repository-owned NuGet dependency is due for a version check
+    And its authoritative package source publishes a newer stable version
+    When an agent performs dependency maintenance
+    Then the latest stable version is selected without case-by-case approval
+    And authoritative version declarations and lockfiles are updated together
+    And applicable restore, build, test, security, licensing, and conformance checks pass
+    And the source, versions, check time, and results are recorded
+
+  Scenario: The latest stable NuGet package violates a protected boundary
+    Given the latest stable package cannot satisfy an approved toolchain or protected boundary
+    When the agent cannot complete a conforming adoption
+    Then the newest conforming version is retained temporarily
+    And the exact rejected version, evidence, reason, owner, remediation, and next review are recorded
+    And the next review is no more than 30 days away

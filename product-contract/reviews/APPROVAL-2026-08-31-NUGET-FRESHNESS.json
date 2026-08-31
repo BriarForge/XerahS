@@ -1,0 +1,34 @@
+{
+  "$schema": "../schemas/approval-record.schema.json",
+  "schema_version": 1,
+  "decision_id": "APPROVAL-2026-08-31-NUGET-FRESHNESS",
+  "recorded_on": "2026-08-31",
+  "authority": {
+    "role": "human-product-owner",
+    "identity": "Repository product owner, confirmed by interactive instruction"
+  },
+  "source": {
+    "kind": "interactive-instruction",
+    "statement": "update contract to give agents full authority to periodically check for nuget versions and use the latest versions"
+  },
+  "decision": "approved",
+  "scope": {
+    "contract_version": "0.1.0",
+    "packages": [
+      "CORE-PLATFORM-001"
+    ]
+  },
+  "effects": {
+    "normative_contract": true,
+    "implementation_authorized": true,
+    "activation_authorized": false,
+    "census_closed": false,
+    "release_authorized": false
+  },
+  "remaining_gates": [
+    "NuGet freshness evidence format and automated check implementation",
+    "Restore, build, test, security, licensing, conformance, and packaging verification for adopted package versions",
+    "Windows, macOS, and Linux implementation and conformance evidence",
+    "Requirement-to-conformance traceability and parity review"
+  ]
+}

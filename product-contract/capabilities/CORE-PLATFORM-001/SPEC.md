@@ -1,6 +1,6 @@
 # CORE-PLATFORM-001 Native platform capability foundation
 
-Version: 0.2.0
+Version: 0.3.0
 
 Status: Approved by the human product owner on 2026-08-31; conformance required before activation
 
@@ -137,6 +137,20 @@ Status: Approved by the human product owner on 2026-08-31; conformance required 
   privacy, accessibility, licensing, and compatibility review, permission and
   degraded-mode tests, cancellation and failure injection, and accepted results
   on Windows, macOS, and Linux for every linked ledger row.
+- **CORE-031:** Every repository-owned NuGet dependency MUST be checked against
+  its authoritative package source whenever it is touched, before release
+  qualification, and when the last recorded repository-wide check is more than
+  30 days old. Agents MUST adopt the latest published stable release, including
+  major versions, without case-by-case approval and MUST update the code,
+  project files, central version declarations, lockfiles, tests, and
+  documentation required for a conforming adoption.
+- **CORE-032:** Each NuGet check MUST record source, check time, previous version,
+  latest stable version, selected version, and verification result. Adoption
+  MUST pass applicable restore, build, test, conformance, security, licensing,
+  and packaging checks. A temporary retention below latest stable MUST identify
+  the exact rejected version, protected-boundary or toolchain blocker, evidence,
+  owner, remediation, and next review no more than 30 days away; silent or
+  indefinite pinning is prohibited.
 
 ## Baseline traceability and disposition
 

@@ -196,7 +196,7 @@ Examples of material pain points include:
 - stale, ambiguous, missing, or overly duplicated scoped instructions
 - obsolete compatibility scaffolding or dead code whose safe removal is demonstrated
 
-The standing authority covers internal module extraction or consolidation, directory and package organization, dependency direction, adapter boundaries, types and interfaces, test architecture, build and developer tooling, diagnostic improvements, and scoped `AGENTS.md` refinements. It applies across adjacent repository scopes when a coherent fix requires them; directory boundaries are not a reason to preserve a known structural defect.
+The standing authority covers internal module extraction or consolidation, directory and package organization, dependency direction, adapter boundaries, types and interfaces, test architecture, build and developer tooling, diagnostic improvements, and scoped `AGENTS.md` refinements. It applies across adjacent repository scopes when a coherent fix requires them; directory boundaries are not a reason to preserve a known structural defect. Existing NuGet package updates, including major versions and their necessary adapting changes, additionally have standing authority under [D-NUGET-001](08-decisions.md#d-nuget-001-latest-stable-nuget-authority).
 
 An agent exercising this authority SHALL:
 
@@ -216,7 +216,7 @@ Prior human approval remains required when the proposed restructuring changes or
 - user-visible Product Contract behavior or an approved platform disposition
 - public protocols, persisted data, migrations, file formats, or compatibility guarantees
 - security, privacy, permissions, credential handling, or trust boundaries
-- licensing posture or a major third-party dependency commitment
+- licensing posture or a new major third-party dependency commitment; version updates to existing NuGet dependencies follow D-NUGET-001
 - supported platforms, binding native framework decisions, shared-runtime policy, or repository boundaries
 - release identity, signing, distribution, or another protected architecture decision
 - the root `AGENTS.md` constitution or its non-overridable rule meanings

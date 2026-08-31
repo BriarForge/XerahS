@@ -38,6 +38,7 @@ These IDs bind the greenfield implementation. Full text is in [08-decisions.md](
 | [D-OWN-001](08-decisions.md#d-own-001-product-contract-ownership-and-approval-authority) | Ownership and approval |
 | [D-CON-001](08-decisions.md#d-con-001-contract-schema-versioning-and-tooling) | Contract schema, versioning, tooling |
 | [D-WIN-001](08-decisions.md#d-win-001-windows-framework-and-os-baseline) | Windows framework and OS baseline |
+| [D-NUGET-001](08-decisions.md#d-nuget-001-latest-stable-nuget-authority) | Latest-stable NuGet authority and cadence |
 | [D-MAC-001](08-decisions.md#d-mac-001-macos-swiftuiappkit-boundary-and-os-baseline) | macOS SwiftUI/AppKit boundary |
 | [D-LIN-001](08-decisions.md#d-lin-001-linux-toolkit-desktop-display-server-portal-distro-and-packaging) | Linux toolkit and packaging |
 | [D-REPO-001](08-decisions.md#d-repo-001-monorepo) | Monorepo |
