@@ -1,14 +1,18 @@
-# Draft coverage review — 2026-08-31
+# Contract approval review — 2026-08-31
 
-Decision state: **Pending human product-owner review**
+Decision state: **All 15 contract definitions approved by the human product owner; activation evidence pending**
 
 This packet summarizes the first exhaustive draft linkage of the pinned
-KovaForge 0.29.0 census. It does not approve the baseline, contracts, platform
-dispositions, compatibility promises, or release readiness.
+KovaForge 0.29.0 census. The product owner approved all 15 version `0.1.0`
+contract definitions through an interactive instruction on 2026-08-31. The
+durable decision is `APPROVAL-2026-08-31-ALL-PACKAGES.json`. Approval makes the
+requirements normative and authorizes implementation; it does not close the
+baseline census, activate capabilities, prove compatibility, or authorize a
+release.
 
 ## Coverage result
 
-All 1,592 parity rows now link to a draft Product Contract package:
+All 1,592 parity rows now link to an approved Product Contract package:
 
 | Ledger | Linked | Total |
 |---|---:|---:|
@@ -18,12 +22,12 @@ All 1,592 parity rows now link to a draft Product Contract package:
 | Interface | 174 | 174 |
 | Compatibility | 16 | 16 |
 
-The manifest contains 15 draft capability packages and 286 stable draft
-requirement IDs. No package is approved or active. The baseline census remains
-open because runtime, semantic, compatibility-fixture, and human reviews are not
+The manifest contains 15 approved capability packages and 286 stable normative
+requirement IDs. No package is active. The baseline census remains open because
+runtime, semantic, compatibility-fixture, and specialist reviews are not
 complete.
 
-## Draft packages for decision
+## Approved packages
 
 | Package | Requirements | Principal decision |
 |---|---:|---|
@@ -43,7 +47,7 @@ complete.
 | `CORE-PLATFORM-001` | 30 | Shell, capture, recording, media, upload, history, automation, operations, distribution, and mobile disposition |
 | `COMPATIBILITY-CATALOG-001` | 18 | Safe import, export, round-trip, migration, fixtures, and runtime observation |
 
-## High-impact decisions requiring explicit acceptance or revision
+## Accepted high-impact decisions
 
 1. Secrets use native credential services and ordinary configuration exports do
    not carry plaintext secrets.
@@ -65,7 +69,7 @@ complete.
 8. Distribution remains GPLv3 and dynamically links LGPL Qt; signed provenance,
    update recovery, coexistence, and platform-native packages are required.
 
-## Evidence still required before approval
+## Evidence still required before activation
 
 - Source-structure reconciliation for reflection, generated registrations,
   stale graph data, dead code, false positives, and omissions.
@@ -87,11 +91,12 @@ complete.
 
 ## Product-owner decision record
 
-Leave this section pending until the human reviewer has inspected the linked
-specifications and evidence.
+The human product owner approved the complete package list in this packet on
+2026-08-31. Activation and census closure remain separate decisions.
 
-- [ ] Approve the 15 packages as written and authorize their manifest status to
-  move from `draft` to `approved` after required specialist evidence is attached.
+- [x] Approve the 15 packages as written, move their manifest lifecycle from
+  `draft` to `approved`, and authorize native implementation against version
+  `0.1.0`.
 - [ ] Request revisions, identifying package IDs and requirement IDs.
 - [ ] Approve an explicit scope change, deviation, or time-bound waiver with
   rationale, owner, affected platforms, expiry, and replacement plan.

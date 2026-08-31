@@ -124,6 +124,17 @@ class ContractBacklogTrackerTests(unittest.TestCase):
             f"- [{expected_mark}] Every parity-ledger row links to a stable Product Contract requirement",
             first,
         )
+        _, lifecycle_statuses = tracker._manifest_summary(tracker.MANIFEST_PATH)
+        lifecycle_mark = (
+            "x"
+            if lifecycle_statuses
+            and all(status in {"approved", "active"} for status in lifecycle_statuses)
+            else " "
+        )
+        self.assertIn(
+            f"- [{lifecycle_mark}] Every manifest capability is approved or active",
+            first,
+        )
 
 
 if __name__ == "__main__":

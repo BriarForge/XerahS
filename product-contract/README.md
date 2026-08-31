@@ -29,8 +29,8 @@ and the required human approvals do.
 
 The current human review packet is
 [`reviews/DRAFT-COVERAGE-REVIEW-2026-08-31.md`](reviews/DRAFT-COVERAGE-REVIEW-2026-08-31.md).
-It summarizes all draft packages, high-impact decisions, and evidence still
-required. The packet is not itself an approval record.
+It summarizes all approved packages, high-impact decisions, and evidence still
+required for activation. The durable approval record is stored beside it.
 
 ## Qualification capabilities (Wave 1)
 
@@ -43,13 +43,13 @@ These packages are selected as the first contract-writing tranche.
 | `REGION-CAPTURE-001` | Interactive region selection, permissions, DPI/monitor mapping, confirm/cancel |
 | `EDITOR-SESSION-001` | Source-image load, rectangle annotation, selection, undo/redo, export, document round-trip |
 
-## ImageEditor expansion (draft)
+## ImageEditor expansion (approved)
 
 The pinned `ShareX.ImageEditor` submodule now has a dedicated static census of
 its tools, concrete annotations, effect types and parameters, operations,
-commands, settings, assets, and UI surfaces. The following draft packages turn
-that discovery evidence into proposed cross-platform behavior. They require
-product-owner approval before becoming normative.
+commands, settings, assets, and UI surfaces. The following approved packages
+turn that discovery evidence into normative cross-platform behavior. Activation
+still requires conformance and specialist evidence.
 
 | ID | Intent |
 |---|---|

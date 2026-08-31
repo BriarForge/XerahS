@@ -2,7 +2,7 @@
 
 Version: 0.1.0
 
-Status: Draft; product-owner approval required
+Status: Approved by the human product owner on 2026-08-31; conformance required before activation
 
 ## User intent
 
@@ -100,7 +100,7 @@ never a silent omission. Non-interactive dispatch overhead SHOULD remain under
 ## Compatibility and baseline disposition
 
 Imported `AfterCaptureTasks` bit flags MUST map to the same user outcomes,
-including obsolete `AnnotateImage` as an alias of `AnnotateMedia`. This draft
+including obsolete `AnnotateImage` as an alias of `AnnotateMedia`. This package
 preserves the baseline action inventory and principal order while correcting
 silent failure/skip recording, incomplete cancellation, and ambiguous recovery.
 

@@ -2,7 +2,7 @@
 
 Version: 0.1.0
 
-Status: Draft; product-owner approval required
+Status: Approved by the human product owner on 2026-08-31; conformance required before activation
 
 ## User intent
 
@@ -11,7 +11,7 @@ undo and redo edits predictably, export the rendered result, and later reopen
 the re-editable annotation document without losing the source or edit state.
 
 This qualification contract covers the session foundation and rectangle tool.
-The complete draft editor surface is expanded by `EDITOR-ANNOTATIONS-001`,
+The complete approved editor surface is expanded by `EDITOR-ANNOTATIONS-001`,
 `EDITOR-EFFECTS-001`, `EDITOR-CANVAS-001`, `EDITOR-OUTPUT-ACTIONS-001`,
 `EDITOR-SETTINGS-001`, and `EDITOR-UTILITIES-001`.
 

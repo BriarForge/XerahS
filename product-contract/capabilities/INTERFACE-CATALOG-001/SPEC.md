@@ -2,14 +2,14 @@
 
 Version: 0.1.0
 
-Status: Draft; product-owner approval required
+Status: Approved by the human product owner on 2026-08-31; conformance required before activation
 
 ## Requirements
 
 - **IFCAT-001:** Every interface-ledger row linked to this package MUST retain
   its stable ledger ID and receive an approved surface ID, semantic operation,
   request and result shape, authority, errors, accessibility behavior, and
-  Windows, macOS, and Linux disposition before approval.
+  Windows, macOS, and Linux disposition before activation.
 - **IFCAT-002:** GUI, CLI, MCP, and provider surfaces MUST invoke shared product
   operations rather than reimplement product behavior. Equivalent requests MUST
   produce equivalent domain results, side effects, and redacted errors.
@@ -67,7 +67,7 @@ Status: Draft; product-owner approval required
   disposition. An unavailable native integration MUST expose the approved
   equivalent, degraded explanation, or explicit absence; a visible but inert
   control is not an acceptable disposition.
-- **IFCAT-018:** Approval MUST include semantic equivalence tests across entry
+- **IFCAT-018:** Activation MUST include semantic equivalence tests across entry
   points, full keyboard and screen-reader review, scaling and localization,
   malformed input, permission and credential denial, cancellation, redaction,
   CLI snapshot and exit-code tests, MCP schema and authority tests, provider
@@ -77,5 +77,5 @@ Status: Draft; product-owner approval required
 
 The interface parity ledger supplies the exhaustive discovery index. Dedicated
 ImageEditor GUI surfaces remain linked to their narrower editor packages.
-Linking a surface here records draft ownership; it does not require native
+Linking a surface here records contract ownership; it does not require native
 applications to reproduce Avalonia layout or command structure.

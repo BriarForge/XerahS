@@ -2,7 +2,7 @@
 
 Version: 0.1.0
 
-Status: Draft; product-owner approval required
+Status: Approved by the human product owner on 2026-08-31; conformance required before activation
 
 ## Requirements
 
@@ -73,6 +73,6 @@ Status: Draft; product-owner approval required
 
 The pinned UI includes start screen, screen color picker, QR, hash checker, icon
 converter, image comparer, background remover, and video converter windows. The
-candidate has no dedicated test project at the pinned commit; this draft
+candidate has no dedicated test project at the pinned commit; this package
 therefore makes contract-derived fixtures and platform runtime journeys a
 precondition for approval rather than treating reachability as correctness.

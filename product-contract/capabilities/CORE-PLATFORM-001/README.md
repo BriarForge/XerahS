@@ -1,6 +1,6 @@
 # CORE-PLATFORM-001
 
-Draft umbrella contract for the remaining pinned-baseline application shell,
+Approved umbrella contract for the remaining pinned-baseline application shell,
 configuration, capture, recording, media, upload, history, automation,
 diagnostics, distribution, and experimental-mobile capability rows.
 

@@ -2,14 +2,14 @@
 
 Version: 0.1.0
 
-Status: Draft; product-owner approval required
+Status: Approved by the human product owner on 2026-08-31; conformance required before activation
 
 ## Requirements
 
 - **WFCAT-001:** Every workflow-ledger row linked to this package MUST retain its
   stable ledger ID and receive an approved action ID, purpose, input schema,
   output schema, side-effect class, authority, cancellation points, failure
-  behavior, and Windows, macOS, and Linux disposition before approval.
+  behavior, and Windows, macOS, and Linux disposition before activation.
 - **WFCAT-002:** A workflow invocation MUST create one traceable execution with a
   stable ID, start time, origin, effective settings snapshot, ordered step
   results, terminal state, and redacted diagnostics.
@@ -63,7 +63,7 @@ Status: Draft; product-owner approval required
 - **WFCAT-017:** Logs, history, notifications, and progress surfaces MUST expose
   the same terminal state and output references while redacting secrets and
   private content. Notifications MUST NOT claim completion for partial failure.
-- **WFCAT-018:** Approval MUST include deterministic scenarios for every linked
+- **WFCAT-018:** Activation MUST include deterministic scenarios for every linked
   action family, ordering and failure matrices, permission denial, cancellation
   at each side-effect boundary, concurrent invocation, retry/idempotency,
   malformed definitions, and execution on all supported platform adapters.
@@ -72,5 +72,5 @@ Status: Draft; product-owner approval required
 
 The workflow parity ledger supplies the exhaustive pinned-baseline discovery
 IDs. ImageEditor commands, tools, operations, and effects remain governed by
-their dedicated packages. Linking here establishes a draft owner and does not
+their dedicated packages. Linking here establishes a contract owner and does not
 make enum membership or current execution ordering normative by itself.

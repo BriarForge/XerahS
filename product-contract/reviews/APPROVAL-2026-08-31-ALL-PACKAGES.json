@@ -1,0 +1,51 @@
+{
+  "$schema": "../schemas/approval-record.schema.json",
+  "schema_version": 1,
+  "decision_id": "APPROVAL-2026-08-31-ALL-PACKAGES",
+  "recorded_on": "2026-08-31",
+  "authority": {
+    "role": "human-product-owner",
+    "identity": "Repository product owner, confirmed by interactive instruction"
+  },
+  "source": {
+    "kind": "interactive-instruction",
+    "statement": "approved for all those 15 packages to be finalised"
+  },
+  "decision": "approved",
+  "scope": {
+    "contract_version": "0.1.0",
+    "packages": [
+      "FILENAME-GENERATION-001",
+      "POST-CAPTURE-ACTIONS-001",
+      "REGION-CAPTURE-001",
+      "EDITOR-SESSION-001",
+      "EDITOR-ANNOTATIONS-001",
+      "EDITOR-EFFECTS-001",
+      "EDITOR-CANVAS-001",
+      "EDITOR-OUTPUT-ACTIONS-001",
+      "EDITOR-SETTINGS-001",
+      "EDITOR-UTILITIES-001",
+      "SETTINGS-CATALOG-001",
+      "WORKFLOW-CATALOG-001",
+      "INTERFACE-CATALOG-001",
+      "CORE-PLATFORM-001",
+      "COMPATIBILITY-CATALOG-001"
+    ]
+  },
+  "effects": {
+    "normative_contract": true,
+    "implementation_authorized": true,
+    "activation_authorized": false,
+    "census_closed": false,
+    "release_authorized": false
+  },
+  "remaining_gates": [
+    "Baseline census closure evidence and product-owner closure signature",
+    "Windows, macOS, and Linux implementation and conformance evidence",
+    "Security and privacy review for capture, credentials, automation, plugins, and external publication",
+    "Accessibility review for native GUI and interaction surfaces",
+    "Compatibility fixtures and runtime-observation evidence",
+    "Licensing and distribution review",
+    "Requirement-to-conformance traceability and parity review"
+  ]
+}

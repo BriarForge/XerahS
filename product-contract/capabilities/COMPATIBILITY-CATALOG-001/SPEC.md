@@ -2,14 +2,14 @@
 
 Version: 0.1.0
 
-Status: Draft; product-owner approval required
+Status: Approved by the human product owner on 2026-08-31; fixtures, runtime observation, and conformance required before activation
 
 ## Requirements
 
 - **COMPCAT-001:** Every compatibility-ledger row linked to this package MUST
   retain its stable ledger ID and receive an approved format identity, version
   detection, import, export, round-trip, migration, rejection, unknown-field,
-  corruption, security, and platform policy before approval.
+  corruption, security, and platform policy before activation.
 - **COMPCAT-002:** Compatibility MUST be derived from documented schemas,
   representative fixtures, and runtime observation. A source type declaration
   or serializer choice alone MUST NOT establish a compatibility promise.
@@ -70,7 +70,7 @@ Status: Draft; product-owner approval required
   preserve an approved rollback or source backup until verification, and record
   format versions and redacted outcomes. Retrying MUST NOT duplicate accounts,
   workflows, history entries, annotations, or remote side effects.
-- **COMPCAT-018:** Approval MUST include golden fixtures from every supported
+- **COMPCAT-018:** Activation MUST include golden fixtures from every supported
   legacy format and version, corrupt and adversarial fixtures, unknown-field and
   unknown-record cases, upgrade and downgrade, cross-platform round-trip,
   secret redaction, idempotent migration, and runtime-observation evidence.
@@ -78,6 +78,6 @@ Status: Draft; product-owner approval required
 ## Baseline traceability and disposition
 
 The compatibility parity ledger identifies candidate promises found in the
-pinned baseline. Linking a row here establishes a draft review owner. It does
+pinned baseline. Linking a row here establishes an approved review owner. It does
 not guarantee byte-for-byte output, authorize legacy code execution, or approve
 secret portability.

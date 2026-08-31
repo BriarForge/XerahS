@@ -2,7 +2,7 @@
 
 Version: 0.1.0
 
-Status: Draft; product-owner approval required
+Status: Approved by the human product owner on 2026-08-31; conformance required before activation
 
 ## Requirements
 
@@ -69,6 +69,6 @@ failure outcomes MUST remain equivalent.
 ## Baseline traceability and disposition
 
 The pinned candidate exposes ten browser-routed operations plus New, Open,
-Insert, zoom/pan, background, compare, clear, and flatten commands. The draft
+Insert, zoom/pan, background, compare, clear, and flatten commands. The approved
 preserves those outcomes while correcting ambiguous annotation transforms,
 unsafe URL/asset handling, and operation atomicity.

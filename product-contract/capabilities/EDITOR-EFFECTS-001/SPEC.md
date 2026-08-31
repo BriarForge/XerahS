@@ -2,7 +2,7 @@
 
 Version: 0.1.0
 
-Status: Draft; product-owner approval required
+Status: Approved by the human product owner on 2026-08-31; conformance required before activation
 
 ## User intent
 
@@ -12,7 +12,7 @@ without damaging the current document when an operation fails or is cancelled.
 
 ## Requirements
 
-- **EE-001:** The draft effect set MUST be the 232 stable IDs selected by
+- **EE-001:** The approved effect set MUST be the 232 stable IDs selected by
   `effect-catalog-selection.json` from the pinned inventory: 32 adjustments,
   16 drawings, 149 filters, and 35 manipulations. Approval MUST review the ID
   set and any correction, omission, or native substitution explicitly.
@@ -77,5 +77,5 @@ The source candidate is reflection-discovered, so file names alone are not a
 complete registry. The deterministic census resolves concrete subclasses,
 stable IDs, categories, execution modes, and 963 declared parameter controls at
 the pinned commit. It also establishes that 219 effects are previewable and 13
-are immediate. These observations are discovery evidence only; this draft
+are immediate. These observations are discovery evidence only; this package
 proposes preserving their outcomes with stronger validation and determinism.

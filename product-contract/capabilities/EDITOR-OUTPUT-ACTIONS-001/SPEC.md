@@ -2,7 +2,7 @@
 
 Version: 0.1.0
 
-Status: Draft; product-owner approval required
+Status: Approved by the human product owner on 2026-08-31; conformance required before activation
 
 ## Requirements
 
@@ -61,5 +61,5 @@ Status: Draft; product-owner approval required
 The pinned code has encoders/helpers for more formats than its visible Save As
 surface. The ImageEditor changelog claims AVIF saving, while observed static UI
 evidence identifies PNG, JPEG, and WebP as the exposed editor choices. This
-draft preserves the user-reachable set and records other formats as unresolved
+approved package preserves the user-reachable set and records other formats as unresolved
 instead of promoting documentation or dormant code into product behavior.

@@ -2,7 +2,7 @@
 
 Version: 0.1.0
 
-Status: Draft; product-owner approval required
+Status: Approved by the human product owner on 2026-08-31; conformance required before activation
 
 ## Requirements
 
@@ -10,7 +10,7 @@ Status: Draft; product-owner approval required
   its stable ledger ID and MUST receive an approved semantic name, value type,
   default, validation rule, persistence scope, privacy class, migration rule,
   downstream effect, and Windows, macOS, and Linux disposition before this
-  package can be approved.
+  package can become active.
 - **SETCAT-002:** Source declarations and initializer expressions are discovery
   evidence only. A default becomes normative only when acceptance evidence
   records the user outcome, boundary behavior, and supported-platform result.
@@ -83,7 +83,7 @@ Status: Draft; product-owner approval required
 - **SETCAT-019:** Configuration import and export MUST be versioned, validate
   before mutation, report retained, transformed, rejected, and secret fields,
   and satisfy the separate configuration compatibility contract and fixtures.
-- **SETCAT-020:** Approval MUST include generated coverage proving every linked
+- **SETCAT-020:** Activation MUST include generated coverage proving every linked
   ledger ID has an accepted field disposition, boundary and malformed-input
   vectors for every value family, upgrade and downgrade fixtures, unknown-field
   round-trip, atomic-write failure, secret redaction, and execution on all three
@@ -92,6 +92,6 @@ Status: Draft; product-owner approval required
 ## Baseline traceability and disposition
 
 The `settings-ledger.yaml` inventory is the exhaustive pinned-baseline queue for
-this draft. Rows already governed by `EDITOR-SETTINGS-001` remain with that
-more-specific package. Linking a row here records its draft owner; it does not
+this package. Rows already governed by `EDITOR-SETTINGS-001` remain with that
+more-specific package. Linking a row here records its contract owner; it does not
 approve the source initializer as product intent.

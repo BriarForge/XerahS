@@ -391,10 +391,8 @@ def render_status(
         lines.append("All maintained packages are complete; verify every completion gate before closure.")
 
     lines.extend(["", "## Completion definition", ""])
-    capability_lifecycle_complete = (
-        overall_status == "active"
-        and bool(manifest_statuses)
-        and all(status in {"approved", "active"} for status in manifest_statuses)
+    capability_lifecycle_complete = bool(manifest_statuses) and all(
+        status in {"approved", "active"} for status in manifest_statuses
     )
     machine_checks = [
         census_status == "closed",

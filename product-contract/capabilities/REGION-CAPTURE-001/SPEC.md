@@ -2,7 +2,7 @@
 
 Version: 0.1.0
 
-Status: Draft; product-owner approval and capture-permission security review required
+Status: Approved by the human product owner on 2026-08-31; capture-permission security review and conformance required before activation
 
 ## User intent
 

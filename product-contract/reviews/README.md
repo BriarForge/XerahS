@@ -5,6 +5,10 @@ This directory contains review packets for human decisions required by
 only when the human product owner records an explicit decision and the affected
 manifest lifecycle and evidence are updated accordingly.
 
+`APPROVAL-2026-08-31-ALL-PACKAGES.json` is the current durable approval record.
+It authorizes implementation of contract version `0.1.0` while explicitly
+withholding activation, census closure, and release authorization.
+
 Review packets MUST distinguish:
 
 - draft linkage from approved product behavior;

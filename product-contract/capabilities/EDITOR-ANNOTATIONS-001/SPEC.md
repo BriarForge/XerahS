@@ -2,7 +2,7 @@
 
 Version: 0.1.0
 
-Status: Draft; product-owner approval required
+Status: Approved by the human product owner on 2026-08-31; conformance required before activation
 
 ## User intent
 
@@ -84,7 +84,7 @@ availability, failure outcomes, and exported pixels remain equivalent.
 ## Baseline traceability and disposition
 
 The pinned candidate exposes 20 `EditorTool` members and 19 concrete annotation
-types (Select is a mode; Step maps to the numbered annotation model). The draft
+types (Select is a mode; Step maps to the numbered annotation model). The approved
 proposes preserving all tool outcomes while correcting ambiguous error,
 security, persistence, and accessibility behavior. Approval MUST evaluate each
 row in `annotation-tools.json`; the reference source is evidence, not authority.

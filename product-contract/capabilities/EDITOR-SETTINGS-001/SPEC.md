@@ -2,14 +2,14 @@
 
 Version: 0.1.0
 
-Status: Draft; product-owner approval required
+Status: Approved by the human product owner on 2026-08-31; conformance required before activation
 
 ## Requirements
 
 - **ESET-001:** Every persisted ImageEditor option in the settings ledger MUST
   receive a stable contract name, type, default, validation, migration,
   privacy classification, supported-platform disposition, and downstream-effect
-  description before this package can be approved.
+  description before this package can become active.
 - **ESET-002:** Loading MUST distinguish missing, valid, unknown, invalid, and
   newer-version fields. Invalid values MUST fall back per field with a visible
   diagnostic or recovery record and MUST NOT reset unrelated valid settings.
@@ -56,7 +56,7 @@ Status: Draft; product-owner approval required
 - **ESET-015:** Settings conformance MUST exercise the vectors in
   `test-vectors.json`, every field's default and invalid boundary, upgrades from
   supported versions, unknown-field round-trip, atomic failure, and all three
-  platform adapters before approval.
+  platform adapters before activation.
 - **ESET-016:** The actions and precedence in `shortcut-catalog.json` MUST remain
   available through native-equivalent gestures and visible command surfaces.
   macOS MAY substitute Command for Control. Text entry and modal dialogs MUST

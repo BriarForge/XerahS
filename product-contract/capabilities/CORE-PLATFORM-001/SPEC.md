@@ -2,7 +2,7 @@
 
 Version: 0.1.0
 
-Status: Draft; product-owner approval required
+Status: Approved by the human product owner on 2026-08-31; conformance required before activation
 
 ## Shared requirements
 
@@ -10,7 +10,7 @@ Status: Draft; product-owner approval required
   its stable ledger ID and receive an approved user outcome, permission and
   authority model, inputs, outputs, cancellation and failure behavior,
   accessibility impact, privacy classification, persistence impact, and
-  Windows, macOS, and Linux disposition before approval.
+  Windows, macOS, and Linux disposition before activation.
 - **CORE-002:** The application MUST use the pilot identity
   `com.xerahs.native` and display name `XerahS Native`, MUST NOT overwrite the
   reference application's live settings, and MUST require explicit user action
@@ -131,7 +131,7 @@ Status: Draft; product-owner approval required
   desktop scope. It MUST remain an explicit product-owner disposition and MUST
   NOT silently add a supported target, weaken desktop requirements, or be
   reported as completed functionality.
-- **CORE-030:** Approval MUST include deterministic domain scenarios, security,
+- **CORE-030:** Activation MUST include deterministic domain scenarios, security,
   privacy, accessibility, licensing, and compatibility review, permission and
   degraded-mode tests, cancellation and failure injection, and accepted results
   on Windows, macOS, and Linux for every linked ledger row.
@@ -139,6 +139,6 @@ Status: Draft; product-owner approval required
 ## Baseline traceability and disposition
 
 The capability parity ledger supplies the exhaustive discovery IDs linked to
-this draft. Existing filename, post-capture, region-capture, and ImageEditor
+this package. Existing filename, post-capture, region-capture, and ImageEditor
 packages remain more-specific authorities. No source class or current platform
 implementation becomes normative merely through this package.

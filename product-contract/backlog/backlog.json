@@ -13,7 +13,7 @@
     "No unresolved deviation, waiver, security review, privacy review, accessibility review, or product-owner decision remains unowned."
   ],
   "waves": [
-    { "id": "D01", "sequence": 1, "target_date": "2026-09-01", "title": "Governance and baseline", "goal": "Approve the census boundary, contract-writing rules, and existing draft disposition.", "package_ids": ["PC-GOVERNANCE-001"] },
+    { "id": "D01", "sequence": 1, "target_date": "2026-09-01", "title": "Governance and baseline", "goal": "Record approved contract definitions and close the census boundary when its evidence is accepted.", "package_ids": ["PC-GOVERNANCE-001"] },
     { "id": "D02", "sequence": 2, "target_date": "2026-09-02", "title": "Application and configuration", "goal": "Specify application lifecycle, settings ownership, identity, secrets, and security behavior.", "package_ids": ["PC-APP-SHELL-001", "PC-CONFIG-SECURITY-001"] },
     { "id": "D03", "sequence": 3, "target_date": "2026-09-03", "title": "Capture and workflow engine", "goal": "Complete capture families and the execution semantics that compose them.", "package_ids": ["PC-CAPTURE-001", "PC-WORKFLOW-ENGINE-001"] },
     { "id": "D04", "sequence": 4, "target_date": "2026-09-04", "title": "Recording and media", "goal": "Specify recording, encoding, playback, and media-editor behavior.", "package_ids": ["PC-RECORDING-001", "PC-MEDIA-001"] },
@@ -29,8 +29,8 @@
   "packages": [
     {
       "id": "PC-GOVERNANCE-001", "title": "Baseline review and contract governance", "kind": "manual", "status": "in_progress", "priority": "P0", "wave": "D01", "owner_role": "contract-steward", "approval": "product-owner", "depends_on": [],
-      "deliverables": ["Signed baseline provenance and census review", "Recorded disposition for all existing draft capability packages", "Named reviewers for security, privacy, accessibility, compatibility, and platform questions"],
-      "exit_criteria": ["The baseline census status is closed with product-owner evidence", "Contract-writing and approval responsibilities are unambiguous", "Existing draft packages are approved, revised, or explicitly returned to backlog"]
+      "deliverables": ["Signed baseline provenance and census review", "Durable approval disposition for all current capability packages", "Named reviewers for security, privacy, accessibility, compatibility, and platform questions"],
+      "exit_criteria": ["The baseline census status is closed with product-owner evidence", "Contract-writing and approval responsibilities are unambiguous", "A durable product-owner approval record covers every current package"]
     },
     {
       "id": "PC-APP-SHELL-001", "title": "Application shell and lifecycle", "kind": "ledger", "status": "planned", "priority": "P0", "wave": "D02", "owner_role": "contract-author", "approval": "product-owner", "depends_on": ["PC-GOVERNANCE-001"],

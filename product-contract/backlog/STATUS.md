@@ -19,14 +19,14 @@ Baseline: `kova-0.29.0` · Tracker: `1.0.0` · Census: `open` · Manifest: `draf
 ## Governance gates
 
 - Baseline census: `open`
-- Manifest lifecycle: `draft` (draft 15)
+- Manifest lifecycle: `draft` (approved 15)
 - Open parity rows with an assigned package: `0` of `0`
 
 ## Daily waves
 
 | Wave | Target | Status | Open rows | Goal |
 |---|---|---|---:|---|
-| D01 — Governance and baseline | 2026-09-01 | `in_progress` | 0 | Approve the census boundary, contract-writing rules, and existing draft disposition. |
+| D01 — Governance and baseline | 2026-09-01 | `in_progress` | 0 | Record approved contract definitions and close the census boundary when its evidence is accepted. |
 | D02 — Application and configuration | 2026-09-02 | `planned` | 0 | Specify application lifecycle, settings ownership, identity, secrets, and security behavior. |
 | D03 — Capture and workflow engine | 2026-09-03 | `planned` | 0 | Complete capture families and the execution semantics that compose them. |
 | D04 — Recording and media | 2026-09-04 | `planned` | 0 | Specify recording, encoding, playback, and media-editor behavior. |
@@ -73,13 +73,13 @@ Baseline: `kova-0.29.0` · Tracker: `1.0.0` · Census: `open` · Manifest: `draf
 
 Advance **D01 — Governance and baseline** (target 2026-09-01):
 
-- `PC-GOVERNANCE-001`: Baseline review and contract governance — 0 of 0 routed rows linked; exit when The baseline census status is closed with product-owner evidence; Contract-writing and approval responsibilities are unambiguous; Existing draft packages are approved, revised, or explicitly returned to backlog.
+- `PC-GOVERNANCE-001`: Baseline review and contract governance — 0 of 0 routed rows linked; exit when The baseline census status is closed with product-owner evidence; Contract-writing and approval responsibilities are unambiguous; A durable product-owner approval record covers every current package.
 
 ## Completion definition
 
 - [ ] The pinned baseline census is reviewed, signed, and closed.
 - [x] Every parity-ledger row links to a stable Product Contract requirement; no contract field remains null.
-- [ ] Every manifest capability is approved or active and declares accepted Windows, macOS, and Linux dispositions.
+- [x] Every manifest capability is approved or active and declares accepted Windows, macOS, and Linux dispositions.
 - [ ] Persisted formats and integrations have compatibility policy, fixtures, and runtime-observation evidence where applicable.
 - [ ] Conformance coverage traces normative requirements to independent evidence and all required human approvals are recorded.
 - [ ] No unresolved deviation, waiver, security review, privacy review, accessibility review, or product-owner decision remains unowned.
