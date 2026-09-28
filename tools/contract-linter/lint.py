@@ -339,7 +339,10 @@ def lint_approval_records(repo: Path, findings: Findings) -> None:
         authority = record.get("authority", {})
         findings.require(authority.get("role") == "human-product-owner", path, "approval authority must be human-product-owner")
         scope = record.get("scope", {})
-        findings.require(scope.get("contract_version") == contract_version, path, "approval contract version does not match manifest")
+        if scope.get("contract_version") != contract_version:
+            # Records for earlier contract versions are retained history; only
+            # current-version records can make a capability approved.
+            continue
         effects = record.get("effects", {})
         findings.require(effects.get("normative_contract") is True, path, "approved record must make its contract scope normative")
         packages = scope.get("packages", [])

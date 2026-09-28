@@ -74,6 +74,34 @@ class ContractLintTests(unittest.TestCase):
                 )
             )
 
+    def test_approval_for_earlier_contract_version_does_not_cover(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            contract = repo / "product-contract"
+            (contract / "reviews").mkdir(parents=True)
+            (contract / "manifest.yaml").write_text(
+                "contract_version: 1.3.0\nstatus: draft\ncapabilities:\n"
+                "  - id: SAMPLE-CAPABILITY-001\n"
+                "    path: capabilities/SAMPLE-CAPABILITY-001\n"
+                "    version: 1.0.0\n    status: approved\n"
+                "    requirements: [SAM-001]\n",
+                encoding="utf-8",
+            )
+            (contract / "reviews" / "APPROVAL-2026-01-01-OLD.json").write_text(
+                json.dumps({
+                    "schema_version": 1,
+                    "decision": "approved",
+                    "authority": {"role": "human-product-owner", "identity": "owner"},
+                    "scope": {"contract_version": "1.2.3", "packages": ["SAMPLE-CAPABILITY-001"]},
+                    "effects": {"normative_contract": True},
+                }),
+                encoding="utf-8",
+            )
+            findings = LINT.Findings()
+            LINT.lint_approval_records(repo, findings)
+            self.assertEqual(1, len(findings.items))
+            self.assertIn("lacks human product-owner approval record: SAMPLE-CAPABILITY-001", findings.items[0])
+
     def test_image_editor_catalogs_match_pinned_census(self) -> None:
         repo = Path(__file__).resolve().parents[3]
         findings = LINT.Findings()
