@@ -119,15 +119,37 @@ def capability_from(values: dict[str, str], path: Path, findings: Findings) -> C
     )
 
 
+MARKDOWN_LINK = re.compile(r"\]\(([^)\s]+)\)")
+PROTECTED_PREFIX = "ROOT-"
+
+
+def instruction_files(repo: Path) -> list[Path]:
+    """Return governed AGENTS.md files, excluding linter fixture repositories."""
+    fixtures_root = (repo / "tools" / "contract-linter" / "fixtures").resolve()
+    return sorted(
+        path for path in repo.rglob("AGENTS.md")
+        if ".git" not in path.relative_to(repo).parts and fixtures_root not in path.resolve().parents
+    )
+
+
+def nearest_ancestor_instructions(path: Path, repo: Path, governed: set[Path]) -> Path | None:
+    directory = path.parent.parent
+    while True:
+        candidate = (directory / "AGENTS.md").resolve()
+        if candidate in governed:
+            return candidate
+        if directory == repo or directory == directory.parent:
+            return None
+        directory = directory.parent
+
+
 def lint_agents(repo: Path, findings: Findings) -> None:
     rule_owners: dict[str, str] = {}
-    fixtures_root = (repo / "tools" / "contract-linter" / "fixtures").resolve()
-    agents_files = sorted(
-        path for path in repo.rglob("AGENTS.md")
-        if ".git" not in path.parts and fixtures_root not in path.resolve().parents
-    )
-    root_file = repo / "AGENTS.md"
-    findings.require(root_file in agents_files, root_file, "missing root constitution")
+    repo = repo.resolve()
+    agents_files = [path.resolve() for path in instruction_files(repo)]
+    governed = set(agents_files)
+    root_file = (repo / "AGENTS.md").resolve()
+    findings.require(root_file in governed, root_file, "missing root constitution")
     for path in agents_files:
         text = path.read_text(encoding="utf-8-sig")
         for rule in RULE_ID.findall(text):
@@ -135,17 +157,47 @@ def lint_agents(repo: Path, findings: Findings) -> None:
                 findings.add(path, f"duplicate rule ID {rule}; first declared in {rule_owners[rule]}")
             else:
                 rule_owners[rule] = relative(path, repo)
+            if path != root_file and rule.startswith(PROTECTED_PREFIX):
+                findings.add(path, f"child declares protected root rule ID {rule}")
+        for target in MARKDOWN_LINK.findall(text):
+            if re.match(r"^[a-z][a-z0-9+.-]*:", target) or target.startswith("#"):
+                continue
+            linked = (path.parent / target.split("#", 1)[0]).resolve()
+            findings.require(linked.exists(), path, f"broken relative link: {target}")
         if path == root_file:
             continue
+        scope_match = re.search(r"^Applies to:\s*(.+?)\s*$", text, re.MULTILINE)
+        expected_scope = f"{relative(path.parent, repo)}/**"
+        if not scope_match:
+            findings.add(path, "missing Applies to declaration")
+        else:
+            findings.require(
+                scope_match.group(1) == expected_scope,
+                path,
+                f"Applies to {scope_match.group(1)!r} does not match directory scope {expected_scope!r}",
+            )
         parent_match = re.search(r"^Parent:\s*(.+?)\s*$", text, re.MULTILINE)
         if not parent_match:
             findings.add(path, "missing Parent declaration")
             continue
         parent = (path.parent / parent_match.group(1).strip()).resolve()
         findings.require(parent.exists(), path, f"parent does not exist: {parent_match.group(1).strip()}")
+        nearest = nearest_ancestor_instructions(path, repo, governed)
+        if parent.exists() and nearest is not None and parent != nearest:
+            findings.add(path, f"Parent must be the nearest ancestor instruction file: {relative(nearest, repo)}")
+        if parent.exists():
+            child_link = Path(path).relative_to(parent.parent).as_posix() if path.is_relative_to(parent.parent) else ""
+            parent_links = {
+                link.split("#", 1)[0] for link in MARKDOWN_LINK.findall(parent.read_text(encoding="utf-8-sig"))
+            }
+            findings.require(
+                child_link in parent_links,
+                path,
+                f"undeclared scope: {relative(parent, repo)} does not index {child_link or relative(path, repo)}",
+            )
         depth = 1
-        seen = {path.resolve()}
-        while parent.exists() and parent != root_file.resolve():
+        seen = {path}
+        while parent.exists() and parent != root_file:
             if parent in seen:
                 findings.add(path, "parent cycle detected")
                 break
@@ -158,6 +210,57 @@ def lint_agents(repo: Path, findings: Findings) -> None:
             parent = (parent.parent / match.group(1).strip()).resolve()
             depth += 1
         findings.require(depth <= 4, path, f"instruction hierarchy depth {depth} exceeds D-AGT-001 maximum 4")
+
+
+def effective_chain(repo: Path, target: str, governed: list[Path]) -> list[Path]:
+    """Return the root-to-leaf AGENTS.md files that govern a repository path."""
+    repo = repo.resolve()
+    governed_set = {path.resolve() for path in governed}
+    parts = Path(target.replace("\\", "/")).parts
+    chain: list[Path] = []
+    for index in range(len(parts) + 1):
+        candidate = (repo.joinpath(*parts[:index]) / "AGENTS.md").resolve()
+        if candidate in governed_set and candidate not in chain:
+            chain.append(candidate)
+    return chain
+
+
+def effective_report(repo: Path, targets: Iterable[str]) -> str:
+    """Render a Markdown effective-instructions report grouped by governing chain (TOOL-EFFECTIVE-001)."""
+    repo = repo.resolve()
+    governed = instruction_files(repo)
+    groups: dict[tuple[Path, ...], list[str]] = {}
+    for target in sorted({item.strip().replace("\\", "/") for item in targets if item.strip()}):
+        groups.setdefault(tuple(effective_chain(repo, target, governed)), []).append(target)
+    lines = ["# Effective instructions", ""]
+    if not groups:
+        lines.append("No changed paths.")
+        return "\n".join(lines) + "\n"
+    for chain, paths in sorted(groups.items(), key=lambda item: [relative(p, repo) for p in item[0]]):
+        heading = " → ".join(relative(path, repo) for path in chain) or "(no governing AGENTS.md)"
+        lines.append(f"## {heading}")
+        lines.append("")
+        for path in chain:
+            rules = RULE_ID.findall(path.read_text(encoding="utf-8-sig"))
+            lines.append(f"- `{relative(path, repo)}`: {', '.join(rules) if rules else 'no rule IDs'}")
+        lines.append("")
+        lines.append(f"Governed paths ({len(paths)}):")
+        lines.append("")
+        lines.extend(f"- `{path}`" for path in paths)
+        lines.append("")
+    return "\n".join(lines)
+
+
+def changed_paths(repo: Path, base: str) -> list[str]:
+    import subprocess
+
+    result = subprocess.run(
+        ["git", "-C", str(repo), "diff", "--name-only", f"{base}...HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return [line for line in result.stdout.splitlines() if line.strip()]
 
 
 def lint_manifest(repo: Path, findings: Findings) -> set[str]:
@@ -359,8 +462,15 @@ def lint_repository(repo: Path) -> list[str]:
 def main(argv: Iterable[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[2])
+    report = parser.add_mutually_exclusive_group()
+    report.add_argument("--effective", nargs="+", metavar="PATH", help="print effective instructions for paths")
+    report.add_argument("--changed-since", metavar="REF", help="print effective instructions for paths changed since REF")
     args = parser.parse_args(list(argv) if argv is not None else None)
     repo = args.repo.resolve()
+    if args.effective or args.changed_since:
+        targets = args.effective or changed_paths(repo, args.changed_since)
+        print(effective_report(repo, targets), end="")
+        return 0
     findings = lint_repository(repo)
     if findings:
         print(f"Contract lint failed with {len(findings)} finding(s):")

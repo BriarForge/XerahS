@@ -102,6 +102,73 @@ class ContractLintTests(unittest.TestCase):
             LINT.lint_editor_catalogs(repo, findings)
             self.assertTrue(any("tool selection differs" in item for item in findings.items))
 
+    def _write(self, root: Path, relative_path: str, text: str) -> None:
+        path = root / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def _hierarchy(self, root: Path, child_text: str, root_index: str = "[child](child/AGENTS.md)") -> None:
+        self._write(root, "AGENTS.md", f"# Root\n\n- **ROOT-TEST-001** Root rule.\n\n{root_index}\n")
+        self._write(root, "child/AGENTS.md", child_text)
+
+    def test_valid_child_hierarchy_has_no_findings(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._hierarchy(root, "Applies to: child/**\nParent: ../AGENTS.md\n\n- **CHILD-TEST-001** Rule.\n")
+            findings = LINT.Findings()
+            LINT.lint_agents(root, findings)
+            self.assertEqual([], findings.items)
+
+    def test_child_cannot_declare_protected_root_rule(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._hierarchy(root, "Applies to: child/**\nParent: ../AGENTS.md\n\n- **ROOT-CHILD-001** Override.\n")
+            findings = LINT.Findings()
+            LINT.lint_agents(root, findings)
+            self.assertTrue(any("protected root rule ID ROOT-CHILD-001" in item for item in findings.items))
+
+    def test_unindexed_child_scope_is_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._hierarchy(root, "Applies to: child/**\nParent: ../AGENTS.md\n", root_index="No children.")
+            findings = LINT.Findings()
+            LINT.lint_agents(root, findings)
+            self.assertTrue(any("undeclared scope" in item for item in findings.items))
+
+    def test_scope_parent_and_link_mismatches_are_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._hierarchy(root, "Applies to: child/**\nParent: ../AGENTS.md\n")
+            self._write(
+                root,
+                "child/grand/AGENTS.md",
+                "Applies to: elsewhere/**\nParent: ../../AGENTS.md\n\n[missing](missing/)\n",
+            )
+            findings = LINT.Findings()
+            LINT.lint_agents(root, findings)
+            joined = "\n".join(findings.items)
+            self.assertIn("does not match directory scope 'child/grand/**'", joined)
+            self.assertIn("nearest ancestor instruction file: child/AGENTS.md", joined)
+            self.assertIn("broken relative link: missing/", joined)
+
+    def test_effective_report_lists_root_to_leaf_chain(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._hierarchy(root, "Applies to: child/**\nParent: ../AGENTS.md\n\n- **CHILD-TEST-001** Rule.\n")
+            report = LINT.effective_report(root, ["child/deep/file.txt", "top.txt"])
+            self.assertIn("## AGENTS.md → child/AGENTS.md", report)
+            self.assertIn("`child/AGENTS.md`: CHILD-TEST-001", report)
+            self.assertIn("- `child/deep/file.txt`", report)
+            self.assertIn("- `top.txt`", report)
+
+    def test_repository_paths_resolve_effective_chain(self) -> None:
+        repo = Path(__file__).resolve().parents[3]
+        chain = LINT.effective_chain(repo, "tools/contract-linter/lint.py", LINT.instruction_files(repo))
+        self.assertEqual(
+            ["AGENTS.md", "tools/AGENTS.md", "tools/contract-linter/AGENTS.md"],
+            [LINT.relative(path, repo.resolve()) for path in chain],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

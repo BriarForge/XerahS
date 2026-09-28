@@ -18,7 +18,7 @@ Owns normative product behavior: capability contracts, requirement IDs, schemas,
 3. User-visible MUST/MUST NOT changes require the human product owner.
 
 # Verification
-- `tools/contract-linter` once it exists.
+- `python tools/contract-linter/lint.py` and `python tools/contract-backlog/tracker.py --check` pass.
 - Manifest lists every capability, version, and requirement ID.
 
 # Prohibited Changes
@@ -30,4 +30,4 @@ Owns normative product behavior: capability contracts, requirement IDs, schemas,
 Ambiguous intent, Unavailable/Degraded dispositions, and waivers go to the product owner.
 
 # Child Scopes
-- [image-editor/](image-editor/) (AGENTS.md when that subtree has a distinct governance boundary)
+None. Add an indexed child `AGENTS.md` when a subtree, such as the ImageEditor capabilities under `capabilities/EDITOR-*`, needs a distinct governance boundary.
