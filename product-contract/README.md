@@ -32,6 +32,12 @@ The current human review packet is
 It summarizes all approved packages, high-impact decisions, and evidence still
 required for activation. The durable approval record is stored beside it.
 
+## Implementation readiness
+
+[`READINESS.md`](READINESS.md) states which native targets can start coding,
+the start order, the test seams each implementation provides, and the gates
+that remain open.
+
 ## Conformance vectors
 
 Every capability's `test-vectors.json` follows [`VECTORS.md`](VECTORS.md): one

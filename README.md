@@ -20,7 +20,7 @@ Pilot-binding defaults (see BXIP001 decisions):
 
 - Windows: WinUI 3 + Win32/WinRT, C#, Windows 11 23H2+
 - macOS: SwiftUI + AppKit, Swift, macOS 14+
-- Linux: Qt 6, C++17, Wayland first
+- Linux: Qt 6, C++17, Wayland first (reference edition); distro-native editions such as Omarchy, Ubuntu, and Fedora under D-LIN-002
 - No shared product runtime binary in the pilot
 - No in-process .NET plugins
 
@@ -45,8 +45,10 @@ version 0.2.0, lifecycle `draft`) lists 15 capabilities with human approval
 records, and every parity-ledger row from the pinned `kova-0.29.0` baseline
 links to a stable requirement ID. See
 [product-contract/backlog/STATUS.md](product-contract/backlog/STATUS.md) for the
-generated completion view. Native implementations and conformance runners have
-not landed yet.
+generated completion view. The contract is ready for native coding to start on
+Windows, macOS, and Linux; see
+[product-contract/READINESS.md](product-contract/READINESS.md). Native
+implementations and conformance runners have not landed yet.
 
 ## Verification
 
