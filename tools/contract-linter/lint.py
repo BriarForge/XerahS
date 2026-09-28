@@ -252,14 +252,21 @@ def effective_report(repo: Path, targets: Iterable[str]) -> str:
 
 
 def changed_paths(repo: Path, base: str) -> list[str]:
+    """List paths changed since base, using the merge base when one exists."""
     import subprocess
 
-    result = subprocess.run(
-        ["git", "-C", str(repo), "diff", "--name-only", f"{base}...HEAD"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    def diff(*revisions: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            ["git", "-C", str(repo), "diff", "--name-only", *revisions],
+            capture_output=True,
+            text=True,
+        )
+
+    result = diff(f"{base}...HEAD")
+    if result.returncode != 0:
+        result = diff(base, "HEAD")
+    if result.returncode != 0:
+        raise SystemExit(f"cannot list changes since {base}: {result.stderr.strip()}")
     return [line for line in result.stdout.splitlines() if line.strip()]
 
 
