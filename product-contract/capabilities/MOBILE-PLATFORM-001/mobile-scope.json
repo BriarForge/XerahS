@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "description": "Normative mobile scope for MOB-002. Dispositions: required (same behavior), equivalent (same outcome through a native mechanism), degraded (reduced outcome accepted by the product owner), unavailable, not-applicable.",
+  "capabilities": {
+    "FILENAME-GENERATION-001": {
+      "android": "required",
+      "ios": "required",
+      "adaptation": "MOB-008 context values; path mode resolves beneath the app's storage or the XerahS collection."
+    },
+    "POST-CAPTURE-ACTIONS-001": {
+      "android": "equivalent",
+      "ios": "equivalent",
+      "adaptation": "Same engine, order, and result model. Per-action dispositions are listed in actions as [android, ios]. Selection windows are native sheets; save-as uses the document picker; reveal opens the item in the system gallery or Files app; file-clipboard shares the file; ocr and qr-scan use on-device recognition.",
+      "actions": {
+        "quick-task-menu": [
+          "equivalent",
+          "equivalent"
+        ],
+        "after-capture-window": [
+          "equivalent",
+          "equivalent"
+        ],
+        "image-effects": [
+          "required",
+          "required"
+        ],
+        "annotation": [
+          "required",
+          "required"
+        ],
+        "save": [
+          "required",
+          "required"
+        ],
+        "save-as": [
+          "equivalent",
+          "equivalent"
+        ],
+        "save-thumbnail": [
+          "required",
+          "required"
+        ],
+        "image-clipboard": [
+          "required",
+          "required"
+        ],
+        "before-upload-window": [
+          "required",
+          "required"
+        ],
+        "upload": [
+          "required",
+          "required"
+        ],
+        "ocr": [
+          "equivalent",
+          "equivalent"
+        ],
+        "ocr-clipboard": [
+          "required",
+          "required"
+        ],
+        "qr-scan": [
+          "equivalent",
+          "equivalent"
+        ],
+        "pin": [
+          "not-applicable",
+          "not-applicable"
+        ],
+        "print": [
+          "equivalent",
+          "equivalent"
+        ],
+        "custom-actions": [
+          "not-applicable",
+          "not-applicable"
+        ],
+        "file-clipboard": [
+          "equivalent",
+          "equivalent"
+        ],
+        "path-clipboard": [
+          "not-applicable",
+          "not-applicable"
+        ],
+        "reveal": [
+          "equivalent",
+          "equivalent"
+        ],
+        "analyze": [
+          "equivalent",
+          "equivalent"
+        ],
+        "delete": [
+          "required",
+          "required"
+        ]
+      }
+    },
+    "REGION-CAPTURE-001": {
+      "android": "equivalent",
+      "ios": "degraded",
+      "adaptation": "Android: MOB-004 capture, then region selection over the captured frame. iOS: MOB-005 import, then region selection over the imported image; on-demand capture of other apps is not possible on iOS. Overlay-specific requirements (RC-005, RC-011 window snapping, RC-013 cursor) are not-applicable; mapping, confirmation, cancellation, keyboard, accessibility, and diagnostics apply."
+    },
+    "EDITOR-SESSION-001": {
+      "android": "required",
+      "ios": "required",
+      "adaptation": "MOB-007 touch mapping; export pixels unchanged."
+    },
+    "EDITOR-ANNOTATIONS-001": {
+      "android": "required",
+      "ios": "required",
+      "adaptation": "Touch-first tool palette; Apple Pencil and stylus pressure MAY refine freehand strokes without changing stored geometry semantics."
+    },
+    "EDITOR-EFFECTS-001": {
+      "android": "required",
+      "ios": "required",
+      "adaptation": "Effect parameters use native controls; output pixels follow the effect contracts."
+    },
+    "EDITOR-CANVAS-001": {
+      "android": "required",
+      "ios": "required",
+      "adaptation": "Pinch and pan change only the viewport (MOB-007)."
+    },
+    "EDITOR-OUTPUT-ACTIONS-001": {
+      "android": "equivalent",
+      "ios": "equivalent",
+      "adaptation": "Outputs route through MOB-009 saving and the system share sheet."
+    },
+    "EDITOR-SETTINGS-001": {
+      "android": "equivalent",
+      "ios": "equivalent",
+      "adaptation": "Keyboard shortcuts apply only with an attached hardware keyboard."
+    },
+    "EDITOR-UTILITIES-001": {
+      "android": "equivalent",
+      "ios": "equivalent",
+      "adaptation": "Utilities that need desktop screen access are not-applicable; the others use native controls."
+    },
+    "SETTINGS-CATALOG-001": {
+      "android": "equivalent",
+      "ios": "equivalent",
+      "adaptation": "MOB-016 shared schema with mobile-applicable subset shown."
+    },
+    "WORKFLOW-CATALOG-001": {
+      "android": "equivalent",
+      "ios": "equivalent",
+      "adaptation": "Workflows triggered by hotkeys or desktop capture modes are not-applicable (MOB-017); per-row mobile dispositions are required before this capability activates on mobile."
+    },
+    "INTERFACE-CATALOG-001": {
+      "android": "equivalent",
+      "ios": "equivalent",
+      "adaptation": "Tray, CLI, MCP, and shell surfaces are not-applicable; share sheet, intents, App Intents, and Shortcuts are the mobile interfaces (MOB-017)."
+    },
+    "CORE-PLATFORM-001": {
+      "android": "equivalent",
+      "ios": "equivalent",
+      "adaptation": "CORE requirements apply except desktop-only surfaces listed in MOB-017 and Linux editions (CORE-033 to CORE-037)."
+    },
+    "COMPATIBILITY-CATALOG-001": {
+      "android": "required",
+      "ios": "required",
+      "adaptation": "Formats read or written on mobile follow their compatibility contracts (MOB-016)."
+    }
+  }
+}

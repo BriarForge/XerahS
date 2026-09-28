@@ -1,0 +1,61 @@
+{
+  "schema_version": 2,
+  "capability": "MOBILE-PLATFORM-001",
+  "comparison": "subset",
+  "notes": "share-intake classifies shared items and reports one pipeline per supported item in received order. expand is FILENAME-GENERATION-001 expansion with a mobile context. run-pipeline is POST-CAPTURE-ACTIONS-001 execution on the named platform; actions absent from injected_outcomes succeed.",
+  "requirement_ids": ["MOB-002", "MOB-003", "MOB-008", "MOB-020"],
+  "vectors": [
+    {
+      "id": "share-intake-classifies-in-order",
+      "operation": "share-intake",
+      "requirements": ["MOB-003"],
+      "input": {
+        "platform": "android",
+        "items": [
+          { "mime_type": "image/png", "byte_length": 2048, "readable": true },
+          { "mime_type": "text/plain", "text": "https://example.test/a?b=1", "readable": true },
+          { "mime_type": "text/plain", "text": "see https://example.test", "readable": true },
+          { "mime_type": "application/pdf", "byte_length": 0, "readable": true },
+          { "mime_type": "video/mp4", "byte_length": 900000, "readable": true },
+          { "mime_type": "application/zip", "byte_length": 4096, "readable": false },
+          { "mime_type": "application/octet-stream", "byte_length": 10, "readable": true }
+        ]
+      },
+      "expected": {
+        "pipelines": [
+          { "item": 0, "kind": "image" },
+          { "item": 1, "kind": "url" },
+          { "item": 2, "kind": "text" },
+          { "item": 4, "kind": "video" },
+          { "item": 6, "kind": "file" }
+        ],
+        "errors": [
+          { "item": 3, "diagnostic": "share-item-unsupported" },
+          { "item": 5, "diagnostic": "share-item-unsupported" }
+        ]
+      }
+    },
+    {
+      "id": "filename-mobile-context",
+      "operation": "expand",
+      "requirements": ["MOB-008"],
+      "input": { "platform": "ios", "mode": "filename", "pattern": "%pn_%t_%widthx%height_%un", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "width": 1170, "height": 2532 } },
+      "expected": { "value": "__1170x2532_", "next_counter": 0 }
+    },
+    {
+      "id": "desktop-only-actions-skip-honestly",
+      "operation": "run-pipeline",
+      "requirements": ["MOB-002"],
+      "input": { "platform": "android", "selected": ["save", "pin", "path-clipboard", "upload"] },
+      "expected": {
+        "pipeline_state": "completed",
+        "ordered_results": [
+          { "action": "save", "state": "succeeded" },
+          { "action": "upload", "state": "succeeded", "input_artifact": "save.file" },
+          { "action": "pin", "state": "skipped", "diagnostic": "platform-not-applicable" },
+          { "action": "path-clipboard", "state": "skipped", "diagnostic": "platform-not-applicable" }
+        ]
+      }
+    }
+  ]
+}

@@ -368,6 +368,46 @@ def lint_vectors(repo: Path, findings: Findings) -> None:
                 findings.require(requirement in allowed, path, f"{vector_id}: unknown requirement {requirement}")
 
 
+MOBILE_DISPOSITIONS = {"required", "equivalent", "degraded", "unavailable", "not-applicable"}
+
+
+def lint_mobile_scope(repo: Path, findings: Findings) -> None:
+    """Keep MOBILE-PLATFORM-001 scope complete against the manifest and action catalogue."""
+    contract_root = repo / "product-contract"
+    scope_path = contract_root / "capabilities" / "MOBILE-PLATFORM-001" / "mobile-scope.json"
+    if not scope_path.is_file():
+        return
+    try:
+        scope = json.loads(scope_path.read_text(encoding="utf-8-sig"))["capabilities"]
+    except (json.JSONDecodeError, UnicodeDecodeError, KeyError, TypeError):
+        findings.add(scope_path, "mobile scope must be JSON with a capabilities object")
+        return
+    _, _, capabilities = parse_manifest(contract_root / "manifest.yaml", Findings())
+    expected = {capability.identifier for capability in capabilities} - {"MOBILE-PLATFORM-001"}
+    for missing in sorted(expected - set(scope)):
+        findings.add(scope_path, f"mobile scope missing capability {missing}")
+    for extra in sorted(set(scope) - expected):
+        findings.add(scope_path, f"mobile scope names unknown capability {extra}")
+    for identifier, entry in sorted(scope.items()):
+        for platform in ("android", "ios"):
+            findings.require(
+                entry.get(platform) in MOBILE_DISPOSITIONS,
+                scope_path,
+                f"{identifier}: invalid {platform} disposition {entry.get(platform)!r}",
+            )
+    actions_path = contract_root / "capabilities" / "POST-CAPTURE-ACTIONS-001" / "actions.json"
+    actions = scope.get("POST-CAPTURE-ACTIONS-001", {}).get("actions")
+    if actions_path.is_file() and isinstance(actions, dict):
+        catalogue = {item["id"] for item in json.loads(actions_path.read_text(encoding="utf-8-sig"))["actions"]}
+        findings.require(set(actions) == catalogue, scope_path, "mobile action dispositions must list every catalogue action")
+        for action, pair in sorted(actions.items()):
+            findings.require(
+                isinstance(pair, list) and len(pair) == 2 and all(value in MOBILE_DISPOSITIONS for value in pair),
+                scope_path,
+                f"{action}: mobile action disposition must be [android, ios]",
+            )
+
+
 def lint_approval_records(repo: Path, findings: Findings) -> None:
     contract_root = repo / "product-contract"
     manifest_path = contract_root / "manifest.yaml"
@@ -516,6 +556,7 @@ def lint_repository(repo: Path) -> list[str]:
     lint_json(repo, findings)
     lint_approval_records(repo, findings)
     lint_vectors(repo, findings)
+    lint_mobile_scope(repo, findings)
     lint_editor_catalogs(repo, findings)
     lint_parity(repo, findings)
     return findings.items

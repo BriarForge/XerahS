@@ -15,7 +15,9 @@ the latest-stable maintenance requirements in `CORE-PLATFORM-001` version
 `APPROVAL-2026-09-28-IMPLEMENTATION-READINESS.json` approves contract version
 `0.2.0`: the implementation-readiness clarifications to the four qualification
 capabilities, the Linux edition model in `CORE-PLATFORM-001`, and the unchanged
-carry-forward of every other package. Records for earlier contract versions
+carry-forward of every other package. `APPROVAL-2026-09-28-MOBILE-TARGETS.json` approves contract version `0.3.0`,
+adding native Android and iOS targets through `MOBILE-PLATFORM-001`.
+Records for earlier contract versions
 are retained history; only records for the manifest's current version count.
 All records explicitly withhold activation, census closure, and release
 authorization.

@@ -827,7 +827,7 @@ items:
       - path: "src/mobile-experimental"
         symbol: "Experimental mobile projects"
     baseline_commit: "5c7e36dea77ab131fe0f5e2101e5d578ccde0306"
-    contract: "product-contract/capabilities/CORE-PLATFORM-001"
+    contract: "product-contract/capabilities/MOBILE-PLATFORM-001"
     platforms:
       windows: "not-applicable"
       macos: "not-applicable"

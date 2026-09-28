@@ -1,8 +1,8 @@
 # CORE-PLATFORM-001 Native platform capability foundation
 
-Version: 0.4.0
+Version: 0.5.0
 
-Status: Approved by the human product owner on 2026-08-31 and 2026-09-28 (0.4.0 Linux editions); conformance required before activation
+Status: Approved by the human product owner on 2026-08-31 and 2026-09-28 (0.4.0 Linux editions; 0.5.0 mobile targets); conformance required before activation
 
 ## Shared requirements
 
@@ -129,10 +129,11 @@ Status: Approved by the human product owner on 2026-08-31 and 2026-09-28 (0.4.0 
   support clean install, replacement migration, update, rollback or recovery,
   and uninstall, and publish verified build provenance for Windows, macOS, and
   Linux.
-- **CORE-029:** The pinned experimental mobile row is outside the BXIP001 native
-  desktop scope. It MUST remain an explicit product-owner disposition and MUST
-  NOT silently add a supported target, weaken desktop requirements, or be
-  reported as completed functionality.
+- **CORE-029:** Native Android and iOS applications are supported targets
+  governed by `MOBILE-PLATFORM-001`, which declares each capability's mobile
+  scope. The baseline's experimental mobile projects are replaced by those
+  applications and remain outside desktop parity measurement. Mobile scope
+  MUST NOT weaken any desktop requirement.
 - **CORE-030:** Activation MUST include deterministic domain scenarios, security,
   privacy, accessibility, licensing, and compatibility review, permission and
   degraded-mode tests, cancellation and failure injection, and accepted results

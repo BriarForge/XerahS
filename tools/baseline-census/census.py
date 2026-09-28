@@ -385,7 +385,7 @@ def capability_rows() -> list[dict[str, Any]]:
         ("INTEGRATION-SHELL-001", "automation-integration", "Use Send To, context-menu, startup, and supported file associations.", "src/desktop/app/XerahS.UI/ViewModels/SettingsViewModel.Integration.cs", "SettingsViewModel integration settings", None),
         ("DIAGNOSTICS-RECOVERY-001", "diagnostics-recovery", "Diagnose permissions and dependencies, retain logs, and recover safely from partial failures.", "src/desktop/cli/XerahS.CLI/Commands/DoctorCommand.cs", "DoctorCommand", None),
         ("DISTRIBUTION-NATIVE-001", "distribution-quality", "Install, update, run, and uninstall a native package without losing user data.", "build", "Packaging definitions", None),
-        ("MOBILE-EXPERIMENTAL-001", "mobile-experimental", "Keep experimental mobile surfaces visible to the census without including them in BXIP001 desktop parity.", "src/mobile-experimental", "Experimental mobile projects", None),
+        ("MOBILE-EXPERIMENTAL-001", "mobile-experimental", "Keep experimental mobile surfaces visible to the census without including them in BXIP001 desktop parity.", "src/mobile-experimental", "Experimental mobile projects", "product-contract/capabilities/MOBILE-PLATFORM-001"),
     ]
     rows = [
         row(

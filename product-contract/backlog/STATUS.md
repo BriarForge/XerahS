@@ -19,7 +19,7 @@ Baseline: `kova-0.29.0` · Tracker: `1.0.0` · Census: `open` · Manifest: `draf
 ## Governance gates
 
 - Baseline census: `open`
-- Manifest lifecycle: `draft` (approved 15)
+- Manifest lifecycle: `draft` (approved 16)
 - Open parity rows with an assigned package: `0` of `0`
 
 ## Daily waves

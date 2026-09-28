@@ -31,6 +31,8 @@ The linter checks:
 - JSON syntax and the presence of JSON Schema dialect declarations;
 - capability `test-vectors.json` structure, unique vector IDs, operations, and
   requirement references under `product-contract/VECTORS.md`;
+- `MOBILE-PLATFORM-001/mobile-scope.json` completeness against the manifest and
+  the post-capture action catalogue;
 - all required baseline/parity artifacts, row fields, unique ledger IDs, source
   evidence, platform dispositions, and valid contract links;
 - the pinned baseline commit and submodule identifiers.

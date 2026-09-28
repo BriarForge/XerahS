@@ -135,6 +135,31 @@ class ContractLintTests(unittest.TestCase):
             self.assertIn("one: vector has no valid operation", joined)
             self.assertIn("one: unknown requirement SAM-999", joined)
 
+    def test_mobile_scope_matches_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            contract = repo / "product-contract"
+            package = contract / "capabilities" / "MOBILE-PLATFORM-001"
+            package.mkdir(parents=True)
+            (contract / "manifest.yaml").write_text(
+                "contract_version: 1.2.3\nstatus: draft\ncapabilities:\n"
+                "  - id: SAMPLE-CAPABILITY-001\n    path: capabilities/SAMPLE-CAPABILITY-001\n"
+                "    version: 1.0.0\n    status: draft\n    requirements: [SAM-001]\n"
+                "  - id: MOBILE-PLATFORM-001\n    path: capabilities/MOBILE-PLATFORM-001\n"
+                "    version: 1.0.0\n    status: draft\n    requirements: [MOB-001]\n",
+                encoding="utf-8",
+            )
+            (package / "mobile-scope.json").write_text(
+                json.dumps({"capabilities": {"OTHER-CAPABILITY-001": {"android": "required", "ios": "sometimes"}}}),
+                encoding="utf-8",
+            )
+            findings = LINT.Findings()
+            LINT.lint_mobile_scope(repo, findings)
+            joined = "\n".join(findings.items)
+            self.assertIn("mobile scope missing capability SAMPLE-CAPABILITY-001", joined)
+            self.assertIn("mobile scope names unknown capability OTHER-CAPABILITY-001", joined)
+            self.assertIn("invalid ios disposition 'sometimes'", joined)
+
     def test_image_editor_catalogs_match_pinned_census(self) -> None:
         repo = Path(__file__).resolve().parents[3]
         findings = LINT.Findings()
