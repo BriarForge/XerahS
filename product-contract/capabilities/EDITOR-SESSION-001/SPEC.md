@@ -57,7 +57,8 @@ The complete approved editor surface is expanded by `EDITOR-ANNOTATIONS-001`,
 - **ES-009:** Export MUST composite the immutable source and all visible
   annotations in z-order into an image with the requested format and color
   profile. For identical normalized document, renderer version, format, and
-  options, decoded output pixels MUST be identical on all supported platforms.
+  options, decoded output pixels MUST be identical on all supported platforms,
+  except as ES-025 permits for rotations that are not multiples of 90 degrees.
 - **ES-010:** Rectangle rendering MUST clip to canvas bounds, apply opacity once,
   use the specified stroke width centered on the rectangle path, and render fill
   before stroke. Native preview MAY be accelerated but export is authoritative.

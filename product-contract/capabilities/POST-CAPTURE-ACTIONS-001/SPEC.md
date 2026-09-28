@@ -46,8 +46,8 @@ future runs.
   and history failures MUST NOT discard working media or a successfully saved
   file.
 - **PCA-006:** Upload MUST use the saved file when available. When no saved file
-  exists, the engine MAY create a managed temporary encoded file; it MUST record
-  that artifact and apply the workflow's cleanup policy.
+  exists, the engine creates a managed temporary encoded file under PCA-019; it
+  MUST record that artifact and apply the workflow's cleanup policy.
 - **PCA-007:** Save success MUST record the absolute native path, media type,
   byte length, and filename-generation context. Save failure MUST leave working
   media available for clipboard and permitted upload fallbacks.

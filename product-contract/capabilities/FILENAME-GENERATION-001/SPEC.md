@@ -55,8 +55,8 @@ produces `_` in `filename` or `path` mode and an empty string otherwise.
   wider value.
 - **FN-008:** `%rn{n}`, `%ra{n}`, `%rna{n}`, `%rx{n}`, `%rX{n}`, `%guid`,
   `%radjective`, `%ranimal`, and `%remoji{n}` MUST use the supplied cryptographic
-  random source. A missing or invalid positive repeat count MUST be reported as
-  a validation error rather than silently producing an unbounded value.
+  random source. An invalid repeat count under FN-019 MUST be reported as a
+  validation error rather than silently producing an unbounded value.
 - **FN-009:** `%rf{path}` MAY read one random line only after the caller grants
   file-read permission. A denied, missing, non-text, or empty file MUST produce
   a typed expansion error and MUST NOT expose unrelated filesystem data.
