@@ -1,8 +1,8 @@
 # POST-CAPTURE-ACTIONS-001 Post-capture actions
 
-Version: 0.1.0
+Version: 0.2.0
 
-Status: Approved by the human product owner on 2026-08-31; conformance required before activation
+Status: Approved by the human product owner on 2026-08-31 (0.1.0) and 2026-09-28 (0.2.0 implementation-readiness clarifications); conformance required before activation
 
 ## User intent
 
@@ -30,11 +30,12 @@ future runs.
 - **PCA-001:** The engine MUST record one action result for every selected
   action, in normative order, with state `succeeded`, `failed`, `cancelled`, or
   `skipped`.
-- **PCA-002:** Actions MUST execute in this order: selection window; image
-  effects; annotation; save; image clipboard; upload; OCR; OCR clipboard; QR
-  scan; pin; print; custom actions; file clipboard; path clipboard; reveal;
-  analyze; before-upload window; deletion; completion/history. An action not
-  selected MUST NOT run.
+- **PCA-002:** Actions MUST execute in this order: selection windows; image
+  effects; annotation; save variants; image clipboard; before-upload window;
+  upload; OCR; OCR clipboard; QR scan; pin; print; custom actions; file
+  clipboard; path clipboard; reveal; analyze; deletion; completion/history, as
+  itemized in `actions.json`. An action not selected MUST NOT run. Completion
+  and history recording is implicit and is not a selectable action.
 - **PCA-003:** A transformation that succeeds MUST replace working media for all
   later actions. A failed transformation MUST leave the last valid working
   media available and MUST NOT dispose or corrupt it.
@@ -78,6 +79,48 @@ future runs.
 - **PCA-016:** Implementations MUST emit the canonical result shape illustrated
   by `test-vectors.json`. Platform-specific metadata MAY be added under a
   namespaced extension object.
+- **PCA-017:** `actions.json` is the normative action catalogue. It defines each
+  stable action ID, the baseline `AfterCaptureTasks` flags it imports from, its
+  kind, the artifacts it requires and produces, and whether it can be
+  interrupted safely. Its array order is the execution order and refines
+  PCA-002: both selection windows run first, save variants and the image
+  clipboard follow the transformations, and the before-upload window runs
+  immediately before upload. Selected actions MUST run in catalogue order
+  regardless of the order in which they were selected.
+- **PCA-018:** An action MUST start only when every artifact it requires is
+  available. `saved-file` resolves to `save.file` when available and otherwise
+  to `save-as.file`. When a required artifact is unavailable the action MUST be
+  `skipped` with diagnostic `dependency-unavailable` and `missing_artifact` set
+  to the canonical name of the first unavailable requirement in catalogue
+  order (`save.file` for an unresolved `saved-file`). The result of an action
+  that consumes `saved-file` or `temporary.file` MUST name the resolved artifact
+  in `input_artifact`.
+- **PCA-019:** Upload MUST use `saved-file` when it is available. Otherwise, when
+  the workflow permits temporary upload files (the default), the engine MUST
+  encode the working media to a managed `temporary.file`, record it as the
+  upload's input artifact, and delete it under the workflow's cleanup policy.
+  When temporary files are not permitted, upload MUST be skipped with
+  `dependency-unavailable` and `missing_artifact` `save.file`.
+- **PCA-020:** When the before-upload window is declined or cancelled, its
+  result MUST be `cancelled`, upload MUST be `skipped` with diagnostic
+  `upload-declined`, and every other action MUST continue. Declining upload is
+  not pipeline cancellation.
+- **PCA-021:** Delete MUST remove only a file this pipeline created, and only
+  after every earlier selected action that requires `saved-file` succeeded.
+  Otherwise delete MUST be `skipped` with diagnostic `delete-guard` so a failed
+  upload or custom action never loses the user's only copy.
+- **PCA-022:** The pipeline state MUST be `cancelled` when cancellation
+  prevented at least one selected action from starting, `interrupted` while a
+  restarted pipeline awaits recovery, and otherwise `completed`. The result
+  MUST report `final_working_media` as the ID of the last transformation that
+  succeeded, or `capture` when none did.
+- **PCA-023:** A selection window that succeeds MAY return a replacement action
+  set for the current run. Replacement entries at or before the selection
+  window's catalogue position MUST be ignored and MUST NOT run, the remaining
+  replacement set MUST run in catalogue order, and the recorded results MUST
+  contain the selection window followed by those remaining actions only. Legacy flag sets MUST map to action IDs
+  through `legacy_flags`, and the obsolete `AnnotateImage` flag MUST map to
+  `annotation`.
 
 ## Supported action inventory
 

@@ -1,13 +1,20 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "capability": "POST-CAPTURE-ACTIONS-001",
+  "operation": "run-pipeline",
+  "comparison": "subset",
   "result_schema": "post-capture-result-v1",
+  "input_defaults": { "injected_outcomes": {}, "options": { "upload_temporary_allowed": true } },
+  "notes": "An action absent from injected_outcomes succeeds. cancel_after requests cancellation after the named action finishes; cancel_during requests it while the named action runs.",
+  "requirement_ids": ["PCA-001", "PCA-002", "PCA-003", "PCA-004", "PCA-005", "PCA-006", "PCA-007", "PCA-008", "PCA-009", "PCA-010", "PCA-014", "PCA-016", "PCA-017", "PCA-018", "PCA-019", "PCA-020", "PCA-021", "PCA-022", "PCA-023"],
   "vectors": [
     {
       "id": "clipboard-failure-continues",
-      "selected": ["save", "image-clipboard", "upload"],
-      "injected_outcomes": { "save": "succeeded", "image-clipboard": "failed", "upload": "succeeded" },
+      "requirements": ["PCA-004", "PCA-005", "PCA-006"],
+      "input": { "selected": ["save", "image-clipboard", "upload"], "injected_outcomes": { "image-clipboard": "failed" } },
       "expected": {
         "pipeline_state": "completed",
+        "final_working_media": "capture",
         "ordered_results": [
           { "action": "save", "state": "succeeded" },
           { "action": "image-clipboard", "state": "failed" },
@@ -18,30 +25,202 @@
     },
     {
       "id": "missing-file-dependency",
-      "selected": ["path-clipboard", "reveal"],
-      "injected_outcomes": {},
+      "requirements": ["PCA-004", "PCA-018"],
+      "input": { "selected": ["path-clipboard", "reveal"] },
       "expected": {
         "pipeline_state": "completed",
         "ordered_results": [
-          { "action": "path-clipboard", "state": "skipped", "diagnostic": "dependency-unavailable" },
-          { "action": "reveal", "state": "skipped", "diagnostic": "dependency-unavailable" }
+          { "action": "path-clipboard", "state": "skipped", "diagnostic": "dependency-unavailable", "missing_artifact": "save.file" },
+          { "action": "reveal", "state": "skipped", "diagnostic": "dependency-unavailable", "missing_artifact": "save.file" }
         ],
         "working_media_retained": true
       }
     },
     {
       "id": "selection-cancel",
-      "selected": ["selection-window", "save", "upload"],
-      "injected_outcomes": { "selection-window": "cancelled" },
+      "requirements": ["PCA-009", "PCA-010", "PCA-022"],
+      "input": { "selected": ["after-capture-window", "save", "upload"], "injected_outcomes": { "after-capture-window": "cancelled" } },
       "expected": {
         "pipeline_state": "cancelled",
         "ordered_results": [
-          { "action": "selection-window", "state": "cancelled" },
+          { "action": "after-capture-window", "state": "cancelled" },
           { "action": "save", "state": "cancelled" },
           { "action": "upload", "state": "cancelled" }
         ],
         "working_media_retained": true
       }
+    },
+    {
+      "id": "catalogue-order-not-selection-order",
+      "requirements": ["PCA-002", "PCA-008", "PCA-017", "PCA-022"],
+      "input": { "selected": ["reveal", "upload", "save", "annotation"] },
+      "expected": {
+        "pipeline_state": "completed",
+        "final_working_media": "annotation",
+        "ordered_results": [
+          { "action": "annotation", "state": "succeeded" },
+          { "action": "save", "state": "succeeded" },
+          { "action": "upload", "state": "succeeded", "input_artifact": "save.file" },
+          { "action": "reveal", "state": "succeeded" }
+        ]
+      }
+    },
+    {
+      "id": "failed-transformation-keeps-last-valid-media",
+      "requirements": ["PCA-003", "PCA-022"],
+      "input": { "selected": ["image-effects", "save"], "injected_outcomes": { "image-effects": "failed" } },
+      "expected": {
+        "pipeline_state": "completed",
+        "final_working_media": "capture",
+        "ordered_results": [
+          { "action": "image-effects", "state": "failed" },
+          { "action": "save", "state": "succeeded" }
+        ],
+        "working_media_retained": true
+      }
+    },
+    {
+      "id": "upload-without-save-uses-temporary-file",
+      "requirements": ["PCA-006", "PCA-019"],
+      "input": { "selected": ["upload"] },
+      "expected": {
+        "pipeline_state": "completed",
+        "ordered_results": [ { "action": "upload", "state": "succeeded", "input_artifact": "temporary.file" } ]
+      }
+    },
+    {
+      "id": "upload-temporary-not-permitted",
+      "requirements": ["PCA-018", "PCA-019"],
+      "input": { "selected": ["upload"], "options": { "upload_temporary_allowed": false } },
+      "expected": {
+        "pipeline_state": "completed",
+        "ordered_results": [ { "action": "upload", "state": "skipped", "diagnostic": "dependency-unavailable", "missing_artifact": "save.file" } ]
+      }
+    },
+    {
+      "id": "save-failure-fallbacks",
+      "requirements": ["PCA-004", "PCA-007", "PCA-018", "PCA-019"],
+      "input": { "selected": ["save", "image-clipboard", "upload", "path-clipboard"], "injected_outcomes": { "save": "failed" } },
+      "expected": {
+        "pipeline_state": "completed",
+        "ordered_results": [
+          { "action": "save", "state": "failed" },
+          { "action": "image-clipboard", "state": "succeeded" },
+          { "action": "upload", "state": "succeeded", "input_artifact": "temporary.file" },
+          { "action": "path-clipboard", "state": "skipped", "diagnostic": "dependency-unavailable", "missing_artifact": "save.file" }
+        ],
+        "working_media_retained": true
+      }
+    },
+    {
+      "id": "save-as-satisfies-saved-file",
+      "requirements": ["PCA-018"],
+      "input": { "selected": ["save-as", "path-clipboard"] },
+      "expected": {
+        "pipeline_state": "completed",
+        "ordered_results": [
+          { "action": "save-as", "state": "succeeded" },
+          { "action": "path-clipboard", "state": "succeeded", "input_artifact": "save-as.file" }
+        ]
+      }
+    },
+    {
+      "id": "cancel-between-actions",
+      "requirements": ["PCA-010", "PCA-022"],
+      "input": { "selected": ["save", "upload", "reveal"], "cancel_after": "save" },
+      "expected": {
+        "pipeline_state": "cancelled",
+        "ordered_results": [
+          { "action": "save", "state": "succeeded" },
+          { "action": "upload", "state": "cancelled" },
+          { "action": "reveal", "state": "cancelled" }
+        ]
+      }
+    },
+    {
+      "id": "cancel-during-uninterruptible-action",
+      "requirements": ["PCA-010", "PCA-022"],
+      "input": { "selected": ["save", "upload", "reveal"], "cancel_during": "upload" },
+      "expected": {
+        "pipeline_state": "cancelled",
+        "ordered_results": [
+          { "action": "save", "state": "succeeded" },
+          { "action": "upload", "state": "succeeded", "cancellation_arrived_during": true },
+          { "action": "reveal", "state": "cancelled" }
+        ]
+      }
+    },
+    {
+      "id": "before-upload-declined",
+      "requirements": ["PCA-017", "PCA-020"],
+      "input": { "selected": ["save", "before-upload-window", "upload", "reveal"], "injected_outcomes": { "before-upload-window": "cancelled" } },
+      "expected": {
+        "pipeline_state": "completed",
+        "ordered_results": [
+          { "action": "save", "state": "succeeded" },
+          { "action": "before-upload-window", "state": "cancelled" },
+          { "action": "upload", "state": "skipped", "diagnostic": "upload-declined" },
+          { "action": "reveal", "state": "succeeded" }
+        ]
+      }
+    },
+    {
+      "id": "delete-guard-after-failed-upload",
+      "requirements": ["PCA-021"],
+      "input": { "selected": ["save", "upload", "delete"], "injected_outcomes": { "upload": "failed" } },
+      "expected": {
+        "pipeline_state": "completed",
+        "ordered_results": [
+          { "action": "save", "state": "succeeded" },
+          { "action": "upload", "state": "failed" },
+          { "action": "delete", "state": "skipped", "diagnostic": "delete-guard" }
+        ]
+      }
+    },
+    {
+      "id": "delete-after-successful-upload",
+      "requirements": ["PCA-021"],
+      "input": { "selected": ["save", "upload", "delete"] },
+      "expected": {
+        "pipeline_state": "completed",
+        "ordered_results": [
+          { "action": "save", "state": "succeeded" },
+          { "action": "upload", "state": "succeeded", "input_artifact": "save.file" },
+          { "action": "delete", "state": "succeeded", "input_artifact": "save.file" }
+        ]
+      }
+    },
+    {
+      "id": "selection-window-replaces-action-set",
+      "requirements": ["PCA-009", "PCA-023"],
+      "input": { "selected": ["after-capture-window", "save"], "injected_outcomes": { "after-capture-window": { "state": "succeeded", "selected": ["image-clipboard", "quick-task-menu"] } } },
+      "expected": {
+        "pipeline_state": "completed",
+        "ordered_results": [
+          { "action": "after-capture-window", "state": "succeeded" },
+          { "action": "image-clipboard", "state": "succeeded" }
+        ]
+      }
+    },
+    {
+      "id": "ocr-clipboard-depends-on-ocr",
+      "requirements": ["PCA-004", "PCA-018"],
+      "input": { "selected": ["ocr", "ocr-clipboard", "qr-scan"], "injected_outcomes": { "ocr": "failed" } },
+      "expected": {
+        "pipeline_state": "completed",
+        "ordered_results": [
+          { "action": "ocr", "state": "failed" },
+          { "action": "ocr-clipboard", "state": "skipped", "diagnostic": "dependency-unavailable", "missing_artifact": "ocr.text" },
+          { "action": "qr-scan", "state": "succeeded" }
+        ]
+      }
+    },
+    {
+      "id": "legacy-flags-map-to-actions",
+      "operation": "map-legacy-flags",
+      "requirements": ["PCA-023"],
+      "input": { "legacy_flags": ["SaveImageToFile", "AnnotateImage", "CopyOcrTextToClipboard", "DoOCR"] },
+      "expected": { "selected": ["annotation", "save", "ocr", "ocr-clipboard"] }
     }
   ]
 }

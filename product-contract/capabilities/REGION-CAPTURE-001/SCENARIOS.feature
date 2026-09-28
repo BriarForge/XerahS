@@ -30,3 +30,18 @@ Feature: Interactive region capture
     When either monitor scale or bounds changes
     Then the session is cancelled with "display-topology-changed"
     And stale bounds are not persisted
+
+  Scenario: Fractional scaling rounds down to the pixel under the pointer
+    Given the topology from vector "fractional-scale-floors"
+    When the logical endpoints in that vector are confirmed
+    Then the rectangle is left 2020 top 50 right 2171 bottom 125
+
+  Scenario: Gaps between monitors are transparent
+    Given monitors of different heights
+    When the selection covers space no monitor shows
+    Then those output pixels are transparent black
+
+  Scenario: A stale last region is refused
+    Given the last region was stored on a display whose bounds later changed
+    When last-region capture runs
+    Then it fails with "last-region-invalid" and captures nothing

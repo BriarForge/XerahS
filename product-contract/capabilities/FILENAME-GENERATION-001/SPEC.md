@@ -1,8 +1,8 @@
 # FILENAME-GENERATION-001 Filename generation
 
-Version: 0.1.0
+Version: 0.2.0
 
-Status: Approved by the human product owner on 2026-08-31; conformance required before activation
+Status: Approved by the human product owner on 2026-08-31 (0.1.0) and 2026-09-28 (0.2.0 implementation-readiness clarifications); conformance required before activation
 
 ## User intent
 
@@ -23,8 +23,10 @@ names that fail on a supported platform.
 ## Preconditions, inputs, and outputs
 
 The input MUST contain a pattern, a parse mode (`filename`, `path`, `text`, or
-`url`), and an expansion context. The output contains the expanded string and
-the next counter value. A blank pattern does not advance the counter and
+`url`), and an expansion context. It MAY contain an extension (without a
+leading `.`) and a maximum length. The output contains the expanded string and
+the next counter value, or a typed error and the unchanged counter. A blank
+pattern (empty, or only Unicode `White_Space`) does not advance the counter and
 produces `_` in `filename` or `path` mode and an empty string otherwise.
 
 ## Requirements
@@ -84,6 +86,81 @@ produces `_` in `filename` or `path` mode and an empty string otherwise.
   later workflow action fails.
 - **FN-017:** Implementations MUST pass every deterministic vector in
   `test-vectors.json` byte-for-byte in UTF-8.
+- **FN-018:** Token recognition MUST scan left to right. At each `%`, the
+  implementation MUST match the longest token name in `tokens.json` that begins
+  there, comparing case-sensitively; `%%` is a token. A `%` that begins no known
+  token is a literal character and scanning resumes at the next character. For
+  example `%widthx` is `%width` then `x`, `%rna` is never `%rn` then `a`, and
+  `%Y` is literal.
+- **FN-019:** Only counter tokens, random character tokens (`%rn`, `%ra`,
+  `%rna`, `%rx`, `%rX`, `%remoji`), and `%rf` accept a `{...}` argument that
+  immediately follows the token name and ends at the first `}`. For every other
+  token a following `{` is literal. A missing `}` MUST fail with
+  `unterminated-argument`. Width and repeat arguments MUST be ASCII decimal
+  integers from 1 to 256 inclusive; any other value MUST fail with
+  `invalid-argument`. A random character token without an argument produces one
+  character; a counter token without an argument has no padding.
+- **FN-020:** Date and time tokens MUST use the wall-clock fields of the
+  context's `local_time` exactly as supplied, including its offset; `%unix` MUST
+  use `unix_time`. `%yy` is the last two digits of the year and `%wy` is the
+  ISO 8601 week number, each zero-padded to two digits. On the twelve-hour
+  clock hour 0 is `12`, hours 13 to 23 subtract 12, and `%pm` is `AM` for hours
+  0 to 11 and `PM` for hours 12 to 23. `%mon` and `%w` use the Unicode CLDR
+  format-wide month and weekday names of the context locale; `%mon2` and `%w2`
+  use the English names.
+- **FN-021:** The random source is an ordered byte sequence consumed left to
+  right across the whole pattern. Each random element MUST be drawn from the
+  ordered list for its token in `random-lists.json` by rejection sampling: for a
+  list of N entries, read one byte b; if b is at least 256 minus (256 modulo N),
+  discard it and read the next byte; otherwise select entry b modulo N. `%guid`
+  and `%GUID` MUST consume 16 bytes, set byte 6 to (byte 6 AND 0x0F) OR 0x40 and
+  byte 8 to (byte 8 AND 0x3F) OR 0x80 as an RFC 9562 version 4 UUID, and format
+  them as 8-4-4-4-12 hexadecimal digits in lowercase or uppercase respectively.
+  Production random sources MUST be cryptographically secure. A conformance
+  source that runs out MUST fail with `random-source-exhausted`.
+- **FN-022:** Values inserted by `%t`, `%pn`, `%un`, `%uln`, `%cn`, and `%rf`
+  MUST be trimmed of leading and trailing Unicode `White_Space`; `%t` and `%pn`
+  then replace each U+0020 space with `_`. In `filename` and `path` mode the
+  value MUST then have the FN-011 character replacement applied, including to
+  `/` and `\`, so metadata never creates a path separator. In `url` mode the
+  value MUST be percent-encoded as UTF-8, leaving only RFC 3986 unreserved
+  characters (`A-Z a-z 0-9 - . _ ~`) unencoded. In `text` mode it is inserted
+  unchanged. Literal pattern text is never percent-encoded.
+- **FN-023:** In `filename` mode the implementation MUST finalize the name in
+  this order: expand tokens; apply FN-011 replacement and collapse to the
+  expanded text; remove trailing spaces and periods; apply FN-013; append `.`
+  and the caller's extension after applying FN-011 replacement to the
+  extension; truncate the part before the extension to the maximum length
+  under FN-014; remove trailing spaces and periods again when no extension is
+  present, applying FN-013 if that empties the name; then prefix `_` when the
+  text before the first `.` equals `CON`, `PRN`, `AUX`, `NUL`, `COM1` to `COM9`,
+  or `LPT1` to `LPT9`, ignoring case. When the prefix makes the name exceed the
+  maximum length, the last scalar value before the extension MUST be removed.
+  When the extension and its `.` alone reach or exceed the maximum length, the
+  parse MUST fail with `name-too-long`.
+- **FN-024:** In `path` mode, `/` and `\` in literal pattern text are separators
+  and the result MUST use `/` between components; the native layer converts it
+  at the filesystem boundary. A pattern that begins with a separator or with a
+  drive prefix such as `C:` MUST fail with `path-not-relative`, and a component
+  that is `..` after expansion MUST fail with `path-traversal`. Each component
+  MUST be finalized as in FN-023 without an extension; the extension and the
+  maximum length apply only to the last component.
+- **FN-025:** The counter is a non-negative integer that fits in a signed 64-bit
+  value. Advancing it beyond 9223372036854775807 MUST fail with
+  `counter-overflow`. Base-36 digits are `0` to `9` followed by `a` to `z`
+  (`A` to `Z` for `%iA`).
+- **FN-026:** An expansion error MUST return a code from this list, the
+  offending token (or `null` for a path-structure error), and the zero-based
+  offset in Unicode scalar values of the token's `%` (or of the offending path
+  component): `invalid-argument`, `unterminated-argument`,
+  `random-source-exhausted`, `file-permission-denied`, `file-unavailable`,
+  `path-not-relative`, `path-traversal`, `counter-overflow`, `name-too-long`.
+  `%rf` selects among the lines of the file, split on LF or CRLF, trimmed, and
+  excluding empty lines, as one random element; a file with no such line is
+  `file-unavailable`.
+- **FN-027:** The preview random source MUST be the byte sequence 0x00, 0x01,
+  and onward, wrapping from 0xFF to 0x00. Preview MUST report the next counter
+  value that execution would commit without committing it.
 
 ## Defaults and compatibility
 

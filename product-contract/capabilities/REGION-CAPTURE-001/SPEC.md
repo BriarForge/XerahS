@@ -1,8 +1,8 @@
 # REGION-CAPTURE-001 Interactive region capture
 
-Version: 0.1.0
+Version: 0.2.0
 
-Status: Approved by the human product owner on 2026-08-31; capture-permission security review and conformance required before activation
+Status: Approved by the human product owner on 2026-08-31 (0.1.0) and 2026-09-28 (0.2.0 implementation-readiness clarifications); capture-permission security review and conformance required before activation
 
 ## User intent
 
@@ -93,6 +93,41 @@ The lifecycle is normative in `STATE_MACHINE.md`.
   an operating-system portal chooser.
 - **RC-021:** Implementations MUST pass the mapping and state vectors in
   `test-vectors.json`.
+- **RC-022:** A logical point on display D MUST map to desktop physical space as
+  `D.physical.left + (x - D.logical.left) * D.scale` and
+  `D.physical.top + (y - D.logical.top) * D.scale`, computed in IEEE 754 double
+  precision and then rounded with `floor(value + 0.000001)`. A pointer position
+  MUST be mapped on the display that reports it. The normalized selection is
+  `left = min(x0, x1)`, `right = max(x0, x1)`, `top = min(y0, y1)`, and
+  `bottom = max(y0, y1)` of the two mapped points, so the end point is the
+  exclusive edge.
+- **RC-023:** Mapped points MUST be clamped to the reporting display's physical
+  bounds, where the right and bottom edges are valid exclusive rectangle edges.
+  Keyboard and handle adjustments MUST keep the rectangle inside the bounding
+  box of all capturable displays. Output pixels inside the rectangle that no
+  capturable display covers MUST be transparent black (all channels zero).
+- **RC-024:** A keyboard move or resize step MUST be 1 physical pixel, and 10
+  physical pixels with the native precision modifier. A move that would cross
+  the bounding box MUST stop at the edge and preserve size. A resize MUST keep
+  width and height at least 1 physical pixel. Each step is one selection
+  change; the resulting bounds MUST be announced to assistive technology.
+- **RC-025:** The session state machine MUST process these events: `permission`
+  (`authorized`, `denied`, `restricted`), `ready`, `pointer-down`,
+  `pointer-move`, `pointer-up`, `key-enter`, `key-escape`, `confirm`,
+  `cancel`, `topology-changed`, `capture-succeeded`, and `capture-failed`. An
+  event with no transition in `STATE_MACHINE.md` MUST be ignored. Denied or
+  restricted permission MUST enter `failed` with `capture-permission-denied`
+  without showing an overlay. `capture-failed` MUST enter `failed` with
+  `capture-source-failed`.
+- **RC-026:** With snapping disabled, a pointer-down and pointer-up at the same
+  physical point MUST leave the session `idle`. With snapping enabled and a
+  detected window or control under the pointer, the same click MUST select
+  that element's clamped physical bounds and then follow RC-007.
+- **RC-027:** The persisted last region MUST record format version 1, the
+  normalized physical rectangle, and the stable ID and physical bounds of every
+  display the rectangle intersects. A later last-region capture MUST fail with
+  `last-region-invalid`, without capturing, when any recorded display is
+  missing or its physical bounds changed.
 
 ## Settings and defaults
 

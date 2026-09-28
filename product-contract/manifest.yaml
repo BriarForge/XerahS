@@ -1,28 +1,28 @@
 # Product Contract manifest. Schema: schemas/manifest.schema.json.
 # Contract version is the product version native apps may claim.
-contract_version: 0.1.0
+contract_version: 0.2.0
 status: draft
 capabilities:
   - id: FILENAME-GENERATION-001
     path: capabilities/FILENAME-GENERATION-001
-    version: 0.1.0
+    version: 0.2.0
     status: approved
-    requirements: [FN-001, FN-002, FN-003, FN-004, FN-005, FN-006, FN-007, FN-008, FN-009, FN-010, FN-011, FN-012, FN-013, FN-014, FN-015, FN-016, FN-017]
+    requirements: [FN-001, FN-002, FN-003, FN-004, FN-005, FN-006, FN-007, FN-008, FN-009, FN-010, FN-011, FN-012, FN-013, FN-014, FN-015, FN-016, FN-017, FN-018, FN-019, FN-020, FN-021, FN-022, FN-023, FN-024, FN-025, FN-026, FN-027]
   - id: POST-CAPTURE-ACTIONS-001
     path: capabilities/POST-CAPTURE-ACTIONS-001
-    version: 0.1.0
+    version: 0.2.0
     status: approved
-    requirements: [PCA-001, PCA-002, PCA-003, PCA-004, PCA-005, PCA-006, PCA-007, PCA-008, PCA-009, PCA-010, PCA-011, PCA-012, PCA-013, PCA-014, PCA-015, PCA-016]
+    requirements: [PCA-001, PCA-002, PCA-003, PCA-004, PCA-005, PCA-006, PCA-007, PCA-008, PCA-009, PCA-010, PCA-011, PCA-012, PCA-013, PCA-014, PCA-015, PCA-016, PCA-017, PCA-018, PCA-019, PCA-020, PCA-021, PCA-022, PCA-023]
   - id: REGION-CAPTURE-001
     path: capabilities/REGION-CAPTURE-001
-    version: 0.1.0
+    version: 0.2.0
     status: approved
-    requirements: [RC-001, RC-002, RC-003, RC-004, RC-005, RC-006, RC-007, RC-008, RC-009, RC-010, RC-011, RC-012, RC-013, RC-014, RC-015, RC-016, RC-017, RC-018, RC-019, RC-020, RC-021]
+    requirements: [RC-001, RC-002, RC-003, RC-004, RC-005, RC-006, RC-007, RC-008, RC-009, RC-010, RC-011, RC-012, RC-013, RC-014, RC-015, RC-016, RC-017, RC-018, RC-019, RC-020, RC-021, RC-022, RC-023, RC-024, RC-025, RC-026, RC-027]
   - id: EDITOR-SESSION-001
     path: capabilities/EDITOR-SESSION-001
-    version: 0.1.0
+    version: 0.2.0
     status: approved
-    requirements: [ES-001, ES-002, ES-003, ES-004, ES-005, ES-006, ES-007, ES-008, ES-009, ES-010, ES-011, ES-012, ES-013, ES-014, ES-015, ES-016, ES-017, ES-018, ES-019, ES-020, ES-021, ES-022]
+    requirements: [ES-001, ES-002, ES-003, ES-004, ES-005, ES-006, ES-007, ES-008, ES-009, ES-010, ES-011, ES-012, ES-013, ES-014, ES-015, ES-016, ES-017, ES-018, ES-019, ES-020, ES-021, ES-022, ES-023, ES-024, ES-025, ES-026, ES-027, ES-028, ES-029, ES-030]
   - id: EDITOR-ANNOTATIONS-001
     path: capabilities/EDITOR-ANNOTATIONS-001
     version: 0.1.0

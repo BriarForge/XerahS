@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "description": "Ordered selection lists for FN-021. Index order is normative; changing an entry or its position is a breaking contract change.",
+  "lists": {
+    "%rn": { "alphabet": "0123456789" },
+    "%ra": { "alphabet": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" },
+    "%rna": { "alphabet": "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz" },
+    "%rx": { "alphabet": "0123456789abcdef" },
+    "%rX": { "alphabet": "0123456789ABCDEF" },
+    "%remoji": { "code_point_range": ["U+1F600", "U+1F63F"], "count": 64 },
+    "%radjective": {
+      "words": [
+        "Able", "Agile", "Amber", "Ancient", "Bold", "Brave", "Bright", "Brisk",
+        "Calm", "Clever", "Cosmic", "Crisp", "Curious", "Daring", "Deep", "Eager",
+        "Early", "Fair", "Fancy", "Fast", "Fearless", "Fierce", "Fluffy", "Gentle",
+        "Giant", "Glad", "Golden", "Grand", "Happy", "Hidden", "Humble", "Icy",
+        "Jolly", "Keen", "Kind", "Lively", "Lucky", "Lunar", "Mellow", "Merry",
+        "Mighty", "Misty", "Noble", "Nimble", "Patient", "Polar", "Proud", "Quick",
+        "Quiet", "Rapid", "Royal", "Rustic", "Silent", "Silver", "Smooth", "Solar",
+        "Steady", "Sunny", "Swift", "Tidy", "Vivid", "Warm", "Wild", "Witty"
+      ]
+    },
+    "%ranimal": {
+      "words": [
+        "Albatross", "Alpaca", "Badger", "Beaver", "Bison", "Bobcat", "Buffalo", "Camel",
+        "Cheetah", "Cobra", "Cougar", "Coyote", "Crane", "Dingo", "Dolphin", "Eagle",
+        "Echidna", "Elk", "Emu", "Falcon", "Ferret", "Finch", "Fox", "Gazelle",
+        "Gecko", "Gibbon", "Heron", "Ibis", "Iguana", "Jackal", "Jaguar", "Kestrel",
+        "Kiwi", "Koala", "Kookaburra", "Lemur", "Leopard", "Lynx", "Magpie", "Marmot",
+        "Meerkat", "Moose", "Narwhal", "Ocelot", "Octopus", "Orca", "Otter", "Owl",
+        "Panda", "Pelican", "Penguin", "Platypus", "Puffin", "Quokka", "Raven", "Salmon",
+        "Seal", "Sparrow", "Tiger", "Toucan", "Walrus", "Wombat", "Yak", "Zebra"
+      ]
+    }
+  }
+}

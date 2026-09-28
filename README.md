@@ -41,7 +41,7 @@ GNU GPL v3. See [LICENSE](LICENSE). Copyright ShareX Team.
 ## Status
 
 Contract drafting phase. The Product Contract (`product-contract/manifest.yaml`,
-version 0.1.0, lifecycle `draft`) lists 15 capabilities with human approval
+version 0.2.0, lifecycle `draft`) lists 15 capabilities with human approval
 records, and every parity-ledger row from the pinned `kova-0.29.0` baseline
 links to a stable requirement ID. See
 [product-contract/backlog/STATUS.md](product-contract/backlog/STATUS.md) for the

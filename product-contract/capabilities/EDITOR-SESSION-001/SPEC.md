@@ -1,8 +1,8 @@
 # EDITOR-SESSION-001 Native editor session
 
-Version: 0.1.0
+Version: 0.2.0
 
-Status: Approved by the human product owner on 2026-08-31; conformance required before activation
+Status: Approved by the human product owner on 2026-08-31 (0.1.0) and 2026-09-28 (0.2.0 implementation-readiness clarifications); conformance required before activation
 
 ## User intent
 
@@ -100,6 +100,57 @@ The complete approved editor surface is expanded by `EDITOR-ANNOTATIONS-001`,
 - **ES-022:** Implementations MUST pass the structural and history vectors in
   `test-vectors.json` and shared golden-image vectors once those fixtures are
   approved.
+- **ES-023:** Colors in `.xann` MUST be `#AARRGGBB` hexadecimal with
+  non-premultiplied 8-bit sRGB channels. Writers MUST emit uppercase digits;
+  readers MUST accept either case. The qualification defaults are stroke
+  `#FFFF0000`, fill `#00000000`, stroke width 4, rotation 0, and opacity 1.
+- **ES-024:** A rectangle's bounds are the normalized `start` and `end` points
+  in canvas coordinates. Rotation is in degrees, clockwise on screen, about the
+  bounds centre. A new rectangle MUST become the only selected object and take
+  the highest z-order.
+- **ES-025:** For rotations that are multiples of 90 degrees, export MUST render
+  each visible annotation in z-order as follows, using IEEE 754 binary64 in the
+  order written and without fused multiply-add. The fill region is the bounds;
+  the stroke region is the bounds grown by half the stroke width minus the
+  bounds shrunk by half the stroke width (empty when either shrunk dimension is
+  not positive). For each pixel square `[i, i+1) x [j, j+1)`, coverage is the
+  exact area of its intersection with a region. With channels scaled to 0..1,
+  fill alpha `af = coverage_fill * Af` and stroke alpha
+  `as = coverage_stroke * As`; the layer alpha is `as + af * (1 - as)` and the
+  layer colour is `(Cs * as + Cf * af * (1 - as)) / layer_alpha` (0 when the
+  layer alpha is 0). The layer alpha is then multiplied by opacity once, giving
+  `A`, and composited source-over onto the current result (colour `Cd`, alpha
+  `Ad`) in non-premultiplied sRGB encoded values as `Ao = A + Ad * (1 - A)` and
+  `Co = (C * A + Cd * Ad * (1 - A)) / Ao`, or 0 when `Ao` is 0. Each channel of the result MUST be quantized after every
+  annotation as `floor(value * 255 + 0.5)`. Other rotations use the same
+  model with exact polygon coverage and MAY differ from the reference by at
+  most 1 in any 8-bit channel.
+- **ES-026:** Selection changes alone are not document mutations and MUST NOT
+  create history operations. Style changes apply to every selected object as
+  one operation and also update the tool default; with nothing selected they
+  update only the tool default. `undo_count` and `redo_count` are the numbers of
+  operations currently available to undo and redo.
+- **ES-027:** The session is dirty exactly when its history position differs
+  from the last successful persistence checkpoint. Undoing or redoing back to
+  the checkpoint MUST make it clean. When a new mutation truncates the redo
+  branch that contained the checkpoint, the session MUST stay dirty until the
+  next successful save.
+- **ES-028:** Readers MUST enforce these limits before allocating pixels: each
+  canvas or image dimension from 1 to 100000 and at most 268435456 pixels, and
+  at most 1073741824 bytes of decompressed `.xann` JSON. Every coordinate,
+  width, rotation, and opacity MUST be finite.
+- **ES-029:** Load, parse, and save failures MUST use these diagnostics:
+  `source-unsupported`, `source-corrupt`, `source-empty`, `source-too-large`,
+  `document-version-unsupported`, `document-invalid`, `document-too-large`,
+  `raster-save-failed`, and `sidecar-save-failed`. When several document
+  failures apply, the first in this order MUST be reported:
+  `document-version-unsupported`, `document-too-large`, `document-invalid`.
+- **ES-030:** The default sidecar path MUST be the raster file's full name with
+  `.xann` appended (for example `shot.png.xann`). When that file is absent,
+  readers MUST also look for the raster's name with its last extension
+  replaced by `.xann` so that baseline sidecars remain discoverable; the
+  baseline convention MUST be confirmed by runtime observation before
+  activation.
 
 ## Native adaptation
 

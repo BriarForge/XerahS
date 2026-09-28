@@ -12,6 +12,11 @@ identity amendment to `CORE-PLATFORM-001` version `0.2.0` within contract versio
 `APPROVAL-2026-08-31-NUGET-FRESHNESS.json` records standing agent authority and
 the latest-stable maintenance requirements in `CORE-PLATFORM-001` version
 `0.3.0`.
+`APPROVAL-2026-09-28-IMPLEMENTATION-READINESS.json` approves contract version
+`0.2.0`: the implementation-readiness clarifications to the four qualification
+capabilities, the Linux edition model in `CORE-PLATFORM-001`, and the unchanged
+carry-forward of every other package. Records for earlier contract versions
+are retained history; only records for the manifest's current version count.
 All records explicitly withhold activation, census closure, and release
 authorization.
 

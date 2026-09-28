@@ -1,45 +1,236 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "capability": "EDITOR-SESSION-001",
+  "comparison": "subset",
+  "notes": "Operations: history applies ops to a new session over a source of source_size (create-rectangle selects the new object; select takes ids by creation index or [] for none; move-selection; set-stroke-width, set-stroke-color, set-fill-color, set-opacity; delete-selection; undo; redo; mark-saved records a successful persistence checkpoint). Reported rectangle fields describe the first annotation; tool_* fields describe tool defaults. render composites annotations over a solid source and reports pixels row by row as #AARRGGBB. parse-document validates a decoded .xann payload. round-trip parses and rewrites a payload. sidecar-path resolves the sidecar for a raster path given existing files. save-sidecar applies ES-014.",
+  "requirement_ids": ["ES-003", "ES-005", "ES-006", "ES-009", "ES-010", "ES-014", "ES-015", "ES-017", "ES-022", "ES-023", "ES-024", "ES-025", "ES-026", "ES-027", "ES-028", "ES-029", "ES-030"],
   "vectors": [
     {
       "id": "reverse-drag-rectangle",
-      "source_size": [800, 600],
-      "operations": [{ "op": "create-rectangle", "start": [500, 400], "end": [100, 150] }],
-      "expected": { "annotation_count": 1, "rectangle_bounds": [100, 150, 500, 400], "undo_count": 1, "redo_count": 0, "dirty": true }
+      "operation": "history",
+      "requirements": ["ES-003", "ES-005", "ES-023", "ES-024"],
+      "input": { "source_size": [800, 600], "operations": [{ "op": "create-rectangle", "start": [500, 400], "end": [100, 150] }] },
+      "expected": { "annotation_count": 1, "selected_count": 1, "rectangle_bounds": [100, 150, 500, 400], "stroke_color": "#FFFF0000", "fill_color": "#00000000", "stroke_width": 4, "rotation_degrees": 0, "opacity": 1, "undo_count": 1, "redo_count": 0, "dirty": true }
+    },
+    {
+      "id": "zero-area-rectangle-rejected",
+      "operation": "history",
+      "requirements": ["ES-003", "ES-005"],
+      "input": { "source_size": [800, 600], "operations": [{ "op": "create-rectangle", "start": [200, 200], "end": [200, 350] }] },
+      "expected": { "annotation_count": 0, "undo_count": 0, "redo_count": 0, "dirty": false }
     },
     {
       "id": "undo-redo-move",
-      "source_size": [800, 600],
-      "operations": [
-        { "op": "create-rectangle", "start": [100, 150], "end": [500, 400] },
-        { "op": "move-selection", "delta": [20, -10] },
-        { "op": "undo" },
-        { "op": "redo" }
-      ],
+      "operation": "history",
+      "requirements": ["ES-005", "ES-006"],
+      "input": {
+        "source_size": [800, 600],
+        "operations": [
+          { "op": "create-rectangle", "start": [100, 150], "end": [500, 400] },
+          { "op": "move-selection", "delta": [20, -10] },
+          { "op": "undo" },
+          { "op": "redo" }
+        ]
+      },
       "expected": { "rectangle_bounds": [120, 140, 520, 390], "undo_count": 2, "redo_count": 0, "dirty": true }
     },
     {
       "id": "branch-clears-redo",
-      "source_size": [800, 600],
-      "operations": [
-        { "op": "create-rectangle", "start": [100, 150], "end": [500, 400] },
-        { "op": "move-selection", "delta": [20, -10] },
-        { "op": "undo" },
-        { "op": "set-stroke-width", "value": 8 }
-      ],
-      "expected": { "rectangle_bounds": [100, 150, 500, 400], "stroke_width": 8, "redo_count": 0, "dirty": true }
+      "operation": "history",
+      "requirements": ["ES-006", "ES-026"],
+      "input": {
+        "source_size": [800, 600],
+        "operations": [
+          { "op": "create-rectangle", "start": [100, 150], "end": [500, 400] },
+          { "op": "move-selection", "delta": [20, -10] },
+          { "op": "undo" },
+          { "op": "set-stroke-width", "value": 8 }
+        ]
+      },
+      "expected": { "rectangle_bounds": [100, 150, 500, 400], "stroke_width": 8, "tool_stroke_width": 8, "undo_count": 2, "redo_count": 0, "dirty": true }
+    },
+    {
+      "id": "selection-is-not-history",
+      "operation": "history",
+      "requirements": ["ES-026"],
+      "input": {
+        "source_size": [800, 600],
+        "operations": [
+          { "op": "create-rectangle", "start": [100, 150], "end": [500, 400] },
+          { "op": "select", "ids": [] },
+          { "op": "select", "ids": [0] },
+          { "op": "select", "ids": [] }
+        ]
+      },
+      "expected": { "selected_count": 0, "undo_count": 1, "redo_count": 0 }
+    },
+    {
+      "id": "style-without-selection-changes-tool-only",
+      "operation": "history",
+      "requirements": ["ES-003", "ES-026"],
+      "input": {
+        "source_size": [800, 600],
+        "operations": [
+          { "op": "create-rectangle", "start": [100, 150], "end": [500, 400] },
+          { "op": "select", "ids": [] },
+          { "op": "set-stroke-width", "value": 8 },
+          { "op": "create-rectangle", "start": [10, 10], "end": [50, 50] }
+        ]
+      },
+      "expected": { "annotation_count": 2, "stroke_width": 4, "tool_stroke_width": 8, "second_stroke_width": 8, "undo_count": 2 }
+    },
+    {
+      "id": "undo-to-checkpoint-is-clean",
+      "operation": "history",
+      "requirements": ["ES-027"],
+      "input": {
+        "source_size": [800, 600],
+        "operations": [
+          { "op": "create-rectangle", "start": [100, 150], "end": [500, 400] },
+          { "op": "mark-saved" },
+          { "op": "move-selection", "delta": [5, 5] },
+          { "op": "undo" }
+        ]
+      },
+      "expected": { "rectangle_bounds": [100, 150, 500, 400], "undo_count": 1, "redo_count": 1, "dirty": false }
+    },
+    {
+      "id": "truncated-checkpoint-stays-dirty",
+      "operation": "history",
+      "requirements": ["ES-006", "ES-027"],
+      "input": {
+        "source_size": [800, 600],
+        "operations": [
+          { "op": "create-rectangle", "start": [100, 150], "end": [500, 400] },
+          { "op": "move-selection", "delta": [5, 5] },
+          { "op": "mark-saved" },
+          { "op": "undo" },
+          { "op": "set-stroke-width", "value": 6 },
+          { "op": "undo" }
+        ]
+      },
+      "expected": { "rectangle_bounds": [100, 150, 500, 400], "stroke_width": 4, "undo_count": 1, "redo_count": 1, "dirty": true }
+    },
+    {
+      "id": "delete-and-undo-restores-selection",
+      "operation": "history",
+      "requirements": ["ES-006", "ES-007"],
+      "input": {
+        "source_size": [800, 600],
+        "operations": [
+          { "op": "create-rectangle", "start": [100, 150], "end": [500, 400] },
+          { "op": "delete-selection" },
+          { "op": "undo" }
+        ]
+      },
+      "expected": { "annotation_count": 1, "selected_count": 1, "rectangle_bounds": [100, 150, 500, 400], "undo_count": 1, "redo_count": 1 }
+    },
+    {
+      "id": "render-stroke-coverage",
+      "operation": "render",
+      "requirements": ["ES-009", "ES-010", "ES-025"],
+      "input": {
+        "source_size": [4, 4],
+        "source_fill": "#FFFFFFFF",
+        "annotations": [{ "type": "rectangle", "start": [1, 1], "end": [3, 3], "strokeColor": "#FFFF0000", "fillColor": "#00000000", "strokeWidth": 1, "rotationDegrees": 0, "opacity": 1 }]
+      },
+      "expected": {
+        "pixels": [
+          ["#FFFFBFBF", "#FFFF8080", "#FFFF8080", "#FFFFBFBF"],
+          ["#FFFF8080", "#FFFF4040", "#FFFF4040", "#FFFF8080"],
+          ["#FFFF8080", "#FFFF4040", "#FFFF4040", "#FFFF8080"],
+          ["#FFFFBFBF", "#FFFF8080", "#FFFF8080", "#FFFFBFBF"]
+        ]
+      }
+    },
+    {
+      "id": "render-opacity-applied-once",
+      "operation": "render",
+      "requirements": ["ES-010", "ES-025"],
+      "input": {
+        "source_size": [2, 2],
+        "source_fill": "#FFFFFFFF",
+        "annotations": [{ "type": "rectangle", "start": [0, 0], "end": [2, 2], "strokeColor": "#FFFF0000", "fillColor": "#FF0000FF", "strokeWidth": 1, "rotationDegrees": 0, "opacity": 0.5 }]
+      },
+      "expected": {
+        "pixels": [
+          ["#FFDF809F", "#FFDF809F"],
+          ["#FFDF809F", "#FFDF809F"]
+        ]
+      }
+    },
+    {
+      "id": "render-fill-with-opacity",
+      "operation": "render",
+      "requirements": ["ES-025"],
+      "input": {
+        "source_size": [2, 1],
+        "source_fill": "#FFFFFFFF",
+        "annotations": [{ "type": "rectangle", "start": [0, 0], "end": [2, 1], "strokeColor": "#00000000", "fillColor": "#FF0000FF", "strokeWidth": 1, "rotationDegrees": 0, "opacity": 0.5 }]
+      },
+      "expected": { "pixels": [["#FF8080FF", "#FF8080FF"]] }
     },
     {
       "id": "empty-document-removes-sidecar",
-      "existing_sidecar": true,
-      "annotations": [],
       "operation": "save-sidecar",
+      "requirements": ["ES-014"],
+      "input": { "existing_sidecar": true, "annotations": [], "sidecar_intent": true },
       "expected": { "sidecar_exists": false, "sidecar_path": null, "raster_untouched": true }
     },
     {
       "id": "newer-version-read-only-failure",
-      "document": { "version": 2 },
+      "operation": "parse-document",
+      "requirements": ["ES-015", "ES-029"],
+      "input": { "document": { "version": 2 } },
       "expected": { "error": "document-version-unsupported", "document_rewritten": false }
+    },
+    {
+      "id": "duplicate-annotation-ids-rejected",
+      "operation": "parse-document",
+      "requirements": ["ES-017", "ES-029"],
+      "input": {
+        "document": {
+          "version": 1, "imagePath": "", "imageHash": "", "canvasWidth": 1, "canvasHeight": 1, "createdAt": "2026-08-30T00:00:00Z", "modifiedAt": "2026-08-30T00:00:00Z", "sourceImagePngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP4DwQACfsD/Wj6HMwAAAAASUVORK5CYII=", "embeddedImages": {},
+          "annotations": [
+            { "id": "6f1c1a52-0a1e-4c4e-9b0a-3d1f5f2a9c01", "type": "rectangle", "start": { "x": 1, "y": 1 }, "end": { "x": 5, "y": 5 }, "strokeColor": "#FFFF0000", "fillColor": "#00000000", "strokeWidth": 4, "rotationDegrees": 0 },
+            { "id": "6f1c1a52-0a1e-4c4e-9b0a-3d1f5f2a9c01", "type": "rectangle", "start": { "x": 2, "y": 2 }, "end": { "x": 6, "y": 6 }, "strokeColor": "#FFFF0000", "fillColor": "#00000000", "strokeWidth": 4, "rotationDegrees": 0 }
+          ]
+        }
+      },
+      "expected": { "error": "document-invalid" }
+    },
+    {
+      "id": "oversized-canvas-rejected-before-allocation",
+      "operation": "parse-document",
+      "requirements": ["ES-017", "ES-028", "ES-029"],
+      "input": { "document": { "version": 1, "imagePath": "", "imageHash": "", "canvasWidth": 20000, "canvasHeight": 20000, "createdAt": "2026-08-30T00:00:00Z", "modifiedAt": "2026-08-30T00:00:00Z", "sourceImagePngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP4DwQACfsD/Wj6HMwAAAAASUVORK5CYII=", "embeddedImages": {}, "annotations": [] } },
+      "expected": { "error": "document-too-large", "pixels_allocated": false }
+    },
+    {
+      "id": "unknown-fields-and-types-round-trip",
+      "operation": "round-trip",
+      "requirements": ["ES-015"],
+      "input": {
+        "document": {
+          "version": 1, "imagePath": "", "imageHash": "", "canvasWidth": 1, "canvasHeight": 1, "createdAt": "2026-08-30T00:00:00Z", "modifiedAt": "2026-08-30T00:00:00Z", "sourceImagePngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP4DwQACfsD/Wj6HMwAAAAASUVORK5CYII=", "embeddedImages": {}, "futureField": { "a": 1 },
+          "annotations": [ { "id": "0b3f7d0e-6c1b-4f5a-8d2e-9a4b1c7e5f10", "type": "hexagon", "sides": 6, "zIndex": 0 } ]
+        }
+      },
+      "expected": { "preserved_paths": ["futureField", "annotations[0].type", "annotations[0].sides"], "unsupported_placeholders": 1 }
+    },
+    {
+      "id": "sidecar-default-path",
+      "operation": "sidecar-path",
+      "requirements": ["ES-030"],
+      "input": { "raster_path": "shots/shot.png", "existing_files": [] },
+      "expected": { "write_path": "shots/shot.png.xann", "read_path": null }
+    },
+    {
+      "id": "sidecar-baseline-fallback",
+      "operation": "sidecar-path",
+      "requirements": ["ES-030"],
+      "input": { "raster_path": "shots/shot.png", "existing_files": ["shots/shot.xann"] },
+      "expected": { "write_path": "shots/shot.png.xann", "read_path": "shots/shot.xann" }
     }
   ]
 }

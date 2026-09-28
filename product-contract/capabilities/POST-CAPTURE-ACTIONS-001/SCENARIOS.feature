@@ -32,3 +32,17 @@ Feature: Ordered and recoverable post-capture actions
     When failed actions are retried
     Then upload is not repeated
     And reveal is attempted in a linked retry
+
+  Scenario: Declining the before-upload window does not cancel the pipeline
+    Given save, the before-upload window, upload, and reveal are selected
+    When the user declines the before-upload window
+    Then upload is skipped with diagnostic "upload-declined"
+    And reveal still runs
+    And the pipeline is completed
+
+  Scenario: Delete never removes the only copy after a failed upload
+    Given save, upload, and delete are selected
+    And upload fails
+    When post-capture actions execute
+    Then delete is skipped with diagnostic "delete-guard"
+    And the saved file remains on disk

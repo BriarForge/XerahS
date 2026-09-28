@@ -26,3 +26,23 @@ Feature: Deterministic filename generation
     When pattern "%i_%rf{secret.txt}" is expanded
     Then expansion fails at "%rf{secret.txt}"
     And the next counter remains 7
+
+  Scenario: The longest known token wins
+    Given the counter is 9
+    When pattern "%iAx%ixy" is expanded as a filename
+    Then the result is "Axay"
+
+  Scenario: Random output is identical on every platform for identical bytes
+    Given the random bytes "003df83ef7"
+    When pattern "%ra{4}" is expanded as a filename
+    Then the byte 0xf8 is rejected by rejection sampling
+    And the result is "0z0z" on Windows, macOS, and Linux
+
+  Scenario: Metadata cannot create directories in path mode
+    Given the window title "a/b"
+    When pattern "Screenshots\%y/%mo/%t" is expanded as a path with extension "png"
+    Then the result is "Screenshots/2026/08/a_b.png"
+
+  Scenario: Path traversal is rejected
+    When pattern "shots/../x" is expanded as a path
+    Then expansion fails with "path-traversal" at offset 6

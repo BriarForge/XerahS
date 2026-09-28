@@ -1,38 +1,277 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "capability": "REGION-CAPTURE-001",
   "coordinate_convention": "half-open desktop physical pixels",
+  "comparison": "subset",
+  "notes": "Operations: map-selection maps two pointer points; keyboard-adjust applies RC-024 steps; composite-coverage reports output size and uncovered pixels; last-region validates a stored last region against the current topology; state-events drives the RC-025 state machine from initial_state (default authorizing, entered when the session starts) with settings quick_confirm and snapping (defaults true and false). Pointer events in state-events use a single 1920x1080 display at scale 1.0 unless topology is given. published_results counts caller completions, which happen exactly once on any terminal transition.",
+  "requirement_ids": ["RC-001", "RC-002", "RC-003", "RC-004", "RC-006", "RC-007", "RC-008", "RC-009", "RC-010", "RC-011", "RC-012", "RC-016", "RC-017", "RC-018", "RC-021", "RC-022", "RC-023", "RC-024", "RC-025", "RC-026", "RC-027"],
   "vectors": [
     {
       "id": "reverse-drag",
-      "topology": [{ "id": "display-a", "physical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "logical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "scale": 1.0 }],
-      "input": { "start_physical": [900, 700], "end_physical": [100, 200] },
+      "operation": "map-selection",
+      "requirements": ["RC-006", "RC-022"],
+      "input": {
+        "topology": [{ "id": "display-a", "physical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "logical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "scale": 1.0 }],
+        "start": { "display": "display-a", "logical": [900, 700] },
+        "end": { "display": "display-a", "logical": [100, 200] }
+      },
       "expected": { "rectangle": { "left": 100, "top": 200, "right": 900, "bottom": 700 }, "output_size": [800, 500] }
     },
     {
       "id": "negative-origin-monitor",
-      "topology": [{ "id": "display-left", "physical": { "left": -1280, "top": 0, "right": 0, "bottom": 1024 }, "logical": { "left": -1280, "top": 0, "right": 0, "bottom": 1024 }, "scale": 1.0 }],
-      "input": { "start_physical": [-1200, 100], "end_physical": [-200, 900] },
+      "operation": "map-selection",
+      "requirements": ["RC-004", "RC-022"],
+      "input": {
+        "topology": [{ "id": "display-left", "physical": { "left": -1280, "top": 0, "right": 0, "bottom": 1024 }, "logical": { "left": -1280, "top": 0, "right": 0, "bottom": 1024 }, "scale": 1.0 }],
+        "start": { "display": "display-left", "logical": [-1200, 100] },
+        "end": { "display": "display-left", "logical": [-200, 900] }
+      },
       "expected": { "rectangle": { "left": -1200, "top": 100, "right": -200, "bottom": 900 }, "output_size": [1000, 800] }
     },
     {
       "id": "mixed-scale-cross-monitor",
-      "topology": [
-        { "id": "display-a", "physical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "logical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "scale": 1.0 },
-        { "id": "display-b", "physical": { "left": 1920, "top": 0, "right": 4480, "bottom": 1440 }, "logical": { "left": 1920, "top": 0, "right": 3626.6666667, "bottom": 960 }, "scale": 1.5 }
-      ],
-      "input": { "start": { "display": "display-a", "logical": [1800, 100] }, "end": { "display": "display-b", "logical": [2120, 500] } },
+      "operation": "map-selection",
+      "requirements": ["RC-004", "RC-012", "RC-022"],
+      "input": {
+        "topology": [
+          { "id": "display-a", "physical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "logical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "scale": 1.0 },
+          { "id": "display-b", "physical": { "left": 1920, "top": 0, "right": 4480, "bottom": 1440 }, "logical": { "left": 1920, "top": 0, "right": 3626.6666667, "bottom": 960 }, "scale": 1.5 }
+        ],
+        "start": { "display": "display-a", "logical": [1800, 100] },
+        "end": { "display": "display-b", "logical": [2120, 500] }
+      },
       "expected": { "rectangle": { "left": 1800, "top": 100, "right": 2220, "bottom": 750 }, "output_size": [420, 650] }
     },
     {
+      "id": "fractional-scale-floors",
+      "operation": "map-selection",
+      "requirements": ["RC-004", "RC-022"],
+      "input": {
+        "topology": [
+          { "id": "display-a", "physical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "logical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "scale": 1.0 },
+          { "id": "display-b", "physical": { "left": 1920, "top": 0, "right": 4320, "bottom": 1350 }, "logical": { "left": 1920, "top": 0, "right": 3840, "bottom": 1080 }, "scale": 1.25 }
+        ],
+        "start": { "display": "display-b", "logical": [2000, 40] },
+        "end": { "display": "display-b", "logical": [2121.3, 100.5] }
+      },
+      "expected": { "rectangle": { "left": 2020, "top": 50, "right": 2171, "bottom": 125 }, "output_size": [151, 75] }
+    },
+    {
+      "id": "fractional-logical-edge-reaches-physical-edge",
+      "operation": "map-selection",
+      "requirements": ["RC-022", "RC-023"],
+      "input": {
+        "topology": [
+          { "id": "display-b", "physical": { "left": 1920, "top": 0, "right": 4480, "bottom": 1440 }, "logical": { "left": 1920, "top": 0, "right": 3626.6666667, "bottom": 960 }, "scale": 1.5 }
+        ],
+        "start": { "display": "display-b", "logical": [3000, 900] },
+        "end": { "display": "display-b", "logical": [3626.6666667, 960] }
+      },
+      "expected": { "rectangle": { "left": 3540, "top": 1350, "right": 4480, "bottom": 1440 }, "output_size": [940, 90] }
+    },
+    {
+      "id": "negative-origin-scaled",
+      "operation": "map-selection",
+      "requirements": ["RC-004", "RC-022"],
+      "input": {
+        "topology": [
+          { "id": "display-left", "physical": { "left": -2560, "top": 0, "right": 0, "bottom": 1440 }, "logical": { "left": -1706.6666667, "top": 0, "right": 0, "bottom": 960 }, "scale": 1.5 }
+        ],
+        "start": { "display": "display-left", "logical": [-1000, 100] },
+        "end": { "display": "display-left", "logical": [-200, 700] }
+      },
+      "expected": { "rectangle": { "left": -1500, "top": 150, "right": -300, "bottom": 1050 }, "output_size": [1200, 900] }
+    },
+    {
+      "id": "point-beyond-display-is-clamped",
+      "operation": "map-selection",
+      "requirements": ["RC-023"],
+      "input": {
+        "topology": [{ "id": "display-a", "physical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "logical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "scale": 1.0 }],
+        "start": { "display": "display-a", "logical": [100, 100] },
+        "end": { "display": "display-a", "logical": [2000, -50] }
+      },
+      "expected": { "rectangle": { "left": 100, "top": 0, "right": 1920, "bottom": 100 }, "output_size": [1820, 100] }
+    },
+    {
+      "id": "keyboard-move-stops-at-edge",
+      "operation": "keyboard-adjust",
+      "requirements": ["RC-010", "RC-024"],
+      "input": {
+        "topology": [{ "id": "display-a", "physical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "logical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "scale": 1.0 }],
+        "rectangle": { "left": 1850, "top": 100, "right": 1915, "bottom": 200 },
+        "steps": [{ "action": "move", "dx": 1, "dy": 0, "precision": true }]
+      },
+      "expected": { "rectangle": { "left": 1855, "top": 100, "right": 1920, "bottom": 200 } }
+    },
+    {
+      "id": "keyboard-move-single-step",
+      "operation": "keyboard-adjust",
+      "requirements": ["RC-024"],
+      "input": {
+        "topology": [{ "id": "display-a", "physical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "logical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "scale": 1.0 }],
+        "rectangle": { "left": 100, "top": 100, "right": 200, "bottom": 200 },
+        "steps": [{ "action": "move", "dx": 0, "dy": -1, "precision": false }, { "action": "resize", "edge": "right", "delta": 1, "precision": true }]
+      },
+      "expected": { "rectangle": { "left": 100, "top": 99, "right": 210, "bottom": 199 } }
+    },
+    {
+      "id": "keyboard-resize-keeps-one-pixel",
+      "operation": "keyboard-adjust",
+      "requirements": ["RC-024"],
+      "input": {
+        "topology": [{ "id": "display-a", "physical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "logical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "scale": 1.0 }],
+        "rectangle": { "left": 100, "top": 100, "right": 101, "bottom": 200 },
+        "steps": [{ "action": "resize", "edge": "right", "delta": -1, "precision": false }]
+      },
+      "expected": { "rectangle": { "left": 100, "top": 100, "right": 101, "bottom": 200 } }
+    },
+    {
+      "id": "uncovered-area-is-transparent",
+      "operation": "composite-coverage",
+      "requirements": ["RC-012", "RC-023"],
+      "input": {
+        "topology": [
+          { "id": "display-a", "physical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "logical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "scale": 1.0 },
+          { "id": "display-b", "physical": { "left": 1920, "top": 0, "right": 3840, "bottom": 1440 }, "logical": { "left": 1920, "top": 0, "right": 3840, "bottom": 1440 }, "scale": 1.0 }
+        ],
+        "rectangle": { "left": 1800, "top": 1000, "right": 2000, "bottom": 1200 }
+      },
+      "expected": { "output_size": [200, 200], "transparent_pixels": 14400, "source_displays": ["display-a", "display-b"] }
+    },
+    {
       "id": "zero-area-not-confirmable",
-      "topology": [{ "id": "display-a", "physical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "logical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 }, "scale": 1.0 }],
-      "input": { "start_physical": [400, 400], "end_physical": [400, 400], "confirm": true },
-      "expected": { "state": "idle", "result": null }
+      "operation": "state-events",
+      "requirements": ["RC-006", "RC-009", "RC-026"],
+      "input": {
+        "initial_state": "idle",
+        "settings": { "quick_confirm": true, "snapping": false },
+        "events": [
+          { "event": "pointer-down", "physical": [400, 400] },
+          { "event": "pointer-up", "physical": [400, 400] },
+          { "event": "key-enter" }
+        ]
+      },
+      "expected": { "state": "idle", "result": null, "published_results": 0 }
     },
     {
       "id": "cancel-selected",
-      "input": { "state": "selected", "event": "escape" },
-      "expected": { "state": "cancelled", "result": null, "last_region_updated": false }
+      "operation": "state-events",
+      "requirements": ["RC-008"],
+      "input": { "initial_state": "selected", "events": [{ "event": "key-escape" }] },
+      "expected": { "state": "cancelled", "result": null, "last_region_updated": false, "published_results": 1 }
+    },
+    {
+      "id": "quick-confirm-completes",
+      "operation": "state-events",
+      "requirements": ["RC-007", "RC-017", "RC-025"],
+      "input": {
+        "settings": { "quick_confirm": true, "snapping": false },
+        "events": [
+          { "event": "permission", "value": "authorized" },
+          { "event": "ready" },
+          { "event": "pointer-down", "physical": [300, 200] },
+          { "event": "pointer-move", "physical": [250, 150] },
+          { "event": "pointer-up", "physical": [100, 100] },
+          { "event": "capture-succeeded" }
+        ]
+      },
+      "expected": { "state": "completed", "rectangle": { "left": 100, "top": 100, "right": 300, "bottom": 200 }, "published_results": 1, "last_region_updated": true }
+    },
+    {
+      "id": "explicit-confirm-with-enter",
+      "operation": "state-events",
+      "requirements": ["RC-007", "RC-009", "RC-025"],
+      "input": {
+        "initial_state": "idle",
+        "settings": { "quick_confirm": false, "snapping": false },
+        "events": [
+          { "event": "key-enter" },
+          { "event": "pointer-down", "physical": [10, 10] },
+          { "event": "pointer-up", "physical": [60, 40] },
+          { "event": "key-enter" },
+          { "event": "capture-succeeded" }
+        ]
+      },
+      "expected": { "state": "completed", "rectangle": { "left": 10, "top": 10, "right": 60, "bottom": 40 }, "published_results": 1, "last_region_updated": true }
+    },
+    {
+      "id": "terminal-events-ignored",
+      "operation": "state-events",
+      "requirements": ["RC-016", "RC-025"],
+      "input": {
+        "initial_state": "idle",
+        "settings": { "quick_confirm": true, "snapping": false },
+        "events": [
+          { "event": "pointer-down", "physical": [10, 10] },
+          { "event": "pointer-up", "physical": [60, 40] },
+          { "event": "capture-succeeded" },
+          { "event": "key-escape" },
+          { "event": "capture-succeeded" },
+          { "event": "topology-changed" }
+        ]
+      },
+      "expected": { "state": "completed", "published_results": 1, "last_region_updated": true }
+    },
+    {
+      "id": "permission-denied-shows-no-overlay",
+      "operation": "state-events",
+      "requirements": ["RC-001", "RC-002", "RC-025"],
+      "input": { "events": [{ "event": "permission", "value": "denied" }, { "event": "ready" }] },
+      "expected": { "state": "failed", "diagnostic": "capture-permission-denied", "overlay_shown": false, "published_results": 1, "last_region_updated": false }
+    },
+    {
+      "id": "topology-change-cancels",
+      "operation": "state-events",
+      "requirements": ["RC-003", "RC-025"],
+      "input": {
+        "initial_state": "idle",
+        "events": [
+          { "event": "pointer-down", "physical": [10, 10] },
+          { "event": "topology-changed" }
+        ]
+      },
+      "expected": { "state": "cancelled", "diagnostic": "display-topology-changed", "result": null, "last_region_updated": false }
+    },
+    {
+      "id": "capture-failure-keeps-last-region",
+      "operation": "state-events",
+      "requirements": ["RC-017", "RC-018", "RC-025"],
+      "input": {
+        "initial_state": "idle",
+        "settings": { "quick_confirm": true, "snapping": false },
+        "events": [
+          { "event": "pointer-down", "physical": [10, 10] },
+          { "event": "pointer-up", "physical": [60, 40] },
+          { "event": "capture-failed" }
+        ]
+      },
+      "expected": { "state": "failed", "diagnostic": "capture-source-failed", "result": null, "last_region_updated": false, "published_results": 1 }
+    },
+    {
+      "id": "click-selects-snapped-window",
+      "operation": "state-events",
+      "requirements": ["RC-011", "RC-026"],
+      "input": {
+        "initial_state": "idle",
+        "settings": { "quick_confirm": false, "snapping": true },
+        "snap_targets": [{ "physical": { "left": 200, "top": 150, "right": 800, "bottom": 600 } }],
+        "events": [
+          { "event": "pointer-down", "physical": [400, 300] },
+          { "event": "pointer-up", "physical": [400, 300] }
+        ]
+      },
+      "expected": { "state": "selected", "rectangle": { "left": 200, "top": 150, "right": 800, "bottom": 600 }, "published_results": 0 }
+    },
+    {
+      "id": "last-region-invalid-after-topology-change",
+      "operation": "last-region",
+      "requirements": ["RC-017", "RC-027"],
+      "input": {
+        "stored": { "version": 1, "rectangle": { "left": 100, "top": 100, "right": 300, "bottom": 200 }, "displays": [{ "id": "display-a", "physical": { "left": 0, "top": 0, "right": 1920, "bottom": 1080 } }] },
+        "topology": [{ "id": "display-a", "physical": { "left": 0, "top": 0, "right": 2560, "bottom": 1440 }, "logical": { "left": 0, "top": 0, "right": 2560, "bottom": 1440 }, "scale": 1.0 }]
+      },
+      "expected": { "error": "last-region-invalid", "captured": false }
     }
   ]
 }

@@ -33,3 +33,13 @@ Feature: Re-editable native editor session
     Then annotations are retained
     And the user chooses between the current raster and embedded source
     And neither source is selected silently
+
+  Scenario: Export pixels are identical on every platform
+    Given the document from vector "render-stroke-coverage"
+    When it is exported as PNG on Windows, macOS, and Linux
+    Then every decoded pixel equals the vector's #AARRGGBB values
+
+  Scenario: Undoing back to the saved state makes the session clean
+    Given a rectangle was saved and then moved
+    When the user undoes the move
+    Then the session is not dirty

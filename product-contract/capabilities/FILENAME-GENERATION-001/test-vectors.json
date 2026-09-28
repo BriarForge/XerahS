@@ -1,62 +1,316 @@
 {
-  "schema_version": 1,
-  "requirement_ids": ["FN-001", "FN-002", "FN-003", "FN-004", "FN-005", "FN-007", "FN-010", "FN-011", "FN-013", "FN-017"],
+  "schema_version": 2,
+  "capability": "FILENAME-GENERATION-001",
+  "operation": "expand",
+  "comparison": "exact",
+  "requirement_ids": ["FN-001", "FN-002", "FN-003", "FN-004", "FN-005", "FN-006", "FN-007", "FN-008", "FN-009", "FN-010", "FN-011", "FN-012", "FN-013", "FN-014", "FN-015", "FN-016", "FN-017", "FN-018", "FN-019", "FN-020", "FN-021", "FN-022", "FN-023", "FN-024", "FN-025", "FN-026", "FN-027"],
   "vectors": [
     {
       "id": "date-counter",
-      "mode": "filename",
-      "pattern": "%y-%mo-%d_%h-%mi-%s_%widthx%height_%i{3}",
-      "context": { "local_time": "2026-08-30T17:04:05.123+08:00", "unix_time": 1788080645, "locale": "en-AU", "counter": 7, "width": 1920, "height": 1080 },
+      "requirements": ["FN-002", "FN-004", "FN-007", "FN-018"],
+      "input": { "mode": "filename", "pattern": "%y-%mo-%d_%h-%mi-%s_%widthx%height_%i{3}", "context": { "local_time": "2026-08-30T17:04:05.123+08:00", "unix_time": 1788080645, "locale": "en-AU", "counter": 7, "width": 1920, "height": 1080 } },
       "expected": { "value": "2026-08-30_17-04-05_1920x1080_008", "next_counter": 8 }
     },
     {
       "id": "twelve-hour",
-      "mode": "filename",
-      "pattern": "%h-%mi%pm",
-      "context": { "local_time": "2026-08-30T17:04:05.123+08:00", "unix_time": 1788080645, "locale": "en-AU", "counter": 0 },
+      "requirements": ["FN-003", "FN-020"],
+      "input": { "mode": "filename", "pattern": "%h-%mi%pm", "context": { "local_time": "2026-08-30T17:04:05.123+08:00", "unix_time": 1788080645, "locale": "en-AU", "counter": 0 } },
       "expected": { "value": "05-04PM", "next_counter": 0 }
     },
     {
+      "id": "twelve-hour-midnight-and-milliseconds",
+      "requirements": ["FN-002", "FN-003", "FN-020"],
+      "input": { "mode": "filename", "pattern": "%h%mi%s%ms%pm", "context": { "local_time": "2026-08-30T00:30:09.007+08:00", "unix_time": 1788021009, "locale": "en-AU", "counter": 0 } },
+      "expected": { "value": "123009007AM", "next_counter": 0 }
+    },
+    {
+      "id": "twelve-hour-noon",
+      "requirements": ["FN-003", "FN-020"],
+      "input": { "mode": "filename", "pattern": "%h%pm", "context": { "local_time": "2026-08-30T12:05:00+08:00", "unix_time": 1788062700, "locale": "en-AU", "counter": 0 } },
+      "expected": { "value": "12PM", "next_counter": 0 }
+    },
+    {
+      "id": "calendar-names-and-week",
+      "requirements": ["FN-002", "FN-020"],
+      "input": { "mode": "filename", "pattern": "%w_%w2_%mon_%mon2_%wy_%yy", "context": { "local_time": "2026-08-30T17:04:05.123+08:00", "unix_time": 1788080645, "locale": "en-AU", "counter": 0 } },
+      "expected": { "value": "Sunday_Sunday_August_August_35_26", "next_counter": 0 }
+    },
+    {
+      "id": "unix-seconds",
+      "requirements": ["FN-002", "FN-020"],
+      "input": { "mode": "text", "pattern": "%unix", "context": { "local_time": "2026-08-30T17:04:05.123+08:00", "unix_time": 1788080645, "locale": "en-AU", "counter": 0 } },
+      "expected": { "value": "1788080645", "next_counter": 0 }
+    },
+    {
       "id": "counter-once",
-      "mode": "filename",
-      "pattern": "%i_%i{3}_%ix_%iX",
-      "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 7 },
+      "requirements": ["FN-007"],
+      "input": { "mode": "filename", "pattern": "%i_%i{3}_%ix_%iX", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 7 } },
       "expected": { "value": "8_008_8_8", "next_counter": 8 }
     },
     {
-      "id": "window-metadata",
-      "mode": "filename",
-      "pattern": "%pn_%t",
-      "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "process_name": "XerahS", "window_title": "Draft/one" },
-      "expected": { "value": "XerahS_Draft_one", "next_counter": 0 }
+      "id": "counter-base36",
+      "requirements": ["FN-007", "FN-025"],
+      "input": { "mode": "filename", "pattern": "%ia_%iA_%ia{4}", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 35 } },
+      "expected": { "value": "10_10_0010", "next_counter": 36 }
     },
     {
-      "id": "portable-invalid-characters",
-      "mode": "filename",
-      "pattern": "report:<draft>|final?.png",
-      "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 },
-      "expected": { "value": "report_draft_final_.png", "next_counter": 0 }
+      "id": "counter-hex-padding",
+      "requirements": ["FN-007"],
+      "input": { "mode": "filename", "pattern": "%ix{4}%iX", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 254 } },
+      "expected": { "value": "00ffFF", "next_counter": 255 }
     },
     {
-      "id": "reserved-device-name",
-      "mode": "filename",
-      "pattern": "CON.txt",
-      "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 },
-      "expected": { "value": "_CON.txt", "next_counter": 0 }
+      "id": "counter-width-never-truncates",
+      "requirements": ["FN-007"],
+      "input": { "mode": "filename", "pattern": "%i{2}", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 1233 } },
+      "expected": { "value": "1234", "next_counter": 1234 }
+    },
+    {
+      "id": "counter-overflow",
+      "requirements": ["FN-025", "FN-026"],
+      "input": { "mode": "filename", "pattern": "a%i", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 9223372036854775807 } },
+      "expected": { "error": { "code": "counter-overflow", "token": "%i", "offset": 1 }, "next_counter": 9223372036854775807 }
+    },
+    {
+      "id": "longest-token-match",
+      "requirements": ["FN-018"],
+      "input": { "mode": "filename", "pattern": "%iAx%ixy", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 9 } },
+      "expected": { "value": "Axay", "next_counter": 10 }
+    },
+    {
+      "id": "case-sensitive-unknown-token",
+      "requirements": ["FN-010", "FN-018"],
+      "input": { "mode": "filename", "pattern": "%Y-%y", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 } },
+      "expected": { "value": "%Y-2026", "next_counter": 0 }
+    },
+    {
+      "id": "brace-after-plain-token-is-literal",
+      "requirements": ["FN-019"],
+      "input": { "mode": "text", "pattern": "%y{2}", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 } },
+      "expected": { "value": "2026{2}", "next_counter": 0 }
     },
     {
       "id": "unknown-and-literal-percent",
-      "mode": "filename",
-      "pattern": "100%%_%future",
-      "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 },
+      "requirements": ["FN-010"],
+      "input": { "mode": "filename", "pattern": "100%%_%future", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 } },
       "expected": { "value": "100%_%future", "next_counter": 0 }
     },
     {
+      "id": "window-metadata",
+      "requirements": ["FN-005", "FN-022"],
+      "input": { "mode": "filename", "pattern": "%pn_%t", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "process_name": "XerahS", "window_title": "Draft/one" } },
+      "expected": { "value": "XerahS_Draft_one", "next_counter": 0 }
+    },
+    {
+      "id": "window-title-trim-space-and-sanitize",
+      "requirements": ["FN-005", "FN-011", "FN-022"],
+      "input": { "mode": "filename", "pattern": "%t", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "window_title": "  Q3 Report: a*b  " } },
+      "expected": { "value": "Q3_Report__a_b", "next_counter": 0 }
+    },
+    {
+      "id": "url-mode-percent-encoding",
+      "requirements": ["FN-005", "FN-022"],
+      "input": { "mode": "url", "pattern": "https://example.test/%t?u=%un", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "window_title": "  Q3 Report: final/draft  ", "user_name": "Ada Lovelace" } },
+      "expected": { "value": "https://example.test/Q3_Report%3A_final%2Fdraft?u=Ada%20Lovelace", "next_counter": 0 }
+    },
+    {
+      "id": "text-mode-environment-unchanged",
+      "requirements": ["FN-006", "FN-022"],
+      "input": { "mode": "text", "pattern": "%un@%cn (%uln)", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "user_name": " Ada Lovelace ", "computer_name": "HOST:1", "login_domain": "LAB" } },
+      "expected": { "value": "Ada Lovelace@HOST:1 (LAB)", "next_counter": 0 }
+    },
+    {
+      "id": "portable-invalid-characters",
+      "requirements": ["FN-011"],
+      "input": { "mode": "filename", "pattern": "report:<draft>|final?.png", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 } },
+      "expected": { "value": "report_draft_final_.png", "next_counter": 0 }
+    },
+    {
+      "id": "trailing-spaces-and-periods",
+      "requirements": ["FN-011", "FN-023"],
+      "input": { "mode": "filename", "pattern": "name. . ", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 } },
+      "expected": { "value": "name", "next_counter": 0 }
+    },
+    {
+      "id": "reserved-device-name",
+      "requirements": ["FN-011", "FN-023"],
+      "input": { "mode": "filename", "pattern": "CON.txt", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 } },
+      "expected": { "value": "_CON.txt", "next_counter": 0 }
+    },
+    {
+      "id": "reserved-device-name-with-extension",
+      "requirements": ["FN-011", "FN-013", "FN-023"],
+      "input": { "mode": "filename", "pattern": "lpt1", "extension": "log", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 } },
+      "expected": { "value": "_lpt1.log", "next_counter": 0 }
+    },
+    {
+      "id": "not-reserved-com10",
+      "requirements": ["FN-023"],
+      "input": { "mode": "filename", "pattern": "COM10", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 } },
+      "expected": { "value": "COM10", "next_counter": 0 }
+    },
+    {
+      "id": "extension-is-not-a-token",
+      "requirements": ["FN-013", "FN-023"],
+      "input": { "mode": "filename", "pattern": "%y%mo%d", "extension": "%y", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 } },
+      "expected": { "value": "20260830.%y", "next_counter": 0 }
+    },
+    {
       "id": "empty-result",
-      "mode": "filename",
-      "pattern": "%width",
-      "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "width": null },
+      "requirements": ["FN-004", "FN-013"],
+      "input": { "mode": "filename", "pattern": "%width", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "width": null } },
       "expected": { "value": "_", "next_counter": 0 }
+    },
+    {
+      "id": "blank-pattern-does-not-advance-counter",
+      "requirements": ["FN-007", "FN-013"],
+      "input": { "mode": "filename", "pattern": "   ", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 3 } },
+      "expected": { "value": "_", "next_counter": 3 }
+    },
+    {
+      "id": "blank-pattern-text-mode",
+      "requirements": ["FN-013"],
+      "input": { "mode": "text", "pattern": "", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 3 } },
+      "expected": { "value": "", "next_counter": 3 }
+    },
+    {
+      "id": "max-length-preserves-extension",
+      "requirements": ["FN-014", "FN-023"],
+      "input": { "mode": "filename", "pattern": "\u00e1bcdefghij", "extension": "png", "max_length": 8, "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 } },
+      "expected": { "value": "\u00e1bcd.png", "next_counter": 0 }
+    },
+    {
+      "id": "max-length-counts-scalar-values",
+      "requirements": ["FN-014"],
+      "input": { "mode": "filename", "pattern": "\ud83d\ude00\ud83d\ude00\ud83d\ude00", "max_length": 2, "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 } },
+      "expected": { "value": "\ud83d\ude00\ud83d\ude00", "next_counter": 0 }
+    },
+    {
+      "id": "extension-exceeds-max-length",
+      "requirements": ["FN-023", "FN-026"],
+      "input": { "mode": "filename", "pattern": "a", "extension": "jpeg", "max_length": 5, "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 } },
+      "expected": { "error": { "code": "name-too-long", "token": null, "offset": 0 }, "next_counter": 0 }
+    },
+    {
+      "id": "path-mode-components",
+      "requirements": ["FN-012", "FN-022", "FN-024"],
+      "input": { "mode": "path", "pattern": "Screenshots\\%y/%mo/%t", "extension": "png", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "window_title": "a/b" } },
+      "expected": { "value": "Screenshots/2026/08/a_b.png", "next_counter": 0 }
+    },
+    {
+      "id": "path-mode-rejects-traversal",
+      "requirements": ["FN-012", "FN-024", "FN-026"],
+      "input": { "mode": "path", "pattern": "shots/../x", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 } },
+      "expected": { "error": { "code": "path-traversal", "token": null, "offset": 6 }, "next_counter": 0 }
+    },
+    {
+      "id": "path-mode-rejects-absolute",
+      "requirements": ["FN-012", "FN-024", "FN-026"],
+      "input": { "mode": "path", "pattern": "/tmp/%y", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 } },
+      "expected": { "error": { "code": "path-not-relative", "token": null, "offset": 0 }, "next_counter": 0 }
+    },
+    {
+      "id": "path-mode-rejects-drive",
+      "requirements": ["FN-012", "FN-024", "FN-026"],
+      "input": { "mode": "path", "pattern": "C:\\shots", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 } },
+      "expected": { "error": { "code": "path-not-relative", "token": null, "offset": 0 }, "next_counter": 0 }
+    },
+    {
+      "id": "random-alphanumeric-with-rejection",
+      "requirements": ["FN-008", "FN-021"],
+      "input": { "mode": "filename", "pattern": "%ra{4}", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "random_bytes": "003df83ef7" } },
+      "expected": { "value": "0z0z", "next_counter": 0 }
+    },
+    {
+      "id": "random-digits-with-rejection",
+      "requirements": ["FN-008", "FN-021"],
+      "input": { "mode": "filename", "pattern": "%rn{3}", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "random_bytes": "09fa0aff13" } },
+      "expected": { "value": "909", "next_counter": 0 }
+    },
+    {
+      "id": "random-hex-both-cases",
+      "requirements": ["FN-008", "FN-021"],
+      "input": { "mode": "filename", "pattern": "%rx{2}%rX{2}", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "random_bytes": "abcdef01" } },
+      "expected": { "value": "bdF1", "next_counter": 0 }
+    },
+    {
+      "id": "random-non-ambiguous",
+      "requirements": ["FN-008", "FN-018", "FN-021"],
+      "input": { "mode": "filename", "pattern": "%rna{3}", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "random_bytes": "08e03037" } },
+      "expected": { "value": "Asz", "next_counter": 0 }
+    },
+    {
+      "id": "random-single-without-argument",
+      "requirements": ["FN-019", "FN-021"],
+      "input": { "mode": "filename", "pattern": "%ra", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "random_bytes": "0a" } },
+      "expected": { "value": "A", "next_counter": 0 }
+    },
+    {
+      "id": "random-words",
+      "requirements": ["FN-008", "FN-021"],
+      "input": { "mode": "filename", "pattern": "%radjective%ranimal", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "random_bytes": "41ff" } },
+      "expected": { "value": "AgileZebra", "next_counter": 0 }
+    },
+    {
+      "id": "random-emoji",
+      "requirements": ["FN-008", "FN-021"],
+      "input": { "mode": "text", "pattern": "%remoji{2}", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "random_bytes": "007f" } },
+      "expected": { "value": "\ud83d\ude00\ud83d\ude3f", "next_counter": 0 }
+    },
+    {
+      "id": "guid-lower-and-upper",
+      "requirements": ["FN-008", "FN-021"],
+      "input": { "mode": "text", "pattern": "%guid %GUID", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "random_bytes": "000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f" } },
+      "expected": { "value": "00010203-0405-4607-8809-0a0b0c0d0e0f 00010203-0405-4607-8809-0A0B0C0D0E0F", "next_counter": 0 }
+    },
+    {
+      "id": "random-source-exhausted",
+      "requirements": ["FN-021", "FN-026"],
+      "input": { "mode": "filename", "pattern": "%rn{2}", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "random_bytes": "01" } },
+      "expected": { "error": { "code": "random-source-exhausted", "token": "%rn", "offset": 0 }, "next_counter": 0 }
+    },
+    {
+      "id": "invalid-repeat-does-not-consume-counter",
+      "requirements": ["FN-008", "FN-016", "FN-019", "FN-026"],
+      "input": { "mode": "filename", "pattern": "%i_%ra{0}", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 5, "random_bytes": "00" } },
+      "expected": { "error": { "code": "invalid-argument", "token": "%ra", "offset": 3 }, "next_counter": 5 }
+    },
+    {
+      "id": "non-numeric-repeat",
+      "requirements": ["FN-019", "FN-026"],
+      "input": { "mode": "filename", "pattern": "ab%rx{two}", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "random_bytes": "00" } },
+      "expected": { "error": { "code": "invalid-argument", "token": "%rx", "offset": 2 }, "next_counter": 0 }
+    },
+    {
+      "id": "unterminated-argument",
+      "requirements": ["FN-019", "FN-026"],
+      "input": { "mode": "filename", "pattern": "x%i{3", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0 } },
+      "expected": { "error": { "code": "unterminated-argument", "token": "%i", "offset": 1 }, "next_counter": 0 }
+    },
+    {
+      "id": "random-file-line",
+      "requirements": ["FN-009", "FN-021", "FN-026"],
+      "input": { "mode": "filename", "pattern": "%rf{words.txt}", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "random_bytes": "01", "random_files": { "words.txt": { "permission": "granted", "content": "alpha\r\n  beta  \n\n" } } } },
+      "expected": { "value": "beta", "next_counter": 0 }
+    },
+    {
+      "id": "random-file-permission-denied",
+      "requirements": ["FN-009", "FN-026"],
+      "input": { "mode": "filename", "pattern": "%rf{words.txt}", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "random_bytes": "01", "random_files": { "words.txt": { "permission": "denied", "content": "alpha\n" } } } },
+      "expected": { "error": { "code": "file-permission-denied", "token": "%rf", "offset": 0 }, "next_counter": 0 }
+    },
+    {
+      "id": "random-file-empty",
+      "requirements": ["FN-009", "FN-026"],
+      "input": { "mode": "filename", "pattern": "%rf{blank.txt}", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 0, "random_bytes": "01", "random_files": { "blank.txt": { "permission": "granted", "content": " \n\r\n" } } } },
+      "expected": { "error": { "code": "file-unavailable", "token": "%rf", "offset": 0 }, "next_counter": 0 }
+    },
+    {
+      "id": "preview-does-not-commit",
+      "operation": "preview",
+      "requirements": ["FN-015", "FN-027"],
+      "input": { "mode": "filename", "pattern": "%ra{3}_%i", "context": { "local_time": "2026-08-30T00:00:00+08:00", "unix_time": 1788019200, "locale": "en-AU", "counter": 4 } },
+      "expected": { "value": "012_5", "next_counter": 5, "committed_counter": 4 }
     }
   ]
 }

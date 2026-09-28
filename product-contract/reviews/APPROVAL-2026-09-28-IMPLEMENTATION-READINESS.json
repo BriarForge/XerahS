@@ -1,0 +1,52 @@
+{
+  "$schema": "../schemas/approval-record.schema.json",
+  "schema_version": 1,
+  "decision_id": "APPROVAL-2026-09-28-IMPLEMENTATION-READINESS",
+  "recorded_on": "2026-09-28",
+  "authority": {
+    "role": "human-product-owner",
+    "identity": "Repository product owner, confirmed by interactive instruction"
+  },
+  "source": {
+    "kind": "interactive-instruction",
+    "statement": "Selected 'Approve as 0.2.0' for recording the implementation-readiness clarifications (token matching, random-byte mapping, post-capture action catalogue, region mapping and state events, editor rendering and history rules, and added vectors) as a product-owner approval for contract 0.2.0, after instructing: 'get the english contract fully ready to the stage where you believe the contract is ready to start implementing/coding native windows, macOS and linux apps'. The owner further directed that Linux may be delivered as native editions for different distributions such as Omarchy, Ubuntu, and Fedora. The eleven other packages carry forward unchanged from APPROVAL-2026-08-31-ALL-PACKAGES, APPROVAL-2026-08-31-PRODUCT-IDENTITY, and APPROVAL-2026-08-31-NUGET-FRESHNESS."
+  },
+  "decision": "approved",
+  "scope": {
+    "contract_version": "0.2.0",
+    "packages": [
+      "FILENAME-GENERATION-001",
+      "POST-CAPTURE-ACTIONS-001",
+      "REGION-CAPTURE-001",
+      "EDITOR-SESSION-001",
+      "EDITOR-ANNOTATIONS-001",
+      "EDITOR-EFFECTS-001",
+      "EDITOR-CANVAS-001",
+      "EDITOR-OUTPUT-ACTIONS-001",
+      "EDITOR-SETTINGS-001",
+      "EDITOR-UTILITIES-001",
+      "SETTINGS-CATALOG-001",
+      "WORKFLOW-CATALOG-001",
+      "INTERFACE-CATALOG-001",
+      "CORE-PLATFORM-001",
+      "COMPATIBILITY-CATALOG-001"
+    ]
+  },
+  "effects": {
+    "normative_contract": true,
+    "implementation_authorized": true,
+    "activation_authorized": false,
+    "census_closed": false,
+    "release_authorized": false
+  },
+  "remaining_gates": [
+    "Baseline census closure evidence and product-owner closure signature",
+    "Windows, macOS, and Linux implementation and conformance evidence, including every supported Linux edition",
+    "Runtime observation of the baseline .xann sidecar naming convention (ES-030)",
+    "Security and privacy review for capture, credentials, automation, plugins, and external publication",
+    "Accessibility review for native GUI and interaction surfaces",
+    "Compatibility fixtures and runtime-observation evidence",
+    "Licensing and distribution review",
+    "Requirement-to-conformance traceability and parity review"
+  ]
+}

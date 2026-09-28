@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "description": "Normative post-capture action catalogue for PCA-017 to PCA-023. Array order is execution order. Artifact names are stable result identifiers.",
+  "artifacts": {
+    "working-media": "The current capture payload; always available unless the capture itself failed.",
+    "save.file": "File written by save.",
+    "save-as.file": "File written by save-as.",
+    "saved-file": "Alias resolving to save.file when available, otherwise save-as.file.",
+    "thumbnail.file": "Thumbnail written by save-thumbnail.",
+    "temporary.file": "Managed temporary encoded file created for upload under PCA-019.",
+    "annotation.document": "Re-editable annotation document produced by annotation.",
+    "upload.result": "Remote URL and deletion data produced by upload.",
+    "ocr.text": "Recognized text produced by ocr.",
+    "qr.text": "Decoded payloads produced by qr-scan."
+  },
+  "actions": [
+    { "id": "quick-task-menu", "legacy_flags": ["ShowQuickTaskMenu"], "kind": "selection", "requires": ["working-media"], "produces": [], "interruptible": true },
+    { "id": "after-capture-window", "legacy_flags": ["ShowAfterCaptureWindow"], "kind": "selection", "requires": ["working-media"], "produces": [], "interruptible": true },
+    { "id": "image-effects", "legacy_flags": ["AddImageEffects"], "kind": "transformation", "requires": ["working-media"], "produces": ["working-media"], "interruptible": true },
+    { "id": "annotation", "legacy_flags": ["AnnotateMedia", "AnnotateImage"], "kind": "transformation", "requires": ["working-media"], "produces": ["working-media", "annotation.document"], "interruptible": true },
+    { "id": "save", "legacy_flags": ["SaveImageToFile"], "kind": "output", "requires": ["working-media"], "produces": ["save.file"], "interruptible": false },
+    { "id": "save-as", "legacy_flags": ["SaveImageToFileWithDialog"], "kind": "output", "requires": ["working-media"], "produces": ["save-as.file"], "interruptible": true },
+    { "id": "save-thumbnail", "legacy_flags": ["SaveThumbnailImageToFile"], "kind": "output", "requires": ["working-media"], "produces": ["thumbnail.file"], "interruptible": false },
+    { "id": "image-clipboard", "legacy_flags": ["CopyImageToClipboard"], "kind": "output", "requires": ["working-media"], "produces": [], "interruptible": false },
+    { "id": "before-upload-window", "legacy_flags": ["ShowBeforeUploadWindow"], "kind": "confirmation", "requires": ["working-media"], "produces": [], "interruptible": true, "applies_to": "upload" },
+    { "id": "upload", "legacy_flags": ["UploadImageToHost"], "kind": "network", "requires": ["saved-file|temporary.file"], "produces": ["upload.result"], "interruptible": false },
+    { "id": "ocr", "legacy_flags": ["DoOCR"], "kind": "analysis", "requires": ["working-media"], "produces": ["ocr.text"], "interruptible": true },
+    { "id": "ocr-clipboard", "legacy_flags": ["CopyOcrTextToClipboard"], "kind": "output", "requires": ["ocr.text"], "produces": [], "interruptible": false },
+    { "id": "qr-scan", "legacy_flags": ["ScanQRCode"], "kind": "analysis", "requires": ["working-media"], "produces": ["qr.text"], "interruptible": true },
+    { "id": "pin", "legacy_flags": ["PinToScreen"], "kind": "presentation", "requires": ["working-media"], "produces": [], "interruptible": false },
+    { "id": "print", "legacy_flags": ["SendImageToPrinter"], "kind": "output", "requires": ["working-media"], "produces": [], "interruptible": true },
+    { "id": "custom-actions", "legacy_flags": ["PerformActions"], "kind": "external", "requires": ["saved-file"], "produces": [], "interruptible": false },
+    { "id": "file-clipboard", "legacy_flags": ["CopyFileToClipboard"], "kind": "output", "requires": ["saved-file"], "produces": [], "interruptible": false },
+    { "id": "path-clipboard", "legacy_flags": ["CopyFilePathToClipboard"], "kind": "output", "requires": ["saved-file"], "produces": [], "interruptible": false },
+    { "id": "reveal", "legacy_flags": ["ShowInExplorer"], "kind": "presentation", "requires": ["saved-file"], "produces": [], "interruptible": false },
+    { "id": "analyze", "legacy_flags": ["AnalyzeImage"], "kind": "analysis", "requires": ["working-media"], "produces": [], "interruptible": true },
+    { "id": "delete", "legacy_flags": ["DeleteFile"], "kind": "destructive", "requires": ["saved-file"], "produces": [], "interruptible": false }
+  ]
+}
