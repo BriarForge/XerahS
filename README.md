@@ -1,13 +1,13 @@
 # XerahS (native)
 
-Greenfield, contract-first native XerahS for Windows, macOS, and Linux.
+Greenfield, contract-first native XerahS for Windows, macOS, and Linux desktops and Android and iOS mobile devices.
 
 This repository is **not a fork** of [ShareX/XerahS](https://github.com/ShareX/XerahS). It does not inherit that tree's history, Avalonia UI, or project layout. ShareX/XerahS remains the production Avalonia application and a behavioral reference. This repository implements the same product from a versioned Product Contract, natively on each operating system.
 
 | Layer | Lives here |
 |---|---|
 | Product truth | `product-contract/` |
-| Platform truth | `platforms/windows`, `platforms/macos`, `platforms/linux` |
+| Platform truth | `platforms/windows`, `platforms/macos`, `platforms/linux`, `platforms/android`, `platforms/ios` |
 | Conformance truth | `conformance/` |
 
 Application identity: `com.xerahs.app` / "XerahS". The native application replaces Avalonia XerahS after full-parity acceptance, with explicit settings migration and recovery safeguards.
@@ -21,6 +21,8 @@ Pilot-binding defaults (see BXIP001 decisions):
 - Windows: WinUI 3 + Win32/WinRT, C#, Windows 11 23H2+
 - macOS: SwiftUI + AppKit, Swift, macOS 14+
 - Linux: Qt 6, C++17, Wayland first (reference edition); distro-native editions such as Omarchy, Ubuntu, and Fedora under D-LIN-002
+- Android: Kotlin + Jetpack Compose, Android 10+ (D-AND-001)
+- iOS and iPadOS: Swift + SwiftUI, iOS 17+ (D-IOS-001); scope in `MOBILE-PLATFORM-001`
 - No shared product runtime binary in the pilot
 - No in-process .NET plugins
 
@@ -41,12 +43,12 @@ GNU GPL v3. See [LICENSE](LICENSE). Copyright ShareX Team.
 ## Status
 
 Contract drafting phase. The Product Contract (`product-contract/manifest.yaml`,
-version 0.2.0, lifecycle `draft`) lists 15 capabilities with human approval
+version 0.3.0, lifecycle `draft`) lists 16 capabilities with human approval
 records, and every parity-ledger row from the pinned `kova-0.29.0` baseline
 links to a stable requirement ID. See
 [product-contract/backlog/STATUS.md](product-contract/backlog/STATUS.md) for the
 generated completion view. The contract is ready for native coding to start on
-Windows, macOS, and Linux; see
+Windows, macOS, Linux, Android, and iOS; see
 [product-contract/READINESS.md](product-contract/READINESS.md). Native
 implementations and conformance runners have not landed yet.
 

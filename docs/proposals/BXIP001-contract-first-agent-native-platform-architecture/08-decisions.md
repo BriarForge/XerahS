@@ -20,7 +20,7 @@ The final parity release requires every in-scope baseline ledger row to be contr
 |---|---|---|
 | Product owner (human) | Approves user-visible contract behavior, Unavailable/Degraded dispositions, waivers, root constitution changes, and releases | Michael D |
 | Contract steward | Owns `product-contract/` quality, identifiers, versioning, and patch-level clarifications that do not change behavior | Designated agent or human reporting to the product owner |
-| Platform owner (Windows, macOS, Linux) | Owns native realization, platform tests, packaging, and signing for that OS | One named owner per platform; a person MAY hold more than one platform |
+| Platform owner (Windows, macOS, Linux, Android, iOS) | Owns native realization, platform tests, packaging, and signing for that OS | One named owner per platform; a person MAY hold more than one platform |
 | Conformance owner | Owns the shared runner, fixtures, tolerances, and independent verification | Must not be the sole platform owner of a platform under test |
 | Governance owner | Owns the `AGENTS.md` hierarchy, rule-ID registry, and instruction linter | Product owner unless delegated in writing |
 
@@ -92,6 +92,24 @@ The root `AGENTS.md` encodes this authority as `ROOT-NUGET-*`. `CORE-PLATFORM-00
 - Every toolkit remains subject to ROOT-LICENSE-001; GTK 4, libadwaita, KDE Frameworks, and Qt are used under GPL v3-compatible licenses with dynamic linking.
 
 **Rationale.** Because behavior is fixed by the English contract and verified by shared vectors, each Linux desktop can receive an application that follows its own conventions without forking the product. The Qt reference edition keeps one release-blocking Linux path while distro-native editions mature.
+
+## D-MOB-001 Native mobile targets
+
+**Decision.** Accepted by product-owner direction on 2026-09-28. Android and iOS are supported native targets. `MOBILE-PLATFORM-001` and its `mobile-scope.json` define which capabilities apply on mobile and how. Desktop parity with the pinned baseline stays measured on desktop only; the baseline's `src/mobile-experimental/` projects are replaced, not ported. Mobile trees live under `platforms/android/` and `platforms/ios/` and conform through `conformance/adapters/android/` and `conformance/adapters/ios/`.
+
+**Rationale.** A contract written in English and verified by shared vectors lets phones and tablets receive truly native applications that name, edit, and publish captures exactly as the desktop does, while platform limits are recorded as dispositions instead of silent gaps.
+
+## D-AND-001 Android toolkit and OS baseline
+
+**Decision.** Kotlin with Jetpack Compose and Material 3; adaptive layouts for phones, foldables, and tablets. Capture: MediaProjection with a foreground service; recording: MediaProjection with MediaCodec. Background work: WorkManager. Secrets: Android Keystore-backed encryption. Share intake: `ACTION_SEND` and `ACTION_SEND_MULTIPLE`. Minimum Android 10 (API level 29). Distribution: Google Play, F-Droid, and signed APKs.
+
+**Rationale.** Compose is the current native Android UI toolkit, and API 29 is the first level with scoped storage as the default model the contract's saving rules assume.
+
+## D-IOS-001 iOS and iPadOS toolkit and OS baseline
+
+**Decision.** Swift with SwiftUI, and UIKit where SwiftUI cannot host a surface with acceptable latency, such as the region-selection canvas. Capture sources: latest screenshot and the system photo picker (MOB-005); recording: a ReplayKit broadcast upload extension. Share intake: a share extension. Background uploads: background `URLSession`. Secrets: Keychain, this-device-only. Minimum iOS and iPadOS 17. Distribution is blocked until the MOB-018 licensing review records a GPL v3 compatible path.
+
+**Rationale.** SwiftUI matches D-MAC-001 so Apple-platform engineers share idioms. iOS cannot capture other applications' screens on demand, so the contract records a degraded region-capture disposition instead of pretending otherwise.
 
 ## D-REPO-001 Monorepo
 

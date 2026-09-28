@@ -92,7 +92,7 @@ This proposal does not:
 - Collapse the native and Avalonia application identities before a later product decision.
 - Require pixel-identical native UI; exported media and deterministic behavior follow contract tolerances.
 - Make AI-generated changes exempt from product, security, accessibility, conformance, or release review.
-- Include experimental Android or iOS implementation; those rows are explicitly classified `OutOfScope-BXIP001` pending a mobile proposal.
+- Port the experimental Android or iOS baseline projects; those rows stay classified `OutOfScope-BXIP001` for desktop parity, and native mobile applications are governed separately by D-MOB-001 and `MOBILE-PLATFORM-001`.
 - Require store publication as proof of parity. Signed/notarized installable desktop artifacts are required; store submission may follow separately.
 
 The out-of-process plugin protocol and platform packaging details MAY be specified in child proposals, but those deliverables cannot remain incomplete at the full-parity release gate.

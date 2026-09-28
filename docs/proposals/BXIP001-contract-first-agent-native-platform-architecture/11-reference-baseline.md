@@ -49,7 +49,7 @@ The parity mandate includes the KovaForge desktop product and its shipped compan
 - Desktop packaging, installation, startup, file associations, update behavior, and uninstall safety
 - Accessibility, localization, performance, permissions, privacy, and security behavior
 
-`src/mobile-experimental/` is explicitly outside BXIP001 because the approved target set is Windows, macOS, and Linux desktop. It SHALL still appear in the census with disposition `OutOfScope-BXIP001` so it is not silently forgotten; a mobile-native program requires a separate proposal.
+`src/mobile-experimental/` is explicitly outside BXIP001 because the approved target set is Windows, macOS, and Linux desktop. It SHALL still appear in the census with disposition `OutOfScope-BXIP001` so it is not silently forgotten; the native mobile program is defined by D-MOB-001 and `MOBILE-PLATFORM-001`, which replace rather than port those projects.
 
 Dead code that is not user-reachable is not automatically a parity requirement. Deprecated but still loadable settings and formats remain compatibility requirements until explicitly retired.
 
