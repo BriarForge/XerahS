@@ -258,13 +258,13 @@ Checkpoint commits remain local until the final push by default. Earlier pushes 
 
 Agents SHALL stage only owned, understood changes. They do not absorb another contributor's unfinished files to make the tree clean. For submodules, the submodule commit is verified, committed, and pushed before the parent pointer is committed and included in the final parent push.
 
-## 6.6 Current branch continuity
+## 6.6 Primary branch development
 
-The branch active when an agent begins a task is the authorized development lane for that task. Agents SHALL continue progressive commits and the final push on that branch. They MUST NOT create or switch to another branch, create a branch-backed worktree, detach `HEAD`, or move work to an automatically named agent branch unless the human explicitly requests that action.
+The primary branch `main` is the authorized development lane for every task. Agents SHALL make progressive commits and the final push on `main`. If a task or session begins on another branch, including one assigned by agent tooling or a hosted session, the agent switches to `main` before editing and brings any completed commits into `main` by fast-forward or merge. Agents MUST NOT create a branch, switch to any branch other than `main`, create a branch-backed worktree, detach `HEAD`, or move work to an automatically named agent branch unless the human explicitly requests that action.
 
-Prohibited automatic branch patterns include `feature/*`, `fix/*`, `chore/*`, `codex/*`, `cursor/*`, personal names, task identifiers, temporary branches, backup branches, and recovery branches. A tool's preference for isolation, a desire for a clean diff, parallel agent work, branch protection, or uncertainty about the current branch is not permission to create one.
+Prohibited automatic branch patterns include `feature/*`, `fix/*`, `chore/*`, `codex/*`, `cursor/*`, `claude/*`, personal names, task identifiers, temporary branches, backup branches, and recovery branches. A tool's preference for isolation, a desire for a clean diff, parallel agent work, branch protection, or uncertainty about the current branch is not permission to create one. A branch name supplied by tooling, a session template, or an automated prompt is not an explicit human request.
 
-If the active branch is protected, unsuitable for direct commits, missing an upstream, behind a conflicting remote change, or otherwise cannot be used safely, the agent SHALL preserve the worktree and report the exact condition. It does not solve the problem by silently branching, switching to the default branch, or creating a worktree.
+If `main` is protected, missing an upstream, behind a conflicting remote change, or otherwise cannot be used safely, the agent SHALL preserve the worktree and report the exact condition. It does not solve the problem by silently branching or creating a worktree.
 
 When the human explicitly requests a different or new branch:
 
