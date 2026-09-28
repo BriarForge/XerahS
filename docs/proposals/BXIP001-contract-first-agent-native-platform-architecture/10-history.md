@@ -62,3 +62,4 @@ Residual risks that remain acceptable for a proposed architecture:
 | 2026-08-30 | Defined progressive commit and final push behavior | Preserve recoverable agent progress as coherent local commits and make a verified final push part of normal task completion |
 | 2026-08-30 | Required current-branch continuity | Prevent unrequested agent, feature, fix, temporary, and worktree branches; branch creation or switching now requires explicit human instruction |
 | 2026-09-28 | Required primary-branch development | All agent work commits and pushes directly on `main`; sessions started on tooling-assigned branches such as `claude/*` switch to `main` first |
+| 2026-09-28 | Added Linux distro-native editions (D-LIN-002) | Let Omarchy, Ubuntu, Fedora, and other desktops receive native editions built from the same contract while `linux-qt` stays the release-blocking reference |

@@ -41,6 +41,7 @@ These IDs bind the greenfield implementation. Full text is in [08-decisions.md](
 | [D-NUGET-001](08-decisions.md#d-nuget-001-latest-stable-nuget-authority) | Latest-stable NuGet authority and cadence |
 | [D-MAC-001](08-decisions.md#d-mac-001-macos-swiftuiappkit-boundary-and-os-baseline) | macOS SwiftUI/AppKit boundary |
 | [D-LIN-001](08-decisions.md#d-lin-001-linux-toolkit-desktop-display-server-portal-distro-and-packaging) | Linux toolkit and packaging |
+| [D-LIN-002](08-decisions.md#d-lin-002-linux-distro-native-editions) | Linux distro-native editions |
 | [D-REPO-001](08-decisions.md#d-repo-001-monorepo) | Monorepo |
 | [D-SHARE-001](08-decisions.md#d-share-001-shared-binaries) | Shared binaries |
 | [D-PLUG-001](08-decisions.md#d-plug-001-cross-language-plugin-automation-and-configuration) | Plugins, automation, configuration |

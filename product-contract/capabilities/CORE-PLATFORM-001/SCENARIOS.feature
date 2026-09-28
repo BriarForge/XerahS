@@ -51,3 +51,14 @@ Feature: Native platform capability invariants
     Then the newest conforming version is retained temporarily
     And the exact rejected version, evidence, reason, owner, remediation, and next review are recorded
     And the next review is no more than 30 days away
+
+  Scenario: Switching Linux edition keeps user data
+    Given the linux-qt edition is installed with settings and history
+    When the user installs the linux-gnome edition on the same system
+    Then the linux-qt edition is replaced rather than installed alongside it
+    And the settings, history, and outputs are read without migration
+
+  Scenario: A supported edition blocks the Linux disposition
+    Given linux-qt and linux-hyprland are both supported editions
+    And linux-hyprland has no accepted disposition for a requirement
+    Then the requirement's Linux disposition is not accepted

@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "description": "Linux edition profiles for CORE-033 to CORE-037. Status is supported (must pass Linux conformance before release), candidate (may be implemented; not release-blocking until promoted by the product owner), or retired. Toolkit entries marked proposed need product-owner confirmation under D-LIN-002 before the edition's first code.",
+  "editions": [
+    {
+      "id": "linux-qt",
+      "status": "supported",
+      "role": "reference edition and fallback for any distribution without a distro-native edition",
+      "targets": [
+        { "distribution": "Ubuntu", "versions": "24.04 LTS and later LTS" },
+        { "distribution": "Fedora Workstation", "versions": "current release" },
+        { "distribution": "Arch Linux", "versions": "rolling (smoke target)" }
+      ],
+      "desktops": ["GNOME 46+", "KDE Plasma 6", "wlroots compositors (best effort)"],
+      "display_server": "Wayland first; X11 documented fallback",
+      "toolkit": { "value": "Qt 6 Widgets, Qt Quick for settings and history chrome, C++17", "decision": "D-LIN-001" },
+      "mechanisms": {
+        "capture": "xdg-desktop-portal Screenshot and ScreenCast; direct protocols as diagnosed fallbacks",
+        "global_shortcuts": "GlobalShortcuts portal",
+        "notifications": "Notification portal or org.freedesktop.Notifications",
+        "tray": "StatusNotifierItem",
+        "credentials": "Secret Service API"
+      },
+      "packaging": [".tar.gz", ".deb", ".rpm", "AUR"]
+    },
+    {
+      "id": "linux-gnome",
+      "status": "candidate",
+      "role": "distro-native edition for GNOME distributions",
+      "targets": [
+        { "distribution": "Ubuntu", "versions": "24.04 LTS and later LTS" },
+        { "distribution": "Fedora Workstation", "versions": "current release" }
+      ],
+      "desktops": ["GNOME 46+"],
+      "display_server": "Wayland",
+      "toolkit": { "value": "GTK 4 with libadwaita", "decision": "D-LIN-002 (proposed)" },
+      "mechanisms": {
+        "capture": "xdg-desktop-portal-gnome Screenshot and ScreenCast",
+        "global_shortcuts": "GlobalShortcuts portal",
+        "notifications": "Notification portal",
+        "tray": "Background portal and status icon where the shell provides one; otherwise an accepted disposition",
+        "credentials": "Secret Service API (GNOME Keyring)"
+      },
+      "packaging": [".deb", ".rpm", "Flatpak"]
+    },
+    {
+      "id": "linux-kde",
+      "status": "candidate",
+      "role": "distro-native edition for KDE Plasma distributions",
+      "targets": [
+        { "distribution": "Fedora KDE Plasma Desktop", "versions": "current release" },
+        { "distribution": "Kubuntu", "versions": "24.04 LTS and later LTS" }
+      ],
+      "desktops": ["KDE Plasma 6"],
+      "display_server": "Wayland",
+      "toolkit": { "value": "Qt 6 with KDE Frameworks 6 and Kirigami", "decision": "D-LIN-002 (proposed)" },
+      "mechanisms": {
+        "capture": "xdg-desktop-portal-kde Screenshot and ScreenCast",
+        "global_shortcuts": "GlobalShortcuts portal or KGlobalAccel",
+        "notifications": "KNotification",
+        "tray": "StatusNotifierItem",
+        "credentials": "Secret Service API (KWallet)"
+      },
+      "packaging": [".rpm", ".deb", "Flatpak"]
+    },
+    {
+      "id": "linux-hyprland",
+      "status": "candidate",
+      "role": "distro-native edition for Hyprland setups such as Omarchy",
+      "targets": [
+        { "distribution": "Omarchy", "versions": "current release" },
+        { "distribution": "Arch Linux with Hyprland", "versions": "rolling" }
+      ],
+      "desktops": ["Hyprland"],
+      "display_server": "Wayland",
+      "toolkit": { "value": "Qt 6 with LayerShellQt or GTK 4 with gtk4-layer-shell; choose one before first code", "decision": "D-LIN-002 (proposed)" },
+      "mechanisms": {
+        "capture": "xdg-desktop-portal-hyprland, with compositor capture protocols as diagnosed fallbacks",
+        "global_shortcuts": "GlobalShortcuts portal, with documented Hyprland bind integration",
+        "notifications": "org.freedesktop.Notifications",
+        "tray": "StatusNotifierItem where the bar supports it; otherwise an accepted disposition",
+        "credentials": "Secret Service API"
+      },
+      "packaging": ["AUR", "pacman package"]
+    }
+  ]
+}

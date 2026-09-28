@@ -26,6 +26,12 @@
         "linux": { "$ref": "#/$defs/disposition" }
       }
     },
+    "linux_editions": {
+      "type": "object",
+      "description": "Per-edition Linux dispositions under CORE-036; keys are edition IDs from linux-editions.json.",
+      "propertyNames": { "pattern": "^linux-[a-z0-9-]+$" },
+      "additionalProperties": { "$ref": "#/$defs/disposition" }
+    },
     "status": { "enum": ["draft", "approved", "retired"] }
   },
   "$defs": { "disposition": { "enum": ["required", "equivalent", "degraded", "unavailable", "not-applicable"] } }

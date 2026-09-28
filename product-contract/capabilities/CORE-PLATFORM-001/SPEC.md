@@ -1,8 +1,8 @@
 # CORE-PLATFORM-001 Native platform capability foundation
 
-Version: 0.3.0
+Version: 0.4.0
 
-Status: Approved by the human product owner on 2026-08-31; conformance required before activation
+Status: Approved by the human product owner on 2026-08-31 and 2026-09-28 (0.4.0 Linux editions); conformance required before activation
 
 ## Shared requirements
 
@@ -151,6 +151,35 @@ Status: Approved by the human product owner on 2026-08-31; conformance required 
   the exact rejected version, protected-boundary or toolchain blocker, evidence,
   owner, remediation, and next review no more than 30 days away; silent or
   indefinite pinning is prohibited.
+
+## Linux editions
+
+- **CORE-033:** The Linux platform MAY be delivered as one or more native
+  editions, each a complete application for a named desktop family and set of
+  distributions. Every edition MUST satisfy every requirement that applies to
+  Linux on each of its declared targets. An edition MUST NOT narrow product
+  behavior; environment differences are expressed only through accepted
+  dispositions.
+- **CORE-034:** Each edition MUST have a profile in `linux-editions.json` that
+  declares its ID, status, target distributions and versions, desktops, display
+  server, UI toolkit and deciding architecture record, capture, shortcut,
+  notification, tray, and credential mechanisms, and packaging formats.
+- **CORE-035:** All editions MUST share the identity `com.xerahs.app`, the XDG
+  configuration, data, cache, and state locations, the settings schema, and all
+  persisted formats, so a user can change edition or distribution without a
+  migration. Installing another edition MUST replace the installed edition
+  rather than create a second identity.
+- **CORE-036:** A requirement's Linux disposition is accepted only when every
+  edition with status `supported` has an accepted disposition for it. An
+  edition-specific Degraded or Unavailable disposition requires product-owner
+  approval like any other platform disposition. Every edition MUST run the
+  shared conformance vectors on each declared target distribution; editions
+  MUST NOT fork expected results.
+- **CORE-037:** An edition MUST follow its desktop's native conventions for
+  layout, theming, accent colour, keyboard behavior, portals, notifications,
+  status or tray presence, and configuration integration wherever they do not
+  conflict with this contract. A candidate edition becomes release-blocking only
+  when the product owner promotes it to `supported`.
 
 ## Baseline traceability and disposition
 
