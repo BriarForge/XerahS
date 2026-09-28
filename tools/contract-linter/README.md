@@ -8,11 +8,22 @@ From the repository root:
 ```powershell
 python tools/contract-linter/lint.py
 python -m unittest discover tools/contract-linter/tests -v
+python tools/contract-linter/lint.py --effective platforms/windows/README.md
+python tools/contract-linter/lint.py --changed-since origin/main
 ```
+
+`--effective` and `--changed-since` print the Markdown effective-instructions
+report required by TOOL-EFFECTIVE-001: each path grouped under its root-to-leaf
+`AGENTS.md` chain with the rule IDs that govern it. CI appends the report for
+every changed path to the job summary.
 
 The linter checks:
 
 - the root-to-leaf `AGENTS.md` parent chain, maximum depth, and unique rule IDs;
+- that each child's `Parent` is its nearest ancestor, its `Applies to` matches
+  its directory, and its parent indexes it (no undeclared scopes);
+- that only the root constitution declares protected `ROOT-*` rule IDs, and
+  that relative links in instruction files resolve;
 - manifest SemVer, capability paths, lifecycle files, and exact requirement-ID
   agreement between the manifest and each `SPEC.md`;
 - human product-owner approval records covering every approved or active

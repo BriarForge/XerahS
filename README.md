@@ -40,4 +40,22 @@ GNU GPL v3. See [LICENSE](LICENSE). Copyright ShareX Team.
 
 ## Status
 
-Phase 0 seed: proposal, constitution, and directory layout. Pilot contracts and native implementations have not landed yet.
+Contract drafting phase. The Product Contract (`product-contract/manifest.yaml`,
+version 0.1.0, lifecycle `draft`) lists 15 capabilities with human approval
+records, and every parity-ledger row from the pinned `kova-0.29.0` baseline
+links to a stable requirement ID. See
+[product-contract/backlog/STATUS.md](product-contract/backlog/STATUS.md) for the
+generated completion view. Native implementations and conformance runners have
+not landed yet.
+
+## Verification
+
+Governance and contract checks use only the Python standard library:
+
+```sh
+python tools/contract-linter/lint.py
+python -m unittest discover tools/contract-linter/tests -v
+python tools/contract-backlog/tracker.py --check
+python -m unittest discover tools/contract-backlog/tests -v
+python tools/contract-linter/lint.py --changed-since origin/main   # effective instructions
+```
