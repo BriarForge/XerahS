@@ -1,24 +1,104 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "capability": "EDITOR-CANVAS-001",
+  "comparison": "subset",
   "vectors": [
     {
       "id": "rotate-90-clockwise",
-      "source_size": [3, 2],
-      "points": [[0, 0], [2, 1]],
-      "operation": { "id": "rotate_90_clockwise" },
-      "expected": { "canvas_size": [2, 3], "points": [[1, 0], [0, 2]], "history_delta": 1 }
+      "operation": "apply-operations",
+      "input": {
+        "source_size": [
+          3,
+          2
+        ],
+        "points": [
+          [
+            0,
+            0
+          ],
+          [
+            2,
+            1
+          ]
+        ],
+        "operations": [
+          {
+            "id": "rotate_90_clockwise"
+          }
+        ]
+      },
+      "expected": {
+        "canvas_size": [
+          2,
+          3
+        ],
+        "points": [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            2
+          ]
+        ],
+        "history_delta": 1
+      }
     },
     {
       "id": "center-expand-canvas",
-      "source_size": [100, 80],
-      "operation": { "id": "resize_canvas", "size": [120, 100], "anchor": "center" },
-      "expected": { "source_offset": [10, 10], "pixels_resampled": false, "history_delta": 1 }
+      "operation": "apply-operations",
+      "input": {
+        "source_size": [
+          100,
+          80
+        ],
+        "operations": [
+          {
+            "id": "resize_canvas",
+            "size": [
+              120,
+              100
+            ],
+            "anchor": "center"
+          }
+        ]
+      },
+      "expected": {
+        "source_offset": [
+          10,
+          10
+        ],
+        "pixels_resampled": false,
+        "history_delta": 1
+      }
     },
     {
       "id": "viewport-only",
-      "source_size": [800, 600],
-      "operations": [{ "id": "zoom_in" }, { "id": "pan", "delta": [30, -12] }],
-      "expected": { "document_changed": false, "history_delta": 0, "dirty_delta": false }
+      "operation": "apply-operations",
+      "input": {
+        "source_size": [
+          800,
+          600
+        ],
+        "operations": [
+          {
+            "id": "zoom_in"
+          },
+          {
+            "id": "pan",
+            "delta": [
+              30,
+              -12
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "document_changed": false,
+        "history_delta": 0,
+        "dirty_delta": false
+      }
     }
   ]
 }

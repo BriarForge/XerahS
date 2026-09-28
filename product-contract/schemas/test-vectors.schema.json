@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xerahs.com/schemas/product-contract-test-vectors-v2.json",
+  "title": "XerahS capability conformance vectors",
+  "type": "object",
+  "required": ["schema_version", "capability", "comparison", "vectors"],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "capability": { "type": "string", "pattern": "^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+-[0-9]{3}$" },
+    "operation": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "comparison": { "enum": ["exact", "subset"] },
+    "input_defaults": { "type": "object" },
+    "requirement_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+    "notes": { "type": "string" },
+    "vectors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "input", "expected"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+          "operation": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "requirements": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+          "input": { "type": "object" },
+          "expected": { "type": "object" }
+        }
+      }
+    }
+  }
+}

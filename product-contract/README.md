@@ -32,6 +32,12 @@ The current human review packet is
 It summarizes all approved packages, high-impact decisions, and evidence still
 required for activation. The durable approval record is stored beside it.
 
+## Conformance vectors
+
+Every capability's `test-vectors.json` follows [`VECTORS.md`](VECTORS.md): one
+structure, one set of comparison rules, and a headless test seam per operation
+that every native implementation and Linux edition uses.
+
 ## Qualification capabilities (Wave 1)
 
 These packages are selected as the first contract-writing tranche.

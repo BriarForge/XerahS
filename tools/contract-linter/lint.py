@@ -317,6 +317,57 @@ def lint_json(repo: Path, findings: Findings) -> None:
             findings.require(isinstance(value, dict) and "$schema" in value, path, "JSON Schema missing $schema")
 
 
+VECTOR_ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+OPERATION = re.compile(r"^[a-z][a-z0-9-]*$")
+
+
+def lint_vectors(repo: Path, findings: Findings) -> None:
+    """Validate capability vector files against product-contract/VECTORS.md."""
+    contract_root = repo / "product-contract"
+    _, _, capabilities = parse_manifest(contract_root / "manifest.yaml", Findings())
+    requirements = {capability.identifier: set(capability.requirements) for capability in capabilities}
+    for path in sorted((contract_root / "capabilities").glob("*/test-vectors.json")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8-sig"))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            continue  # reported by lint_json
+        capability = path.parent.name
+        if not isinstance(data, dict) or data.get("schema_version") != 2:
+            findings.add(path, "vector file must use schema_version 2 (product-contract/VECTORS.md)")
+            continue
+        findings.require(data.get("capability") == capability, path, f"vector capability must be {capability}")
+        findings.require(data.get("comparison") in {"exact", "subset"}, path, "vector comparison must be exact or subset")
+        allowed = requirements.get(capability, set())
+        for requirement in data.get("requirement_ids", []):
+            findings.require(requirement in allowed, path, f"requirement_ids names unknown requirement {requirement}")
+        default_operation = data.get("operation")
+        vectors = data.get("vectors")
+        if not isinstance(vectors, list) or not vectors:
+            findings.add(path, "vector file must contain vectors")
+            continue
+        seen: set[str] = set()
+        for vector in vectors:
+            if not isinstance(vector, dict):
+                findings.add(path, "vector must be an object")
+                continue
+            vector_id = vector.get("id", "")
+            findings.require(bool(VECTOR_ID.fullmatch(str(vector_id))), path, f"invalid vector id {vector_id!r}")
+            findings.require(vector_id not in seen, path, f"duplicate vector id {vector_id}")
+            seen.add(vector_id)
+            extra = sorted(set(vector) - {"id", "operation", "requirements", "input", "expected"})
+            findings.require(not extra, path, f"{vector_id}: unsupported vector fields {extra}")
+            operation = vector.get("operation", default_operation)
+            findings.require(
+                isinstance(operation, str) and bool(OPERATION.fullmatch(operation)),
+                path,
+                f"{vector_id}: vector has no valid operation",
+            )
+            findings.require(isinstance(vector.get("input"), dict), path, f"{vector_id}: input must be an object")
+            findings.require(isinstance(vector.get("expected"), dict), path, f"{vector_id}: expected must be an object")
+            for requirement in vector.get("requirements", []):
+                findings.require(requirement in allowed, path, f"{vector_id}: unknown requirement {requirement}")
+
+
 def lint_approval_records(repo: Path, findings: Findings) -> None:
     contract_root = repo / "product-contract"
     manifest_path = contract_root / "manifest.yaml"
@@ -464,6 +515,7 @@ def lint_repository(repo: Path) -> list[str]:
     lint_manifest(repo, findings)
     lint_json(repo, findings)
     lint_approval_records(repo, findings)
+    lint_vectors(repo, findings)
     lint_editor_catalogs(repo, findings)
     lint_parity(repo, findings)
     return findings.items

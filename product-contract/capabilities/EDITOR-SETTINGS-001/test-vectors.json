@@ -1,24 +1,60 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "capability": "EDITOR-SETTINGS-001",
+  "comparison": "subset",
   "vectors": [
     {
       "id": "invalid-field-isolation",
-      "input": { "Theme": "Dark", "BlurStrength": "NaN", "Thickness": 8 },
-      "expected": { "Theme": "Dark", "BlurStrength": 30, "Thickness": 8, "diagnostic": "invalid-BlurStrength" }
+      "operation": "load-settings",
+      "input": {
+        "stored": {
+          "Theme": "Dark",
+          "BlurStrength": "NaN",
+          "Thickness": 8
+        }
+      },
+      "expected": {
+        "Theme": "Dark",
+        "BlurStrength": 30,
+        "Thickness": 8,
+        "diagnostic": "invalid-BlurStrength"
+      }
     },
     {
       "id": "recent-deduplication",
-      "platform": "windows",
-      "existing": ["C:\\Images\\One.png"],
-      "add": "c:\\images\\ONE.png",
-      "maximum": 10,
-      "expected_count": 1
+      "operation": "recent-files-add",
+      "input": {
+        "platform": "windows",
+        "existing": [
+          "C:\\Images\\One.png"
+        ],
+        "add": "c:\\images\\ONE.png",
+        "maximum": 10
+      },
+      "expected": {
+        "count": 1
+      }
     },
     {
       "id": "unknown-round-trip",
-      "input": { "Theme": "Light", "FutureOption": { "enabled": true } },
-      "change": { "Theme": "Dark" },
-      "expected": { "Theme": "Dark", "FutureOption": { "enabled": true } }
+      "operation": "settings-round-trip",
+      "input": {
+        "stored": {
+          "Theme": "Light",
+          "FutureOption": {
+            "enabled": true
+          }
+        },
+        "change": {
+          "Theme": "Dark"
+        }
+      },
+      "expected": {
+        "Theme": "Dark",
+        "FutureOption": {
+          "enabled": true
+        }
+      }
     }
   ]
 }

@@ -29,6 +29,8 @@ The linter checks:
 - human product-owner approval records covering every approved or active
   capability at the manifest contract version;
 - JSON syntax and the presence of JSON Schema dialect declarations;
+- capability `test-vectors.json` structure, unique vector IDs, operations, and
+  requirement references under `product-contract/VECTORS.md`;
 - all required baseline/parity artifacts, row fields, unique ledger IDs, source
   evidence, platform dispositions, and valid contract links;
 - the pinned baseline commit and submodule identifiers.

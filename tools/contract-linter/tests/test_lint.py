@@ -102,6 +102,39 @@ class ContractLintTests(unittest.TestCase):
             self.assertEqual(1, len(findings.items))
             self.assertIn("lacks human product-owner approval record: SAMPLE-CAPABILITY-001", findings.items[0])
 
+    def test_vector_file_structure_is_validated(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            contract = repo / "product-contract"
+            package = contract / "capabilities" / "SAMPLE-CAPABILITY-001"
+            package.mkdir(parents=True)
+            (contract / "manifest.yaml").write_text(
+                "contract_version: 1.2.3\nstatus: draft\ncapabilities:\n"
+                "  - id: SAMPLE-CAPABILITY-001\n"
+                "    path: capabilities/SAMPLE-CAPABILITY-001\n"
+                "    version: 1.0.0\n    status: draft\n"
+                "    requirements: [SAM-001]\n",
+                encoding="utf-8",
+            )
+            (package / "test-vectors.json").write_text(
+                json.dumps({
+                    "schema_version": 2,
+                    "capability": "SAMPLE-CAPABILITY-001",
+                    "comparison": "subset",
+                    "vectors": [
+                        {"id": "one", "operation": "run", "requirements": ["SAM-001"], "input": {}, "expected": {}},
+                        {"id": "one", "requirements": ["SAM-999"], "input": {}, "expected": {}},
+                    ],
+                }),
+                encoding="utf-8",
+            )
+            findings = LINT.Findings()
+            LINT.lint_vectors(repo, findings)
+            joined = "\n".join(findings.items)
+            self.assertIn("duplicate vector id one", joined)
+            self.assertIn("one: vector has no valid operation", joined)
+            self.assertIn("one: unknown requirement SAM-999", joined)
+
     def test_image_editor_catalogs_match_pinned_census(self) -> None:
         repo = Path(__file__).resolve().parents[3]
         findings = LINT.Findings()
