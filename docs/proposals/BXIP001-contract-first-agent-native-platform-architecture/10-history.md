@@ -64,3 +64,4 @@ Residual risks that remain acceptable for a proposed architecture:
 | 2026-09-28 | Required primary-branch development | All agent work commits and pushes directly on `main`; sessions started on tooling-assigned branches such as `claude/*` switch to `main` first |
 | 2026-09-28 | Added Linux distro-native editions (D-LIN-002) | Let Omarchy, Ubuntu, Fedora, and other desktops receive native editions built from the same contract while `linux-qt` stays the release-blocking reference |
 | 2026-09-28 | Added native Android and iOS targets (D-MOB-001, D-AND-001, D-IOS-001) | Extend the English contract to mobile through `MOBILE-PLATFORM-001` while keeping desktop parity measurement unchanged |
+| 2026-10-08 | Confirmed the `linux-hyprland` toolkit as Qt 6 with LayerShellQt (D-LIN-002, contract 0.3.1) | Share the Qt code base and C++ toolchain with the `linux-qt` reference edition while using layer-shell surfaces for Hyprland overlays |

@@ -1,6 +1,6 @@
 # Native implementation readiness
 
-Contract version `0.3.0` (approval `APPROVAL-2026-09-28-MOBILE-TARGETS`) is ready
+Contract version `0.3.1` (approval `APPROVAL-2026-10-08-LINUX-HYPRLAND-TOOLKIT`) is ready
 for native coding to start on Windows, macOS, Linux, Android, and iOS. This page
 states what each platform team starts with, in what order, and which gates stay
 open without blocking the start.
@@ -14,7 +14,7 @@ open without blocking the start.
 | Linux `linux-qt` (reference edition) | D-LIN-001: Qt 6, C++17, Wayland first | Ready to start |
 | Linux `linux-gnome` (Ubuntu, Fedora Workstation) | D-LIN-002: GTK 4 with libadwaita, proposed | Ready once the product owner confirms the toolkit |
 | Linux `linux-kde` (Fedora KDE, Kubuntu) | D-LIN-002: Qt 6 with KDE Frameworks 6, proposed | Ready once the product owner confirms the toolkit |
-| Linux `linux-hyprland` (Omarchy, Arch with Hyprland) | D-LIN-002: toolkit to be chosen | Ready once the product owner chooses the toolkit |
+| Linux `linux-hyprland` (Omarchy, Arch with Hyprland) | D-LIN-002: Qt 6 with LayerShellQt, confirmed 2026-10-08 | Ready to start as a candidate edition |
 | Android | D-AND-001: Kotlin, Jetpack Compose, Android 10+ | Ready to start within `mobile-scope.json` |
 | iOS and iPadOS | D-IOS-001: Swift, SwiftUI with UIKit, iOS 17+ | Ready to start within `mobile-scope.json`; release blocked by the MOB-018 licensing review |
 

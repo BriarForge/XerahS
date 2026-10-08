@@ -73,7 +73,7 @@
       ],
       "desktops": ["Hyprland"],
       "display_server": "Wayland",
-      "toolkit": { "value": "Qt 6 with LayerShellQt or GTK 4 with gtk4-layer-shell; choose one before first code", "decision": "D-LIN-002 (proposed)" },
+      "toolkit": { "value": "Qt 6 with LayerShellQt, C++17", "decision": "D-LIN-002 (confirmed 2026-10-08)" },
       "mechanisms": {
         "capture": "xdg-desktop-portal-hyprland, with compositor capture protocols as diagnosed fallbacks",
         "global_shortcuts": "GlobalShortcuts portal, with documented Hyprland bind integration",

@@ -1,0 +1,54 @@
+{
+  "$schema": "../schemas/approval-record.schema.json",
+  "schema_version": 1,
+  "decision_id": "APPROVAL-2026-10-08-LINUX-HYPRLAND-TOOLKIT",
+  "recorded_on": "2026-10-08",
+  "authority": {
+    "role": "human-product-owner",
+    "identity": "Repository product owner, confirmed by interactive instruction"
+  },
+  "source": {
+    "kind": "interactive-instruction",
+    "statement": "Product-owner decision of 2026-10-08: the linux-hyprland edition uses Qt 6 with LayerShellQt. Recorded as approval of contract 0.3.1: CORE-PLATFORM-001 0.5.1 confirms the linux-hyprland toolkit in linux-editions.json under D-LIN-002, with no change to any requirement. The edition stays a candidate. All other packages carry forward unchanged from APPROVAL-2026-09-28-MOBILE-TARGETS."
+  },
+  "decision": "approved",
+  "scope": {
+    "contract_version": "0.3.1",
+    "packages": [
+      "FILENAME-GENERATION-001",
+      "POST-CAPTURE-ACTIONS-001",
+      "REGION-CAPTURE-001",
+      "EDITOR-SESSION-001",
+      "EDITOR-ANNOTATIONS-001",
+      "EDITOR-EFFECTS-001",
+      "EDITOR-CANVAS-001",
+      "EDITOR-OUTPUT-ACTIONS-001",
+      "EDITOR-SETTINGS-001",
+      "EDITOR-UTILITIES-001",
+      "SETTINGS-CATALOG-001",
+      "WORKFLOW-CATALOG-001",
+      "INTERFACE-CATALOG-001",
+      "CORE-PLATFORM-001",
+      "COMPATIBILITY-CATALOG-001",
+      "MOBILE-PLATFORM-001"
+    ]
+  },
+  "effects": {
+    "normative_contract": true,
+    "implementation_authorized": true,
+    "activation_authorized": false,
+    "census_closed": false,
+    "release_authorized": false
+  },
+  "remaining_gates": [
+    "Promotion of linux-hyprland from candidate to supported by the product owner",
+    "Baseline census closure evidence and product-owner closure signature",
+    "Windows, macOS, Linux, Android, and iOS implementation and conformance evidence",
+    "Licensing review of iOS distribution under GPL v3 before any iOS release (MOB-018)",
+    "Per-row mobile dispositions for WORKFLOW-CATALOG-001 before it activates on mobile",
+    "Security and privacy review for capture, credentials, automation, extensions, and external publication",
+    "Accessibility review for native desktop and mobile interaction surfaces",
+    "Compatibility fixtures and runtime-observation evidence",
+    "Requirement-to-conformance traceability and parity review"
+  ]
+}

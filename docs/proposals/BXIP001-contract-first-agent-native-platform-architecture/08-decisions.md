@@ -82,11 +82,11 @@ The root `AGENTS.md` encodes this authority as `ROOT-NUGET-*`. `CORE-PLATFORM-00
 
 ## D-LIN-002 Linux distro-native editions
 
-**Decision.** Accepted by product-owner direction on 2026-09-28 for the edition model; per-edition toolkits remain proposed until confirmed.
+**Decision.** Accepted by product-owner direction on 2026-09-28 for the edition model. The `linux-hyprland` toolkit was confirmed by the product owner on 2026-10-08; the other per-edition toolkits remain proposed until confirmed.
 
 - Linux MAY ship as several native editions defined by `CORE-033` to `CORE-037` and profiled in `product-contract/capabilities/CORE-PLATFORM-001/linux-editions.json`. Each edition is a complete native application built from the same English Product Contract, not a theme or wrapper.
 - `linux-qt` under D-LIN-001 is the reference edition and the fallback for any distribution without a distro-native edition. It is `supported` and release-blocking.
-- Candidate editions: `linux-gnome` (Ubuntu, Fedora Workstation; proposed GTK 4 with libadwaita), `linux-kde` (Fedora KDE, Kubuntu; proposed Qt 6 with KDE Frameworks 6 and Kirigami), and `linux-hyprland` (Omarchy and Arch with Hyprland; Qt 6 with LayerShellQt or GTK 4 with gtk4-layer-shell, to be chosen). A candidate MAY be implemented once the product owner confirms its toolkit and becomes release-blocking only when promoted to `supported`.
+- Candidate editions: `linux-gnome` (Ubuntu, Fedora Workstation; proposed GTK 4 with libadwaita), `linux-kde` (Fedora KDE, Kubuntu; proposed Qt 6 with KDE Frameworks 6 and Kirigami), and `linux-hyprland` (Omarchy and Arch with Hyprland; Qt 6 with LayerShellQt, confirmed 2026-10-08). A candidate MAY be implemented once the product owner confirms its toolkit and becomes release-blocking only when promoted to `supported`.
 - This decision supersedes D-LIN-001's rejection of GTK 4 and libadwaita only for a confirmed `linux-gnome` edition, and its best-effort wlroots posture only for a confirmed `linux-hyprland` edition.
 - All editions share identity, XDG locations, persisted formats, and conformance vectors. Editions live under `platforms/linux/<edition>/` and conform through `conformance/adapters/linux/`.
 - Every toolkit remains subject to ROOT-LICENSE-001; GTK 4, libadwaita, KDE Frameworks, and Qt are used under GPL v3-compatible licenses with dynamic linking.

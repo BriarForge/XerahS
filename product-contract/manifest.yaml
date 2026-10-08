@@ -1,6 +1,6 @@
 # Product Contract manifest. Schema: schemas/manifest.schema.json.
 # Contract version is the product version native apps may claim.
-contract_version: 0.3.0
+contract_version: 0.3.1
 status: draft
 capabilities:
   - id: FILENAME-GENERATION-001
@@ -70,7 +70,7 @@ capabilities:
     requirements: [IFCAT-001, IFCAT-002, IFCAT-003, IFCAT-004, IFCAT-005, IFCAT-006, IFCAT-007, IFCAT-008, IFCAT-009, IFCAT-010, IFCAT-011, IFCAT-012, IFCAT-013, IFCAT-014, IFCAT-015, IFCAT-016, IFCAT-017, IFCAT-018]
   - id: CORE-PLATFORM-001
     path: capabilities/CORE-PLATFORM-001
-    version: 0.5.0
+    version: 0.5.1
     status: approved
     requirements: [CORE-001, CORE-002, CORE-003, CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-010, CORE-011, CORE-012, CORE-013, CORE-014, CORE-015, CORE-016, CORE-017, CORE-018, CORE-019, CORE-020, CORE-021, CORE-022, CORE-023, CORE-024, CORE-025, CORE-026, CORE-027, CORE-028, CORE-029, CORE-030, CORE-031, CORE-032, CORE-033, CORE-034, CORE-035, CORE-036, CORE-037]
   - id: COMPATIBILITY-CATALOG-001
