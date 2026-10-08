@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # D-LIN-001: Qt 6, dynamically linked.
-find_package(Qt6 6.4 REQUIRED COMPONENTS Core Test)
+find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Widgets DBus Network Test)
 # .xann gzip container (ES-013); zlib licence is GPL-compatible.
 find_package(ZLIB REQUIRED)
 
@@ -37,6 +37,23 @@ target_compile_options(xerahs_core PRIVATE -Wall -Wextra -Wpedantic
 add_executable(xerahs-conformance-adapter conformance-adapter/main.cpp)
 target_link_libraries(xerahs-conformance-adapter PRIVATE xerahs_core)
 target_compile_options(xerahs-conformance-adapter PRIVATE -Wall -Wextra -Wpedantic)
+
+# The XerahS application (D-LIN-001: Qt Widgets). Product logic stays in
+# xerahs_core; app/ only wires it to Qt and the desktop.
+add_executable(xerahs
+  app/CaptureActions.cpp
+  app/CaptureActions.h
+  app/CaptureController.cpp
+  app/CaptureController.h
+  app/PortalScreenshot.cpp
+  app/PortalScreenshot.h
+  app/RegionOverlay.cpp
+  app/RegionOverlay.h
+  app/main.cpp
+)
+set_target_properties(xerahs PROPERTIES AUTOMOC ON)
+target_link_libraries(xerahs PRIVATE xerahs_core Qt6::Gui Qt6::Widgets Qt6::DBus Qt6::Network)
+target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
 enable_testing()
 add_executable(filename-generator-test tests/FilenameGeneratorTest.cpp)

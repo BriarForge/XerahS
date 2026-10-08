@@ -98,6 +98,23 @@ private slots:
     QCOMPARE(outcome->lastRegion->displays.size(), std::size_t{2});
   }
 
+  // RC-010, RC-024: keyboard steps adjust only a selected rectangle.
+  void keyboardAdjustsSelectedOnly() {
+    RegionSession session(twoDisplays(), SessionSettings{false, false}, {}, {});
+    session.resumeAt(SessionState::Idle);
+    KeyboardStep right;
+    right.dx = 1;
+    QVERIFY(!session.keyboardAdjust(right));
+    session.pointerDown({1, 1});
+    session.pointerUp({3, 2});
+    QVERIFY(session.keyboardAdjust(right));
+    QCOMPARE(session.selection(), std::optional<PhysicalRect>(PhysicalRect{2, 1, 4, 2}));
+    right.precision = true;
+    QVERIFY(session.keyboardAdjust(right));
+    QCOMPARE(session.selection(), std::optional<PhysicalRect>(PhysicalRect{6, 1, 8, 2}));
+    QVERIFY(!session.keyboardAdjust(right));  // already at the edge
+  }
+
   // RC-011: dragging overrides snapping.
   void dragOverridesSnapping() {
     RegionSession session(twoDisplays(), SessionSettings{false, true}, {SnapTarget{{0, 0, 8, 4}}}, {});

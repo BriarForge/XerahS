@@ -61,6 +61,10 @@ public:
   void pointerMove(PhysicalPoint point);
   void pointerUp(PhysicalPoint point);
   void keyEnter();
+  // RC-010, RC-024: one keyboard move or resize step on the selected
+  // rectangle, clamped to the bounding box of all displays. Returns whether
+  // the selection changed, so the overlay can announce the new bounds.
+  bool keyboardAdjust(const KeyboardStep &step);
   void confirm();
   void keyEscape();
   void cancel();
@@ -73,6 +77,7 @@ public:
 
   SessionState state() const { return m_state; }
   std::optional<PhysicalRect> selection() const { return m_selection; }
+  const Topology &topology() const { return m_topology; }
   std::optional<QString> diagnostic() const { return m_diagnostic; }
   bool overlayShown() const { return m_overlayShown; }
   int publishedResults() const { return m_published; }

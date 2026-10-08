@@ -125,6 +125,14 @@ void RegionSession::keyEnter() {
 
 void RegionSession::confirm() { keyEnter(); }
 
+bool RegionSession::keyboardAdjust(const KeyboardStep &step) {
+  if (m_state != SessionState::Selected || !m_selection) return false;
+  const PhysicalRect adjusted = applyKeyboardStep(*m_selection, step, boundingBox(m_topology));
+  if (adjusted == *m_selection) return false;
+  m_selection = adjusted;
+  return true;
+}
+
 void RegionSession::keyEscape() {
   // RC-008: no image, no last-region update, no post-capture actions.
   if (isTerminal(m_state)) return;
