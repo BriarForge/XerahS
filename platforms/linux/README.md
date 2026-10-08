@@ -1,6 +1,6 @@
 # Linux
 
-Native Linux application. Started: the `linux-qt` reference edition lives in [`linux-qt/`](linux-qt/README.md).
+Native Linux application. Started: the `linux-qt` reference edition lives in [`linux-qt/`](linux-qt/README.md), and its ImageEditor module in [`linux-qt/src/image-editor/`](linux-qt/src/image-editor/README.md).
 
 Pilot default (D-LIN-001): Qt 6 (dynamically linked), C++17, Wayland first, X11 fallback. GNOME 46+ and KDE Plasma 6 first-class.
 

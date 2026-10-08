@@ -11,6 +11,7 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 ## Layout
 
 - `src/` production libraries with conformance seams (Qt Core only)
+- `src/image-editor/` native ImageEditor feature module ([README](src/image-editor/README.md)); not started
 - `conformance-adapter/` thin adapter for `conformance/runner`
 - `tests/` native unit tests for paths the vectors cannot reach
 - `traceability/` requirement to implementation and evidence maps
