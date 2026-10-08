@@ -8,7 +8,10 @@
     "platforms/linux/linux-qt/src/capture/RegionGeometry.h",
     "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
     "platforms/linux/linux-qt/src/capture/RegionSession.h",
-    "platforms/linux/linux-qt/src/capture/RegionSession.cpp"
+    "platforms/linux/linux-qt/src/capture/RegionSession.cpp",
+    "platforms/linux/linux-qt/app/PortalScreenshot.cpp",
+    "platforms/linux/linux-qt/app/RegionOverlay.cpp",
+    "platforms/linux/linux-qt/app/CaptureController.cpp"
   ],
   "requirements": {
     "RC-001": {
@@ -16,14 +19,14 @@
       "vectors": [
         "permission-denied-shows-no-overlay"
       ],
-      "note": "The session enters failed without an overlay on denied or restricted permission. Querying portal authorization arrives with the Wayland capture backend."
+      "note": "The app asks the xdg-desktop-portal Screenshot portal before any overlay; a denial fails with capture-permission-denied and no overlay. A portal that only exposes an interactive chooser is not yet handled."
     },
     "RC-002": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "permission-denied-shows-no-overlay"
       ],
-      "note": "Denial maps to capture-permission-denied and the state machine never re-prompts. The native consent flow arrives with the portal backend."
+      "note": "The portal owns the native consent prompt (verified on Hyprland, 2026-10-09); denial is reported once and never re-prompted."
     },
     "RC-003": {
       "status": "partial",
@@ -42,9 +45,9 @@
       ]
     },
     "RC-005": {
-      "status": "not-started",
+      "status": "partial",
       "vectors": [],
-      "note": "Overlay UI."
+      "note": "One frameless fullscreen overlay per screen shows the frozen snapshot. Verified on a single Hyprland display; multi-display layouts are unverified."
     },
     "RC-006": {
       "status": "implemented",
@@ -78,7 +81,7 @@
       "vectors": [
         "keyboard-move-stops-at-edge"
       ],
-      "note": "Keyboard steps are clamped to the bounding box. Resize handles, size presets, and the in-UI modifier hint arrive with the overlay."
+      "note": "Arrow, Shift+Arrow, and Alt+Arrow steps are clamped and the precision modifier is shown in the overlay hint bar. Resize handles and size presets are not yet interactive."
     },
     "RC-011": {
       "status": "partial",
@@ -101,9 +104,9 @@
       "note": "Cursor inclusion."
     },
     "RC-014": {
-      "status": "not-started",
+      "status": "partial",
       "vectors": [],
-      "note": "Frozen and live overlay modes."
+      "note": "Frozen mode from one portal snapshot is implemented. Live mode is not offered."
     },
     "RC-015": {
       "status": "not-started",
@@ -133,9 +136,9 @@
       "note": "Stable codes capture-permission-denied, display-topology-changed, capture-source-failed, and last-region-invalid; failed composites return no pixels. The privacy and diagnostic retention policy applies once real pixels exist."
     },
     "RC-019": {
-      "status": "not-started",
+      "status": "partial",
       "vectors": [],
-      "note": "Overlay accessibility."
+      "note": "Keyboard-only selection (Space anchors at a keyboard cursor), accessible name and instructions, bounds announcements, and a white-on-black boundary with corner handles. Screen-reader behaviour is not yet verified with Orca."
     },
     "RC-020": {
       "status": "not-started",
@@ -168,13 +171,13 @@
       ]
     },
     "RC-024": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "keyboard-move-stops-at-edge",
         "keyboard-move-single-step",
         "keyboard-resize-keeps-one-pixel"
       ],
-      "note": "Step sizes, edge stops, and the 1-pixel minimum are implemented. Announcing bounds to assistive technology arrives with the overlay."
+      "note": "Keyboard steps are announced to assistive technology through the overlay's accessible description."
     },
     "RC-025": {
       "status": "implemented",

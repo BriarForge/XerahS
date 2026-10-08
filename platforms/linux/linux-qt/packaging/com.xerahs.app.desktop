@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Name=XerahS
+GenericName=Screen capture
+Comment=Capture, annotate, and share screenshots
+Exec=xerahs %U
+Icon=com.xerahs.app
+Terminal=false
+Categories=Graphics;Utility;
+Keywords=screenshot;capture;region;
+StartupNotify=false
+Actions=CaptureRegion;
+
+[Desktop Action CaptureRegion]
+Name=Capture region
+Exec=xerahs --capture-region

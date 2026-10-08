@@ -19,6 +19,17 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 - `tests/` native unit tests for paths the vectors cannot reach
 - `traceability/` requirement to implementation and evidence maps
 
+## The `xerahs` app
+
+`build/xerahs` is a single-instance tray app (`com.xerahs.app`, "XerahS").
+
+- **Capture region** (tray menu, tray click, or `xerahs --capture-region`, which forwards to a running instance) takes a frozen snapshot through the xdg-desktop-portal Screenshot portal, shows a fullscreen selection overlay per screen, and runs the post-capture pipeline: save as PNG to `~/Pictures/XerahS` with the default filename pattern, then copy the image to the clipboard. The first capture shows the portal's consent prompt.
+- Keys in the overlay: drag or Space to select, Enter to capture, Esc to cancel, arrows to move by 1 pixel (Shift for 10), Alt+arrows to resize.
+- Hyprland binding example: `bind = , PRINT, exec, xerahs --capture-region`.
+- `packaging/com.xerahs.app.desktop` gives desktop launches the `com.xerahs.app` identity, which portals use to attribute consent.
+
+No settings are persisted yet, and the reference Avalonia app's configuration is never read or written.
+
 ## Build and test
 
 See [`../AGENTS.md`](../AGENTS.md) for the toolchain. On Ubuntu 24.04:
