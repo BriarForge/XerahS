@@ -7,6 +7,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # D-LIN-001: Qt 6, dynamically linked.
 find_package(Qt6 6.4 REQUIRED COMPONENTS Core Test)
+# .xann gzip container (ES-013); zlib licence is GPL-compatible.
+find_package(ZLIB REQUIRED)
 
 set(XERAHS_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." CACHE PATH "BriarForge/XerahS repository root")
 
@@ -17,12 +19,20 @@ add_library(xerahs_core STATIC
   src/capture/RegionGeometry.h
   src/capture/RegionSession.cpp
   src/capture/RegionSession.h
+  src/image-editor/AnnotationDocument.cpp
+  src/image-editor/AnnotationDocument.h
+  src/image-editor/AnnotationRenderer.cpp
+  src/image-editor/AnnotationRenderer.h
+  src/image-editor/EditorSession.cpp
+  src/image-editor/EditorSession.h
   src/naming/FilenameGenerator.cpp
   src/naming/FilenameGenerator.h
 )
 target_include_directories(xerahs_core PUBLIC src)
-target_link_libraries(xerahs_core PUBLIC Qt6::Core)
-target_compile_options(xerahs_core PRIVATE -Wall -Wextra -Wpedantic)
+target_link_libraries(xerahs_core PUBLIC Qt6::Core PRIVATE ZLIB::ZLIB)
+target_compile_options(xerahs_core PRIVATE -Wall -Wextra -Wpedantic
+  # ES-025: binary64 in the order written, no fused multiply-add.
+  -ffp-contract=off)
 
 add_executable(xerahs-conformance-adapter conformance-adapter/main.cpp)
 target_link_libraries(xerahs-conformance-adapter PRIVATE xerahs_core)
@@ -45,6 +55,11 @@ add_executable(region-capture-test tests/RegionCaptureTest.cpp)
 set_target_properties(region-capture-test PROPERTIES AUTOMOC ON)
 target_link_libraries(region-capture-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME region-capture COMMAND region-capture-test)
+
+add_executable(editor-session-test tests/EditorSessionTest.cpp)
+set_target_properties(editor-session-test PROPERTIES AUTOMOC ON)
+target_link_libraries(editor-session-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME editor-session COMMAND editor-session-test)
 
 find_package(Python3 3.12 REQUIRED COMPONENTS Interpreter)
 # Capabilities this edition implements. The full suite, including capabilities

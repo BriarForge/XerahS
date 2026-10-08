@@ -23,7 +23,7 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 See [`../AGENTS.md`](../AGENTS.md) for the toolchain. On Ubuntu 24.04:
 
 ```bash
-sudo apt install cmake ninja-build g++ qt6-base-dev python3
+sudo apt install cmake ninja-build g++ qt6-base-dev zlib1g-dev python3
 cmake -S . -B build -G Ninja
 cmake --build build
 ctest --test-dir build --output-on-failure
