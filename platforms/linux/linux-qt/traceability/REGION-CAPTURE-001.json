@@ -1,0 +1,204 @@
+{
+  "capability": "REGION-CAPTURE-001",
+  "capability_version": "0.2.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "implementation": [
+    "platforms/linux/linux-qt/src/capture/RegionGeometry.h",
+    "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
+    "platforms/linux/linux-qt/src/capture/RegionSession.h",
+    "platforms/linux/linux-qt/src/capture/RegionSession.cpp"
+  ],
+  "requirements": {
+    "RC-001": {
+      "status": "partial",
+      "vectors": [
+        "permission-denied-shows-no-overlay"
+      ],
+      "note": "The session enters failed without an overlay on denied or restricted permission. Querying portal authorization arrives with the Wayland capture backend."
+    },
+    "RC-002": {
+      "status": "partial",
+      "vectors": [
+        "permission-denied-shows-no-overlay"
+      ],
+      "note": "Denial maps to capture-permission-denied and the state machine never re-prompts. The native consent flow arrives with the portal backend."
+    },
+    "RC-003": {
+      "status": "partial",
+      "vectors": [
+        "topology-change-cancels"
+      ],
+      "note": "Topology change cancels with display-topology-changed. The snapshot holds identity, bounds, and scale; rotation and colour characteristics arrive with the display backend."
+    },
+    "RC-004": {
+      "status": "implemented",
+      "vectors": [
+        "negative-origin-monitor",
+        "mixed-scale-cross-monitor",
+        "fractional-scale-floors",
+        "negative-origin-scaled"
+      ]
+    },
+    "RC-005": {
+      "status": "not-started",
+      "vectors": [],
+      "note": "Overlay UI."
+    },
+    "RC-006": {
+      "status": "implemented",
+      "vectors": [
+        "reverse-drag",
+        "zero-area-not-confirmable"
+      ]
+    },
+    "RC-007": {
+      "status": "implemented",
+      "vectors": [
+        "quick-confirm-completes",
+        "explicit-confirm-with-enter"
+      ]
+    },
+    "RC-008": {
+      "status": "implemented",
+      "vectors": [
+        "cancel-selected"
+      ]
+    },
+    "RC-009": {
+      "status": "implemented",
+      "vectors": [
+        "zero-area-not-confirmable",
+        "explicit-confirm-with-enter"
+      ]
+    },
+    "RC-010": {
+      "status": "partial",
+      "vectors": [
+        "keyboard-move-stops-at-edge"
+      ],
+      "note": "Keyboard steps are clamped to the bounding box. Resize handles, size presets, and the in-UI modifier hint arrive with the overlay."
+    },
+    "RC-011": {
+      "status": "partial",
+      "vectors": [
+        "click-selects-snapped-window"
+      ],
+      "note": "Click-to-snap and drag override are implemented (platforms/linux/linux-qt/tests/RegionCaptureTest.cpp). Native window and control discovery arrives with the overlay."
+    },
+    "RC-012": {
+      "status": "partial",
+      "vectors": [
+        "mixed-scale-cross-monitor",
+        "uncovered-area-is-transparent"
+      ],
+      "note": "The compositor places exact source pixels in desktop physical order and rejects resampled sources (platforms/linux/linux-qt/tests/RegionCaptureTest.cpp). Real capture sources arrive with the portal backend."
+    },
+    "RC-013": {
+      "status": "not-started",
+      "vectors": [],
+      "note": "Cursor inclusion."
+    },
+    "RC-014": {
+      "status": "not-started",
+      "vectors": [],
+      "note": "Frozen and live overlay modes."
+    },
+    "RC-015": {
+      "status": "not-started",
+      "vectors": [],
+      "note": "HDR and wide-gamut conversion."
+    },
+    "RC-016": {
+      "status": "implemented",
+      "vectors": [
+        "terminal-events-ignored"
+      ]
+    },
+    "RC-017": {
+      "status": "partial",
+      "vectors": [
+        "quick-confirm-completes",
+        "capture-failure-keeps-last-region",
+        "last-region-invalid-after-topology-change"
+      ],
+      "note": "The last region is produced only on capture success and validated against topology (platforms/linux/linux-qt/tests/RegionCaptureTest.cpp). Atomic persistence arrives with settings storage."
+    },
+    "RC-018": {
+      "status": "partial",
+      "vectors": [
+        "capture-failure-keeps-last-region"
+      ],
+      "note": "Stable codes capture-permission-denied, display-topology-changed, capture-source-failed, and last-region-invalid; failed composites return no pixels. The privacy and diagnostic retention policy applies once real pixels exist."
+    },
+    "RC-019": {
+      "status": "not-started",
+      "vectors": [],
+      "note": "Overlay accessibility."
+    },
+    "RC-020": {
+      "status": "not-started",
+      "vectors": [],
+      "note": "Overlay performance."
+    },
+    "RC-021": {
+      "status": "implemented",
+      "vectors": [
+        "all"
+      ]
+    },
+    "RC-022": {
+      "status": "implemented",
+      "vectors": [
+        "reverse-drag",
+        "negative-origin-monitor",
+        "mixed-scale-cross-monitor",
+        "fractional-scale-floors",
+        "fractional-logical-edge-reaches-physical-edge",
+        "negative-origin-scaled"
+      ]
+    },
+    "RC-023": {
+      "status": "implemented",
+      "vectors": [
+        "fractional-logical-edge-reaches-physical-edge",
+        "point-beyond-display-is-clamped",
+        "uncovered-area-is-transparent"
+      ]
+    },
+    "RC-024": {
+      "status": "partial",
+      "vectors": [
+        "keyboard-move-stops-at-edge",
+        "keyboard-move-single-step",
+        "keyboard-resize-keeps-one-pixel"
+      ],
+      "note": "Step sizes, edge stops, and the 1-pixel minimum are implemented. Announcing bounds to assistive technology arrives with the overlay."
+    },
+    "RC-025": {
+      "status": "implemented",
+      "vectors": [
+        "quick-confirm-completes",
+        "explicit-confirm-with-enter",
+        "terminal-events-ignored",
+        "permission-denied-shows-no-overlay",
+        "topology-change-cancels",
+        "capture-failure-keeps-last-region"
+      ]
+    },
+    "RC-026": {
+      "status": "implemented",
+      "vectors": [
+        "zero-area-not-confirmable",
+        "click-selects-snapped-window"
+      ]
+    },
+    "RC-027": {
+      "status": "implemented",
+      "vectors": [
+        "last-region-invalid-after-topology-change"
+      ]
+    }
+  }
+}
