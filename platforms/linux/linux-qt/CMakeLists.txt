@@ -64,7 +64,7 @@ add_test(NAME editor-session COMMAND editor-session-test)
 find_package(Python3 3.12 REQUIRED COMPONENTS Interpreter)
 # Capabilities this edition implements. The full suite, including capabilities
 # not yet implemented, runs without --capability and is expected to fail.
-set(XERAHS_IMPLEMENTED_CAPABILITIES FILENAME-GENERATION-001 POST-CAPTURE-ACTIONS-001 REGION-CAPTURE-001)
+set(XERAHS_IMPLEMENTED_CAPABILITIES FILENAME-GENERATION-001 POST-CAPTURE-ACTIONS-001 REGION-CAPTURE-001 EDITOR-SESSION-001)
 list(TRANSFORM XERAHS_IMPLEMENTED_CAPABILITIES PREPEND "--capability;" OUTPUT_VARIABLE XERAHS_CAPABILITY_ARGS)
 add_test(NAME conformance
   COMMAND Python3::Interpreter "${XERAHS_REPO_ROOT}/conformance/runner/xerahs_conformance.py"

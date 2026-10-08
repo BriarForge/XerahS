@@ -1,0 +1,210 @@
+{
+  "capability": "EDITOR-SESSION-001",
+  "capability_version": "0.2.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "implementation": [
+    "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.h",
+    "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+    "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.h",
+    "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp"
+  ],
+  "requirements": {
+    "ES-001": {
+      "status": "partial",
+      "vectors": [],
+      "note": "Typed source diagnostics are defined; decoding the source raster arrives with the Qt Gui editor surface."
+    },
+    "ES-002": {
+      "status": "partial",
+      "vectors": [],
+      "note": "Canvas coordinates are source pixels with a top-left origin. Orientation, alpha, and colour normalization arrive with the source loader."
+    },
+    "ES-003": {
+      "status": "implemented",
+      "vectors": [
+        "reverse-drag-rectangle",
+        "zero-area-rectangle-rejected",
+        "style-without-selection-changes-tool-only"
+      ]
+    },
+    "ES-004": {
+      "status": "partial",
+      "vectors": [],
+      "note": "Selection, move, and delete exist in EditorSession. Visible selection, resize, rotate, ordering, and pointer and keyboard handling arrive with the editor UI."
+    },
+    "ES-005": {
+      "status": "implemented",
+      "vectors": [
+        "reverse-drag-rectangle",
+        "zero-area-rectangle-rejected",
+        "undo-redo-move"
+      ]
+    },
+    "ES-006": {
+      "status": "implemented",
+      "vectors": [
+        "undo-redo-move",
+        "branch-clears-redo",
+        "truncated-checkpoint-stays-dirty",
+        "delete-and-undo-restores-selection"
+      ],
+      "note": "Undo and redo restore the selection each state had (platforms/linux/linux-qt/tests/EditorSessionTest.cpp)."
+    },
+    "ES-007": {
+      "status": "implemented",
+      "vectors": [
+        "delete-and-undo-restores-selection"
+      ],
+      "note": "History states are value snapshots; embedded images are implicitly shared and never mutated or disposed while reachable."
+    },
+    "ES-008": {
+      "status": "not-started",
+      "vectors": [],
+      "note": "Gesture cancellation and the Save, Discard, Cancel close prompt arrive with the editor UI."
+    },
+    "ES-009": {
+      "status": "partial",
+      "vectors": [
+        "render-stroke-coverage"
+      ],
+      "note": "AnnotationRenderer is the authoritative export compositor. Encoding the requested format and colour profile arrives with the save path."
+    },
+    "ES-010": {
+      "status": "implemented",
+      "vectors": [
+        "render-stroke-coverage",
+        "render-opacity-applied-once"
+      ]
+    },
+    "ES-011": {
+      "status": "partial",
+      "vectors": [],
+      "note": "EditorSession::recordSave() marks clean only when the raster and sidecar both persisted (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Atomic raster replacement arrives with the save path."
+    },
+    "ES-012": {
+      "status": "implemented",
+      "vectors": [],
+      "note": "A sidecar failure keeps the session dirty and reports sidecar-save-failed (platforms/linux/linux-qt/tests/EditorSessionTest.cpp)."
+    },
+    "ES-013": {
+      "status": "partial",
+      "vectors": [],
+      "note": "gzip-wrapped UTF-8 JSON with the schema fields round-trips (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Computing the source SHA-256 arrives with the source loader."
+    },
+    "ES-014": {
+      "status": "implemented",
+      "vectors": [
+        "empty-document-removes-sidecar"
+      ]
+    },
+    "ES-015": {
+      "status": "implemented",
+      "vectors": [
+        "newer-version-read-only-failure",
+        "unknown-fields-and-types-round-trip"
+      ]
+    },
+    "ES-016": {
+      "status": "not-started",
+      "vectors": [],
+      "note": "The source-hash mismatch choice arrives with the editor UI."
+    },
+    "ES-017": {
+      "status": "implemented",
+      "vectors": [
+        "duplicate-annotation-ids-rejected",
+        "oversized-canvas-rejected-before-allocation"
+      ],
+      "note": "Strict base64, PNG signature and IHDR limits, duplicate IDs, and finite numbers are checked before decode (platforms/linux/linux-qt/tests/EditorSessionTest.cpp)."
+    },
+    "ES-018": {
+      "status": "not-started",
+      "vectors": [],
+      "note": "Recovery documents."
+    },
+    "ES-019": {
+      "status": "not-started",
+      "vectors": [],
+      "note": "Editor accessibility."
+    },
+    "ES-020": {
+      "status": "not-started",
+      "vectors": [],
+      "note": "Temp and recovery retention arrive with the save path and recovery."
+    },
+    "ES-021": {
+      "status": "not-started",
+      "vectors": [],
+      "note": "Editor performance."
+    },
+    "ES-022": {
+      "status": "partial",
+      "vectors": [],
+      "note": "Structural and history vectors pass. Shared golden-image vectors await approved fixtures."
+    },
+    "ES-023": {
+      "status": "implemented",
+      "vectors": [
+        "reverse-drag-rectangle"
+      ]
+    },
+    "ES-024": {
+      "status": "implemented",
+      "vectors": [
+        "reverse-drag-rectangle"
+      ]
+    },
+    "ES-025": {
+      "status": "partial",
+      "vectors": [
+        "render-stroke-coverage",
+        "render-opacity-applied-once",
+        "render-fill-with-opacity"
+      ],
+      "note": "Multiple-of-90 rotations follow the reference exactly; other rotations return UnsupportedRotation until exact polygon coverage is implemented."
+    },
+    "ES-026": {
+      "status": "implemented",
+      "vectors": [
+        "branch-clears-redo",
+        "selection-is-not-history",
+        "style-without-selection-changes-tool-only"
+      ]
+    },
+    "ES-027": {
+      "status": "implemented",
+      "vectors": [
+        "undo-to-checkpoint-is-clean",
+        "truncated-checkpoint-stays-dirty"
+      ]
+    },
+    "ES-028": {
+      "status": "implemented",
+      "vectors": [
+        "oversized-canvas-rejected-before-allocation"
+      ],
+      "note": "Canvas and embedded-image limits are checked from JSON and PNG headers; readXann stops inflating at the JSON byte limit (platforms/linux/linux-qt/tests/EditorSessionTest.cpp)."
+    },
+    "ES-029": {
+      "status": "partial",
+      "vectors": [
+        "newer-version-read-only-failure",
+        "duplicate-annotation-ids-rejected",
+        "oversized-canvas-rejected-before-allocation"
+      ],
+      "note": "Document diagnostics follow the required priority and sidecar-save-failed and raster-save-failed are reported; the source-* diagnostics arrive with the source loader."
+    },
+    "ES-030": {
+      "status": "implemented",
+      "vectors": [
+        "sidecar-default-path",
+        "sidecar-baseline-fallback"
+      ],
+      "note": "The baseline fallback convention still needs runtime observation before activation, as ES-030 requires."
+    }
+  }
+}

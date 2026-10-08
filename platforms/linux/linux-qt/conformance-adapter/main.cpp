@@ -5,6 +5,8 @@
 #include "actions/PostCapturePipeline.h"
 #include "capture/RegionGeometry.h"
 #include "capture/RegionSession.h"
+#include "image-editor/AnnotationRenderer.h"
+#include "image-editor/EditorSession.h"
 #include "naming/FilenameGenerator.h"
 
 #include <QCoreApplication>
@@ -15,11 +17,13 @@
 #include <QRegularExpression>
 
 #include <cstdio>
+#include <set>
 #include <map>
 
 using namespace xerahs::naming;
 namespace pca = xerahs::actions;
 namespace rc = xerahs::capture;
+namespace ed = xerahs::editor;
 
 namespace {
 
@@ -402,6 +406,233 @@ QJsonObject runRegionCapture(const QString &operation, const QJsonObject &input)
                      {QStringLiteral("overlay_shown"), session.overlayShown()}};
 }
 
+ed::PointF pointFrom(const QJsonValue &value) {
+  if (value.isArray()) return {value.toArray().at(0).toDouble(), value.toArray().at(1).toDouble()};
+  const QJsonObject o = value.toObject();
+  return {o.value(u"x").toDouble(), o.value(u"y").toDouble()};
+}
+
+// 1x1 transparent PNG used where a vector supplies only annotations.
+const char *kOnePixelPng =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP4DwQACfsD/Wj6HMwAAAAASUVORK5CYII=";
+
+ed::AnnotationDocument blankDocument(qint64 width, qint64 height) {
+  ed::AnnotationDocument document;
+  document.canvasWidth = width;
+  document.canvasHeight = height;
+  document.createdAt = document.modifiedAt = QStringLiteral("2026-01-01T00:00:00Z");
+  document.sourceImagePng = QByteArray::fromBase64(kOnePixelPng);
+  return document;
+}
+
+QJsonObject historyOutput(const ed::EditorSession &session) {
+  const auto &annotations = session.document().annotations;
+  QJsonObject out{{QStringLiteral("annotation_count"), static_cast<qint64>(annotations.size())},
+                  {QStringLiteral("selected_count"), static_cast<qint64>(session.selection().size())},
+                  {QStringLiteral("undo_count"), session.undoCount()},
+                  {QStringLiteral("redo_count"), session.redoCount()},
+                  {QStringLiteral("dirty"), session.dirty()},
+                  {QStringLiteral("tool_stroke_width"), session.toolStyle().strokeWidth},
+                  {QStringLiteral("tool_stroke_color"), ed::formatColor(session.toolStyle().strokeColor)},
+                  {QStringLiteral("tool_fill_color"), ed::formatColor(session.toolStyle().fillColor)},
+                  {QStringLiteral("tool_opacity"), session.toolStyle().opacity}};
+  if (!annotations.empty()) {
+    if (const auto *r = std::get_if<ed::RectangleAnnotation>(&annotations[0])) {
+      out.insert(QStringLiteral("rectangle_bounds"), QJsonArray{r->left(), r->top(), r->right(), r->bottom()});
+      out.insert(QStringLiteral("stroke_color"), ed::formatColor(r->style.strokeColor));
+      out.insert(QStringLiteral("fill_color"), ed::formatColor(r->style.fillColor));
+      out.insert(QStringLiteral("stroke_width"), r->style.strokeWidth);
+      out.insert(QStringLiteral("rotation_degrees"), r->style.rotationDegrees);
+      out.insert(QStringLiteral("opacity"), r->style.opacity);
+    }
+  }
+  if (annotations.size() > 1) {
+    if (const auto *r = std::get_if<ed::RectangleAnnotation>(&annotations[1])) {
+      out.insert(QStringLiteral("second_stroke_width"), r->style.strokeWidth);
+    }
+  }
+  return out;
+}
+
+// Paths of unknown properties and unknown annotation types the rewrite kept
+// with identical values (ES-015).
+QJsonArray preservedPaths(const QJsonObject &input, const QJsonObject &output) {
+  static const QStringList knownDocument = {
+      QStringLiteral("version"),     QStringLiteral("imagePath"),    QStringLiteral("imageHash"),
+      QStringLiteral("canvasWidth"), QStringLiteral("canvasHeight"), QStringLiteral("createdAt"),
+      QStringLiteral("modifiedAt"),  QStringLiteral("sourceImagePngBase64"), QStringLiteral("embeddedImages"),
+      QStringLiteral("annotations"), QStringLiteral("extensions")};
+  static const QStringList knownAnnotation = {
+      QStringLiteral("id"),          QStringLiteral("type"),        QStringLiteral("start"),
+      QStringLiteral("end"),         QStringLiteral("strokeColor"), QStringLiteral("fillColor"),
+      QStringLiteral("strokeWidth"), QStringLiteral("rotationDegrees"), QStringLiteral("zIndex"),
+      QStringLiteral("visible"),     QStringLiteral("opacity")};
+  QJsonArray paths;
+  for (const QString &key : input.keys()) {
+    if (!knownDocument.contains(key) && output.value(key) == input.value(key)) paths.append(key);
+  }
+  const QJsonArray in = input.value(u"annotations").toArray();
+  const QJsonArray out = output.value(u"annotations").toArray();
+  for (qsizetype i = 0; i < in.size() && i < out.size(); ++i) {
+    const QJsonObject a = in.at(i).toObject();
+    const QJsonObject b = out.at(i).toObject();
+    const QString prefix = QStringLiteral("annotations[%1].").arg(i);
+    if (a.value(u"type").toString() != u"rectangle" && b.value(u"type") == a.value(u"type")) paths.append(prefix + QStringLiteral("type"));
+    for (const QString &key : a.keys()) {
+      if (!knownAnnotation.contains(key) && b.value(key) == a.value(key)) paths.append(prefix + key);
+    }
+  }
+  return paths;
+}
+
+class MemorySidecarStore final : public ed::SidecarStore {
+public:
+  std::set<QString> files;
+  bool rasterTouched = false;
+  QString rasterPath;
+
+  bool exists(const QString &path) override { return files.count(path) > 0; }
+  bool write(const QString &path, const QByteArray &) override {
+    rasterTouched = rasterTouched || path == rasterPath;
+    files.insert(path);
+    return true;
+  }
+  bool remove(const QString &path) override {
+    rasterTouched = rasterTouched || path == rasterPath;
+    return files.erase(path) > 0;
+  }
+};
+
+QJsonObject runEditorSession(const QString &operation, const QJsonObject &input) {
+  if (operation == u"history") {
+    const QJsonArray size = input.value(u"source_size").toArray();
+    ed::EditorSession session(blankDocument(size.at(0).toInteger(), size.at(1).toInteger()));
+    QList<QUuid> created;
+    for (const QJsonValue &item : input.value(u"operations").toArray()) {
+      const QJsonObject o = item.toObject();
+      const QString op = o.value(u"op").toString();
+      if (op == u"create-rectangle") {
+        if (auto id = session.createRectangle(pointFrom(o.value(u"start")), pointFrom(o.value(u"end")))) created.append(*id);
+      } else if (op == u"select") {
+        QList<QUuid> ids;
+        for (const QJsonValue &index : o.value(u"ids").toArray()) {
+          const qsizetype i = index.toInteger();
+          if (i >= 0 && i < created.size()) ids.append(created.at(i));
+        }
+        session.select(ids);
+      } else if (op == u"move-selection") {
+        const QJsonArray delta = o.value(u"delta").toArray();
+        session.moveSelection(delta.at(0).toDouble(), delta.at(1).toDouble());
+      } else if (op == u"set-stroke-width") {
+        session.setStrokeWidth(o.value(u"value").toDouble());
+      } else if (op == u"set-stroke-color" || op == u"set-fill-color") {
+        const auto color = ed::parseColor(o.value(u"value").toString());
+        if (!color) return adapterError(QStringLiteral("invalid colour"));
+        if (op == u"set-stroke-color") session.setStrokeColor(*color);
+        else session.setFillColor(*color);
+      } else if (op == u"set-opacity") {
+        session.setOpacity(o.value(u"value").toDouble());
+      } else if (op == u"delete-selection") {
+        session.deleteSelection();
+      } else if (op == u"undo") {
+        session.undo();
+      } else if (op == u"redo") {
+        session.redo();
+      } else if (op == u"mark-saved") {
+        session.markSaved();
+      } else {
+        return adapterError(QStringLiteral("unknown op: ") + op);
+      }
+    }
+    return historyOutput(session);
+  }
+  if (operation == u"render") {
+    const QJsonArray size = input.value(u"source_size").toArray();
+    const auto fill = ed::parseColor(input.value(u"source_fill").toString());
+    if (!fill) return adapterError(QStringLiteral("invalid source_fill"));
+    std::vector<ed::Annotation> annotations;
+    for (const QJsonValue &item : input.value(u"annotations").toArray()) {
+      const QJsonObject o = item.toObject();
+      if (o.value(u"type").toString() != u"rectangle") return adapterError(QStringLiteral("unsupported annotation type"));
+      const auto stroke = ed::parseColor(o.value(u"strokeColor").toString());
+      const auto fillColor = ed::parseColor(o.value(u"fillColor").toString());
+      if (!stroke || !fillColor) return adapterError(QStringLiteral("invalid colour"));
+      const ed::PointF start = pointFrom(o.value(u"start"));
+      const ed::PointF end = pointFrom(o.value(u"end"));
+      ed::RectangleAnnotation r;
+      r.id = QUuid::createUuid();
+      r.start = {std::min(start.x, end.x), std::min(start.y, end.y)};
+      r.end = {std::max(start.x, end.x), std::max(start.y, end.y)};
+      r.style = ed::RectangleStyle{*stroke, *fillColor, o.value(u"strokeWidth").toDouble(4),
+                                   o.value(u"rotationDegrees").toDouble(0), o.value(u"opacity").toDouble(1)};
+      r.visible = o.value(u"visible").toBool(true);
+      annotations.emplace_back(r);
+    }
+    const ed::RenderResult result =
+        ed::render(ed::solidImage(size.at(0).toInteger(), size.at(1).toInteger(), *fill), annotations);
+    if (!result.image) return adapterError(QStringLiteral("unsupported rotation"));
+    QJsonArray rows;
+    for (qint64 y = 0; y < result.image->height; ++y) {
+      QJsonArray row;
+      for (qint64 x = 0; x < result.image->width; ++x) row.append(ed::formatColor(result.image->at(x, y)));
+      rows.append(row);
+    }
+    return QJsonObject{{QStringLiteral("pixels"), rows}};
+  }
+  if (operation == u"parse-document" || operation == u"round-trip") {
+    const QJsonObject payload = input.value(u"document").toObject();
+    const ed::ParseResult parsed = ed::parseDocument(payload);
+    if (!parsed.document) {
+      // Parsing works on the decoded payload in memory; it never writes the
+      // document or decodes pixels.
+      return QJsonObject{{QStringLiteral("error"), *parsed.error},
+                         {QStringLiteral("document_rewritten"), false},
+                         {QStringLiteral("pixels_allocated"), false}};
+    }
+    qint64 placeholders = 0;
+    for (const ed::Annotation &a : parsed.document->annotations) {
+      if (std::holds_alternative<ed::UnsupportedAnnotation>(a)) ++placeholders;
+    }
+    QJsonObject out{{QStringLiteral("error"), QJsonValue::Null},
+                    {QStringLiteral("annotation_count"), static_cast<qint64>(parsed.document->annotations.size())},
+                    {QStringLiteral("unsupported_placeholders"), placeholders}};
+    if (operation == u"round-trip") {
+      out.insert(QStringLiteral("preserved_paths"), preservedPaths(payload, ed::serializeDocument(*parsed.document)));
+    }
+    return out;
+  }
+  if (operation == u"sidecar-path") {
+    const QStringList existing = [&] {
+      QStringList list;
+      for (const QJsonValue &v : input.value(u"existing_files").toArray()) list.append(v.toString());
+      return list;
+    }();
+    const ed::SidecarPaths paths = ed::sidecarPaths(input.value(u"raster_path").toString(),
+                                                    [&](const QString &path) { return existing.contains(path); });
+    return QJsonObject{{QStringLiteral("write_path"), paths.writePath},
+                       {QStringLiteral("read_path"), paths.readPath ? QJsonValue(*paths.readPath) : QJsonValue::Null}};
+  }
+  if (operation == u"save-sidecar") {
+    const QString raster = QStringLiteral("capture.png");
+    MemorySidecarStore store;
+    store.rasterPath = raster;
+    store.files.insert(raster);
+    const QString sidecar = ed::sidecarPaths(raster, [](const QString &) { return false; }).writePath;
+    if (input.value(u"existing_sidecar").toBool()) store.files.insert(sidecar);
+    QJsonObject payload = ed::serializeDocument(blankDocument(1, 1));
+    payload.insert(QStringLiteral("annotations"), input.value(u"annotations").toArray());
+    const ed::ParseResult parsed = ed::parseDocument(payload);
+    if (!parsed.document) return adapterError(QStringLiteral("invalid annotations: ") + *parsed.error);
+    const ed::SidecarSaveResult result =
+        ed::saveSidecar(store, raster, *parsed.document, input.value(u"sidecar_intent").toBool());
+    return QJsonObject{{QStringLiteral("sidecar_exists"), store.exists(sidecar)},
+                       {QStringLiteral("sidecar_path"), result.sidecarPath ? QJsonValue(*result.sidecarPath) : QJsonValue::Null},
+                       {QStringLiteral("raster_untouched"), !store.rasterTouched && store.exists(raster)},
+                       {QStringLiteral("error"), result.diagnostic ? QJsonValue(*result.diagnostic) : QJsonValue::Null}};
+  }
+  return adapterError(QStringLiteral("unsupported operation: ") + operation);
+}
+
 }  // namespace
 
 int main(int argc, char *argv[]) {
@@ -424,6 +655,10 @@ int main(int argc, char *argv[]) {
 
   if (capability == u"FILENAME-GENERATION-001") {
     writeJson(runFilenameGeneration(operation, input));
+    return 0;
+  }
+  if (capability == u"EDITOR-SESSION-001") {
+    writeJson(runEditorSession(operation, input));
     return 0;
   }
   if (capability == u"REGION-CAPTURE-001") {

@@ -9,11 +9,12 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 | `FILENAME-GENERATION-001` | Core logic and conformance seam; no UI yet | 51 of 51 vectors pass; [traceability](traceability/FILENAME-GENERATION-001.json) |
 | `POST-CAPTURE-ACTIONS-001` | Pipeline engine and conformance seam; native actions, retry, and recovery not yet | 17 of 17 vectors pass; [traceability](traceability/POST-CAPTURE-ACTIONS-001.json) |
 | `REGION-CAPTURE-001` | Mapping, keyboard, compositing, last-region, and session state machine; no overlay or capture backend yet | 21 of 21 vectors pass; [traceability](traceability/REGION-CAPTURE-001.json) |
+| `EDITOR-SESSION-001` | Document, `.xann` reader and writer, history, and export renderer; no editor UI yet | 19 of 19 vectors pass; [traceability](traceability/EDITOR-SESSION-001.json) |
 
 ## Layout
 
 - `src/` production libraries with conformance seams (Qt Core only)
-- `src/image-editor/` native ImageEditor feature module ([README](src/image-editor/README.md)); not started
+- `src/image-editor/` native ImageEditor feature module ([README](src/image-editor/README.md))
 - `conformance-adapter/` thin adapter for `conformance/runner`
 - `tests/` native unit tests for paths the vectors cannot reach
 - `traceability/` requirement to implementation and evidence maps
