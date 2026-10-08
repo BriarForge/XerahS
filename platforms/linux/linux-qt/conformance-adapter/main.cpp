@@ -2,10 +2,12 @@
 // Protocol (conformance/runner/README.md): one JSON request on stdin,
 // {"capability", "operation", "input"}, and one JSON result object on stdout.
 
+#include "actions/PostCapturePipeline.h"
 #include "naming/FilenameGenerator.h"
 
 #include <QCoreApplication>
 #include <QFile>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QRegularExpression>
@@ -14,6 +16,7 @@
 #include <map>
 
 using namespace xerahs::naming;
+namespace pca = xerahs::actions;
 
 namespace {
 
@@ -131,6 +134,99 @@ QJsonObject runFilenameGeneration(const QString &operation, const QJsonObject &i
   return output;
 }
 
+QStringList stringList(const QJsonValue &value) {
+  QStringList list;
+  for (const QJsonValue &item : value.toArray()) list.append(item.toString());
+  return list;
+}
+
+// Injected executor: each action's own work is replaced by the vector's
+// injected outcome; absent actions succeed. cancel_during requests
+// cancellation while the named action runs; an interruptible action then stops.
+class InjectedExecutor final : public pca::ActionExecutor {
+public:
+  InjectedExecutor(QJsonObject outcomes, QString cancelDuring, pca::CancellationToken &token)
+      : m_outcomes(std::move(outcomes)), m_cancelDuring(std::move(cancelDuring)), m_token(token) {}
+
+  pca::ActionOutcome run(const pca::ActionRequest &request) override {
+    pca::ActionOutcome outcome;
+    const QJsonValue injected = m_outcomes.value(request.spec.id);
+    QString state = QStringLiteral("succeeded");
+    if (injected.isString()) {
+      state = injected.toString();
+    } else if (injected.isObject()) {
+      const QJsonObject object = injected.toObject();
+      state = object.value(u"state").toString(state);
+      if (object.contains(u"selected")) outcome.replacementSelection = stringList(object.value(u"selected"));
+    }
+    if (request.spec.id == m_cancelDuring) {
+      m_token.request();
+      if (request.spec.interruptible && !injected.isString() && !injected.isObject()) {
+        state = QStringLiteral("cancelled");
+      }
+    }
+    if (state == u"failed") outcome.state = pca::ActionState::Failed;
+    else if (state == u"cancelled") outcome.state = pca::ActionState::Cancelled;
+    else outcome.state = pca::ActionState::Succeeded;
+    return outcome;
+  }
+
+  bool createTemporaryUploadFile() override { return true; }
+  void removeTemporaryUploadFile() override {}
+
+private:
+  QJsonObject m_outcomes;
+  QString m_cancelDuring;
+  pca::CancellationToken &m_token;
+};
+
+QJsonObject actionResultJson(const pca::ActionResult &result) {
+  QJsonObject json{{QStringLiteral("action"), result.action},
+                   {QStringLiteral("state"), pca::actionStateName(result.state)}};
+  if (result.diagnostic) json.insert(QStringLiteral("diagnostic"), *result.diagnostic);
+  if (result.missingArtifact) json.insert(QStringLiteral("missing_artifact"), *result.missingArtifact);
+  if (result.inputArtifact) json.insert(QStringLiteral("input_artifact"), *result.inputArtifact);
+  if (result.cancellationArrivedDuring) json.insert(QStringLiteral("cancellation_arrived_during"), true);
+  return json;
+}
+
+QJsonObject runPostCaptureActions(const QString &operation, const QJsonObject &input) {
+  if (operation == u"map-legacy-flags") {
+    const pca::LegacyFlagMapping mapping = pca::mapLegacyFlags(stringList(input.value(u"legacy_flags")));
+    QJsonObject output{{QStringLiteral("selected"), QJsonArray::fromStringList(mapping.selected)}};
+    if (!mapping.unknownFlags.isEmpty()) {
+      output.insert(QStringLiteral("unknown_flags"), QJsonArray::fromStringList(mapping.unknownFlags));
+    }
+    return output;
+  }
+  if (operation != u"run-pipeline") return adapterError(QStringLiteral("unsupported operation: ") + operation);
+
+  const QJsonObject options = input.value(u"options").toObject();
+  pca::PipelineOptions pipelineOptions;
+  pipelineOptions.uploadTemporaryAllowed = options.value(u"upload_temporary_allowed").toBool(true);
+
+  pca::CancellationToken token;
+  InjectedExecutor executor(input.value(u"injected_outcomes").toObject(),
+                            input.value(u"cancel_during").toString(), token);
+  const QString cancelAfter = input.value(u"cancel_after").toString();
+  pca::PipelineHooks hooks;
+  hooks.actionFinished = [&](const pca::ActionResult &result) {
+    if (!cancelAfter.isEmpty() && result.action == cancelAfter) token.request();
+  };
+
+  const pca::PipelineResult result = pca::runPipeline(QStringLiteral("conformance"), stringList(input.value(u"selected")),
+                                                      pipelineOptions, executor, token, hooks);
+  if (!result.ignoredSelection.isEmpty()) {
+    return adapterError(QStringLiteral("unknown action IDs: ") + result.ignoredSelection.join(u','));
+  }
+  QJsonArray ordered;
+  for (const pca::ActionResult &action : result.orderedResults) ordered.append(actionResultJson(action));
+  return QJsonObject{{QStringLiteral("pipeline_state"), pca::pipelineStateName(result.state)},
+                     {QStringLiteral("final_working_media"), result.finalWorkingMedia},
+                     {QStringLiteral("ordered_results"), ordered},
+                     {QStringLiteral("working_media_retained"), result.workingMediaRetained}};
+}
+
 }  // namespace
 
 int main(int argc, char *argv[]) {
@@ -153,6 +249,10 @@ int main(int argc, char *argv[]) {
 
   if (capability == u"FILENAME-GENERATION-001") {
     writeJson(runFilenameGeneration(operation, input));
+    return 0;
+  }
+  if (capability == u"POST-CAPTURE-ACTIONS-001") {
+    writeJson(runPostCaptureActions(operation, input));
     return 0;
   }
   writeJson(adapterError(QStringLiteral("unsupported capability: ") + capability));

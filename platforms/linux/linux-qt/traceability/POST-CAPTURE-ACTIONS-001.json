@@ -1,0 +1,173 @@
+{
+  "capability": "POST-CAPTURE-ACTIONS-001",
+  "capability_version": "0.2.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "implementation": [
+    "platforms/linux/linux-qt/src/actions/PostCapturePipeline.h",
+    "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp"
+  ],
+  "requirements": {
+    "PCA-001": {
+      "status": "implemented",
+      "vectors": [],
+      "note": "One result per selected action in catalogue order; unknown IDs are reported in ignoredSelection and never run."
+    },
+    "PCA-002": {
+      "status": "implemented",
+      "vectors": [
+        "catalogue-order-not-selection-order"
+      ]
+    },
+    "PCA-003": {
+      "status": "implemented",
+      "vectors": [
+        "failed-transformation-keeps-last-valid-media"
+      ],
+      "note": "The engine tracks the working media by the last successful transformation; ActionExecutor owns the media and must not touch it on failure."
+    },
+    "PCA-004": {
+      "status": "implemented",
+      "vectors": [
+        "clipboard-failure-continues",
+        "missing-file-dependency",
+        "save-failure-fallbacks",
+        "ocr-clipboard-depends-on-ocr"
+      ]
+    },
+    "PCA-005": {
+      "status": "implemented",
+      "vectors": [
+        "clipboard-failure-continues"
+      ],
+      "note": "No action failure discards working media; workingMediaRetained is always true."
+    },
+    "PCA-006": {
+      "status": "implemented",
+      "vectors": [
+        "clipboard-failure-continues",
+        "upload-without-save-uses-temporary-file"
+      ],
+      "note": "Temporary file creation and cleanup are covered by platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp."
+    },
+    "PCA-007": {
+      "status": "partial",
+      "vectors": [
+        "save-failure-fallbacks"
+      ],
+      "note": "Save failure leaves working media for fallbacks. Recording the absolute path, media type, byte length, and filename context arrives with the native save action."
+    },
+    "PCA-008": {
+      "status": "partial",
+      "vectors": [
+        "catalogue-order-not-selection-order"
+      ],
+      "note": "Annotation runs before save and a successful result becomes working media. Offering the re-editable document to persistence arrives with the ImageEditor."
+    },
+    "PCA-009": {
+      "status": "partial",
+      "vectors": [
+        "selection-cancel",
+        "selection-window-replaces-action-set"
+      ],
+      "note": "Selection cancel and replacement are implemented. Persisting a workflow change only on explicit user choice arrives with the selection UI."
+    },
+    "PCA-010": {
+      "status": "implemented",
+      "vectors": [
+        "selection-cancel",
+        "cancel-between-actions",
+        "cancel-during-uninterruptible-action"
+      ]
+    },
+    "PCA-011": {
+      "status": "not-started",
+      "vectors": [],
+      "note": "Retry needs the persisted pipeline result from PCA-012."
+    },
+    "PCA-012": {
+      "status": "not-started",
+      "vectors": [],
+      "note": "Durable pipeline results and recovery (interrupted state) arrive with history persistence."
+    },
+    "PCA-013": {
+      "status": "partial",
+      "vectors": [],
+      "note": "The engine emits only stable diagnostic codes and never carries media, clipboard, OCR, or credential content. A review of native action diagnostics follows with each action."
+    },
+    "PCA-014": {
+      "status": "implemented",
+      "vectors": [],
+      "note": "One engine, runPipeline(), serves configured workflows, quick actions, and conformance. No UI surface exists yet."
+    },
+    "PCA-015": {
+      "status": "implemented",
+      "vectors": [],
+      "note": "No shared state between runs; isolation is covered by platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp."
+    },
+    "PCA-016": {
+      "status": "implemented",
+      "vectors": [
+        "all"
+      ],
+      "note": "The adapter emits the canonical result shape with no extension object."
+    },
+    "PCA-017": {
+      "status": "implemented",
+      "vectors": [
+        "catalogue-order-not-selection-order",
+        "before-upload-declined"
+      ],
+      "note": "The compiled catalogue is checked against actions.json by platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp."
+    },
+    "PCA-018": {
+      "status": "implemented",
+      "vectors": [
+        "missing-file-dependency",
+        "upload-temporary-not-permitted",
+        "save-failure-fallbacks",
+        "save-as-satisfies-saved-file",
+        "ocr-clipboard-depends-on-ocr"
+      ]
+    },
+    "PCA-019": {
+      "status": "implemented",
+      "vectors": [
+        "upload-without-save-uses-temporary-file",
+        "upload-temporary-not-permitted",
+        "save-failure-fallbacks"
+      ]
+    },
+    "PCA-020": {
+      "status": "implemented",
+      "vectors": [
+        "before-upload-declined"
+      ]
+    },
+    "PCA-021": {
+      "status": "implemented",
+      "vectors": [
+        "delete-guard-after-failed-upload",
+        "delete-after-successful-upload"
+      ]
+    },
+    "PCA-022": {
+      "status": "implemented",
+      "vectors": [
+        "selection-cancel",
+        "catalogue-order-not-selection-order",
+        "failed-transformation-keeps-last-valid-media",
+        "cancel-between-actions",
+        "cancel-during-uninterruptible-action"
+      ]
+    },
+    "PCA-023": {
+      "status": "implemented",
+      "vectors": [
+        "selection-window-replaces-action-set",
+        "legacy-flags-map-to-actions"
+      ]
+    }
+  }
+}

@@ -7,6 +7,7 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 | Capability | State | Evidence |
 |---|---|---|
 | `FILENAME-GENERATION-001` | Core logic and conformance seam; no UI yet | 51 of 51 vectors pass; [traceability](traceability/FILENAME-GENERATION-001.json) |
+| `POST-CAPTURE-ACTIONS-001` | Pipeline engine and conformance seam; native actions, retry, and recovery not yet | 17 of 17 vectors pass; [traceability](traceability/POST-CAPTURE-ACTIONS-001.json) |
 
 ## Layout
 

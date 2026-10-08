@@ -7,3 +7,4 @@ The `linux-qt` adapter is built from `platforms/linux/linux-qt/conformance-adapt
 | Capability | Operations |
 |---|---|
 | `FILENAME-GENERATION-001` | `expand`, `preview` |
+| `POST-CAPTURE-ACTIONS-001` | `run-pipeline`, `map-legacy-flags` |
