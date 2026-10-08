@@ -13,6 +13,10 @@ set(XERAHS_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." CACHE PATH "BriarFor
 add_library(xerahs_core STATIC
   src/actions/PostCapturePipeline.cpp
   src/actions/PostCapturePipeline.h
+  src/capture/RegionGeometry.cpp
+  src/capture/RegionGeometry.h
+  src/capture/RegionSession.cpp
+  src/capture/RegionSession.h
   src/naming/FilenameGenerator.cpp
   src/naming/FilenameGenerator.h
 )
@@ -36,6 +40,11 @@ target_link_libraries(post-capture-pipeline-test PRIVATE xerahs_core Qt6::Test)
 target_compile_definitions(post-capture-pipeline-test PRIVATE
   XERAHS_ACTIONS_CATALOGUE="${XERAHS_REPO_ROOT}/product-contract/capabilities/POST-CAPTURE-ACTIONS-001/actions.json")
 add_test(NAME post-capture-pipeline COMMAND post-capture-pipeline-test)
+
+add_executable(region-capture-test tests/RegionCaptureTest.cpp)
+set_target_properties(region-capture-test PROPERTIES AUTOMOC ON)
+target_link_libraries(region-capture-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME region-capture COMMAND region-capture-test)
 
 find_package(Python3 3.12 REQUIRED COMPONENTS Interpreter)
 # Capabilities this edition implements. The full suite, including capabilities
