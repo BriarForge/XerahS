@@ -34,3 +34,5 @@ Infeasible native requirements: clarification, deviation, time-bound waiver (max
 
 # Child Scopes
 Platform-specific `AGENTS.md` files are added when Windows, macOS, or Linux implementations exist.
+
+- [linux/](linux/AGENTS.md)

@@ -1,0 +1,268 @@
+{
+  "capability": "FILENAME-GENERATION-001",
+  "capability_version": "0.2.0",
+  "contract_version": "0.3.0",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "implementation": [
+    "platforms/linux/linux-qt/src/naming/FilenameGenerator.h",
+    "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp"
+  ],
+  "requirements": {
+    "FN-001": {
+      "status": "implemented",
+      "vectors": [
+        "all"
+      ],
+      "note": "expand() takes the context by const reference and reads each value once per parse."
+    },
+    "FN-002": {
+      "status": "implemented",
+      "vectors": [
+        "date-counter",
+        "twelve-hour-midnight-and-milliseconds",
+        "calendar-names-and-week",
+        "unix-seconds"
+      ]
+    },
+    "FN-003": {
+      "status": "implemented",
+      "vectors": [
+        "twelve-hour",
+        "twelve-hour-midnight-and-milliseconds",
+        "twelve-hour-noon"
+      ]
+    },
+    "FN-004": {
+      "status": "implemented",
+      "vectors": [
+        "date-counter",
+        "empty-result"
+      ]
+    },
+    "FN-005": {
+      "status": "implemented",
+      "vectors": [
+        "window-metadata",
+        "window-title-trim-space-and-sanitize",
+        "url-mode-percent-encoding"
+      ]
+    },
+    "FN-006": {
+      "status": "implemented",
+      "vectors": [
+        "text-mode-environment-unchanged"
+      ]
+    },
+    "FN-007": {
+      "status": "implemented",
+      "vectors": [
+        "date-counter",
+        "counter-once",
+        "counter-base36",
+        "counter-hex-padding",
+        "counter-width-never-truncates",
+        "blank-pattern-does-not-advance-counter"
+      ]
+    },
+    "FN-008": {
+      "status": "implemented",
+      "vectors": [
+        "random-alphanumeric-with-rejection",
+        "random-digits-with-rejection",
+        "random-hex-both-cases",
+        "random-non-ambiguous",
+        "random-words",
+        "random-emoji",
+        "guid-lower-and-upper",
+        "invalid-repeat-does-not-consume-counter"
+      ],
+      "tests": [
+        "filename-generator-test"
+      ]
+    },
+    "FN-009": {
+      "status": "partial",
+      "vectors": [
+        "random-file-line",
+        "random-file-permission-denied",
+        "random-file-empty"
+      ],
+      "note": "Expansion honours the caller's grant through RandomFileAccess. The production grant prompt arrives with the pattern editor UI."
+    },
+    "FN-010": {
+      "status": "implemented",
+      "vectors": [
+        "case-sensitive-unknown-token",
+        "unknown-and-literal-percent"
+      ]
+    },
+    "FN-011": {
+      "status": "implemented",
+      "vectors": [
+        "window-title-trim-space-and-sanitize",
+        "portable-invalid-characters",
+        "trailing-spaces-and-periods",
+        "reserved-device-name",
+        "reserved-device-name-with-extension"
+      ]
+    },
+    "FN-012": {
+      "status": "implemented",
+      "vectors": [
+        "path-mode-components",
+        "path-mode-rejects-traversal",
+        "path-mode-rejects-absolute",
+        "path-mode-rejects-drive"
+      ]
+    },
+    "FN-013": {
+      "status": "implemented",
+      "vectors": [
+        "reserved-device-name-with-extension",
+        "extension-is-not-a-token",
+        "empty-result",
+        "blank-pattern-does-not-advance-counter",
+        "blank-pattern-text-mode"
+      ]
+    },
+    "FN-014": {
+      "status": "implemented",
+      "vectors": [
+        "max-length-preserves-extension",
+        "max-length-counts-scalar-values"
+      ]
+    },
+    "FN-015": {
+      "status": "implemented",
+      "vectors": [
+        "preview-does-not-commit"
+      ]
+    },
+    "FN-016": {
+      "status": "partial",
+      "vectors": [
+        "invalid-repeat-does-not-consume-counter"
+      ],
+      "note": "expand() never commits; it returns next_counter for the caller to commit after reserving the name. Atomic persistence arrives with the saving capability."
+    },
+    "FN-017": {
+      "status": "implemented",
+      "vectors": [
+        "all"
+      ]
+    },
+    "FN-018": {
+      "status": "implemented",
+      "vectors": [
+        "date-counter",
+        "longest-token-match",
+        "case-sensitive-unknown-token",
+        "random-non-ambiguous"
+      ]
+    },
+    "FN-019": {
+      "status": "implemented",
+      "vectors": [
+        "brace-after-plain-token-is-literal",
+        "random-single-without-argument",
+        "invalid-repeat-does-not-consume-counter",
+        "non-numeric-repeat",
+        "unterminated-argument"
+      ]
+    },
+    "FN-020": {
+      "status": "implemented",
+      "vectors": [
+        "twelve-hour",
+        "twelve-hour-midnight-and-milliseconds",
+        "twelve-hour-noon",
+        "calendar-names-and-week",
+        "unix-seconds"
+      ]
+    },
+    "FN-021": {
+      "status": "implemented",
+      "vectors": [
+        "random-alphanumeric-with-rejection",
+        "random-digits-with-rejection",
+        "random-hex-both-cases",
+        "random-non-ambiguous",
+        "random-single-without-argument",
+        "random-words",
+        "random-emoji",
+        "guid-lower-and-upper",
+        "random-source-exhausted",
+        "random-file-line"
+      ],
+      "note": "Files with more than 256 non-empty lines: only the first 256 are selectable, pending a contract clarification.",
+      "tests": [
+        "filename-generator-test"
+      ]
+    },
+    "FN-022": {
+      "status": "implemented",
+      "vectors": [
+        "window-metadata",
+        "window-title-trim-space-and-sanitize",
+        "url-mode-percent-encoding",
+        "text-mode-environment-unchanged",
+        "path-mode-components"
+      ]
+    },
+    "FN-023": {
+      "status": "implemented",
+      "vectors": [
+        "trailing-spaces-and-periods",
+        "reserved-device-name",
+        "reserved-device-name-with-extension",
+        "not-reserved-com10",
+        "extension-is-not-a-token",
+        "max-length-preserves-extension",
+        "extension-exceeds-max-length"
+      ]
+    },
+    "FN-024": {
+      "status": "implemented",
+      "vectors": [
+        "path-mode-components",
+        "path-mode-rejects-traversal",
+        "path-mode-rejects-absolute",
+        "path-mode-rejects-drive"
+      ]
+    },
+    "FN-025": {
+      "status": "implemented",
+      "vectors": [
+        "counter-base36",
+        "counter-overflow"
+      ]
+    },
+    "FN-026": {
+      "status": "implemented",
+      "vectors": [
+        "counter-overflow",
+        "extension-exceeds-max-length",
+        "path-mode-rejects-traversal",
+        "path-mode-rejects-absolute",
+        "path-mode-rejects-drive",
+        "random-source-exhausted",
+        "invalid-repeat-does-not-consume-counter",
+        "non-numeric-repeat",
+        "unterminated-argument",
+        "random-file-line",
+        "random-file-permission-denied",
+        "random-file-empty"
+      ]
+    },
+    "FN-027": {
+      "status": "implemented",
+      "vectors": [
+        "preview-does-not-commit"
+      ],
+      "tests": [
+        "filename-generator-test"
+      ]
+    }
+  }
+}
