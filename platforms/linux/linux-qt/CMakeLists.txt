@@ -11,6 +11,8 @@ find_package(Qt6 6.4 REQUIRED COMPONENTS Core Test)
 set(XERAHS_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." CACHE PATH "BriarForge/XerahS repository root")
 
 add_library(xerahs_core STATIC
+  src/actions/PostCapturePipeline.cpp
+  src/actions/PostCapturePipeline.h
   src/naming/FilenameGenerator.cpp
   src/naming/FilenameGenerator.h
 )
@@ -27,6 +29,13 @@ add_executable(filename-generator-test tests/FilenameGeneratorTest.cpp)
 set_target_properties(filename-generator-test PROPERTIES AUTOMOC ON)
 target_link_libraries(filename-generator-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME filename-generator COMMAND filename-generator-test)
+
+add_executable(post-capture-pipeline-test tests/PostCapturePipelineTest.cpp)
+set_target_properties(post-capture-pipeline-test PROPERTIES AUTOMOC ON)
+target_link_libraries(post-capture-pipeline-test PRIVATE xerahs_core Qt6::Test)
+target_compile_definitions(post-capture-pipeline-test PRIVATE
+  XERAHS_ACTIONS_CATALOGUE="${XERAHS_REPO_ROOT}/product-contract/capabilities/POST-CAPTURE-ACTIONS-001/actions.json")
+add_test(NAME post-capture-pipeline COMMAND post-capture-pipeline-test)
 
 find_package(Python3 3.12 REQUIRED COMPONENTS Interpreter)
 # Capabilities this edition implements. The full suite, including capabilities
