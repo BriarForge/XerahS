@@ -170,6 +170,27 @@ private slots:
     QCOMPARE(session.selection().size(), 0);
     QCOMPARE(session.document().annotations.size(), std::size_t{0});
   }
+
+  void resizeRotateAndReorder() {
+    EditorSession session(document());
+    const QUuid a = *session.createRectangle({1, 1}, {4, 4});
+    const QUuid b = *session.createRectangle({2, 2}, {5, 5});
+    session.select({a});
+    QVERIFY(!session.resizeSelection(-3, 0));  // would collapse to zero width
+    QVERIFY(session.resizeSelection(2, 1));
+    QCOMPARE(std::get<RectangleAnnotation>(session.document().annotations[0]).end.x, 6.0);
+    QVERIFY(session.rotateSelection(-90));
+    QCOMPARE(std::get<RectangleAnnotation>(session.document().annotations[0]).style.rotationDegrees, 270.0);
+    QVERIFY(session.reorderSelection(EditorSession::Order::Front));
+    QCOMPARE(annotationId(session.document().annotations[1]), a);
+    QVERIFY(!session.reorderSelection(EditorSession::Order::Front));  // already on top
+    QVERIFY(session.reorderSelection(EditorSession::Order::Backward));
+    QCOMPARE(annotationId(session.document().annotations[0]), a);
+    QCOMPARE(annotationId(session.document().annotations[1]), b);
+    const int undos = session.undoCount();
+    session.undo();
+    QCOMPARE(session.undoCount(), undos - 1);  // each was one operation
+  }
 };
 
 QTEST_GUILESS_MAIN(EditorSessionTest)

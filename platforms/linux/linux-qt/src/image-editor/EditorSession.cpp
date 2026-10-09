@@ -108,6 +108,59 @@ bool EditorSession::setOpacity(double opacity) {
   });
 }
 
+bool EditorSession::resizeSelection(double dw, double dh) {
+  if (!std::isfinite(dw) || !std::isfinite(dh) || (dw == 0 && dh == 0)) return false;
+  AnnotationDocument probe = document();
+  for (Annotation &annotation : probe.annotations) {
+    const auto *r = std::get_if<RectangleAnnotation>(&annotation);
+    if (r && m_selection.contains(r->id) &&
+        (r->end.x + dw - r->start.x <= 0 || r->end.y + dh - r->start.y <= 0)) {
+      return false;  // ES-003: never produce a zero-area rectangle
+    }
+  }
+  return changeSelected([&](RectangleAnnotation &r) {
+    r.end = {r.end.x + dw, r.end.y + dh};
+    return true;
+  });
+}
+
+bool EditorSession::rotateSelection(double degrees) {
+  if (!std::isfinite(degrees)) return false;
+  return changeSelected([&](RectangleAnnotation &r) {
+    double next = std::fmod(r.style.rotationDegrees + degrees, 360.0);
+    if (next < 0) next += 360.0;
+    if (next == r.style.rotationDegrees) return false;
+    r.style.rotationDegrees = next;
+    return true;
+  });
+}
+
+bool EditorSession::reorderSelection(Order order) {
+  AnnotationDocument next = document();
+  auto &list = next.annotations;
+  const auto selected = [&](const Annotation &a) { return m_selection.contains(annotationId(a)); };
+  if (m_selection.isEmpty() || !std::any_of(list.begin(), list.end(), selected)) return false;
+  const std::vector<Annotation> before = list;
+  if (order == Order::Front) {
+    std::stable_partition(list.begin(), list.end(), [&](const Annotation &a) { return !selected(a); });
+  } else if (order == Order::Back) {
+    std::stable_partition(list.begin(), list.end(), selected);
+  } else if (order == Order::Forward) {
+    for (std::size_t i = list.size(); i-- > 1;) {
+      if (selected(list[i - 1]) && !selected(list[i])) std::swap(list[i - 1], list[i]);
+    }
+  } else {
+    for (std::size_t i = 1; i < list.size(); ++i) {
+      if (selected(list[i]) && !selected(list[i - 1])) std::swap(list[i - 1], list[i]);
+    }
+  }
+  bool same = true;
+  for (std::size_t i = 0; i < list.size(); ++i) same = same && annotationId(list[i]) == annotationId(before[i]);
+  if (same) return false;
+  commit(std::move(next));
+  return true;
+}
+
 bool EditorSession::deleteSelection() {
   if (m_selection.isEmpty()) return false;
   AnnotationDocument next = document();

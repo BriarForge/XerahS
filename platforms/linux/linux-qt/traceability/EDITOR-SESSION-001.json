@@ -36,9 +36,9 @@
       ]
     },
     "ES-004": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "The canvas shows a non-colour-only selection outline and handles click, additive click, drag-move, arrow-key move, and Delete. Resize, rotate, and ordering are not yet available."
+      "note": "Selection outline, click and additive click, drag and arrow-key move, Alt+arrow resize, R/Shift+R rotate by 90 degrees (the exported rotations), [ and ] ordering (Ctrl for front/back), and Delete are available. Free-angle rotation waits on export support."
     },
     "ES-005": {
       "status": "implemented",

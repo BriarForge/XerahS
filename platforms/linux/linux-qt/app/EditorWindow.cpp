@@ -160,7 +160,25 @@ protected:
       return;
     }
     const double step = (event->modifiers() & Qt::ShiftModifier) ? 10 : 1;
+    if (event->modifiers() & Qt::AltModifier) {  // Alt+arrows resize (ES-004)
+      switch (event->key()) {
+        case Qt::Key_Left: m_session.resizeSelection(-step, 0); break;
+        case Qt::Key_Right: m_session.resizeSelection(step, 0); break;
+        case Qt::Key_Up: m_session.resizeSelection(0, -step); break;
+        case Qt::Key_Down: m_session.resizeSelection(0, step); break;
+        default: QWidget::keyPressEvent(event); return;
+      }
+      update();
+      emit changed();
+      return;
+    }
+    const bool toEdge = event->modifiers() & Qt::ControlModifier;
     switch (event->key()) {
+      case Qt::Key_R: m_session.rotateSelection((event->modifiers() & Qt::ShiftModifier) ? -90 : 90); break;
+      case Qt::Key_BracketRight:
+        m_session.reorderSelection(toEdge ? EditorSession::Order::Front : EditorSession::Order::Forward); break;
+      case Qt::Key_BracketLeft:
+        m_session.reorderSelection(toEdge ? EditorSession::Order::Back : EditorSession::Order::Backward); break;
       case Qt::Key_Left: m_session.moveSelection(-step, 0); break;
       case Qt::Key_Right: m_session.moveSelection(step, 0); break;
       case Qt::Key_Up: m_session.moveSelection(0, -step); break;

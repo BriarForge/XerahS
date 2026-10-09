@@ -31,6 +31,13 @@ public:
   bool setStrokeColor(Argb color);
   bool setFillColor(Argb color);
   bool setOpacity(double opacity);
+  // ES-004: keyboard and pointer parity operations, each one history operation.
+  // Resizing moves the bottom-right corner; a result without positive area is rejected.
+  bool resizeSelection(double dw, double dh);
+  // Rotation is clockwise degrees about the bounds centre, normalized to [0, 360).
+  bool rotateSelection(double degrees);
+  enum class Order { Forward, Backward, Front, Back };
+  bool reorderSelection(Order order);
   bool deleteSelection();
 
   bool undo();
