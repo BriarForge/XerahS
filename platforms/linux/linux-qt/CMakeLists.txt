@@ -45,6 +45,10 @@ add_executable(xerahs
   app/CaptureActions.h
   app/CaptureController.cpp
   app/CaptureController.h
+  app/EditorSource.cpp
+  app/EditorSource.h
+  app/EditorWindow.cpp
+  app/EditorWindow.h
   app/PortalScreenshot.cpp
   app/PortalScreenshot.h
   app/RegionOverlay.cpp
@@ -77,6 +81,13 @@ add_executable(editor-session-test tests/EditorSessionTest.cpp)
 set_target_properties(editor-session-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-session-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME editor-session COMMAND editor-session-test)
+
+add_executable(editor-source-test tests/EditorSourceTest.cpp app/EditorSource.cpp)
+set_target_properties(editor-source-test PROPERTIES AUTOMOC ON)
+target_include_directories(editor-source-test PRIVATE app)
+target_link_libraries(editor-source-test PRIVATE xerahs_core Qt6::Gui Qt6::Test)
+add_test(NAME editor-source COMMAND editor-source-test)
+set_tests_properties(editor-source PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
 
 find_package(Python3 3.12 REQUIRED COMPONENTS Interpreter)
 # Capabilities this edition implements. The full suite, including capabilities

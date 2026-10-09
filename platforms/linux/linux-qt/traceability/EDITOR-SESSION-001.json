@@ -10,18 +10,22 @@
     "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.h",
     "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
     "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
-    "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp"
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+    "platforms/linux/linux-qt/app/EditorSource.h",
+    "platforms/linux/linux-qt/app/EditorSource.cpp",
+    "platforms/linux/linux-qt/app/EditorWindow.h",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp"
   ],
   "requirements": {
     "ES-001": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "Typed source diagnostics are defined; decoding the source raster arrives with the Qt Gui editor surface."
+      "note": "app/EditorSource.cpp decodes with header size limits and typed diagnostics, never modifying the file; verified by tests/EditorSourceTest.cpp."
     },
     "ES-002": {
       "status": "partial",
       "vectors": [],
-      "note": "Canvas coordinates are source pixels with a top-left origin. Orientation, alpha, and colour normalization arrive with the source loader."
+      "note": "Orientation is normalized once at load (QImageReader auto-transform) and pixels are held as non-premultiplied ARGB32; colour profile conversion is not yet applied."
     },
     "ES-003": {
       "status": "implemented",
@@ -34,7 +38,7 @@
     "ES-004": {
       "status": "partial",
       "vectors": [],
-      "note": "Selection, move, and delete exist in EditorSession. Visible selection, resize, rotate, ordering, and pointer and keyboard handling arrive with the editor UI."
+      "note": "The canvas shows a non-colour-only selection outline and handles click, additive click, drag-move, arrow-key move, and Delete. Resize, rotate, and ordering are not yet available."
     },
     "ES-005": {
       "status": "implemented",
@@ -62,9 +66,9 @@
       "note": "History states are value snapshots; embedded images are implicitly shared and never mutated or disposed while reachable."
     },
     "ES-008": {
-      "status": "not-started",
+      "status": "implemented",
       "vectors": [],
-      "note": "Gesture cancellation and the Save, Discard, Cancel close prompt arrive with the editor UI."
+      "note": "Escape cancels a draw or move gesture; closing a dirty editor offers Save, Discard, and Cancel."
     },
     "ES-009": {
       "status": "partial",
@@ -109,9 +113,9 @@
       ]
     },
     "ES-016": {
-      "status": "not-started",
+      "status": "partial",
       "vectors": [],
-      "note": "The source-hash mismatch choice arrives with the editor UI."
+      "note": "A source-hash mismatch warns and keeps annotations on the current raster; an explicit choice to use the embedded source is not offered yet. A matching hash edits the embedded unannotated source."
     },
     "ES-017": {
       "status": "implemented",
@@ -127,9 +131,9 @@
       "note": "Recovery documents."
     },
     "ES-019": {
-      "status": "not-started",
+      "status": "partial",
       "vectors": [],
-      "note": "Editor accessibility."
+      "note": "Canvas is focusable with a visible focus ring, accessible name and description, and a dashed selection outline; toolbar is keyboard reachable. High contrast and screen-reader state for annotations are not yet verified."
     },
     "ES-020": {
       "status": "not-started",

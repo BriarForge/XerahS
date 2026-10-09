@@ -2,12 +2,15 @@
 // Identity com.xerahs.app / "XerahS" (CORE-002, ROOT-IDENTITY-001).
 
 #include "CaptureController.h"
+#include "EditorWindow.h"
 
 #include <QAction>
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QDesktopServices>
 #include <QDir>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QLocalServer>
 #include <QLocalSocket>
 #include <QMenu>
@@ -25,6 +28,7 @@ namespace {
 
 const QString kInstanceName = QStringLiteral("com.xerahs.app");
 const QByteArray kCaptureRegion = QByteArrayLiteral("capture-region");
+const QByteArray kEditPrefix = QByteArrayLiteral("edit ");
 const QByteArray kActivate = QByteArrayLiteral("activate");
 
 // Monochrome capture-frame mark, drawn so no asset pipeline is needed yet.
@@ -84,8 +88,14 @@ int main(int argc, char *argv[]) {
   const QCommandLineOption captureRegion(QStringLiteral("capture-region"),
                                          QStringLiteral("Start a region capture (in the running instance if any)."));
   parser.addOption(captureRegion);
+  const QCommandLineOption edit(QStringLiteral("edit"), QStringLiteral("Open an image in the editor."),
+                                QStringLiteral("file"));
+  parser.addOption(edit);
   parser.process(app);
-  const QByteArray request = parser.isSet(captureRegion) ? kCaptureRegion : kActivate;
+  QByteArray request = parser.isSet(captureRegion) ? kCaptureRegion : kActivate;
+  if (parser.isSet(edit)) {
+    request = kEditPrefix + QFileInfo(parser.value(edit)).absoluteFilePath().toUtf8();
+  }
 
   if (forwardToRunningInstance(request)) return 0;
 
@@ -105,12 +115,19 @@ int main(int argc, char *argv[]) {
   tray.setToolTip(QStringLiteral("XerahS"));
   QMenu menu;
   QAction *region = menu.addAction(QStringLiteral("Capture region"));
+  QAction *openImage = menu.addAction(QStringLiteral("Open image…"));
   QAction *folder = menu.addAction(QStringLiteral("Open captures folder"));
   menu.addSeparator();
   QAction *quit = menu.addAction(QStringLiteral("Quit XerahS"));
   tray.setContextMenu(&menu);
 
   QObject::connect(region, &QAction::triggered, &capture, &CaptureController::captureRegion);
+  QObject::connect(openImage, &QAction::triggered, [&capture] {
+    const QString path = QFileDialog::getOpenFileName(nullptr, QStringLiteral("Open image"), capture.saveDirectory(),
+                                                      QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp *.webp *.gif)"));
+    if (path.isEmpty()) return;
+    if (auto *window = xerahs::app::EditorWindow::open(path)) window->show();
+  });
   QObject::connect(folder, &QAction::triggered, [&capture] {
     QDir().mkpath(capture.saveDirectory());
     QDesktopServices::openUrl(QUrl::fromLocalFile(capture.saveDirectory()));
@@ -139,6 +156,10 @@ int main(int argc, char *argv[]) {
         if (line == kCaptureRegion) {
           socket->write(capture.busy() ? "busy\n" : "ok\n");
           capture.captureRegion();
+        } else if (line.startsWith(kEditPrefix)) {
+          socket->write("ok\n");
+          const QString path = QString::fromUtf8(line.mid(kEditPrefix.size()));
+          if (auto *window = xerahs::app::EditorWindow::open(path)) window->show();
         } else if (line == kActivate) {
           socket->write("ok\n");
         } else {
@@ -155,5 +176,8 @@ int main(int argc, char *argv[]) {
   }
   tray.show();
   if (request == kCaptureRegion) capture.captureRegion();
+  if (request.startsWith(kEditPrefix)) {
+    if (auto *window = xerahs::app::EditorWindow::open(QString::fromUtf8(request.mid(kEditPrefix.size())))) window->show();
+  }
   return app.exec();
 }
