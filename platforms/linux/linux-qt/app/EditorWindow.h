@@ -31,6 +31,7 @@ private:
   bool save(bool chooseFile);
   void refresh();
   void cropImage();
+  void autoCropImage();
   void resizeImage(bool canvasOnly);
   void applyCanvas(xerahs::editor::CanvasOperation operation);
 

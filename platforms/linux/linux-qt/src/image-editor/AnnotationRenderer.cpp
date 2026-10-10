@@ -133,8 +133,14 @@ ArgbImage solidImage(qint64 width, qint64 height, Argb color) {
   return ArgbImage{width, height, std::vector<Argb>(static_cast<std::size_t>(width * height), color)};
 }
 
-RenderResult render(const ArgbImage &source, const std::vector<Annotation> &annotations) {
+RenderResult render(const ArgbImage &source, const std::vector<Annotation> &annotations, const RenderControl &control) {
   RenderResult result;
+  const auto cancelled = [&] {
+    if (!control.cancelled || !control.cancelled()) return false;
+    result.error = RenderError::Cancelled;
+    return true;
+  };
+  if (cancelled()) return result;
   if (source.width < 1 || source.height < 1 || source.width > kMaxDimension || source.height > kMaxDimension ||
       source.width * source.height > kMaxPixels ||
       source.pixels.size() != static_cast<std::size_t>(source.width * source.height)) {
@@ -143,7 +149,10 @@ RenderResult render(const ArgbImage &source, const std::vector<Annotation> &anno
   }
   ArgbImage image = source;  // ES-009: the source itself is never modified
 
-  for (const Annotation &annotation : annotations) {
+  for (std::size_t index = 0; index < annotations.size(); ++index) {
+    if (cancelled()) return result;
+    if (control.progress) control.progress(int(index * 100 / annotations.size()));
+    const Annotation &annotation = annotations[index];
     const auto *rectangle = std::get_if<RectangleAnnotation>(&annotation);
     if (!rectangle || !rectangle->visible) continue;
     const RectangleStyle &style = rectangle->style;
@@ -203,7 +212,9 @@ RenderResult render(const ArgbImage &source, const std::vector<Annotation> &anno
     // ES-025 composites every pixel. Where the layer alpha is 0 the result is
     // the destination, except that a fully transparent destination becomes
     // 0 in every channel; applying that first lets the loop skip A = 0 pixels.
-    for (Argb &pixel : image.pixels) {
+    for (std::size_t k = 0; k < image.pixels.size(); ++k) {
+      if (k % 16384 == 0 && cancelled()) return result;
+      Argb &pixel = image.pixels[k];
       if ((pixel >> 24) == 0) pixel = 0;
     }
 
@@ -219,6 +230,7 @@ RenderResult render(const ArgbImage &source, const std::vector<Annotation> &anno
     const qint64 y1 = static_cast<qint64>(std::ceil(std::clamp(clipBounds.bottom, 0.0, double(image.height))));
 
     for (qint64 j = y0; j < y1; ++j) {
+      if (cancelled()) return result;
       for (qint64 i = x0; i < x1; ++i) {
         const double coverageFill = turns ? coverage(bounds, i, j) : coverage(fillPolygon, i, j);
         const double outer = turns ? coverage(grown, i, j) : coverage(outerPolygon, i, j);
@@ -240,8 +252,11 @@ RenderResult render(const ArgbImage &source, const std::vector<Annotation> &anno
         pixel = pack(Channels{ao, compose(layer.r, a, d.r, d.a, ao), compose(layer.g, a, d.g, d.a, ao),
                               compose(layer.b, a, d.b, d.a, ao)});
       }
+      if (control.progress) control.progress(int((index * 100 + (j - y0 + 1) * 100 / (y1 - y0)) / annotations.size()));
     }
   }
+  if (cancelled()) return result;
+  if (control.progress) control.progress(100);
   result.image = std::move(image);
   return result;
 }

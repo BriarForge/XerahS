@@ -129,6 +129,39 @@ private slots:
     QVERIFY(!window->findChild<QAction *>(QStringLiteral("undo"))->isEnabled());
     QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
   }
+
+  void nativeAutoCropPersistsAlphaAndCreatesExactlyOneUndoStep() {
+    QTemporaryDir dir; const QString path = dir.filePath("auto.png");
+    QImage original(8, 6, QImage::Format_ARGB32); original.fill(Qt::transparent);
+    original.setColorSpace(QColorSpace::SRgb);
+    for (int y = 1; y < 5; ++y) for (int x = 2; x < 6; ++x) original.setPixel(x, y, qRgba(90, 20, 40, 128));
+    QVERIFY(original.save(path));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);
+    window->show();
+    const auto runCrop = [&] {
+      QTimer::singleShot(0, [] {
+        auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog);
+        QVERIFY(dialog->findChild<QSpinBox *>(QStringLiteral("cropAlpha"))); dialog->accept();
+      });
+      trigger(*window, QStringLiteral("autoCrop"));
+    };
+    runCrop();
+    QVERIFY(window->statusBar()->currentMessage().startsWith(QStringLiteral("4 × 4")));
+    runCrop();  // No border: no extra history entry.
+    trigger(*window, QStringLiteral("saveImage"));
+    const auto reopened = loadSource(path); QVERIFY(reopened.document);
+    QCOMPARE(reopened.image.size(), QSize(4, 4)); QCOMPARE(reopened.image.colorSpace(), original.colorSpace());
+    for (int y = 0; y < 4; ++y) for (int x = 0; x < 4; ++x) QCOMPARE(reopened.image.pixel(x, y), original.pixel(x + 2, y + 1));
+    trigger(*window, QStringLiteral("undo"));
+    QVERIFY(window->statusBar()->currentMessage().startsWith(QStringLiteral("8 × 6")));
+    QVERIFY(!window->findChild<QAction *>(QStringLiteral("undo"))->isEnabled());
+    const QString status = window->statusBar()->currentMessage();
+    QTimer::singleShot(0, [] { auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog); dialog->reject(); });
+    trigger(*window, QStringLiteral("autoCrop"));
+    QCOMPARE(window->statusBar()->currentMessage(), status);
+    QVERIFY(window->findChild<QAction *>(QStringLiteral("redo"))->isEnabled());
+    trigger(*window, QStringLiteral("redo")); QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+  }
 };
 
 QTEST_MAIN(EditorWindowTest)

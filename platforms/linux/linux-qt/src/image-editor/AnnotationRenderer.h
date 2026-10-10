@@ -6,6 +6,7 @@
 
 #include <optional>
 #include <vector>
+#include <functional>
 
 namespace xerahs::editor {
 
@@ -23,6 +24,7 @@ ArgbImage solidImage(qint64 width, qint64 height, Argb color);
 enum class RenderError {
   InvalidSource,
   InvalidGeometry,
+  Cancelled,
 };
 
 struct RenderResult {
@@ -32,6 +34,12 @@ struct RenderResult {
 
 // Composites the visible rectangles of `annotations` in order over `source`.
 // Unsupported annotation types are skipped by the exporter.
-RenderResult render(const ArgbImage &source, const std::vector<Annotation> &annotations);
+struct RenderControl {
+  std::function<bool()> cancelled;
+  std::function<void(int)> progress;
+};
+
+RenderResult render(const ArgbImage &source, const std::vector<Annotation> &annotations,
+                    const RenderControl &control = {});
 
 }  // namespace xerahs::editor

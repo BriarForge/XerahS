@@ -13,6 +13,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QInputDialog>
+#include <QLabel>
 #include <QFormLayout>
 #include <QMenuBar>
 #include <QMessageBox>
@@ -76,6 +77,9 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   cropTool->setCheckable(true);
   cropTool->setObjectName(QStringLiteral("cropTool"));
   connect(crop, &QAction::triggered, this, &EditorWindow::cropImage);
+  QAction *autoCrop = imageMenu->addAction(QStringLiteral("Auto Crop…"));
+  autoCrop->setObjectName(QStringLiteral("autoCrop"));
+  connect(autoCrop, &QAction::triggered, this, &EditorWindow::autoCropImage);
   connect(cropTool, &QAction::toggled, m_canvas, &EditorCanvas::setCropTool);
   connect(m_canvas, &EditorCanvas::cropRequested, this, [this](QPointF start, QPointF end) {
     CanvasOperation operation;
@@ -220,6 +224,44 @@ void EditorWindow::cropImage() {
   operation.action = CanvasAction::Crop;
   operation.start = {double(left->value()), double(top->value())};
   operation.end = {double(left->value() + width->value()), double(top->value() + height->value())};
+  applyCanvas(operation);
+}
+
+void EditorWindow::autoCropImage() {
+  QDialog dialog(this);
+  dialog.setWindowTitle(QStringLiteral("Auto Crop"));
+  auto *form = new QFormLayout(&dialog);
+  auto *border = new QComboBox(&dialog);
+  border->setObjectName(QStringLiteral("cropBorder"));
+  border->addItems({QStringLiteral("Transparent pixels"), QStringLiteral("Match top-left pixel"), QStringLiteral("Match chosen colour")});
+  form->addRow(QStringLiteral("Border rule"), border);
+  auto *alpha = new QSpinBox(&dialog), *tolerance = new QSpinBox(&dialog);
+  alpha->setObjectName(QStringLiteral("cropAlpha")); tolerance->setObjectName(QStringLiteral("cropTolerance"));
+  alpha->setRange(0, 255); tolerance->setRange(0, 255); tolerance->setEnabled(false);
+  form->addRow(QStringLiteral("Ignore alpha at or below"), alpha);
+  form->addRow(QStringLiteral("RGBA channel tolerance"), tolerance);
+  Argb selectedColor = 0xFFFFFFFF;
+  auto *color = new QPushButton(QStringLiteral("#FFFFFFFF"), &dialog); color->setEnabled(false);
+  form->addRow(QStringLiteral("Border colour"), color);
+  connect(color, &QPushButton::clicked, &dialog, [&] {
+    const QColor chosen = QColorDialog::getColor(QColor::fromRgba(selectedColor), &dialog, QStringLiteral("Border colour"), QColorDialog::ShowAlphaChannel);
+    if (chosen.isValid()) { selectedColor = chosen.rgba(); color->setText(chosen.name(QColor::HexArgb)); }
+  });
+  connect(border, &QComboBox::currentIndexChanged, &dialog, [&](int index) {
+    tolerance->setEnabled(index != 0); color->setEnabled(index == 2);
+  });
+  auto *annotations = new QCheckBox(QStringLiteral("Include visible annotations when finding bounds"), &dialog);
+  annotations->setObjectName(QStringLiteral("cropAnnotations")); annotations->setChecked(true); form->addRow(annotations);
+  auto *rules = new QLabel(QStringLiteral("Trim complete background rows and columns from the four edges. "
+      "Colour matching allows the stated difference in every RGBA channel. "
+      "An empty image or unchanged bounds leave the document unchanged."), &dialog);
+  rules->setWordWrap(true); form->addRow(rules);
+  auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog); form->addRow(buttons);
+  connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+  connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+  if (dialog.exec() != QDialog::Accepted) return;
+  CanvasOperation operation; operation.action = CanvasAction::AutoCrop;
+  operation.autoCrop = {CropBorder(border->currentIndex()), alpha->value(), tolerance->value(), selectedColor, annotations->isChecked()};
   applyCanvas(operation);
 }
 

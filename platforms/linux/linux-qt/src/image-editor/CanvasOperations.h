@@ -16,9 +16,18 @@ struct CanvasTransform {
 };
 
 enum class CanvasAction { Crop, ResizeCanvas, ResizeImage, RotateClockwise, RotateCounterClockwise, Rotate180,
-                          FlipHorizontal, FlipVertical };
+                          FlipHorizontal, FlipVertical, AutoCrop };
 enum class CanvasAnchor { TopLeft, Top, TopRight, Left, Center, Right, BottomLeft, Bottom, BottomRight };
 enum class Interpolation { Nearest, Bilinear };
+enum class CropBorder { Transparent, TopLeftColor, Color };
+
+struct AutoCropPolicy {
+  CropBorder border = CropBorder::Transparent;
+  int alphaThreshold = 0;  // alpha <= threshold is always background
+  int tolerance = 0;       // maximum absolute RGBA channel distance, inclusive
+  Argb color = 0xFFFFFFFF;
+  bool includeAnnotations = true;
+};
 
 struct CanvasOperation {
   CanvasAction action = CanvasAction::RotateClockwise;
@@ -28,6 +37,7 @@ struct CanvasOperation {
   Argb fill = 0;     // added canvas area, non-premultiplied #AARRGGBB
   Interpolation interpolation = Interpolation::Nearest;
   bool lockAspect = true;
+  AutoCropPolicy autoCrop;
 };
 
 struct CanvasControl {

@@ -17,7 +17,8 @@ The next editor work follows these dependencies:
 3. Atomic crop, basic pixel resize, canvas resize, quarter turns and flips now
    share production geometry, PNG preparation and history with all three canvas
    vectors passing. Continue with general affine annotations, custom rotation
-   and auto crop, then insert, background composition, flatten and comparison.
+   (auto crop now provides explicit border/alpha/colour rules), then insert,
+   background composition, flatten and comparison.
 4. Expand annotation tools, effects, output actions, settings and utilities,
    alongside the remaining capture and post-capture integrations.
 

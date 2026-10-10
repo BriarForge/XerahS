@@ -93,6 +93,52 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
   if (!validSize(source.width, source.height) || document.canvasWidth != source.width || document.canvasHeight != source.height ||
       source.pixels.size() != std::size_t(source.width * source.height)) return failure(diagnostic::documentInvalid);
   if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));
+  if (op.action == CanvasAction::AutoCrop) {
+    const AutoCropPolicy &policy = op.autoCrop;
+    if (policy.alphaThreshold < 0 || policy.alphaThreshold > 255 || policy.tolerance < 0 || policy.tolerance > 255 ||
+        (policy.border != CropBorder::Transparent && policy.border != CropBorder::TopLeftColor && policy.border != CropBorder::Color))
+      return failure(diagnostic::documentInvalid);
+    qint64 left = source.width, top = source.height, right = 0, bottom = 0;
+    {
+      std::optional<ArgbImage> composite;
+      if (policy.includeAnnotations && !document.annotations.empty()) {
+        for (const auto &annotation : document.annotations)
+          if (!std::holds_alternative<RectangleAnnotation>(annotation))
+            return failure(QStringLiteral("canvas-annotation-transform-unsupported"));
+        auto rendered = render(source, document.annotations,
+            {control.cancelled, [&](int p) { progress(control, p * 30 / 100); }});
+        if (rendered.error) return failure(*rendered.error == RenderError::Cancelled ? QStringLiteral("canvas-cancelled") : diagnostic::documentInvalid);
+        composite = std::move(rendered.image);
+      }
+      const ArgbImage &boundsImage = composite ? *composite : source;
+      const Argb reference = policy.border == CropBorder::TopLeftColor ? boundsImage.at(0, 0) : policy.color;
+      const auto background = [&](Argb pixel) {
+        if (int(pixel >> 24) <= policy.alphaThreshold) return true;
+        if (policy.border == CropBorder::Transparent) return false;
+        for (int shift : {0, 8, 16, 24})
+          if (std::abs(int((pixel >> shift) & 255) - int((reference >> shift) & 255)) > policy.tolerance) return false;
+        return true;
+      };
+      for (qint64 y = 0; y < source.height; ++y) {
+        if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));
+        for (qint64 x = 0; x < source.width; ++x) if (!background(boundsImage.at(x, y))) {
+          left = std::min(left, x); top = std::min(top, y);
+          right = std::max(right, x + 1); bottom = std::max(bottom, y + 1);
+        }
+        progress(control, 30 + int((y + 1) * 30 / source.height));
+      }
+    }  // Release the optional composite before allocating the cropped source.
+    if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));
+    // With no foreground, retain the original valid canvas as a no-op.
+    if (right == 0) { left = top = 0; right = source.width; bottom = source.height; }
+    CanvasOperation crop;
+    crop.action = CanvasAction::Crop;
+    crop.start = {double(left), double(top)}; crop.end = {double(right), double(bottom)};
+    auto result = apply(document, source, crop,
+        {control.cancelled, [&](int p) { progress(control, 60 + p * 40 / 100); }});
+    if (!result.error) progress(control, 100);
+    return result;
+  }
   if ((op.action == CanvasAction::ResizeCanvas || op.action == CanvasAction::ResizeImage) && !validSize(op.width, op.height))
     return failure(op.width < 1 || op.height < 1 ? diagnostic::documentInvalid : diagnostic::documentTooLarge);
 

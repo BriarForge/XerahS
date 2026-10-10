@@ -151,6 +151,83 @@ private slots:
     QCOMPARE(result.image->height, 2);
   }
 
+  void autoCropUsesAlphaThresholdAndCopiesOriginalPixels() {
+    ArgbImage source = solidImage(8, 6, 0x00112233);
+    source.pixels[0] = 0x0800FF00;
+    for (int y = 1; y < 5; ++y) for (int x = 2; x < 6; ++x) source.pixels[y * 8 + x] = 0x80FF0000;
+    CanvasOperation op; op.action = CanvasAction::AutoCrop; op.autoCrop.alphaThreshold = 8;
+    const auto result = applyCanvasOperation(document(8, 6), source, op);
+    QVERIFY(result.changed && result.image && !result.pixelsResampled);
+    QCOMPARE(result.image->width, 4); QCOMPARE(result.image->height, 4);
+    QCOMPARE(result.transform.dx, -2); QCOMPARE(result.transform.dy, -1);
+    for (Argb pixel : result.image->pixels) QCOMPARE(pixel, Argb(0x80FF0000));
+    QCOMPARE(source.at(0, 0), Argb(0x0800FF00));
+  }
+
+  void autoCropColorDistanceIncludesAlphaAndInclusiveTolerance() {
+    ArgbImage source = solidImage(7, 5, 0xFFEEEEEE);
+    source.pixels[1] = 0xFFE9EDEE;  // distance 5, still background
+    source.pixels[2 * 7 + 3] = 0xFF000000;
+    source.pixels[3 * 7 + 4] = 0xF9EEEEEE;  // alpha distance 6, foreground
+    CanvasOperation op; op.action = CanvasAction::AutoCrop;
+    op.autoCrop.border = CropBorder::TopLeftColor; op.autoCrop.tolerance = 5;
+    const auto result = applyCanvasOperation(document(7, 5), source, op); QVERIFY(result.image);
+    QCOMPARE(result.image->width, 2); QCOMPARE(result.image->height, 2);
+    QVERIFY(result.image->pixels == (std::vector<Argb>{0xFF000000, 0xFFEEEEEE, 0xFFEEEEEE, 0xF9EEEEEE}));
+    op.autoCrop.border = CropBorder::Color; op.autoCrop.color = 0xFFEEEEEE;
+    const auto explicitColor = applyCanvasOperation(document(7, 5), source, op); QVERIFY(explicitColor.image);
+    QVERIFY(explicitColor.image->pixels == result.image->pixels);
+  }
+
+  void autoCropKeepsVisibleAnnotationContentEditable() {
+    auto d = document(8, 8);
+    auto visible = rectangle({1, 1}, {3, 3}); visible.style.strokeColor = 0; visible.style.fillColor = 0xFFFF0000;
+    auto hidden = rectangle({6, 6}, {7, 7}); hidden.visible = false;
+    d.annotations = {visible, hidden};
+    ArgbImage source = solidImage(8, 8, 0); source.pixels[4 * 8 + 4] = 0xFF0000FF;
+    CanvasOperation op; op.action = CanvasAction::AutoCrop;
+    auto result = applyCanvasOperation(d, source, op); QVERIFY(result.image && result.document);
+    QCOMPARE(result.image->width, 4); QCOMPARE(result.image->height, 4);
+    QCOMPARE(result.image->at(0, 0), Argb(0));  // annotations were never flattened into source
+    QCOMPARE(result.document->annotations.size(), std::size_t(1));
+    const auto &kept = std::get<RectangleAnnotation>(result.document->annotations[0]);
+    QCOMPARE(kept.id, visible.id); QCOMPARE(kept.start, (PointF{0, 0})); QCOMPARE(kept.end, (PointF{2, 2}));
+    op.autoCrop.includeAnnotations = false;
+    result = applyCanvasOperation(d, source, op); QVERIFY(result.image);
+    QCOMPARE(result.image->width, 1); QCOMPARE(result.image->height, 1);
+    QVERIFY(result.document->annotations.empty());
+  }
+
+  void autoCropNoForegroundAndFullBoundsPreserveHistory() {
+    QImage source(8, 6, QImage::Format_ARGB32); source.fill(0x00FF00FF);
+    EditorSession session(withSource(source));
+    CanvasOperation op; op.action = CanvasAction::AutoCrop;
+    auto result = xerahs::app::prepareCanvasEdit(session.document(), source, op);
+    QVERIFY(!result.result.changed && !result.result.image);
+    QCOMPARE(result.result.document->sourceImagePng, session.document().sourceImagePng);
+    source.setPixel(0, 0, 0xFFFFFFFF); source.setPixel(7, 5, 0xFFFFFFFF);
+    result = xerahs::app::prepareCanvasEdit(withSource(source), source, op);
+    QVERIFY(!result.result.changed && !result.result.image);
+    QCOMPARE(session.undoCount(), 0); QVERIFY(!session.dirty());
+  }
+
+  void autoCropValidationAndCancellationReturnNoPartialResult() {
+    auto d = document(40, 40);
+    auto r = rectangle({2, 2}, {38, 38}); r.style.fillColor = 0xFFFFFFFF; d.annotations = {r};
+    const ArgbImage source = solidImage(40, 40, 0);
+    CanvasOperation op; op.action = CanvasAction::AutoCrop;
+    op.autoCrop.tolerance = 256;
+    QCOMPARE(applyCanvasOperation(d, source, op).error, std::optional<QString>(diagnostic::documentInvalid));
+    op.autoCrop.tolerance = 0;
+    for (int cancelAt : {5, 45, 75}) {
+      int percent = 0;
+      const auto result = applyCanvasOperation(d, source, op,
+          {[&] { return percent >= cancelAt; }, [&](int p) { percent = p; }});
+      QCOMPARE(result.error, std::optional<QString>(QStringLiteral("canvas-cancelled")));
+      QVERIFY(!result.document && !result.image);
+    }
+  }
+
   void invalidAndCancelledEditsHaveNoPartialOutputs() {
     const ArgbImage source = solidImage(10, 12, 0xFFFFFFFF);
     const auto d = document(10, 12);

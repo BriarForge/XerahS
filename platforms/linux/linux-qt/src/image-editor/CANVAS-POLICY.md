@@ -13,6 +13,21 @@ bounds, translated to the new origin, and export clips them to the canvas.
 Stable IDs and object order survive. Unsupported annotation geometry causes an
 atomic failure rather than loss of its data.
 
+Auto Crop scans the canvas for the smallest half-open box containing foreground
+pixels, which trims only complete background rows/columns from the four edges.
+By default its bounds include the authoritative composite of source and visible
+annotations; the dialog also offers source-only bounds. This never flattens
+annotations into the source. The resulting box uses the same crop operation and
+intersection policy. Border matching is explicit: transparent pixels only,
+the top-left pixel of the chosen bounds image, or a selected ARGB colour. Alpha
+at or below the chosen threshold (0..255) is always background. Colour matching
+uses the maximum absolute difference across the four 8-bit RGBA channels,
+with inclusive tolerance (0..255); hidden RGB in transparent pixels is ignored
+by the alpha rule. The scan is global, not flood fill: internal matching pixels
+do not remove foreground islands. No foreground or full-canvas bounds produce
+a no-op, with no source encoding, history entry, or change to dirty state.
+Compositing, scanning and source copying support cancellation and progress.
+
 Resize Canvas uses nine anchors. Added pixels use the explicitly selected
 non-premultiplied ARGB colour, transparent by default. Each origin offset is
 `floor((new_dimension - old_dimension) * anchor_fraction)`, where the fraction
@@ -45,7 +60,7 @@ enters history, guarded by the original session state ID. Undo and redo restore
 the source PNG, dimensions, annotations and selection; viewport state stays
 independent. Allocation is reserved before changing the redo branch.
 
-Custom image rotation, auto crop, general affine annotations, inserted images,
+Custom image rotation, general affine annotations, inserted images,
 background composition, flatten, clear and comparison remain subsequent work.
 Shared goldens and the remaining qualification gates in
 `product-contract/READINESS.md` still apply.

@@ -682,6 +682,17 @@ QJsonObject runEditorCanvas(const QString &operation, const QJsonObject &input) 
       else if (id == u"crop") {
         command.action = ed::CanvasAction::Crop;
         command.start = pointFrom(op.value(u"start")); command.end = pointFrom(op.value(u"end"));
+      } else if (id == u"auto_crop") {
+        command.action = ed::CanvasAction::AutoCrop;
+        const QString border = op.value(u"border").toString(QStringLiteral("transparent"));
+        if (border != u"transparent" && border != u"top-left" && border != u"color") return adapterError(QStringLiteral("unknown auto crop border"));
+        command.autoCrop.border = border == u"top-left" ? ed::CropBorder::TopLeftColor : border == u"color" ? ed::CropBorder::Color : ed::CropBorder::Transparent;
+        command.autoCrop.alphaThreshold = op.value(u"alpha_threshold").toInt();
+        command.autoCrop.tolerance = op.value(u"tolerance").toInt();
+        command.autoCrop.includeAnnotations = op.value(u"include_annotations").toBool(true);
+        const auto color = ed::parseColor(op.value(u"color").toString(QStringLiteral("#FFFFFFFF")));
+        if (!color) return adapterError(QStringLiteral("invalid auto crop color"));
+        command.autoCrop.color = *color;
       } else if (id == u"resize_canvas" || id == u"resize_image") {
         command.action = id == u"resize_canvas" ? ed::CanvasAction::ResizeCanvas : ed::CanvasAction::ResizeImage;
         const QJsonArray target = op.value(u"size").toArray();
