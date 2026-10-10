@@ -3,6 +3,7 @@
 #include "CaptureController.h"
 
 #include <QAccessible>
+#include <QFontDatabase>
 #include <QGuiApplication>
 #include <QKeyEvent>
 #include <QPainter>
@@ -131,8 +132,14 @@ void RegionOverlay::paintEvent(QPaintEvent *) {
 void RegionOverlay::paintBadge(QPainter &painter, const QRectF &r, const PhysicalRect &physical) {
   // RC-011: physical bounds are visible before confirmation.
   QFont font = painter.font();
-  font.setPixelSize(12);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+  // QFont::Tag and setFeature were added in Qt 6.7.
   font.setFeature(QFont::Tag("tnum"), 1);
+#else
+  // The Qt 6.4 baseline still needs stable-width digits in the bounds badge.
+  font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+#endif
+  font.setPixelSize(12);
   painter.setFont(font);
   const QString size = QStringLiteral("%1 × %2").arg(physical.width()).arg(physical.height());
   const QString origin = QStringLiteral("%1, %2").arg(physical.left).arg(physical.top);

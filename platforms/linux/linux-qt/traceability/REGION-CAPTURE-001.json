@@ -88,7 +88,7 @@
       "vectors": [
         "click-selects-snapped-window"
       ],
-      "note": "Click-to-snap and drag override are implemented (platforms/linux/linux-qt/tests/RegionCaptureTest.cpp). Native window and control discovery arrives with the overlay."
+      "note": "Click-to-snap and drag override are implemented (platforms/linux/linux-qt/tests/RegionCaptureTest.cpp). Native window and control discovery arrives with the overlay. The overlay badge shows physical size and origin with tabular digits on Qt 6.7+ and the native fixed font on Qt 6.4; the Ubuntu CI job checks the minimum-version app build."
     },
     "RC-012": {
       "status": "partial",
