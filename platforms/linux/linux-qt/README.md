@@ -9,7 +9,9 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 | `FILENAME-GENERATION-001` | Core logic and conformance seam; no UI yet | 51 of 51 vectors pass; [traceability](traceability/FILENAME-GENERATION-001.json) |
 | `POST-CAPTURE-ACTIONS-001` | Pipeline engine and conformance seam; native actions, retry, and recovery not yet | 17 of 17 vectors pass; [traceability](traceability/POST-CAPTURE-ACTIONS-001.json) |
 | `REGION-CAPTURE-001` | Mapping, keyboard, compositing, last-region, and session state machine; no overlay or capture backend yet | 21 of 21 vectors pass; [traceability](traceability/REGION-CAPTURE-001.json) |
-| `EDITOR-SESSION-001` | Document, `.xann` reader and writer, history, and export renderer; editor window with rectangle tool, selection, save, and sidecar reopen; resize, rotate, and ordering by keyboard | 19 of 19 vectors pass; [traceability](traceability/EDITOR-SESSION-001.json) |
+| `EDITOR-SESSION-001` | Document, `.xann` reader and writer, history, and export renderer; editor window with rectangle tool, selection, save, and sidecar reopen; resize and ordering by keyboard, arbitrary-angle rotation and export | 19 of 19 vectors pass; [traceability](traceability/EDITOR-SESSION-001.json) |
+
+The next implementation steps are tracked in [IMPLEMENTATION.md](IMPLEMENTATION.md).
 
 ## Layout
 
@@ -28,7 +30,7 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 - Hyprland binding example: `bind = , PRINT, exec, xerahs --capture-region`.
 - `packaging/com.xerahs.app.desktop` gives desktop launches the `com.xerahs.app` identity, which portals use to attribute consent.
 
-- **Open image** (tray menu or `xerahs --edit FILE`) opens the editor: drag to draw rectangles, click to select, drag or arrow keys to move, Delete to remove, Alt+arrows to resize, R to rotate, `[`/`]` to reorder, Ctrl+Z/Ctrl+Shift+Z for history, Ctrl+S to save the flattened PNG with its `.xann` sidecar.
+- **Open image** (tray menu or `xerahs --edit FILE`) opens the editor: drag to draw rectangles, click to select, drag or arrow keys to move, Delete to remove, Alt+arrows to resize, R for quarter turns or **Rotate selection…** for any angle, `[`/`]` to reorder, Ctrl+Z/Ctrl+Shift+Z for history, Ctrl+S to save the flattened PNG with its `.xann` sidecar.
 
 No settings are persisted yet, and the reference Avalonia app's configuration is never read or written.
 

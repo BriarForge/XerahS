@@ -21,10 +21,8 @@ struct ArgbImage {
 ArgbImage solidImage(qint64 width, qint64 height, Argb color);
 
 enum class RenderError {
-  // Pending clarification (ROOT-ESCALATE-001): ES-025 allows rotations that are
-  // not multiples of 90 degrees within 1 per channel through exact polygon
-  // coverage. This renderer implements the multiple-of-90 reference only.
-  UnsupportedRotation,
+  InvalidSource,
+  InvalidGeometry,
 };
 
 struct RenderResult {

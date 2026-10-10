@@ -37,6 +37,7 @@ private:
   QAction *m_undo = nullptr;
   QAction *m_redo = nullptr;
   QAction *m_delete = nullptr;
+  QAction *m_rotate = nullptr;
 };
 
 }  // namespace xerahs::app

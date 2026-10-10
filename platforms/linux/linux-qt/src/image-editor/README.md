@@ -1,5 +1,16 @@
 # Linux ImageEditor
 
-Native ImageEditor feature module of the `linux-qt` edition. Owned by this platform tree, not a ShareX.ImageEditor submodule.
+Native ImageEditor feature module of the `linux-qt` reference edition. Implements
+the approved Product Contract using Qt Core libraries shared by the app and the
+conformance adapter.
 
-Started with the `EDITOR-SESSION-001` core: `AnnotationDocument` (`.xann` v1 reader, writer, and sidecars), `EditorSession` (rectangle tool, selection, history, dirty state), and `AnnotationRenderer` (authoritative export). No editor UI yet.
+`AnnotationDocument` reads and writes `.xann` v1 documents and sidecars.
+`EditorSession` owns rectangle annotations, selection, atomic history, and dirty
+state. `AnnotationRenderer` is the authoritative export path: quarter-turn
+rectangles use exact box coverage, and arbitrary rotations use exact polygon
+coverage under ES-025.
+
+The native editor in `app/EditorWindow.cpp` loads sources, draws and manipulates
+rectangles, exposes undo/redo and save, and reopens editable sidecars. See the
+edition [implementation plan](../../IMPLEMENTATION.md) and
+[traceability](../../traceability/) for remaining contract requirements.

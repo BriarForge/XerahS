@@ -1,6 +1,7 @@
 #include "image-editor/AnnotationRenderer.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 // ES-025 requires binary64 evaluated in the order written, without fused
@@ -58,6 +59,69 @@ std::optional<int> quarterTurns(double degrees) {
   return std::nullopt;
 }
 
+using Polygon = std::vector<PointF>;
+
+Polygon rotatedBox(const Box &box, PointF centre, double cosine, double sine) {
+  Polygon polygon;
+  polygon.reserve(4);
+  for (const PointF point : std::array<PointF, 4>{{{box.left, box.top}, {box.right, box.top},
+                                                {box.right, box.bottom}, {box.left, box.bottom}}}) {
+    const double x = point.x - centre.x;
+    const double y = point.y - centre.y;
+    polygon.push_back({centre.x + x * cosine - y * sine, centre.y + x * sine + y * cosine});
+  }
+  return polygon;
+}
+
+bool finite(const Polygon &polygon) {
+  return std::all_of(polygon.begin(), polygon.end(), [](PointF p) {
+    return std::isfinite(p.x) && std::isfinite(p.y);
+  });
+}
+
+// Sutherland-Hodgman clipping against a pixel's four half-planes. Subtract
+// the pixel origin first so area evaluation never subtracts large products
+// in document coordinates. Pixel edges of zero area do not affect coverage.
+double coverage(const Polygon &polygon, qint64 i, qint64 j) {
+  Polygon clipped;
+  clipped.reserve(8);
+  for (PointF p : polygon) clipped.push_back({p.x - i, p.y - j});
+  for (int edge = 0; edge < 4 && !clipped.empty(); ++edge) {
+    const bool horizontal = edge >= 2;
+    const double boundary = edge % 2;
+    const auto coordinate = [horizontal](PointF p) { return horizontal ? p.y : p.x; };
+    const auto inside = [&](PointF p) {
+      return edge % 2 == 0 ? coordinate(p) >= boundary : coordinate(p) <= boundary;
+    };
+    Polygon next;
+    next.reserve(8);
+    PointF previous = clipped.back();
+    bool previousInside = inside(previous);
+    for (PointF current : clipped) {
+      const bool currentInside = inside(current);
+      if (previousInside != currentInside) {
+        const double fraction = (boundary - coordinate(previous)) / (coordinate(current) - coordinate(previous));
+        PointF intersection{previous.x + fraction * (current.x - previous.x),
+                            previous.y + fraction * (current.y - previous.y)};
+        if (horizontal) intersection.y = boundary;
+        else intersection.x = boundary;
+        next.push_back(intersection);
+      }
+      if (currentInside) next.push_back(current);
+      previous = current;
+      previousInside = currentInside;
+    }
+    clipped = std::move(next);
+  }
+  double twiceArea = 0;
+  for (std::size_t n = 1; n + 1 < clipped.size(); ++n) {
+    const PointF a{clipped[n].x - clipped[0].x, clipped[n].y - clipped[0].y};
+    const PointF b{clipped[n + 1].x - clipped[0].x, clipped[n + 1].y - clipped[0].y};
+    twiceArea += a.x * b.y - a.y * b.x;
+  }
+  return std::clamp(std::abs(twiceArea) / 2, 0.0, 1.0);
+}
+
 double compose(double layerColour, double a, double cd, double ad, double ao) {
   if (ao == 0) return 0;
   return (layerColour * a + cd * ad * (1 - a)) / ao;
@@ -71,22 +135,32 @@ ArgbImage solidImage(qint64 width, qint64 height, Argb color) {
 
 RenderResult render(const ArgbImage &source, const std::vector<Annotation> &annotations) {
   RenderResult result;
+  if (source.width < 1 || source.height < 1 || source.width > kMaxDimension || source.height > kMaxDimension ||
+      source.width * source.height > kMaxPixels ||
+      source.pixels.size() != static_cast<std::size_t>(source.width * source.height)) {
+    result.error = RenderError::InvalidSource;
+    return result;
+  }
   ArgbImage image = source;  // ES-009: the source itself is never modified
 
   for (const Annotation &annotation : annotations) {
     const auto *rectangle = std::get_if<RectangleAnnotation>(&annotation);
     if (!rectangle || !rectangle->visible) continue;
     const RectangleStyle &style = rectangle->style;
-    const std::optional<int> turns = quarterTurns(style.rotationDegrees);
-    if (!turns) {
-      result.error = RenderError::UnsupportedRotation;
+    if (!std::isfinite(rectangle->left()) || !std::isfinite(rectangle->top()) ||
+        !std::isfinite(rectangle->right()) || !std::isfinite(rectangle->bottom()) ||
+        !std::isfinite(style.rotationDegrees) || !std::isfinite(style.strokeWidth) || style.strokeWidth <= 0 ||
+        !std::isfinite(style.opacity) || style.opacity < 0 || style.opacity > 1 ||
+        rectangle->right() <= rectangle->left() || rectangle->bottom() <= rectangle->top()) {
+      result.error = RenderError::InvalidGeometry;
       return result;
     }
+    const std::optional<int> turns = quarterTurns(style.rotationDegrees);
 
     // ES-024: rotation is about the bounds centre; a quarter turn swaps the
     // extents.
     Box bounds{rectangle->left(), rectangle->top(), rectangle->right(), rectangle->bottom()};
-    if (*turns % 2 == 1) {
+    if (turns && *turns % 2 == 1) {
       const double cx = (bounds.left + bounds.right) / 2;
       const double cy = (bounds.top + bounds.bottom) / 2;
       const double halfWidth = (bounds.right - bounds.left) / 2;
@@ -99,6 +173,33 @@ RenderResult render(const ArgbImage &source, const std::vector<Annotation> &anno
     const Box shrunk{bounds.left + half, bounds.top + half, bounds.right - half, bounds.bottom - half};
     const bool shrunkEmpty = !(shrunk.right - shrunk.left > 0) || !(shrunk.bottom - shrunk.top > 0);
 
+    Box clipBounds = grown;
+    Polygon fillPolygon, outerPolygon, innerPolygon;
+    if (!turns) {
+      const PointF centre{bounds.left / 2 + bounds.right / 2, bounds.top / 2 + bounds.bottom / 2};
+      const double radians = std::fmod(style.rotationDegrees, 360.0) * (std::acos(-1.0) / 180.0);
+      const double cosine = std::cos(radians), sine = std::sin(radians);
+      fillPolygon = rotatedBox(bounds, centre, cosine, sine);
+      outerPolygon = rotatedBox(grown, centre, cosine, sine);
+      if (!shrunkEmpty) innerPolygon = rotatedBox(shrunk, centre, cosine, sine);
+      if (!finite(fillPolygon) || !finite(outerPolygon) || !finite(innerPolygon)) {
+        result.error = RenderError::InvalidGeometry;
+        return result;
+      }
+      clipBounds = {outerPolygon[0].x, outerPolygon[0].y, outerPolygon[0].x, outerPolygon[0].y};
+      for (PointF p : outerPolygon) {
+        clipBounds.left = std::min(clipBounds.left, p.x);
+        clipBounds.top = std::min(clipBounds.top, p.y);
+        clipBounds.right = std::max(clipBounds.right, p.x);
+        clipBounds.bottom = std::max(clipBounds.bottom, p.y);
+      }
+    }
+    if (!std::isfinite(clipBounds.left) || !std::isfinite(clipBounds.top) ||
+        !std::isfinite(clipBounds.right) || !std::isfinite(clipBounds.bottom)) {
+      result.error = RenderError::InvalidGeometry;
+      return result;
+    }
+
     // ES-025 composites every pixel. Where the layer alpha is 0 the result is
     // the destination, except that a fully transparent destination becomes
     // 0 in every channel; applying that first lets the loop skip A = 0 pixels.
@@ -110,15 +211,19 @@ RenderResult render(const ArgbImage &source, const std::vector<Annotation> &anno
     const Channels fill = channels(style.fillColor);
 
     // ES-010: clip to the canvas.
-    const qint64 x0 = std::max<qint64>(0, static_cast<qint64>(std::floor(grown.left)));
-    const qint64 y0 = std::max<qint64>(0, static_cast<qint64>(std::floor(grown.top)));
-    const qint64 x1 = std::min<qint64>(image.width, static_cast<qint64>(std::ceil(grown.right)));
-    const qint64 y1 = std::min<qint64>(image.height, static_cast<qint64>(std::ceil(grown.bottom)));
+    // Clamp in floating point before integer conversion, including far-off
+    // finite annotations. This also avoids undefined casts of large values.
+    const qint64 x0 = static_cast<qint64>(std::floor(std::clamp(clipBounds.left, 0.0, double(image.width))));
+    const qint64 y0 = static_cast<qint64>(std::floor(std::clamp(clipBounds.top, 0.0, double(image.height))));
+    const qint64 x1 = static_cast<qint64>(std::ceil(std::clamp(clipBounds.right, 0.0, double(image.width))));
+    const qint64 y1 = static_cast<qint64>(std::ceil(std::clamp(clipBounds.bottom, 0.0, double(image.height))));
 
     for (qint64 j = y0; j < y1; ++j) {
       for (qint64 i = x0; i < x1; ++i) {
-        const double coverageFill = coverage(bounds, i, j);
-        const double coverageStroke = coverage(grown, i, j) - (shrunkEmpty ? 0 : coverage(shrunk, i, j));
+        const double coverageFill = turns ? coverage(bounds, i, j) : coverage(fillPolygon, i, j);
+        const double outer = turns ? coverage(grown, i, j) : coverage(outerPolygon, i, j);
+        const double inner = shrunkEmpty ? 0 : (turns ? coverage(shrunk, i, j) : coverage(innerPolygon, i, j));
+        const double coverageStroke = std::clamp(outer - inner, 0.0, 1.0);
         const double af = coverageFill * fill.a;
         const double as = coverageStroke * stroke.a;
         const double layerAlpha = as + af * (1 - as);

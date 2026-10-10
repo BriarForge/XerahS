@@ -75,6 +75,32 @@ private slots:
     QCOMPARE(reopened.document->annotations.size(), size_t(1));
     QCOMPARE(reopened.image.pixel(0, 0), qRgba(0, 0, 0, 255));
   }
+
+  void freeAngleRotationSavesAndReopensWithHistory() {
+    QTemporaryDir dir;
+    const QString path = dir.filePath("rotated.png");
+    QImage blank(40, 30, QImage::Format_ARGB32);
+    blank.fill(Qt::transparent);
+    QVERIFY(blank.save(path));
+    const LoadedSource first = loadSource(path);
+    QVERIFY(first.document);
+    EditorSession session(*first.document);
+    QVERIFY(session.createRectangle({10, 5}, {30, 25}));
+    QVERIFY(session.rotateSelection(17));
+    QCOMPARE(session.undoCount(), 2);
+    QVERIFY(session.undo());
+    QCOMPARE(std::get<RectangleAnnotation>(session.document().annotations[0]).style.rotationDegrees, 0);
+    QVERIFY(session.redo());
+    const auto outcome = saveEdit(path, first.image, session.document());
+    QVERIFY(outcome.rasterSaved && outcome.sidecarSaved);
+    QVERIFY(session.recordSave(outcome.rasterSaved, outcome.sidecarSaved).isEmpty());
+    const LoadedSource reopened = loadSource(path);
+    QVERIFY(reopened.document);
+    QVERIFY(reopened.warnings.isEmpty());
+    QCOMPARE(std::get<RectangleAnnotation>(reopened.document->annotations[0]).style.rotationDegrees, 17);
+    QCOMPARE(reopened.image.pixel(10, 15), qRgba(0, 0, 0, 0));
+    QVERIFY(qAlpha(QImage(path).pixel(10, 15)) > 0);
+  }
 };
 
 QTEST_MAIN(EditorSourceTest)

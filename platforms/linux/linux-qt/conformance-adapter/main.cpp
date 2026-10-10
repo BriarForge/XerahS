@@ -570,7 +570,7 @@ QJsonObject runEditorSession(const QString &operation, const QJsonObject &input)
     }
     const ed::RenderResult result =
         ed::render(ed::solidImage(size.at(0).toInteger(), size.at(1).toInteger(), *fill), annotations);
-    if (!result.image) return adapterError(QStringLiteral("unsupported rotation"));
+    if (!result.image) return adapterError(QStringLiteral("invalid image or annotation geometry"));
     QJsonArray rows;
     for (qint64 y = 0; y < result.image->height; ++y) {
       QJsonArray row;

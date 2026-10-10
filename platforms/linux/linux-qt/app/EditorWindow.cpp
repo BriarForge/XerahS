@@ -8,6 +8,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QKeyEvent>
+#include <QInputDialog>
 #include <QMessageBox>
 #include <QMouseEvent>
 #include <QPainter>
@@ -77,6 +78,9 @@ protected:
                                             r->style.strokeWidth);
         p.save();
         if (m_moving) p.translate(m_moveLast - m_moveStart);
+        p.translate(box.center());
+        p.rotate(r->style.rotationDegrees);
+        p.translate(-box.center());
         p.setBrush(Qt::NoBrush);
         p.setPen(QPen(Qt::white, 2));
         p.drawRect(outline);
@@ -202,7 +206,12 @@ private:
       const auto *r = std::get_if<RectangleAnnotation>(&*it);
       if (!r || !r->visible) continue;
       const double slop = std::max(6.0, r->style.strokeWidth / 2);
-      if (QRectF(QPointF(r->left(), r->top()), QPointF(r->right(), r->bottom())).adjusted(-slop, -slop, slop, slop).contains(at))
+      const QRectF box(QPointF(r->left(), r->top()), QPointF(r->right(), r->bottom()));
+      QTransform rotation;
+      rotation.translate(box.center().x(), box.center().y());
+      rotation.rotate(r->style.rotationDegrees);
+      rotation.translate(-box.center().x(), -box.center().y());
+      if (box.adjusted(-slop, -slop, slop, slop).contains(rotation.inverted().map(at)))
         return r->id;
     }
     return std::nullopt;
@@ -250,6 +259,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   m_redo = bar->addAction(QStringLiteral("Redo"));
   m_redo->setShortcut(QKeySequence::Redo);
   m_delete = bar->addAction(QStringLiteral("Delete"));
+  m_rotate = bar->addAction(QStringLiteral("Rotate selection…"));
   bar->addSeparator();
   QAction *stroke = bar->addAction(QStringLiteral("Stroke colour…"));
   QAction *fill = bar->addAction(QStringLiteral("Fill colour…"));
@@ -261,6 +271,13 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(m_undo, &QAction::triggered, this, [this] { m_session->undo(); refresh(); });
   connect(m_redo, &QAction::triggered, this, [this] { m_session->redo(); refresh(); });
   connect(m_delete, &QAction::triggered, this, [this] { m_session->deleteSelection(); refresh(); });
+  connect(m_rotate, &QAction::triggered, this, [this] {
+    bool accepted = false;
+    const double degrees = QInputDialog::getDouble(this, QStringLiteral("Rotate selection"),
+        QStringLiteral("Clockwise angle in degrees (negative turns counter-clockwise):"),
+        0, -360, 360, 2, &accepted);
+    if (accepted) { m_session->rotateSelection(degrees); refresh(); }
+  });
   connect(stroke, &QAction::triggered, this, [this] {
     const QColor c = QColorDialog::getColor(toColor(m_session->toolStyle().strokeColor), this,
                                             QStringLiteral("Stroke colour"), QColorDialog::ShowAlphaChannel);
@@ -288,6 +305,7 @@ void EditorWindow::refresh() {
   m_undo->setEnabled(m_session->undoCount() > 0);
   m_redo->setEnabled(m_session->redoCount() > 0);
   m_delete->setEnabled(!m_session->selection().isEmpty());
+  m_rotate->setEnabled(!m_session->selection().isEmpty());
   setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(QFileInfo(m_path).fileName(),
                                                     m_session->dirty() ? QStringLiteral(" •") : QString()));
   statusBar()->showMessage(QStringLiteral("%1 × %2 · %3 annotation(s) · %4 selected")

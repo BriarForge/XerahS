@@ -38,7 +38,7 @@
     "ES-004": {
       "status": "implemented",
       "vectors": [],
-      "note": "Selection outline, click and additive click, drag and arrow-key move, Alt+arrow resize, R/Shift+R rotate by 90 degrees (the exported rotations), [ and ] ordering (Ctrl for front/back), and Delete are available. Free-angle rotation waits on export support."
+      "note": "Native selection outline and hit testing follow rotation. Pointer and keyboard move, Alt+arrow resize, R/Shift+R quarter turns, a cancellable Rotate selection dialog for arbitrary angles, ordering, and Delete are available. Rotation commits one session history entry."
     },
     "ES-005": {
       "status": "implemented",
@@ -163,13 +163,13 @@
       ]
     },
     "ES-025": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "render-stroke-coverage",
         "render-opacity-applied-once",
         "render-fill-with-opacity"
       ],
-      "note": "Multiple-of-90 rotations follow the reference exactly; other rotations return UnsupportedRotation until exact polygon coverage is implemented."
+      "note": "Quarter turns retain the binary64 box-coverage path; all other finite angles use exact polygon/pixel intersections with fill-before-stroke and one opacity application. Analytical diamond coverage, inner-stroke subtraction, and compositing are checked in tests/EditorSessionTest.cpp; tests/EditorSourceTest.cpp verifies a 17-degree PNG/sidecar save and reopen. Shared golden fixtures remain an ES-022 activation gate."
     },
     "ES-026": {
       "status": "implemented",

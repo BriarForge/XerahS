@@ -133,7 +133,7 @@ SaveOutcome saveEdit(const QString &rasterPath, const QImage &source, const Anno
   }
   const RenderResult rendered = render(input, document.annotations);
   if (!rendered.image) {
-    outcome.rasterError = QStringLiteral("Rotated rectangles cannot be exported yet.");
+    outcome.rasterError = QStringLiteral("The image or annotation geometry is invalid and cannot be exported.");
     return outcome;
   }
   QImage out(argb.size(), QImage::Format_ARGB32);
