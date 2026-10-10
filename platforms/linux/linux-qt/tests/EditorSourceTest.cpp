@@ -56,7 +56,7 @@ private slots:
     QCOMPARE(second.image.pixel(5, 12), qRgba(255, 255, 255, 255));
   }
 
-  void changedRasterWarnsAndKeepsAnnotations() {
+  void changedRasterRequiresChoiceAndKeepsValidatedSnapshots() {
     QTemporaryDir dir;
     const QString path = dir.filePath("shot.png");
     QImage blank(40, 30, QImage::Format_ARGB32);
@@ -66,14 +66,39 @@ private slots:
     EditorSession session(*first.document);
     session.createRectangle({5, 5}, {20, 20});
     QVERIFY(saveEdit(path, first.image, session.document()).rasterSaved);
-    QImage other(40, 30, QImage::Format_ARGB32);
+    QImage other(24, 20, QImage::Format_ARGB32);
     other.fill(Qt::black);
     QVERIFY(other.save(path));
     LoadedSource reopened = loadSource(path);
-    QVERIFY(reopened.document);
-    QCOMPARE(reopened.warnings.size(), 1);
-    QCOMPARE(reopened.document->annotations.size(), size_t(1));
-    QCOMPARE(reopened.image.pixel(0, 0), qRgba(0, 0, 0, 255));
+    QVERIFY(!reopened.document && reopened.pendingChoice && reopened.image.isNull());
+    QVERIFY(resolveSourceChoice(reopened, SourceChoice::Unspecified).pendingChoice);
+    // A file changes again while the user decides: use the validated snapshot.
+    QImage later(10, 10, QImage::Format_ARGB32); later.fill(Qt::blue); QVERIFY(later.save(path));
+    const auto current = resolveSourceChoice(reopened, SourceChoice::CurrentRaster);
+    QVERIFY(current.document); QCOMPARE(current.image, other); QCOMPARE(current.document->canvasWidth, 24);
+    const auto embedded = resolveSourceChoice(reopened, SourceChoice::EmbeddedSource);
+    QVERIFY(embedded.document); QCOMPARE(embedded.image, blank); QCOMPARE(embedded.document->canvasWidth, 40);
+    QCOMPARE(embedded.document->annotations.size(), size_t(1));
+    QCOMPARE(serializeDocument(*current.document).value(u"annotations"), serializeDocument(*embedded.document).value(u"annotations"));
+    QCOMPARE(QImage(path), later);  // no choice rewrites the user's file
+  }
+
+  void invalidOrNewerSidecarsNeverCreateABareRasterSession() {
+    QTemporaryDir dir; const QString path = dir.filePath("safe.png");
+    QImage image(4, 3, QImage::Format_ARGB32); image.fill(Qt::white); QVERIFY(image.save(path));
+    const auto initial = loadSource(path); QVERIFY(initial.document);
+    auto document = *initial.document; document.version = 2;
+    const auto newer = writeXann(document); QVERIFY(newer);
+    QFile sidecar(path + ".xann"); QVERIFY(sidecar.open(QIODevice::WriteOnly)); QCOMPARE(sidecar.write(*newer), newer->size()); sidecar.close();
+    const auto failed = loadSource(path);
+    QVERIFY(!failed.document && !failed.pendingChoice); QCOMPARE(failed.diagnostic, diagnostic::documentVersionUnsupported);
+    QVERIFY(sidecar.open(QIODevice::ReadOnly)); QCOMPARE(sidecar.readAll(), *newer); sidecar.close(); QCOMPARE(QImage(path), image);
+    QVERIFY(sidecar.open(QIODevice::WriteOnly | QIODevice::Truncate)); sidecar.write("corrupt"); sidecar.close();
+    const auto corrupt = loadSource(path); QVERIFY(!corrupt.document); QCOMPARE(corrupt.diagnostic, diagnostic::documentInvalid);
+    document.version = 1; document.sourceImagePng.truncate(29);  // header passes; pixel decoding must fail
+    const auto truncated = writeXann(document); QVERIFY(truncated);
+    QVERIFY(sidecar.open(QIODevice::WriteOnly | QIODevice::Truncate)); sidecar.write(*truncated); sidecar.close();
+    const auto damagedSource = loadSource(path); QVERIFY(!damagedSource.document); QCOMPARE(damagedSource.diagnostic, diagnostic::documentInvalid);
   }
 
   void freeAngleRotationSavesAndReopensWithHistory() {

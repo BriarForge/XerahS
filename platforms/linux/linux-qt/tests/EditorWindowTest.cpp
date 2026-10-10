@@ -15,6 +15,8 @@
 #include <QFile>
 #include <QLabel>
 #include <QProgressBar>
+#include <QMessageBox>
+#include <QPushButton>
 #include <QSpinBox>
 #include <QStatusBar>
 #include <QTemporaryDir>
@@ -86,6 +88,42 @@ void runRotationPreview(EditorWindow &window, bool accept) {
 class EditorWindowTest : public QObject {
   Q_OBJECT
 private slots:
+  void nativeSourceMismatchChoice_data() {
+    QTest::addColumn<int>("choice");
+    QTest::newRow("cancel") << int(SourceChoice::Unspecified);
+    QTest::newRow("current") << int(SourceChoice::CurrentRaster);
+    QTest::newRow("embedded") << int(SourceChoice::EmbeddedSource);
+  }
+  void nativeSourceMismatchChoice() {
+    QFETCH(int, choice);
+    QTemporaryDir dir; const QString path = dir.filePath("mismatch.png");
+    const QImage original = fixture(); QVERIFY(original.save(path));
+    const auto first = loadSource(path); QVERIFY(first.document);
+    EditorSession session(*first.document); QVERIFY(session.createRectangle({8, 8}, {22, 16}));
+    const auto saved = saveEdit(path, original, session.document()); QVERIFY(saved.rasterSaved && saved.sidecarSaved);
+    QImage current(24, 20, QImage::Format_ARGB32); current.fill(Qt::black); QVERIFY(current.save(path));
+    QFile sidecar(path + ".xann"); QVERIFY(sidecar.open(QIODevice::ReadOnly)); const QByteArray sidecarBefore = sidecar.readAll(); sidecar.close();
+    QTimer::singleShot(0, [choice] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box);
+      QCOMPARE(box->defaultButton(), box->button(QMessageBox::Cancel));
+      if (choice == int(SourceChoice::Unspecified)) { box->button(QMessageBox::Cancel)->click(); return; }
+      const QString prefix = choice == int(SourceChoice::CurrentRaster) ? QStringLiteral("Current raster") : QStringLiteral("Embedded source");
+      for (auto *button : box->buttons()) if (button->text().startsWith(prefix)) { button->click(); return; }
+      QFAIL("The source-choice dialog did not expose both validated images.");
+    });
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path));
+    if (choice == int(SourceChoice::Unspecified)) QVERIFY(!window);
+    else {
+      QVERIFY(window);
+      const QString dimensions = choice == int(SourceChoice::CurrentRaster) ? QStringLiteral("24 × 20") : QStringLiteral("60 × 40");
+      QVERIFY(window->statusBar()->currentMessage().startsWith(dimensions));
+      QVERIFY(window->statusBar()->currentMessage().contains(QStringLiteral("1 annotation(s)")));
+      QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+    }
+    QCOMPARE(QImage(path), current);
+    QVERIFY(sidecar.open(QIODevice::ReadOnly)); QCOMPARE(sidecar.readAll(), sidecarBefore);
+  }
+
   void cropIsUndoableAndReopensTheCroppedSource() {
     QTemporaryDir dir;
     const QString path = dir.filePath("crop.png");

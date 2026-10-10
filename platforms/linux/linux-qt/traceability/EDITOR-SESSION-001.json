@@ -18,7 +18,9 @@
     "platforms/linux/linux-qt/app/EditorCanvas.h",
     "platforms/linux/linux-qt/app/EditorCanvas.cpp",
     "platforms/linux/linux-qt/src/image-editor/CanvasOperations.cpp",
-    "platforms/linux/linux-qt/app/EditorCanvasOperations.cpp"
+    "platforms/linux/linux-qt/app/EditorCanvasOperations.cpp",
+    "platforms/linux/linux-qt/src/image-editor/SourceBinding.h",
+    "platforms/linux/linux-qt/src/image-editor/SourceBinding.cpp"
   ],
   "requirements": {
     "ES-001": {
@@ -110,16 +112,17 @@
       ]
     },
     "ES-015": {
-      "status": "implemented",
+      "status": "partial",
       "vectors": [
         "newer-version-read-only-failure",
         "unknown-fields-and-types-round-trip"
-      ]
+      ],
+      "note": "Unknown additive fields and annotation types round-trip in the core. The native source loader now also fails closed for newer, unreadable or corrupt sidecars and embedded sources, preserving the original files and preventing a writable bare-raster fallback. Native file tests cover these failures; unsupported-placeholder presentation remains tracked under editor accessibility/tool coverage."
     },
     "ES-016": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "A source-hash mismatch warns and keeps annotations on the current raster; an explicit choice to use the embedded source is not offered yet. A matching hash edits the embedded unannotated source."
+      "note": "Qt Core SourceBinding requires an explicit current-raster or embedded-source choice when hashes differ. The native warning offers both validated images with dimensions and Cancel as default. Cancellation creates no session; choices preserve annotation fields/coordinates/assets and use the validated snapshots without rereading files. Core, file and native-dialog tests cover choices, changed dimensions, cancellation, snapshot stability and untouched files."
     },
     "ES-017": {
       "status": "implemented",

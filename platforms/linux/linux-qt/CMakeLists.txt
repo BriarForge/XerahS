@@ -29,6 +29,8 @@ add_library(xerahs_core STATIC
   src/image-editor/EditorSession.h
   src/image-editor/EditorViewport.cpp
   src/image-editor/EditorViewport.h
+  src/image-editor/SourceBinding.cpp
+  src/image-editor/SourceBinding.h
   src/naming/FilenameGenerator.cpp
   src/naming/FilenameGenerator.h
 )

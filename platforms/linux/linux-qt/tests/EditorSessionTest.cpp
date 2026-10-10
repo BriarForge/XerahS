@@ -4,6 +4,7 @@
 
 #include "image-editor/AnnotationRenderer.h"
 #include "image-editor/EditorSession.h"
+#include "image-editor/SourceBinding.h"
 
 #include <QJsonArray>
 #include <QTest>
@@ -63,6 +64,43 @@ class EditorSessionTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void mismatchedSourceRequiresAnExplicitBindingChoice() {
+    auto d = document(10, 10); d.sourceImagePng = pngHeader(10, 10);
+    d.imageHash = QStringLiteral("sha256:") + QString(64, QLatin1Char('0'));
+    const QString hash = QStringLiteral("sha256:") + QString(64, QLatin1Char('1'));
+    const QByteArray current = pngHeader(12, 8);
+    const auto r = rectangle(1, 2, 5, 6); d.annotations = {r};
+    d.extra.insert(QStringLiteral("vendor"), QStringLiteral("preserve"));
+    auto result = bindSource(d, current, QStringLiteral("changed.png"), hash);
+    QVERIFY(result.choiceRequired && !result.document && !result.error);
+    result = bindSource(d, current, QStringLiteral("changed.png"), hash, SourceChoice::CurrentRaster);
+    QVERIFY(result.document); QCOMPARE(result.document->sourceImagePng, current);
+    QCOMPARE(result.document->canvasWidth, 12); QCOMPARE(result.document->canvasHeight, 8);
+    QCOMPARE(result.document->imageHash, hash); QCOMPARE(result.document->extra, d.extra);
+    QCOMPARE(serializeDocument(*result.document).value(u"annotations"), serializeDocument(d).value(u"annotations"));
+    result = bindSource(d, current, QStringLiteral("changed.png"), hash, SourceChoice::EmbeddedSource);
+    QVERIFY(result.document); QCOMPARE(result.document->sourceImagePng, d.sourceImagePng);
+    QCOMPARE(result.document->canvasWidth, 10); QCOMPARE(result.document->canvasHeight, 10);
+    QCOMPARE(d.imageHash, QStringLiteral("sha256:") + QString(64, QLatin1Char('0')));
+    result = bindSource(d, current, QStringLiteral("unchanged.png"), d.imageHash);
+    QVERIFY(result.document && !result.choiceRequired); QCOMPARE(result.document->sourceImagePng, d.sourceImagePng);
+  }
+
+  void sourceBindingRejectsVersionsCorruptHeadersAndInvalidChoices() {
+    auto d = document(1, 1);
+    d.version = 2;
+    QCOMPARE(bindSource(d, kOnePixelPng, QStringLiteral("image.png"), QString()).error,
+             std::optional<QString>(diagnostic::documentVersionUnsupported));
+    d.version = 1;
+    QCOMPARE(bindSource(d, QByteArray("bad"), QStringLiteral("image.png"), QString(), SourceChoice::CurrentRaster).error,
+             std::optional<QString>(diagnostic::documentInvalid));
+    QCOMPARE(bindSource(d, kOnePixelPng, QStringLiteral("image.png"), QString(), SourceChoice(-1)).error,
+             std::optional<QString>(diagnostic::documentInvalid));
+    d.canvasWidth = 2;
+    QCOMPARE(bindSource(d, kOnePixelPng, QStringLiteral("image.png"), QString()).error,
+             std::optional<QString>(diagnostic::documentInvalid));
+  }
+
   // ES-013: gzip-wrapped JSON round-trips with uppercase colours.
   void xannRoundTrips() {
     AnnotationDocument d = document();

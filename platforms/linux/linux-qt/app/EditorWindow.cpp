@@ -45,6 +45,9 @@ QString describe(const QString &diagnostic) {
   if (diagnostic == diagnostic::sourceCorrupt) return QStringLiteral("This image is damaged and cannot be read.");
   if (diagnostic == diagnostic::sourceEmpty) return QStringLiteral("This image is empty.");
   if (diagnostic == diagnostic::sourceTooLarge) return QStringLiteral("This image is too large to edit.");
+  if (diagnostic == diagnostic::documentVersionUnsupported) return QStringLiteral("The annotation file was created by a newer editor version and cannot be opened safely.");
+  if (diagnostic == diagnostic::documentInvalid) return QStringLiteral("The annotation file or its embedded source is damaged and cannot be opened safely.");
+  if (diagnostic == diagnostic::documentTooLarge) return QStringLiteral("The annotation document exceeds the editor's resource limits.");
   return diagnostic;
 }
 
@@ -52,6 +55,19 @@ QString describe(const QString &diagnostic) {
 
 EditorWindow *EditorWindow::open(const QString &path, QWidget *parent) {
   LoadedSource source = loadSource(path);
+  if (source.pendingChoice) {
+    const auto &sources = *source.pendingChoice;
+    QMessageBox box(QMessageBox::Warning, QStringLiteral("Image changed since annotations were saved"),
+        QStringLiteral("Choose the image to use with the saved annotations. Their coordinates will be kept. "
+                       "Cancel leaves both files unchanged."), QMessageBox::Cancel, parent);
+    auto *current = box.addButton(QStringLiteral("Current raster (%1 × %2)").arg(sources.currentRaster.width()).arg(sources.currentRaster.height()), QMessageBox::ActionRole);
+    auto *embedded = box.addButton(QStringLiteral("Embedded source (%1 × %2)").arg(sources.embeddedSource.width()).arg(sources.embeddedSource.height()), QMessageBox::ActionRole);
+    box.setDefaultButton(QMessageBox::Cancel);
+    box.exec();
+    if (box.clickedButton() == current) source = resolveSourceChoice(source, SourceChoice::CurrentRaster);
+    else if (box.clickedButton() == embedded) source = resolveSourceChoice(source, SourceChoice::EmbeddedSource);
+    else return nullptr;
+  }
   if (!source.document) {
     QMessageBox::warning(parent, QStringLiteral("Cannot open image"),
                          QStringLiteral("%1\n\n%2").arg(QFileInfo(path).fileName(), describe(source.diagnostic)));

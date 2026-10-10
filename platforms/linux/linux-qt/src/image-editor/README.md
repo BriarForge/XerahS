@@ -5,6 +5,8 @@ the approved Product Contract using Qt Core libraries shared by the app and the
 conformance adapter.
 
 `AnnotationDocument` reads and writes `.xann` v1 documents and sidecars.
+`SourceBinding` validates source identity and requires an explicit choice before
+annotations can be attached to a raster whose hash differs from the sidecar.
 `EditorSession` owns rectangle annotations, selection, atomic history, and dirty
 state. `EditorViewport` owns finite zoom, pointer anchoring and bounded pan
 independently of the session. `AnnotationRenderer` is the authoritative export path: quarter-turn

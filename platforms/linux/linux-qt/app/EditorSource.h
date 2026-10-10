@@ -4,6 +4,7 @@
 #pragma once
 
 #include "image-editor/EditorSession.h"
+#include "image-editor/SourceBinding.h"
 
 #include <QImage>
 #include <QString>
@@ -13,16 +14,26 @@
 
 namespace xerahs::app {
 
+struct PendingSourceChoice {
+  xerahs::editor::AnnotationDocument document;
+  QImage currentRaster, embeddedSource;
+  QByteArray currentRasterPng;
+  QString rasterPath, rasterHash, sidecarPath;
+};
+
 struct LoadedSource {
   std::optional<xerahs::editor::AnnotationDocument> document;
   QImage image;                  // normalized once at load: upright, non-premultiplied ARGB32
   QString diagnostic;            // ES-029 identifier when `document` is empty
   QStringList warnings;          // user-facing: sidecar problems, source mismatch (ES-016)
   QString sidecarPath;           // sidecar the annotations came from, if any
+  std::optional<PendingSourceChoice> pendingChoice;  // no usable document until explicitly resolved
 };
 
 // Never modifies `path`. Reopens annotations from the sidecar when one exists.
 LoadedSource loadSource(const QString &path);
+// Uses the validated snapshots shown by the chooser, without rereading files.
+LoadedSource resolveSourceChoice(const LoadedSource &pending, xerahs::editor::SourceChoice choice);
 
 struct SaveOutcome {
   bool rasterSaved = false;

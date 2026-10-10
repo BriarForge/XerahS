@@ -11,6 +11,8 @@
 #include <QImageReader>
 #include <QSaveFile>
 
+#include <new>
+
 namespace xerahs::app {
 
 namespace {
@@ -39,7 +41,7 @@ LoadedSource fail(const QString &diagnostic) {
 
 }  // namespace
 
-LoadedSource loadSource(const QString &path) {
+static LoadedSource loadSourceImpl(const QString &path) {
   QFile file(path);
   if (!file.open(QIODevice::ReadOnly)) return fail(diagnostic::sourceUnsupported);
   const QByteArray bytes = file.readAll();
@@ -67,6 +69,11 @@ LoadedSource loadSource(const QString &path) {
     return fail(diagnostic::sourceTooLarge);
   }
   image = image.convertToFormat(QImage::Format_ARGB32);
+  if (image.isNull()) return fail(diagnostic::sourceTooLarge);
+
+  QByteArray normalizedPng;
+  QBuffer normalized(&normalizedPng);
+  if (!normalized.open(QIODevice::WriteOnly) || !image.save(&normalized, "PNG")) return fail(diagnostic::sourceCorrupt);
 
   LoadedSource result;
   result.image = image;
@@ -79,33 +86,23 @@ LoadedSource loadSource(const QString &path) {
     ParseResult parsed;
     if (sidecarFile.open(QIODevice::ReadOnly)) parsed = readXann(sidecarFile.readAll());
     else parsed.error = diagnostic::documentInvalid;
-    if (parsed.document) {
-      AnnotationDocument document = *parsed.document;
-      // ES-016: never silently bind annotations to mismatched pixels.
-      if (!document.imageHash.isEmpty() && document.imageHash != hash) {
-        result.warnings << QStringLiteral(
-            "The image changed since these annotations were saved. They are kept on the current image.");
-      } else if (!document.sourceImagePng.isEmpty()) {
-        // The raster is the flattened export this sidecar was saved with: edit
-        // the embedded unannotated source so annotations are not applied twice.
-        QImage embedded;
-        if (embedded.loadFromData(document.sourceImagePng, "PNG") && embedded.size() == image.size()) {
-          image = embedded.convertToFormat(QImage::Format_ARGB32);
-          result.image = image;
-        }
-      }
-      document.imagePath = path;
-      document.canvasWidth = image.width();
-      document.canvasHeight = image.height();
-      QBuffer png(&document.sourceImagePng);
-      png.open(QIODevice::WriteOnly);
-      image.save(&png, "PNG");
-      result.sidecarPath = *sidecar.readPath;
-      result.document = document;
-      return result;
+    // ES-015: a failed sidecar must never become a writable bare-raster session.
+    if (!parsed.document) return fail(parsed.error.value_or(diagnostic::documentInvalid));
+    QImage embedded;
+    if (!embedded.loadFromData(parsed.document->sourceImagePng, "PNG")) return fail(diagnostic::documentInvalid);
+    embedded = embedded.convertToFormat(QImage::Format_ARGB32);
+    if (embedded.isNull()) return fail(diagnostic::documentTooLarge);
+    const auto binding = bindSource(*parsed.document, normalizedPng, path, hash);
+    if (binding.error) return fail(*binding.error);
+    if (binding.choiceRequired) {
+      LoadedSource pending;
+      pending.pendingChoice = PendingSourceChoice{*parsed.document, image, embedded, normalizedPng, path, hash, *sidecar.readPath};
+      return pending;
     }
-    result.warnings << QStringLiteral("The annotation file %1 could not be read (%2); opened the image without it.")
-                           .arg(QFileInfo(*sidecar.readPath).fileName(), parsed.error.value_or(diagnostic::documentInvalid));
+    result.document = binding.document;
+    result.image = embedded;
+    result.sidecarPath = *sidecar.readPath;
+    return result;
   }
 
   AnnotationDocument document;
@@ -114,10 +111,26 @@ LoadedSource loadSource(const QString &path) {
   document.canvasWidth = image.width();
   document.canvasHeight = image.height();
   document.createdAt = document.modifiedAt = now();
-  QBuffer png(&document.sourceImagePng);
-  png.open(QIODevice::WriteOnly);
-  image.save(&png, "PNG");
+  document.sourceImagePng = normalizedPng;
   result.document = document;
+  return result;
+}
+
+LoadedSource loadSource(const QString &path) {
+  try { return loadSourceImpl(path); }
+  catch (const std::bad_alloc &) { return fail(diagnostic::documentTooLarge); }
+}
+
+LoadedSource resolveSourceChoice(const LoadedSource &pending, SourceChoice choice) {
+  if (!pending.pendingChoice) return fail(diagnostic::documentInvalid);
+  const PendingSourceChoice &sources = *pending.pendingChoice;
+  const auto binding = bindSource(sources.document, sources.currentRasterPng, sources.rasterPath, sources.rasterHash, choice);
+  if (binding.error) return fail(*binding.error);
+  if (binding.choiceRequired) return pending;
+  LoadedSource result;
+  result.document = binding.document;
+  result.image = choice == SourceChoice::CurrentRaster ? sources.currentRaster : sources.embeddedSource;
+  result.sidecarPath = sources.sidecarPath;
   return result;
 }
 
