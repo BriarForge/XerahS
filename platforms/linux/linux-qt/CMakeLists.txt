@@ -23,6 +23,8 @@ add_library(xerahs_core STATIC
   src/image-editor/AnnotationDocument.h
   src/image-editor/AnnotationRenderer.cpp
   src/image-editor/AnnotationRenderer.h
+  src/image-editor/CanvasOperations.cpp
+  src/image-editor/CanvasOperations.h
   src/image-editor/EditorSession.cpp
   src/image-editor/EditorSession.h
   src/image-editor/EditorViewport.cpp
@@ -36,8 +38,15 @@ target_compile_options(xerahs_core PRIVATE -Wall -Wextra -Wpedantic
   # ES-025: binary64 in the order written, no fused multiply-add.
   -ffp-contract=off)
 
+# Native image codecs are an I/O boundary; all canvas product decisions stay
+# in the Qt Core library. The adapter and app share the same PNG preparation.
+add_library(xerahs_editor_codecs STATIC app/EditorCanvasOperations.cpp app/EditorCanvasOperations.h)
+target_include_directories(xerahs_editor_codecs PUBLIC app)
+target_link_libraries(xerahs_editor_codecs PUBLIC xerahs_core Qt6::Gui)
+target_compile_options(xerahs_editor_codecs PRIVATE -Wall -Wextra -Wpedantic)
+
 add_executable(xerahs-conformance-adapter conformance-adapter/main.cpp)
-target_link_libraries(xerahs-conformance-adapter PRIVATE xerahs_core)
+target_link_libraries(xerahs-conformance-adapter PRIVATE xerahs_core xerahs_editor_codecs)
 target_compile_options(xerahs-conformance-adapter PRIVATE -Wall -Wextra -Wpedantic)
 
 # The XerahS application (D-LIN-001: Qt Widgets). Product logic stays in
@@ -60,7 +69,7 @@ add_executable(xerahs
   app/main.cpp
 )
 set_target_properties(xerahs PROPERTIES AUTOMOC ON)
-target_link_libraries(xerahs PRIVATE xerahs_core Qt6::Gui Qt6::Widgets Qt6::DBus Qt6::Network)
+target_link_libraries(xerahs PRIVATE xerahs_core xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus Qt6::Network)
 target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
 enable_testing()
@@ -105,10 +114,23 @@ target_link_libraries(editor-canvas-test PRIVATE xerahs_core Qt6::Widgets Qt6::T
 add_test(NAME editor-canvas COMMAND editor-canvas-test)
 set_tests_properties(editor-canvas PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
 
+add_executable(canvas-operations-test tests/CanvasOperationsTest.cpp)
+set_target_properties(canvas-operations-test PROPERTIES AUTOMOC ON)
+target_link_libraries(canvas-operations-test PRIVATE xerahs_editor_codecs Qt6::Test)
+add_test(NAME canvas-operations COMMAND canvas-operations-test)
+
+add_executable(editor-window-test tests/EditorWindowTest.cpp app/EditorWindow.cpp app/EditorWindow.h
+               app/EditorCanvas.cpp app/EditorCanvas.h app/EditorSource.cpp)
+set_target_properties(editor-window-test PROPERTIES AUTOMOC ON)
+target_link_libraries(editor-window-test PRIVATE xerahs_editor_codecs Qt6::Widgets Qt6::Test)
+add_test(NAME editor-window COMMAND editor-window-test)
+set_tests_properties(editor-window PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+
 find_package(Python3 3.12 REQUIRED COMPONENTS Interpreter)
-# Capabilities this edition implements. The full suite, including capabilities
-# not yet implemented, runs without --capability and is expected to fail.
-set(XERAHS_IMPLEMENTED_CAPABILITIES FILENAME-GENERATION-001 POST-CAPTURE-ACTIONS-001 REGION-CAPTURE-001 EDITOR-SESSION-001)
+# Capabilities whose published vector operations this edition implements.
+# Full requirement coverage remains in traceability, including partial rows.
+# The full suite runs without --capability and still fails for missing seams.
+set(XERAHS_IMPLEMENTED_CAPABILITIES FILENAME-GENERATION-001 POST-CAPTURE-ACTIONS-001 REGION-CAPTURE-001 EDITOR-SESSION-001 EDITOR-CANVAS-001)
 list(TRANSFORM XERAHS_IMPLEMENTED_CAPABILITIES PREPEND "--capability;" OUTPUT_VARIABLE XERAHS_CAPABILITY_ARGS)
 add_test(NAME conformance
   COMMAND Python3::Interpreter "${XERAHS_REPO_ROOT}/conformance/runner/xerahs_conformance.py"

@@ -4,6 +4,7 @@
 
 #include <QBuffer>
 #include <QCryptographicHash>
+#include <QColorSpace>
 #include <QDateTime>
 #include <QFile>
 #include <QFileInfo>
@@ -137,6 +138,7 @@ SaveOutcome saveEdit(const QString &rasterPath, const QImage &source, const Anno
     return outcome;
   }
   QImage out(argb.size(), QImage::Format_ARGB32);
+  out.setColorSpace(source.colorSpace());
   for (int y = 0; y < out.height(); ++y) {
     auto *row = reinterpret_cast<QRgb *>(out.scanLine(y));
     for (int x = 0; x < out.width(); ++x) row[x] = rendered.image->at(x, y);

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <new>
 
 namespace xerahs::editor {
 
@@ -11,8 +12,12 @@ EditorSession::EditorSession(AnnotationDocument document) {
 }
 
 void EditorSession::commit(AnnotationDocument document) {
+  // Allocate before changing the redo branch or checkpoint identities.
+  if (m_history.capacity() < m_position + 2) m_history.reserve(std::max(m_position + 2, m_history.capacity() * 2));
+  HistoryState next{m_nextStateId, std::move(document), m_selection};
   m_history.resize(m_position + 1);  // ES-006: a new mutation clears redo
-  m_history.push_back(HistoryState{m_nextStateId++, std::move(document), m_selection});
+  m_history.push_back(std::move(next));
+  ++m_nextStateId;
   ++m_position;
 }
 
@@ -188,6 +193,32 @@ bool EditorSession::redo() {
   ++m_position;
   m_selection = m_history[m_position].selection;
   return true;
+}
+
+bool EditorSession::commitCanvas(AnnotationDocument next, quint64 expectedState) {
+  if (expectedState != stateId()) return false;
+  try {
+    const QJsonObject serialized = serializeDocument(next);
+    if (!parseDocument(serialized).document) return false;
+    const auto pngDimension = [&](int offset) {
+      const auto *p = reinterpret_cast<const unsigned char *>(next.sourceImagePng.constData() + offset);
+      return (qint64(p[0]) << 24) | (qint64(p[1]) << 16) | (qint64(p[2]) << 8) | qint64(p[3]);
+    };
+    // Canvas edits persist a complete new source, rather than leaving an old
+    // PNG attached to new dimensions. parseDocument checked the PNG header.
+    if (pngDimension(16) != next.canvasWidth || pngDimension(20) != next.canvasHeight) return false;
+    // Preserve the selection from immediately before this operation, then keep
+    // only IDs whose objects survived the retained-rectangle policy.
+    QSet<QUuid> retained;
+    for (const Annotation &a : next.annotations) {
+      if (m_selection.contains(annotationId(a))) retained.insert(annotationId(a));
+    }
+    if (m_history.capacity() < m_position + 2) m_history.reserve(std::max(m_position + 2, m_history.capacity() * 2));
+    m_history[m_position].selection = m_selection;
+    m_selection = std::move(retained);
+    commit(std::move(next));
+    return true;
+  } catch (const std::bad_alloc &) { return false; }
 }
 
 QStringList EditorSession::recordSave(bool rasterSaved, bool sidecarSaved) {

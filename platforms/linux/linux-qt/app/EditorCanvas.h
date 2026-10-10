@@ -19,10 +19,13 @@ public:
   void zoomOut();
   void resetZoom();
   void zoomToFit();
+  void setCropTool(bool active);
+  void sourceChanged();
 
 signals:
   void changed();
   void viewportChanged(double zoom);
+  void cropRequested(QPointF start, QPointF end);
 
 protected:
   void paintEvent(QPaintEvent *) override;
@@ -48,6 +51,7 @@ private:
   xerahs::editor::EditorViewport m_view;
   std::optional<std::pair<QPointF, QPointF>> m_drag;
   bool m_moving = false;
+  bool m_cropTool = false;
   QPointF m_moveStart, m_moveLast;
   bool m_spaceHeld = false;
   bool m_panning = false;

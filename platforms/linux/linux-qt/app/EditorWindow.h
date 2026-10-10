@@ -3,6 +3,7 @@
 #pragma once
 
 #include "image-editor/EditorSession.h"
+#include "image-editor/CanvasOperations.h"
 
 #include <QImage>
 #include <QMainWindow>
@@ -29,9 +30,13 @@ private:
   EditorWindow(const QString &path, QImage image, xerahs::editor::AnnotationDocument document);
   bool save(bool chooseFile);
   void refresh();
+  void cropImage();
+  void resizeImage(bool canvasOnly);
+  void applyCanvas(xerahs::editor::CanvasOperation operation);
 
   QString m_path;
   QImage m_image;
+  QByteArray m_sourceBytes;
   std::unique_ptr<xerahs::editor::EditorSession> m_session;
   EditorCanvas *m_canvas = nullptr;
   QAction *m_undo = nullptr;

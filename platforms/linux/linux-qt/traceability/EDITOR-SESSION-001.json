@@ -16,7 +16,9 @@
     "platforms/linux/linux-qt/app/EditorWindow.h",
     "platforms/linux/linux-qt/app/EditorWindow.cpp",
     "platforms/linux/linux-qt/app/EditorCanvas.h",
-    "platforms/linux/linux-qt/app/EditorCanvas.cpp"
+    "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+    "platforms/linux/linux-qt/src/image-editor/CanvasOperations.cpp",
+    "platforms/linux/linux-qt/app/EditorCanvasOperations.cpp"
   ],
   "requirements": {
     "ES-001": {
@@ -58,14 +60,14 @@
         "truncated-checkpoint-stays-dirty",
         "delete-and-undo-restores-selection"
       ],
-      "note": "Undo and redo restore the selection each state had (platforms/linux/linux-qt/tests/EditorSessionTest.cpp)."
+      "note": "Undo and redo restore the selection each state had (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Canvas history restores the source PNG and dimensions plus annotations and selection; CanvasOperationsTest and EditorWindowTest cover crop, resize and whole-image rotation."
     },
     "ES-007": {
       "status": "implemented",
       "vectors": [
         "delete-and-undo-restores-selection"
       ],
-      "note": "History states are value snapshots; embedded images are implicitly shared and never mutated or disposed while reachable."
+      "note": "History snapshots hold immutable, implicitly shared source PNG and assets. Canvas edits create a separate encoded source before committing; undo/redo never modify a reachable prior source. Allocation is reserved before truncating the redo branch."
     },
     "ES-008": {
       "status": "implemented",
@@ -77,7 +79,7 @@
       "vectors": [
         "render-stroke-coverage"
       ],
-      "note": "AnnotationRenderer is the authoritative export compositor. Encoding the requested format and colour profile arrives with the save path."
+      "note": "The authoritative PNG compositor and atomic save preserve the source colour profile. Native tests verify profile and alpha across canvas edits and persisted PNG/sidecar reopening. Additional export formats, requested profile conversion and cross-platform golden coverage remain pending."
     },
     "ES-010": {
       "status": "implemented",

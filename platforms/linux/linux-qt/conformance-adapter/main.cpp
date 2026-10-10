@@ -8,6 +8,8 @@
 #include "image-editor/AnnotationRenderer.h"
 #include "image-editor/EditorSession.h"
 #include "image-editor/EditorViewport.h"
+#include "EditorCanvasOperations.h"
+#include <QBuffer>
 #include "naming/FilenameGenerator.h"
 
 #include <QCoreApplication>
@@ -640,12 +642,25 @@ QJsonObject runEditorCanvas(const QString &operation, const QJsonObject &input) 
   const qint64 width = size.at(0).toInteger(), height = size.at(1).toInteger();
   if (width < 1 || height < 1 || width > ed::kMaxDimension || height > ed::kMaxDimension || width * height > ed::kMaxPixels)
     return adapterError(QStringLiteral("invalid source size"));
-  ed::EditorSession session(blankDocument(width, height));
+  QImage source(int(width), int(height), QImage::Format_ARGB32);
+  if (source.isNull()) return adapterError(QStringLiteral("cannot allocate injected source"));
+  const auto color = ed::parseColor(input.value(u"source_fill").toString(QStringLiteral("#00000000")));
+  if (!color) return adapterError(QStringLiteral("invalid source fill"));
+  source.fill(*color);
+  ed::AnnotationDocument initial = blankDocument(width, height);
+  QBuffer png(&initial.sourceImagePng);
+  png.open(QIODevice::WriteOnly | QIODevice::Truncate);
+  if (!source.save(&png, "PNG")) return adapterError(QStringLiteral("cannot encode injected source"));
+  ed::EditorSession session(initial);
   ed::EditorViewport view(QSizeF(width, height));
   view.setViewSize(QSizeF(width, height));
   const QJsonObject before = ed::serializeDocument(session.document());
   const int undoBefore = session.undoCount();
   const bool dirtyBefore = session.dirty();
+  std::vector<ed::PointF> points;
+  for (const QJsonValue &point : input.value(u"points").toArray()) points.push_back(pointFrom(point));
+  ed::PointF sourceOffset;
+  bool pixelsResampled = false;
   const QPointF centre(width / 2.0, height / 2.0);
   for (const QJsonValue &item : input.value(u"operations").toArray()) {
     const QJsonObject op = item.toObject();
@@ -657,9 +672,52 @@ QJsonObject runEditorCanvas(const QString &operation, const QJsonObject &input) 
     else if (id == u"pan") {
       const QJsonArray delta = op.value(u"delta").toArray();
       view.pan({delta.at(0).toDouble(), delta.at(1).toDouble()});
-    } else return adapterError(QStringLiteral("canvas operation not yet implemented: ") + id);
+    } else {
+      ed::CanvasOperation command;
+      if (id == u"rotate_90_clockwise") command.action = ed::CanvasAction::RotateClockwise;
+      else if (id == u"rotate_90_counter_clockwise") command.action = ed::CanvasAction::RotateCounterClockwise;
+      else if (id == u"rotate_180") command.action = ed::CanvasAction::Rotate180;
+      else if (id == u"flip_horizontal") command.action = ed::CanvasAction::FlipHorizontal;
+      else if (id == u"flip_vertical") command.action = ed::CanvasAction::FlipVertical;
+      else if (id == u"crop") {
+        command.action = ed::CanvasAction::Crop;
+        command.start = pointFrom(op.value(u"start")); command.end = pointFrom(op.value(u"end"));
+      } else if (id == u"resize_canvas" || id == u"resize_image") {
+        command.action = id == u"resize_canvas" ? ed::CanvasAction::ResizeCanvas : ed::CanvasAction::ResizeImage;
+        const QJsonArray target = op.value(u"size").toArray();
+        command.width = target.at(0).toInteger(); command.height = target.at(1).toInteger();
+        const QStringList anchors{QStringLiteral("top-left"), QStringLiteral("top"), QStringLiteral("top-right"),
+            QStringLiteral("left"), QStringLiteral("center"), QStringLiteral("right"),
+            QStringLiteral("bottom-left"), QStringLiteral("bottom"), QStringLiteral("bottom-right")};
+        const int anchor = anchors.indexOf(op.value(u"anchor").toString(QStringLiteral("center")));
+        if (anchor < 0) return adapterError(QStringLiteral("unknown canvas anchor"));
+        command.anchor = ed::CanvasAnchor(anchor);
+        command.lockAspect = op.value(u"lock_aspect").toBool(true);
+        const QString interpolation = op.value(u"interpolation").toString(QStringLiteral("nearest"));
+        if (interpolation != u"nearest" && interpolation != u"bilinear") return adapterError(QStringLiteral("unknown interpolation"));
+        command.interpolation = interpolation == u"bilinear" ? ed::Interpolation::Bilinear : ed::Interpolation::Nearest;
+        const auto fill = ed::parseColor(op.value(u"fill").toString(QStringLiteral("#00000000")));
+        if (!fill) return adapterError(QStringLiteral("invalid canvas fill"));
+        command.fill = *fill;
+      } else return adapterError(QStringLiteral("canvas operation not yet implemented: ") + id);
+      const auto prepared = xerahs::app::prepareCanvasEdit(session.document(), source, command);
+      if (prepared.result.error) return adapterError(*prepared.result.error);
+      if (!prepared.result.changed) continue;
+      if (!session.commitCanvas(*prepared.result.document, session.stateId())) return adapterError(QStringLiteral("canvas commit failed"));
+      source = QImage::fromData(session.document().sourceImagePng, "PNG");
+      view.setImageSize(source.size());
+      for (ed::PointF &point : points) point = prepared.result.transform.mapPixel(point);
+      sourceOffset = prepared.result.transform.map(sourceOffset);
+      pixelsResampled = pixelsResampled || prepared.result.pixelsResampled;
+    }
   }
+  QJsonArray mapped;
+  for (ed::PointF point : points) mapped.append(QJsonArray{point.x, point.y});
   return QJsonObject{{QStringLiteral("document_changed"), before != ed::serializeDocument(session.document())},
+                     {QStringLiteral("canvas_size"), QJsonArray{session.document().canvasWidth, session.document().canvasHeight}},
+                     {QStringLiteral("points"), mapped},
+                     {QStringLiteral("source_offset"), QJsonArray{sourceOffset.x, sourceOffset.y}},
+                     {QStringLiteral("pixels_resampled"), pixelsResampled},
                      {QStringLiteral("history_delta"), session.undoCount() - undoBefore},
                      {QStringLiteral("dirty_delta"), session.dirty() != dirtyBefore},
                      {QStringLiteral("zoom"), view.zoom()},

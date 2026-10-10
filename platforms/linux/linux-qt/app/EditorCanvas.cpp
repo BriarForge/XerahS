@@ -84,6 +84,18 @@ void EditorCanvas::zoomToFit() {
   syncViewport();
 }
 
+void EditorCanvas::setCropTool(bool active) {
+  cancelGesture();
+  m_cropTool = active;
+  viewport()->setCursor(active ? Qt::CrossCursor : Qt::ArrowCursor);
+}
+
+void EditorCanvas::sourceChanged() {
+  cancelGesture();
+  m_view.setImageSize(m_image.size());
+  syncViewport();
+}
+
 void EditorCanvas::resizeEvent(QResizeEvent *event) {
   QAbstractScrollArea::resizeEvent(event);
   m_view.setViewSize(viewport()->size());
@@ -160,6 +172,11 @@ void EditorCanvas::mousePressEvent(QMouseEvent *event) {
   }
   if (event->button() != Qt::LeftButton) return;
   const QPointF at = m_view.toImage(event->position());
+  if (m_cropTool) {
+    m_drag = std::make_pair(at, at);
+    viewport()->update();
+    return;
+  }
   if (const auto hit = topmostAt(at)) {
     const bool additive = event->modifiers() & Qt::ControlModifier;
     QList<QUuid> ids;
@@ -200,7 +217,7 @@ void EditorCanvas::mouseReleaseEvent(QMouseEvent *event) {
   if (m_panning && (event->button() == Qt::MiddleButton || event->button() == Qt::LeftButton)) {
     m_view.pan(event->position() - m_panLast);
     m_panning = false;
-    viewport()->setCursor(m_spaceHeld ? Qt::OpenHandCursor : Qt::ArrowCursor);
+    viewport()->setCursor(m_spaceHeld ? Qt::OpenHandCursor : (m_cropTool ? Qt::CrossCursor : Qt::ArrowCursor));
     syncViewport();
     return;
   }
@@ -209,7 +226,8 @@ void EditorCanvas::mouseReleaseEvent(QMouseEvent *event) {
   if (m_drag) {
     const QPointF start = m_drag->first;
     m_drag.reset();
-    m_session.createRectangle({start.x(), start.y()}, {at.x(), at.y()});
+    if (m_cropTool) emit cropRequested(start, at);
+    else m_session.createRectangle({start.x(), start.y()}, {at.x(), at.y()});
   } else if (m_moving) {
     m_moving = false;
     const QPointF delta = at - m_moveStart;
@@ -224,7 +242,7 @@ void EditorCanvas::cancelGesture() {
   m_moving = false;
   if (m_panning) m_view.setOffset(m_panOriginalOffset);
   m_panning = false;
-  viewport()->setCursor(m_spaceHeld ? Qt::OpenHandCursor : Qt::ArrowCursor);
+  viewport()->setCursor(m_spaceHeld ? Qt::OpenHandCursor : (m_cropTool ? Qt::CrossCursor : Qt::ArrowCursor));
   viewport()->update();
 }
 
@@ -313,7 +331,7 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
 void EditorCanvas::keyReleaseEvent(QKeyEvent *event) {
   if (event->key() == Qt::Key_Space && !event->isAutoRepeat()) {
     m_spaceHeld = false;
-    viewport()->setCursor(m_panning ? Qt::ClosedHandCursor : Qt::ArrowCursor);
+    viewport()->setCursor(m_panning ? Qt::ClosedHandCursor : (m_cropTool ? Qt::CrossCursor : Qt::ArrowCursor));
     return;
   }
   QAbstractScrollArea::keyReleaseEvent(event);

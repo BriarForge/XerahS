@@ -48,6 +48,14 @@ bool EditorViewport::setViewSize(QSizeF size) {
   return true;
 }
 
+bool EditorViewport::setImageSize(QSizeF size) {
+  if (!valid(size) || size.width() > kMaxDimension || size.height() > kMaxDimension ||
+      size.width() * size.height() > kMaxPixels || size == m_imageSize) return false;
+  m_imageSize = size;
+  clampOffset();
+  return true;
+}
+
 bool EditorViewport::zoomAt(double scale, QPointF anchor) {
   if (!std::isfinite(scale) || scale <= 0 || !finite(anchor)) return false;
   scale = std::clamp(scale, minimumZoom, maximumZoom);

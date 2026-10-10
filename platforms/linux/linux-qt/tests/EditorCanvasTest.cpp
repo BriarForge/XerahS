@@ -3,6 +3,7 @@
 
 #include <QNativeGestureEvent>
 #include <QScrollBar>
+#include <QSignalSpy>
 #include <QTest>
 #include <QWheelEvent>
 
@@ -187,6 +188,29 @@ private slots:
     const QImage preview = canvas.viewport()->grab().toImage();
     QCOMPARE(preview.pixelColor(inside), QColor(Qt::green));
     QCOMPARE(preview.pixelColor(outside), QColor(Qt::white));
+  }
+
+  void cropToolUsesImageCoordinatesAndCancellationIsLossless() {
+    const QImage source = image();
+    EditorSession session(document());
+    EditorCanvas canvas(session, source);
+    canvas.resize(420, 340); canvas.show(); QTest::qWait(10);
+    canvas.resetZoom(); canvas.zoomIn(); canvas.setCropTool(true);
+    QSignalSpy requested(&canvas, &EditorCanvas::cropRequested);
+    const QPoint a = canvas.viewState().toView({150, 130}).toPoint();
+    const QPoint b = canvas.viewState().toView({250, 230}).toPoint();
+    QTest::mousePress(canvas.viewport(), Qt::LeftButton, Qt::NoModifier, a);
+    QTest::keyClick(&canvas, Qt::Key_Escape);
+    QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, Qt::NoModifier, b);
+    QCOMPARE(requested.size(), 0);
+    QTest::mousePress(canvas.viewport(), Qt::LeftButton, Qt::NoModifier, a);
+    QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, Qt::NoModifier, b);
+    QCOMPARE(requested.size(), 1);
+    const QPointF start = requested[0][0].toPointF(), end = requested[0][1].toPointF();
+    QVERIFY(QLineF(start, QPointF(150, 130)).length() < 1);
+    QVERIFY(QLineF(end, QPointF(250, 230)).length() < 1);
+    QCOMPARE(session.undoCount(), 0);
+    QVERIFY(session.document().annotations.empty());  // the window commits the crop, not a rectangle annotation
   }
 };
 

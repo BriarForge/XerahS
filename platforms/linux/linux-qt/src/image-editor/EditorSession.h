@@ -44,6 +44,12 @@ public:
   bool redo();
   int undoCount() const { return static_cast<int>(m_position); }
   int redoCount() const { return static_cast<int>(m_history.size() - 1 - m_position); }
+  quint64 stateId() const { return m_history[m_position].stateId; }
+
+  // EC-017/ES-005: replace source and annotations only after preparation and
+  // encoding succeeded, and only if the document being edited is still current.
+  // Validation or a stale state leaves document, selection and history intact.
+  bool commitCanvas(AnnotationDocument document, quint64 expectedState);
 
   // ES-027.
   bool dirty() const { return m_history[m_position].stateId != m_checkpoint; }

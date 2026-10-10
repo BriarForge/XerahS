@@ -11,6 +11,12 @@ independently of the session. `AnnotationRenderer` is the authoritative export p
 rectangles use exact box coverage, and arbitrary rotations use exact polygon
 coverage under ES-025.
 
+`CanvasOperations` transforms source pixels and annotation geometry atomically.
+Native PNG preparation stays at the image-codec I/O boundary, and
+`EditorSession::commitCanvas` admits only validated results for the current
+state. [CANVAS-POLICY.md](CANVAS-POLICY.md) documents the retained-rectangle,
+anchor, sampling and history policies and remaining work.
+
 The native editor in `app/EditorWindow.cpp` and `app/EditorCanvas.cpp` loads sources, draws and manipulates
 rectangles, exposes undo/redo and save, and reopens editable sidecars. See the
 edition [implementation plan](../../IMPLEMENTATION.md) and

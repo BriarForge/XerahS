@@ -20,6 +20,7 @@ public:
   QPointF toView(QPointF imagePoint) const;
 
   bool setViewSize(QSizeF size);
+  bool setImageSize(QSizeF size);
   bool zoomAt(double scale, QPointF anchor);
   bool zoomBy(double factor, QPointF anchor);
   bool fit();
