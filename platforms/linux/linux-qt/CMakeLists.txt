@@ -62,6 +62,8 @@ add_executable(xerahs
   app/EditorCanvas.h
   app/EditorWindow.cpp
   app/EditorWindow.h
+  app/CanvasRotationDialog.cpp
+  app/CanvasRotationDialog.h
   app/PortalScreenshot.cpp
   app/PortalScreenshot.h
   app/RegionOverlay.cpp
@@ -120,7 +122,8 @@ target_link_libraries(canvas-operations-test PRIVATE xerahs_editor_codecs Qt6::T
 add_test(NAME canvas-operations COMMAND canvas-operations-test)
 
 add_executable(editor-window-test tests/EditorWindowTest.cpp app/EditorWindow.cpp app/EditorWindow.h
-               app/EditorCanvas.cpp app/EditorCanvas.h app/EditorSource.cpp)
+               app/EditorCanvas.cpp app/EditorCanvas.h app/EditorSource.cpp
+               app/CanvasRotationDialog.cpp app/CanvasRotationDialog.h)
 set_target_properties(editor-window-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-window-test PRIVATE xerahs_editor_codecs Qt6::Widgets Qt6::Test)
 add_test(NAME editor-window COMMAND editor-window-test)

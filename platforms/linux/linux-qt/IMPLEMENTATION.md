@@ -14,11 +14,12 @@ The next editor work follows these dependencies:
    Keep viewport state outside the document and history; convert all pointer
    input into document pixels and keep hit targets usable at every zoom. Verify
    pointer anchoring, finite scale limits, history isolation, and native input.
-3. Atomic crop, basic pixel resize, canvas resize, quarter turns and flips now
-   share production geometry, PNG preparation and history with all three canvas
-   vectors passing. Continue with general affine annotations, custom rotation
-   (auto crop now provides explicit border/alpha/colour rules), then insert,
-   background composition, flatten and comparison.
+3. Atomic crop, auto crop, basic pixel resize, canvas resize, custom rotation,
+   quarter turns and flips now share production geometry, PNG preparation and
+   history with all three canvas
+   vectors passing. Auto crop has explicit border/alpha/colour rules; custom
+   rotation has a cancellable native preview. Continue with general affine
+   annotations, then insert, background composition, flatten and comparison.
 4. Expand annotation tools, effects, output actions, settings and utilities,
    alongside the remaining capture and post-capture integrations.
 

@@ -693,6 +693,16 @@ QJsonObject runEditorCanvas(const QString &operation, const QJsonObject &input) 
         const auto color = ed::parseColor(op.value(u"color").toString(QStringLiteral("#FFFFFFFF")));
         if (!color) return adapterError(QStringLiteral("invalid auto crop color"));
         command.autoCrop.color = *color;
+      } else if (id == u"rotate_custom") {
+        command.action = ed::CanvasAction::RotateCustom;
+        command.rotationDegrees = op.value(u"angle").toDouble();
+        command.expandCanvas = op.value(u"expand_canvas").toBool(true);
+        const QString interpolation = op.value(u"interpolation").toString(QStringLiteral("nearest"));
+        if (interpolation != u"nearest" && interpolation != u"bilinear") return adapterError(QStringLiteral("unknown interpolation"));
+        command.interpolation = interpolation == u"bilinear" ? ed::Interpolation::Bilinear : ed::Interpolation::Nearest;
+        const auto fill = ed::parseColor(op.value(u"fill").toString(QStringLiteral("#00000000")));
+        if (!fill) return adapterError(QStringLiteral("invalid canvas fill"));
+        command.fill = *fill;
       } else if (id == u"resize_canvas" || id == u"resize_image") {
         command.action = id == u"resize_canvas" ? ed::CanvasAction::ResizeCanvas : ed::CanvasAction::ResizeImage;
         const QJsonArray target = op.value(u"size").toArray();

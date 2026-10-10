@@ -301,6 +301,88 @@ private slots:
     QCOMPARE(session.undoCount(), 1);
     QVERIFY(session.undo()); QVERIFY(!session.dirty());
   }
+
+  void customRotationHasAnalyticalNearestPixelsAndCanvasGeometry() {
+    const ArgbImage source{3, 3, {1, 2, 3, 4, 5, 6, 7, 8, 9}};
+    auto d = document(3, 3); auto r = rectangle({1, 1}, {2, 2}); r.style.rotationDegrees = 17; d.annotations = {r};
+    CanvasOperation op; op.action = CanvasAction::RotateCustom; op.rotationDegrees = 45; op.fill = 99;
+    auto result = applyCanvasOperation(d, source, op); QVERIFY(result.image && result.document);
+    // Rotated extent is 3*sqrt(2), rounded up to 5, centred on (2.5,2.5).
+    QCOMPARE(result.image->width, 5); QCOMPARE(result.image->height, 5); QVERIFY(result.pixelsResampled);
+    QVERIFY(result.image->pixels == (std::vector<Argb>{99,99,1,99,99, 99,4,1,2,99, 7,7,5,3,3, 99,8,9,6,99, 99,99,9,99,99}));
+    const auto &moved = std::get<RectangleAnnotation>(result.document->annotations[0]);
+    QCOMPARE(moved.id, r.id); QCOMPARE(moved.start, (PointF{2, 2})); QCOMPARE(moved.end, (PointF{3, 3}));
+    QCOMPARE(moved.style.rotationDegrees, 62); QCOMPARE(moved.style.strokeWidth, r.style.strokeWidth);
+    op.expandCanvas = false;
+    result = applyCanvasOperation(d, source, op); QVERIFY(result.image);
+    QCOMPARE(result.image->width, 3); QCOMPARE(result.image->height, 3);
+    QVERIFY(result.image->pixels == (std::vector<Argb>{4,1,2, 7,5,3, 8,9,6}));
+    const auto &cropped = std::get<RectangleAnnotation>(result.document->annotations[0]);
+    QCOMPARE(cropped.start.x, r.start.x); QCOMPARE(cropped.start.y, r.start.y);
+  }
+
+  void customBilinearSamplesExplicitBorderAndPremultipliedAlpha() {
+    CanvasOperation op; op.action = CanvasAction::RotateCustom; op.rotationDegrees = 45; op.interpolation = Interpolation::Bilinear;
+    const ArgbImage source{1, 1, {0xFFFF0000}};
+    op.fill = 0x000000FF;  // transparent RGB must not leak into red
+    auto result = applyCanvasOperation(document(1, 1), source, op); QVERIFY(result.image);
+    QCOMPARE(result.image->width, 2); QCOMPARE(result.image->height, 2);
+    // Each corner has source weight 1 - 1/sqrt(2), so alpha rounds to 75.
+    for (Argb pixel : result.image->pixels) QCOMPARE(pixel, Argb(0x4BFF0000));
+    op.fill = 0xFF0000FF;
+    result = applyCanvasOperation(document(1, 1), source, op); QVERIFY(result.image);
+    for (Argb pixel : result.image->pixels) QCOMPARE(pixel, Argb(0xFF4B00B4));
+  }
+
+  void customQuarterTurnsAreExactAndFullTurnsAreNoOps() {
+    const ArgbImage source{3, 2, {1, 2, 3, 4, 5, 6}};
+    CanvasOperation op; op.action = CanvasAction::RotateCustom; op.rotationDegrees = 450;
+    op.interpolation = Interpolation::Bilinear;
+    auto result = applyCanvasOperation(document(3, 2), source, op); QVERIFY(result.image);
+    QVERIFY(!result.pixelsResampled);
+    QVERIFY(result.image->pixels == (std::vector<Argb>{4, 1, 5, 2, 6, 3}));
+    op.rotationDegrees = -720;
+    result = applyCanvasOperation(document(3, 2), source, op);
+    QVERIFY(!result.changed && !result.image);
+  }
+
+  void customRotationRejectsInvalidOrExcessiveDimensionsAndCancels() {
+    CanvasOperation op; op.action = CanvasAction::RotateCustom; op.rotationDegrees = NAN;
+    QCOMPARE(applyCanvasOperation(document(4, 4), solidImage(4, 4, 0), op).error, std::optional<QString>(diagnostic::documentInvalid));
+    op.rotationDegrees = 45;
+    QCOMPARE(applyCanvasOperation(document(100000, 1), solidImage(100000, 1, 0), op).error, std::optional<QString>(diagnostic::documentTooLarge));
+    int percent = 0;
+    const auto cancelled = applyCanvasOperation(document(4, 4), solidImage(4, 4, 0), op,
+        {[&] { return percent >= 50; }, [&](int p) { percent = p; }});
+    QCOMPARE(cancelled.error, std::optional<QString>(QStringLiteral("canvas-cancelled")));
+    QVERIFY(!cancelled.image && !cancelled.document);
+    auto d = document(4, 4); d.annotations = {rectangle({1, 1}, {3, 3}), rectangle({-10, -10}, {-9, -9})};
+    op.expandCanvas = false;
+    const auto clipped = applyCanvasOperation(d, solidImage(4, 4, 0), op); QVERIFY(clipped.document);
+    QCOMPARE(clipped.document->annotations.size(), std::size_t(1));
+  }
+
+  void preparedPreviewCompositesAnnotationsAndCommitsOnlyOnRequest() {
+    QImage source(4, 4, QImage::Format_ARGB32); source.fill(Qt::blue);
+    auto d = withSource(source); auto r = rectangle({1, 1}, {3, 3});
+    r.style.strokeColor = 0; r.style.fillColor = 0xFFFF0000; d.annotations = {r};
+    EditorSession session(d); const quint64 state = session.stateId();
+    CanvasOperation op; op.action = CanvasAction::RotateCustom; op.rotationDegrees = 90;
+    const auto preview = xerahs::app::prepareCanvasPreview(d, source, op);
+    QVERIFY(!preview.edit.result.error && preview.edit.result.document);
+    QCOMPARE(preview.composite.pixel(1, 1), QRgb(0xFFFF0000));
+    QCOMPARE(preview.edit.source.pixel(1, 1), QRgb(0xFF0000FF));
+    QCOMPARE(session.document().sourceImagePng, d.sourceImagePng); QCOMPARE(session.undoCount(), 0); QVERIFY(!session.dirty());
+    QVERIFY(session.commitCanvas(*preview.edit.result.document, state)); QCOMPARE(session.undoCount(), 1);
+    QVERIFY(session.undo()); QVERIFY(!session.dirty()); QCOMPARE(session.document().sourceImagePng, d.sourceImagePng);
+    for (int cancelAt : {40, 80, 98}) {
+      int percent = 0;
+      const auto cancelled = xerahs::app::prepareCanvasPreview(d, source, op,
+          {[&] { return percent >= cancelAt; }, [&](int p) { percent = p; }});
+      QCOMPARE(cancelled.edit.result.error, std::optional<QString>(QStringLiteral("canvas-cancelled")));
+      QVERIFY(!cancelled.edit.result.document && cancelled.composite.isNull());
+    }
+  }
 };
 
 QTEST_GUILESS_MAIN(CanvasOperationsTest)

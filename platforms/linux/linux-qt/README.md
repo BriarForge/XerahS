@@ -9,7 +9,7 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 | `FILENAME-GENERATION-001` | Core logic and conformance seam; no UI yet | 51 of 51 vectors pass; [traceability](traceability/FILENAME-GENERATION-001.json) |
 | `POST-CAPTURE-ACTIONS-001` | Pipeline engine and conformance seam; native actions, retry, and recovery not yet | 17 of 17 vectors pass; [traceability](traceability/POST-CAPTURE-ACTIONS-001.json) |
 | `REGION-CAPTURE-001` | Mapping, keyboard, compositing, last-region, and session state machine; no overlay or capture backend yet | 21 of 21 vectors pass; [traceability](traceability/REGION-CAPTURE-001.json) |
-| `EDITOR-CANVAS-001` | Viewport controls; native crop, auto crop, pixel/canvas resize, quarter turns and flips; remaining image operations pending | All 3 published vectors plus native geometry, history, window and persistence tests; [traceability](traceability/EDITOR-CANVAS-001.json) |
+| `EDITOR-CANVAS-001` | Viewport controls; native crop, auto crop, pixel/canvas resize, custom rotation, quarter turns and flips; remaining image operations pending | All 3 published vectors plus native geometry, history, window and persistence tests; [traceability](traceability/EDITOR-CANVAS-001.json) |
 | `EDITOR-SESSION-001` | Document, `.xann` reader and writer, history, and export renderer; editor window with rectangle tool, selection, save, and sidecar reopen; resize and ordering by keyboard, arbitrary-angle rotation and export | 19 of 19 vectors pass; [traceability](traceability/EDITOR-SESSION-001.json) |
 
 The next implementation steps are tracked in [IMPLEMENTATION.md](IMPLEMENTATION.md).
@@ -36,6 +36,8 @@ The next implementation steps are tracked in [IMPLEMENTATION.md](IMPLEMENTATION.
 **Viewport:** Zoom In/Out, 100% and Fit actions expose keyboard shortcuts (Ctrl+plus/minus, Ctrl+0, Ctrl+9). Ctrl+wheel or pinch zooms around the pointer. Scrollbars, wheel, middle-button drag, Space+drag, and arrows with no selection pan. Zoom and pan never alter pixels, annotations, history, or dirty state.
 
 **Image menu:** Crop Image and the Crop tool share a retained rectangle. Auto Crop offers transparent or colour matching with explicit alpha and RGBA tolerance, includes visible annotations by default, and adds no history when bounds are unchanged. Resize Image changes pixel dimensions with aspect lock and nearest/bilinear interpolation; Resize Canvas uses nine anchors and a chosen alpha/colour fill. Image rotations and flips change the source and annotations together. Every successful edit is undoable and saves its edited, unannotated source into the sidecar. Costly work exposes progress and cancellation. The [canvas policy](src/image-editor/CANVAS-POLICY.md) records intersection, sampling and remaining transform limitations.
+
+**Rotate Image…** previews the edited source and visible annotations with controls for clockwise angle, nearest/bilinear interpolation, canvas expansion or cropping, and uncovered-pixel colour/alpha. Changing controls cancels obsolete previews. Cancel preserves the document; OK applies the displayed edit as one undo step. Exact expanded quarter turns preserve pixels without interpolation.
 
 No settings are persisted yet, and the reference Avalonia app's configuration is never read or written.
 

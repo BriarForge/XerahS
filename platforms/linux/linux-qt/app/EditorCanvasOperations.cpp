@@ -33,8 +33,12 @@ PreparedCanvasEdit prepare(const AnnotationDocument &document, const QImage &sou
     progress(control, (y + 1) * 10 / argb.height());
   }
   const CanvasControl engineControl{control.cancelled, [&](int value) { progress(control, 10 + value * 70 / 100); }};
-  PreparedCanvasEdit prepared{applyCanvasOperation(document, input, operation, engineControl)};
-  if (!prepared.result.changed || prepared.result.error) return prepared;
+  PreparedCanvasEdit prepared;
+  prepared.result = applyCanvasOperation(document, input, operation, engineControl);
+  if (!prepared.result.changed || prepared.result.error) {
+    if (!prepared.result.error) prepared.source = source;
+    return prepared;
+  }
   const ArgbImage &output = *prepared.result.image;
   QImage image(int(output.width), int(output.height), QImage::Format_ARGB32);
   if (image.isNull()) return fail(diagnostic::documentTooLarge);
@@ -53,6 +57,7 @@ PreparedCanvasEdit prepare(const AnnotationDocument &document, const QImage &sou
   if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
   prepared.result.document->sourceImagePng = bytes;
   prepared.result.image.reset();  // source is retained as immutable PNG history
+  prepared.source = std::move(image);
   progress(control, 100);
   return prepared;
 }
@@ -62,6 +67,39 @@ PreparedCanvasEdit prepareCanvasEdit(const AnnotationDocument &document, const Q
                                     const CanvasOperation &operation, const CanvasControl &control) {
   try { return prepare(document, source, operation, control); }
   catch (const std::bad_alloc &) { return fail(diagnostic::documentTooLarge); }
+}
+
+CanvasPreview prepareCanvasPreview(const AnnotationDocument &document, const QImage &source,
+                                   const CanvasOperation &operation, const CanvasControl &control) {
+  try {
+    CanvasPreview preview;
+    preview.edit = prepareCanvasEdit(document, source, operation,
+        {control.cancelled, [&](int p) { progress(control, p * 60 / 100); }});
+    if (preview.edit.result.error) return preview;
+    const QImage argb = preview.edit.source.convertToFormat(QImage::Format_ARGB32);
+    if (argb.isNull()) return {fail(diagnostic::documentTooLarge), {}};
+    ArgbImage input{argb.width(), argb.height(), {}};
+    input.pixels.resize(std::size_t(input.width * input.height));
+    for (int y = 0; y < argb.height(); ++y) {
+      if (cancelled(control)) return {fail(QStringLiteral("canvas-cancelled")), {}};
+      std::copy_n(reinterpret_cast<const QRgb *>(argb.constScanLine(y)), argb.width(), input.pixels.begin() + std::size_t(y) * argb.width());
+      progress(control, 60 + (y + 1) * 5 / argb.height());
+    }
+    auto rendered = render(input, preview.edit.result.document->annotations,
+        {control.cancelled, [&](int p) { progress(control, 65 + p * 30 / 100); }});
+    if (rendered.error) return {fail(*rendered.error == RenderError::Cancelled ? QStringLiteral("canvas-cancelled") : diagnostic::documentInvalid), {}};
+    QImage composite(argb.size(), QImage::Format_ARGB32);
+    if (composite.isNull()) return {fail(diagnostic::documentTooLarge), {}};
+    composite.setColorSpace(source.colorSpace());
+    for (int y = 0; y < composite.height(); ++y) {
+      if (cancelled(control)) return {fail(QStringLiteral("canvas-cancelled")), {}};
+      std::copy_n(rendered.image->pixels.begin() + std::size_t(y) * argb.width(), argb.width(), reinterpret_cast<QRgb *>(composite.scanLine(y)));
+      progress(control, 95 + (y + 1) * 5 / argb.height());
+    }
+    if (cancelled(control)) return {fail(QStringLiteral("canvas-cancelled")), {}};
+    preview.composite = std::move(composite);
+    return preview;
+  } catch (const std::bad_alloc &) { return {fail(diagnostic::documentTooLarge), {}}; }
 }
 
 }  // namespace xerahs::app

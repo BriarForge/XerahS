@@ -42,6 +42,31 @@ mapping the boundary point to `(H-y,x)`. Rectangle centres and orientations
 transform together. Unknown directional assets require their tool-specific
 implementation before they can be transformed safely.
 
+Custom rotation uses the canvas centre as its pivot; positive angles rotate
+clockwise. Angles are normalized modulo 360. Expansion uses
+`ceil(abs(W*cos(angle)) + abs(H*sin(angle)))` for width and the corresponding
+swapped expression for height, placing the original centre at the new canvas
+centre. Without expansion the dimensions stay fixed and the rotated image is
+cropped there. Exact expanded quarter turns use the lossless pixel permutation;
+zero/full turns are no-ops. Other angles inverse-map output pixel centres into
+the source, using nearest neighbour or alpha-aware bilinear interpolation.
+Samples outside the source use the chosen ARGB background; transparency inside
+the source is preserved. Bilinear border samples participate in the same
+premultiplied-alpha weighting as source samples. Rotation retains rectangle
+size/stroke width, transforms centres and adds the angle to each orientation.
+Without expansion, wholly outside annotations are removed under the crop
+intersection policy; partial objects retain their editable bounds.
+
+The native Rotate Image dialog shows the authoritative source/annotation
+composite of the actual full-resolution prepared edit, fitted to the preview
+area. Angle, interpolation, expansion/cropping and uncovered-pixel colour are
+explicit controls. Control changes cancel obsolete work and invalidate its
+acceptance; only a ready preview of the latest controls can be accepted. Cancel
+waits for the live worker cooperatively without changing the session. Accept
+commits the prepared source and geometry already shown, guarded by the original
+state ID, as one history entry. Neither preview nor cancellation changes pixels,
+annotations, selection, dirty checkpoints, history, or the main viewport.
+
 Resize Image exposes pixel dimensions, an aspect lock, and nearest-neighbour
 or bilinear interpolation. The aspect lock derives height from width rounded
 to the nearest integer. Sampling aligns pixel centres and clamps at image
@@ -60,7 +85,7 @@ enters history, guarded by the original session state ID. Undo and redo restore
 the source PNG, dimensions, annotations and selection; viewport state stays
 independent. Allocation is reserved before changing the redo branch.
 
-Custom image rotation, general affine annotations, inserted images,
+General affine annotations, inserted images,
 background composition, flatten, clear and comparison remain subsequent work.
 Shared goldens and the remaining qualification gates in
 `product-contract/READINESS.md` still apply.

@@ -65,14 +65,18 @@ std::optional<bool> intersectsCanvas(const RectangleAnnotation &r, qint64 width,
   return true;
 }
 
-Argb bilinear(const ArgbImage &source, double x, double y) {
-  x = std::clamp(x, 0.0, double(source.width - 1));
-  y = std::clamp(y, 0.0, double(source.height - 1));
+Argb bilinear(const ArgbImage &source, double x, double y, bool useBorder = false, Argb border = 0) {
+  if (!useBorder) {
+    x = std::clamp(x, 0.0, double(source.width - 1));
+    y = std::clamp(y, 0.0, double(source.height - 1));
+  }
+  const auto sample = [&](qint64 sx, qint64 sy) {
+    if (useBorder && (sx < 0 || sy < 0 || sx >= source.width || sy >= source.height)) return border;
+    return source.at(std::clamp<qint64>(sx, 0, source.width - 1), std::clamp<qint64>(sy, 0, source.height - 1));
+  };
   const qint64 left = qint64(std::floor(x)), top = qint64(std::floor(y));
   const double fx = x - left, fy = y - top;
-  const std::array<Argb, 4> samples{{source.at(left, top), source.at(std::min(left + 1, source.width - 1), top),
-      source.at(left, std::min(top + 1, source.height - 1)),
-      source.at(std::min(left + 1, source.width - 1), std::min(top + 1, source.height - 1))}};
+  const std::array<Argb, 4> samples{{sample(left, top), sample(left + 1, top), sample(left, top + 1), sample(left + 1, top + 1)}};
   const std::array<double, 4> weights{{(1 - fx) * (1 - fy), fx * (1 - fy), (1 - fx) * fy, fx * fy}};
   double alpha = 0, red = 0, green = 0, blue = 0;
   for (std::size_t i = 0; i < samples.size(); ++i) {
@@ -93,6 +97,16 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
   if (!validSize(source.width, source.height) || document.canvasWidth != source.width || document.canvasHeight != source.height ||
       source.pixels.size() != std::size_t(source.width * source.height)) return failure(diagnostic::documentInvalid);
   if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));
+  if (op.action == CanvasAction::RotateCustom && op.expandCanvas && std::isfinite(op.rotationDegrees) &&
+      std::fmod(op.rotationDegrees, 90.0) == 0) {
+    if (op.interpolation != Interpolation::Nearest && op.interpolation != Interpolation::Bilinear) return failure(diagnostic::documentInvalid);
+    const double angle = normalizedAngle(op.rotationDegrees);
+    if (angle != 0) {
+      CanvasOperation exact = op;
+      exact.action = angle == 90 ? CanvasAction::RotateClockwise : angle == 180 ? CanvasAction::Rotate180 : CanvasAction::RotateCounterClockwise;
+      return apply(document, source, exact, control);
+    }
+  }
   if (op.action == CanvasAction::AutoCrop) {
     const AutoCropPolicy &policy = op.autoCrop;
     if (policy.alphaThreshold < 0 || policy.alphaThreshold > 255 || policy.tolerance < 0 || policy.tolerance > 255 ||
@@ -102,9 +116,11 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
     {
       std::optional<ArgbImage> composite;
       if (policy.includeAnnotations && !document.annotations.empty()) {
-        for (const auto &annotation : document.annotations)
+        for (const auto &annotation : document.annotations) {
+          if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));
           if (!std::holds_alternative<RectangleAnnotation>(annotation))
             return failure(QStringLiteral("canvas-annotation-transform-unsupported"));
+        }
         auto rendered = render(source, document.annotations,
             {control.cancelled, [&](int p) { progress(control, p * 30 / 100); }});
         if (rendered.error) return failure(*rendered.error == RenderError::Cancelled ? QStringLiteral("canvas-cancelled") : diagnostic::documentInvalid);
@@ -199,6 +215,28 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
     case CanvasAction::FlipVertical:
       transform = {1, 0, 0, -1, 0, double(source.height)}; reflection = true;
       break;
+    case CanvasAction::RotateCustom: {
+      if (!std::isfinite(op.rotationDegrees) ||
+          (op.interpolation != Interpolation::Nearest && op.interpolation != Interpolation::Bilinear)) return failure(diagnostic::documentInvalid);
+      angleDelta = normalizedAngle(op.rotationDegrees);
+      const double radians = angleDelta * std::acos(-1.0) / 180;
+      // Exact quarter turns avoid trigonometric drift and extra canvas pixels.
+      const double cosine = angleDelta == 0 ? 1 : angleDelta == 90 || angleDelta == 270 ? 0 : angleDelta == 180 ? -1 : std::cos(radians);
+      const double sine = angleDelta == 0 || angleDelta == 180 ? 0 : angleDelta == 90 ? 1 : angleDelta == 270 ? -1 : std::sin(radians);
+      if (op.expandCanvas) {
+        const double expandedWidth = std::ceil(std::abs(cosine) * source.width + std::abs(sine) * source.height);
+        const double expandedHeight = std::ceil(std::abs(sine) * source.width + std::abs(cosine) * source.height);
+        if (expandedWidth > kMaxDimension || expandedHeight > kMaxDimension || expandedWidth * expandedHeight > kMaxPixels)
+          return failure(diagnostic::documentTooLarge);
+        width = qint64(expandedWidth); height = qint64(expandedHeight);
+      }
+      transform = {cosine, -sine, sine, cosine,
+          width / 2.0 - cosine * source.width / 2.0 + sine * source.height / 2.0,
+          height / 2.0 - sine * source.width / 2.0 - cosine * source.height / 2.0};
+      resample = true;
+      clipAnnotations = !op.expandCanvas;
+      break;
+    }
     default: return failure(diagnostic::documentInvalid);
   }
   if (!validSize(width, height)) return failure(width < 1 || height < 1 ? diagnostic::documentInvalid : diagnostic::documentTooLarge);
@@ -215,6 +253,7 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
   next.canvasWidth = width; next.canvasHeight = height;
   std::vector<Annotation> annotations;
   for (const Annotation &a : document.annotations) {
+    if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));
     const auto *r = std::get_if<RectangleAnnotation>(&a);
     if (!r) return failure(QStringLiteral("canvas-annotation-transform-unsupported"));
     if (!validRectangle(*r)) return failure(diagnostic::documentInvalid);
@@ -222,7 +261,7 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
     const PointF centre{r->left() / 2 + r->right() / 2, r->top() / 2 + r->bottom() / 2};
     const PointF mapped = transform.map(centre);
     double halfWidth = (r->right() - r->left()) / 2, halfHeight = (r->bottom() - r->top()) / 2;
-    if (resample) {
+    if (op.action == CanvasAction::ResizeImage) {
       const double angle = normalizedAngle(r->style.rotationDegrees);
       if (transform.xx != transform.yy && std::fmod(angle, 90.0) != 0)
         return failure(QStringLiteral("canvas-annotation-shear-unsupported"));
@@ -250,13 +289,19 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
   progress(control, 0);
   ArgbImage image = solidImage(width, height, op.fill);
   if (resample) {
+    const bool rotating = op.action == CanvasAction::RotateCustom;
     for (qint64 y = 0; y < height; ++y) {
       if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));
       for (qint64 x = 0; x < width; ++x) {
-        const double sx = (x + .5) / transform.xx - .5, sy = (y + .5) / transform.yy - .5;
-        image.pixels[std::size_t(y * width + x)] = op.interpolation == Interpolation::Bilinear ? bilinear(source, sx, sy) :
-          source.at(std::clamp<qint64>(qint64(std::floor(sx + .5)), 0, source.width - 1),
-                    std::clamp<qint64>(qint64(std::floor(sy + .5)), 0, source.height - 1));
+        const double bx = x + .5 - transform.dx, by = y + .5 - transform.dy;
+        const double sx = rotating ? transform.xx * bx + transform.yx * by - .5 : (x + .5) / transform.xx - .5;
+        const double sy = rotating ? transform.xy * bx + transform.yy * by - .5 : (y + .5) / transform.yy - .5;
+        const qint64 ix = qint64(std::floor(sx + .5)), iy = qint64(std::floor(sy + .5));
+        Argb pixel;
+        if (op.interpolation == Interpolation::Bilinear) pixel = bilinear(source, sx, sy, rotating, op.fill);
+        else if (rotating && (ix < 0 || iy < 0 || ix >= source.width || iy >= source.height)) pixel = op.fill;
+        else pixel = source.at(std::clamp<qint64>(ix, 0, source.width - 1), std::clamp<qint64>(iy, 0, source.height - 1));
+        image.pixels[std::size_t(y * width + x)] = pixel;
       }
       progress(control, int((y + 1) * 100 / height));
     }

@@ -16,6 +16,7 @@ class QAction;
 namespace xerahs::app {
 
 class EditorCanvas;
+struct PreparedCanvasEdit;
 
 class EditorWindow final : public QMainWindow {
   Q_OBJECT
@@ -32,8 +33,10 @@ private:
   void refresh();
   void cropImage();
   void autoCropImage();
+  void rotateImage();
   void resizeImage(bool canvasOnly);
   void applyCanvas(xerahs::editor::CanvasOperation operation);
+  void commitCanvas(PreparedCanvasEdit prepared, quint64 state);
 
   QString m_path;
   QImage m_image;

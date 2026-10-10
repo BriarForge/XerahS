@@ -16,7 +16,9 @@
     "platforms/linux/linux-qt/app/EditorCanvasOperations.h",
     "platforms/linux/linux-qt/app/EditorCanvasOperations.cpp",
     "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.h",
-    "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp"
+    "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
+    "platforms/linux/linux-qt/app/CanvasRotationDialog.h",
+    "platforms/linux/linux-qt/app/CanvasRotationDialog.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorViewportTest.cpp",
@@ -95,12 +97,13 @@
       "vectors": [
         "rotate-90-clockwise"
       ],
-      "note": "Native quarter turns, 180-degree rotation, and horizontal/vertical flips transform source pixels, canvas dimensions, rectangle geometry and orientation atomically. Pixel-centre coordinates use the same production transform as the adapter. General custom rotation and directional/inserted assets await their implementations. Unit tests compare independent pixel permutations and authoritative annotation rendering; native tests save and undo a whole-image rotation."
+      "note": "Native quarter turns, custom rotation and flips transform source pixels, dimensions, rectangle centres/orientations and pixel-centre coordinates atomically. Custom rotation has explicit expansion/cropping, background and sampling policies; exact expanded quarter turns are lossless. Tests cover independent pixel permutations, analytical 45-degree output, alpha-aware border interpolation, limits, editable persistence and undo. Directional/inserted assets await their tool implementations."
     },
     "EC-012": {
       "disposition": "Required",
-      "status": "not-started",
-      "vectors": []
+      "status": "implemented",
+      "vectors": [],
+      "note": "Native Rotate Image exposes angle, nearest/bilinear interpolation, expand/crop and uncovered-pixel ARGB controls. A cancellable worker prepares the complete source/document and authoritative rendered preview without entering session history. Changes invalidate obsolete previews; accepting commits exactly the prepared result with a state guard, once. Native tests exercise the cancelled 17-degree annotated/dirty scenario, rejection of an obsolete preview, controls, live-worker cancellation, save/reopen and one-step history; core tests verify independent sampling and atomic failures."
     },
     "EC-013": {
       "disposition": "Required",

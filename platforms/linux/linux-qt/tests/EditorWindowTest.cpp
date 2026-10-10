@@ -3,11 +3,18 @@
 #include "EditorWindow.h"
 #include "EditorCanvas.h"
 #include "EditorSource.h"
+#include "CanvasRotationDialog.h"
 
 #include <QAction>
 #include <QColorSpace>
 #include <QDialog>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QDoubleSpinBox>
+#include <QElapsedTimer>
 #include <QFile>
+#include <QLabel>
+#include <QProgressBar>
 #include <QSpinBox>
 #include <QStatusBar>
 #include <QTemporaryDir>
@@ -41,6 +48,38 @@ void acceptDimensions(int width, int height, int left = 0, int top = 0) {
 void trigger(EditorWindow &window, const QString &name) {
   auto *action = window.findChild<QAction *>(name);
   QVERIFY(action); action->trigger();
+}
+void runRotationPreview(EditorWindow &window, bool accept) {
+  QTimer timer; QElapsedTimer deadline; deadline.start();
+  bool configured = false, intermediateReady = false, previewReady = false, timedOut = false;
+  QObject::connect(&timer, &QTimer::timeout, [&] {
+    auto *dialog = qobject_cast<CanvasRotationDialog *>(QApplication::activeModalWidget());
+    if (!dialog) return;
+    if (deadline.elapsed() > 5000) { timedOut = true; dialog->reject(); return; }
+    if (!configured) {
+      auto *angle = dialog->findChild<QDoubleSpinBox *>(QStringLiteral("rotationAngle"));
+      auto *interpolation = dialog->findChild<QComboBox *>(QStringLiteral("rotationInterpolation"));
+      auto *expand = dialog->findChild<QCheckBox *>(QStringLiteral("rotationExpand"));
+      QVERIFY(angle && interpolation && expand);
+      angle->setValue(11); interpolation->setCurrentIndex(1); expand->setChecked(false);
+      configured = true;
+    }
+    auto *status = dialog->findChild<QLabel *>(QStringLiteral("rotationStatus")); QVERIFY(status);
+    if (!intermediateReady && status->text().startsWith(QStringLiteral("Preview: 60 × 40"))) {
+      intermediateReady = true;
+      dialog->findChild<QDoubleSpinBox *>(QStringLiteral("rotationAngle"))->setValue(17);
+      dialog->findChild<QComboBox *>(QStringLiteral("rotationInterpolation"))->setCurrentIndex(0);
+      dialog->findChild<QCheckBox *>(QStringLiteral("rotationExpand"))->setChecked(true);
+      dialog->accept();  // The prior prepared preview can no longer be accepted.
+      QVERIFY(dialog->isVisible());
+    }
+    if (intermediateReady && status->text().startsWith(QStringLiteral("Preview: 70 × 56"))) {
+      previewReady = true; accept ? dialog->accept() : dialog->reject();
+    }
+  });
+  timer.start(10);
+  trigger(window, QStringLiteral("rotateImage")); timer.stop();
+  QVERIFY(configured && intermediateReady && previewReady && !timedOut);
 }
 }  // namespace
 
@@ -161,6 +200,74 @@ private slots:
     QCOMPARE(window->statusBar()->currentMessage(), status);
     QVERIFY(window->findChild<QAction *>(QStringLiteral("redo"))->isEnabled());
     trigger(*window, QStringLiteral("redo")); QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+  }
+
+  void cancelledSeventeenDegreePreviewPreservesDirtyAnnotationsAndHistory() {
+    QTemporaryDir dir; const QString path = dir.filePath("cancel-rotation.png");
+    const QImage source = fixture(); QVERIFY(source.save(path));
+    auto loaded = loadSource(path); QVERIFY(loaded.document);
+    RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {8, 8}; r.end = {22, 16}; r.style.rotationDegrees = 17;
+    loaded.document->annotations = {r};
+    const auto saved = saveEdit(path, source, *loaded.document); QVERIFY(saved.rasterSaved && saved.sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas); canvas->resetZoom();
+    QTest::mousePress(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({35, 25}).toPoint());
+    QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({45, 30}).toPoint());
+    const QString before = window->statusBar()->currentMessage(); const QString title = window->windowTitle();
+    QVERIFY(title.contains(QChar(0x2022)));
+    runRotationPreview(*window, false);
+    QCOMPARE(window->statusBar()->currentMessage(), before); QCOMPARE(window->windowTitle(), title);
+    trigger(*window, QStringLiteral("undo"));
+    QVERIFY(!window->findChild<QAction *>(QStringLiteral("undo"))->isEnabled());
+    QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+    trigger(*window, QStringLiteral("saveImage"));
+    const auto reopened = loadSource(path); QVERIFY(reopened.document);
+    QCOMPARE(reopened.image, source); QCOMPARE(reopened.document->annotations.size(), std::size_t(1));
+    const auto &retained = std::get<RectangleAnnotation>(reopened.document->annotations[0]);
+    QCOMPARE(retained.id, r.id); QCOMPARE(retained.start, r.start); QCOMPARE(retained.end, r.end); QCOMPARE(retained.style.rotationDegrees, 17);
+  }
+
+  void acceptedPreviewPersistsTransformedSourceAndEditableAnnotationsOnce() {
+    QTemporaryDir dir; const QString path = dir.filePath("custom-rotation.png");
+    const QImage source = fixture(); QVERIFY(source.save(path));
+    auto loaded = loadSource(path); QVERIFY(loaded.document);
+    RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {8, 8}; r.end = {22, 16}; r.style.rotationDegrees = 17;
+    loaded.document->annotations = {r};
+    const auto saved = saveEdit(path, source, *loaded.document); QVERIFY(saved.rasterSaved && saved.sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
+    runRotationPreview(*window, true);
+    QVERIFY(window->statusBar()->currentMessage().startsWith(QStringLiteral("70 × 56")));
+    trigger(*window, QStringLiteral("saveImage"));
+    const auto reopened = loadSource(path); QVERIFY(reopened.document);
+    QCOMPARE(reopened.image.size(), QSize(70, 56)); QCOMPARE(reopened.image.colorSpace(), source.colorSpace());
+    QCOMPARE(reopened.image.pixel(35, 28), source.pixel(30, 20)); QCOMPARE(qAlpha(reopened.image.pixel(0, 0)), 0);
+    QCOMPARE(reopened.document->annotations.size(), std::size_t(1));
+    const auto &moved = std::get<RectangleAnnotation>(reopened.document->annotations[0]);
+    QCOMPARE(moved.id, r.id); QCOMPARE(moved.style.rotationDegrees, 34);
+    QCOMPARE(moved.right() - moved.left(), 14.0); QCOMPARE(moved.bottom() - moved.top(), 8.0);
+    trigger(*window, QStringLiteral("undo"));
+    QVERIFY(window->statusBar()->currentMessage().startsWith(QStringLiteral("60 × 40")));
+    QVERIFY(!window->findChild<QAction *>(QStringLiteral("undo"))->isEnabled());
+    trigger(*window, QStringLiteral("redo"));
+    QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+  }
+
+  void nativePreviewCancellationWaitsForTheLiveWorkerWithoutCommitting() {
+    QTemporaryDir dir; const QString path = dir.filePath("large-preview.png");
+    QImage source(1500, 1000, QImage::Format_ARGB32); source.fill(Qt::red); QVERIFY(source.save(path));
+    const auto loaded = loadSource(path); QVERIFY(loaded.document);
+    CanvasRotationDialog dialog(*loaded.document, source);
+    dialog.findChild<QDoubleSpinBox *>(QStringLiteral("rotationAngle"))->setValue(17);
+    QTimer timer; QElapsedTimer deadline; deadline.start(); bool cancelledLiveWorker = false;
+    connect(&timer, &QTimer::timeout, &dialog, [&] {
+      const int progress = dialog.findChild<QProgressBar *>()->value();
+      if (progress > 0 && progress < 100) { cancelledLiveWorker = true; dialog.reject(); timer.stop(); }
+      else if (deadline.elapsed() > 5000) { dialog.reject(); timer.stop(); }
+    });
+    timer.start(5);
+    QCOMPARE(dialog.exec(), int(QDialog::Rejected)); QVERIFY(cancelledLiveWorker);
+    QVERIFY(!dialog.takeEdit());
+    QCOMPARE(QImage(path), source);
   }
 };
 

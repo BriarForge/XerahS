@@ -2,6 +2,7 @@
 
 #include "EditorCanvas.h"
 #include "EditorCanvasOperations.h"
+#include "CanvasRotationDialog.h"
 #include "EditorSource.h"
 
 #include <QAction>
@@ -94,6 +95,9 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   resizeCanvas->setObjectName(QStringLiteral("resizeCanvas"));
   connect(resizeCanvas, &QAction::triggered, this, [this] { resizeImage(true); });
   imageMenu->addSeparator();
+  QAction *customRotation = imageMenu->addAction(QStringLiteral("Rotate Image…"));
+  customRotation->setObjectName(QStringLiteral("rotateImage"));
+  connect(customRotation, &QAction::triggered, this, &EditorWindow::rotateImage);
   for (const auto &entry : std::array<std::pair<QString, CanvasAction>, 5>{{
       {QStringLiteral("Rotate Image 90° Clockwise"), CanvasAction::RotateClockwise},
       {QStringLiteral("Rotate Image 90° Counter-clockwise"), CanvasAction::RotateCounterClockwise},
@@ -316,6 +320,13 @@ void EditorWindow::resizeImage(bool canvasOnly) {
   applyCanvas(operation);
 }
 
+void EditorWindow::rotateImage() {
+  const quint64 state = m_session->stateId();
+  CanvasRotationDialog dialog(m_session->document(), m_image, this);
+  if (dialog.exec() != QDialog::Accepted) return;
+  if (auto edit = dialog.takeEdit()) commitCanvas(std::move(*edit), state);
+}
+
 void EditorWindow::applyCanvas(CanvasOperation operation) {
   const quint64 state = m_session->stateId();
   const AnnotationDocument document = m_session->document();
@@ -343,8 +354,12 @@ void EditorWindow::applyCanvas(CanvasOperation operation) {
   if (worker.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
     cancelled.store(true); dialog.setLabelText(QStringLiteral("Cancelling…")); dialog.exec();
   }
-  const auto prepared = worker.get();
+  auto prepared = worker.get();
   if (cancelled.load() || prepared.result.error == QStringLiteral("canvas-cancelled")) return;
+  commitCanvas(std::move(prepared), state);
+}
+
+void EditorWindow::commitCanvas(PreparedCanvasEdit prepared, quint64 state) {
   if (prepared.result.error) {
     QString message = *prepared.result.error;
     if (message == u"canvas-annotation-shear-unsupported") message = QStringLiteral("Keep the aspect ratio locked to preserve rotated or stroked annotations.");
