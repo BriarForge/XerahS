@@ -7,6 +7,23 @@ on:
   push:
 
 jobs:
+  linux-qt:
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    steps:
+      - name: Install the Linux reference toolchain
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates git cmake ninja-build g++ qt6-base-dev zlib1g-dev python3
+      - uses: actions/checkout@v4
+      - name: Configure native Linux
+        run: cmake -S platforms/linux/linux-qt -B platforms/linux/linux-qt/build -G Ninja
+      - name: Build native Linux
+        run: cmake --build platforms/linux/linux-qt/build --parallel 2
+      - name: Verify native tests and implemented contract vectors
+        run: ctest --test-dir platforms/linux/linux-qt/build --output-on-failure
+
   lint:
     runs-on: ubuntu-latest
     steps:

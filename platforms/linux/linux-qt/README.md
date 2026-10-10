@@ -47,3 +47,7 @@ cmake -S . -B build -G Ninja
 cmake --build build
 ctest --test-dir build --output-on-failure
 ```
+
+The Product Contract workflow also builds this edition in Ubuntu 24.04 and
+runs the native tests and implemented conformance capabilities on every push
+and pull request.
