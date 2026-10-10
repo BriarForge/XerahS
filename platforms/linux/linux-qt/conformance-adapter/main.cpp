@@ -679,6 +679,9 @@ QJsonObject runEditorCanvas(const QString &operation, const QJsonObject &input) 
       else if (id == u"rotate_180") command.action = ed::CanvasAction::Rotate180;
       else if (id == u"flip_horizontal") command.action = ed::CanvasAction::FlipHorizontal;
       else if (id == u"flip_vertical") command.action = ed::CanvasAction::FlipVertical;
+      else if (id == u"flatten") command.action = ed::CanvasAction::Flatten;
+      else if (id == u"clear_annotations") command.action = ed::CanvasAction::ClearAnnotations;
+      else if (id == u"clear_image_and_annotations") command.action = ed::CanvasAction::ClearImageAndAnnotations;
       else if (id == u"crop") {
         command.action = ed::CanvasAction::Crop;
         command.start = pointFrom(op.value(u"start")); command.end = pointFrom(op.value(u"end"));

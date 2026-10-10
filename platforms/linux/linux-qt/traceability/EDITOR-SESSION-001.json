@@ -112,12 +112,12 @@
       ]
     },
     "ES-015": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "newer-version-read-only-failure",
         "unknown-fields-and-types-round-trip"
       ],
-      "note": "Unknown additive fields and annotation types round-trip in the core. The native source loader now also fails closed for newer, unreadable or corrupt sidecars and embedded sources, preserving the original files and preventing a writable bare-raster fallback. Native file tests cover these failures; unsupported-placeholder presentation remains tracked under editor accessibility/tool coverage."
+      "note": "Unknown additive fields and annotation types round-trip in the core. Native opening fails closed for newer, unreadable or corrupt sidecars and embedded sources. Unsupported objects are shown as labelled, accessible native dock placeholders, including hidden state, and survive flatten/clear undo. Core, file and window tests verify preservation, failure without rewriting and placeholder presentation."
     },
     "ES-016": {
       "status": "implemented",

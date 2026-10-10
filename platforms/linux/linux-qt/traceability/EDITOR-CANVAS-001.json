@@ -112,13 +112,15 @@
     },
     "EC-014": {
       "disposition": "Required",
-      "status": "not-started",
-      "vectors": []
+      "status": "partial",
+      "vectors": [],
+      "note": "Native Flatten composites the current source and supported visible annotations into an encoded immutable source, clearing only IDs with positive rendered coverage. Hidden, transparent, zero-opacity, off-canvas and hidden unsupported objects remain; visible unsupported types fail atomically. Assets remain reachable throughout history. Core and native file/window tests verify independent source-over pixels, profile preservation, represented-object filtering, selection/source undo, no-op repetition and live-worker cancellation. Separate background layers await EC-013; full flatten qualification remains pending."
     },
     "EC-015": {
       "disposition": "Required",
-      "status": "not-started",
-      "vectors": []
+      "status": "implemented",
+      "vectors": [],
+      "note": "Distinct native Clear Annotations and Clear Image and Annotations commands share atomic history. Annotation clear retains source PNG bytes exactly. Pixel clear uses an accessible native confirmation defaulting to Cancel, offers Save before Clear/Clear without Saving for dirty sessions, retains dimensions/profile and complete Undo recovery, and changes files only after explicit save. Core and native window tests cover cancellation, save/discard/clear choices, checkpoint and selection restoration, unsupported-object recovery and transparent PNG output. Dirty replacement/open-in-place remains governed by its separate session confirmation path when implemented."
     },
     "EC-016": {
       "disposition": "Required",

@@ -39,6 +39,13 @@ PreparedCanvasEdit prepare(const AnnotationDocument &document, const QImage &sou
     if (!prepared.result.error) prepared.source = source;
     return prepared;
   }
+  if (!prepared.result.image) {
+    // Annotation-only mutations retain the original source bytes exactly.
+    prepared.source = source;
+    progress(control, 100);
+    if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
+    return prepared;
+  }
   const ArgbImage &output = *prepared.result.image;
   QImage image(int(output.width), int(output.height), QImage::Format_ARGB32);
   if (image.isNull()) return fail(diagnostic::documentTooLarge);
@@ -59,6 +66,7 @@ PreparedCanvasEdit prepare(const AnnotationDocument &document, const QImage &sou
   prepared.result.image.reset();  // source is retained as immutable PNG history
   prepared.source = std::move(image);
   progress(control, 100);
+  if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
   return prepared;
 }
 }  // namespace

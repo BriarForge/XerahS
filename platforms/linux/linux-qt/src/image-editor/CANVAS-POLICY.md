@@ -85,7 +85,30 @@ enters history, guarded by the original session state ID. Undo and redo restore
 the source PNG, dimensions, annotations and selection; viewport state stays
 independent. Allocation is reserved before changing the redo branch.
 
+Flatten uses the authoritative renderer and records which annotation layers
+had positive visible coverage on the canvas. Those objects alone are removed
+after their composite is encoded as a new immutable source. Hidden, fully
+transparent, zero-opacity and wholly off-canvas objects remain editable, in
+their original relative order. A visible unsupported annotation causes an
+atomic failure; hidden unsupported objects and compatible fields are preserved.
+Embedded assets are retained in the document and all reachable history states;
+this edition does not infer that an asset is unreachable from unknown fields.
+No represented objects means no-op, with no new history entry. Separate
+background layers still depend on the upcoming background implementation.
+
+Clear Annotations removes all objects, including unsupported placeholders,
+as one undoable operation and retains source PNG bytes and colour metadata
+exactly. Clear Image and Annotations is a separate, explicitly labelled command
+that resets every source pixel to transparent black, removes objects, and
+retains canvas dimensions/profile. Its native confirmation defaults to Cancel;
+dirty sessions offer Save before Clear, Clear without Saving and Cancel. A
+failed or cancelled save prevents clearing. Clear commits only after preparation
+succeeds, and Undo restores pixels, objects, selection and the applicable clean
+checkpoint. Already empty objects or an already cleared canvas add no history.
+Neither command alters disk files until an explicit save. That save follows the
+existing explicit no-annotation sidecar removal policy.
+
 General affine annotations, inserted images,
-background composition, flatten, clear and comparison remain subsequent work.
+background composition and comparison remain subsequent work.
 Shared goldens and the remaining qualification gates in
 `product-contract/READINESS.md` still apply.

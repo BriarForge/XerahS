@@ -16,7 +16,7 @@ struct CanvasTransform {
 };
 
 enum class CanvasAction { Crop, ResizeCanvas, ResizeImage, RotateClockwise, RotateCounterClockwise, Rotate180,
-                          FlipHorizontal, FlipVertical, AutoCrop, RotateCustom };
+                          FlipHorizontal, FlipVertical, AutoCrop, RotateCustom, Flatten, ClearAnnotations, ClearImageAndAnnotations };
 enum class CanvasAnchor { TopLeft, Top, TopRight, Left, Center, Right, BottomLeft, Bottom, BottomRight };
 enum class Interpolation { Nearest, Bilinear };
 enum class CropBorder { Transparent, TopLeftColor, Color };
@@ -50,6 +50,8 @@ struct CanvasControl {
 struct CanvasResult {
   std::optional<AnnotationDocument> document;
   std::optional<ArgbImage> image;
+  // A document-only edit (e.g. clearing annotations) keeps its source PNG
+  // and has no replacement image to encode.
   std::optional<QString> error;
   CanvasTransform transform;
   bool changed = false;

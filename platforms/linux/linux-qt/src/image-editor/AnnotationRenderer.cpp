@@ -148,6 +148,7 @@ RenderResult render(const ArgbImage &source, const std::vector<Annotation> &anno
     return result;
   }
   ArgbImage image = source;  // ES-009: the source itself is never modified
+  std::vector<QUuid> composited;
 
   for (std::size_t index = 0; index < annotations.size(); ++index) {
     if (cancelled()) return result;
@@ -229,6 +230,7 @@ RenderResult render(const ArgbImage &source, const std::vector<Annotation> &anno
     const qint64 x1 = static_cast<qint64>(std::ceil(std::clamp(clipBounds.right, 0.0, double(image.width))));
     const qint64 y1 = static_cast<qint64>(std::ceil(std::clamp(clipBounds.bottom, 0.0, double(image.height))));
 
+    bool represented = false;
     for (qint64 j = y0; j < y1; ++j) {
       if (cancelled()) return result;
       for (qint64 i = x0; i < x1; ++i) {
@@ -245,6 +247,7 @@ RenderResult render(const ArgbImage &source, const std::vector<Annotation> &anno
                              (stroke.g * as + fill.g * af * (1 - as)) / layerAlpha,
                              (stroke.b * as + fill.b * af * (1 - as)) / layerAlpha};
         const double a = layerAlpha * style.opacity;
+        if (a > 0) represented = true;
 
         Argb &pixel = image.pixels[static_cast<std::size_t>(j * image.width + i)];
         const Channels d = channels(pixel);
@@ -254,10 +257,12 @@ RenderResult render(const ArgbImage &source, const std::vector<Annotation> &anno
       }
       if (control.progress) control.progress(int((index * 100 + (j - y0 + 1) * 100 / (y1 - y0)) / annotations.size()));
     }
+    if (represented) composited.push_back(rectangle->id);
   }
   if (cancelled()) return result;
   if (control.progress) control.progress(100);
   result.image = std::move(image);
+  result.compositedAnnotations = std::move(composited);
   return result;
 }
 

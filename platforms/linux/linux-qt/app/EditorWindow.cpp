@@ -11,16 +11,20 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
+#include <QDockWidget>
+#include <QEventLoop>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QInputDialog>
 #include <QLabel>
+#include <QListWidget>
 #include <QFormLayout>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QProgressDialog>
 #include <QPushButton>
 #include <QSignalBlocker>
+#include <QScopedValueRollback>
 #include <QSpinBox>
 #include <QStatusBar>
 #include <QToolBar>
@@ -86,6 +90,15 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   m_canvas = new EditorCanvas(*m_session, m_image);
   m_sourceBytes = m_session->document().sourceImagePng;
   setCentralWidget(m_canvas);
+  m_unsupportedDock = new QDockWidget(QStringLiteral("Unsupported annotations"), this);
+  m_unsupportedDock->setFeatures(QDockWidget::DockWidgetMovable);
+  m_unsupportedDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+  m_unsupportedObjects = new QListWidget(m_unsupportedDock);
+  m_unsupportedObjects->setObjectName(QStringLiteral("unsupportedAnnotations"));
+  m_unsupportedObjects->setAccessibleName(QStringLiteral("Unsupported annotations"));
+  m_unsupportedObjects->setAccessibleDescription(QStringLiteral("These objects are preserved in the document. Their tools are not available in this editor version."));
+  m_unsupportedDock->setWidget(m_unsupportedObjects);
+  addDockWidget(Qt::RightDockWidgetArea, m_unsupportedDock);
 
   auto *imageMenu = menuBar()->addMenu(QStringLiteral("&Image"));
   QAction *crop = imageMenu->addAction(QStringLiteral("Crop Image…"));
@@ -126,6 +139,16 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
       CanvasOperation operation; operation.action = command; applyCanvas(operation);
     });
   }
+  imageMenu->addSeparator();
+  QAction *flatten = imageMenu->addAction(QStringLiteral("Flatten"));
+  flatten->setObjectName(QStringLiteral("flattenImage"));
+  connect(flatten, &QAction::triggered, this, [this] { CanvasOperation op; op.action = CanvasAction::Flatten; applyCanvas(op); });
+  m_clearAnnotations = imageMenu->addAction(QStringLiteral("Clear Annotations"));
+  m_clearAnnotations->setObjectName(QStringLiteral("clearAnnotations"));
+  connect(m_clearAnnotations, &QAction::triggered, this, [this] { CanvasOperation op; op.action = CanvasAction::ClearAnnotations; applyCanvas(op); });
+  QAction *clear = imageMenu->addAction(QStringLiteral("Clear Image and Annotations…"));
+  clear->setObjectName(QStringLiteral("clearImage"));
+  connect(clear, &QAction::triggered, this, &EditorWindow::clearImage);
 
   auto *bar = addToolBar(QStringLiteral("Edit"));
   bar->setMovable(false);
@@ -200,6 +223,15 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
 }
 
 void EditorWindow::refresh() {
+  if (m_placeholderState != m_session->stateId()) {
+    m_placeholderState = m_session->stateId(); m_unsupportedObjects->clear();
+    for (const Annotation &a : m_session->document().annotations) if (const auto *object = std::get_if<UnsupportedAnnotation>(&a)) {
+      auto *item = new QListWidgetItem(QStringLiteral("Unsupported: %1%2").arg(object->raw.value(u"type").toString(),
+          object->raw.value(u"visible").toBool(true) ? QString() : QStringLiteral(" (hidden)")), m_unsupportedObjects);
+      item->setData(Qt::UserRole, object->id.toString(QUuid::WithoutBraces));
+    }
+    m_unsupportedDock->setVisible(m_unsupportedObjects->count() > 0);
+  }
   if (m_sourceBytes != m_session->document().sourceImagePng) {
     const QImage next = QImage::fromData(m_session->document().sourceImagePng, "PNG").convertToFormat(QImage::Format_ARGB32);
     if (!next.isNull()) {
@@ -212,6 +244,7 @@ void EditorWindow::refresh() {
   m_redo->setEnabled(m_session->redoCount() > 0);
   m_delete->setEnabled(!m_session->selection().isEmpty());
   m_rotate->setEnabled(!m_session->selection().isEmpty());
+  m_clearAnnotations->setEnabled(!m_session->document().annotations.empty());
   setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(QFileInfo(m_path).fileName(),
                                                     m_session->dirty() ? QStringLiteral(" •") : QString()));
   statusBar()->showMessage(QStringLiteral("%1 × %2 · %3 annotation(s) · %4 selected · %5%")
@@ -343,7 +376,27 @@ void EditorWindow::rotateImage() {
   if (auto edit = dialog.takeEdit()) commitCanvas(std::move(*edit), state);
 }
 
+void EditorWindow::clearImage() {
+  const bool dirty = m_session->dirty();
+  QMessageBox box(QMessageBox::Warning, QStringLiteral("Clear Image and Annotations"),
+      QStringLiteral("Remove all pixels and annotation objects from this canvas, keeping its dimensions and colour profile? "
+                     "You can restore the current document with Undo."),
+      dirty ? QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel : QMessageBox::Ok | QMessageBox::Cancel, this);
+  box.setDefaultButton(QMessageBox::Cancel);
+  if (dirty) {
+    box.setInformativeText(QStringLiteral("Save the current changes before clearing?"));
+    box.button(QMessageBox::Save)->setText(QStringLiteral("Save, then Clear"));
+    box.button(QMessageBox::Discard)->setText(QStringLiteral("Clear without Saving"));
+  } else box.button(QMessageBox::Ok)->setText(QStringLiteral("Clear"));
+  const int answer = box.exec();
+  if (answer == QMessageBox::Save && !save(false)) return;
+  if (answer != QMessageBox::Save && answer != QMessageBox::Discard && answer != QMessageBox::Ok) return;
+  CanvasOperation op; op.action = CanvasAction::ClearImageAndAnnotations; applyCanvas(op);
+}
+
 void EditorWindow::applyCanvas(CanvasOperation operation) {
+  if (m_canvasOperationPending) return;
+  const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
   const quint64 state = m_session->stateId();
   const AnnotationDocument document = m_session->document();
   const QImage source = m_image;
@@ -353,23 +406,30 @@ void EditorWindow::applyCanvas(CanvasOperation operation) {
   dialog.setWindowTitle(QStringLiteral("Image operation"));
   dialog.setWindowModality(Qt::WindowModal);
   dialog.setAutoClose(false); dialog.setAutoReset(false);
-  auto worker = std::async(std::launch::async, [&] {
-    return prepareCanvasEdit(document, source, operation, CanvasControl{
-        [&] { return cancelled.load(); }, [&](int value) { progress.store(value); }});
+  std::future<PreparedCanvasEdit> worker;
+  try {
+    worker = std::async(std::launch::async, [&] {
+      return prepareCanvasEdit(document, source, operation, CanvasControl{
+          [&] { return cancelled.load(); }, [&](int value) { progress.store(value); }});
+    });
+  } catch (const std::exception &) {
+    QMessageBox::warning(this, QStringLiteral("Cannot edit image"), QStringLiteral("The image operation could not be started. The document has been kept unchanged."));
+    return;
+  }
+  QEventLoop completion;
+  connect(&dialog, &QProgressDialog::canceled, &completion, [&] {
+    cancelled.store(true); dialog.setLabelText(QStringLiteral("Cancelling…")); dialog.setCancelButton(nullptr);
   });
-  connect(&dialog, &QProgressDialog::canceled, this, [&] { cancelled.store(true); });
+  connect(&dialog, &QDialog::rejected, &completion, [&] { cancelled.store(true); });
   QTimer timer;
   connect(&timer, &QTimer::timeout, &dialog, [&] {
     dialog.setValue(progress.load());
-    if (worker.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) dialog.accept();
+    if (worker.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) { dialog.accept(); completion.quit(); }
   });
   timer.start(20);
-  dialog.exec();
-  // Cancellation may close the dialog before the worker exits. Keep the
-  // modal window open until all captured state is safe to release.
-  if (worker.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
-    cancelled.store(true); dialog.setLabelText(QStringLiteral("Cancelling…")); dialog.exec();
-  }
+  // Closing/cancelling the progress window does not release captured state.
+  // Keep processing native events until the same worker actually finishes.
+  dialog.open(); completion.exec();
   auto prepared = worker.get();
   if (cancelled.load() || prepared.result.error == QStringLiteral("canvas-cancelled")) return;
   commitCanvas(std::move(prepared), state);
@@ -379,8 +439,11 @@ void EditorWindow::commitCanvas(PreparedCanvasEdit prepared, quint64 state) {
   if (prepared.result.error) {
     QString message = *prepared.result.error;
     if (message == u"canvas-annotation-shear-unsupported") message = QStringLiteral("Keep the aspect ratio locked to preserve rotated or stroked annotations.");
+    else if (message == u"canvas-annotation-render-unsupported") message = QStringLiteral("This document contains visible annotation types this editor cannot flatten yet. The document has been kept unchanged.");
     else if (message == u"canvas-annotation-transform-unsupported") message = QStringLiteral("This document contains annotation types this editor cannot transform yet.");
     else if (message == diagnostic::documentTooLarge) message = QStringLiteral("The requested image exceeds the editor's dimensions or memory limits.");
+    else if (message == diagnostic::documentInvalid) message = QStringLiteral("The image or annotation data is invalid.");
+    else if (message == u"canvas-encoding-failed") message = QStringLiteral("The edited source could not be encoded.");
     QMessageBox::warning(this, QStringLiteral("Cannot edit image"), message);
     return;
   }
@@ -417,6 +480,9 @@ bool EditorWindow::save(bool chooseFile) {
 }
 
 void EditorWindow::closeEvent(QCloseEvent *event) {
+  // A cancelled progress window can hide before its worker exits. Keep the
+  // editor and its stack-owned modal objects alive until preparation completes.
+  if (m_canvasOperationPending) { event->ignore(); return; }
   if (!m_session->dirty()) { event->accept(); return; }
   // ES-008: Save, Discard, Cancel.
   QMessageBox box(QMessageBox::Question, QStringLiteral("Unsaved changes"),

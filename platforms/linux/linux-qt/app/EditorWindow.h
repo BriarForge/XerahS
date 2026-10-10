@@ -12,6 +12,8 @@
 #include <optional>
 
 class QAction;
+class QDockWidget;
+class QListWidget;
 
 namespace xerahs::app {
 
@@ -34,6 +36,7 @@ private:
   void cropImage();
   void autoCropImage();
   void rotateImage();
+  void clearImage();
   void resizeImage(bool canvasOnly);
   void applyCanvas(xerahs::editor::CanvasOperation operation);
   void commitCanvas(PreparedCanvasEdit prepared, quint64 state);
@@ -47,6 +50,11 @@ private:
   QAction *m_redo = nullptr;
   QAction *m_delete = nullptr;
   QAction *m_rotate = nullptr;
+  QAction *m_clearAnnotations = nullptr;
+  QDockWidget *m_unsupportedDock = nullptr;
+  QListWidget *m_unsupportedObjects = nullptr;
+  std::optional<quint64> m_placeholderState;
+  bool m_canvasOperationPending = false;
 };
 
 }  // namespace xerahs::app

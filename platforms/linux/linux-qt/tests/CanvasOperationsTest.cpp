@@ -383,6 +383,84 @@ private slots:
       QVERIFY(!cancelled.edit.result.document && cancelled.composite.isNull());
     }
   }
+
+  void flattenCompositesOnlyRepresentedObjectsAndRetainsOthers() {
+    auto d = document(4, 4);
+    auto shown = rectangle({1, 1}, {3, 3}); shown.style.strokeColor = 0; shown.style.fillColor = 0x80FF0000;
+    auto hidden = rectangle({0, 0}, {1, 1}); hidden.visible = false;
+    auto outside = rectangle({10, 10}, {11, 11});
+    auto transparent = rectangle({0, 0}, {1, 1}); transparent.style.strokeColor = transparent.style.fillColor = 0;
+    auto zeroOpacity = rectangle({3, 3}, {4, 4}); zeroOpacity.style.opacity = 0;
+    const QUuid futureId = QUuid::createUuid();
+    const UnsupportedAnnotation future{futureId, {{"id", futureId.toString(QUuid::WithoutBraces)}, {"type", "future"}, {"visible", false}, {"vendor", "retain"}}};
+    d.annotations = {shown, hidden, outside, transparent, zeroOpacity, future};
+    d.embeddedImages = {{QStringLiteral("asset"), d.sourceImagePng}};
+    const ArgbImage source = solidImage(4, 4, 0x800000FF);
+    CanvasOperation op; op.action = CanvasAction::Flatten;
+    auto result = applyCanvasOperation(d, source, op); QVERIFY(result.changed && result.image && result.document);
+    // Source-over 128/255 red on 128/255 blue gives A=192,R=170,B=85.
+    QCOMPARE(result.image->at(1, 1), Argb(0xC0AA0055)); QCOMPARE(result.image->at(0, 0), Argb(0x800000FF));
+    QCOMPARE(result.document->annotations.size(), std::size_t(5));
+    QCOMPARE(annotationId(result.document->annotations[0]), hidden.id);
+    QCOMPARE(annotationId(result.document->annotations[4]), futureId);
+    QVERIFY(result.document->embeddedImages == d.embeddedImages);
+    const auto repeated = applyCanvasOperation(*result.document, *result.image, op);
+    QVERIFY(!repeated.changed && !repeated.image);  // nothing else is represented
+    QCOMPARE(source.at(1, 1), Argb(0x800000FF));
+    std::get<UnsupportedAnnotation>(d.annotations.back()).raw.insert(QStringLiteral("visible"), true);
+    const auto unsupported = applyCanvasOperation(d, source, op);
+    QCOMPARE(unsupported.error, std::optional<QString>(QStringLiteral("canvas-annotation-render-unsupported")));
+    QVERIFY(!unsupported.document && !unsupported.image);
+  }
+
+  void nativeFlattenRestoresSourceAssetsSelectionAndCheckpointWithUndo() {
+    QImage source(4, 4, QImage::Format_ARGB32); source.fill(0x800000FF);
+    auto d = withSource(source); auto shown = rectangle({1, 1}, {3, 3}); shown.style.strokeColor = 0; shown.style.fillColor = 0x80FF0000;
+    auto hidden = rectangle({0, 0}, {1, 1}); hidden.visible = false; d.annotations = {shown, hidden};
+    EditorSession session(d); session.select({shown.id, hidden.id});
+    CanvasOperation op; op.action = CanvasAction::Flatten;
+    const auto prepared = xerahs::app::prepareCanvasEdit(d, source, op); QVERIFY(prepared.result.document);
+    QCOMPARE(prepared.source.pixel(1, 1), QRgb(0xC0AA0055));
+    QVERIFY(session.commitCanvas(*prepared.result.document, session.stateId()));
+    QCOMPARE(session.undoCount(), 1); QCOMPARE(session.selection(), QSet<QUuid>{hidden.id}); QVERIFY(session.dirty());
+    QVERIFY(session.undo()); QCOMPARE(session.document().sourceImagePng, d.sourceImagePng);
+    QCOMPARE(session.selection(), (QSet<QUuid>{shown.id, hidden.id})); QVERIFY(!session.dirty());
+    QVERIFY(session.redo()); QCOMPARE(session.document().annotations.size(), std::size_t(1));
+  }
+
+  void clearCommandsAreDistinctAtomicAndRepeatAsNoOps() {
+    QImage source(4, 4, QImage::Format_ARGB32); source.fill(Qt::blue);
+    auto d = withSource(source); auto r = rectangle({1, 1}, {3, 3}); d.annotations = {r};
+    EditorSession session(d); session.select({r.id});
+    CanvasOperation op; op.action = CanvasAction::ClearAnnotations;
+    auto prepared = xerahs::app::prepareCanvasEdit(d, source, op);
+    QVERIFY(prepared.result.changed && !prepared.result.image); QCOMPARE(prepared.result.document->sourceImagePng, d.sourceImagePng);
+    QVERIFY(session.commitCanvas(*prepared.result.document, session.stateId()));
+    QVERIFY(session.document().annotations.empty()); QCOMPARE(session.document().sourceImagePng, d.sourceImagePng);
+    QVERIFY(!xerahs::app::prepareCanvasEdit(session.document(), source, op).result.changed);
+    QVERIFY(session.undo()); QCOMPARE(session.selection(), QSet<QUuid>{r.id}); QVERIFY(!session.dirty());
+    op.action = CanvasAction::ClearImageAndAnnotations;
+    prepared = xerahs::app::prepareCanvasEdit(d, source, op); QVERIFY(prepared.result.changed);
+    QCOMPARE(prepared.source.size(), source.size()); QVERIFY(prepared.result.document->annotations.empty());
+    for (int y = 0; y < 4; ++y) for (int x = 0; x < 4; ++x) QCOMPARE(prepared.source.pixel(x, y), QRgb(0));
+    QVERIFY(session.commitCanvas(*prepared.result.document, session.stateId()));
+    QCOMPARE(session.undoCount(), 1); QCOMPARE(session.redoCount(), 0);
+    QVERIFY(!xerahs::app::prepareCanvasEdit(session.document(), prepared.source, op).result.changed);
+    QVERIFY(session.undo()); QCOMPARE(session.document().sourceImagePng, d.sourceImagePng); QVERIFY(!session.dirty());
+  }
+
+  void flattenAndClearCancellationNeverReturnPartialEdits() {
+    auto d = document(100, 100); auto r = rectangle({5, 5}, {95, 95}); r.style.fillColor = 0xFFFFFFFF; d.annotations = {r};
+    for (CanvasAction action : {CanvasAction::Flatten, CanvasAction::ClearAnnotations, CanvasAction::ClearImageAndAnnotations}) {
+      CanvasOperation op; op.action = action; int percent = 0;
+      const auto cancelled = applyCanvasOperation(d, solidImage(100, 100, 0), op,
+          {[&] { return percent >= 50; }, [&](int p) { percent = p; }});
+      QCOMPARE(cancelled.error, std::optional<QString>(QStringLiteral("canvas-cancelled")));
+      QVERIFY(!cancelled.document && !cancelled.image);
+      const auto immediate = applyCanvasOperation(d, solidImage(100, 100, 0), op, {[] { return true; }, {}});
+      QCOMPARE(immediate.error, std::optional<QString>(QStringLiteral("canvas-cancelled")));
+    }
+  }
 };
 
 QTEST_GUILESS_MAIN(CanvasOperationsTest)

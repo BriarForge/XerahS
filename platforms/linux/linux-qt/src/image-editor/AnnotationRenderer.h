@@ -30,6 +30,7 @@ enum class RenderError {
 struct RenderResult {
   std::optional<ArgbImage> image;
   std::optional<RenderError> error;
+  std::vector<QUuid> compositedAnnotations;  // positive visible coverage; only present after successful rendering
 };
 
 // Composites the visible rectangles of `annotations` in order over `source`.

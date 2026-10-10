@@ -8,6 +8,7 @@
 #include <QAction>
 #include <QColorSpace>
 #include <QDialog>
+#include <QDir>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDoubleSpinBox>
@@ -15,8 +16,10 @@
 #include <QFile>
 #include <QLabel>
 #include <QProgressBar>
+#include <QProgressDialog>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QListWidget>
 #include <QSpinBox>
 #include <QStatusBar>
 #include <QTemporaryDir>
@@ -306,6 +309,153 @@ private slots:
     QCOMPARE(dialog.exec(), int(QDialog::Rejected)); QVERIFY(cancelledLiveWorker);
     QVERIFY(!dialog.takeEdit());
     QCOMPARE(QImage(path), source);
+  }
+
+  void flattenPersistsOnlyRenderedObjectsAndShowsUnsupportedPlaceholders() {
+    QTemporaryDir dir; const QString path = dir.filePath("flatten.png");
+    const QImage original = fixture(); QVERIFY(original.save(path));
+    auto loaded = loadSource(path); QVERIFY(loaded.document);
+    RectangleAnnotation shown; shown.id = QUuid::createUuid(); shown.start = {1, 1}; shown.end = {4, 4};
+    shown.style.strokeColor = 0; shown.style.fillColor = 0xFF00FF00;
+    RectangleAnnotation hidden = shown; hidden.id = QUuid::createUuid(); hidden.visible = false;
+    const QUuid id = QUuid::createUuid();
+    UnsupportedAnnotation future{id, {{"id", id.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"visible", false}, {"vendor", "preserve"}}};
+    loaded.document->annotations = {shown, hidden, future};
+    const auto saved = saveEdit(path, original, *loaded.document); QVERIFY(saved.rasterSaved && saved.sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
+    auto *placeholders = window->findChild<QListWidget *>(QStringLiteral("unsupportedAnnotations")); QVERIFY(placeholders);
+    QCOMPARE(placeholders->count(), 1); QVERIFY(placeholders->isVisible());
+    QVERIFY(placeholders->item(0)->text().contains(QStringLiteral("future-art")));
+    trigger(*window, QStringLiteral("flattenImage"));
+    QVERIFY(window->statusBar()->currentMessage().contains(QStringLiteral("2 annotation(s)")));
+    trigger(*window, QStringLiteral("saveImage"));
+    const auto flattened = loadSource(path); QVERIFY(flattened.document);
+    QCOMPARE(flattened.image.pixel(2, 2), QRgb(0xFF00FF00)); QCOMPARE(flattened.image.colorSpace(), original.colorSpace());
+    QCOMPARE(annotationId(flattened.document->annotations[0]), hidden.id);
+    QCOMPARE(std::get<UnsupportedAnnotation>(flattened.document->annotations[1]).raw.value(u"vendor").toString(), QStringLiteral("preserve"));
+    trigger(*window, QStringLiteral("flattenImage"));  // no represented annotations: no second history entry
+    trigger(*window, QStringLiteral("undo"));
+    QVERIFY(!window->findChild<QAction *>(QStringLiteral("undo"))->isEnabled());
+    trigger(*window, QStringLiteral("saveImage"));
+    const auto restored = loadSource(path); QVERIFY(restored.document); QCOMPARE(restored.image, original);
+    QCOMPARE(restored.document->annotations.size(), std::size_t(3));
+  }
+
+  void clearAnnotationsKeepsSourcePixelsAndRestoresUnsupportedObjectsWithUndo() {
+    QTemporaryDir dir; const QString path = dir.filePath("clear-objects.png");
+    const QImage original = fixture(); QVERIFY(original.save(path));
+    auto loaded = loadSource(path); QVERIFY(loaded.document);
+    const QUuid id = QUuid::createUuid();
+    loaded.document->annotations = {UnsupportedAnnotation{id, {{"id", id.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"vendor", "preserve"}}}};
+    const auto saved = saveEdit(path, original, *loaded.document); QVERIFY(saved.rasterSaved && saved.sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
+    trigger(*window, QStringLiteral("clearAnnotations"));
+    QVERIFY(!window->findChild<QAction *>(QStringLiteral("clearAnnotations"))->isEnabled());
+    QCOMPARE(window->findChild<QListWidget *>(QStringLiteral("unsupportedAnnotations"))->count(), 0);
+    trigger(*window, QStringLiteral("saveImage")); QCOMPARE(QImage(path), original); QVERIFY(!QFile::exists(path + ".xann"));
+    trigger(*window, QStringLiteral("undo"));
+    QCOMPARE(window->findChild<QListWidget *>(QStringLiteral("unsupportedAnnotations"))->count(), 1);
+    trigger(*window, QStringLiteral("saveImage"));
+    const auto restored = loadSource(path); QVERIFY(restored.document);
+    QCOMPARE(std::get<UnsupportedAnnotation>(restored.document->annotations[0]).raw.value(u"vendor").toString(), QStringLiteral("preserve"));
+  }
+
+  void clearImageConfirmationAndRecovery_data() {
+    QTest::addColumn<bool>("dirty"); QTest::addColumn<int>("answer");
+    QTest::newRow("clean-cancel") << false << int(QMessageBox::Cancel);
+    QTest::newRow("clean-clear") << false << int(QMessageBox::Ok);
+    QTest::newRow("dirty-cancel") << true << int(QMessageBox::Cancel);
+    QTest::newRow("dirty-save-first") << true << int(QMessageBox::Save);
+    QTest::newRow("dirty-clear-without-saving") << true << int(QMessageBox::Discard);
+  }
+  void clearImageConfirmationAndRecovery() {
+    QFETCH(bool, dirty); QFETCH(int, answer);
+    QTemporaryDir dir; const QString path = dir.filePath("clear.png");
+    const QImage original = fixture(); QVERIFY(original.save(path));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas); canvas->resetZoom();
+    if (dirty) {
+      QTest::mousePress(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({8, 8}).toPoint());
+      QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({22, 16}).toPoint());
+    }
+    const QString status = window->statusBar()->currentMessage(); const QString title = window->windowTitle();
+    const double zoom = canvas->viewState().zoom(); const QPointF offset = canvas->viewState().offset();
+    QTimer::singleShot(0, [answer] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box);
+      QCOMPARE(box->defaultButton(), box->button(QMessageBox::Cancel));
+      auto *button = box->button(QMessageBox::StandardButton(answer)); QVERIFY(button); button->click();
+    });
+    trigger(*window, QStringLiteral("clearImage"));
+    QCOMPARE(canvas->viewState().zoom(), zoom); QCOMPARE(canvas->viewState().offset(), offset);
+    if (answer == QMessageBox::Cancel) { QCOMPARE(window->statusBar()->currentMessage(), status); QCOMPARE(window->windowTitle(), title); }
+    else {
+      QVERIFY(window->statusBar()->currentMessage().contains(QStringLiteral("0 annotation(s)")));
+      trigger(*window, QStringLiteral("undo")); QCOMPARE(window->statusBar()->currentMessage(), status);
+      QCOMPARE(window->windowTitle().contains(QChar(0x2022)), dirty && answer != QMessageBox::Save);
+      if (dirty) trigger(*window, QStringLiteral("undo"));
+      QVERIFY(!window->findChild<QAction *>(QStringLiteral("undo"))->isEnabled());
+    }
+    if (answer != QMessageBox::Save) QCOMPARE(QImage(path), original);
+    else { QVERIFY(QFile::exists(path + ".xann")); QVERIFY(QImage(path) != original); }
+  }
+
+  void clearedImageSavesTransparentPixelsAndUndoRestoresTheImmutableSource() {
+    QTemporaryDir dir; const QString path = dir.filePath("transparent.png");
+    const QImage original = fixture(); QVERIFY(original.save(path));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
+    QTimer::singleShot(0, [] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box); box->button(QMessageBox::Ok)->click(); });
+    trigger(*window, QStringLiteral("clearImage")); trigger(*window, QStringLiteral("saveImage"));
+    const QImage cleared(path); QCOMPARE(cleared.size(), original.size()); QCOMPARE(cleared.colorSpace(), original.colorSpace());
+    for (int y = 0; y < cleared.height(); ++y) for (int x = 0; x < cleared.width(); ++x) QCOMPARE(cleared.pixel(x, y), QRgb(0));
+    trigger(*window, QStringLiteral("undo")); trigger(*window, QStringLiteral("saveImage")); QCOMPARE(QImage(path), original);
+  }
+
+  void cancellingNativeFlattenLeavesFilesDocumentAndHistoryUntouched() {
+    QTemporaryDir dir; const QString path = dir.filePath("cancel-flatten.png");
+    QImage original(600, 400, QImage::Format_ARGB32); original.fill(Qt::blue); QVERIFY(original.save(path));
+    auto loaded = loadSource(path); QVERIFY(loaded.document);
+    RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {50, 50}; r.end = {550, 350};
+    r.style.rotationDegrees = 17; r.style.fillColor = 0x80FF0000; loaded.document->annotations = {r};
+    const auto bytes = writeXann(*loaded.document); QVERIFY(bytes);
+    QFile sidecar(path + ".xann"); QVERIFY(sidecar.open(QIODevice::WriteOnly)); sidecar.write(*bytes); sidecar.close();
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
+    const QString status = window->statusBar()->currentMessage(), title = window->windowTitle();
+    QTimer timer; QElapsedTimer deadline; deadline.start(); bool cancelledLive = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *progress = qobject_cast<QProgressDialog *>(QApplication::activeModalWidget());
+      if (!progress) return;
+      if ((progress->value() > 5 && progress->value() < 90) || deadline.elapsed() > 5000) {
+        cancelledLive = progress->value() > 5 && progress->value() < 90;
+        auto *button = progress->findChild<QPushButton *>(); QVERIFY(button); button->click();
+        QVERIFY(!window->close());  // the editor stays alive until its worker has stopped
+        timer.stop();
+      }
+    });
+    timer.start(5); trigger(*window, QStringLiteral("flattenImage")); timer.stop();
+    QVERIFY(cancelledLive); QCOMPARE(window->statusBar()->currentMessage(), status); QCOMPARE(window->windowTitle(), title);
+    QVERIFY(!window->findChild<QAction *>(QStringLiteral("undo"))->isEnabled());
+    QCOMPARE(QImage(path), original); QVERIFY(sidecar.open(QIODevice::ReadOnly)); QCOMPARE(sidecar.readAll(), *bytes);
+  }
+
+  void failedSaveBeforeClearKeepsTheDirtySessionAndHistory() {
+    QTemporaryDir dir; const QString path = dir.filePath("failed-save.png"), backup = dir.filePath("original.png");
+    const QImage original = fixture(); QVERIFY(original.save(path));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas); canvas->resetZoom();
+    QTest::mousePress(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({8, 8}).toPoint());
+    QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({22, 16}).toPoint());
+    const QString before = window->statusBar()->currentMessage(), title = window->windowTitle(); QVERIFY(title.contains(QChar(0x2022)));
+    QVERIFY(QFile::rename(path, backup)); QVERIFY(QDir().mkdir(path));  // destination is now a directory
+    QTimer timer; bool saveRequested = false, failureShown = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return;
+      if (box->windowTitle() == u"Clear Image and Annotations" && !saveRequested) { saveRequested = true; box->button(QMessageBox::Save)->click(); }
+      else if (box->windowTitle() == u"Save incomplete") { failureShown = true; box->accept(); }
+    });
+    timer.start(5); trigger(*window, QStringLiteral("clearImage")); timer.stop();
+    QVERIFY(saveRequested && failureShown); QCOMPARE(window->statusBar()->currentMessage(), before); QCOMPARE(window->windowTitle(), title);
+    QVERIFY(QDir(path).exists()); QCOMPARE(QImage(backup), original);
+    trigger(*window, QStringLiteral("undo")); QVERIFY(!window->findChild<QAction *>(QStringLiteral("undo"))->isEnabled());
   }
 };
 

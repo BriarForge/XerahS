@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <new>
+#include <QSet>
 
 namespace xerahs::editor {
 namespace {
@@ -97,6 +98,44 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
   if (!validSize(source.width, source.height) || document.canvasWidth != source.width || document.canvasHeight != source.height ||
       source.pixels.size() != std::size_t(source.width * source.height)) return failure(diagnostic::documentInvalid);
   if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));
+  if (op.action == CanvasAction::ClearAnnotations || op.action == CanvasAction::ClearImageAndAnnotations || op.action == CanvasAction::Flatten) {
+    CanvasResult result; result.document = document;
+    if (op.action == CanvasAction::ClearAnnotations) {
+      result.changed = !document.annotations.empty();
+      result.document->annotations.clear();
+    } else if (op.action == CanvasAction::ClearImageAndAnnotations) {
+      bool nonzero = false;
+      for (qint64 y = 0; y < source.height && !nonzero; ++y) {
+        if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));
+        for (qint64 x = 0; x < source.width; ++x) if (source.at(x, y) != 0) { nonzero = true; break; }
+        progress(control, int((y + 1) * 30 / source.height));
+      }
+      result.changed = nonzero || !document.annotations.empty();
+      if (result.changed) result.image = solidImage(source.width, source.height, 0);
+      result.document->annotations.clear();
+    } else {
+      for (const Annotation &annotation : document.annotations) {
+        if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));
+        if (const auto *unsupported = std::get_if<UnsupportedAnnotation>(&annotation))
+          if (unsupported->raw.value(u"visible").toBool(true)) return failure(QStringLiteral("canvas-annotation-render-unsupported"));
+      }
+      auto rendered = render(source, document.annotations, {control.cancelled, control.progress});
+      if (rendered.error) return failure(*rendered.error == RenderError::Cancelled ? QStringLiteral("canvas-cancelled") : diagnostic::documentInvalid);
+      const QSet<QUuid> represented(rendered.compositedAnnotations.begin(), rendered.compositedAnnotations.end());
+      result.changed = !represented.isEmpty();
+      if (result.changed) {
+        auto &annotations = result.document->annotations;
+        annotations.erase(std::remove_if(annotations.begin(), annotations.end(), [&](const Annotation &a) {
+          return represented.contains(annotationId(a));
+        }), annotations.end());
+        result.image = std::move(rendered.image);
+      }
+    }
+    if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));
+    progress(control, 100);
+    if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));
+    return result;
+  }
   if (op.action == CanvasAction::RotateCustom && op.expandCanvas && std::isfinite(op.rotationDegrees) &&
       std::fmod(op.rotationDegrees, 90.0) == 0) {
     if (op.interpolation != Interpolation::Nearest && op.interpolation != Interpolation::Bilinear) return failure(diagnostic::documentInvalid);
