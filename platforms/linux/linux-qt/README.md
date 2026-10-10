@@ -9,6 +9,7 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 | `FILENAME-GENERATION-001` | Core logic and conformance seam; no UI yet | 51 of 51 vectors pass; [traceability](traceability/FILENAME-GENERATION-001.json) |
 | `POST-CAPTURE-ACTIONS-001` | Pipeline engine and conformance seam; native actions, retry, and recovery not yet | 17 of 17 vectors pass; [traceability](traceability/POST-CAPTURE-ACTIONS-001.json) |
 | `REGION-CAPTURE-001` | Mapping, keyboard, compositing, last-region, and session state machine; no overlay or capture backend yet | 21 of 21 vectors pass; [traceability](traceability/REGION-CAPTURE-001.json) |
+| `EDITOR-CANVAS-001` | Zoom, fit, reset, wheel/pinch and pan; pixel operations pending | Native viewport/input tests and `viewport-only` shared vector; [traceability](traceability/EDITOR-CANVAS-001.json) |
 | `EDITOR-SESSION-001` | Document, `.xann` reader and writer, history, and export renderer; editor window with rectangle tool, selection, save, and sidecar reopen; resize and ordering by keyboard, arbitrary-angle rotation and export | 19 of 19 vectors pass; [traceability](traceability/EDITOR-SESSION-001.json) |
 
 The next implementation steps are tracked in [IMPLEMENTATION.md](IMPLEMENTATION.md).
@@ -31,6 +32,8 @@ The next implementation steps are tracked in [IMPLEMENTATION.md](IMPLEMENTATION.
 - `packaging/com.xerahs.app.desktop` gives desktop launches the `com.xerahs.app` identity, which portals use to attribute consent.
 
 - **Open image** (tray menu or `xerahs --edit FILE`) opens the editor: drag to draw rectangles, click to select, drag or arrow keys to move, Delete to remove, Alt+arrows to resize, R for quarter turns or **Rotate selection…** for any angle, `[`/`]` to reorder, Ctrl+Z/Ctrl+Shift+Z for history, Ctrl+S to save the flattened PNG with its `.xann` sidecar.
+
+**Viewport:** Zoom In/Out, 100% and Fit actions expose keyboard shortcuts (Ctrl+plus/minus, Ctrl+0, Ctrl+9). Ctrl+wheel or pinch zooms around the pointer. Scrollbars, wheel, middle-button drag, Space+drag, and arrows with no selection pan. Zoom and pan never alter pixels, annotations, history, or dirty state.
 
 No settings are persisted yet, and the reference Avalonia app's configuration is never read or written.
 

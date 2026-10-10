@@ -25,6 +25,8 @@ add_library(xerahs_core STATIC
   src/image-editor/AnnotationRenderer.h
   src/image-editor/EditorSession.cpp
   src/image-editor/EditorSession.h
+  src/image-editor/EditorViewport.cpp
+  src/image-editor/EditorViewport.h
   src/naming/FilenameGenerator.cpp
   src/naming/FilenameGenerator.h
 )
@@ -47,6 +49,8 @@ add_executable(xerahs
   app/CaptureController.h
   app/EditorSource.cpp
   app/EditorSource.h
+  app/EditorCanvas.cpp
+  app/EditorCanvas.h
   app/EditorWindow.cpp
   app/EditorWindow.h
   app/PortalScreenshot.cpp
@@ -88,6 +92,18 @@ target_include_directories(editor-source-test PRIVATE app)
 target_link_libraries(editor-source-test PRIVATE xerahs_core Qt6::Gui Qt6::Test)
 add_test(NAME editor-source COMMAND editor-source-test)
 set_tests_properties(editor-source PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
+
+add_executable(editor-viewport-test tests/EditorViewportTest.cpp)
+set_target_properties(editor-viewport-test PROPERTIES AUTOMOC ON)
+target_link_libraries(editor-viewport-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME editor-viewport COMMAND editor-viewport-test)
+
+add_executable(editor-canvas-test tests/EditorCanvasTest.cpp app/EditorCanvas.cpp app/EditorCanvas.h)
+set_target_properties(editor-canvas-test PROPERTIES AUTOMOC ON)
+target_include_directories(editor-canvas-test PRIVATE app)
+target_link_libraries(editor-canvas-test PRIVATE xerahs_core Qt6::Widgets Qt6::Test)
+add_test(NAME editor-canvas COMMAND editor-canvas-test)
+set_tests_properties(editor-canvas PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
 
 find_package(Python3 3.12 REQUIRED COMPONENTS Interpreter)
 # Capabilities this edition implements. The full suite, including capabilities

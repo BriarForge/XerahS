@@ -1,5 +1,6 @@
 #include "EditorWindow.h"
 
+#include "EditorCanvas.h"
 #include "EditorSource.h"
 
 #include <QAction>
@@ -7,16 +8,10 @@
 #include <QColorDialog>
 #include <QFileDialog>
 #include <QFileInfo>
-#include <QKeyEvent>
 #include <QInputDialog>
 #include <QMessageBox>
-#include <QMouseEvent>
-#include <QPainter>
-#include <QScrollArea>
 #include <QStatusBar>
 #include <QToolBar>
-
-#include <cmath>
 
 namespace xerahs::app {
 
@@ -36,194 +31,6 @@ QString describe(const QString &diagnostic) {
 
 }  // namespace
 
-// Draws the source with the session's rectangles and turns pointer and keyboard
-// input into session operations. Preview painting is not the export (ES-010).
-class EditorCanvas final : public QWidget {
-  Q_OBJECT
-public:
-  EditorCanvas(EditorSession &session, const QImage &image) : m_session(session), m_image(image) {
-    setFocusPolicy(Qt::StrongFocus);
-    setMouseTracking(false);
-    setAccessibleName(QStringLiteral("Image canvas"));
-    setAccessibleDescription(QStringLiteral("Drag to draw a rectangle. Arrow keys move the selection; Delete removes it."));
-    resize(image.size());
-    setMinimumSize(image.size());
-  }
-
-signals:
-  void changed();
-
-protected:
-  void paintEvent(QPaintEvent *) override {
-    QPainter p(this);
-    p.drawImage(0, 0, m_image);
-    p.setRenderHint(QPainter::Antialiasing);
-    for (const Annotation &annotation : m_session.document().annotations) {
-      const auto *r = std::get_if<RectangleAnnotation>(&annotation);
-      if (!r || !r->visible) continue;
-      const QRectF box(QPointF(r->left(), r->top()), QPointF(r->right(), r->bottom()));
-      p.save();
-      if (m_moving && m_session.selection().contains(r->id)) p.translate(m_moveLast - m_moveStart);  // gesture preview
-      p.translate(box.center());
-      p.rotate(r->style.rotationDegrees);
-      p.translate(-box.center());
-      p.setOpacity(r->style.opacity);
-      p.setBrush(toColor(r->style.fillColor));
-      p.setPen(QPen(toColor(r->style.strokeColor), r->style.strokeWidth, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
-      p.drawRect(box);
-      p.restore();
-      if (m_session.selection().contains(r->id)) {
-        // Non-colour-only selection (ES-019): dashed two-tone outline.
-        const QRectF outline = box.adjusted(-r->style.strokeWidth, -r->style.strokeWidth, r->style.strokeWidth,
-                                            r->style.strokeWidth);
-        p.save();
-        if (m_moving) p.translate(m_moveLast - m_moveStart);
-        p.translate(box.center());
-        p.rotate(r->style.rotationDegrees);
-        p.translate(-box.center());
-        p.setBrush(Qt::NoBrush);
-        p.setPen(QPen(Qt::white, 2));
-        p.drawRect(outline);
-        p.setPen(QPen(QColor(0, 90, 220), 2, Qt::DashLine));
-        p.drawRect(outline);
-        p.restore();
-      }
-    }
-    if (m_drag) {
-      p.setBrush(Qt::NoBrush);
-      p.setPen(QPen(QColor(0, 90, 220), 1, Qt::DashLine));
-      p.drawRect(QRectF(m_drag->first, m_drag->second).normalized());
-    }
-    if (hasFocus()) {
-      p.setRenderHint(QPainter::Antialiasing, false);
-      p.setPen(QPen(QColor(0, 90, 220), 2));
-      p.setBrush(Qt::NoBrush);
-      p.drawRect(rect().adjusted(1, 1, -1, -1));
-    }
-  }
-
-  void mousePressEvent(QMouseEvent *event) override {
-    if (event->button() != Qt::LeftButton) return;
-    setFocus();
-    const QPointF at = event->position();
-    if (const auto hit = topmostAt(at)) {
-      // Clicking an annotation selects it and begins a move gesture (ES-004).
-      const bool additive = event->modifiers() & Qt::ControlModifier;
-      QList<QUuid> ids;
-      if (additive) {
-        for (const QUuid &id : m_session.selection()) ids << id;
-        if (!ids.removeOne(*hit)) ids << *hit;
-      } else if (!m_session.selection().contains(*hit)) {
-        ids << *hit;
-      } else {
-        for (const QUuid &id : m_session.selection()) ids << id;
-      }
-      m_session.select(ids);
-      m_moving = m_session.selection().contains(*hit);
-      m_moveStart = m_moveLast = at;
-    } else {
-      if (!(event->modifiers() & Qt::ControlModifier)) m_session.select({});
-      m_drag = std::make_pair(at, at);
-    }
-    update();
-    emit changed();
-  }
-
-  void mouseMoveEvent(QMouseEvent *event) override {
-    if (m_drag) {
-      m_drag->second = event->position();
-      update();
-    } else if (m_moving) {
-      m_moveLast = event->position();
-      update();
-    }
-  }
-
-  void mouseReleaseEvent(QMouseEvent *event) override {
-    if (event->button() != Qt::LeftButton) return;
-    if (m_drag) {
-      const auto [a, b] = *m_drag;
-      m_drag.reset();
-      m_session.createRectangle({a.x(), a.y()}, {event->position().x(), event->position().y()});
-    } else if (m_moving) {
-      m_moving = false;
-      // ES-005: one history operation per completed gesture.
-      const QPointF delta = event->position() - m_moveStart;
-      if (delta.x() != 0 || delta.y() != 0) m_session.moveSelection(delta.x(), delta.y());
-    }
-    update();
-    emit changed();
-  }
-
-  void keyPressEvent(QKeyEvent *event) override {
-    if (event->key() == Qt::Key_Escape && (m_drag || m_moving)) {
-      // ES-008: cancelling a gesture restores the last committed state.
-      m_drag.reset();
-      m_moving = false;
-      update();
-      return;
-    }
-    const double step = (event->modifiers() & Qt::ShiftModifier) ? 10 : 1;
-    if (event->modifiers() & Qt::AltModifier) {  // Alt+arrows resize (ES-004)
-      switch (event->key()) {
-        case Qt::Key_Left: m_session.resizeSelection(-step, 0); break;
-        case Qt::Key_Right: m_session.resizeSelection(step, 0); break;
-        case Qt::Key_Up: m_session.resizeSelection(0, -step); break;
-        case Qt::Key_Down: m_session.resizeSelection(0, step); break;
-        default: QWidget::keyPressEvent(event); return;
-      }
-      update();
-      emit changed();
-      return;
-    }
-    const bool toEdge = event->modifiers() & Qt::ControlModifier;
-    switch (event->key()) {
-      case Qt::Key_R: m_session.rotateSelection((event->modifiers() & Qt::ShiftModifier) ? -90 : 90); break;
-      case Qt::Key_BracketRight:
-        m_session.reorderSelection(toEdge ? EditorSession::Order::Front : EditorSession::Order::Forward); break;
-      case Qt::Key_BracketLeft:
-        m_session.reorderSelection(toEdge ? EditorSession::Order::Back : EditorSession::Order::Backward); break;
-      case Qt::Key_Left: m_session.moveSelection(-step, 0); break;
-      case Qt::Key_Right: m_session.moveSelection(step, 0); break;
-      case Qt::Key_Up: m_session.moveSelection(0, -step); break;
-      case Qt::Key_Down: m_session.moveSelection(0, step); break;
-      case Qt::Key_Delete:
-      case Qt::Key_Backspace: m_session.deleteSelection(); break;
-      default: QWidget::keyPressEvent(event); return;
-    }
-    update();
-    emit changed();
-  }
-
-  void focusInEvent(QFocusEvent *e) override { QWidget::focusInEvent(e); update(); }
-  void focusOutEvent(QFocusEvent *e) override { QWidget::focusOutEvent(e); update(); }
-
-private:
-  // Hit targets include the stroke and a minimum slop so thin lines stay usable.
-  std::optional<QUuid> topmostAt(const QPointF &at) const {
-    const auto &list = m_session.document().annotations;
-    for (auto it = list.rbegin(); it != list.rend(); ++it) {
-      const auto *r = std::get_if<RectangleAnnotation>(&*it);
-      if (!r || !r->visible) continue;
-      const double slop = std::max(6.0, r->style.strokeWidth / 2);
-      const QRectF box(QPointF(r->left(), r->top()), QPointF(r->right(), r->bottom()));
-      QTransform rotation;
-      rotation.translate(box.center().x(), box.center().y());
-      rotation.rotate(r->style.rotationDegrees);
-      rotation.translate(-box.center().x(), -box.center().y());
-      if (box.adjusted(-slop, -slop, slop, slop).contains(rotation.inverted().map(at)))
-        return r->id;
-    }
-    return std::nullopt;
-  }
-
-  EditorSession &m_session;
-  const QImage &m_image;
-  std::optional<std::pair<QPointF, QPointF>> m_drag;
-  bool m_moving = false;
-  QPointF m_moveStart, m_moveLast;
-};
-
 EditorWindow *EditorWindow::open(const QString &path, QWidget *parent) {
   LoadedSource source = loadSource(path);
   if (!source.document) {
@@ -242,10 +49,7 @@ EditorWindow *EditorWindow::open(const QString &path, QWidget *parent) {
 EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument document)
     : m_path(path), m_image(std::move(image)), m_session(std::make_unique<EditorSession>(std::move(document))) {
   m_canvas = new EditorCanvas(*m_session, m_image);
-  auto *scroll = new QScrollArea;
-  scroll->setWidget(m_canvas);
-  scroll->setAlignment(Qt::AlignCenter);
-  setCentralWidget(scroll);
+  setCentralWidget(m_canvas);
 
   auto *bar = addToolBar(QStringLiteral("Edit"));
   bar->setMovable(false);
@@ -294,6 +98,21 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(thin, &QAction::triggered, this, [this] {
     m_session->setStrokeWidth(std::max(1.0, m_session->toolStyle().strokeWidth - 1)); refresh();
   });
+  auto *view = addToolBar(QStringLiteral("View"));
+  view->setMovable(false);
+  QAction *zoomIn = view->addAction(QStringLiteral("Zoom In"));
+  zoomIn->setShortcuts(QList<QKeySequence>{QKeySequence(Qt::CTRL | Qt::Key_Plus), QKeySequence(Qt::CTRL | Qt::Key_Equal)});
+  QAction *zoomOut = view->addAction(QStringLiteral("Zoom Out"));
+  zoomOut->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Minus));
+  QAction *resetZoom = view->addAction(QStringLiteral("100%"));
+  resetZoom->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_0));
+  QAction *fit = view->addAction(QStringLiteral("Fit"));
+  fit->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_9));
+  connect(zoomIn, &QAction::triggered, m_canvas, &EditorCanvas::zoomIn);
+  connect(zoomOut, &QAction::triggered, m_canvas, &EditorCanvas::zoomOut);
+  connect(resetZoom, &QAction::triggered, m_canvas, &EditorCanvas::resetZoom);
+  connect(fit, &QAction::triggered, m_canvas, &EditorCanvas::zoomToFit);
+  connect(m_canvas, &EditorCanvas::viewportChanged, this, &EditorWindow::refresh);
   connect(m_canvas, &EditorCanvas::changed, this, &EditorWindow::refresh);
 
   resize(std::min(m_image.width() + 40, 1400), std::min(m_image.height() + 120, 900));
@@ -308,10 +127,11 @@ void EditorWindow::refresh() {
   m_rotate->setEnabled(!m_session->selection().isEmpty());
   setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(QFileInfo(m_path).fileName(),
                                                     m_session->dirty() ? QStringLiteral(" •") : QString()));
-  statusBar()->showMessage(QStringLiteral("%1 × %2 · %3 annotation(s) · %4 selected")
+  statusBar()->showMessage(QStringLiteral("%1 × %2 · %3 annotation(s) · %4 selected · %5%")
                                .arg(m_image.width()).arg(m_image.height())
-                               .arg(m_session->document().annotations.size()).arg(m_session->selection().size()));
-  m_canvas->update();
+                               .arg(m_session->document().annotations.size()).arg(m_session->selection().size())
+                               .arg(m_canvas->viewState().zoom() * 100, 0, 'f', 1));
+  m_canvas->viewport()->update();
 }
 
 bool EditorWindow::save(bool chooseFile) {
@@ -351,5 +171,3 @@ void EditorWindow::closeEvent(QCloseEvent *event) {
 }
 
 }  // namespace xerahs::app
-
-#include "EditorWindow.moc"

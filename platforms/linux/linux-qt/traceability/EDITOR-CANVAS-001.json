@@ -1,0 +1,114 @@
+{
+  "capability": "EDITOR-CANVAS-001",
+  "contract_version": "0.1.0",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial",
+  "implementation": [
+    "platforms/linux/linux-qt/src/image-editor/EditorViewport.h",
+    "platforms/linux/linux-qt/src/image-editor/EditorViewport.cpp",
+    "platforms/linux/linux-qt/app/EditorCanvas.h",
+    "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/tests/EditorViewportTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+  ],
+  "requirements": {
+    "EC-001": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": []
+    },
+    "EC-002": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "Native file opening validates through EditorSource before creating a window and normalizes orientation. Recent-file selection and complete color metadata handling remain pending."
+    },
+    "EC-003": {
+      "disposition": "Not applicable",
+      "status": "not-started",
+      "vectors": [],
+      "note": "The optional URL-opening feature is not offered."
+    },
+    "EC-004": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": []
+    },
+    "EC-005": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [
+        "viewport-only"
+      ],
+      "note": "EditorViewport holds zoom and pan outside document history. Native actions, Control+wheel, pinch, scrollbars, middle drag, Space+drag, and keyboard pan share that state. EditorViewportTest and EditorCanvasTest verify immutable pixels and geometry, clean checkpoints, and unchanged history."
+    },
+    "EC-006": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [
+        "viewport-only"
+      ],
+      "note": "Finite zoom is bounded to 1/64..64. Zoom keeps the logical point under the pointer unless image visibility bounds require clamping; native scrollbars and pan keep at least a 32px strip accessible. The status bar exposes zoom. Native tests cover wheel/pinch anchoring, finite bounds, zoom-independent hit targets and rotated previews."
+    },
+    "EC-007": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": []
+    },
+    "EC-008": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": []
+    },
+    "EC-009": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": []
+    },
+    "EC-010": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": []
+    },
+    "EC-011": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": []
+    },
+    "EC-012": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": []
+    },
+    "EC-013": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": []
+    },
+    "EC-014": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": []
+    },
+    "EC-015": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": []
+    },
+    "EC-016": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": []
+    },
+    "EC-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "Viewport inputs reject non-finite values and enforce bounded scales without changing the session. The full apply-operations adapter and pixel/canvas operations remain pending; only viewport-only currently passes, so this capability is not in the qualified conformance suite."
+    }
+  }
+}

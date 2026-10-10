@@ -7,6 +7,7 @@
 #include "capture/RegionSession.h"
 #include "image-editor/AnnotationRenderer.h"
 #include "image-editor/EditorSession.h"
+#include "image-editor/EditorViewport.h"
 #include "naming/FilenameGenerator.h"
 
 #include <QCoreApplication>
@@ -633,6 +634,38 @@ QJsonObject runEditorSession(const QString &operation, const QJsonObject &input)
   return adapterError(QStringLiteral("unsupported operation: ") + operation);
 }
 
+QJsonObject runEditorCanvas(const QString &operation, const QJsonObject &input) {
+  if (operation != u"apply-operations") return adapterError(QStringLiteral("unsupported operation: ") + operation);
+  const QJsonArray size = input.value(u"source_size").toArray();
+  const qint64 width = size.at(0).toInteger(), height = size.at(1).toInteger();
+  if (width < 1 || height < 1 || width > ed::kMaxDimension || height > ed::kMaxDimension || width * height > ed::kMaxPixels)
+    return adapterError(QStringLiteral("invalid source size"));
+  ed::EditorSession session(blankDocument(width, height));
+  ed::EditorViewport view(QSizeF(width, height));
+  view.setViewSize(QSizeF(width, height));
+  const QJsonObject before = ed::serializeDocument(session.document());
+  const int undoBefore = session.undoCount();
+  const bool dirtyBefore = session.dirty();
+  const QPointF centre(width / 2.0, height / 2.0);
+  for (const QJsonValue &item : input.value(u"operations").toArray()) {
+    const QJsonObject op = item.toObject();
+    const QString id = op.value(u"id").toString();
+    if (id == u"zoom_in") view.zoomBy(1.25, centre);
+    else if (id == u"zoom_out") view.zoomBy(1 / 1.25, centre);
+    else if (id == u"reset_zoom") view.reset();
+    else if (id == u"zoom_to_fit") view.fit();
+    else if (id == u"pan") {
+      const QJsonArray delta = op.value(u"delta").toArray();
+      view.pan({delta.at(0).toDouble(), delta.at(1).toDouble()});
+    } else return adapterError(QStringLiteral("canvas operation not yet implemented: ") + id);
+  }
+  return QJsonObject{{QStringLiteral("document_changed"), before != ed::serializeDocument(session.document())},
+                     {QStringLiteral("history_delta"), session.undoCount() - undoBefore},
+                     {QStringLiteral("dirty_delta"), session.dirty() != dirtyBefore},
+                     {QStringLiteral("zoom"), view.zoom()},
+                     {QStringLiteral("viewport_offset"), QJsonArray{view.offset().x(), view.offset().y()}}};
+}
+
 }  // namespace
 
 int main(int argc, char *argv[]) {
@@ -659,6 +692,10 @@ int main(int argc, char *argv[]) {
   }
   if (capability == u"EDITOR-SESSION-001") {
     writeJson(runEditorSession(operation, input));
+    return 0;
+  }
+  if (capability == u"EDITOR-CANVAS-001") {
+    writeJson(runEditorCanvas(operation, input));
     return 0;
   }
   if (capability == u"REGION-CAPTURE-001") {

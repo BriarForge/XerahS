@@ -14,7 +14,9 @@
     "platforms/linux/linux-qt/app/EditorSource.h",
     "platforms/linux/linux-qt/app/EditorSource.cpp",
     "platforms/linux/linux-qt/app/EditorWindow.h",
-    "platforms/linux/linux-qt/app/EditorWindow.cpp"
+    "platforms/linux/linux-qt/app/EditorWindow.cpp",
+    "platforms/linux/linux-qt/app/EditorCanvas.h",
+    "platforms/linux/linux-qt/app/EditorCanvas.cpp"
   ],
   "requirements": {
     "ES-001": {
@@ -133,7 +135,7 @@
     "ES-019": {
       "status": "partial",
       "vectors": [],
-      "note": "Canvas is focusable with a visible focus ring, accessible name and description, and a dashed selection outline; toolbar is keyboard reachable. High contrast and screen-reader state for annotations are not yet verified."
+      "note": "Canvas is focusable with a visible focus ring, accessible names, a dashed two-tone selection outline, fixed-width outlines and six-screen-pixel hit targets under zoom. Native tests cover low-zoom selection. Toolbars and scrollbars are keyboard reachable; screen-reader annotation state and full high-contrast review remain pending."
     },
     "ES-020": {
       "status": "not-started",
