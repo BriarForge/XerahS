@@ -8,8 +8,19 @@ namespace {
 const QJsonObject defaults{
   {QStringLiteral("schemaVersion"), 1}, {QStringLiteral("Theme"), QStringLiteral("Dark")},
   {QStringLiteral("BlurStrength"), 30}, {QStringLiteral("Thickness"), 4},
+  {QStringLiteral("BorderColorHex"), QStringLiteral("#FFFF0000")},
+  {QStringLiteral("FillColorHex"), QStringLiteral("#00000000")},
   {QStringLiteral("RememberRecentImagePaths"), false}, {QStringLiteral("MaxRecentImageFiles"), RecentImages::defaultMaximum},
   {QStringLiteral("RecentImageFiles"), QJsonArray{}}};
+const QStringList nonPersistentFields{QStringLiteral("BorderColor"), QStringLiteral("FillColor")};
+std::optional<Argb> preferenceColor(const QJsonValue &value) {
+  if (!value.isString()) return {};
+  QString text = value.toString();
+  // Compatible opaque RGB input becomes explicit ARGB on the next save.
+  if (text.size() == 7 && text.startsWith(QLatin1Char('#'))) text.insert(1, QStringLiteral("FF"));
+  if (text.size() != 9) return {};
+  return parseColor(text);
+}
 bool number(const QJsonValue &value, double minimum, double maximum, bool integer) {
   if (!value.isDouble()) return false;
   const double n = value.toDouble();
@@ -28,7 +39,9 @@ EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRul
   EditorPreferences result; result.recent = RecentImages(rules); result.values = defaults;
   for (auto it = defaults.begin(); it != defaults.end(); ++it)
     result.fields[it.key()] = stored.contains(it.key()) ? PreferenceFieldState::Valid : PreferenceFieldState::Missing;
-  for (auto it = stored.begin(); it != stored.end(); ++it) if (!defaults.contains(it.key())) {
+  for (auto it = stored.begin(); it != stored.end(); ++it) if (nonPersistentFields.contains(it.key())) {
+    result.fields[it.key()] = PreferenceFieldState::NonPersistent;
+  } else if (!defaults.contains(it.key())) {
     result.values.insert(it.key(), it.value()); result.fields[it.key()] = PreferenceFieldState::Unknown;
   }
   if (stored.contains(u"schemaVersion") && stored.value(u"schemaVersion") != QJsonValue(1)) {
@@ -39,9 +52,15 @@ EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRul
     return result;
   }
   for (const auto &key : {QStringLiteral("Theme"), QStringLiteral("BlurStrength"), QStringLiteral("Thickness"),
-                         QStringLiteral("RememberRecentImagePaths"), QStringLiteral("MaxRecentImageFiles")}) {
+                         QStringLiteral("RememberRecentImagePaths"), QStringLiteral("MaxRecentImageFiles"),
+                         QStringLiteral("BorderColorHex"), QStringLiteral("FillColorHex")}) {
     if (!stored.contains(key)) continue;
     const auto value = stored.value(key);
+    if (key == u"BorderColorHex" || key == u"FillColorHex") {
+      const auto color = preferenceColor(value);
+      if (color) result.values.insert(key, formatColor(*color)); else invalid(result, key);
+      continue;
+    }
     const bool valid = key == u"Theme" ? (value.isString() && QStringList{"Dark", "Light", "System"}.contains(value.toString())) :
         key == u"BlurStrength" ? number(value, 0, 100, false) :
         key == u"Thickness" ? number(value, 1, 10000, true) :
@@ -70,6 +89,7 @@ EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRul
 }
 QJsonObject serializeEditorPreferences(const EditorPreferences &preferences) {
   QJsonObject values = preferences.values;
+  for (const auto &key : nonPersistentFields) values.remove(key);
   const auto recents = recentPreferenceValues(preferences.recent);
   for (auto it = recents.begin(); it != recents.end(); ++it) values.insert(it.key(), it.value());
   return values;
@@ -82,5 +102,13 @@ PreferenceChange changeEditorPreferences(const EditorPreferences &current, const
   if (next.readOnly || std::any_of(next.fields.cbegin(), next.fields.cend(), [](PreferenceFieldState state) { return state == PreferenceFieldState::Invalid; }))
     return {{}, next.diagnostics};
   return {std::move(next), {}};
+}
+RectangleStyle drawingStyleFromPreferences(const EditorPreferences &preferences) {
+  RectangleStyle style;
+  style.strokeColor = preferenceColor(preferences.values.value(u"BorderColorHex")).value_or(style.strokeColor);
+  style.fillColor = preferenceColor(preferences.values.value(u"FillColorHex")).value_or(style.fillColor);
+  const auto thickness = preferences.values.value(u"Thickness");
+  if (number(thickness, 1, 10000, true)) style.strokeWidth = thickness.toDouble();
+  return style;
 }
 }  // namespace xerahs::editor

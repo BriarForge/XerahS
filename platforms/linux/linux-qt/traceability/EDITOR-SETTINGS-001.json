@@ -17,14 +17,17 @@
     "platforms/linux/linux-qt/app/RecentImageMenu.h",
     "platforms/linux/linux-qt/app/RecentImageMenu.cpp",
     "platforms/linux/linux-qt/app/EditorWindow.cpp",
-    "platforms/linux/linux-qt/app/main.cpp"
+    "platforms/linux/linux-qt/app/main.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
     "platforms/linux/linux-qt/tests/RecentImagesTest.cpp",
     "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
     "platforms/linux/linux-qt/src/image-editor/PREFERENCES-POLICY.md",
-    "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp"
+    "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
   ],
   "requirements": {
     "ESET-001": {
@@ -47,7 +50,7 @@
       "vectors": [
         "unknown-round-trip"
       ],
-      "note": "Production QSaveFile replacement stores current and privacy-pruned previous values as one artifact, preserves compatible unknown fields, enforces private bounded storage and rejects stale/locked writes. Injected failure and real-file tests prove unchanged stored versions and published state. Approved retention policy, independent recovery from a destroyed whole file, computed/convenience exclusions and all fields remain Required."
+      "note": "Production QSaveFile replacement stores current and privacy-pruned previous values as one artifact, preserves compatible unknown fields, enforces private bounded storage and rejects stale/locked writes. Injected failure and real-file tests prove unchanged stored versions and published state. Approved retention policy, independent recovery from a destroyed whole file, computed/convenience exclusions and all fields remain Required. BorderColor/FillColor convenience aliases are now explicitly non-persistent; the rest of the ledger exclusions remain Required."
     },
     "ESET-004": {
       "disposition": "Required",
@@ -65,13 +68,13 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Existing editor creation style is separate from document history and explicit selection edits. Persisted tool/style preference wiring and all remaining creation defaults remain Required."
+      "note": "Production preferences now map persisted border/fill/thickness to creation styles. The explicit session operation changes only future creations and leaves selected objects, dirty checkpoint and undo/redo unchanged; explicit selection edits still commit history. Native preference-to-tool wiring and all remaining defaults remain Required."
     },
     "ESET-007": {
       "disposition": "Required",
-      "status": "not-started",
+      "status": "partial",
       "vectors": [],
-      "note": "Persistent canonical alpha-preserving color preferences and per-field recovery remain Required."
+      "note": "BorderColorHex/FillColorHex load and persist uppercase alpha-preserving #AARRGGBB; compatible opaque #RRGGBB receives FF alpha. Invalid values recover per field with value-free diagnostics. Derived BorderColor/FillColor aliases are non-persistent and cannot override the canonical fields; unknown color extensions survive. Core boundary, transparent-channel, previous-version and restart tests pass. Other color fields, native controls and full metadata review remain Required."
     },
     "ESET-008": {
       "disposition": "Required",

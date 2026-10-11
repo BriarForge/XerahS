@@ -11,6 +11,14 @@ EditorSession::EditorSession(AnnotationDocument document, InitialPersistence per
   m_checkpoint = persistence == InitialPersistence::Saved ? std::optional<quint64>(0) : std::nullopt;
 }
 
+bool EditorSession::setCreationStyle(const RectangleStyle &style) {
+  if (!std::isfinite(style.strokeWidth) || style.strokeWidth <= 0 || style.strokeWidth > 10000 ||
+      !std::isfinite(style.rotationDegrees) || !std::isfinite(style.opacity) || style.opacity < 0 || style.opacity > 1)
+    return false;
+  m_tool = style;
+  return true;
+}
+
 void EditorSession::commit(AnnotationDocument document) {
   // Allocate before changing the redo branch or checkpoint identities.
   if (m_history.capacity() < m_position + 2) m_history.reserve(std::max(m_position + 2, m_history.capacity() * 2));

@@ -1,12 +1,13 @@
 // ESET-001/002/003/009/012: validated preferences shared by the app and adapter.
 #pragma once
+#include "AnnotationDocument.h"
 #include "RecentImages.h"
 #include <QJsonObject>
 #include <QMap>
 #include <optional>
 
 namespace xerahs::editor {
-enum class PreferenceFieldState { Missing, Valid, Invalid, Unknown, NewerVersion };
+enum class PreferenceFieldState { Missing, Valid, Invalid, Unknown, NewerVersion, NonPersistent };
 struct EditorPreferences {
   QJsonObject values;
   RecentImages recent;
@@ -23,4 +24,6 @@ struct PreferenceChange {
 // Invalid changes are rejected together. Loading repairs individual fields.
 PreferenceChange changeEditorPreferences(const EditorPreferences &current, const QJsonObject &changes);
 QJsonObject recentPreferenceValues(const RecentImages &recent);
+// ESET-006/007: saved drawing defaults are separate from annotation state.
+RectangleStyle drawingStyleFromPreferences(const EditorPreferences &preferences);
 }  // namespace xerahs::editor

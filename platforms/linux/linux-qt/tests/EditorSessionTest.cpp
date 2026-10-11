@@ -64,6 +64,42 @@ class EditorSessionTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void creationDefaultsLeaveSelectedObjectsCheckpointAndRedoIntact() {
+    EditorSession session(document());
+    const auto id = session.createRectangle({1, 1}, {4, 4}); QVERIFY(id);
+    session.markSaved();
+    const auto before = serializeDocument(session.document());
+    const auto selection = session.selection(); const auto state = session.stateId();
+    RectangleStyle next; next.strokeColor = 0x1234ABCD; next.fillColor = 0x80665544; next.strokeWidth = 10;
+    QVERIFY(session.setCreationStyle(next));
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.selection(), selection);
+    QCOMPARE(session.stateId(), state); QCOMPARE(session.undoCount(), 1); QVERIFY(!session.dirty());
+    QVERIFY(session.undo()); QCOMPARE(session.redoCount(), 1);
+    next.strokeWidth = 9; QVERIFY(session.setCreationStyle(next)); QCOMPARE(session.redoCount(), 1);
+    QVERIFY(session.redo()); QVERIFY(!session.dirty());
+    QVERIFY(session.createRectangle({5, 5}, {8, 8}));
+    const auto &created = std::get<RectangleAnnotation>(session.document().annotations.back());
+    QCOMPARE(created.style.strokeColor, Argb{0x1234ABCD}); QCOMPARE(created.style.fillColor, Argb{0x80665544});
+    QCOMPARE(created.style.strokeWidth, 9.0);
+    QCOMPARE(std::get<RectangleAnnotation>(session.document().annotations.front()).style.strokeWidth, 4.0);
+    QVERIFY(session.undo()); QVERIFY(!session.dirty()); QCOMPARE(session.toolStyle().strokeWidth, 9.0);
+    // Explicit editing of the selected original object remains a history edit.
+    QVERIFY(session.setStrokeWidth(7)); QVERIFY(session.dirty());
+    QCOMPARE(std::get<RectangleAnnotation>(session.document().annotations.front()).style.strokeWidth, 7.0);
+  }
+  void invalidCreationDefaultsPreserveThePreviousStyle() {
+    EditorSession session(document());
+    RectangleStyle valid; valid.strokeWidth = 8; QVERIFY(session.setCreationStyle(valid));
+    for (double width : {0.0, -1.0, 10000.1, std::numeric_limits<double>::infinity()}) {
+      auto next = valid; next.strokeWidth = width; QVERIFY(!session.setCreationStyle(next));
+      QCOMPARE(session.toolStyle().strokeWidth, 8.0);
+    }
+    for (double opacity : {-0.01, 1.01, std::numeric_limits<double>::quiet_NaN()}) {
+      auto next = valid; next.opacity = opacity; QVERIFY(!session.setCreationStyle(next));
+    }
+    auto next = valid; next.rotationDegrees = std::numeric_limits<double>::infinity();
+    QVERIFY(!session.setCreationStyle(next)); QCOMPARE(session.undoCount(), 0); QVERIFY(!session.dirty());
+  }
   void unsavedInitialPixelsHaveNoCleanCheckpointUntilSuccessfulSave() {
     EditorSession session(document(), EditorSession::InitialPersistence::Unsaved);
     QVERIFY(session.dirty()); QCOMPARE(session.undoCount(), 0); QVERIFY(!session.undo());

@@ -22,6 +22,9 @@ public:
   const QSet<QUuid> &selection() const { return m_selection; }
   const RectangleStyle &toolStyle() const { return m_tool; }
 
+  // ESET-006: changing creation defaults never edits selection or history.
+  bool setCreationStyle(const RectangleStyle &style);
+
   // ES-003, ES-024: returns the new ID, or nullopt for a zero-area drag.
   std::optional<QUuid> createRectangle(PointF start, PointF end);
   // ES-004, ES-026: selection is not a document mutation. Unknown IDs are ignored.

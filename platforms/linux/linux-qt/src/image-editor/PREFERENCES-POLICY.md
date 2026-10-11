@@ -20,9 +20,26 @@ initializer evidence alone does not approve shared defaults. Blur's fallback
 | `Theme` | Enum string, `Dark` | `Dark`, `Light`, `System` | Non-secret preference; future native theme/system-theme resolution and accessible contrast remain Required | `SET-IMAGE-EDITOR-OPTIONS-THEME-001`; load/change/round-trip tests; UI effect pending |
 | `BlurStrength` | Finite number, 30 | 0..100; fractional values allowed | Non-secret preference; future blur creation defaults remain Required | `SET-IMAGE-EDITOR-OPTIONS-BLUR-STRENGTH-001`; published isolation vector and independent boundaries; blur tool pending |
 | `Thickness` | Integer, 4 | 1..10000, within the production editor width limit | Non-secret preference; future creation defaults must leave existing objects unchanged | `SET-IMAGE-EDITOR-OPTIONS-THICKNESS-001`; validation/isolation tests; preference-to-tool wiring pending |
+| `BorderColorHex` | String, `#FFFF0000` | Exactly `#RRGGBB` or `#AARRGGBB`, hexadecimal digits; canonical uppercase `#AARRGGBB` | Non-secret drawing default; alpha, including transparent RGB, survives; applies to new objects | `SET-IMAGE-EDITOR-OPTIONS-BORDER-COLOR-HEX-001`; core alpha/invalid/restart tests; default agrees with the ES rectangle qualification default; native wiring pending |
+| `FillColorHex` | String, `#00000000` | Same canonical colour validation as border | Non-secret drawing default; applies to new objects | `SET-IMAGE-EDITOR-OPTIONS-FILL-COLOR-HEX-001`; core alpha/invalid/restart tests; default agrees with the ES rectangle qualification default; native wiring pending |
 | `RememberRecentImagePaths` | Boolean, false | Boolean only; false ignores and removes retained paths | Private local consent; only later successful Open/Save may add paths; no backfill | Native opt-in authority under ESET-012, absent from the pinned legacy field census; core/native runtime tests |
 | `MaxRecentImageFiles` | Integer, 10 | 1..100 | Private local retention policy; decreasing it removes oldest entries | `SET-IMAGE-EDITOR-OPTIONS-MAX-RECENT-IMAGE-FILES-001`; bounded model and preference tests |
 | `RecentImageFiles` | Array of strings, empty | At most 100 encoded entries and at most the validated maximum distinct absolute paths; valid platform path syntax | Private local data; newest first, deduplicated, removable individually or together; absent resources stay removable | `SET-IMAGE-EDITOR-OPTIONS-RECENT-IMAGE-FILES-001`; path/opt-in/isolation/removal/recovery tests |
+
+`BorderColor` and `FillColor` are derived convenience aliases, classified
+`NonPersistent` and excluded from both saved versions. Only their canonical
+`Hex` fields are authorities. A stored alias cannot override the corresponding
+field; compatible unknown colour fields still round-trip. Colour names, short
+hex, whitespace, incorrect lengths/types and malformed digits recover only the
+affected field and emit `invalid-BorderColorHex` or `invalid-FillColorHex`.
+Opaque six-digit input receives explicit `FF` alpha during normalization; no
+locale, native colour name, or floating-point conversion participates.
+
+The production session has an explicit creation-style operation separate from
+selection editing. Updating creation defaults leaves existing objects, source,
+selection, checkpoint, undo and redo untouched. Later creations snapshot the
+new style; explicit selection edits retain their existing atomic history path.
+
 
 Windows and macOS field dispositions remain Required in their own adapters.
 Injecting Windows path rules in a Linux core test does not qualify Windows.
@@ -30,7 +47,8 @@ Every other ImageEditor ledger field, its semantic metadata, migrations and
 downstream behavior remain Required. This small table does not replace that
 full inventory. Computed/color convenience properties have no approved native
 persisted mapping yet; the store does not serialize a baseline object graph.
-Their explicit non-persistent dispositions remain part of full qualification.
+Beyond border/fill, their explicit non-persistent dispositions remain part of
+full qualification.
 
 ## Loading and compatible changes
 

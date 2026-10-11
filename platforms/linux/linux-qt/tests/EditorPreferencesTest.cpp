@@ -45,6 +45,58 @@ bool privateWrite(const QString &path, const QByteArray &bytes) {
 class EditorPreferencesTest : public QObject {
   Q_OBJECT
 private slots:
+  void colorsPreserveAlphaNormalizeAndExcludeComputedAliases() {
+    auto defaults = loadEditorPreferences({});
+    QCOMPARE(defaults.values.value("BorderColorHex"), QJsonValue("#FFFF0000"));
+    QCOMPARE(defaults.values.value("FillColorHex"), QJsonValue("#00000000"));
+    const QJsonObject extension{{"future", "retained"}};
+    auto loaded = loadEditorPreferences({{"BorderColorHex", "#1234abcd"}, {"FillColorHex", "#ab12ef"},
+        {"BorderColor", "computed"}, {"FillColor", QJsonObject{{"computed", true}}}, {"FutureColor", extension}, {"Thickness", 9}});
+    QCOMPARE(loaded.values.value("BorderColorHex"), QJsonValue("#1234ABCD"));
+    QCOMPARE(loaded.values.value("FillColorHex"), QJsonValue("#FFAB12EF"));
+    QCOMPARE(loaded.fields.value("BorderColor"), PreferenceFieldState::NonPersistent);
+    QCOMPARE(loaded.fields.value("FillColor"), PreferenceFieldState::NonPersistent);
+    QVERIFY(loaded.diagnostics.isEmpty());
+    const auto serialized = serializeEditorPreferences(loaded);
+    QVERIFY(!serialized.contains("BorderColor")); QVERIFY(!serialized.contains("FillColor"));
+    QCOMPARE(serialized.value("FutureColor").toObject(), extension);
+    const auto style = drawingStyleFromPreferences(loaded);
+    QCOMPARE(style.strokeColor, Argb{0x1234ABCD}); QCOMPARE(style.fillColor, Argb{0xFFAB12EF});
+    QCOMPARE(style.strokeWidth, 9.0); QCOMPARE(style.opacity, 1.0); QCOMPARE(style.rotationDegrees, 0.0);
+    MemoryStorage storage; EditorPreferenceStore store(storage); QVERIFY(store.save(loaded).saved);
+    auto next = changeEditorPreferences(store.preferences(), {{"BorderColorHex", "#00ff0012"}, {"FillColorHex", "#7f010203"}});
+    QVERIFY(next.preferences); QVERIFY(store.save(*next.preferences).saved);
+    QCOMPARE(section(storage, "previous").value("BorderColorHex"), QJsonValue("#1234ABCD"));
+    QVERIFY(!section(storage, "previous").contains("BorderColor"));
+    EditorPreferenceStore restarted(storage);
+    QCOMPARE(restarted.preferences().values.value("BorderColorHex"), QJsonValue("#00FF0012"));
+    QCOMPARE(restarted.preferences().values.value("FillColorHex"), QJsonValue("#7F010203"));
+  }
+  void invalidColorsRecoverIndependentlyAndRejectWholeChange_data() {
+    QTest::addColumn<QJsonValue>("value");
+    QTest::newRow("name") << QJsonValue("red");
+    QTest::newRow("short") << QJsonValue("#FFF");
+    QTest::newRow("length") << QJsonValue("#FFFFFFFFF");
+    QTest::newRow("invalid-digit") << QJsonValue("#00FF00ZZ");
+    QTest::newRow("leading-space") << QJsonValue(" #FFFFFFFF");
+    QTest::newRow("trailing-newline") << QJsonValue("#FFFFFFFF\n");
+    QTest::newRow("number") << QJsonValue(0x123456);
+    QTest::newRow("null") << QJsonValue(QJsonValue::Null);
+  }
+  void invalidColorsRecoverIndependentlyAndRejectWholeChange() {
+    QFETCH(QJsonValue, value);
+    const auto loaded = loadEditorPreferences({{"BorderColorHex", value}, {"FillColorHex", "#80010203"}, {"Thickness", 10}});
+    QCOMPARE(loaded.values.value("BorderColorHex"), QJsonValue("#FFFF0000"));
+    QCOMPARE(loaded.values.value("FillColorHex"), QJsonValue("#80010203"));
+    QCOMPARE(loaded.values.value("Thickness"), QJsonValue(10));
+    QCOMPARE(loaded.diagnostics, QStringList{"invalid-BorderColorHex"});
+    const auto invalidFill = loadEditorPreferences({{"BorderColorHex", "#40112233"}, {"FillColorHex", value}});
+    QCOMPARE(invalidFill.values.value("BorderColorHex"), QJsonValue("#40112233"));
+    QCOMPARE(invalidFill.values.value("FillColorHex"), QJsonValue("#00000000"));
+    QCOMPARE(invalidFill.diagnostics, QStringList{"invalid-FillColorHex"});
+    const auto changed = changeEditorPreferences(loadEditorPreferences({}), {{"Thickness", 12}, {"FillColorHex", value}});
+    QVERIFY(!changed.preferences); QCOMPARE(changed.diagnostics, QStringList{"invalid-FillColorHex"});
+  }
   void defaultAndInvalidFieldsRemainIsolated() {
     const auto defaults = loadEditorPreferences({});
     QVERIFY(!defaults.readOnly); QVERIFY(!defaults.recent.enabled());
