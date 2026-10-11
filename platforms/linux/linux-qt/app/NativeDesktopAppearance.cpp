@@ -41,19 +41,37 @@ void NativeDesktopAppearance::start(const QDBusConnection &connection, const QSt
   if (m_started) return;
   m_started = true; m_bus = connection; m_service = service;
   if (!m_bus.isConnected()) return;
-  m_bus.connect(m_service, portalPath, portalInterface, QStringLiteral("SettingChanged"), this,
-      SLOT(portalSettingChanged(QString,QString,QDBusVariant)));
   auto *watcher = new QDBusServiceWatcher(m_service, m_bus, QDBusServiceWatcher::WatchForOwnerChange, this);
   connect(watcher, &QDBusServiceWatcher::serviceOwnerChanged, this, [this](const QString &, const QString &, const QString &owner) {
-    ++m_generation; m_ownerAvailable = !owner.isEmpty(); publish({});
-    if (m_ownerAvailable) readAll();
+    setOwner(owner);
   });
+  const auto generation = m_generation;
+  auto message = QDBusMessage::createMethodCall(QStringLiteral("org.freedesktop.DBus"), QStringLiteral("/org/freedesktop/DBus"),
+      QStringLiteral("org.freedesktop.DBus"), QStringLiteral("GetNameOwner"));
+  message << m_service;
+  auto *pending = new QDBusPendingCallWatcher(m_bus.asyncCall(message, 1500), this);
+  connect(pending, &QDBusPendingCallWatcher::finished, this, [this, generation](QDBusPendingCallWatcher *call) {
+    QDBusPendingReply<QString> reply = *call; call->deleteLater();
+    if (generation != m_generation) return;
+    if (reply.isError()) readAll(); // A normal portal read may activate an installed service.
+    else setOwner(reply.value());
+  });
+}
+void NativeDesktopAppearance::setOwner(const QString &owner) {
+  if (!m_owner.isEmpty()) m_bus.disconnect(m_owner, portalPath, portalInterface, QStringLiteral("SettingChanged"), this,
+      SLOT(portalSettingChanged(QString,QString,QDBusVariant,QDBusMessage)));
+  ++m_generation; m_owner = owner; m_ownerAvailable = !owner.isEmpty(); publish({});
+  if (!m_ownerAvailable) return;
+  // Resolve and bind the unique sender before reading. Signals and snapshots
+  // then share one owner, avoiding Qt 6.4's well-known-owner startup race.
+  m_bus.connect(m_owner, portalPath, portalInterface, QStringLiteral("SettingChanged"), this,
+      SLOT(portalSettingChanged(QString,QString,QDBusVariant,QDBusMessage)));
   readAll();
 }
 void NativeDesktopAppearance::readAll() {
   if (m_readPending || !m_ownerAvailable) return;
   m_readPending = true; const auto generation = m_generation;
-  auto message = QDBusMessage::createMethodCall(m_service, portalPath, portalInterface, QStringLiteral("ReadAll"));
+  auto message = QDBusMessage::createMethodCall(m_owner.isEmpty() ? m_service : m_owner, portalPath, portalInterface, QStringLiteral("ReadAll"));
   message << QStringList{appearanceNamespace};
   auto *pending = new QDBusPendingCallWatcher(m_bus.asyncCall(message, 1500), this);
   connect(pending, &QDBusPendingCallWatcher::finished, this, [this, generation](QDBusPendingCallWatcher *call) {
@@ -66,8 +84,9 @@ void NativeDesktopAppearance::readAll() {
     publish(std::move(settings));
   });
 }
-void NativeDesktopAppearance::portalSettingChanged(const QString &nameSpace, const QString &key, const QDBusVariant &value) {
-  if (nameSpace != appearanceNamespace || !known(key)) return;
+void NativeDesktopAppearance::portalSettingChanged(const QString &nameSpace, const QString &key, const QDBusVariant &value, const QDBusMessage &message) {
+  // A signal already queued before disconnect can outlive its owner's loss.
+  if (m_owner.isEmpty() || message.service() != m_owner || nameSpace != appearanceNamespace || !known(key)) return;
   ++m_generation; auto next = m_settings; next.insert(key, translated(value.variant(), key)); publish(std::move(next));
 }
 void NativeDesktopAppearance::publish(QJsonObject settings) {

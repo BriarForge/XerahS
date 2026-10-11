@@ -2,6 +2,7 @@
 #pragma once
 #include "image-editor/EditorAppearance.h"
 #include <QDBusConnection>
+#include <QDBusMessage>
 #include <QDBusVariant>
 #include <QObject>
 #include <QVariantMap>
@@ -19,13 +20,15 @@ public:
 signals:
   void changed();
 private slots:
-  void portalSettingChanged(const QString &nameSpace, const QString &key, const QDBusVariant &value);
+  void portalSettingChanged(const QString &nameSpace, const QString &key, const QDBusVariant &value, const QDBusMessage &message);
 private:
   void readAll();
+  void setOwner(const QString &owner);
   void publish(QJsonObject settings);
   void restoreMotion();
   QDBusConnection m_bus;
   QString m_service;
+  QString m_owner;
   QJsonObject m_settings;
   quint64 m_generation = 0;
   bool m_started = false, m_ownerAvailable = true, m_readPending = false;

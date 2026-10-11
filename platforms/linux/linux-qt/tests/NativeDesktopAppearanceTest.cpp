@@ -26,6 +26,7 @@ public:
   QStringList namespaces;
   int reads = 0;
   bool delayNext = false, rejectReads = false;
+  bool changeDuringNextRead = false;
   QDBusMessage pending;
   QDBusConnection replyBus{QString()};
   void finishDelayed(const QVariantMap &snapshot) {
@@ -39,7 +40,9 @@ public slots:
     ++reads; namespaces = requested;
     if (rejectReads) { sendErrorReply(QStringLiteral("org.freedesktop.DBus.Error.UnknownMethod"), QStringLiteral("Unsupported")); return {}; }
     if (delayNext) { delayNext = false; setDelayedReply(true); pending = message(); replyBus = connection(); return {}; }
-    return {{"org.freedesktop.appearance", values}};
+    const auto snapshot = values;
+    if (changeDuringNextRead) { changeDuringNextRead = false; change("color-scheme", uint(2)); }
+    return {{"org.freedesktop.appearance", snapshot}};
   }
 signals:
   void SettingChanged(const QString &nameSpace, const QString &key, const QDBusVariant &value);
@@ -103,11 +106,18 @@ private slots:
     QTRY_COMPARE(portal.reads, 2); QTRY_COMPARE(source.appearance().colorScheme, DesktopColorScheme::Light);
     QVERIFY(!observed.contains(DesktopColorScheme::Dark));
   }
+  void subscriptionIsReadyForAChangeDuringTheFirstRead() {
+    FakePortal portal; portal.values = {{"color-scheme", uint(1)}}; portal.changeDuringNextRead = true; registerPortal(portal);
+    NativeDesktopAppearance source; source.start(m_client, m_service);
+    QTRY_COMPARE(source.appearance().colorScheme, DesktopColorScheme::Light);
+    QCOMPARE(portal.namespaces, QStringList{"org.freedesktop.appearance"});
+  }
   void ownerLossRejectsLateRepliesAndRestartReadsFreshHints() {
     FakePortal portal; portal.values = {{"color-scheme", uint(1)}}; portal.delayNext = true; registerPortal(portal);
     NativeDesktopAppearance source; source.start(m_client, m_service); QTRY_COMPARE(portal.reads, 1);
     portal.change("color-scheme", uint(2)); QTRY_COMPARE(source.appearance().colorScheme, DesktopColorScheme::Light);
-    QVERIFY(m_server.unregisterService(m_service)); QTRY_COMPARE(source.appearance().colorScheme, DesktopColorScheme::Unspecified);
+    QVERIFY(m_server.unregisterService(m_service)); portal.change("color-scheme", uint(1));
+    QTRY_COMPARE(source.appearance().colorScheme, DesktopColorScheme::Unspecified);
     portal.finishDelayed({{"color-scheme", uint(1)}}); QTest::qWait(50);
     QCOMPARE(source.appearance().colorScheme, DesktopColorScheme::Unspecified); QCOMPARE(portal.reads, 1);
     portal.values = {{"color-scheme", uint(2)}, {"accent-color", QVariant::fromValue(PortalRgb{0, 1, 0})}};

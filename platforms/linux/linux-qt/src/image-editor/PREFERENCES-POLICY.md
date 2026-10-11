@@ -235,7 +235,11 @@ semantic and compatibility reviews remain Required.
 `NativeDesktopAppearance` asynchronously reads only the standardized appearance
 namespace over the Settings portal, accepts typed SettingChanged signals, and
 watches service ownership. Newer signals and owner changes supersede in-flight
-snapshots; a restarted owner is read afresh. Unsupported, missing or disconnected
+snapshots; a restarted owner is read afresh. The observer resolves the unique
+portal owner asynchronously and subscribes to that sender before its first
+snapshot, so early changes do not depend on a well-known-name cache. Signals
+already queued from a previous owner are rejected by their sender identity.
+Unsupported, missing or disconnected
 portals leave the native Qt fallback. The observer never writes host settings
 or native preferences. High contrast applies independently of theme/accent
 choices. Reduced motion disables six Qt menu/combo/tooltip/toolbox effects and
@@ -265,5 +269,6 @@ Tests exercise actual editor actions, image/sidecar/checkpoint/redo isolation,
 multi-window/restart, cancellation/reset, invalid/locked/stale drafts, native
 alpha picking, focus and accessible names. A separate private D-Bus with no
 host service activation tests actual ReadAll/signals, unsigned flags and RGB
-tuples, invalid hints, delayed snapshot races, service loss/restart and reduced
+tuples, invalid hints, first-read subscription and delayed snapshot races,
+old-owner signals, service loss/restart and reduced
 motion without preference writes.
