@@ -8,7 +8,7 @@ namespace xerahs::app {
 using namespace xerahs::editor;
 namespace {
 PreparedNewImage fail(const QString &error) {
-  return {std::nullopt, {}, error};
+  return {std::nullopt, {}, {}, error};
 }
 bool cancelled(const RenderControl &control) {
   return control.cancelled && control.cancelled();
@@ -93,6 +93,9 @@ PreparedNewImage prepareNewImage(const NewImageOptions &options, const QImage &i
     document.canvasWidth = options.width;
     document.canvasHeight = options.height;
     document.createdAt = document.modifiedAt = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+    const QImage display = profile == QColorSpace(QColorSpace::SRgb) ? source : source.convertedToColorSpace(QColorSpace::SRgb);
+    if (display.isNull()) return fail(diagnostic::documentTooLarge);
+    if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
     QBuffer png(&document.sourceImagePng);
     if (!png.open(QIODevice::WriteOnly) || !source.save(&png, "PNG"))
       return fail(QStringLiteral("canvas-encoding-failed"));
@@ -104,7 +107,7 @@ PreparedNewImage prepareNewImage(const NewImageOptions &options, const QImage &i
     progress(control, 100);
     if (cancelled(control))
       return fail(QStringLiteral("canvas-cancelled"));
-    return {std::move(document), std::move(source), {}};
+    return {std::move(document), std::move(source), display, {}};
   } catch (const std::bad_alloc &) {
     return fail(diagnostic::documentTooLarge);
   }

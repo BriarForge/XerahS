@@ -115,6 +115,7 @@ int main(int argc, char *argv[]) {
   tray.setToolTip(QStringLiteral("XerahS"));
   QMenu menu;
   QAction *region = menu.addAction(QStringLiteral("Capture region"));
+  QAction *newImage = menu.addAction(QStringLiteral("New image…"));
   QAction *openImage = menu.addAction(QStringLiteral("Open image…"));
   QAction *folder = menu.addAction(QStringLiteral("Open captures folder"));
   menu.addSeparator();
@@ -122,6 +123,9 @@ int main(int argc, char *argv[]) {
   tray.setContextMenu(&menu);
 
   QObject::connect(region, &QAction::triggered, &capture, &CaptureController::captureRegion);
+  QObject::connect(newImage, &QAction::triggered, [] {
+    if (auto *window = xerahs::app::EditorWindow::createNew()) window->show();
+  });
   QObject::connect(openImage, &QAction::triggered, [&capture] {
     const QString path = QFileDialog::getOpenFileName(nullptr, QStringLiteral("Open image"), capture.saveDirectory(),
                                                       QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp *.webp *.gif)"));

@@ -75,6 +75,8 @@ add_executable(xerahs
   app/CanvasRotationDialog.h
   app/ImageComparisonDialog.cpp
   app/ImageComparisonDialog.h
+  app/NewImageDialog.cpp
+  app/NewImageDialog.h
   app/PortalScreenshot.cpp
   app/PortalScreenshot.h
   app/RegionOverlay.cpp
@@ -149,10 +151,17 @@ target_link_libraries(image-comparison-dialog-test PRIVATE xerahs_editor_codecs 
 add_test(NAME image-comparison-dialog COMMAND image-comparison-dialog-test)
 set_tests_properties(image-comparison-dialog PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 
+add_executable(new-image-dialog-test tests/NewImageDialogTest.cpp app/NewImageDialog.cpp app/NewImageDialog.h)
+set_target_properties(new-image-dialog-test PROPERTIES AUTOMOC ON)
+target_link_libraries(new-image-dialog-test PRIVATE xerahs_editor_codecs Qt6::Widgets Qt6::Test)
+add_test(NAME new-image-dialog COMMAND new-image-dialog-test)
+set_tests_properties(new-image-dialog PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+
 add_executable(editor-window-test tests/EditorWindowTest.cpp app/EditorWindow.cpp app/EditorWindow.h
                app/EditorCanvas.cpp app/EditorCanvas.h app/EditorSource.cpp
                app/CanvasRotationDialog.cpp app/CanvasRotationDialog.h
-               app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h)
+               app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h
+               app/NewImageDialog.cpp app/NewImageDialog.h)
 set_target_properties(editor-window-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-window-test PRIVATE xerahs_editor_codecs Qt6::Widgets Qt6::Test)
 add_test(NAME editor-window COMMAND editor-window-test)

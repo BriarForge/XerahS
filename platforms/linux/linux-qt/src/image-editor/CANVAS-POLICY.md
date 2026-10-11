@@ -15,7 +15,23 @@ background passes initial bytes through exactly. Sources are never modified.
 The validated immutable PNG embeds the profile and is paired with a fresh
 document with no file identity or annotations. New sessions have no persistence
 checkpoint, so Undo back to initial pixels remains dirty until a successful
-raster/sidecar save. Native creation/replacement controls follow this preparation.
+raster/sidecar save. The native New Image dialog exposes dimensions,
+transparent or ARGB background, profile and explicit file/clipboard initial
+pixels. Loading and preparation run on a cancellable worker; invalid input,
+picker cancellation and failed initial-image replacement keep the prior inputs.
+The worker also prepares a private sRGB display copy, leaving the selected
+source profile and pixels intact.
+
+Preparation succeeds before the editor offers Save, Discard and Cancel for
+replacement of a dirty document, with Cancel as default. Cancelling, an
+incomplete save, or cancelling the Save destination keeps the current session,
+selection, history and viewport. Accepting replacement intentionally discards
+the old history and adopts the fully prepared source with empty annotations,
+selection and history, an unsaved checkpoint and a fitted viewport. Existing
+canvas controls remain bound to the new session. Untitled Save prompts for a
+PNG path, and closing an unsaved initial image uses the same native session
+confirmation rules. Explicitly saving the current image before replacement
+is the only part of this flow that changes its files.
 
 Crop Image and the temporary Crop tool call the same production operation.
 The retained rectangle normalizes drag direction, floors left/top, ceils

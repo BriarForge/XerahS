@@ -12,7 +12,8 @@ namespace xerahs::app {
 class EditorCanvas final : public QAbstractScrollArea {
   Q_OBJECT
 public:
-  EditorCanvas(xerahs::editor::EditorSession &session, const QImage &image, QWidget *parent = nullptr);
+  EditorCanvas(xerahs::editor::EditorSession &session, const QImage &image, QWidget *parent = nullptr,
+               const QImage &displaySource = {});
 
   const xerahs::editor::EditorViewport &viewState() const { return m_view; }
   void zoomIn();
@@ -21,6 +22,8 @@ public:
   void zoomToFit();
   void setCropTool(bool active);
   void sourceChanged();
+  // Adopt an already prepared session without rebuilding actions or controls.
+  void resetDocument(xerahs::editor::EditorSession &session, const QImage &displaySource);
 
 signals:
   void changed();
@@ -46,8 +49,9 @@ private:
   void syncViewport();
   void cancelGesture();
 
-  xerahs::editor::EditorSession &m_session;
+  xerahs::editor::EditorSession *m_session;
   const QImage &m_image;
+  QImage m_displaySource;
   xerahs::editor::EditorViewport m_view;
   std::optional<std::pair<QPointF, QPointF>> m_drag;
   bool m_moving = false;

@@ -24,6 +24,11 @@ The next editor work follows these dependencies:
    exposes accessible divider controls, and keeps source/session state immutable.
    Flatten of represented annotations and distinct clear commands preserve complete
    history; flattening separate background layers follows their implementation.
+   New Image now validates dimensions, alpha/colour, selected profile and optional
+   file/clipboard initial pixels on a cancellable worker, confirms dirty session
+   replacement, and opens an untitled source that stays unsaved until persistence.
+   Continue native Open/recent-file selection with the same replacement rules,
+   then general affine annotations, inserted images and background composition.
 4. Expand annotation tools, effects, output actions, settings and utilities,
    alongside the remaining capture and post-capture integrations.
 

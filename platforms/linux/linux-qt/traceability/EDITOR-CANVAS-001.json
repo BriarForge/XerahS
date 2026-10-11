@@ -31,7 +31,10 @@
     "platforms/linux/linux-qt/src/image-editor/NewImage.h",
     "platforms/linux/linux-qt/src/image-editor/NewImage.cpp",
     "platforms/linux/linux-qt/app/NewImageSource.h",
-    "platforms/linux/linux-qt/app/NewImageSource.cpp"
+    "platforms/linux/linux-qt/app/NewImageSource.cpp",
+    "platforms/linux/linux-qt/app/NewImageDialog.h",
+    "platforms/linux/linux-qt/app/NewImageDialog.cpp",
+    "platforms/linux/linux-qt/app/main.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorViewportTest.cpp",
@@ -42,14 +45,15 @@
     "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp",
     "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
     "platforms/linux/linux-qt/tests/NewImageTest.cpp",
-    "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+    "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+    "platforms/linux/linux-qt/tests/NewImageDialogTest.cpp"
   ],
   "requirements": {
     "EC-001": {
       "disposition": "Required",
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "Qt Core creation validates dimensions/profile and composes optional immutable initial pixels over a chosen background at native top-left size with explicit crop/padding rules. The native codec privately converts to sRGB, linear sRGB, Display P3 or Adobe RGB and prepares a validated PNG/document. Independent pixel, profile conversion, alpha, PNG/xann metadata, limits and cancellation tests pass. Initial unsaved sessions remain dirty until successful persistence. Native creation and replacement controls are the next implementation step; full qualification remains pending."
+      "note": "Native New Image is available from the tray and editor File menu/Ctrl+N, with validated dimensions, transparent or ARGB background, four colour profiles and explicit file/clipboard initial pixels. Qt Core composes native-size top-left pixels with declared crop/padding; codecs prepare an immutable profiled PNG/document and private sRGB display copy. Cancellable workers complete before dirty Save/Discard/Cancel replacement, defaulting to Cancel. New sessions have no persistence checkpoint until successful saving, including after Undo to their initial source. Independent pixel/profile/alpha/PNG/xann tests and actual native controls verify invalid inputs, cancelled pickers/work, failed raster/sidecar saves, cancelled untitled Save, immutable prior history/selection/viewport/files, new session action bindings and persistence. Published New Image vectors and full capability qualification remain pending."
     },
     "EC-002": {
       "disposition": "Required",
@@ -139,7 +143,7 @@
       "disposition": "Required",
       "status": "implemented",
       "vectors": [],
-      "note": "Distinct native Clear Annotations and Clear Image and Annotations commands share atomic history. Annotation clear retains source PNG bytes exactly. Pixel clear uses an accessible native confirmation defaulting to Cancel, offers Save before Clear/Clear without Saving for dirty sessions, retains dimensions/profile and complete Undo recovery, and changes files only after explicit save. Core and native window tests cover cancellation, save/discard/clear choices, checkpoint and selection restoration, unsupported-object recovery and transparent PNG output. Dirty replacement/open-in-place remains governed by its separate session confirmation path when implemented."
+      "note": "Distinct native Clear Annotations and Clear Image and Annotations commands share atomic history. Annotation clear retains source PNG bytes exactly. Pixel clear uses an accessible native confirmation defaulting to Cancel, offers Save before Clear/Clear without Saving for dirty sessions, retains dimensions/profile and complete Undo recovery, and changes files only after explicit save. Core and native window tests cover cancellation, save/discard/clear choices, checkpoint and selection restoration, unsupported-object recovery and transparent PNG output. New Image replacement now prepares the complete new source before native Save/Discard/Cancel confirmation, defaulting to Cancel; cancellation and incomplete saves keep the current dirty session and history. Save and Discard intentionally adopt a fresh unsaved session only after success/confirmation. Native window tests cover all choices, untitled destination cancellation, failed raster and sidecar persistence, and preserved old files except explicit Save. Open-in-place follows the same rules when implemented."
     },
     "EC-016": {
       "disposition": "Required",
@@ -155,7 +159,7 @@
         "center-expand-canvas",
         "viewport-only"
       ],
-      "note": "All three published vectors pass through production calls and native PNG codecs. Preparation runs on a worker with progress/cancellation; dimension checks precede allocation, preparation/encoding failure preserves the session, and validated state-guarded commits are one undo step. Native tests verify restored source pixels, dimensions, selection, dirty checkpoints and color metadata. Remaining canvas operations and general affine annotation support are still required before full qualification. Comparison adds header validation, union-canvas limits, progress/cooperative cancellation and immutable worker snapshots; native tests verify failed/cancelled loads retain the prior comparison and never enter editor history."
+      "note": "All three published vectors pass through production calls and native PNG codecs. Preparation runs on a worker with progress/cancellation; dimension checks precede allocation, preparation/encoding failure preserves the session, and validated state-guarded commits are one undo step. Native tests verify restored source pixels, dimensions, selection, dirty checkpoints and color metadata. Remaining canvas operations and general affine annotation support are still required before full qualification. Comparison adds header validation, union-canvas limits, progress/cooperative cancellation and immutable worker snapshots; native tests verify failed/cancelled loads retain the prior comparison and never enter editor history. New Image validates dimensions/profile before allocation, prepares source/display/PNG/document off the UI thread, and publishes only a successful result. Native dialog tests cancel and close the same live worker without publishing; native window tests verify atomic replacement and save failure recovery."
     }
   },
   "capability_version": "0.1.0"

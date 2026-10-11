@@ -26,6 +26,15 @@ prepares private sRGB display copies on a cancellable worker. `RasterSource`
 is the shared Qt image-decoder boundary used by editor opening and comparison;
 editing sidecar resolution remains exclusively in `EditorSource`.
 
+`NewImage` validates new canvas limits and composes native-size initial pixels
+at the top left. `NewImageSource` privately converts background/initial colours
+to the selected profile and prepares a validated immutable PNG/document plus
+a private sRGB display copy. `NewImageDialog` provides native dimensions,
+alpha/colour, profile, file and clipboard controls with progress/cancellation.
+`EditorWindow` confirms dirty replacement and starts an untitled session with
+no persistence checkpoint; saving or cancelling never confuses its initial
+state with a previously saved document.
+
 The native editor in `app/EditorWindow.cpp` and `app/EditorCanvas.cpp` loads sources, draws and manipulates
 rectangles, exposes undo/redo and save, and reopens editable sidecars. See the
 edition [implementation plan](../../IMPLEMENTATION.md) and

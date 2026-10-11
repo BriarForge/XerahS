@@ -9,7 +9,7 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 | `FILENAME-GENERATION-001` | Core logic and conformance seam; no UI yet | 51 of 51 vectors pass; [traceability](traceability/FILENAME-GENERATION-001.json) |
 | `POST-CAPTURE-ACTIONS-001` | Pipeline engine and conformance seam; native actions, retry, and recovery not yet | 17 of 17 vectors pass; [traceability](traceability/POST-CAPTURE-ACTIONS-001.json) |
 | `REGION-CAPTURE-001` | Mapping, keyboard, compositing, last-region, and session state machine; no overlay or capture backend yet | 21 of 21 vectors pass; [traceability](traceability/REGION-CAPTURE-001.json) |
-| `EDITOR-CANVAS-001` | Viewport controls; native crop, auto crop, resize, rotation, flips, annotation flatten, clear and image comparison; remaining image operations pending | All 3 published vectors plus native geometry, history, window, comparison and persistence tests; [traceability](traceability/EDITOR-CANVAS-001.json) |
+| `EDITOR-CANVAS-001` | New Image with native controls and confirmed dirty replacement; viewport, crop, auto crop, resize, rotation, flips, annotation flatten, clear and image comparison; remaining image operations pending | All 3 published vectors plus native geometry, history, window, creation, comparison and persistence tests; [traceability](traceability/EDITOR-CANVAS-001.json) |
 | `EDITOR-SESSION-001` | Document, `.xann` reader and writer, history, and export renderer; editor window with rectangle tool, selection, save, and sidecar reopen; resize and ordering by keyboard, arbitrary-angle rotation and export | 19 of 19 vectors pass; [traceability](traceability/EDITOR-SESSION-001.json) |
 
 The next implementation steps are tracked in [IMPLEMENTATION.md](IMPLEMENTATION.md).
@@ -32,6 +32,14 @@ The next implementation steps are tracked in [IMPLEMENTATION.md](IMPLEMENTATION.
 - `packaging/com.xerahs.app.desktop` gives desktop launches the `com.xerahs.app` identity, which portals use to attribute consent.
 
 - **Open image** (tray menu or `xerahs --edit FILE`) opens the editor: drag to draw rectangles, click to select, drag or arrow keys to move, Delete to remove, Alt+arrows to resize, R for quarter turns or **Rotate selection…** for any angle, `[`/`]` to reorder, Ctrl+Z/Ctrl+Shift+Z for history, Ctrl+S to save the flattened PNG with its `.xann` sidecar.
+
+- **New image…** (tray menu or editor **File → New Image…**, Ctrl+N) offers
+  validated dimensions, transparent or ARGB background, sRGB/linear sRGB/Display
+  P3/Adobe RGB, and optional initial pixels from a file or clipboard. Initial
+  pixels retain native size at the top left; chosen dimensions crop or pad them.
+  Preparation has progress and cancellation. Replacing a dirty editor offers
+  Save, Discard and Cancel after preparation succeeds. An untitled image stays
+  unsaved until Ctrl+S successfully writes its chosen PNG destination.
 
 An unreadable, corrupt or newer sidecar stops opening and leaves both files untouched. If the raster changed since its annotations were saved, a native warning offers the validated current raster or embedded source with their dimensions; Cancel opens no session. Annotation coordinates and assets are preserved whichever source is chosen.
 
@@ -58,6 +66,13 @@ strings) or a uniform `fill`, with `alignment` (`top-left` or `center`) and
 `reveal` (0..1000). This calls the production layout/compositor and returns
 canvas size, offsets, split column, pixels and a diagnostic. Published shared
 comparison vectors and full capability qualification remain pending.
+
+Its `create-image` seam accepts `size`, an optional `background` (#AARRGGBB,
+sRGB, transparent by default), `profile` (`srgb`, `linear-srgb`, `display-p3`,
+`adobe-rgb`) and optional `initial` pixels with their `size` and `profile`.
+It calls production preparation and returns source-profile pixels, dimensions,
+profile, initial dirty/history state and a diagnostic. Published shared New
+Image vectors and full capability qualification remain pending.
 
 No settings are persisted yet, and the reference Avalonia app's configuration is never read or written.
 

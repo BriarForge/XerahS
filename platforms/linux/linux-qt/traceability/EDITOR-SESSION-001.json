@@ -22,7 +22,11 @@
     "platforms/linux/linux-qt/src/image-editor/SourceBinding.h",
     "platforms/linux/linux-qt/src/image-editor/SourceBinding.cpp",
     "platforms/linux/linux-qt/app/RasterSource.h",
-    "platforms/linux/linux-qt/app/RasterSource.cpp"
+    "platforms/linux/linux-qt/app/RasterSource.cpp",
+    "platforms/linux/linux-qt/app/NewImageDialog.h",
+    "platforms/linux/linux-qt/app/NewImageDialog.cpp",
+    "platforms/linux/linux-qt/app/NewImageSource.h",
+    "platforms/linux/linux-qt/app/NewImageSource.cpp"
   ],
   "requirements": {
     "ES-001": {
@@ -33,7 +37,7 @@
     "ES-002": {
       "status": "partial",
       "vectors": [],
-      "note": "Orientation is normalized once with QImageReader auto-transform and pixels remain non-premultiplied ARGB32. Independent EXIF/JPEG mapping tests also verify embedded PNG has the same orientation; PNG tests preserve alpha and colour metadata. Comparison converts only private display copies to sRGB. Full editor colour-profile conversion remains pending."
+      "note": "Orientation is normalized once with QImageReader auto-transform and pixels remain non-premultiplied ARGB32. Independent EXIF/JPEG mapping tests verify embedded PNG orientation; PNG tests preserve alpha and colour metadata. New Image converts initial pixels/background to an explicitly selected profile, retaining immutable source bytes. Editor canvas and comparison use private sRGB display copies, with independent linear/sRGB pixel and native-view tests. End-to-end annotation composition in the working profile and requested export-profile conversion remain pending."
     },
     "ES-003": {
       "status": "implemented",
@@ -71,19 +75,19 @@
       "vectors": [
         "delete-and-undo-restores-selection"
       ],
-      "note": "History snapshots hold immutable, implicitly shared source PNG and assets. Canvas edits create a separate encoded source before committing; undo/redo never modify a reachable prior source. Allocation is reserved before truncating the redo branch. New sessions distinguish saved and unsaved initial sources; immutable initial pixels survive Undo and have no clean checkpoint until successful persistence."
+      "note": "History snapshots hold immutable, implicitly shared source PNG and assets. Canvas edits create a separate encoded source before committing; undo/redo never modify a reachable prior source. Allocation is reserved before truncating the redo branch. New sessions distinguish saved and unsaved initial sources; immutable initial pixels survive Undo and have no clean checkpoint until successful persistence. New Image replacement reserves a complete fresh session before confirmation and preserves the existing history on cancel or incomplete save; adopting a new document intentionally discards the old history only after Save/Discard confirmation."
     },
     "ES-008": {
       "status": "implemented",
       "vectors": [],
-      "note": "Escape cancels a draw or move gesture; closing a dirty editor offers Save, Discard, and Cancel."
+      "note": "Escape cancels a draw or move gesture. Native dirty close and New Image replacement offer Save, Discard and Cancel; replacement defaults to Cancel and waits for fully validated preparation. Untitled images are dirty without prior edits and Save prompts for a PNG destination. Native window tests verify cancelled close/replacement/destination, successful save/discard, failed raster or sidecar save, preserved prior source/history/selection/viewport and rebound canvas actions. The editor remains alive until modal preparation workers finish."
     },
     "ES-009": {
       "status": "partial",
       "vectors": [
         "render-stroke-coverage"
       ],
-      "note": "The authoritative PNG compositor and atomic save preserve the source colour profile. Native tests verify profile and alpha across canvas edits and persisted PNG/sidecar reopening. Additional export formats, requested profile conversion and cross-platform golden coverage remain pending."
+      "note": "The authoritative PNG compositor and atomic save preserve the source colour profile. Native tests verify profile and alpha across canvas edits, New Image creation and persisted PNG/sidecar reopening. Annotation colour composition for non-sRGB sources, additional export formats, requested profile conversion and cross-platform golden coverage remain pending."
     },
     "ES-010": {
       "status": "implemented",
@@ -95,17 +99,17 @@
     "ES-011": {
       "status": "partial",
       "vectors": [],
-      "note": "EditorSession::recordSave() marks clean only when the raster and sidecar both persisted (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Atomic raster replacement arrives with the save path."
+      "note": "Native save uses QSaveFile atomic raster replacement and marks the checkpoint only after raster and required sidecar persistence succeed. New Image tests verify a blank initial source stays dirty until a successful destination save, and failed raster/sidecar persistence prevents dirty replacement. Full save/output qualification remains pending."
     },
     "ES-012": {
       "status": "implemented",
       "vectors": [],
-      "note": "A sidecar failure keeps the session dirty and reports sidecar-save-failed (platforms/linux/linux-qt/tests/EditorSessionTest.cpp)."
+      "note": "A sidecar failure keeps the session dirty and reports sidecar-save-failed (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Native replacement tests force a sidecar write failure after raster persistence, report Save incomplete, and retain the current editable session/history/selection/checkpoint."
     },
     "ES-013": {
       "status": "partial",
       "vectors": [],
-      "note": "gzip-wrapped UTF-8 JSON with the schema fields round-trips (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Computing the source SHA-256 arrives with the source loader."
+      "note": "gzip-wrapped UTF-8 JSON with schema fields round-trips. Native load/save computes raster SHA-256, embeds immutable unannotated PNG and records timestamps. New Image starts without file identity and retains the selected profile through PNG/xann round trips. Full document compatibility qualification remains pending."
     },
     "ES-014": {
       "status": "implemented",
@@ -142,7 +146,7 @@
     "ES-019": {
       "status": "partial",
       "vectors": [],
-      "note": "Canvas is focusable with a visible focus ring, accessible names, a dashed two-tone selection outline, fixed-width outlines and six-screen-pixel hit targets under zoom. Native tests cover low-zoom selection. Toolbars and scrollbars are keyboard reachable; screen-reader annotation state and full high-contrast review remain pending."
+      "note": "Canvas is focusable with a visible focus ring, accessible names, a dashed two-tone selection outline, fixed-width outlines and six-screen-pixel hit targets under zoom. Native tests cover low-zoom selection. Toolbars and scrollbars are keyboard reachable; screen-reader annotation state and full high-contrast review remain pending. New Image fields have native labels/buddies and accessible names, keyboard operation and a named progress control; native accessibility interfaces verify the dimensions name and Linux profile label relation/current value."
     },
     "ES-020": {
       "status": "not-started",
@@ -193,7 +197,8 @@
       "vectors": [
         "undo-to-checkpoint-is-clean",
         "truncated-checkpoint-stays-dirty"
-      ]
+      ],
+      "note": "Saved sessions retain stable checkpoint IDs. Newly created sources use an absent initial checkpoint, so Undo to initial pixels remains dirty until successful persistence. EditorSessionTest and EditorWindowTest verify unsaved initial/Undo/Redo, cancelled Save and complete/incomplete native persistence."
     },
     "ES-028": {
       "status": "implemented",

@@ -4,6 +4,7 @@
 #include "EditorCanvasOperations.h"
 #include "CanvasRotationDialog.h"
 #include "ImageComparisonDialog.h"
+#include "NewImageDialog.h"
 #include "EditorSource.h"
 
 #include <QAction>
@@ -86,9 +87,27 @@ EditorWindow *EditorWindow::open(const QString &path, QWidget *parent) {
   return window;
 }
 
-EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument document)
-    : m_path(path), m_image(std::move(image)), m_session(std::make_unique<EditorSession>(std::move(document))) {
-  m_canvas = new EditorCanvas(*m_session, m_image);
+EditorWindow *EditorWindow::createNew(QWidget *parent) {
+  NewImageDialog dialog(parent);
+  if (dialog.exec() != QDialog::Accepted) return nullptr;
+  auto prepared = dialog.takeImage();
+  if (!prepared) return nullptr;
+  try {
+    auto *window = new EditorWindow({}, std::move(prepared->source), std::move(*prepared->document),
+        EditorSession::InitialPersistence::Unsaved, std::move(prepared->displaySource));
+    window->setAttribute(Qt::WA_DeleteOnClose);
+    return window;
+  } catch (const std::bad_alloc &) {
+    QMessageBox::warning(parent, QStringLiteral("Cannot create image"),
+                         QStringLiteral("There is not enough memory to open the new image."));
+    return nullptr;
+  }
+}
+
+EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument document,
+                           EditorSession::InitialPersistence persistence, QImage displaySource)
+    : m_path(path), m_image(std::move(image)), m_session(std::make_unique<EditorSession>(std::move(document), persistence)) {
+  m_canvas = new EditorCanvas(*m_session, m_image, nullptr, displaySource);
   m_sourceBytes = m_session->document().sourceImagePng;
   setCentralWidget(m_canvas);
   m_unsupportedDock = new QDockWidget(QStringLiteral("Unsupported annotations"), this);
@@ -100,6 +119,12 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   m_unsupportedObjects->setAccessibleDescription(QStringLiteral("These objects are preserved in the document. Their tools are not available in this editor version."));
   m_unsupportedDock->setWidget(m_unsupportedObjects);
   addDockWidget(Qt::RightDockWidgetArea, m_unsupportedDock);
+
+  auto *fileMenu = menuBar()->addMenu(QStringLiteral("&File"));
+  auto *create = fileMenu->addAction(QStringLiteral("New Image…"));
+  create->setObjectName(QStringLiteral("newImage"));
+  create->setShortcut(QKeySequence::New);
+  connect(create, &QAction::triggered, this, &EditorWindow::newImage);
 
   auto *imageMenu = menuBar()->addMenu(QStringLiteral("&Image"));
   QAction *crop = imageMenu->addAction(QStringLiteral("Crop Image…"));
@@ -250,13 +275,50 @@ void EditorWindow::refresh() {
   m_delete->setEnabled(!m_session->selection().isEmpty());
   m_rotate->setEnabled(!m_session->selection().isEmpty());
   m_clearAnnotations->setEnabled(!m_session->document().annotations.empty());
-  setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(QFileInfo(m_path).fileName(),
+  setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName(),
                                                     m_session->dirty() ? QStringLiteral(" •") : QString()));
   statusBar()->showMessage(QStringLiteral("%1 × %2 · %3 annotation(s) · %4 selected · %5%")
                                .arg(m_image.width()).arg(m_image.height())
                                .arg(m_session->document().annotations.size()).arg(m_session->selection().size())
                                .arg(m_canvas->viewState().zoom() * 100, 0, 'f', 1));
   m_canvas->viewport()->update();
+}
+
+void EditorWindow::newImage() {
+  if (m_canvasOperationPending) return;
+  const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
+  NewImageDialog dialog(this);
+  if (dialog.exec() != QDialog::Accepted) return;
+  auto prepared = dialog.takeImage();
+  if (!prepared) return;
+  std::unique_ptr<EditorSession> next;
+  try {
+    next = std::make_unique<EditorSession>(std::move(*prepared->document), EditorSession::InitialPersistence::Unsaved);
+  } catch (const std::bad_alloc &) {
+    QMessageBox::warning(this, QStringLiteral("Cannot create image"),
+                         QStringLiteral("There is not enough memory for a new session. The current document is unchanged."));
+    return;
+  }
+  if (m_session->dirty()) {
+    QMessageBox box(QMessageBox::Question, QStringLiteral("Replace current image"),
+        QStringLiteral("Save changes to %1 before replacing it with the new image?")
+            .arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName()),
+        QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, this);
+    box.setDefaultButton(QMessageBox::Cancel);
+    const int choice = box.exec();
+    if (choice == QMessageBox::Cancel || (choice == QMessageBox::Save && !save(false))) return;
+    if (choice != QMessageBox::Save && choice != QMessageBox::Discard) return;
+  }
+  // Keep the old session alive until the canvas has cancelled its gesture and
+  // switched its session pointer. Retaining the widget preserves action bindings.
+  auto previous = std::move(m_session);
+  m_session = std::move(next);
+  m_image = std::move(prepared->source);
+  m_sourceBytes = m_session->document().sourceImagePng;
+  m_path.clear(); m_placeholderState.reset();
+  m_canvas->resetDocument(*m_session, prepared->displaySource);
+  findChild<QAction *>(QStringLiteral("cropTool"))->setChecked(false);
+  refresh(); m_canvas->setFocus();
 }
 
 void EditorWindow::cropImage() {
@@ -471,8 +533,9 @@ void EditorWindow::commitCanvas(PreparedCanvasEdit prepared, quint64 state) {
 
 bool EditorWindow::save(bool chooseFile) {
   QString target = m_path;
-  if (chooseFile) {
-    target = QFileDialog::getSaveFileName(this, QStringLiteral("Save image"), m_path, QStringLiteral("PNG image (*.png)"));
+  if (chooseFile || m_path.isEmpty()) {
+    target = QFileDialog::getSaveFileName(this, QStringLiteral("Save image"),
+        m_path.isEmpty() ? QStringLiteral("Untitled.png") : m_path, QStringLiteral("PNG image (*.png)"));
     if (target.isEmpty()) return false;
     if (QFileInfo(target).suffix().isEmpty()) target += QStringLiteral(".png");
   }
@@ -498,7 +561,7 @@ void EditorWindow::closeEvent(QCloseEvent *event) {
   if (!m_session->dirty()) { event->accept(); return; }
   // ES-008: Save, Discard, Cancel.
   QMessageBox box(QMessageBox::Question, QStringLiteral("Unsaved changes"),
-                  QStringLiteral("Save changes to %1?").arg(QFileInfo(m_path).fileName()),
+                  QStringLiteral("Save changes to %1?").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName()),
                   QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, this);
   box.setDefaultButton(QMessageBox::Save);
   switch (box.exec()) {

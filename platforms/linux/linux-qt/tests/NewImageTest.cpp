@@ -60,7 +60,7 @@ private slots:
     QCOMPARE(created.error, std::optional<QString>(QStringLiteral("canvas-cancelled")));
     percent = 0;
     const auto prepared = prepareNewImage({10, 10}, {}, {[&] { return percent >= 80; }, [&](int p) { percent = p; }});
-    QVERIFY(!prepared.document && prepared.source.isNull());
+    QVERIFY(!prepared.document && prepared.source.isNull() && prepared.displaySource.isNull());
     QCOMPARE(prepared.diagnostic, QStringLiteral("canvas-cancelled"));
   }
   void profileMetadataSurvivesPngAndXann_data() {
@@ -77,6 +77,10 @@ private slots:
     QVERIFY2(prepared.document, qPrintable(prepared.diagnostic));
     QCOMPARE(prepared.source.colorSpace(), newImageColorSpace(options.profile));
     QCOMPARE(prepared.source.size(), QSize(3, 2));
+    QCOMPARE(prepared.displaySource.colorSpace(), QColorSpace(QColorSpace::SRgb));
+    QCOMPARE(prepared.displaySource.size(), prepared.source.size());
+    QVERIFY(std::abs(qRed(prepared.displaySource.pixel(0, 0)) - 128) <= 1);
+    QCOMPARE(qAlpha(prepared.displaySource.pixel(0, 0)), 128);
     QCOMPARE(qAlpha(prepared.source.pixel(0, 0)), 128);
     if (options.profile == NewImageProfile::SRgb)
       QCOMPARE(qRed(prepared.source.pixel(0, 0)), 128);

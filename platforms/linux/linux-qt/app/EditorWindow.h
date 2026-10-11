@@ -25,12 +25,16 @@ class EditorWindow final : public QMainWindow {
 public:
   // Returns nullptr after telling the user why when the image cannot be opened.
   static EditorWindow *open(const QString &path, QWidget *parent = nullptr);
+  static EditorWindow *createNew(QWidget *parent = nullptr);
 
 protected:
   void closeEvent(QCloseEvent *event) override;
 
 private:
-  EditorWindow(const QString &path, QImage image, xerahs::editor::AnnotationDocument document);
+  EditorWindow(const QString &path, QImage image, xerahs::editor::AnnotationDocument document,
+               xerahs::editor::EditorSession::InitialPersistence persistence = xerahs::editor::EditorSession::InitialPersistence::Saved,
+               QImage displaySource = {});
+  void newImage();
   bool save(bool chooseFile);
   void refresh();
   void cropImage();

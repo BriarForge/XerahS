@@ -1,5 +1,6 @@
 #include "EditorCanvas.h"
 
+#include <QColorSpace>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QNativeGestureEvent>
@@ -15,6 +16,10 @@ namespace xerahs::app {
 using namespace xerahs::editor;
 
 namespace {
+QImage displayCopy(const QImage &source) {
+  return !source.colorSpace().isValid() || source.colorSpace() == QColorSpace(QColorSpace::SRgb) ? source
+      : source.convertedToColorSpace(QColorSpace::SRgb);
+}
 QTransform rotation(const RectangleAnnotation &r) {
   const QPointF centre{r.left() / 2 + r.right() / 2, r.top() / 2 + r.bottom() / 2};
   QTransform transform;
@@ -31,8 +36,9 @@ QPen outlinePen(QColor color, Qt::PenStyle style = Qt::SolidLine) {
 }
 }  // namespace
 
-EditorCanvas::EditorCanvas(EditorSession &session, const QImage &image, QWidget *parent)
-    : QAbstractScrollArea(parent), m_session(session), m_image(image), m_view(image.size()) {
+EditorCanvas::EditorCanvas(EditorSession &session, const QImage &image, QWidget *parent, const QImage &displaySource)
+    : QAbstractScrollArea(parent), m_session(&session), m_image(image),
+      m_displaySource(displaySource.isNull() ? displayCopy(image) : displaySource), m_view(image.size()) {
   setObjectName(QStringLiteral("editorCanvas"));
   setFocusPolicy(Qt::StrongFocus);
   setAccessibleName(QStringLiteral("Image canvas"));
@@ -90,8 +96,22 @@ void EditorCanvas::setCropTool(bool active) {
   viewport()->setCursor(active ? Qt::CrossCursor : Qt::ArrowCursor);
 }
 
+void EditorCanvas::resetDocument(EditorSession &session, const QImage &displaySource) {
+  cancelGesture();
+  m_session = &session;
+  m_displaySource = displaySource;
+  m_cropTool = false;
+  m_spaceHeld = false;
+  viewport()->setCursor(Qt::ArrowCursor);
+  m_view = EditorViewport(m_image.size());
+  m_view.setViewSize(viewport()->size());
+  m_view.fit();
+  syncViewport();
+}
+
 void EditorCanvas::sourceChanged() {
   cancelGesture();
+  m_displaySource = displayCopy(m_image);
   m_view.setImageSize(m_image.size());
   syncViewport();
 }
@@ -118,21 +138,21 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
   tile.fill(Qt::white);
   { QPainter checker(&tile); checker.fillRect(0, 0, 8, 8, Qt::lightGray); checker.fillRect(8, 8, 8, 8, Qt::lightGray); }
   p.fillRect(QRectF(QPointF(0, 0), m_image.size()), QBrush(tile));
-  p.drawImage(0, 0, m_image);
+  p.drawImage(0, 0, m_displaySource);
   p.setRenderHint(QPainter::Antialiasing);
-  for (const Annotation &annotation : m_session.document().annotations) {
+  for (const Annotation &annotation : m_session->document().annotations) {
     const auto *r = std::get_if<RectangleAnnotation>(&annotation);
     if (!r || !r->visible) continue;
     const QRectF box(QPointF(r->left(), r->top()), QPointF(r->right(), r->bottom()));
     p.save();
-    if (m_moving && m_session.selection().contains(r->id)) p.translate(m_moveLast - m_moveStart);
+    if (m_moving && m_session->selection().contains(r->id)) p.translate(m_moveLast - m_moveStart);
     p.setWorldTransform(rotation(*r), true);
     p.setOpacity(r->style.opacity);
     p.setBrush(QColor::fromRgba(r->style.fillColor));
     p.setPen(QPen(QColor::fromRgba(r->style.strokeColor), r->style.strokeWidth, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
     p.drawRect(box);
     p.restore();
-    if (m_session.selection().contains(r->id)) {
+    if (m_session->selection().contains(r->id)) {
       const double gap = r->style.strokeWidth / 2 + 3 / m_view.zoom();
       const QRectF outline = box.adjusted(-gap, -gap, gap, gap);
       p.save();
@@ -181,18 +201,18 @@ void EditorCanvas::mousePressEvent(QMouseEvent *event) {
     const bool additive = event->modifiers() & Qt::ControlModifier;
     QList<QUuid> ids;
     if (additive) {
-      for (const QUuid &id : m_session.selection()) ids << id;
+      for (const QUuid &id : m_session->selection()) ids << id;
       if (!ids.removeOne(*hit)) ids << *hit;
-    } else if (!m_session.selection().contains(*hit)) {
+    } else if (!m_session->selection().contains(*hit)) {
       ids << *hit;
     } else {
-      for (const QUuid &id : m_session.selection()) ids << id;
+      for (const QUuid &id : m_session->selection()) ids << id;
     }
-    m_session.select(ids);
-    m_moving = m_session.selection().contains(*hit);
+    m_session->select(ids);
+    m_moving = m_session->selection().contains(*hit);
     m_moveStart = m_moveLast = at;
   } else {
-    if (!(event->modifiers() & Qt::ControlModifier)) m_session.select({});
+    if (!(event->modifiers() & Qt::ControlModifier)) m_session->select({});
     m_drag = std::make_pair(at, at);
   }
   viewport()->update();
@@ -227,11 +247,11 @@ void EditorCanvas::mouseReleaseEvent(QMouseEvent *event) {
     const QPointF start = m_drag->first;
     m_drag.reset();
     if (m_cropTool) emit cropRequested(start, at);
-    else m_session.createRectangle({start.x(), start.y()}, {at.x(), at.y()});
+    else m_session->createRectangle({start.x(), start.y()}, {at.x(), at.y()});
   } else if (m_moving) {
     m_moving = false;
     const QPointF delta = at - m_moveStart;
-    m_session.moveSelection(delta.x(), delta.y());
+    m_session->moveSelection(delta.x(), delta.y());
   }
   viewport()->update();
   emit changed();
@@ -288,7 +308,7 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
     return;
   }
   const double step = (event->modifiers() & Qt::ShiftModifier) ? 10 : 1;
-  if (m_session.selection().isEmpty()) {
+  if (m_session->selection().isEmpty()) {
     switch (event->key()) {
       case Qt::Key_Left: m_view.pan({25 * step, 0}); break;
       case Qt::Key_Right: m_view.pan({-25 * step, 0}); break;
@@ -301,26 +321,26 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
   }
   if (event->modifiers() & Qt::AltModifier) {
     switch (event->key()) {
-      case Qt::Key_Left: m_session.resizeSelection(-step, 0); break;
-      case Qt::Key_Right: m_session.resizeSelection(step, 0); break;
-      case Qt::Key_Up: m_session.resizeSelection(0, -step); break;
-      case Qt::Key_Down: m_session.resizeSelection(0, step); break;
+      case Qt::Key_Left: m_session->resizeSelection(-step, 0); break;
+      case Qt::Key_Right: m_session->resizeSelection(step, 0); break;
+      case Qt::Key_Up: m_session->resizeSelection(0, -step); break;
+      case Qt::Key_Down: m_session->resizeSelection(0, step); break;
       default: QAbstractScrollArea::keyPressEvent(event); return;
     }
   } else {
     const bool toEdge = event->modifiers() & Qt::ControlModifier;
     switch (event->key()) {
-      case Qt::Key_R: m_session.rotateSelection((event->modifiers() & Qt::ShiftModifier) ? -90 : 90); break;
+      case Qt::Key_R: m_session->rotateSelection((event->modifiers() & Qt::ShiftModifier) ? -90 : 90); break;
       case Qt::Key_BracketRight:
-        m_session.reorderSelection(toEdge ? EditorSession::Order::Front : EditorSession::Order::Forward); break;
+        m_session->reorderSelection(toEdge ? EditorSession::Order::Front : EditorSession::Order::Forward); break;
       case Qt::Key_BracketLeft:
-        m_session.reorderSelection(toEdge ? EditorSession::Order::Back : EditorSession::Order::Backward); break;
-      case Qt::Key_Left: m_session.moveSelection(-step, 0); break;
-      case Qt::Key_Right: m_session.moveSelection(step, 0); break;
-      case Qt::Key_Up: m_session.moveSelection(0, -step); break;
-      case Qt::Key_Down: m_session.moveSelection(0, step); break;
+        m_session->reorderSelection(toEdge ? EditorSession::Order::Back : EditorSession::Order::Backward); break;
+      case Qt::Key_Left: m_session->moveSelection(-step, 0); break;
+      case Qt::Key_Right: m_session->moveSelection(step, 0); break;
+      case Qt::Key_Up: m_session->moveSelection(0, -step); break;
+      case Qt::Key_Down: m_session->moveSelection(0, step); break;
       case Qt::Key_Delete:
-      case Qt::Key_Backspace: m_session.deleteSelection(); break;
+      case Qt::Key_Backspace: m_session->deleteSelection(); break;
       default: QAbstractScrollArea::keyPressEvent(event); return;
     }
   }
@@ -346,7 +366,7 @@ void EditorCanvas::focusOutEvent(QFocusEvent *event) {
 }
 
 std::optional<QUuid> EditorCanvas::topmostAt(QPointF at) const {
-  const auto &list = m_session.document().annotations;
+  const auto &list = m_session->document().annotations;
   for (auto it = list.rbegin(); it != list.rend(); ++it) {
     const auto *r = std::get_if<RectangleAnnotation>(&*it);
     if (!r || !r->visible) continue;

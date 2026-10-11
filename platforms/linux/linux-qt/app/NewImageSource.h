@@ -7,7 +7,7 @@
 namespace xerahs::app {
 struct PreparedNewImage {
   std::optional<xerahs::editor::AnnotationDocument> document;
-  QImage source;
+  QImage source, displaySource;  // profile-preserving source and private sRGB view
   QString diagnostic;
 };
 QColorSpace newImageColorSpace(xerahs::editor::NewImageProfile profile);
