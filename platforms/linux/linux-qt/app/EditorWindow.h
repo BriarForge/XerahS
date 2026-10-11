@@ -19,6 +19,7 @@ namespace xerahs::app {
 
 class EditorCanvas;
 class NativeEditorWindowState;
+class NativeEditorToolbar;
 struct PreparedCanvasEdit;
 
 class EditorWindow final : public QMainWindow {
@@ -64,6 +65,8 @@ private:
   std::unique_ptr<xerahs::editor::EditorSession> m_session;
   EditorCanvas *m_canvas = nullptr;
   NativeEditorWindowState *m_windowState = nullptr;
+  NativeEditorToolbar *m_toolbarController = nullptr;
+  QMap<QString, QAction *> m_toolbarActions;
   QAction *m_undo = nullptr;
   QAction *m_redo = nullptr;
   QAction *m_delete = nullptr;

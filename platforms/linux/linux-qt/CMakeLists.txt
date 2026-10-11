@@ -95,6 +95,9 @@ add_executable(xerahs
   app/NativeEditorAppearance.h
   app/AppearanceDialog.cpp
   app/AppearanceDialog.h
+  app/NativeEditorToolbar.cpp
+  app/NativeEditorToolbar.h
+  app/ToolbarDialog.cpp
   app/EditorCanvas.cpp
   app/EditorCanvas.h
   app/EditorWindow.cpp
@@ -120,6 +123,16 @@ add_executable(toolbar-preferences-test tests/ToolbarPreferencesTest.cpp)
 set_target_properties(toolbar-preferences-test PROPERTIES AUTOMOC ON)
 target_link_libraries(toolbar-preferences-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME toolbar-preferences COMMAND toolbar-preferences-test)
+add_executable(native-editor-toolbar-test tests/NativeEditorToolbarTest.cpp
+               app/NativeEditorToolbar.cpp app/NativeEditorToolbar.h app/ToolbarDialog.cpp
+               app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h
+               app/NativeEditorAppearance.cpp app/NativeEditorAppearance.h
+               app/NativeDesktopAppearance.cpp app/NativeDesktopAppearance.h)
+set_target_properties(native-editor-toolbar-test PROPERTIES AUTOMOC ON)
+target_link_libraries(native-editor-toolbar-test PRIVATE xerahs_core Qt6::Widgets Qt6::DBus Qt6::Test)
+target_include_directories(native-editor-toolbar-test PRIVATE app)
+add_test(NAME native-editor-toolbar COMMAND native-editor-toolbar-test)
+set_tests_properties(native-editor-toolbar PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 add_executable(editor-preferences-test tests/EditorPreferencesTest.cpp)
 set_target_properties(editor-preferences-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-preferences-test PRIVATE xerahs_core Qt6::Test)
@@ -252,6 +265,7 @@ add_test(NAME new-image-dialog COMMAND new-image-dialog-test)
 set_tests_properties(new-image-dialog PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 
 add_executable(editor-window-test tests/EditorWindowTest.cpp app/EditorWindow.cpp app/EditorWindow.h app/EditorOpen.cpp app/EditorOpen.h
+               app/NativeEditorToolbar.cpp app/NativeEditorToolbar.h app/ToolbarDialog.cpp
                app/RecentImageMenu.cpp app/RecentImageMenu.h
                app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h
                app/DrawingDefaultsDialog.cpp app/DrawingDefaultsDialog.h

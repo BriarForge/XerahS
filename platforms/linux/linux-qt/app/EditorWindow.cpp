@@ -12,6 +12,7 @@
 #include "NativeEditorWindowState.h"
 #include "NativeEditorAppearance.h"
 #include "AppearanceDialog.h"
+#include "NativeEditorToolbar.h"
 
 #include <QAction>
 #include <QCloseEvent>
@@ -69,6 +70,7 @@ EditorWindow::~EditorWindow() {
   // QWidget teardown can send focus events to the active canvas. Destroy the
   // canvas while its referenced image/session still exist, before members and
   // the QMainWindow base are destroyed; no refresh may run during that teardown.
+  delete m_toolbarController; m_toolbarController = nullptr;
   m_canvas->disconnect(this);
   delete takeCentralWidget(); m_canvas = nullptr;
 }
@@ -147,6 +149,12 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     if (manageRecentImages(this)) { m_preferenceDiagnostic.clear(); refresh(); }
   });
   auto *preferences = menuBar()->addMenu(QStringLiteral("&Preferences"));
+  auto *customizeToolbar = preferences->addAction(QStringLiteral("Toolbar…"));
+  customizeToolbar->setObjectName(QStringLiteral("customizeToolbar"));
+  connect(customizeToolbar, &QAction::triggered, this, [this] {
+    if (m_canvasOperationPending || m_closePending || m_canvas->interactionActive()) return;
+    const QScopedValueRollback<bool> pending(m_canvasOperationPending, true); manageEditorToolbar(this, m_toolbarActions);
+  });
   auto *drawingDefaults = preferences->addAction(QStringLiteral("Drawing Defaults…"));
   drawingDefaults->setObjectName(QStringLiteral("drawingDefaults"));
   connect(drawingDefaults, &QAction::triggered, this, [this] {
@@ -210,6 +218,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   QAction *customRotation = imageMenu->addAction(QStringLiteral("Rotate Image…"));
   customRotation->setObjectName(QStringLiteral("rotateImage"));
   connect(customRotation, &QAction::triggered, this, &EditorWindow::rotateImage);
+  QMap<CanvasAction, QAction *> canvasActions;
   for (const auto &entry : std::array<std::pair<QString, CanvasAction>, 5>{{
       {QStringLiteral("Rotate Image 90° Clockwise"), CanvasAction::RotateClockwise},
       {QStringLiteral("Rotate Image 90° Counter-clockwise"), CanvasAction::RotateCounterClockwise},
@@ -218,6 +227,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
       {QStringLiteral("Flip Image Vertically"), CanvasAction::FlipVertical}}}) {
     QAction *action = imageMenu->addAction(entry.first);
     action->setObjectName(QStringLiteral("canvasAction%1").arg(int(entry.second)));
+    canvasActions.insert(entry.second, action);
     connect(action, &QAction::triggered, this, [this, command = entry.second] {
       CanvasOperation operation; operation.action = command; applyCanvas(operation);
     });
@@ -226,8 +236,10 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   QAction *flatten = imageMenu->addAction(QStringLiteral("Flatten"));
   flatten->setObjectName(QStringLiteral("flattenImage"));
   connect(flatten, &QAction::triggered, this, [this] { CanvasOperation op; op.action = CanvasAction::Flatten; applyCanvas(op); });
+  flatten->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_F));
   m_clearAnnotations = imageMenu->addAction(QStringLiteral("Clear Annotations"));
   m_clearAnnotations->setObjectName(QStringLiteral("clearAnnotations"));
+  m_clearAnnotations->setShortcut(QKeySequence(Qt::SHIFT | Qt::Key_Delete));
   connect(m_clearAnnotations, &QAction::triggered, this, [this] { CanvasOperation op; op.action = CanvasAction::ClearAnnotations; applyCanvas(op); });
   QAction *clear = imageMenu->addAction(QStringLiteral("Clear Image and Annotations…"));
   clear->setObjectName(QStringLiteral("clearImage"));
@@ -237,11 +249,13 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(compare, &QAction::triggered, this, &EditorWindow::compareImages);
 
   auto *bar = addToolBar(QStringLiteral("Edit"));
+  bar->setObjectName(QStringLiteral("editorToolbar"));
   bar->setMovable(false);
   QAction *saveAction = bar->addAction(QStringLiteral("Save"));
   saveAction->setObjectName(QStringLiteral("saveImage"));
   saveAction->setShortcut(QKeySequence::Save);
   QAction *saveAs = bar->addAction(QStringLiteral("Save As…"));
+  saveAs->setObjectName(QStringLiteral("saveAsImage"));
   saveAs->setShortcut(QKeySequence::SaveAs);
   bar->addSeparator();
   m_undo = bar->addAction(QStringLiteral("Undo"));
@@ -249,10 +263,12 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   m_undo->setShortcut(QKeySequence::Undo);
   m_redo = bar->addAction(QStringLiteral("Redo"));
   m_redo->setObjectName(QStringLiteral("redo"));
-  m_redo->setShortcut(QKeySequence::Redo);
+  m_redo->setShortcuts({QKeySequence(Qt::CTRL | Qt::Key_Y), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Z)});
   m_delete = bar->addAction(QStringLiteral("Delete"));
   m_delete->setObjectName(QStringLiteral("deleteSelection"));
+  m_delete->setShortcut(QKeySequence(Qt::Key_Delete));
   m_rotate = bar->addAction(QStringLiteral("Rotate selection…"));
+  m_rotate->setObjectName(QStringLiteral("rotateSelection"));
   bar->addSeparator();
   QAction *stroke = bar->addAction(QStringLiteral("Stroke colour…"));
   QAction *fill = bar->addAction(QStringLiteral("Fill colour…"));
@@ -295,15 +311,25 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     if (m_canvasOperationPending) return;
     m_session->setStrokeWidth(std::max(1.0, m_session->toolStyle().strokeWidth - 1)); persistDrawingDefaults(); refresh();
   });
-  auto *view = addToolBar(QStringLiteral("View"));
-  view->setMovable(false);
+  // Fixed command menus remain available even with an empty custom toolbar.
+  fileMenu->addSeparator(); fileMenu->addAction(saveAction); fileMenu->addAction(saveAs);
+  auto *closeEditor = fileMenu->addAction(QStringLiteral("Close Editor"));
+  closeEditor->setObjectName(QStringLiteral("closeEditor")); closeEditor->setShortcut(QKeySequence::Close);
+  connect(closeEditor, &QAction::triggered, this, [this] { close(); });
+  auto *edit = menuBar()->addMenu(QStringLiteral("&Edit"));
+  for (auto *action : {m_undo, m_redo, m_delete, m_rotate, stroke, fill, width, thin}) edit->addAction(action);
+  auto *view = menuBar()->addMenu(QStringLiteral("&View"));
   QAction *zoomIn = view->addAction(QStringLiteral("Zoom In"));
+  zoomIn->setObjectName(QStringLiteral("zoomIn"));
   zoomIn->setShortcuts(QList<QKeySequence>{QKeySequence(Qt::CTRL | Qt::Key_Plus), QKeySequence(Qt::CTRL | Qt::Key_Equal)});
   QAction *zoomOut = view->addAction(QStringLiteral("Zoom Out"));
+  zoomOut->setObjectName(QStringLiteral("zoomOut"));
   zoomOut->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Minus));
   QAction *resetZoom = view->addAction(QStringLiteral("100%"));
+  resetZoom->setObjectName(QStringLiteral("resetZoom"));
   resetZoom->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_0));
   QAction *fit = view->addAction(QStringLiteral("Fit"));
+  fit->setObjectName(QStringLiteral("fitImage"));
   fit->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_9));
   connect(zoomIn, &QAction::triggered, m_canvas, &EditorCanvas::zoomIn);
   connect(zoomOut, &QAction::triggered, m_canvas, &EditorCanvas::zoomOut);
@@ -311,6 +337,31 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(fit, &QAction::triggered, m_canvas, &EditorCanvas::zoomToFit);
   connect(m_canvas, &EditorCanvas::viewportChanged, this, &EditorWindow::refresh);
   connect(m_canvas, &EditorCanvas::changed, this, &EditorWindow::refresh);
+  auto *toggleToolbar = bar->toggleViewAction(); toggleToolbar->setText(QStringLiteral("Show Toolbar"));
+  toggleToolbar->setObjectName(QStringLiteral("toggleToolbars")); toggleToolbar->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_H));
+  view->addSeparator(); view->addAction(toggleToolbar);
+  m_toolbarActions = {
+    {"save", saveAction}, {"save-as", saveAs}, {"undo", m_undo}, {"redo", m_redo},
+    {"delete-selection", m_delete}, {"rotate-selection", m_rotate},
+    {"stroke-colour", stroke}, {"fill-colour", fill}, {"increase-stroke", width}, {"decrease-stroke", thin},
+    {"zoom-in", zoomIn}, {"zoom-out", zoomOut}, {"reset-zoom", resetZoom}, {"fit-image", fit},
+    {"new-image", create}, {"open-image", open}, {"crop-image", crop}, {"crop-tool", cropTool},
+    {"auto-crop", autoCrop}, {"resize-image", resizePixels}, {"resize-canvas", resizeCanvas},
+    {"rotate-image", customRotation},
+    {"rotate-clockwise", canvasActions.value(CanvasAction::RotateClockwise)},
+    {"rotate-counter-clockwise", canvasActions.value(CanvasAction::RotateCounterClockwise)},
+    {"rotate-180", canvasActions.value(CanvasAction::Rotate180)},
+    {"flip-horizontal", canvasActions.value(CanvasAction::FlipHorizontal)},
+    {"flip-vertical", canvasActions.value(CanvasAction::FlipVertical)},
+    {"flatten-image", flatten}, {"clear-annotations", m_clearAnnotations}, {"clear-image", clear},
+    {"compare-images", compare}, {"drawing-defaults", drawingDefaults}, {"appearance-preferences", appearance},
+    {"remember-window-state", rememberWindow}, {"customize-toolbar", customizeToolbar},
+    {"toggle-toolbars", toggleToolbar}, {"close-editor", closeEditor}
+  };
+  for (auto *action : m_toolbarActions) { action->setParent(this); addAction(action); }
+  m_toolbarController = new NativeEditorToolbar(*this, *bar, m_toolbarActions, [this] {
+    return m_canvas && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive();
+  });
 
   m_windowState = new NativeEditorWindowState(*this, {std::min(m_image.width() + 40, 1400), std::min(m_image.height() + 120, 900)});
   new NativeEditorAppearance(*this);

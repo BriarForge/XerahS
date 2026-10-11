@@ -11,6 +11,7 @@ signals:
   void drawingDefaultsChanged();
   void windowMemoryChanged(bool enabled);
   void appearanceChanged();
+  void toolbarChanged();
 };
 NativeEditorPreferenceEvents &nativeEditorPreferenceEvents();
 quint64 nativeEditorPreferenceRevision();
@@ -24,6 +25,7 @@ xerahs::editor::PreferenceWrite applyRecentImagePreferences(
 xerahs::editor::PreferenceWrite applyDrawingDefaults(const QJsonObject &changes, quint64 expectedRevision);
 xerahs::editor::PreferenceWrite applyWindowPreferences(const QJsonObject &changes, quint64 expectedRevision);
 xerahs::editor::PreferenceWrite applyAppearancePreferences(const QJsonObject &changes, quint64 expectedRevision);
+xerahs::editor::PreferenceWrite applyToolbarPreferences(const QJsonArray &items, quint64 expectedRevision);
 QString rememberEditorWindowState(const QJsonObject &state);
 QString rememberEditorImage(const QString &absolutePath);
 QString editorPreferenceDiagnosticMessage(const QString &diagnostic);

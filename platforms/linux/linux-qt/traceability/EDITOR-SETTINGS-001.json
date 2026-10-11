@@ -35,7 +35,10 @@
     "platforms/linux/linux-qt/app/AppearanceDialog.h",
     "platforms/linux/linux-qt/app/AppearanceDialog.cpp",
     "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.h",
-    "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.cpp"
+    "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.cpp",
+    "platforms/linux/linux-qt/app/NativeEditorToolbar.h",
+    "platforms/linux/linux-qt/app/NativeEditorToolbar.cpp",
+    "platforms/linux/linux-qt/app/ToolbarDialog.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
@@ -50,7 +53,8 @@
     "platforms/linux/linux-qt/tests/NativeDesktopAppearanceTest.cpp",
     "platforms/linux/linux-qt/tests/NativeEditorAppearanceTest.cpp",
     "platforms/linux/linux-qt/tests/appearance-test-bus.conf",
-    "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp"
+    "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+    "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
   ],
   "requirements": {
     "ESET-001": {
@@ -117,13 +121,13 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Production Qt Core toolbar placements validate bounded stable IDs, Boolean visibility, nullable group defaults and locale-independent additional hotkeys. Duplicate actions/gestures, malformed chords and protected/reserved collisions are rejected atomically. Compatible future entries remain inactive, survive field recovery/save/reset/restart, and cannot be introduced or edited by ordinary changes. Core independent references and private-file restart tests cover this foundation. Native action mapping, customization/dispatch, complete action coverage and shared ID/default/format/compatibility qualification remain Required."
+      "note": "Production Qt Core toolbar placements validate bounded stable IDs, Boolean visibility, nullable group defaults and locale-independent additional hotkeys. Duplicate actions/gestures, malformed chords and protected/reserved collisions are rejected atomically. Compatible future entries remain inactive, survive field recovery/save/reset/restart, and cannot be introduced or edited by ordinary changes. Native mapping reuses all 37 current editor commands; hidden group boundaries carry to the next visible command and unavailable entries remain read-only. Core independent references and native private-file/control/restart tests cover this subset. Complete contracted action coverage and shared ID/default/format/compatibility qualification remain Required."
     },
     "ESET-011": {
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Production toolbar reset restores known candidate defaults while preserving compatible extension properties and inactive unknown entries. Explicit empty placement lists remain empty. Native reorder/visibility/group/hotkey controls, atomic Apply/Cancel and guaranteed reachable recovery surfaces remain Required."
+      "note": "Native customization provides reorder, visibility, nullable grouping, additional hotkeys and draft reset for the current command registry. Apply persists one validated change before publishing across windows; Cancel, invalid/locked/stale/read-only writes preserve the active layout and stored bytes. Reset preserves compatible extensions and inactive unknown entries. Explicit empty placement lists remain empty; fixed menus, toolbar preferences, show-toolbar and close remain reachable. Tests exercise actual native cell editing, controls, multi-window/restart and real editor files/checkpoint/undo/redo isolation. Complete command coverage, shared metadata and physical keyboard/accessibility qualification remain Required."
     },
     "ESET-012": {
       "disposition": "Required",
@@ -153,13 +157,13 @@
         "recent-deduplication",
         "unknown-round-trip"
       ],
-      "note": "All three published operations call production code. Independent core and real native-control tests cover current field boundaries, missing markers, newer/unreadable preservation, unknown round-trip, atomic failures, private files, privacy-pruned recovery, restart, Apply/Cancel, capped stale revisions and actual image Open/Save. Every remaining field, supported upgrades, all other platform adapters and acceptance reviews remain Required. Drawing-default tests now add canonical alpha, non-persistent aliases, invalid/cancelled/reset/locked/stale drafts, actual color pickers, multi-window creation-only effects, preserved redo, session replacement and PNG/sidecar/restart evidence. Window boundary, type, independent geometry and disabled-memory recovery tests cover the production core; native port, actual editor lifecycle/display recovery, memory toggles, cancellation, failure, restart and preserved source/checkpoint/redo evidence are now present. Physical display and acceptance review remain Required. Appearance evidence adds independent sRGB references, core/desktop precedence and invalid boundaries, private D-Bus snapshot/signal/race/restart transport, native Apply/Cancel/reset/stale/locking/picker/focus/accessibility and actual editor image/history isolation."
+      "note": "All three published operations call production code. Independent core and real native-control tests cover current field boundaries, missing markers, newer/unreadable preservation, unknown round-trip, atomic failures, private files, privacy-pruned recovery, restart, Apply/Cancel, capped stale revisions and actual image Open/Save. Every remaining field, supported upgrades, all other platform adapters and acceptance reviews remain Required. Drawing-default tests now add canonical alpha, non-persistent aliases, invalid/cancelled/reset/locked/stale drafts, actual color pickers, multi-window creation-only effects, preserved redo, session replacement and PNG/sidecar/restart evidence. Window boundary, type, independent geometry and disabled-memory recovery tests cover the production core; native port, actual editor lifecycle/display recovery, memory toggles, cancellation, failure, restart and preserved source/checkpoint/redo evidence are now present. Physical display and acceptance review remain Required. Appearance evidence adds independent sRGB references, core/desktop precedence and invalid boundaries, private D-Bus snapshot/signal/race/restart transport, native Apply/Cancel/reset/stale/locking/picker/focus/accessibility and actual editor image/history isolation. Toolbar evidence adds core collision/boundary/recovery references, real delegate editing, native Apply/Cancel/reset/failure/restart, inactive unknown preservation, multi-window layout and protected/additional dispatch with actual image/checkpoint/redo isolation."
     },
     "ESET-016": {
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Existing native editor actions, modal and text-entry precedence have native tests. Complete shortcut catalog and persistent custom-hotkey collision validation remain Required. Production toolbar policy now reserves the complete catalogue and native selection/navigation/window gestures, with duplicate/canonical collision tests; native custom-hotkey dispatch and full gesture coverage remain Required."
+      "note": "Production toolbar policy reserves the complete shortcut catalogue and native selection/navigation/window gestures, with duplicate/canonical collision tests. Native additional bindings invoke actual enabled actions, retain protected defaults, avoid duplicate registration of an identical protected binding and yield to text entry, modal/popup widgets and pending editor operations or gestures. Tests exercise hidden/menu commands, actual additional/protected key dispatch, native text undo, disabled/busy/modal guards and real editor history. Complete contracted shortcut/command coverage, physical keyboard and assistive-technology qualification remain Required."
     }
   }
 }

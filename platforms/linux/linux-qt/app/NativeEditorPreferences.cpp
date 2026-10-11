@@ -34,10 +34,12 @@ PreferenceWrite publish(EditorPreferences next) {
   // would reset it and allow an older modal draft to overwrite an incoming Open.
   const bool changed = drawingChanged(state.current, next);
   const bool appearance = appearanceChanged(state.current, next);
+  const bool toolbar = state.current.values.value(u"ToolbarItems") != next.values.value(u"ToolbarItems");
   const bool memoryChanged = state.current.values.value(u"RememberWindowState") != next.values.value(u"RememberWindowState");
   state.current = std::move(next); ++state.revision;
   if (changed) emit nativeEditorPreferenceEvents().drawingDefaultsChanged();
   if (appearance) emit nativeEditorPreferenceEvents().appearanceChanged();
+  if (toolbar) emit nativeEditorPreferenceEvents().toolbarChanged();
   if (memoryChanged) emit nativeEditorPreferenceEvents().windowMemoryChanged(state.current.values.value(u"RememberWindowState").toBool());
   return {true, {}};
 }
@@ -60,6 +62,8 @@ QStringList initializeNativeEditorPreferences(const QString &path) {
   ++state.revision;
   if (drawingChanged(before, state.current)) emit nativeEditorPreferenceEvents().drawingDefaultsChanged();
   if (appearanceChanged(before, state.current)) emit nativeEditorPreferenceEvents().appearanceChanged();
+  if (before.values.value(u"ToolbarItems") != state.current.values.value(u"ToolbarItems"))
+    emit nativeEditorPreferenceEvents().toolbarChanged();
   if (before.values.value(u"RememberWindowState") != state.current.values.value(u"RememberWindowState"))
     emit nativeEditorPreferenceEvents().windowMemoryChanged(state.current.values.value(u"RememberWindowState").toBool());
   return state.store ? state.store->diagnostics() : QStringList{};
@@ -118,6 +122,14 @@ QString rememberEditorWindowState(const QJsonObject &window) {
   for (auto it = window.begin(); it != window.end(); ++it) if (current.values.value(it.key()) != it.value()) changed = true;
   if (!changed) return {};
   return applyWindowPreferences(window, host().revision).diagnostic;
+}
+PreferenceWrite applyToolbarPreferences(const QJsonArray &items, quint64 expectedRevision) {
+  auto &state = host();
+  if (state.revision != expectedRevision) return {false, QStringLiteral("settings-changed-in-session")};
+  auto changed = changeEditorPreferences(state.current, {{QStringLiteral("ToolbarItems"), items}});
+  if (!changed.preferences) return {false, changed.diagnostics.value(0)};
+  changed.preferences->recent = state.current.recent;
+  return publish(std::move(*changed.preferences));
 }
 QString rememberEditorImage(const QString &absolutePath) {
   const auto &current = host().current;

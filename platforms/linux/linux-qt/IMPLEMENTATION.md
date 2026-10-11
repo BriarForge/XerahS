@@ -54,6 +54,13 @@ The next editor work follows these dependencies:
    of preferences; private-bus tests cover wire types, live changes, stale
    snapshots, missing services and owner restart. Physical style/focus and
    assistive-technology qualification remain Required.
+   Native toolbar customization now reorders, shows/hides and groups all 37
+   current commands, validates additional hotkeys and applies or cancels one
+   atomic draft. Fixed menus and protected shortcuts remain reachable with an
+   empty toolbar. Native input tests cover text/modal/busy precedence, disabled
+   commands, live cell editing, multiple windows, restart and preserved image
+   files/checkpoints/redo. Complete command coverage, shared metadata and
+   physical keyboard/accessibility qualification remain Required.
    Continue complete settings metadata and
    downstream preferences, independent whole-file recovery and review gates
    under EDITOR-SETTINGS-001, then general affine annotations, inserted images

@@ -22,6 +22,7 @@ public:
   void zoomToFit();
   void setCropTool(bool active);
   void sourceChanged();
+  bool interactionActive() const { return m_drag.has_value() || m_moving || m_panning; }
   // Adopt an already prepared session without rebuilding actions or controls.
   void resetDocument(xerahs::editor::EditorSession &session, const QImage &displaySource);
 

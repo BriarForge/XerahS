@@ -320,6 +320,22 @@ Nonfatal preservation warnings do not make an otherwise valid atomic save fail.
 Core tests cover independent gesture references, collection/type/length bounds,
 protected/reserved collisions, explicit empty layouts, nullable groups, isolated
 recovery, reset, extensions, inactive future data, real private storage and
-restart. Native customization controls, live layout/dispatch, complete command
-coverage, physical keyboard/accessibility qualification and shared semantic
-acceptance remain Required.
+restart. Native `ToolbarDialog` provides reorder, show/hide, nullable grouping,
+additional hotkeys and draft reset for the 37 currently registered editor
+commands. Apply saves before publishing to every open editor; Cancel,
+invalid/locked/stale/read-only writes leave the layout and preferences intact.
+The active native hotkey cell editor is committed before Apply reads the draft.
+Unknown entries are read-only and retain their original JSON.
+
+`NativeEditorToolbar` reuses production actions. Hidden group boundaries carry
+forward to the next visible command, without leading separators. Removing a
+toolbar placement leaves its fixed menu and protected shortcut available;
+Preferences/Toolbar, View/Show Toolbar and File/Close Editor remain reachable
+with an empty layout. Additional shortcuts share command enablement and yield
+to text entry, modal/popup widgets and pending editor operations or gestures.
+An additional binding equal to its own protected binding is not registered
+twice. Native tests cover real delegate editing, atomic controls, multiple
+windows, restart, dispatch, text undo, preserved recent-list authority and
+actual editor files/checkpoints/redo. Complete contracted command coverage,
+physical keyboard/accessibility qualification and shared ID/default/format
+and compatibility acceptance remain Required.

@@ -66,6 +66,13 @@ roles. Native controls apply/reset/cancel atomically; editor palettes follow
 desktop changes without altering application-native palette authority,
 documents or history. The Settings observer uses asynchronous read-only D-Bus
 with owner/stale-reply recovery, and a private-bus fixture verifies transport.
+`ToolbarPreferences` validates persistent placements and protected hotkey
+collisions in Qt Core. Native customization drafts reorder/show/hide/group
+commands and reset without persistence until Apply. `NativeEditorToolbar`
+reuses actual editor actions, keeps fixed menus and protected shortcuts
+reachable with an empty toolbar, and gives text/modal/busy input precedence.
+Native tests cover atomic failure/cancellation, live editing and dispatch,
+multiple windows, restart and preserved image/checkpoint/history state.
 Full field coverage and review gates remain required;
 [PREFERENCES-POLICY.md](PREFERENCES-POLICY.md)
 records implemented metadata, compatibility/recovery limits and review gates.

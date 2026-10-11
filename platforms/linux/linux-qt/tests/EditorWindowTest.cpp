@@ -24,6 +24,7 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QLabel>
+#include <QJsonArray>
 #include <QLineEdit>
 #include <QLockFile>
 #include <QProgressBar>
@@ -39,6 +40,9 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTimer>
+#include <QTableWidget>
+#include <QToolBar>
+#include <QScopeGuard>
 #include <cmath>
 
 using namespace xerahs::app;
@@ -171,6 +175,85 @@ class EditorWindowTest : public QObject {
 private slots:
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  void toolbarApplyKeepsImageCheckpointAndRedoWhileHiddenCommandsRemainReachable() {
+    QTemporaryDir temporary; const auto image = temporary.filePath("input.png"), settings = temporary.filePath("native/settings.json");
+    QVERIFY(fixture().save(image)); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    std::unique_ptr<EditorWindow> one(EditorWindow::open(image)), two(EditorWindow::open(image)); QVERIFY(one && two);
+    one->show(); two->show(); auto *canvas = one->findChild<EditorCanvas *>(); QVERIFY(canvas); drawRectangle(*canvas);
+    trigger(*one, "saveImage"); trigger(*one, QString("canvasAction%1").arg(int(CanvasAction::RotateClockwise))); trigger(*one, "undo");
+    const auto raster = storedBytes(image), sidecar = storedBytes(image + ".xann");
+    QVERIFY(!raster.isEmpty() && !sidecar.isEmpty());
+    const auto title = one->windowTitle(); const auto palette = one->palette();
+    QVERIFY(one->findChild<QAction *>("undo")->isEnabled() && one->findChild<QAction *>("redo")->isEnabled());
+    bool edited = false;
+    QTimer::singleShot(0, [&] {
+      auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog);
+      const auto close = qScopeGuard([&] { if (dialog->isVisible()) dialog->reject(); });
+      QCOMPARE(dialog->objectName(), QString("toolbarDialog")); QVERIFY(!one->close());
+      auto *table = dialog->findChild<QTableWidget *>("toolbarItems"); QVERIFY(table); int undo = -1;
+      for (int row = 0; row < table->rowCount(); ++row) {
+        table->item(row, 1)->setCheckState(Qt::Unchecked);
+        if (table->item(row, 0)->data(Qt::UserRole).value<QJsonObject>().value("Id") == QJsonValue("undo")) undo = row;
+      }
+      QVERIFY(undo >= 0); table->item(undo, 3)->setText("F6"); table->setCurrentCell(undo, 0);
+      while (table->currentRow() > 0) dialog->findChild<QPushButton *>("toolbarUp")->click();
+      dialog->findChild<QPushButton *>("applyToolbar")->click(); QVERIFY(!dialog->isVisible()); edited = true;
+    });
+    trigger(*one, "customizeToolbar"); QVERIFY(edited);
+    QVERIFY(one->findChild<QToolBar *>("editorToolbar")->actions().isEmpty());
+    QVERIFY(two->findChild<QToolBar *>("editorToolbar")->actions().isEmpty());
+    QCOMPARE(storedBytes(image), raster); QCOMPARE(storedBytes(image + ".xann"), sidecar);
+    QCOMPARE(one->windowTitle(), title); QCOMPARE(one->palette(), palette);
+    QVERIFY(one->findChild<QAction *>("undo")->isEnabled() && one->findChild<QAction *>("redo")->isEnabled());
+    const auto saved = nativeEditorPreferences().values.value("ToolbarItems").toArray(); QCOMPARE(saved.at(0).toObject().value("Id"), QJsonValue("undo"));
+    for (const auto *name : {"saveImage", "undo", "redo", "closeEditor", "customizeToolbar", "toggleToolbars"}) {
+      auto *action = one->findChild<QAction *>(name); QVERIFY(action && action->isVisible());
+      bool menu = false; for (auto *object : action->associatedObjects()) menu = menu || qobject_cast<QMenu *>(object);
+      QVERIFY(menu);
+    }
+    one->activateWindow(); canvas->setFocus(); QTRY_VERIFY(one->isActiveWindow()); QTRY_COMPARE(QApplication::focusWidget(), canvas);
+    const auto shown = one->findChild<QAction *>("toggleToolbars")->isChecked();
+    QTest::keyClick(canvas, Qt::Key_H, Qt::ControlModifier); QCOMPARE(one->findChild<QAction *>("toggleToolbars")->isChecked(), !shown);
+    QTest::keyClick(canvas, Qt::Key_H, Qt::ControlModifier); QCOMPARE(one->findChild<QAction *>("toggleToolbars")->isChecked(), shown);
+    QTest::keyClick(canvas, Qt::Key_F6); QVERIFY(!one->findChild<QAction *>("undo")->isEnabled()); QVERIFY(one->windowTitle().contains(QChar(0x2022)));
+    QTest::keyClick(canvas, Qt::Key_Y, Qt::ControlModifier); QCOMPARE(one->windowTitle(), title); QVERIFY(one->findChild<QAction *>("redo")->isEnabled());
+    QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier | Qt::ShiftModifier);
+    QVERIFY(one->findChild<QStatusBar *>()->currentMessage().contains("40 × 60"));
+    QCOMPARE(storedBytes(image), raster); QCOMPARE(storedBytes(image + ".xann"), sidecar);
+    QVERIFY(initializeNativeEditorPreferences(settings).isEmpty()); std::unique_ptr<EditorWindow> restarted(EditorWindow::open(image)); QVERIFY(restarted);
+    QVERIFY(restarted->findChild<QToolBar *>("editorToolbar")->actions().isEmpty());
+    QCOMPARE(nativeEditorPreferences().values.value("ToolbarItems"), QJsonValue(saved));
+  }
+  void cancelledOrFailedToolbarDraftPreservesActualEditorHistory_data() {
+    QTest::addColumn<bool>("fail"); QTest::newRow("cancel") << false; QTest::newRow("locked") << true;
+  }
+  void cancelledOrFailedToolbarDraftPreservesActualEditorHistory() {
+    QFETCH(bool, fail); QTemporaryDir temporary; const auto image = temporary.filePath("input.png"), settings = temporary.filePath("native/settings.json");
+    QVERIFY(fixture().save(image)); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    QVERIFY(applyToolbarPreferences(nativeEditorPreferences().values.value("ToolbarItems").toArray(), nativeEditorPreferenceRevision()).saved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(image)); QVERIFY(window); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas); drawRectangle(*canvas); trigger(*window, "saveImage");
+    trigger(*window, QString("canvasAction%1").arg(int(CanvasAction::RotateClockwise))); trigger(*window, "undo");
+    const auto before = storedBytes(settings), raster = storedBytes(image), sidecar = storedBytes(image + ".xann");
+    QVERIFY(!before.isEmpty() && !raster.isEmpty() && !sidecar.isEmpty());
+    const auto title = window->windowTitle();
+    const auto layout = window->findChild<QToolBar *>("editorToolbar")->actions(); const auto revision = nativeEditorPreferenceRevision();
+    QLockFile lock(settings + ".lock"); if (fail) QVERIFY(lock.tryLock(0)); bool edited = false;
+    QTimer::singleShot(0, [&] {
+      auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog);
+      const auto close = qScopeGuard([&] { if (dialog->isVisible()) dialog->reject(); });
+      auto *table = dialog->findChild<QTableWidget *>("toolbarItems"); QVERIFY(table);
+      table->item(0, 1)->setCheckState(Qt::Unchecked); table->item(0, 3)->setText("F6");
+      if (fail) { dialog->findChild<QPushButton *>("applyToolbar")->click(); QVERIFY(dialog->isVisible()); QVERIFY(!dialog->findChild<QLabel *>("toolbarError")->text().isEmpty()); }
+      dialog->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Cancel)->click(); edited = true;
+    });
+    trigger(*window, "customizeToolbar"); QVERIFY(edited);
+    QCOMPARE(window->findChild<QToolBar *>("editorToolbar")->actions(), layout); QCOMPARE(window->windowTitle(), title);
+    QVERIFY(window->findChild<QAction *>("undo")->isEnabled() && window->findChild<QAction *>("redo")->isEnabled());
+    QCOMPARE(storedBytes(settings), before); QCOMPARE(storedBytes(image), raster); QCOMPARE(storedBytes(image + ".xann"), sidecar);
+    QCOMPARE(nativeEditorPreferenceRevision(), revision); trigger(*window, "redo");
+    QVERIFY(window->findChild<QStatusBar *>()->currentMessage().contains("40 × 60"));
+  }
   void appearanceApplyUpdatesActualEditorsWithoutEditingPixelsCheckpointOrRedo() {
     QTemporaryDir dir; const QString settings = dir.filePath("native/settings.json"), first = dir.filePath("first.png"), second = dir.filePath("second.png");
     QVERIFY(fixture().save(first)); QVERIFY(fixture().save(second)); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
