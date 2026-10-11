@@ -3,6 +3,7 @@
 #include "EditorCanvas.h"
 #include "EditorCanvasOperations.h"
 #include "CanvasRotationDialog.h"
+#include "ImageComparisonDialog.h"
 #include "EditorSource.h"
 
 #include <QAction>
@@ -149,6 +150,9 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   QAction *clear = imageMenu->addAction(QStringLiteral("Clear Image and Annotations…"));
   clear->setObjectName(QStringLiteral("clearImage"));
   connect(clear, &QAction::triggered, this, &EditorWindow::clearImage);
+  QAction *compare = imageMenu->addAction(QStringLiteral("Compare Images…"));
+  compare->setObjectName(QStringLiteral("compareImages"));
+  connect(compare, &QAction::triggered, this, &EditorWindow::compareImages);
 
   auto *bar = addToolBar(QStringLiteral("Edit"));
   bar->setMovable(false);
@@ -165,6 +169,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   m_redo->setObjectName(QStringLiteral("redo"));
   m_redo->setShortcut(QKeySequence::Redo);
   m_delete = bar->addAction(QStringLiteral("Delete"));
+  m_delete->setObjectName(QStringLiteral("deleteSelection"));
   m_rotate = bar->addAction(QStringLiteral("Rotate selection…"));
   bar->addSeparator();
   QAction *stroke = bar->addAction(QStringLiteral("Stroke colour…"));
@@ -433,6 +438,13 @@ void EditorWindow::applyCanvas(CanvasOperation operation) {
   auto prepared = worker.get();
   if (cancelled.load() || prepared.result.error == QStringLiteral("canvas-cancelled")) return;
   commitCanvas(std::move(prepared), state);
+}
+
+void EditorWindow::compareImages() {
+  if (m_canvasOperationPending) return;
+  const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
+  ImageComparisonDialog dialog(m_session->document(), m_image, this);
+  dialog.exec();
 }
 
 void EditorWindow::commitCanvas(PreparedCanvasEdit prepared, quint64 state) {

@@ -108,7 +108,38 @@ checkpoint. Already empty objects or an already cleared canvas add no history.
 Neither command alters disk files until an explicit save. That save follows the
 existing explicit no-annotation sidecar removal policy.
 
-General affine annotations, inserted images,
-background composition and comparison remain subsequent work.
+Image comparison accepts two validated raster files, or the current rendered
+editor snapshot and a raster file. File comparison reads the raster itself;
+it does not restore an editable source from its `.xann` sidecar. The shared
+native decoder checks dimensions before allocating pixels, applies orientation
+once, and retains alpha and source colour metadata. Private display copies
+convert to sRGB; untagged inputs are treated as sRGB. Current annotations are
+rendered onto that display copy by the authoritative renderer. Visible
+unsupported annotation types prevent a faithful current snapshot and report an
+error; choosing two supported raster files remains available.
+
+The union canvas is `max(widths) × max(heights)`, with no pixel resampling.
+Top-left alignment uses zero offsets. Centered alignment uses integer
+`floor((union_dimension - input_dimension) / 2)` offsets, leaving odd extra
+padding on the right/bottom. Unmatched areas are transparent. Each input and
+the union canvas obey the existing dimension/pixel limits. The first image
+occupies columns before `floor(union_width * reveal / 1000)`; the second
+occupies the remaining columns. The native slider exposes 0..100 percent
+(mapped to per-mille reveal), arrow steps, page steps and Home/End endpoints.
+The view also supports dragging and arrow/Home/End keys with a visible focus
+indicator. Slider position does not allocate or rerender a comparison raster;
+the view clips the validated display copies using the production layout/split.
+
+File reading, native decoding, colour conversion and current-image rendering
+run on a worker with progress and cooperative cancellation. Reading and
+rendering check cancellation between chunks/rows; native decode/colour calls
+check it before and after completion. A cancelled/failed replacement or native
+file-picker cancellation keeps the previous pair and divider. Close waits for
+the actual worker to stop before releasing its immutable snapshots. Comparison
+never commits to the session or changes source pixels/profiles, annotations,
+selection, history, dirty checkpoints, disk files, or the main viewport.
+
+General affine annotations, inserted images and
+background composition remain subsequent work.
 Shared goldens and the remaining qualification gates in
 `product-contract/READINESS.md` still apply.

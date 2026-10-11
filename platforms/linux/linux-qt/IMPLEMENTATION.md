@@ -19,8 +19,10 @@ The next editor work follows these dependencies:
    history with all three canvas
    vectors passing. Auto crop has explicit border/alpha/colour rules; custom
    rotation has a cancellable native preview. Continue with general affine
-   annotations, then insert, background composition and comparison. Flatten of
-   represented annotations and distinct clear commands now preserve complete
+   annotations, then insert and background composition. Native image comparison
+   now accepts two raster files or a rendered editor snapshot with a file,
+   exposes accessible divider controls, and keeps source/session state immutable.
+   Flatten of represented annotations and distinct clear commands preserve complete
    history; flattening separate background layers follows their implementation.
 4. Expand annotation tools, effects, output actions, settings and utilities,
    alongside the remaining capture and post-capture integrations.

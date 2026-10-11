@@ -8,6 +8,7 @@
 #include "image-editor/AnnotationRenderer.h"
 #include "image-editor/EditorSession.h"
 #include "image-editor/EditorViewport.h"
+#include "image-editor/ImageComparison.h"
 #include "EditorCanvasOperations.h"
 #include <QBuffer>
 #include "naming/FilenameGenerator.h"
@@ -637,6 +638,48 @@ QJsonObject runEditorSession(const QString &operation, const QJsonObject &input)
 }
 
 QJsonObject runEditorCanvas(const QString &operation, const QJsonObject &input) {
+  if (operation == u"compare-images") {
+    const QJsonObject first = input.value(u"first").toObject(), second = input.value(u"second").toObject();
+    const auto extent = [](const QJsonObject &image) {
+      const QJsonArray size = image.value(u"size").toArray();
+      return ed::ImageExtent{size.at(0).toInteger(), size.at(1).toInteger()};
+    };
+    const QString alignmentName = input.value(u"alignment").toString(QStringLiteral("top-left"));
+    if (alignmentName != u"top-left" && alignmentName != u"center") return adapterError(QStringLiteral("unknown comparison alignment"));
+    const auto alignment = alignmentName == u"center" ? ed::ComparisonAlignment::Center : ed::ComparisonAlignment::TopLeft;
+    const auto geometry = ed::comparisonLayout(extent(first), extent(second), alignment);
+    if (geometry.error) return QJsonObject{{QStringLiteral("error"), *geometry.error}};
+    const int reveal = input.value(u"reveal").toInt(-1);
+    if (!ed::comparisonSplitColumn(*geometry.layout, reveal)) return QJsonObject{{QStringLiteral("error"), ed::diagnostic::documentInvalid}};
+    const auto injectedImage = [](const QJsonObject &json, ed::ImageExtent size) -> std::optional<ed::ArgbImage> {
+      if (!json.contains(u"pixels")) {
+        const auto fill = ed::parseColor(json.value(u"fill").toString(QStringLiteral("#00000000")));
+        if (!fill) return std::nullopt;
+        return ed::solidImage(size.width, size.height, *fill);
+      }
+      const QJsonArray values = json.value(u"pixels").toArray();
+      if (values.size() != size.width * size.height) return std::nullopt;
+      ed::ArgbImage image{size.width, size.height, {}};
+      image.pixels.reserve(std::size_t(values.size()));
+      for (const auto &value : values) {
+        const auto color = ed::parseColor(value.toString());
+        if (!color) return std::nullopt;
+        image.pixels.push_back(*color);
+      }
+      return image;
+    };
+    const auto firstImage = injectedImage(first, geometry.layout->first), secondImage = injectedImage(second, geometry.layout->second);
+    if (!firstImage || !secondImage) return adapterError(QStringLiteral("invalid injected comparison pixels"));
+    const auto result = ed::composeComparison(*firstImage, *secondImage, alignment, reveal);
+    if (result.error) return QJsonObject{{QStringLiteral("error"), *result.error}};
+    QJsonArray pixels;
+    for (ed::Argb pixel : result.image->pixels) pixels.append(ed::formatColor(pixel));
+    return QJsonObject{{QStringLiteral("canvas_size"), QJsonArray{result.layout->canvas.width, result.layout->canvas.height}},
+        {QStringLiteral("first_offset"), QJsonArray{result.layout->firstOffset.x, result.layout->firstOffset.y}},
+        {QStringLiteral("second_offset"), QJsonArray{result.layout->secondOffset.x, result.layout->secondOffset.y}},
+        {QStringLiteral("split_column"), *ed::comparisonSplitColumn(*result.layout, reveal)},
+        {QStringLiteral("pixels"), pixels}, {QStringLiteral("error"), QJsonValue::Null}};
+  }
   if (operation != u"apply-operations") return adapterError(QStringLiteral("unsupported operation: ") + operation);
   const QJsonArray size = input.value(u"source_size").toArray();
   const qint64 width = size.at(0).toInteger(), height = size.at(1).toInteger();

@@ -20,18 +20,20 @@
     "platforms/linux/linux-qt/src/image-editor/CanvasOperations.cpp",
     "platforms/linux/linux-qt/app/EditorCanvasOperations.cpp",
     "platforms/linux/linux-qt/src/image-editor/SourceBinding.h",
-    "platforms/linux/linux-qt/src/image-editor/SourceBinding.cpp"
+    "platforms/linux/linux-qt/src/image-editor/SourceBinding.cpp",
+    "platforms/linux/linux-qt/app/RasterSource.h",
+    "platforms/linux/linux-qt/app/RasterSource.cpp"
   ],
   "requirements": {
     "ES-001": {
       "status": "implemented",
       "vectors": [],
-      "note": "app/EditorSource.cpp decodes with header size limits and typed diagnostics, never modifying the file; verified by tests/EditorSourceTest.cpp."
+      "note": "EditorSource shares the RasterSource native decoder, with header limits before pixel allocation, chunk-level cancellation, original file-byte snapshots and typed diagnostics. EditorSourceTest verifies unsupported/empty inputs, oversized BMP header rejection before decode, PNG alpha/profile preservation and untouched files."
     },
     "ES-002": {
       "status": "partial",
       "vectors": [],
-      "note": "Orientation is normalized once at load (QImageReader auto-transform) and pixels are held as non-premultiplied ARGB32; colour profile conversion is not yet applied."
+      "note": "Orientation is normalized once with QImageReader auto-transform and pixels remain non-premultiplied ARGB32. Independent EXIF/JPEG mapping tests also verify embedded PNG has the same orientation; PNG tests preserve alpha and colour metadata. Comparison converts only private display copies to sRGB. Full editor colour-profile conversion remains pending."
     },
     "ES-003": {
       "status": "implemented",

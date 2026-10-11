@@ -25,6 +25,7 @@ enum class RenderError {
   InvalidSource,
   InvalidGeometry,
   Cancelled,
+  UnsupportedAnnotation,
 };
 
 struct RenderResult {

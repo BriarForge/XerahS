@@ -31,6 +31,8 @@ add_library(xerahs_core STATIC
   src/image-editor/EditorViewport.h
   src/image-editor/SourceBinding.cpp
   src/image-editor/SourceBinding.h
+  src/image-editor/ImageComparison.cpp
+  src/image-editor/ImageComparison.h
   src/naming/FilenameGenerator.cpp
   src/naming/FilenameGenerator.h
 )
@@ -42,7 +44,9 @@ target_compile_options(xerahs_core PRIVATE -Wall -Wextra -Wpedantic
 
 # Native image codecs are an I/O boundary; all canvas product decisions stay
 # in the Qt Core library. The adapter and app share the same PNG preparation.
-add_library(xerahs_editor_codecs STATIC app/EditorCanvasOperations.cpp app/EditorCanvasOperations.h)
+add_library(xerahs_editor_codecs STATIC app/EditorCanvasOperations.cpp app/EditorCanvasOperations.h
+                                      app/RasterSource.cpp app/RasterSource.h
+                                      app/ComparisonImages.cpp app/ComparisonImages.h)
 target_include_directories(xerahs_editor_codecs PUBLIC app)
 target_link_libraries(xerahs_editor_codecs PUBLIC xerahs_core Qt6::Gui)
 target_compile_options(xerahs_editor_codecs PRIVATE -Wall -Wextra -Wpedantic)
@@ -66,6 +70,8 @@ add_executable(xerahs
   app/EditorWindow.h
   app/CanvasRotationDialog.cpp
   app/CanvasRotationDialog.h
+  app/ImageComparisonDialog.cpp
+  app/ImageComparisonDialog.h
   app/PortalScreenshot.cpp
   app/PortalScreenshot.h
   app/RegionOverlay.cpp
@@ -102,7 +108,7 @@ add_test(NAME editor-session COMMAND editor-session-test)
 add_executable(editor-source-test tests/EditorSourceTest.cpp app/EditorSource.cpp)
 set_target_properties(editor-source-test PROPERTIES AUTOMOC ON)
 target_include_directories(editor-source-test PRIVATE app)
-target_link_libraries(editor-source-test PRIVATE xerahs_core Qt6::Gui Qt6::Test)
+target_link_libraries(editor-source-test PRIVATE xerahs_editor_codecs Qt6::Test)
 add_test(NAME editor-source COMMAND editor-source-test)
 set_tests_properties(editor-source PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
 
@@ -123,9 +129,22 @@ set_target_properties(canvas-operations-test PROPERTIES AUTOMOC ON)
 target_link_libraries(canvas-operations-test PRIVATE xerahs_editor_codecs Qt6::Test)
 add_test(NAME canvas-operations COMMAND canvas-operations-test)
 
+add_executable(image-comparison-test tests/ImageComparisonTest.cpp)
+set_target_properties(image-comparison-test PROPERTIES AUTOMOC ON)
+target_link_libraries(image-comparison-test PRIVATE xerahs_editor_codecs Qt6::Test)
+add_test(NAME image-comparison COMMAND image-comparison-test)
+
+add_executable(image-comparison-dialog-test tests/ImageComparisonDialogTest.cpp
+               app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h)
+set_target_properties(image-comparison-dialog-test PROPERTIES AUTOMOC ON)
+target_link_libraries(image-comparison-dialog-test PRIVATE xerahs_editor_codecs Qt6::Widgets Qt6::Test)
+add_test(NAME image-comparison-dialog COMMAND image-comparison-dialog-test)
+set_tests_properties(image-comparison-dialog PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+
 add_executable(editor-window-test tests/EditorWindowTest.cpp app/EditorWindow.cpp app/EditorWindow.h
                app/EditorCanvas.cpp app/EditorCanvas.h app/EditorSource.cpp
-               app/CanvasRotationDialog.cpp app/CanvasRotationDialog.h)
+               app/CanvasRotationDialog.cpp app/CanvasRotationDialog.h
+               app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h)
 set_target_properties(editor-window-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-window-test PRIVATE xerahs_editor_codecs Qt6::Widgets Qt6::Test)
 add_test(NAME editor-window COMMAND editor-window-test)

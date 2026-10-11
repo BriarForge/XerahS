@@ -9,7 +9,7 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 | `FILENAME-GENERATION-001` | Core logic and conformance seam; no UI yet | 51 of 51 vectors pass; [traceability](traceability/FILENAME-GENERATION-001.json) |
 | `POST-CAPTURE-ACTIONS-001` | Pipeline engine and conformance seam; native actions, retry, and recovery not yet | 17 of 17 vectors pass; [traceability](traceability/POST-CAPTURE-ACTIONS-001.json) |
 | `REGION-CAPTURE-001` | Mapping, keyboard, compositing, last-region, and session state machine; no overlay or capture backend yet | 21 of 21 vectors pass; [traceability](traceability/REGION-CAPTURE-001.json) |
-| `EDITOR-CANVAS-001` | Viewport controls; native crop, auto crop, resize, rotation, flips, annotation flatten and clear commands; remaining image operations pending | All 3 published vectors plus native geometry, history, window and persistence tests; [traceability](traceability/EDITOR-CANVAS-001.json) |
+| `EDITOR-CANVAS-001` | Viewport controls; native crop, auto crop, resize, rotation, flips, annotation flatten, clear and image comparison; remaining image operations pending | All 3 published vectors plus native geometry, history, window, comparison and persistence tests; [traceability](traceability/EDITOR-CANVAS-001.json) |
 | `EDITOR-SESSION-001` | Document, `.xann` reader and writer, history, and export renderer; editor window with rectangle tool, selection, save, and sidecar reopen; resize and ordering by keyboard, arbitrary-angle rotation and export | 19 of 19 vectors pass; [traceability](traceability/EDITOR-SESSION-001.json) |
 
 The next implementation steps are tracked in [IMPLEMENTATION.md](IMPLEMENTATION.md).
@@ -42,6 +42,22 @@ An unreadable, corrupt or newer sidecar stops opening and leaves both files unto
 **Rotate Image…** previews the edited source and visible annotations with controls for clockwise angle, nearest/bilinear interpolation, canvas expansion or cropping, and uncovered-pixel colour/alpha. Changing controls cancels obsolete previews. Cancel preserves the document; OK applies the displayed edit as one undo step. Exact expanded quarter turns preserve pixels without interpolation.
 
 **Flatten** makes rendered visible annotations part of a new immutable source, removing only objects represented in that composite. Hidden or off-canvas objects remain; visible unsupported types prevent flattening. **Clear Annotations** keeps source pixels intact. **Clear Image and Annotations…** resets the canvas to transparent pixels after confirmation, with Save before Clear, Clear without Saving and Cancel for dirty documents. These operations preserve full Undo/Redo recovery and colour metadata. Unsupported annotation types appear as preserved placeholders in a native dock.
+
+**Compare Images…** accepts two raster files or the current rendered editor
+image plus a file. Top-left and centered alignment retain native pixel sizes
+and show unmatched areas as transparent. Private display copies use sRGB,
+with untagged images treated as sRGB. Move the divider by dragging, slider,
+arrows, or Home/End. Loading and current-image rendering expose progress and
+cancellation; failed or cancelled replacement keeps the prior pair. Comparison
+leaves editor history, dirty state, selection, viewport and files unchanged.
+File comparisons use the raster itself and do not load its editing sidecar.
+
+The canvas adapter also exposes `compare-images` over injected `first` and
+`second` objects containing `size` and either row-major `pixels` (ARGB hex
+strings) or a uniform `fill`, with `alignment` (`top-left` or `center`) and
+`reveal` (0..1000). This calls the production layout/compositor and returns
+canvas size, offsets, split column, pixels and a diagnostic. Published shared
+comparison vectors and full capability qualification remain pending.
 
 No settings are persisted yet, and the reference Avalonia app's configuration is never read or written.
 

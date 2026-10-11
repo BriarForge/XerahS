@@ -1,11 +1,17 @@
 // Load/save path of the editor (ES-001, ES-011, ES-016, ES-029) over real files.
 
 #include "EditorSource.h"
+#include "RasterSource.h"
+#include "ComparisonImages.h"
 
+#include <QBuffer>
+#include <QColorSpace>
 #include <QFile>
 #include <QImage>
+#include <QImageReader>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QtEndian>
 
 using namespace xerahs::app;
 using namespace xerahs::editor;
@@ -13,6 +19,83 @@ using namespace xerahs::editor;
 class EditorSourceTest : public QObject {
   Q_OBJECT
 private slots:
+  void rasterDecodePreservesAlphaProfileAndOriginalBytes() {
+    QTemporaryDir dir;
+    const QString path = dir.filePath("alpha.png");
+    QImage image(3, 2, QImage::Format_ARGB32);
+    image.fill(qRgba(64, 128, 192, 80));
+    image.setColorSpace(QColorSpace::SRgbLinear);
+    QVERIFY(image.save(path));
+    QFile file(path); QVERIFY(file.open(QIODevice::ReadOnly));
+    const QByteArray before = file.readAll(); file.close();
+    const auto loaded = loadRaster(path);
+    QVERIFY(loaded.diagnostic.isEmpty());
+    QCOMPARE(loaded.image, image);
+    QCOMPARE(loaded.image.colorSpace(), image.colorSpace());
+    QCOMPARE(loaded.fileBytes, before);
+    int percent = 0;
+    const auto cancelled = loadRaster(path, {[&] { return percent >= 20; }, [&](int p) { percent = p; }});
+    QCOMPARE(cancelled.diagnostic, QStringLiteral("canvas-cancelled"));
+    QVERIFY(cancelled.image.isNull() && cancelled.fileBytes.isEmpty());
+    QVERIFY(file.open(QIODevice::ReadOnly)); QCOMPARE(file.readAll(), before);
+  }
+
+  void orientationIsAppliedExactlyOnceToPixelsAndEmbeddedSource() {
+    QTemporaryDir dir;
+    QImage image(2, 3, QImage::Format_RGB32);
+    for (int y = 0; y < 3; ++y) for (int x = 0; x < 2; ++x)
+      image.setPixel(x, y, qRgb(x * 150, y * 90, 40));
+    QByteArray jpeg; QBuffer buffer(&jpeg); QVERIFY(buffer.open(QIODevice::WriteOnly));
+    QVERIFY(image.save(&buffer, "JPEG", 100)); buffer.close();
+    // Independent TIFF/EXIF fixture: little-endian orientation tag 6 (CW 90).
+    const QByteArray exif = QByteArray::fromHex("45786966000049492a0008000000010012010300010000000600000000000000");
+    QByteArray segment = QByteArray::fromHex("ffe1");
+    segment.append(char((exif.size() + 2) >> 8)); segment.append(char((exif.size() + 2) & 255)); segment.append(exif);
+    jpeg.insert(2, segment);
+    const QString path = dir.filePath("oriented.jpg");
+    QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); QCOMPARE(file.write(jpeg), jpeg.size()); file.close();
+    QImageReader rawReader(path); rawReader.setAutoTransform(false);
+    const QImage raw = rawReader.read().convertToFormat(QImage::Format_ARGB32);
+    QCOMPARE(raw.size(), QSize(2, 3));
+    const auto loaded = loadRaster(path); QVERIFY(loaded.diagnostic.isEmpty());
+    QCOMPARE(loaded.image.size(), QSize(3, 2));
+    for (int y = 0; y < 2; ++y) for (int x = 0; x < 3; ++x)
+      QCOMPARE(loaded.image.pixel(x, y), raw.pixel(y, 2 - x));
+    const auto source = loadSource(path); QVERIFY(source.document);
+    QCOMPARE(source.image, loaded.image);
+    const QImage embedded = QImage::fromData(source.document->sourceImagePng, "PNG");
+    QCOMPARE(embedded, loaded.image);
+    QVERIFY(file.open(QIODevice::ReadOnly)); QCOMPARE(file.readAll(), jpeg);
+  }
+
+  void rasterHeadersAreLimitedBeforePixelDecode() {
+    QTemporaryDir dir;
+    QByteArray bmp(54, '\0'); bmp[0] = 'B'; bmp[1] = 'M';
+    auto put32 = [&](int offset, quint32 value) { qToLittleEndian(value, bmp.data() + offset); };
+    put32(2, 54); put32(10, 54); put32(14, 40); put32(18, 100001); put32(22, 1);
+    bmp[26] = 1; bmp[28] = 32;
+    QFile file(dir.filePath("oversized.bmp")); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(bmp); file.close();
+    QImageReader reader(file.fileName()); QVERIFY(reader.canRead()); QCOMPARE(reader.size(), QSize(100001, 1));
+    const auto loaded = loadRaster(file.fileName());
+    QCOMPARE(loaded.diagnostic, diagnostic::sourceTooLarge);
+    QVERIFY(loaded.image.isNull() && loaded.fileBytes.isEmpty());
+  }
+
+  void comparisonLoadsTheRasterWithoutReadingOrChangingItsSidecar() {
+    QTemporaryDir dir;
+    const QString path = dir.filePath("raster.png");
+    QImage image(2, 3, QImage::Format_ARGB32); image.fill(qRgba(20, 40, 60, 80)); QVERIFY(image.save(path));
+    QFile sidecar(path + ".xann"); QVERIFY(sidecar.open(QIODevice::WriteOnly)); sidecar.write("corrupt"); sidecar.close();
+    QCOMPARE(loadSource(path).diagnostic, diagnostic::documentInvalid);
+    const auto comparison = loadComparisonImage(path); QVERIFY(comparison.diagnostic.isEmpty());
+    QCOMPARE(comparison.image.size(), image.size());
+    QCOMPARE(comparison.image.colorSpace(), QColorSpace(QColorSpace::SRgb));
+    for (int y = 0; y < image.height(); ++y) for (int x = 0; x < image.width(); ++x)
+      QCOMPARE(comparison.image.pixel(x, y), image.pixel(x, y));
+    QVERIFY(sidecar.open(QIODevice::ReadOnly)); QCOMPARE(sidecar.readAll(), QByteArray("corrupt"));
+    QCOMPARE(QImage(path), image);
+  }
+
   void rejectsNonImages() {
     QTemporaryDir dir;
     QFile f(dir.filePath("bad.png"));

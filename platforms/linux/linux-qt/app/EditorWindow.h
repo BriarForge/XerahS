@@ -37,6 +37,7 @@ private:
   void autoCropImage();
   void rotateImage();
   void clearImage();
+  void compareImages();
   void resizeImage(bool canvasOnly);
   void applyCanvas(xerahs::editor::CanvasOperation operation);
   void commitCanvas(PreparedCanvasEdit prepared, quint64 state);

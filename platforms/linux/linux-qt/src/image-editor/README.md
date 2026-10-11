@@ -19,6 +19,13 @@ Native PNG preparation stays at the image-codec I/O boundary, and
 state. [CANVAS-POLICY.md](CANVAS-POLICY.md) documents the retained-rectangle,
 anchor, sampling and history policies and remaining work.
 
+`ImageComparison` validates native-size layouts, computes divider columns and
+composes immutable pixel buffers. The native `ImageComparisonDialog` shares
+that layout/split, provides accessible keyboard and pointer controls, and
+prepares private sRGB display copies on a cancellable worker. `RasterSource`
+is the shared Qt image-decoder boundary used by editor opening and comparison;
+editing sidecar resolution remains exclusively in `EditorSource`.
+
 The native editor in `app/EditorWindow.cpp` and `app/EditorCanvas.cpp` loads sources, draws and manipulates
 rectangles, exposes undo/redo and save, and reopens editable sidecars. See the
 edition [implementation plan](../../IMPLEMENTATION.md) and

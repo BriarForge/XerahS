@@ -1,4 +1,5 @@
 #include "EditorSource.h"
+#include "RasterSource.h"
 
 #include "image-editor/AnnotationRenderer.h"
 
@@ -8,7 +9,6 @@
 #include <QDateTime>
 #include <QFile>
 #include <QFileInfo>
-#include <QImageReader>
 #include <QSaveFile>
 
 #include <new>
@@ -42,34 +42,10 @@ LoadedSource fail(const QString &diagnostic) {
 }  // namespace
 
 static LoadedSource loadSourceImpl(const QString &path) {
-  QFile file(path);
-  if (!file.open(QIODevice::ReadOnly)) return fail(diagnostic::sourceUnsupported);
-  const QByteArray bytes = file.readAll();
-  if (bytes.isEmpty()) return fail(diagnostic::sourceEmpty);
-
-  // ES-001: size limits are checked from the header before pixels are allocated.
-  QBuffer buffer;
-  buffer.setData(bytes);
-  buffer.open(QIODevice::ReadOnly);
-  QImageReader reader(&buffer);
-  reader.setAutoTransform(true);  // ES-002: orientation normalized once
-  if (!reader.canRead()) return fail(diagnostic::sourceUnsupported);
-  const QSize size = reader.size();
-  if (size.isValid()) {
-    if (size.width() < 1 || size.height() < 1) return fail(diagnostic::sourceEmpty);
-    if (size.width() > kMaxDimension || size.height() > kMaxDimension ||
-        static_cast<qint64>(size.width()) * size.height() > kMaxPixels) {
-      return fail(diagnostic::sourceTooLarge);
-    }
-  }
-  QImage image = reader.read();
-  if (image.isNull()) return fail(diagnostic::sourceCorrupt);
-  if (image.width() > kMaxDimension || image.height() > kMaxDimension ||
-      static_cast<qint64>(image.width()) * image.height() > kMaxPixels) {
-    return fail(diagnostic::sourceTooLarge);
-  }
-  image = image.convertToFormat(QImage::Format_ARGB32);
-  if (image.isNull()) return fail(diagnostic::sourceTooLarge);
+  const LoadedRaster raster = loadRaster(path);
+  if (!raster.diagnostic.isEmpty()) return fail(raster.diagnostic);
+  const QByteArray &bytes = raster.fileBytes;
+  const QImage &image = raster.image;
 
   QByteArray normalizedPng;
   QBuffer normalized(&normalizedPng);

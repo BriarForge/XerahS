@@ -4,6 +4,7 @@
 #include "EditorCanvas.h"
 #include "EditorSource.h"
 #include "CanvasRotationDialog.h"
+#include "ImageComparisonDialog.h"
 
 #include <QAction>
 #include <QColorSpace>
@@ -21,6 +22,7 @@
 #include <QPushButton>
 #include <QListWidget>
 #include <QSpinBox>
+#include <QSlider>
 #include <QStatusBar>
 #include <QTemporaryDir>
 #include <QTest>
@@ -91,6 +93,57 @@ void runRotationPreview(EditorWindow &window, bool accept) {
 class EditorWindowTest : public QObject {
   Q_OBJECT
 private slots:
+  void comparisonPreservesDirtyHistorySelectionViewportAndFiles() {
+    QTemporaryDir dir;
+    const QString path = dir.filePath("current.png"), otherPath = dir.filePath("other.png");
+    const QImage original = fixture(); QVERIFY(original.save(path));
+    QImage other(40, 60, QImage::Format_ARGB32); other.fill(Qt::blue); QVERIFY(other.save(otherPath));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas); canvas->resetZoom();
+    QTest::mousePress(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({8, 8}).toPoint());
+    QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({22, 16}).toPoint());
+    trigger(*window, QStringLiteral("canvasAction%1").arg(int(CanvasAction::RotateClockwise)));
+    trigger(*window, QStringLiteral("undo"));  // both undo and redo branches must survive comparison
+    canvas->zoomIn();
+    const QString title = window->windowTitle(), status = window->statusBar()->currentMessage();
+    const double zoom = canvas->viewState().zoom(); const QPointF offset = canvas->viewState().offset();
+    auto *undo = window->findChild<QAction *>("undo"), *redo = window->findChild<QAction *>("redo");
+    auto *remove = window->findChild<QAction *>("deleteSelection");
+    QVERIFY(undo && redo && remove); QVERIFY(undo->isEnabled() && redo->isEnabled() && remove->isEnabled());
+    bool loaded = false, exercised = false, timedOut = false;
+    QTimer timer; QElapsedTimer deadline; deadline.start();
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *dialog = qobject_cast<ImageComparisonDialog *>(QApplication::activeModalWidget()); if (!dialog) return;
+      if (deadline.elapsed() > 5000) { timedOut = true; dialog->reject(); return; }
+      auto *first = dialog->findChild<QLabel *>("comparisonInput0"); QVERIFY(first);
+      if (!loaded && first->text().startsWith("Current rendered image")) { loaded = dialog->loadFile(1, otherPath); }
+      auto *slider = dialog->findChild<QSlider *>("comparisonDivider"); QVERIFY(slider);
+      if (!slider->isEnabled()) return;
+      dialog->findChild<QComboBox *>("comparisonAlignment")->setCurrentIndex(1);
+      slider->setValue(75); QTest::keyClick(slider, Qt::Key_Left); QCOMPARE(slider->value(), 74);
+      QVERIFY(!window->close());  // snapshots stay alive until the comparison closes
+      exercised = true; dialog->reject();
+    });
+    timer.start(10); trigger(*window, QStringLiteral("compareImages")); timer.stop();
+    QVERIFY(loaded && exercised && !timedOut);
+    QCOMPARE(window->windowTitle(), title); QCOMPARE(window->statusBar()->currentMessage(), status);
+    QCOMPARE(canvas->viewState().zoom(), zoom); QCOMPARE(canvas->viewState().offset(), offset);
+    QVERIFY(undo->isEnabled() && redo->isEnabled() && remove->isEnabled());
+    QCOMPARE(QImage(path), original); QCOMPARE(QImage(otherPath), other);
+    QVERIFY(!QFile::exists(path + ".xann") && !QFile::exists(otherPath + ".xann"));
+    trigger(*window, QStringLiteral("redo"));
+    QVERIFY(window->statusBar()->currentMessage().startsWith(QStringLiteral("40 × 60")));
+    trigger(*window, QStringLiteral("undo")); trigger(*window, QStringLiteral("saveImage"));
+    const auto saved = loadSource(path); QVERIFY(saved.document);
+    QCOMPARE(saved.document->annotations.size(), std::size_t(1)); QCOMPARE(saved.image, original);
+    const auto &rectangle = std::get<RectangleAnnotation>(saved.document->annotations[0]);
+    QCOMPARE(rectangle.style.rotationDegrees, 0);
+    QVERIFY(std::abs(rectangle.start.x - 8) <= .51 && std::abs(rectangle.end.x - 22) <= .51);
+    trigger(*window, QStringLiteral("undo"));
+    QVERIFY(window->statusBar()->currentMessage().contains(QStringLiteral("0 annotation(s)")));
+    QVERIFY(!undo->isEnabled());
+  }
+
   void nativeSourceMismatchChoice_data() {
     QTest::addColumn<int>("choice");
     QTest::newRow("cancel") << int(SourceChoice::Unspecified);
