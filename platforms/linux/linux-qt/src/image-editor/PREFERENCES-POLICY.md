@@ -17,10 +17,10 @@ initializer evidence alone does not approve shared defaults. Blur's fallback
 | Stable field | Type and default | Inclusive validation | Privacy and downstream effect | Ledger linkage and Linux evidence |
 |---|---|---|---|---|
 | `schemaVersion` | Integer, 1 | Exactly 1 for writes; absence loads the version-1 defaults; unsupported versions are read-only | Public format metadata; gates interpretation before mutation | Native envelope/model version; malformed/newer preservation tests |
-| `Theme` | Enum string, `Dark` | `Dark`, `Light`, `System` | Non-secret preference; future native theme/system-theme resolution and accessible contrast remain Required | `SET-IMAGE-EDITOR-OPTIONS-THEME-001`; load/change/round-trip tests; UI effect pending |
-| `UseSystemTheme` | Boolean, true (candidate census default) | Boolean only | Non-secret appearance preference; follows desktop appearance while retaining the manual theme | `SET-IMAGE-EDITOR-OPTIONS-USE-SYSTEM-THEME-001`; core validation and resolution tests; native integration pending |
-| `UseSystemAccentColor` | Boolean, true (candidate census default) | Boolean only | Non-secret appearance preference; follows the desktop accent while retaining the saved manual colour | `SET-IMAGE-EDITOR-OPTIONS-USE-SYSTEM-ACCENT-COLOR-001`; core validation and resolution tests; native integration pending |
-| `AccentColorHex` | String, `#FF3E83F2` (candidate census default) | Same alpha-preserving canonical validation as drawing colours | Non-secret appearance preference; display compositing/contrast adjustment never rewrites the saved colour | `SET-IMAGE-EDITOR-OPTIONS-ACCENT-COLOR-HEX-001`; core alpha, invalid-field, round-trip and contrast tests; native integration pending |
+| `Theme` | Enum string, `Dark` | `Dark`, `Light`, `System` | Non-secret appearance preference; applies when system theme is disabled, with compatible System behavior | `SET-IMAGE-EDITOR-OPTIONS-THEME-001`; core/native resolution, controls, live changes and restart tests |
+| `UseSystemTheme` | Boolean, true (candidate census default) | Boolean only | Non-secret appearance preference; follows desktop appearance while retaining the manual theme | `SET-IMAGE-EDITOR-OPTIONS-USE-SYSTEM-THEME-001`; core validation and native resolution/control/portal tests |
+| `UseSystemAccentColor` | Boolean, true (candidate census default) | Boolean only | Non-secret appearance preference; follows the desktop accent while retaining the saved manual colour | `SET-IMAGE-EDITOR-OPTIONS-USE-SYSTEM-ACCENT-COLOR-001`; core validation and native resolution/control/portal tests |
+| `AccentColorHex` | String, `#FF3E83F2` (candidate census default) | Same alpha-preserving canonical validation as drawing colours | Non-secret appearance preference; display compositing/contrast adjustment never rewrites the saved colour | `SET-IMAGE-EDITOR-OPTIONS-ACCENT-COLOR-HEX-001`; core/native alpha, invalid-field, picker, round-trip and contrast tests |
 | `BlurStrength` | Finite number, 30 | 0..100; fractional values allowed | Non-secret preference; future blur creation defaults remain Required | `SET-IMAGE-EDITOR-OPTIONS-BLUR-STRENGTH-001`; published isolation vector and independent boundaries; blur tool pending |
 | `Thickness` | Integer, 4 | 1..10000, within the production editor width limit | Non-secret drawing default; affects new objects, without editing existing objects | `SET-IMAGE-EDITOR-OPTIONS-THICKNESS-001`; core and native validation/isolation/restart/history tests |
 | `BorderColorHex` | String, `#FFFF0000` | Exactly `#RRGGBB` or `#AARRGGBB`, hexadecimal digits; canonical uppercase `#AARRGGBB` | Non-secret drawing default; alpha, including transparent RGB, survives; applies to new objects | `SET-IMAGE-EDITOR-OPTIONS-BORDER-COLOR-HEX-001`; core alpha/invalid/restart tests; default agrees with the ES rectangle qualification default; native Apply/Cancel, picker and persistence tests |
@@ -209,7 +209,7 @@ undo or redo. Physical compositor/display/scale behavior, accessibility and
 shared semantic/compatibility review remain required for full qualification;
 these automated ports do not substitute for those acceptance gates.
 
-## Appearance resolution foundation
+## Appearance resolution and native integration
 
 `EditorAppearance` is a Qt Core policy over validated preferences, a translated
 desktop hint record and a native palette. `UseSystemTheme` or the compatible
@@ -229,7 +229,41 @@ adjacent surfaces; an unusable accent receives a neutral display replacement.
 Resolution leaves preferences unchanged. The analytical sRGB implementation
 and tests follow the [W3C contrast definition](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html).
 These palette checks do not establish complete native accessibility or focus
-rendering qualification. Reduced motion passes through the resolved model;
-native desktop observation, widgets and controls follow in the integration
-checkpoint. Physical compositor, assistive technology, shared semantic and
-compatibility reviews remain Required.
+rendering qualification. Physical compositor, assistive technology, shared
+semantic and compatibility reviews remain Required.
+
+`NativeDesktopAppearance` asynchronously reads only the standardized appearance
+namespace over the Settings portal, accepts typed SettingChanged signals, and
+watches service ownership. Newer signals and owner changes supersede in-flight
+snapshots; a restarted owner is read afresh. Unsupported, missing or disconnected
+portals leave the native Qt fallback. The observer never writes host settings
+or native preferences. High contrast applies independently of theme/accent
+choices. Reduced motion disables six Qt menu/combo/tooltip/toolbox effects and
+restores their preceding effective state when removed, on owner loss, or when
+the observer stops. Other style-specific animation and complete assistive
+technology/focus qualification remain review work.
+
+Editor-root palettes follow successful preference publication, desktop hints
+and native ApplicationPaletteChange events. QApplication's palette remains the
+native source, avoiding feedback from application overrides. Active, inactive
+and disabled native control roles, placeholder and tooltip text share readable
+display colours; child controls/dialogs keep their native widget semantics,
+fonts and focus. Appearance changes never edit source pixels, annotations,
+selection, saved checkpoints or history.
+
+The native Appearance dialog keeps a local draft with system-theme/accent
+switches, manual Dark/Light and an alpha-aware colour picker. Reset modifies
+only the draft. Apply validates/saves all four fields before publication;
+invalid, locked, read-only or stale changes leave the dialog open with a
+value-free accessible alert. Cancel preserves both stored and active values.
+Compatible Theme=System loads as following the desktop; an explicit Apply
+stores the dialog's manual Dark/Light fallback plus system switch. Runtime
+desktop changes do not normalize or rewrite preferences. Native window
+operations remain guarded while the dialog is open.
+
+Tests exercise actual editor actions, image/sidecar/checkpoint/redo isolation,
+multi-window/restart, cancellation/reset, invalid/locked/stale drafts, native
+alpha picking, focus and accessible names. A separate private D-Bus with no
+host service activation tests actual ReadAll/signals, unsigned flags and RGB
+tuples, invalid hints, delayed snapshot races, service loss/restart and reduced
+motion without preference writes.

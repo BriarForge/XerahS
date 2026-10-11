@@ -60,6 +60,12 @@ restores visible geometry without writing. Accepted close stores normal size
 and maximized state; the shared memory toggle excludes retained state and stops
 automatic writes. Native port and actual editor tests cover display recovery,
 minimization, failure, cancellation, restart and preserved redo/files.
+`EditorAppearance` resolves the theme and accent over translated desktop hints
+and a native palette with alpha-preserving saved colours and readable display
+roles. Native controls apply/reset/cancel atomically; editor palettes follow
+desktop changes without altering application-native palette authority,
+documents or history. The Settings observer uses asynchronous read-only D-Bus
+with owner/stale-reply recovery, and a private-bus fixture verifies transport.
 Full field coverage and review gates remain required;
 [PREFERENCES-POLICY.md](PREFERENCES-POLICY.md)
 records implemented metadata, compatibility/recovery limits and review gates.

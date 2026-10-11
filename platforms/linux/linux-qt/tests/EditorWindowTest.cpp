@@ -8,6 +8,7 @@
 #include "NewImageDialog.h"
 #include "RecentImageMenu.h"
 #include "NativeEditorWindowState.h"
+#include "NativeEditorAppearance.h"
 
 #include <QAction>
 #include <QColorSpace>
@@ -170,6 +171,64 @@ class EditorWindowTest : public QObject {
 private slots:
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  void appearanceApplyUpdatesActualEditorsWithoutEditingPixelsCheckpointOrRedo() {
+    QTemporaryDir dir; const QString settings = dir.filePath("native/settings.json"), first = dir.filePath("first.png"), second = dir.filePath("second.png");
+    QVERIFY(fixture().save(first)); QVERIFY(fixture().save(second)); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    QVERIFY(applyAppearancePreferences({{"Theme", "Dark"}, {"UseSystemTheme", false}, {"UseSystemAccentColor", false}}, nativeEditorPreferenceRevision()).saved);
+    std::unique_ptr<EditorWindow> one(EditorWindow::open(first)), two(EditorWindow::open(second)); QVERIFY(one && two); one->show(); two->show();
+    QApplication::processEvents(); auto *canvas = one->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas); trigger(*one, "saveImage");
+    trigger(*one, QStringLiteral("canvasAction%1").arg(int(CanvasAction::RotateClockwise))); trigger(*one, "undo");
+    const auto raster = storedBytes(first), sidecar = storedBytes(first + ".xann"), preferences = storedBytes(settings);
+    const auto title = one->windowTitle(); const auto palette = one->palette(); const auto defaults = drawingStyleFromPreferences(nativeEditorPreferences());
+    QTimer timer; QElapsedTimer deadline; deadline.start(); bool applied = false, timedOut = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!dialog) return;
+      if (deadline.elapsed() > 5000) { timedOut = true; dialog->reject(); return; }
+      QCOMPARE(dialog->objectName(), QStringLiteral("appearanceDialog")); QVERIFY(!one->close());
+      dialog->findChild<QCheckBox *>("useSystemTheme")->setChecked(false);
+      dialog->findChild<QComboBox *>("manualTheme")->setCurrentIndex(1);
+      dialog->findChild<QCheckBox *>("useSystemAccent")->setChecked(false);
+      dialog->findChild<QLineEdit *>("manualAccent")->setText("#80006000");
+      QCOMPARE(one->palette(), palette); QCOMPARE(storedBytes(settings), preferences);
+      applied = true; dialog->findChild<QPushButton *>("applyAppearance")->click();
+    });
+    timer.start(5); trigger(*one, "manageAppearance"); timer.stop(); QVERIFY(applied && !timedOut);
+    QCOMPARE(one->palette().color(QPalette::Window), QColor(240, 240, 240)); QCOMPARE(one->palette(), two->palette());
+    QCOMPARE(nativeEditorPreferences().values.value("AccentColorHex"), QJsonValue("#80006000"));
+    QCOMPARE(one->windowTitle(), title); QVERIFY(one->findChild<QAction *>("undo")->isEnabled() && one->findChild<QAction *>("redo")->isEnabled());
+    QCOMPARE(storedBytes(first), raster); QCOMPARE(storedBytes(first + ".xann"), sidecar); QCOMPARE(QImage(second), fixture()); QVERIFY(!QFile::exists(second + ".xann"));
+    QCOMPARE(drawingStyleFromPreferences(nativeEditorPreferences()).strokeColor, defaults.strokeColor);
+    QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    std::unique_ptr<EditorWindow> restarted(EditorWindow::open(second)); QVERIFY(restarted); QCOMPARE(restarted->palette(), two->palette());
+    trigger(*one, "redo"); QVERIFY(one->statusBar()->currentMessage().startsWith("40 × 60"));
+  }
+  void cancelledAppearanceAndFailedApplyKeepActualEditorPaletteAndHistory() {
+    QTemporaryDir dir; const QString settings = dir.filePath("native/settings.json"), path = dir.filePath("image.png");
+    QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    QVERIFY(applyAppearancePreferences({{"Theme", "Dark"}, {"UseSystemTheme", false}, {"UseSystemAccentColor", false}}, nativeEditorPreferenceRevision()).saved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); QApplication::processEvents();
+    auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas);
+    const auto title = window->windowTitle(); const auto palette = window->palette(); const auto before = storedBytes(settings); const auto revision = nativeEditorPreferenceRevision();
+    for (bool locked : {false, true}) {
+      QLockFile lock(settings + ".lock"); if (locked) QVERIFY(lock.tryLock(0));
+      QTimer timer; QElapsedTimer deadline; deadline.start(); bool configured = false, timedOut = false;
+      connect(&timer, &QTimer::timeout, [&] {
+        auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!dialog) return;
+        if (deadline.elapsed() > 5000) { timedOut = true; dialog->reject(); return; }
+        dialog->findChild<QCheckBox *>("useSystemTheme")->setChecked(false); dialog->findChild<QComboBox *>("manualTheme")->setCurrentIndex(1);
+        if (locked) {
+          dialog->findChild<QPushButton *>("applyAppearance")->click();
+          QVERIFY(dialog->isVisible()); QVERIFY(dialog->findChild<QLabel *>("appearanceError")->text().contains("Another process"));
+        }
+        configured = true; dialog->reject();
+      });
+      timer.start(5); trigger(*window, "manageAppearance"); timer.stop(); QVERIFY(configured && !timedOut);
+      QCOMPARE(window->palette(), palette); QCOMPARE(window->windowTitle(), title); QCOMPARE(storedBytes(settings), before);
+      QCOMPARE(nativeEditorPreferenceRevision(), revision); QVERIFY(window->findChild<QAction *>("undo")->isEnabled());
+    }
+    QVERIFY(!QFile::exists(path + ".xann")); QCOMPARE(QImage(path), fixture());
+    trigger(*window, "undo"); QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+  }
   void recoveringTheActualEditorFramePreservesPixelsCheckpointAndRedo() {
     QTemporaryDir dir; const QString settings = dir.filePath("native/settings.json"), path = dir.filePath("image.png");
     QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());

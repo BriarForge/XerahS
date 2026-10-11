@@ -18,6 +18,11 @@ bool drawingChanged(const EditorPreferences &before, const EditorPreferences &af
     if (before.values.value(QLatin1String(key)) != after.values.value(QLatin1String(key))) return true;
   return false;
 }
+bool appearanceChanged(const EditorPreferences &before, const EditorPreferences &after) {
+  for (const auto *key : {"Theme", "UseSystemTheme", "UseSystemAccentColor", "AccentColorHex"})
+    if (before.values.value(QLatin1String(key)) != after.values.value(QLatin1String(key))) return true;
+  return false;
+}
 PreferenceWrite publish(EditorPreferences next) {
   auto &state = host();
   if (state.current.readOnly) return {false, QStringLiteral("settings-read-only")};
@@ -28,9 +33,11 @@ PreferenceWrite publish(EditorPreferences next) {
   // Keep the live model's monotonic revision. Re-loading normalized JSON here
   // would reset it and allow an older modal draft to overwrite an incoming Open.
   const bool changed = drawingChanged(state.current, next);
+  const bool appearance = appearanceChanged(state.current, next);
   const bool memoryChanged = state.current.values.value(u"RememberWindowState") != next.values.value(u"RememberWindowState");
   state.current = std::move(next); ++state.revision;
   if (changed) emit nativeEditorPreferenceEvents().drawingDefaultsChanged();
+  if (appearance) emit nativeEditorPreferenceEvents().appearanceChanged();
   if (memoryChanged) emit nativeEditorPreferenceEvents().windowMemoryChanged(state.current.values.value(u"RememberWindowState").toBool());
   return {true, {}};
 }
@@ -52,6 +59,7 @@ QStringList initializeNativeEditorPreferences(const QString &path) {
   }
   ++state.revision;
   if (drawingChanged(before, state.current)) emit nativeEditorPreferenceEvents().drawingDefaultsChanged();
+  if (appearanceChanged(before, state.current)) emit nativeEditorPreferenceEvents().appearanceChanged();
   if (before.values.value(u"RememberWindowState") != state.current.values.value(u"RememberWindowState"))
     emit nativeEditorPreferenceEvents().windowMemoryChanged(state.current.values.value(u"RememberWindowState").toBool());
   return state.store ? state.store->diagnostics() : QStringList{};
@@ -85,6 +93,17 @@ PreferenceWrite applyWindowPreferences(const QJsonObject &changes, quint64 expec
   for (auto it = changes.begin(); it != changes.end(); ++it)
     if (it.key() != u"RememberWindowState" && it.key() != u"WindowWidth" && it.key() != u"WindowHeight" && it.key() != u"IsWindowMaximized")
       return {false, QStringLiteral("invalid-window-state")};
+  auto changed = changeEditorPreferences(state.current, changes);
+  if (!changed.preferences) return {false, changed.diagnostics.value(0)};
+  changed.preferences->recent = state.current.recent;
+  return publish(std::move(*changed.preferences));
+}
+PreferenceWrite applyAppearancePreferences(const QJsonObject &changes, quint64 expectedRevision) {
+  auto &state = host();
+  if (state.revision != expectedRevision) return {false, QStringLiteral("settings-changed-in-session")};
+  for (auto it = changes.begin(); it != changes.end(); ++it)
+    if (it.key() != u"Theme" && it.key() != u"UseSystemTheme" && it.key() != u"UseSystemAccentColor" && it.key() != u"AccentColorHex")
+      return {false, QStringLiteral("invalid-appearance-preferences")};
   auto changed = changeEditorPreferences(state.current, changes);
   if (!changed.preferences) return {false, changed.diagnostics.value(0)};
   changed.preferences->recent = state.current.recent;
@@ -130,12 +149,15 @@ QString editorPreferenceDiagnosticMessage(const QString &diagnostic) {
     return QStringLiteral("Stored recent paths were ignored because remembering images was not enabled.");
   if (diagnostic == u"invalid-drawing-defaults") return QStringLiteral("The drawing preference change is not supported.");
   if (diagnostic == u"invalid-window-state") return QStringLiteral("The window preference change is not supported.");
+  if (diagnostic == u"invalid-appearance-preferences") return QStringLiteral("The appearance preference change is not supported.");
   if (diagnostic == u"settings-window-display-unavailable") return QStringLiteral("No usable display is available to save the window state.");
   if (diagnostic.startsWith(u"invalid-")) {
     const QString field = diagnostic.mid(8);
     const QString label = field == u"BlurStrength" ? QStringLiteral("Blur strength") :
         field == u"Thickness" ? QStringLiteral("Thickness") : field == u"Theme" ? QStringLiteral("Theme") :
         field == u"BorderColorHex" ? QStringLiteral("Stroke colour") : field == u"FillColorHex" ? QStringLiteral("Fill colour") :
+        field == u"AccentColorHex" ? QStringLiteral("Accent colour") : field == u"UseSystemTheme" ? QStringLiteral("Desktop theme preference") :
+        field == u"UseSystemAccentColor" ? QStringLiteral("Desktop accent preference") :
         field == u"RememberWindowState" ? QStringLiteral("Remember window state") :
         field == u"WindowWidth" ? QStringLiteral("Window width") : field == u"WindowHeight" ? QStringLiteral("Window height") :
         field == u"IsWindowMaximized" ? QStringLiteral("Maximized window state") :

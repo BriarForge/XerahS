@@ -10,6 +10,8 @@
 #include "RecentImageMenu.h"
 #include "DrawingDefaultsDialog.h"
 #include "NativeEditorWindowState.h"
+#include "NativeEditorAppearance.h"
+#include "AppearanceDialog.h"
 
 #include <QAction>
 #include <QCloseEvent>
@@ -156,6 +158,11 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     applyCreationDefaults(); m_drawingPreferenceDiagnostic.clear(); refresh();
   });
   auto *rememberWindow = preferences->addAction(QStringLiteral("Remember Window Size and Maximized State"));
+  auto *appearance = preferences->addAction(QStringLiteral("Appearance…")); appearance->setObjectName(QStringLiteral("manageAppearance"));
+  connect(appearance, &QAction::triggered, this, [this] {
+    if (m_canvasOperationPending || m_closePending) return;
+    const QScopedValueRollback<bool> pending(m_canvasOperationPending, true); manageEditorAppearance(this);
+  });
   rememberWindow->setObjectName(QStringLiteral("rememberWindowState")); rememberWindow->setCheckable(true);
   rememberWindow->setChecked(windowPreferencesFromPreferences(nativeEditorPreferences()).remember);
   connect(rememberWindow, &QAction::triggered, this, [this, rememberWindow](bool enabled) {
@@ -306,6 +313,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(m_canvas, &EditorCanvas::changed, this, &EditorWindow::refresh);
 
   m_windowState = new NativeEditorWindowState(*this, {std::min(m_image.width() + 40, 1400), std::min(m_image.height() + 120, 900)});
+  new NativeEditorAppearance(*this);
   refresh();
   m_canvas->setFocus();
 }

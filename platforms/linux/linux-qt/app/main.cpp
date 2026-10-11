@@ -5,6 +5,8 @@
 #include "EditorWindow.h"
 #include "EditorOpen.h"
 #include "RecentImageMenu.h"
+#include "NativeDesktopAppearance.h"
+#include "AppearanceDialog.h"
 
 #include <QAction>
 #include <QApplication>
@@ -112,6 +114,7 @@ int main(int argc, char *argv[]) {
   // Initialize only in the winning native instance, before any editor opens.
   // The Avalonia configuration is never imported implicitly.
   const auto preferenceDiagnostics = xerahs::app::initializeNativeEditorPreferences(xerahs::app::nativeEditorPreferencePath());
+  xerahs::app::nativeDesktopAppearance().start();
   if (!preferenceDiagnostics.isEmpty()) {
     QStringList messages;
     for (const auto &code : preferenceDiagnostics) messages.append(xerahs::app::editorPreferenceDiagnosticMessage(code));
@@ -132,6 +135,7 @@ int main(int argc, char *argv[]) {
     if (auto *window = xerahs::app::EditorWindow::open(path)) window->show();
   }, [] { xerahs::app::manageRecentImages(); });
   QAction *folder = menu.addAction(QStringLiteral("Open captures folder"));
+  QAction *appearance = menu.addAction(QStringLiteral("Editor appearance…"));
   menu.addSeparator();
   QAction *quit = menu.addAction(QStringLiteral("Quit XerahS"));
   tray.setContextMenu(&menu);
@@ -151,6 +155,7 @@ int main(int argc, char *argv[]) {
     QDesktopServices::openUrl(QUrl::fromLocalFile(capture.saveDirectory()));
   });
   QObject::connect(quit, &QAction::triggered, &app, &QApplication::quit);
+  QObject::connect(appearance, &QAction::triggered, [] { xerahs::app::manageEditorAppearance(); });
   QObject::connect(&tray, &QSystemTrayIcon::activated, [&capture](QSystemTrayIcon::ActivationReason reason) {
     if (reason == QSystemTrayIcon::Trigger) capture.captureRegion();
   });

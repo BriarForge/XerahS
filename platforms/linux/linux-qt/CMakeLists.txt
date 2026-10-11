@@ -87,6 +87,12 @@ add_executable(xerahs
   app/DrawingDefaultsDialog.h
   app/NativeEditorWindowState.cpp
   app/NativeEditorWindowState.h
+  app/NativeDesktopAppearance.cpp
+  app/NativeDesktopAppearance.h
+  app/NativeEditorAppearance.cpp
+  app/NativeEditorAppearance.h
+  app/AppearanceDialog.cpp
+  app/AppearanceDialog.h
   app/EditorCanvas.cpp
   app/EditorCanvas.h
   app/EditorWindow.cpp
@@ -117,6 +123,30 @@ add_executable(editor-appearance-test tests/EditorAppearanceTest.cpp)
 set_target_properties(editor-appearance-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-appearance-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME editor-appearance COMMAND editor-appearance-test)
+
+add_executable(native-editor-appearance-test tests/NativeEditorAppearanceTest.cpp
+               app/NativeDesktopAppearance.cpp app/NativeDesktopAppearance.h
+               app/NativeEditorAppearance.cpp app/NativeEditorAppearance.h
+               app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h
+               app/AppearanceDialog.cpp app/AppearanceDialog.h)
+set_target_properties(native-editor-appearance-test PROPERTIES AUTOMOC ON)
+target_link_libraries(native-editor-appearance-test PRIVATE xerahs_core Qt6::Widgets Qt6::DBus Qt6::Test)
+target_include_directories(native-editor-appearance-test PRIVATE app)
+add_test(NAME native-editor-appearance COMMAND native-editor-appearance-test)
+set_tests_properties(native-editor-appearance PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+
+# Desktop transport tests run on their own bus, isolated from live settings.
+find_program(XERAHS_DBUS_RUN_SESSION dbus-run-session REQUIRED)
+add_executable(native-desktop-appearance-test tests/NativeDesktopAppearanceTest.cpp
+               app/NativeDesktopAppearance.cpp app/NativeDesktopAppearance.h
+               app/NativeEditorAppearance.cpp app/NativeEditorAppearance.h
+               app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h)
+set_target_properties(native-desktop-appearance-test PROPERTIES AUTOMOC ON)
+target_link_libraries(native-desktop-appearance-test PRIVATE xerahs_core Qt6::Widgets Qt6::DBus Qt6::Test)
+target_include_directories(native-desktop-appearance-test PRIVATE app)
+add_test(NAME native-desktop-appearance COMMAND "${XERAHS_DBUS_RUN_SESSION}"
+         "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf" -- $<TARGET_FILE:native-desktop-appearance-test>)
+set_tests_properties(native-desktop-appearance PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 
 add_executable(editor-window-placement-test tests/EditorWindowPlacementTest.cpp)
 set_target_properties(editor-window-placement-test PROPERTIES AUTOMOC ON)
@@ -220,12 +250,15 @@ add_executable(editor-window-test tests/EditorWindowTest.cpp app/EditorWindow.cp
                app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h
                app/DrawingDefaultsDialog.cpp app/DrawingDefaultsDialog.h
                app/EditorCanvas.cpp app/EditorCanvas.h app/EditorSource.cpp
+               app/NativeDesktopAppearance.cpp app/NativeDesktopAppearance.h
+               app/NativeEditorAppearance.cpp app/NativeEditorAppearance.h
+               app/AppearanceDialog.cpp app/AppearanceDialog.h
                app/NativeEditorWindowState.cpp app/NativeEditorWindowState.h
                app/CanvasRotationDialog.cpp app/CanvasRotationDialog.h
                app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h
                app/NewImageDialog.cpp app/NewImageDialog.h)
 set_target_properties(editor-window-test PROPERTIES AUTOMOC ON)
-target_link_libraries(editor-window-test PRIVATE xerahs_editor_codecs Qt6::Widgets Qt6::Test)
+target_link_libraries(editor-window-test PRIVATE xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
 add_test(NAME editor-window COMMAND editor-window-test)
 set_tests_properties(editor-window PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 

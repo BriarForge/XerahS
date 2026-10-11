@@ -47,6 +47,13 @@ The next editor work follows these dependencies:
    window state from both versions and stops automatic persistence; native
    tests cover cancellation, failure, minimized/maximized state, injected display
    changes, actual editor frame recovery and preserved document/redo state.
+   Theme/system-theme and accent/system-accent now resolve over a read-only
+   desktop Settings observer and native Qt palette. Atomic native Apply/Cancel,
+   reset and alpha-aware colour picking update all editor windows while preserving
+   image state and history. Desktop contrast and reduced motion are independent
+   of preferences; private-bus tests cover wire types, live changes, stale
+   snapshots, missing services and owner restart. Physical style/focus and
+   assistive-technology qualification remain Required.
    Continue complete settings metadata and
    downstream preferences, independent whole-file recovery and review gates
    under EDITOR-SETTINGS-001, then general affine annotations, inserted images

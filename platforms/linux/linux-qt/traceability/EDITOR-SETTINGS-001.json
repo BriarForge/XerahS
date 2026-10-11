@@ -27,7 +27,13 @@
     "platforms/linux/linux-qt/app/NativeEditorWindowState.h",
     "platforms/linux/linux-qt/app/NativeEditorWindowState.cpp",
     "platforms/linux/linux-qt/src/image-editor/EditorAppearance.h",
-    "platforms/linux/linux-qt/src/image-editor/EditorAppearance.cpp"
+    "platforms/linux/linux-qt/src/image-editor/EditorAppearance.cpp",
+    "platforms/linux/linux-qt/app/NativeDesktopAppearance.h",
+    "platforms/linux/linux-qt/app/NativeDesktopAppearance.cpp",
+    "platforms/linux/linux-qt/app/NativeEditorAppearance.h",
+    "platforms/linux/linux-qt/app/NativeEditorAppearance.cpp",
+    "platforms/linux/linux-qt/app/AppearanceDialog.h",
+    "platforms/linux/linux-qt/app/AppearanceDialog.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
@@ -38,7 +44,10 @@
     "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
     "platforms/linux/linux-qt/tests/EditorWindowPlacementTest.cpp",
     "platforms/linux/linux-qt/tests/NativeEditorWindowStateTest.cpp",
-    "platforms/linux/linux-qt/tests/EditorAppearanceTest.cpp"
+    "platforms/linux/linux-qt/tests/EditorAppearanceTest.cpp",
+    "platforms/linux/linux-qt/tests/NativeDesktopAppearanceTest.cpp",
+    "platforms/linux/linux-qt/tests/NativeEditorAppearanceTest.cpp",
+    "platforms/linux/linux-qt/tests/appearance-test-bus.conf"
   ],
   "requirements": {
     "ESET-001": {
@@ -67,7 +76,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Qt Core appearance policy resolves validated theme/system-theme and accent/system-accent preferences against translated desktop hints and a native palette. Saved alpha is retained while display roles are composited and adjusted for text/highlight contrast; high-contrast and reduced-motion hints remain independent of persisted values. Independent analytical, precedence, invalid-hint, per-field recovery and round-trip tests cover this foundation. Native desktop observation/controls, physical theme/focus/assistive-technology evidence and shared semantic/compatibility qualification remain Required."
+      "note": "Production Qt Core theme/system-theme and accent/system-accent resolution preserves saved alpha while compositing/adjusting display roles for text/highlight contrast. Native read-only asynchronous Settings observer consumes typed hints, rejects stale snapshots, recovers owner loss/restart and falls back to the native Qt palette. Editor palettes update on successful preference publication and native/desktop changes without modifying application-native palette authority, documents, checkpoints or history. Native Appearance Apply/Cancel/reset, alpha picker, invalid/locked/stale writes, multi-window/restart, accessible names and preserved focus have tests. Private-bus tests cover actual wire types, live changes, missing/unsupported/disconnected services and reduced-motion suppression/restoration of six framework effects. Physical desktop/style/focus, other style-specific animation, assistive-technology and shared default/metadata/compatibility qualification remain Required."
     },
     "ESET-005": {
       "disposition": "Required",
@@ -85,7 +94,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "BorderColorHex/FillColorHex load and persist uppercase alpha-preserving #AARRGGBB; compatible opaque #RRGGBB receives FF alpha. Invalid values recover per field with visible value-free diagnostics. Derived BorderColor/FillColor aliases are non-persistent and cannot override canonical fields; unknown color extensions survive. Native defaults and actual toolbar color pickers preserve alpha, reject malformed drafts atomically and persist through restart/sidecar saves. Other color fields and full shared metadata review remain Required. AccentColorHex now shares canonical alpha-preserving validation and computed-alias exclusion with independent core round-trip/recovery evidence; native appearance integration remains Required."
+      "note": "BorderColorHex/FillColorHex load and persist uppercase alpha-preserving #AARRGGBB; compatible opaque #RRGGBB receives FF alpha. Invalid values recover per field with visible value-free diagnostics. Derived BorderColor/FillColor aliases are non-persistent and cannot override canonical fields; unknown color extensions survive. Native defaults and actual toolbar color pickers preserve alpha, reject malformed drafts atomically and persist through restart/sidecar saves. Other color fields and full shared metadata review remain Required. AccentColorHex now shares canonical alpha-preserving validation and computed-alias exclusion with independent core round-trip/recovery evidence; native alpha picking, atomic appearance controls and restart evidence are present; full shared metadata/compatibility review remains Required."
     },
     "ESET-008": {
       "disposition": "Required",
@@ -141,7 +150,7 @@
         "recent-deduplication",
         "unknown-round-trip"
       ],
-      "note": "All three published operations call production code. Independent core and real native-control tests cover current field boundaries, missing markers, newer/unreadable preservation, unknown round-trip, atomic failures, private files, privacy-pruned recovery, restart, Apply/Cancel, capped stale revisions and actual image Open/Save. Every remaining field, supported upgrades, all other platform adapters and acceptance reviews remain Required. Drawing-default tests now add canonical alpha, non-persistent aliases, invalid/cancelled/reset/locked/stale drafts, actual color pickers, multi-window creation-only effects, preserved redo, session replacement and PNG/sidecar/restart evidence. Window boundary, type, independent geometry and disabled-memory recovery tests cover the production core; native port, actual editor lifecycle/display recovery, memory toggles, cancellation, failure, restart and preserved source/checkpoint/redo evidence are now present. Physical display and acceptance review remain Required."
+      "note": "All three published operations call production code. Independent core and real native-control tests cover current field boundaries, missing markers, newer/unreadable preservation, unknown round-trip, atomic failures, private files, privacy-pruned recovery, restart, Apply/Cancel, capped stale revisions and actual image Open/Save. Every remaining field, supported upgrades, all other platform adapters and acceptance reviews remain Required. Drawing-default tests now add canonical alpha, non-persistent aliases, invalid/cancelled/reset/locked/stale drafts, actual color pickers, multi-window creation-only effects, preserved redo, session replacement and PNG/sidecar/restart evidence. Window boundary, type, independent geometry and disabled-memory recovery tests cover the production core; native port, actual editor lifecycle/display recovery, memory toggles, cancellation, failure, restart and preserved source/checkpoint/redo evidence are now present. Physical display and acceptance review remain Required. Appearance evidence adds independent sRGB references, core/desktop precedence and invalid boundaries, private D-Bus snapshot/signal/race/restart transport, native Apply/Cancel/reset/stale/locking/picker/focus/accessibility and actual editor image/history isolation."
     },
     "ESET-016": {
       "disposition": "Required",

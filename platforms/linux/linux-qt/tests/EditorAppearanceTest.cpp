@@ -78,6 +78,19 @@ private slots:
         QVERIFY(r.reducedMotion); QCOMPARE(r.highContrast, high); QCOMPARE(serializeEditorPreferences(prefs), before);
       }
   }
+  void mixedNativeSurfacesKeepTextAndHighlightReadable() {
+    AppearancePalette native; native.window = 0xFF000000; native.windowText = 0xFFFFFFFF;
+    native.base = 0xFFFFFFFF; native.text = 0xFF000000;
+    native.button = 0xFF777777; native.buttonText = 0xFF000000; native.highlight = 0xFFFFFFFF;
+    const auto prefs = loadEditorPreferences({}); const auto before = serializeEditorPreferences(prefs);
+    const auto r = resolveEditorAppearance(prefs, {}, native); const auto &p = r.palette;
+    QVERIFY(r.accentAdjustedForContrast);
+    QVERIFY(appearanceContrastRatio(p.windowText, p.window) >= 4.5);
+    QVERIFY(appearanceContrastRatio(p.buttonText, p.button) >= 4.5);
+    QVERIFY(appearanceContrastRatio(p.highlightedText, p.highlight) >= 4.5);
+    for (auto background : {p.window, p.base, p.button}) QVERIFY(appearanceContrastRatio(p.highlight, background) >= 3);
+    QCOMPARE(serializeEditorPreferences(prefs), before);
+  }
 };
 QTEST_GUILESS_MAIN(EditorAppearanceTest)
 #include "EditorAppearanceTest.moc"
