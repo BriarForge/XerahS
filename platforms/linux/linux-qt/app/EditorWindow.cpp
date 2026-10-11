@@ -7,6 +7,7 @@
 #include "NewImageDialog.h"
 #include "EditorSource.h"
 #include "EditorOpen.h"
+#include "RecentImageMenu.h"
 
 #include <QAction>
 #include <QCloseEvent>
@@ -74,7 +75,8 @@ EditorWindow *EditorWindow::open(const QString &path, QWidget *parent) {
     if (owner->m_canvasOperationPending) return nullptr;
     pending.emplace(owner->m_canvasOperationPending, true);
   }
-  LoadedSource source = openSource(path, parent);
+  const QString target = absoluteImagePath(path);
+  LoadedSource source = openSource(target, parent);
   if (source.diagnostic == u"canvas-cancelled") return nullptr;
   if (!source.document) {
     QMessageBox::warning(parent, QStringLiteral("Cannot open image"),
@@ -82,13 +84,14 @@ EditorWindow *EditorWindow::open(const QString &path, QWidget *parent) {
     return nullptr;
   }
   EditorWindow *window;
-  try { window = new EditorWindow(QFileInfo(path).absoluteFilePath(), source.image, *source.document,
+  try { window = new EditorWindow(target, source.image, *source.document,
       EditorSession::InitialPersistence::Saved, source.displayImage); }
   catch (const std::bad_alloc &) { QMessageBox::warning(parent, QStringLiteral("Cannot open image"), describe(diagnostic::documentTooLarge)); return nullptr; }
   window->setAttribute(Qt::WA_DeleteOnClose);
   if (!source.warnings.isEmpty()) {
     QMessageBox::information(window, QStringLiteral("Annotations"), source.warnings.join(QLatin1Char('\n')));
   }
+  recentImageHistory().remember(target);
   return window;
 }
 
@@ -133,6 +136,11 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   auto *open = fileMenu->addAction(QStringLiteral("Open Image…"));
   open->setObjectName(QStringLiteral("openImage")); open->setShortcut(QKeySequence::Open);
   connect(open, &QAction::triggered, this, [this] { openImage(); });
+  addRecentImagesMenu(fileMenu, [this](const QString &path) { openImage(path); }, [this] {
+    if (m_canvasOperationPending) return;
+    const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
+    manageRecentImages(this);
+  });
 
   auto *imageMenu = menuBar()->addMenu(QStringLiteral("&Image"));
   QAction *crop = imageMenu->addAction(QStringLiteral("Crop Image…"));
@@ -344,7 +352,7 @@ bool EditorWindow::openImage(const QString &path) {
   QString target = path;
   if (target.isEmpty()) target = QFileDialog::getOpenFileName(this, QStringLiteral("Open image"), m_path, imageFileFilter());
   if (target.isEmpty()) return false;
-  target = QFileInfo(target).absoluteFilePath();
+  target = absoluteImagePath(target);
   auto source = openSource(target, this);
   auto usable = [&] {
     if (source.diagnostic == u"canvas-cancelled") return false;
@@ -368,6 +376,7 @@ bool EditorWindow::openImage(const QString &path) {
     next = prepareSession(); if (!next) return false;
   }
   adoptSession(std::move(next), target, std::move(source.image), source.displayImage);
+  recentImageHistory().remember(target);
   return true;
 }
 
@@ -600,6 +609,7 @@ bool EditorWindow::save(bool chooseFile) {
     return false;
   }
   m_path = target;
+  recentImageHistory().remember(absoluteImagePath(target));
   refresh();
   return true;
 }

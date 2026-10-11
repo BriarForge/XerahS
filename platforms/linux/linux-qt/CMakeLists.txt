@@ -35,6 +35,8 @@ add_library(xerahs_core STATIC
   src/image-editor/ImageComparison.h
   src/image-editor/NewImage.cpp
   src/image-editor/NewImage.h
+  src/image-editor/RecentImages.cpp
+  src/image-editor/RecentImages.h
   src/naming/FilenameGenerator.cpp
   src/naming/FilenameGenerator.h
 )
@@ -69,6 +71,8 @@ add_executable(xerahs
   app/EditorSource.h
   app/EditorOpen.cpp
   app/EditorOpen.h
+  app/RecentImageMenu.cpp
+  app/RecentImageMenu.h
   app/EditorCanvas.cpp
   app/EditorCanvas.h
   app/EditorWindow.cpp
@@ -90,6 +94,10 @@ target_link_libraries(xerahs PRIVATE xerahs_core xerahs_editor_codecs Qt6::Gui Q
 target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
 enable_testing()
+add_executable(recent-images-test tests/RecentImagesTest.cpp)
+set_target_properties(recent-images-test PROPERTIES AUTOMOC ON)
+target_link_libraries(recent-images-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME recent-images COMMAND recent-images-test)
 add_executable(filename-generator-test tests/FilenameGeneratorTest.cpp)
 set_target_properties(filename-generator-test PROPERTIES AUTOMOC ON)
 target_link_libraries(filename-generator-test PRIVATE xerahs_core Qt6::Test)
@@ -160,6 +168,7 @@ add_test(NAME new-image-dialog COMMAND new-image-dialog-test)
 set_tests_properties(new-image-dialog PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 
 add_executable(editor-window-test tests/EditorWindowTest.cpp app/EditorWindow.cpp app/EditorWindow.h app/EditorOpen.cpp app/EditorOpen.h
+               app/RecentImageMenu.cpp app/RecentImageMenu.h
                app/EditorCanvas.cpp app/EditorCanvas.h app/EditorSource.cpp
                app/CanvasRotationDialog.cpp app/CanvasRotationDialog.h
                app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h

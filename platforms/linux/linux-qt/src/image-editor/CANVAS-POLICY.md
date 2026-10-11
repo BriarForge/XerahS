@@ -53,8 +53,10 @@ sidecar before adoption. Source-hash mismatch choices use the validated current
 and embedded snapshots shown by the native chooser, without rereading them.
 Cancellation waits for the same live worker; the editor rejects close while
 preparation is active. Canvas teardown precedes destruction of its referenced
-source/session, so focus changes cannot refresh a destroyed session. Recent-file
-selection and its opt-in private settings remain pending.
+source/session, so focus changes cannot refresh a destroyed session. The native
+recent-file menu routes explicit paths through this same Open flow. Its opt-in
+runtime policy is recorded in [RECENT-PATHS-POLICY.md](RECENT-PATHS-POLICY.md);
+private preference persistence remains required under EDITOR-SETTINGS-001.
 
 Crop Image and the temporary Crop tool call the same production operation.
 The retained rectangle normalizes drag direction, floors left/top, ceils

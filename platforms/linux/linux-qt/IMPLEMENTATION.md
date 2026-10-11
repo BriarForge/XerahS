@@ -30,8 +30,12 @@ The next editor work follows these dependencies:
    Native Open now validates raster and sidecar snapshots on a cancellable
    worker before the same dirty replacement confirmation. Saving over the
    candidate reloads the explicit save before adoption; failed or cancelled
-   opening preserves the current session. Continue opt-in recent-file selection,
-   then general affine annotations, inserted images and background composition.
+   opening preserves the current session. Recent-file selection now offers
+   session-only opt-in, bounded platform-aware paths, removal/clearing and
+   atomic Apply/Cancel controls in the editor and tray. Continue versioned
+   private recent-preference persistence and remaining settings metadata under
+   EDITOR-SETTINGS-001, then general affine annotations, inserted images and
+   background composition.
 4. Expand annotation tools, effects, output actions, settings and utilities,
    alongside the remaining capture and post-capture integrations.
 

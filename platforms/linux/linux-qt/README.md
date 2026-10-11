@@ -9,7 +9,7 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 | `FILENAME-GENERATION-001` | Core logic and conformance seam; no UI yet | 51 of 51 vectors pass; [traceability](traceability/FILENAME-GENERATION-001.json) |
 | `POST-CAPTURE-ACTIONS-001` | Pipeline engine and conformance seam; native actions, retry, and recovery not yet | 17 of 17 vectors pass; [traceability](traceability/POST-CAPTURE-ACTIONS-001.json) |
 | `REGION-CAPTURE-001` | Mapping, keyboard, compositing, last-region, and session state machine; no overlay or capture backend yet | 21 of 21 vectors pass; [traceability](traceability/REGION-CAPTURE-001.json) |
-| `EDITOR-CANVAS-001` | Native New/Open with confirmed dirty replacement; viewport, crop, auto crop, resize, rotation, flips, annotation flatten, clear and image comparison; recent files and remaining image operations pending | All 3 published vectors plus native geometry, history, window, creation, opening, comparison and persistence tests; [traceability](traceability/EDITOR-CANVAS-001.json) |
+| `EDITOR-CANVAS-001` | Native New/Open and opt-in session recent files with confirmed dirty replacement; viewport, crop, auto crop, resize, rotation, flips, annotation flatten, clear and image comparison; persistent preferences and remaining image operations pending | All 3 published vectors plus native geometry, history, window, creation, opening, recent-file, comparison and persistence tests; [traceability](traceability/EDITOR-CANVAS-001.json) |
 | `EDITOR-SESSION-001` | Document, `.xann` reader and writer, history, and export renderer; editor window with rectangle tool, selection, save, and sidecar reopen; resize and ordering by keyboard, arbitrary-angle rotation and export | 19 of 19 vectors pass; [traceability](traceability/EDITOR-SESSION-001.json) |
 
 The next implementation steps are tracked in [IMPLEMENTATION.md](IMPLEMENTATION.md).
@@ -31,7 +31,9 @@ The next implementation steps are tracked in [IMPLEMENTATION.md](IMPLEMENTATION.
 - Hyprland binding example: `bind = , PRINT, exec, xerahs --capture-region`.
 - `packaging/com.xerahs.app.desktop` gives desktop launches the `com.xerahs.app` identity, which portals use to attribute consent.
 
-- **Open image** (tray menu or `xerahs --edit FILE`) opens the editor. Editor **File → Open Image…**, Ctrl+O, replaces the current session after loading succeeds and a dirty document's Save/Discard/Cancel confirmation. Loading exposes progress and cancellation; failed or cancelled opening preserves the current session. Saving to the same candidate path reloads the newly saved raster and sidecar before replacement. Recent-file selection remains pending.
+- **Open image** (tray menu or `xerahs --edit FILE`) opens the editor. Editor **File → Open Image…**, Ctrl+O, replaces the current session after loading succeeds and a dirty document's Save/Discard/Cancel confirmation. Loading exposes progress and cancellation; failed or cancelled opening preserves the current session. Saving to the same candidate path reloads the newly saved raster and sidecar before replacement.
+
+- **Recent Images → Manage Recent Images…** (editor File menu or tray) offers explicit opt-in for this running session, a maximum of 1..100 entries (default 10), Remove Selected and Clear All. Apply changes the private list; Cancel keeps it intact. Only successful openings and saves after opt-in add paths. Selecting a recent entry uses the same validated Open and dirty confirmation flow; missing entries remain removable. Paths are cleared on opt-out or process exit. Persistent recent preferences remain required under `EDITOR-SETTINGS-001`.
 
 - In the editor, drag to draw rectangles, click to select, drag or arrow keys to move, Delete to remove, Alt+arrows to resize, R for quarter turns or **Rotate selection…** for any angle, `[`/`]` to reorder, Ctrl+Z/Ctrl+Shift+Z for history, Ctrl+S to save the flattened PNG with its `.xann` sidecar.
 

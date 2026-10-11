@@ -35,6 +35,13 @@ alpha/colour, profile, file and clipboard controls with progress/cancellation.
 no persistence checkpoint; saving or cancelling never confuses its initial
 state with a previously saved document.
 
+`RecentImages` owns opt-in state, validated limits and platform-aware path
+ordering independently of the document. `RecentImageMenu` hosts the native
+editor/tray selection and Apply/Cancel removal controls. Paths currently stay
+in the running process; versioned private preference persistence remains
+required. [RECENT-PATHS-POLICY.md](RECENT-PATHS-POLICY.md) records boundaries,
+privacy and the subsequent settings work.
+
 The native editor in `app/EditorWindow.cpp` and `app/EditorCanvas.cpp` loads sources, draws and manipulates
 rectangles, exposes undo/redo and save, and reopens editable sidecars. See the
 edition [implementation plan](../../IMPLEMENTATION.md) and

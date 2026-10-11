@@ -6,10 +6,12 @@
 #include "CanvasRotationDialog.h"
 #include "ImageComparisonDialog.h"
 #include "NewImageDialog.h"
+#include "RecentImageMenu.h"
 
 #include <QAction>
 #include <QColorSpace>
 #include <QDialog>
+#include <QDialogButtonBox>
 #include <QDir>
 #include <QCheckBox>
 #include <QComboBox>
@@ -22,6 +24,7 @@
 #include <QProgressBar>
 #include <QProgressDialog>
 #include <QMessageBox>
+#include <QMenu>
 #include <QPushButton>
 #include <QListWidget>
 #include <QSpinBox>
@@ -143,6 +146,133 @@ void runRotationPreview(EditorWindow &window, bool accept) {
 class EditorWindowTest : public QObject {
   Q_OBJECT
 private slots:
+  void init() { recentImageHistory() = RecentImages{}; }
+  void cleanup() { recentImageHistory() = RecentImages{}; }
+  void nativeRecentPreferencesAreOptInAtomicAndLeaveTheDocumentAlone_data() {
+    QTest::addColumn<bool>("apply"); QTest::newRow("cancel") << false; QTest::newRow("apply") << true;
+  }
+  void nativeRecentPreferencesAreOptInAtomicAndLeaveTheDocumentAlone() {
+    QFETCH(bool, apply); QTemporaryDir dir; const QString path = dir.filePath("current.png"); QVERIFY(fixture().save(path));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->resize(900, 600); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas); canvas->zoomIn();
+    const QString status = window->statusBar()->currentMessage(), title = window->windowTitle();
+    const double zoom = canvas->viewState().zoom(); const QPointF offset = canvas->viewState().offset();
+    QVERIFY(!recentImageHistory().enabled()); QVERIFY(recentImageHistory().paths().isEmpty());
+    auto *menu = window->findChild<QMenu *>(QStringLiteral("recentImagesMenu")); QVERIFY(menu);
+    QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
+    QTimer::singleShot(0, [&, apply] {
+      auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog); QCOMPARE(dialog->objectName(), QStringLiteral("recentImagesDialog"));
+      QVERIFY(!window->close()); auto *enabled = dialog->findChild<QCheckBox *>(QStringLiteral("rememberRecentImages")); QVERIFY(enabled && !enabled->isChecked());
+      enabled->setChecked(true); dialog->findChild<QSpinBox *>(QStringLiteral("maximumRecentImages"))->setValue(2);
+      QVERIFY(!recentImageHistory().enabled());
+      auto *buttons = dialog->findChild<QDialogButtonBox *>(); QVERIFY(buttons);
+      buttons->button(apply ? QDialogButtonBox::Ok : QDialogButtonBox::Cancel)->click();
+    });
+    trigger(*window, QStringLiteral("manageRecentImages"));
+    QCOMPARE(recentImageHistory().enabled(), apply); QCOMPARE(recentImageHistory().maximum(), apply ? 2 : 10);
+    QVERIFY(recentImageHistory().paths().isEmpty()); // Explicit opt-in does not backfill prior openings.
+    QCOMPARE(window->windowTitle(), title); QCOMPARE(window->statusBar()->currentMessage(), status);
+    QCOMPARE(canvas->viewState().zoom(), zoom); QCOMPARE(canvas->viewState().offset(), offset);
+    QVERIFY(window->findChild<QAction *>(QStringLiteral("undo"))->isEnabled());
+  }
+  void recentMenuUsesDirtyConfirmationAndKeepsMissingEntriesRemovable() {
+    QTemporaryDir dir; const QString current = dir.filePath("current.png"), target = dir.filePath("one&two.png");
+    const QImage original = fixture(); QVERIFY(original.save(current)); QImage other(20, 15, QImage::Format_ARGB32); other.fill(Qt::green); QVERIFY(other.save(target));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(current)); QVERIFY(window); window->resize(900, 600); window->show();
+    QVERIFY(recentImageHistory().setPreferences(true, 2)); QVERIFY(recentImageHistory().paths().isEmpty());
+    { std::unique_ptr<EditorWindow> second(EditorWindow::open(target)); QVERIFY(second); }
+    { std::unique_ptr<EditorWindow> second(EditorWindow::open(target)); QVERIFY(second); }
+    QCOMPARE(recentImageHistory().paths(), QStringList{target});
+    auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas); canvas->zoomIn();
+    const QString title = window->windowTitle(), status = window->statusBar()->currentMessage();
+    const double zoom = canvas->viewState().zoom(); const QPointF offset = canvas->viewState().offset();
+    auto *menu = window->findChild<QMenu *>(QStringLiteral("recentImagesMenu")); QVERIFY(menu); QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
+    auto *action = menu->findChild<QAction *>(QStringLiteral("recentImage0")); QVERIFY(action);
+    QCOMPARE(action->data().toString(), target); QVERIFY(action->text().contains(QStringLiteral("one&&two.png")));
+    QTimer timer; int confirmation = int(QMessageBox::Cancel); bool confirmed = false, reported = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) {
+        if (box->windowTitle() == u"Replace current image") { confirmed = true; QCOMPARE(box->defaultButton(), box->button(QMessageBox::Cancel)); box->button(QMessageBox::StandardButton(confirmation))->click(); }
+        else { reported = box->windowTitle() == u"Cannot open image"; box->accept(); }
+      }
+    });
+    timer.start(5); action->trigger(); timer.stop(); QVERIFY(confirmed && !reported);
+    QCOMPARE(window->windowTitle(), title); QCOMPARE(window->statusBar()->currentMessage(), status);
+    QCOMPARE(canvas->viewState().zoom(), zoom); QCOMPARE(canvas->viewState().offset(), offset); QCOMPARE(recentImageHistory().paths(), QStringList{target});
+    confirmation = int(QMessageBox::Discard); confirmed = false; timer.start(5); action->trigger(); timer.stop(); QVERIFY(confirmed);
+    QVERIFY(window->statusBar()->currentMessage().startsWith("20 × 15")); QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+    QVERIFY(!window->findChild<QAction *>(QStringLiteral("undo"))->isEnabled()); QCOMPARE(QImage(current), original); QVERIFY(!QFile::exists(current + ".xann"));
+    QVERIFY(QFile::remove(target)); const QString adoptedTitle = window->windowTitle(), adoptedStatus = window->statusBar()->currentMessage();
+    QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow")); action = menu->findChild<QAction *>(QStringLiteral("recentImage0")); QVERIFY(action);
+    confirmed = false; timer.start(5); action->trigger(); timer.stop(); QVERIFY(reported && !confirmed);
+    QCOMPARE(window->windowTitle(), adoptedTitle); QCOMPARE(window->statusBar()->currentMessage(), adoptedStatus); QCOMPARE(recentImageHistory().paths(), QStringList{target});
+    QVERIFY(recentImageHistory().remove(target)); QVERIFY(recentImageHistory().paths().isEmpty());
+  }
+  void recentEntryPreservesTheOpenedSymlinkParentSource() {
+    QTemporaryDir dir; QVERIFY(QDir().mkpath(dir.filePath("outside/child")));
+    QVERIFY(fixture().save(dir.filePath("one.png")));
+    QImage outside(20, 15, QImage::Format_ARGB32); outside.fill(Qt::green); QVERIFY(outside.save(dir.filePath("outside/one.png")));
+    QVERIFY(QFile::link(dir.filePath("outside/child"), dir.filePath("linked")));
+    const QString chosen = dir.filePath("linked/../one.png"); QVERIFY(recentImageHistory().setPreferences(true, 10));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(chosen)); QVERIFY(window); window->show();
+    QVERIFY(window->statusBar()->currentMessage().startsWith("20 × 15")); QCOMPARE(recentImageHistory().paths(), QStringList{chosen});
+    auto *menu = window->findChild<QMenu *>(QStringLiteral("recentImagesMenu")); QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
+    auto *action = menu->findChild<QAction *>(QStringLiteral("recentImage0")); QVERIFY(action); QCOMPARE(action->data().toString(), chosen);
+    action->trigger(); QVERIFY(window->statusBar()->currentMessage().startsWith("20 × 15")); QCOMPARE(recentImageHistory().paths(), QStringList{chosen});
+    QCOMPARE(QImage(chosen), outside);
+  }
+  void nativeRecentRemovalAndLimitChangesApplyOrCancel_data() {
+    QTest::addColumn<QString>("edit"); QTest::addColumn<bool>("apply");
+    for (const QString &edit : {QStringLiteral("remove"), QStringLiteral("clear"), QStringLiteral("disable"), QStringLiteral("trim")})
+      for (bool apply : {false, true}) QTest::newRow(qPrintable(edit + (apply ? "-apply" : "-cancel"))) << edit << apply;
+  }
+  void incomingOpenPreventsStaleRecentPreferencesFromOverwritingTheList() {
+    QTemporaryDir dir; const QString current = dir.filePath("current.png"), incoming = dir.filePath("incoming.png");
+    QVERIFY(fixture().save(current)); QVERIFY(fixture().save(incoming));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(current)); QVERIFY(window); window->show();
+    QVERIFY(recentImageHistory().setPreferences(true, 10));
+    auto *menu = window->findChild<QMenu *>(QStringLiteral("recentImagesMenu")); QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
+    bool reported = false;
+    QTimer::singleShot(0, [&] {
+      auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog);
+      dialog->findChild<QCheckBox *>(QStringLiteral("rememberRecentImages"))->setChecked(false);
+      // Instance requests can open another editor inside the dialog's event loop.
+      std::unique_ptr<EditorWindow> added(EditorWindow::open(incoming)); QVERIFY(added);
+      QTimer::singleShot(0, [&] {
+        auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box);
+        reported = box->windowTitle() == u"Recent images changed"; box->accept();
+      });
+      dialog->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Ok)->click();
+    });
+    trigger(*window, QStringLiteral("manageRecentImages")); QVERIFY(reported);
+    QVERIFY(recentImageHistory().enabled()); QCOMPARE(recentImageHistory().paths(), QStringList{incoming});
+    QVERIFY(window->windowTitle().startsWith("current.png")); QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+  }
+  void nativeRecentRemovalAndLimitChangesApplyOrCancel() {
+    QFETCH(QString, edit); QFETCH(bool, apply); QTemporaryDir dir; const QString current = dir.filePath("current.png"); QVERIFY(fixture().save(current));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(current)); QVERIFY(window); window->show();
+    auto &history = recentImageHistory(); QVERIFY(history.setPreferences(true, 3));
+    for (const auto &path : QStringList{"/images/one.png", "/images/two.png", "/images/three.png"}) QVERIFY(history.remember(path));
+    const QStringList before = history.paths(); const auto revision = history.revision();
+    auto *menu = window->findChild<QMenu *>(QStringLiteral("recentImagesMenu")); QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
+    QTimer::singleShot(0, [&, apply, edit] {
+      auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog);
+      auto *paths = dialog->findChild<QListWidget *>(QStringLiteral("recentImagePaths")); QVERIFY(paths); QCOMPARE(paths->count(), 3);
+      if (edit == u"remove") { paths->setCurrentRow(1); dialog->findChild<QPushButton *>(QStringLiteral("removeRecentImage"))->click(); }
+      else if (edit == u"clear") dialog->findChild<QPushButton *>(QStringLiteral("clearRecentImages"))->click();
+      else if (edit == u"disable") dialog->findChild<QCheckBox *>(QStringLiteral("rememberRecentImages"))->setChecked(false);
+      else dialog->findChild<QSpinBox *>(QStringLiteral("maximumRecentImages"))->setValue(1);
+      QCOMPARE(history.paths(), before); QCOMPARE(history.revision(), revision);
+      dialog->findChild<QDialogButtonBox *>()->button(apply ? QDialogButtonBox::Ok : QDialogButtonBox::Cancel)->click();
+    });
+    trigger(*window, QStringLiteral("manageRecentImages"));
+    if (!apply) { QCOMPARE(history.paths(), before); QCOMPARE(history.revision(), revision); QCOMPARE(history.maximum(), 3); QVERIFY(history.enabled()); }
+    else if (edit == u"remove") QCOMPARE(history.paths(), QStringList({"/images/three.png", "/images/one.png"}));
+    else if (edit == u"trim") { QCOMPARE(history.paths(), QStringList({"/images/three.png"})); QCOMPARE(history.maximum(), 1); }
+    else { QVERIFY(history.paths().isEmpty()); QCOMPARE(history.enabled(), edit != u"disable"); }
+    QVERIFY(window->statusBar()->currentMessage().startsWith("60 × 40 · 0 annotation(s)"));
+    QVERIFY(!window->windowTitle().contains(QChar(0x2022))); QCOMPARE(QImage(current), fixture());
+  }
   void nativeOpenPickerConfirmsAndPreservesOrReplacesTheDirtySession_data() {
     QTest::addColumn<int>("choice");
     QTest::newRow("cancel") << int(QMessageBox::Cancel);

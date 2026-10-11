@@ -1,5 +1,6 @@
 #include "EditorOpen.h"
 #include <QDialog>
+#include <QDir>
 #include <QEventLoop>
 #include <QImageReader>
 #include <QMessageBox>
@@ -50,6 +51,10 @@ QString imageFileFilter() {
   QStringList patterns;
   for (const auto &format : QImageReader::supportedImageFormats()) patterns.append(QStringLiteral("*.%1").arg(QString::fromLatin1(format)));
   return QStringLiteral("Images (%1);;All files (*)").arg(patterns.join(QLatin1Char(' ')));
+}
+QString absoluteImagePath(const QString &path) {
+  if (path.isEmpty() || QDir::isAbsolutePath(path)) return path;
+  return QDir::currentPath() + QLatin1Char('/') + path;
 }
 LoadedSource openSource(const QString &path, QWidget *parent) {
   auto source = runWork([path](const RenderControl &control) { return loadSource(path, control); }, parent);

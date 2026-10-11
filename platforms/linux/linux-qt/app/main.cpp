@@ -4,6 +4,7 @@
 #include "CaptureController.h"
 #include "EditorWindow.h"
 #include "EditorOpen.h"
+#include "RecentImageMenu.h"
 
 #include <QAction>
 #include <QApplication>
@@ -95,7 +96,7 @@ int main(int argc, char *argv[]) {
   parser.process(app);
   QByteArray request = parser.isSet(captureRegion) ? kCaptureRegion : kActivate;
   if (parser.isSet(edit)) {
-    request = kEditPrefix + QFileInfo(parser.value(edit)).absoluteFilePath().toUtf8();
+    request = kEditPrefix + xerahs::app::absoluteImagePath(parser.value(edit)).toUtf8();
   }
 
   if (forwardToRunningInstance(request)) return 0;
@@ -118,6 +119,9 @@ int main(int argc, char *argv[]) {
   QAction *region = menu.addAction(QStringLiteral("Capture region"));
   QAction *newImage = menu.addAction(QStringLiteral("New image…"));
   QAction *openImage = menu.addAction(QStringLiteral("Open image…"));
+  xerahs::app::addRecentImagesMenu(&menu, [](const QString &path) {
+    if (auto *window = xerahs::app::EditorWindow::open(path)) window->show();
+  }, [] { xerahs::app::manageRecentImages(); });
   QAction *folder = menu.addAction(QStringLiteral("Open captures folder"));
   menu.addSeparator();
   QAction *quit = menu.addAction(QStringLiteral("Quit XerahS"));
