@@ -1,6 +1,6 @@
 # Native editor preference storage
 
-This is implementation evidence for ESET-001/002/003/005/006/007/009/012/015, not activation
+This is implementation evidence for ESET-001/002/003/004/005/006/007/009/012/015, not activation
 of EDITOR-SETTINGS-001, approval of the complete settings ledger, or a release
 privacy/security review. The production Qt Core model and store are shared
 with the conformance adapter. The native app initializes the store only after
@@ -18,6 +18,9 @@ initializer evidence alone does not approve shared defaults. Blur's fallback
 |---|---|---|---|---|
 | `schemaVersion` | Integer, 1 | Exactly 1 for writes; absence loads the version-1 defaults; unsupported versions are read-only | Public format metadata; gates interpretation before mutation | Native envelope/model version; malformed/newer preservation tests |
 | `Theme` | Enum string, `Dark` | `Dark`, `Light`, `System` | Non-secret preference; future native theme/system-theme resolution and accessible contrast remain Required | `SET-IMAGE-EDITOR-OPTIONS-THEME-001`; load/change/round-trip tests; UI effect pending |
+| `UseSystemTheme` | Boolean, true (candidate census default) | Boolean only | Non-secret appearance preference; follows desktop appearance while retaining the manual theme | `SET-IMAGE-EDITOR-OPTIONS-USE-SYSTEM-THEME-001`; core validation and resolution tests; native integration pending |
+| `UseSystemAccentColor` | Boolean, true (candidate census default) | Boolean only | Non-secret appearance preference; follows the desktop accent while retaining the saved manual colour | `SET-IMAGE-EDITOR-OPTIONS-USE-SYSTEM-ACCENT-COLOR-001`; core validation and resolution tests; native integration pending |
+| `AccentColorHex` | String, `#FF3E83F2` (candidate census default) | Same alpha-preserving canonical validation as drawing colours | Non-secret appearance preference; display compositing/contrast adjustment never rewrites the saved colour | `SET-IMAGE-EDITOR-OPTIONS-ACCENT-COLOR-HEX-001`; core alpha, invalid-field, round-trip and contrast tests; native integration pending |
 | `BlurStrength` | Finite number, 30 | 0..100; fractional values allowed | Non-secret preference; future blur creation defaults remain Required | `SET-IMAGE-EDITOR-OPTIONS-BLUR-STRENGTH-001`; published isolation vector and independent boundaries; blur tool pending |
 | `Thickness` | Integer, 4 | 1..10000, within the production editor width limit | Non-secret drawing default; affects new objects, without editing existing objects | `SET-IMAGE-EDITOR-OPTIONS-THICKNESS-001`; core and native validation/isolation/restart/history tests |
 | `BorderColorHex` | String, `#FFFF0000` | Exactly `#RRGGBB` or `#AARRGGBB`, hexadecimal digits; canonical uppercase `#AARRGGBB` | Non-secret drawing default; alpha, including transparent RGB, survives; applies to new objects | `SET-IMAGE-EDITOR-OPTIONS-BORDER-COLOR-HEX-001`; core alpha/invalid/restart tests; default agrees with the ES rectangle qualification default; native Apply/Cancel, picker and persistence tests |
@@ -30,12 +33,12 @@ initializer evidence alone does not approve shared defaults. Blur's fallback
 | `MaxRecentImageFiles` | Integer, 10 | 1..100 | Private local retention policy; decreasing it removes oldest entries | `SET-IMAGE-EDITOR-OPTIONS-MAX-RECENT-IMAGE-FILES-001`; bounded model and preference tests |
 | `RecentImageFiles` | Array of strings, empty | At most 100 encoded entries and at most the validated maximum distinct absolute paths; valid platform path syntax | Private local data; newest first, deduplicated, removable individually or together; absent resources stay removable | `SET-IMAGE-EDITOR-OPTIONS-RECENT-IMAGE-FILES-001`; path/opt-in/isolation/removal/recovery tests |
 
-`BorderColor` and `FillColor` are derived convenience aliases, classified
+`BorderColor`, `FillColor` and `AccentColor` are derived convenience aliases, classified
 `NonPersistent` and excluded from both saved versions. Only their canonical
 `Hex` fields are authorities. A stored alias cannot override the corresponding
 field; compatible unknown colour fields still round-trip. Colour names, short
 hex, whitespace, incorrect lengths/types and malformed digits recover only the
-affected field and emit `invalid-BorderColorHex` or `invalid-FillColorHex`.
+affected field and emit its `invalid-…ColorHex` diagnostic.
 Opaque six-digit input receives explicit `FF` alpha during normalization; no
 locale, native colour name, or floating-point conversion participates.
 
@@ -205,3 +208,28 @@ disabled persistence, and recovery without changing source files, checkpoints,
 undo or redo. Physical compositor/display/scale behavior, accessibility and
 shared semantic/compatibility review remain required for full qualification;
 these automated ports do not substitute for those acceptance gates.
+
+## Appearance resolution foundation
+
+`EditorAppearance` is a Qt Core policy over validated preferences, a translated
+desktop hint record and a native palette. `UseSystemTheme` or the compatible
+`Theme=System` value follows the desktop colour scheme; an unspecified scheme
+uses the native palette. Explicit Light/Dark choices select the corresponding
+native-edition palette. `UseSystemAccentColor` selects a valid desktop accent,
+falling back to the native highlight; otherwise the saved manual accent applies.
+These native metadata/precedence choices remain subject to shared semantic
+review before activation.
+
+The [desktop portal Settings reference](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.Settings.html)
+defines colour-scheme, sRGB accent, contrast and reduced-motion hints. Invalid
+or unknown hint values revert only that hint. Saved accent alpha is retained;
+display colours are composited over their actual backgrounds. Text roles target
+4.5:1 and higher-contrast text 7:1. Highlight roles target 3:1 against their
+adjacent surfaces; an unusable accent receives a neutral display replacement.
+Resolution leaves preferences unchanged. The analytical sRGB implementation
+and tests follow the [W3C contrast definition](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html).
+These palette checks do not establish complete native accessibility or focus
+rendering qualification. Reduced motion passes through the resolved model;
+native desktop observation, widgets and controls follow in the integration
+checkpoint. Physical compositor, assistive technology, shared semantic and
+compatibility reviews remain Required.

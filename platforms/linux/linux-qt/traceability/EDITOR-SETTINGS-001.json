@@ -25,7 +25,9 @@
     "platforms/linux/linux-qt/src/image-editor/EditorWindowPlacement.h",
     "platforms/linux/linux-qt/src/image-editor/EditorWindowPlacement.cpp",
     "platforms/linux/linux-qt/app/NativeEditorWindowState.h",
-    "platforms/linux/linux-qt/app/NativeEditorWindowState.cpp"
+    "platforms/linux/linux-qt/app/NativeEditorWindowState.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorAppearance.h",
+    "platforms/linux/linux-qt/src/image-editor/EditorAppearance.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
@@ -35,7 +37,8 @@
     "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
     "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
     "platforms/linux/linux-qt/tests/EditorWindowPlacementTest.cpp",
-    "platforms/linux/linux-qt/tests/NativeEditorWindowStateTest.cpp"
+    "platforms/linux/linux-qt/tests/NativeEditorWindowStateTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorAppearanceTest.cpp"
   ],
   "requirements": {
     "ESET-001": {
@@ -58,13 +61,13 @@
       "vectors": [
         "unknown-round-trip"
       ],
-      "note": "Production QSaveFile replacement stores current and privacy-pruned previous values as one artifact, preserves compatible unknown fields, enforces private bounded storage and rejects stale/locked writes. Injected failure and real-file tests prove unchanged stored versions and published state. Approved retention policy, independent recovery from a destroyed whole file, computed/convenience exclusions and all fields remain Required. BorderColor/FillColor convenience aliases are now explicitly non-persistent; the rest of the ledger exclusions remain Required."
+      "note": "Production QSaveFile replacement stores current and privacy-pruned previous values as one artifact, preserves compatible unknown fields, enforces private bounded storage and rejects stale/locked writes. Injected failure and real-file tests prove unchanged stored versions and published state. Approved retention policy, independent recovery from a destroyed whole file, computed/convenience exclusions and all fields remain Required. BorderColor/FillColor convenience aliases are now explicitly non-persistent; the rest of the ledger exclusions remain Required. AccentColor is also explicitly non-persistent."
     },
     "ESET-004": {
       "disposition": "Required",
-      "status": "not-started",
+      "status": "partial",
       "vectors": [],
-      "note": "Theme field validation is present; native theme/system/accent resolution and accessible preference effects remain Required."
+      "note": "Qt Core appearance policy resolves validated theme/system-theme and accent/system-accent preferences against translated desktop hints and a native palette. Saved alpha is retained while display roles are composited and adjusted for text/highlight contrast; high-contrast and reduced-motion hints remain independent of persisted values. Independent analytical, precedence, invalid-hint, per-field recovery and round-trip tests cover this foundation. Native desktop observation/controls, physical theme/focus/assistive-technology evidence and shared semantic/compatibility qualification remain Required."
     },
     "ESET-005": {
       "disposition": "Required",
@@ -82,7 +85,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "BorderColorHex/FillColorHex load and persist uppercase alpha-preserving #AARRGGBB; compatible opaque #RRGGBB receives FF alpha. Invalid values recover per field with visible value-free diagnostics. Derived BorderColor/FillColor aliases are non-persistent and cannot override canonical fields; unknown color extensions survive. Native defaults and actual toolbar color pickers preserve alpha, reject malformed drafts atomically and persist through restart/sidecar saves. Other color fields and full shared metadata review remain Required."
+      "note": "BorderColorHex/FillColorHex load and persist uppercase alpha-preserving #AARRGGBB; compatible opaque #RRGGBB receives FF alpha. Invalid values recover per field with visible value-free diagnostics. Derived BorderColor/FillColor aliases are non-persistent and cannot override canonical fields; unknown color extensions survive. Native defaults and actual toolbar color pickers preserve alpha, reject malformed drafts atomically and persist through restart/sidecar saves. Other color fields and full shared metadata review remain Required. AccentColorHex now shares canonical alpha-preserving validation and computed-alias exclusion with independent core round-trip/recovery evidence; native appearance integration remains Required."
     },
     "ESET-008": {
       "disposition": "Required",

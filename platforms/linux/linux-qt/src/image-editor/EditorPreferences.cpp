@@ -7,6 +7,8 @@ namespace xerahs::editor {
 namespace {
 const QJsonObject defaults{
   {QStringLiteral("schemaVersion"), 1}, {QStringLiteral("Theme"), QStringLiteral("Dark")},
+  {QStringLiteral("UseSystemTheme"), true}, {QStringLiteral("UseSystemAccentColor"), true},
+  {QStringLiteral("AccentColorHex"), QStringLiteral("#FF3E83F2")},
   {QStringLiteral("BlurStrength"), 30}, {QStringLiteral("Thickness"), 4},
   {QStringLiteral("BorderColorHex"), QStringLiteral("#FFFF0000")},
   {QStringLiteral("FillColorHex"), QStringLiteral("#00000000")},
@@ -14,7 +16,7 @@ const QJsonObject defaults{
   {QStringLiteral("WindowHeight"), 720}, {QStringLiteral("IsWindowMaximized"), true},
   {QStringLiteral("RememberRecentImagePaths"), false}, {QStringLiteral("MaxRecentImageFiles"), RecentImages::defaultMaximum},
   {QStringLiteral("RecentImageFiles"), QJsonArray{}}};
-const QStringList nonPersistentFields{QStringLiteral("BorderColor"), QStringLiteral("FillColor")};
+const QStringList nonPersistentFields{QStringLiteral("BorderColor"), QStringLiteral("FillColor"), QStringLiteral("AccentColor")};
 std::optional<Argb> preferenceColor(const QJsonValue &value) {
   if (!value.isString()) return {};
   QString text = value.toString();
@@ -55,12 +57,13 @@ EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRul
   }
   for (const auto &key : {QStringLiteral("Theme"), QStringLiteral("BlurStrength"), QStringLiteral("Thickness"),
                          QStringLiteral("RememberRecentImagePaths"), QStringLiteral("MaxRecentImageFiles"),
-                         QStringLiteral("BorderColorHex"), QStringLiteral("FillColorHex"),
+                         QStringLiteral("BorderColorHex"), QStringLiteral("FillColorHex"), QStringLiteral("AccentColorHex"),
+                         QStringLiteral("UseSystemTheme"), QStringLiteral("UseSystemAccentColor"),
                          QStringLiteral("RememberWindowState"), QStringLiteral("WindowWidth"),
                          QStringLiteral("WindowHeight"), QStringLiteral("IsWindowMaximized")}) {
     if (!stored.contains(key)) continue;
     const auto value = stored.value(key);
-    if (key == u"BorderColorHex" || key == u"FillColorHex") {
+    if (key == u"BorderColorHex" || key == u"FillColorHex" || key == u"AccentColorHex") {
       const auto color = preferenceColor(value);
       if (color) result.values.insert(key, formatColor(*color)); else invalid(result, key);
       continue;
@@ -68,7 +71,8 @@ EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRul
     const bool valid = key == u"Theme" ? (value.isString() && QStringList{"Dark", "Light", "System"}.contains(value.toString())) :
         key == u"BlurStrength" ? number(value, 0, 100, false) :
         key == u"Thickness" ? number(value, 1, 10000, true) :
-        key == u"RememberRecentImagePaths" || key == u"RememberWindowState" || key == u"IsWindowMaximized" ? value.isBool() :
+        key == u"RememberRecentImagePaths" || key == u"RememberWindowState" || key == u"IsWindowMaximized" ||
+        key == u"UseSystemTheme" || key == u"UseSystemAccentColor" ? value.isBool() :
         key == u"WindowWidth" || key == u"WindowHeight" ? number(value, 1, maximumEditorWindowExtent, false) :
         number(value, RecentImages::minimumMaximum, RecentImages::maximumMaximum, true);
     if (valid) result.values.insert(key, value); else invalid(result, key);

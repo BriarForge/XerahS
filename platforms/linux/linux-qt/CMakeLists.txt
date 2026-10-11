@@ -39,6 +39,8 @@ add_library(xerahs_core STATIC
   src/image-editor/RecentImages.h
   src/image-editor/EditorPreferences.cpp
   src/image-editor/EditorPreferences.h
+  src/image-editor/EditorAppearance.cpp
+  src/image-editor/EditorAppearance.h
   src/image-editor/EditorPreferenceStore.cpp
   src/image-editor/EditorPreferenceStore.h
   src/image-editor/EditorWindowPlacement.cpp
@@ -110,6 +112,11 @@ add_executable(editor-preferences-test tests/EditorPreferencesTest.cpp)
 set_target_properties(editor-preferences-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-preferences-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME editor-preferences COMMAND editor-preferences-test)
+
+add_executable(editor-appearance-test tests/EditorAppearanceTest.cpp)
+set_target_properties(editor-appearance-test PROPERTIES AUTOMOC ON)
+target_link_libraries(editor-appearance-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME editor-appearance COMMAND editor-appearance-test)
 
 add_executable(editor-window-placement-test tests/EditorWindowPlacementTest.cpp)
 set_target_properties(editor-window-placement-test PROPERTIES AUTOMOC ON)
