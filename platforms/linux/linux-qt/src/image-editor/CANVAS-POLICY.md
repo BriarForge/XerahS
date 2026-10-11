@@ -33,6 +33,29 @@ PNG path, and closing an unsaved initial image uses the same native session
 confirmation rules. Explicitly saving the current image before replacement
 is the only part of this flow that changes its files.
 
+Open Image uses the native picker, or an explicit path from the tray/CLI,
+and fully validates the raster and optional sidecar before publishing a session.
+File reads, source hashing, native decode/encode and private sRGB display
+preparation run on a worker with progress and cooperative cancellation. Reads
+and hashing check between chunks; native codec and colour calls check before
+and after completion. Encoded raster and sidecar inputs are limited to 1 GiB,
+checked before buffering and during reads if a file grows. Existing decoded
+dimension/pixel and decompressed document limits still apply. Unsupported or
+corrupt input, failed sidecars, picker cancellation and loading cancellation
+preserve the active session, its history, selection, viewport and files.
+
+Editor Open offers the same default-Cancel Save/Discard/Cancel replacement
+confirmation after preparation. A successful replacement adopts the validated
+document and immutable source with a clean checkpoint, empty history/selection
+and a fitted viewport. If an explicit Save overwrites the candidate path,
+including an untitled Save destination, Open reloads the just-saved raster and
+sidecar before adoption. Source-hash mismatch choices use the validated current
+and embedded snapshots shown by the native chooser, without rereading them.
+Cancellation waits for the same live worker; the editor rejects close while
+preparation is active. Canvas teardown precedes destruction of its referenced
+source/session, so focus changes cannot refresh a destroyed session. Recent-file
+selection and its opt-in private settings remain pending.
+
 Crop Image and the temporary Crop tool call the same production operation.
 The retained rectangle normalizes drag direction, floors left/top, ceils
 right/bottom, clips to the source canvas, and rejects empty/non-finite input.

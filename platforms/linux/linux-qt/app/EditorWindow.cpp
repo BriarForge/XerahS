@@ -6,6 +6,7 @@
 #include "ImageComparisonDialog.h"
 #include "NewImageDialog.h"
 #include "EditorSource.h"
+#include "EditorOpen.h"
 
 #include <QAction>
 #include <QCloseEvent>
@@ -59,27 +60,31 @@ QString describe(const QString &diagnostic) {
 
 }  // namespace
 
+EditorWindow::~EditorWindow() {
+  // QWidget teardown can send focus events to the active canvas. Destroy the
+  // canvas while its referenced image/session still exist, before members and
+  // the QMainWindow base are destroyed; no refresh may run during that teardown.
+  m_canvas->disconnect(this);
+  delete takeCentralWidget(); m_canvas = nullptr;
+}
+
 EditorWindow *EditorWindow::open(const QString &path, QWidget *parent) {
-  LoadedSource source = loadSource(path);
-  if (source.pendingChoice) {
-    const auto &sources = *source.pendingChoice;
-    QMessageBox box(QMessageBox::Warning, QStringLiteral("Image changed since annotations were saved"),
-        QStringLiteral("Choose the image to use with the saved annotations. Their coordinates will be kept. "
-                       "Cancel leaves both files unchanged."), QMessageBox::Cancel, parent);
-    auto *current = box.addButton(QStringLiteral("Current raster (%1 × %2)").arg(sources.currentRaster.width()).arg(sources.currentRaster.height()), QMessageBox::ActionRole);
-    auto *embedded = box.addButton(QStringLiteral("Embedded source (%1 × %2)").arg(sources.embeddedSource.width()).arg(sources.embeddedSource.height()), QMessageBox::ActionRole);
-    box.setDefaultButton(QMessageBox::Cancel);
-    box.exec();
-    if (box.clickedButton() == current) source = resolveSourceChoice(source, SourceChoice::CurrentRaster);
-    else if (box.clickedButton() == embedded) source = resolveSourceChoice(source, SourceChoice::EmbeddedSource);
-    else return nullptr;
+  std::optional<QScopedValueRollback<bool>> pending;
+  if (auto *owner = qobject_cast<EditorWindow *>(parent)) {
+    if (owner->m_canvasOperationPending) return nullptr;
+    pending.emplace(owner->m_canvasOperationPending, true);
   }
+  LoadedSource source = openSource(path, parent);
+  if (source.diagnostic == u"canvas-cancelled") return nullptr;
   if (!source.document) {
     QMessageBox::warning(parent, QStringLiteral("Cannot open image"),
                          QStringLiteral("%1\n\n%2").arg(QFileInfo(path).fileName(), describe(source.diagnostic)));
     return nullptr;
   }
-  auto *window = new EditorWindow(path, source.image, *source.document);
+  EditorWindow *window;
+  try { window = new EditorWindow(QFileInfo(path).absoluteFilePath(), source.image, *source.document,
+      EditorSession::InitialPersistence::Saved, source.displayImage); }
+  catch (const std::bad_alloc &) { QMessageBox::warning(parent, QStringLiteral("Cannot open image"), describe(diagnostic::documentTooLarge)); return nullptr; }
   window->setAttribute(Qt::WA_DeleteOnClose);
   if (!source.warnings.isEmpty()) {
     QMessageBox::information(window, QStringLiteral("Annotations"), source.warnings.join(QLatin1Char('\n')));
@@ -125,6 +130,9 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   create->setObjectName(QStringLiteral("newImage"));
   create->setShortcut(QKeySequence::New);
   connect(create, &QAction::triggered, this, &EditorWindow::newImage);
+  auto *open = fileMenu->addAction(QStringLiteral("Open Image…"));
+  open->setObjectName(QStringLiteral("openImage")); open->setShortcut(QKeySequence::Open);
+  connect(open, &QAction::triggered, this, [this] { openImage(); });
 
   auto *imageMenu = menuBar()->addMenu(QStringLiteral("&Image"));
   QAction *crop = imageMenu->addAction(QStringLiteral("Crop Image…"));
@@ -299,26 +307,68 @@ void EditorWindow::newImage() {
                          QStringLiteral("There is not enough memory for a new session. The current document is unchanged."));
     return;
   }
+  if (confirmReplacement(QStringLiteral("the new image")) == QMessageBox::Cancel) return;
+  adoptSession(std::move(next), {}, std::move(prepared->source), prepared->displaySource);
+}
+
+int EditorWindow::confirmReplacement(const QString &replacement) {
   if (m_session->dirty()) {
     QMessageBox box(QMessageBox::Question, QStringLiteral("Replace current image"),
-        QStringLiteral("Save changes to %1 before replacing it with the new image?")
-            .arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName()),
+        QStringLiteral("Save changes to %1 before replacing it with %2?")
+            .arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName(), replacement),
         QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, this);
     box.setDefaultButton(QMessageBox::Cancel);
     const int choice = box.exec();
-    if (choice == QMessageBox::Cancel || (choice == QMessageBox::Save && !save(false))) return;
-    if (choice != QMessageBox::Save && choice != QMessageBox::Discard) return;
+    if (choice == QMessageBox::Save && !save(false)) return QMessageBox::Cancel;
+    return choice == QMessageBox::Save || choice == QMessageBox::Discard ? choice : QMessageBox::Cancel;
   }
+  return QMessageBox::Discard;
+}
+
+void EditorWindow::adoptSession(std::unique_ptr<EditorSession> next, const QString &path, QImage source, const QImage &display) {
   // Keep the old session alive until the canvas has cancelled its gesture and
   // switched its session pointer. Retaining the widget preserves action bindings.
   auto previous = std::move(m_session);
   m_session = std::move(next);
-  m_image = std::move(prepared->source);
+  m_image = std::move(source);
   m_sourceBytes = m_session->document().sourceImagePng;
-  m_path.clear(); m_placeholderState.reset();
-  m_canvas->resetDocument(*m_session, prepared->displaySource);
+  m_path = path; m_placeholderState.reset();
+  m_canvas->resetDocument(*m_session, display);
   findChild<QAction *>(QStringLiteral("cropTool"))->setChecked(false);
   refresh(); m_canvas->setFocus();
+}
+
+bool EditorWindow::openImage(const QString &path) {
+  if (m_canvasOperationPending) return false;
+  const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
+  QString target = path;
+  if (target.isEmpty()) target = QFileDialog::getOpenFileName(this, QStringLiteral("Open image"), m_path, imageFileFilter());
+  if (target.isEmpty()) return false;
+  target = QFileInfo(target).absoluteFilePath();
+  auto source = openSource(target, this);
+  auto usable = [&] {
+    if (source.diagnostic == u"canvas-cancelled") return false;
+    if (source.document) return true;
+    QMessageBox::warning(this, QStringLiteral("Cannot open image"), QStringLiteral("%1\n\n%2").arg(QFileInfo(target).fileName(), describe(source.diagnostic)));
+    return false;
+  };
+  if (!usable()) return false;
+  auto prepareSession = [&]() -> std::unique_ptr<EditorSession> {
+    try { return std::make_unique<EditorSession>(*source.document); }
+    catch (const std::bad_alloc &) { QMessageBox::warning(this, QStringLiteral("Cannot open image"), describe(diagnostic::documentTooLarge)); return {}; }
+  };
+  auto next = prepareSession(); if (!next) return false;
+  const int choice = confirmReplacement(QFileInfo(target).fileName());
+  if (choice == QMessageBox::Cancel) return false;
+  // Saving this very file changes the validated candidate. Reload the explicit
+  // save, including its sidecar, rather than adopting the older pre-save snapshot.
+  const QString savedIdentity = QFileInfo(m_path).canonicalFilePath();
+  if (choice == QMessageBox::Save && !savedIdentity.isEmpty() && savedIdentity == QFileInfo(target).canonicalFilePath()) {
+    source = openSource(target, this); if (!usable()) return false;
+    next = prepareSession(); if (!next) return false;
+  }
+  adoptSession(std::move(next), target, std::move(source.image), source.displayImage);
+  return true;
 }
 
 void EditorWindow::cropImage() {

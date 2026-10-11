@@ -143,6 +143,159 @@ void runRotationPreview(EditorWindow &window, bool accept) {
 class EditorWindowTest : public QObject {
   Q_OBJECT
 private slots:
+  void nativeOpenPickerConfirmsAndPreservesOrReplacesTheDirtySession_data() {
+    QTest::addColumn<int>("choice");
+    QTest::newRow("cancel") << int(QMessageBox::Cancel);
+    QTest::newRow("save") << int(QMessageBox::Save);
+    QTest::newRow("discard") << int(QMessageBox::Discard);
+  }
+  void nativeOpenPickerConfirmsAndPreservesOrReplacesTheDirtySession() {
+    QFETCH(int, choice);
+    QTemporaryDir dir; const QString path = dir.filePath("current.png"), target = dir.filePath("linear.png");
+    const QImage original = fixture(); QVERIFY(original.save(path));
+    QImage other(24, 18, QImage::Format_ARGB32); other.fill(qRgba(128, 0, 0, 80)); other.setColorSpace(QColorSpace::SRgbLinear); QVERIFY(other.save(target));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->resize(900, 600); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas);
+    trigger(*window, QStringLiteral("canvasAction%1").arg(int(CanvasAction::RotateClockwise))); trigger(*window, QStringLiteral("undo")); canvas->zoomIn();
+    const QString title = window->windowTitle(), status = window->statusBar()->currentMessage();
+    const double zoom = canvas->viewState().zoom(); const QPointF offset = canvas->viewState().offset();
+    bool picked = false, confirmed = false, timedOut = false; QTimer timer; QElapsedTimer deadline; deadline.start();
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *modal = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!modal) return;
+      if (deadline.elapsed() > 5000) { timedOut = true; modal->reject(); return; }
+      if (auto *picker = qobject_cast<QFileDialog *>(modal)) { picked = true; picker->selectFile(target); QMetaObject::invokeMethod(picker, "accept"); }
+      else if (auto *box = qobject_cast<QMessageBox *>(modal)) { confirmed = true; QCOMPARE(box->defaultButton(), box->button(QMessageBox::Cancel)); box->button(QMessageBox::StandardButton(choice))->click(); }
+    });
+    timer.start(5); trigger(*window, QStringLiteral("openImage")); timer.stop(); QVERIFY(picked && confirmed && !timedOut);
+    QCOMPARE(window->findChild<EditorCanvas *>(), canvas); QCOMPARE(QImage(target), other); QCOMPARE(QImage(target).colorSpace(), other.colorSpace());
+    if (choice == int(QMessageBox::Cancel)) {
+      QCOMPARE(window->windowTitle(), title); QCOMPARE(window->statusBar()->currentMessage(), status);
+      QCOMPARE(canvas->viewState().zoom(), zoom); QCOMPARE(canvas->viewState().offset(), offset);
+      QVERIFY(window->findChild<QAction *>("undo")->isEnabled() && window->findChild<QAction *>("redo")->isEnabled());
+      QVERIFY(window->findChild<QAction *>("deleteSelection")->isEnabled());
+      trigger(*window, QStringLiteral("redo")); QVERIFY(window->statusBar()->currentMessage().startsWith("40 × 60"));
+      QCOMPARE(QImage(path), original); QVERIFY(!QFile::exists(path + ".xann"));
+    } else {
+      QVERIFY(window->windowTitle().startsWith("linear.png")); QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+      QVERIFY(window->statusBar()->currentMessage().startsWith("24 × 18 · 0 annotation(s) · 0 selected"));
+      QVERIFY(!window->findChild<QAction *>("undo")->isEnabled() && !window->findChild<QAction *>("redo")->isEnabled());
+      if (choice == int(QMessageBox::Save)) { const auto old = loadSource(path); QVERIFY(old.document); QCOMPARE(old.image, original); QCOMPARE(old.document->annotations.size(), std::size_t(1)); }
+      else { QCOMPARE(QImage(path), original); QVERIFY(!QFile::exists(path + ".xann")); }
+      // Saving the adopted source preserves encoded pixels, alpha and metadata.
+      trigger(*window, QStringLiteral("saveImage")); const QImage saved(target); QCOMPARE(saved, other); QCOMPARE(saved.colorSpace(), other.colorSpace());
+      canvas->resetZoom(); drawRectangle(*canvas); QVERIFY(window->statusBar()->currentMessage().contains("1 annotation(s)"));
+      trigger(*window, QStringLiteral("undo")); QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+    }
+  }
+
+  void cancelledPickerAndCorruptOpenPreserveTheCurrentSession_data() {
+    QTest::addColumn<int>("failure");
+    QTest::newRow("cancel-picker") << 0; QTest::newRow("unsupported-image") << 1; QTest::newRow("corrupt-sidecar") << 2;
+  }
+  void cancelledPickerAndCorruptOpenPreserveTheCurrentSession() {
+    QFETCH(int, failure);
+    QTemporaryDir dir; const QString path = dir.filePath("current.png"), target = dir.filePath("target.png");
+    const QImage original = fixture(); QVERIFY(original.save(path));
+    if (failure == 1) { QFile bad(target); QVERIFY(bad.open(QIODevice::WriteOnly)); bad.write("bad"); }
+    if (failure == 2) { QVERIFY(original.save(target)); QFile bad(target + ".xann"); QVERIFY(bad.open(QIODevice::WriteOnly)); bad.write("corrupt"); }
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); window->resize(900, 600); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas); canvas->zoomIn();
+    const QString status = window->statusBar()->currentMessage(), title = window->windowTitle();
+    const double zoom = canvas->viewState().zoom(); const QPointF offset = canvas->viewState().offset();
+    bool picked = false, reported = false, confirmed = false; QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] {
+      if (auto *picker = qobject_cast<QFileDialog *>(QApplication::activeModalWidget())) {
+        picked = true; if (!failure) picker->reject(); else { picker->selectFile(target); QMetaObject::invokeMethod(picker, "accept"); }
+      } else if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) {
+        reported = box->windowTitle() == u"Cannot open image"; confirmed = box->windowTitle() == u"Replace current image"; box->reject();
+      }
+    });
+    timer.start(5); trigger(*window, QStringLiteral("openImage")); timer.stop();
+    QVERIFY(picked && !confirmed); QCOMPARE(reported, failure != 0);
+    QCOMPARE(window->statusBar()->currentMessage(), status); QCOMPARE(window->windowTitle(), title);
+    QCOMPARE(canvas->viewState().zoom(), zoom); QCOMPARE(canvas->viewState().offset(), offset);
+    QVERIFY(window->findChild<QAction *>("undo")->isEnabled() && window->findChild<QAction *>("deleteSelection")->isEnabled());
+    QCOMPARE(QImage(path), original); QVERIFY(!QFile::exists(path + ".xann"));
+    trigger(*window, QStringLiteral("undo")); QVERIFY(!window->findChild<QAction *>("undo")->isEnabled());
+  }
+
+  void saveBeforeOpeningTheSameFileAdoptsTheJustSavedSourceAndSidecar() {
+    QTemporaryDir dir; const QString path = dir.filePath("current.png"); const QImage original = fixture(); QVERIFY(original.save(path));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); window->resize(900, 600); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas);
+    acceptDimensions(40, 20, 5, 6); trigger(*window, QStringLiteral("cropImage"));
+    bool savedBeforeReplace = false; QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] {
+      if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) {
+        QCOMPARE(box->windowTitle(), QStringLiteral("Replace current image")); savedBeforeReplace = true; box->button(QMessageBox::Save)->click();
+      }
+    });
+    timer.start(5); QVERIFY(window->openImage(path)); timer.stop(); QVERIFY(savedBeforeReplace);
+    QVERIFY(window->statusBar()->currentMessage().startsWith("40 × 20 · 1 annotation(s) · 0 selected"));
+    QVERIFY(!window->windowTitle().contains(QChar(0x2022))); QVERIFY(!window->findChild<QAction *>("undo")->isEnabled());
+    const auto persisted = loadSource(path); QVERIFY(persisted.document); QCOMPARE(persisted.image.size(), QSize(40, 20));
+    QCOMPARE(persisted.image.pixel(0, 0), original.pixel(5, 6)); QCOMPARE(persisted.document->annotations.size(), std::size_t(1));
+    trigger(*window, QStringLiteral("canvasAction%1").arg(int(CanvasAction::RotateClockwise)));
+    QVERIFY(window->statusBar()->currentMessage().startsWith("20 × 40")); trigger(*window, QStringLiteral("undo"));
+    QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+  }
+
+  void cancellingAndClosingOpenWaitForTheSameLiveWorker() {
+    QTemporaryDir dir; const QString path = dir.filePath("current.png"), target = dir.filePath("large.png");
+    const QImage original = fixture(); QVERIFY(original.save(path));
+    QImage large(4000, 4000, QImage::Format_ARGB32); large.fill(Qt::blue); QVERIFY(large.save(target));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); window->resize(900, 600); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas);
+    const QString title = window->windowTitle(), status = window->statusBar()->currentMessage();
+    for (bool closeProgress : {false, true}) {
+      QTimer timer; QElapsedTimer deadline; deadline.start(); bool cancelledLive = false;
+      connect(&timer, &QTimer::timeout, [&] {
+        auto *progress = qobject_cast<QProgressDialog *>(QApplication::activeModalWidget()); if (!progress) return;
+        if ((progress->value() >= 9 && progress->value() < 100) || deadline.elapsed() > 5000) {
+          cancelledLive = progress->value() >= 9 && progress->value() < 100;
+          QVERIFY(!window->close()); timer.stop();
+          if (closeProgress) progress->reject(); else progress->findChild<QPushButton *>()->click();
+        }
+      });
+      timer.start(5); QVERIFY(!window->openImage(target)); timer.stop(); QVERIFY(cancelledLive);
+      QCOMPARE(window->windowTitle(), title); QCOMPARE(window->statusBar()->currentMessage(), status);
+      QVERIFY(window->findChild<QAction *>("undo")->isEnabled() && window->findChild<QAction *>("deleteSelection")->isEnabled());
+    }
+    QCOMPARE(QImage(path), original); QVERIFY(!QFile::exists(path + ".xann")); QCOMPARE(QImage(target), large);
+  }
+
+  void savingAnUntitledImageOverTheOpenCandidateReloadsTheSavedImage() {
+    QTemporaryDir dir; const QString target = dir.filePath("candidate.png"); QVERIFY(fixture().save(target));
+    QTimer::singleShot(0, [] {
+      auto *dialog = qobject_cast<NewImageDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog);
+      configureNewImage(*dialog); dialog->accept();
+    });
+    std::unique_ptr<EditorWindow> window(EditorWindow::createNew()); QVERIFY(window); window->show();
+    bool confirmed = false, picked = false; QTimer timer; QElapsedTimer deadline; deadline.start();
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *modal = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!modal) return;
+      if (deadline.elapsed() > 5000) { modal->reject(); return; }
+      if (auto *box = qobject_cast<QMessageBox *>(modal)) {
+        if (box->windowTitle() == u"Replace current image") { confirmed = true; box->button(QMessageBox::Save)->click(); }
+        else if (box->standardButtons() & QMessageBox::Yes) box->button(QMessageBox::Yes)->click();
+      } else if (auto *picker = qobject_cast<QFileDialog *>(modal); picker && !picked) {
+        picker->selectFile(target);
+        // The file-system model loads the newly chosen directory asynchronously.
+        if (picker->selectedFiles() != QStringList{target}) return;
+        picked = true;
+        // Let the recurring timer handle the native overwrite confirmation in
+        // its nested loop, after this timeout's callback has returned.
+        QTimer::singleShot(0, picker, [picker] { QMetaObject::invokeMethod(picker, "accept"); });
+      }
+    });
+    timer.start(5); QVERIFY(window->openImage(target)); timer.stop(); QVERIFY(confirmed && picked);
+    QVERIFY(window->statusBar()->currentMessage().startsWith("64 × 48")); QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+    QVERIFY(!window->findChild<QAction *>("undo")->isEnabled());
+    const auto persisted = loadSource(target); QVERIFY(persisted.document); QCOMPARE(persisted.image.size(), QSize(64, 48));
+    QCOMPARE(persisted.image.colorSpace(), QColorSpace(QColorSpace::SRgbLinear));
+    QVERIFY(std::abs(qRed(persisted.image.pixel(0, 0)) - 55) <= 1);
+  }
+
   void cancelledOrFailedNewImagePreservesTheDirtySession_data() {
     QTest::addColumn<bool>("cancelWizard"); QTest::addColumn<int>("failure");
     QTest::newRow("invalid-and-cancelled-controls") << true << 0;
@@ -344,15 +497,17 @@ private slots:
     const auto saved = saveEdit(path, original, session.document()); QVERIFY(saved.rasterSaved && saved.sidecarSaved);
     QImage current(24, 20, QImage::Format_ARGB32); current.fill(Qt::black); QVERIFY(current.save(path));
     QFile sidecar(path + ".xann"); QVERIFY(sidecar.open(QIODevice::ReadOnly)); const QByteArray sidecarBefore = sidecar.readAll(); sidecar.close();
-    QTimer::singleShot(0, [choice] {
-      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box);
+    QTimer timer;
+    connect(&timer, &QTimer::timeout, [choice, &timer] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return;
+      timer.stop();
       QCOMPARE(box->defaultButton(), box->button(QMessageBox::Cancel));
       if (choice == int(SourceChoice::Unspecified)) { box->button(QMessageBox::Cancel)->click(); return; }
       const QString prefix = choice == int(SourceChoice::CurrentRaster) ? QStringLiteral("Current raster") : QStringLiteral("Embedded source");
       for (auto *button : box->buttons()) if (button->text().startsWith(prefix)) { button->click(); return; }
       QFAIL("The source-choice dialog did not expose both validated images.");
     });
-    std::unique_ptr<EditorWindow> window(EditorWindow::open(path));
+    timer.start(5); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); timer.stop();
     if (choice == int(SourceChoice::Unspecified)) QVERIFY(!window);
     else {
       QVERIFY(window);

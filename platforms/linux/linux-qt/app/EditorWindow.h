@@ -23,9 +23,12 @@ struct PreparedCanvasEdit;
 class EditorWindow final : public QMainWindow {
   Q_OBJECT
 public:
+  ~EditorWindow() override;
   // Returns nullptr after telling the user why when the image cannot be opened.
   static EditorWindow *open(const QString &path, QWidget *parent = nullptr);
   static EditorWindow *createNew(QWidget *parent = nullptr);
+  // Empty path invokes the native picker; recent-file actions pass an explicit path.
+  bool openImage(const QString &path = {});
 
 protected:
   void closeEvent(QCloseEvent *event) override;
@@ -35,6 +38,9 @@ private:
                xerahs::editor::EditorSession::InitialPersistence persistence = xerahs::editor::EditorSession::InitialPersistence::Saved,
                QImage displaySource = {});
   void newImage();
+  int confirmReplacement(const QString &replacement);
+  void adoptSession(std::unique_ptr<xerahs::editor::EditorSession> session, const QString &path,
+                    QImage source, const QImage &display);
   bool save(bool chooseFile);
   void refresh();
   void cropImage();

@@ -30,6 +30,8 @@ LoadedRaster loadRaster(const QString &path, const RenderControl &control) {
     if (!file.open(QIODevice::ReadOnly))
       return fail(diagnostic::sourceUnsupported);
     const qint64 length = file.size();
+    if (length > kMaxEncodedImageBytes)
+      return fail(diagnostic::sourceTooLarge);
     QByteArray bytes;
     while (!file.atEnd()) {
       if (cancelled(control))
@@ -37,6 +39,8 @@ LoadedRaster loadRaster(const QString &path, const RenderControl &control) {
       const QByteArray chunk = file.read(65536);
       if (file.error() != QFile::NoError)
         return fail(diagnostic::sourceUnsupported);
+      if (bytes.size() + chunk.size() > kMaxEncodedImageBytes)
+        return fail(diagnostic::sourceTooLarge);
       bytes.append(chunk);
       if (length > 0)
         progress(control, int(std::min(10.0, double(bytes.size()) / length * 10)));

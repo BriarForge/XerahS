@@ -26,18 +26,20 @@
     "platforms/linux/linux-qt/app/NewImageDialog.h",
     "platforms/linux/linux-qt/app/NewImageDialog.cpp",
     "platforms/linux/linux-qt/app/NewImageSource.h",
-    "platforms/linux/linux-qt/app/NewImageSource.cpp"
+    "platforms/linux/linux-qt/app/NewImageSource.cpp",
+    "platforms/linux/linux-qt/app/EditorOpen.h",
+    "platforms/linux/linux-qt/app/EditorOpen.cpp"
   ],
   "requirements": {
     "ES-001": {
       "status": "implemented",
       "vectors": [],
-      "note": "EditorSource shares the RasterSource native decoder, with header limits before pixel allocation, chunk-level cancellation, original file-byte snapshots and typed diagnostics. EditorSourceTest verifies unsupported/empty inputs, oversized BMP header rejection before decode, PNG alpha/profile preservation and untouched files."
+      "note": "EditorSource shares the RasterSource native decoder, with header limits before pixel allocation, chunk-level cancellation, original file-byte snapshots and typed diagnostics. EditorSourceTest verifies unsupported/empty inputs, oversized BMP header rejection before decode, PNG alpha/profile preservation and untouched files. Native editor, tray and CLI loading now run on a progress/cancellation worker. Raster and sidecar encoded inputs are bounded to 1 GiB before buffering and during growth; source loading/hashing checks cancellation before publishing any document. Sparse oversized-file and staged cancellation tests verify typed errors, empty unpublished results and unchanged files."
     },
     "ES-002": {
       "status": "partial",
       "vectors": [],
-      "note": "Orientation is normalized once with QImageReader auto-transform and pixels remain non-premultiplied ARGB32. Independent EXIF/JPEG mapping tests verify embedded PNG orientation; PNG tests preserve alpha and colour metadata. New Image converts initial pixels/background to an explicitly selected profile, retaining immutable source bytes. Editor canvas and comparison use private sRGB display copies, with independent linear/sRGB pixel and native-view tests. End-to-end annotation composition in the working profile and requested export-profile conversion remain pending."
+      "note": "Orientation is normalized once with QImageReader auto-transform and pixels remain non-premultiplied ARGB32. Independent EXIF/JPEG mapping tests verify embedded PNG orientation; PNG tests preserve alpha and colour metadata. New Image converts initial pixels/background to an explicitly selected profile, retaining immutable source bytes. Editor canvas and comparison use private sRGB display copies, with independent linear/sRGB pixel and native-view tests. End-to-end annotation composition in the working profile and requested export-profile conversion remain pending. Open prepares its private sRGB display cache on the worker before session adoption; independent linear-to-sRGB transfer and alpha tests verify unchanged source pixels/profile."
     },
     "ES-003": {
       "status": "implemented",
@@ -80,7 +82,7 @@
     "ES-008": {
       "status": "implemented",
       "vectors": [],
-      "note": "Escape cancels a draw or move gesture. Native dirty close and New Image replacement offer Save, Discard and Cancel; replacement defaults to Cancel and waits for fully validated preparation. Untitled images are dirty without prior edits and Save prompts for a PNG destination. Native window tests verify cancelled close/replacement/destination, successful save/discard, failed raster or sidecar save, preserved prior source/history/selection/viewport and rebound canvas actions. The editor remains alive until modal preparation workers finish."
+      "note": "Escape cancels a draw or move gesture. Native dirty close and New/Open Image replacement offer Save, Discard and Cancel; replacement defaults to Cancel and waits for fully validated preparation. Untitled images are dirty without prior edits and Save prompts for a PNG destination. Native window tests verify cancelled close/replacement/destination, successful save/discard, failed raster or sidecar save, preserved prior source/history/selection/viewport and rebound canvas actions. The editor remains alive until modal preparation workers finish. Native Open tests also verify same-file and untitled overlapping Save reload the persisted source/sidecar, while cancelled pickers, loading and invalid sources preserve the current session. Canvas teardown occurs while its referenced session/image remain alive."
     },
     "ES-009": {
       "status": "partial",
@@ -128,7 +130,7 @@
     "ES-016": {
       "status": "implemented",
       "vectors": [],
-      "note": "Qt Core SourceBinding requires an explicit current-raster or embedded-source choice when hashes differ. The native warning offers both validated images with dimensions and Cancel as default. Cancellation creates no session; choices preserve annotation fields/coordinates/assets and use the validated snapshots without rereading files. Core, file and native-dialog tests cover choices, changed dimensions, cancellation, snapshot stability and untouched files."
+      "note": "Qt Core SourceBinding requires an explicit current-raster or embedded-source choice when hashes differ. The native warning offers both validated images with dimensions and Cancel as default. Cancellation creates no session; choices preserve annotation fields/coordinates/assets and use the validated snapshots without rereading files. Core, file and native-dialog tests cover choices, changed dimensions, cancellation, snapshot stability and untouched files. Native opening and choice resolution run on cancellable workers, including private current/embedded display preparation, and never publish a usable session after cancellation."
     },
     "ES-017": {
       "status": "implemented",

@@ -27,7 +27,10 @@ The next editor work follows these dependencies:
    New Image now validates dimensions, alpha/colour, selected profile and optional
    file/clipboard initial pixels on a cancellable worker, confirms dirty session
    replacement, and opens an untitled source that stays unsaved until persistence.
-   Continue native Open/recent-file selection with the same replacement rules,
+   Native Open now validates raster and sidecar snapshots on a cancellable
+   worker before the same dirty replacement confirmation. Saving over the
+   candidate reloads the explicit save before adoption; failed or cancelled
+   opening preserves the current session. Continue opt-in recent-file selection,
    then general affine annotations, inserted images and background composition.
 4. Expand annotation tools, effects, output actions, settings and utilities,
    alongside the remaining capture and post-capture integrations.

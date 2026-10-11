@@ -3,6 +3,7 @@
 
 #include "CaptureController.h"
 #include "EditorWindow.h"
+#include "EditorOpen.h"
 
 #include <QAction>
 #include <QApplication>
@@ -128,7 +129,7 @@ int main(int argc, char *argv[]) {
   });
   QObject::connect(openImage, &QAction::triggered, [&capture] {
     const QString path = QFileDialog::getOpenFileName(nullptr, QStringLiteral("Open image"), capture.saveDirectory(),
-                                                      QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp *.webp *.gif)"));
+                                                      xerahs::app::imageFileFilter());
     if (path.isEmpty()) return;
     if (auto *window = xerahs::app::EditorWindow::open(path)) window->show();
   });

@@ -67,6 +67,8 @@ add_executable(xerahs
   app/CaptureController.h
   app/EditorSource.cpp
   app/EditorSource.h
+  app/EditorOpen.cpp
+  app/EditorOpen.h
   app/EditorCanvas.cpp
   app/EditorCanvas.h
   app/EditorWindow.cpp
@@ -157,7 +159,7 @@ target_link_libraries(new-image-dialog-test PRIVATE xerahs_editor_codecs Qt6::Wi
 add_test(NAME new-image-dialog COMMAND new-image-dialog-test)
 set_tests_properties(new-image-dialog PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 
-add_executable(editor-window-test tests/EditorWindowTest.cpp app/EditorWindow.cpp app/EditorWindow.h
+add_executable(editor-window-test tests/EditorWindowTest.cpp app/EditorWindow.cpp app/EditorWindow.h app/EditorOpen.cpp app/EditorOpen.h
                app/EditorCanvas.cpp app/EditorCanvas.h app/EditorSource.cpp
                app/CanvasRotationDialog.cpp app/CanvasRotationDialog.h
                app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h

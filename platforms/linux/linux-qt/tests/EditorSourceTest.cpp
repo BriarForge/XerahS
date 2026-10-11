@@ -7,11 +7,13 @@
 #include <QBuffer>
 #include <QColorSpace>
 #include <QFile>
+#include <QFileInfo>
 #include <QImage>
 #include <QImageReader>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QtEndian>
+#include <cmath>
 
 using namespace xerahs::app;
 using namespace xerahs::editor;
@@ -19,6 +21,41 @@ using namespace xerahs::editor;
 class EditorSourceTest : public QObject {
   Q_OBJECT
 private slots:
+  void sourceLoadingPreparesPrivateDisplayPixelsAndCancelsWithoutPublishing_data() {
+    QTest::addColumn<int>("cancelAt");
+    for (int stage : {0, 40, 50, 60, 75, 80, 100}) QTest::newRow(qPrintable(QString::number(stage))) << stage;
+  }
+  void sourceLoadingPreparesPrivateDisplayPixelsAndCancelsWithoutPublishing() {
+    QFETCH(int, cancelAt);
+    QTemporaryDir dir; const QString path = dir.filePath("linear.png");
+    QImage image(3, 2, QImage::Format_ARGB32); image.fill(qRgba(128, 0, 0, 80)); image.setColorSpace(QColorSpace::SRgbLinear);
+    QVERIFY(image.save(path)); const auto first = loadSource(path); QVERIFY(first.document);
+    QCOMPARE(first.image, image); QCOMPARE(first.image.colorSpace(), image.colorSpace());
+    QCOMPARE(first.displayImage.colorSpace(), QColorSpace(QColorSpace::SRgb));
+    QVERIFY(std::abs(qRed(first.displayImage.pixel(0, 0)) - 188) <= 1); QCOMPARE(qAlpha(first.displayImage.pixel(0, 0)), 80);
+    EditorSession session(*first.document); QVERIFY(session.createRectangle({.25, .25}, {1.5, 1.5}));
+    const auto saved = saveEdit(path, image, session.document()); QVERIFY(saved.rasterSaved && saved.sidecarSaved);
+    QFile raster(path), sidecar(path + ".xann"); QVERIFY(raster.open(QIODevice::ReadOnly)); const auto rasterBefore = raster.readAll(); raster.close();
+    QVERIFY(sidecar.open(QIODevice::ReadOnly)); const auto sidecarBefore = sidecar.readAll(); sidecar.close();
+    int percent = 0;
+    const auto stopped = loadSource(path, {[&] { return percent >= cancelAt; }, [&](int p) { percent = p; }});
+    QCOMPARE(stopped.diagnostic, QStringLiteral("canvas-cancelled"));
+    QVERIFY(!stopped.document && !stopped.pendingChoice && stopped.image.isNull() && stopped.displayImage.isNull());
+    QVERIFY(raster.open(QIODevice::ReadOnly)); QCOMPARE(raster.readAll(), rasterBefore);
+    QVERIFY(sidecar.open(QIODevice::ReadOnly)); QCOMPARE(sidecar.readAll(), sidecarBefore);
+  }
+  void encodedFilesAreBoundedBeforeBufferAllocation() {
+    QTemporaryDir dir; const QString path = dir.filePath("oversized.png");
+    QFile huge(path); QVERIFY(huge.open(QIODevice::WriteOnly)); QVERIFY(huge.resize(kMaxEncodedImageBytes + 1)); huge.close();
+    const auto raster = loadRaster(path); QCOMPARE(raster.diagnostic, diagnostic::sourceTooLarge);
+    QVERIFY(raster.image.isNull() && raster.fileBytes.isEmpty());
+    QCOMPARE(loadSource(path).diagnostic, diagnostic::sourceTooLarge);
+    QImage image(2, 2, QImage::Format_ARGB32); image.fill(Qt::blue); QVERIFY(image.save(path));
+    QFile sidecar(path + ".xann"); QVERIFY(sidecar.open(QIODevice::WriteOnly)); QVERIFY(sidecar.resize(kMaxEncodedImageBytes + 1)); sidecar.close();
+    const auto document = loadSource(path); QCOMPARE(document.diagnostic, diagnostic::documentTooLarge);
+    QVERIFY(!document.document && document.image.isNull() && document.displayImage.isNull());
+    QCOMPARE(QImage(path), image); QCOMPARE(QFileInfo(sidecar.fileName()).size(), kMaxEncodedImageBytes + 1);
+  }
   void rasterDecodePreservesAlphaProfileAndOriginalBytes() {
     QTemporaryDir dir;
     const QString path = dir.filePath("alpha.png");
