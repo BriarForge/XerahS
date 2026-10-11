@@ -33,6 +33,8 @@ add_library(xerahs_core STATIC
   src/image-editor/SourceBinding.h
   src/image-editor/ImageComparison.cpp
   src/image-editor/ImageComparison.h
+  src/image-editor/NewImage.cpp
+  src/image-editor/NewImage.h
   src/naming/FilenameGenerator.cpp
   src/naming/FilenameGenerator.h
 )
@@ -46,7 +48,8 @@ target_compile_options(xerahs_core PRIVATE -Wall -Wextra -Wpedantic
 # in the Qt Core library. The adapter and app share the same PNG preparation.
 add_library(xerahs_editor_codecs STATIC app/EditorCanvasOperations.cpp app/EditorCanvasOperations.h
                                       app/RasterSource.cpp app/RasterSource.h
-                                      app/ComparisonImages.cpp app/ComparisonImages.h)
+                                      app/ComparisonImages.cpp app/ComparisonImages.h
+                                      app/NewImageSource.cpp app/NewImageSource.h)
 target_include_directories(xerahs_editor_codecs PUBLIC app)
 target_link_libraries(xerahs_editor_codecs PUBLIC xerahs_core Qt6::Gui)
 target_compile_options(xerahs_editor_codecs PRIVATE -Wall -Wextra -Wpedantic)
@@ -133,6 +136,11 @@ add_executable(image-comparison-test tests/ImageComparisonTest.cpp)
 set_target_properties(image-comparison-test PROPERTIES AUTOMOC ON)
 target_link_libraries(image-comparison-test PRIVATE xerahs_editor_codecs Qt6::Test)
 add_test(NAME image-comparison COMMAND image-comparison-test)
+
+add_executable(new-image-test tests/NewImageTest.cpp)
+set_target_properties(new-image-test PROPERTIES AUTOMOC ON)
+target_link_libraries(new-image-test PRIVATE xerahs_editor_codecs Qt6::Test)
+add_test(NAME new-image COMMAND new-image-test)
 
 add_executable(image-comparison-dialog-test tests/ImageComparisonDialogTest.cpp
                app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h)

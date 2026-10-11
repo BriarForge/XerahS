@@ -71,7 +71,7 @@
       "vectors": [
         "delete-and-undo-restores-selection"
       ],
-      "note": "History snapshots hold immutable, implicitly shared source PNG and assets. Canvas edits create a separate encoded source before committing; undo/redo never modify a reachable prior source. Allocation is reserved before truncating the redo branch."
+      "note": "History snapshots hold immutable, implicitly shared source PNG and assets. Canvas edits create a separate encoded source before committing; undo/redo never modify a reachable prior source. Allocation is reserved before truncating the redo branch. New sessions distinguish saved and unsaved initial sources; immutable initial pixels survive Undo and have no clean checkpoint until successful persistence."
     },
     "ES-008": {
       "status": "implemented",

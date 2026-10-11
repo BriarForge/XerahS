@@ -10,6 +10,7 @@
 #include "image-editor/EditorViewport.h"
 #include "image-editor/ImageComparison.h"
 #include "EditorCanvasOperations.h"
+#include "NewImageSource.h"
 #include <QBuffer>
 #include "naming/FilenameGenerator.h"
 
@@ -638,6 +639,47 @@ QJsonObject runEditorSession(const QString &operation, const QJsonObject &input)
 }
 
 QJsonObject runEditorCanvas(const QString &operation, const QJsonObject &input) {
+  if (operation == u"create-image") {
+    const auto profileFromName = [](const QString &name) {
+      const QStringList names{QStringLiteral("srgb"), QStringLiteral("linear-srgb"),
+          QStringLiteral("display-p3"), QStringLiteral("adobe-rgb")};
+      return ed::NewImageProfile(names.indexOf(name));
+    };
+    const QJsonArray size = input.value(u"size").toArray();
+    const QString profile = input.value(u"profile").toString(QStringLiteral("srgb"));
+    const auto background = ed::parseColor(input.value(u"background").toString(QStringLiteral("#00000000")));
+    if (!background) return adapterError(QStringLiteral("invalid injected background colour"));
+    const ed::NewImageOptions options{size.at(0).toInteger(), size.at(1).toInteger(), *background, profileFromName(profile)};
+    if (auto error = ed::validateNewImage(options)) return QJsonObject{{QStringLiteral("error"), *error}};
+    QImage initial;
+    if (input.contains(u"initial")) {
+      const QJsonObject json = input.value(u"initial").toObject();
+      const QJsonArray initialSize = json.value(u"size").toArray();
+      const ed::NewImageOptions extent{initialSize.at(0).toInteger(), initialSize.at(1).toInteger()};
+      if (auto error = ed::validateNewImage(extent)) return QJsonObject{{QStringLiteral("error"), *error}};
+      const auto initialProfile = profileFromName(json.value(u"profile").toString(QStringLiteral("srgb")));
+      if (!xerahs::app::newImageColorSpace(initialProfile).isValid()) return adapterError(QStringLiteral("invalid injected initial profile"));
+      const QJsonArray pixels = json.value(u"pixels").toArray();
+      if (pixels.size() != extent.width * extent.height) return adapterError(QStringLiteral("invalid injected initial pixels"));
+      initial = QImage(int(extent.width), int(extent.height), QImage::Format_ARGB32);
+      if (initial.isNull()) return QJsonObject{{QStringLiteral("error"), ed::diagnostic::documentTooLarge}};
+      initial.setColorSpace(xerahs::app::newImageColorSpace(initialProfile));
+      for (int y = 0; y < initial.height(); ++y) for (int x = 0; x < initial.width(); ++x) {
+        const auto pixel = ed::parseColor(pixels.at(y * initial.width() + x).toString());
+        if (!pixel) return adapterError(QStringLiteral("invalid injected initial colour"));
+        initial.setPixel(x, y, *pixel);
+      }
+    }
+    const auto prepared = xerahs::app::prepareNewImage(options, initial);
+    if (!prepared.document) return QJsonObject{{QStringLiteral("error"), prepared.diagnostic}};
+    ed::EditorSession session(*prepared.document, ed::EditorSession::InitialPersistence::Unsaved);
+    QJsonArray pixels;
+    for (int y = 0; y < prepared.source.height(); ++y) for (int x = 0; x < prepared.source.width(); ++x)
+      pixels.append(ed::formatColor(prepared.source.pixel(x, y)));
+    return QJsonObject{{QStringLiteral("canvas_size"), size}, {QStringLiteral("profile"), profile},
+        {QStringLiteral("pixels"), pixels}, {QStringLiteral("dirty"), session.dirty()},
+        {QStringLiteral("history_count"), session.undoCount()}, {QStringLiteral("error"), QJsonValue::Null}};
+  }
   if (operation == u"compare-images") {
     const QJsonObject first = input.value(u"first").toObject(), second = input.value(u"second").toObject();
     const auto extent = [](const QJsonObject &image) {

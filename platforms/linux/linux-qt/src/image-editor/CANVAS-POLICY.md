@@ -3,6 +3,20 @@
 Implements the existing `EDITOR-CANVAS-001` requirements; this document does not
 approve new product behavior or close the full capability's parity review.
 
+New Image preparation validates dimensions and the selected sRGB, linear sRGB,
+Display P3 or Adobe RGB profile before pixel allocation. A chosen background
+colour starts in sRGB and is converted to the working profile. Optional initial
+pixels retain their colour interpretation (untagged means sRGB), convert on a
+private copy to that profile, and are placed at native size at the top left.
+The requested dimensions crop excess pixels or pad uncovered areas with the
+background. Source-over composition occurs in the chosen profile's encoded
+channels, rounded to 8-bit straight alpha after each pixel; transparent
+background passes initial bytes through exactly. Sources are never modified.
+The validated immutable PNG embeds the profile and is paired with a fresh
+document with no file identity or annotations. New sessions have no persistence
+checkpoint, so Undo back to initial pixels remains dirty until a successful
+raster/sidecar save. Native creation/replacement controls follow this preparation.
+
 Crop Image and the temporary Crop tool call the same production operation.
 The retained rectangle normalizes drag direction, floors left/top, ceils
 right/bottom, clips to the source canvas, and rejects empty/non-finite input.

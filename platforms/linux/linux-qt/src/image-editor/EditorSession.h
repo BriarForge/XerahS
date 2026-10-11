@@ -15,7 +15,8 @@ class EditorSession {
 public:
   // ES-002: canvas coordinates are source pixels; `document` carries source
   // identity and any annotations reopened from a sidecar.
-  explicit EditorSession(AnnotationDocument document);
+  enum class InitialPersistence { Saved, Unsaved };
+  explicit EditorSession(AnnotationDocument document, InitialPersistence persistence = InitialPersistence::Saved);
 
   const AnnotationDocument &document() const { return m_history[m_position].document; }
   const QSet<QUuid> &selection() const { return m_selection; }
@@ -52,7 +53,7 @@ public:
   bool commitCanvas(AnnotationDocument document, quint64 expectedState);
 
   // ES-027.
-  bool dirty() const { return m_history[m_position].stateId != m_checkpoint; }
+  bool dirty() const { return !m_checkpoint || m_history[m_position].stateId != *m_checkpoint; }
   void markSaved() { m_checkpoint = m_history[m_position].stateId; }
 
   // ES-011, ES-012: a save is clean only when the raster and the sidecar both
@@ -75,7 +76,7 @@ private:
   std::vector<HistoryState> m_history;
   std::size_t m_position = 0;
   quint64 m_nextStateId = 1;
-  quint64 m_checkpoint = 0;
+  std::optional<quint64> m_checkpoint = 0;
   QSet<QUuid> m_selection;
   RectangleStyle m_tool;
 };

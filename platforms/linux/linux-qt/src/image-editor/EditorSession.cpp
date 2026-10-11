@@ -6,9 +6,9 @@
 
 namespace xerahs::editor {
 
-EditorSession::EditorSession(AnnotationDocument document) {
+EditorSession::EditorSession(AnnotationDocument document, InitialPersistence persistence) {
   m_history.push_back(HistoryState{0, std::move(document), {}});
-  m_checkpoint = 0;  // a freshly opened session is clean
+  m_checkpoint = persistence == InitialPersistence::Saved ? std::optional<quint64>(0) : std::nullopt;
 }
 
 void EditorSession::commit(AnnotationDocument document) {

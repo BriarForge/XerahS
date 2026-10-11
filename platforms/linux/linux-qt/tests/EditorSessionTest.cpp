@@ -64,6 +64,19 @@ class EditorSessionTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void unsavedInitialPixelsHaveNoCleanCheckpointUntilSuccessfulSave() {
+    EditorSession session(document(), EditorSession::InitialPersistence::Unsaved);
+    QVERIFY(session.dirty()); QCOMPARE(session.undoCount(), 0); QVERIFY(!session.undo());
+    QVERIFY(session.createRectangle({1, 1}, {4, 4}));
+    QVERIFY(session.undo()); QVERIFY(session.dirty());
+    QCOMPARE(session.recordSave(true, false), QStringList{diagnostic::sidecarSaveFailed});
+    QVERIFY(session.dirty());
+    QVERIFY(session.recordSave(true, true).isEmpty()); QVERIFY(!session.dirty());
+    QVERIFY(session.redo()); QVERIFY(session.dirty());
+    QVERIFY(session.undo()); QVERIFY(!session.dirty());
+    EditorSession opened(document()); QVERIFY(!opened.dirty());
+  }
+
   void mismatchedSourceRequiresAnExplicitBindingChoice() {
     auto d = document(10, 10); d.sourceImagePng = pngHeader(10, 10);
     d.imageHash = QStringLiteral("sha256:") + QString(64, QLatin1Char('0'));
