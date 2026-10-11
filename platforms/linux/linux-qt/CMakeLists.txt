@@ -77,6 +77,8 @@ add_executable(xerahs
   app/EditorOpen.h
   app/RecentImageMenu.cpp
   app/RecentImageMenu.h
+  app/NativeEditorPreferences.cpp
+  app/NativeEditorPreferences.h
   app/EditorCanvas.cpp
   app/EditorCanvas.h
   app/EditorWindow.cpp
@@ -102,6 +104,15 @@ add_executable(editor-preferences-test tests/EditorPreferencesTest.cpp)
 set_target_properties(editor-preferences-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-preferences-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME editor-preferences COMMAND editor-preferences-test)
+
+add_executable(native-editor-preferences-test tests/NativeEditorPreferencesTest.cpp
+               app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h
+               app/RecentImageMenu.cpp app/RecentImageMenu.h)
+set_target_properties(native-editor-preferences-test PROPERTIES AUTOMOC ON)
+target_link_libraries(native-editor-preferences-test PRIVATE xerahs_core Qt6::Widgets Qt6::Test)
+target_include_directories(native-editor-preferences-test PRIVATE app)
+add_test(NAME native-editor-preferences COMMAND native-editor-preferences-test)
+set_tests_properties(native-editor-preferences PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 
 add_executable(recent-images-test tests/RecentImagesTest.cpp)
 set_target_properties(recent-images-test PROPERTIES AUTOMOC ON)
@@ -178,6 +189,7 @@ set_tests_properties(new-image-dialog PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=off
 
 add_executable(editor-window-test tests/EditorWindowTest.cpp app/EditorWindow.cpp app/EditorWindow.h app/EditorOpen.cpp app/EditorOpen.h
                app/RecentImageMenu.cpp app/RecentImageMenu.h
+               app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h
                app/EditorCanvas.cpp app/EditorCanvas.h app/EditorSource.cpp
                app/CanvasRotationDialog.cpp app/CanvasRotationDialog.h
                app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h

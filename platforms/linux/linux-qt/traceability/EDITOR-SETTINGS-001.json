@@ -11,30 +11,129 @@
     "platforms/linux/linux-qt/src/image-editor/EditorPreferenceStore.cpp",
     "platforms/linux/linux-qt/src/image-editor/RecentImages.h",
     "platforms/linux/linux-qt/src/image-editor/RecentImages.cpp",
-    "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+    "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+    "platforms/linux/linux-qt/app/NativeEditorPreferences.h",
+    "platforms/linux/linux-qt/app/NativeEditorPreferences.cpp",
+    "platforms/linux/linux-qt/app/RecentImageMenu.h",
+    "platforms/linux/linux-qt/app/RecentImageMenu.cpp",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp",
+    "platforms/linux/linux-qt/app/main.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
     "platforms/linux/linux-qt/tests/RecentImagesTest.cpp",
     "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
-    "platforms/linux/linux-qt/src/image-editor/PREFERENCES-POLICY.md"
+    "platforms/linux/linux-qt/src/image-editor/PREFERENCES-POLICY.md",
+    "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp"
   ],
   "requirements": {
-    "ESET-001": {"disposition": "Required", "status": "partial", "vectors": [], "note": "PREFERENCES-POLICY documents native metadata, bounded validation, scope, privacy, missing-marker migration and ledger links for the current model. The full ledger and approved shared semantics remain Required; this foundation does not activate the package."},
-    "ESET-002": {"disposition": "Required", "status": "partial", "vectors": ["invalid-field-isolation"], "note": "Production loading distinguishes missing, valid, invalid, unknown and newer-version fields, repairs known invalid values independently and records value-free field diagnostics. Unsupported versions and unreadable files stay read-only. Native diagnostic presentation and remaining fields remain Required."},
-    "ESET-003": {"disposition": "Required", "status": "partial", "vectors": ["unknown-round-trip"], "note": "Production QSaveFile replacement stores current and privacy-pruned previous values as one artifact, preserves compatible unknown fields, enforces private bounded storage and rejects stale/locked writes. Injected failure and real-file tests prove unchanged stored versions and published state. Approved retention policy, independent recovery from a destroyed whole file, computed/convenience exclusions and all fields remain Required."},
-    "ESET-004": {"disposition": "Required", "status": "not-started", "vectors": [], "note": "Theme field validation is present; native theme/system/accent resolution and accessible preference effects remain Required."},
-    "ESET-005": {"disposition": "Required", "status": "not-started", "vectors": [], "note": "Persisted window placement, scaling/topology recovery and opt-out remain Required."},
-    "ESET-006": {"disposition": "Required", "status": "partial", "vectors": [], "note": "Existing editor creation style is separate from document history and explicit selection edits. Persisted tool/style preference wiring and all remaining creation defaults remain Required."},
-    "ESET-007": {"disposition": "Required", "status": "not-started", "vectors": [], "note": "Persistent canonical alpha-preserving color preferences and per-field recovery remain Required."},
-    "ESET-008": {"disposition": "Required", "status": "not-started", "vectors": [], "note": "Native font validation, fallback without implicit rewrite and text/step preferences remain Required."},
-    "ESET-009": {"disposition": "Required", "status": "partial", "vectors": ["invalid-field-isolation"], "note": "Production blur/thickness/recent-limit validation rejects invalid types, fractional integers and non-finite or out-of-range numbers. Independent inclusive boundary tests verify this subset; all numeric effect fields and UI/import/automation parity remain Required."},
-    "ESET-010": {"disposition": "Required", "status": "not-started", "vectors": [], "note": "Persistent toolbar action placements and protected hotkey validation remain Required."},
-    "ESET-011": {"disposition": "Required", "status": "not-started", "vectors": [], "note": "Native toolbar customization and atomic persistence remain Required."},
-    "ESET-012": {"disposition": "Required", "status": "partial", "vectors": ["recent-deduplication"], "note": "Native runtime controls and production path rules already provide opt-in, validated bounds, newest-first deduplication and single/full removal. The new store preserves consent and prunes forgotten paths from both retained versions atomically, with restart/recovery evidence. Application persistence integration and full privacy qualification remain Required."},
-    "ESET-013": {"disposition": "Required", "status": "not-started", "vectors": [], "note": "Stable persistent recent/favorite effect lists and retired-ID handling remain Required."},
-    "ESET-014": {"disposition": "Required", "status": "not-started", "vectors": [], "note": "Persistent automation/convenience preferences with consent and error invariants remain Required."},
-    "ESET-015": {"disposition": "Required", "status": "partial", "vectors": ["invalid-field-isolation", "recent-deduplication", "unknown-round-trip"], "note": "All three published operations call production code; independent tests cover known field boundaries, missing version markers, incompatible versions, unknown round-trip, failed atomic writes, real private files and recovery privacy. Every remaining field, supported upgrades, all platform adapters and acceptance reviews remain Required."},
-    "ESET-016": {"disposition": "Required", "status": "partial", "vectors": [], "note": "Existing native editor actions, modal and text-entry precedence have native tests. Complete shortcut catalog and persistent custom-hotkey collision validation remain Required."}
+    "ESET-001": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "PREFERENCES-POLICY documents native metadata, bounded validation, scope, privacy, missing-marker migration and ledger links for the current model. The full ledger and approved shared semantics remain Required; this foundation does not activate the package."
+    },
+    "ESET-002": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [
+        "invalid-field-isolation"
+      ],
+      "note": "Production loading distinguishes missing, valid, invalid, unknown and newer-version fields, repairs known invalid values independently and records value-free diagnostics. The winning native instance loads before opening editors and presents field recovery/read-only fallback through native warnings. Native host tests preserve unrelated/unknown values after recovery and a recent-list save. Remaining fields and complete recovery qualification remain Required."
+    },
+    "ESET-003": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [
+        "unknown-round-trip"
+      ],
+      "note": "Production QSaveFile replacement stores current and privacy-pruned previous values as one artifact, preserves compatible unknown fields, enforces private bounded storage and rejects stale/locked writes. Injected failure and real-file tests prove unchanged stored versions and published state. Approved retention policy, independent recovery from a destroyed whole file, computed/convenience exclusions and all fields remain Required."
+    },
+    "ESET-004": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": [],
+      "note": "Theme field validation is present; native theme/system/accent resolution and accessible preference effects remain Required."
+    },
+    "ESET-005": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": [],
+      "note": "Persisted window placement, scaling/topology recovery and opt-out remain Required."
+    },
+    "ESET-006": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "Existing editor creation style is separate from document history and explicit selection edits. Persisted tool/style preference wiring and all remaining creation defaults remain Required."
+    },
+    "ESET-007": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": [],
+      "note": "Persistent canonical alpha-preserving color preferences and per-field recovery remain Required."
+    },
+    "ESET-008": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": [],
+      "note": "Native font validation, fallback without implicit rewrite and text/step preferences remain Required."
+    },
+    "ESET-009": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [
+        "invalid-field-isolation"
+      ],
+      "note": "Production blur/thickness/recent-limit validation rejects invalid types, fractional integers and non-finite or out-of-range numbers. Independent inclusive boundary tests verify this subset; all numeric effect fields and UI/import/automation parity remain Required."
+    },
+    "ESET-010": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": [],
+      "note": "Persistent toolbar action placements and protected hotkey validation remain Required."
+    },
+    "ESET-011": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": [],
+      "note": "Native toolbar customization and atomic persistence remain Required."
+    },
+    "ESET-012": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [
+        "recent-deduplication"
+      ],
+      "note": "Native editor/tray opt-in and bounded newest-first path management now persist in isolated private versioned storage. Apply writes before publishing; Cancel, failed writes and stale modal drafts preserve active/stored values. Remove, Clear, trim and opt-out prune forgotten paths from current and retained previous versions together. Actual Open/complete Save record paths, incomplete saves do not, and preference-save failures visibly survive focus/document refresh without undoing successful image work. Native restart/removal/locking/unknown-field/privacy tests pass; approved retention policy and human privacy/security/compatibility qualification remain Required."
+    },
+    "ESET-013": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": [],
+      "note": "Stable persistent recent/favorite effect lists and retired-ID handling remain Required."
+    },
+    "ESET-014": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": [],
+      "note": "Persistent automation/convenience preferences with consent and error invariants remain Required."
+    },
+    "ESET-015": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [
+        "invalid-field-isolation",
+        "recent-deduplication",
+        "unknown-round-trip"
+      ],
+      "note": "All three published operations call production code. Independent core and real native-control tests cover current field boundaries, missing markers, newer/unreadable preservation, unknown round-trip, atomic failures, private files, privacy-pruned recovery, restart, Apply/Cancel, capped stale revisions and actual image Open/Save. Every remaining field, supported upgrades, all other platform adapters and acceptance reviews remain Required."
+    },
+    "ESET-016": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "Existing native editor actions, modal and text-entry precedence have native tests. Complete shortcut catalog and persistent custom-hotkey collision validation remain Required."
+    }
   }
 }

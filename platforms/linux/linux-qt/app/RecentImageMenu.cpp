@@ -15,15 +15,17 @@
 
 namespace xerahs::app {
 using xerahs::editor::RecentImages;
-RecentImages &recentImageHistory() { static RecentImages history; return history; }
 bool manageRecentImages(QWidget *parent) {
   RecentImages draft = recentImageHistory(); const auto originalRevision = draft.revision();
   QDialog dialog(parent); dialog.setObjectName(QStringLiteral("recentImagesDialog"));
   dialog.setWindowTitle(QStringLiteral("Recent Images")); dialog.resize(620, 350);
   auto *layout = new QVBoxLayout(&dialog);
-  auto *enabled = new QCheckBox(QStringLiteral("Remember recently opened images for this session"), &dialog);
+  auto *enabled = new QCheckBox(QStringLiteral("Remember recently opened images"), &dialog);
   enabled->setObjectName(QStringLiteral("rememberRecentImages")); enabled->setChecked(draft.enabled()); layout->addWidget(enabled);
-  auto *privacy = new QLabel(QStringLiteral("Paths stay in this running app and are cleared when it exits."), &dialog);
+  auto *privacy = new QLabel(nativeEditorPreferencePersistence() ?
+      QStringLiteral("Image paths are saved privately on this computer until you remove them or turn this option off.") :
+      QStringLiteral("Image paths are kept for this session."), &dialog);
+  privacy->setObjectName(QStringLiteral("recentImagesPrivacy"));
   privacy->setWordWrap(true); layout->addWidget(privacy);
   auto *form = new QFormLayout; auto *maximum = new QSpinBox(&dialog);
   maximum->setObjectName(QStringLiteral("maximumRecentImages")); maximum->setAccessibleName(QStringLiteral("Maximum recent images"));
@@ -62,7 +64,12 @@ bool manageRecentImages(QWidget *parent) {
         QStringLiteral("Recent images changed while this window was open. Reopen it to apply your changes."));
     return false;
   }
-  recentImageHistory() = std::move(draft); return true;
+  const auto written = applyRecentImagePreferences(draft, originalRevision);
+  if (!written.saved) {
+    QMessageBox::warning(parent, QStringLiteral("Preferences not saved"), editorPreferenceDiagnosticMessage(written.diagnostic));
+    return false;
+  }
+  return true;
 }
 QMenu *addRecentImagesMenu(QMenu *parent, std::function<void(const QString &)> open, std::function<void()> manage) {
   auto *menu = parent->addMenu(QStringLiteral("Recent Images")); menu->setObjectName(QStringLiteral("recentImagesMenu"));

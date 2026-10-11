@@ -42,7 +42,10 @@
     "platforms/linux/linux-qt/src/image-editor/RecentImages.h",
     "platforms/linux/linux-qt/src/image-editor/RecentImages.cpp",
     "platforms/linux/linux-qt/app/RecentImageMenu.h",
-    "platforms/linux/linux-qt/app/RecentImageMenu.cpp"
+    "platforms/linux/linux-qt/app/RecentImageMenu.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorPreferences.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorPreferenceStore.cpp",
+    "platforms/linux/linux-qt/app/NativeEditorPreferences.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorViewportTest.cpp",
@@ -55,7 +58,9 @@
     "platforms/linux/linux-qt/tests/NewImageTest.cpp",
     "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
     "platforms/linux/linux-qt/tests/NewImageDialogTest.cpp",
-    "platforms/linux/linux-qt/tests/RecentImagesTest.cpp"
+    "platforms/linux/linux-qt/tests/RecentImagesTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
+    "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp"
   ],
   "requirements": {
     "EC-001": {
@@ -68,7 +73,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Native editor File/Open Image (Ctrl+O), tray and CLI use EditorOpen workers over EditorSource and the shared RasterSource decoder. Raster/sidecar validation and private sRGB display preparation precede dirty-session Save/Discard/Cancel confirmation. Encoded 1 GiB and decoded header limits precede allocation; orientation is applied once and original alpha/profile metadata survive normalized PNG embedding. Native tests verify picker/loading cancellation, typed decode/sidecar failures, all replacement choices, unchanged prior history/selection/viewport/files, fresh clean adoption, and reload after explicit Save overwrites the candidate, including untitled Save. Native editor/tray recent selection now uses the same validated Open flow. The Qt Core model defaults off, validates a 1..100 maximum (default 10), deduplicates using injected POSIX/Windows rules, orders newest first, removes/clears missing entries, and clears on opt-out. Native Manage controls apply a draft atomically or cancel it, guard against an incoming Open overwriting a stale list, and leave document/history/viewport/files untouched. Paths are currently process-local with explicitly described session retention; versioned private preference persistence and full ESET-012/settings qualification remain Required. Complete working/export-profile composition remains pending. POSIX parent-directory segments and chosen symlink paths remain intact through CLI/editor absolute-path preparation and menu action data; real symlink/source tests prove a recent entry reopens the same pixels."
+      "note": "Native editor File/Open Image (Ctrl+O), tray and CLI use EditorOpen workers over EditorSource and the shared RasterSource decoder. Raster/sidecar validation and private sRGB display preparation precede dirty-session Save/Discard/Cancel confirmation. Encoded 1 GiB and decoded header limits precede allocation; orientation is applied once and original alpha/profile metadata survive normalized PNG embedding. Native tests verify picker/loading cancellation, typed decode/sidecar failures, all replacement choices, unchanged prior history/selection/viewport/files, fresh clean adoption, and reload after explicit Save overwrites the candidate, including untitled Save. Native editor/tray recent selection now uses the same validated Open flow. The Qt Core model defaults off, validates a 1..100 maximum (default 10), deduplicates using injected POSIX/Windows rules, orders newest first, removes/clears missing entries, and clears on opt-out. Native Manage controls apply a draft atomically or cancel it, guard against an incoming Open overwriting a stale list, and leave document/history/viewport/files untouched. Recent preferences now survive restart through isolated private atomic storage, with unknown-field retention and privacy-pruned previous settings. Native Apply/Cancel, stale revisions, failed writes and complete/incomplete image-save tests verify publication and document independence. Full settings metadata, retention/recovery policy and human privacy/security/compatibility qualification remain Required. Complete working/export-profile composition remains pending. POSIX parent-directory segments and chosen symlink paths remain intact through CLI/editor absolute-path preparation and menu action data; real symlink/source tests prove a recent entry reopens the same pixels."
     },
     "EC-003": {
       "disposition": "Not applicable",
@@ -179,13 +184,17 @@
       "status": "partial",
       "implementation": [
         "platforms/linux/linux-qt/src/image-editor/RecentImages.cpp",
-        "platforms/linux/linux-qt/app/RecentImageMenu.cpp"
+        "platforms/linux/linux-qt/app/RecentImageMenu.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorPreferenceStore.cpp",
+        "platforms/linux/linux-qt/app/NativeEditorPreferences.cpp"
       ],
       "evidence": [
         "platforms/linux/linux-qt/tests/RecentImagesTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp"
       ],
-      "note": "Runtime recent paths default off, have validated bounded platform-aware deduplication, individual/full removal and native Apply/Cancel controls, and remain private within the running process. Opening a selected entry uses the same validated native replacement flow; missing files remain removable. Native controls explicitly describe session retention. Versioned private persistence, full settings metadata/conformance and privacy qualification remain Required; EDITOR-SETTINGS-001 is not activated by this checkpoint."
+      "note": "Native opt-in and list edits persist through isolated bounded private storage with atomic current/previous replacement. Forgotten paths are removed from recovery data too. Native Apply/Cancel, locked writes, restart, capped stale revisions and actual successful/incomplete image saves have independent evidence. Missing entries remain removable, and preference errors survive editor refresh without undoing successful image work. Approved retention/recovery policy, full ledger and human privacy/security/compatibility reviews remain Required; this checkpoint does not activate EDITOR-SETTINGS-001."
     }
   }
 }

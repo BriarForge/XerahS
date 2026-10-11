@@ -3,7 +3,9 @@
 This is implementation evidence for ESET-001/002/003/009/012/015, not activation
 of EDITOR-SETTINGS-001, approval of the complete settings ledger, or a release
 privacy/security review. The production Qt Core model and store are shared
-with the conformance adapter. Native application wiring follows this foundation.
+with the conformance adapter. The native app initializes the store only after
+winning its instance socket, before any editor opens. Field recovery and
+read-only fallback appear in native startup warnings without private values.
 
 ## Fields and disposition
 
@@ -61,7 +63,7 @@ The artifact and its final directory require private owner-only permissions
 (0600 and 0700). Reads and writes are bounded to 1 MiB, including both versions
 and compatible extensions. Existing foreign-owned, shared, symlinked, unsafe,
 unreadable or oversized storage is rejected. A missing file causes no write.
-The intended native location is the generic XDG configuration directory plus
+The native location is the generic XDG configuration directory plus
 `com.xerahs.app/linux-qt/editor-settings.json`, isolated from the live Avalonia
 configuration in `~/.config/xerahs/`.
 
@@ -82,7 +84,17 @@ previous record from destroyed JSON. Independent whole-file recovery/import
 flows, approved retention policy, and their human compatibility/privacy/security
 reviews remain Required before complete qualification.
 
-Native diagnostics must expose recovery without disclosing private values.
+The native recent-file dialog describes private on-disk retention, edits a
+draft and persists Apply before publishing it. Cancel performs no write. A
+changed live list revision rejects a stale draft, including replacement at a
+full one-entry limit. Save failure preserves both active and stored preferences.
+Successful editor Open and complete raster/sidecar Save remember paths only
+after opt-in; failed/cancelled/incomplete image operations do not add them.
+Automatic recent-save failures leave successful image work intact and remain
+visible across focus, zoom and document refreshes. The empty-path host mode
+exists for in-memory test fixtures; application startup selects the native path.
+
+Native diagnostics expose recovery without disclosing private values.
 Recent paths must stay excluded from telemetry and support exports. The store
 performs no network access and has no credential import/export authority.
 Full secret-field classification and secure-service settings are separate

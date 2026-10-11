@@ -16,6 +16,7 @@
 #include <QLocalServer>
 #include <QLocalSocket>
 #include <QMenu>
+#include <QMessageBox>
 #include <QPainter>
 #include <QPainterPath>
 #include <QStandardPaths>
@@ -108,8 +109,16 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  // Pending clarification (ROOT-ESCALATE-001): no settings store exists yet;
-  // captures go to the XDG pictures directory, confirmed by the product owner.
+  // Initialize only in the winning native instance, before any editor opens.
+  // The Avalonia configuration is never imported implicitly.
+  const auto preferenceDiagnostics = xerahs::app::initializeNativeEditorPreferences(xerahs::app::nativeEditorPreferencePath());
+  if (!preferenceDiagnostics.isEmpty()) {
+    QStringList messages;
+    for (const auto &code : preferenceDiagnostics) messages.append(xerahs::app::editorPreferenceDiagnosticMessage(code));
+    QMessageBox::warning(nullptr, QStringLiteral("Editor preferences"), messages.join(QLatin1Char('\n')));
+  }
+  // Capture destination preferences remain Required; the current destination
+  // is the XDG pictures directory confirmed by the product owner.
   const QString pictures = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
   CaptureController capture(QDir(pictures.isEmpty() ? QDir::homePath() : pictures).filePath(QStringLiteral("XerahS")));
 

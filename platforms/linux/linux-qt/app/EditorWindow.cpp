@@ -91,7 +91,7 @@ EditorWindow *EditorWindow::open(const QString &path, QWidget *parent) {
   if (!source.warnings.isEmpty()) {
     QMessageBox::information(window, QStringLiteral("Annotations"), source.warnings.join(QLatin1Char('\n')));
   }
-  recentImageHistory().remember(target);
+  window->recordRecentImage(target);
   return window;
 }
 
@@ -139,7 +139,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   addRecentImagesMenu(fileMenu, [this](const QString &path) { openImage(path); }, [this] {
     if (m_canvasOperationPending) return;
     const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
-    manageRecentImages(this);
+    if (manageRecentImages(this)) { m_preferenceDiagnostic.clear(); refresh(); }
   });
 
   auto *imageMenu = menuBar()->addMenu(QStringLiteral("&Image"));
@@ -293,10 +293,13 @@ void EditorWindow::refresh() {
   m_clearAnnotations->setEnabled(!m_session->document().annotations.empty());
   setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName(),
                                                     m_session->dirty() ? QStringLiteral(" •") : QString()));
-  statusBar()->showMessage(QStringLiteral("%1 × %2 · %3 annotation(s) · %4 selected · %5%")
+  QString status = QStringLiteral("%1 × %2 · %3 annotation(s) · %4 selected · %5%")
                                .arg(m_image.width()).arg(m_image.height())
                                .arg(m_session->document().annotations.size()).arg(m_session->selection().size())
-                               .arg(m_canvas->viewState().zoom() * 100, 0, 'f', 1));
+                               .arg(m_canvas->viewState().zoom() * 100, 0, 'f', 1);
+  if (!m_preferenceDiagnostic.isEmpty()) status += QStringLiteral(" · Recent images could not be saved: %1")
+      .arg(editorPreferenceDiagnosticMessage(m_preferenceDiagnostic));
+  statusBar()->showMessage(status);
   m_canvas->viewport()->update();
 }
 
@@ -376,7 +379,7 @@ bool EditorWindow::openImage(const QString &path) {
     next = prepareSession(); if (!next) return false;
   }
   adoptSession(std::move(next), target, std::move(source.image), source.displayImage);
-  recentImageHistory().remember(target);
+  recordRecentImage(target);
   return true;
 }
 
@@ -609,9 +612,13 @@ bool EditorWindow::save(bool chooseFile) {
     return false;
   }
   m_path = target;
-  recentImageHistory().remember(absoluteImagePath(target));
-  refresh();
+  recordRecentImage(absoluteImagePath(target));
   return true;
+}
+
+void EditorWindow::recordRecentImage(const QString &absolutePath) {
+  m_preferenceDiagnostic = rememberEditorImage(absolutePath);
+  refresh();
 }
 
 void EditorWindow::closeEvent(QCloseEvent *event) {

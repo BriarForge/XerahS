@@ -1,6 +1,6 @@
 # Native recent-image implementation policy
 
-Implements the native selection portion of EC-002 and runtime safety in
+Implements the native selection portion of EC-002 and persisted recent data in
 ESET-012. This checkpoint does not activate EDITOR-SETTINGS-001 or approve
 shared settings metadata, migrations, privacy review or capability completion.
 
@@ -23,7 +23,7 @@ case-insensitive drive/UNC deduplication, slash normalization and dot segments
 bounded by the drive/share root. Its tests include the published Windows
 deduplication fixture; this is not Windows edition qualification.
 
-The editor and tray share the same process-local model. Menu selection opens
+The editor and tray share the same live preference model. Menu selection opens
 the explicit path through the production validation/progress/cancellation and
 dirty confirmation flow. Missing files show the normal typed opening failure
 and preserve both the current editor and the removable recent entry. Native
@@ -36,11 +36,23 @@ revision prevents the older draft from overwriting those newer entries and
 asks the user to reopen the controls. Preference changes never enter document
 history or change source pixels, selection, dirty state, viewport or files.
 
-Paths are private local runtime data. The app writes no recent-path file,
-imports no reference Avalonia settings, and includes no recent paths in
-telemetry/support output. The native controls explicitly describe session
-retention; all entries disappear when the process exits. This runtime-only
-checkpoint is not the final persisted settings implementation. Versioned,
-atomic private storage, recoverable previous settings, unknown-field retention,
-field-specific invalid recovery, complete stable metadata and shared settings
-conformance remain Required under ESET-001/ESET-002/ESET-003/ESET-015.
+Paths are private local data. The native application stores them in its
+isolated XDG preference file with owner-only file/directory permissions and
+bounded atomic replacement. The native controls describe on-disk retention.
+The store keeps current and privacy-pruned previous preferences together;
+Remove, Clear, trim and opt-out erase forgotten paths from both versions, so
+recovery cannot reintroduce them. No reference Avalonia settings are imported,
+and no recent paths enter telemetry/support output.
+
+Missing preferences cause no startup write. Compatible unknown fields survive
+a saved list change. Invalid fields recover independently; unsupported or
+unreadable formats are preserved read-only and native startup warnings expose
+recovery. Failed writes preserve the active list and file. An automatic recent
+save failure is visible across editor refreshes without undoing successful
+image Open/Save. Native tests use only temporary preference files, including
+restart, actual image saves, failed Apply, incomplete sidecars and stale drafts.
+
+The [preference policy](PREFERENCES-POLICY.md) records metadata and whole-file
+recovery limitations. Complete ledger semantics, approved retention policy,
+remaining settings, cross-platform conformance and human privacy/security/
+compatibility qualification remain Required under ESET-001/002/003/015.

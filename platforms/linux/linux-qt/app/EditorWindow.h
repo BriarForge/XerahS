@@ -42,6 +42,7 @@ private:
   void adoptSession(std::unique_ptr<xerahs::editor::EditorSession> session, const QString &path,
                     QImage source, const QImage &display);
   bool save(bool chooseFile);
+  void recordRecentImage(const QString &absolutePath);
   void refresh();
   void cropImage();
   void autoCropImage();
@@ -53,6 +54,7 @@ private:
   void commitCanvas(PreparedCanvasEdit prepared, quint64 state);
 
   QString m_path;
+  QString m_preferenceDiagnostic;
   QImage m_image;
   QByteArray m_sourceBytes;
   std::unique_ptr<xerahs::editor::EditorSession> m_session;

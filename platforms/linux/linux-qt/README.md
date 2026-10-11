@@ -9,9 +9,9 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 | `FILENAME-GENERATION-001` | Core logic and conformance seam; no UI yet | 51 of 51 vectors pass; [traceability](traceability/FILENAME-GENERATION-001.json) |
 | `POST-CAPTURE-ACTIONS-001` | Pipeline engine and conformance seam; native actions, retry, and recovery not yet | 17 of 17 vectors pass; [traceability](traceability/POST-CAPTURE-ACTIONS-001.json) |
 | `REGION-CAPTURE-001` | Mapping, keyboard, compositing, last-region, and session state machine; no overlay or capture backend yet | 21 of 21 vectors pass; [traceability](traceability/REGION-CAPTURE-001.json) |
-| `EDITOR-CANVAS-001` | Native New/Open and opt-in session recent files with confirmed dirty replacement; viewport, crop, auto crop, resize, rotation, flips, annotation flatten, clear and image comparison; persistent preferences and remaining image operations pending | All 3 published vectors plus native geometry, history, window, creation, opening, recent-file, comparison and persistence tests; [traceability](traceability/EDITOR-CANVAS-001.json) |
+| `EDITOR-CANVAS-001` | Native New/Open and opt-in persisted recent files with confirmed dirty replacement; viewport, crop, auto crop, resize, rotation, flips, annotation flatten, clear and image comparison; remaining image operations pending | All 3 published vectors plus native geometry, history, window, creation, opening, recent-file, comparison and persistence tests; [traceability](traceability/EDITOR-CANVAS-001.json) |
 | `EDITOR-SESSION-001` | Document, `.xann` reader and writer, history, and export renderer; editor window with rectangle tool, selection, save, and sidecar reopen; resize and ordering by keyboard, arbitrary-angle rotation and export | 19 of 19 vectors pass; [traceability](traceability/EDITOR-SESSION-001.json) |
-| `EDITOR-SETTINGS-001` | Versioned Qt Core preferences and atomic private store; field isolation, unknown-field retention and privacy-pruned previous settings; native persistence wiring and full ledger pending | All 3 published vectors plus independent field/storage/recovery tests; [traceability](traceability/EDITOR-SETTINGS-001.json) |
+| `EDITOR-SETTINGS-001` | Native persisted recent-file opt-in and management over versioned atomic private storage; field isolation, unknown retention and privacy-pruned previous settings; remaining preference UI, complete ledger and review gates pending | All 3 published vectors plus core/storage/recovery and native restart/failure tests; [traceability](traceability/EDITOR-SETTINGS-001.json) |
 
 The next implementation steps are tracked in [IMPLEMENTATION.md](IMPLEMENTATION.md).
 
@@ -34,7 +34,7 @@ The next implementation steps are tracked in [IMPLEMENTATION.md](IMPLEMENTATION.
 
 - **Open image** (tray menu or `xerahs --edit FILE`) opens the editor. Editor **File → Open Image…**, Ctrl+O, replaces the current session after loading succeeds and a dirty document's Save/Discard/Cancel confirmation. Loading exposes progress and cancellation; failed or cancelled opening preserves the current session. Saving to the same candidate path reloads the newly saved raster and sidecar before replacement.
 
-- **Recent Images → Manage Recent Images…** (editor File menu or tray) offers explicit opt-in for this running session, a maximum of 1..100 entries (default 10), Remove Selected and Clear All. Apply changes the private list; Cancel keeps it intact. Only successful openings and saves after opt-in add paths. Selecting a recent entry uses the same validated Open and dirty confirmation flow; missing entries remain removable. Paths are cleared on opt-out or process exit. Persistent recent preferences remain required under `EDITOR-SETTINGS-001`.
+- **Recent Images → Manage Recent Images…** (editor File menu or tray) offers explicit opt-in, a maximum of 1..100 entries (default 10), Remove Selected and Clear All. Apply atomically saves the private list and preferences; Cancel leaves active and stored values unchanged. Only successful openings and complete raster/sidecar saves after opt-in add paths. Selecting an entry uses the same validated Open and dirty confirmation flow; missing entries remain removable. Preferences survive restart. Remove, Clear, trim and opt-out remove forgotten paths from the current and retained previous settings together. A preference-save failure preserves the old list and visibly reports the problem while leaving a successful image operation successful.
 
 - In the editor, drag to draw rectangles, click to select, drag or arrow keys to move, Delete to remove, Alt+arrows to resize, R for quarter turns or **Rotate selection…** for any angle, `[`/`]` to reorder, Ctrl+Z/Ctrl+Shift+Z for history, Ctrl+S to save the flattened PNG with its `.xann` sidecar.
 
@@ -79,7 +79,14 @@ It calls production preparation and returns source-profile pixels, dimensions,
 profile, initial dirty/history state and a diagnostic. Published shared New
 Image vectors and full capability qualification remain pending.
 
-No settings are persisted yet, and the reference Avalonia app's configuration is never read or written.
+Native editor preferences use the XDG config directory plus
+`com.xerahs.app/linux-qt/editor-settings.json`, with private file/directory
+permissions, bounded reads/writes, compatible unknown retention and atomic
+replacement. Missing settings cause no startup write. Newer or unreadable
+settings stay untouched; native startup warnings report field recovery or
+read-only fallback. The reference Avalonia configuration is never read or
+written. The [preference policy](src/image-editor/PREFERENCES-POLICY.md)
+records metadata, recovery limitations, remaining field work and review gates.
 
 ## Build and test
 

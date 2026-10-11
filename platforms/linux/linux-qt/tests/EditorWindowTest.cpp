@@ -21,6 +21,7 @@
 #include <QFileDialog>
 #include <QLabel>
 #include <QLineEdit>
+#include <QLockFile>
 #include <QProgressBar>
 #include <QProgressDialog>
 #include <QMessageBox>
@@ -146,8 +147,70 @@ void runRotationPreview(EditorWindow &window, bool accept) {
 class EditorWindowTest : public QObject {
   Q_OBJECT
 private slots:
-  void init() { recentImageHistory() = RecentImages{}; }
-  void cleanup() { recentImageHistory() = RecentImages{}; }
+  void init() { initializeNativeEditorPreferences(); }
+  void cleanup() { initializeNativeEditorPreferences(); }
+  void actualOpenAndCompleteSavePersistRecentImagesAcrossRestart() {
+    QTemporaryDir dir; const QString preferences = dir.filePath("native/settings.json");
+    const QString first = dir.filePath("first.png"), second = dir.filePath("second.png");
+    QVERIFY(fixture().save(first)); QVERIFY(fixture().save(second));
+    QVERIFY(initializeNativeEditorPreferences(preferences).isEmpty());
+    { std::unique_ptr<EditorWindow> prior(EditorWindow::open(first)); QVERIFY(prior); }
+    QVERIFY(!QFile::exists(preferences)); // Opening before opt-in leaves no path data.
+    auto draft = recentImageHistory(); const auto revision = draft.revision();
+    QVERIFY(draft.setPreferences(true, 2)); QVERIFY(applyRecentImagePreferences(draft, revision).saved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(second)); QVERIFY(window); window->resize(900, 600); window->show();
+    QCOMPARE(recentImageHistory().paths(), QStringList{second});
+    draft = recentImageHistory(); const auto beforeClear = draft.revision(); draft.clear();
+    QVERIFY(applyRecentImagePreferences(draft, beforeClear).saved);
+    auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas);
+    trigger(*window, QStringLiteral("saveImage")); QVERIFY(QFile::exists(second + ".xann"));
+    QVERIFY(!window->windowTitle().contains(QChar(0x2022))); QCOMPARE(recentImageHistory().paths(), QStringList{second});
+    QVERIFY(initializeNativeEditorPreferences(preferences).isEmpty()); QCOMPARE(recentImageHistory().paths(), QStringList{second});
+    QVERIFY(recentImageHistory().enabled()); QCOMPARE(recentImageHistory().maximum(), 2);
+  }
+  void recentPreferenceWriteFailureDoesNotUndoSuccessfulImageOpenOrSave() {
+    QTemporaryDir dir; const QString preferences = dir.filePath("native/settings.json");
+    const QString first = dir.filePath("first.png"), second = dir.filePath("second.png");
+    QVERIFY(fixture().save(first)); QVERIFY(fixture().save(second));
+    QVERIFY(initializeNativeEditorPreferences(preferences).isEmpty());
+    auto draft = recentImageHistory(); QVERIFY(draft.setPreferences(true, 10));
+    QVERIFY(applyRecentImagePreferences(draft, recentImageHistory().revision()).saved);
+    { std::unique_ptr<EditorWindow> prior(EditorWindow::open(first)); QVERIFY(prior); }
+    QFile preferenceFile(preferences); QVERIFY(preferenceFile.open(QIODevice::ReadOnly));
+    const QByteArray before = preferenceFile.readAll(); preferenceFile.close();
+    QLockFile lock(preferences + ".lock"); QVERIFY(lock.tryLock(0));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(second)); QVERIFY(window); window->resize(900, 600); window->show();
+    QVERIFY(window->statusBar()->currentMessage().contains("Recent images could not be saved:"));
+    QCOMPARE(recentImageHistory().paths(), QStringList{first});
+    auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas);
+    QVERIFY(window->statusBar()->currentMessage().contains("Recent images could not be saved:"));
+    trigger(*window, QStringLiteral("saveImage"));
+    QVERIFY(!window->windowTitle().contains(QChar(0x2022))); QVERIFY(QFile::exists(second + ".xann"));
+    QVERIFY(window->statusBar()->currentMessage().contains("Recent images could not be saved:"));
+    QCOMPARE(recentImageHistory().paths(), QStringList{first});
+    QVERIFY(preferenceFile.open(QIODevice::ReadOnly)); QCOMPARE(preferenceFile.readAll(), before); preferenceFile.close();
+    lock.unlock(); QVERIFY(initializeNativeEditorPreferences(preferences).isEmpty()); QCOMPARE(recentImageHistory().paths(), QStringList{first});
+  }
+  void incompleteImageSaveDoesNotRecordAPersistedRecentPath() {
+    QTemporaryDir dir; const QString preferences = dir.filePath("native/settings.json"), image = dir.filePath("image.png");
+    QVERIFY(fixture().save(image)); QVERIFY(initializeNativeEditorPreferences(preferences).isEmpty());
+    auto draft = recentImageHistory(); QVERIFY(draft.setPreferences(true, 10));
+    QVERIFY(applyRecentImagePreferences(draft, recentImageHistory().revision()).saved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(image)); QVERIFY(window); window->resize(900, 600); window->show();
+    draft = recentImageHistory(); const auto revision = draft.revision(); draft.clear();
+    QVERIFY(applyRecentImagePreferences(draft, revision).saved);
+    QFile file(preferences); QVERIFY(file.open(QIODevice::ReadOnly)); const QByteArray before = file.readAll(); file.close();
+    QVERIFY(QDir().mkdir(image + ".xann"));
+    auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas);
+    bool reported = false;
+    QTimer::singleShot(0, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box);
+      reported = box->windowTitle() == u"Save incomplete"; box->accept();
+    });
+    trigger(*window, QStringLiteral("saveImage")); QVERIFY(reported); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+    QVERIFY(recentImageHistory().paths().isEmpty()); QVERIFY(file.open(QIODevice::ReadOnly)); QCOMPARE(file.readAll(), before); file.close();
+    QVERIFY(initializeNativeEditorPreferences(preferences).isEmpty()); QVERIFY(recentImageHistory().paths().isEmpty());
+  }
   void nativeRecentPreferencesAreOptInAtomicAndLeaveTheDocumentAlone_data() {
     QTest::addColumn<bool>("apply"); QTest::newRow("cancel") << false; QTest::newRow("apply") << true;
   }

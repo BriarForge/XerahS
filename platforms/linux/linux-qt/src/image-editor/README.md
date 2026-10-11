@@ -37,17 +37,19 @@ state with a previously saved document.
 
 `RecentImages` owns opt-in state, validated limits and platform-aware path
 ordering independently of the document. `RecentImageMenu` hosts the native
-editor/tray selection and Apply/Cancel removal controls. Paths currently stay
-in the running process; versioned private preference persistence remains
-required. [RECENT-PATHS-POLICY.md](RECENT-PATHS-POLICY.md) records boundaries,
+editor/tray selection and Apply/Cancel removal controls. `NativeEditorPreferences`
+connects that model to versioned private storage after the app claims its
+instance socket. [RECENT-PATHS-POLICY.md](RECENT-PATHS-POLICY.md) records boundaries,
 privacy and the subsequent settings work.
 
 `EditorPreferences` validates known fields independently, preserves compatible
 unknown fields and rejects invalid changes atomically. `EditorPreferenceStore`
 uses a bounded private native storage boundary, writes current and privacy-pruned
 previous settings together, and publishes only after replacement succeeds.
-The production conformance seams share this code. Native persistence wiring
-and full field coverage remain required; [PREFERENCES-POLICY.md](PREFERENCES-POLICY.md)
+The production conformance seams share this code. Native opt-in and list edits
+survive restart; failed preference writes retain the old list without undoing
+successful image work. Full field coverage and review gates remain required;
+[PREFERENCES-POLICY.md](PREFERENCES-POLICY.md)
 records implemented metadata, compatibility/recovery limits and review gates.
 
 The native editor in `app/EditorWindow.cpp` and `app/EditorCanvas.cpp` loads sources, draws and manipulates
