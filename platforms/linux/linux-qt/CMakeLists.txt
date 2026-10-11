@@ -39,6 +39,8 @@ add_library(xerahs_core STATIC
   src/image-editor/RecentImages.h
   src/image-editor/EditorPreferences.cpp
   src/image-editor/EditorPreferences.h
+  src/image-editor/ToolbarPreferences.cpp
+  src/image-editor/ToolbarPreferences.h
   src/image-editor/EditorAppearance.cpp
   src/image-editor/EditorAppearance.h
   src/image-editor/EditorPreferenceStore.cpp
@@ -114,6 +116,10 @@ target_link_libraries(xerahs PRIVATE xerahs_core xerahs_editor_codecs Qt6::Gui Q
 target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
 enable_testing()
+add_executable(toolbar-preferences-test tests/ToolbarPreferencesTest.cpp)
+set_target_properties(toolbar-preferences-test PROPERTIES AUTOMOC ON)
+target_link_libraries(toolbar-preferences-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME toolbar-preferences COMMAND toolbar-preferences-test)
 add_executable(editor-preferences-test tests/EditorPreferencesTest.cpp)
 set_target_properties(editor-preferences-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-preferences-test PRIVATE xerahs_core Qt6::Test)

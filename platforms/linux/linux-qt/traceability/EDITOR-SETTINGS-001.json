@@ -33,7 +33,9 @@
     "platforms/linux/linux-qt/app/NativeEditorAppearance.h",
     "platforms/linux/linux-qt/app/NativeEditorAppearance.cpp",
     "platforms/linux/linux-qt/app/AppearanceDialog.h",
-    "platforms/linux/linux-qt/app/AppearanceDialog.cpp"
+    "platforms/linux/linux-qt/app/AppearanceDialog.cpp",
+    "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.h",
+    "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
@@ -47,14 +49,15 @@
     "platforms/linux/linux-qt/tests/EditorAppearanceTest.cpp",
     "platforms/linux/linux-qt/tests/NativeDesktopAppearanceTest.cpp",
     "platforms/linux/linux-qt/tests/NativeEditorAppearanceTest.cpp",
-    "platforms/linux/linux-qt/tests/appearance-test-bus.conf"
+    "platforms/linux/linux-qt/tests/appearance-test-bus.conf",
+    "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp"
   ],
   "requirements": {
     "ESET-001": {
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "PREFERENCES-POLICY documents native metadata, bounded validation, scope, privacy, missing-marker migration and ledger links for the current model. The full ledger and approved shared semantics remain Required; this foundation does not activate the package."
+      "note": "PREFERENCES-POLICY documents native metadata, bounded validation, scope, privacy, missing-marker migration and ledger links for the current model. The full ledger and approved shared semantics remain Required; this foundation does not activate the package. Toolbar candidate metadata covers Id/IsVisible/nullable BeginGroup/Hotkey, limits, unknown preservation and protected gestures; shared approval remains Required."
     },
     "ESET-002": {
       "disposition": "Required",
@@ -70,7 +73,7 @@
       "vectors": [
         "unknown-round-trip"
       ],
-      "note": "Production QSaveFile replacement stores current and privacy-pruned previous values as one artifact, preserves compatible unknown fields, enforces private bounded storage and rejects stale/locked writes. Injected failure and real-file tests prove unchanged stored versions and published state. Approved retention policy, independent recovery from a destroyed whole file, computed/convenience exclusions and all fields remain Required. BorderColor/FillColor convenience aliases are now explicitly non-persistent; the rest of the ledger exclusions remain Required. AccentColor is also explicitly non-persistent."
+      "note": "Production QSaveFile replacement stores current and privacy-pruned previous values as one artifact, preserves compatible unknown fields, enforces private bounded storage and rejects stale/locked writes. Injected failure and real-file tests prove unchanged stored versions and published state. Approved retention policy, independent recovery from a destroyed whole file, computed/convenience exclusions and all fields remain Required. BorderColor/FillColor convenience aliases are now explicitly non-persistent; the rest of the ledger exclusions remain Required. AccentColor is also explicitly non-persistent. Compatible inactive toolbar entries and extensions now survive atomic store saves despite nonfatal unknown-action warnings."
     },
     "ESET-004": {
       "disposition": "Required",
@@ -112,15 +115,15 @@
     },
     "ESET-010": {
       "disposition": "Required",
-      "status": "not-started",
+      "status": "partial",
       "vectors": [],
-      "note": "Persistent toolbar action placements and protected hotkey validation remain Required."
+      "note": "Production Qt Core toolbar placements validate bounded stable IDs, Boolean visibility, nullable group defaults and locale-independent additional hotkeys. Duplicate actions/gestures, malformed chords and protected/reserved collisions are rejected atomically. Compatible future entries remain inactive, survive field recovery/save/reset/restart, and cannot be introduced or edited by ordinary changes. Core independent references and private-file restart tests cover this foundation. Native action mapping, customization/dispatch, complete action coverage and shared ID/default/format/compatibility qualification remain Required."
     },
     "ESET-011": {
       "disposition": "Required",
-      "status": "not-started",
+      "status": "partial",
       "vectors": [],
-      "note": "Native toolbar customization and atomic persistence remain Required."
+      "note": "Production toolbar reset restores known candidate defaults while preserving compatible extension properties and inactive unknown entries. Explicit empty placement lists remain empty. Native reorder/visibility/group/hotkey controls, atomic Apply/Cancel and guaranteed reachable recovery surfaces remain Required."
     },
     "ESET-012": {
       "disposition": "Required",
@@ -156,7 +159,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Existing native editor actions, modal and text-entry precedence have native tests. Complete shortcut catalog and persistent custom-hotkey collision validation remain Required."
+      "note": "Existing native editor actions, modal and text-entry precedence have native tests. Complete shortcut catalog and persistent custom-hotkey collision validation remain Required. Production toolbar policy now reserves the complete catalogue and native selection/navigation/window gestures, with duplicate/canonical collision tests; native custom-hotkey dispatch and full gesture coverage remain Required."
     }
   }
 }

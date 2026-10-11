@@ -32,6 +32,7 @@ initializer evidence alone does not approve shared defaults. Blur's fallback
 | `RememberRecentImagePaths` | Boolean, false | Boolean only; false ignores and removes retained paths | Private local consent; only later successful Open/Save may add paths; no backfill | Native opt-in authority under ESET-012, absent from the pinned legacy field census; core/native runtime tests |
 | `MaxRecentImageFiles` | Integer, 10 | 1..100 | Private local retention policy; decreasing it removes oldest entries | `SET-IMAGE-EDITOR-OPTIONS-MAX-RECENT-IMAGE-FILES-001`; bounded model and preference tests |
 | `RecentImageFiles` | Array of strings, empty | At most 100 encoded entries and at most the validated maximum distinct absolute paths; valid platform path syntax | Private local data; newest first, deduplicated, removable individually or together; absent resources stay removable | `SET-IMAGE-EDITOR-OPTIONS-RECENT-IMAGE-FILES-001`; path/opt-in/isolation/removal/recovery tests |
+| `ToolbarItems` | Array of action placements, native candidate layout on absence | At most 256 distinct action IDs; typed visibility/group fields and validated single-chord additional hotkeys | Non-secret global editor layout/input preference; explicit empty list stays empty | `SET-IMAGE-EDITOR-OPTIONS-TOOLBAR-ITEMS-001` and the four `SET-IMAGE-EDITOR-TOOLBAR-ITEM-OPTIONS-*` rows; production core validation, preservation and restart tests |
 
 `BorderColor`, `FillColor` and `AccentColor` are derived convenience aliases, classified
 `NonPersistent` and excluded from both saved versions. Only their canonical
@@ -274,3 +275,51 @@ host service activation tests actual ReadAll/signals, unsigned flags and RGB
 tuples, invalid hints, cold-start live updates, first-read subscription, delayed
 snapshot races, old-owner signals, service loss/restart and reduced motion
 without preference writes.
+
+## Toolbar placements and hotkeys
+
+`ToolbarPreferences` owns a Qt Core model with the census field names `Id`,
+`IsVisible`, `BeginGroup` and `Hotkey`. IDs use lowercase ASCII identifiers
+of at most 80 characters; visibility is Boolean, a missing/null group flag
+inherits the native action's group default, and hotkeys are strings of at most
+64 characters. Missing visibility defaults to true and a missing hotkey to
+empty. Compatible extension properties survive normalization and reset.
+
+The native candidate catalogue uses stable semantic IDs for the currently
+represented editor commands. Absence initializes the existing fourteen visible
+Edit/View commands; other registered commands start hidden. A present empty
+array is an explicit empty layout, rather than an instruction to regenerate
+defaults. These ID/default/missing-field choices require the shared metadata
+and compatibility review; source initializers do not approve them.
+
+Nonempty additional hotkeys contain one chord: Ctrl/Alt/Shift/Meta modifiers,
+ASCII letters/digits, F1..F35 or documented named navigation/punctuation keys.
+Canonical spelling is locale independent, with modifiers in Ctrl/Alt/Shift/Meta
+order. Plus is a logical key and discards an incidental Shift modifier.
+Malformed sequences, duplicate modifiers, duplicate action placements and
+duplicate canonical hotkeys are rejected as one change. Multi-chord sequences
+and localized key names are outside this native candidate format.
+
+The production policy protects every gesture in the shortcut catalogue,
+including commands still awaiting native implementation. A protected gesture
+may be assigned only to its own action. Native zoom and close bindings are
+also protected. Escape/Enter, focus traversal, space-pan, selection movement
+and resize, bracket ordering, selection rotation, desktop Meta gestures,
+Alt+F4, Ctrl+Q and Ctrl+Alt function-key session switching cannot be reassigned.
+An empty hotkey means no additional binding; protected defaults remain available.
+
+Compatible unknown action entries remain inactive and round-trip byte-equivalent
+JSON values, with a value-free warning. Their hotkey strings are not interpreted.
+Ordinary changes cannot introduce, edit or remove these entries; reorder and
+reset retain them. Invalid known layouts recover to native defaults while
+retaining compatible unknown entries; unrelated preferences remain unchanged.
+Recovery/reset insert known defaults only within the remaining collection
+capacity, so retained future entries never cause an oversized repaired list.
+Nonfatal preservation warnings do not make an otherwise valid atomic save fail.
+
+Core tests cover independent gesture references, collection/type/length bounds,
+protected/reserved collisions, explicit empty layouts, nullable groups, isolated
+recovery, reset, extensions, inactive future data, real private storage and
+restart. Native customization controls, live layout/dispatch, complete command
+coverage, physical keyboard/accessibility qualification and shared semantic
+acceptance remain Required.

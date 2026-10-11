@@ -150,6 +150,15 @@ QString editorPreferenceDiagnosticMessage(const QString &diagnostic) {
   if (diagnostic == u"invalid-drawing-defaults") return QStringLiteral("The drawing preference change is not supported.");
   if (diagnostic == u"invalid-window-state") return QStringLiteral("The window preference change is not supported.");
   if (diagnostic == u"invalid-appearance-preferences") return QStringLiteral("The appearance preference change is not supported.");
+  if (diagnostic == u"toolbar-unknown-action") return QStringLiteral("Some toolbar commands are unavailable in this editor version. Their settings are preserved and their hotkeys are inactive.");
+  if (diagnostic == u"toolbar-unknown-action-change") return QStringLiteral("Unavailable toolbar commands must be preserved unchanged.");
+  if (diagnostic == u"toolbar-invalid-list") return QStringLiteral("The toolbar list is invalid or exceeds 256 items.");
+  if (diagnostic == u"toolbar-invalid-item") return QStringLiteral("A toolbar command, visibility or group setting is invalid.");
+  if (diagnostic == u"toolbar-invalid-hotkey") return QStringLiteral("Enter one hotkey, such as Ctrl+Alt+J or F6.");
+  if (diagnostic == u"toolbar-duplicate-action") return QStringLiteral("Each command can appear only once in the toolbar.");
+  if (diagnostic == u"toolbar-duplicate-hotkey") return QStringLiteral("Two commands cannot use the same additional hotkey.");
+  if (diagnostic == u"toolbar-protected-hotkey" || diagnostic == u"toolbar-reserved-hotkey")
+    return QStringLiteral("That hotkey is reserved for an editor or desktop command. Choose another hotkey.");
   if (diagnostic == u"settings-window-display-unavailable") return QStringLiteral("No usable display is available to save the window state.");
   if (diagnostic.startsWith(u"invalid-")) {
     const QString field = diagnostic.mid(8);
@@ -163,7 +172,8 @@ QString editorPreferenceDiagnosticMessage(const QString &diagnostic) {
         field == u"IsWindowMaximized" ? QStringLiteral("Maximized window state") :
         field == u"MaxRecentImageFiles" ? QStringLiteral("Maximum recent images") :
         field == u"RememberRecentImagePaths" ? QStringLiteral("Remember recent images") :
-        field == u"RecentImageFiles" ? QStringLiteral("Recent image list") : QStringLiteral("Preference version");
+        field == u"RecentImageFiles" ? QStringLiteral("Recent image list") :
+        field == u"ToolbarItems" ? QStringLiteral("Toolbar layout") : QStringLiteral("Preference version");
     return QStringLiteral("%1 was invalid and is using its default.").arg(label);
   }
   if (diagnostic == u"settings-too-large") return QStringLiteral("The preferences file exceeds the storage limit.");

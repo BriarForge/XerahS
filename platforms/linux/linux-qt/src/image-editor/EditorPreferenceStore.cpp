@@ -7,6 +7,7 @@
 #include <QLockFile>
 #include <QSaveFile>
 #include <unistd.h>
+#include <algorithm>
 
 namespace xerahs::editor {
 namespace {
@@ -99,7 +100,9 @@ void EditorPreferenceStore::reload() {
 PreferenceWrite EditorPreferenceStore::save(const EditorPreferences &preferences) {
   if (m_preferences.readOnly || preferences.readOnly) return {false, QStringLiteral("settings-read-only")};
   const auto verified = loadEditorPreferences(serializeEditorPreferences(preferences));
-  if (verified.readOnly || !verified.diagnostics.isEmpty()) return {false, QStringLiteral("settings-invalid-change")};
+  if (verified.readOnly || std::any_of(verified.fields.cbegin(), verified.fields.cend(),
+      [](PreferenceFieldState state) { return state == PreferenceFieldState::Invalid; }))
+    return {false, QStringLiteral("settings-invalid-change")};
   QJsonObject envelope = m_envelope;
   envelope.insert(QStringLiteral("format"), format); envelope.insert(QStringLiteral("version"), 1);
   envelope.insert(QStringLiteral("current"), serializeEditorPreferences(verified));

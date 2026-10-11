@@ -1,4 +1,5 @@
 #include "EditorPreferences.h"
+#include "ToolbarPreferences.h"
 #include <QJsonArray>
 #include <algorithm>
 #include <cmath>
@@ -15,7 +16,8 @@ const QJsonObject defaults{
   {QStringLiteral("RememberWindowState"), true}, {QStringLiteral("WindowWidth"), 1280},
   {QStringLiteral("WindowHeight"), 720}, {QStringLiteral("IsWindowMaximized"), true},
   {QStringLiteral("RememberRecentImagePaths"), false}, {QStringLiteral("MaxRecentImageFiles"), RecentImages::defaultMaximum},
-  {QStringLiteral("RecentImageFiles"), QJsonArray{}}};
+  {QStringLiteral("RecentImageFiles"), QJsonArray{}},
+  {QStringLiteral("ToolbarItems"), defaultToolbarItems()}};
 const QStringList nonPersistentFields{QStringLiteral("BorderColor"), QStringLiteral("FillColor"), QStringLiteral("AccentColor")};
 std::optional<Argb> preferenceColor(const QJsonValue &value) {
   if (!value.isString()) return {};
@@ -54,6 +56,27 @@ EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRul
     result.fields[QStringLiteral("schemaVersion")] = newer ? PreferenceFieldState::NewerVersion : PreferenceFieldState::Invalid;
     result.diagnostics.append(newer ? QStringLiteral("settings-newer-version") : QStringLiteral("invalid-schemaVersion"));
     return result;
+  }
+  if (stored.contains(u"ToolbarItems")) {
+    const auto toolbar = validateToolbarItems(stored.value(u"ToolbarItems"));
+    if (toolbar.valid) {
+      result.values.insert(QStringLiteral("ToolbarItems"), toolbar.items);
+      result.diagnostics.append(toolbar.diagnostics);
+    } else {
+      invalid(result, QStringLiteral("ToolbarItems"));
+      // A damaged known placement must not erase compatible inactive future
+      // entries when the repaired preferences are explicitly saved later.
+      if (stored.value(u"ToolbarItems").isArray() && stored.value(u"ToolbarItems").toArray().size() <= maximumToolbarItems) {
+        QJsonArray retained; QStringList ids;
+        for (const auto &entry : stored.value(u"ToolbarItems").toArray()) {
+          const auto id = entry.toObject().value(u"Id").toString();
+          if (!knownToolbarAction(id) && !ids.contains(id) && validateToolbarItems(QJsonArray{entry}).valid) {
+            retained.append(entry); ids.append(id);
+          }
+        }
+        result.values.insert(QStringLiteral("ToolbarItems"), resetToolbarItems(retained));
+      }
+    }
   }
   for (const auto &key : {QStringLiteral("Theme"), QStringLiteral("BlurStrength"), QStringLiteral("Thickness"),
                          QStringLiteral("RememberRecentImagePaths"), QStringLiteral("MaxRecentImageFiles"),
@@ -110,6 +133,12 @@ QJsonObject serializeEditorPreferences(const EditorPreferences &preferences) {
 }
 PreferenceChange changeEditorPreferences(const EditorPreferences &current, const QJsonObject &changes) {
   if (current.readOnly) return {{}, {QStringLiteral("settings-read-only")}};
+  if (changes.contains(u"ToolbarItems")) {
+    const auto toolbar = validateToolbarItems(changes.value(u"ToolbarItems"));
+    if (!toolbar.valid) return {{}, {toolbar.diagnostics.constLast()}};
+    const auto diagnostic = validateToolbarChange(current.values.value(u"ToolbarItems").toArray(), toolbar.items);
+    if (!diagnostic.isEmpty()) return {{}, {diagnostic}};
+  }
   QJsonObject merged = serializeEditorPreferences(current);
   for (auto it = changes.begin(); it != changes.end(); ++it) merged.insert(it.key(), it.value());
   auto next = loadEditorPreferences(merged, current.recent.pathRules());
