@@ -19,9 +19,9 @@ initializer evidence alone does not approve shared defaults. Blur's fallback
 | `schemaVersion` | Integer, 1 | Exactly 1 for writes; absence loads the version-1 defaults; unsupported versions are read-only | Public format metadata; gates interpretation before mutation | Native envelope/model version; malformed/newer preservation tests |
 | `Theme` | Enum string, `Dark` | `Dark`, `Light`, `System` | Non-secret preference; future native theme/system-theme resolution and accessible contrast remain Required | `SET-IMAGE-EDITOR-OPTIONS-THEME-001`; load/change/round-trip tests; UI effect pending |
 | `BlurStrength` | Finite number, 30 | 0..100; fractional values allowed | Non-secret preference; future blur creation defaults remain Required | `SET-IMAGE-EDITOR-OPTIONS-BLUR-STRENGTH-001`; published isolation vector and independent boundaries; blur tool pending |
-| `Thickness` | Integer, 4 | 1..10000, within the production editor width limit | Non-secret preference; future creation defaults must leave existing objects unchanged | `SET-IMAGE-EDITOR-OPTIONS-THICKNESS-001`; validation/isolation tests; preference-to-tool wiring pending |
-| `BorderColorHex` | String, `#FFFF0000` | Exactly `#RRGGBB` or `#AARRGGBB`, hexadecimal digits; canonical uppercase `#AARRGGBB` | Non-secret drawing default; alpha, including transparent RGB, survives; applies to new objects | `SET-IMAGE-EDITOR-OPTIONS-BORDER-COLOR-HEX-001`; core alpha/invalid/restart tests; default agrees with the ES rectangle qualification default; native wiring pending |
-| `FillColorHex` | String, `#00000000` | Same canonical colour validation as border | Non-secret drawing default; applies to new objects | `SET-IMAGE-EDITOR-OPTIONS-FILL-COLOR-HEX-001`; core alpha/invalid/restart tests; default agrees with the ES rectangle qualification default; native wiring pending |
+| `Thickness` | Integer, 4 | 1..10000, within the production editor width limit | Non-secret drawing default; affects new objects, without editing existing objects | `SET-IMAGE-EDITOR-OPTIONS-THICKNESS-001`; core and native validation/isolation/restart/history tests |
+| `BorderColorHex` | String, `#FFFF0000` | Exactly `#RRGGBB` or `#AARRGGBB`, hexadecimal digits; canonical uppercase `#AARRGGBB` | Non-secret drawing default; alpha, including transparent RGB, survives; applies to new objects | `SET-IMAGE-EDITOR-OPTIONS-BORDER-COLOR-HEX-001`; core alpha/invalid/restart tests; default agrees with the ES rectangle qualification default; native Apply/Cancel, picker and persistence tests |
+| `FillColorHex` | String, `#00000000` | Same canonical colour validation as border | Non-secret drawing default; applies to new objects | `SET-IMAGE-EDITOR-OPTIONS-FILL-COLOR-HEX-001`; core alpha/invalid/restart tests; default agrees with the ES rectangle qualification default; native Apply/Cancel, picker and persistence tests |
 | `RememberRecentImagePaths` | Boolean, false | Boolean only; false ignores and removes retained paths | Private local consent; only later successful Open/Save may add paths; no backfill | Native opt-in authority under ESET-012, absent from the pinned legacy field census; core/native runtime tests |
 | `MaxRecentImageFiles` | Integer, 10 | 1..100 | Private local retention policy; decreasing it removes oldest entries | `SET-IMAGE-EDITOR-OPTIONS-MAX-RECENT-IMAGE-FILES-001`; bounded model and preference tests |
 | `RecentImageFiles` | Array of strings, empty | At most 100 encoded entries and at most the validated maximum distinct absolute paths; valid platform path syntax | Private local data; newest first, deduplicated, removable individually or together; absent resources stay removable | `SET-IMAGE-EDITOR-OPTIONS-RECENT-IMAGE-FILES-001`; path/opt-in/isolation/removal/recovery tests |
@@ -39,7 +39,6 @@ The production session has an explicit creation-style operation separate from
 selection editing. Updating creation defaults leaves existing objects, source,
 selection, checkpoint, undo and redo untouched. Later creations snapshot the
 new style; explicit selection edits retain their existing atomic history path.
-
 
 Windows and macOS field dispositions remain Required in their own adapters.
 Injecting Windows path rules in a Linux core test does not qualify Windows.
@@ -117,3 +116,30 @@ Recent paths must stay excluded from telemetry and support exports. The store
 performs no network access and has no credential import/export authority.
 Full secret-field classification and secure-service settings are separate
 Required work, not implied by compatible unknown-field retention here.
+
+## Native drawing defaults
+
+Preferences → Drawing Defaults edits border/fill/thickness as one draft.
+Accessible native fields, alpha-aware pickers and explicit format guidance share
+production validation. Reset changes only the draft; Cancel performs no write.
+Apply writes before publishing to every open editor. Invalid input, failed
+persistence or a changed preference revision leaves the dialog open with a
+value-free error. An incoming Open that changes recents also invalidates an older
+drawing draft. Drawing changes preserve the live recent model revision, so they
+cannot allow a stale recent draft to overwrite a newer entry.
+
+Existing objects, selected objects, source files, dirty checkpoints and both
+history branches survive a default change unchanged. Subsequent creations in
+open, new and replaced sessions use the saved defaults. The toolbar's colour
+and thickness actions explicitly edit the selected objects through their normal
+history path, then save the resulting creation defaults. If that preference
+write fails, the explicit document edit remains undoable and the old persisted
+preferences remain active for other editors; a status error survives ordinary
+focus, zoom and document refreshes. A later successful default change clears
+that error without rewriting already edited objects.
+
+Native tests exercise actual dialogs and colour pickers, Cancel/reset/Apply,
+invalid inputs, file locking, stale incoming-image drafts, multiple editor
+windows, redo preservation, PNG/sidecar persistence, replacement and restart.
+All fixtures use temporary preference storage; this evidence does not approve
+all settings fields, shared metadata or platform/release qualification.

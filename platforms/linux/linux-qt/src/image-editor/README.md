@@ -48,7 +48,12 @@ uses a bounded private native storage boundary, writes current and privacy-prune
 previous settings together, and publishes only after replacement succeeds.
 The production conformance seams share this code. Native opt-in and list edits
 survive restart; failed preference writes retain the old list without undoing
-successful image work. Full field coverage and review gates remain required;
+successful image work. `DrawingDefaultsDialog` provides atomic Apply/Cancel,
+draft reset and alpha-aware native colour pickers for border/fill/thickness.
+Successful saves update creation styles across open editors, without selection
+or history edits; newly opened/replaced sessions use the same persisted defaults.
+Explicit toolbar selection edits retain history even if preference persistence
+fails, with a visible status error. Full field coverage and review gates remain required;
 [PREFERENCES-POLICY.md](PREFERENCES-POLICY.md)
 records implemented metadata, compatibility/recovery limits and review gates.
 

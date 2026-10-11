@@ -36,7 +36,12 @@ The next editor work follows these dependencies:
    store atomically retains current and privacy-pruned previous settings,
    preserves compatible unknown fields and publishes only successful writes.
    Native tests cover restart, cancellation, stale drafts, write failure and
-   successful/incomplete image saves. Continue complete settings metadata and
+   successful/incomplete image saves. Border/fill colours and thickness now
+   persist canonically with alpha, apply only to future creations across native
+   editor windows, and survive session replacement and restart. Native drawing
+   controls support atomic Apply/Cancel, reset, invalid/stale draft rejection and
+   failure reporting; explicit toolbar edits retain their document history if
+   preference saving fails. Continue complete settings metadata and
    downstream preferences, independent whole-file recovery and review gates
    under EDITOR-SETTINGS-001, then general affine annotations, inserted images
    and background composition.

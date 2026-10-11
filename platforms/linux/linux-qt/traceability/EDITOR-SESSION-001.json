@@ -28,7 +28,10 @@
     "platforms/linux/linux-qt/app/NewImageSource.h",
     "platforms/linux/linux-qt/app/NewImageSource.cpp",
     "platforms/linux/linux-qt/app/EditorOpen.h",
-    "platforms/linux/linux-qt/app/EditorOpen.cpp"
+    "platforms/linux/linux-qt/app/EditorOpen.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorPreferences.cpp",
+    "platforms/linux/linux-qt/app/NativeEditorPreferences.cpp",
+    "platforms/linux/linux-qt/app/DrawingDefaultsDialog.cpp"
   ],
   "requirements": {
     "ES-001": {
@@ -192,7 +195,8 @@
         "branch-clears-redo",
         "selection-is-not-history",
         "style-without-selection-changes-tool-only"
-      ]
+      ],
+      "note": "Persisted drawing defaults update only subsequent creations and stay outside annotation history. Native Apply leaves selected objects, dirty checkpoints and redo intact; toolbar controls still explicitly edit selection and update future defaults. Failed preference persistence leaves explicit document edits undoable and reports the failure. EditorSessionTest and EditorWindowTest cover these production paths; remaining settings coverage is tracked under ESET-006/007/015."
     },
     "ES-027": {
       "status": "implemented",

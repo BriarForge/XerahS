@@ -10,6 +10,7 @@
 
 #include <QAction>
 #include <QColorSpace>
+#include <QColorDialog>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDir>
@@ -66,6 +67,23 @@ void trigger(EditorWindow &window, const QString &name) {
 void drawRectangle(EditorCanvas &canvas) {
   QTest::mousePress(canvas.viewport(), Qt::LeftButton, Qt::NoModifier, canvas.viewState().toView({8, 8}).toPoint());
   QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, Qt::NoModifier, canvas.viewState().toView({22, 16}).toPoint());
+}
+QByteArray storedBytes(const QString &path) {
+  QFile file(path); return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray{};
+}
+void changeDrawingDefaults(EditorWindow &window, const QString &stroke, const QString &fill, int thickness, bool apply = true) {
+  QTimer timer; QElapsedTimer deadline; deadline.start(); bool configured = false, timedOut = false;
+  QObject::connect(&timer, &QTimer::timeout, [&] {
+    auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!dialog) return;
+    if (deadline.elapsed() > 5000) { timedOut = true; dialog->reject(); return; }
+    if (configured) return; configured = true;
+    QCOMPARE(dialog->objectName(), QStringLiteral("drawingDefaultsDialog")); QVERIFY(!window.close());
+    dialog->findChild<QLineEdit *>("defaultStrokeColour")->setText(stroke);
+    dialog->findChild<QLineEdit *>("defaultFillColour")->setText(fill);
+    dialog->findChild<QSpinBox *>("defaultStrokeThickness")->setValue(thickness);
+    dialog->findChild<QDialogButtonBox *>()->button(apply ? QDialogButtonBox::Ok : QDialogButtonBox::Cancel)->click();
+  });
+  timer.start(5); trigger(window, QStringLiteral("drawingDefaults")); timer.stop(); QVERIFY(configured && !timedOut);
 }
 void configureNewImage(NewImageDialog &dialog) {
   dialog.findChild<QSpinBox *>("newImageWidth")->setValue(64);
@@ -149,6 +167,109 @@ class EditorWindowTest : public QObject {
 private slots:
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  void savedDefaultsAffectOnlyNewAnnotationsAcrossOpenEditorsAndRestart() {
+    QTemporaryDir dir; const QString settings = dir.filePath("native/settings.json");
+    const QString first = dir.filePath("first.png"), second = dir.filePath("second.png"), replacement = dir.filePath("replacement.png");
+    QVERIFY(fixture().save(first)); QVERIFY(fixture().save(second)); QVERIFY(fixture().save(replacement));
+    QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    std::unique_ptr<EditorWindow> one(EditorWindow::open(first)), two(EditorWindow::open(second)); QVERIFY(one && two);
+    for (auto *window : {one.get(), two.get()}) {
+      window->resize(900, 600); window->show();
+      auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas);
+      trigger(*window, QStringLiteral("saveImage")); QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+    }
+    auto *other = two->findChild<EditorCanvas *>();
+    QTest::mousePress(other->viewport(), Qt::LeftButton, Qt::NoModifier, other->viewState().toView({38, 28}).toPoint());
+    QTest::mouseRelease(other->viewport(), Qt::LeftButton, Qt::NoModifier, other->viewState().toView({52, 37}).toPoint());
+    trigger(*two, QStringLiteral("undo")); QVERIFY(!two->windowTitle().contains(QChar(0x2022)));
+    QVERIFY(two->findChild<QAction *>("redo")->isEnabled());
+    const auto firstBytes = storedBytes(first + ".xann"), secondBytes = storedBytes(second + ".xann");
+    changeDrawingDefaults(*one, "#40123456", "#008899aa", 9, false);
+    QVERIFY(!QFile::exists(settings)); QCOMPARE(nativeEditorPreferences().values.value("Thickness"), QJsonValue(4));
+    changeDrawingDefaults(*one, "#40123456", "#008899aa", 9);
+    QCOMPARE(storedBytes(first + ".xann"), firstBytes); QCOMPARE(storedBytes(second + ".xann"), secondBytes);
+    QVERIFY(!one->windowTitle().contains(QChar(0x2022))); QVERIFY(!two->windowTitle().contains(QChar(0x2022)));
+    QVERIFY(two->findChild<QAction *>("redo")->isEnabled()); QVERIFY(one->findChild<QAction *>("deleteSelection")->isEnabled());
+    trigger(*two, QStringLiteral("redo")); trigger(*two, QStringLiteral("saveImage"));
+    const auto unchanged = loadSource(second); QVERIFY(unchanged.document); QCOMPARE(unchanged.document->annotations.size(), std::size_t{2});
+    for (const auto &annotation : unchanged.document->annotations)
+      QCOMPARE(std::get<RectangleAnnotation>(annotation).style.strokeWidth, 4.0);
+    QTest::mousePress(other->viewport(), Qt::LeftButton, Qt::NoModifier, other->viewState().toView({35, 2}).toPoint());
+    QTest::mouseRelease(other->viewport(), Qt::LeftButton, Qt::NoModifier, other->viewState().toView({50, 10}).toPoint());
+    trigger(*two, QStringLiteral("saveImage"));
+    const auto extended = loadSource(second); QVERIFY(extended.document); QCOMPARE(extended.document->annotations.size(), std::size_t{3});
+    const auto &created = std::get<RectangleAnnotation>(extended.document->annotations.back());
+    QCOMPARE(created.style.strokeWidth, 9.0); QCOMPARE(created.style.strokeColor, Argb{0x40123456});
+    QCOMPARE(created.style.fillColor, Argb{0x008899AA});
+    QVERIFY(one->openImage(replacement)); drawRectangle(*one->findChild<EditorCanvas *>());
+    trigger(*one, QStringLiteral("saveImage"));
+    auto replaced = loadSource(replacement); QVERIFY(replaced.document);
+    QCOMPARE(std::get<RectangleAnnotation>(replaced.document->annotations.front()).style.strokeWidth, 9.0);
+    one.reset(); two.reset();
+    QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    const QString restarted = dir.filePath("restart.png"); QVERIFY(fixture().save(restarted));
+    std::unique_ptr<EditorWindow> restart(EditorWindow::open(restarted)); QVERIFY(restart); restart->resize(900, 600); restart->show();
+    auto *canvas = restart->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas); trigger(*restart, QStringLiteral("saveImage"));
+    const auto persisted = loadSource(restarted); QVERIFY(persisted.document);
+    const auto &style = std::get<RectangleAnnotation>(persisted.document->annotations.front()).style;
+    QCOMPARE(style.strokeWidth, 9.0); QCOMPARE(style.strokeColor, Argb{0x40123456}); QCOMPARE(style.fillColor, Argb{0x008899AA});
+  }
+  void toolbarPreferenceFailurePreservesExplicitSelectionEditAndHistory() {
+    QTemporaryDir dir; const QString settings = dir.filePath("native/settings.json"), path = dir.filePath("image.png");
+    QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    QVERIFY(applyDrawingDefaults({{"Thickness", 7}}, nativeEditorPreferenceRevision()).saved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->resize(900, 600); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas); trigger(*window, QStringLiteral("saveImage"));
+    const auto originalBytes = storedBytes(settings); QLockFile lock(settings + ".lock"); QVERIFY(lock.tryLock(0));
+    trigger(*window, QStringLiteral("increaseStroke"));
+    QVERIFY(window->windowTitle().contains(QChar(0x2022))); QCOMPARE(storedBytes(settings), originalBytes);
+    QCOMPARE(nativeEditorPreferences().values.value("Thickness"), QJsonValue(7));
+    trigger(*window, QStringLiteral("saveImage"));
+    const auto edited = loadSource(path); QVERIFY(edited.document);
+    QCOMPARE(std::get<RectangleAnnotation>(edited.document->annotations.front()).style.strokeWidth, 8.0);
+    QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+    canvas->zoomIn(); canvas->setFocus(); QApplication::processEvents();
+    QVERIFY(window->statusBar()->currentMessage().contains("Drawing defaults could not be saved"));
+    trigger(*window, QStringLiteral("undo")); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+    trigger(*window, QStringLiteral("redo")); QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+    lock.unlock(); changeDrawingDefaults(*window, "#FFFF0000", "#00000000", 9);
+    QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+    QVERIFY(!window->statusBar()->currentMessage().contains("Drawing defaults could not be saved"));
+    const auto stillEdited = loadSource(path); QVERIFY(stillEdited.document);
+    QCOMPARE(std::get<RectangleAnnotation>(stillEdited.document->annotations.front()).style.strokeWidth, 8.0);
+    QCOMPARE(nativeEditorPreferences().values.value("Thickness"), QJsonValue(9));
+  }
+  void toolbarColorChoicePersistsAlphaWhileCancelLeavesEverythingUnchanged_data() {
+    QTest::addColumn<QString>("action"); QTest::addColumn<bool>("apply");
+    for (const auto *action : {"strokeColour", "fillColour"}) for (bool apply : {false, true})
+      QTest::newRow(qPrintable(QString("%1-%2").arg(action, apply ? "apply" : "cancel"))) << QString(action) << apply;
+  }
+  void toolbarColorChoicePersistsAlphaWhileCancelLeavesEverythingUnchanged() {
+    QFETCH(QString, action); QFETCH(bool, apply);
+    QTemporaryDir dir; const QString settings = dir.filePath("native/settings.json"), path = dir.filePath("image.png");
+    QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->resize(900, 600); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas); trigger(*window, QStringLiteral("saveImage"));
+    QTimer timer; QElapsedTimer deadline; deadline.start(); bool chosen = false, timedOut = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *dialog = qobject_cast<QColorDialog *>(QApplication::activeModalWidget()); if (!dialog) return;
+      if (deadline.elapsed() > 5000) { timedOut = true; dialog->reject(); return; }
+      if (chosen) return; chosen = true; QVERIFY(dialog->testOption(QColorDialog::ShowAlphaChannel));
+      QVERIFY(!window->close());
+      dialog->setCurrentColor(QColor::fromRgba(0x40667788)); apply ? dialog->accept() : dialog->reject();
+    });
+    timer.start(5); trigger(*window, action); timer.stop(); QVERIFY(chosen && !timedOut);
+    QCOMPARE(window->windowTitle().contains(QChar(0x2022)), apply); QCOMPARE(QFile::exists(settings), apply);
+    if (apply) {
+      const QString field = action == u"strokeColour" ? QStringLiteral("BorderColorHex") : QStringLiteral("FillColorHex");
+      QCOMPARE(nativeEditorPreferences().values.value(field), QJsonValue("#40667788"));
+      trigger(*window, QStringLiteral("saveImage")); const auto saved = loadSource(path); QVERIFY(saved.document);
+      const auto &style = std::get<RectangleAnnotation>(saved.document->annotations.front()).style;
+      QCOMPARE(action == u"strokeColour" ? style.strokeColor : style.fillColor, Argb{0x40667788});
+      QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+      QCOMPARE(nativeEditorPreferences().values.value(field), QJsonValue("#40667788"));
+    }
+  }
   void actualOpenAndCompleteSavePersistRecentImagesAcrossRestart() {
     QTemporaryDir dir; const QString preferences = dir.filePath("native/settings.json");
     const QString first = dir.filePath("first.png"), second = dir.filePath("second.png");

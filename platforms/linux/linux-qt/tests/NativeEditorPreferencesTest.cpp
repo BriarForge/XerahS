@@ -1,18 +1,22 @@
 #include "NativeEditorPreferences.h"
 #include "RecentImageMenu.h"
+#include "DrawingDefaultsDialog.h"
 #include <QApplication>
 #include <QCheckBox>
 #include <QDialog>
 #include <QDialogButtonBox>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QLabel>
 #include <QListWidget>
 #include <QLockFile>
+#include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTimer>
@@ -45,6 +49,112 @@ void changeDialog(const QString &operation, bool apply) {
 class NativeEditorPreferencesTest : public QObject {
   Q_OBJECT
 private slots:
+  void drawingDraftApplyCancelAndReset_data() {
+    QTest::addColumn<bool>("apply"); QTest::addColumn<bool>("reset");
+    for (bool apply : {false, true}) for (bool reset : {false, true})
+      QTest::newRow(qPrintable(QString("%1-%2").arg(apply ? "apply" : "cancel", reset ? "reset" : "edit"))) << apply << reset;
+  }
+  void drawingDraftApplyCancelAndReset() {
+    QFETCH(bool, apply); QFETCH(bool, reset);
+    QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
+    QVERIFY(applyDrawingDefaults({{"BorderColorHex", "#11223344"}, {"FillColorHex", "#80556677"}, {"Thickness", 7}}, nativeEditorPreferenceRevision()).saved);
+    const auto original = nativeEditorPreferences().values; const auto previousBytes = bytes(path);
+    QSignalSpy events(&nativeEditorPreferenceEvents(), &NativeEditorPreferenceEvents::drawingDefaultsChanged);
+    QTimer timer; QElapsedTimer deadline; deadline.start(); bool edited = false, timedOut = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!dialog) return;
+      if (deadline.elapsed() > 5000) { timedOut = true; dialog->reject(); return; }
+      if (edited) return; edited = true;
+      QCOMPARE(dialog->objectName(), QStringLiteral("drawingDefaultsDialog"));
+      dialog->findChild<QLineEdit *>("defaultStrokeColour")->setText("#40667788");
+      dialog->findChild<QLineEdit *>("defaultFillColour")->setText("#008899aa");
+      dialog->findChild<QSpinBox *>("defaultStrokeThickness")->setValue(10);
+      if (reset) dialog->findChild<QPushButton *>("resetDrawingDefaults")->click();
+      auto *buttons = dialog->findChild<QDialogButtonBox *>(); QVERIFY(buttons);
+      buttons->button(apply ? QDialogButtonBox::Ok : QDialogButtonBox::Cancel)->click();
+    });
+    timer.start(5); QCOMPARE(manageDrawingDefaults(), apply); timer.stop(); QVERIFY(edited && !timedOut);
+    QCOMPARE(events.count(), apply ? 1 : 0);
+    if (!apply) { QCOMPARE(nativeEditorPreferences().values, original); QCOMPARE(bytes(path), previousBytes); }
+    else {
+      QCOMPARE(nativeEditorPreferences().values.value("BorderColorHex"), QJsonValue(reset ? "#FFFF0000" : "#40667788"));
+      QCOMPARE(nativeEditorPreferences().values.value("FillColorHex"), QJsonValue(reset ? "#00000000" : "#008899AA"));
+      QCOMPARE(nativeEditorPreferences().values.value("Thickness"), QJsonValue(reset ? 4 : 10));
+    }
+    const auto expected = nativeEditorPreferences().values;
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty()); QCOMPARE(nativeEditorPreferences().values, expected);
+  }
+  void invalidDrawingDraftRemainsOpenWithoutPublishingAnyField() {
+    QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
+    const auto original = nativeEditorPreferences().values; const auto revision = nativeEditorPreferenceRevision();
+    QSignalSpy events(&nativeEditorPreferenceEvents(), &NativeEditorPreferenceEvents::drawingDefaultsChanged);
+    QTimer timer; QElapsedTimer deadline; deadline.start(); bool tested = false, timedOut = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!dialog) return;
+      if (deadline.elapsed() > 5000) { timedOut = true; dialog->reject(); return; }
+      if (tested) return; tested = true;
+      auto *stroke = dialog->findChild<QLineEdit *>("defaultStrokeColour");
+      auto *fill = dialog->findChild<QLineEdit *>("defaultFillColour");
+      auto *apply = dialog->findChild<QPushButton *>("applyDrawingDefaults");
+      stroke->setText("red"); fill->setText("#80010203");
+      dialog->findChild<QSpinBox *>("defaultStrokeThickness")->setValue(12); apply->click();
+      QVERIFY(dialog->isVisible()); QCOMPARE(nativeEditorPreferences().values, original);
+      QCOMPARE(nativeEditorPreferenceRevision(), revision); QVERIFY(!QFile::exists(path));
+      QVERIFY(dialog->findChild<QLabel *>("drawingDefaultsError")->text().contains("#AARRGGBB"));
+      stroke->setText("#ffffffff"); fill->setText("#invalid"); apply->click();
+      QVERIFY(dialog->isVisible()); QCOMPARE(nativeEditorPreferences().values, original); QVERIFY(!QFile::exists(path));
+      dialog->reject();
+    });
+    timer.start(5); QVERIFY(!manageDrawingDefaults()); timer.stop(); QVERIFY(tested && !timedOut); QCOMPARE(events.count(), 0);
+    const auto invalid = applyDrawingDefaults({{"Thickness", 0}, {"FillColorHex", "#80010203"}}, revision);
+    QVERIFY(!invalid.saved); QCOMPARE(invalid.diagnostic, QStringLiteral("invalid-Thickness"));
+    QCOMPARE(nativeEditorPreferences().values, original);
+  }
+  void failedOrStaleDrawingDraftPreservesStoredAndActiveDefaults_data() {
+    QTest::addColumn<bool>("stale"); QTest::newRow("locked") << false; QTest::newRow("incoming-image") << true;
+  }
+  void failedOrStaleDrawingDraftPreservesStoredAndActiveDefaults() {
+    QFETCH(bool, stale);
+    QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty()); QVERIFY(optIn(1));
+    QVERIFY(rememberEditorImage("/private/first.png").isEmpty());
+    QLockFile lock(path + ".lock"); if (!stale) QVERIFY(lock.tryLock(0));
+    QSignalSpy events(&nativeEditorPreferenceEvents(), &NativeEditorPreferenceEvents::drawingDefaultsChanged);
+    QByteArray expectedBytes = bytes(path); auto expected = nativeEditorPreferences().values;
+    QTimer timer; QElapsedTimer deadline; deadline.start(); bool tested = false, timedOut = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!dialog) return;
+      if (deadline.elapsed() > 5000) { timedOut = true; dialog->reject(); return; }
+      if (tested) return; tested = true;
+      dialog->findChild<QLineEdit *>("defaultStrokeColour")->setText("#40667788");
+      dialog->findChild<QSpinBox *>("defaultStrokeThickness")->setValue(10);
+      if (stale) {
+        QVERIFY(rememberEditorImage("/private/incoming.png").isEmpty());
+        expectedBytes = bytes(path); expected = nativeEditorPreferences().values;
+      }
+      dialog->findChild<QPushButton *>("applyDrawingDefaults")->click();
+      QVERIFY(dialog->isVisible()); QCOMPARE(nativeEditorPreferences().values, expected); QCOMPARE(bytes(path), expectedBytes);
+      const auto error = dialog->findChild<QLabel *>("drawingDefaultsError")->text();
+      QVERIFY(error.contains(stale ? "changed" : "Another process")); QVERIFY(!error.contains("/private/"));
+      dialog->reject();
+    });
+    timer.start(5); QVERIFY(!manageDrawingDefaults()); timer.stop(); QVERIFY(tested && !timedOut); QCOMPARE(events.count(), 0);
+    lock.unlock(); QVERIFY(initializeNativeEditorPreferences(path).isEmpty()); QCOMPARE(nativeEditorPreferences().values, expected);
+  }
+  void styleApplyCannotResetRecentDraftRevisionOrOverwriteAnIncomingImage() {
+    QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty()); QVERIFY(optIn(1));
+    QVERIFY(rememberEditorImage("/private/first.png").isEmpty());
+    const auto draft = recentImageHistory(); const auto revision = draft.revision();
+    QVERIFY(applyDrawingDefaults({{"Thickness", 8}}, nativeEditorPreferenceRevision()).saved);
+    QCOMPARE(recentImageHistory().revision(), revision); QCOMPARE(recentImageHistory().paths(), draft.paths());
+    QVERIFY(rememberEditorImage("/private/next.png").isEmpty()); QVERIFY(recentImageHistory().revision() > revision);
+    const auto rejected = applyRecentImagePreferences(draft, revision); QVERIFY(!rejected.saved);
+    QCOMPARE(recentImageHistory().paths(), QStringList{"/private/next.png"});
+    QCOMPARE(nativeEditorPreferences().values.value("Thickness"), QJsonValue(8));
+  }
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
   void missingNativeStoreDoesNotWriteOrBackfill() {

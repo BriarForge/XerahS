@@ -8,6 +8,7 @@
 #include "EditorSource.h"
 #include "EditorOpen.h"
 #include "RecentImageMenu.h"
+#include "DrawingDefaultsDialog.h"
 
 #include <QAction>
 #include <QCloseEvent>
@@ -115,6 +116,7 @@ EditorWindow *EditorWindow::createNew(QWidget *parent) {
 EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument document,
                            EditorSession::InitialPersistence persistence, QImage displaySource)
     : m_path(path), m_image(std::move(image)), m_session(std::make_unique<EditorSession>(std::move(document), persistence)) {
+  applyCreationDefaults();
   m_canvas = new EditorCanvas(*m_session, m_image, nullptr, displaySource);
   m_sourceBytes = m_session->document().sourceImagePng;
   setCentralWidget(m_canvas);
@@ -140,6 +142,17 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     if (m_canvasOperationPending) return;
     const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
     if (manageRecentImages(this)) { m_preferenceDiagnostic.clear(); refresh(); }
+  });
+  auto *preferences = menuBar()->addMenu(QStringLiteral("&Preferences"));
+  auto *drawingDefaults = preferences->addAction(QStringLiteral("Drawing Defaults…"));
+  drawingDefaults->setObjectName(QStringLiteral("drawingDefaults"));
+  connect(drawingDefaults, &QAction::triggered, this, [this] {
+    if (m_canvasOperationPending) return;
+    const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
+    if (manageDrawingDefaults(this)) { applyCreationDefaults(); m_drawingPreferenceDiagnostic.clear(); refresh(); }
+  });
+  connect(&nativeEditorPreferenceEvents(), &NativeEditorPreferenceEvents::drawingDefaultsChanged, this, [this] {
+    applyCreationDefaults(); m_drawingPreferenceDiagnostic.clear(); refresh();
   });
 
   auto *imageMenu = menuBar()->addMenu(QStringLiteral("&Image"));
@@ -217,6 +230,8 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   QAction *fill = bar->addAction(QStringLiteral("Fill colour…"));
   QAction *width = bar->addAction(QStringLiteral("Stroke +"));
   QAction *thin = bar->addAction(QStringLiteral("Stroke −"));
+  stroke->setObjectName(QStringLiteral("strokeColour")); fill->setObjectName(QStringLiteral("fillColour"));
+  width->setObjectName(QStringLiteral("increaseStroke")); thin->setObjectName(QStringLiteral("decreaseStroke"));
 
   connect(saveAction, &QAction::triggered, this, [this] { save(false); });
   connect(saveAs, &QAction::triggered, this, [this] { save(true); });
@@ -231,20 +246,26 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     if (accepted) { m_session->rotateSelection(degrees); refresh(); }
   });
   connect(stroke, &QAction::triggered, this, [this] {
+    if (m_canvasOperationPending) return;
+    const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
     const QColor c = QColorDialog::getColor(toColor(m_session->toolStyle().strokeColor), this,
                                             QStringLiteral("Stroke colour"), QColorDialog::ShowAlphaChannel);
-    if (c.isValid()) { m_session->setStrokeColor(c.rgba()); refresh(); }
+    if (c.isValid()) { m_session->setStrokeColor(c.rgba()); persistDrawingDefaults(); refresh(); }
   });
   connect(fill, &QAction::triggered, this, [this] {
+    if (m_canvasOperationPending) return;
+    const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
     const QColor c = QColorDialog::getColor(toColor(m_session->toolStyle().fillColor), this,
                                             QStringLiteral("Fill colour"), QColorDialog::ShowAlphaChannel);
-    if (c.isValid()) { m_session->setFillColor(c.rgba()); refresh(); }
+    if (c.isValid()) { m_session->setFillColor(c.rgba()); persistDrawingDefaults(); refresh(); }
   });
   connect(width, &QAction::triggered, this, [this] {
-    m_session->setStrokeWidth(m_session->toolStyle().strokeWidth + 1); refresh();
+    if (m_canvasOperationPending) return;
+    m_session->setStrokeWidth(std::min(10000.0, m_session->toolStyle().strokeWidth + 1)); persistDrawingDefaults(); refresh();
   });
   connect(thin, &QAction::triggered, this, [this] {
-    m_session->setStrokeWidth(std::max(1.0, m_session->toolStyle().strokeWidth - 1)); refresh();
+    if (m_canvasOperationPending) return;
+    m_session->setStrokeWidth(std::max(1.0, m_session->toolStyle().strokeWidth - 1)); persistDrawingDefaults(); refresh();
   });
   auto *view = addToolBar(QStringLiteral("View"));
   view->setMovable(false);
@@ -266,6 +287,21 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   resize(std::min(m_image.width() + 40, 1400), std::min(m_image.height() + 120, 900));
   refresh();
   m_canvas->setFocus();
+}
+
+void EditorWindow::applyCreationDefaults() {
+  const auto defaults = drawingStyleFromPreferences(nativeEditorPreferences());
+  auto style = m_session->toolStyle();
+  style.strokeColor = defaults.strokeColor; style.fillColor = defaults.fillColor; style.strokeWidth = defaults.strokeWidth;
+  m_session->setCreationStyle(style);
+}
+
+void EditorWindow::persistDrawingDefaults() {
+  const auto &style = m_session->toolStyle();
+  const auto written = applyDrawingDefaults({{QStringLiteral("BorderColorHex"), formatColor(style.strokeColor)},
+      {QStringLiteral("FillColorHex"), formatColor(style.fillColor)}, {QStringLiteral("Thickness"), style.strokeWidth}},
+      nativeEditorPreferenceRevision());
+  m_drawingPreferenceDiagnostic = written.diagnostic;
 }
 
 void EditorWindow::refresh() {
@@ -299,6 +335,8 @@ void EditorWindow::refresh() {
                                .arg(m_canvas->viewState().zoom() * 100, 0, 'f', 1);
   if (!m_preferenceDiagnostic.isEmpty()) status += QStringLiteral(" · Recent images could not be saved: %1")
       .arg(editorPreferenceDiagnosticMessage(m_preferenceDiagnostic));
+  if (!m_drawingPreferenceDiagnostic.isEmpty()) status += QStringLiteral(" · Drawing defaults could not be saved: %1")
+      .arg(editorPreferenceDiagnosticMessage(m_drawingPreferenceDiagnostic));
   statusBar()->showMessage(status);
   m_canvas->viewport()->update();
 }
@@ -341,6 +379,7 @@ void EditorWindow::adoptSession(std::unique_ptr<EditorSession> next, const QStri
   // switched its session pointer. Retaining the widget preserves action bindings.
   auto previous = std::move(m_session);
   m_session = std::move(next);
+  applyCreationDefaults();
   m_image = std::move(source);
   m_sourceBytes = m_session->document().sourceImagePng;
   m_path = path; m_placeholderState.reset();

@@ -43,6 +43,8 @@ private:
                     QImage source, const QImage &display);
   bool save(bool chooseFile);
   void recordRecentImage(const QString &absolutePath);
+  void applyCreationDefaults();
+  void persistDrawingDefaults();
   void refresh();
   void cropImage();
   void autoCropImage();
@@ -55,6 +57,7 @@ private:
 
   QString m_path;
   QString m_preferenceDiagnostic;
+  QString m_drawingPreferenceDiagnostic;
   QImage m_image;
   QByteArray m_sourceBytes;
   std::unique_ptr<xerahs::editor::EditorSession> m_session;
