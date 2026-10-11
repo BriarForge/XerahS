@@ -109,6 +109,9 @@ QString editorPreferenceDiagnosticMessage(const QString &diagnostic) {
     const QString label = field == u"BlurStrength" ? QStringLiteral("Blur strength") :
         field == u"Thickness" ? QStringLiteral("Thickness") : field == u"Theme" ? QStringLiteral("Theme") :
         field == u"BorderColorHex" ? QStringLiteral("Stroke colour") : field == u"FillColorHex" ? QStringLiteral("Fill colour") :
+        field == u"RememberWindowState" ? QStringLiteral("Remember window state") :
+        field == u"WindowWidth" ? QStringLiteral("Window width") : field == u"WindowHeight" ? QStringLiteral("Window height") :
+        field == u"IsWindowMaximized" ? QStringLiteral("Maximized window state") :
         field == u"MaxRecentImageFiles" ? QStringLiteral("Maximum recent images") :
         field == u"RememberRecentImagePaths" ? QStringLiteral("Remember recent images") :
         field == u"RecentImageFiles" ? QStringLiteral("Recent image list") : QStringLiteral("Preference version");

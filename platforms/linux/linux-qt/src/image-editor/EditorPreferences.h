@@ -4,6 +4,7 @@
 #include "RecentImages.h"
 #include <QJsonObject>
 #include <QMap>
+#include <QSizeF>
 #include <optional>
 
 namespace xerahs::editor {
@@ -26,4 +27,11 @@ PreferenceChange changeEditorPreferences(const EditorPreferences &current, const
 QJsonObject recentPreferenceValues(const RecentImages &recent);
 // ESET-006/007: saved drawing defaults are separate from annotation state.
 RectangleStyle drawingStyleFromPreferences(const EditorPreferences &preferences);
+constexpr double maximumEditorWindowExtent = 16777215; // Qt's QWidget extent limit, in logical pixels.
+struct EditorWindowPreferences {
+  bool remember = true;
+  QSizeF normalSize{1280, 720};
+  bool maximized = true;
+};
+EditorWindowPreferences windowPreferencesFromPreferences(const EditorPreferences &preferences);
 }  // namespace xerahs::editor

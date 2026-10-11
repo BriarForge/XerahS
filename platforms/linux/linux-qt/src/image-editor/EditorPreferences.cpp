@@ -10,6 +10,8 @@ const QJsonObject defaults{
   {QStringLiteral("BlurStrength"), 30}, {QStringLiteral("Thickness"), 4},
   {QStringLiteral("BorderColorHex"), QStringLiteral("#FFFF0000")},
   {QStringLiteral("FillColorHex"), QStringLiteral("#00000000")},
+  {QStringLiteral("RememberWindowState"), true}, {QStringLiteral("WindowWidth"), 1280},
+  {QStringLiteral("WindowHeight"), 720}, {QStringLiteral("IsWindowMaximized"), true},
   {QStringLiteral("RememberRecentImagePaths"), false}, {QStringLiteral("MaxRecentImageFiles"), RecentImages::defaultMaximum},
   {QStringLiteral("RecentImageFiles"), QJsonArray{}}};
 const QStringList nonPersistentFields{QStringLiteral("BorderColor"), QStringLiteral("FillColor")};
@@ -53,7 +55,9 @@ EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRul
   }
   for (const auto &key : {QStringLiteral("Theme"), QStringLiteral("BlurStrength"), QStringLiteral("Thickness"),
                          QStringLiteral("RememberRecentImagePaths"), QStringLiteral("MaxRecentImageFiles"),
-                         QStringLiteral("BorderColorHex"), QStringLiteral("FillColorHex")}) {
+                         QStringLiteral("BorderColorHex"), QStringLiteral("FillColorHex"),
+                         QStringLiteral("RememberWindowState"), QStringLiteral("WindowWidth"),
+                         QStringLiteral("WindowHeight"), QStringLiteral("IsWindowMaximized")}) {
     if (!stored.contains(key)) continue;
     const auto value = stored.value(key);
     if (key == u"BorderColorHex" || key == u"FillColorHex") {
@@ -64,7 +68,8 @@ EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRul
     const bool valid = key == u"Theme" ? (value.isString() && QStringList{"Dark", "Light", "System"}.contains(value.toString())) :
         key == u"BlurStrength" ? number(value, 0, 100, false) :
         key == u"Thickness" ? number(value, 1, 10000, true) :
-        key == u"RememberRecentImagePaths" ? value.isBool() :
+        key == u"RememberRecentImagePaths" || key == u"RememberWindowState" || key == u"IsWindowMaximized" ? value.isBool() :
+        key == u"WindowWidth" || key == u"WindowHeight" ? number(value, 1, maximumEditorWindowExtent, false) :
         number(value, RecentImages::minimumMaximum, RecentImages::maximumMaximum, true);
     if (valid) result.values.insert(key, value); else invalid(result, key);
   }
@@ -85,11 +90,16 @@ EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRul
   validated.setPreferences(enabled, maximum); result.recent = std::move(validated);
   const auto recents = recentPreferenceValues(result.recent);
   for (auto it = recents.begin(); it != recents.end(); ++it) result.values.insert(it.key(), it.value());
+  if (!result.values.value(u"RememberWindowState").toBool())
+    for (const auto *key : {"WindowWidth", "WindowHeight", "IsWindowMaximized"})
+      result.values.insert(QLatin1String(key), defaults.value(QLatin1String(key)));
   return result;
 }
 QJsonObject serializeEditorPreferences(const EditorPreferences &preferences) {
   QJsonObject values = preferences.values;
   for (const auto &key : nonPersistentFields) values.remove(key);
+  if (!values.value(u"RememberWindowState").toBool())
+    for (const auto *key : {"WindowWidth", "WindowHeight", "IsWindowMaximized"}) values.remove(QLatin1String(key));
   const auto recents = recentPreferenceValues(preferences.recent);
   for (auto it = recents.begin(); it != recents.end(); ++it) values.insert(it.key(), it.value());
   return values;
@@ -110,5 +120,14 @@ RectangleStyle drawingStyleFromPreferences(const EditorPreferences &preferences)
   const auto thickness = preferences.values.value(u"Thickness");
   if (number(thickness, 1, 10000, true)) style.strokeWidth = thickness.toDouble();
   return style;
+}
+EditorWindowPreferences windowPreferencesFromPreferences(const EditorPreferences &preferences) {
+  EditorWindowPreferences window;
+  window.remember = preferences.values.value(u"RememberWindowState").toBool(true);
+  window.maximized = preferences.values.value(u"IsWindowMaximized").toBool(true);
+  const auto width = preferences.values.value(u"WindowWidth"), height = preferences.values.value(u"WindowHeight");
+  if (number(width, 1, maximumEditorWindowExtent, false)) window.normalSize.setWidth(width.toDouble());
+  if (number(height, 1, maximumEditorWindowExtent, false)) window.normalSize.setHeight(height.toDouble());
+  return window;
 }
 }  // namespace xerahs::editor

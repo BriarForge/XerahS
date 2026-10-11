@@ -45,6 +45,53 @@ bool privateWrite(const QString &path, const QByteArray &bytes) {
 class EditorPreferencesTest : public QObject {
   Q_OBJECT
 private slots:
+  void windowFieldsRecoverIndependentlyAndRespectInclusiveBounds() {
+    const auto defaults = windowPreferencesFromPreferences(loadEditorPreferences({}));
+    QVERIFY(defaults.remember); QVERIFY(defaults.maximized); QCOMPARE(defaults.normalSize, QSizeF(1280, 720));
+    for (const auto *key : {"WindowWidth", "WindowHeight"}) {
+      for (double value : {1.0, 640.5, maximumEditorWindowExtent}) {
+        auto loaded = loadEditorPreferences({{key, value}}); QCOMPARE(loaded.fields.value(key), PreferenceFieldState::Valid);
+        QCOMPARE(loaded.values.value(key).toDouble(), value);
+      }
+      for (const auto &value : {QJsonValue(0), QJsonValue(-1), QJsonValue(maximumEditorWindowExtent + 1),
+                               QJsonValue(std::numeric_limits<double>::infinity()), QJsonValue("640"), QJsonValue(true)}) {
+        const auto loaded = loadEditorPreferences({{key, value}, {"Thickness", 9}, {"Theme", "Light"}});
+        QCOMPARE(loaded.fields.value(key), PreferenceFieldState::Invalid);
+        QCOMPARE(loaded.diagnostics, QStringList{QStringLiteral("invalid-") + key});
+        QCOMPARE(loaded.values.value("Theme"), QJsonValue("Light")); QCOMPARE(loaded.values.value("Thickness"), QJsonValue(9));
+      }
+    }
+    for (const auto *key : {"RememberWindowState", "IsWindowMaximized"}) {
+      const auto invalid = loadEditorPreferences({{key, "false"}, {"WindowHeight", 800}});
+      QCOMPARE(invalid.fields.value(key), PreferenceFieldState::Invalid);
+      QCOMPARE(invalid.values.value("WindowHeight"), QJsonValue(800));
+      QCOMPARE(invalid.diagnostics, QStringList{QStringLiteral("invalid-") + key});
+      const auto valid = loadEditorPreferences({{key, false}}); QCOMPARE(valid.fields.value(key), PreferenceFieldState::Valid);
+    }
+    const auto invalidWidth = loadEditorPreferences({{"WindowWidth", "NaN"}, {"WindowHeight", 900}, {"IsWindowMaximized", false}});
+    QCOMPARE(windowPreferencesFromPreferences(invalidWidth).normalSize, QSizeF(1280, 900));
+    QVERIFY(!windowPreferencesFromPreferences(invalidWidth).maximized);
+    const auto rejected = changeEditorPreferences(loadEditorPreferences({}), {{"RememberWindowState", false}, {"WindowWidth", 0}});
+    QVERIFY(!rejected.preferences); QCOMPARE(rejected.diagnostics, QStringList{"invalid-WindowWidth"});
+  }
+  void disablingWindowMemoryPrunesBothVersionsAndRecoveryCannotReenableIt() {
+    MemoryStorage storage; EditorPreferenceStore store(storage);
+    auto before = changeEditorPreferences(store.preferences(), {{"WindowWidth", 900}, {"WindowHeight", 600}, {"IsWindowMaximized", false}});
+    QVERIFY(before.preferences); QVERIFY(store.save(*before.preferences).saved);
+    auto disabled = changeEditorPreferences(store.preferences(), {{"RememberWindowState", false}});
+    QVERIFY(disabled.preferences); QVERIFY(store.save(*disabled.preferences).saved);
+    for (const auto *version : {"current", "previous"}) {
+      const auto values = section(storage, version); QVERIFY(!values.value("RememberWindowState").toBool());
+      for (const auto *field : {"WindowWidth", "WindowHeight", "IsWindowMaximized"}) QVERIFY(!values.contains(field));
+    }
+    const auto previous = section(storage, "previous");
+    storage.artifact.bytes = envelope(QJsonValue("corrupt current"), previous);
+    EditorPreferenceStore recovered(storage); QVERIFY(!windowPreferencesFromPreferences(recovered.preferences()).remember);
+    auto next = changeEditorPreferences(recovered.preferences(), {{"Thickness", 8}});
+    QVERIFY(next.preferences); QVERIFY(recovered.save(*next.preferences).saved);
+    QVERIFY(!section(storage, "current").contains("WindowWidth"));
+    QCOMPARE(recovered.preferences().values.value("Thickness"), QJsonValue(8));
+  }
   void colorsPreserveAlphaNormalizeAndExcludeComputedAliases() {
     auto defaults = loadEditorPreferences({});
     QCOMPARE(defaults.values.value("BorderColorHex"), QJsonValue("#FFFF0000"));

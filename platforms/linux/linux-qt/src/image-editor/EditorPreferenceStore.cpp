@@ -18,7 +18,11 @@ constexpr auto sharedPermissions = QFileDevice::ReadGroup | QFileDevice::WriteGr
 PreferenceRead failure(const QString &code) { return {PreferenceRead::Kind::Failed, {}, code}; }
 bool owned(const QFileInfo &info) { return info.ownerId() == ::geteuid(); }
 QJsonObject previousFor(const EditorPreferences &previous, const EditorPreferences &next) {
-  QJsonObject values = serializeEditorPreferences(previous);
+  auto retainedPreferences = previous;
+  // Recovery must not silently re-enable a deliberately disabled memory option.
+  if (!next.values.value(u"RememberWindowState").toBool())
+    retainedPreferences.values.insert(QStringLiteral("RememberWindowState"), false);
+  QJsonObject values = serializeEditorPreferences(retainedPreferences);
   RecentImages retained; retained.setPreferences(true, next.recent.maximum());
   // Membership uses the already normalized POSIX paths. Never restore paths
   // intentionally removed, trimmed or cleared in the new current version.

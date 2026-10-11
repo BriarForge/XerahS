@@ -21,7 +21,9 @@
     "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
     "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
     "platforms/linux/linux-qt/app/DrawingDefaultsDialog.h",
-    "platforms/linux/linux-qt/app/DrawingDefaultsDialog.cpp"
+    "platforms/linux/linux-qt/app/DrawingDefaultsDialog.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorWindowPlacement.h",
+    "platforms/linux/linux-qt/src/image-editor/EditorWindowPlacement.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
@@ -29,7 +31,8 @@
     "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
     "platforms/linux/linux-qt/src/image-editor/PREFERENCES-POLICY.md",
     "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
-    "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+    "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorWindowPlacementTest.cpp"
   ],
   "requirements": {
     "ESET-001": {
@@ -44,7 +47,7 @@
       "vectors": [
         "invalid-field-isolation"
       ],
-      "note": "Production loading distinguishes missing, valid, invalid, unknown and newer-version fields, repairs known invalid values independently and records value-free diagnostics. The winning native instance loads before opening editors and presents field recovery/read-only fallback through native warnings. Native host tests preserve unrelated/unknown values after recovery and a recent-list save. Remaining fields and complete recovery qualification remain Required."
+      "note": "Production loading distinguishes missing, valid, invalid, unknown and newer-version fields, repairs known invalid values independently and records value-free diagnostics. The winning native instance loads before opening editors and presents field recovery/read-only fallback through native warnings. Native host tests preserve unrelated/unknown values after recovery and a recent-list save. Remaining fields and complete recovery qualification remain Required. Window dimensions and memory/maximized flags now recover independently with field-specific native diagnostic labels."
     },
     "ESET-003": {
       "disposition": "Required",
@@ -62,9 +65,9 @@
     },
     "ESET-005": {
       "disposition": "Required",
-      "status": "not-started",
+      "status": "partial",
       "vectors": [],
-      "note": "Persisted window placement, scaling/topology recovery and opt-out remain Required."
+      "note": "Qt Core window fields validate normal client width/height and maximized/memory flags independently. The production logical-pixel placement model clamps to a usable work area, includes frame margins, chooses greatest overlap or preferred fallback and handles missing/disconnected/scaled/negative-origin/tiny displays. Disabling memory removes dimensions/maximized state from current and previous versions, preventing recovery from re-enabling it. Independent analytical and storage recovery tests cover this foundation; native lifecycle/controls and physical display/accessibility/metadata qualification remain Required."
     },
     "ESET-006": {
       "disposition": "Required",
@@ -132,7 +135,7 @@
         "recent-deduplication",
         "unknown-round-trip"
       ],
-      "note": "All three published operations call production code. Independent core and real native-control tests cover current field boundaries, missing markers, newer/unreadable preservation, unknown round-trip, atomic failures, private files, privacy-pruned recovery, restart, Apply/Cancel, capped stale revisions and actual image Open/Save. Every remaining field, supported upgrades, all other platform adapters and acceptance reviews remain Required. Drawing-default tests now add canonical alpha, non-persistent aliases, invalid/cancelled/reset/locked/stale drafts, actual color pickers, multi-window creation-only effects, preserved redo, session replacement and PNG/sidecar/restart evidence."
+      "note": "All three published operations call production code. Independent core and real native-control tests cover current field boundaries, missing markers, newer/unreadable preservation, unknown round-trip, atomic failures, private files, privacy-pruned recovery, restart, Apply/Cancel, capped stale revisions and actual image Open/Save. Every remaining field, supported upgrades, all other platform adapters and acceptance reviews remain Required. Drawing-default tests now add canonical alpha, non-persistent aliases, invalid/cancelled/reset/locked/stale drafts, actual color pickers, multi-window creation-only effects, preserved redo, session replacement and PNG/sidecar/restart evidence. Window boundary, type, independent geometry and disabled-memory recovery tests cover the production core; native display/lifecycle evidence remains Required."
     },
     "ESET-016": {
       "disposition": "Required",
