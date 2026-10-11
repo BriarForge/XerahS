@@ -8,6 +8,7 @@
 #include "image-editor/AnnotationRenderer.h"
 #include "image-editor/EditorSession.h"
 #include "image-editor/EditorViewport.h"
+#include "image-editor/EditorPreferences.h"
 #include "image-editor/ImageComparison.h"
 #include "EditorCanvasOperations.h"
 #include "NewImageSource.h"
@@ -24,6 +25,7 @@
 #include <cstdio>
 #include <set>
 #include <map>
+#include <limits>
 
 using namespace xerahs::naming;
 namespace pca = xerahs::actions;
@@ -833,6 +835,45 @@ QJsonObject runEditorCanvas(const QString &operation, const QJsonObject &input) 
                      {QStringLiteral("viewport_offset"), QJsonArray{view.offset().x(), view.offset().y()}}};
 }
 
+QJsonObject runEditorSettings(const QString &operation, const QJsonObject &input) {
+  if (operation == u"load-settings" || operation == u"settings-round-trip") {
+    if (!input.value(u"stored").isObject()) return adapterError(QStringLiteral("stored settings must be an object"));
+    const auto loaded = ed::loadEditorPreferences(input.value(u"stored").toObject());
+    if (operation == u"settings-round-trip") {
+      if (!input.value(u"change").isObject()) return adapterError(QStringLiteral("settings change must be an object"));
+      const auto changed = ed::changeEditorPreferences(loaded, input.value(u"change").toObject());
+      if (!changed.preferences) return QJsonObject{{QStringLiteral("diagnostic"), changed.diagnostics.value(0)}};
+      return ed::serializeEditorPreferences(*changed.preferences);
+    }
+    QJsonObject result = ed::serializeEditorPreferences(loaded);
+    result.insert(QStringLiteral("diagnostic"), loaded.diagnostics.value(0));
+    result.insert(QStringLiteral("diagnostics"), QJsonArray::fromStringList(loaded.diagnostics));
+    result.insert(QStringLiteral("read_only"), loaded.readOnly);
+    return result;
+  }
+  if (operation == u"recent-files-add") {
+    const QString platform = input.value(u"platform").toString(QStringLiteral("linux"));
+    if (platform != u"linux" && platform != u"macos" && platform != u"windows")
+      return adapterError(QStringLiteral("unknown recent path platform"));
+    ed::RecentImages recent(platform == u"windows" ? ed::RecentPathRules::Windows : ed::RecentPathRules::Posix);
+    const auto maximum = input.contains(u"maximum") ? optionalInteger(input, "maximum") :
+        std::optional<qint64>(ed::RecentImages::defaultMaximum);
+    if (!maximum || *maximum < std::numeric_limits<int>::min() || *maximum > std::numeric_limits<int>::max() ||
+        !recent.setPreferences(true, static_cast<int>(*maximum)))
+      return adapterError(QStringLiteral("invalid recent maximum"));
+    if (!input.value(u"existing").isArray()) return adapterError(QStringLiteral("existing recent paths must be an array"));
+    const auto existing = input.value(u"existing").toArray();
+    for (int i = existing.size() - 1; i >= 0; --i)
+      if (!existing.at(i).isString() || !recent.remember(existing.at(i).toString()))
+        return adapterError(QStringLiteral("invalid existing recent path"));
+    if (!input.value(u"add").isString() || !recent.remember(input.value(u"add").toString()))
+      return adapterError(QStringLiteral("invalid new recent path"));
+    return QJsonObject{{QStringLiteral("count"), recent.paths().size()},
+                       {QStringLiteral("paths"), QJsonArray::fromStringList(recent.paths())}};
+  }
+  return adapterError(QStringLiteral("unsupported operation: ") + operation);
+}
+
 }  // namespace
 
 int main(int argc, char *argv[]) {
@@ -863,6 +904,10 @@ int main(int argc, char *argv[]) {
   }
   if (capability == u"EDITOR-CANVAS-001") {
     writeJson(runEditorCanvas(operation, input));
+    return 0;
+  }
+  if (capability == u"EDITOR-SETTINGS-001") {
+    writeJson(runEditorSettings(operation, input));
     return 0;
   }
   if (capability == u"REGION-CAPTURE-001") {

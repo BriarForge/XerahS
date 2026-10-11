@@ -13,6 +13,7 @@ public:
   explicit RecentImages(RecentPathRules rules = RecentPathRules::Posix) : m_rules(rules) {}
   bool enabled() const { return m_enabled; }
   int maximum() const { return m_maximum; }
+  RecentPathRules pathRules() const { return m_rules; }
   const QStringList &paths() const { return m_paths; }
   quint64 revision() const { return m_revision; }
   // Invalid maximum is atomic. Opting out clears paths, without backfilling on opt-in.

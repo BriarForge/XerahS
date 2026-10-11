@@ -42,6 +42,14 @@ in the running process; versioned private preference persistence remains
 required. [RECENT-PATHS-POLICY.md](RECENT-PATHS-POLICY.md) records boundaries,
 privacy and the subsequent settings work.
 
+`EditorPreferences` validates known fields independently, preserves compatible
+unknown fields and rejects invalid changes atomically. `EditorPreferenceStore`
+uses a bounded private native storage boundary, writes current and privacy-pruned
+previous settings together, and publishes only after replacement succeeds.
+The production conformance seams share this code. Native persistence wiring
+and full field coverage remain required; [PREFERENCES-POLICY.md](PREFERENCES-POLICY.md)
+records implemented metadata, compatibility/recovery limits and review gates.
+
 The native editor in `app/EditorWindow.cpp` and `app/EditorCanvas.cpp` loads sources, draws and manipulates
 rectangles, exposes undo/redo and save, and reopens editable sidecars. See the
 edition [implementation plan](../../IMPLEMENTATION.md) and

@@ -37,6 +37,10 @@ add_library(xerahs_core STATIC
   src/image-editor/NewImage.h
   src/image-editor/RecentImages.cpp
   src/image-editor/RecentImages.h
+  src/image-editor/EditorPreferences.cpp
+  src/image-editor/EditorPreferences.h
+  src/image-editor/EditorPreferenceStore.cpp
+  src/image-editor/EditorPreferenceStore.h
   src/naming/FilenameGenerator.cpp
   src/naming/FilenameGenerator.h
 )
@@ -94,6 +98,11 @@ target_link_libraries(xerahs PRIVATE xerahs_core xerahs_editor_codecs Qt6::Gui Q
 target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
 enable_testing()
+add_executable(editor-preferences-test tests/EditorPreferencesTest.cpp)
+set_target_properties(editor-preferences-test PROPERTIES AUTOMOC ON)
+target_link_libraries(editor-preferences-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME editor-preferences COMMAND editor-preferences-test)
+
 add_executable(recent-images-test tests/RecentImagesTest.cpp)
 set_target_properties(recent-images-test PROPERTIES AUTOMOC ON)
 target_link_libraries(recent-images-test PRIVATE xerahs_core Qt6::Test)
@@ -182,7 +191,7 @@ find_package(Python3 3.12 REQUIRED COMPONENTS Interpreter)
 # Capabilities whose published vector operations this edition implements.
 # Full requirement coverage remains in traceability, including partial rows.
 # The full suite runs without --capability and still fails for missing seams.
-set(XERAHS_IMPLEMENTED_CAPABILITIES FILENAME-GENERATION-001 POST-CAPTURE-ACTIONS-001 REGION-CAPTURE-001 EDITOR-SESSION-001 EDITOR-CANVAS-001)
+set(XERAHS_IMPLEMENTED_CAPABILITIES FILENAME-GENERATION-001 POST-CAPTURE-ACTIONS-001 REGION-CAPTURE-001 EDITOR-SESSION-001 EDITOR-CANVAS-001 EDITOR-SETTINGS-001)
 list(TRANSFORM XERAHS_IMPLEMENTED_CAPABILITIES PREPEND "--capability;" OUTPUT_VARIABLE XERAHS_CAPABILITY_ARGS)
 add_test(NAME conformance
   COMMAND Python3::Interpreter "${XERAHS_REPO_ROOT}/conformance/runner/xerahs_conformance.py"

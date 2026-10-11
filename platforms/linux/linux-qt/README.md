@@ -11,6 +11,7 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 | `REGION-CAPTURE-001` | Mapping, keyboard, compositing, last-region, and session state machine; no overlay or capture backend yet | 21 of 21 vectors pass; [traceability](traceability/REGION-CAPTURE-001.json) |
 | `EDITOR-CANVAS-001` | Native New/Open and opt-in session recent files with confirmed dirty replacement; viewport, crop, auto crop, resize, rotation, flips, annotation flatten, clear and image comparison; persistent preferences and remaining image operations pending | All 3 published vectors plus native geometry, history, window, creation, opening, recent-file, comparison and persistence tests; [traceability](traceability/EDITOR-CANVAS-001.json) |
 | `EDITOR-SESSION-001` | Document, `.xann` reader and writer, history, and export renderer; editor window with rectangle tool, selection, save, and sidecar reopen; resize and ordering by keyboard, arbitrary-angle rotation and export | 19 of 19 vectors pass; [traceability](traceability/EDITOR-SESSION-001.json) |
+| `EDITOR-SETTINGS-001` | Versioned Qt Core preferences and atomic private store; field isolation, unknown-field retention and privacy-pruned previous settings; native persistence wiring and full ledger pending | All 3 published vectors plus independent field/storage/recovery tests; [traceability](traceability/EDITOR-SETTINGS-001.json) |
 
 The next implementation steps are tracked in [IMPLEMENTATION.md](IMPLEMENTATION.md).
 
