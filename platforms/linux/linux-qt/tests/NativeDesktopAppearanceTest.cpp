@@ -75,6 +75,8 @@ private slots:
     initializeNativeEditorPreferences(); QApplication::setPalette(m_native);
   }
   void readOnlyPortalSnapshotAndSignalsUpdateNativeWidgetsWithoutSaving() {
+    // Keep the first live update covered in a fresh process: earlier portal
+    // traffic can mask missing slot-type registration on Qt 6.4.
     FakePortal portal; portal.values = {{"color-scheme", uint(1)}, {"accent-color", QVariant::fromValue(PortalRgb{1, 0.5, 0})},
         {"contrast", uint(0)}, {"reduced-motion", uint(0)}, {"private-unrelated", "never read"}}; registerPortal(portal);
     QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");

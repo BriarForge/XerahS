@@ -239,8 +239,10 @@ snapshots; a restarted owner is read afresh. The observer resolves the unique
 portal owner asynchronously and subscribes to that sender before its first
 snapshot, so early changes do not depend on a well-known-name cache. Signals
 already queued from a previous owner are rejected by their sender identity.
-Unsupported, missing or disconnected
-portals leave the native Qt fallback. The observer never writes host settings
+The observer explicitly registers its slot payload types before subscribing;
+Qt 6.4 must not depend on an earlier read to register `QDBusVariant`. Failed
+subscriptions and unsupported, missing or disconnected portals leave the
+native Qt fallback. The observer never writes host settings
 or native preferences. High contrast applies independently of theme/accent
 choices. Reduced motion disables six Qt menu/combo/tooltip/toolbox effects and
 restores their preceding effective state when removed, on owner loss, or when
@@ -269,6 +271,6 @@ Tests exercise actual editor actions, image/sidecar/checkpoint/redo isolation,
 multi-window/restart, cancellation/reset, invalid/locked/stale drafts, native
 alpha picking, focus and accessible names. A separate private D-Bus with no
 host service activation tests actual ReadAll/signals, unsigned flags and RGB
-tuples, invalid hints, first-read subscription and delayed snapshot races,
-old-owner signals, service loss/restart and reduced
-motion without preference writes.
+tuples, invalid hints, cold-start live updates, first-read subscription, delayed
+snapshot races, old-owner signals, service loss/restart and reduced motion
+without preference writes.

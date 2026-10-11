@@ -33,6 +33,10 @@ QJsonValue translated(QVariant value, const QString &key) {
 }
 }
 NativeDesktopAppearance::NativeDesktopAppearance(QObject *parent) : QObject(parent), m_bus(QString()) {
+  // Qt 6.4 resolves string-based slot parameters by registered type name.
+  // Register before subscribing, rather than relying on an earlier portal read.
+  qRegisterMetaType<QDBusVariant>();
+  qRegisterMetaType<QDBusMessage>();
   qDBusRegisterMetaType<PortalAppearanceSettings>();
 }
 NativeDesktopAppearance::~NativeDesktopAppearance() { restoreMotion(); }
@@ -62,10 +66,12 @@ void NativeDesktopAppearance::setOwner(const QString &owner) {
       SLOT(portalSettingChanged(QString,QString,QDBusVariant,QDBusMessage)));
   ++m_generation; m_owner = owner; m_ownerAvailable = !owner.isEmpty(); publish({});
   if (!m_ownerAvailable) return;
-  // Resolve and bind the unique sender before reading. Signals and snapshots
-  // then share one owner, avoiding Qt 6.4's well-known-owner startup race.
-  m_bus.connect(m_owner, portalPath, portalInterface, QStringLiteral("SettingChanged"), this,
-      SLOT(portalSettingChanged(QString,QString,QDBusVariant,QDBusMessage)));
+  // Bind the unique sender before reading so signals and snapshots share
+  // one owner. A failed subscription retains the native palette fallback.
+  if (!m_bus.connect(m_owner, portalPath, portalInterface, QStringLiteral("SettingChanged"), this,
+      SLOT(portalSettingChanged(QString,QString,QDBusVariant,QDBusMessage)))) {
+    m_ownerAvailable = false; return;
+  }
   readAll();
 }
 void NativeDesktopAppearance::readAll() {
