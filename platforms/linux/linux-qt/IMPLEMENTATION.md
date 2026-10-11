@@ -41,7 +41,13 @@ The next editor work follows these dependencies:
    editor windows, and survive session replacement and restart. Native drawing
    controls support atomic Apply/Cancel, reset, invalid/stale draft rejection and
    failure reporting; explicit toolbar edits retain their document history if
-   preference saving fails. Continue complete settings metadata and
+   preference saving fails. Window size/maximized state now restore through a
+   logical-pixel display model, recover on native screen/work-area/DPI changes,
+   and save only on accepted close. A shared memory toggle atomically excludes
+   window state from both versions and stops automatic persistence; native
+   tests cover cancellation, failure, minimized/maximized state, injected display
+   changes, actual editor frame recovery and preserved document/redo state.
+   Continue complete settings metadata and
    downstream preferences, independent whole-file recovery and review gates
    under EDITOR-SETTINGS-001, then general affine annotations, inserted images
    and background composition.

@@ -83,6 +83,8 @@ add_executable(xerahs
   app/NativeEditorPreferences.h
   app/DrawingDefaultsDialog.cpp
   app/DrawingDefaultsDialog.h
+  app/NativeEditorWindowState.cpp
+  app/NativeEditorWindowState.h
   app/EditorCanvas.cpp
   app/EditorCanvas.h
   app/EditorWindow.cpp
@@ -123,6 +125,15 @@ target_link_libraries(native-editor-preferences-test PRIVATE xerahs_core Qt6::Wi
 target_include_directories(native-editor-preferences-test PRIVATE app)
 add_test(NAME native-editor-preferences COMMAND native-editor-preferences-test)
 set_tests_properties(native-editor-preferences PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+
+add_executable(native-editor-window-state-test tests/NativeEditorWindowStateTest.cpp
+               app/NativeEditorWindowState.cpp app/NativeEditorWindowState.h
+               app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h)
+set_target_properties(native-editor-window-state-test PROPERTIES AUTOMOC ON)
+target_link_libraries(native-editor-window-state-test PRIVATE xerahs_core Qt6::Widgets Qt6::Test)
+target_include_directories(native-editor-window-state-test PRIVATE app)
+add_test(NAME native-editor-window-state COMMAND native-editor-window-state-test)
+set_tests_properties(native-editor-window-state PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 
 add_executable(recent-images-test tests/RecentImagesTest.cpp)
 set_target_properties(recent-images-test PROPERTIES AUTOMOC ON)
@@ -202,6 +213,7 @@ add_executable(editor-window-test tests/EditorWindowTest.cpp app/EditorWindow.cp
                app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h
                app/DrawingDefaultsDialog.cpp app/DrawingDefaultsDialog.h
                app/EditorCanvas.cpp app/EditorCanvas.h app/EditorSource.cpp
+               app/NativeEditorWindowState.cpp app/NativeEditorWindowState.h
                app/CanvasRotationDialog.cpp app/CanvasRotationDialog.h
                app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h
                app/NewImageDialog.cpp app/NewImageDialog.h)

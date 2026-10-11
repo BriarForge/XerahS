@@ -9,6 +9,7 @@ class NativeEditorPreferenceEvents final : public QObject {
   Q_OBJECT
 signals:
   void drawingDefaultsChanged();
+  void windowMemoryChanged(bool enabled);
 };
 NativeEditorPreferenceEvents &nativeEditorPreferenceEvents();
 quint64 nativeEditorPreferenceRevision();
@@ -20,6 +21,8 @@ xerahs::editor::RecentImages &recentImageHistory();
 xerahs::editor::PreferenceWrite applyRecentImagePreferences(
     const xerahs::editor::RecentImages &draft, quint64 expectedRevision);
 xerahs::editor::PreferenceWrite applyDrawingDefaults(const QJsonObject &changes, quint64 expectedRevision);
+xerahs::editor::PreferenceWrite applyWindowPreferences(const QJsonObject &changes, quint64 expectedRevision);
+QString rememberEditorWindowState(const QJsonObject &state);
 QString rememberEditorImage(const QString &absolutePath);
 QString editorPreferenceDiagnosticMessage(const QString &diagnostic);
 }  // namespace xerahs::app

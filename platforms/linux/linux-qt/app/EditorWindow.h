@@ -18,6 +18,7 @@ class QListWidget;
 namespace xerahs::app {
 
 class EditorCanvas;
+class NativeEditorWindowState;
 struct PreparedCanvasEdit;
 
 class EditorWindow final : public QMainWindow {
@@ -62,6 +63,7 @@ private:
   QByteArray m_sourceBytes;
   std::unique_ptr<xerahs::editor::EditorSession> m_session;
   EditorCanvas *m_canvas = nullptr;
+  NativeEditorWindowState *m_windowState = nullptr;
   QAction *m_undo = nullptr;
   QAction *m_redo = nullptr;
   QAction *m_delete = nullptr;
@@ -71,6 +73,7 @@ private:
   QListWidget *m_unsupportedObjects = nullptr;
   std::optional<quint64> m_placeholderState;
   bool m_canvasOperationPending = false;
+  bool m_closePending = false;
 };
 
 }  // namespace xerahs::app

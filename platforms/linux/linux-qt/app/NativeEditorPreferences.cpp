@@ -28,8 +28,10 @@ PreferenceWrite publish(EditorPreferences next) {
   // Keep the live model's monotonic revision. Re-loading normalized JSON here
   // would reset it and allow an older modal draft to overwrite an incoming Open.
   const bool changed = drawingChanged(state.current, next);
+  const bool memoryChanged = state.current.values.value(u"RememberWindowState") != next.values.value(u"RememberWindowState");
   state.current = std::move(next); ++state.revision;
   if (changed) emit nativeEditorPreferenceEvents().drawingDefaultsChanged();
+  if (memoryChanged) emit nativeEditorPreferenceEvents().windowMemoryChanged(state.current.values.value(u"RememberWindowState").toBool());
   return {true, {}};
 }
 }
@@ -50,6 +52,8 @@ QStringList initializeNativeEditorPreferences(const QString &path) {
   }
   ++state.revision;
   if (drawingChanged(before, state.current)) emit nativeEditorPreferenceEvents().drawingDefaultsChanged();
+  if (before.values.value(u"RememberWindowState") != state.current.values.value(u"RememberWindowState"))
+    emit nativeEditorPreferenceEvents().windowMemoryChanged(state.current.values.value(u"RememberWindowState").toBool());
   return state.store ? state.store->diagnostics() : QStringList{};
 }
 const EditorPreferences &nativeEditorPreferences() { return host().current; }
@@ -74,6 +78,27 @@ PreferenceWrite applyDrawingDefaults(const QJsonObject &changes, quint64 expecte
   // A style update cannot reset the recent list's monotonic draft revision.
   changed.preferences->recent = state.current.recent;
   return publish(std::move(*changed.preferences));
+}
+PreferenceWrite applyWindowPreferences(const QJsonObject &changes, quint64 expectedRevision) {
+  auto &state = host();
+  if (state.revision != expectedRevision) return {false, QStringLiteral("settings-changed-in-session")};
+  for (auto it = changes.begin(); it != changes.end(); ++it)
+    if (it.key() != u"RememberWindowState" && it.key() != u"WindowWidth" && it.key() != u"WindowHeight" && it.key() != u"IsWindowMaximized")
+      return {false, QStringLiteral("invalid-window-state")};
+  auto changed = changeEditorPreferences(state.current, changes);
+  if (!changed.preferences) return {false, changed.diagnostics.value(0)};
+  changed.preferences->recent = state.current.recent;
+  return publish(std::move(*changed.preferences));
+}
+QString rememberEditorWindowState(const QJsonObject &window) {
+  const auto &current = host().current;
+  if (!current.values.value(u"RememberWindowState").toBool()) return {};
+  if (window.isEmpty()) return QStringLiteral("settings-window-display-unavailable");
+  if (window.contains(u"RememberWindowState")) return QStringLiteral("invalid-window-state");
+  bool changed = false;
+  for (auto it = window.begin(); it != window.end(); ++it) if (current.values.value(it.key()) != it.value()) changed = true;
+  if (!changed) return {};
+  return applyWindowPreferences(window, host().revision).diagnostic;
 }
 QString rememberEditorImage(const QString &absolutePath) {
   const auto &current = host().current;
@@ -104,6 +129,8 @@ QString editorPreferenceDiagnosticMessage(const QString &diagnostic) {
   if (diagnostic == u"recent-paths-ignored-without-opt-in")
     return QStringLiteral("Stored recent paths were ignored because remembering images was not enabled.");
   if (diagnostic == u"invalid-drawing-defaults") return QStringLiteral("The drawing preference change is not supported.");
+  if (diagnostic == u"invalid-window-state") return QStringLiteral("The window preference change is not supported.");
+  if (diagnostic == u"settings-window-display-unavailable") return QStringLiteral("No usable display is available to save the window state.");
   if (diagnostic.startsWith(u"invalid-")) {
     const QString field = diagnostic.mid(8);
     const QString label = field == u"BlurStrength" ? QStringLiteral("Blur strength") :

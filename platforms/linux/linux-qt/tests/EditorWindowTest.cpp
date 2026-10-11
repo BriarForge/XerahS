@@ -7,10 +7,12 @@
 #include "ImageComparisonDialog.h"
 #include "NewImageDialog.h"
 #include "RecentImageMenu.h"
+#include "NativeEditorWindowState.h"
 
 #include <QAction>
 #include <QColorSpace>
 #include <QColorDialog>
+#include <QCloseEvent>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDir>
@@ -25,6 +27,7 @@
 #include <QLockFile>
 #include <QProgressBar>
 #include <QProgressDialog>
+#include <QScreen>
 #include <QMessageBox>
 #include <QMenu>
 #include <QPushButton>
@@ -167,6 +170,114 @@ class EditorWindowTest : public QObject {
 private slots:
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  void recoveringTheActualEditorFramePreservesPixelsCheckpointAndRedo() {
+    QTemporaryDir dir; const QString settings = dir.filePath("native/settings.json"), path = dir.filePath("image.png");
+    QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    QVERIFY(applyWindowPreferences({{"WindowWidth", 640}, {"WindowHeight", 480}, {"IsWindowMaximized", false}}, nativeEditorPreferenceRevision()).saved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); QApplication::processEvents();
+    auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas); trigger(*window, QStringLiteral("saveImage"));
+    trigger(*window, QStringLiteral("canvasAction%1").arg(int(CanvasAction::RotateClockwise))); trigger(*window, QStringLiteral("undo"));
+    QVERIFY(window->findChild<QAction *>("undo")->isEnabled() && window->findChild<QAction *>("redo")->isEnabled());
+    const auto raster = storedBytes(path), sidecar = storedBytes(path + ".xann"), preferences = storedBytes(settings);
+    const auto revision = nativeEditorPreferenceRevision(); window->move(-3000, -2000);
+    window->findChild<NativeEditorWindowState *>()->recoverPlacement();
+    QVERIFY(window->screen()->availableGeometry().contains(window->frameGeometry()));
+    // Exercise the complete menu/toolbar/canvas layout through the same native
+    // display port, including a work area smaller than the preferred minimum.
+    NativeEditorWindowState constrained(*window, {300, 200}, [] { return NativeWindowDisplays{{QRectF(0, 0, 320, 210)}, 0}; });
+    constrained.recoverPlacement();
+    QVERIFY(QRectF(0, 0, 320, 210).contains(QRectF(window->frameGeometry())));
+    QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+    QVERIFY(window->findChild<QAction *>("undo")->isEnabled() && window->findChild<QAction *>("redo")->isEnabled());
+    QCOMPARE(storedBytes(path), raster); QCOMPARE(storedBytes(path + ".xann"), sidecar); QCOMPARE(storedBytes(settings), preferences);
+    QCOMPARE(nativeEditorPreferenceRevision(), revision);
+    trigger(*window, QStringLiteral("redo")); QVERIFY(window->statusBar()->currentMessage().startsWith("40 × 60"));
+  }
+  void cancelledCloseDoesNotSaveWindowStateAndAcceptedCloseRestoresIt() {
+    QTemporaryDir dir; const QString settings = dir.filePath("native/settings.json"), path = dir.filePath("image.png");
+    QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    QVERIFY(applyWindowPreferences({{"WindowWidth", 640}, {"WindowHeight", 480}, {"IsWindowMaximized", false}}, nativeEditorPreferenceRevision()).saved);
+    const auto original = storedBytes(settings);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);
+    window->setAttribute(Qt::WA_DeleteOnClose, false); window->show(); QApplication::processEvents();
+    QCOMPARE(storedBytes(settings), original); // Showing/recovery never writes.
+    window->resize(700, 500); auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas);
+    QTimer timer; QElapsedTimer deadline; deadline.start(); bool cancelled = false, timedOut = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return;
+      if (deadline.elapsed() > 5000) { timedOut = true; box->reject(); return; }
+      QCOMPARE(box->windowTitle(), QStringLiteral("Unsaved changes"));
+      QCloseEvent nested; QApplication::sendEvent(window.get(), &nested); QVERIFY(!nested.isAccepted()); QVERIFY(window->isVisible());
+      cancelled = true; box->button(QMessageBox::Cancel)->click();
+    });
+    timer.start(5); QVERIFY(!window->close()); timer.stop(); QVERIFY(cancelled && !timedOut);
+    QCOMPARE(storedBytes(settings), original); QVERIFY(window->isVisible());
+    QVERIFY(window->windowTitle().contains(QChar(0x2022))); QVERIFY(window->findChild<QAction *>("undo")->isEnabled());
+    const auto actual = window->findChild<NativeEditorWindowState *>()->snapshot();
+    QTimer::singleShot(0, [] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box);
+      box->button(QMessageBox::Discard)->click();
+    });
+    QVERIFY(window->close()); QVERIFY(!window->isVisible());
+    QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    QCOMPARE(nativeEditorPreferences().values.value("WindowWidth"), actual.value("WindowWidth"));
+    QCOMPARE(nativeEditorPreferences().values.value("WindowHeight"), actual.value("WindowHeight"));
+    QVERIFY(!windowPreferencesFromPreferences(nativeEditorPreferences()).maximized);
+    QVERIFY(!QFile::exists(path + ".xann")); QCOMPARE(QImage(path), fixture()); window.reset();
+    std::unique_ptr<EditorWindow> restored(EditorWindow::open(path)); QVERIFY(restored); restored->show(); QApplication::processEvents();
+    QCOMPARE(restored->size(), QSize(actual.value("WindowWidth").toInt(), actual.value("WindowHeight").toInt()));
+  }
+  void windowMemoryMenuRollsBackFailedWritesAndUpdatesAllEditorActions() {
+    QTemporaryDir dir; const QString settings = dir.filePath("native/settings.json"), first = dir.filePath("first.png"), second = dir.filePath("second.png");
+    QVERIFY(fixture().save(first)); QVERIFY(fixture().save(second)); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    QVERIFY(applyWindowPreferences({{"WindowWidth", 640}, {"WindowHeight", 480}, {"IsWindowMaximized", false}}, nativeEditorPreferenceRevision()).saved);
+    std::unique_ptr<EditorWindow> one(EditorWindow::open(first)), two(EditorWindow::open(second)); QVERIFY(one && two);
+    for (auto *window : {one.get(), two.get()}) { window->setAttribute(Qt::WA_DeleteOnClose, false); window->show(); }
+    QApplication::processEvents();
+    auto *action = one->findChild<QAction *>("rememberWindowState"), *other = two->findChild<QAction *>("rememberWindowState");
+    QVERIFY(action && other && action->isChecked() && other->isChecked()); const auto before = storedBytes(settings);
+    const auto geometry = one->geometry(); QLockFile lock(settings + ".lock"); QVERIFY(lock.tryLock(0));
+    QTimer timer; QElapsedTimer deadline; deadline.start(); bool warned = false, timedOut = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return;
+      if (deadline.elapsed() > 5000) { timedOut = true; box->reject(); return; }
+      QCOMPARE(box->windowTitle(), QStringLiteral("Preferences not saved")); QVERIFY(!one->close());
+      QVERIFY(box->text().contains("Another process")); warned = true; box->accept();
+    });
+    timer.start(5); action->trigger(); timer.stop(); QVERIFY(warned && !timedOut);
+    QVERIFY(action->isChecked() && other->isChecked()); QCOMPARE(storedBytes(settings), before); lock.unlock();
+    action->trigger(); QVERIFY(!action->isChecked() && !other->isChecked()); QCOMPARE(one->geometry(), geometry);
+    QVERIFY(!one->windowTitle().contains(QChar(0x2022))); QVERIFY(!one->findChild<QAction *>("undo")->isEnabled());
+    const auto disabled = storedBytes(settings); const auto revision = nativeEditorPreferenceRevision();
+    one->resize(700, 500); two->resize(650, 450); QVERIFY(one->close()); QVERIFY(two->close());
+    QCOMPARE(storedBytes(settings), disabled); QCOMPARE(nativeEditorPreferenceRevision(), revision);
+    action->trigger(); QVERIFY(action->isChecked() && other->isChecked());
+    const auto snapshot = one->findChild<NativeEditorWindowState *>()->snapshot();
+    QCOMPARE(nativeEditorPreferences().values.value("WindowWidth"), snapshot.value("WindowWidth"));
+    QVERIFY(initializeNativeEditorPreferences(settings).isEmpty()); QVERIFY(windowPreferencesFromPreferences(nativeEditorPreferences()).remember);
+  }
+  void failedWindowPersistenceIsVisibleAndAllowsClosingWithoutChangingTheFile() {
+    QTemporaryDir dir; const QString settings = dir.filePath("native/settings.json"), path = dir.filePath("image.png");
+    QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    QVERIFY(applyWindowPreferences({{"WindowWidth", 640}, {"WindowHeight", 480}, {"IsWindowMaximized", false}}, nativeEditorPreferenceRevision()).saved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->setAttribute(Qt::WA_DeleteOnClose, false);
+    window->show(); QApplication::processEvents(); window->resize(700, 500);
+    const auto before = storedBytes(settings); const auto revision = nativeEditorPreferenceRevision();
+    QLockFile lock(settings + ".lock"); QVERIFY(lock.tryLock(0));
+    QTimer timer; QElapsedTimer deadline; deadline.start(); bool warned = false, timedOut = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return;
+      if (deadline.elapsed() > 5000) { timedOut = true; box->reject(); return; }
+      QCOMPARE(box->windowTitle(), QStringLiteral("Window preferences not saved"));
+      QVERIFY(box->text().contains("Another process"));
+      QCloseEvent nested; QApplication::sendEvent(window.get(), &nested); QVERIFY(!nested.isAccepted()); QVERIFY(window->isVisible());
+      warned = true; box->accept();
+    });
+    timer.start(5); QVERIFY(window->close()); timer.stop(); QVERIFY(warned && !timedOut);
+    QCOMPARE(storedBytes(settings), before); QCOMPARE(nativeEditorPreferenceRevision(), revision); QVERIFY(!QFile::exists(path + ".xann"));
+    lock.unlock(); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    QCOMPARE(windowPreferencesFromPreferences(nativeEditorPreferences()).normalSize, QSizeF(640, 480));
+  }
   void savedDefaultsAffectOnlyNewAnnotationsAcrossOpenEditorsAndRestart() {
     QTemporaryDir dir; const QString settings = dir.filePath("native/settings.json");
     const QString first = dir.filePath("first.png"), second = dir.filePath("second.png"), replacement = dir.filePath("replacement.png");

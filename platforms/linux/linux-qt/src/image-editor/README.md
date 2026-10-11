@@ -53,7 +53,14 @@ draft reset and alpha-aware native colour pickers for border/fill/thickness.
 Successful saves update creation styles across open editors, without selection
 or history edits; newly opened/replaced sessions use the same persisted defaults.
 Explicit toolbar selection edits retain history even if preference persistence
-fails, with a visible status error. Full field coverage and review gates remain required;
+fails, with a visible status error. `EditorWindowPlacement` resolves normal
+client/frame bounds against logical work areas. `NativeEditorWindowState` reads
+Qt screens and frame margins, observes work-area/DPI/screen/state changes and
+restores visible geometry without writing. Accepted close stores normal size
+and maximized state; the shared memory toggle excludes retained state and stops
+automatic writes. Native port and actual editor tests cover display recovery,
+minimization, failure, cancellation, restart and preserved redo/files.
+Full field coverage and review gates remain required;
 [PREFERENCES-POLICY.md](PREFERENCES-POLICY.md)
 records implemented metadata, compatibility/recovery limits and review gates.
 

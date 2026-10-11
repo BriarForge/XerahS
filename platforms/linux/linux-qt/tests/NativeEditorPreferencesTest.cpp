@@ -49,6 +49,51 @@ void changeDialog(const QString &operation, bool apply) {
 class NativeEditorPreferencesTest : public QObject {
   Q_OBJECT
 private slots:
+  void windowChangesKeepRecentsAndUnrelatedFieldsWhileRejectingInvalidOrStaleWrites() {
+    QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");
+    FilePreferenceStorage storage(path); EditorPreferenceStore seed(storage);
+    const QJsonObject future{{"mode", "preserved"}};
+    auto prepared = changeEditorPreferences(seed.preferences(), {{"Theme", "Light"}, {"Thickness", 8}, {"FutureOption", future},
+        {"RememberRecentImagePaths", true}, {"MaxRecentImageFiles", 1}, {"RecentImageFiles", QJsonArray{"/private/first.png"}}});
+    QVERIFY(prepared.preferences); QVERIFY(seed.save(*prepared.preferences).saved);
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
+    const auto recentRevision = recentImageHistory().revision(); const auto oldPreferenceRevision = nativeEditorPreferenceRevision();
+    QVERIFY(rememberEditorWindowState({{"WindowWidth", 700}, {"WindowHeight", 500}, {"IsWindowMaximized", false}}).isEmpty());
+    QCOMPARE(recentImageHistory().revision(), recentRevision); QCOMPARE(recentImageHistory().paths(), QStringList{"/private/first.png"});
+    const auto after = bytes(path);
+    const auto stale = applyWindowPreferences({{"RememberWindowState", false}}, oldPreferenceRevision);
+    QVERIFY(!stale.saved); QCOMPARE(stale.diagnostic, QStringLiteral("settings-changed-in-session"));
+    const auto invalid = applyWindowPreferences({{"WindowHeight", 0}, {"WindowWidth", 800}}, nativeEditorPreferenceRevision());
+    QVERIFY(!invalid.saved); QCOMPARE(invalid.diagnostic, QStringLiteral("invalid-WindowHeight")); QCOMPARE(bytes(path), after);
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
+    QCOMPARE(windowPreferencesFromPreferences(nativeEditorPreferences()).normalSize, QSizeF(700, 500));
+    QCOMPARE(nativeEditorPreferences().values.value("Theme"), QJsonValue("Light"));
+    QCOMPARE(nativeEditorPreferences().values.value("Thickness"), QJsonValue(8));
+    QCOMPARE(nativeEditorPreferences().values.value("FutureOption"), QJsonValue(future));
+    QCOMPARE(recentImageHistory().paths(), QStringList{"/private/first.png"});
+  }
+  void windowOptOutStopsAutomaticUpdatesAndSurvivesPreviousRecordRecovery() {
+    QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
+    QVERIFY(rememberEditorWindowState({{"WindowWidth", 700}, {"WindowHeight", 500}, {"IsWindowMaximized", false}}).isEmpty());
+    QSignalSpy events(&nativeEditorPreferenceEvents(), &NativeEditorPreferenceEvents::windowMemoryChanged);
+    QVERIFY(applyWindowPreferences({{"RememberWindowState", false}}, nativeEditorPreferenceRevision()).saved);
+    QCOMPARE(events.count(), 1); QCOMPARE(events.at(0).at(0).toBool(), false);
+    const auto disabled = bytes(path); const auto revision = nativeEditorPreferenceRevision();
+    QVERIFY(rememberEditorWindowState({{"WindowWidth", 900}, {"WindowHeight", 600}, {"IsWindowMaximized", true}}).isEmpty());
+    QCOMPARE(bytes(path), disabled); QCOMPARE(nativeEditorPreferenceRevision(), revision);
+    auto document = QJsonDocument::fromJson(disabled).object();
+    for (const auto *version : {"current", "previous"}) {
+      const auto record = document.value(version).toObject(); QVERIFY(!record.value("RememberWindowState").toBool());
+      for (const auto *key : {"WindowWidth", "WindowHeight", "IsWindowMaximized"}) QVERIFY(!record.contains(key));
+    }
+    document.insert("current", "damaged current"); QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly));
+    const auto recoveredBytes = QJsonDocument(document).toJson(); QCOMPARE(file.write(recoveredBytes), recoveredBytes.size()); file.close();
+    QCOMPARE(initializeNativeEditorPreferences(path), QStringList{"recovered-previous-settings"});
+    QVERIFY(!windowPreferencesFromPreferences(nativeEditorPreferences()).remember);
+    QVERIFY(rememberEditorWindowState({{"WindowWidth", 900}, {"WindowHeight", 600}, {"IsWindowMaximized", true}}).isEmpty());
+    QCOMPARE(bytes(path), recoveredBytes);
+  }
   void drawingDraftApplyCancelAndReset_data() {
     QTest::addColumn<bool>("apply"); QTest::addColumn<bool>("reset");
     for (bool apply : {false, true}) for (bool reset : {false, true})

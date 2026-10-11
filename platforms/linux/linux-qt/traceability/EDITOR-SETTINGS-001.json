@@ -23,7 +23,9 @@
     "platforms/linux/linux-qt/app/DrawingDefaultsDialog.h",
     "platforms/linux/linux-qt/app/DrawingDefaultsDialog.cpp",
     "platforms/linux/linux-qt/src/image-editor/EditorWindowPlacement.h",
-    "platforms/linux/linux-qt/src/image-editor/EditorWindowPlacement.cpp"
+    "platforms/linux/linux-qt/src/image-editor/EditorWindowPlacement.cpp",
+    "platforms/linux/linux-qt/app/NativeEditorWindowState.h",
+    "platforms/linux/linux-qt/app/NativeEditorWindowState.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
@@ -32,7 +34,8 @@
     "platforms/linux/linux-qt/src/image-editor/PREFERENCES-POLICY.md",
     "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
     "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
-    "platforms/linux/linux-qt/tests/EditorWindowPlacementTest.cpp"
+    "platforms/linux/linux-qt/tests/EditorWindowPlacementTest.cpp",
+    "platforms/linux/linux-qt/tests/NativeEditorWindowStateTest.cpp"
   ],
   "requirements": {
     "ESET-001": {
@@ -67,7 +70,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Qt Core window fields validate normal client width/height and maximized/memory flags independently. The production logical-pixel placement model clamps to a usable work area, includes frame margins, chooses greatest overlap or preferred fallback and handles missing/disconnected/scaled/negative-origin/tiny displays. Disabling memory removes dimensions/maximized state from current and previous versions, preventing recovery from re-enabling it. Independent analytical and storage recovery tests cover this foundation; native lifecycle/controls and physical display/accessibility/metadata qualification remain Required."
+      "note": "Production Qt Core fields and placement constrain normal client/frame bounds to usable logical work areas, greatest overlap or preferred fallback. Native controller observes Qt screen/work-area/DPI/window-state changes, preserves normal size and maximized state while minimized, and recovers normal placement without writing. Actual accepted close saves only after Save/Discard/Cancel succeeds; cancelled/reentrant closes and failed image saves do not capture state. Shared memory toggle saves before publishing, rolls back failed toggles and removes bounds/maximized state plus memory authority from current/previous versions when disabled. Core analytical, native injected-display, actual editor-frame/history/file, maximize/minimize, restart, cancellation and locked-write tests cover the implementation. Physical compositor/display/scaling, accessibility and shared default/metadata/compatibility qualification remain Required."
     },
     "ESET-006": {
       "disposition": "Required",
@@ -135,7 +138,7 @@
         "recent-deduplication",
         "unknown-round-trip"
       ],
-      "note": "All three published operations call production code. Independent core and real native-control tests cover current field boundaries, missing markers, newer/unreadable preservation, unknown round-trip, atomic failures, private files, privacy-pruned recovery, restart, Apply/Cancel, capped stale revisions and actual image Open/Save. Every remaining field, supported upgrades, all other platform adapters and acceptance reviews remain Required. Drawing-default tests now add canonical alpha, non-persistent aliases, invalid/cancelled/reset/locked/stale drafts, actual color pickers, multi-window creation-only effects, preserved redo, session replacement and PNG/sidecar/restart evidence. Window boundary, type, independent geometry and disabled-memory recovery tests cover the production core; native display/lifecycle evidence remains Required."
+      "note": "All three published operations call production code. Independent core and real native-control tests cover current field boundaries, missing markers, newer/unreadable preservation, unknown round-trip, atomic failures, private files, privacy-pruned recovery, restart, Apply/Cancel, capped stale revisions and actual image Open/Save. Every remaining field, supported upgrades, all other platform adapters and acceptance reviews remain Required. Drawing-default tests now add canonical alpha, non-persistent aliases, invalid/cancelled/reset/locked/stale drafts, actual color pickers, multi-window creation-only effects, preserved redo, session replacement and PNG/sidecar/restart evidence. Window boundary, type, independent geometry and disabled-memory recovery tests cover the production core; native port, actual editor lifecycle/display recovery, memory toggles, cancellation, failure, restart and preserved source/checkpoint/redo evidence are now present. Physical display and acceptance review remain Required."
     },
     "ESET-016": {
       "disposition": "Required",

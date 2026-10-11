@@ -22,10 +22,10 @@ initializer evidence alone does not approve shared defaults. Blur's fallback
 | `Thickness` | Integer, 4 | 1..10000, within the production editor width limit | Non-secret drawing default; affects new objects, without editing existing objects | `SET-IMAGE-EDITOR-OPTIONS-THICKNESS-001`; core and native validation/isolation/restart/history tests |
 | `BorderColorHex` | String, `#FFFF0000` | Exactly `#RRGGBB` or `#AARRGGBB`, hexadecimal digits; canonical uppercase `#AARRGGBB` | Non-secret drawing default; alpha, including transparent RGB, survives; applies to new objects | `SET-IMAGE-EDITOR-OPTIONS-BORDER-COLOR-HEX-001`; core alpha/invalid/restart tests; default agrees with the ES rectangle qualification default; native Apply/Cancel, picker and persistence tests |
 | `FillColorHex` | String, `#00000000` | Same canonical colour validation as border | Non-secret drawing default; applies to new objects | `SET-IMAGE-EDITOR-OPTIONS-FILL-COLOR-HEX-001`; core alpha/invalid/restart tests; default agrees with the ES rectangle qualification default; native Apply/Cancel, picker and persistence tests |
-| `RememberWindowState` | Boolean, true (candidate census default) | Boolean only | Local layout preference; false stops memory and excludes size/maximized state from both versions | `SET-IMAGE-EDITOR-OPTIONS-REMEMBER-WINDOW-STATE-001`; core opt-out/recovery tests; native wiring pending |
-| `WindowWidth` | Finite number, 1280 (candidate census default) | 1..16777215 logical pixels; fractional input is supported and floored for integer widget geometry | Local layout preference; normal client width, constrained to current work area | `SET-IMAGE-EDITOR-OPTIONS-WINDOW-WIDTH-001`; core bounds/isolation tests; native wiring pending |
-| `WindowHeight` | Finite number, 720 (candidate census default) | Same range/units as width | Local layout preference; normal client height, constrained to current work area | `SET-IMAGE-EDITOR-OPTIONS-WINDOW-HEIGHT-001`; core bounds/isolation tests; native wiring pending |
-| `IsWindowMaximized` | Boolean, true (candidate census default) | Boolean only | Local layout preference; native maximized state is separate from normal size | `SET-IMAGE-EDITOR-OPTIONS-IS-WINDOW-MAXIMIZED-001`; core type/isolation tests; native wiring pending |
+| `RememberWindowState` | Boolean, true (candidate census default) | Boolean only | Local layout preference; false stops memory and excludes size/maximized state from both versions | `SET-IMAGE-EDITOR-OPTIONS-REMEMBER-WINDOW-STATE-001`; core/native opt-out, failure and previous-record recovery tests |
+| `WindowWidth` | Finite number, 1280 (candidate census default) | 1..16777215 logical pixels; fractional input is supported and floored for integer widget geometry | Local layout preference; normal client width, constrained to current work area | `SET-IMAGE-EDITOR-OPTIONS-WINDOW-WIDTH-001`; core bounds/isolation and native restore/close/display tests |
+| `WindowHeight` | Finite number, 720 (candidate census default) | Same range/units as width | Local layout preference; normal client height, constrained to current work area | `SET-IMAGE-EDITOR-OPTIONS-WINDOW-HEIGHT-001`; core bounds/isolation and native restore/close/display tests |
+| `IsWindowMaximized` | Boolean, true (candidate census default) | Boolean only | Local layout preference; native maximized state is separate from normal size | `SET-IMAGE-EDITOR-OPTIONS-IS-WINDOW-MAXIMIZED-001`; core type/isolation and native maximize/minimize/close/restart tests |
 | `RememberRecentImagePaths` | Boolean, false | Boolean only; false ignores and removes retained paths | Private local consent; only later successful Open/Save may add paths; no backfill | Native opt-in authority under ESET-012, absent from the pinned legacy field census; core/native runtime tests |
 | `MaxRecentImageFiles` | Integer, 10 | 1..100 | Private local retention policy; decreasing it removes oldest entries | `SET-IMAGE-EDITOR-OPTIONS-MAX-RECENT-IMAGE-FILES-001`; bounded model and preference tests |
 | `RecentImageFiles` | Array of strings, empty | At most 100 encoded entries and at most the validated maximum distinct absolute paths; valid platform path syntax | Private local data; newest first, deduplicated, removable individually or together; absent resources stay removable | `SET-IMAGE-EDITOR-OPTIONS-RECENT-IMAGE-FILES-001`; path/opt-in/isolation/removal/recovery tests |
@@ -155,7 +155,7 @@ come from the pinned field census and remain subject to the shared semantic
 review; they do not activate the settings capability. The numeric upper bound
 is the native Qt widget extent limit, independent of image dimensions. Normal
 client size uses Qt logical pixels, not physical pixels or a saved DPR.
-Display identifiers and window positions are not persisted. Missing native
+The native window-state record contains no display identifier or window position. Missing native
 window fields use their own defaults; invalid values recover independently and
 emit field-specific diagnostics.
 
@@ -163,8 +163,10 @@ Disabling memory excludes width, height and maximized state from serialization
 and clears them from the in-memory authority. The same atomic save disables
 memory and excludes those fields in the retained previous version. Recovery
 cannot silently re-enable memory. Other preferences and opted-in recents keep
-their existing policies. Native lifecycle persistence and controls follow in
-the next integration checkpoint.
+their existing policies. The native memory toggle updates all editor actions only after a successful
+atomic write; failure restores the original checked state and reports the error.
+Enabling memory captures the current window state as that explicit preference
+transaction. Toggling memory never resizes existing windows or edits documents.
 
 `EditorWindowPlacement` chooses the usable display with the largest frame
 intersection, or centres on the preferred/first usable display when the old
@@ -176,3 +178,30 @@ frame margins are excluded; a temporarily empty display list yields no
 placement and allows native recovery to wait for an available display.
 Analytical tests cover disconnected/negative-origin displays, overlap, scale
 changes, decorations, small work areas, invalid input and repeated recovery.
+
+The native controller reads available Qt work areas and actual frame margins.
+It observes screen addition/removal, screen/work-area geometry, logical and
+physical DPI, and the native window's screen and state changes. Normal recovery
+is queued until Qt completes the transition. The compositor owns maximized and
+minimized geometry; returning to normal schedules work-area recovery. A
+minimized window retains its preceding maximized flag and normal size. Missing
+usable displays leave geometry/settings intact until an available display is
+observed. The controller uses a display I/O port for deterministic native tests.
+
+Window state saves only after the editor accepts close, following its existing
+Save/Discard/Cancel decision. Cancel, failed image Save, and a pending operation
+perform no window-state write. Reentrant close events are rejected while that
+flow or its error reporting remains active. A failed preference write reports
+its value-free diagnostic and still permits closing after acknowledgement;
+the stored file and active preferences remain unchanged. The latest successful
+accepted close supplies the normal size/maximized defaults for later editors.
+Unchanged state causes no additional write or revision change.
+
+Native tests cover actual Qt frame containment, removed/negative-origin/scaled
+and tiny work areas through injected display input, maximized/minimized
+normal-size retention, startup without writes, actual close cancellation,
+accepted close/restart, locked writes, toggle rollback/shared action state,
+disabled persistence, and recovery without changing source files, checkpoints,
+undo or redo. Physical compositor/display/scale behavior, accessibility and
+shared semantic/compatibility review remain required for full qualification;
+these automated ports do not substitute for those acceptance gates.

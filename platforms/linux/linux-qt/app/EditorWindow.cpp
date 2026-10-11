@@ -9,6 +9,7 @@
 #include "EditorOpen.h"
 #include "RecentImageMenu.h"
 #include "DrawingDefaultsDialog.h"
+#include "NativeEditorWindowState.h"
 
 #include <QAction>
 #include <QCloseEvent>
@@ -154,6 +155,26 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(&nativeEditorPreferenceEvents(), &NativeEditorPreferenceEvents::drawingDefaultsChanged, this, [this] {
     applyCreationDefaults(); m_drawingPreferenceDiagnostic.clear(); refresh();
   });
+  auto *rememberWindow = preferences->addAction(QStringLiteral("Remember Window Size and Maximized State"));
+  rememberWindow->setObjectName(QStringLiteral("rememberWindowState")); rememberWindow->setCheckable(true);
+  rememberWindow->setChecked(windowPreferencesFromPreferences(nativeEditorPreferences()).remember);
+  connect(rememberWindow, &QAction::triggered, this, [this, rememberWindow](bool enabled) {
+    if (m_canvasOperationPending || m_closePending) {
+      const QSignalBlocker blocker(rememberWindow);
+      rememberWindow->setChecked(windowPreferencesFromPreferences(nativeEditorPreferences()).remember); return;
+    }
+    const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
+    QJsonObject changes = enabled ? m_windowState->snapshot() : QJsonObject{};
+    changes.insert(QStringLiteral("RememberWindowState"), enabled);
+    const auto written = applyWindowPreferences(changes, nativeEditorPreferenceRevision());
+    if (!written.saved) {
+      const QSignalBlocker blocker(rememberWindow);
+      rememberWindow->setChecked(windowPreferencesFromPreferences(nativeEditorPreferences()).remember);
+      QMessageBox::warning(this, QStringLiteral("Preferences not saved"), editorPreferenceDiagnosticMessage(written.diagnostic));
+    }
+  });
+  connect(&nativeEditorPreferenceEvents(), &NativeEditorPreferenceEvents::windowMemoryChanged, rememberWindow,
+      [rememberWindow](bool enabled) { const QSignalBlocker blocker(rememberWindow); rememberWindow->setChecked(enabled); });
 
   auto *imageMenu = menuBar()->addMenu(QStringLiteral("&Image"));
   QAction *crop = imageMenu->addAction(QStringLiteral("Crop Image…"));
@@ -284,7 +305,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(m_canvas, &EditorCanvas::viewportChanged, this, &EditorWindow::refresh);
   connect(m_canvas, &EditorCanvas::changed, this, &EditorWindow::refresh);
 
-  resize(std::min(m_image.width() + 40, 1400), std::min(m_image.height() + 120, 900));
+  m_windowState = new NativeEditorWindowState(*this, {std::min(m_image.width() + 40, 1400), std::min(m_image.height() + 120, 900)});
   refresh();
   m_canvas->setFocus();
 }
@@ -663,18 +684,23 @@ void EditorWindow::recordRecentImage(const QString &absolutePath) {
 void EditorWindow::closeEvent(QCloseEvent *event) {
   // A cancelled progress window can hide before its worker exits. Keep the
   // editor and its stack-owned modal objects alive until preparation completes.
-  if (m_canvasOperationPending) { event->ignore(); return; }
-  if (!m_session->dirty()) { event->accept(); return; }
-  // ES-008: Save, Discard, Cancel.
-  QMessageBox box(QMessageBox::Question, QStringLiteral("Unsaved changes"),
-                  QStringLiteral("Save changes to %1?").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName()),
-                  QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, this);
-  box.setDefaultButton(QMessageBox::Save);
-  switch (box.exec()) {
-    case QMessageBox::Save: save(false) ? event->accept() : event->ignore(); break;
-    case QMessageBox::Discard: event->accept(); break;
-    default: event->ignore();
+  if (m_canvasOperationPending || m_closePending) { event->ignore(); return; }
+  const QScopedValueRollback<bool> closing(m_closePending, true);
+  if (m_session->dirty()) {
+    // ES-008: Save, Discard, Cancel.
+    QMessageBox box(QMessageBox::Question, QStringLiteral("Unsaved changes"),
+                    QStringLiteral("Save changes to %1?").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName()),
+                    QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, this);
+    box.setDefaultButton(QMessageBox::Save);
+    switch (box.exec()) {
+      case QMessageBox::Save: if (!save(false)) { event->ignore(); return; } break;
+      case QMessageBox::Discard: break;
+      default: event->ignore(); return;
+    }
   }
+  const auto diagnostic = m_windowState->remember();
+  if (!diagnostic.isEmpty()) QMessageBox::warning(this, QStringLiteral("Window preferences not saved"), editorPreferenceDiagnosticMessage(diagnostic));
+  event->accept();
 }
 
 }  // namespace xerahs::app
