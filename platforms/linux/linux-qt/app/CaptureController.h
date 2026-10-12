@@ -53,6 +53,7 @@ public:
   std::optional<int> compositionProgress() const;
   QString pipelineActivity() const { return m_pipelineActivity; }
   CapturePipelineReceipt lastPipelineResult() const { return m_lastPipelineResult; }
+  bool discardRetainedResult(const CapturePipelineReceipt &expected);
 
 public slots:
   void captureRegion();
@@ -63,6 +64,7 @@ signals:
   void notify(const QString &title, const QString &body, bool success);
   void compositionProgressChanged(int percent);
   void pipelineActivityChanged(const QString &text);
+  void retainedResultChanged();
 
 private:
   void onSnapshot(int outcome, const QImage &image, const QString &detail);

@@ -13,7 +13,9 @@
     "platforms/linux/linux-qt/app/NativeInstance.cpp",
     "platforms/linux/linux-qt/app/ApplicationWindow.h",
     "platforms/linux/linux-qt/app/ApplicationWindow.cpp",
-    "platforms/linux/linux-qt/app/main.cpp"
+    "platforms/linux/linux-qt/app/main.cpp",
+    "platforms/linux/linux-qt/app/CaptureRecoveryActions.h",
+    "platforms/linux/linux-qt/app/CaptureRecoveryActions.cpp"
   ],
   "requirements": {
     "CORE-001": {
@@ -46,7 +48,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native Screenshot acquisition, worker pixel composition, post-capture PNG saving/action dispatch and editor loading have cancellation/failure evidence. Known composition progress is determinate; codec/action stages expose accessible indeterminate activity. Cancellation during an uninterruptible action retains its real outcome and prevents later actions; unclaimed obsolete requests cannot mutate the clipboard. Native receipts retain working media and completed files in memory. Full action/workflow/recording/upload/utility coverage, durable recovery, configured privacy policy and physical accessibility/performance qualification remain Required.",
+      "note": "Native Screenshot acquisition, worker pixel composition, post-capture PNG saving/action dispatch and editor loading have cancellation/failure evidence. Known composition progress is determinate; codec/action stages expose accessible indeterminate activity. Cancellation during an uninterruptible action retains its real outcome and prevents later actions; unclaimed obsolete requests cannot mutate the clipboard. Native receipts retain working media and completed files in memory. Full action/workflow/recording/upload/utility coverage, durable recovery, configured privacy policy and physical accessibility/performance qualification remain Required. Native recovery can edit retained confirmed pixels after failed output and independently discard the current receipt by explicit confirmation without removing completed outputs.",
       "evidence": [
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
@@ -87,11 +89,13 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "A native command window reuses actual tray actions and current capture availability, supports keyboard/accessible activation and preserves true capture results. Default repeated launch shows/restores the window. Region/Open activation shares the production dispatcher. Full main UI, workflow catalogue, global hotkeys, command palette, all surface availability and physical assistive-technology qualification remain Required.",
+      "note": "A native command window reuses actual tray actions and current capture availability, supports keyboard/accessible activation and preserves true capture results. Default repeated launch shows/restores the window. Region/Open activation shares the production dispatcher. Full main UI, workflow catalogue, global hotkeys, command palette, all surface availability and physical assistive-technology qualification remain Required. Shared tray/main-window recovery actions expose real current availability and immutable capture-to-editor handoff, plus explicit guarded discard of the in-memory result; private native keyboard/callback/confirmation tests cover these commands.",
       "evidence": [
         "platforms/linux/linux-qt/app/ApplicationWindow.cpp",
         "platforms/linux/linux-qt/app/main.cpp",
-        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp"
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/app/CaptureRecoveryActions.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
       ]
     },
     "CORE-008": {

@@ -71,4 +71,9 @@ LoadedSource openSource(const QString &path, QWidget *parent) {
   if (choice == SourceChoice::Unspecified) return failure(QStringLiteral("canvas-cancelled"));
   return runWork([source, choice](const RenderControl &control) { return resolveSourceChoice(source, choice, control); }, parent);
 }
+LoadedSource openCapturedSource(const QImage &image, QWidget *parent) {
+  // Own the requested immutable snapshot independently of receipt replacement
+  // or discard while the native progress dialog processes events.
+  return runWork([image](const RenderControl &control) { return prepareCapturedSource(image, control); }, parent);
+}
 }  // namespace xerahs::app

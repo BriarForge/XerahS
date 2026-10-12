@@ -2,6 +2,7 @@
 // Identity com.xerahs.app / "XerahS" (CORE-002, ROOT-IDENTITY-001).
 
 #include "CaptureController.h"
+#include "CaptureRecoveryActions.h"
 #include "EditorWindow.h"
 #include "EditorOpen.h"
 #include "RecentImageMenu.h"
@@ -140,6 +141,15 @@ int main(int argc, char *argv[]) {
       {"new-image", newImage}, {"open-image", openImage}, {"captures-folder", folder}, {"editor-appearance", appearance}, {"quit", quit}});
   auto *showHome = new QAction(QStringLiteral("Open XerahS"), &menu); menu.insertAction(region, showHome);
   QObject::connect(showHome, &QAction::triggered, &home, &xerahs::app::ApplicationWindow::activate);
+  auto *recovery = new xerahs::app::CaptureRecoveryActions(capture, &home, [](const QImage &image, QWidget *parent) {
+    if (auto *window = xerahs::app::EditorWindow::fromCapturedImage(image, parent)) { window->show(); return true; }
+    return false;
+  }, &home);
+  menu.insertAction(newImage, recovery->editAction()); menu.insertAction(newImage, recovery->discardAction());
+  home.addCaptureRecoveryActions(recovery->editAction(), recovery->discardAction());
+  QObject::connect(recovery, &xerahs::app::CaptureRecoveryActions::notify, &home, [&home](const QString &body, bool success) {
+    home.showResult(QStringLiteral("Retained capture"), body, success);
+  });
 
   QObject::connect(newImage, &QAction::triggered, [] {
     if (auto *window = xerahs::app::EditorWindow::createNew()) window->show();

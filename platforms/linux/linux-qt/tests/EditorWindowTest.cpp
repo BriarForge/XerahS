@@ -863,6 +863,21 @@ private slots:
     QVERIFY(std::abs(qRed(persisted.image.pixel(0, 0)) - 55) <= 1);
   }
 
+  void retainedCaptureOpensAnOwnedUntitledDocumentAndSavesOnlyToExplicitDestination() {
+    QTemporaryDir dir; const auto original = fixture(); auto retained = original;
+    const QString savedCapture = dir.filePath("capture.png"), destination = dir.filePath("edited.png"); QVERIFY(original.save(savedCapture));
+    const auto captureBytes = storedBytes(savedCapture);
+    QVERIFY(initializeNativeEditorPreferences(dir.filePath("preferences.json")).isEmpty());
+    std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedImage(retained)); QVERIFY(window); window->show();
+    QVERIFY(window->windowTitle().startsWith("Untitled image")); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+    QVERIFY(!window->findChild<QAction *>("undo")->isEnabled()); QVERIFY(recentImageHistory().paths().isEmpty());
+    retained = {}; saveUntitled(*window); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+    QCOMPARE(storedBytes(savedCapture), captureBytes); QVERIFY(!QFile::exists(savedCapture + ".xann"));
+    saveUntitled(*window, destination); QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+    QCOMPARE(loadSource(destination).image, original); QCOMPARE(storedBytes(savedCapture), captureBytes);
+    QVERIFY(!QFile::exists(destination + ".xann")); window->setAttribute(Qt::WA_DeleteOnClose, false); QVERIFY(window->close());
+  }
+
   void cancelledOrFailedNewImagePreservesTheDirtySession_data() {
     QTest::addColumn<bool>("cancelWizard"); QTest::addColumn<int>("failure");
     QTest::newRow("invalid-and-cancelled-controls") << true << 0;

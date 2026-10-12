@@ -81,7 +81,9 @@ last-region persistence and complete overlay behavior. Native save/clipboard
 pipelines now execute the Core engine on a worker, publish private PNG files
 without replacing existing destinations, expose activity and cancellation,
 retain true results/artifacts/media and dispatch the clipboard on the GUI.
-Continue the remaining action catalogue, recovery UI, configured retention,
+Shared tray/main-window recovery controls now open retained pixels as an owned
+unsaved editor source and explicitly discard only the confirmed current receipt.
+Continue the remaining action catalogue, multi-result recovery UI, configured retention,
 canonical serialization, durable journal/restart recovery and native qualification. Continue those native capture requirements alongside the full
 application domains recorded in the audit.
 

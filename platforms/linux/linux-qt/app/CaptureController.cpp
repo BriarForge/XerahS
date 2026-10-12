@@ -198,6 +198,11 @@ void CaptureController::cancel() {
   afterInput();
 }
 
+bool CaptureController::discardRetainedResult(const CapturePipelineReceipt &expected) {
+  if (m_busy || !expected || m_lastPipelineResult != expected) return false;
+  m_lastPipelineResult.reset(); emit retainedResultChanged(); return true;
+}
+
 bool CaptureController::key(int key, Qt::KeyboardModifiers modifiers, const Display &display) {
   if (!m_session) return false;
   const SessionState state = m_session->state();
@@ -394,6 +399,7 @@ void CaptureController::runPipeline(const PhysicalRect &rect) {
     if (m_pipeline != pipeline || !m_busy) return;
     m_pipeline = nullptr; pipeline->deleteLater(); m_lastPipelineResult = result;
     const QPointer<CaptureController> guard(this);
+    emit retainedResultChanged(); if (!guard) return;
     publishPipeline(rect, result);
     if (guard) { closeOverlays(); finish(); }
   });

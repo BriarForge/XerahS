@@ -13,7 +13,9 @@
     "platforms/linux/linux-qt/app/CaptureSave.cpp",
     "platforms/linux/linux-qt/app/CapturePipeline.h",
     "platforms/linux/linux-qt/app/CapturePipeline.cpp",
-    "platforms/linux/linux-qt/app/CaptureController.cpp"
+    "platforms/linux/linux-qt/app/CaptureController.cpp",
+    "platforms/linux/linux-qt/app/CaptureRecoveryActions.h",
+    "platforms/linux/linux-qt/app/CaptureRecoveryActions.cpp"
   ],
   "requirements": {
     "PCA-001": {
@@ -52,10 +54,12 @@
       "vectors": [
         "clipboard-failure-continues"
       ],
-      "note": "Native pipeline receipts retain confirmed working media and any completed save artifact after independent save/clipboard failure or cancellation. The controller retains the latest receipt in memory, replacing it only with another completed receipt. Private native tests verify exact media/files after failed encoding, clipboard exceptions and cancelled actions. Full recovery UI, configurable retention/discard policy, other action coverage and review/qualification remain Required.",
+      "note": "Native pipeline receipts retain confirmed working media and completed save artifacts after output failure/cancellation. Shared tray/main-window recovery actions open an immutable snapshot as a new unsaved editor document without consuming or rereading the saved capture. Explicit Discard/Cancel confirmation clears only the expected current in-memory receipt; saved files, clipboard contents and existing editor snapshots are preserved. Busy state, missing opener, stale approval, callback exception/reentrancy and owner destruction have private native UI/controller tests; editor tests prove exact source ownership/profile/alpha, empty durable path, cancelled Save and explicit new-file persistence. Only the latest receipt is retained in memory. Complete history/restart recovery, retention policy, remaining actions and physical/human qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
-        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ],
       "disposition": "Required"
     },

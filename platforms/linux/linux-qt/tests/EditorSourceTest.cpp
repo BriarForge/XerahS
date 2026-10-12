@@ -14,6 +14,7 @@
 #include <QTest>
 #include <QtEndian>
 #include <cmath>
+#include <stdexcept>
 
 using namespace xerahs::app;
 using namespace xerahs::editor;
@@ -21,6 +22,39 @@ using namespace xerahs::editor;
 class EditorSourceTest : public QObject {
   Q_OBJECT
 private slots:
+  void capturedSourceOwnsPixelsPreservesAlphaAndProfileAndInfersNoFile() {
+    QByteArray memory(3 * 2 * 4, '\0');
+    QImage input(reinterpret_cast<uchar *>(memory.data()), 3, 2, 12, QImage::Format_ARGB32);
+    input.fill(qRgba(128, 0, 0, 80)); input.setColorSpace(QColorSpace::SRgbLinear); input.setDevicePixelRatio(2);
+    const auto result = prepareCapturedSource(input); QVERIFY(result.document); QVERIFY(result.diagnostic.isEmpty());
+    QCOMPARE(result.document->canvasWidth, qint64(3)); QCOMPARE(result.document->canvasHeight, qint64(2));
+    QVERIFY(result.document->imagePath.isEmpty() && result.document->imageHash.isEmpty() && result.sidecarPath.isEmpty());
+    QCOMPARE(result.image.colorSpace(), QColorSpace(QColorSpace::SRgbLinear)); QCOMPARE(result.image.devicePixelRatio(), qreal(1));
+    QCOMPARE(result.image.pixel(0, 0), qRgba(128, 0, 0, 80)); QCOMPARE(result.displayImage.colorSpace(), QColorSpace(QColorSpace::SRgb));
+    QVERIFY(std::abs(qRed(result.displayImage.pixel(0, 0)) - 188) <= 1); QCOMPARE(qAlpha(result.displayImage.pixel(0, 0)), 80);
+    input = {}; memory.fill('\0');
+    QCOMPARE(result.image.pixel(0, 0), qRgba(128, 0, 0, 80));
+    QCOMPARE(QImage::fromData(result.document->sourceImagePng, "PNG").pixel(0, 0), qRgba(128, 0, 0, 80));
+  }
+  void capturedSourceCancellationDiscardsAllPreparedOutput_data() {
+    QTest::addColumn<int>("cancelAt");
+    for (int stage : {0, 20, 60, 70, 90, 100}) QTest::newRow(qPrintable(QString::number(stage))) << stage;
+  }
+  void capturedSourceCancellationDiscardsAllPreparedOutput() {
+    QFETCH(int, cancelAt); QImage image(12, 8, QImage::Format_ARGB32); image.fill(qRgba(23, 45, 67, 89));
+    const auto before = image.copy(); int progress = 0;
+    const auto result = prepareCapturedSource(image, {[&] { return progress >= cancelAt; }, [&](int p) { progress = p; }});
+    QCOMPARE(result.diagnostic, QString("canvas-cancelled")); QVERIFY(!result.document && result.image.isNull() && result.displayImage.isNull());
+    QCOMPARE(image, before);
+  }
+  void capturedSourceRejectsEmptyOversizedInputAndRedactsCallbackExceptions() {
+    QCOMPARE(prepareCapturedSource({}).diagnostic, diagnostic::sourceEmpty);
+    QImage excessive(int(kMaxDimension + 1), 1, QImage::Format_ARGB32);
+    const auto rejected = prepareCapturedSource(excessive); QCOMPARE(rejected.diagnostic, diagnostic::sourceTooLarge); QVERIFY(!rejected.document);
+    QImage image(2, 2, QImage::Format_ARGB32); image.fill(Qt::red);
+    const auto failed = prepareCapturedSource(image, {{}, [](int) { throw std::runtime_error("private value"); }});
+    QCOMPARE(failed.diagnostic, diagnostic::documentInvalid); QVERIFY(!failed.document && failed.image.isNull());
+  }
   void sourceLoadingPreparesPrivateDisplayPixelsAndCancelsWithoutPublishing_data() {
     QTest::addColumn<int>("cancelAt");
     for (int stage : {0, 40, 50, 60, 75, 80, 100}) QTest::newRow(qPrintable(QString::number(stage))) << stage;

@@ -2,9 +2,12 @@
 // bus. Every image, output directory and clipboard belongs to this fixture.
 #include "PortalScreenshot.h"
 #include "CaptureController.h"
+#include "CaptureRecoveryActions.h"
+#include "ApplicationWindow.h"
 #include "capture/RegionGeometry.h"
 #include "image-editor/AnnotationDocument.h"
 #include <QApplication>
+#include <QAction>
 #include <QClipboard>
 #include <QColorSpace>
 #include <QDBusContext>
@@ -14,6 +17,9 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QPointer>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QToolButton>
 #include <QScreen>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -24,6 +30,7 @@
 #include <QWidget>
 #include <memory>
 #include <atomic>
+#include <stdexcept>
 
 using namespace xerahs::app;
 namespace {
@@ -410,6 +417,79 @@ private slots:
     QCOMPARE(QImage(result->file->path).size(), QSize(30, 25)); QCOMPARE(result->workingMedia.size(), QSize(30, 25));
     QCOMPARE(QApplication::clipboard()->text(), QString("saving fixture clipboard")); QCOMPARE(bytes(path), before);
     QVERIFY(notified.first().first().toString().contains("cancelled"));
+  }
+  void recoveryActionsUseActualSharedKeyboardCommandsAndKeepFailedMediaUntilExplicitDiscard() {
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto before = bytes(path);
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    CaptureActionPorts ports; ports.save.encode = [](const QImage &, QIODevice *) { return false; };
+    ports.clipboard = [](const QImage &, const xerahs::actions::CancellationToken &) {
+      return xerahs::actions::ActionOutcome{xerahs::actions::ActionState::Failed, QString("clipboard-unavailable"), {}};
+    };
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, {}, ports);
+    QImage opened; int calls = 0;
+    CaptureRecoveryActions recovery(controller, nullptr, [&](const QImage &image, QWidget *) { ++calls; opened = image.copy(); return true; });
+    ApplicationWindow home({}); home.addCaptureRecoveryActions(recovery.editAction(), recovery.discardAction()); home.activate();
+    auto *edit = home.findChild<QToolButton *>("edit-retained-capture"); auto *discard = home.findChild<QToolButton *>("discard-retained-capture");
+    QVERIFY(edit && discard && !edit->isEnabled() && !discard->isEnabled());
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
+    const auto retained = controller.lastPipelineResult(); QVERIFY(retained && !retained->file); QCOMPARE(retained->workingMedia.size(), QSize(30, 25));
+    QVERIFY(edit->isEnabled() && discard->isEnabled()); edit->setFocus(); QTest::keyClick(edit, Qt::Key_Space);
+    QCOMPARE(calls, 1); QCOMPARE(opened, retained->workingMedia); QCOMPARE(controller.lastPipelineResult(), retained);
+    recovery.discardAction()->trigger(); QTRY_VERIFY(QApplication::activeModalWidget());
+    auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box); QCOMPARE(box->objectName(), QString("discardRetainedCaptureDialog"));
+    QCOMPARE(box->defaultButton(), box->button(QMessageBox::Cancel)); QVERIFY(!edit->isEnabled() && !discard->isEnabled());
+    box->button(QMessageBox::Cancel)->click(); QTRY_VERIFY(!QApplication::activeModalWidget()); QCOMPARE(controller.lastPipelineResult(), retained);
+    QVERIFY(edit->isEnabled()); recovery.discardAction()->trigger(); QTRY_VERIFY(QApplication::activeModalWidget());
+    box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box); box->button(QMessageBox::Discard)->click();
+    QTRY_VERIFY(!controller.lastPipelineResult()); QVERIFY(!edit->isEnabled() && !discard->isEnabled());
+    QCOMPARE(opened, retained->workingMedia); QCOMPARE(bytes(path), before);
+  }
+  void discardApprovalCannotClearANewerResultAndNeverRemovesSavedFiles() {
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    CaptureRecoveryActions recovery(controller, nullptr, {}); QSignalSpy notices(&recovery, &CaptureRecoveryActions::notify);
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
+    const auto first = controller.lastPipelineResult(); QVERIFY(first && first->file); const auto firstFile = bytes(first->file->path);
+    QVERIFY(!recovery.editAction()->isEnabled()); QVERIFY(recovery.discardAction()->isEnabled());
+    recovery.discardAction()->trigger(); QTRY_VERIFY(QApplication::activeModalWidget());
+    QPointer<QMessageBox> approval = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(approval);
+    // A new production capture completes while the old target's confirmation
+    // remains open. Its owned receipt cannot be consumed by that approval.
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); controller.pointerDown({5, 5}); controller.pointerUp({15, 15}); QTRY_VERIFY(!controller.busy());
+    const auto second = controller.lastPipelineResult(); QVERIFY(second && second != first && second->file);
+    approval->button(QMessageBox::Discard)->click(); QTRY_VERIFY(!QApplication::activeModalWidget());
+    QCOMPARE(controller.lastPipelineResult(), second); QCOMPARE(notices.count(), 1); QVERIFY(!notices.first().last().toBool());
+    QCOMPARE(bytes(first->file->path), firstFile);
+    recovery.discardAction()->trigger(); QTRY_VERIFY(QApplication::activeModalWidget());
+    auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box); box->button(QMessageBox::Discard)->click();
+    QTRY_VERIFY(!controller.lastPipelineResult()); QVERIFY(QFileInfo::exists(second->file->path)); QCOMPARE(bytes(first->file->path), firstFile);
+  }
+  void recoveryCallbackCancellationExceptionsAndReentrancyDoNotConsumeTheReceipt() {
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
+    const auto retained = controller.lastPipelineResult(); int calls = 0; CaptureRecoveryActions *running = nullptr;
+    CaptureRecoveryActions recovery(controller, nullptr, [&](const QImage &, QWidget *) {
+      ++calls; running->editAction()->trigger(); running->discardAction()->trigger(); if (calls == 2) throw std::runtime_error("private pixels"); return false;
+    }); running = &recovery; QSignalSpy notices(&recovery, &CaptureRecoveryActions::notify);
+    recovery.editAction()->trigger(); QCOMPARE(calls, 1); QCOMPARE(notices.count(), 0); QCOMPARE(controller.lastPipelineResult(), retained);
+    recovery.editAction()->trigger(); QCOMPARE(calls, 2); QCOMPARE(notices.count(), 1); QVERIFY(notices.first().first().toString().contains("action-failed"));
+    QVERIFY(!notices.first().first().toString().contains("private pixels")); QCOMPARE(controller.lastPipelineResult(), retained); QVERIFY(!QApplication::activeModalWidget());
+  }
+  void recoveryOwnerDestructionCancelsPendingApprovalAndKeepsTheReceipt() {
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
+    const auto retained = controller.lastPipelineResult(); QVERIFY(retained && retained->file);
+    auto recovery = std::make_unique<CaptureRecoveryActions>(controller, nullptr, CapturedImageOpener{});
+    recovery->discardAction()->trigger(); QTRY_VERIFY(QApplication::activeModalWidget());
+    QPointer<QWidget> approval = QApplication::activeModalWidget(); recovery.reset(); QTRY_VERIFY(!approval);
+    QCOMPARE(controller.lastPipelineResult(), retained); QVERIFY(QFileInfo::exists(retained->file->path));
+    recovery = std::make_unique<CaptureRecoveryActions>(controller, nullptr, [&](const QImage &, QWidget *) { recovery.reset(); return false; });
+    recovery->editAction()->trigger(); QVERIFY(!recovery); QCOMPARE(controller.lastPipelineResult(), retained);
   }
 };
 QTEST_MAIN(PortalScreenshotTest)

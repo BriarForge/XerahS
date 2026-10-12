@@ -13,6 +13,7 @@
 
 #include <new>
 #include <algorithm>
+#include <cstring>
 
 namespace xerahs::app {
 
@@ -49,6 +50,45 @@ QImage displayCopy(const QImage &image) {
 }
 
 }  // namespace
+
+LoadedSource prepareCapturedSource(const QImage &image, const RenderControl &control) {
+  try {
+    if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
+    if (image.isNull()) return fail(diagnostic::sourceEmpty);
+    if (image.width() > kMaxDimension || image.height() > kMaxDimension || qint64(image.width()) * image.height() > kMaxPixels)
+      return fail(diagnostic::sourceTooLarge);
+    const auto normalized = image.convertToFormat(QImage::Format_ARGB32);
+    if (normalized.isNull()) return fail(diagnostic::sourceTooLarge);
+    if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
+    QImage source(image.width(), image.height(), QImage::Format_ARGB32);
+    if (source.isNull()) return fail(diagnostic::sourceTooLarge);
+    source.setColorSpace(image.colorSpace());
+    for (int row = 0; row < source.height(); ++row) {
+      if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
+      std::memcpy(source.scanLine(row), normalized.constScanLine(row), std::size_t(source.width()) * 4);
+      progress(control, (row + 1) * 60 / source.height());
+    }
+    const auto display = displayCopy(source);
+    if (display.isNull()) return fail(diagnostic::sourceTooLarge);
+    progress(control, 70);
+    if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
+    AnnotationDocument document;
+    document.canvasWidth = source.width(); document.canvasHeight = source.height();
+    document.createdAt = document.modifiedAt = now();
+    QBuffer buffer(&document.sourceImagePng);
+    if (!buffer.open(QIODevice::WriteOnly) || !source.save(&buffer, "PNG")) return fail(diagnostic::sourceCorrupt);
+    if (document.sourceImagePng.size() > kMaxEncodedImageBytes) return fail(diagnostic::sourceTooLarge);
+    progress(control, 90);
+    if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
+    const auto parsed = parseDocument(serializeDocument(document));
+    if (!parsed.document) return fail(parsed.error.value_or(diagnostic::documentInvalid));
+    progress(control, 100);
+    if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
+    LoadedSource result; result.document = std::move(document); result.image = std::move(source); result.displayImage = display;
+    return result;
+  } catch (const std::bad_alloc &) { return fail(diagnostic::sourceTooLarge); }
+    catch (...) { return fail(diagnostic::documentInvalid); }
+}
 
 static LoadedSource loadSourceImpl(const QString &path, const RenderControl &control) {
   const LoadedRaster raster = loadRaster(path, {control.cancelled, [&](int p) { progress(control, p * 45 / 100); }});

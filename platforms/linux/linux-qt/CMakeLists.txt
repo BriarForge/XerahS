@@ -91,6 +91,8 @@ add_executable(xerahs
   app/CaptureSave.h
   app/CaptureController.cpp
   app/CaptureController.h
+  app/CaptureRecoveryActions.cpp
+  app/CaptureRecoveryActions.h
   app/CapturePipeline.cpp
   app/CapturePipeline.h
   app/SnapshotComposition.cpp
@@ -214,6 +216,8 @@ add_executable(portal-screenshot-test tests/PortalScreenshotTest.cpp app/PortalS
                app/CaptureController.cpp app/CaptureController.h app/CaptureActions.cpp app/CaptureActions.h
                app/CaptureSave.cpp app/CaptureSave.h
                app/CapturePipeline.cpp app/CapturePipeline.h
+               app/CaptureRecoveryActions.cpp app/CaptureRecoveryActions.h
+               app/ApplicationWindow.cpp app/ApplicationWindow.h
                app/SnapshotComposition.cpp app/SnapshotComposition.h
                app/RegionOverlay.cpp app/RegionOverlay.h)
 set_target_properties(portal-screenshot-test PROPERTIES AUTOMOC ON)

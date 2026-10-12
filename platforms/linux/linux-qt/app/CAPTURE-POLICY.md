@@ -119,11 +119,43 @@ independent actions eligible and expose stable value-free diagnostics.
 A native receipt contains ordered Core results, confirmed working media and
 actual save metadata. The controller retains its latest receipt in memory until
 a later receipt replaces it or the controller/application closes. This preserves
-working media and completed files after output failure; it does not provide a
-complete recovery UI, configured retention/discard policy, external canonical
-serialization or PCA-012 durable journal. These remain Required alongside the
+working media and completed files after output failure. Shared recovery controls
+now open the retained snapshot in a new unsaved editor and explicitly discard
+the current in-memory receipt. Complete recovery/history UI, configured retention
+policy, external canonical serialization and the PCA-012 durable journal remain Required. These remain Required alongside the
 remaining action catalogue, configured workflows, privacy/security review and
 physical clipboard/input-serial/compositor/performance qualification.
+
+## Retained capture recovery and discard
+
+The tray and main window use the same actual Edit Retained Capture and Discard
+Retained Capture actions. They are available only after a receipt exists and
+capture/action execution is idle. A missing editor opener disables editing with
+an explanation. Reentrant recovery commands cannot start another operation.
+
+Edit snapshots the requested media independently of later receipt replacement
+or discard. A cancellable worker validates dimensions/resources, copies owned
+physical-pixel ARGB32 rows, retains original alpha/colour metadata, embeds PNG
+source bytes through the production document parser and prepares a private sRGB
+view. It creates a new unsaved standalone editor: no saved capture/sidecar is
+reread, and no earlier durable path is adopted. Cancelled/failed preparation
+opens no partial document and consumes no receipt. Save uses the existing
+explicit destination and dirty-session policy. Opening does not retry any
+pipeline action, modify its append-only results or complete task-mode annotation.
+
+Discard defaults to Cancel and explains that files, clipboard contents and
+existing editor documents are kept. Its asynchronous native confirmation binds
+one exact receipt. If capture is busy or a newer receipt replaces it, the old
+approval cannot clear the current result. Destroying the recovery owner cancels
+pending approval; an opener exception exposes only a value-free failure.
+Discard releases the controller's reference; other legitimate owners/copies
+are unaffected, and this is not a claim of secure memory erasure.
+
+The current store retains one latest receipt until a later completed pipeline
+replaces it, explicit discard, or application close. Recovery controls do not
+provide multi-result history, durable restart recovery, configured retention,
+crash-temporary cleanup or full privacy/security/accessibility acceptance.
+Those remain Required before full production readiness.
 
 ## Evidence and required reviews
 
