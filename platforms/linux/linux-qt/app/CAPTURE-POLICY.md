@@ -82,6 +82,17 @@ a new session; controller destruction cancels and releases the UI without
 joining the worker. Existing colour metadata survives preparation; this is
 not a qualified HDR/wide-gamut workflow conversion.
 
+Native PNG saving encodes once into a private same-filesystem temporary file
+(mode 0600), flushes its bytes, and publishes with Linux `RENAME_NOREPLACE`.
+Existing destinations, including dangling symlinks and racing writers, are
+preserved. Random name collisions retry without re-encoding; failures remove
+only the owned temporary file. Unsupported atomic-publication mechanisms fail
+explicitly. The native save artifact records its absolute path, media type,
+actual byte length and immutable naming context. These values are artifact data,
+not ordinary diagnostics. This does not provide the durable pipeline journal
+and restart/recovery behavior required by PCA-012. The filesystem/native target
+matrix and human privacy/security review remain Required.
+
 Saving/encoding and the general post-capture pipeline still need their own
 native cooperative cancellation/progress integration. Pixel completion is a
 session terminal state; it is not proof of post-capture action completion.
@@ -118,3 +129,5 @@ physical coordinate, identity and frozen multi-source authority evidence.
 Protocol references: [Screenshot](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.Screenshot.html),
 [Request](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.Request.html)
 and [request lifecycle](https://flatpak.github.io/xdg-desktop-portal/docs/requests.html).
+
+Atomic publication reference: [Linux renameat2](https://man7.org/linux/man-pages/man2/rename.2.html).

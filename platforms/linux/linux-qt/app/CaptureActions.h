@@ -4,6 +4,7 @@
 #pragma once
 
 #include "actions/PostCapturePipeline.h"
+#include "CaptureSave.h"
 
 #include <QImage>
 #include <QString>
@@ -21,6 +22,7 @@ public:
   void removeTemporaryUploadFile() override {}
 
   const std::optional<QString> &savedPath() const { return m_savedPath; }
+  const std::optional<CaptureFile> &savedFile() const { return m_savedFile; }
 
   // Pending clarification (ROOT-ESCALATE-001): the contract names no code for
   // an action this build cannot perform yet.
@@ -34,6 +36,7 @@ private:
   QString m_directory;
   QString m_pattern;
   std::optional<QString> m_savedPath;
+  std::optional<CaptureFile> m_savedFile;
 };
 
 }  // namespace xerahs::app

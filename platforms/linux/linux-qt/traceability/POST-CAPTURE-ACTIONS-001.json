@@ -6,7 +6,11 @@
   "edition": "linux-qt",
   "implementation": [
     "platforms/linux/linux-qt/src/actions/PostCapturePipeline.h",
-    "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp"
+    "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
+    "platforms/linux/linux-qt/app/CaptureActions.h",
+    "platforms/linux/linux-qt/app/CaptureActions.cpp",
+    "platforms/linux/linux-qt/app/CaptureSave.h",
+    "platforms/linux/linux-qt/app/CaptureSave.cpp"
   ],
   "requirements": {
     "PCA-001": {
@@ -56,7 +60,10 @@
       "vectors": [
         "save-failure-fallbacks"
       ],
-      "note": "Save failure leaves working media for fallbacks. Recording the absolute path, media type, byte length, and filename context arrives with the native save action."
+      "note": "Native PNG saving encodes once into an owner-private temporary file and atomically publishes through Linux RENAME_NOREPLACE. Existing files, dangling symlinks and racing writers are never replaced; collisions retry fresh random names. CaptureActions records the absolute native path, actual media type/byte length and immutable filename-generation context. Independent native tests cover exact pixels, concurrent/racing publication, private permissions, cleanup and value-free failures. Full action artifact/result serialization, durable recovery, configured counter/storage integration, all save variants and native review/target qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
+      ]
     },
     "PCA-008": {
       "status": "partial",
@@ -94,7 +101,7 @@
     "PCA-013": {
       "status": "partial",
       "vectors": [],
-      "note": "The engine emits only stable diagnostic codes and never carries media, clipboard, OCR, or credential content. A review of native action diagnostics follows with each action."
+      "note": "The engine emits stable diagnostic codes. Native capture-save encoding, publication and hook exceptions return value-free codes; private file paths and filename context remain artifact data rather than ordinary diagnostics. Complete native action privacy/diagnostic and human review coverage remain Required."
     },
     "PCA-014": {
       "status": "implemented",

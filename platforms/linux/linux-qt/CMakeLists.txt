@@ -87,6 +87,8 @@ add_executable(xerahs
   app/ApplicationWindow.h
   app/CaptureActions.cpp
   app/CaptureActions.h
+  app/CaptureSave.cpp
+  app/CaptureSave.h
   app/CaptureController.cpp
   app/CaptureController.h
   app/SnapshotComposition.cpp
@@ -133,6 +135,11 @@ target_link_libraries(xerahs PRIVATE xerahs_native_instance xerahs_editor_codecs
 target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
 enable_testing()
+add_executable(capture-save-test tests/CaptureSaveTest.cpp app/CaptureSave.cpp app/CaptureSave.h)
+set_target_properties(capture-save-test PROPERTIES AUTOMOC ON)
+target_include_directories(capture-save-test PRIVATE app)
+target_link_libraries(capture-save-test PRIVATE xerahs_core Qt6::Gui Qt6::Test)
+add_test(NAME capture-save COMMAND capture-save-test)
 add_executable(snapshot-composition-test tests/SnapshotCompositionTest.cpp app/SnapshotComposition.cpp app/SnapshotComposition.h)
 set_target_properties(snapshot-composition-test PROPERTIES AUTOMOC ON)
 target_include_directories(snapshot-composition-test PRIVATE app)
@@ -195,6 +202,7 @@ set_tests_properties(native-editor-appearance PROPERTIES ENVIRONMENT QT_QPA_PLAT
 find_program(XERAHS_DBUS_RUN_SESSION dbus-run-session REQUIRED)
 add_executable(portal-screenshot-test tests/PortalScreenshotTest.cpp app/PortalScreenshot.cpp app/PortalScreenshot.h
                app/CaptureController.cpp app/CaptureController.h app/CaptureActions.cpp app/CaptureActions.h
+               app/CaptureSave.cpp app/CaptureSave.h
                app/SnapshotComposition.cpp app/SnapshotComposition.h
                app/RegionOverlay.cpp app/RegionOverlay.h)
 set_target_properties(portal-screenshot-test PROPERTIES AUTOMOC ON)
