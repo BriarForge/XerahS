@@ -24,11 +24,12 @@ const QColor kAccent(255, 255, 255);
 
 }  // namespace
 
-RegionOverlay::RegionOverlay(CaptureController &controller, QScreen *screen, Display display, QImage snapshot)
+RegionOverlay::RegionOverlay(CaptureController &controller, QScreen *screen, Display display, QImage snapshot, QRect source)
     : QWidget(nullptr, Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool),
       m_controller(controller),
       m_display(std::move(display)),
       m_snapshot(std::move(snapshot)),
+      m_source(source.isNull() ? m_snapshot.rect() : source),
       m_screenOrigin(screen->geometry().topLeft()) {
   setAttribute(Qt::WA_DeleteOnClose, false);
   setAttribute(Qt::WA_OpaquePaintEvent);
@@ -83,7 +84,7 @@ void RegionOverlay::keyPressEvent(QKeyEvent *event) {
 void RegionOverlay::paintEvent(QPaintEvent *) {
   QPainter painter(this);
   // RC-005, RC-014: the frozen snapshot at 1:1 physical pixels.
-  painter.drawImage(rect(), m_snapshot);
+  painter.drawImage(rect(), m_snapshot, m_source);
 
   const std::optional<PhysicalRect> selection = m_controller.selection();
   std::optional<PhysicalRect> visible;
@@ -162,6 +163,13 @@ void RegionOverlay::paintBadge(QPainter &painter, const QRectF &r, const Physica
 }
 
 void RegionOverlay::paintHint(QPainter &painter) {
+  if (const auto progress = m_controller.compositionProgress()) {
+    const auto text = QStringLiteral("Preparing capture pixels · %1% · Escape cancels").arg(*progress);
+    const auto metrics = painter.fontMetrics(); const auto width = metrics.horizontalAdvance(text) + 32;
+    const QRectF box(std::max(4.0, (this->width() - width) / 2.0), this->height() - metrics.height() - 42,
+        std::min(width, this->width() - 8), metrics.height() + 16);
+    painter.fillRect(box, kPanel); painter.setPen(kPanelText); painter.drawText(box, Qt::AlignCenter, text); return;
+  }
   // RC-010: the precision modifier is documented in the UI.
   struct Item {
     const char *key;

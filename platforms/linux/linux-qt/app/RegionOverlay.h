@@ -16,7 +16,7 @@ class RegionOverlay final : public QWidget {
   Q_OBJECT
 
 public:
-  RegionOverlay(CaptureController &controller, QScreen *screen, xerahs::capture::Display display, QImage snapshot);
+  RegionOverlay(CaptureController &controller, QScreen *screen, xerahs::capture::Display display, QImage snapshot, QRect source = {});
 
   const xerahs::capture::Display &display() const { return m_display; }
   // Announces the current bounds to assistive technology (RC-024).
@@ -38,7 +38,8 @@ private:
 
   CaptureController &m_controller;
   xerahs::capture::Display m_display;
-  QImage m_snapshot;  // this display's pixels, physical size
+  QImage m_snapshot;  // immutable shared frozen source, never modified
+  QRect m_source;
   QPointF m_screenOrigin;
 };
 

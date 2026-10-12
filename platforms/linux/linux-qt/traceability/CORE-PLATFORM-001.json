@@ -46,10 +46,14 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Screenshot and editor loading have cancellation/failure tests. General progress, cancellation and recoverable terminal/output behavior across workflows, recording, uploads and all utilities remain Required.",
+      "note": "Native Screenshot acquisition, confirming pixel composition and editor loading have cancellation/failure evidence. Confirming capture uses worker-owned immutable inputs, bounded cooperative composition, real accessible progress and immediate GUI cancellation; stale cancelled workers cannot publish into another session. General progress, cancellation and recoverable output/terminal behavior across encoding, workflows, recording, uploads and all utilities, plus physical accessibility/performance qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/SnapshotCompositionTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/app/CAPTURE-POLICY.md"
       ]
     },
     "CORE-005": {

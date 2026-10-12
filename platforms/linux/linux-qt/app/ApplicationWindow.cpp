@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QMenu>
 #include <QMenuBar>
+#include <QProgressBar>
 #include <QToolButton>
 #include <QVBoxLayout>
 namespace xerahs::app {
@@ -25,6 +26,9 @@ ApplicationWindow::ApplicationWindow(const QMap<QString, QAction *> &actions, QW
   layout->addStretch(); m_status = new QLabel(QStringLiteral("Ready"), central);
   m_status->setObjectName(QStringLiteral("operationStatus")); m_status->setWordWrap(true);
   m_status->setTextFormat(Qt::PlainText); m_status->setAccessibleName(QStringLiteral("Most recent operation result")); layout->addWidget(m_status);
+  m_progress = new QProgressBar(central); m_progress->setObjectName(QStringLiteral("operationProgress"));
+  m_progress->setAccessibleName(QStringLiteral("Operation progress")); m_progress->setRange(0, 100);
+  m_progress->hide(); layout->addWidget(m_progress);
   setCentralWidget(central);
   auto *file = menuBar()->addMenu(QStringLiteral("&File"));
   for (const auto &id : {QString("new-image"), QString("open-image"), QString("captures-folder"), QString("quit")}) if (auto *action = actions.value(id)) file->addAction(action);
@@ -41,9 +45,22 @@ void ApplicationWindow::activate() {
   if (auto *modal = QApplication::activeModalWidget()) { modal->raise(); modal->activateWindow(); }
 }
 void ApplicationWindow::showResult(const QString &title, const QString &body, bool success) {
+  m_progress->hide(); m_progressTitle.clear();
   const auto text = body.isEmpty() ? title : title + QStringLiteral(": ") + body;
   m_status->setText(text); m_status->setAccessibleDescription(text);
   QAccessibleEvent event(m_status, success ? QAccessible::DescriptionChanged : QAccessible::Alert);
   QAccessible::updateAccessibility(&event);
+}
+void ApplicationWindow::showProgress(const QString &title, int percent) {
+  m_progressTitle = title;
+  m_progress->setValue(qBound(0, percent, 100)); m_progress->show();
+  const auto text = title + QStringLiteral(": Preparing pixels · %1% · Cancel Capture or Escape stops this operation.").arg(m_progress->value());
+  m_status->setText(text); m_status->setAccessibleDescription(text);
+  QAccessibleEvent event(m_status, QAccessible::DescriptionChanged); QAccessible::updateAccessibility(&event);
+}
+void ApplicationWindow::cancelPendingProgress() {
+  if (m_progress->isHidden()) return;
+  const auto title = m_progressTitle;
+  showResult(title, QStringLiteral("Cancelled"), true);
 }
 } // namespace xerahs::app

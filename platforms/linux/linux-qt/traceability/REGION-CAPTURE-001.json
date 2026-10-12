@@ -15,7 +15,9 @@
     "platforms/linux/linux-qt/app/PortalScreenshot.h",
     "platforms/linux/linux-qt/app/CaptureController.h",
     "platforms/linux/linux-qt/app/RegionOverlay.h",
-    "platforms/linux/linux-qt/app/main.cpp"
+    "platforms/linux/linux-qt/app/main.cpp",
+    "platforms/linux/linux-qt/app/SnapshotComposition.h",
+    "platforms/linux/linux-qt/app/SnapshotComposition.cpp"
   ],
   "requirements": {
     "RC-001": {
@@ -39,7 +41,7 @@
       "vectors": [
         "topology-change-cancels"
       ],
-      "note": "Topology change cancels with display-topology-changed. The snapshot holds identity, bounds, and scale; rotation and colour characteristics arrive with the display backend.",
+      "note": "Selection and confirming composition cancel on native screen add/remove, geometry, orientation and DPI signals. Core topology vectors pass. Native uniform-scale inference still lacks authoritative stable identity, per-display physical mapping, rotation and colour descriptions; see app/SOURCE-TOPOLOGY-REVIEW.md. Complete native topology qualification remains Required.",
       "disposition": "Required"
     },
     "RC-004": {
@@ -80,7 +82,7 @@
       "vectors": [
         "cancel-selected"
       ],
-      "note": "Core cancellation is terminal and side-effect free. Native Cancel Capture now closes a pending portal request, including an unexpected late legacy handle, while portal response 1 and actual overlay Escape cancel without notification, files or clipboard changes. Controller tests include first-availability cancellation, destruction and stale old-request callbacks. Cooperative cancellation/progress during subsequent pixel composition and pipeline work and physical consent/overlay qualification remain Required.",
+      "note": "Core cancellation is terminal and side-effect free. Native Cancel Capture closes pending portal requests; overlay Escape and Cancel Capture also cancel confirming composition without capture publication, file or clipboard changes. A worker owns frozen inputs and cooperative cancellation; the GUI never joins it. Private-bus production tests pause the actual compositor before start, midway and at the final row, prove responsive Escape, unchanged fixtures, non-blocking destruction and late-worker isolation. Cancellation/progress during encoding and subsequent pipeline work, and physical consent/overlay qualification remain Required.",
       "disposition": "Required"
     },
     "RC-009": {
@@ -113,7 +115,7 @@
         "mixed-scale-cross-monitor",
         "uncovered-area-is-transparent"
       ],
-      "note": "The production compositor places exact source pixels and rejects resampled sources. The native frozen portal source and overlay now have private-bus fixture evidence; the controller still needs a per-monitor physical source backend and complete mixed-scale/native qualification.",
+      "note": "The same Qt Core compositor serves conformance and native worker composition: exact source pixels, transparent gaps, bounded output, no resampling, cooperative cancellation and discarded partial output. SnapshotCompositionTest independently checks native pixel placement, image ownership and retained colour metadata. The frozen-source controller still assumes uniform desktop scale; authoritative per-monitor acquisition and complete mixed-scale/native qualification remain Required.",
       "disposition": "Required"
     },
     "RC-013": {
@@ -139,7 +141,7 @@
       "vectors": [
         "terminal-events-ignored"
       ],
-      "note": "Core terminal-event vectors pass. Native Screenshot is single-use, correlates owner/handle and publishes one result; duplicate responses/starts/cancels, timeout, late handles and controller replacement/destruction have production transport tests. Full native capture/composition/pipeline terminal qualification remains Required.",
+      "note": "Core terminal-event vectors pass. Native Screenshot and confirming composition publish one terminal result; duplicate starts/responses/selection inputs, late cancelled workers and controller replacement/destruction have production tests. A successful private fixture runs one save/clipboard pipeline. General pipeline cancellation/terminal coverage and full physical native qualification remain Required.",
       "disposition": "Required"
     },
     "RC-017": {
@@ -157,19 +159,19 @@
       "vectors": [
         "capture-failure-keeps-last-region"
       ],
-      "note": "Native failures expose stable capture-source-failed or capture-permission-denied without raw portal errors/URIs. URI type/locality and shared image-decoder resource limits are validated; worker cancellation discards output. Borrowed portal files remain unmodified and no application-owned screenshot cache is created before confirmation. Private-bus tests cover malformed/corrupt/oversized input and unchanged files. Portal-owned retention/revocation, complete capture privacy/diagnostic policy and human security/privacy review remain Required.",
+      "note": "Native failures expose stable capture-source-failed or capture-permission-denied without raw portal errors/URIs. Shared decode and composition resource bounds reject excess output before unsafe arithmetic. Worker cancellation discards pixels and source-result metadata; source/progress exceptions return value-free diagnostics. Borrowed files remain unmodified and no owned screenshot cache precedes confirmation. Core/native/private-bus tests cover corrupt/oversized input, exact pixels, cancellation and unchanged files. Complete capture retention/diagnostic policy, portal-owned revocation and human security/privacy review remain Required.",
       "disposition": "Required"
     },
     "RC-019": {
       "status": "partial",
       "vectors": [],
-      "note": "Keyboard-only selection (Space anchors at a keyboard cursor), accessible name and instructions, bounds announcements, and a white-on-black boundary with corner handles. Screen-reader behaviour is not yet verified with Orca.",
+      "note": "Native keyboard selection, accessible bounds/instructions and actual progress in overlay descriptions and a command-window QProgressBar have fixture evidence. Cancelled progress returns to a terminal command-window status without an alert; successful/error results remain visible. Full physical keyboard/compositor and Orca qualification remain Required.",
       "disposition": "Required"
     },
     "RC-020": {
       "status": "not-started",
       "vectors": [],
-      "note": "Overlay performance.",
+      "note": "A worker removes source copying/format preparation/composition from the GUI; private-bus tests prove event-loop responsiveness and non-blocking cancellation/destruction. Required physical overlay frame-rate, acquisition/composition latency and resource measurements on the supported native matrix have not been established.",
       "disposition": "Required"
     },
     "RC-021": {
@@ -242,6 +244,10 @@
   "evidence": [
     "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
     "platforms/linux/linux-qt/app/CAPTURE-POLICY.md",
-    "platforms/linux/linux-qt/CONTRACT-AUDIT.md"
+    "platforms/linux/linux-qt/CONTRACT-AUDIT.md",
+    "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+    "platforms/linux/linux-qt/tests/SnapshotCompositionTest.cpp",
+    "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+    "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md"
   ]
 }

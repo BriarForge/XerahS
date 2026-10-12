@@ -5,6 +5,7 @@
 #pragma once
 
 #include "capture/RegionSession.h"
+#include "SnapshotComposition.h"
 
 #include <QImage>
 #include <QObject>
@@ -16,18 +17,20 @@
 #include <vector>
 
 class QScreen;
+class QTimer;
 
 namespace xerahs::app {
 
 class PortalScreenshot;
 class RegionOverlay;
+struct CaptureComposition;
 
 class CaptureController final : public QObject {
   Q_OBJECT
 
 public:
   using ScreenshotFactory = std::function<PortalScreenshot *(QObject *)>;
-  explicit CaptureController(QString saveDirectory, QObject *parent = nullptr, ScreenshotFactory factory = {});
+  explicit CaptureController(QString saveDirectory, QObject *parent = nullptr, ScreenshotFactory factory = {}, SnapshotComposer composer = {});
   ~CaptureController() override;
 
   static QString instructions();
@@ -46,6 +49,7 @@ public:
   bool selectionSettled() const;
   std::optional<xerahs::capture::PhysicalPoint> keyboardCursor() const;
   QScreen *hintScreen() const;
+  std::optional<int> compositionProgress() const;
 
 public slots:
   void captureRegion();
@@ -54,12 +58,14 @@ signals:
   void busyChanged(bool busy);
   // CORE-010: the originating operation and its true result.
   void notify(const QString &title, const QString &body, bool success);
+  void compositionProgressChanged(int percent);
 
 private:
   void onSnapshot(int outcome, const QImage &image, const QString &detail);
   void onOutcome(const xerahs::capture::SessionOutcome &outcome);
   void afterInput();
   void acquire();
+  void pollComposition();
   void runPipeline(const xerahs::capture::PhysicalRect &rect);
   void closeOverlays();
   void finish();
@@ -68,6 +74,11 @@ private:
 
   QString m_saveDirectory;
   ScreenshotFactory m_screenshotFactory;
+  SnapshotComposer m_composer;
+  std::shared_ptr<CaptureComposition> m_composition;
+  QTimer *m_compositionTimer = nullptr;
+  int m_reportedProgress = -1;
+  quint64 m_generation = 0;
   bool m_busy = false;
   QPointer<PortalScreenshot> m_portal;
   QImage m_desktop;  // frozen snapshot in desktop physical pixels

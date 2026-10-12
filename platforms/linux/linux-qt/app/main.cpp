@@ -163,6 +163,12 @@ int main(int argc, char *argv[]) {
                                       5000);
                    });
   QObject::connect(&capture, &CaptureController::notify, &home, &xerahs::app::ApplicationWindow::showResult);
+  QObject::connect(&capture, &CaptureController::compositionProgressChanged, &home, [&home](int percent) {
+    home.showProgress(QStringLiteral("Region capture"), percent);
+  });
+  QObject::connect(&capture, &CaptureController::busyChanged, &home, [&home](bool busy) {
+    if (!busy) home.cancelPendingProgress();
+  });
   ActivationDispatcher dispatcher({[&home] { home.activate(); }, [&capture] { capture.captureRegion(); },
       [](const QString &path) { if (auto *window = xerahs::app::EditorWindow::open(path)) window->show(); },
       [&capture] { return capture.busy(); }, [] { return QApplication::activeModalWidget() != nullptr; }});

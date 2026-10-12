@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <QMenu>
 #include <QMenuBar>
+#include <QProgressBar>
 #include <QSignalSpy>
 #include <QTest>
 #include <QToolButton>
@@ -14,6 +15,21 @@ using namespace xerahs::app;
 class ApplicationWindowTest final : public QObject {
   Q_OBJECT
 private slots:
+  void preparingProgressIsAccessibleAndCancellationDoesNotReplacePublishedResults() {
+    ApplicationWindow window({}); window.activate();
+    auto *progress = window.findChild<QProgressBar *>("operationProgress");
+    auto *status = window.findChild<QLabel *>("operationStatus"); QVERIFY(progress); QVERIFY(status);
+    QVERIFY(progress->isHidden()); window.showProgress("Region capture", 50);
+    QVERIFY(!progress->isHidden()); QCOMPARE(progress->value(), 50);
+    auto *accessible = QAccessible::queryAccessibleInterface(progress); QVERIFY(accessible);
+    QVERIFY(accessible->valueInterface()); QCOMPARE(accessible->valueInterface()->currentValue().toInt(), 50);
+    window.cancelPendingProgress(); QVERIFY(progress->isHidden());
+    QCOMPARE(status->text(), QString("Region capture: Cancelled"));
+    window.showProgress("Region capture", 100); window.showResult("Capture", "Saved", true);
+    window.cancelPendingProgress(); QVERIFY(progress->isHidden()); QCOMPARE(status->text(), QString("Capture: Saved"));
+    window.showProgress("Region capture", 10); window.showResult("Capture", "Failed", false);
+    window.cancelPendingProgress(); QCOMPARE(status->text(), QString("Capture: Failed"));
+  }
   void nativeKeyboardAndMenuUseTheActualSharedOperationAndAvailability() {
     QAction capture(QStringLiteral("Capture region")), cancel(QStringLiteral("Cancel capture"));
     cancel.setEnabled(false);

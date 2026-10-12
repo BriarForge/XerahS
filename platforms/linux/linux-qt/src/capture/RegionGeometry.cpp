@@ -27,7 +27,7 @@ bool reaches(const PhysicalRect &bounds, PhysicalPoint point) {
 std::optional<PhysicalRect> intersection(const PhysicalRect &a, const PhysicalRect &b) {
   const PhysicalRect r{std::max(a.left, b.left), std::max(a.top, b.top), std::min(a.right, b.right),
                        std::min(a.bottom, b.bottom)};
-  if (!r.positive()) return std::nullopt;
+  if (r.right <= r.left || r.bottom <= r.top) return std::nullopt;
   return r;
 }
 
@@ -96,50 +96,89 @@ PhysicalRect applyKeyboardStep(const PhysicalRect &rect, const KeyboardStep &ste
   return r;
 }
 
-CompositeResult composite(const PhysicalRect &rect, const Topology &topology, const DisplayGrabber &grab) {
+CompositeResult composite(const PhysicalRect &rect, const Topology &topology, const DisplayGrabber &grab,
+                          const CompositeControl &control) {
   CompositeResult result;
-  if (!rect.positive()) {
+  const auto abandon = [&]() {
+    result.image.reset(); result.sourceDisplays.clear(); result.diagnostic.reset(); result.cancelled = true;
+    return result;
+  };
+  if (rect.right <= rect.left || rect.bottom <= rect.top) {
     result.diagnostic = diagnostic::captureSourceFailed;
     return result;
   }
-
-  std::vector<const Display *> sources;
-  for (const Display &display : topology) {
-    if (intersection(rect, display.physical)) sources.push_back(&display);
+  const quint64 width = quint64(rect.right) - quint64(rect.left);
+  const quint64 height = quint64(rect.bottom) - quint64(rect.top);
+  if (width > kMaximumCaptureDimension || height > kMaximumCaptureDimension || width > kMaximumCapturePixels / height) {
+    result.diagnostic = diagnostic::captureSourceFailed;
+    return result;
   }
-  // Desktop physical order: top to bottom, then left to right.
-  std::stable_sort(sources.begin(), sources.end(), [](const Display *a, const Display *b) {
-    if (a->physical.top != b->physical.top) return a->physical.top < b->physical.top;
-    return a->physical.left < b->physical.left;
-  });
+  try {
+    const auto cancelled = [&] { return control.cancelled && control.cancelled(); };
+    if (cancelled()) return abandon();
 
-  RgbaImage image;
-  image.width = rect.width();
-  image.height = rect.height();
-  // RC-023: transparent black wherever no display covers the rectangle.
-  image.pixels = QByteArray(static_cast<qsizetype>(image.width * image.height * 4), '\0');
+    std::vector<const Display *> sources;
+    for (const Display &display : topology) {
+      if (display.physical.right <= display.physical.left || display.physical.bottom <= display.physical.top) {
+        result.diagnostic = diagnostic::captureSourceFailed; return result;
+      }
+      if (intersection(rect, display.physical)) sources.push_back(&display);
+    }
+    // Desktop physical order: top to bottom, then left to right.
+    std::stable_sort(sources.begin(), sources.end(), [](const Display *a, const Display *b) {
+      if (a->physical.top != b->physical.top) return a->physical.top < b->physical.top;
+      return a->physical.left < b->physical.left;
+    });
 
-  for (const Display *display : sources) {
-    const PhysicalRect source = *intersection(rect, display->physical);
-    const std::optional<RgbaImage> pixels = grab(*display, source);
-    if (!pixels || pixels->width != source.width() || pixels->height != source.height() ||
-        pixels->pixels.size() != static_cast<qsizetype>(source.width() * source.height() * 4)) {
-      // RC-012, RC-018: a missing or resampled source is a capture-source
-      // failure; no partial image is returned.
-      result.diagnostic = diagnostic::captureSourceFailed;
-      result.sourceDisplays.clear();
-      return result;
+    RgbaImage image;
+    image.width = rect.width();
+    image.height = rect.height();
+    qint64 totalRows = image.height;
+    for (const Display *display : sources) totalRows += intersection(rect, display->physical)->height();
+    qint64 doneRows = 0; int reported = -1;
+    const auto progress = [&] {
+      const int value = int(doneRows * 100 / totalRows);
+      if (value != reported) { reported = value; if (control.progress) control.progress(value); }
+    };
+    progress(); if (cancelled()) return abandon();
+    // RC-023: transparent black wherever no display covers the rectangle.
+    image.pixels.resize(static_cast<qsizetype>(image.width * image.height * 4));
+    for (qint64 row = 0; row < image.height; ++row) {
+      if (cancelled()) return abandon();
+      std::memset(image.pixels.data() + row * image.width * 4, 0, std::size_t(image.width * 4));
+      ++doneRows; progress();
     }
-    const qint64 rowBytes = source.width() * 4;
-    for (qint64 row = 0; row < source.height(); ++row) {
-      const qint64 target = ((source.top - rect.top + row) * image.width + (source.left - rect.left)) * 4;
-      std::memcpy(image.pixels.data() + target, pixels->pixels.constData() + row * rowBytes,
-                  static_cast<std::size_t>(rowBytes));
+
+    for (const Display *display : sources) {
+      const PhysicalRect source = *intersection(rect, display->physical);
+      if (cancelled()) return abandon();
+      const std::optional<RgbaImage> pixels = grab(*display, source);
+      if (cancelled()) return abandon();
+      if (!pixels || pixels->width != source.width() || pixels->height != source.height() ||
+          pixels->pixels.size() != static_cast<qsizetype>(source.width() * source.height() * 4)) {
+        // RC-012, RC-018: a missing or resampled source is a capture-source
+        // failure; no partial image is returned.
+        result.diagnostic = diagnostic::captureSourceFailed;
+        result.sourceDisplays.clear();
+        return result;
+      }
+      const qint64 rowBytes = source.width() * 4;
+      for (qint64 row = 0; row < source.height(); ++row) {
+        if (cancelled()) return abandon();
+        const qint64 target = ((source.top - rect.top + row) * image.width + (source.left - rect.left)) * 4;
+        std::memcpy(image.pixels.data() + target, pixels->pixels.constData() + row * rowBytes,
+                    static_cast<std::size_t>(rowBytes));
+        ++doneRows; progress();
+      }
+      result.sourceDisplays.append(display->id);
     }
-    result.sourceDisplays.append(display->id);
+    if (cancelled()) return abandon();
+    result.image = std::move(image);
+    return result;
+  } catch (...) {
+    result.image.reset(); result.sourceDisplays.clear(); result.cancelled = false;
+    result.diagnostic = diagnostic::captureSourceFailed; return result;
   }
-  result.image = std::move(image);
-  return result;
 }
 
 qint64 transparentBlackPixels(const RgbaImage &image) {

@@ -99,11 +99,23 @@ struct CompositeResult {
   std::optional<RgbaImage> image;
   QStringList sourceDisplays;     // in desktop physical order
   std::optional<QString> diagnostic;
+  bool cancelled = false;
 };
+
+struct CompositeControl {
+  std::function<bool()> cancelled;
+  std::function<void(int)> progress; // 0..100; known row preparation/copy work
+};
+// Matches the current native raster-input ceiling; excessive output fails
+// explicitly, never by resampling. Full capture resource qualification remains
+// Required. Check unsigned extents before signed geometry/byte arithmetic.
+constexpr quint64 kMaximumCaptureDimension = 100000;
+constexpr quint64 kMaximumCapturePixels = 268435456;
 
 // RC-012, RC-023: composites every intersecting display into one image of the
 // rectangle's physical size; pixels no display covers stay transparent black.
-CompositeResult composite(const PhysicalRect &rect, const Topology &topology, const DisplayGrabber &grab);
+CompositeResult composite(const PhysicalRect &rect, const Topology &topology, const DisplayGrabber &grab,
+                          const CompositeControl &control = {});
 qint64 transparentBlackPixels(const RgbaImage &image);
 
 // RC-017, RC-027: persisted last region, format version 1.

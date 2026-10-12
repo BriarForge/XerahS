@@ -54,6 +54,38 @@ image reaches the controller. The portal's file/document lifecycle is external
 authority and needs privacy-policy qualification. Removing a file merely
 because its URI was supplied would risk unrelated user data.
 
+## Confirmed pixel composition
+
+Confirmed bounds stay in the production session's `confirming` state while
+a native worker invokes the Qt Core compositor. The worker owns an immutable
+frozen source, topology and cancellation/progress state; it never accesses the
+controller, overlays, clipboard, files or widgets. Source copying, pixel-format
+preparation and final image conversion happen there. Overlays share the frozen
+image and paint their source subrectangles, avoiding per-display pixel copies
+on the UI thread.
+
+The compositor checks cancellation before allocation, during transparent-row
+initialization, around each source read, during each copied row and before
+publication. Cancellation discards all partial output and source-result
+metadata. Output extent checks precede signed subtraction and byte-size
+arithmetic. The current native raster ceiling (100,000 pixels per dimension,
+268,435,456 pixels total) is also applied to composition; excess output fails
+explicitly without resampling. Complete resource/performance qualification
+and the final configured privacy policy remain Required.
+
+Known row work supplies 0..100 progress to the overlay and command window.
+Native format/copy operations cannot be interrupted internally; cancellation
+is checked around them and the GUI never waits for their worker. Escape or
+Cancel Capture cancels while confirming without a capture result, last-region
+update, file or clipboard action. Late cancelled results cannot publish into
+a new session; controller destruction cancels and releases the UI without
+joining the worker. Existing colour metadata survives preparation; this is
+not a qualified HDR/wide-gamut workflow conversion.
+
+Saving/encoding and the general post-capture pipeline still need their own
+native cooperative cancellation/progress integration. Pixel completion is a
+session terminal state; it is not proof of post-capture action completion.
+
 ## Evidence and required reviews
 
 `PortalScreenshotTest` invokes the production transport and controller on a
@@ -65,13 +97,23 @@ unavailable sources, corrupt/oversized input, unchanged returned files and
 actual overlay Escape. They do not query the host's capture portal or acquire
 real desktop pixels.
 
+Composition tests pause the actual production compositor at deterministic row
+checkpoints on that private bus. They verify GUI responsiveness, Escape before
+worker start/midway/at the final row, unchanged fixture clipboard/files, late
+old-worker isolation, non-blocking destruction and one successful pipeline
+with a correctly sized temporary PNG. Core/native pixel tests cover exact
+placement, transparent gaps, metadata/ownership, bounded extents, exceptions,
+monotone progress and discarded partial pixels.
+
 Native mixed-scale sources, display identity/rotation/colour/availability,
 cursor options, HDR/wide-gamut conversion, last-region persistence/invocation,
-complete overlay controls, cancellation/progress during subsequent pixel
-composition and pipeline work, performance, physical compositor and
+complete overlay controls, cancellation/progress during subsequent pipeline
+work, performance, physical compositor and
 assistive-technology qualification remain Required. Permission-settings
 navigation where available, portal-owned file retention/revocation and human
 capture-permission/privacy/security approval also remain Required.
+The [source-topology review](SOURCE-TOPOLOGY-REVIEW.md) records the remaining
+physical coordinate, identity and frozen multi-source authority evidence.
 
 Protocol references: [Screenshot](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.Screenshot.html),
 [Request](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.Request.html)

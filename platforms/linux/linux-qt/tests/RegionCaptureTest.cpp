@@ -6,6 +6,8 @@
 #include "capture/RegionSession.h"
 
 #include <QTest>
+#include <limits>
+#include <stdexcept>
 
 using namespace xerahs::capture;
 
@@ -58,6 +60,48 @@ private slots:
     });
     QVERIFY(!result.image);
     QCOMPARE(result.diagnostic, std::optional<QString>(diagnostic::captureSourceFailed));
+  }
+  void compositionCancellationDiscardsAllPartialPixels_data() {
+    QTest::addColumn<int>("cancelAt");
+    for (int percent : {0, 20, 50, 80, 100}) QTest::newRow(qPrintable(QString::number(percent))) << percent;
+  }
+  void compositionCancellationDiscardsAllPartialPixels() {
+    QFETCH(int, cancelAt); bool cancelled = false; int last = -1;
+    const auto result = composite({2, 0, 6, 3}, twoDisplays(), labelled, {[&] { return cancelled; }, [&](int percent) {
+      QVERIFY(percent >= last); QVERIFY(percent >= 0 && percent <= 100); last = percent;
+      if (percent >= cancelAt) cancelled = true;
+    }});
+    QVERIFY(result.cancelled); QVERIFY(!result.image); QVERIFY(!result.diagnostic); QVERIFY(result.sourceDisplays.isEmpty());
+  }
+  void progressCompletesWithoutChangingPhysicalPixels() {
+    QList<int> progress;
+    const auto result = composite({2, 0, 6, 3}, twoDisplays(), labelled, {{}, [&](int percent) { progress.append(percent); }});
+    QVERIFY(result.image); QVERIFY(!result.cancelled); QVERIFY(!result.diagnostic);
+    QCOMPARE(progress.first(), 0); QCOMPARE(progress.last(), 100);
+    QCOMPARE(transparentBlackPixels(*result.image), qint64(2));
+    const auto pixel = result.image->pixels.mid((2 * 4 + 2) * 4, 4);
+    QCOMPARE(pixel, QByteArray::fromHex("040202ff"));
+  }
+  void excessiveAndOverflowingRectanglesFailBeforeSourceAccess() {
+    int calls = 0;
+    const auto source = [&](const Display &d, const PhysicalRect &r) { ++calls; return labelled(d, r); };
+    for (const auto &rectangle : {PhysicalRect{0, 0, 100001, 1}, PhysicalRect{0, 0, 100000, 100000},
+        PhysicalRect{std::numeric_limits<qint64>::min(), 0, std::numeric_limits<qint64>::max(), 1}}) {
+      const auto result = composite(rectangle, twoDisplays(), source);
+      QVERIFY(!result.image); QVERIFY(!result.cancelled); QCOMPARE(result.diagnostic, std::optional<QString>(diagnostic::captureSourceFailed));
+    }
+    QCOMPARE(calls, 0);
+    const Topology invalid{{"broken", {std::numeric_limits<qint64>::max(), 0, std::numeric_limits<qint64>::min(), 2}, {}, 1}};
+    const auto corrupt = composite({0, 0, 4, 2}, invalid, source);
+    QVERIFY(!corrupt.image); QCOMPARE(corrupt.diagnostic, std::optional<QString>(diagnostic::captureSourceFailed)); QCOMPARE(calls, 0);
+  }
+  void sourceAndProgressExceptionsBecomeValueFreeFailure() {
+    const auto failed = composite({0, 0, 4, 2}, twoDisplays(), [](const Display &, const PhysicalRect &) -> std::optional<RgbaImage> {
+      throw std::runtime_error("private fixture token");
+    });
+    QCOMPARE(failed.diagnostic, std::optional<QString>(diagnostic::captureSourceFailed)); QVERIFY(!failed.image);
+    const auto callback = composite({0, 0, 4, 2}, twoDisplays(), labelled, {{}, [](int) { throw std::runtime_error("private progress fixture"); }});
+    QCOMPARE(callback.diagnostic, std::optional<QString>(diagnostic::captureSourceFailed)); QVERIFY(!callback.image);
   }
 
   // RC-017, RC-027: a recorded region stays valid on the same topology.
