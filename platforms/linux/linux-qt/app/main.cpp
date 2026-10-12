@@ -10,6 +10,7 @@
 #include "AppearanceDialog.h"
 #include "NativeInstance.h"
 #include "ApplicationWindow.h"
+#include "PipelineHistoryDialog.h"
 #include "shell/ActivationDispatcher.h"
 
 #include <QAction>
@@ -118,7 +119,8 @@ int main(int argc, char *argv[]) {
   // Capture destination preferences remain Required; the current destination
   // is the XDG pictures directory confirmed by the product owner.
   const QString pictures = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
-  CaptureController capture(QDir(pictures.isEmpty() ? QDir::homePath() : pictures).filePath(QStringLiteral("XerahS")));
+  const auto journal = std::make_shared<xerahs::app::NativePipelineJournal>(xerahs::app::NativePipelineJournal::defaultDirectory());
+  CaptureController capture(QDir(pictures.isEmpty() ? QDir::homePath() : pictures).filePath(QStringLiteral("XerahS")), nullptr, {}, {}, {}, journal);
 
   QSystemTrayIcon tray(appIcon());
   tray.setToolTip(QStringLiteral("XerahS"));
@@ -133,12 +135,19 @@ int main(int argc, char *argv[]) {
     if (auto *window = xerahs::app::EditorWindow::open(path)) window->show();
   }, [] { xerahs::app::manageRecentImages(); });
   QAction *folder = menu.addAction(QStringLiteral("Open captures folder"));
+  QAction *history = menu.addAction(QStringLiteral("Capture result history…"));
   QAction *appearance = menu.addAction(QStringLiteral("Editor appearance…"));
   menu.addSeparator();
   QAction *quit = menu.addAction(QStringLiteral("Quit XerahS"));
   tray.setContextMenu(&menu);
   xerahs::app::ApplicationWindow home({{"capture-region", region}, {"cancel-capture", cancelCapture},
-      {"new-image", newImage}, {"open-image", openImage}, {"captures-folder", folder}, {"editor-appearance", appearance}, {"quit", quit}});
+      {"new-image", newImage}, {"open-image", openImage}, {"captures-folder", folder}, {"capture-history", history}, {"editor-appearance", appearance}, {"quit", quit}});
+  QPointer<xerahs::app::PipelineHistoryDialog> historyDialog;
+  QObject::connect(history, &QAction::triggered, &home, [&] {
+    if (historyDialog) { historyDialog->show(); historyDialog->raise(); historyDialog->activateWindow(); return; }
+    historyDialog = new xerahs::app::PipelineHistoryDialog(journal, [&capture] { return capture.busy(); }, &home);
+    historyDialog->show();
+  });
   auto *showHome = new QAction(QStringLiteral("Open XerahS"), &menu); menu.insertAction(region, showHome);
   QObject::connect(showHome, &QAction::triggered, &home, &xerahs::app::ApplicationWindow::activate);
   auto *recovery = new xerahs::app::CaptureRecoveryActions(capture, &home, [](const QImage &image, QWidget *parent) {

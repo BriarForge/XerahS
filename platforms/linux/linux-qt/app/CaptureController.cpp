@@ -40,8 +40,8 @@ const QStringList kDefaultActions = {QStringLiteral("save"), QStringLiteral("ima
 
 }  // namespace
 
-CaptureController::CaptureController(QString saveDirectory, QObject *parent, ScreenshotFactory factory, SnapshotComposer composer, CaptureActionPorts actionPorts)
-    : QObject(parent), m_saveDirectory(std::move(saveDirectory)), m_screenshotFactory(std::move(factory)), m_composer(std::move(composer)), m_actionPorts(std::move(actionPorts)) {
+CaptureController::CaptureController(QString saveDirectory, QObject *parent, ScreenshotFactory factory, SnapshotComposer composer, CaptureActionPorts actionPorts, PipelineJournalStorage journal)
+    : QObject(parent), m_saveDirectory(std::move(saveDirectory)), m_screenshotFactory(std::move(factory)), m_composer(std::move(composer)), m_actionPorts(std::move(actionPorts)), m_journal(std::move(journal)) {
   m_compositionTimer = new QTimer(this); m_compositionTimer->setInterval(10);
   connect(m_compositionTimer, &QTimer::timeout, this, &CaptureController::pollComposition);
 }
@@ -386,7 +386,7 @@ void CaptureController::onOutcome(const SessionOutcome &outcome) {
 void CaptureController::runPipeline(const PhysicalRect &rect) {
   // Keep overlays/focus until native clipboard dispatch; the worker never
   // accesses UI or controller state. The receipt retains confirmed media.
-  auto *pipeline = new CapturePipeline(*m_captured, m_saveDirectory, kCapturePattern, kDefaultActions, this, m_actionPorts);
+  auto *pipeline = new CapturePipeline(*m_captured, m_saveDirectory, kCapturePattern, kDefaultActions, this, m_actionPorts, m_journal);
   m_pipeline = pipeline;
   connect(pipeline, &CapturePipeline::activityChanged, this, [this, pipeline](const QString &text) {
     if (m_pipeline != pipeline) return;

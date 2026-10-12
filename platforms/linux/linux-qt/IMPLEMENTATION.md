@@ -86,8 +86,14 @@ unsaved editor source, explicitly discard only the confirmed current receipt,
 and review a read-only action/result snapshot. Canonical result serialization now
 lives in the production Qt Core library shared by the adapter and native receipt;
 actual file facts, task identity and execution times use a namespaced extension.
-Continue the remaining action catalogue, multi-result recovery UI, configured retention,
-durable journal/restart recovery and native qualification. Continue those native capture requirements alongside the full
+The real save/image-clipboard path now adds a Qt Core write-ahead recorder,
+private atomic journal and native multi-record restart review/confirmed forget
+surface. Real-process kill/reopen and native/storage fixtures distinguish
+unknown outcomes without repeating actions, preserve true successful files and
+leave unsaved pixels unpersisted. Continue artifact/media recovery and bounded
+linked retry, configured retention/pagination, crash-temporary authority,
+shared persisted compatibility, the remaining catalogue and native/human
+qualification under app/JOURNAL-RECOVERY.md. Continue those native capture requirements alongside the full
 application domains recorded in the audit.
 
 Each checkpoint updates requirement traceability, runs native tests and the

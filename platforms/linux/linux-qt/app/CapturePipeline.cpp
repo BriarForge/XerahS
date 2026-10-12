@@ -5,6 +5,7 @@
 #include <QUuid>
 #include <condition_variable>
 #include <mutex>
+#include <stdexcept>
 namespace xerahs::app {
 using namespace xerahs::actions;
 QJsonObject CapturePipelineResult::canonicalResult() const {
@@ -34,10 +35,25 @@ struct CapturePipelineState {
   QString activity;
   bool ready = false;
 };
+namespace {
+class JournaledExecutor final : public ActionExecutor {
+public:
+  JournaledExecutor(CaptureActions &actions, PipelineJournalRecorder &journal) : m_actions(actions), m_journal(journal) {}
+  ActionOutcome run(const ActionRequest &request) override {
+    if (!m_journal.before(request.spec)) return {ActionState::Failed, QStringLiteral("pipeline-journal-unavailable"), {}};
+    return m_actions.run(request);
+  }
+  bool createTemporaryUploadFile() override { return m_actions.createTemporaryUploadFile(); }
+  void removeTemporaryUploadFile() override { m_actions.removeTemporaryUploadFile(); }
+private:
+  CaptureActions &m_actions;
+  PipelineJournalRecorder &m_journal;
+};
+}
 CapturePipeline::CapturePipeline(QImage media, QString directory, QString pattern, QStringList selected,
-                                 QObject *parent, CaptureActionPorts ports)
+                                 QObject *parent, CaptureActionPorts ports, PipelineJournalStorage journal)
     : QObject(parent), m_state(std::make_shared<CapturePipelineState>()), m_media(std::move(media)),
-      m_directory(std::move(directory)), m_pattern(std::move(pattern)), m_selected(std::move(selected)), m_ports(std::move(ports)) {
+      m_directory(std::move(directory)), m_pattern(std::move(pattern)), m_selected(std::move(selected)), m_ports(std::move(ports)), m_journal(std::move(journal)) {
   qRegisterMetaType<CapturePipelineReceipt>();
   m_timer = new QTimer(this); m_timer->setInterval(10); connect(m_timer, &QTimer::timeout, this, &CapturePipeline::poll);
 }
@@ -70,18 +86,28 @@ void CapturePipeline::start() {
     return call->done ? call->result : cancelled();
   };
   auto *worker = QThread::create([state, ports, media = m_media, directory = m_directory,
-                                  pattern = m_pattern, selected = m_selected] {
+                                  pattern = m_pattern, selected = m_selected, storage = m_journal]() mutable {
     state->result->workingMedia = media;
-    CaptureActions actions(media, directory, pattern, ports);
-    PipelineHooks hooks;
-    hooks.actionFinished = [state](const ActionResult &result) { state->result->pipeline.orderedResults.push_back(result); };
     const auto id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    try { state->result->pipeline = runPipeline(id, selected, {}, actions, state->cancellation, hooks); }
+    PipelineJournalRecorder journal(storage, id, selected, QDateTime::currentDateTimeUtc());
+    const auto externalPublish = ports.save.beforePublish;
+    ports.save.beforePublish = [&journal, externalPublish](const QString &path) {
+      if (!journal.beforePublish(path)) throw std::runtime_error("pipeline-journal-unavailable");
+      if (externalPublish) externalPublish(path);
+    };
+    CaptureActions actions(media, directory, pattern, ports); JournaledExecutor executor(actions, journal);
+    PipelineHooks hooks;
+    hooks.actionFinished = [state, &journal, &actions](const ActionResult &result) {
+      state->result->pipeline.orderedResults.push_back(result); journal.completed(result, actions.savedFile() ? std::vector<SavedFileArtifact>{*actions.savedFile()} : std::vector<SavedFileArtifact>{});
+    };
+    try { state->result->pipeline = runPipeline(id, selected, {}, executor, state->cancellation, hooks); }
     catch (...) {
       state->result->pipeline.taskId = id; state->result->pipeline.state = PipelineState::Interrupted;
       state->result->diagnostic = diagnostic::actionFailed;
     }
     state->result->file = actions.savedFile();
+    journal.finish(state->result->pipeline, state->result->file ? std::vector<SavedFileArtifact>{*state->result->file} : std::vector<SavedFileArtifact>{});
+    if (!journal.diagnostic().isEmpty()) state->result->diagnostic = journal.diagnostic();
     { std::lock_guard<std::mutex> lock(state->mutex); state->ready = true; }
   });
   connect(worker, &QThread::finished, worker, &QObject::deleteLater); worker->start(); m_timer->start();

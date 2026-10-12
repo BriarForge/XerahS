@@ -38,13 +38,13 @@ Opening/closing/review-owner destruction never retries an action, changes the
 clipboard, modifies files or consumes the receipt. It does not open an editor
 or require an editor opener. Later captures cannot rewrite this value snapshot.
 
-This is serialization and user review, **not a durable journal**. The latest
-receipt remains in memory only. PCA-012 still requires write-ahead operation and
-artifact authority, restart recovery with interrupted/unknown external outcomes,
-configured retention, multi-result history and crash-temporary cleanup. A JSON
-report is not authority to re-execute, upload or delete anything. No importer,
-automatic retry, restart-media reconstruction or accepted privacy policy is
-inferred from this checkpoint.
+The serializer itself grants no retry, deletion or media authority. The native
+save/image-clipboard path now supplies its canonical results to a separate
+[write-ahead journal and restart history](JOURNAL-RECOVERY.md). That record
+preserves acknowledged outcomes and reports unacknowledged actions as
+interrupted/unknown. It retains no raster bytes and re-executes nothing. Full
+media/artifact recovery, retry, configured retention, crash-temporary cleanup,
+shared persisted compatibility and human/native qualification remain Required.
 
 `PostCapturePipelineTest` independently checks canonical fields, catalogue order,
 namespace isolation, exact integer metadata, UTC times and absence of invented

@@ -1,0 +1,20 @@
+#include "CapturePipeline.h"
+#include <QGuiApplication>
+#include <QThread>
+#include <cstdio>
+using namespace xerahs::app;
+using namespace xerahs::actions;
+int main(int argc, char **argv) {
+  QGuiApplication app(argc, argv);
+  if (argc != 4) return 2;
+  auto journal = std::make_shared<NativePipelineJournal>(QString::fromLocal8Bit(argv[1]));
+  const auto mode = QString::fromLocal8Bit(argv[3]);
+  const auto stop = [] { std::puts("checkpoint"); std::fflush(stdout); QThread::sleep(60); };
+  CaptureActionPorts ports;
+  if (mode == "before-publication") ports.save.beforePublish = [stop](const QString &) { stop(); };
+  ports.clipboard = [mode, stop](const QImage &, const CancellationToken &) { if (mode == "after-save") stop(); return ActionOutcome{}; };
+  QImage image(9, 7, QImage::Format_ARGB32); image.fill(Qt::red);
+  CapturePipeline pipeline(image, QString::fromLocal8Bit(argv[2]), "capture", {"save", "image-clipboard"}, nullptr, ports, journal);
+  QObject::connect(&pipeline, &CapturePipeline::finished, &app, &QCoreApplication::quit);
+  pipeline.start(); return app.exec();
+}

@@ -206,10 +206,16 @@
       "note": "Human-approved isolated plugin hosting, provenance/permissions/IPC/secrets/crash/revocation/audit remain Required."
     },
     "CORE-023": {
-      "status": "not-started",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Task/media history IDs, state/output references, search/pagination/retention/privacy/missing-file/corruption recovery remain Required. Editor recent paths do not implement task/media history."
+      "note": "Native capture result history now loads multiple private versioned journal records on a worker, exposes actual completed/cancelled/interrupted outcomes and unknown pending actions, reviews immutable canonical snapshots and forgets only explicitly confirmed unchanged metadata. Real-process restart and native keyboard/stale-confirmation/file-preservation fixtures cover save/image-clipboard recovery. Full task/media history, pixel reconstruction, shared persisted compatibility, search/pagination/retention/privacy policy, missing-file/corruption recovery, all actions, target matrix and human approvals remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/JOURNAL-RECOVERY.md",
+        "platforms/linux/linux-qt/app/PipelineHistoryDialog.cpp",
+        "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineHistoryDialogTest.cpp"
+      ]
     },
     "CORE-024": {
       "status": "partial",

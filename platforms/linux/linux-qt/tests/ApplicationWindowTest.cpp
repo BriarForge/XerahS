@@ -75,6 +75,15 @@ private slots:
     window.activate(); QVERIFY(window.isVisible()); QVERIFY(consent.isVisible());
     QCOMPARE(QApplication::activeModalWidget(), &consent);
   }
+  void durableHistoryUsesTheSharedActionFromTheWindowAndMenu() {
+    QAction history(QStringLiteral("Capture result history…"));
+    ApplicationWindow window({{"capture-history", &history}}); window.activate();
+    auto *button = window.findChild<QToolButton *>("capture-history"); QVERIFY(button);
+    QSignalSpy invoked(&history, &QAction::triggered); button->setFocus(); QTest::keyClick(button, Qt::Key_Space); QCOMPARE(invoked.count(), 1);
+    bool found = false;
+    for (auto *action : window.menuBar()->actions()) if (auto *menu = action->menu()) found |= menu->actions().contains(&history);
+    QVERIFY(found); history.setEnabled(false); QVERIFY(!button->isEnabled());
+  }
 };
 QTEST_MAIN(ApplicationWindowTest)
 #include "ApplicationWindowTest.moc"

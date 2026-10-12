@@ -1,15 +1,8 @@
 #include "CaptureRecoveryActions.h"
+#include "PipelineResultDialog.h"
 #include <QAction>
 #include <QApplication>
 #include <QMessageBox>
-#include <QDialogButtonBox>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QLabel>
-#include <QPlainTextEdit>
-#include <QPushButton>
-#include <QTreeWidget>
-#include <QVBoxLayout>
 namespace xerahs::app {
 CaptureRecoveryActions::CaptureRecoveryActions(CaptureController &capture, QWidget *dialogParent,
                                                CapturedImageOpener opener, QObject *parent)
@@ -59,44 +52,14 @@ void CaptureRecoveryActions::review() {
   const auto operation = ++m_operation; m_running = true;
   const QPointer<CaptureRecoveryActions> guard(this);
   updateAvailability(); if (!guard) return;
-  auto *dialog = new QDialog(m_dialogParent);
-  dialog->setObjectName(QStringLiteral("retainedCaptureResultDialog"));
-  dialog->setWindowTitle(QStringLiteral("Retained capture result")); dialog->setAttribute(Qt::WA_DeleteOnClose);
-  dialog->resize(680, 420); m_dialog = dialog;
-  auto *layout = new QVBoxLayout(dialog);
-  auto *summary = new QLabel(QStringLiteral("Pipeline: %1. Completed describes a finished run; individual actions can still fail.")
-                             .arg(report.value("pipeline_state").toString()), dialog);
-  summary->setTextFormat(Qt::PlainText); summary->setWordWrap(true); layout->addWidget(summary);
-  auto *table = new QTreeWidget(dialog); table->setObjectName(QStringLiteral("captureActionResults"));
-  table->setAccessibleName(QStringLiteral("Capture action outcomes")); table->setRootIsDecorated(false);
-  table->setHeaderLabels({QStringLiteral("Action"), QStringLiteral("State"), QStringLiteral("Diagnostic"), QStringLiteral("Input artifact")});
-  for (const auto &value : report.value("ordered_results").toArray()) {
-    const auto action = value.toObject();
-    new QTreeWidgetItem(table, {action.value("action").toString(), action.value("state").toString(),
-        action.value("diagnostic").toString(), action.value("input_artifact").toString()});
-  }
-  for (int column = 0; column < 4; ++column) table->resizeColumnToContents(column);
-  layout->addWidget(table);
-  auto *privacy = new QLabel(QStringLiteral("Report details contain private saved-file paths and naming settings. Image pixels, clipboard contents and recognized text are excluded. "
-                                             "Reviewing does not retry actions, modify files or change the clipboard."), dialog);
-  privacy->setTextFormat(Qt::PlainText); privacy->setWordWrap(true); layout->addWidget(privacy);
-  auto *details = new QPlainTextEdit(dialog); details->setObjectName(QStringLiteral("captureResultJson"));
-  details->setAccessibleName(QStringLiteral("Capture result report JSON")); details->setReadOnly(true);
-  details->setPlainText(QString::fromUtf8(QJsonDocument(report).toJson(QJsonDocument::Indented))); details->hide();
-  auto *toggle = new QPushButton(QStringLiteral("Show report details"), dialog);
-  toggle->setCheckable(true);
-  connect(toggle, &QPushButton::toggled, details, &QWidget::setVisible);
-  connect(toggle, &QPushButton::toggled, toggle, [toggle](bool visible) { toggle->setText(visible ? QStringLiteral("Hide report details") : QStringLiteral("Show report details")); });
-  layout->addWidget(toggle); layout->addWidget(details);
-  auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, dialog); layout->addWidget(buttons);
-  connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+  auto *dialog = makePipelineResultDialog(report, m_dialogParent); m_dialog = dialog;
   const auto restore = [this, operation] {
     if (operation != m_operation || !m_running) return;
     m_dialog = nullptr; m_running = false; updateAvailability();
   };
   connect(dialog, &QDialog::finished, this, restore);
   connect(dialog, &QObject::destroyed, this, restore);
-  dialog->open(); table->setFocus();
+  dialog->open();
 }
 void CaptureRecoveryActions::discard() {
   if (m_running || !m_capture || m_capture->busy() || QApplication::activeModalWidget()) return;

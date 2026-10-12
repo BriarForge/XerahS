@@ -31,7 +31,7 @@ class CaptureController final : public QObject {
 
 public:
   using ScreenshotFactory = std::function<PortalScreenshot *(QObject *)>;
-  explicit CaptureController(QString saveDirectory, QObject *parent = nullptr, ScreenshotFactory factory = {}, SnapshotComposer composer = {}, CaptureActionPorts actionPorts = {});
+  explicit CaptureController(QString saveDirectory, QObject *parent = nullptr, ScreenshotFactory factory = {}, SnapshotComposer composer = {}, CaptureActionPorts actionPorts = {}, PipelineJournalStorage journal = {});
   ~CaptureController() override;
 
   static QString instructions();
@@ -87,6 +87,7 @@ private:
   int m_reportedProgress = -1;
   quint64 m_generation = 0;
   CaptureActionPorts m_actionPorts;
+  PipelineJournalStorage m_journal;
   QPointer<CapturePipeline> m_pipeline;
   QString m_pipelineActivity;
   CapturePipelineReceipt m_lastPipelineResult;

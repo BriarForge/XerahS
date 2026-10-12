@@ -1,5 +1,6 @@
 #pragma once
 #include "CaptureActions.h"
+#include "NativePipelineJournal.h"
 #include <QObject>
 #include <memory>
 class QTimer;
@@ -19,7 +20,7 @@ class CapturePipeline final : public QObject {
   Q_OBJECT
 public:
   CapturePipeline(QImage media, QString directory, QString pattern, QStringList selected,
-                  QObject *parent = nullptr, CaptureActionPorts ports = {});
+                  QObject *parent = nullptr, CaptureActionPorts ports = {}, PipelineJournalStorage journal = {});
   ~CapturePipeline() override;
   void start();
   void cancel();
@@ -33,6 +34,7 @@ private:
   QString m_directory, m_pattern;
   QStringList m_selected;
   CaptureActionPorts m_ports;
+  PipelineJournalStorage m_journal;
   QString m_activity;
   QTimer *m_timer = nullptr;
   bool m_started = false;
