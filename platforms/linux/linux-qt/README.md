@@ -14,6 +14,8 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 | `EDITOR-SETTINGS-001` | Persisted recents, drawing/appearance defaults, toolbar placements/hotkeys and normal/maximized window state over private atomic storage; live desktop appearance, creation-only styles, toolbar customization, display recovery and memory opt-out; remaining preferences, complete ledger and review gates pending | All 3 published vectors plus core/storage/recovery, native controls/dispatch, private desktop transport, window lifecycle/display ports, restart, history isolation and failure tests; [traceability](traceability/EDITOR-SETTINGS-001.json) |
 
 The next implementation steps are tracked in [IMPLEMENTATION.md](IMPLEMENTATION.md).
+The [full Linux scope audit](CONTRACT-AUDIT.md) records the remaining application,
+capture, recording, upload, workflow, editor, integration and release work.
 
 The native test suite requires `dbus-run-session` (the `dbus-daemon` package on
 Ubuntu). Desktop appearance transport tests use a private bus with no service
