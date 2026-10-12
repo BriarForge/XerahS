@@ -166,6 +166,9 @@ int main(int argc, char *argv[]) {
   QObject::connect(&capture, &CaptureController::compositionProgressChanged, &home, [&home](int percent) {
     home.showProgress(QStringLiteral("Region capture"), percent);
   });
+  QObject::connect(&capture, &CaptureController::pipelineActivityChanged, &home, [&home](const QString &text) {
+    home.showActivity(QStringLiteral("Capture actions"), text);
+  });
   QObject::connect(&capture, &CaptureController::busyChanged, &home, [&home](bool busy) {
     if (!busy) home.cancelPendingProgress();
   });

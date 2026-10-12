@@ -11,7 +11,6 @@
 #include <QScreen>
 #include <QThread>
 #include <QTimer>
-#include <QUuid>
 
 #include <cmath>
 #include <atomic>
@@ -41,14 +40,15 @@ const QStringList kDefaultActions = {QStringLiteral("save"), QStringLiteral("ima
 
 }  // namespace
 
-CaptureController::CaptureController(QString saveDirectory, QObject *parent, ScreenshotFactory factory, SnapshotComposer composer)
-    : QObject(parent), m_saveDirectory(std::move(saveDirectory)), m_screenshotFactory(std::move(factory)), m_composer(std::move(composer)) {
+CaptureController::CaptureController(QString saveDirectory, QObject *parent, ScreenshotFactory factory, SnapshotComposer composer, CaptureActionPorts actionPorts)
+    : QObject(parent), m_saveDirectory(std::move(saveDirectory)), m_screenshotFactory(std::move(factory)), m_composer(std::move(composer)), m_actionPorts(std::move(actionPorts)) {
   m_compositionTimer = new QTimer(this); m_compositionTimer->setInterval(10);
   connect(m_compositionTimer, &QTimer::timeout, this, &CaptureController::pollComposition);
 }
 
 CaptureController::~CaptureController() {
   m_compositionTimer->stop();
+  if (m_pipeline) { disconnect(m_pipeline, nullptr, this, nullptr); m_pipeline->cancel(); }
   if (m_composition) { m_composition->cancelled.store(true); m_composition.reset(); }
   if (m_portal) {
     auto *portal = m_portal.data(); disconnect(portal, nullptr, this, nullptr);
@@ -67,6 +67,7 @@ QString CaptureController::instructions() {
 void CaptureController::captureRegion() {
   if (m_busy) return;
   ++m_generation;
+  m_pendingPipelineCancellation = false;
   m_busy = true;
   m_portal = m_screenshotFactory ? m_screenshotFactory(this) : new PortalScreenshot(this);
   if (!m_portal) {
@@ -188,6 +189,8 @@ void CaptureController::pointerUp(PhysicalPoint point) {
 }
 
 void CaptureController::cancel() {
+  if (m_pipeline) { m_pipeline->cancel(); return; }
+  if (m_session && m_session->state() == SessionState::Completed) m_pendingPipelineCancellation = true;
   if (m_composition) m_composition->cancelled.store(true);
   if (m_portal) { m_portal->cancel(); return; }
   if (!m_session) return;
@@ -362,6 +365,7 @@ void CaptureController::onOutcome(const SessionOutcome &outcome) {
     const QPointer<CaptureController> guard(this);
     if (outcome.state == SessionState::Completed && outcome.rectangle && m_captured) {
       runPipeline(*outcome.rectangle);
+      return; // cleanup follows the actual pipeline receipt
     } else if (outcome.diagnostic) {
       const QString title = outcome.state == SessionState::Failed ? QStringLiteral("Region capture failed")
                                                                   : QStringLiteral("Region capture cancelled");
@@ -375,32 +379,57 @@ void CaptureController::onOutcome(const SessionOutcome &outcome) {
 }
 
 void CaptureController::runPipeline(const PhysicalRect &rect) {
-  // Runs while the overlay still has focus, so the clipboard has a valid
-  // Wayland input serial.
-  CaptureActions actions(*m_captured, m_saveDirectory, kCapturePattern);
-  xerahs::actions::CancellationToken token;
-  const xerahs::actions::PipelineResult result =
-      xerahs::actions::runPipeline(QUuid::createUuid().toString(QUuid::WithoutBraces), kDefaultActions, {}, actions, token);
+  // Keep overlays/focus until native clipboard dispatch; the worker never
+  // accesses UI or controller state. The receipt retains confirmed media.
+  auto *pipeline = new CapturePipeline(*m_captured, m_saveDirectory, kCapturePattern, kDefaultActions, this, m_actionPorts);
+  m_pipeline = pipeline;
+  connect(pipeline, &CapturePipeline::activityChanged, this, [this, pipeline](const QString &text) {
+    if (m_pipeline != pipeline) return;
+    m_pipelineActivity = text;
+    const QPointer<CaptureController> guard(this);
+    for (auto &overlay : m_overlays) { overlay->announce(text); if (!guard) return; }
+    emit pipelineActivityChanged(text); if (guard) repaint();
+  });
+  connect(pipeline, &CapturePipeline::finished, this, [this, pipeline, rect](const CapturePipelineReceipt &result) {
+    if (m_pipeline != pipeline || !m_busy) return;
+    m_pipeline = nullptr; pipeline->deleteLater(); m_lastPipelineResult = result;
+    const QPointer<CaptureController> guard(this);
+    publishPipeline(rect, result);
+    if (guard) { closeOverlays(); finish(); }
+  });
+  const QPointer<CapturePipeline> pipelineGuard(pipeline);
+  if (m_pendingPipelineCancellation) pipeline->cancel();
+  if (pipelineGuard) pipelineGuard->start();
+}
+
+void CaptureController::publishPipeline(const PhysicalRect &rect, const CapturePipelineReceipt &receipt) {
+  const auto &result = receipt->pipeline;
 
   QStringList done;
   QStringList failed;
   for (const auto &action : result.orderedResults) {
+    const auto label = action.action == QStringLiteral("save") ? QStringLiteral("Save image") :
+        action.action == QStringLiteral("image-clipboard") ? QStringLiteral("Copy image") : action.action;
     if (action.state == xerahs::actions::ActionState::Succeeded) {
-      if (action.action == QStringLiteral("save") && actions.savedPath()) {
-        done.append(QStringLiteral("Saved %1").arg(QFileInfo(*actions.savedPath()).fileName()));
+      if (action.action == QStringLiteral("save") && receipt->file) {
+        done.append(QStringLiteral("Saved %1").arg(QFileInfo(receipt->file->path).fileName()));
       } else if (action.action == QStringLiteral("image-clipboard")) {
         done.append(QStringLiteral("copied to clipboard"));
       }
+      if (action.cancellationArrivedDuring) done.append(QStringLiteral("%1 finished after cancellation was requested").arg(label));
     } else {
-      failed.append(QStringLiteral("%1 %2 (%3)")
-                        .arg(action.action, xerahs::actions::actionStateName(action.state),
-                             action.diagnostic.value_or(QString())));
+      auto description = label + QStringLiteral(" ") + xerahs::actions::actionStateName(action.state);
+      if (action.diagnostic) description += QStringLiteral(" (%1)").arg(*action.diagnostic);
+      failed.append(description);
     }
   }
   const QString size = QStringLiteral("%1 × %2").arg(rect.width()).arg(rect.height());
   QString body = done.join(QStringLiteral(", "));
   if (!failed.isEmpty()) body += (body.isEmpty() ? QString() : QStringLiteral("; ")) + failed.join(QStringLiteral("; "));
-  emit notify(QStringLiteral("Region captured · %1").arg(size), body, failed.isEmpty());
+  if (!receipt->diagnostic.isEmpty()) body += QStringLiteral("; ") + receipt->diagnostic;
+  const auto title = result.state == xerahs::actions::PipelineState::Cancelled ? QStringLiteral("Capture actions cancelled · %1") :
+      result.state == xerahs::actions::PipelineState::Interrupted ? QStringLiteral("Capture actions interrupted · %1") : QStringLiteral("Region captured · %1");
+  emit notify(title.arg(size), body, failed.isEmpty() && receipt->diagnostic.isEmpty());
 }
 
 void CaptureController::closeOverlays() {
@@ -413,6 +442,7 @@ void CaptureController::finish() {
   m_compositionTimer->stop();
   if (m_composition) { m_composition->cancelled.store(true); m_composition.reset(); }
   m_reportedProgress = -1;
+  m_pipelineActivity.clear();
   for (const auto &connection : m_screenConnections) disconnect(connection);
   m_screenConnections.clear();
   m_session.reset();

@@ -10,26 +10,32 @@
     "platforms/linux/linux-qt/app/CaptureActions.h",
     "platforms/linux/linux-qt/app/CaptureActions.cpp",
     "platforms/linux/linux-qt/app/CaptureSave.h",
-    "platforms/linux/linux-qt/app/CaptureSave.cpp"
+    "platforms/linux/linux-qt/app/CaptureSave.cpp",
+    "platforms/linux/linux-qt/app/CapturePipeline.h",
+    "platforms/linux/linux-qt/app/CapturePipeline.cpp",
+    "platforms/linux/linux-qt/app/CaptureController.cpp"
   ],
   "requirements": {
     "PCA-001": {
       "status": "implemented",
       "vectors": [],
-      "note": "One result per selected action in catalogue order; unknown IDs are reported in ignoredSelection and never run."
+      "note": "One result per selected action in catalogue order; unknown IDs are reported in ignoredSelection and never run.",
+      "disposition": "Required"
     },
     "PCA-002": {
       "status": "implemented",
       "vectors": [
         "catalogue-order-not-selection-order"
-      ]
+      ],
+      "disposition": "Required"
     },
     "PCA-003": {
       "status": "implemented",
       "vectors": [
         "failed-transformation-keeps-last-valid-media"
       ],
-      "note": "The engine tracks the working media by the last successful transformation; ActionExecutor owns the media and must not touch it on failure."
+      "note": "The engine tracks the working media by the last successful transformation; ActionExecutor owns the media and must not touch it on failure.",
+      "disposition": "Required"
     },
     "PCA-004": {
       "status": "implemented",
@@ -38,14 +44,20 @@
         "missing-file-dependency",
         "save-failure-fallbacks",
         "ocr-clipboard-depends-on-ocr"
-      ]
+      ],
+      "disposition": "Required"
     },
     "PCA-005": {
       "status": "implemented",
       "vectors": [
         "clipboard-failure-continues"
       ],
-      "note": "No action failure discards working media; workingMediaRetained is always true."
+      "note": "Native pipeline receipts retain confirmed working media and any completed save artifact after independent save/clipboard failure or cancellation. The controller retains the latest receipt in memory, replacing it only with another completed receipt. Private native tests verify exact media/files after failed encoding, clipboard exceptions and cancelled actions. Full recovery UI, configurable retention/discard policy, other action coverage and review/qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+      ],
+      "disposition": "Required"
     },
     "PCA-006": {
       "status": "implemented",
@@ -53,7 +65,8 @@
         "clipboard-failure-continues",
         "upload-without-save-uses-temporary-file"
       ],
-      "note": "Temporary file creation and cleanup are covered by platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp."
+      "note": "Temporary file creation and cleanup are covered by platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp.",
+      "disposition": "Required"
     },
     "PCA-007": {
       "status": "partial",
@@ -63,14 +76,16 @@
       "note": "Native PNG saving encodes once into an owner-private temporary file and atomically publishes through Linux RENAME_NOREPLACE. Existing files, dangling symlinks and racing writers are never replaced; collisions retry fresh random names. CaptureActions records the absolute native path, actual media type/byte length and immutable filename-generation context. Independent native tests cover exact pixels, concurrent/racing publication, private permissions, cleanup and value-free failures. Full action artifact/result serialization, durable recovery, configured counter/storage integration, all save variants and native review/target qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "PCA-008": {
       "status": "partial",
       "vectors": [
         "catalogue-order-not-selection-order"
       ],
-      "note": "Annotation runs before save and a successful result becomes working media. Offering the re-editable document to persistence arrives with the ImageEditor."
+      "note": "Annotation runs before save and a successful result becomes working media. Offering the re-editable document to persistence arrives with the ImageEditor.",
+      "disposition": "Required"
     },
     "PCA-009": {
       "status": "partial",
@@ -78,7 +93,8 @@
         "selection-cancel",
         "selection-window-replaces-action-set"
       ],
-      "note": "Selection cancel and replacement are implemented. Persisting a workflow change only on explicit user choice arrives with the selection UI."
+      "note": "Selection cancel and replacement are implemented. Persisting a workflow change only on explicit user choice arrives with the selection UI.",
+      "disposition": "Required"
     },
     "PCA-010": {
       "status": "implemented",
@@ -86,39 +102,59 @@
         "selection-cancel",
         "cancel-between-actions",
         "cancel-during-uninterruptible-action"
-      ]
+      ],
+      "note": "The same Qt Core engine runs native actions on a worker with a reachable cancellation token. Escape and Cancel Capture request cancellation while saving; an uninterruptible save may finish, records cancellation_arrived_during, and later clipboard work is cancelled. A claimed native clipboard call retains its actual outcome even if cancellation arrives during it; unclaimed calls cannot publish late. Native tests cover before-start, save/clipboard races, GUI responsiveness, destruction and actual overlay Escape. Full action catalogue and supported native matrix qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+      ],
+      "disposition": "Required"
     },
     "PCA-011": {
       "status": "not-started",
       "vectors": [],
-      "note": "Retry needs the persisted pipeline result from PCA-012."
+      "note": "Retry needs the persisted pipeline result from PCA-012.",
+      "disposition": "Required"
     },
     "PCA-012": {
       "status": "not-started",
       "vectors": [],
-      "note": "Durable pipeline results and recovery (interrupted state) arrive with history persistence."
+      "note": "Durable pipeline results and recovery (interrupted state) arrive with history persistence.",
+      "disposition": "Required"
     },
     "PCA-013": {
       "status": "partial",
       "vectors": [],
-      "note": "The engine emits stable diagnostic codes. Native capture-save encoding, publication and hook exceptions return value-free codes; private file paths and filename context remain artifact data rather than ordinary diagnostics. Complete native action privacy/diagnostic and human review coverage remain Required."
+      "note": "The engine emits stable diagnostic codes. Native capture-save encoding, publication and hook exceptions return value-free codes; private file paths and filename context remain artifact data rather than ordinary diagnostics. Complete native action privacy/diagnostic and human review coverage remain Required.",
+      "disposition": "Required"
     },
     "PCA-014": {
       "status": "implemented",
       "vectors": [],
-      "note": "One engine, runPipeline(), serves configured workflows, quick actions, and conformance. No UI surface exists yet."
+      "note": "One engine, runPipeline(), serves configured workflows, quick actions, and conformance. No UI surface exists yet.",
+      "disposition": "Required"
     },
     "PCA-015": {
       "status": "implemented",
       "vectors": [],
-      "note": "No shared state between runs; isolation is covered by platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp."
+      "note": "Core seams and native worker jobs isolate selected-action snapshots, media, files, receipts and cancellation by unique task ID. Real parallel native pipelines prove one cancelled job cannot corrupt another successful job. Configured workflow counters, temporary upload files, remaining actions and full persistence/target qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+      ],
+      "disposition": "Required"
     },
     "PCA-016": {
       "status": "implemented",
       "vectors": [
         "all"
       ],
-      "note": "The adapter emits the canonical result shape with no extension object."
+      "note": "All published vectors pass through the production Core engine. Native receipts add confirmed media and actual save artifact metadata in typed native structures; complete canonical external serialization, durable history/recovery and namespace integration remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+      ],
+      "disposition": "Required"
     },
     "PCA-017": {
       "status": "implemented",
@@ -126,7 +162,8 @@
         "catalogue-order-not-selection-order",
         "before-upload-declined"
       ],
-      "note": "The compiled catalogue is checked against actions.json by platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp."
+      "note": "The compiled catalogue is checked against actions.json by platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp.",
+      "disposition": "Required"
     },
     "PCA-018": {
       "status": "implemented",
@@ -136,7 +173,8 @@
         "save-failure-fallbacks",
         "save-as-satisfies-saved-file",
         "ocr-clipboard-depends-on-ocr"
-      ]
+      ],
+      "disposition": "Required"
     },
     "PCA-019": {
       "status": "implemented",
@@ -144,20 +182,23 @@
         "upload-without-save-uses-temporary-file",
         "upload-temporary-not-permitted",
         "save-failure-fallbacks"
-      ]
+      ],
+      "disposition": "Required"
     },
     "PCA-020": {
       "status": "implemented",
       "vectors": [
         "before-upload-declined"
-      ]
+      ],
+      "disposition": "Required"
     },
     "PCA-021": {
       "status": "implemented",
       "vectors": [
         "delete-guard-after-failed-upload",
         "delete-after-successful-upload"
-      ]
+      ],
+      "disposition": "Required"
     },
     "PCA-022": {
       "status": "implemented",
@@ -167,14 +208,16 @@
         "failed-transformation-keeps-last-valid-media",
         "cancel-between-actions",
         "cancel-during-uninterruptible-action"
-      ]
+      ],
+      "disposition": "Required"
     },
     "PCA-023": {
       "status": "implemented",
       "vectors": [
         "selection-window-replaces-action-set",
         "legacy-flags-map-to-actions"
-      ]
+      ],
+      "disposition": "Required"
     }
   }
 }

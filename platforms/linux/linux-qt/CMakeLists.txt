@@ -91,6 +91,8 @@ add_executable(xerahs
   app/CaptureSave.h
   app/CaptureController.cpp
   app/CaptureController.h
+  app/CapturePipeline.cpp
+  app/CapturePipeline.h
   app/SnapshotComposition.cpp
   app/SnapshotComposition.h
   app/EditorSource.cpp
@@ -135,6 +137,15 @@ target_link_libraries(xerahs PRIVATE xerahs_native_instance xerahs_editor_codecs
 target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
 enable_testing()
+find_program(XERAHS_DBUS_RUN_SESSION dbus-run-session REQUIRED)
+add_executable(capture-pipeline-test tests/CapturePipelineTest.cpp app/CapturePipeline.cpp app/CapturePipeline.h
+  app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h)
+set_target_properties(capture-pipeline-test PROPERTIES AUTOMOC ON)
+target_include_directories(capture-pipeline-test PRIVATE app)
+target_link_libraries(capture-pipeline-test PRIVATE xerahs_core Qt6::Gui Qt6::Test)
+add_test(NAME capture-pipeline COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-pipeline-test>)
+set_tests_properties(capture-pipeline PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
 add_executable(capture-save-test tests/CaptureSaveTest.cpp app/CaptureSave.cpp app/CaptureSave.h)
 set_target_properties(capture-save-test PROPERTIES AUTOMOC ON)
 target_include_directories(capture-save-test PRIVATE app)
@@ -199,10 +210,10 @@ add_test(NAME native-editor-appearance COMMAND native-editor-appearance-test)
 set_tests_properties(native-editor-appearance PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 
 # Desktop transport tests run on their own bus, isolated from live settings.
-find_program(XERAHS_DBUS_RUN_SESSION dbus-run-session REQUIRED)
 add_executable(portal-screenshot-test tests/PortalScreenshotTest.cpp app/PortalScreenshot.cpp app/PortalScreenshot.h
                app/CaptureController.cpp app/CaptureController.h app/CaptureActions.cpp app/CaptureActions.h
                app/CaptureSave.cpp app/CaptureSave.h
+               app/CapturePipeline.cpp app/CapturePipeline.h
                app/SnapshotComposition.cpp app/SnapshotComposition.h
                app/RegionOverlay.cpp app/RegionOverlay.h)
 set_target_properties(portal-screenshot-test PROPERTIES AUTOMOC ON)

@@ -53,8 +53,15 @@ void ApplicationWindow::showResult(const QString &title, const QString &body, bo
 }
 void ApplicationWindow::showProgress(const QString &title, int percent) {
   m_progressTitle = title;
+  m_progress->setRange(0, 100);
   m_progress->setValue(qBound(0, percent, 100)); m_progress->show();
   const auto text = title + QStringLiteral(": Preparing pixels · %1% · Cancel Capture or Escape stops this operation.").arg(m_progress->value());
+  m_status->setText(text); m_status->setAccessibleDescription(text);
+  QAccessibleEvent event(m_status, QAccessible::DescriptionChanged); QAccessible::updateAccessibility(&event);
+}
+void ApplicationWindow::showActivity(const QString &title, const QString &body) {
+  m_progressTitle = title; m_progress->setRange(0, 0); m_progress->show();
+  const auto text = title + QStringLiteral(": ") + body;
   m_status->setText(text); m_status->setAccessibleDescription(text);
   QAccessibleEvent event(m_status, QAccessible::DescriptionChanged); QAccessible::updateAccessibility(&event);
 }

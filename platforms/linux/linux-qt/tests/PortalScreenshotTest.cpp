@@ -383,6 +383,34 @@ private slots:
     const QImage output(QDir(controller.saveDirectory()).filePath(files.first())); QCOMPARE(output.size(), QSize(30, 25));
     QTest::qWait(30); QCOMPARE(notified.count(), 1); QVERIFY(!overlayExists());
   }
+  void actualOverlayEscapeDuringSavingKeepsTheCompletedFileAndCancelsClipboard() {
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto before = bytes(path);
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    auto gate = std::make_shared<CompositionGate>(); ReleaseGate release{gate};
+    CaptureActionPorts ports;
+    ports.save.beforePublish = [gate](const QString &) {
+      gate->entered.store(true); QElapsedTimer deadline; deadline.start();
+      while (!gate->released.load() && deadline.elapsed() < 10000) QThread::msleep(1);
+      if (!gate->released.load()) throw 1;
+    };
+    QApplication::clipboard()->setText("saving fixture clipboard");
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, {}, ports);
+    QSignalSpy notified(&controller, &CaptureController::notify); controller.captureRegion(); QTRY_VERIFY(overlayExists());
+    controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(gate->entered.load());
+    QWidget *overlay = nullptr;
+    for (auto *widget : QApplication::topLevelWidgets()) if (widget->windowTitle() == u"XerahS region capture") overlay = widget;
+    QVERIFY(overlay); QTest::keyClick(overlay, Qt::Key_Escape);
+    QVERIFY(controller.busy()); QVERIFY(controller.pipelineActivity().contains("Cancellation requested"));
+    bool heartbeat = false; QTimer::singleShot(0, [&] { heartbeat = true; }); QTRY_VERIFY(heartbeat);
+    gate->released.store(true); QTRY_VERIFY(!controller.busy()); QCOMPARE(notified.count(), 1); QVERIFY(!overlayExists());
+    const auto result = controller.lastPipelineResult(); QVERIFY(result); QVERIFY(result->file);
+    QCOMPARE(result->pipeline.state, xerahs::actions::PipelineState::Cancelled);
+    QCOMPARE(result->pipeline.orderedResults[0].state, xerahs::actions::ActionState::Succeeded); QVERIFY(result->pipeline.orderedResults[0].cancellationArrivedDuring);
+    QCOMPARE(result->pipeline.orderedResults[1].state, xerahs::actions::ActionState::Cancelled);
+    QCOMPARE(QImage(result->file->path).size(), QSize(30, 25)); QCOMPARE(result->workingMedia.size(), QSize(30, 25));
+    QCOMPARE(QApplication::clipboard()->text(), QString("saving fixture clipboard")); QCOMPARE(bytes(path), before);
+    QVERIFY(notified.first().first().toString().contains("cancelled"));
+  }
 };
 QTEST_MAIN(PortalScreenshotTest)
 #include "PortalScreenshotTest.moc"

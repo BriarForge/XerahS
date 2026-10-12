@@ -17,7 +17,9 @@
     "platforms/linux/linux-qt/app/RegionOverlay.h",
     "platforms/linux/linux-qt/app/main.cpp",
     "platforms/linux/linux-qt/app/SnapshotComposition.h",
-    "platforms/linux/linux-qt/app/SnapshotComposition.cpp"
+    "platforms/linux/linux-qt/app/SnapshotComposition.cpp",
+    "platforms/linux/linux-qt/app/CapturePipeline.h",
+    "platforms/linux/linux-qt/app/CapturePipeline.cpp"
   ],
   "requirements": {
     "RC-001": {
@@ -82,7 +84,7 @@
       "vectors": [
         "cancel-selected"
       ],
-      "note": "Core cancellation is terminal and side-effect free. Native Cancel Capture closes pending portal requests; overlay Escape and Cancel Capture also cancel confirming composition without capture publication, file or clipboard changes. A worker owns frozen inputs and cooperative cancellation; the GUI never joins it. Private-bus production tests pause the actual compositor before start, midway and at the final row, prove responsive Escape, unchanged fixtures, non-blocking destruction and late-worker isolation. Cancellation/progress during encoding and subsequent pipeline work, and physical consent/overlay qualification remain Required.",
+      "note": "Core and native non-terminal capture cancellation discard all partial pixels and start no actions. Pending portal, actual overlay and confirming worker cancellation have private-bus production evidence. After pixel completion, selection is terminal; the visible action-phase hint gives Escape/Cancel Capture separate PCA-010 pipeline authority. An already running save may finish and retain its artifact while later clipboard work is cancelled; this does not revoke or repeat the completed capture. Full catalogue/native matrix/permission qualification remain Required.",
       "disposition": "Required"
     },
     "RC-009": {
@@ -141,7 +143,7 @@
       "vectors": [
         "terminal-events-ignored"
       ],
-      "note": "Core terminal-event vectors pass. Native Screenshot and confirming composition publish one terminal result; duplicate starts/responses/selection inputs, late cancelled workers and controller replacement/destruction have production tests. A successful private fixture runs one save/clipboard pipeline. General pipeline cancellation/terminal coverage and full physical native qualification remain Required.",
+      "note": "Core terminal-event vectors pass. Native Screenshot and confirming composition produce one capture outcome; repeated selection inputs cannot produce another image. The separate post-capture engine produces one immutable receipt and respects true completed/cancelled action states. Private-bus/offscreen tests cover duplicate input, late cancelled workers, controller replacement/destruction, one successful pipeline and overlay Escape during native saving. Full native catalogue and physical terminal qualification remain Required.",
       "disposition": "Required"
     },
     "RC-017": {
@@ -248,6 +250,7 @@
     "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
     "platforms/linux/linux-qt/tests/SnapshotCompositionTest.cpp",
     "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
-    "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md"
+    "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md",
+    "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp"
   ]
 }

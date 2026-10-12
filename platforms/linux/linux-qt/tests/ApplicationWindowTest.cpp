@@ -29,6 +29,10 @@ private slots:
     window.cancelPendingProgress(); QVERIFY(progress->isHidden()); QCOMPARE(status->text(), QString("Capture: Saved"));
     window.showProgress("Region capture", 10); window.showResult("Capture", "Failed", false);
     window.cancelPendingProgress(); QCOMPARE(status->text(), QString("Capture: Failed"));
+    window.showActivity("Capture actions", "Saving capture"); QVERIFY(!progress->isHidden());
+    QCOMPARE(progress->minimum(), 0); QCOMPARE(progress->maximum(), 0);
+    QCOMPARE(status->text(), QString("Capture actions: Saving capture"));
+    window.showProgress("Region capture", 50); QCOMPARE(progress->maximum(), 100); QCOMPARE(progress->value(), 50);
   }
   void nativeKeyboardAndMenuUseTheActualSharedOperationAndAvailability() {
     QAction capture(QStringLiteral("Capture region")), cancel(QStringLiteral("Cancel capture"));

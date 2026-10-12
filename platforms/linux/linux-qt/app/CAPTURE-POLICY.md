@@ -86,16 +86,44 @@ Native PNG saving encodes once into a private same-filesystem temporary file
 (mode 0600), flushes its bytes, and publishes with Linux `RENAME_NOREPLACE`.
 Existing destinations, including dangling symlinks and racing writers, are
 preserved. Random name collisions retry without re-encoding; failures remove
-only the owned temporary file. Unsupported atomic-publication mechanisms fail
+only the owned temporary file on ordinary failure/exit. A process crash can
+leave an owner-private encoded temporary file; durable journal-based recovery
+and policy-governed cleanup remain Required. Unsupported atomic-publication mechanisms fail
 explicitly. The native save artifact records its absolute path, media type,
 actual byte length and immutable naming context. These values are artifact data,
 not ordinary diagnostics. This does not provide the durable pipeline journal
 and restart/recovery behavior required by PCA-012. The filesystem/native target
 matrix and human privacy/security review remain Required.
 
-Saving/encoding and the general post-capture pipeline still need their own
-native cooperative cancellation/progress integration. Pixel completion is a
-session terminal state; it is not proof of post-capture action completion.
+## Native post-capture execution
+
+Pixel completion is a selection terminal state, not action completion. The
+controller stays busy while the same production Core pipeline runs on a native
+worker. It owns immutable confirmed media, selected actions, naming settings,
+unique task identity and cancellation state. PNG encoding/publication and the
+Core action engine do not block the GUI. Selection events no longer change
+acquired bounds or publish another image after pixel completion; Escape in
+the identified action phase requests pipeline cancellation under PCA-010. The overlay and command window expose
+accessible action activity; PNG encoding has indeterminate progress because
+its native codec does not provide a known-work progress callback.
+
+Escape or Cancel Capture reaches the pipeline token. Under PCA-010, an already
+running uninterruptible save can finish and retain its file; its result records
+that cancellation arrived during it. Remaining actions are cancelled. Clipboard
+requests are claimed on the Qt GUI thread while the overlay/focus is retained.
+Unclaimed cancelled requests cannot mutate the clipboard; a claimed action
+finishes with its actual outcome. Destruction releases the GUI without joining
+an encoding worker and wakes pending clipboard waits. Ordinary failures keep
+independent actions eligible and expose stable value-free diagnostics.
+
+A native receipt contains ordered Core results, confirmed working media and
+actual save metadata. The controller retains its latest receipt in memory until
+a later receipt replaces it or the controller/application closes. This preserves
+working media and completed files after output failure; it does not provide a
+complete recovery UI, configured retention/discard policy, external canonical
+serialization or PCA-012 durable journal. These remain Required alongside the
+remaining action catalogue, configured workflows, privacy/security review and
+physical clipboard/input-serial/compositor/performance qualification.
 
 ## Evidence and required reviews
 
@@ -131,3 +159,10 @@ Protocol references: [Screenshot](https://flatpak.github.io/xdg-desktop-portal/d
 and [request lifecycle](https://flatpak.github.io/xdg-desktop-portal/docs/requests.html).
 
 Atomic publication reference: [Linux renameat2](https://man7.org/linux/man-pages/man2/rename.2.html).
+
+`CapturePipelineTest` uses offscreen native clipboard fixtures and real private
+PNG publication to verify responsive cancellation, GUI dispatch, isolated
+concurrent tasks, failure fallbacks, true claimed-action outcomes, non-blocking
+destruction and retained media/artifacts. The private portal controller test
+presses Escape on the actual overlay while saving and verifies the completed
+PNG, cancelled clipboard and unchanged borrowed source.

@@ -6,6 +6,7 @@
 
 #include "capture/RegionSession.h"
 #include "SnapshotComposition.h"
+#include "CapturePipeline.h"
 
 #include <QImage>
 #include <QObject>
@@ -30,7 +31,7 @@ class CaptureController final : public QObject {
 
 public:
   using ScreenshotFactory = std::function<PortalScreenshot *(QObject *)>;
-  explicit CaptureController(QString saveDirectory, QObject *parent = nullptr, ScreenshotFactory factory = {}, SnapshotComposer composer = {});
+  explicit CaptureController(QString saveDirectory, QObject *parent = nullptr, ScreenshotFactory factory = {}, SnapshotComposer composer = {}, CaptureActionPorts actionPorts = {});
   ~CaptureController() override;
 
   static QString instructions();
@@ -50,6 +51,8 @@ public:
   std::optional<xerahs::capture::PhysicalPoint> keyboardCursor() const;
   QScreen *hintScreen() const;
   std::optional<int> compositionProgress() const;
+  QString pipelineActivity() const { return m_pipelineActivity; }
+  CapturePipelineReceipt lastPipelineResult() const { return m_lastPipelineResult; }
 
 public slots:
   void captureRegion();
@@ -59,6 +62,7 @@ signals:
   // CORE-010: the originating operation and its true result.
   void notify(const QString &title, const QString &body, bool success);
   void compositionProgressChanged(int percent);
+  void pipelineActivityChanged(const QString &text);
 
 private:
   void onSnapshot(int outcome, const QImage &image, const QString &detail);
@@ -67,6 +71,7 @@ private:
   void acquire();
   void pollComposition();
   void runPipeline(const xerahs::capture::PhysicalRect &rect);
+  void publishPipeline(const xerahs::capture::PhysicalRect &rect, const CapturePipelineReceipt &result);
   void closeOverlays();
   void finish();
   void repaint();
@@ -79,6 +84,11 @@ private:
   QTimer *m_compositionTimer = nullptr;
   int m_reportedProgress = -1;
   quint64 m_generation = 0;
+  CaptureActionPorts m_actionPorts;
+  QPointer<CapturePipeline> m_pipeline;
+  QString m_pipelineActivity;
+  CapturePipelineReceipt m_lastPipelineResult;
+  bool m_pendingPipelineCancellation = false;
   bool m_busy = false;
   QPointer<PortalScreenshot> m_portal;
   QImage m_desktop;  // frozen snapshot in desktop physical pixels

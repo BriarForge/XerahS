@@ -13,6 +13,7 @@ public:
   void activate();
   void showResult(const QString &title, const QString &body, bool success);
   void showProgress(const QString &title, int percent);
+  void showActivity(const QString &title, const QString &body);
   void cancelPendingProgress();
 private:
   QLabel *m_status = nullptr;

@@ -163,6 +163,13 @@ void RegionOverlay::paintBadge(QPainter &painter, const QRectF &r, const Physica
 }
 
 void RegionOverlay::paintHint(QPainter &painter) {
+  if (!m_controller.pipelineActivity().isEmpty()) {
+    const auto text = m_controller.pipelineActivity();
+    const auto metrics = painter.fontMetrics(); const auto width = metrics.horizontalAdvance(text) + 32;
+    const QRectF box(std::max(4.0, (this->width() - width) / 2.0), this->height() - metrics.height() - 42,
+        std::min(width, this->width() - 8), metrics.height() + 16);
+    painter.fillRect(box, kPanel); painter.setPen(kPanelText); painter.drawText(box, Qt::AlignCenter, text); return;
+  }
   if (const auto progress = m_controller.compositionProgress()) {
     const auto text = QStringLiteral("Preparing capture pixels · %1% · Escape cancels").arg(*progress);
     const auto metrics = painter.fontMetrics(); const auto width = metrics.horizontalAdvance(text) + 32;

@@ -74,11 +74,15 @@ platform services, compatibility and release qualification. Native screenshot
 transport now binds replies to the requested owner/handle, distinguishes
 cancel from permission denial, closes pending/late legacy requests and decodes
 borrowed images on a bounded worker. A native Cancel Capture command reaches
-the pending portal and overlay phases; private-bus production tests cover
+the pending portal, overlay and confirming-composition phases; private-bus production tests cover
 failure/cancellation and no output/clipboard side effects. Human permission
 and privacy review remain Required, as do per-monitor sources, capture settings,
-last-region persistence, complete overlay behavior and subsequent operation
-cancellation. Continue those native capture requirements alongside the full
+last-region persistence and complete overlay behavior. Native save/clipboard
+pipelines now execute the Core engine on a worker, publish private PNG files
+without replacing existing destinations, expose activity and cancellation,
+retain true results/artifacts/media and dispatch the clipboard on the GUI.
+Continue the remaining action catalogue, recovery UI, configured retention,
+canonical serialization, durable journal/restart recovery and native qualification. Continue those native capture requirements alongside the full
 application domains recorded in the audit.
 
 Each checkpoint updates requirement traceability, runs native tests and the
