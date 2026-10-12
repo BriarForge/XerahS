@@ -11,7 +11,11 @@
     "platforms/linux/linux-qt/src/capture/RegionSession.cpp",
     "platforms/linux/linux-qt/app/PortalScreenshot.cpp",
     "platforms/linux/linux-qt/app/RegionOverlay.cpp",
-    "platforms/linux/linux-qt/app/CaptureController.cpp"
+    "platforms/linux/linux-qt/app/CaptureController.cpp",
+    "platforms/linux/linux-qt/app/PortalScreenshot.h",
+    "platforms/linux/linux-qt/app/CaptureController.h",
+    "platforms/linux/linux-qt/app/RegionOverlay.h",
+    "platforms/linux/linux-qt/app/main.cpp"
   ],
   "requirements": {
     "RC-001": {
@@ -19,76 +23,89 @@
       "vectors": [
         "permission-denied-shows-no-overlay"
       ],
-      "note": "The app asks the xdg-desktop-portal Screenshot portal before any overlay; a denial fails with capture-permission-denied and no overlay. A portal that only exposes an interactive chooser is not yet handled."
+      "note": "Native Screenshot transport resolves and subscribes the unique owner before requesting pixels, uses native consent without an automatic retry, verifies the returned request handle and produces no overlay on denial/cancellation/failure. Private-bus tests exercise actual production transport and controller, missing/disconnected services, cold-start/legacy response ordering, owner/sender/path fencing and invalid input. Complete native backend/permission/compositor qualification and human security review remain Required.",
+      "disposition": "Required"
     },
     "RC-002": {
-      "status": "implemented",
+      "status": "partial",
       "vectors": [
         "permission-denied-shows-no-overlay"
       ],
-      "note": "The portal owns the native consent prompt (verified on Hyprland, 2026-10-09); denial is reported once and never re-prompted."
+      "note": "The portal owns native consent; explicit NotAllowed/AccessDenied errors return capture-permission-denied once. Response code 1 is user cancellation, not an inferred denial. Private-bus production tests prove no overlay, clipboard or save on denial and value-free diagnostics. Historical single-display Hyprland smoke evidence is not full qualification. Permission-settings navigation where available, physical consent and human capture-permission/security review remain Required.",
+      "disposition": "Required"
     },
     "RC-003": {
       "status": "partial",
       "vectors": [
         "topology-change-cancels"
       ],
-      "note": "Topology change cancels with display-topology-changed. The snapshot holds identity, bounds, and scale; rotation and colour characteristics arrive with the display backend."
+      "note": "Topology change cancels with display-topology-changed. The snapshot holds identity, bounds, and scale; rotation and colour characteristics arrive with the display backend.",
+      "disposition": "Required"
     },
     "RC-004": {
-      "status": "implemented",
+      "status": "partial",
       "vectors": [
         "negative-origin-monitor",
         "mixed-scale-cross-monitor",
         "fractional-scale-floors",
         "negative-origin-scaled"
-      ]
+      ],
+      "note": "Qt Core mapping passes every published per-monitor vector. The current native frozen-source controller still assumes uniform desktop scale; a qualified per-monitor physical source backend remains Required. Core vector success does not prove mixed-scale native capture.",
+      "disposition": "Required"
     },
     "RC-005": {
       "status": "partial",
       "vectors": [],
-      "note": "One frameless fullscreen overlay per screen shows the frozen snapshot. Verified on a single Hyprland display; multi-display layouts are unverified."
+      "note": "One frameless fullscreen overlay per screen shows the frozen snapshot. Verified on a single Hyprland display; multi-display layouts are unverified.",
+      "disposition": "Required"
     },
     "RC-006": {
       "status": "implemented",
       "vectors": [
         "reverse-drag",
         "zero-area-not-confirmable"
-      ]
+      ],
+      "disposition": "Required"
     },
     "RC-007": {
       "status": "implemented",
       "vectors": [
         "quick-confirm-completes",
         "explicit-confirm-with-enter"
-      ]
+      ],
+      "disposition": "Required"
     },
     "RC-008": {
-      "status": "implemented",
+      "status": "partial",
       "vectors": [
         "cancel-selected"
-      ]
+      ],
+      "note": "Core cancellation is terminal and side-effect free. Native Cancel Capture now closes a pending portal request, including an unexpected late legacy handle, while portal response 1 and actual overlay Escape cancel without notification, files or clipboard changes. Controller tests include first-availability cancellation, destruction and stale old-request callbacks. Cooperative cancellation/progress during subsequent pixel composition and pipeline work and physical consent/overlay qualification remain Required.",
+      "disposition": "Required"
     },
     "RC-009": {
       "status": "implemented",
       "vectors": [
         "zero-area-not-confirmable",
         "explicit-confirm-with-enter"
-      ]
+      ],
+      "disposition": "Required"
     },
     "RC-010": {
       "status": "partial",
       "vectors": [
         "keyboard-move-stops-at-edge"
       ],
-      "note": "Arrow, Shift+Arrow, and Alt+Arrow steps are clamped and the precision modifier is shown in the overlay hint bar. Resize handles and size presets are not yet interactive."
+      "note": "Arrow, Shift+Arrow, and Alt+Arrow steps are clamped and the precision modifier is shown in the overlay hint bar. Resize handles and size presets are not yet interactive.",
+      "disposition": "Required"
     },
     "RC-011": {
       "status": "partial",
       "vectors": [
         "click-selects-snapped-window"
       ],
-      "note": "Click-to-snap and drag override are implemented (platforms/linux/linux-qt/tests/RegionCaptureTest.cpp). Native window and control discovery arrives with the overlay. The overlay badge shows physical size and origin with tabular digits on Qt 6.7+ and the native fixed font on Qt 6.4; the Ubuntu CI job checks the minimum-version app build."
+      "note": "Click-to-snap and drag override are implemented (platforms/linux/linux-qt/tests/RegionCaptureTest.cpp). Native window and control discovery arrives with the overlay. The overlay badge shows physical size and origin with tabular digits on Qt 6.7+ and the native fixed font on Qt 6.4; the Ubuntu CI job checks the minimum-version app build.",
+      "disposition": "Required"
     },
     "RC-012": {
       "status": "partial",
@@ -96,28 +113,34 @@
         "mixed-scale-cross-monitor",
         "uncovered-area-is-transparent"
       ],
-      "note": "The compositor places exact source pixels in desktop physical order and rejects resampled sources (platforms/linux/linux-qt/tests/RegionCaptureTest.cpp). Real capture sources arrive with the portal backend."
+      "note": "The production compositor places exact source pixels and rejects resampled sources. The native frozen portal source and overlay now have private-bus fixture evidence; the controller still needs a per-monitor physical source backend and complete mixed-scale/native qualification.",
+      "disposition": "Required"
     },
     "RC-013": {
       "status": "not-started",
       "vectors": [],
-      "note": "Cursor inclusion."
+      "note": "Cursor inclusion.",
+      "disposition": "Required"
     },
     "RC-014": {
       "status": "partial",
       "vectors": [],
-      "note": "Frozen mode from one portal snapshot is implemented. Live mode is not offered."
+      "note": "Frozen mode from one portal snapshot is implemented. Live mode is not offered.",
+      "disposition": "Required"
     },
     "RC-015": {
       "status": "not-started",
       "vectors": [],
-      "note": "HDR and wide-gamut conversion."
+      "note": "HDR and wide-gamut conversion.",
+      "disposition": "Required"
     },
     "RC-016": {
       "status": "implemented",
       "vectors": [
         "terminal-events-ignored"
-      ]
+      ],
+      "note": "Core terminal-event vectors pass. Native Screenshot is single-use, correlates owner/handle and publishes one result; duplicate responses/starts/cancels, timeout, late handles and controller replacement/destruction have production transport tests. Full native capture/composition/pipeline terminal qualification remains Required.",
+      "disposition": "Required"
     },
     "RC-017": {
       "status": "partial",
@@ -126,33 +149,38 @@
         "capture-failure-keeps-last-region",
         "last-region-invalid-after-topology-change"
       ],
-      "note": "The last region is produced only on capture success and validated against topology (platforms/linux/linux-qt/tests/RegionCaptureTest.cpp). Atomic persistence arrives with settings storage."
+      "note": "The last region is produced only on capture success and validated against topology (platforms/linux/linux-qt/tests/RegionCaptureTest.cpp). Atomic persistence arrives with settings storage.",
+      "disposition": "Required"
     },
     "RC-018": {
       "status": "partial",
       "vectors": [
         "capture-failure-keeps-last-region"
       ],
-      "note": "Stable codes capture-permission-denied, display-topology-changed, capture-source-failed, and last-region-invalid; failed composites return no pixels. The privacy and diagnostic retention policy applies once real pixels exist."
+      "note": "Native failures expose stable capture-source-failed or capture-permission-denied without raw portal errors/URIs. URI type/locality and shared image-decoder resource limits are validated; worker cancellation discards output. Borrowed portal files remain unmodified and no application-owned screenshot cache is created before confirmation. Private-bus tests cover malformed/corrupt/oversized input and unchanged files. Portal-owned retention/revocation, complete capture privacy/diagnostic policy and human security/privacy review remain Required.",
+      "disposition": "Required"
     },
     "RC-019": {
       "status": "partial",
       "vectors": [],
-      "note": "Keyboard-only selection (Space anchors at a keyboard cursor), accessible name and instructions, bounds announcements, and a white-on-black boundary with corner handles. Screen-reader behaviour is not yet verified with Orca."
+      "note": "Keyboard-only selection (Space anchors at a keyboard cursor), accessible name and instructions, bounds announcements, and a white-on-black boundary with corner handles. Screen-reader behaviour is not yet verified with Orca.",
+      "disposition": "Required"
     },
     "RC-020": {
       "status": "not-started",
       "vectors": [],
-      "note": "Overlay performance."
+      "note": "Overlay performance.",
+      "disposition": "Required"
     },
     "RC-021": {
       "status": "implemented",
       "vectors": [
         "all"
-      ]
+      ],
+      "disposition": "Required"
     },
     "RC-022": {
-      "status": "implemented",
+      "status": "partial",
       "vectors": [
         "reverse-drag",
         "negative-origin-monitor",
@@ -160,7 +188,9 @@
         "fractional-scale-floors",
         "fractional-logical-edge-reaches-physical-edge",
         "negative-origin-scaled"
-      ]
+      ],
+      "note": "Qt Core mapping follows the specified binary64/floor arithmetic and reporting-display rules, with all published vectors passing. Actual native per-monitor source/topology integration remains Required because the current controller assumes uniform scale.",
+      "disposition": "Required"
     },
     "RC-023": {
       "status": "implemented",
@@ -168,7 +198,8 @@
         "fractional-logical-edge-reaches-physical-edge",
         "point-beyond-display-is-clamped",
         "uncovered-area-is-transparent"
-      ]
+      ],
+      "disposition": "Required"
     },
     "RC-024": {
       "status": "implemented",
@@ -177,7 +208,8 @@
         "keyboard-move-single-step",
         "keyboard-resize-keeps-one-pixel"
       ],
-      "note": "Keyboard steps are announced to assistive technology through the overlay's accessible description."
+      "note": "Keyboard steps are announced to assistive technology through the overlay's accessible description.",
+      "disposition": "Required"
     },
     "RC-025": {
       "status": "implemented",
@@ -188,20 +220,28 @@
         "permission-denied-shows-no-overlay",
         "topology-change-cancels",
         "capture-failure-keeps-last-region"
-      ]
+      ],
+      "disposition": "Required"
     },
     "RC-026": {
       "status": "implemented",
       "vectors": [
         "zero-area-not-confirmable",
         "click-selects-snapped-window"
-      ]
+      ],
+      "disposition": "Required"
     },
     "RC-027": {
       "status": "implemented",
       "vectors": [
         "last-region-invalid-after-topology-change"
-      ]
+      ],
+      "disposition": "Required"
     }
-  }
+  },
+  "evidence": [
+    "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+    "platforms/linux/linux-qt/app/CAPTURE-POLICY.md",
+    "platforms/linux/linux-qt/CONTRACT-AUDIT.md"
+  ]
 }

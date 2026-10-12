@@ -11,6 +11,7 @@
 #include <QPointer>
 
 #include <memory>
+#include <functional>
 #include <optional>
 #include <vector>
 
@@ -25,7 +26,8 @@ class CaptureController final : public QObject {
   Q_OBJECT
 
 public:
-  explicit CaptureController(QString saveDirectory, QObject *parent = nullptr);
+  using ScreenshotFactory = std::function<PortalScreenshot *(QObject *)>;
+  explicit CaptureController(QString saveDirectory, QObject *parent = nullptr, ScreenshotFactory factory = {});
   ~CaptureController() override;
 
   static QString instructions();
@@ -65,6 +67,7 @@ private:
   void announce();
 
   QString m_saveDirectory;
+  ScreenshotFactory m_screenshotFactory;
   bool m_busy = false;
   QPointer<PortalScreenshot> m_portal;
   QImage m_desktop;  // frozen snapshot in desktop physical pixels

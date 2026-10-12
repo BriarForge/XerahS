@@ -30,10 +30,16 @@ const QStringList kDefaultActions = {QStringLiteral("save"), QStringLiteral("ima
 
 }  // namespace
 
-CaptureController::CaptureController(QString saveDirectory, QObject *parent)
-    : QObject(parent), m_saveDirectory(std::move(saveDirectory)) {}
+CaptureController::CaptureController(QString saveDirectory, QObject *parent, ScreenshotFactory factory)
+    : QObject(parent), m_saveDirectory(std::move(saveDirectory)), m_screenshotFactory(std::move(factory)) {}
 
-CaptureController::~CaptureController() { closeOverlays(); }
+CaptureController::~CaptureController() {
+  if (m_portal) {
+    auto *portal = m_portal.data(); disconnect(portal, nullptr, this, nullptr);
+    portal->setParent(nullptr); portal->cancel(); portal->retire(); m_portal = nullptr;
+  }
+  closeOverlays();
+}
 
 QString CaptureController::instructions() {
   return QStringLiteral(
@@ -45,21 +51,30 @@ QString CaptureController::instructions() {
 void CaptureController::captureRegion() {
   if (m_busy) return;
   m_busy = true;
-  emit busyChanged(true);
-  m_portal = new PortalScreenshot(this);
-  connect(m_portal, &PortalScreenshot::finished, this,
-          [this](PortalScreenshot::Outcome outcome, const QImage &image, const QString &detail) {
-            m_portal->deleteLater();
+  m_portal = m_screenshotFactory ? m_screenshotFactory(this) : new PortalScreenshot(this);
+  if (!m_portal) {
+    emit busyChanged(true);
+    emit notify(QStringLiteral("Region capture failed"), diagnostic::captureSourceFailed, false); finish(); return;
+  }
+  auto *portal = m_portal.data();
+  connect(portal, &PortalScreenshot::finished, this,
+          [this, portal](PortalScreenshot::Outcome outcome, const QImage &image, const QString &detail) {
+            // Queued old-request callbacks cannot finish a newer capture.
+            if (!m_busy || m_portal != portal) return;
+            m_portal = nullptr; portal->setParent(nullptr); portal->retire();
             onSnapshot(static_cast<int>(outcome), image, detail);
           });
-  m_portal->request();
+  emit busyChanged(true);
+  // Availability listeners may synchronously cancel before acquisition starts.
+  if (m_busy && m_portal == portal) portal->request();
 }
 
 void CaptureController::onSnapshot(int outcome, const QImage &image, const QString &detail) {
   const auto result = static_cast<PortalScreenshot::Outcome>(outcome);
+  if (result == PortalScreenshot::Outcome::Cancelled) { finish(); return; }
   if (result == PortalScreenshot::Outcome::Failed) {
     emit notify(QStringLiteral("Region capture failed"),
-                QStringLiteral("%1: %2").arg(diagnostic::captureSourceFailed, detail), false);
+                detail.isEmpty() ? diagnostic::captureSourceFailed : detail, false);
     finish();
     return;
   }
@@ -152,6 +167,7 @@ void CaptureController::pointerUp(PhysicalPoint point) {
 }
 
 void CaptureController::cancel() {
+  if (m_portal) { m_portal->cancel(); return; }
   if (!m_session) return;
   m_session->cancel();
   afterInput();
@@ -338,6 +354,7 @@ void CaptureController::closeOverlays() {
 }
 
 void CaptureController::finish() {
+  if (!m_busy) return;
   for (const auto &connection : m_screenConnections) disconnect(connection);
   m_screenConnections.clear();
   m_session.reset();

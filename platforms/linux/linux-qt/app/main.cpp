@@ -129,6 +129,9 @@ int main(int argc, char *argv[]) {
   tray.setToolTip(QStringLiteral("XerahS"));
   QMenu menu;
   QAction *region = menu.addAction(QStringLiteral("Capture region"));
+  QAction *cancelCapture = menu.addAction(QStringLiteral("Cancel capture"));
+  cancelCapture->setEnabled(false);
+  QObject::connect(cancelCapture, &QAction::triggered, &capture, &CaptureController::cancel);
   QAction *newImage = menu.addAction(QStringLiteral("New image…"));
   QAction *openImage = menu.addAction(QStringLiteral("Open image…"));
   xerahs::app::addRecentImagesMenu(&menu, [](const QString &path) {
@@ -160,8 +163,10 @@ int main(int argc, char *argv[]) {
     if (reason == QSystemTrayIcon::Trigger) capture.captureRegion();
   });
   // CORE-007: availability is shown, not faked.
-  QObject::connect(&capture, &CaptureController::busyChanged, region, [region](bool busy) {
+  QObject::connect(&capture, &CaptureController::busyChanged, region, [region, cancelCapture, &capture](bool) {
+    const bool busy = capture.busy();
     region->setEnabled(!busy);
+    cancelCapture->setEnabled(busy);
     region->setText(busy ? QStringLiteral("Capture region (in progress)") : QStringLiteral("Capture region"));
   });
   QObject::connect(&capture, &CaptureController::notify, &tray,

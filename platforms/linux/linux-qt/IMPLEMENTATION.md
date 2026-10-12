@@ -68,6 +68,19 @@ The next editor work follows these dependencies:
 4. Expand annotation tools, effects, output actions, settings and utilities,
    alongside the remaining capture and post-capture integrations.
 
+The [full contract scope audit](CONTRACT-AUDIT.md) also tracks capture,
+recording, uploads, workflow/catalogue integration, native application surfaces,
+platform services, compatibility and release qualification. Native screenshot
+transport now binds replies to the requested owner/handle, distinguishes
+cancel from permission denial, closes pending/late legacy requests and decodes
+borrowed images on a bounded worker. A native Cancel Capture command reaches
+the pending portal and overlay phases; private-bus production tests cover
+failure/cancellation and no output/clipboard side effects. Human permission
+and privacy review remain Required, as do per-monitor sources, capture settings,
+last-region persistence, complete overlay behavior and subsequent operation
+cancellation. Continue those native capture requirements alongside the full
+application domains recorded in the audit.
+
 Each checkpoint updates requirement traceability, runs native tests and the
 implemented shared vectors, and lands on `main`. Passing the small pilot vector
 set does not establish full capability completion. Linux edition qualification,

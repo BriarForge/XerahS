@@ -156,6 +156,15 @@ set_tests_properties(native-editor-appearance PROPERTIES ENVIRONMENT QT_QPA_PLAT
 
 # Desktop transport tests run on their own bus, isolated from live settings.
 find_program(XERAHS_DBUS_RUN_SESSION dbus-run-session REQUIRED)
+add_executable(portal-screenshot-test tests/PortalScreenshotTest.cpp app/PortalScreenshot.cpp app/PortalScreenshot.h
+               app/CaptureController.cpp app/CaptureController.h app/CaptureActions.cpp app/CaptureActions.h
+               app/RegionOverlay.cpp app/RegionOverlay.h)
+set_target_properties(portal-screenshot-test PROPERTIES AUTOMOC ON)
+target_link_libraries(portal-screenshot-test PRIVATE xerahs_core xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
+target_include_directories(portal-screenshot-test PRIVATE app)
+add_test(NAME portal-screenshot COMMAND "${XERAHS_DBUS_RUN_SESSION}"
+         "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf" -- $<TARGET_FILE:portal-screenshot-test>)
+set_tests_properties(portal-screenshot PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 45)
 add_executable(native-desktop-appearance-test tests/NativeDesktopAppearanceTest.cpp
                app/NativeDesktopAppearance.cpp app/NativeDesktopAppearance.h
                app/NativeEditorAppearance.cpp app/NativeEditorAppearance.h

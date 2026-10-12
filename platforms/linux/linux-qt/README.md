@@ -8,7 +8,7 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 |---|---|---|
 | `FILENAME-GENERATION-001` | Core logic and conformance seam; no UI yet | 51 of 51 vectors pass; [traceability](traceability/FILENAME-GENERATION-001.json) |
 | `POST-CAPTURE-ACTIONS-001` | Pipeline engine and conformance seam; native actions, retry, and recovery not yet | 17 of 17 vectors pass; [traceability](traceability/POST-CAPTURE-ACTIONS-001.json) |
-| `REGION-CAPTURE-001` | Mapping, keyboard, compositing, last-region, and session state machine; no overlay or capture backend yet | 21 of 21 vectors pass; [traceability](traceability/REGION-CAPTURE-001.json) |
+| `REGION-CAPTURE-001` | Core mapping/compositing/session model and native frozen portal/overlay flow; cancellable, owner-fenced screenshot requests; per-monitor source mapping, capture settings and full qualification pending | 21 of 21 vectors plus private native transport/controller/cancellation tests; [traceability](traceability/REGION-CAPTURE-001.json) |
 | `EDITOR-CANVAS-001` | Native New/Open and opt-in persisted recent files with confirmed dirty replacement; viewport, crop, auto crop, resize, rotation, flips, annotation flatten, clear and image comparison; remaining image operations pending | All 3 published vectors plus native geometry, history, window, creation, opening, recent-file, comparison and persistence tests; [traceability](traceability/EDITOR-CANVAS-001.json) |
 | `EDITOR-SESSION-001` | Document, `.xann` reader and writer, history, and export renderer; editor window with rectangle tool, selection, save, and sidecar reopen; resize and ordering by keyboard, arbitrary-angle rotation and export | 19 of 19 vectors pass; [traceability](traceability/EDITOR-SESSION-001.json) |
 | `EDITOR-SETTINGS-001` | Persisted recents, drawing/appearance defaults, toolbar placements/hotkeys and normal/maximized window state over private atomic storage; live desktop appearance, creation-only styles, toolbar customization, display recovery and memory opt-out; remaining preferences, complete ledger and review gates pending | All 3 published vectors plus core/storage/recovery, native controls/dispatch, private desktop transport, window lifecycle/display ports, restart, history isolation and failure tests; [traceability](traceability/EDITOR-SETTINGS-001.json) |
@@ -18,8 +18,9 @@ The [full Linux scope audit](CONTRACT-AUDIT.md) records the remaining applicatio
 capture, recording, upload, workflow, editor, integration and release work.
 
 The native test suite requires `dbus-run-session` (the `dbus-daemon` package on
-Ubuntu). Desktop appearance transport tests use a private bus with no service
-activation directories; they cannot start or query the host's portal services.
+Ubuntu). Desktop appearance and screenshot transport tests use private buses
+with no service activation directories; they cannot start or query the host's
+portal services.
 
 ## Layout
 
@@ -35,6 +36,7 @@ activation directories; they cannot start or query the host's portal services.
 
 - **Capture region** (tray menu, tray click, or `xerahs --capture-region`, which forwards to a running instance) takes a frozen snapshot through the xdg-desktop-portal Screenshot portal, shows a fullscreen selection overlay per screen, and runs the post-capture pipeline: save as PNG to `~/Pictures/XerahS` with the default filename pattern, then copy the image to the clipboard. The first capture shows the portal's consent prompt.
 - Keys in the overlay: drag or Space to select, Enter to capture, Esc to cancel, arrows to move by 1 pixel (Shift for 10), Alt+arrows to resize.
+- **Cancel capture** in the tray cancels a pending native portal interaction or an open overlay. User cancellation creates no capture, save or clipboard action. Portal errors produce stable diagnostics; returned images decode on a native worker with validated resource limits. The [capture policy](app/CAPTURE-POLICY.md) records request/file authority and remaining qualification.
 - Hyprland binding example: `bind = , PRINT, exec, xerahs --capture-region`.
 - `packaging/com.xerahs.app.desktop` gives desktop launches the `com.xerahs.app` identity, which portals use to attribute consent.
 
