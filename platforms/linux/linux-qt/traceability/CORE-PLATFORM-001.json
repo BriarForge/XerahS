@@ -1,0 +1,344 @@
+{
+  "capability": "CORE-PLATFORM-001",
+  "capability_version": "0.5.1",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "implementation": [
+    "platforms/linux/linux-qt/src/shell/ActivationProtocol.h",
+    "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
+    "platforms/linux/linux-qt/src/shell/ActivationDispatcher.h",
+    "platforms/linux/linux-qt/src/shell/ActivationDispatcher.cpp",
+    "platforms/linux/linux-qt/app/NativeInstance.h",
+    "platforms/linux/linux-qt/app/NativeInstance.cpp",
+    "platforms/linux/linux-qt/app/ApplicationWindow.h",
+    "platforms/linux/linux-qt/app/ApplicationWindow.cpp",
+    "platforms/linux/linux-qt/app/main.cpp"
+  ],
+  "requirements": {
+    "CORE-001": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Full linked ledger outcomes, authority, accessibility, privacy, persistence and all supported-platform acceptance remain Required."
+    },
+    "CORE-002": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native display/desktop/runtime identity is XerahS/com.xerahs.app. Reference live settings are never imported implicitly. Previewed explicit replacement migration, backup and recovery remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/main.cpp",
+        "platforms/linux/linux-qt/packaging/com.xerahs.app.desktop"
+      ]
+    },
+    "CORE-003": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Core conformance seams and stable native capture/activation errors exist. Shared result/error coverage, approved degraded modes and cross-platform parity remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
+        "platforms/linux/linux-qt/app/NativeInstance.cpp"
+      ]
+    },
+    "CORE-004": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Screenshot and editor loading have cancellation/failure tests. General progress, cancellation and recoverable terminal/output behavior across workflows, recording, uploads and all utilities remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+      ]
+    },
+    "CORE-005": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native portal consent and kernel-credential activation checks have isolated tests. Least-authority coverage for all sensitive operations and human security/privacy review remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/app/ACTIVATION-POLICY.md"
+      ]
+    },
+    "CORE-006": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native launch uses a private runtime directory, lifetime flock and authenticated bounded local IPC. Real-process tests cover simultaneous launch, busy/rejection, crash recovery, corrupt/lost acknowledgements, unsafe paths and actual application forwarding before preference initialization. Default-profile production behavior is implemented; complete profile integration, target-matrix/security/compatibility review, published shared scenarios/vectors and accepted parity remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
+        "platforms/linux/linux-qt/src/shell/ActivationDispatcher.cpp",
+        "platforms/linux/linux-qt/app/NativeInstance.cpp",
+        "platforms/linux/linux-qt/app/main.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp"
+      ]
+    },
+    "CORE-007": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "A native command window reuses actual tray actions and current capture availability, supports keyboard/accessible activation and preserves true capture results. Default repeated launch shows/restores the window. Region/Open activation shares the production dispatcher. Full main UI, workflow catalogue, global hotkeys, command palette, all surface availability and physical assistive-technology qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/ApplicationWindow.cpp",
+        "platforms/linux/linux-qt/app/main.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp"
+      ]
+    },
+    "CORE-008": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Resumable accessible onboarding and explicit integration/permission/default-workflow choices remain Required."
+    },
+    "CORE-009": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native editor preference and desktop appearance tests exist. Full application theming, localization, runtime expansion, high contrast and reduced-motion qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/NativeEditorAppearanceTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeDesktopAppearanceTest.cpp"
+      ]
+    },
+    "CORE-010": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Capture results reach the native tray and persist as plain accessible operation text in the command window. Full native policy, private-preview protection, result correlation and authority-limited actions remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/main.cpp",
+        "platforms/linux/linux-qt/app/ApplicationWindow.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp"
+      ]
+    },
+    "CORE-011": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Explicit/policy-scheduled signed update checks, channel/version display and install recovery remain Required."
+    },
+    "CORE-012": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "An isolated private atomic editor preference store has recovery/unknown-field tests. All SETTINGS-CATALOG rows, shared profile/schema lifecycle and previewed import/migration/reset/export remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/image-editor/EditorPreferenceStore.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp"
+      ]
+    },
+    "CORE-013": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Approved Secret Service storage, references, revocation and diagnostic/interface redaction remain Required."
+    },
+    "CORE-014": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native region snapshot intake exists. Full-screen/monitor/window target controls, per-monitor physical native sources, mixed scale, cursor/delay and all target/permission failure handling remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/CaptureController.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+      ]
+    },
+    "CORE-015": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Scrolling capture selection, strategy, alignment/merge confidence, progress/cancellation/bounds/partial output remain Required."
+    },
+    "CORE-016": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Explicit bounded automatic capture schedules, target scope, visible stop/concurrency/lock/storage/privacy policy remain Required."
+    },
+    "CORE-017": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Video/GIF recording target, timing/codec/container/options and observable pause/stop/abort/recoverable failure states remain Required."
+    },
+    "CORE-018": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Selected system/microphone enumeration, consent, indication, mixing/synchronization and absent-device behavior remain Required."
+    },
+    "CORE-019": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Video editing and complete media utilities, formats/metadata/quality, progress/cancellation/temp-file/recovery behavior remain Required."
+    },
+    "CORE-020": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native upload input/destination validation, credential references, progress/cancellation, bounded retry/idempotency and true publication outcomes remain Required."
+    },
+    "CORE-021": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "First-party/custom destination capabilities, fields/authentication/results/URLs/deletion/constraints/rates/errors remain Required."
+    },
+    "CORE-022": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Human-approved isolated plugin hosting, provenance/permissions/IPC/secrets/crash/revocation/audit remain Required."
+    },
+    "CORE-023": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Task/media history IDs, state/output references, search/pagination/retention/privacy/missing-file/corruption recovery remain Required. Editor recent paths do not implement task/media history."
+    },
+    "CORE-024": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "The private native launch protocol has version/UUID correlation, kernel peer authentication, bounded intake/concurrency, redacted failures and limited receipt replay. This candidate is not an approved shared CLI/MCP API. Full shared operations, progress/cancellation, consent, assistant/shell/watch-folder coverage and human review remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
+        "platforms/linux/linux-qt/app/NativeInstance.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/app/ACTIVATION-POLICY.md"
+      ]
+    },
+    "CORE-025": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Authorized canonical watch roots, readiness/duplicate/loop/traversal/checkpoint/failure/stop behavior remain Required."
+    },
+    "CORE-026": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Assistant provider/data flow minimization, explicit capture/history authority and sensitive/destructive review remain Required."
+    },
+    "CORE-027": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native capture/activation publish stable value-free errors; activation failures have actionable text and unknown delivery never becomes success or a second instance. Full structured severity/correlation/retention/export/configuration/output recovery remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/NativeInstance.cpp",
+        "platforms/linux/linux-qt/app/main.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp"
+      ]
+    },
+    "CORE-028": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Desktop identity and dynamic Qt build exist. Signed/provenance-verified tar/deb/rpm/AUR packages, license obligations, clean install/replacement/update/rollback/uninstall qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/CMakeLists.txt",
+        "platforms/linux/linux-qt/packaging/com.xerahs.app.desktop"
+      ]
+    },
+    "CORE-029": {
+      "status": "not-applicable",
+      "disposition": "Not applicable",
+      "vectors": [],
+      "note": "MOBILE-PLATFORM-001 declares Android/iOS scope; native mobile implementation is outside this Linux desktop target. Mobile and cross-platform acceptance gates remain open; no desktop requirement is waived."
+    },
+    "CORE-030": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Deterministic native/domain tests and six capabilities' published vectors run in baseline CI. CORE has no published test-vectors.json. All linked-row/platform acceptance and human security/privacy/accessibility/licensing/compatibility/parity reviews remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/CMakeLists.txt",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/CONTRACT-AUDIT.md"
+      ]
+    },
+    "CORE-031": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "This CMake Linux edition introduces no NuGet dependency. Repository-wide authoritative NuGet maintenance before release qualification and the other contract triggers remain Required; no release qualification is claimed."
+    },
+    "CORE-032": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "No NuGet adoption is part of this checkpoint. Complete repository-wide source/version/time/verification records and any bounded retention approvals remain Required before release qualification."
+    },
+    "CORE-033": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "linux-qt is implemented as the supported reference candidate application. Every applicable requirement on every declared target remains Required; no scope reduction or edition promotion is claimed.",
+      "evidence": [
+        "platforms/linux/linux-qt/CONTRACT-AUDIT.md"
+      ]
+    },
+    "CORE-034": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "The approved linux-editions.json declares supported linux-qt and candidate editions. Actual qualification of all declared mechanisms and targets remains Required.",
+      "evidence": [
+        "product-contract/capabilities/CORE-PLATFORM-001/linux-editions.json"
+      ]
+    },
+    "CORE-035": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Desktop and runtime identity are shared com.xerahs.app. The current isolated native editor candidate store is edition-specific; approved shared persisted schemas/XDG formats, edition switching/replacement and explicit migration qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/NativeInstance.cpp",
+        "platforms/linux/linux-qt/app/NativeEditorPreferences.cpp",
+        "platforms/linux/linux-qt/src/image-editor/PREFERENCES-POLICY.md"
+      ]
+    },
+    "CORE-036": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Current published vectors run for linux-qt on Ubuntu baseline CI and the local toolchain. Every declared target distribution/native environment, accepted row disposition and complete shared conformance/parity remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/CMakeLists.txt",
+        "platforms/linux/linux-qt/CONTRACT-AUDIT.md"
+      ]
+    },
+    "CORE-037": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native Qt Widgets actions/keyboard/accessibility, portal capture and editor desktop appearance exist. Full convention/a11y/theming/notification/shortcut/configuration integration on GNOME/Plasma/wlroots remains Required. Candidate editions are not self-promoted.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/ApplicationWindow.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeDesktopAppearanceTest.cpp"
+      ]
+    }
+  },
+  "qualification": {
+    "status": "Required",
+    "shared_vectors": "No CORE-PLATFORM-001/test-vectors.json is published. Native tests are partial evidence, not shared conformance acceptance.",
+    "reviews": [
+      "security",
+      "privacy",
+      "accessibility",
+      "licensing",
+      "compatibility",
+      "parity",
+      "release"
+    ],
+    "target_matrix": "Ubuntu LTS, Fedora Workstation, Arch Linux; GNOME, Plasma and wlroots native qualification remains Required."
+  }
+}

@@ -7,6 +7,9 @@
 #include "RecentImageMenu.h"
 #include "NativeDesktopAppearance.h"
 #include "AppearanceDialog.h"
+#include "NativeInstance.h"
+#include "ApplicationWindow.h"
+#include "shell/ActivationDispatcher.h"
 
 #include <QAction>
 #include <QApplication>
@@ -15,8 +18,6 @@
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
-#include <QLocalServer>
-#include <QLocalSocket>
 #include <QMenu>
 #include <QMessageBox>
 #include <QPainter>
@@ -26,15 +27,22 @@
 #include <QUrl>
 
 #include <cstdio>
+#include <algorithm>
+#include <tuple>
 
 using xerahs::app::CaptureController;
 
 namespace {
-
-const QString kInstanceName = QStringLiteral("com.xerahs.app");
-const QByteArray kCaptureRegion = QByteArrayLiteral("capture-region");
-const QByteArray kEditPrefix = QByteArrayLiteral("edit ");
-const QByteArray kActivate = QByteArrayLiteral("activate");
+QString activationFailureMessage(const QString &diagnostic) {
+  if (diagnostic == u"activation-busy") return QStringLiteral("XerahS is busy. Try again after the current capture or dialog finishes.");
+  if (diagnostic == u"instance-unavailable") return QStringLiteral("The running XerahS instance is not ready. Try again after startup finishes.");
+  if (diagnostic == u"activation-delivery-unknown") return QStringLiteral("XerahS did not acknowledge the request. Check the running instance before retrying.");
+  if (diagnostic == u"instance-storage-denied") return QStringLiteral("XerahS could not secure its runtime files. Check the ownership and permissions of XDG_RUNTIME_DIR.");
+  if (diagnostic == u"instance-endpoint-conflict") return QStringLiteral("The XerahS runtime endpoint is in use or unsafe. Close conflicting instances and check runtime permissions.");
+  if (diagnostic == u"activation-peer-denied") return QStringLiteral("XerahS could not authenticate the running instance. Check your per-user runtime environment.");
+  if (diagnostic == u"activation-invalid" || diagnostic == u"activation-version-unsupported") return QStringLiteral("The activation request is invalid or incompatible. Check the command and installed XerahS version.");
+  return QStringLiteral("XerahS could not accept the activation. Check the running instance and try again.");
+}
 
 // Monochrome capture-frame mark, drawn so no asset pipeline is needed yet.
 QIcon appIcon() {
@@ -64,18 +72,6 @@ QIcon appIcon() {
   return icon;
 }
 
-// CORE-006: deliver the request to a running instance. Returns true when one
-// accepted it.
-bool forwardToRunningInstance(const QByteArray &request) {
-  QLocalSocket socket;
-  socket.connectToServer(kInstanceName);
-  if (!socket.waitForConnected(500)) return false;
-  socket.write(request + '\n');
-  socket.flush();
-  if (!socket.waitForReadyRead(2000)) return false;
-  return socket.readLine().trimmed() == "ok";
-}
-
 }  // namespace
 
 int main(int argc, char *argv[]) {
@@ -97,18 +93,16 @@ int main(int argc, char *argv[]) {
                                 QStringLiteral("file"));
   parser.addOption(edit);
   parser.process(app);
-  QByteArray request = parser.isSet(captureRegion) ? kCaptureRegion : kActivate;
-  if (parser.isSet(edit)) {
-    request = kEditPrefix + xerahs::app::absoluteImagePath(parser.value(edit)).toUtf8();
-  }
-
-  if (forwardToRunningInstance(request)) return 0;
-
-  QLocalServer server;
-  QLocalServer::removeServer(kInstanceName);  // stale socket from a crash
-  if (!server.listen(kInstanceName)) {
-    std::fprintf(stderr, "xerahs: cannot claim the instance socket: %s\n", qPrintable(server.errorString()));
-    return 1;
+  using namespace xerahs::shell;
+  const auto request = makeActivationRequest(parser.isSet(edit) ? ActivationAction::EditImage :
+      parser.isSet(captureRegion) ? ActivationAction::CaptureRegion : ActivationAction::Activate,
+      parser.isSet(edit) ? xerahs::app::absoluteImagePath(parser.value(edit)) : QString{});
+  xerahs::app::NativeInstance instance(xerahs::app::NativeInstance::runtimeDirectory());
+  const auto started = instance.start(request);
+  if (started.kind == xerahs::app::InstanceStart::Kind::Forwarded) return 0;
+  if (started.kind != xerahs::app::InstanceStart::Kind::Primary) {
+    std::fprintf(stderr, "xerahs: %s: %s\n", qPrintable(started.diagnostic), qPrintable(activationFailureMessage(started.diagnostic)));
+    return started.kind == xerahs::app::InstanceStart::Kind::Busy ? 2 : 1;
   }
 
   // Initialize only in the winning native instance, before any editor opens.
@@ -142,16 +136,13 @@ int main(int argc, char *argv[]) {
   menu.addSeparator();
   QAction *quit = menu.addAction(QStringLiteral("Quit XerahS"));
   tray.setContextMenu(&menu);
+  xerahs::app::ApplicationWindow home({{"capture-region", region}, {"cancel-capture", cancelCapture},
+      {"new-image", newImage}, {"open-image", openImage}, {"captures-folder", folder}, {"editor-appearance", appearance}, {"quit", quit}});
+  auto *showHome = new QAction(QStringLiteral("Open XerahS"), &menu); menu.insertAction(region, showHome);
+  QObject::connect(showHome, &QAction::triggered, &home, &xerahs::app::ApplicationWindow::activate);
 
-  QObject::connect(region, &QAction::triggered, &capture, &CaptureController::captureRegion);
   QObject::connect(newImage, &QAction::triggered, [] {
     if (auto *window = xerahs::app::EditorWindow::createNew()) window->show();
-  });
-  QObject::connect(openImage, &QAction::triggered, [&capture] {
-    const QString path = QFileDialog::getOpenFileName(nullptr, QStringLiteral("Open image"), capture.saveDirectory(),
-                                                      xerahs::app::imageFileFilter());
-    if (path.isEmpty()) return;
-    if (auto *window = xerahs::app::EditorWindow::open(path)) window->show();
   });
   QObject::connect(folder, &QAction::triggered, [&capture] {
     QDir().mkpath(capture.saveDirectory());
@@ -159,9 +150,6 @@ int main(int argc, char *argv[]) {
   });
   QObject::connect(quit, &QAction::triggered, &app, &QApplication::quit);
   QObject::connect(appearance, &QAction::triggered, [] { xerahs::app::manageEditorAppearance(); });
-  QObject::connect(&tray, &QSystemTrayIcon::activated, [&capture](QSystemTrayIcon::ActivationReason reason) {
-    if (reason == QSystemTrayIcon::Trigger) capture.captureRegion();
-  });
   // CORE-007: availability is shown, not faked.
   QObject::connect(&capture, &CaptureController::busyChanged, region, [region, cancelCapture, &capture](bool) {
     const bool busy = capture.busy();
@@ -174,38 +162,41 @@ int main(int argc, char *argv[]) {
                      tray.showMessage(title, body, success ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning,
                                       5000);
                    });
-
-  QObject::connect(&server, &QLocalServer::newConnection, [&server, &capture] {
-    while (QLocalSocket *socket = server.nextPendingConnection()) {
-      QObject::connect(socket, &QLocalSocket::disconnected, socket, &QObject::deleteLater);
-      QObject::connect(socket, &QLocalSocket::readyRead, socket, [socket, &capture] {
-        if (!socket->canReadLine()) return;
-        const QByteArray line = socket->readLine().trimmed();
-        if (line == kCaptureRegion) {
-          socket->write(capture.busy() ? "busy\n" : "ok\n");
-          capture.captureRegion();
-        } else if (line.startsWith(kEditPrefix)) {
-          socket->write("ok\n");
-          const QString path = QString::fromUtf8(line.mid(kEditPrefix.size()));
-          if (auto *window = xerahs::app::EditorWindow::open(path)) window->show();
-        } else if (line == kActivate) {
-          socket->write("ok\n");
-        } else {
-          socket->write("unknown\n");
-        }
-        socket->flush();
-        socket->disconnectFromServer();
-      });
+  QObject::connect(&capture, &CaptureController::notify, &home, &xerahs::app::ApplicationWindow::showResult);
+  ActivationDispatcher dispatcher({[&home] { home.activate(); }, [&capture] { capture.captureRegion(); },
+      [](const QString &path) { if (auto *window = xerahs::app::EditorWindow::open(path)) window->show(); },
+      [&capture] { return capture.busy(); }, [] { return QApplication::activeModalWidget() != nullptr; }});
+  instance.setAdmission([&dispatcher](const ActivationRequest &incoming) { return dispatcher.admit(incoming); });
+  const auto dispatch = [&dispatcher, &home](const ActivationRequest &incoming) {
+    const auto diagnostic = dispatcher.dispatch(incoming);
+    if (!diagnostic.isEmpty()) { home.showResult(QStringLiteral("Activation"), activationFailureMessage(diagnostic), false); home.activate(); }
+  };
+  QObject::connect(&instance, &xerahs::app::NativeInstance::activationRequested, &home, dispatch);
+  const auto invokeLocal = [&dispatcher, &dispatch, &home](ActivationAction action, const QString &path = QString{}) {
+    const auto local = makeActivationRequest(action, path);
+    const auto admitted = dispatcher.admit(local);
+    if (admitted == ActivationReplyState::Accepted) dispatch(local);
+    else {
+      home.showResult(QStringLiteral("Activation"), activationFailureMessage(admitted == ActivationReplyState::Busy ? QStringLiteral("activation-busy") : QStringLiteral("activation-unavailable")), false);
+      home.activate();
     }
+  };
+  QObject::connect(region, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureRegion); });
+  QObject::connect(openImage, &QAction::triggered, &home, [&invokeLocal, &capture, &home] {
+    const auto path = QFileDialog::getOpenFileName(&home, QStringLiteral("Open image"), capture.saveDirectory(), xerahs::app::imageFileFilter());
+    if (!path.isEmpty()) invokeLocal(ActivationAction::EditImage, path);
+  });
+  QObject::connect(&tray, &QSystemTrayIcon::activated, region, [region](QSystemTrayIcon::ActivationReason reason) {
+    if (reason == QSystemTrayIcon::Trigger) region->trigger();
   });
 
-  if (!QSystemTrayIcon::isSystemTrayAvailable()) {
-    std::fprintf(stderr, "xerahs: no system tray host; use --capture-region to capture\n");
+  const bool trayAvailable = QSystemTrayIcon::isSystemTrayAvailable();
+  if (!trayAvailable) {
+    std::fprintf(stderr, "xerahs: no system tray host; use the XerahS window\n");
+    home.show();
   }
+  app.setQuitOnLastWindowClosed(!trayAvailable);
   tray.show();
-  if (request == kCaptureRegion) capture.captureRegion();
-  if (request.startsWith(kEditPrefix)) {
-    if (auto *window = xerahs::app::EditorWindow::open(QString::fromUtf8(request.mid(kEditPrefix.size())))) window->show();
-  }
-  return app.exec();
+  if (dispatcher.admit(request) == ActivationReplyState::Accepted) dispatch(request);
+  const int result = app.exec(); instance.setAdmission({}); return result;
 }

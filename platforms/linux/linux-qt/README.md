@@ -6,6 +6,7 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 
 | Capability | State | Evidence |
 |---|---|---|
+| `CORE-PLATFORM-001` | Native lifetime instance ownership, authenticated bounded activation and a keyboard-accessible command window; complete application foundation and release gates pending | Real-process/actual-application forwarding, failure/recovery, core dispatch and native action tests; no CORE vectors published yet; [traceability](traceability/CORE-PLATFORM-001.json) |
 | `FILENAME-GENERATION-001` | Core logic and conformance seam; no UI yet | 51 of 51 vectors pass; [traceability](traceability/FILENAME-GENERATION-001.json) |
 | `POST-CAPTURE-ACTIONS-001` | Pipeline engine and conformance seam; native actions, retry, and recovery not yet | 17 of 17 vectors pass; [traceability](traceability/POST-CAPTURE-ACTIONS-001.json) |
 | `REGION-CAPTURE-001` | Core mapping/compositing/session model and native frozen portal/overlay flow; cancellable, owner-fenced screenshot requests; per-monitor source mapping, capture settings and full qualification pending | 21 of 21 vectors plus private native transport/controller/cancellation tests; [traceability](traceability/REGION-CAPTURE-001.json) |
@@ -32,7 +33,12 @@ portal services.
 
 ## The `xerahs` app
 
-`build/xerahs` is a single-instance tray app (`com.xerahs.app`, "XerahS").
+`build/xerahs` is a native command-window and tray app (`com.xerahs.app`, "XerahS").
+Repeated desktop launch shows/restores the existing window. A lifetime kernel
+lock prevents another primary after a busy, rejected or uncertain activation;
+private bounded IPC authenticates peer users before sending paths. The
+[activation policy](app/ACTIVATION-POLICY.md) records ownership, delivery and
+review limits. With no tray host, the window provides the current commands.
 
 - **Capture region** (tray menu, tray click, or `xerahs --capture-region`, which forwards to a running instance) takes a frozen snapshot through the xdg-desktop-portal Screenshot portal, shows a fullscreen selection overlay per screen, and runs the post-capture pipeline: save as PNG to `~/Pictures/XerahS` with the default filename pattern, then copy the image to the clipboard. The first capture shows the portal's consent prompt.
 - Keys in the overlay: drag or Space to select, Enter to capture, Esc to cancel, arrows to move by 1 pixel (Shift for 10), Alt+arrows to resize.

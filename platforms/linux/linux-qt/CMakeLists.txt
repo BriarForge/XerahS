@@ -13,6 +13,10 @@ find_package(ZLIB REQUIRED)
 set(XERAHS_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." CACHE PATH "BriarForge/XerahS repository root")
 
 add_library(xerahs_core STATIC
+  src/shell/ActivationDispatcher.cpp
+  src/shell/ActivationDispatcher.h
+  src/shell/ActivationProtocol.cpp
+  src/shell/ActivationProtocol.h
   src/actions/PostCapturePipeline.cpp
   src/actions/PostCapturePipeline.h
   src/capture/RegionGeometry.cpp
@@ -70,9 +74,17 @@ add_executable(xerahs-conformance-adapter conformance-adapter/main.cpp)
 target_link_libraries(xerahs-conformance-adapter PRIVATE xerahs_core xerahs_editor_codecs)
 target_compile_options(xerahs-conformance-adapter PRIVATE -Wall -Wextra -Wpedantic)
 
+add_library(xerahs_native_instance STATIC app/NativeInstance.cpp app/NativeInstance.h)
+set_target_properties(xerahs_native_instance PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_native_instance PUBLIC app)
+target_link_libraries(xerahs_native_instance PUBLIC xerahs_core Qt6::Network)
+target_compile_options(xerahs_native_instance PRIVATE -Wall -Wextra -Wpedantic)
+
 # The XerahS application (D-LIN-001: Qt Widgets). Product logic stays in
 # xerahs_core; app/ only wires it to Qt and the desktop.
 add_executable(xerahs
+  app/ApplicationWindow.cpp
+  app/ApplicationWindow.h
   app/CaptureActions.cpp
   app/CaptureActions.h
   app/CaptureController.cpp
@@ -115,10 +127,28 @@ add_executable(xerahs
   app/main.cpp
 )
 set_target_properties(xerahs PROPERTIES AUTOMOC ON)
-target_link_libraries(xerahs PRIVATE xerahs_core xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus Qt6::Network)
+target_link_libraries(xerahs PRIVATE xerahs_native_instance xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus)
 target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
 enable_testing()
+add_executable(activation-protocol-test tests/ActivationProtocolTest.cpp)
+set_target_properties(activation-protocol-test PROPERTIES AUTOMOC ON)
+target_link_libraries(activation-protocol-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME activation-protocol COMMAND activation-protocol-test)
+add_executable(application-window-test tests/ApplicationWindowTest.cpp app/ApplicationWindow.cpp app/ApplicationWindow.h)
+set_target_properties(application-window-test PROPERTIES AUTOMOC ON)
+target_include_directories(application-window-test PRIVATE app)
+target_link_libraries(application-window-test PRIVATE Qt6::Widgets Qt6::Test)
+add_test(NAME application-window COMMAND application-window-test)
+set_tests_properties(application-window PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+add_executable(native-instance-fixture tests/NativeInstanceFixture.cpp)
+target_link_libraries(native-instance-fixture PRIVATE xerahs_native_instance)
+add_executable(native-instance-test tests/NativeInstanceTest.cpp)
+set_target_properties(native-instance-test PROPERTIES AUTOMOC ON)
+target_link_libraries(native-instance-test PRIVATE xerahs_native_instance Qt6::Test)
+add_dependencies(native-instance-test native-instance-fixture xerahs)
+add_test(NAME native-instance COMMAND native-instance-test)
+set_tests_properties(native-instance PROPERTIES TIMEOUT 45)
 add_executable(toolbar-preferences-test tests/ToolbarPreferencesTest.cpp)
 set_target_properties(toolbar-preferences-test PROPERTIES AUTOMOC ON)
 target_link_libraries(toolbar-preferences-test PRIVATE xerahs_core Qt6::Test)
@@ -292,11 +322,20 @@ add_test(NAME editor-window COMMAND editor-window-test)
 set_tests_properties(editor-window PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 
 find_package(Python3 3.12 REQUIRED COMPONENTS Interpreter)
-# Capabilities whose published vector operations this edition implements.
+# Capabilities with production implementation and requirement traceability.
 # Full requirement coverage remains in traceability, including partial rows.
 # The full suite runs without --capability and still fails for missing seams.
-set(XERAHS_IMPLEMENTED_CAPABILITIES FILENAME-GENERATION-001 POST-CAPTURE-ACTIONS-001 REGION-CAPTURE-001 EDITOR-SESSION-001 EDITOR-CANVAS-001 EDITOR-SETTINGS-001)
-list(TRANSFORM XERAHS_IMPLEMENTED_CAPABILITIES PREPEND "--capability;" OUTPUT_VARIABLE XERAHS_CAPABILITY_ARGS)
+set(XERAHS_IMPLEMENTED_CAPABILITIES CORE-PLATFORM-001 FILENAME-GENERATION-001 POST-CAPTURE-ACTIONS-001 REGION-CAPTURE-001 EDITOR-SESSION-001 EDITOR-CANVAS-001 EDITOR-SETTINGS-001)
+set(XERAHS_CAPABILITY_ARGS)
+foreach(capability IN LISTS XERAHS_IMPLEMENTED_CAPABILITIES)
+  if(EXISTS "${XERAHS_REPO_ROOT}/product-contract/capabilities/${capability}/test-vectors.json")
+    list(APPEND XERAHS_CAPABILITY_ARGS --capability "${capability}")
+  elseif(capability STREQUAL "CORE-PLATFORM-001")
+    message(STATUS "${capability}: no published test-vectors.json; native tests are partial evidence. Shared conformance and qualification remain Required.")
+  else()
+    message(FATAL_ERROR "${capability}: required published test-vectors.json is missing.")
+  endif()
+endforeach()
 add_test(NAME conformance
   COMMAND Python3::Interpreter "${XERAHS_REPO_ROOT}/conformance/runner/xerahs_conformance.py"
           --adapter $<TARGET_FILE:xerahs-conformance-adapter>

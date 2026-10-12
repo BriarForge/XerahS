@@ -8,9 +8,19 @@ waiver, release approval or reduced completion condition.
 
 The full native Linux application is **unfinished**. The baseline's 1,592
 linked discovery rows establish contract routing, not implemented behavior.
-Six capability packages have Linux requirement trace files and a production
-conformance adapter; their 114 published vectors cover only those seams.
+Seven capability packages now have Linux requirement trace files. Six have
+published vectors and a production conformance adapter; their 114 vectors
+cover only those seams. CORE has native/domain evidence and no published
+vector file yet.
 Neither that vector count nor a green Ubuntu CI run proves the full contract.
+
+The numbered desktop-spec inventory contains 324 requirements across 15
+packages. Current trace files label 81 as implemented (25%) and 64 as partial
+(20%); 178 have no implemented/partial evidence, and CORE-029 records the
+declared mobile scope outside Linux desktop. These are unweighted trace labels,
+not a production-readiness score: some implemented rows cover core seams only,
+and individual catalogue requirements expand into hundreds of ledger items.
+No full native production-readiness percentage or release acceptance is proven.
 
 ## Capability scope
 
@@ -20,10 +30,10 @@ entire specification and linked ledger rows, not just the examples listed.
 
 | Capability | Current evidence | Requirements still needing implementation or qualification |
 |---|---|---|
-| `CORE-PLATFORM-001` | Native tray, instance socket, region controller, editor and desktop-file identity in `app/` and `packaging/` | No complete CORE requirement trace. Main application/onboarding, authenticated activation and failure recovery, localization, notification authority/privacy, updates, profiles/migration, credential services, global shortcuts, general capture, recording/audio, media, uploads, plugins, history, automation/watch folders/assistant, diagnostics and distribution remain Required. |
+| `CORE-PLATFORM-001` | All 37 CORE rows traced; native lifetime lock, authenticated bounded activation, real-process failure/recovery and actual-application forwarding tests; native command window sharing tray actions | Complete main application/onboarding, shared profile/activation qualification, localization, notification authority/privacy, updates, migration, credential services, global shortcuts, general capture, recording/audio, media, uploads, plugins, history, automation/watch folders/assistant, diagnostics and distribution remain Required. Native candidate evidence does not accept human reviews or full CORE scope. |
 | `FILENAME-GENERATION-001` | `src/naming/`, adapter and 51 vectors | Complete native preference/input integration, filename preview and destination workflow qualification remain Required. Core expansion evidence alone does not accept all native usage paths. |
 | `POST-CAPTURE-ACTIONS-001` | `src/actions/`, adapter and 17 vectors; `CaptureActions` implements the current save/clipboard path | Full native action catalogue, configurable action selection, annotation/effects/output handoffs, uploads, bounded retry, durable results/restart recovery, privacy and consent qualification remain Required. |
-| `REGION-CAPTURE-001` | `src/capture/`, 21 vectors; `PortalScreenshot`, `CaptureController`, `RegionOverlay` | Native portal lifecycle/cancellation/failure evidence is missing at the audit baseline. The controller assumes a uniform desktop scale; per-monitor physical source mapping, rotation/colour/availability, mixed displays, cursor settings, HDR conversion, interactive handles/snapping/magnifier, persisted last-region invocation, physical accessibility and performance remain Required. |
+| `REGION-CAPTURE-001` | `src/capture/`, 21 vectors; `PortalScreenshot`, `CaptureController`, `RegionOverlay`; native portal lifecycle/cancellation/failure tests added after the audit baseline in `cf02933` | The controller assumes a uniform desktop scale; per-monitor physical source mapping, rotation/colour/availability, mixed displays, cursor settings, HDR conversion, interactive handles/snapping/magnifier, persisted last-region invocation, physical accessibility and performance remain Required. |
 | `EDITOR-SESSION-001` | Document/sidecar, source binding, rectangle history/rendering, native editor, 19 vectors | Full contracted annotation/effect/canvas/output integration, complete persistence compatibility, native parity, visual goldens and human reviews remain Required. |
 | `EDITOR-ANNOTATIONS-001` | Rectangle creation/selection/style/rotation/order in the session and canvas | No complete EA trace. All 20 stable tools, curves/freehand/text/balloons/steps/image/emoji/cursor, redaction/magnifier/spotlight/eraser/cut-out, object clipboard/duplicate, complete persistence and accessible tool controls remain Required. |
 | `EDITOR-EFFECTS-001` | General canvas pixel preparation/history exists | No complete EE trace or effect catalogue implementation. All 232 selected stable effect IDs, parameter semantics, preview/Apply, resource/colour/alpha/randomness rules, presets/favorites, cancellation and visual evidence remain Required. |
@@ -66,11 +76,12 @@ marked implemented in a core trace file.
 
 ## Next production work
 
-1. Complete native screenshot request lifecycle under RC-001/002/008/016/018
-   and CORE-004/005: cancel pending native interaction, distinguish user cancel
-   from denial, bind responses to the requested service owner/handle, terminate
-   transport failure once, redact errors and bound native image decoding.
-   Verify production calls on an isolated bus and temporary image fixtures.
+1. Continue full native capture/operation qualification under
+   RC-001/002/008/016/018 and CORE-004/005. The pending Screenshot lifecycle is
+   now cancellable, owner/handle fenced and bounded, with isolated production
+   transport/controller evidence. Core startup now also has lifetime ownership,
+   authenticated activation/failure recovery and a real command window. Native
+   candidate code still requires shared/profile/physical/human qualification.
 2. Remove the controller's uniform-scale source assumption through a specified
    physical-source backend and verify per-display mapping/topology/colour, then
    complete last-region storage, cursor/settings and overlay interactions.
