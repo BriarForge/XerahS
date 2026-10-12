@@ -145,8 +145,8 @@ int main(int argc, char *argv[]) {
     if (auto *window = xerahs::app::EditorWindow::fromCapturedImage(image, parent)) { window->show(); return true; }
     return false;
   }, &home);
-  menu.insertAction(newImage, recovery->editAction()); menu.insertAction(newImage, recovery->discardAction());
-  home.addCaptureRecoveryActions(recovery->editAction(), recovery->discardAction());
+  menu.insertAction(newImage, recovery->editAction()); menu.insertAction(newImage, recovery->reviewAction()); menu.insertAction(newImage, recovery->discardAction());
+  home.addCaptureRecoveryActions(recovery->editAction(), recovery->discardAction(), recovery->reviewAction());
   QObject::connect(recovery, &xerahs::app::CaptureRecoveryActions::notify, &home, [&home](const QString &body, bool success) {
     home.showResult(QStringLiteral("Retained capture"), body, success);
   });

@@ -19,6 +19,8 @@ add_library(xerahs_core STATIC
   src/shell/ActivationProtocol.h
   src/actions/PostCapturePipeline.cpp
   src/actions/PostCapturePipeline.h
+  src/actions/PipelineResultJson.cpp
+  src/actions/PipelineResultJson.h
   src/capture/RegionGeometry.cpp
   src/capture/RegionGeometry.h
   src/capture/RegionSession.cpp

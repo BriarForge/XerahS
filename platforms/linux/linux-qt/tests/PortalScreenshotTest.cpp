@@ -17,6 +17,9 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QPointer>
+#include <QPlainTextEdit>
+#include <QJsonDocument>
+#include <QTreeWidget>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QToolButton>
@@ -417,6 +420,37 @@ private slots:
     QCOMPARE(QImage(result->file->path).size(), QSize(30, 25)); QCOMPARE(result->workingMedia.size(), QSize(30, 25));
     QCOMPARE(QApplication::clipboard()->text(), QString("saving fixture clipboard")); QCOMPARE(bytes(path), before);
     QVERIFY(notified.first().first().toString().contains("cancelled"));
+  }
+  void sharedReviewCommandShowsAnImmutableReadOnlyReportAndHasNoOutputSideEffects() {
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto before = bytes(path);
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    CaptureActionPorts ports;
+    ports.clipboard = [](const QImage &, const xerahs::actions::CancellationToken &) {
+      return xerahs::actions::ActionOutcome{xerahs::actions::ActionState::Failed, QString("clipboard-unavailable"), {}};
+    };
+    CaptureController controller(dir.filePath("private-<img>"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, {}, ports);
+    auto recovery = std::make_unique<CaptureRecoveryActions>(controller, nullptr, CapturedImageOpener{});
+    ApplicationWindow home({}); home.addCaptureRecoveryActions(recovery->editAction(), recovery->discardAction(), recovery->reviewAction()); home.activate();
+    auto *review = home.findChild<QToolButton *>("review-retained-capture"); QVERIFY(review && !review->isEnabled());
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
+    const auto retained = controller.lastPipelineResult(); QVERIFY(retained && retained->file);
+    const auto saved = bytes(retained->file->path); QApplication::clipboard()->setText("review fixture private clipboard");
+    QVERIFY(review->isEnabled()); QVERIFY(!recovery->editAction()->isEnabled());
+    review->setFocus(); QTest::keyClick(review, Qt::Key_Space); QTRY_VERIFY(QApplication::activeModalWidget());
+    auto *dialog = QApplication::activeModalWidget(); QCOMPARE(dialog->objectName(), QString("retainedCaptureResultDialog"));
+    auto *report = dialog->findChild<QPlainTextEdit *>("captureResultJson"); QVERIFY(report && report->isReadOnly()); QVERIFY(!report->isVisible());
+    QCOMPARE(QJsonDocument::fromJson(report->toPlainText().toUtf8()).object(), retained->canonicalResult());
+    auto *outcomes = dialog->findChild<QTreeWidget *>("captureActionResults"); QVERIFY(outcomes); QCOMPARE(outcomes->topLevelItemCount(), 2);
+    QCOMPARE(outcomes->topLevelItem(0)->text(1), QString("succeeded")); QCOMPARE(outcomes->topLevelItem(1)->text(2), QString("clipboard-unavailable"));
+    QPushButton *toggle = nullptr; for (auto *button : dialog->findChildren<QPushButton *>()) if (button->text() == "Show report details") toggle = button;
+    QVERIFY(toggle); toggle->click(); QVERIFY(report->isVisible()); const auto original = report->toPlainText();
+    report->setFocus(); QTest::keyClicks(report, "cannot edit"); QCOMPARE(report->toPlainText(), original);
+    QCOMPARE(controller.lastPipelineResult(), retained); QCOMPARE(QApplication::clipboard()->text(), QString("review fixture private clipboard"));
+    QTest::keyClick(dialog, Qt::Key_Escape); QTRY_VERIFY(!QApplication::activeModalWidget()); QVERIFY(review->isEnabled());
+    recovery->reviewAction()->trigger(); QTRY_VERIFY(QApplication::activeModalWidget());
+    QPointer<QWidget> owned = QApplication::activeModalWidget(); recovery.reset(); QTRY_VERIFY(!owned);
+    QCOMPARE(controller.lastPipelineResult(), retained); QCOMPARE(bytes(retained->file->path), saved); QCOMPARE(bytes(path), before);
+    QCOMPARE(QApplication::clipboard()->text(), QString("review fixture private clipboard"));
   }
   void recoveryActionsUseActualSharedKeyboardCommandsAndKeepFailedMediaUntilExplicitDiscard() {
     QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto before = bytes(path);

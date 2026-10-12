@@ -1,4 +1,5 @@
 #pragma once
+#include "actions/PipelineResultJson.h"
 #include <QImage>
 #include <QJsonObject>
 #include <QString>
@@ -7,12 +8,7 @@
 class QIODevice;
 namespace xerahs::app {
 // Native PCA-007 artifact. Keep private paths/context out of ordinary diagnostics.
-struct CaptureFile {
-  QString path;
-  QString mediaType;
-  qint64 byteLength = 0;
-  QJsonObject filenameContext;
-};
+using CaptureFile = xerahs::actions::SavedFileArtifact;
 struct CaptureSaveResult {
   std::optional<CaptureFile> file;
   QString diagnostic;

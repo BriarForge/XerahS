@@ -122,7 +122,10 @@ a later receipt replaces it or the controller/application closes. This preserves
 working media and completed files after output failure. Shared recovery controls
 now open the retained snapshot in a new unsaved editor and explicitly discard
 the current in-memory receipt. Complete recovery/history UI, configured retention
-policy, external canonical serialization and the PCA-012 durable journal remain Required. These remain Required alongside the
+policy and the PCA-012 durable journal remain Required. Native receipts now emit
+the shared production canonical result, including namespaced actual file/context,
+task and timing facts, for read-only user review; see [pipeline reports](PIPELINE-RESULTS.md).
+Serialization is not persistence or recovery authority. These remain Required alongside the
 remaining action catalogue, configured workflows, privacy/security review and
 physical clipboard/input-serial/compositor/performance qualification.
 

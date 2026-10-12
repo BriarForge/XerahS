@@ -3,6 +3,7 @@
 // misuse, unknown legacy flags, and per-run isolation.
 
 #include "actions/PostCapturePipeline.h"
+#include "actions/PipelineResultJson.h"
 
 #include <QFile>
 #include <QJsonArray>
@@ -64,6 +65,65 @@ class PostCapturePipelineTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void canonicalResultUsesContractFieldsAndNamespacedActualMetadata() {
+    ScriptedExecutor executor; executor.states["image-clipboard"] = ActionState::Failed;
+    CancellationToken token; PipelineHooks hooks;
+    auto time = QDateTime::fromString("2026-10-13T14:00:00.123+08:00", Qt::ISODateWithMs);
+    hooks.clock = [&] { const auto current = time; time = time.addMSecs(100); return current; };
+    const auto result = runPipeline("task-fixture", {"reveal", "image-clipboard", "save"}, {}, executor, token, hooks);
+    const qint64 length = 9007199254740993LL;
+    const SavedFileArtifact file{"/fixtures/private.png", "image/png", length,
+                                 {{"pattern", "%Y-%mo-%d"}, {"counter", 17}}};
+    const auto json = pipelineResultJson(result, {file});
+    QCOMPARE(json.value("pipeline_state").toString(), QString("completed"));
+    QCOMPARE(json.value("final_working_media").toString(), QString("capture"));
+    QVERIFY(json.value("working_media_retained").toBool());
+    const QJsonArray expected{QJsonObject{{"action", "save"}, {"state", "succeeded"}},
+        QJsonObject{{"action", "image-clipboard"}, {"state", "failed"}, {"diagnostic", "action-failed"}},
+        QJsonObject{{"action", "reveal"}, {"state", "succeeded"}, {"input_artifact", "save.file"}}};
+    QCOMPARE(json.value("ordered_results").toArray(), expected);
+    const auto metadata = json.value("extensions").toObject().value("com.xerahs.app").toObject();
+    QCOMPARE(metadata.value("task_id").toString(), QString("task-fixture"));
+    QCOMPARE(metadata.value("schema_version").toInt(), 1);
+    const auto timings = metadata.value("action_timings").toArray(); QCOMPARE(timings.size(), 3);
+    QCOMPARE(timings[0].toObject(), (QJsonObject{{"action", "save"}, {"started_at", "2026-10-13T06:00:00.123Z"},
+                                               {"finished_at", "2026-10-13T06:00:00.223Z"}}));
+    const auto artifact = metadata.value("file_artifacts").toArray().first().toObject();
+    QCOMPARE(artifact, (QJsonObject{{"artifact", "save.file"}, {"path", file.path}, {"media_type", "image/png"},
+                                  {"byte_length", length}, {"filename_context", file.filenameContext}}));
+    const auto roundTrip = QJsonDocument::fromJson(QJsonDocument(json).toJson()).object();
+    QCOMPARE(roundTrip, json); QCOMPARE(artifact.value("byte_length").toInteger(), length);
+    QVERIFY(!json.contains("task_id")); QVERIFY(!json.contains("file_artifacts"));
+    QCOMPARE(result.orderedResults[0].startedAt.offsetFromUtc(), 8 * 3600);
+  }
+
+  void cancelledAndSkippedActionsHaveNoInventedExecutionTimes() {
+    ScriptedExecutor executor; CancellationToken token;
+    PipelineHooks hooks; hooks.actionFinished = [&](const ActionResult &) { token.request(); };
+    const auto result = runPipeline("cancel-fixture", {"path-clipboard", "pin"}, {}, executor, token, hooks);
+    const auto json = pipelineResultJson(result);
+    QCOMPARE(json.value("pipeline_state").toString(), QString("cancelled"));
+    QCOMPARE(json.value("ordered_results").toArray(), (QJsonArray{
+        QJsonObject{{"action", "pin"}, {"state", "succeeded"}},
+        QJsonObject{{"action", "path-clipboard"}, {"state", "cancelled"}}}));
+    const auto native = json.value("extensions").toObject().value("com.xerahs.app").toObject();
+    QCOMPARE(native.value("action_timings").toArray().size(), 1);
+    QVERIFY(native.value("file_artifacts").toArray().isEmpty());
+    CancellationToken independent; ScriptedExecutor missing;
+    const auto skipped = pipelineResultJson(runPipeline("skip-fixture", {"path-clipboard"}, {}, missing, independent));
+    QCOMPARE(skipped.value("ordered_results").toArray(), (QJsonArray{
+        QJsonObject{{"action", "path-clipboard"}, {"state", "skipped"},
+                    {"diagnostic", "dependency-unavailable"}, {"missing_artifact", "save.file"}}}));
+    QVERIFY(skipped.value("extensions").toObject().value("com.xerahs.app").toObject().value("action_timings").toArray().isEmpty());
+  }
+
+  void interruptedReportDoesNotInventFailureOrCompletion() {
+    PipelineResult result; result.taskId = "unknown-outcome"; result.state = PipelineState::Interrupted;
+    const auto json = pipelineResultJson(result);
+    QCOMPARE(json.value("pipeline_state").toString(), QString("interrupted"));
+    QVERIFY(json.value("ordered_results").toArray().isEmpty());
+  }
+
   // PCA-017: the compiled catalogue is the contract's catalogue.
   void catalogueMatchesContract() {
     QFile file(QStringLiteral(XERAHS_ACTIONS_CATALOGUE));

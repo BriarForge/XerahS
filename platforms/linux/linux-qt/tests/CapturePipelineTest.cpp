@@ -3,6 +3,9 @@
 #include <QDir>
 #include <QElapsedTimer>
 #include <QGuiApplication>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QFileInfo>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
@@ -27,6 +30,29 @@ void waitAtSave(const std::shared_ptr<SaveGate> &gate) {
 class CapturePipelineTest final : public QObject {
   Q_OBJECT
 private slots:
+  void actualReceiptEmitsCanonicalResultsAndPrivateArtifactFactsWithoutPayloads() {
+    QTemporaryDir dir; CaptureActionPorts ports;
+    ports.clipboard = [](const QImage &, const CancellationToken &) -> ActionOutcome { throw std::runtime_error("private clipboard contents and secret"); };
+    CapturePipeline pipeline(pixels(), dir.path(), "capture", {"save", "image-clipboard"}, nullptr, ports);
+    QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_COMPARE(done.count(), 1);
+    const auto retained = receipt(done); QVERIFY(retained->file);
+    const auto report = retained->canonicalResult();
+    QCOMPARE(report.value("pipeline_state").toString(), QString("completed"));
+    QCOMPARE(report.value("ordered_results").toArray(), (QJsonArray{
+        QJsonObject{{"action", "save"}, {"state", "succeeded"}},
+        QJsonObject{{"action", "image-clipboard"}, {"state", "failed"}, {"diagnostic", "action-failed"}}}));
+    const auto metadata = report.value("extensions").toObject().value("com.xerahs.app").toObject();
+    QCOMPARE(metadata.value("task_id").toString(), retained->pipeline.taskId);
+    const auto file = metadata.value("file_artifacts").toArray().first().toObject();
+    QCOMPARE(file.value("artifact").toString(), QString("save.file"));
+    QCOMPARE(file.value("path").toString(), retained->file->path);
+    QCOMPARE(file.value("byte_length").toInteger(), QFileInfo(retained->file->path).size());
+    QCOMPARE(file.value("filename_context").toObject(), retained->file->filenameContext);
+    const auto encoded = QJsonDocument(report).toJson();
+    QVERIFY(!encoded.contains("private clipboard contents")); QVERIFY(!encoded.contains("secret"));
+    QVERIFY(!encoded.contains("base64")); QVERIFY(!encoded.contains("iVBOR"));
+    QCOMPARE(retained->workingMedia, pixels()); QCOMPARE(QImage(retained->file->path), pixels());
+  }
   void cancelDuringUninterruptibleNativeSavePreservesItsFileAndStopsClipboard() {
     QTemporaryDir dir; const auto media = pixels(); auto gate = std::make_shared<SaveGate>(); ReleaseGate release{gate}; int copied = 0;
     QGuiApplication::clipboard()->setText("fixture before save");

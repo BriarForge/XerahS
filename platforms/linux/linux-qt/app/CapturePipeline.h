@@ -9,6 +9,7 @@ struct CapturePipelineResult {
   std::optional<CaptureFile> file;
   QImage workingMedia;
   QString diagnostic;
+  QJsonObject canonicalResult() const;
 };
 using CapturePipelineReceipt = std::shared_ptr<const CapturePipelineResult>;
 struct CapturePipelineState;

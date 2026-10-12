@@ -4,6 +4,7 @@
 #include <functional>
 class QAction;
 class QMessageBox;
+class QDialog;
 class QWidget;
 namespace xerahs::app {
 // The opener receives an immutable image snapshot on the GUI thread. It owns
@@ -19,17 +20,19 @@ public:
   ~CaptureRecoveryActions() override;
   QAction *editAction() const { return m_edit; }
   QAction *discardAction() const { return m_discard; }
+  QAction *reviewAction() const { return m_review; }
 signals:
   void notify(const QString &body, bool success);
 private:
   void updateAvailability();
   void edit();
   void discard();
+  void review();
   QPointer<CaptureController> m_capture;
   QPointer<QWidget> m_dialogParent;
-  QPointer<QMessageBox> m_dialog;
+  QPointer<QDialog> m_dialog;
   CapturedImageOpener m_opener;
-  QAction *m_edit = nullptr, *m_discard = nullptr;
+  QAction *m_edit = nullptr, *m_discard = nullptr, *m_review = nullptr;
   quint64 m_operation = 0;
   bool m_running = false;
 };

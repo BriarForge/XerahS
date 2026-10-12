@@ -3,6 +3,7 @@
 // {"capability", "operation", "input"}, and one JSON result object on stdout.
 
 #include "actions/PostCapturePipeline.h"
+#include "actions/PipelineResultJson.h"
 #include "capture/RegionGeometry.h"
 #include "capture/RegionSession.h"
 #include "image-editor/AnnotationRenderer.h"
@@ -194,16 +195,6 @@ private:
   pca::CancellationToken &m_token;
 };
 
-QJsonObject actionResultJson(const pca::ActionResult &result) {
-  QJsonObject json{{QStringLiteral("action"), result.action},
-                   {QStringLiteral("state"), pca::actionStateName(result.state)}};
-  if (result.diagnostic) json.insert(QStringLiteral("diagnostic"), *result.diagnostic);
-  if (result.missingArtifact) json.insert(QStringLiteral("missing_artifact"), *result.missingArtifact);
-  if (result.inputArtifact) json.insert(QStringLiteral("input_artifact"), *result.inputArtifact);
-  if (result.cancellationArrivedDuring) json.insert(QStringLiteral("cancellation_arrived_during"), true);
-  return json;
-}
-
 QJsonObject runPostCaptureActions(const QString &operation, const QJsonObject &input) {
   if (operation == u"map-legacy-flags") {
     const pca::LegacyFlagMapping mapping = pca::mapLegacyFlags(stringList(input.value(u"legacy_flags")));
@@ -233,12 +224,7 @@ QJsonObject runPostCaptureActions(const QString &operation, const QJsonObject &i
   if (!result.ignoredSelection.isEmpty()) {
     return adapterError(QStringLiteral("unknown action IDs: ") + result.ignoredSelection.join(u','));
   }
-  QJsonArray ordered;
-  for (const pca::ActionResult &action : result.orderedResults) ordered.append(actionResultJson(action));
-  return QJsonObject{{QStringLiteral("pipeline_state"), pca::pipelineStateName(result.state)},
-                     {QStringLiteral("final_working_media"), result.finalWorkingMedia},
-                     {QStringLiteral("ordered_results"), ordered},
-                     {QStringLiteral("working_media_retained"), result.workingMediaRetained}};
+  return pca::pipelineResultJson(result);
 }
 
 rc::PhysicalRect physicalRect(const QJsonValue &value) {

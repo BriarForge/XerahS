@@ -15,7 +15,9 @@
     "platforms/linux/linux-qt/app/CapturePipeline.cpp",
     "platforms/linux/linux-qt/app/CaptureController.cpp",
     "platforms/linux/linux-qt/app/CaptureRecoveryActions.h",
-    "platforms/linux/linux-qt/app/CaptureRecoveryActions.cpp"
+    "platforms/linux/linux-qt/app/CaptureRecoveryActions.cpp",
+    "platforms/linux/linux-qt/src/actions/PipelineResultJson.h",
+    "platforms/linux/linux-qt/src/actions/PipelineResultJson.cpp"
   ],
   "requirements": {
     "PCA-001": {
@@ -77,9 +79,10 @@
       "vectors": [
         "save-failure-fallbacks"
       ],
-      "note": "Native PNG saving encodes once into an owner-private temporary file and atomically publishes through Linux RENAME_NOREPLACE. Existing files, dangling symlinks and racing writers are never replaced; collisions retry fresh random names. CaptureActions records the absolute native path, actual media type/byte length and immutable filename-generation context. Independent native tests cover exact pixels, concurrent/racing publication, private permissions, cleanup and value-free failures. Full action artifact/result serialization, durable recovery, configured counter/storage integration, all save variants and native review/target qualification remain Required.",
+      "note": "Native PNG saving encodes once into an owner-private temporary file and atomically publishes through Linux RENAME_NOREPLACE. Existing files, dangling symlinks and racing writers are never replaced; collisions retry fresh random names. CaptureActions records the absolute native path, actual media type/byte length and immutable filename-generation context. Independent native tests cover exact pixels, concurrent/racing publication, private permissions, cleanup and value-free failures. Production canonical result serialization now emits the actual save artifact under a namespaced extension. Complete artifact catalogue, durable recovery, configured counter/storage integration, all save variants and native review/target qualification remain Required.",
       "evidence": [
-        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp"
       ],
       "disposition": "Required"
     },
@@ -129,7 +132,7 @@
     "PCA-013": {
       "status": "partial",
       "vectors": [],
-      "note": "The engine emits stable diagnostic codes. Native capture-save encoding, publication and hook exceptions return value-free codes; private file paths and filename context remain artifact data rather than ordinary diagnostics. Complete native action privacy/diagnostic and human review coverage remain Required.",
+      "note": "The engine emits stable diagnostic codes. Native capture-save encoding, publication and hook exceptions return value-free codes; private file paths and filename context remain artifact data rather than ordinary diagnostics. Complete native action privacy/diagnostic and human review coverage remain Required. The result-report serializer accepts no raster bytes, clipboard payload, recognized text or credential data; private artifact path/context appear only in user-requested review details with a privacy notice. Private native fixtures verify exception redaction and unchanged clipboard/files.",
       "disposition": "Required"
     },
     "PCA-014": {
@@ -153,8 +156,9 @@
       "vectors": [
         "all"
       ],
-      "note": "All published vectors pass through the production Core engine. Native receipts add confirmed media and actual save artifact metadata in typed native structures; complete canonical external serialization, durable history/recovery and namespace integration remain Required.",
+      "note": "The application native receipt and thin adapter now call one Qt Core production canonical serializer. The four published result fields and applicable action/dependency/cancellation fields remain intact; actual task identity, UTC execution times and native saved-file path/type/integer byte-length/naming context are under extensions.com.xerahs.app version 1. Native shared tray/main-window review shows an immutable read-only report without retry, file, clipboard or receipt mutations. Published vectors and independent Core/native/privacy/UI fixtures cover this seam. Serialization does not provide durable journal/restart recovery, retry authority, remaining artifact catalogue or human/native matrix acceptance; those remain Required.",
       "evidence": [
+        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
       ],

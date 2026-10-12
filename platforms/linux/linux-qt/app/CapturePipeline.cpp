@@ -7,6 +7,10 @@
 #include <mutex>
 namespace xerahs::app {
 using namespace xerahs::actions;
+QJsonObject CapturePipelineResult::canonicalResult() const {
+  return pipelineResultJson(pipeline, file ? std::vector<SavedFileArtifact>{*file}
+                                         : std::vector<SavedFileArtifact>{});
+}
 namespace {
 struct ClipboardCall {
   QImage media;
