@@ -31,11 +31,13 @@ public:
   }
   ~FileManager() override { bus.unregisterObject("/org/freedesktop/FileManager1"); bus.unregisterService("org.freedesktop.FileManager1"); }
   QDBusConnection bus; int calls = 0; QStringList items; QString startup; bool denied = false, delayed = false;
+  QString errorName;
   QDBusMessage pending;
 public slots:
   void ShowItems(const QStringList &uris, const QString &startupId) {
     ++calls; items = uris; startup = startupId;
-    if (denied) sendErrorReply("org.freedesktop.DBus.Error.AccessDenied", "private fixture secret");
+    if (!errorName.isEmpty()) sendErrorReply(errorName, "private fixture secret");
+    else if (denied) sendErrorReply("org.freedesktop.DBus.Error.AccessDenied", "private fixture secret");
     else if (delayed) { setDelayedReply(true); pending = message(); }
   }
 };
@@ -94,6 +96,17 @@ private slots:
     bool heartbeat = false; QTimer::singleShot(0, [&] { heartbeat = true; }); QTRY_VERIFY(heartbeat); QTRY_VERIFY(result);
     QCOMPARE(result->diagnostic, std::optional<QString>{"reveal-outcome-unknown"}); QCOMPARE(callbacks, 1);
     QVERIFY(manager.bus.send(manager.pending.createReply())); QTest::qWait(20); QCOMPARE(callbacks, 1);
+  }
+  void transportErrorRepliesPreserveUnknownDelivery_data() {
+    QTest::addColumn<QString>("name");
+    for (const auto &name : {"Timeout", "TimedOut", "NoReply", "Disconnected"}) QTest::newRow(name) << QString(name);
+  }
+  void transportErrorRepliesPreserveUnknownDelivery() {
+    QFETCH(QString, name); QTemporaryDir dir; const auto saved = saveCapture(pixels(), dir.path(), "capture"); QVERIFY(saved.file);
+    FileManager manager(server); manager.errorName = "org.freedesktop.DBus.Error." + name;
+    QObject owner; std::optional<ActionOutcome> result;
+    revealCaptureFile(*saved.file, &owner, [&](ActionOutcome value) { result = value; }, client);
+    QTRY_VERIFY(result); QVERIFY(result->outcomeUnknown); QCOMPARE(result->diagnostic, std::optional<QString>{"reveal-outcome-unknown"});
   }
   void ownerDestructionAfterDispatchKeepsUnknownDeliveryAndReleasesTheWait() {
     QTemporaryDir dir; const auto saved = saveCapture(pixels(), dir.path(), "capture"); QVERIFY(saved.file); FileManager manager(server); manager.delayed = true;

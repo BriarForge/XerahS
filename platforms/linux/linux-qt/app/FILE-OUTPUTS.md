@@ -100,7 +100,9 @@ configuration and real capture/upload commands remain untouched. Exact pushed
 revision qualification uses the Ubuntu 24.04/Qt 6.4.2 Product Contract CI.
 
 Native diagnostic names and typed unknown-delivery semantics need shared
-conformance/schema qualification. Concrete owner decisions include independently
+conformance/schema qualification. Private-bus remote error fixtures include both
+standard D-Bus `Timeout` and `TimedOut` spellings, `NoReply`, and `Disconnected`;
+none can become a known failed action or retry permission. Concrete owner decisions include independently
 published unknown-outcome vectors and whether originally configured symlink
 save roots may be admitted through a bound directory identity; this candidate
 rejects symlink components while preserving the saved file. Native Save As/thumbnail, multiple artifact

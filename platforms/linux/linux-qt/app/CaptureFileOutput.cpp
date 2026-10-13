@@ -50,7 +50,7 @@ void revealCaptureFile(const CaptureFile &file, QObject *owner, FileOutputComple
       const QDBusError error(reply);
       const auto type = error.type();
       const bool uncertain = reply.type() != QDBusMessage::ErrorMessage || type == QDBusError::NoReply ||
-          type == QDBusError::Timeout || type == QDBusError::Disconnected;
+          type == QDBusError::Timeout || type == QDBusError::TimedOut || type == QDBusError::Disconnected;
       ownedState->finish(uncertain ? unknown() : failed("reveal-unavailable"));
     }
     if (guard) guard->deleteLater();
