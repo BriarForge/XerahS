@@ -52,6 +52,8 @@ SaveOutcome runEditorSave(const QString &path, const QImage &source, const xerah
     if (state->ready.load()) { completion.quit(); return; }
     if (dialog) {
       dialog->setValue(state->percent.load());
+      // Modal setValue can process events that destroy the owner/dialog.
+      if (!dialog) return;
       dialog->setLabelText(state->cancelled.load() ? "Cancelling save at the next safe boundary…" : phaseText(state->phase.load()));
     }
   });

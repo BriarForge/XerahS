@@ -77,7 +77,11 @@ copy-on-write image that owns its pixels. The worker has no references to a
 window, session or GUI stack. Synchronous encoder/publication hooks borrow
 their arguments only for the worker call; they must not call GUI APIs. A false
 encoder result or exception fails before its publication and exposes no private
-exception payload. Progress observers cannot retract acknowledged artifacts.
+exception payload. Callback captures must remain alive through the worker's
+terminal boundary, even if owner destruction releases the GUI bridge early;
+copying a callable does not own any reference captures. Progress updates recheck
+the dialog after modal value updates can dispatch owner-destruction events.
+Progress observers cannot retract acknowledged artifacts.
 `EditorWindow::saveFinished` runs on the GUI after checkpoint/receipt recording
 while Save is busy; reentrant Save is ignored and deletion of the owner is
 guarded, including during busy-state restoration. Parent destruction requests

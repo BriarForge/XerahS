@@ -34,6 +34,8 @@ enum class EditorSavePhase { Rendering, Encoding, PublishingRaster, SavingAnnota
 struct EditorSaveHooks {
   // Synchronous worker callbacks; arguments are borrowed for this call only.
   // Returning false/throwing fails before publication; never use GUI APIs here.
+  // Captured state must outlive the worker, including after parent destruction
+  // releases runEditorSave. Copying a callable does not extend reference captures.
   std::function<bool(const QImage &, QIODevice *)> encode;
   std::function<void(EditorSaveArtifact, const QString &)> beforePublish;
 };
