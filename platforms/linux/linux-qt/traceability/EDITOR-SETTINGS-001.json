@@ -41,7 +41,9 @@
     "platforms/linux/linux-qt/app/ToolbarDialog.cpp",
     "platforms/linux/linux-qt/app/CaptureAnnotationDialog.h",
     "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
-    "platforms/linux/linux-qt/app/EditorSource.cpp"
+    "platforms/linux/linux-qt/app/EditorSource.cpp",
+    "platforms/linux/linux-qt/app/EditorCopy.h",
+    "platforms/linux/linux-qt/app/EditorCopy.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
@@ -131,7 +133,12 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Production Qt Core toolbar placements validate bounded stable IDs, Boolean visibility, nullable group defaults and locale-independent additional hotkeys. Duplicate actions/gestures, malformed chords and protected/reserved collisions are rejected atomically. Compatible future entries remain inactive, survive field recovery/save/reset/restart, and cannot be introduced or edited by ordinary changes. Native mapping reuses all 37 current editor commands; hidden group boundaries carry to the next visible command and unavailable entries remain read-only. Core independent references and native private-file/control/restart tests cover this subset. Complete contracted action coverage and shared ID/default/format/compatibility qualification remain Required."
+      "note": "Production Qt Core toolbar placements validate bounded stable IDs, Boolean visibility, nullable group defaults and locale-independent additional hotkeys. Duplicate actions/gestures, malformed chords and protected/reserved collisions are rejected atomically. Compatible future entries remain inactive, survive field recovery/save/reset/restart, and cannot be introduced or edited by ordinary changes. Native mapping reuses all 38 current editor commands; hidden group boundaries carry to the next visible command and unavailable entries remain read-only. Core independent references and native private-file/control/restart tests cover this subset. Complete contracted action coverage and shared ID/default/format/compatibility qualification remain Required. The native copy-rendered-image command now participates in toolbar customization while remaining hidden in the unchanged default layout. Protected Ctrl+C maps to that command and Ctrl+Shift+C stays protected for annotation copy. Native/core tests cover command admission and input/disabled behavior; complete shared metadata/default/compatibility qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/EDITOR-COPY.md",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+      ]
     },
     "ESET-011": {
       "disposition": "Required",
@@ -173,7 +180,12 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Production toolbar policy reserves the complete shortcut catalogue and native selection/navigation/window gestures, with duplicate/canonical collision tests. Native additional bindings invoke actual enabled actions, retain protected defaults, avoid duplicate registration of an identical protected binding and yield to text entry, modal/popup widgets and pending editor operations or gestures. Tests exercise hidden/menu commands, actual additional/protected key dispatch, native text undo, disabled/busy/modal guards and real editor history. Complete contracted shortcut/command coverage, physical keyboard and assistive-technology qualification remain Required."
+      "note": "Production toolbar policy reserves the complete shortcut catalogue and native selection/navigation/window gestures, with duplicate/canonical collision tests. Native additional bindings invoke actual enabled actions, retain protected defaults, avoid duplicate registration of an identical protected binding and yield to text entry, modal/popup widgets and pending editor operations or gestures. Tests exercise hidden/menu commands, actual additional/protected key dispatch, native text undo, disabled/busy/modal guards and real editor history. Complete contracted shortcut/command coverage, physical keyboard and assistive-technology qualification remain Required. Native Copy Image uses the same registry and input gate for fixed and customized shortcuts. Text entry and busy/modal state retain precedence, missing services disable the action, and custom shortcuts inherit its non-auto-repeat policy. Native window and toolbar fixtures cover this surface; physical/native/human qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/EDITOR-COPY.md",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+      ]
     }
   }
 }

@@ -37,7 +37,7 @@ entire specification and linked ledger rows, not just the examples listed.
 | `EDITOR-ANNOTATIONS-001` | Rectangle creation/selection/style/rotation/order in the session and canvas | No complete EA trace. All 20 stable tools, curves/freehand/text/balloons/steps/image/emoji/cursor, redaction/magnifier/spotlight/eraser/cut-out, object clipboard/duplicate, complete persistence and accessible tool controls remain Required. |
 | `EDITOR-EFFECTS-001` | General canvas pixel preparation/history exists | No complete EE trace or effect catalogue implementation. All 232 selected stable effect IDs, parameter semantics, preview/Apply, resource/colour/alpha/randomness rules, presets/favorites, cancellation and visual evidence remain Required. |
 | `EDITOR-CANVAS-001` | Native New/Open, zoom/pan, crop/auto-crop, resize/rotate/flip, represented-annotation flatten/clear and comparison; three vectors | Inserted images, background composition, general affine annotation transforms, complete flattening and native format/colour/resource/interaction qualification remain Required. |
-| `EDITOR-OUTPUT-ACTIONS-001` | PNG Save/Save As now freeze an owned snapshot on a cancellable worker with guarded atomic publication, true partial receipt and explicit companion-only repair; Save As adopts its path only after full success | No complete EO trace or published EO vectors. Full immutable output catalogue/background integration, JPEG/WebP quality/alpha/metadata choices, permission/ACL/disk-full/shutdown/durability and physical accessibility qualification, native image copy, uploads, print, pinning, result publication and destructive/exit consent qualification remain Required. |
+| `EDITOR-OUTPUT-ACTIONS-001` | PNG Save/Save As freeze an owned snapshot on a cancellable worker with guarded atomic publication, true partial receipt and explicit companion-only repair; Save As adopts its path only after full success. Native Copy Image now offers one immutable sRGB/alpha image plus PNG with GUI acknowledgement, explicit unknown delivery and confirmed known-failure replay while preserving document/history/files | No complete EO trace or published EO vectors. Full immutable output catalogue/background integration, JPEG/WebP quality/alpha/metadata choices, permission/ACL/disk-full/shutdown/durability and physical accessibility qualification, complete clipboard/paste-target/color qualification, uploads, print, pinning, result publication and destructive/exit consent qualification remain Required. |
 | `EDITOR-SETTINGS-001` | Private atomic store, recents, creation-only border/fill/thickness, appearance, window state and toolbar controls; three vectors plus native tests | Complete field ledger/default/migration/downstream coverage, fonts/other tool defaults, numeric/effect settings, recent/favorite effects, convenience/automation preferences, independent whole-file recovery, shared semantics and physical/human reviews remain Required. |
 | `EDITOR-UTILITIES-001` | Canvas comparison support covers only a related image operation | No complete EU trace. Contracted utility tools, deterministic local processing, resource policy, progress/cancellation, accessibility and output integration remain Required. |
 | `SETTINGS-CATALOG-001` | Editor preference subset and inactive unknown preservation | No complete SETCAT trace. All 922 settings rows, profiles/scopes, shared schema, secure credential references, import/export/reset preview, full validation/migration and approval remain Required. |
@@ -75,10 +75,11 @@ marked implemented in a core trace file.
 
 ## Next production work
 
-The 14 October editor-save checkpoint extends paired capture persistence,
+The 14 October editor-copy checkpoint extends editor Save, paired capture persistence,
 annotation handoff, Save As/multiple-file results, journal/recovery, linked retry
-and per-run selection with owned worker output and explicit editor companion repair.
-It passed all 40 local CTest targets
+and per-run selection with owned worker output, explicit editor companion repair,
+and non-mutating native clipboard output with guarded known/unknown delivery.
+It passed all 41 local CTest targets
 (native tests and all 114 published vectors for the six implemented vector
 packages), contract lint/backlog checks, their 25 unit tests and the seven
 conformance-runner unit tests. The production-path real-process fixtures use
@@ -111,6 +112,14 @@ future-major/old-destination preservation and owner/callback lifetime tests.
 Affected fixtures also run against cached Qt 6.4.2. Human permission/ACL policy,
 path-race/power-loss/process-death/full-shutdown and native disk-full qualification
 remain Required; no durable editor retry authority is inferred from this live receipt.
+The [editor-copy evidence](app/EDITOR-COPY.md) indexes actual image/PNG/alpha
+offers, worker/GUI separation, frozen snapshots, Cancel/owner destruction,
+unknown ownership/foreign replacement, explicit known-failure replay, Ctrl+C
+text precedence and unchanged dirty/history/viewport/settings/files. The native
+toolbar now has 38 current commands while retaining its default layout.
+EO-004-LINUX-2026-10-14 remains pending; Copy is independent specified output
+work, not a decision on those format defaults. Complete physical clipboard,
+color/alpha, shutdown, accessibility and privacy/security qualification remain Required.
 
 1. Continue full native capture/operation qualification under
    RC-001/002/008/016/018 and CORE-004/005. The pending Screenshot lifecycle is
@@ -144,7 +153,11 @@ remain Required; no durable editor retry authority is inferred from this live re
    Next implement explicit PNG/JPEG/WebP save options under EO-004/005/006.
    Resolve EO-004-LINUX-2026-10-14, recorded in EDITOR-SAVE.md for the product owner,
    covering draft format selection, defaults, alpha flattening, quality and profile
-   policy, while continuing decided behavior and independent contract work. Continue all
+   policy, while continuing decided behavior and independent contract work.
+   Native Copy Image now renders one owned snapshot and preserves document state
+   through cancellation/failure/replay under EO-001/002/014/015. Next continue
+   native Print's immutable snapshot/preview/cancellation behavior under
+   EO-008/014/015 while resolving the format policy. Continue all
    annotation tools, full workflow configuration, remaining save variants and
    media/artifact recovery alongside that work.
 4. Maintain requirement-level traces and meaningful failure/consent evidence;

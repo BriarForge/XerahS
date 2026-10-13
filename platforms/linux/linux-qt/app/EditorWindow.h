@@ -5,6 +5,7 @@
 #include "image-editor/EditorSession.h"
 #include "image-editor/CanvasOperations.h"
 #include "EditorSave.h"
+#include "EditorCopy.h"
 
 #include <QImage>
 #include <QMainWindow>
@@ -35,10 +36,13 @@ public:
   // Empty path invokes the native picker; recent-file actions pass an explicit path.
   bool openImage(const QString &path = {});
   void setSaveHooks(EditorSaveHooks hooks) { m_saveHooks = std::move(hooks); }
+  void setCopyPorts(EditorCopyPorts ports);
 signals:
   // GUI-thread acknowledgement after checkpoint/partial receipt recording;
   // emitted while Save is busy. Reentrant Save is ignored; owner deletion is safe.
   void saveFinished(bool rasterSaved, bool sidecarSaved, bool cancelled);
+  // GUI acknowledgement while outputs are busy; unknown delivery is explicit.
+  void copyFinished(const QString &state, const QString &diagnostic, bool cancellationArrivedDuring);
 
 protected:
   void closeEvent(QCloseEvent *event) override;
@@ -54,6 +58,9 @@ private:
   bool save(bool chooseFile);
   bool retrySave();
   bool performSave(const QString &target, const EditorSaveReceiptPtr &repair = {});
+  bool withOutputBusy(const std::function<bool()> &operation);
+  bool copyImage(const EditorCopyPayloadPtr &retry = {});
+  bool retryCopy();
   void recordRecentImage(const QString &absolutePath);
   void applyCreationDefaults();
   void persistDrawingDefaults();
@@ -87,13 +94,20 @@ private:
   std::optional<quint64> m_placeholderState;
   bool m_canvasOperationPending = false;
   bool m_closePending = false;
-  bool m_savePending = false;
+  bool m_outputPending = false;
   QAction *m_retrySave = nullptr;
   EditorSaveHooks m_saveHooks;
   EditorSaveReceiptPtr m_partialSave;
   std::optional<quint64> m_partialSaveState;
   QString m_saveMessage;
   std::optional<quint64> m_saveMessageState;
+  QAction *m_copyAction = nullptr;
+  QAction *m_retryCopy = nullptr;
+  EditorCopyPorts m_copyPorts;
+  EditorCopyPayloadPtr m_failedCopy;
+  std::optional<quint64> m_failedCopyState;
+  QString m_copyMessage;
+  std::optional<quint64> m_copyMessageState;
 };
 
 }  // namespace xerahs::app

@@ -137,11 +137,22 @@ companion repair preserves the PNG and Redo; failed Save As keeps the current pa
 until full repair. Native tests cover actual cancellation, concurrent caller changes,
 old-destination/future-companion preservation, bounded hashing, owner destruction,
 completion exceptions and refused non-PNG destinations. Full path-race, filesystem,
-shutdown, physical and human qualification remain Required. Next implement explicit
-PNG/JPEG/WebP alpha/quality/extension/overwrite/profile choices under EO-004/005/006,
-resolve the format-policy clarification recorded in EDITOR-SAVE.md and continue decided independent work,
+shutdown, physical and human qualification remain Required. Explicit
+PNG/JPEG/WebP alpha/quality/extension/overwrite/profile choices remain Required
+under EO-004/005/006; resolve the format-policy clarification recorded in
+EDITOR-SAVE.md while continuing decided independent work,
 alongside complete annotation tools, configured workflows, remaining save variants
-and catalogue.
+and catalogue. [Native editor Copy Image](app/EDITOR-COPY.md) now implements
+independent EO-001/002/014/015 behavior while the format clarification remains
+pending: owned worker composition, bounded alpha-preserving PNG plus native
+image offers, GUI-only acknowledgement, explicit unknown delivery, unchanged
+dirty/history/files and default-Cancel known-failure replay. Fixed Ctrl+C and
+customized hotkeys share native text/modal/busy precedence. Save and Copy now
+share one guarded busy/lifetime scope. Next continue native Print's immutable,
+non-mutating snapshot/preview/cancellation flow under EO-008/014/015 while
+resolving the format policy and all other contracted output/capture/application
+domains. Physical clipboard/color/accessibility, shutdown and human gates remain
+Required; this does not accept full output conformance or parity.
 
 Each checkpoint updates requirement traceability, runs native tests and the
 implemented shared vectors, and lands on `main`. Passing the small pilot vector

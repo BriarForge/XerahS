@@ -17,7 +17,7 @@ const QVector<ToolbarAction> &toolbarActions() {
     {"rotate-counter-clockwise"}, {"rotate-180"}, {"flip-horizontal"}, {"flip-vertical"},
     {"flatten-image"}, {"clear-annotations"}, {"clear-image"}, {"compare-images"},
     {"drawing-defaults"}, {"appearance-preferences"}, {"remember-window-state"},
-    {"customize-toolbar"}, {"toggle-toolbars"}, {"close-editor"}
+    {"customize-toolbar"}, {"toggle-toolbars"}, {"close-editor"}, {"copy-rendered-image"}
   };
   return actions;
 }

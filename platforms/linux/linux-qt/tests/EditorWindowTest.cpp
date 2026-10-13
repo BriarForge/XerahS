@@ -12,6 +12,7 @@
 
 #include <QAction>
 #include <QColorSpace>
+#include <QClipboard>
 #include <QColorDialog>
 #include <QCloseEvent>
 #include <QDialog>
@@ -48,6 +49,7 @@
 #include <QThread>
 #include <atomic>
 #include <thread>
+#include <stdexcept>
 #include <cmath>
 
 using namespace xerahs::app;
@@ -202,6 +204,78 @@ private slots:
   }
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  void copyMenuAndShortcutPublishOneSnapshotWithoutSavingOrClearingHistory() {
+    QTemporaryDir dir; const auto path = dir.filePath("image.png"); QVERIFY(fixture().save(path)); const auto original = storedBytes(path);
+    QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);
+    window->show(); auto *canvas = window->findChild<EditorCanvas *>(); drawRectangle(*canvas); trigger(*window, "deleteSelection"); trigger(*window, "undo");
+    const auto title = window->windowTitle(); const auto status = window->statusBar()->currentMessage(); const auto preferences = nativeEditorPreferences().values; const auto view = canvas->viewState();
+    EditorCopyPorts ports; int publications = 0; EditorCopyPayloadPtr payload;
+    ports.publish = [&](const EditorCopyPayload &value) { ++publications; payload = std::make_shared<EditorCopyPayload>(value); QApplication::clipboard()->setImage(value.image); return xerahs::actions::ActionOutcome{}; };
+    window->setCopyPorts(ports); QSignalSpy copied(window.get(), &EditorWindow::copyFinished), saved(window.get(), &EditorWindow::saveFinished);
+    auto *action = window->findChild<QAction *>("copyImage"); QVERIFY(action && action->isEnabled()); QCOMPARE(action->shortcut(), QKeySequence::Copy); QVERIFY(!action->autoRepeat());
+    action->trigger(); QCOMPARE(publications, 1); QCOMPARE(copied.first()[0].toString(), QString("succeeded")); QVERIFY(payload);
+    QCOMPARE(payload->image.pixel(8, 12), qRgb(255, 0, 0)); QCOMPARE(payload->image.pixel(0, 0), fixture().pixel(0, 0)); QCOMPARE(QApplication::clipboard()->image(), payload->image);
+    QCOMPARE(window->windowTitle(), title); QVERIFY(window->statusBar()->currentMessage().startsWith(status)); QVERIFY(window->findChild<QAction *>("redo")->isEnabled()); QCOMPARE(saved.count(), 0); QCOMPARE(storedBytes(path), original); QVERIFY(!QFile::exists(path + ".xann"));
+    QCOMPARE(nativeEditorPreferences().values, preferences); QCOMPARE(canvas->viewState().zoom(), view.zoom()); QCOMPARE(canvas->viewState().offset(), view.offset());
+    window->activateWindow(); QTRY_VERIFY(window->isActiveWindow());
+    auto *line = new QLineEdit("Local text", window.get()); line->show(); line->setFocus(); line->selectAll(); QTRY_COMPARE(QApplication::focusWidget(), line); QTest::keyClick(line, Qt::Key_C, Qt::ControlModifier);
+    QCOMPARE(publications, 1); QCOMPARE(QApplication::clipboard()->text(), QString("Local text")); delete line;
+    window->activateWindow(); canvas->setFocus(); QTRY_VERIFY(window->isActiveWindow()); QTRY_COMPARE(QApplication::focusWidget(), canvas);
+    QTest::keyClick(canvas, Qt::Key_C, Qt::ControlModifier); QCOMPARE(publications, 2); QCOMPARE(window->windowTitle(), title); QCOMPARE(saved.count(), 0);
+  }
+  void copyCancellationIsResponsiveAndBlocksOtherOutputAndDocumentActions() {
+    QTemporaryDir dir; const auto path = dir.filePath("image.png"); QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty());
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); drawRectangle(*window->findChild<EditorCanvas *>()); const auto title = window->windowTitle();
+    const auto gate = std::make_shared<SaveGate>(); EditorCopyPorts ports; int publications = 0;
+    ports.beforeRender = [gate] { gate->workerThread.store(QThread::currentThread() != qApp->thread()); gate->entered.store(true); while (!gate->released.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1)); };
+    ports.publish = [&](const EditorCopyPayload &) { ++publications; return xerahs::actions::ActionOutcome{}; }; window->setCopyPorts(ports);
+    QApplication::clipboard()->setText("KEEP"); QSignalSpy copied(window.get(), &EditorWindow::copyFinished); QTimer timer; bool observed = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *dialog = qobject_cast<QProgressDialog *>(QApplication::activeModalWidget()); if (!dialog || !gate->entered.load() || observed) return;
+      observed = true; QCOMPARE(dialog->objectName(), QString("copyImageProgress")); QVERIFY(!window->findChild<QAction *>("saveImage")->isEnabled()); QVERIFY(!window->findChild<QAction *>("copyImage")->isEnabled());
+      QVERIFY(!window->close()); QVERIFY(!window->openImage(path)); trigger(*window, "saveImage"); trigger(*window, "copyImage");
+      dialog->findChild<QPushButton *>()->click(); gate->released.store(true);
+    });
+    timer.start(5); trigger(*window, "copyImage"); timer.stop(); QVERIFY(observed && gate->workerThread.load()); QCOMPARE(publications, 0); QCOMPARE(copied.count(), 1); QCOMPARE(copied.first()[0].toString(), QString("cancelled"));
+    QCOMPARE(window->windowTitle(), title); QCOMPARE(QApplication::clipboard()->text(), QString("KEEP")); QVERIFY(window->findChild<QAction *>("saveImage")->isEnabled()); QVERIFY(window->findChild<QAction *>("copyImage")->isEnabled());
+  }
+  void knownCopyFailureOffersDefaultCancelRetryWithoutRenderingOrChangingRedo() {
+    QTemporaryDir dir; const auto path = dir.filePath("image.png"); QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty());
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); drawRectangle(*window->findChild<EditorCanvas *>());
+    EditorCopyPorts ports; int encodes = 0, publications = 0; bool acceptPublication = false; QByteArray first;
+    ports.encode = [&](const QImage &image, QIODevice *device) { ++encodes; return image.save(device, "PNG"); };
+    ports.publish = [&](const EditorCopyPayload &payload) { ++publications; if (first.isEmpty()) first = payload.png;
+      if (!acceptPublication) return xerahs::actions::ActionOutcome{xerahs::actions::ActionState::Failed, "clipboard-unavailable", std::nullopt};
+      QApplication::clipboard()->setImage(payload.image); return xerahs::actions::ActionOutcome{}; };
+    window->setCopyPorts(ports); QSignalSpy copied(window.get(), &EditorWindow::copyFinished); QTimer failure; bool reported = false;
+    connect(&failure, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (box && box->windowTitle() == "Image copy incomplete") { reported = true; QVERIFY(box->informativeText().contains("clipboard-unavailable")); box->accept(); } });
+    failure.start(5); trigger(*window, "copyImage"); failure.stop(); QVERIFY(reported); auto *retry = window->findChild<QAction *>("retryImageCopy"); QVERIFY(retry->isEnabled());
+    trigger(*window, "deleteSelection"); QVERIFY(!retry->isEnabled()); trigger(*window, "undo"); QVERIFY(retry->isEnabled()); QVERIFY(window->findChild<QAction *>("redo")->isEnabled());
+    bool cancelled = false, confirmed = false; QTimer confirmation;
+    connect(&confirmation, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box || box->objectName() != "retryImageCopyDialog") return;
+      QCOMPARE(box->defaultButton(), box->button(QMessageBox::Cancel)); if (!acceptPublication) { cancelled = true; box->button(QMessageBox::Cancel)->click(); } else { confirmed = true; box->button(QMessageBox::Retry)->click(); } });
+    confirmation.start(5); retry->trigger(); confirmation.stop(); QVERIFY(cancelled); QCOMPARE(encodes, 1); QCOMPARE(publications, 1); QCOMPARE(copied.count(), 1);
+    acceptPublication = true; confirmation.start(5); retry->trigger(); confirmation.stop(); QVERIFY(confirmed); QCOMPARE(encodes, 1); QCOMPARE(publications, 2); QCOMPARE(copied.last()[0].toString(), QString("succeeded"));
+    QVERIFY(!retry->isEnabled()); QVERIFY(window->findChild<QAction *>("redo")->isEnabled()); QVERIFY(window->windowTitle().contains(QChar(0x2022))); QCOMPARE(QApplication::clipboard()->image().pixel(8, 12), qRgb(255, 0, 0));
+  }
+  void unknownCopyDeliveryCannotAuthorizeRetryAndMissingServiceIsVisible() {
+    QTemporaryDir dir; const auto path = dir.filePath("image.png"); QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty());
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); drawRectangle(*window->findChild<EditorCanvas *>());
+    EditorCopyPorts ports; ports.publish = [](const EditorCopyPayload &payload) -> xerahs::actions::ActionOutcome { QApplication::clipboard()->setImage(payload.image); throw std::runtime_error("PRIVATE callback payload"); };
+    window->setCopyPorts(ports); QSignalSpy copied(window.get(), &EditorWindow::copyFinished); QTimer timer; bool reported = false;
+    connect(&timer, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (box && box->windowTitle() == "Image copy incomplete") { reported = true; QVERIFY(box->text().contains("may have changed")); QVERIFY(!box->informativeText().contains("PRIVATE")); box->accept(); } });
+    timer.start(5); trigger(*window, "copyImage"); timer.stop(); QVERIFY(reported); QCOMPARE(copied.first()[0].toString(), QString("unknown")); QVERIFY(!window->findChild<QAction *>("retryImageCopy")->isEnabled());
+    QVERIFY(window->windowTitle().contains(QChar(0x2022))); ports.publish = {}; window->setCopyPorts(ports); auto *copy = window->findChild<QAction *>("copyImage"); QVERIFY(!copy->isEnabled()); QVERIFY(copy->toolTip().contains("no clipboard service"));
+    trigger(*window, "copyImage"); QCOMPARE(copied.count(), 1);
+  }
+  void copyPublicationAndCompletionCanDestroyTheirOwner_data() { QTest::addColumn<bool>("duringPublication"); QTest::newRow("publication") << true; QTest::newRow("completion") << false; }
+  void copyPublicationAndCompletionCanDestroyTheirOwner() {
+    QFETCH(bool, duringPublication); QTemporaryDir dir; const auto path = dir.filePath("image.png"); QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty());
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); drawRectangle(*window->findChild<EditorCanvas *>()); bool published = false;
+    EditorCopyPorts ports; ports.publish = [&](const EditorCopyPayload &payload) { QApplication::clipboard()->setImage(payload.image); published = true; if (duringPublication) window.reset(); return xerahs::actions::ActionOutcome{}; };
+    window->setCopyPorts(ports); connect(window.get(), &EditorWindow::copyFinished, this, [&](const QString &, const QString &, bool) { if (!duringPublication) window.reset(); });
+    trigger(*window, "copyImage"); QVERIFY(published && !window); QCOMPARE(QApplication::clipboard()->image().pixel(8, 12), qRgb(255, 0, 0));
+  }
   void saveRunsOnWorkerWithResponsiveCancellationAndNoReentrantActions_data() {
     QTest::addColumn<bool>("afterRaster"); QTest::newRow("before PNG") << false; QTest::newRow("after PNG") << true;
   }

@@ -321,7 +321,7 @@ Core tests cover independent gesture references, collection/type/length bounds,
 protected/reserved collisions, explicit empty layouts, nullable groups, isolated
 recovery, reset, extensions, inactive future data, real private storage and
 restart. Native `ToolbarDialog` provides reorder, show/hide, nullable grouping,
-additional hotkeys and draft reset for the 37 currently registered editor
+additional hotkeys and draft reset for the 38 currently registered editor
 commands. Apply saves before publishing to every open editor; Cancel,
 invalid/locked/stale/read-only writes leave the layout and preferences intact.
 The active native hotkey cell editor is committed before Apply reads the draft.

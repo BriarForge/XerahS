@@ -346,6 +346,15 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   closeEditor->setObjectName(QStringLiteral("closeEditor")); closeEditor->setShortcut(QKeySequence::Close);
   connect(closeEditor, &QAction::triggered, this, [this] { close(); });
   auto *edit = menuBar()->addMenu(QStringLiteral("&Edit"));
+  m_copyAction = edit->addAction("&Copy Image"); m_copyAction->setObjectName("copyImage");
+  m_copyAction->setShortcut(QKeySequence::Copy);
+  m_copyAction->setAutoRepeat(false);
+  m_copyAction->setStatusTip("Copy visible annotations as sRGB pixels with alpha and PNG. The source and editing data stay in the editor.");
+  connect(m_copyAction, &QAction::triggered, this, [this] { copyImage(); });
+  m_retryCopy = edit->addAction("Retry image &copy…"); m_retryCopy->setObjectName("retryImageCopy");
+  m_retryCopy->setStatusTip("Retry only a known failed clipboard publication of the unchanged rendered snapshot.");
+  addAction(m_retryCopy); connect(m_retryCopy, &QAction::triggered, this, [this] { retryCopy(); });
+  edit->addSeparator();
   for (auto *action : {m_undo, m_redo, m_delete, m_rotate, stroke, fill, width, thin}) edit->addAction(action);
   auto *view = menuBar()->addMenu(QStringLiteral("&View"));
   QAction *zoomIn = view->addAction(QStringLiteral("Zoom In"));
@@ -385,11 +394,11 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     {"flatten-image", flatten}, {"clear-annotations", m_clearAnnotations}, {"clear-image", clear},
     {"compare-images", compare}, {"drawing-defaults", drawingDefaults}, {"appearance-preferences", appearance},
     {"remember-window-state", rememberWindow}, {"customize-toolbar", customizeToolbar},
-    {"toggle-toolbars", toggleToolbar}, {"close-editor", closeEditor}
+    {"toggle-toolbars", toggleToolbar}, {"close-editor", closeEditor}, {"copy-rendered-image", m_copyAction}
   };
   for (auto *action : m_toolbarActions) { action->setParent(this); addAction(action); }
   m_toolbarController = new NativeEditorToolbar(*this, *bar, m_toolbarActions, [this] {
-    return m_canvas && !m_canvasOperationPending && !m_closePending && !m_savePending && !m_canvas->interactionActive();
+    return m_canvas && !m_canvasOperationPending && !m_closePending && !m_outputPending && !m_canvas->interactionActive();
   });
 
   m_windowState = new NativeEditorWindowState(*this, {std::min(m_image.width() + 40, 1400), std::min(m_image.height() + 120, 900)});
@@ -414,6 +423,7 @@ void EditorWindow::persistDrawingDefaults() {
 }
 
 void EditorWindow::refresh() {
+  if (m_copyMessageState != m_session->stateId()) { m_copyMessage.clear(); m_copyMessageState.reset(); }
   if (m_saveMessageState != m_session->stateId()) { m_saveMessage.clear(); m_saveMessageState.reset(); }
   if (m_placeholderState != m_session->stateId()) {
     m_placeholderState = m_session->stateId(); m_unsupportedObjects->clear();
@@ -432,15 +442,20 @@ void EditorWindow::refresh() {
       m_canvas->sourceChanged();
     }
   }
-  m_undo->setEnabled(!m_savePending && m_session->undoCount() > 0);
-  m_redo->setEnabled(!m_savePending && m_session->redoCount() > 0);
-  m_delete->setEnabled(!m_savePending && !m_session->selection().isEmpty());
-  m_rotate->setEnabled(!m_savePending && !m_session->selection().isEmpty());
-  m_clearAnnotations->setEnabled(!m_savePending && !m_session->document().annotations.empty());
-  m_retrySave->setEnabled(!m_savePending && m_partialSave && m_partialSaveState == m_session->stateId());
+  m_undo->setEnabled(!m_outputPending && m_session->undoCount() > 0);
+  m_redo->setEnabled(!m_outputPending && m_session->redoCount() > 0);
+  m_delete->setEnabled(!m_outputPending && !m_session->selection().isEmpty());
+  m_rotate->setEnabled(!m_outputPending && !m_session->selection().isEmpty());
+  m_clearAnnotations->setEnabled(!m_outputPending && !m_session->document().annotations.empty());
+  m_retrySave->setEnabled(!m_outputPending && m_partialSave && m_partialSaveState == m_session->stateId());
   m_retrySave->setToolTip(m_partialSave && m_partialSaveState != m_session->stateId()
       ? "The document changed since this PNG was saved. Undo to that state before retrying its annotations, or save a new snapshot."
       : m_retrySave->statusTip());
+  m_copyAction->setEnabled(!m_outputPending && bool(m_copyPorts.publish));
+  m_copyAction->setToolTip(m_copyPorts.publish ? m_copyAction->statusTip() : "Copy Image is unavailable: no clipboard service was provided.");
+  m_retryCopy->setEnabled(!m_outputPending && m_copyPorts.publish && m_failedCopy && m_failedCopyState == m_session->stateId());
+  m_retryCopy->setToolTip(m_failedCopy && m_failedCopyState != m_session->stateId()
+      ? "The document changed. Undo to the failed snapshot before retrying it, or use Copy Image for a new snapshot." : m_retryCopy->statusTip());
   setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName(),
                                                     m_session->dirty() ? QStringLiteral(" •") : QString()));
   QString status = QStringLiteral("%1 × %2 · %3 annotation(s) · %4 selected · %5%")
@@ -452,12 +467,13 @@ void EditorWindow::refresh() {
   if (!m_drawingPreferenceDiagnostic.isEmpty()) status += QStringLiteral(" · Drawing defaults could not be saved: %1")
       .arg(editorPreferenceDiagnosticMessage(m_drawingPreferenceDiagnostic));
   if (!m_saveMessage.isEmpty()) status += " · " + m_saveMessage;
+  if (!m_copyMessage.isEmpty()) status += " · " + m_copyMessage;
   statusBar()->showMessage(status);
   m_canvas->viewport()->update();
 }
 
 void EditorWindow::newImage() {
-  if (m_canvasOperationPending || m_savePending) return;
+  if (m_canvasOperationPending || m_outputPending) return;
   const QPointer<EditorWindow> guard(this); m_canvasOperationPending = true;
   const auto pending = qScopeGuard([guard] { if (guard) guard->m_canvasOperationPending = false; });
   NewImageDialog dialog(this);
@@ -505,13 +521,14 @@ void EditorWindow::adoptSession(std::unique_ptr<EditorSession> next, const QStri
   m_path = path; m_placeholderState.reset();
   m_partialSave.reset(); m_partialSaveState.reset();
   m_saveMessage.clear(); m_saveMessageState.reset();
+  m_failedCopy.reset(); m_failedCopyState.reset(); m_copyMessage.clear(); m_copyMessageState.reset();
   m_canvas->resetDocument(*m_session, display);
   findChild<QAction *>(QStringLiteral("cropTool"))->setChecked(false);
   refresh(); m_canvas->setFocus();
 }
 
 bool EditorWindow::openImage(const QString &path) {
-  if (m_canvasOperationPending || m_savePending) return false;
+  if (m_canvasOperationPending || m_outputPending) return false;
   const QPointer<EditorWindow> guard(this); m_canvasOperationPending = true;
   const auto pending = qScopeGuard([guard] { if (guard) guard->m_canvasOperationPending = false; });
   QString target = path;
@@ -757,7 +774,7 @@ void EditorWindow::commitCanvas(PreparedCanvasEdit prepared, quint64 state) {
 }
 
 bool EditorWindow::save(bool chooseFile) {
-  if (m_savePending || m_canvas->interactionActive()) return false;
+  if (m_outputPending || m_canvas->interactionActive()) return false;
   const QPointer<EditorWindow> guard(this);
   QString target = m_path;
   if (chooseFile || m_path.isEmpty()) {
@@ -777,7 +794,7 @@ bool EditorWindow::save(bool chooseFile) {
   return performSave(target);
 }
 bool EditorWindow::retrySave() {
-  if (m_savePending || !m_partialSave || m_partialSaveState != m_session->stateId() || m_canvas->interactionActive()) return false;
+  if (m_outputPending || !m_partialSave || m_partialSaveState != m_session->stateId() || m_canvas->interactionActive()) return false;
   const QPointer<EditorWindow> guard(this); const auto expected = m_partialSave; const auto state = m_partialSaveState;
   QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, "Retry annotation save?",
       QString("Retry the editable annotations for %1? The already saved PNG will be kept without rewriting it.").arg(QFileInfo(expected->path).fileName()),
@@ -785,54 +802,108 @@ bool EditorWindow::retrySave() {
   box->setTextFormat(Qt::PlainText);
   box->setObjectName("retryEditorSidecarDialog"); box->setDefaultButton(QMessageBox::Cancel); box->setEscapeButton(QMessageBox::Cancel);
   const auto choice = box->exec(); delete box.data();
-  if (!guard || choice != QMessageBox::Retry || m_savePending || m_partialSave != expected || m_partialSaveState != state || state != m_session->stateId()) return false;
+  if (!guard || choice != QMessageBox::Retry || m_outputPending || m_partialSave != expected || m_partialSaveState != state || state != m_session->stateId()) return false;
   return performSave(expected->path, expected);
 }
-bool EditorWindow::performSave(const QString &target, const EditorSaveReceiptPtr &repair) {
-  if (m_savePending || m_canvas->interactionActive()) return false;
+bool EditorWindow::withOutputBusy(const std::function<bool()> &operation) {
+  if (m_outputPending || m_canvas->interactionActive()) return false;
   const QPointer<EditorWindow> guard(this);
-  const auto state = m_session->stateId(); const auto document = m_session->document(); const auto source = m_image; const auto hooks = m_saveHooks;
   QMap<QAction *, bool> enabled;
   for (auto *action : m_toolbarActions) enabled.insert(action, action->isEnabled());
   const bool canvasEnabled = m_canvas->isEnabled(), menusEnabled = menuBar()->isEnabled();
-  m_savePending = true;
+  m_outputPending = true;
   const auto restore = qScopeGuard([guard, enabled, canvasEnabled, menusEnabled] {
     if (!guard) return;
-    guard->m_savePending = false; guard->m_canvas->setEnabled(canvasEnabled); if (!guard) return;
+    guard->m_outputPending = false; guard->m_canvas->setEnabled(canvasEnabled); if (!guard) return;
     guard->menuBar()->setEnabled(menusEnabled); if (!guard) return;
     for (auto it = enabled.cbegin(); it != enabled.cend(); ++it) { it.key()->setEnabled(it.value()); if (!guard) return; }
     guard->refresh();
   });
   for (auto it = enabled.cbegin(); it != enabled.cend(); ++it) { it.key()->setEnabled(false); if (!guard) return false; }
   m_retrySave->setEnabled(false); if (!guard) return false;
+  m_retryCopy->setEnabled(false); if (!guard) return false;
   m_canvas->setEnabled(false); if (!guard) return false;
   menuBar()->setEnabled(false); if (!guard) return false;
-  const SaveOutcome outcome = runEditorSave(target, source, document, this, hooks, repair);
-  if (!guard) return false;
-  if (outcome.cancelled && !outcome.rasterSaved) {
-    emit saveFinished(false, false, true); return false;
-  }
-  // ES-012: clean only when both artifacts persisted; say which one failed.
-  const QStringList failed = m_session->recordSnapshotSave(state, outcome.rasterSaved, outcome.sidecarSaved);
-  if (outcome.rasterSaved && !outcome.sidecarSaved && outcome.receipt) { m_partialSave = outcome.receipt; m_partialSaveState = state; }
-  if (!failed.isEmpty()) {
-    refresh(); emit saveFinished(outcome.rasterSaved, outcome.sidecarSaved, outcome.cancelled); if (!guard) return false;
-    QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, "Save incomplete",
-        outcome.rasterSaved ? "PNG saved; editable annotation persistence failed. The document remains unsaved. Retry annotation save keeps the PNG."
-                            : "PNG was not saved. The previous destination and editable document have been kept.", QMessageBox::Ok, this));
-    box->setTextFormat(Qt::PlainText);
-    box->setInformativeText(QString("Destination: %1\nFormat: PNG\n%2").arg(target, failed.join(", "))); box->exec(); delete box.data();
-    return false;
-  }
-  m_partialSave.reset(); m_partialSaveState.reset();
-  m_saveMessage = outcome.sidecarPath ? "Saved PNG and editable annotations" : "Saved PNG; no annotation companion needed";
-  if (outcome.cancelled) m_saveMessage += " (completed despite cancellation)";
-  m_saveMessageState = state;
-  m_path = target;
-  recordRecentImage(absoluteImagePath(target));
-  if (!guard) return false;
-  emit saveFinished(true, true, outcome.cancelled);
-  return bool(guard);
+  return operation();
+}
+bool EditorWindow::performSave(const QString &target, const EditorSaveReceiptPtr &repair) {
+  const QPointer<EditorWindow> guard(this);
+  const auto state = m_session->stateId(); const auto document = m_session->document(); const auto source = m_image; const auto hooks = m_saveHooks;
+  return withOutputBusy([this, guard, state, document, source, hooks, target, repair] {
+    const SaveOutcome outcome = runEditorSave(target, source, document, this, hooks, repair);
+    if (!guard) return false;
+    if (outcome.cancelled && !outcome.rasterSaved) {
+      emit saveFinished(false, false, true); return false;
+    }
+    // ES-012: clean only when both artifacts persisted; say which one failed.
+    const QStringList failed = m_session->recordSnapshotSave(state, outcome.rasterSaved, outcome.sidecarSaved);
+    if (outcome.rasterSaved && !outcome.sidecarSaved && outcome.receipt) { m_partialSave = outcome.receipt; m_partialSaveState = state; }
+    if (!failed.isEmpty()) {
+      refresh(); emit saveFinished(outcome.rasterSaved, outcome.sidecarSaved, outcome.cancelled); if (!guard) return false;
+      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, "Save incomplete",
+          outcome.rasterSaved ? "PNG saved; editable annotation persistence failed. The document remains unsaved. Retry annotation save keeps the PNG."
+                              : "PNG was not saved. The previous destination and editable document have been kept.", QMessageBox::Ok, this));
+      box->setTextFormat(Qt::PlainText);
+      box->setInformativeText(QString("Destination: %1\nFormat: PNG\n%2").arg(target, failed.join(", "))); box->exec(); delete box.data();
+      return false;
+    }
+    m_partialSave.reset(); m_partialSaveState.reset();
+    m_saveMessage = outcome.sidecarPath ? "Saved PNG and editable annotations" : "Saved PNG; no annotation companion needed";
+    if (outcome.cancelled) m_saveMessage += " (completed despite cancellation)";
+    m_saveMessageState = state;
+    m_path = target;
+    recordRecentImage(absoluteImagePath(target));
+    if (!guard) return false;
+    emit saveFinished(true, true, outcome.cancelled);
+    return bool(guard);
+  });
+}
+
+void EditorWindow::setCopyPorts(EditorCopyPorts ports) { m_copyPorts = std::move(ports); refresh(); }
+bool EditorWindow::copyImage(const EditorCopyPayloadPtr &retry) {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || !m_copyPorts.publish || m_canvas->interactionActive()) return false;
+  const QPointer<EditorWindow> guard(this);
+  const auto state = m_session->stateId(); const auto document = m_session->document(); const auto source = m_image; const auto ports = m_copyPorts;
+  return withOutputBusy([this, guard, state, document, source, ports, retry] {
+    const auto copied = runEditorCopy(source, document, this, ports, retry);
+    if (!guard) return false;
+    const auto &action = copied.action;
+    const bool success = !action.outcomeUnknown && action.state == xerahs::actions::ActionState::Succeeded;
+    if (success) { m_failedCopy.reset(); m_failedCopyState.reset(); m_copyMessage = "Image copied with alpha and PNG; clipboard uses sRGB"; }
+    else if (action.outcomeUnknown) {
+      m_failedCopy.reset(); m_failedCopyState.reset();
+      m_copyMessage = "Image copy delivery is unknown; the clipboard may have changed. Check the destination before copying again";
+    } else if (action.state == xerahs::actions::ActionState::Failed) {
+      m_failedCopy = copied.payload; m_failedCopyState = copied.payload ? std::optional<quint64>{state} : std::nullopt;
+      m_copyMessage = "Image copy failed; the document is unchanged";
+    } else m_copyMessage = "Image copy cancelled; the clipboard was kept";
+    if (copied.payload && copied.payload->disclosures.contains("clipboard-colour-converted-to-srgb")) m_copyMessage += " (source colours converted to sRGB)";
+    if (copied.payload && copied.payload->disclosures.contains("clipboard-untagged-assumed-srgb")) m_copyMessage += " (untagged source interpreted as sRGB)";
+    if (copied.cancellationArrivedDuring) m_copyMessage += " (cancellation arrived during publication)";
+    m_copyMessageState = state;
+    const auto diagnostic = action.diagnostic.value_or(QString{});
+    emit copyFinished(action.outcomeUnknown ? "unknown" : xerahs::actions::actionStateName(action.state), diagnostic, copied.cancellationArrivedDuring);
+    if (!guard) return false;
+    if (action.state == xerahs::actions::ActionState::Failed || action.outcomeUnknown) {
+      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, "Image copy incomplete",
+          action.outcomeUnknown ? "Clipboard delivery could not be confirmed. Its contents may have changed; check the destination before a new Copy Image action. The editable document is kept."
+                               : diagnostic == "clipboard-annotation-unsupported" ? "A visible unsupported annotation cannot be copied without losing it. The editable document and clipboard contents are kept."
+                               : copied.payload ? "The image was not copied. The editable document and previous clipboard contents are kept. Retry image copy can publish a prepared snapshot without rendering it again."
+                                                : "The image could not be prepared. The editable document and clipboard contents are kept. Use Copy Image to try again.", QMessageBox::Ok, this));
+      box->setTextFormat(Qt::PlainText); box->setInformativeText(diagnostic); box->exec(); delete box.data();
+    }
+    return success && bool(guard);
+  });
+}
+bool EditorWindow::retryCopy() {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || !m_copyPorts.publish || !m_failedCopy || m_failedCopyState != m_session->stateId() || m_canvas->interactionActive()) return false;
+  const QPointer<EditorWindow> guard(this); const auto expected = m_failedCopy; const auto state = m_failedCopyState;
+  QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, "Retry image copy?",
+      "Publish the unchanged rendered snapshot to the clipboard? No pixels will be rendered again. This replaces current clipboard contents.", QMessageBox::Retry | QMessageBox::Cancel, this));
+  box->setObjectName("retryImageCopyDialog"); box->setDefaultButton(QMessageBox::Cancel); box->setEscapeButton(QMessageBox::Cancel);
+  const auto choice = box->exec(); delete box.data();
+  if (!guard || choice != QMessageBox::Retry || m_outputPending || m_failedCopy != expected || m_failedCopyState != state || state != m_session->stateId()) return false;
+  return copyImage(expected);
 }
 
 void EditorWindow::recordRecentImage(const QString &absolutePath) {
@@ -846,7 +917,7 @@ void EditorWindow::recordRecentImage(const QString &absolutePath) {
 void EditorWindow::closeEvent(QCloseEvent *event) {
   // A cancelled progress window can hide before its worker exits. Keep the
   // editor and its stack-owned modal objects alive until preparation completes.
-  if (m_canvasOperationPending || m_closePending || m_savePending) { event->ignore(); return; }
+  if (m_canvasOperationPending || m_closePending || m_outputPending) { event->ignore(); return; }
   const QPointer<EditorWindow> guard(this); m_closePending = true;
   const auto closing = qScopeGuard([guard] { if (guard) guard->m_closePending = false; });
   if (m_session->dirty()) {

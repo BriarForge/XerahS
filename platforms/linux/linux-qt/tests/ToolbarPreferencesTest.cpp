@@ -47,6 +47,9 @@ private slots:
         "Backspace", "Ctrl+Delete", "R", "Shift+R", "Ctrl+BracketLeft", "Alt+F4", "Ctrl+Q", "Meta+J", "Ctrl+Alt+F2"})
       QCOMPARE(toolbarHotkeyDiagnostic(*parseToolbarHotkey(key), "crop-image"), QString("toolbar-reserved-hotkey"));
     QVERIFY(toolbarHotkeyDiagnostic(*parseToolbarHotkey("Ctrl+S"), "save").isEmpty());
+    QVERIFY(knownToolbarAction("copy-rendered-image"));
+    QVERIFY(validateToolbarItems(QJsonArray{item("copy-rendered-image", "Ctrl+C")}).valid);
+    QCOMPARE(toolbarHotkeyDiagnostic(*parseToolbarHotkey("Ctrl+Shift+C"), "copy-rendered-image"), QString("toolbar-protected-hotkey"));
     QVERIFY(toolbarHotkeyDiagnostic(*parseToolbarHotkey("F6"), "fit-image").isEmpty());
     QVERIFY(toolbarHotkeyDiagnostic(*parseToolbarHotkey("Ctrl+Alt+J"), "crop-image").isEmpty());
   }

@@ -76,6 +76,7 @@ void NativeEditorToolbar::refresh() {
     auto *shortcut = new QShortcut(QKeySequence(QKeyCombination(placement.hotkey.modifiers, placement.hotkey.key)), &m_window);
     shortcut->setObjectName(QStringLiteral("toolbarHotkey:") + placement.id);
     shortcut->setContext(Qt::WindowShortcut);
+    shortcut->setAutoRepeat(action->autoRepeat());
     connect(shortcut, &QShortcut::activated, this, [this, action] {
       if (canDispatch() && action->isEnabled()) action->trigger();
     });
