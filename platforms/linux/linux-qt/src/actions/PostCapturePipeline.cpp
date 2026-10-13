@@ -194,6 +194,9 @@ PipelineResult runPipeline(const QString &taskId, const QStringList &selected,
 
   PipelineResult result;
   result.taskId = taskId;
+  const auto inheritedMedia = catalogueIndex(options.inheritedWorkingMedia);
+  if (inheritedMedia && actions[size_t(*inheritedMedia)].kind == ActionKind::Transformation)
+    result.finalWorkingMedia = options.inheritedWorkingMedia;
   std::vector<int> plan = planFor(selected, -1, &result.ignoredSelection);
   ArtifactSet artifacts(options.inheritedSaveAvailable, options.inheritedSaveAsAvailable);
   bool uploadDeclined = false;

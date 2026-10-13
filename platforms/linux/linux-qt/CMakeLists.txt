@@ -99,11 +99,21 @@ target_include_directories(xerahs_file_output PUBLIC app)
 target_link_libraries(xerahs_file_output PUBLIC xerahs_core Qt6::Gui Qt6::DBus)
 target_compile_options(xerahs_file_output PRIVATE -Wall -Wextra -Wpedantic)
 
+add_library(xerahs_editor_source STATIC app/EditorSource.cpp app/EditorSource.h)
+target_include_directories(xerahs_editor_source PUBLIC app)
+target_link_libraries(xerahs_editor_source PUBLIC xerahs_editor_codecs)
+target_compile_options(xerahs_editor_source PRIVATE -Wall -Wextra -Wpedantic)
+add_library(xerahs_editor_canvas STATIC app/EditorCanvas.cpp app/EditorCanvas.h)
+set_target_properties(xerahs_editor_canvas PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_editor_canvas PUBLIC app)
+target_link_libraries(xerahs_editor_canvas PUBLIC xerahs_core Qt6::Widgets)
+target_compile_options(xerahs_editor_canvas PRIVATE -Wall -Wextra -Wpedantic)
+
 add_library(xerahs_action_selection STATIC app/ActionSelectionDialog.cpp app/ActionSelectionDialog.h
-  app/CaptureSaveAsDialog.cpp app/CaptureSaveAsDialog.h)
+  app/CaptureSaveAsDialog.cpp app/CaptureSaveAsDialog.h app/CaptureAnnotationDialog.cpp app/CaptureAnnotationDialog.h)
 set_target_properties(xerahs_action_selection PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_action_selection PUBLIC app)
-target_link_libraries(xerahs_action_selection PUBLIC xerahs_core Qt6::Widgets)
+target_link_libraries(xerahs_action_selection PUBLIC xerahs_core xerahs_editor_source xerahs_editor_canvas Qt6::Widgets)
 target_compile_options(xerahs_action_selection PRIVATE -Wall -Wextra -Wpedantic)
 
 # The XerahS application (D-LIN-001: Qt Widgets). Product logic stays in
@@ -127,8 +137,6 @@ add_executable(xerahs
   app/CapturePipeline.h
   app/SnapshotComposition.cpp
   app/SnapshotComposition.h
-  app/EditorSource.cpp
-  app/EditorSource.h
   app/EditorOpen.cpp
   app/EditorOpen.h
   app/RecentImageMenu.cpp
@@ -148,8 +156,6 @@ add_executable(xerahs
   app/NativeEditorToolbar.cpp
   app/NativeEditorToolbar.h
   app/ToolbarDialog.cpp
-  app/EditorCanvas.cpp
-  app/EditorCanvas.h
   app/EditorWindow.cpp
   app/EditorWindow.h
   app/CanvasRotationDialog.cpp
@@ -222,6 +228,13 @@ target_link_libraries(capture-save-as-test PRIVATE xerahs_file_output xerahs_act
 add_test(NAME capture-save-as COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-save-as-test>)
 set_tests_properties(capture-save-as PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+add_executable(capture-annotation-test tests/CaptureAnnotationTest.cpp app/CapturePipeline.cpp app/CapturePipeline.h
+  app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h)
+set_target_properties(capture-annotation-test PROPERTIES AUTOMOC ON)
+target_link_libraries(capture-annotation-test PRIVATE xerahs_file_output xerahs_action_selection xerahs_pipeline_journal Qt6::Test)
+add_test(NAME capture-annotation COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-annotation-test>)
+set_tests_properties(capture-annotation PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 add_executable(capture-save-test tests/CaptureSaveTest.cpp app/CaptureSave.cpp app/CaptureSave.h)
 set_target_properties(capture-save-test PROPERTIES AUTOMOC ON)
 target_include_directories(capture-save-test PRIVATE app)
@@ -362,10 +375,10 @@ set_target_properties(editor-session-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-session-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME editor-session COMMAND editor-session-test)
 
-add_executable(editor-source-test tests/EditorSourceTest.cpp app/EditorSource.cpp)
+add_executable(editor-source-test tests/EditorSourceTest.cpp)
 set_target_properties(editor-source-test PROPERTIES AUTOMOC ON)
 target_include_directories(editor-source-test PRIVATE app)
-target_link_libraries(editor-source-test PRIVATE xerahs_editor_codecs Qt6::Test)
+target_link_libraries(editor-source-test PRIVATE xerahs_editor_source Qt6::Test)
 add_test(NAME editor-source COMMAND editor-source-test)
 set_tests_properties(editor-source PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
 
@@ -374,10 +387,10 @@ set_target_properties(editor-viewport-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-viewport-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME editor-viewport COMMAND editor-viewport-test)
 
-add_executable(editor-canvas-test tests/EditorCanvasTest.cpp app/EditorCanvas.cpp app/EditorCanvas.h)
+add_executable(editor-canvas-test tests/EditorCanvasTest.cpp)
 set_target_properties(editor-canvas-test PROPERTIES AUTOMOC ON)
 target_include_directories(editor-canvas-test PRIVATE app)
-target_link_libraries(editor-canvas-test PRIVATE xerahs_core Qt6::Widgets Qt6::Test)
+target_link_libraries(editor-canvas-test PRIVATE xerahs_editor_canvas Qt6::Widgets Qt6::Test)
 add_test(NAME editor-canvas COMMAND editor-canvas-test)
 set_tests_properties(editor-canvas PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
 
@@ -414,7 +427,7 @@ add_executable(editor-window-test tests/EditorWindowTest.cpp app/EditorWindow.cp
                app/RecentImageMenu.cpp app/RecentImageMenu.h
                app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h
                app/DrawingDefaultsDialog.cpp app/DrawingDefaultsDialog.h
-               app/EditorCanvas.cpp app/EditorCanvas.h app/EditorSource.cpp
+
                app/NativeDesktopAppearance.cpp app/NativeDesktopAppearance.h
                app/NativeEditorAppearance.cpp app/NativeEditorAppearance.h
                app/AppearanceDialog.cpp app/AppearanceDialog.h
@@ -423,7 +436,7 @@ add_executable(editor-window-test tests/EditorWindowTest.cpp app/EditorWindow.cp
                app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h
                app/NewImageDialog.cpp app/NewImageDialog.h)
 set_target_properties(editor-window-test PROPERTIES AUTOMOC ON)
-target_link_libraries(editor-window-test PRIVATE xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
+target_link_libraries(editor-window-test PRIVATE xerahs_editor_source xerahs_editor_canvas xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
 add_test(NAME editor-window COMMAND editor-window-test)
 set_tests_properties(editor-window PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 

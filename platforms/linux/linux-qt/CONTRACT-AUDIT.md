@@ -31,7 +31,7 @@ entire specification and linked ledger rows, not just the examples listed.
 |---|---|---|
 | `CORE-PLATFORM-001` | All 37 CORE rows traced; native lifetime lock, authenticated bounded activation, real-process failure/recovery and actual-application forwarding tests; native command window sharing tray actions | Complete main application/onboarding, shared profile/activation qualification, localization, notification authority/privacy, updates, migration, credential services, global shortcuts, general capture, recording/audio, media, uploads, plugins, history, automation/watch folders/assistant, diagnostics and distribution remain Required. Native candidate evidence does not accept human reviews or full CORE scope. |
 | `FILENAME-GENERATION-001` | `src/naming/`, adapter and 51 vectors | Complete native preference/input integration, filename preview and destination workflow qualification remain Required. Core expansion evidence alone does not accept all native usage paths. |
-| `POST-CAPTURE-ACTIONS-001` | `src/actions/`, adapter and 17 vectors; `CapturePipeline` runs native PNG publication and GUI clipboard dispatch through the Core engine, with cancellation, activity, actual artifact metadata and in-memory receipts with shared edit/discard/review controls; native write-ahead records and multi-record restart history preserve acknowledged results and distinguish interrupted unknown actions; explicit native linked retry reuses retained pixels/settings and preserves previous successes; the application and adapter share the canonical result serializer with namespaced task/timing/file/retry facts; a cancellable per-run chooser selects outputs/empty with effective-plan recovery; native file/path clipboard and asynchronous ShowItems reveal consume a live file binding; native Save As chooses a new PNG path, retains both Save aliases with Save-first precedence and has actual picker, linked retry and process-kill journal evidence | Full save variants, native action catalogue, configured workflow selection/persistence, annotation/effects/output handoffs, uploads, complete catalogue/prerequisite retry, full durable media/artifact recovery, configured retention/pagination, crash cleanup authority, shared persisted compatibility, privacy and consent qualification remain Required. |
+| `POST-CAPTURE-ACTIONS-001` | `src/actions/`, adapter and 17 vectors; `CapturePipeline` runs native PNG publication and GUI clipboard dispatch through the Core engine, with cancellation, activity, actual artifact metadata and in-memory receipts with shared edit/discard/review controls; native write-ahead records and multi-record restart history preserve acknowledged results and distinguish interrupted unknown actions; explicit native linked retry reuses retained pixels/settings and preserves previous successes; the application and adapter share the canonical result serializer with namespaced task/timing/file/retry facts; a cancellable per-run chooser selects outputs/empty with effective-plan recovery; native file/path clipboard and asynchronous ShowItems reveal consume a live file binding; native Save As retains both file aliases; native rectangle annotation returns edited pixels before output and retains its document for explicit compatible editor persistence, with actual canvas/recovery/retry/process-kill evidence | Full save variants, native action catalogue, configured workflow selection/persistence, annotation/effects/output handoffs, uploads, complete catalogue/prerequisite retry, full durable media/artifact recovery, configured retention/pagination, crash cleanup authority, shared persisted compatibility, privacy and consent qualification remain Required. |
 | `REGION-CAPTURE-001` | `src/capture/`, 21 vectors; `PortalScreenshot`, `CaptureController`, `RegionOverlay`; native portal lifecycle/failure tests, worker composition with accessible progress and responsive cancellation, independent pixel fixtures and stale-worker isolation tests | The controller assumes a uniform desktop scale; per-monitor physical source mapping, rotation/colour/availability, mixed displays, cursor settings, HDR conversion, interactive handles/snapping/magnifier, persisted last-region invocation, physical accessibility and performance remain Required. |
 | `EDITOR-SESSION-001` | Document/sidecar, source binding, rectangle history/rendering, native editor, 19 vectors | Full contracted annotation/effect/canvas/output integration, complete persistence compatibility, native parity, visual goldens and human reviews remain Required. |
 | `EDITOR-ANNOTATIONS-001` | Rectangle creation/selection/style/rotation/order in the session and canvas | No complete EA trace. All 20 stable tools, curves/freehand/text/balloons/steps/image/emoji/cursor, redaction/magnifier/spotlight/eraser/cut-out, object clipboard/duplicate, complete persistence and accessible tool controls remain Required. |
@@ -75,8 +75,8 @@ marked implemented in a core trace file.
 
 ## Next production work
 
-The 14 October Save As/multiple-file checkpoint extends journal/recovery,
-linked native retry, per-run selection and saved-file outputs. It passed all 37 local CTest targets
+The 14 October annotation handoff checkpoint extends Save As/multiple-file
+results, journal/recovery, linked retry and per-run selection. It passed all 38 local CTest targets
 (native tests and all 114 published vectors for the six implemented vector
 packages), contract lint/backlog checks, their 25 unit tests and the seven
 conformance-runner unit tests. The production-path real-process fixtures use
@@ -95,6 +95,11 @@ The initial Save As baseline run exposed Qt 6.4 focused-field selection
 behavior in a fixture. Corrected focus/selected-path/Save-control fixtures and
 standard directory navigation retain the rejection/path assertions, with
 isolated Qt 6.4.2 reproduction and native verification indexed in SAVE-AS.md.
+The [annotation handoff evidence](app/ANNOTATION-HANDOFF.md) indexes actual
+before-save canvas/rendering, frozen styles, retained editable documents,
+explicit compatible editor persistence, output retry and killed-process recovery.
+This is partial native rectangle coverage; capture-side companion persistence
+and the full tool/workflow/native/human scope remain Required.
 
 1. Continue full native capture/operation qualification under
    RC-001/002/008/016/018 and CORE-004/005. The pending Screenshot lifecycle is
@@ -118,10 +123,12 @@ isolated Qt 6.4.2 reproduction and native verification indexed in SAVE-AS.md.
    records actual native behavior, path-race limits and remaining human/native
    qualification. Native Save As now retains both files, checks cancellation at
    safe publication boundaries and preserves earlier success in retry/recovery.
-   Next implement the native annotation handoff and compatible re-editable
-   persistence under PCA-008, before save, with truthful raster failure and
-   cancellation behavior. Continue full workflow configuration, remaining save
-   variants and media/artifact recovery alongside that work.
+   Native annotation now returns accepted rendered pixels before save and
+   retains a re-editable source document for explicit compatible editor Save.
+   Next integrate explicit sidecar intent and truthful companion-artifact
+   outcomes into capture Save/Save As under ES-011/012/014/030. Continue all
+   annotation tools, full workflow configuration, remaining save variants and
+   media/artifact recovery alongside that work.
 4. Maintain requirement-level traces and meaningful failure/consent evidence;
    qualify the complete supported target matrix and prepare all human gates.
 

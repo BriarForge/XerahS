@@ -24,7 +24,7 @@ PipelineRetryPlan planRetainedCaptureRetry(const PipelineResult &source, bool me
     return unavailable("retry-invalid-source");
   if (source.state == PipelineState::Interrupted) return unavailable("retry-outcome-unknown");
   if (!mediaAvailable || !source.workingMediaRetained) return unavailable("retry-media-unavailable");
-  if (source.finalWorkingMedia != "capture") return unavailable("retry-media-unavailable");
+  if (source.finalWorkingMedia != "capture" && source.finalWorkingMedia != "annotation") return unavailable("retry-media-unavailable");
   PipelineRetryPlan plan;
   PipelineRetryLink link;
   link.originalTaskId = source.retry ? source.retry->originalTaskId : source.taskId; link.previousTaskId = source.taskId;
@@ -53,6 +53,7 @@ PipelineRetryPlan planRetainedCaptureRetry(const PipelineResult &source, bool me
     plan.selected.append(result.action);
   }
   for (const auto &action : catalogue()) if (successes.contains(action.id)) link.preservedSuccessfulActions.append(action.id);
+  if (source.finalWorkingMedia == "annotation" && !successes.contains("annotation")) return unavailable("retry-invalid-source");
   if (savedFileAvailable && !successes.contains("save")) return unavailable("retry-invalid-source");
   if (successes.contains("save") && !savedFileAvailable) return unavailable("retry-artifact-unavailable");
   if (savedAsFileAvailable && !successes.contains("save-as")) return unavailable("retry-invalid-source");

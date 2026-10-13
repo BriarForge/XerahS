@@ -121,6 +121,9 @@ int main(int argc, char *argv[]) {
   const QString pictures = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
   const auto journal = std::make_shared<xerahs::app::NativePipelineJournal>(xerahs::app::NativePipelineJournal::defaultDirectory());
   CaptureController capture(QDir(pictures.isEmpty() ? QDir::homePath() : pictures).filePath(QStringLiteral("XerahS")), nullptr, {}, {}, {}, journal);
+  const auto refreshCaptureStyle = [&capture] { capture.setAnnotationStyle(xerahs::editor::drawingStyleFromPreferences(xerahs::app::nativeEditorPreferences())); };
+  refreshCaptureStyle();
+  QObject::connect(&xerahs::app::nativeEditorPreferenceEvents(), &xerahs::app::NativeEditorPreferenceEvents::drawingDefaultsChanged, &capture, refreshCaptureStyle);
 
   QSystemTrayIcon tray(appIcon());
   tray.setToolTip(QStringLiteral("XerahS"));
@@ -161,6 +164,10 @@ int main(int argc, char *argv[]) {
   }, &home);
   menu.insertAction(newImage, recovery->editAction()); menu.insertAction(newImage, recovery->reviewAction()); menu.insertAction(newImage, recovery->discardAction());
   menu.insertAction(newImage, recovery->retryAction());
+  recovery->setAnnotationOpener([](const xerahs::editor::AnnotationDocument &document, QWidget *parent) {
+    if (auto *window = xerahs::app::EditorWindow::fromCapturedDocument(document, parent)) { window->show(); return true; }
+    return false;
+  });
   home.addCaptureRecoveryActions(recovery->editAction(), recovery->discardAction(), recovery->reviewAction(), recovery->retryAction());
   QObject::connect(recovery, &xerahs::app::CaptureRecoveryActions::notify, &home, [&home](const QString &body, bool success) {
     home.showResult(QStringLiteral("Retained capture"), body, success);

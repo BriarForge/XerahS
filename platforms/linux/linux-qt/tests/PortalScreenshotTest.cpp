@@ -7,6 +7,8 @@
 #include "ActionSelectionDialog.h"
 #include "CaptureFileOutput.h"
 #include "CaptureSaveAsDialog.h"
+#include "CaptureAnnotationDialog.h"
+#include "EditorCanvas.h"
 #include "capture/RegionGeometry.h"
 #include "image-editor/AnnotationDocument.h"
 #include <QApplication>
@@ -141,6 +143,29 @@ class PortalScreenshotTest final : public QObject {
   static Outcome outcome(const QSignalSpy &spy) { return spy.at(0).at(0).value<Outcome>(); }
   static QImage resultImage(const QSignalSpy &spy) { return spy.at(0).at(1).value<QImage>(); }
 private slots:
+  void selectedAnnotationReturnsToCaptureAndRecoveryKeepsTheEditableDocument() {
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto borrowed = bytes(path);
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString(); CaptureActionPorts ports;
+    ports.save.encode = [](const QImage &, QIODevice *) { return false; };
+    CaptureController controller(dir.filePath("output"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, {}, ports);
+    ApplicationWindow home({}); controller.setActionSelectionParent(&home); connect(&controller, &CaptureController::choosingActions, &home, &ApplicationWindow::activate);
+    int flattened = 0, editable = 0; std::optional<xerahs::editor::AnnotationDocument> reopened;
+    CaptureRecoveryActions recovery(controller, &home, [&](const QImage &, QWidget *) { ++flattened; return true; });
+    recovery.setAnnotationOpener([&](const xerahs::editor::AnnotationDocument &document, QWidget *) { ++editable; reopened = document; return true; });
+    controller.captureRegionWithActions(); QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35});
+    QTRY_VERIFY(qobject_cast<ActionSelectionDialog *>(QApplication::activeModalWidget())); auto *selection = qobject_cast<ActionSelectionDialog *>(QApplication::activeModalWidget());
+    auto *annotation = selection->findChild<QCheckBox *>("capture-action-annotation"); QVERIFY(annotation && annotation->isEnabled()); annotation->setChecked(true);
+    selection->findChild<QCheckBox *>("capture-action-image-clipboard")->setChecked(false); selection->accept();
+    QTRY_VERIFY(qobject_cast<CaptureAnnotationDialog *>(QApplication::activeModalWidget())); auto *editor = qobject_cast<CaptureAnnotationDialog *>(QApplication::activeModalWidget());
+    QCOMPARE(editor->parentWidget(), &home); QVERIFY(!overlayExists()); auto *canvas = editor->findChild<EditorCanvas *>(); QVERIFY(canvas);
+    QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView({4, 4}).toPoint());
+    QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView({20, 18}).toPoint()); editor->accept(); QTRY_VERIFY(!controller.busy());
+    const auto result = controller.lastPipelineResult(); QVERIFY(result->annotationDocument); QCOMPARE(result->annotationDocument->annotations.size(), size_t(1)); QVERIFY(result->files.empty());
+    QCOMPARE(result->pipeline.finalWorkingMedia, QString("annotation")); QVERIFY(recovery.editAction()->isEnabled()); recovery.editAction()->trigger();
+    QCOMPARE(editable, 1); QCOMPARE(flattened, 0); QVERIFY(reopened); QCOMPARE(reopened->sourceImagePng, result->annotationDocument->sourceImagePng);
+    QCOMPARE(reopened->annotations.size(), size_t(1)); QCOMPARE(portal.calls, 1); QCOMPARE(bytes(path), borrowed); QCOMPARE(controller.lastPipelineResult(), result);
+    recovery.setAnnotationOpener({}); QVERIFY(!recovery.editAction()->isEnabled());
+  }
   void nativeSaveAsAndSharedRetryUseRetainedPixelsWithoutAnotherPortalCapture() {
     QTemporaryDir dir, preferences;
     QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, preferences.path());

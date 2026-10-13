@@ -30,6 +30,7 @@ public:
   static EditorWindow *open(const QString &path, QWidget *parent = nullptr);
   static EditorWindow *createNew(QWidget *parent = nullptr);
   static EditorWindow *fromCapturedImage(const QImage &image, QWidget *parent = nullptr);
+  static EditorWindow *fromCapturedDocument(const xerahs::editor::AnnotationDocument &document, QWidget *parent = nullptr);
   // Empty path invokes the native picker; recent-file actions pass an explicit path.
   bool openImage(const QString &path = {});
 

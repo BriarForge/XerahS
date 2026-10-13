@@ -2,6 +2,7 @@
 #include "ActionSelectionDialog.h"
 #include "CaptureFileOutput.h"
 #include "CaptureSaveAsDialog.h"
+#include "CaptureAnnotationDialog.h"
 #include <QPointer>
 #include <QThread>
 #include <QTimer>
@@ -17,6 +18,7 @@ QJsonObject CapturePipelineResult::canonicalResult() const {
 }
 std::vector<CaptureFile> CapturePipelineResult::savedFiles() const { return files.empty() && file ? std::vector<CaptureFile>{*file} : files; }
 PipelineRetryPlan CapturePipelineResult::retryPlan() const {
+  if (pipeline.finalWorkingMedia == "annotation" && !annotationDocument) return {{}, {}, "retry-media-unavailable"};
   bool save = false, saveAs = false;
   for (const auto &saved : savedFiles()) { save |= saved.artifact == "save.file"; saveAs |= saved.artifact == "save-as.file"; }
   return planRetainedCaptureRetry(pipeline, !workingMedia.isNull(), save, saveAs);
@@ -31,9 +33,11 @@ struct ClipboardCall {
 struct SelectionCall { bool done = false; ActionOutcome result; };
 struct FileOutputCall { QString action; std::optional<CaptureFile> file; bool claimed = false, done = false; ActionOutcome result; };
 struct SaveAsCall { QString directory; bool done = false; CaptureSaveAsChoice choice; };
+struct AnnotationCall { LoadedSource source; bool done = false; CaptureAnnotationChoice choice; };
 void completeSelection(const std::shared_ptr<CapturePipelineState> &state, const std::shared_ptr<SelectionCall> &call, ActionOutcome result);
 ActionOutcome cancelled() { return {ActionState::Cancelled, {}, {}}; }
 QString actionActivity(const QString &id) {
+  if (id == "annotation") return "Preparing capture annotation. Cancel Capture stops later actions.";
   if (id == "save") return QStringLiteral("Saving capture. Escape or Cancel Capture stops later actions.");
   if (id == "save-as") return QStringLiteral("Choose a new PNG path. Cancel skips Save As; Cancel Capture stops later actions.");
   if (id == "image-clipboard") return QStringLiteral("Copying capture to the clipboard.");
@@ -52,11 +56,16 @@ struct CapturePipelineState {
   std::shared_ptr<SelectionCall> selection;
   std::shared_ptr<FileOutputCall> fileOutput;
   std::shared_ptr<SaveAsCall> saveAs;
+  std::shared_ptr<AnnotationCall> annotation;
   std::shared_ptr<CapturePipelineResult> result = std::make_shared<CapturePipelineResult>();
   QString activity;
   bool ready = false;
 };
 namespace {
+void completeAnnotation(const std::shared_ptr<CapturePipelineState> &state, const std::shared_ptr<AnnotationCall> &call, CaptureAnnotationChoice choice) {
+  { std::lock_guard<std::mutex> lock(state->mutex); if (call->done) return; call->choice = std::move(choice); call->done = true; }
+  state->changed.notify_all();
+}
 void completeSaveAs(const std::shared_ptr<CapturePipelineState> &state, const std::shared_ptr<SaveAsCall> &call, CaptureSaveAsChoice choice) {
   { std::lock_guard<std::mutex> lock(state->mutex); if (call->done) return; call->choice = std::move(choice); call->done = true; }
   state->changed.notify_all();
@@ -108,6 +117,7 @@ CapturePipeline::~CapturePipeline() {
   m_state->changed.notify_all();
   if (m_selectionDialog) { disconnect(m_selectionDialog, nullptr, this, nullptr); delete m_selectionDialog.data(); }
   if (m_saveAsDialog) { disconnect(m_saveAsDialog, nullptr, this, nullptr); delete m_saveAsDialog.data(); }
+  if (m_annotationDialog) { disconnect(m_annotationDialog, nullptr, this, nullptr); delete m_annotationDialog.data(); }
 }
 void CapturePipeline::start() {
   if (m_started) return;
@@ -154,6 +164,14 @@ void CapturePipeline::start() {
     if (!token.requested() && call->choice.path) state->activity = QStringLiteral("Saving capture to the chosen PNG path. Cancel Capture stops publication at the next safe boundary.");
     return token.requested() ? CaptureSaveAsChoice{} : call->choice;
   };
+  ports.annotation = [state](const LoadedSource &source, const CancellationToken &token) {
+    if (token.requested()) return CaptureAnnotationChoice{};
+    auto call = std::make_shared<AnnotationCall>(); call->source = source;
+    std::unique_lock<std::mutex> lock(state->mutex); state->annotation = call; state->activity = "Annotate capture. Cancel skips annotation; Cancel Capture stops later actions.";
+    state->changed.wait(lock, [&] { return call->done || token.requested(); });
+    if (!token.requested() && call->choice.document) state->activity = "Rendering accepted annotations. Cancel Capture prevents adoption at the next safe boundary.";
+    return token.requested() ? CaptureAnnotationChoice{} : call->choice;
+  };
   auto *worker = QThread::create([state, ports, media = m_media, directory = m_directory,
                                   pattern = m_pattern, selected = m_selected, storage = m_journal,
                                   retryRequested = m_retryRequested, source = m_retrySource]() mutable {
@@ -172,14 +190,14 @@ void CapturePipeline::start() {
     std::vector<SavedFileArtifact> initialFacts;
     for (auto &file : inheritedFiles) { if (file.creatorTaskId.isEmpty()) file.creatorTaskId = source->pipeline.taskId; initialFacts.push_back(file); }
     PipelineJournalRecorder journal(storage, id, selected, QDateTime::currentDateTimeUtc(), retry.link,
-                                    initialFacts);
+                                    initialFacts, source ? source->pipeline.finalWorkingMedia : QStringLiteral("capture"));
     journal.begin(); // retry lineage/files precede any new external action
     const auto externalPublish = ports.save.beforePublish;
     ports.save.beforePublish = [&journal, externalPublish](const QString &path) {
       if (!journal.beforePublish(path)) throw std::runtime_error("pipeline-journal-unavailable");
       if (externalPublish) externalPublish(path);
     };
-    CaptureActions actions(media, directory, pattern, ports, {}, inheritedFiles); JournaledExecutor executor(actions, journal);
+    CaptureActions actions(media, directory, pattern, ports, {}, inheritedFiles, source ? source->annotationDocument : std::nullopt); JournaledExecutor executor(actions, journal);
     const auto currentFiles = [&actions, id] {
       std::vector<SavedFileArtifact> facts;
       for (auto file : actions.savedFiles()) { if (file.creatorTaskId.isEmpty()) file.creatorTaskId = id; facts.push_back(file); }
@@ -191,6 +209,7 @@ void CapturePipeline::start() {
       state->result->pipeline.orderedResults.push_back(result); journal.completed(result, currentFiles());
     };
     PipelineOptions options;
+    if (source) options.inheritedWorkingMedia = source->pipeline.finalWorkingMedia;
     if (retryRequested) for (const auto &file : inheritedFiles) {
       options.inheritedSaveAvailable |= file.artifact == "save.file"; options.inheritedSaveAsAvailable |= file.artifact == "save-as.file";
     }
@@ -200,6 +219,7 @@ void CapturePipeline::start() {
       state->result->diagnostic = diagnostic::actionFailed;
     }
     state->result->pipeline.retry = retry.link;
+    state->result->workingMedia = actions.workingMedia(); state->result->annotationDocument = actions.annotationDocument();
     if (!executor.interruptionDiagnostic().isEmpty()) state->result->diagnostic = executor.interruptionDiagnostic();
     // Retain the live native binding; canonical/journal facts deliberately
     // slice it away and must never reconstruct authority from metadata.
@@ -222,6 +242,8 @@ void CapturePipeline::cancel() {
   if (!guard) return;
   if (m_saveAsDialog) m_saveAsDialog->reject();
   if (!guard) return;
+  if (m_annotationDialog) m_annotationDialog->reject();
+  if (!guard) return;
   emit activityChanged(QStringLiteral("Cancellation requested. Finishing the current action safely."));
 }
 void CapturePipeline::poll() {
@@ -232,6 +254,33 @@ void CapturePipeline::poll() {
   const QPointer<CapturePipeline> guard(this);
   if (!activity.isEmpty() && activity != m_activity && !state->cancellation.requested()) {
     m_activity = activity; emit activityChanged(activity); if (!guard) return;
+  }
+  std::shared_ptr<AnnotationCall> annotation;
+  { std::lock_guard<std::mutex> lock(state->mutex); annotation = std::move(state->annotation); }
+  if (annotation) {
+    if (state->cancellation.requested()) completeAnnotation(state, annotation, {});
+    else {
+      emit choosingActions(); if (!guard) return;
+      if (state->cancellation.requested()) completeAnnotation(state, annotation, {});
+      else if (const auto native = m_ports.annotation) {
+        try { completeAnnotation(state, annotation, native(annotation->source, state->cancellation)); }
+        catch (...) { completeAnnotation(state, annotation, {{}, diagnostic::actionFailed}); }
+        if (!guard) return;
+      } else {
+        auto *dialog = new CaptureAnnotationDialog(annotation->source, m_selectionParent, m_ports.annotationStyle); m_annotationDialog = dialog;
+        const auto parent = m_selectionParent;
+        connect(dialog, &QDialog::finished, this, [state, annotation, dialog, parent](int result) {
+          const CaptureAnnotationChoice choice = result == QDialog::Accepted ? CaptureAnnotationChoice{dialog->document(), {}} : CaptureAnnotationChoice{};
+          const auto ownedState = state; const auto ownedCall = annotation;
+          if (parent) parent->activateWindow();
+          completeAnnotation(ownedState, ownedCall, choice);
+        });
+        connect(dialog, &QObject::destroyed, this, [state, annotation] { completeAnnotation(state, annotation, {}); });
+        dialog->show(); if (!guard || !m_annotationDialog) return;
+        dialog->raise(); if (!guard || !m_annotationDialog) return;
+        dialog->activateWindow(); if (!guard) return;
+      }
+    }
   }
   std::shared_ptr<SaveAsCall> saveAs;
   { std::lock_guard<std::mutex> lock(state->mutex); saveAs = std::move(state->saveAs); }
@@ -250,7 +299,8 @@ void CapturePipeline::poll() {
         connect(dialog, &QDialog::finished, this, [state, saveAs, dialog, parent](int result) {
           const CaptureSaveAsChoice choice = result == QDialog::Accepted ? CaptureSaveAsChoice{dialog->targetPath(), {}} : CaptureSaveAsChoice{};
           const auto ownedState = state; const auto ownedCall = saveAs;
-          if (parent) parent->activateWindow(); completeSaveAs(ownedState, ownedCall, choice);
+          if (parent) parent->activateWindow();
+          completeSaveAs(ownedState, ownedCall, choice);
         });
         connect(dialog, &QObject::destroyed, this, [state, saveAs] { completeSaveAs(state, saveAs, {}); });
         dialog->show(); if (!guard || !m_saveAsDialog) return;

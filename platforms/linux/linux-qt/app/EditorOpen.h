@@ -5,6 +5,7 @@ class QWidget;
 namespace xerahs::app {
 LoadedSource openSource(const QString &path, QWidget *parent = nullptr);
 LoadedSource openCapturedSource(const QImage &image, QWidget *parent = nullptr);
+LoadedSource openCapturedDocument(const xerahs::editor::AnnotationDocument &document, QWidget *parent = nullptr);
 QString imageFileFilter();
 // Preserve POSIX symlink/parent-segment resolution when making CLI paths absolute.
 QString absoluteImagePath(const QString &path);

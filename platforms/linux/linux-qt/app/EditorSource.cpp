@@ -199,30 +199,51 @@ LoadedSource resolveSourceChoice(const LoadedSource &pending, SourceChoice choic
   return result;
 }
 
-SaveOutcome saveEdit(const QString &rasterPath, const QImage &source, const AnnotationDocument &document) {
-  SaveOutcome outcome;
+LoadedSource prepareCapturedDocument(const AnnotationDocument &document, const RenderControl &control) {
+  if (cancelled(control)) return fail("canvas-cancelled");
+  if (document.sourceImagePng.size() > kMaxEncodedImageBytes) return fail(diagnostic::documentTooLarge);
+  const auto parsed = parseDocument(serializeDocument(document));
+  if (!parsed.document) return fail(parsed.error.value_or(diagnostic::documentInvalid));
+  auto source = prepareCapturedSource(QImage::fromData(document.sourceImagePng, "PNG"), control);
+  if (!source.document) return source;
+  if (parsed.document->canvasWidth != source.image.width() || parsed.document->canvasHeight != source.image.height()) return fail(diagnostic::documentInvalid);
+  source.document = *parsed.document; source.document->imagePath.clear(); source.document->imageHash.clear();
+  return source;
+}
+RenderedEditorImage renderEditorImage(const QImage &source, const AnnotationDocument &document, const RenderControl &control) {
+  if (cancelled(control)) return {{}, "canvas-cancelled"};
+  if (source.isNull() || qint64(source.width()) * source.height() > kMaxPixels) return {{}, diagnostic::documentInvalid};
   const QImage argb = source.convertToFormat(QImage::Format_ARGB32);
+  if (argb.isNull()) return {{}, diagnostic::documentTooLarge};
   ArgbImage input;
   input.width = argb.width();
   input.height = argb.height();
   input.pixels.resize(static_cast<std::size_t>(input.width * input.height));
   for (int y = 0; y < argb.height(); ++y) {
+    if (cancelled(control)) return {{}, "canvas-cancelled"};
     const auto *row = reinterpret_cast<const QRgb *>(argb.constScanLine(y));
     for (int x = 0; x < argb.width(); ++x) input.pixels[static_cast<std::size_t>(y) * input.width + x] = row[x];
   }
-  const RenderResult rendered = render(input, document.annotations);
+  const RenderResult rendered = render(input, document.annotations, control);
   if (!rendered.image) {
-    outcome.rasterError = QStringLiteral("The image or annotation geometry is invalid and cannot be exported.");
-    return outcome;
+    return {{}, rendered.error == RenderError::Cancelled ? QStringLiteral("canvas-cancelled") : diagnostic::documentInvalid};
   }
   QImage out(argb.size(), QImage::Format_ARGB32);
+  if (out.isNull()) return {{}, diagnostic::documentTooLarge};
   out.setColorSpace(source.colorSpace());
   for (int y = 0; y < out.height(); ++y) {
+    if (cancelled(control)) return {{}, "canvas-cancelled"};
     auto *row = reinterpret_cast<QRgb *>(out.scanLine(y));
     for (int x = 0; x < out.width(); ++x) row[x] = rendered.image->at(x, y);
   }
+  return {out, {}};
+}
+SaveOutcome saveEdit(const QString &rasterPath, const QImage &source, const AnnotationDocument &document) {
+  SaveOutcome outcome;
+  const auto rendered = renderEditorImage(source, document);
+  if (rendered.image.isNull()) { outcome.rasterError = "The image or annotation geometry is invalid and cannot be exported."; return outcome; }
   QSaveFile raster(rasterPath);
-  if (raster.open(QIODevice::WriteOnly) && out.save(&raster, "PNG") && raster.commit()) {
+  if (raster.open(QIODevice::WriteOnly) && rendered.image.save(&raster, "PNG") && raster.commit()) {
     outcome.rasterSaved = true;
   } else {
     outcome.rasterError = raster.errorString();

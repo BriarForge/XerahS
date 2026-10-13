@@ -10,11 +10,13 @@ class QWidget;
 namespace xerahs::app {
 class ActionSelectionDialog;
 class CaptureSaveAsDialog;
+class CaptureAnnotationDialog;
 struct CapturePipelineResult {
   xerahs::actions::PipelineResult pipeline;
   std::optional<CaptureFile> file;
   std::vector<CaptureFile> files;
   QImage workingMedia;
+  std::optional<xerahs::editor::AnnotationDocument> annotationDocument;
   QString diagnostic;
   // Immutable native settings used by this capture, including after save
   // failure. Retry never reads the current preferences or decodes a saved path.
@@ -58,6 +60,7 @@ private:
   QPointer<ActionSelectionDialog> m_selectionDialog;
   QPointer<QWidget> m_selectionParent;
   QPointer<CaptureSaveAsDialog> m_saveAsDialog;
+  QPointer<CaptureAnnotationDialog> m_annotationDialog;
 };
 } // namespace xerahs::app
 Q_DECLARE_METATYPE(xerahs::app::CapturePipelineReceipt)

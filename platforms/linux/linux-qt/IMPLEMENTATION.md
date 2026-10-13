@@ -117,9 +117,16 @@ keeps known successes/creator facts and asks again only for failed Save As;
 write-ahead recovery preserves earlier files and unknown pending publication.
 [Save As evidence](app/SAVE-AS.md) indexes actual picker/private-bus/process-kill
 tests and concrete remaining replacement/format/sidecar/shared-schema decisions.
-Next implement native annotation handoff and compatible re-editable persistence
-under PCA-008 before save, including truthful raster failure and cancellation,
-alongside full configured workflows, remaining save variants and catalogue.
+Native [annotation handoff](app/ANNOTATION-HANDOFF.md) now runs an asynchronous
+rectangle canvas before save, renders accepted edits on the worker and retains
+the source document for explicit compatible persistence through the real editor.
+Cancellation preserves original pixels; output retry retains annotated media
+and its identity without repeating annotation. Actual native/private-bus and
+process-kill fixtures cover this partial PCA-008 surface. Shared canvas/source
+libraries prevent capture and editor paths from diverging. Next integrate
+explicit sidecar intent and truthful companion-artifact outcomes into capture
+Save/Save As under ES-011/012/014/030, alongside complete annotation tools,
+configured workflows, remaining save variants and catalogue.
 
 Each checkpoint updates requirement traceability, runs native tests and the
 implemented shared vectors, and lands on `main`. Passing the small pilot vector

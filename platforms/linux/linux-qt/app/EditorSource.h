@@ -38,6 +38,12 @@ LoadedSource loadSource(const QString &path, const xerahs::editor::RenderControl
 // Captured pixels become an owned, untitled source. No file/sidecar is read or
 // written, and no durable path is inferred from an earlier pipeline save.
 LoadedSource prepareCapturedSource(const QImage &image, const xerahs::editor::RenderControl &control = {});
+// Reopens an owned in-memory document; no saved raster or sidecar path is read.
+LoadedSource prepareCapturedDocument(const xerahs::editor::AnnotationDocument &document,
+                                    const xerahs::editor::RenderControl &control = {});
+struct RenderedEditorImage { QImage image; QString diagnostic; };
+RenderedEditorImage renderEditorImage(const QImage &source, const xerahs::editor::AnnotationDocument &document,
+                                     const xerahs::editor::RenderControl &control = {});
 // Uses the validated snapshots shown by the chooser, without rereading files.
 LoadedSource resolveSourceChoice(const LoadedSource &pending, xerahs::editor::SourceChoice choice,
                                 const xerahs::editor::RenderControl &control = {});

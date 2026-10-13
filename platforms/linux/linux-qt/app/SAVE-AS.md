@@ -106,6 +106,8 @@ shared artifact/diagnostic/recovery vectors and configured path/symlink policy.
 This new-PNG candidate adds no accepted unavailable disposition or waiver.
 Thumbnail save, annotation/effects handoff, full workflow persistence, remaining
 catalogue/retry/media recovery, retention/cleanup and security/privacy/
-accessibility/parity/release reviews stay in the full Linux audit. Next implement
-the native annotation handoff and compatible re-editable persistence under
-PCA-008, preserving its before-save dependency and honest raster save failures.
+accessibility/parity/release reviews stay in the full Linux audit. Native
+[annotation handoff](ANNOTATION-HANDOFF.md) now returns edited pixels before
+save and offers explicit compatible persistence through the retained document
+editor. Next integrate sidecar intent and true companion-artifact outcomes into
+capture Save/Save As under ES-011/012/014/030.

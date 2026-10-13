@@ -112,3 +112,10 @@ intent; it cannot authorize retry. Native identity is deliberately excluded
 from persisted metadata. The linked evidence records verification and remaining
 catalogue/shared/native/human scope. Both Save aliases now have actual
 multiple-file prerequisite and creator preservation evidence in SAVE-AS.md.
+
+[Native annotation handoff](ANNOTATION-HANDOFF.md) now retains its successful
+document and rendered pixels through output retry. Acknowledged annotation
+media is admitted without repeating the transformation, and its actual media
+ID enters both the Core result and pending retry journal. Missing native
+documents and unsupported failed transformations stay unavailable; full
+transformation/catalogue replay and restart media authority remain Required.

@@ -44,6 +44,15 @@ review limits. With no tray host, the window provides the current commands.
 
 - **Capture region and choose actions…** (tray or main window) opens a native chooser after capturing. Run Save, Save As, Copy image, file/path clipboard, Show saved file, or no outputs for this capture only. File outputs prefer Save's file, then Save As's, and expose its saved location. Cancel, Escape or window close in the action chooser stops actions before outputs and retains captured pixels for the recovery controls. Save As opens a separate new-PNG picker; cancelling that picker skips only Save As. Both saved files remain in the result. Existing destinations are kept. Workflow defaults stay unchanged. The remaining catalogue is visibly unavailable pending native implementation. The [selection evidence](app/ACTION-SELECTION.md) and [Save As evidence](app/SAVE-AS.md) record actual UI, publication, cancellation, retry and recovery coverage and remaining qualification.
 - Keys in the overlay: drag or Space to select, Enter to capture, Esc to cancel, arrows to move by 1 pixel (Shift for 10), Alt+arrows to resize.
+- **Annotate image** in the capture action chooser opens a native rectangle
+  canvas before saving. Apply sends edited pixels to later outputs and keeps
+  the editable document; Cancel skips annotation and keeps original pixels.
+  Cancel Capture stops later actions. **Edit retained capture…** reopens the
+  document as unsaved for re-editing and explicit compatible PNG/`.xann` Save.
+  Capture Save/Save As currently write rendered PNG only. Output retry keeps
+  accepted annotations without opening the canvas again. The
+  [handoff evidence](app/ANNOTATION-HANDOFF.md) records actual verification and
+  remaining tools, paired capture persistence and qualification.
 - **Cancel capture** in the command window or tray cancels a pending native portal interaction, an open overlay or confirming pixel composition. Confirmed composition runs on a worker with visible accessible progress; Escape cancels without waiting for that worker. Cancellation before pixel completion creates no capture, save or clipboard action. After confirmation, PNG saving runs off the UI thread with visible activity: cancellation lets an already running save finish, records that fact and stops later actions. Portal errors produce stable diagnostics; returned images decode on a native worker with validated resource limits. The [capture policy](app/CAPTURE-POLICY.md) records request/file authority and remaining qualification.
 - Hyprland binding example: `bind = , PRINT, exec, xerahs --capture-region`.
 - `packaging/com.xerahs.app.desktop` gives desktop launches the `com.xerahs.app` identity, which portals use to attribute consent.

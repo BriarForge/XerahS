@@ -138,6 +138,7 @@ struct PipelineOptions {
   // This grants prerequisite availability, never authority to delete it.
   bool inheritedSaveAvailable = false;
   bool inheritedSaveAsAvailable = false;
+  QString inheritedWorkingMedia = QStringLiteral("capture");
 };
 
 // PCA-011: append-only attempt identity. Preserved successes are provenance,

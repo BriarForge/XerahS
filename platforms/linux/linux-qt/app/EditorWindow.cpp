@@ -133,6 +133,15 @@ EditorWindow *EditorWindow::fromCapturedImage(const QImage &image, QWidget *pare
   }
 }
 
+EditorWindow *EditorWindow::fromCapturedDocument(const AnnotationDocument &document, QWidget *parent) {
+  auto source = openCapturedDocument(document, parent);
+  if (source.diagnostic == "canvas-cancelled") return nullptr;
+  if (!source.document) { QMessageBox::warning(parent, "Cannot edit retained annotations", describe(source.diagnostic)); return nullptr; }
+  try {
+    auto *window = new EditorWindow({}, std::move(source.image), std::move(*source.document), EditorSession::InitialPersistence::Unsaved, std::move(source.displayImage));
+    window->setAttribute(Qt::WA_DeleteOnClose); return window;
+  } catch (const std::bad_alloc &) { QMessageBox::warning(parent, "Cannot edit retained annotations", describe(diagnostic::documentTooLarge)); return nullptr; }
+}
 EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument document,
                            EditorSession::InitialPersistence persistence, QImage displaySource)
     : m_path(path), m_image(std::move(image)), m_session(std::make_unique<EditorSession>(std::move(document), persistence)) {

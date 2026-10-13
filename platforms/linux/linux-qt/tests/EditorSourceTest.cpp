@@ -22,6 +22,16 @@ using namespace xerahs::editor;
 class EditorSourceTest : public QObject {
   Q_OBJECT
 private slots:
+  void retainedDocumentReopensSourceAndAnnotationsWithoutRasterReads() {
+    QTemporaryDir dir; const auto raster = dir.filePath("borrowed.png"); QImage image(30, 24, QImage::Format_ARGB32); image.fill(Qt::blue); QVERIFY(image.save(raster));
+    auto source = prepareCapturedSource(image); QVERIFY(source.document); xerahs::editor::EditorSession session(*source.document); session.createRectangle({5, 5}, {15, 15});
+    auto document = session.document(); document.imagePath = raster; document.imageHash = "sha256:" + QString(64, '0'); QVERIFY(QFile::remove(raster));
+    const auto reopened = prepareCapturedDocument(document); QVERIFY(reopened.document); QCOMPARE(reopened.image, image);
+    QVERIFY(reopened.document->imagePath.isEmpty() && reopened.document->imageHash.isEmpty()); QCOMPARE(reopened.document->annotations.size(), size_t(1));
+    const auto rendered = renderEditorImage(reopened.image, *reopened.document); QVERIFY(!rendered.image.isNull()); QCOMPARE(rendered.image.pixel(5, 5), qRgb(255, 0, 0));
+    QCOMPARE(renderEditorImage(reopened.image, *reopened.document, {[] { return true; }, {}}).diagnostic, QString("canvas-cancelled"));
+    document.canvasWidth = 31; QVERIFY(!prepareCapturedDocument(document).document);
+  }
   void capturedSourceOwnsPixelsPreservesAlphaAndProfileAndInfersNoFile() {
     QByteArray memory(3 * 2 * 4, '\0');
     QImage input(reinterpret_cast<uchar *>(memory.data()), 3, 2, 12, QImage::Format_ARGB32);

@@ -30,7 +30,8 @@ CaptureRecoveryActions::~CaptureRecoveryActions() {
 void CaptureRecoveryActions::updateAvailability() {
   const bool available = m_capture && !m_capture->busy() && m_capture->lastPipelineResult() && !m_running;
   const QPointer<CaptureRecoveryActions> guard(this);
-  m_edit->setEnabled(available && bool(m_opener)); if (!guard) return;
+  const bool editable = m_capture && m_capture->lastPipelineResult() && m_capture->lastPipelineResult()->annotationDocument ? bool(m_annotationOpener) : bool(m_opener);
+  m_edit->setEnabled(available && editable); if (!guard) return;
   m_discard->setEnabled(available); if (!guard) return;
   m_review->setEnabled(available); if (!guard) return;
   const auto plan = m_capture && m_capture->lastPipelineResult() ? m_capture->lastPipelineResult()->retryPlan() : xerahs::actions::PipelineRetryPlan{};
@@ -38,7 +39,10 @@ void CaptureRecoveryActions::updateAvailability() {
   m_retry->setToolTip(plan.available() ? m_retry->statusTip() :
       QStringLiteral("Retry unavailable (%1). Retained pixels can still be opened in the editor.").arg(plan.diagnostic.isEmpty() ? QStringLiteral("retry-no-failed-actions") : plan.diagnostic));
   if (!guard) return;
-  m_edit->setToolTip(m_opener ? m_edit->statusTip() : QStringLiteral("The image editor is unavailable."));
+  m_edit->setToolTip(editable ? m_edit->statusTip() : QStringLiteral("The image or annotation editor is unavailable."));
+}
+void CaptureRecoveryActions::setAnnotationOpener(std::function<bool(const xerahs::editor::AnnotationDocument &, QWidget *)> opener) {
+  m_annotationOpener = std::move(opener); updateAvailability();
 }
 void CaptureRecoveryActions::retry() {
   if (m_running || !m_capture || m_capture->busy() || QApplication::activeModalWidget()) return;
@@ -82,13 +86,15 @@ void CaptureRecoveryActions::retry() {
   box->open();
 }
 void CaptureRecoveryActions::edit() {
-  if (m_running || !m_capture || m_capture->busy() || !m_opener || QApplication::activeModalWidget()) return;
+  if (m_running || !m_capture || m_capture->busy() || QApplication::activeModalWidget()) return;
   const auto receipt = m_capture->lastPipelineResult(); if (!receipt) return;
   const auto opener = m_opener; const auto parent = m_dialogParent;
+  const auto annotationOpener = m_annotationOpener;
+  if (receipt->annotationDocument ? !annotationOpener : !opener) return;
   const QPointer<CaptureRecoveryActions> guard(this);
   ++m_operation; m_running = true; updateAvailability(); if (!guard) return;
   bool opened = false, failed = false;
-  try { opened = opener(receipt->workingMedia, parent.data()); } catch (...) { failed = true; }
+  try { opened = receipt->annotationDocument ? annotationOpener(*receipt->annotationDocument, parent.data()) : opener(receipt->workingMedia, parent.data()); } catch (...) { failed = true; }
   if (!guard) return;
   m_running = false; updateAvailability(); if (!guard) return;
   if (failed) emit notify(QStringLiteral("Could not edit the retained capture (action-failed). The retained result is still available."), false);

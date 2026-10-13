@@ -147,3 +147,9 @@ Uncertain reveal delivery interrupts the engine and retains pending journal
 intent; it cannot authorize retry. Native identity is deliberately excluded
 from persisted metadata. The linked evidence records verification and remaining
 multiple-artifact/catalogue/shared/native/human scope.
+
+[Native annotation handoff](ANNOTATION-HANDOFF.md) now records an acknowledged
+transformation before save intent. A killed annotated save retains that media
+ID and unknown pending publication; linked output retry inherits it without
+inventing another annotation result. Embedded source/document bytes stay only
+in the current native receipt and never enter this metadata store.

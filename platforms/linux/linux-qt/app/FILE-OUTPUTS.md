@@ -112,5 +112,7 @@ retry/journal coverage. Thumbnail save, complete save variants,
 generic catalogue/prerequisite retry, uploads/editor handoffs,
 configured workflows, restart media authority, retention/cleanup and all
 supported filesystem/distro/compositor/physical accessibility/security/privacy/
-parity/release reviews remain Required. Next implement native annotation
-handoff and compatible re-editable persistence under PCA-008.
+parity/release reviews remain Required. Native
+[annotation handoff](ANNOTATION-HANDOFF.md) now feeds rendered pixels to these
+save/file consumers and retains a source document for explicit editor Save.
+Next integrate capture-side sidecar intent and true companion-artifact outcomes.

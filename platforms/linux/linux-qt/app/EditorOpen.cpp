@@ -76,4 +76,7 @@ LoadedSource openCapturedSource(const QImage &image, QWidget *parent) {
   // or discard while the native progress dialog processes events.
   return runWork([image](const RenderControl &control) { return prepareCapturedSource(image, control); }, parent);
 }
+LoadedSource openCapturedDocument(const AnnotationDocument &document, QWidget *parent) {
+  return runWork([document](const RenderControl &control) { return prepareCapturedDocument(document, control); }, parent);
+}
 }  // namespace xerahs::app

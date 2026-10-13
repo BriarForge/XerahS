@@ -38,7 +38,10 @@
     "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.cpp",
     "platforms/linux/linux-qt/app/NativeEditorToolbar.h",
     "platforms/linux/linux-qt/app/NativeEditorToolbar.cpp",
-    "platforms/linux/linux-qt/app/ToolbarDialog.cpp"
+    "platforms/linux/linux-qt/app/ToolbarDialog.cpp",
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.h",
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+    "platforms/linux/linux-qt/app/EditorSource.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
@@ -95,7 +98,14 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Persisted border/fill/thickness now initialize new/replaced native sessions and update creation defaults in all open editors only after successful persistence. Apply/Cancel and reset are draft operations; existing/selected annotations, source, checkpoint and undo/redo remain unchanged. Actual toolbar color/width edits keep explicit selection history and persist subsequent creation defaults; a failed preference save leaves the document edit intact with a persistent status diagnostic. Core/native multi-window, picker, sidecar, restart and redo tests cover this subset. Last tool and all remaining creation defaults remain Required."
+      "note": "Persisted border/fill/thickness now initialize new/replaced native sessions and update creation defaults in all open editors only after successful persistence. Apply/Cancel and reset are draft operations; existing/selected annotations, source, checkpoint and undo/redo remain unchanged. Actual toolbar color/width edits keep explicit selection history and persist subsequent creation defaults; a failed preference save leaves the document edit intact with a persistent status diagnostic. Core/native multi-window, picker, sidecar, restart and redo tests cover this subset. Last tool and all remaining creation defaults remain Required. Native capture annotation now snapshots the persisted border/fill/thickness creation defaults into each pipeline and uses them in its private rectangle session. Later preference publication affects future pipelines; active annotation styles and existing objects remain unchanged. CaptureAnnotationTest verifies frozen style and real rendered pixels. Complete settings/downstream coverage and native/human qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+      ]
     },
     "ESET-007": {
       "disposition": "Required",

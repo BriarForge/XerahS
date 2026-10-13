@@ -30,6 +30,7 @@
 #include <QProgressBar>
 #include <QProgressDialog>
 #include <QScreen>
+#include <QSettings>
 #include <QMessageBox>
 #include <QMenu>
 #include <QPushButton>
@@ -172,9 +173,26 @@ void runRotationPreview(EditorWindow &window, bool accept) {
 
 class EditorWindowTest : public QObject {
   Q_OBJECT
+  QTemporaryDir dialogPreferences;
 private slots:
+  void initTestCase() {
+    QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
+    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());
+  }
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  void retainedAnnotatedDocumentOpensUnsavedAndPersistsAnEditablePair() {
+    QTemporaryDir dir; QVERIFY(initializeNativeEditorPreferences(dir.filePath("settings/editor.json")).isEmpty());
+    auto source = prepareCapturedSource(fixture()); QVERIFY(source.document); EditorSession session(*source.document); session.createRectangle({8, 8}, {22, 16});
+    const auto document = session.document(); const auto original = serializeDocument(document);
+    std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedDocument(document)); QVERIFY(window); window->show();
+    QVERIFY(window->windowTitle().contains(QChar(0x2022))); QVERIFY(window->findChild<EditorCanvas *>());
+    const auto target = dir.filePath("editable.png"); saveUntitled(*window, target);
+    QVERIFY(!window->windowTitle().contains(QChar(0x2022))); QVERIFY(QFile::exists(target + ".xann"));
+    const auto loaded = loadSource(target); QVERIFY(loaded.document); QCOMPARE(loaded.document->annotations.size(), size_t(1));
+    QCOMPARE(QImage::fromData(loaded.document->sourceImagePng, "PNG"), fixture());
+    QCOMPARE(QImage(target), renderEditorImage(fixture(), document).image); QCOMPARE(serializeDocument(document), original);
+  }
   void toolbarApplyKeepsImageCheckpointAndRedoWhileHiddenCommandsRemainReachable() {
     QTemporaryDir temporary; const auto image = temporary.filePath("input.png"), settings = temporary.filePath("native/settings.json");
     QVERIFY(fixture().save(image)); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());

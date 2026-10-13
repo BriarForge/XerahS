@@ -19,7 +19,7 @@ The command window preserves maximized state and stays available for native
 focus and clipboard ownership when its transient chooser closes. The chooser
 shows image dimensions, per-run scope, retained-pixel behavior, keyboard
 cancellation and all 19 remaining catalogue choices.
-Save image, Save image as new PNG, image/file/path clipboard and Show saved file are available; the other choices are
+Annotation, Save image, Save image as new PNG, image/file/path clipboard and Show saved file are available; the other choices are
 disabled with visible and accessible unavailability explanations. These are
 unfinished Required actions, not accepted Degraded/Unavailable dispositions.
 
@@ -92,8 +92,10 @@ editing, the remaining catalogue and editor handoffs, prerequisite/artifact
 retry and recovery, supported distro/compositor/physical focus and assistive
 technology qualification, and all human gates remain Required. Native
 [Save As](SAVE-AS.md) now uses the same chooser, engine, multiple-file result,
-linked retry and journal. Next implement the native annotation handoff and
-compatible re-editable persistence under PCA-008.
+linked retry and journal. Native [annotation handoff](ANNOTATION-HANDOFF.md)
+now returns accepted edited pixels before save and retains the document for
+explicit compatible editor persistence. Capture-side paired persistence and
+the complete annotation/action catalogue remain Required.
 
 [Native file/path clipboard and reveal](FILE-OUTPUTS.md) now extend the chooser
 and linked retry with original-save prerequisites and live file validation.

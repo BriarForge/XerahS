@@ -46,7 +46,8 @@ class PipelineJournalRecorder {
 public:
   PipelineJournalRecorder(std::shared_ptr<const PipelineJournalStoragePort> storage, const QString &id,
                           const QStringList &selected, const QDateTime &createdAt,
-                          const std::optional<PipelineRetryLink> &retry = {}, const std::vector<SavedFileArtifact> &initialFiles = {});
+                          const std::optional<PipelineRetryLink> &retry = {}, const std::vector<SavedFileArtifact> &initialFiles = {},
+                          const QString &initialWorkingMedia = QStringLiteral("capture"));
   bool begin();
   bool before(const ActionSpec &action);
   bool beforePublish(const QString &path);

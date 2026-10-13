@@ -31,6 +31,16 @@ void write(const QString &path, const QByteArray &data) { QFile file(path); if (
 class PipelineJournalTest final : public QObject {
   Q_OBJECT
 private slots:
+  void killedAnnotatedSaveRetainsAcknowledgedTransformationAndUnknownPublication() {
+    QTemporaryDir dir; QProcess process;
+    process.start(QCoreApplication::applicationDirPath() + "/pipeline-journal-fixture", {dir.filePath("state"), dir.filePath("output"), "annotation-before-publication"});
+    QVERIFY(process.waitForStarted(3000)); QTRY_VERIFY_WITH_TIMEOUT(process.canReadLine() || process.state() == QProcess::NotRunning, 5000);
+    QCOMPARE(process.readLine().trimmed(), QByteArray("checkpoint")); process.kill(); QVERIFY(process.waitForFinished(3000));
+    const auto listing = NativePipelineJournal(dir.filePath("state")).list(); QCOMPARE(listing.entries.size(), size_t(1)); const auto &record = listing.entries[0].parsed.record; QVERIFY(record);
+    QCOMPARE(record->report.value("final_working_media"), QJsonValue("annotation")); QCOMPARE(record->report.value("ordered_results").toArray()[0].toObject().value("state"), QJsonValue("succeeded"));
+    QCOMPARE(record->pendingAction, std::optional<QString>{"save"}); QVERIFY(!record->terminal); QVERIFY(!record->report.value("working_media_retained").toBool());
+    QVERIFY(!QFile::exists(dir.filePath("output/capture.png")));
+  }
   void killedSaveAsHasItsOwnUnknownCandidateAndPreservesEarlierArtifacts_data() {
     QTest::addColumn<bool>("earlierSave"); QTest::newRow("Save As only") << false; QTest::newRow("Save then Save As") << true;
   }

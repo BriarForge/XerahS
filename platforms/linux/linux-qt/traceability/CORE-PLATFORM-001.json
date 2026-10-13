@@ -15,7 +15,11 @@
     "platforms/linux/linux-qt/app/ApplicationWindow.cpp",
     "platforms/linux/linux-qt/app/main.cpp",
     "platforms/linux/linux-qt/app/CaptureRecoveryActions.h",
-    "platforms/linux/linux-qt/app/CaptureRecoveryActions.cpp"
+    "platforms/linux/linux-qt/app/CaptureRecoveryActions.cpp",
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.h",
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+    "platforms/linux/linux-qt/app/EditorSource.cpp",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp"
   ],
   "requirements": {
     "CORE-001": {
@@ -48,7 +52,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native Screenshot acquisition, worker pixel composition, post-capture PNG saving/action dispatch and editor loading have cancellation/failure evidence. Known composition progress is determinate; codec/action stages expose accessible indeterminate activity. Cancellation during an uninterruptible action retains its real outcome and prevents later actions; unclaimed obsolete requests cannot mutate the clipboard. Native receipts retain working media and completed files in memory. Full action/workflow/recording/upload/utility coverage, durable recovery, configured privacy policy and physical accessibility/performance qualification remain Required. Native recovery can edit retained confirmed pixels after failed output and independently discard the current receipt by explicit confirmation without removing completed outputs. Native per-run selection has a responsive GUI with a cancellable worker wait; cancelled/empty choices keep pixels without outputs, and accepted work uses the same pipeline. Native file output includes responsive asynchronous D-Bus acknowledgement, bounded unknown-delivery interruption and cancellation evidence. Native Save As has an asynchronous cancellable Qt picker and worker PNG encoding with cancellation checks at safe publication boundaries; independent actions continue after picker-only cancellation, and true files/pixels remain retained.",
+      "note": "Native Screenshot acquisition, worker pixel composition, post-capture PNG saving/action dispatch and editor loading have cancellation/failure evidence. Known composition progress is determinate; codec/action stages expose accessible indeterminate activity. Cancellation during an uninterruptible action retains its real outcome and prevents later actions; unclaimed obsolete requests cannot mutate the clipboard. Native receipts retain working media and completed files in memory. Full action/workflow/recording/upload/utility coverage, durable recovery, configured privacy policy and physical accessibility/performance qualification remain Required. Native recovery can edit retained confirmed pixels after failed output and independently discard the current receipt by explicit confirmation without removing completed outputs. Native per-run selection has a responsive GUI with a cancellable worker wait; cancelled/empty choices keep pixels without outputs, and accepted work uses the same pipeline. Native file output includes responsive asynchronous D-Bus acknowledgement, bounded unknown-delivery interruption and cancellation evidence. Native Save As has an asynchronous cancellable Qt picker and worker PNG encoding with cancellation checks at safe publication boundaries; independent actions continue after picker-only cancellation, and true files/pixels remain retained. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Automatic paired capture persistence, remaining tools/workflows and full native/human qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
@@ -61,14 +65,17 @@
         "platforms/linux/linux-qt/app/ACTION-SELECTION.md",
         "platforms/linux/linux-qt/app/FILE-OUTPUTS.md",
         "platforms/linux/linux-qt/app/SAVE-AS.md",
-        "platforms/linux/linux-qt/tests/CaptureSaveAsTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureSaveAsTest.cpp",
+        "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp"
       ]
     },
     "CORE-005": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native portal consent and kernel-credential activation checks have isolated tests. Least-authority coverage for all sensitive operations and human security/privacy review remain Required. Shared retained-capture Retry confirms one attempt against an unchanged source, reports real outcomes/activity and keeps cancellation reachable through the command window and tray; lifecycle fixtures cover stale approval, initial cancellation and synchronous controller destruction. Per-run Save/Copy selection explicitly authorizes current-run outputs only; cancellation before mutation and unchanged defaults are covered by private-bus/native fixtures. Native file consumers validate an in-memory publication binding and require explicit per-run output selection or linked retry. URI/path dispatch races and complete security/privacy/native qualification remain human review work. Save As explicitly chooses a new PNG path and refuses replacement in the picker and atomic worker publication. Failed Save As retry asks again while preserving earlier file authority. Complete replacement/format/path policy and human security/privacy review remain Required.",
+      "note": "Native portal consent and kernel-credential activation checks have isolated tests. Least-authority coverage for all sensitive operations and human security/privacy review remain Required. Shared retained-capture Retry confirms one attempt against an unchanged source, reports real outcomes/activity and keeps cancellation reachable through the command window and tray; lifecycle fixtures cover stale approval, initial cancellation and synchronous controller destruction. Per-run Save/Copy selection explicitly authorizes current-run outputs only; cancellation before mutation and unchanged defaults are covered by private-bus/native fixtures. Native file consumers validate an in-memory publication binding and require explicit per-run output selection or linked retry. URI/path dispatch races and complete security/privacy/native qualification remain human review work. Save As explicitly chooses a new PNG path and refuses replacement in the picker and atomic worker publication. Failed Save As retry asks again while preserving earlier file authority. Complete replacement/format/path policy and human security/privacy review remain Required. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Automatic paired capture persistence, remaining tools/workflows and full native/human qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
@@ -76,7 +83,11 @@
         "platforms/linux/linux-qt/app/ACTION-SELECTION.md",
         "platforms/linux/linux-qt/app/FILE-OUTPUTS.md",
         "platforms/linux/linux-qt/app/SAVE-AS.md",
-        "platforms/linux/linux-qt/tests/CaptureSaveAsTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureSaveAsTest.cpp",
+        "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ]
     },
     "CORE-006": {
@@ -97,7 +108,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "A native command window reuses actual tray actions and current capture availability, supports keyboard/accessible activation and preserves true capture results. Default repeated launch shows/restores the window. Region/Open activation shares the production dispatcher. Full main UI, workflow catalogue, global hotkeys, command palette, all surface availability and physical assistive-technology qualification remain Required. Shared tray/main-window recovery actions expose real current availability and immutable capture-to-editor handoff, plus explicit guarded discard of the in-memory result; private native keyboard/callback/confirmation tests cover these commands. Capture region and choose actions shares a tray/main/menu QAction and existing busy/modal admission; its actual Qt chooser exposes available output choices and visible disabled catalogue rows. The same per-run chooser exposes file/path clipboard and reveal with prerequisite/location-sharing text; shared retry confirmation names the true selected outputs. The shared per-run chooser now enables Save As; actual native picker and shared Retry keyboard fixtures verify transient ownership, folder navigation, Escape and retained-pixel publication. Full native focus/accessibility qualification remains Required.",
+      "note": "A native command window reuses actual tray actions and current capture availability, supports keyboard/accessible activation and preserves true capture results. Default repeated launch shows/restores the window. Region/Open activation shares the production dispatcher. Full main UI, workflow catalogue, global hotkeys, command palette, all surface availability and physical assistive-technology qualification remain Required. Shared tray/main-window recovery actions expose real current availability and immutable capture-to-editor handoff, plus explicit guarded discard of the in-memory result; private native keyboard/callback/confirmation tests cover these commands. Capture region and choose actions shares a tray/main/menu QAction and existing busy/modal admission; its actual Qt chooser exposes available output choices and visible disabled catalogue rows. The same per-run chooser exposes file/path clipboard and reveal with prerequisite/location-sharing text; shared retry confirmation names the true selected outputs. The shared per-run chooser now enables Save As; actual native picker and shared Retry keyboard fixtures verify transient ownership, folder navigation, Escape and retained-pixel publication. Full native focus/accessibility qualification remains Required. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Automatic paired capture persistence, remaining tools/workflows and full native/human qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/ApplicationWindow.cpp",
         "platforms/linux/linux-qt/app/main.cpp",
@@ -107,7 +118,11 @@
         "platforms/linux/linux-qt/app/ACTION-SELECTION.md",
         "platforms/linux/linux-qt/app/FILE-OUTPUTS.md",
         "platforms/linux/linux-qt/app/SAVE-AS.md",
-        "platforms/linux/linux-qt/tests/CaptureSaveAsTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureSaveAsTest.cpp",
+        "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ]
     },
     "CORE-008": {

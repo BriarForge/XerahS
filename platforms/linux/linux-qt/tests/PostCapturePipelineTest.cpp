@@ -66,6 +66,11 @@ class PostCapturePipelineTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void retainedTransformationIdentityDoesNotInventAnotherExecution() {
+    ScriptedExecutor executor; CancellationToken token; PipelineOptions options; options.inheritedWorkingMedia = "annotation";
+    const auto result = runPipeline("retained-media-fixture", {"save"}, options, executor, token);
+    QCOMPARE(result.finalWorkingMedia, QString("annotation")); QCOMPARE(result.orderedResults.size(), size_t(1)); QCOMPARE(result.orderedResults[0].action, QString("save"));
+  }
   void inheritedSaveAsSuppliesFallbackWithoutAuthorizingDeletion() {
     ScriptedExecutor executor; CancellationToken token; PipelineOptions options; options.inheritedSaveAsAvailable = true;
     const auto result = runPipeline("save-as-fixture", {"path-clipboard", "delete"}, options, executor, token);

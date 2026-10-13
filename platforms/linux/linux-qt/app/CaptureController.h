@@ -56,6 +56,9 @@ public:
   bool discardRetainedResult(const CapturePipelineReceipt &expected);
   bool retryFailedActions(const CapturePipelineReceipt &expected);
   void setActionSelectionParent(QWidget *parent);
+  // Future pipelines copy this GUI-thread preference value; active workers
+  // retain the style already captured by their pipeline constructor.
+  void setAnnotationStyle(const xerahs::editor::RectangleStyle &style) { m_actionPorts.annotationStyle = style; }
 
 public slots:
   void captureRegion();

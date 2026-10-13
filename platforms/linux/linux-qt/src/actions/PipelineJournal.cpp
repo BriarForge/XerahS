@@ -127,9 +127,11 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
 }
 PipelineJournalRecorder::PipelineJournalRecorder(std::shared_ptr<const PipelineJournalStoragePort> storage, const QString &id,
                                                  const QStringList &selected, const QDateTime &createdAt,
-                                                 const std::optional<PipelineRetryLink> &retry, const std::vector<SavedFileArtifact> &initialFiles)
+                                                 const std::optional<PipelineRetryLink> &retry, const std::vector<SavedFileArtifact> &initialFiles, const QString &initialWorkingMedia)
     : m_storage(std::move(storage)) {
   m_snapshot.result.taskId = id; m_snapshot.result.retry = retry; m_snapshot.files = initialFiles; m_snapshot.createdAt = createdAt;
+  const auto media = catalogueIndex(initialWorkingMedia);
+  if (media && catalogue()[size_t(*media)].kind == ActionKind::Transformation) m_snapshot.result.finalWorkingMedia = initialWorkingMedia;
   for (const auto &action : catalogue()) if (selected.contains(action.id)) m_snapshot.selected.append(action.id);
 }
 bool PipelineJournalRecorder::begin() {
