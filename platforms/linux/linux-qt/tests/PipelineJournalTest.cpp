@@ -31,6 +31,35 @@ void write(const QString &path, const QByteArray &data) { QFile file(path); if (
 class PipelineJournalTest final : public QObject {
   Q_OBJECT
 private slots:
+  void killedLinkedRetryKeepsTheOriginalRecordAndUnknownNewOutcome_data() {
+    QTest::addColumn<QString>("mode"); QTest::newRow("save") << QString("retry-before-publication"); QTest::newRow("clipboard") << QString("retry-clipboard");
+  }
+  void killedLinkedRetryKeepsTheOriginalRecordAndUnknownNewOutcome() {
+    QFETCH(QString, mode); QTemporaryDir dir; QProcess process;
+    process.start(QCoreApplication::applicationDirPath() + "/pipeline-journal-fixture", {dir.filePath("state"), dir.filePath("output"), mode});
+    QVERIFY(process.waitForStarted(3000)); QTRY_VERIFY_WITH_TIMEOUT(process.canReadLine() || process.state() == QProcess::NotRunning, 5000);
+    QCOMPARE(process.readLine().trimmed(), QByteArray("checkpoint")); process.kill(); QVERIFY(process.waitForFinished(3000));
+    NativePipelineJournal storage(dir.filePath("state")); const auto listing = storage.list(); QCOMPARE(listing.entries.size(), size_t(2));
+    const JournalEntry *original = nullptr, *retry = nullptr;
+    for (const auto &entry : listing.entries) {
+      QVERIFY(entry.parsed.record);
+      if (entry.parsed.record->terminal) original = &entry; else retry = &entry;
+    }
+    QVERIFY(original && retry); const auto &record = *retry->parsed.record;
+    const auto native = record.report.value("extensions").toObject().value("com.xerahs.app").toObject();
+    const auto link = native.value("retry").toObject(); QCOMPARE(link.value("original_task_id"), QJsonValue(original->taskId));
+    QCOMPARE(link.value("previous_task_id"), QJsonValue(original->taskId)); QCOMPARE(link.value("attempt"), QJsonValue(1));
+    QCOMPARE(record.report.value("pipeline_state"), QJsonValue("interrupted"));
+    QCOMPARE(record.pendingAction.value(), mode == "retry-before-publication" ? QString("save") : QString("image-clipboard"));
+    QCOMPARE(record.report.value("ordered_results").toArray().size(), 0);
+    if (mode == "retry-clipboard") {
+      const auto file = native.value("file_artifacts").toArray().first().toObject(); QCOMPARE(file.value("creator_task_id"), QJsonValue(original->taskId));
+      QCOMPARE(QImage(dir.filePath("output/capture.png")), pixels());
+    } else QVERIFY(!QFileInfo::exists(dir.filePath("output/capture.png")));
+    const auto originalBytes = original->bytes; const auto retryBytes = retry->bytes;
+    const auto reopened = storage.list(); QCOMPARE(reopened.entries.size(), size_t(2));
+    for (const auto &entry : reopened.entries) QCOMPARE(entry.bytes, entry.taskId == original->taskId ? originalBytes : retryBytes);
+  }
   void interruptedNetworkOutcomeIsUnknownRatherThanInventedFailure() {
     const auto task = id(); const auto snapshot = observation(task); const auto encoded = serializePipelineJournal(snapshot);
     const auto parsed = parsePipelineJournal(encoded, task); QVERIFY(parsed.record);

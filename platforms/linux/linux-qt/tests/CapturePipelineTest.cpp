@@ -6,6 +6,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QFileInfo>
+#include <QFile>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
@@ -30,6 +31,83 @@ void waitAtSave(const std::shared_ptr<SaveGate> &gate) {
 class CapturePipelineTest final : public QObject {
   Q_OBJECT
 private slots:
+  void retriesFailedSaveWithOriginalSettingsAndDoesNotRepeatSuccessfulClipboard() {
+    QTemporaryDir dir; auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("state")); int encoded = 0, copied = 0;
+    CaptureActionPorts ports;
+    ports.save.encode = [&](const QImage &image, QIODevice *output) { ++encoded; return encoded > 1 && image.save(output, "PNG"); };
+    ports.clipboard = [&](const QImage &, const CancellationToken &) { ++copied; return ActionOutcome{}; };
+    CapturePipeline initial(pixels(), dir.filePath("output"), "original-name", {"save", "image-clipboard"}, nullptr, ports, journal);
+    QSignalSpy originalDone(&initial, &CapturePipeline::finished); initial.start(); QTRY_COMPARE(originalDone.count(), 1);
+    const auto original = receipt(originalDone); const auto originalReport = original->canonicalResult(); QVERIFY(!original->file); QCOMPARE(copied, 1);
+    CapturePipeline retry(original, nullptr, ports, journal); QSignalSpy done(&retry, &CapturePipeline::finished); retry.start(); QTRY_COMPARE(done.count(), 1);
+    const auto result = receipt(done); QVERIFY(result->file); QCOMPARE(encoded, 2); QCOMPARE(copied, 1);
+    QCOMPARE(result->pipeline.orderedResults.size(), size_t(1)); QCOMPARE(result->pipeline.orderedResults[0].action, QString("save"));
+    QCOMPARE(result->pipeline.orderedResults[0].state, ActionState::Succeeded); QCOMPARE(result->file->path, dir.filePath("output/original-name.png"));
+    QCOMPARE(QImage(result->file->path), pixels()); QCOMPARE(result->file->creatorTaskId, result->pipeline.taskId);
+    QVERIFY(result->pipeline.retry); QCOMPARE(result->pipeline.retry->originalTaskId, original->pipeline.taskId);
+    QCOMPARE(result->pipeline.retry->preservedSuccessfulActions, QStringList{"image-clipboard"});
+    QCOMPARE(original->canonicalResult(), originalReport); QVERIFY(!result->retryPlan().available());
+    const auto stored = journal->list(); QCOMPARE(stored.entries.size(), size_t(2));
+    for (const auto &entry : stored.entries) { QVERIFY(entry.parsed.record); QVERIFY(entry.parsed.record->terminal); }
+  }
+  void retriesOnlyFailedClipboardAndKeepsTheExistingFileAndAppendOnlyLineage() {
+    QTemporaryDir dir; auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("state")); int encoded = 0, copied = 0; bool onGui = true;
+    CaptureActionPorts ports; ports.save.encode = [&](const QImage &image, QIODevice *output) { ++encoded; return image.save(output, "PNG"); };
+    ports.clipboard = [&](const QImage &image, const CancellationToken &) {
+      onGui = onGui && QThread::currentThread() == qGuiApp->thread(); ++copied;
+      return copied < 3 || image != pixels() ? ActionOutcome{ActionState::Failed, "clipboard-unavailable", {}} : ActionOutcome{};
+    };
+    CapturePipeline initial(pixels(), dir.filePath("output"), "capture", {"save", "image-clipboard"}, nullptr, ports, journal);
+    QSignalSpy originalDone(&initial, &CapturePipeline::finished); initial.start(); QTRY_COMPARE(originalDone.count(), 1);
+    const auto original = receipt(originalDone); QVERIFY(original->file); const auto originalReport = original->canonicalResult();
+    QFile existing(original->file->path); QVERIFY(existing.open(QIODevice::ReadOnly)); const auto before = existing.readAll(); existing.close();
+    CapturePipeline retry(original, nullptr, ports, journal); QSignalSpy done(&retry, &CapturePipeline::finished); retry.start(); QTRY_COMPARE(done.count(), 1);
+    const auto first = receipt(done); QCOMPARE(first->pipeline.retry->attempt, 1); QVERIFY(first->retryPlan().available());
+    CapturePipeline again(first, nullptr, ports, journal); QSignalSpy next(&again, &CapturePipeline::finished); again.start(); QTRY_COMPARE(next.count(), 1);
+    const auto second = receipt(next); QCOMPARE(encoded, 1); QCOMPARE(copied, 3); QVERIFY(onGui);
+    QCOMPARE(second->pipeline.retry->originalTaskId, original->pipeline.taskId); QCOMPARE(second->pipeline.retry->previousTaskId, first->pipeline.taskId);
+    QCOMPARE(second->pipeline.retry->attempt, 2); QCOMPARE(second->pipeline.retry->preservedSuccessfulActions, QStringList{"save"});
+    QCOMPARE(second->file->path, original->file->path); QCOMPARE(second->file->creatorTaskId, original->pipeline.taskId);
+    QVERIFY(existing.open(QIODevice::ReadOnly)); QCOMPARE(existing.readAll(), before); existing.close();
+    QCOMPARE(original->canonicalResult(), originalReport); QCOMPARE(first->pipeline.orderedResults[0].state, ActionState::Failed);
+    QCOMPARE(second->pipeline.orderedResults[0].state, ActionState::Succeeded); QCOMPARE(journal->list().entries.size(), size_t(3));
+  }
+  void cancellingRetryBeforeStartKeepsTheOriginalArtifactPixelsAndDurableLink() {
+    QTemporaryDir dir; auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("state")); CaptureActionPorts originalPorts;
+    originalPorts.clipboard = [](const QImage &, const CancellationToken &) { return ActionOutcome{ActionState::Failed, "clipboard-unavailable", {}}; };
+    CapturePipeline initial(pixels(), dir.filePath("output"), "capture", {"save", "image-clipboard"}, nullptr, originalPorts, journal);
+    QSignalSpy originalDone(&initial, &CapturePipeline::finished); initial.start(); QTRY_COMPARE(originalDone.count(), 1);
+    const auto original = receipt(originalDone); int started = 0; CaptureActionPorts ports; ports.actionStarted = [&](const QString &) { ++started; };
+    CapturePipeline retry(original, nullptr, ports, journal); connect(&retry, &CapturePipeline::activityChanged, &retry,
+        [&](const QString &text) { if (text == "Preparing capture actions.") retry.cancel(); });
+    QSignalSpy done(&retry, &CapturePipeline::finished); retry.start(); QTRY_COMPARE(done.count(), 1);
+    const auto result = receipt(done); QCOMPARE(started, 0); QCOMPARE(result->pipeline.state, PipelineState::Cancelled);
+    QCOMPARE(result->workingMedia, original->workingMedia); QCOMPARE(result->file->path, original->file->path); QCOMPARE(QImage(result->file->path), pixels());
+    const auto listing = journal->list(); QCOMPARE(listing.entries.size(), size_t(2));
+    for (const auto &entry : listing.entries) if (entry.taskId == result->pipeline.taskId) {
+      QVERIFY(entry.parsed.record); QVERIFY(entry.parsed.record->terminal);
+      QCOMPARE(entry.parsed.record->report.value("pipeline_state"), QJsonValue("cancelled"));
+    }
+  }
+  void unknownOutcomeCannotRetryAndStorageFailureCannotLoseTheSuccessfulSave() {
+    QTemporaryDir dir; const auto state = dir.filePath("state"); auto journal = std::make_shared<NativePipelineJournal>(state); int copied = 0;
+    CaptureActionPorts ports; ports.clipboard = [&](const QImage &, const CancellationToken &) { ++copied; return ActionOutcome{ActionState::Failed, "clipboard-unavailable", {}}; };
+    CapturePipeline initial(pixels(), dir.filePath("output"), "capture", {"save", "image-clipboard"}, nullptr, ports, journal);
+    QSignalSpy originalDone(&initial, &CapturePipeline::finished); initial.start(); QTRY_COMPARE(originalDone.count(), 1);
+    const auto original = receipt(originalDone); auto unknown = std::make_shared<CapturePipelineResult>(*original); unknown->pipeline.state = PipelineState::Interrupted;
+    CapturePipeline rejected(unknown, nullptr, ports, journal); QSignalSpy rejection(&rejected, &CapturePipeline::finished); rejected.start(); QTRY_COMPARE(rejection.count(), 1);
+    QCOMPARE(receipt(rejection)->diagnostic, QString("retry-outcome-unknown")); QCOMPARE(receipt(rejection)->pipeline.state, PipelineState::Completed);
+    QCOMPARE(unknown->pipeline.state, PipelineState::Interrupted); QCOMPARE(copied, 1); QCOMPARE(journal->list().entries.size(), size_t(1));
+    CapturePipeline empty(CapturePipelineReceipt{}, nullptr, ports, journal); QSignalSpy emptyDone(&empty, &CapturePipeline::finished);
+    empty.start(); QTRY_COMPARE(emptyDone.count(), 1); QVERIFY(!receipt(emptyDone)->pipeline.workingMediaRetained);
+    QCOMPARE(receipt(emptyDone)->diagnostic, QString("retry-invalid-source")); QCOMPARE(copied, 1);
+    QVERIFY(QFile::setPermissions(state, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner | QFile::ReadOther));
+    CapturePipeline retry(original, nullptr, ports, journal); QSignalSpy done(&retry, &CapturePipeline::finished); retry.start(); QTRY_COMPARE(done.count(), 1);
+    const auto result = receipt(done); QCOMPARE(copied, 1); QCOMPARE(result->pipeline.orderedResults[0].state, ActionState::Failed);
+    QCOMPARE(*result->pipeline.orderedResults[0].diagnostic, QString("pipeline-journal-unavailable"));
+    QCOMPARE(result->workingMedia, pixels()); QCOMPARE(result->file->creatorTaskId, original->pipeline.taskId); QCOMPARE(QImage(result->file->path), pixels());
+    QVERIFY(QFile::setPermissions(state, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner));
+  }
   void actualReceiptEmitsCanonicalResultsAndPrivateArtifactFactsWithoutPayloads() {
     QTemporaryDir dir; CaptureActionPorts ports;
     ports.clipboard = [](const QImage &, const CancellationToken &) -> ActionOutcome { throw std::runtime_error("private clipboard contents and secret"); };

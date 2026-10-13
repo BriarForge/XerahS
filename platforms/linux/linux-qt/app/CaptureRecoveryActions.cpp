@@ -13,9 +13,12 @@ CaptureRecoveryActions::CaptureRecoveryActions(CaptureController &capture, QWidg
   m_discard->setStatusTip(QStringLiteral("Clear the retained result from memory. Saved files, clipboard contents and editor documents are kept."));
   m_review = new QAction(QStringLiteral("Review retained capture result…"), this); m_review->setObjectName(QStringLiteral("reviewRetainedCaptureResult"));
   m_review->setStatusTip(QStringLiteral("Inspect action outcomes and saved-file metadata without repeating actions."));
+  m_retry = new QAction(QStringLiteral("Retry failed capture actions…"), this); m_retry->setObjectName(QStringLiteral("retryRetainedCaptureActions"));
+  m_retry->setStatusTip(QStringLiteral("Make one linked attempt at failed save/clipboard actions using retained pixels. Earlier successful actions are kept."));
   connect(m_edit, &QAction::triggered, this, &CaptureRecoveryActions::edit);
   connect(m_discard, &QAction::triggered, this, &CaptureRecoveryActions::discard);
   connect(m_review, &QAction::triggered, this, &CaptureRecoveryActions::review);
+  connect(m_retry, &QAction::triggered, this, &CaptureRecoveryActions::retry);
   connect(&capture, &CaptureController::busyChanged, this, &CaptureRecoveryActions::updateAvailability);
   connect(&capture, &CaptureController::retainedResultChanged, this, &CaptureRecoveryActions::updateAvailability);
   connect(&capture, &QObject::destroyed, this, &CaptureRecoveryActions::updateAvailability);
@@ -30,7 +33,53 @@ void CaptureRecoveryActions::updateAvailability() {
   m_edit->setEnabled(available && bool(m_opener)); if (!guard) return;
   m_discard->setEnabled(available); if (!guard) return;
   m_review->setEnabled(available); if (!guard) return;
+  const auto plan = m_capture && m_capture->lastPipelineResult() ? m_capture->lastPipelineResult()->retryPlan() : xerahs::actions::PipelineRetryPlan{};
+  m_retry->setEnabled(available && plan.available()); if (!guard) return;
+  m_retry->setToolTip(plan.available() ? m_retry->statusTip() :
+      QStringLiteral("Retry unavailable (%1). Retained pixels can still be opened in the editor.").arg(plan.diagnostic.isEmpty() ? QStringLiteral("retry-no-failed-actions") : plan.diagnostic));
+  if (!guard) return;
   m_edit->setToolTip(m_opener ? m_edit->statusTip() : QStringLiteral("The image editor is unavailable."));
+}
+void CaptureRecoveryActions::retry() {
+  if (m_running || !m_capture || m_capture->busy() || QApplication::activeModalWidget()) return;
+  const auto expected = m_capture->lastPipelineResult(); if (!expected) return;
+  const auto plan = expected->retryPlan(); if (!plan.available()) return;
+  QStringList labels;
+  for (const auto &id : plan.selected) labels.append(id == "save" ? QStringLiteral("Save image") : QStringLiteral("Copy image to clipboard"));
+  const auto operation = ++m_operation; m_running = true;
+  const QPointer<CaptureRecoveryActions> guard(this); updateAvailability(); if (!guard) return;
+  auto *box = new QMessageBox(QMessageBox::Question, QStringLiteral("Retry failed capture actions?"),
+      QStringLiteral("Retry %1 once using the retained capture? Earlier successful actions are kept. "
+                     "The attempt creates a linked result. Cancel Capture or Escape in the XerahS window stops later actions.").arg(labels.join(QStringLiteral(" and "))),
+      QMessageBox::Retry | QMessageBox::Cancel, m_dialogParent);
+  box->setObjectName(QStringLiteral("retryRetainedCaptureDialog")); box->setDefaultButton(QMessageBox::Cancel);
+  box->setEscapeButton(QMessageBox::Cancel); box->setAttribute(Qt::WA_DeleteOnClose); m_dialog = box;
+  connect(box, &QMessageBox::finished, this, [this, operation, expected](int choice) {
+    if (operation != m_operation) return;
+    const QPointer<CaptureRecoveryActions> guard(this);
+    m_dialog = nullptr; m_running = false;
+    if (choice == QMessageBox::Retry && m_dialogParent) {
+      const QPointer<QWidget> parent = m_dialogParent;
+      if (parent && parent->isMinimized()) parent->setWindowState(parent->windowState() & ~Qt::WindowMinimized);
+      if (!guard) return;
+      if (parent) parent->show();
+      if (!guard) return;
+      if (parent) parent->raise();
+      if (!guard) return;
+      if (parent) parent->activateWindow();
+    }
+    if (!guard) return;
+    const bool accepted = choice == QMessageBox::Retry && m_capture && m_capture->retryFailedActions(expected);
+    if (!guard) return;
+    updateAvailability(); if (!guard) return;
+    if (choice == QMessageBox::Retry && !accepted)
+      emit notify(QStringLiteral("The retained capture changed or is busy. Review its current result before retrying."), false);
+  });
+  connect(box, &QObject::destroyed, this, [this, operation] {
+    if (operation != m_operation || !m_running) return;
+    m_dialog = nullptr; m_running = false; updateAvailability();
+  });
+  box->open();
 }
 void CaptureRecoveryActions::edit() {
   if (m_running || !m_capture || m_capture->busy() || !m_opener || QApplication::activeModalWidget()) return;

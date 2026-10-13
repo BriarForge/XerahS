@@ -12,6 +12,9 @@ QJsonObject CapturePipelineResult::canonicalResult() const {
   return pipelineResultJson(pipeline, file ? std::vector<SavedFileArtifact>{*file}
                                          : std::vector<SavedFileArtifact>{});
 }
+PipelineRetryPlan CapturePipelineResult::retryPlan() const {
+  return planRetainedCaptureRetry(pipeline, !workingMedia.isNull(), bool(file));
+}
 namespace {
 struct ClipboardCall {
   QImage media;
@@ -57,6 +60,11 @@ CapturePipeline::CapturePipeline(QImage media, QString directory, QString patter
   qRegisterMetaType<CapturePipelineReceipt>();
   m_timer = new QTimer(this); m_timer->setInterval(10); connect(m_timer, &QTimer::timeout, this, &CapturePipeline::poll);
 }
+CapturePipeline::CapturePipeline(CapturePipelineReceipt source, QObject *parent, CaptureActionPorts ports, PipelineJournalStorage journal)
+    : CapturePipeline(source ? source->workingMedia : QImage{}, source ? source->saveDirectory : QString{},
+                      source ? source->filenamePattern : QString{}, {}, parent, std::move(ports), std::move(journal)) {
+  m_retryRequested = true; m_retrySource = std::move(source);
+}
 CapturePipeline::~CapturePipeline() {
   m_timer->stop();
   { std::lock_guard<std::mutex> lock(m_state->mutex); m_state->cancellation.request(); }
@@ -86,27 +94,47 @@ void CapturePipeline::start() {
     return call->done ? call->result : cancelled();
   };
   auto *worker = QThread::create([state, ports, media = m_media, directory = m_directory,
-                                  pattern = m_pattern, selected = m_selected, storage = m_journal]() mutable {
+                                  pattern = m_pattern, selected = m_selected, storage = m_journal,
+                                  retryRequested = m_retryRequested, source = m_retrySource]() mutable {
     state->result->workingMedia = media;
+    state->result->saveDirectory = directory; state->result->filenamePattern = pattern;
     const auto id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    PipelineJournalRecorder journal(storage, id, selected, QDateTime::currentDateTimeUtc());
+    const auto retry = source ? source->retryPlan() : PipelineRetryPlan{};
+    if (retryRequested && !retry.available()) {
+      state->result->pipeline.taskId = id; // rejected admission: no action started
+      state->result->pipeline.workingMediaRetained = !media.isNull();
+      state->result->diagnostic = retry.diagnostic.isEmpty() ? QStringLiteral("retry-invalid-source") : retry.diagnostic;
+      std::lock_guard<std::mutex> lock(state->mutex); state->ready = true; return;
+    }
+    if (retryRequested) selected = retry.selected;
+    auto inheritedFile = source ? source->file : std::optional<CaptureFile>{};
+    if (inheritedFile && inheritedFile->creatorTaskId.isEmpty()) inheritedFile->creatorTaskId = source->pipeline.taskId;
+    PipelineJournalRecorder journal(storage, id, selected, QDateTime::currentDateTimeUtc(), retry.link,
+                                    inheritedFile ? std::vector<SavedFileArtifact>{*inheritedFile} : std::vector<SavedFileArtifact>{});
+    journal.begin(); // retry lineage/files precede any new external action
     const auto externalPublish = ports.save.beforePublish;
     ports.save.beforePublish = [&journal, externalPublish](const QString &path) {
       if (!journal.beforePublish(path)) throw std::runtime_error("pipeline-journal-unavailable");
       if (externalPublish) externalPublish(path);
     };
-    CaptureActions actions(media, directory, pattern, ports); JournaledExecutor executor(actions, journal);
+    CaptureActions actions(media, directory, pattern, ports, inheritedFile); JournaledExecutor executor(actions, journal);
+    const auto currentFiles = [&actions, id] {
+      auto file = actions.savedFile(); if (!file) return std::vector<SavedFileArtifact>{};
+      if (file->creatorTaskId.isEmpty()) file->creatorTaskId = id;
+      return std::vector<SavedFileArtifact>{*file};
+    };
     PipelineHooks hooks;
-    hooks.actionFinished = [state, &journal, &actions](const ActionResult &result) {
-      state->result->pipeline.orderedResults.push_back(result); journal.completed(result, actions.savedFile() ? std::vector<SavedFileArtifact>{*actions.savedFile()} : std::vector<SavedFileArtifact>{});
+    hooks.actionFinished = [state, &journal, currentFiles](const ActionResult &result) {
+      state->result->pipeline.orderedResults.push_back(result); journal.completed(result, currentFiles());
     };
     try { state->result->pipeline = runPipeline(id, selected, {}, executor, state->cancellation, hooks); }
     catch (...) {
       state->result->pipeline.taskId = id; state->result->pipeline.state = PipelineState::Interrupted;
       state->result->diagnostic = diagnostic::actionFailed;
     }
-    state->result->file = actions.savedFile();
-    journal.finish(state->result->pipeline, state->result->file ? std::vector<SavedFileArtifact>{*state->result->file} : std::vector<SavedFileArtifact>{});
+    state->result->pipeline.retry = retry.link;
+    const auto files = currentFiles(); if (!files.empty()) state->result->file = files.front();
+    journal.finish(state->result->pipeline, files);
     if (!journal.diagnostic().isEmpty()) state->result->diagnostic = journal.diagnostic();
     { std::lock_guard<std::mutex> lock(state->mutex); state->ready = true; }
   });

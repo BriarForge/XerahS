@@ -34,6 +34,9 @@ ApplicationWindow::ApplicationWindow(const QMap<QString, QAction *> &actions, QW
   for (const auto &id : {QString("new-image"), QString("open-image"), QString("captures-folder"), QString("capture-history"), QString("quit")}) if (auto *action = actions.value(id)) file->addAction(action);
   auto *capture = menuBar()->addMenu(QStringLiteral("&Capture"));
   for (const auto &id : {QString("capture-region"), QString("cancel-capture")}) if (auto *action = actions.value(id)) capture->addAction(action);
+  if (auto *cancel = actions.value(QStringLiteral("cancel-capture"))) {
+    cancel->setShortcut(QKeySequence(Qt::Key_Escape)); cancel->setShortcutContext(Qt::WindowShortcut); addAction(cancel);
+  }
   auto *preferences = menuBar()->addMenu(QStringLiteral("&Preferences"));
   if (auto *action = actions.value(QStringLiteral("editor-appearance"))) preferences->addAction(action);
   resize(640, 360);
@@ -70,23 +73,24 @@ void ApplicationWindow::cancelPendingProgress() {
   const auto title = m_progressTitle;
   showResult(title, QStringLiteral("Cancelled"), true);
 }
-void ApplicationWindow::addCaptureRecoveryActions(QAction *edit, QAction *discard, QAction *review) {
+void ApplicationWindow::addCaptureRecoveryActions(QAction *edit, QAction *discard, QAction *review, QAction *retry) {
   auto *layout = qobject_cast<QVBoxLayout *>(centralWidget()->layout());
   auto *commands = new QGridLayout;
   int index = 0;
-  for (auto *action : {edit, review, discard}) {
+  for (auto *action : {edit, review, retry, discard}) {
     if (!action) continue;
     auto *button = new QToolButton(centralWidget()); button->setDefaultAction(action);
     button->setToolButtonStyle(Qt::ToolButtonTextOnly); button->setFocusPolicy(Qt::StrongFocus);
     button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     button->setObjectName(action == edit ? QStringLiteral("edit-retained-capture") :
-        action == review ? QStringLiteral("review-retained-capture") : QStringLiteral("discard-retained-capture"));
-    commands->addWidget(button, 0, index++);
+        action == review ? QStringLiteral("review-retained-capture") : action == retry ? QStringLiteral("retry-retained-capture") : QStringLiteral("discard-retained-capture"));
+    commands->addWidget(button, index / 2, index % 2); ++index;
   }
   layout->insertLayout(2, commands);
   auto *menu = menuBar()->addMenu(QStringLiteral("&Retained Capture"));
   if (edit) menu->addAction(edit);
   if (review) menu->addAction(review);
+  if (retry) menu->addAction(retry);
   if (discard) menu->addAction(discard);
 }
 } // namespace xerahs::app

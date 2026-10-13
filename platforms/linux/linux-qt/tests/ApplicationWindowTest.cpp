@@ -75,6 +75,14 @@ private slots:
     window.activate(); QVERIFY(window.isVisible()); QVERIFY(consent.isVisible());
     QCOMPARE(QApplication::activeModalWidget(), &consent);
   }
+  void escapeCancelsTheWindowOperationAndConsentDialogsKeepTheirOwnEscape() {
+    QAction cancel(QStringLiteral("Cancel capture")); ApplicationWindow window({{"cancel-capture", &cancel}}); window.activate();
+    QSignalSpy cancelled(&cancel, &QAction::triggered); QTRY_VERIFY(window.isActiveWindow());
+    QTest::keyClick(&window, Qt::Key_Escape); QCOMPARE(cancelled.count(), 1);
+    QDialog consent(&window); consent.setModal(true); consent.show(); QTRY_COMPARE(QApplication::activeModalWidget(), &consent);
+    QTest::keyClick(&consent, Qt::Key_Escape); QTRY_VERIFY(!consent.isVisible()); QCOMPARE(cancelled.count(), 1);
+    cancel.setEnabled(false); window.activate(); QTest::keyClick(&window, Qt::Key_Escape); QCOMPARE(cancelled.count(), 1);
+  }
   void durableHistoryUsesTheSharedActionFromTheWindowAndMenu() {
     QAction history(QStringLiteral("Capture result history…"));
     ApplicationWindow window({{"capture-history", &history}}); window.activate();

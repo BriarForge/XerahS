@@ -21,6 +21,8 @@ add_library(xerahs_core STATIC
   src/actions/PostCapturePipeline.h
   src/actions/PipelineResultJson.cpp
   src/actions/PipelineResultJson.h
+  src/actions/PipelineRetry.cpp
+  src/actions/PipelineRetry.h
   src/actions/PipelineJournal.cpp
   src/actions/PipelineJournal.h
   src/capture/RegionGeometry.cpp
@@ -152,6 +154,10 @@ target_link_libraries(xerahs PRIVATE xerahs_pipeline_journal xerahs_native_insta
 target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
 enable_testing()
+add_executable(pipeline-retry-test tests/PipelineRetryTest.cpp)
+set_target_properties(pipeline-retry-test PROPERTIES AUTOMOC ON)
+target_link_libraries(pipeline-retry-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME pipeline-retry COMMAND pipeline-retry-test)
 find_program(XERAHS_DBUS_RUN_SESSION dbus-run-session REQUIRED)
 add_executable(pipeline-journal-fixture tests/PipelineJournalFixture.cpp app/CapturePipeline.cpp app/CapturePipeline.h
   app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h)

@@ -64,7 +64,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native portal consent and kernel-credential activation checks have isolated tests. Least-authority coverage for all sensitive operations and human security/privacy review remain Required.",
+      "note": "Native portal consent and kernel-credential activation checks have isolated tests. Least-authority coverage for all sensitive operations and human security/privacy review remain Required. Shared retained-capture Retry confirms one attempt against an unchanged source, reports real outcomes/activity and keeps cancellation reachable through the command window and tray; lifecycle fixtures cover stale approval, initial cancellation and synchronous controller destruction.",
       "evidence": [
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
@@ -209,7 +209,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native capture result history now loads multiple private versioned journal records on a worker, exposes actual completed/cancelled/interrupted outcomes and unknown pending actions, reviews immutable canonical snapshots and forgets only explicitly confirmed unchanged metadata. Real-process restart and native keyboard/stale-confirmation/file-preservation fixtures cover save/image-clipboard recovery. Full task/media history, pixel reconstruction, shared persisted compatibility, search/pagination/retention/privacy policy, missing-file/corruption recovery, all actions, target matrix and human approvals remain Required.",
+      "note": "Native capture result history now loads multiple private versioned journal records on a worker, exposes actual completed/cancelled/interrupted outcomes and unknown pending actions, reviews immutable canonical snapshots and forgets only explicitly confirmed unchanged metadata. Real-process restart and native keyboard/stale-confirmation/file-preservation fixtures cover save/image-clipboard recovery. Full task/media history, pixel reconstruction, shared persisted compatibility, search/pagination/retention/privacy policy, missing-file/corruption recovery, all actions, target matrix and human approvals remain Required. Linked native retry journals preserve original/previous identities, attempt number and actual file creator facts. Real-process restart fixtures preserve terminal original records and unknown interrupted retry outcomes; the native reviewer distinguishes preserved successes from actions executed in the current attempt.",
       "evidence": [
         "platforms/linux/linux-qt/app/JOURNAL-RECOVERY.md",
         "platforms/linux/linux-qt/app/PipelineHistoryDialog.cpp",

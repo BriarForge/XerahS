@@ -22,13 +22,19 @@ QJsonObject pipelineResultJson(const PipelineResult &result,
     }
   }
   for (const auto &file : files) {
-    artifacts.append(QJsonObject{{"artifact", file.artifact}, {"path", file.path},
+    QJsonObject facts{{"artifact", file.artifact}, {"path", file.path},
         {"media_type", file.mediaType}, {"byte_length", file.byteLength},
-        {"filename_context", file.filenameContext}});
+        {"filename_context", file.filenameContext}};
+    if (!file.creatorTaskId.isEmpty()) facts.insert("creator_task_id", file.creatorTaskId);
+    artifacts.append(facts);
   }
   QJsonObject native{{"schema_version", 1}, {"task_id", result.taskId},
                      {"action_timings", timings}, {"file_artifacts", artifacts}};
   if (!result.ignoredSelection.isEmpty()) native.insert("ignored_selection", QJsonArray::fromStringList(result.ignoredSelection));
+  if (result.retry) native.insert("retry", QJsonObject{{"schema_version", 1},
+      {"original_task_id", result.retry->originalTaskId}, {"previous_task_id", result.retry->previousTaskId},
+      {"attempt", result.retry->attempt},
+      {"preserved_successful_actions", QJsonArray::fromStringList(result.retry->preservedSuccessfulActions)}});
   return QJsonObject{{"pipeline_state", pipelineStateName(result.state)},
       {"final_working_media", result.finalWorkingMedia}, {"ordered_results", ordered},
       {"working_media_retained", result.workingMediaRetained},

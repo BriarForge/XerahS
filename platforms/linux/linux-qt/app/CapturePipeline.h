@@ -1,6 +1,7 @@
 #pragma once
 #include "CaptureActions.h"
 #include "NativePipelineJournal.h"
+#include "actions/PipelineRetry.h"
 #include <QObject>
 #include <memory>
 class QTimer;
@@ -10,7 +11,11 @@ struct CapturePipelineResult {
   std::optional<CaptureFile> file;
   QImage workingMedia;
   QString diagnostic;
+  // Immutable native settings used by this capture, including after save
+  // failure. Retry never reads the current preferences or decodes a saved path.
+  QString saveDirectory, filenamePattern;
   QJsonObject canonicalResult() const;
+  xerahs::actions::PipelineRetryPlan retryPlan() const;
 };
 using CapturePipelineReceipt = std::shared_ptr<const CapturePipelineResult>;
 struct CapturePipelineState;
@@ -21,6 +26,7 @@ class CapturePipeline final : public QObject {
 public:
   CapturePipeline(QImage media, QString directory, QString pattern, QStringList selected,
                   QObject *parent = nullptr, CaptureActionPorts ports = {}, PipelineJournalStorage journal = {});
+  CapturePipeline(CapturePipelineReceipt source, QObject *parent = nullptr, CaptureActionPorts ports = {}, PipelineJournalStorage journal = {});
   ~CapturePipeline() override;
   void start();
   void cancel();
@@ -35,6 +41,8 @@ private:
   QStringList m_selected;
   CaptureActionPorts m_ports;
   PipelineJournalStorage m_journal;
+  CapturePipelineReceipt m_retrySource;
+  bool m_retryRequested = false;
   QString m_activity;
   QTimer *m_timer = nullptr;
   bool m_started = false;

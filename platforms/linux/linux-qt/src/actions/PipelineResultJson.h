@@ -11,6 +11,7 @@ struct SavedFileArtifact {
   qint64 byteLength = 0;
   QJsonObject filenameContext;
   QString artifact = QStringLiteral("save.file");
+  QString creatorTaskId = {}; // empty in older receipts; never deletion authority
 };
 
 // PCA-016: the four canonical fields from post-capture-result-v1. Additional

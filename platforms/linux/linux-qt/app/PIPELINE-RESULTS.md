@@ -42,8 +42,10 @@ The serializer itself grants no retry, deletion or media authority. The native
 save/image-clipboard path now supplies its canonical results to a separate
 [write-ahead journal and restart history](JOURNAL-RECOVERY.md). That record
 preserves acknowledged outcomes and reports unacknowledged actions as
-interrupted/unknown. It retains no raster bytes and re-executes nothing. Full
-media/artifact recovery, retry, configured retention, crash-temporary cleanup,
+interrupted/unknown. It retains no raster bytes and re-executes nothing. [Explicit native retry](RETRY-POLICY.md) adds namespaced original/previous task
+links, attempt index, preserved-success provenance and actual file creator IDs,
+while current ordered results describe only this attempt. Full
+media/artifact recovery, catalogue/prerequisite retry, configured retention, crash-temporary cleanup,
 shared persisted compatibility and human/native qualification remain Required.
 
 `PostCapturePipelineTest` independently checks canonical fields, catalogue order,

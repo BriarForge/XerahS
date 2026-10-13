@@ -90,8 +90,13 @@ The real save/image-clipboard path now adds a Qt Core write-ahead recorder,
 private atomic journal and native multi-record restart review/confirmed forget
 surface. Real-process kill/reopen and native/storage fixtures distinguish
 unknown outcomes without repeating actions, preserve true successful files and
-leave unsaved pixels unpersisted. Continue artifact/media recovery and bounded
-linked retry, configured retention/pagination, crash-temporary authority,
+leave unsaved pixels unpersisted. Explicit native retry now confirms one attempt at known failed save/clipboard
+operations, preserves earlier successes and original settings/pixels, and
+records new original/previous task links and actual file creators. Core/native
+UI/I/O and real-process kill/reopen tests cover cancellation, stale approval,
+owner destruction, storage failure and unknown outcomes. Continue full
+catalogue/prerequisite retry and artifact/media recovery, configured
+retention/pagination, crash-temporary authority,
 shared persisted compatibility, the remaining catalogue and native/human
 qualification under app/JOURNAL-RECOVERY.md. Continue those native capture requirements alongside the full
 application domains recorded in the audit.

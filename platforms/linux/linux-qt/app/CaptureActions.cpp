@@ -18,8 +18,9 @@ ActionOutcome failed(const QString &diagnostic) {
 
 const QString CaptureActions::kActionUnavailable = QStringLiteral("action-unavailable");
 
-CaptureActions::CaptureActions(QImage media, QString directory, QString pattern, CaptureActionPorts ports)
-    : m_media(std::move(media)), m_directory(std::move(directory)), m_pattern(std::move(pattern)), m_ports(std::move(ports)) {}
+CaptureActions::CaptureActions(QImage media, QString directory, QString pattern, CaptureActionPorts ports, std::optional<CaptureFile> inheritedFile)
+    : m_media(std::move(media)), m_directory(std::move(directory)), m_pattern(std::move(pattern)),
+      m_savedPath(inheritedFile ? std::optional<QString>(inheritedFile->path) : std::nullopt), m_savedFile(std::move(inheritedFile)), m_ports(std::move(ports)) {}
 
 ActionOutcome CaptureActions::run(const ActionRequest &request) {
   try {

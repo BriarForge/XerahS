@@ -131,6 +131,15 @@ struct PipelineOptions {
   bool removeTemporaryFileAfterUpload = true;    // PCA-019 cleanup policy
 };
 
+// PCA-011: append-only attempt identity. Preserved successes are provenance,
+// never invented results or authority to perform an external action again.
+struct PipelineRetryLink {
+  QString originalTaskId;
+  QString previousTaskId;
+  int attempt = 1;
+  QStringList preservedSuccessfulActions;
+};
+
 struct PipelineResult {
   QString taskId;
   PipelineState state = PipelineState::Completed;
@@ -138,6 +147,7 @@ struct PipelineResult {
   std::vector<ActionResult> orderedResults;
   bool workingMediaRetained = true;
   QStringList ignoredSelection;  // unknown action IDs that never ran
+  std::optional<PipelineRetryLink> retry;
 };
 
 struct PipelineHooks {

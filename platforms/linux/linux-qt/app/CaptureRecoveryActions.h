@@ -21,6 +21,7 @@ public:
   QAction *editAction() const { return m_edit; }
   QAction *discardAction() const { return m_discard; }
   QAction *reviewAction() const { return m_review; }
+  QAction *retryAction() const { return m_retry; }
 signals:
   void notify(const QString &body, bool success);
 private:
@@ -28,11 +29,12 @@ private:
   void edit();
   void discard();
   void review();
+  void retry();
   QPointer<CaptureController> m_capture;
   QPointer<QWidget> m_dialogParent;
   QPointer<QDialog> m_dialog;
   CapturedImageOpener m_opener;
-  QAction *m_edit = nullptr, *m_discard = nullptr, *m_review = nullptr;
+  QAction *m_edit = nullptr, *m_discard = nullptr, *m_review = nullptr, *m_retry = nullptr;
   quint64 m_operation = 0;
   bool m_running = false;
 };

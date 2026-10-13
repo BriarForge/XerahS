@@ -54,6 +54,7 @@ public:
   QString pipelineActivity() const { return m_pipelineActivity; }
   CapturePipelineReceipt lastPipelineResult() const { return m_lastPipelineResult; }
   bool discardRetainedResult(const CapturePipelineReceipt &expected);
+  bool retryFailedActions(const CapturePipelineReceipt &expected);
 
 public slots:
   void captureRegion();
@@ -72,8 +73,9 @@ private:
   void afterInput();
   void acquire();
   void pollComposition();
-  void runPipeline(const xerahs::capture::PhysicalRect &rect);
-  void publishPipeline(const xerahs::capture::PhysicalRect &rect, const CapturePipelineReceipt &result);
+  void runPipeline();
+  void connectPipeline(CapturePipeline *pipeline);
+  void publishPipeline(const CapturePipelineReceipt &result);
   void closeOverlays();
   void finish();
   void repaint();

@@ -116,7 +116,11 @@ The following owner/conformance clarifications remain concrete release work:
    temporary-file native execution remain unimplemented; presentation of an
    injected unknown upload is not production uploader evidence.
 
-Full media reconstruction, retry, search/pagination/retention, all artifact and
+[Explicit retained-pixel save/clipboard retry](RETRY-POLICY.md) now creates a
+new linked journal, preserving original/previous identity, actual file creator
+and earlier successful actions. Restart records themselves never dispatch retry.
+
+Full media reconstruction, catalogue/prerequisite retry, search/pagination/retention, all artifact and
 action types, upgrade/recovery compatibility, filesystem/distro/compositor
 qualification and human security/privacy/accessibility/parity/release approvals
 remain Required. No gate is self-approved by these tests or this record.

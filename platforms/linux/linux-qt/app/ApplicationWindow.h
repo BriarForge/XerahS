@@ -15,7 +15,7 @@ public:
   void showProgress(const QString &title, int percent);
   void showActivity(const QString &title, const QString &body);
   void cancelPendingProgress();
-  void addCaptureRecoveryActions(QAction *edit, QAction *discard, QAction *review = nullptr);
+  void addCaptureRecoveryActions(QAction *edit, QAction *discard, QAction *review = nullptr, QAction *retry = nullptr);
 private:
   QLabel *m_status = nullptr;
   QProgressBar *m_progress = nullptr;

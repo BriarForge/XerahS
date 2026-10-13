@@ -22,7 +22,7 @@ struct CaptureActionPorts {
 
 class CaptureActions final : public xerahs::actions::ActionExecutor {
 public:
-  CaptureActions(QImage media, QString directory, QString pattern, CaptureActionPorts ports = {});
+  CaptureActions(QImage media, QString directory, QString pattern, CaptureActionPorts ports = {}, std::optional<CaptureFile> inheritedFile = {});
 
   xerahs::actions::ActionOutcome run(const xerahs::actions::ActionRequest &request) override;
   bool createTemporaryUploadFile() override { return false; }

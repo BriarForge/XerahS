@@ -155,7 +155,8 @@ int main(int argc, char *argv[]) {
     return false;
   }, &home);
   menu.insertAction(newImage, recovery->editAction()); menu.insertAction(newImage, recovery->reviewAction()); menu.insertAction(newImage, recovery->discardAction());
-  home.addCaptureRecoveryActions(recovery->editAction(), recovery->discardAction(), recovery->reviewAction());
+  menu.insertAction(newImage, recovery->retryAction());
+  home.addCaptureRecoveryActions(recovery->editAction(), recovery->discardAction(), recovery->reviewAction(), recovery->retryAction());
   QObject::connect(recovery, &xerahs::app::CaptureRecoveryActions::notify, &home, [&home](const QString &body, bool success) {
     home.showResult(QStringLiteral("Retained capture"), body, success);
   });

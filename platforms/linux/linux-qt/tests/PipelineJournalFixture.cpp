@@ -10,6 +10,23 @@ int main(int argc, char **argv) {
   auto journal = std::make_shared<NativePipelineJournal>(QString::fromLocal8Bit(argv[1]));
   const auto mode = QString::fromLocal8Bit(argv[3]);
   const auto stop = [] { std::puts("checkpoint"); std::fflush(stdout); QThread::sleep(60); };
+  if (mode.startsWith("retry-")) {
+    CaptureActionPorts initial;
+    if (mode == "retry-before-publication") initial.save.encode = [](const QImage &, QIODevice *) { return false; };
+    initial.clipboard = [mode](const QImage &, const CancellationToken &) {
+      return mode == "retry-clipboard" ? ActionOutcome{ActionState::Failed, "clipboard-unavailable", {}} : ActionOutcome{};
+    };
+    QImage image(9, 7, QImage::Format_ARGB32); image.fill(Qt::red);
+    CapturePipeline original(image, QString::fromLocal8Bit(argv[2]), "capture", {"save", "image-clipboard"}, nullptr, initial, journal);
+    QObject::connect(&original, &CapturePipeline::finished, &app, [&](const CapturePipelineReceipt &source) {
+      CaptureActionPorts ports;
+      if (mode == "retry-before-publication") ports.save.beforePublish = [stop](const QString &) { stop(); };
+      ports.clipboard = [mode, stop](const QImage &, const CancellationToken &) { if (mode == "retry-clipboard") stop(); return ActionOutcome{}; };
+      auto *retry = new CapturePipeline(source, &app, ports, journal);
+      QObject::connect(retry, &CapturePipeline::finished, &app, &QCoreApplication::quit); retry->start();
+    });
+    original.start(); return app.exec();
+  }
   CaptureActionPorts ports;
   if (mode == "before-publication") ports.save.beforePublish = [stop](const QString &) { stop(); };
   ports.clipboard = [mode, stop](const QImage &, const CancellationToken &) { if (mode == "after-save") stop(); return ActionOutcome{}; };

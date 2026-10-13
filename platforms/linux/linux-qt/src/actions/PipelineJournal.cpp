@@ -1,4 +1,5 @@
 #include "PipelineJournal.h"
+#include "PipelineRetry.h"
 #include <QDir>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -91,6 +92,19 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
         !file.value("media_type").isString() || file.value("media_type").toString().size() > 128 ||
         !file.value("byte_length").isDouble() || file.value("byte_length").toInteger(-1) < 0 ||
         !file.value("filename_context").isObject()) return invalid();
+    if (file.contains("creator_task_id") && !validJournalTaskId(file.value("creator_task_id").toString())) return invalid();
+  }
+  if (metadata.contains("retry")) {
+    if (!metadata.value("retry").isObject()) return invalid();
+    const auto retry = metadata.value("retry").toObject();
+    if (retry.value("schema_version") != QJsonValue(1) || !retry.value("preserved_successful_actions").isArray()) return invalid();
+    PipelineRetryLink link{retry.value("original_task_id").toString(), retry.value("previous_task_id").toString(), retry.value("attempt").toInt(), {}};
+    if (retry.value("attempt") != QJsonValue(link.attempt)) return invalid();
+    for (const auto &id : retry.value("preserved_successful_actions").toArray()) {
+      if (!id.isString() || record.selected.contains(id.toString())) return invalid();
+      link.preservedSuccessfulActions.append(id.toString());
+    }
+    if (!validPipelineRetryLink(link, expectedTaskId)) return invalid();
   }
   if (value.contains("pending_action")) {
     const auto id = value.value("pending_action").toString();
@@ -112,10 +126,14 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
   return {std::move(record), {}};
 }
 PipelineJournalRecorder::PipelineJournalRecorder(std::shared_ptr<const PipelineJournalStoragePort> storage, const QString &id,
-                                                 const QStringList &selected, const QDateTime &createdAt)
+                                                 const QStringList &selected, const QDateTime &createdAt,
+                                                 const std::optional<PipelineRetryLink> &retry, const std::vector<SavedFileArtifact> &initialFiles)
     : m_storage(std::move(storage)) {
-  m_snapshot.result.taskId = id; m_snapshot.createdAt = createdAt;
+  m_snapshot.result.taskId = id; m_snapshot.result.retry = retry; m_snapshot.files = initialFiles; m_snapshot.createdAt = createdAt;
   for (const auto &action : catalogue()) if (selected.contains(action.id)) m_snapshot.selected.append(action.id);
+}
+bool PipelineJournalRecorder::begin() {
+  return !m_storage || !m_snapshot.result.retry || persist();
 }
 bool PipelineJournalRecorder::before(const ActionSpec &action) {
   if (!m_storage) return true;

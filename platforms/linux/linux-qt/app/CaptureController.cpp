@@ -369,7 +369,7 @@ void CaptureController::onOutcome(const SessionOutcome &outcome) {
     if (generation != m_generation || !m_busy) return;
     const QPointer<CaptureController> guard(this);
     if (outcome.state == SessionState::Completed && outcome.rectangle && m_captured) {
-      runPipeline(*outcome.rectangle);
+      runPipeline();
       return; // cleanup follows the actual pipeline receipt
     } else if (outcome.diagnostic) {
       const QString title = outcome.state == SessionState::Failed ? QStringLiteral("Region capture failed")
@@ -383,10 +383,26 @@ void CaptureController::onOutcome(const SessionOutcome &outcome) {
   });
 }
 
-void CaptureController::runPipeline(const PhysicalRect &rect) {
+void CaptureController::runPipeline() {
   // Keep overlays/focus until native clipboard dispatch; the worker never
   // accesses UI or controller state. The receipt retains confirmed media.
   auto *pipeline = new CapturePipeline(*m_captured, m_saveDirectory, kCapturePattern, kDefaultActions, this, m_actionPorts, m_journal);
+  connectPipeline(pipeline);
+  const QPointer<CapturePipeline> pipelineGuard(pipeline);
+  if (m_pendingPipelineCancellation) pipeline->cancel();
+  if (pipelineGuard) pipelineGuard->start();
+}
+bool CaptureController::retryFailedActions(const CapturePipelineReceipt &expected) {
+  if (m_busy || !expected || m_lastPipelineResult != expected || !expected->retryPlan().available()) return false;
+  ++m_generation; m_busy = true; m_pendingPipelineCancellation = false;
+  auto *pipeline = new CapturePipeline(expected, this, m_actionPorts, m_journal);
+  connectPipeline(pipeline);
+  const QPointer<CaptureController> guard(this); const QPointer<CapturePipeline> operation(pipeline);
+  emit busyChanged(true); // cancel/destruction can arrive at first availability
+  if (guard && operation) operation->start();
+  return true;
+}
+void CaptureController::connectPipeline(CapturePipeline *pipeline) {
   m_pipeline = pipeline;
   connect(pipeline, &CapturePipeline::activityChanged, this, [this, pipeline](const QString &text) {
     if (m_pipeline != pipeline) return;
@@ -395,20 +411,17 @@ void CaptureController::runPipeline(const PhysicalRect &rect) {
     for (auto &overlay : m_overlays) { overlay->announce(text); if (!guard) return; }
     emit pipelineActivityChanged(text); if (guard) repaint();
   });
-  connect(pipeline, &CapturePipeline::finished, this, [this, pipeline, rect](const CapturePipelineReceipt &result) {
+  connect(pipeline, &CapturePipeline::finished, this, [this, pipeline](const CapturePipelineReceipt &result) {
     if (m_pipeline != pipeline || !m_busy) return;
     m_pipeline = nullptr; pipeline->deleteLater(); m_lastPipelineResult = result;
     const QPointer<CaptureController> guard(this);
     emit retainedResultChanged(); if (!guard) return;
-    publishPipeline(rect, result);
+    publishPipeline(result);
     if (guard) { closeOverlays(); finish(); }
   });
-  const QPointer<CapturePipeline> pipelineGuard(pipeline);
-  if (m_pendingPipelineCancellation) pipeline->cancel();
-  if (pipelineGuard) pipelineGuard->start();
 }
 
-void CaptureController::publishPipeline(const PhysicalRect &rect, const CapturePipelineReceipt &receipt) {
+void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt) {
   const auto &result = receipt->pipeline;
 
   QStringList done;
@@ -429,12 +442,13 @@ void CaptureController::publishPipeline(const PhysicalRect &rect, const CaptureP
       failed.append(description);
     }
   }
-  const QString size = QStringLiteral("%1 × %2").arg(rect.width()).arg(rect.height());
+  const QString size = QStringLiteral("%1 × %2").arg(receipt->workingMedia.width()).arg(receipt->workingMedia.height());
   QString body = done.join(QStringLiteral(", "));
   if (!failed.isEmpty()) body += (body.isEmpty() ? QString() : QStringLiteral("; ")) + failed.join(QStringLiteral("; "));
   if (!receipt->diagnostic.isEmpty()) body += QStringLiteral("; ") + receipt->diagnostic;
   const auto title = result.state == xerahs::actions::PipelineState::Cancelled ? QStringLiteral("Capture actions cancelled · %1") :
-      result.state == xerahs::actions::PipelineState::Interrupted ? QStringLiteral("Capture actions interrupted · %1") : QStringLiteral("Region captured · %1");
+      result.state == xerahs::actions::PipelineState::Interrupted ? QStringLiteral("Capture actions interrupted · %1") :
+      result.retry ? QStringLiteral("Capture actions retried · %1") : QStringLiteral("Region captured · %1");
   emit notify(title.arg(size), body, failed.isEmpty() && receipt->diagnostic.isEmpty());
 }
 

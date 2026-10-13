@@ -21,6 +21,14 @@ QDialog *makePipelineResultDialog(const QJsonObject &report, QWidget *parent, co
       QStringLiteral("Pipeline: interrupted. An action with an unknown outcome may have completed. Check its output before retrying; recovery does not repeat actions.") :
       QStringLiteral("Pipeline: %1. Completed describes a finished run; individual actions can still fail.").arg(state), dialog);
   summary->setTextFormat(Qt::PlainText); summary->setWordWrap(true); layout->addWidget(summary);
+  const auto retry = report.value("extensions").toObject().value("com.xerahs.app").toObject().value("retry").toObject();
+  if (!retry.isEmpty()) {
+    QStringList preserved;
+    for (const auto &id : retry.value("preserved_successful_actions").toArray()) preserved.append(id.toString());
+    auto *lineage = new QLabel(QStringLiteral("Linked retry %1. Earlier successful actions kept: %2. Saved-file facts may refer to an earlier attempt.")
+        .arg(retry.value("attempt").toInt()).arg(preserved.isEmpty() ? QStringLiteral("none") : preserved.join(QStringLiteral(", "))), dialog);
+    lineage->setObjectName(QStringLiteral("captureRetryLineage")); lineage->setTextFormat(Qt::PlainText); lineage->setWordWrap(true); layout->addWidget(lineage);
+  }
   auto *table = new QTreeWidget(dialog); table->setObjectName(QStringLiteral("captureActionResults"));
   table->setAccessibleName(QStringLiteral("Capture action outcomes")); table->setRootIsDecorated(false);
   table->setHeaderLabels({QStringLiteral("Action"), QStringLiteral("State"), QStringLiteral("Diagnostic"), QStringLiteral("Input artifact")});

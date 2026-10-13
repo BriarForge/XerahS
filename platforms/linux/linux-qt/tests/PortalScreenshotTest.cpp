@@ -19,6 +19,7 @@
 #include <QPointer>
 #include <QPlainTextEdit>
 #include <QJsonDocument>
+#include <QLabel>
 #include <QTreeWidget>
 #include <QMessageBox>
 #include <QPushButton>
@@ -134,6 +135,75 @@ class PortalScreenshotTest final : public QObject {
   static Outcome outcome(const QSignalSpy &spy) { return spy.at(0).at(0).value<Outcome>(); }
   static QImage resultImage(const QSignalSpy &spy) { return spy.at(0).at(1).value<QImage>(); }
 private slots:
+  void nativeRetryUsesSharedKeyboardApprovalKeepsSuccessfulSaveAndStartsNoNewPortal() {
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto sourceBytes = bytes(path);
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    int encoded = 0, copied = 0; CaptureActionPorts ports;
+    ports.save.encode = [&](const QImage &image, QIODevice *output) { ++encoded; return image.save(output, "PNG"); };
+    ports.clipboard = [&](const QImage &, const xerahs::actions::CancellationToken &) {
+      ++copied; return copied == 1 ? xerahs::actions::ActionOutcome{xerahs::actions::ActionState::Failed, "clipboard-unavailable", {}} : xerahs::actions::ActionOutcome{};
+    };
+    auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, {}, ports, journal);
+    QAction cancel(QStringLiteral("Cancel capture")); cancel.setEnabled(false); connect(&cancel, &QAction::triggered, &controller, &CaptureController::cancel);
+    connect(&controller, &CaptureController::busyChanged, &cancel, [&](bool busy) { cancel.setEnabled(busy); });
+    ApplicationWindow home({{"cancel-capture", &cancel}}); CaptureRecoveryActions recovery(controller, &home, {});
+    home.addCaptureRecoveryActions(recovery.editAction(), recovery.discardAction(), recovery.reviewAction(), recovery.retryAction()); home.activate();
+    auto *retry = home.findChild<QToolButton *>("retry-retained-capture"); QVERIFY(retry && !retry->isEnabled());
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
+    const auto original = controller.lastPipelineResult(); QVERIFY(original && original->file); const auto saved = bytes(original->file->path);
+    QTRY_VERIFY(retry->isEnabled()); retry->setFocus(); QTest::keyClick(retry, Qt::Key_Space); QTRY_VERIFY(QApplication::activeModalWidget());
+    auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box); QCOMPARE(box->objectName(), QString("retryRetainedCaptureDialog"));
+    QCOMPARE(box->defaultButton(), box->button(QMessageBox::Cancel)); QTest::keyClick(box, Qt::Key_Escape); QTRY_VERIFY(!QApplication::activeModalWidget());
+    QCOMPARE(controller.lastPipelineResult(), original); QCOMPARE(copied, 1); QCOMPARE(encoded, 1);
+    retry->setFocus(); QTest::keyClick(retry, Qt::Key_Space); QTRY_VERIFY(QApplication::activeModalWidget());
+    box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box); box->button(QMessageBox::Retry)->click();
+    QTRY_VERIFY(!controller.busy()); const auto result = controller.lastPipelineResult(); QVERIFY(result != original && result->pipeline.retry);
+    QCOMPARE(result->pipeline.retry->originalTaskId, original->pipeline.taskId); QCOMPARE(result->pipeline.orderedResults.size(), size_t(1));
+    QCOMPARE(copied, 2); QCOMPARE(encoded, 1); QCOMPARE(portal.calls, 1); QCOMPARE(bytes(original->file->path), saved); QCOMPARE(bytes(path), sourceBytes);
+    QVERIFY(!retry->isEnabled()); QCOMPARE(journal->list().entries.size(), size_t(2));
+    recovery.reviewAction()->trigger(); QTRY_VERIFY(QApplication::activeModalWidget());
+    auto *review = QApplication::activeModalWidget(); auto *lineage = review->findChild<QLabel *>("captureRetryLineage"); QVERIFY(lineage);
+    QCOMPARE(lineage->textFormat(), Qt::PlainText); QVERIFY(lineage->text().contains("Linked retry 1")); QVERIFY(lineage->text().contains("save"));
+    QTest::keyClick(review, Qt::Key_Escape); QTRY_VERIFY(!QApplication::activeModalWidget());
+    QCOMPARE(controller.lastPipelineResult(), result); QCOMPARE(copied, 2); QCOMPARE(bytes(original->file->path), saved);
+  }
+  void staleRetryConfirmationCannotRepeatActionsForANewerReceipt() {
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString(); int copies = 0;
+    CaptureActionPorts ports; ports.clipboard = [&](const QImage &, const xerahs::actions::CancellationToken &) {
+      ++copies; return xerahs::actions::ActionOutcome{xerahs::actions::ActionState::Failed, "clipboard-unavailable", {}};
+    };
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, {}, ports);
+    CaptureRecoveryActions recovery(controller, nullptr, {}); QSignalSpy notices(&recovery, &CaptureRecoveryActions::notify);
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
+    const auto first = controller.lastPipelineResult(); recovery.retryAction()->trigger(); QTRY_VERIFY(QApplication::activeModalWidget());
+    QPointer<QMessageBox> approval = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(approval);
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); controller.pointerDown({5, 5}); controller.pointerUp({15, 15}); QTRY_VERIFY(!controller.busy());
+    const auto second = controller.lastPipelineResult(); QVERIFY(second != first); approval->button(QMessageBox::Retry)->click(); QTRY_VERIFY(!QApplication::activeModalWidget());
+    QCOMPARE(controller.lastPipelineResult(), second); QCOMPARE(copies, 2); QCOMPARE(portal.calls, 2); QCOMPARE(notices.count(), 1); QVERIFY(!notices.first().last().toBool());
+    QVERIFY(!controller.retryFailedActions(first)); QCOMPARE(copies, 2);
+  }
+  void cancellationAtRetryAvailabilityKeepsPixelsAndSuccessfulFileAndOwnerDestructionCannotStartWork() {
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString(); int copies = 0;
+    CaptureActionPorts ports; ports.clipboard = [&](const QImage &, const xerahs::actions::CancellationToken &) {
+      ++copies; return xerahs::actions::ActionOutcome{xerahs::actions::ActionState::Failed, "clipboard-unavailable", {}};
+    };
+    auto controller = std::make_unique<CaptureController>(dir.filePath("outputs"), nullptr,
+        [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, SnapshotComposer{}, ports);
+    controller->captureRegion(); QTRY_VERIFY(overlayExists()); controller->pointerDown({10, 10}); controller->pointerUp({40, 35}); QTRY_VERIFY(!controller->busy());
+    const auto original = controller->lastPipelineResult(); const auto saved = bytes(original->file->path);
+    const auto connection = connect(controller.get(), &CaptureController::busyChanged, controller.get(), [&](bool busy) { if (busy) controller->cancel(); });
+    QVERIFY(controller->retryFailedActions(original)); QTRY_VERIFY(!controller->busy()); disconnect(connection);
+    const auto cancelled = controller->lastPipelineResult(); QCOMPARE(cancelled->pipeline.state, xerahs::actions::PipelineState::Cancelled);
+    QCOMPARE(cancelled->workingMedia, original->workingMedia); QCOMPARE(bytes(cancelled->file->path), saved); QCOMPARE(copies, 1); QCOMPARE(portal.calls, 1);
+    // Restore a definitive failed receipt through a second isolated capture,
+    // then destroy the controller synchronously at admission of its retry.
+    controller->captureRegion(); QTRY_VERIFY(overlayExists()); controller->pointerDown({10, 10}); controller->pointerUp({40, 35}); QTRY_VERIFY(!controller->busy());
+    const auto expected = controller->lastPipelineResult(); connect(controller.get(), &CaptureController::busyChanged, [&](bool busy) { if (busy) controller.reset(); });
+    controller->retryFailedActions(expected); QVERIFY(!controller); QTest::qWait(30); QCOMPARE(copies, 2); QCOMPARE(portal.calls, 2); QVERIFY(QFileInfo::exists(expected->file->path));
+  }
   void init() {
     server = QDBusConnection::connectToBus(QDBusConnection::SessionBus, "screenshot-test-server");
     client = QDBusConnection::connectToBus(QDBusConnection::SessionBus, "screenshot-test-client");
