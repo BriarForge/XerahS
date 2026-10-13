@@ -14,7 +14,7 @@
 
 namespace xerahs::app {
 struct CaptureSaveAsChoice { std::optional<QString> path; QString diagnostic; };
-struct CaptureAnnotationChoice { std::optional<xerahs::editor::AnnotationDocument> document; QString diagnostic; };
+struct CaptureAnnotationChoice { std::optional<xerahs::editor::AnnotationDocument> document; QString diagnostic; bool sidecarIntent = false; };
 struct CaptureActionPorts {
   // CapturePipeline invokes save/actionStarted on its worker and clipboard on
   // its GUI thread. Its selection bridge waits on the worker for asynchronous
@@ -30,11 +30,12 @@ struct CaptureActionPorts {
   std::function<CaptureSaveAsChoice(const QString &, const xerahs::actions::CancellationToken &)> chooseSaveAs;
   std::function<CaptureAnnotationChoice(const LoadedSource &, const xerahs::actions::CancellationToken &)> annotation;
   xerahs::editor::RectangleStyle annotationStyle;
+  std::function<void(const std::vector<CaptureFile> &)> rasterPublished;
 };
 
 class CaptureActions final : public xerahs::actions::ActionExecutor {
 public:
-  CaptureActions(QImage media, QString directory, QString pattern, CaptureActionPorts ports = {}, std::optional<CaptureFile> inheritedFile = {}, std::vector<CaptureFile> inheritedFiles = {}, std::optional<xerahs::editor::AnnotationDocument> inheritedDocument = {});
+  CaptureActions(QImage media, QString directory, QString pattern, CaptureActionPorts ports = {}, std::optional<CaptureFile> inheritedFile = {}, std::vector<CaptureFile> inheritedFiles = {}, std::optional<xerahs::editor::AnnotationDocument> inheritedDocument = {}, bool sidecarIntent = false);
 
   xerahs::actions::ActionOutcome run(const xerahs::actions::ActionRequest &request) override;
   bool createTemporaryUploadFile() override { return false; }
@@ -45,6 +46,7 @@ public:
   std::vector<CaptureFile> savedFiles() const;
   const QImage &workingMedia() const { return m_media; }
   const std::optional<xerahs::editor::AnnotationDocument> &annotationDocument() const { return m_annotationDocument; }
+  bool sidecarIntent() const { return m_sidecarIntent; }
   static xerahs::actions::ActionOutcome copyImageToNativeClipboard(const QImage &media);
   static QStringList selectableActions();
   static QString actionLabel(const QString &id);
@@ -54,7 +56,9 @@ public:
   static const QString kActionUnavailable;
 
 private:
-  xerahs::actions::ActionOutcome save();
+  xerahs::actions::ActionOutcome save(const xerahs::actions::CancellationToken &cancellation);
+  xerahs::actions::ActionOutcome finishSave(const QString &action, const CaptureFile &raster, const xerahs::actions::CancellationToken &cancellation);
+  xerahs::actions::ActionOutcome failedSave(const QString &action, const QString &diagnostic) const;
   xerahs::actions::ActionOutcome annotate(const xerahs::actions::CancellationToken &cancellation);
   xerahs::actions::ActionOutcome saveAs(const xerahs::actions::CancellationToken &cancellation);
   xerahs::actions::ActionOutcome copyImage(const xerahs::actions::CancellationToken &cancellation);
@@ -68,6 +72,8 @@ private:
   std::optional<CaptureFile> m_savedAsFile;
   CaptureActionPorts m_ports;
   std::optional<xerahs::editor::AnnotationDocument> m_annotationDocument;
+  bool m_sidecarIntent = false;
+  std::vector<CaptureFile> m_sidecars;
 };
 
 }  // namespace xerahs::app

@@ -235,6 +235,13 @@ target_link_libraries(capture-annotation-test PRIVATE xerahs_file_output xerahs_
 add_test(NAME capture-annotation COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-annotation-test>)
 set_tests_properties(capture-annotation PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+add_executable(capture-paired-save-test tests/CapturePairedSaveTest.cpp app/CapturePipeline.cpp app/CapturePipeline.h
+  app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h app/PipelineResultDialog.cpp)
+set_target_properties(capture-paired-save-test PROPERTIES AUTOMOC ON)
+target_link_libraries(capture-paired-save-test PRIVATE xerahs_file_output xerahs_action_selection xerahs_pipeline_journal Qt6::Test)
+add_test(NAME capture-paired-save COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-paired-save-test>)
+set_tests_properties(capture-paired-save PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 add_executable(capture-save-test tests/CaptureSaveTest.cpp app/CaptureSave.cpp app/CaptureSave.h)
 set_target_properties(capture-save-test PROPERTIES AUTOMOC ON)
 target_include_directories(capture-save-test PRIVATE app)

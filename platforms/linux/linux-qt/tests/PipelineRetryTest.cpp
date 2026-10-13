@@ -16,6 +16,31 @@ PipelineResult result(ActionState save, ActionState clipboard) {
 class PipelineRetryTest final : public QObject {
   Q_OBJECT
 private slots:
+  void typedPartialSavePreservesRasterProvenanceAcrossFailedAndCancelledRepairs() {
+    auto value = result(ActionState::Failed, ActionState::Succeeded); value.orderedResults[0].diagnostic = "sidecar-save-failed";
+    value.orderedResults[0].artifacts = {{"save.file", ActionState::Succeeded, {}}, {"save.sidecar", ActionState::Failed, "sidecar-save-failed"}};
+    const auto first = planRetainedCaptureRetry(value, true, true); QVERIFY(first.available()); QCOMPARE(first.selected, QStringList{"save"});
+    QCOMPARE(first.link->preservedRasterActions, QStringList{"save"}); QVERIFY(!first.link->preservedSuccessfulActions.contains("save"));
+    QCOMPARE(planRetainedCaptureRetry(value, true, false).diagnostic, QString("retry-artifact-unavailable"));
+    PipelineResult cancelled; cancelled.taskId = id(); cancelled.retry = first.link;
+    cancelled.orderedResults = {ActionResult{"save", ActionState::Cancelled}, ActionResult{"path-clipboard", ActionState::Failed}};
+    const auto next = planRetainedCaptureRetry(cancelled, true, true); QVERIFY(next.available()); QCOMPARE(next.selected, QStringList{"path-clipboard"});
+    QCOMPARE(next.link->preservedRasterActions, QStringList{"save"});
+    value.orderedResults[0].artifacts[0].artifact = "save-as.file";
+    QCOMPARE(planRetainedCaptureRetry(value, true, true).diagnostic, QString("retry-invalid-source"));
+  }
+  void artifactOutcomesAreNamespacedAndCorruptPairFactsFailJournalParsing() {
+    auto value = result(ActionState::Failed, ActionState::Succeeded); value.orderedResults[0].diagnostic = "sidecar-save-failed";
+    value.orderedResults[0].artifacts = {{"save.file", ActionState::Succeeded, {}}, {"save.sidecar", ActionState::Failed, "sidecar-save-failed"}};
+    const auto report = pipelineResultJson(value); QVERIFY(!report.value("ordered_results").toArray().first().toObject().contains("artifacts"));
+    QCOMPARE(report.value("extensions").toObject().value("com.xerahs.app").toObject().value("artifact_outcomes").toArray().size(), 2);
+    PipelineJournalSnapshot snapshot; snapshot.result = value; snapshot.selected = {"save", "image-clipboard"}; snapshot.createdAt = QDateTime::currentDateTimeUtc(); snapshot.terminal = true;
+    QVERIFY(parsePipelineJournal(serializePipelineJournal(snapshot), value.taskId).record);
+    snapshot.result.orderedResults[0].artifacts[1].state = ActionState::Succeeded;
+    QVERIFY(!parsePipelineJournal(serializePipelineJournal(snapshot), value.taskId).record);
+    snapshot.result = value; snapshot.result.orderedResults[0].artifacts[0].absent = true;
+    QVERIFY(!parsePipelineJournal(serializePipelineJournal(snapshot), value.taskId).record);
+  }
   void saveAsArtifactsSatisfyConsumersAndDoNotAuthorizeSuccessfulSaveReplay() {
     PipelineResult source; source.taskId = id(); source.orderedResults = {ActionResult{"save-as", ActionState::Succeeded}, ActionResult{"path-clipboard", ActionState::Failed}};
     const auto plan = planRetainedCaptureRetry(source, true, false, true); QVERIFY(plan.available()); QCOMPARE(plan.selected, QStringList{"path-clipboard"});

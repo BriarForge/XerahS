@@ -31,6 +31,20 @@ void write(const QString &path, const QByteArray &data) { QFile file(path); if (
 class PipelineJournalTest final : public QObject {
   Q_OBJECT
 private slots:
+  void killedCompanionSavePreservesKnownPngButDoesNotInventWholeSaveSuccess() {
+    QTemporaryDir dir; QProcess process;
+    process.start(QCoreApplication::applicationDirPath() + "/pipeline-journal-fixture", {dir.filePath("state"), dir.filePath("output"), "companion-before-publication"});
+    QVERIFY(process.waitForStarted(3000)); QTRY_VERIFY_WITH_TIMEOUT(process.canReadLine() || process.state() == QProcess::NotRunning, 5000);
+    QCOMPARE(process.readLine().trimmed(), QByteArray("checkpoint")); process.kill(); QVERIFY(process.waitForFinished(3000));
+    const auto listing = NativePipelineJournal(dir.filePath("state")).list(); QCOMPARE(listing.entries.size(), size_t(1)); const auto &record = listing.entries[0].parsed.record; QVERIFY(record);
+    QCOMPARE(record->pendingAction, std::optional<QString>{"save"}); QCOMPARE(record->pendingSavePath, std::optional<QString>{dir.filePath("output/capture.png.xann")});
+    QCOMPARE(record->pendingSaveArtifact, std::optional<QString>{"save.sidecar"});
+    const auto known = record->report.value("extensions").toObject().value("com.xerahs.app").toObject().value("file_artifacts").toArray(); QCOMPARE(known.size(), 1);
+    QCOMPARE(known[0].toObject().value("artifact"), QJsonValue("save.file")); QCOMPARE(known[0].toObject().value("creator_task_id"), QJsonValue(record->taskId));
+    QCOMPARE(record->report.value("ordered_results").toArray().size(), 1); QVERIFY(!record->report.value("working_media_retained").toBool());
+    QVERIFY(!QImage(dir.filePath("output/capture.png")).isNull()); QVERIFY(!QFile::exists(dir.filePath("output/capture.png.xann")));
+    QVERIFY(!listing.entries[0].bytes.contains("sourceImagePng"));
+  }
   void killedAnnotatedSaveRetainsAcknowledgedTransformationAndUnknownPublication() {
     QTemporaryDir dir; QProcess process;
     process.start(QCoreApplication::applicationDirPath() + "/pipeline-journal-fixture", {dir.filePath("state"), dir.filePath("output"), "annotation-before-publication"});
@@ -130,6 +144,7 @@ private slots:
     QVERIFY(!validJournalTaskId("../other"));
     QVERIFY(!validJournalTaskId(task + '\n'));
     value = original; value.insert("pending_action", ""); QVERIFY(!parsePipelineJournal(QJsonDocument(value).toJson(), task).record);
+    value = original; value.insert("pending_save_artifact", "save.sidecar"); QVERIFY(!parsePipelineJournal(QJsonDocument(value).toJson(), task).record);
   }
   void privateAtomicStorageKeepsMultipleRecordsAndChecksExactSnapshots() {
     QTemporaryDir dir; const auto path = dir.filePath("state/pipelines"); NativePipelineJournal storage(path);

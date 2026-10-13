@@ -75,8 +75,8 @@ marked implemented in a core trace file.
 
 ## Next production work
 
-The 14 October annotation handoff checkpoint extends Save As/multiple-file
-results, journal/recovery, linked retry and per-run selection. It passed all 38 local CTest targets
+The 14 October paired-save checkpoint extends annotation handoff, Save As/multiple-file
+results, journal/recovery, linked retry and per-run selection. It passed all 39 local CTest targets
 (native tests and all 114 published vectors for the six implemented vector
 packages), contract lint/backlog checks, their 25 unit tests and the seven
 conformance-runner unit tests. The production-path real-process fixtures use
@@ -98,8 +98,11 @@ isolated Qt 6.4.2 reproduction and native verification indexed in SAVE-AS.md.
 The [annotation handoff evidence](app/ANNOTATION-HANDOFF.md) indexes actual
 before-save canvas/rendering, frozen styles, retained editable documents,
 explicit compatible editor persistence, output retry and killed-process recovery.
-This is partial native rectangle coverage; capture-side companion persistence
-and the full tool/workflow/native/human scope remain Required.
+This is partial native rectangle coverage. The [paired-save evidence](app/PAIRED-SAVE.md)
+adds explicit Save/Save As companions with true per-artifact failures, known-PNG
+consumption, companion-only repair and known-PNG/unknown-companion restart
+review. Full persistence/default/removal/format policy, tool/workflow/native/human
+scope remain Required.
 
 1. Continue full native capture/operation qualification under
    RC-001/002/008/016/018 and CORE-004/005. The pending Screenshot lifecycle is
@@ -125,8 +128,11 @@ and the full tool/workflow/native/human scope remain Required.
    safe publication boundaries and preserves earlier success in retry/recovery.
    Native annotation now returns accepted rendered pixels before save and
    retains a re-editable source document for explicit compatible editor Save.
-   Next integrate explicit sidecar intent and truthful companion-artifact
-   outcomes into capture Save/Save As under ES-011/012/014/030. Continue all
+   Explicit sidecar intent and truthful companion-artifact outcomes now enter
+   capture Save/Save As under ES-011/012/014/030. Next extend explicit editor
+   Save to the bounded immutable worker-output and partial-repair model under
+   EO-001/003/005/006/014/015 and ES-011/012, including validated replacement/
+   owned-companion authority, cancellation and retained dirty-state evidence. Continue all
    annotation tools, full workflow configuration, remaining save variants and
    media/artifact recovery alongside that work.
 4. Maintain requirement-level traces and meaningful failure/consent evidence;

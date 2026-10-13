@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <linux/fs.h>
 #include <sys/syscall.h>
+#include <sys/stat.h>
 #include <unistd.h>
 namespace xerahs::app {
 namespace {
@@ -57,6 +58,7 @@ CaptureSaveResult saveCapture(const QImage &media, const QString &directory, con
       const auto path = destination.filePath(name.value());
       filenameContext.insert("next_counter", name.nextCounter);
       CaptureFile artifact{path, QStringLiteral("image/png"), length, filenameContext};
+      if (hooks.publicationIntent) hooks.publicationIntent(path, false);
       if (hooks.beforePublish) hooks.beforePublish(path);
       const auto target = QFile::encodeName(path);
       // PCA-007: Linux atomic publication refuses every existing destination,
@@ -87,6 +89,7 @@ CaptureSaveResult saveCaptureAs(const QImage &media, const QString &requested, c
     QJsonObject context{{"mode", "explicit-save-as"}, {"extension", "png"}, {"file_name", info.fileName()},
         {"width", media.width()}, {"height", media.height()}};
     CaptureFile artifact{target.path, "image/png", encoded.size(), context}; artifact.artifact = "save-as.file";
+    if (hooks.publicationIntent) hooks.publicationIntent(target.path, false);
     if (hooks.beforePublish) hooks.beforePublish(target.path);
     if (cancellation.requested()) return {{}, {}, true};
     const auto from = QFile::encodeName(encoded.fileName()); const auto to = QFile::encodeName(target.path);
@@ -95,5 +98,59 @@ CaptureSaveResult saveCaptureAs(const QImage &media, const QString &requested, c
     encoded.setAutoRemove(false); artifact.identity = captureFileIdentity(encoded.handle());
     return {std::move(artifact), {}};
   } catch (...) { return failure("save-write-failed"); }
+}
+namespace {
+class CaptureSidecarStore final : public xerahs::editor::SidecarStore {
+public:
+  CaptureSidecarStore(const CaptureFile &raster, const xerahs::actions::CancellationToken &token, const CaptureSaveHooks &hooks)
+      : m_raster(raster), m_token(token), m_hooks(hooks) {}
+  bool exists(const QString &path) override {
+    struct stat info{}; const auto name = QFile::encodeName(path);
+    // Treat every error except definite absence as an existing destination.
+    return ::lstat(name.constData(), &info) == 0 || errno != ENOENT;
+  }
+  bool remove(const QString &) override {
+    // New capture paths have no previous owned companion. Preserve colliding
+    // files rather than infer deletion authority from their suffix.
+    return false;
+  }
+  bool write(const QString &path, const QByteArray &bytes) override {
+    if (m_token.requested() || !validateCaptureFile(m_raster).isEmpty()) return false;
+    QTemporaryFile encoded(QFileInfo(path).dir().filePath(".xerahs-sidecar-XXXXXX"));
+    if (!encoded.open() || !encoded.setPermissions(QFile::ReadOwner | QFile::WriteOwner) ||
+        encoded.write(bytes) != bytes.size() || !encoded.flush() || ::fsync(encoded.handle()) != 0) return false;
+    if (m_token.requested()) return false;
+    if (m_hooks.publicationIntent) m_hooks.publicationIntent(path, true);
+    if (m_hooks.beforePublish) m_hooks.beforePublish(path);
+    if (m_token.requested() || !validateCaptureFile(m_raster).isEmpty()) return false;
+    CaptureFile companion{path, "application/gzip", encoded.size(), {}};
+    companion.artifact = m_raster.artifact == "save.file" ? "save.sidecar" : "save-as.sidecar";
+    const auto from = QFile::encodeName(encoded.fileName()); const auto to = QFile::encodeName(path);
+    if (::syscall(SYS_renameat2, AT_FDCWD, from.constData(), AT_FDCWD, to.constData(), RENAME_NOREPLACE) != 0) return false;
+    encoded.setAutoRemove(false);
+    companion.identity = captureFileIdentity(encoded.handle()); m_file = std::move(companion); return true;
+  }
+  std::optional<CaptureFile> file() const { return m_file; }
+private:
+  CaptureFile m_raster;
+  const xerahs::actions::CancellationToken &m_token;
+  const CaptureSaveHooks &m_hooks;
+  std::optional<CaptureFile> m_file;
+};
+}
+CaptureSidecarResult saveCaptureSidecar(const CaptureFile &raster, const xerahs::editor::AnnotationDocument &document,
+    const xerahs::actions::CancellationToken &cancellation, const CaptureSaveHooks &hooks) {
+  using namespace xerahs::editor;
+  try {
+    if (cancellation.requested()) return {false, {}, diagnostic::sidecarSaveFailed};
+    auto saved = document; saved.imagePath = raster.path; saved.imageHash = captureFileHash(raster, cancellation);
+    if (saved.imageHash.isEmpty()) return {false, {}, diagnostic::sidecarSaveFailed};
+    saved.modifiedAt = QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs);
+    const auto parsed = parseDocument(serializeDocument(saved));
+    if (!parsed.document || cancellation.requested()) return {false, {}, diagnostic::sidecarSaveFailed};
+    CaptureSidecarStore store(raster, cancellation, hooks);
+    const auto result = saveSidecar(store, raster.path, *parsed.document, true);
+    return {result.ok, store.file(), result.diagnostic.value_or(QString{})};
+  } catch (...) { return {false, {}, diagnostic::sidecarSaveFailed}; }
 }
 } // namespace xerahs::app

@@ -2,6 +2,7 @@
 #include "CaptureAnnotationDialog.h"
 #include "EditorCanvas.h"
 #include <QApplication>
+#include <QCheckBox>
 #include <QFile>
 #include <QJsonArray>
 #include <QSignalSpy>
@@ -35,6 +36,7 @@ private slots:
     QCOMPARE(result->pipeline.finalWorkingMedia, QString("annotation")); QVERIFY(result->annotationDocument); QCOMPARE(result->annotationDocument->annotations.size(), size_t(1));
     QCOMPARE(result->workingMedia.pixel(20, 20), qRgb(255, 0, 0)); QCOMPARE(result->workingMedia.pixel(0, 0), qRgb(0, 0, 255));
     QCOMPARE(copied, result->workingMedia); QCOMPARE(QImage(result->file->path), result->workingMedia);
+    QVERIFY(!result->sidecarIntent); QVERIFY(!QFile::exists(result->file->path + ".xann"));
     QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), pixels());
     const auto editable = prepareCapturedDocument(*result->annotationDocument); QVERIFY(editable.document); QCOMPARE(editable.image, pixels());
     const auto persisted = saveEdit(dir.filePath("editable.png"), editable.image, *editable.document); QVERIFY(persisted.rasterSaved && persisted.sidecarSaved);
@@ -46,9 +48,11 @@ private slots:
   }
   void escapeSkipsAnnotationAndIndependentOutputsUseOriginalPixels() {
     QTemporaryDir dir; CapturePipeline pipeline(pixels(), dir.path(), "original", {"annotation", "save"}); QSignalSpy done(&pipeline, &CapturePipeline::finished);
-    pipeline.start(); QTRY_VERIFY(dialog()); QTest::keyClick(dialog(), Qt::Key_Escape); QTRY_COMPARE(done.count(), 1); const auto result = receipt(done);
+    pipeline.start(); QTRY_VERIFY(dialog()); dialog()->findChild<QCheckBox *>("captureSaveAnnotationSidecar")->setChecked(true);
+    QTest::keyClick(dialog(), Qt::Key_Escape); QTRY_COMPARE(done.count(), 1); const auto result = receipt(done);
     QCOMPARE(result->pipeline.orderedResults[0].state, ActionState::Cancelled); QCOMPARE(result->pipeline.orderedResults[1].state, ActionState::Succeeded);
     QCOMPARE(result->pipeline.finalWorkingMedia, QString("capture")); QVERIFY(!result->annotationDocument); QCOMPARE(QImage(result->file->path), pixels());
+    QVERIFY(!result->sidecarIntent); QVERIFY(!QFile::exists(result->file->path + ".xann"));
   }
   void rectangleCreationUsesTheFrozenPreferenceSnapshot() {
     QTemporaryDir dir; CaptureActionPorts ports; ports.annotationStyle.fillColor = 0xff00ff00; ports.annotationStyle.strokeWidth = 1;

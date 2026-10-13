@@ -50,11 +50,15 @@ void CaptureRecoveryActions::retry() {
   const auto plan = expected->retryPlan(); if (!plan.available()) return;
   QStringList labels;
   for (const auto &id : plan.selected) labels.append(CaptureActions::actionLabel(id));
+  QString companionNote;
+  for (const auto &action : expected->pipeline.orderedResults)
+    if (xerahs::actions::hasAcknowledgedPartialRaster(action.action, action.state, action.artifacts))
+      companionNote = " A partial paired save retries only its .xann companion at the existing PNG path; the PNG is kept without rewriting it or reopening Save As.";
   const auto operation = ++m_operation; m_running = true;
   const QPointer<CaptureRecoveryActions> guard(this); updateAvailability(); if (!guard) return;
   auto *box = new QMessageBox(QMessageBox::Question, QStringLiteral("Retry failed capture actions?"),
       QStringLiteral("Retry %1 once using the retained capture? Earlier successful actions are kept. "
-                     "The attempt creates a linked result. Cancel Capture or Escape in the XerahS window stops later actions.").arg(labels.join(QStringLiteral(" and "))),
+                     "The attempt creates a linked result. Cancel Capture or Escape in the XerahS window stops later actions.").arg(labels.join(QStringLiteral(" and "))) + companionNote,
       QMessageBox::Retry | QMessageBox::Cancel, m_dialogParent);
   box->setObjectName(QStringLiteral("retryRetainedCaptureDialog")); box->setDefaultButton(QMessageBox::Cancel);
   box->setEscapeButton(QMessageBox::Cancel); box->setAttribute(Qt::WA_DeleteOnClose); m_dialog = box;

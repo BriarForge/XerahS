@@ -116,3 +116,13 @@ parity/release reviews remain Required. Native
 [annotation handoff](ANNOTATION-HANDOFF.md) now feeds rendered pixels to these
 save/file consumers and retains a source document for explicit editor Save.
 Next integrate capture-side sidecar intent and true companion-artifact outcomes.
+
+## Paired capture persistence checkpoint
+
+[PAIRED-SAVE.md](PAIRED-SAVE.md) indexes explicit companion intent for both Save
+aliases, typed raster/sidecar outcomes, known-PNG prerequisites without delete
+authority, companion-only repair with original PNG creators, and write-ahead
+known-PNG/unknown-companion restart review. Actual native/private-bus and
+killed-process fixtures verify these additive candidate seams. Workflow defaults,
+complete save/removal/format policy, shared persisted compatibility, catalogue
+recovery and all native/human acceptance gates remain Required.

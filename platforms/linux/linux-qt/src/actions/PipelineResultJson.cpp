@@ -4,7 +4,7 @@
 namespace xerahs::actions {
 QJsonObject pipelineResultJson(const PipelineResult &result,
                               const std::vector<SavedFileArtifact> &files) {
-  QJsonArray ordered, timings, artifacts;
+  QJsonArray ordered, timings, artifacts, artifactOutcomes;
   for (const auto &action : result.orderedResults) {
     QJsonObject entry{{"action", action.action}, {"state", actionStateName(action.state)}};
     if (action.diagnostic) entry.insert("diagnostic", *action.diagnostic);
@@ -12,6 +12,12 @@ QJsonObject pipelineResultJson(const PipelineResult &result,
     if (action.inputArtifact) entry.insert("input_artifact", *action.inputArtifact);
     if (action.cancellationArrivedDuring) entry.insert("cancellation_arrived_during", true);
     ordered.append(entry);
+    for (const auto &artifact : action.artifacts) {
+      QJsonObject fact{{"action", action.action}, {"artifact", artifact.artifact}, {"state", actionStateName(artifact.state)}};
+      if (artifact.diagnostic) fact.insert("diagnostic", *artifact.diagnostic);
+      if (artifact.absent) fact.insert("absent", true);
+      artifactOutcomes.append(fact);
+    }
     // Pending/dependency-skipped actions have no execution timestamps. Do not
     // manufacture start/finish times when no native action ran.
     if (action.startedAt.isValid() || action.finishedAt.isValid()) {
@@ -30,11 +36,15 @@ QJsonObject pipelineResultJson(const PipelineResult &result,
   }
   QJsonObject native{{"schema_version", 1}, {"task_id", result.taskId},
                      {"action_timings", timings}, {"file_artifacts", artifacts}};
+  if (!artifactOutcomes.isEmpty()) native.insert("artifact_outcomes", artifactOutcomes);
   if (!result.ignoredSelection.isEmpty()) native.insert("ignored_selection", QJsonArray::fromStringList(result.ignoredSelection));
   if (result.retry) native.insert("retry", QJsonObject{{"schema_version", 1},
       {"original_task_id", result.retry->originalTaskId}, {"previous_task_id", result.retry->previousTaskId},
       {"attempt", result.retry->attempt},
       {"preserved_successful_actions", QJsonArray::fromStringList(result.retry->preservedSuccessfulActions)}});
+  if (result.retry && !result.retry->preservedRasterActions.isEmpty()) {
+    auto retry = native.value("retry").toObject(); retry.insert("preserved_raster_actions", QJsonArray::fromStringList(result.retry->preservedRasterActions)); native.insert("retry", retry);
+  }
   return QJsonObject{{"pipeline_state", pipelineStateName(result.state)},
       {"final_working_media", result.finalWorkingMedia}, {"ordered_results", ordered},
       {"working_media_retained", result.workingMediaRetained},

@@ -30,6 +30,21 @@ QMessageBox *confirmation(QWidget *owner) {
 class PipelineHistoryDialogTest final : public QObject {
   Q_OBJECT
 private slots:
+  void pendingCompanionReviewSeparatesKnownRasterFromUnknownSave() {
+    QTemporaryDir dir; const auto rasterPath = dir.filePath("capture.png"); QFile raster(rasterPath); QVERIFY(raster.open(QIODevice::WriteOnly)); raster.write("KEEP"); raster.close();
+    auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state")); const auto id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    PipelineJournalSnapshot record; record.result.taskId = id; record.createdAt = QDateTime::currentDateTimeUtc(); record.selected = {"save"};
+    record.files = {{rasterPath, "image/png", 4, {}}}; record.pendingAction = "save"; record.pendingSavePath = rasterPath + ".xann"; record.pendingSaveArtifact = "save.sidecar";
+    const auto encoded = serializePipelineJournal(record); QVERIFY(storage->replace(id, {}, encoded).stored);
+    QWidget owner; auto *dialog = new PipelineHistoryDialog(storage, [] { return false; }, &owner); dialog->show();
+    auto *review = dialog->findChild<QPushButton *>("reviewCaptureHistory"); QTRY_VERIFY(review->isEnabled()); review->click();
+    auto *result = dialog->findChild<QDialog *>("retainedCaptureResultDialog"); QVERIFY(result);
+    auto *actions = result->findChild<QTreeWidget *>("captureActionResults"); QCOMPARE(actions->topLevelItem(0)->text(1), QString("Outcome unknown"));
+    auto *artifacts = result->findChild<QTreeWidget *>("captureArtifactResults"); QVERIFY(artifacts); QCOMPARE(artifacts->topLevelItemCount(), 2);
+    QCOMPARE(artifacts->topLevelItem(0)->text(1), QString("PNG file")); QCOMPARE(artifacts->topLevelItem(0)->text(2), QString("publication acknowledged"));
+    QCOMPARE(artifacts->topLevelItem(1)->text(1), QString("Editable annotations (.xann)")); QCOMPARE(artifacts->topLevelItem(1)->text(2), QString("Outcome unknown"));
+    QTest::keyClick(result, Qt::Key_Escape); QCOMPARE(storage->list().entries.front().bytes, encoded); QCOMPARE(fileBytes(rasterPath), QByteArray("KEEP"));
+  }
   void runningCaptureDefersReadsUntilItsLiveJournalCanBeInterpretedHonestly() {
     QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
     const auto id = QUuid::createUuid().toString(QUuid::WithoutBraces);

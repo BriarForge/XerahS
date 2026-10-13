@@ -16,6 +16,7 @@ struct PipelineJournalSnapshot {
   std::vector<SavedFileArtifact> files;
   std::optional<QString> pendingAction;
   std::optional<QString> pendingSavePath;
+  std::optional<QString> pendingSaveArtifact;
   bool terminal = false;
 };
 QByteArray serializePipelineJournal(const PipelineJournalSnapshot &snapshot);
@@ -26,6 +27,7 @@ struct RecoveredPipelineJournal {
   QJsonObject report;
   std::optional<QString> pendingAction;
   std::optional<QString> pendingSavePath;
+  std::optional<QString> pendingSaveArtifact;
   bool terminal = false;
 };
 struct PipelineJournalParse {
@@ -50,7 +52,10 @@ public:
                           const QString &initialWorkingMedia = QStringLiteral("capture"));
   bool begin();
   bool before(const ActionSpec &action);
-  bool beforePublish(const QString &path);
+  bool beforePublish(const QString &path, bool companion = false);
+  // Acknowledge the PNG while its save action is still pending, before a
+  // companion write. Storage failure blocks that next durable effect.
+  bool published(const std::vector<SavedFileArtifact> &files);
   void selectionChanged(const QStringList &selected);
   void completed(const ActionResult &result, const std::vector<SavedFileArtifact> &files);
   void finish(const PipelineResult &result, const std::vector<SavedFileArtifact> &files);

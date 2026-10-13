@@ -64,3 +64,13 @@ Physical screen-reader/compositor qualification and human reviews remain Require
 canonical/journal facts and linked retries preserving the earlier creator and
 bytes. The preferred single-file compatibility member does not truncate the
 multiple-file report.
+
+## Paired capture persistence checkpoint
+
+[PAIRED-SAVE.md](PAIRED-SAVE.md) indexes explicit companion intent for both Save
+aliases, typed raster/sidecar outcomes, known-PNG prerequisites without delete
+authority, companion-only repair with original PNG creators, and write-ahead
+known-PNG/unknown-companion restart review. Actual native/private-bus and
+killed-process fixtures verify these additive candidate seams. Workflow defaults,
+complete save/removal/format policy, shared persisted compatibility, catalogue
+recovery and all native/human acceptance gates remain Required.

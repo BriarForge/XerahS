@@ -66,6 +66,31 @@ class PostCapturePipelineTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void partialRasterAcknowledgementSatisfiesConsumersButNeverGrantsDeletion() {
+    class PartialExecutor final : public ActionExecutor {
+    public:
+      ActionOutcome run(const ActionRequest &request) override {
+        if (request.spec.id != "save") return {};
+        ActionOutcome failed{ActionState::Failed, "sidecar-save-failed", {}};
+        failed.artifacts = {{"save.file", ActionState::Succeeded, {}}, {"save.sidecar", ActionState::Failed, "sidecar-save-failed"}};
+        return failed;
+      }
+      bool createTemporaryUploadFile() override { return false; }
+      void removeTemporaryUploadFile() override {}
+    } executor;
+    CancellationToken token;
+    const auto result = runPipeline("partial-fixture", {"save", "path-clipboard", "delete"}, {}, executor, token);
+    QCOMPARE(result.orderedResults[0].state, ActionState::Failed);
+    QCOMPARE(result.orderedResults[1].state, ActionState::Succeeded); QCOMPARE(result.orderedResults[1].inputArtifact, std::optional<QString>{"save.file"});
+    QCOMPARE(result.orderedResults[2].diagnostic, std::optional<QString>{"delete-guard"});
+    ScriptedExecutor repair; CancellationToken second; PipelineOptions inherited; inherited.inheritedSaveAvailable = true;
+    const auto repaired = runPipeline("repair-fixture", {"save", "path-clipboard", "delete"}, inherited, repair, second);
+    QCOMPARE(repaired.orderedResults[2].diagnostic, std::optional<QString>{"delete-guard"});
+    auto facts = result.orderedResults[0].artifacts; facts[0].artifact = "save-as.file";
+    QVERIFY(!validSavedOutputOutcomes("save", ActionState::Failed, facts));
+    facts = result.orderedResults[0].artifacts; facts[1].state = ActionState::Succeeded;
+    QVERIFY(!validSavedOutputOutcomes("save", ActionState::Failed, facts));
+  }
   void retainedTransformationIdentityDoesNotInventAnotherExecution() {
     ScriptedExecutor executor; CancellationToken token; PipelineOptions options; options.inheritedWorkingMedia = "annotation";
     const auto result = runPipeline("retained-media-fixture", {"save"}, options, executor, token);

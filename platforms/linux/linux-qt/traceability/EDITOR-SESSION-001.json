@@ -33,7 +33,13 @@
     "platforms/linux/linux-qt/app/NativeEditorPreferences.cpp",
     "platforms/linux/linux-qt/app/DrawingDefaultsDialog.cpp",
     "platforms/linux/linux-qt/app/CaptureAnnotationDialog.h",
-    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp"
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+    "platforms/linux/linux-qt/app/CaptureSave.cpp",
+    "platforms/linux/linux-qt/app/CaptureActions.cpp",
+    "platforms/linux/linux-qt/app/CaptureFileIdentity.cpp",
+    "platforms/linux/linux-qt/src/actions/PipelineJournal.cpp",
+    "platforms/linux/linux-qt/src/actions/PipelineRetry.cpp",
+    "platforms/linux/linux-qt/src/actions/PipelineResultJson.cpp"
   ],
   "requirements": {
     "ES-001": {
@@ -44,7 +50,7 @@
     "ES-002": {
       "status": "partial",
       "vectors": [],
-      "note": "Orientation is normalized once with QImageReader auto-transform and pixels remain non-premultiplied ARGB32. Independent EXIF/JPEG mapping tests verify embedded PNG orientation; PNG tests preserve alpha and colour metadata. New Image converts initial pixels/background to an explicitly selected profile, retaining immutable source bytes. Editor canvas and comparison use private sRGB display copies, with independent linear/sRGB pixel and native-view tests. End-to-end annotation composition in the working profile and requested export-profile conversion remain pending. Open prepares its private sRGB display cache on the worker before session adoption; independent linear-to-sRGB transfer and alpha tests verify unchanged source pixels/profile. Captured-source recovery uses a cancellable native worker to prepare owned pixel-normalized source/PNG/document and a private sRGB view, preserving alpha/profile and inferring no original save path. Native source/editor tests cover borrowed-buffer lifetime, pixel-ratio normalization, bounds, staged cancellation, redacted exceptions, unsaved history/close semantics and explicit Save As without touching the original capture. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Automatic paired capture persistence, remaining tools/workflows and full native/human qualification remain Required.",
+      "note": "Orientation is normalized once with QImageReader auto-transform and pixels remain non-premultiplied ARGB32. Independent EXIF/JPEG mapping tests verify embedded PNG orientation; PNG tests preserve alpha and colour metadata. New Image converts initial pixels/background to an explicitly selected profile, retaining immutable source bytes. Editor canvas and comparison use private sRGB display copies, with independent linear/sRGB pixel and native-view tests. End-to-end annotation composition in the working profile and requested export-profile conversion remain pending. Open prepares its private sRGB display cache on the worker before session adoption; independent linear-to-sRGB transfer and alpha tests verify unchanged source pixels/profile. Captured-source recovery uses a cancellable native worker to prepare owned pixel-normalized source/PNG/document and a private sRGB view, preserving alpha/profile and inferring no original save path. Native source/editor tests cover borrowed-buffer lifetime, pixel-ratio normalization, bounds, staged cancellation, redacted exceptions, unsaved history/close semantics and explicit Save As without touching the original capture. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
@@ -101,7 +107,7 @@
       "vectors": [
         "render-stroke-coverage"
       ],
-      "note": "The authoritative PNG compositor and atomic save preserve the source colour profile. Native tests verify profile and alpha across canvas edits, New Image creation and persisted PNG/sidecar reopening. Annotation colour composition for non-sRGB sources, additional export formats, requested profile conversion and cross-platform golden coverage remain pending. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Automatic paired capture persistence, remaining tools/workflows and full native/human qualification remain Required.",
+      "note": "The authoritative PNG compositor and atomic save preserve the source colour profile. Native tests verify profile and alpha across canvas edits, New Image creation and persisted PNG/sidecar reopening. Annotation colour composition for non-sRGB sources, additional export formats, requested profile conversion and cross-platform golden coverage remain pending. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
@@ -120,36 +126,67 @@
     "ES-011": {
       "status": "partial",
       "vectors": [],
-      "note": "Native save uses QSaveFile atomic raster replacement and marks the checkpoint only after raster and required sidecar persistence succeed. New Image tests verify a blank initial source stays dirty until a successful destination save, and failed raster/sidecar persistence prevents dirty replacement. Full save/output qualification remains pending. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Automatic paired capture persistence, remaining tools/workflows and full native/human qualification remain Required.",
+      "note": "Native save uses QSaveFile atomic raster replacement and marks the checkpoint only after raster and required sidecar persistence succeed. New Image tests verify a blank initial source stays dirty until a successful destination save, and failed raster/sidecar persistence prevents dirty replacement. Full save/output qualification remains pending. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/app/PAIRED-SAVE.md",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineRetryTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineHistoryDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp"
       ]
     },
     "ES-012": {
       "status": "implemented",
       "vectors": [],
-      "note": "A sidecar failure keeps the session dirty and reports sidecar-save-failed (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Native replacement tests force a sidecar write failure after raster persistence, report Save incomplete, and retain the current editable session/history/selection/checkpoint. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Automatic paired capture persistence, remaining tools/workflows and full native/human qualification remain Required.",
+      "note": "A sidecar failure keeps the session dirty and reports sidecar-save-failed (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Native replacement tests force a sidecar write failure after raster persistence, report Save incomplete, and retain the current editable session/history/selection/checkpoint. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/app/PAIRED-SAVE.md",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineRetryTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineHistoryDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp"
       ]
     },
     "ES-013": {
       "status": "partial",
       "vectors": [],
-      "note": "gzip-wrapped UTF-8 JSON with schema fields round-trips. Native load/save computes raster SHA-256, embeds immutable unannotated PNG and records timestamps. New Image starts without file identity and retains the selected profile through PNG/xann round trips. Full document compatibility qualification remains pending."
+      "note": "gzip-wrapped UTF-8 JSON with schema fields round-trips. Native load/save computes raster SHA-256, embeds immutable unannotated PNG and records timestamps. New Image starts without file identity and retains the selected profile through PNG/xann round trips. Full document compatibility qualification remains pending. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/PAIRED-SAVE.md",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineRetryTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineHistoryDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp"
+      ]
     },
     "ES-014": {
       "status": "implemented",
       "vectors": [
         "empty-document-removes-sidecar"
+      ],
+      "note": " Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/PAIRED-SAVE.md",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineRetryTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineHistoryDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp"
       ]
     },
     "ES-015": {
@@ -186,7 +223,7 @@
     "ES-020": {
       "status": "not-started",
       "vectors": [],
-      "note": "Temp and recovery retention arrive with the save path and recovery. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Automatic paired capture persistence, remaining tools/workflows and full native/human qualification remain Required.",
+      "note": "Temp and recovery retention arrive with the save path and recovery. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
@@ -265,7 +302,16 @@
         "sidecar-default-path",
         "sidecar-baseline-fallback"
       ],
-      "note": "The baseline fallback convention still needs runtime observation before activation, as ES-030 requires."
+      "note": "The baseline fallback convention still needs runtime observation before activation, as ES-030 requires. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/PAIRED-SAVE.md",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineRetryTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineHistoryDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp"
+      ]
     }
   }
 }

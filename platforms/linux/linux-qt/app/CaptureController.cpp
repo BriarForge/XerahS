@@ -457,6 +457,10 @@ void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt) {
       else if (action.action == "reveal") done.append(QStringLiteral("file manager acknowledged the show request"));
       if (action.cancellationArrivedDuring) done.append(QStringLiteral("%1 finished after cancellation was requested").arg(label));
     } else {
+      if (xerahs::actions::hasAcknowledgedPartialRaster(action.action, action.state, action.artifacts)) {
+        for (const auto &file : receipt->savedFiles()) if (file.artifact == action.action + ".file")
+          done.append(QStringLiteral("PNG saved as %1; editable companion failed and document is retained").arg(QFileInfo(file.path).fileName()));
+      }
       auto description = label + QStringLiteral(" ") + xerahs::actions::actionStateName(action.state);
       if (action.diagnostic) description += QStringLiteral(" (%1)").arg(*action.diagnostic);
       failed.append(description);

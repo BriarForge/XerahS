@@ -59,9 +59,10 @@ real editor's explicit Save chooses a destination and uses the existing
 compatible raster/`.xann` service: atomic raster replacement, embedded original
 source, true raster hash, annotations and sidecar acknowledgement. A failed
 artifact keeps the editor dirty and visibly incomplete under ES-011/012.
-Capture Save/Save As still publish PNG only. Automatic paired capture persistence
-and companion artifact outcomes are the next integration slice, not claimed by
-this explicit editable-copy offer.
+The subsequent [paired-save checkpoint](PAIRED-SAVE.md) adds explicit companion
+intent to this same dialog and truthful capture Save/Save As artifact outcomes,
+companion-only repair and restart review. Workflow-wide pairing/defaults and
+full persistence/native/human qualification remain Required.
 
 Retry of failed eligible outputs reuses annotated pixels and the retained
 document without opening annotation again. The Core planner admits acknowledged
@@ -89,14 +90,16 @@ restart review never reconstructs pixels/documents or repeats the transformation
   its acknowledged transformation plus unknown save, with no invented retained
   pixels. Core tests cover inherited media identity without another result.
 
-All 38 native/contract CTest targets include the unchanged 114 published vectors.
+The annotation handoff checkpoint's 38 native/contract CTest targets included
+the unchanged 114 published vectors; paired saving adds a 39th target.
 Affected native paths also run against isolated Qt 6.4.2 libraries; exact pushed
 revision qualification uses Ubuntu 24.04/Qt 6.4.2 CI. Live Avalonia configuration
 and real capture/upload commands remain untouched.
 
-Next integrate explicit compatible sidecar intent into capture Save/Save As,
-with separate true artifact facts and incomplete outcomes under ES-011/012/014/
-030, preserving successful rasters and re-editable data on failure. Complete
+Explicit compatible sidecar intent now enters capture Save/Save As with true
+artifact facts and incomplete outcomes under ES-011/012/014/030, as indexed
+in PAIRED-SAVE.md. Next extend explicit editor Save to bounded immutable
+worker output and partial repair. Complete
 annotation/effect/canvas/output tools, workflow/settings persistence, catalogue
 retry, restart media authority, shared schema/vectors, colour/performance and
 supported distro/compositor/physical accessibility/security/privacy/parity/

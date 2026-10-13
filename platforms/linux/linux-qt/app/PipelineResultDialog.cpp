@@ -42,6 +42,33 @@ QDialog *makePipelineResultDialog(const QJsonObject &report, QWidget *parent, co
     new QTreeWidgetItem(table, {id, id == unknownAction ? QStringLiteral("Outcome unknown") : QStringLiteral("Not started"), {}, {}});
   for (int column = 0; column < 4; ++column) table->resizeColumnToContents(column);
   layout->addWidget(table);
+  const auto native = report.value("extensions").toObject().value("com.xerahs.app").toObject();
+  auto artifacts = native.value("artifact_outcomes").toArray(); QSet<QString> acknowledged;
+  for (const auto &entry : artifacts) acknowledged.insert(entry.toObject().value("artifact").toString());
+  for (const auto &entry : native.value("file_artifacts").toArray()) {
+    const auto file = entry.toObject(); const auto artifact = file.value("artifact").toString();
+    if (!acknowledged.contains(artifact)) {
+      artifacts.append(QJsonObject{{"action", artifact.section('.', 0, 0)}, {"artifact", artifact}, {"state", "publication acknowledged"}});
+      acknowledged.insert(artifact);
+    }
+  }
+  const auto unknownArtifact = native.value("recovery").toObject().value("unknown_artifact").toString();
+  if (!unknownArtifact.isEmpty()) artifacts.append(QJsonObject{{"action", unknownArtifact.section('.', 0, 0)}, {"artifact", unknownArtifact}, {"state", "Outcome unknown"}});
+  if (!artifacts.isEmpty()) {
+    auto *files = new QTreeWidget(dialog); files->setObjectName("captureArtifactResults"); files->setRootIsDecorated(false);
+    files->setAccessibleName("Capture artifact outcomes"); files->setHeaderLabels({"Action", "Artifact", "State", "Diagnostic"});
+    for (const auto &value : artifacts) {
+      const auto fact = value.toObject();
+      const auto id = fact.value("artifact").toString(); const auto action = fact.value("action").toString();
+      const auto artifactLabel = id == "save.file" || id == "save-as.file" ? QString("PNG file") :
+          id == "save.sidecar" || id == "save-as.sidecar" ? QString("Editable annotations (.xann)") : id;
+      auto *item = new QTreeWidgetItem(files, {action == "save" ? QString("Save") : action == "save-as" ? QString("Save As") : action, artifactLabel,
+          fact.value("absent").toBool() ? "succeeded (no companion needed)" : fact.value("state").toString(), fact.value("diagnostic").toString()});
+      item->setData(1, Qt::UserRole, id);
+    }
+    for (int column = 0; column < 4; ++column) files->resizeColumnToContents(column);
+    layout->addWidget(files);
+  }
   auto *privacy = new QLabel(QStringLiteral("Report details contain private saved-file paths and naming settings. Image pixels, clipboard contents and recognized text are excluded. "
                                            "Reviewing does not retry actions, modify files or change the clipboard."), dialog);
   privacy->setTextFormat(Qt::PlainText); privacy->setWordWrap(true); layout->addWidget(privacy);

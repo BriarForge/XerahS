@@ -123,10 +123,17 @@ the source document for explicit compatible persistence through the real editor.
 Cancellation preserves original pixels; output retry retains annotated media
 and its identity without repeating annotation. Actual native/private-bus and
 process-kill fixtures cover this partial PCA-008 surface. Shared canvas/source
-libraries prevent capture and editor paths from diverging. Next integrate
-explicit sidecar intent and truthful companion-artifact outcomes into capture
-Save/Save As under ES-011/012/014/030, alongside complete annotation tools,
-configured workflows, remaining save variants and catalogue.
+libraries prevent capture and editor paths from diverging. [Paired capture persistence](app/PAIRED-SAVE.md)
+now freezes explicit sidecar intent, publishes compatible companions and reports
+each artifact separately. Partial save keeps the PNG/document for companion-only
+repair, admits acknowledged PNG consumers without delete authority, and records
+known PNG facts before unknown companion intent. Native/private-bus and real-process
+fixtures verify both Save aliases, actual re-editing, unchanged bytes/creators,
+cancellation, private-store failure and honest normal/restart review. Next extend
+explicit editor Save to the same bounded immutable worker-output and partial-repair
+model under EO-001/003/005/006/014/015 and ES-011/012, including validated replacement/
+owned-companion authority, cancellation and retained dirty-state evidence, alongside
+complete annotation tools, configured workflows, remaining save variants and catalogue.
 
 Each checkpoint updates requirement traceability, runs native tests and the
 implemented shared vectors, and lands on `main`. Passing the small pilot vector

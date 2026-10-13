@@ -3,6 +3,7 @@
 #include <QDir>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QMap>
 #include <QRegularExpression>
 #include <QSet>
 
@@ -38,6 +39,7 @@ QByteArray serializePipelineJournal(const PipelineJournalSnapshot &snapshot) {
       {"result", pipelineResultJson(result, snapshot.files)}};
   if (snapshot.pendingAction) value.insert("pending_action", *snapshot.pendingAction);
   if (snapshot.pendingSavePath) value.insert("pending_save_path", *snapshot.pendingSavePath);
+  if (snapshot.pendingSaveArtifact) value.insert("pending_save_artifact", *snapshot.pendingSaveArtifact);
   return QJsonDocument(value).toJson(QJsonDocument::Compact);
 }
 PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString &expectedTaskId) {
@@ -86,6 +88,29 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
     if (!entry.isObject() || !completed.contains(timing.value("action").toString())) return invalid();
     for (const auto *key : {"started_at", "finished_at"}) if (timing.contains(key) && !timeValue(timing.value(key))) return invalid();
   }
+  if (metadata.contains("artifact_outcomes")) {
+    if (!metadata.value("artifact_outcomes").isArray()) return invalid();
+    QMap<QString, std::vector<ArtifactOutcome>> outcomes;
+    for (const auto &entry : metadata.value("artifact_outcomes").toArray()) {
+      const auto fact = entry.toObject(); const auto action = fact.value("action").toString();
+      const auto state = fact.value("state").toString();
+      if (!entry.isObject() || !completed.contains(action) || !codeValue(fact.value("artifact")) ||
+          (fact.contains("diagnostic") && !codeValue(fact.value("diagnostic"))) ||
+          (fact.contains("absent") && !fact.value("absent").isBool())) return invalid();
+      ArtifactOutcome outcome; outcome.artifact = fact.value("artifact").toString(); outcome.absent = fact.value("absent").toBool();
+      if (state == "succeeded") outcome.state = ActionState::Succeeded;
+      else if (state == "failed") outcome.state = ActionState::Failed;
+      else if (state == "skipped") outcome.state = ActionState::Skipped;
+      else return invalid();
+      if (fact.contains("diagnostic")) outcome.diagnostic = fact.value("diagnostic").toString();
+      outcomes[action].push_back(outcome);
+    }
+    for (const auto &entry : record.report.value("ordered_results").toArray()) {
+      const auto action = entry.toObject(); const auto state = action.value("state").toString();
+      const auto typed = state == "succeeded" ? ActionState::Succeeded : state == "failed" ? ActionState::Failed : ActionState::Skipped;
+      if (!validSavedOutputOutcomes(action.value("action").toString(), typed, outcomes[action.value("action").toString()])) return invalid();
+    }
+  }
   for (const auto &entry : metadata.value("file_artifacts").toArray()) {
     const auto file = entry.toObject();
     if (!entry.isObject() || !pathValue(file.value("path")) || !codeValue(file.value("artifact")) ||
@@ -104,6 +129,13 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
       if (!id.isString() || record.selected.contains(id.toString())) return invalid();
       link.preservedSuccessfulActions.append(id.toString());
     }
+    if (retry.contains("preserved_raster_actions")) {
+      if (!retry.value("preserved_raster_actions").isArray()) return invalid();
+      for (const auto &id : retry.value("preserved_raster_actions").toArray()) {
+        if (!id.isString()) return invalid();
+        link.preservedRasterActions.append(id.toString());
+      }
+    }
     if (!validPipelineRetryLink(link, expectedTaskId)) return invalid();
   }
   if (value.contains("pending_action")) {
@@ -115,6 +147,12 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
     if ((record.pendingAction != QStringLiteral("save") && record.pendingAction != QStringLiteral("save-as")) || !pathValue(value.value("pending_save_path"))) return invalid();
     record.pendingSavePath = value.value("pending_save_path").toString();
   }
+  if (value.contains("pending_save_artifact")) {
+    const auto artifact = value.value("pending_save_artifact").toString();
+    if (!record.pendingSavePath || !record.pendingAction ||
+        (artifact != *record.pendingAction + ".file" && artifact != *record.pendingAction + ".sidecar")) return invalid();
+    record.pendingSaveArtifact = artifact;
+  }
   if (record.terminal && completed.size() != record.selected.size()) return invalid();
   // Recovery never invents an action failure or repeats external work. An
   // unacknowledged network action, like any pending action, has unknown outcome.
@@ -122,6 +160,7 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
   QJsonObject recovery{{"schema_version", 1}, {"terminal", record.terminal}};
   if (record.pendingAction) recovery.insert("unknown_action", *record.pendingAction);
   if (record.pendingSavePath) recovery.insert("unconfirmed_save_path", *record.pendingSavePath);
+  if (record.pendingSaveArtifact) recovery.insert("unknown_artifact", *record.pendingSaveArtifact);
   native.insert("recovery", recovery); extensions.insert("com.xerahs.app", native); record.report.insert("extensions", extensions);
   return {std::move(record), {}};
 }
@@ -144,23 +183,29 @@ bool PipelineJournalRecorder::before(const ActionSpec &action) {
   // Once chosen, beforePublish() persists both intent and exact candidate path.
   if (action.id == "save-as" && !required && !m_expected) { m_snapshot.pendingAction = action.id; return true; }
   if (!required && !m_expected) return true;
-  m_snapshot.pendingAction = action.id; m_snapshot.pendingSavePath.reset();
+  m_snapshot.pendingAction = action.id; m_snapshot.pendingSavePath.reset(); m_snapshot.pendingSaveArtifact.reset();
   const bool stored = persist();
   // PCA-004/007: after a failed save, independent non-durable clipboard work
   // remains possible. Once a durable file exists, another external effect
   // requires its write-ahead observation to succeed first.
   return stored || !required;
 }
-bool PipelineJournalRecorder::beforePublish(const QString &path) {
+bool PipelineJournalRecorder::beforePublish(const QString &path, bool companion) {
   if (!m_storage) return true;
-  m_snapshot.pendingSavePath = path; return persist();
+  m_snapshot.pendingSavePath = path;
+  if (m_snapshot.pendingAction) m_snapshot.pendingSaveArtifact = *m_snapshot.pendingAction + (companion ? ".sidecar" : ".file");
+  return persist();
+}
+bool PipelineJournalRecorder::published(const std::vector<SavedFileArtifact> &files) {
+  m_snapshot.files = files; m_snapshot.pendingSavePath.reset(); m_snapshot.pendingSaveArtifact.reset();
+  return !m_storage || persist();
 }
 void PipelineJournalRecorder::completed(const ActionResult &result, const std::vector<SavedFileArtifact> &files) {
   m_snapshot.result.orderedResults.push_back(result);
   const auto index = catalogueIndex(result.action);
   if (result.state == ActionState::Succeeded && index && catalogue()[size_t(*index)].kind == ActionKind::Transformation)
     m_snapshot.result.finalWorkingMedia = result.action;
-  m_snapshot.pendingAction.reset(); m_snapshot.pendingSavePath.reset(); m_snapshot.files = files;
+  m_snapshot.pendingAction.reset(); m_snapshot.pendingSavePath.reset(); m_snapshot.pendingSaveArtifact.reset(); m_snapshot.files = files;
   if (m_expected) persist();
 }
 void PipelineJournalRecorder::selectionChanged(const QStringList &selected) {
@@ -171,7 +216,7 @@ void PipelineJournalRecorder::selectionChanged(const QStringList &selected) {
 void PipelineJournalRecorder::finish(const PipelineResult &result, const std::vector<SavedFileArtifact> &files) {
   if (!m_expected) return;
   m_snapshot.result = result; m_snapshot.files = files;
-  if (result.state != PipelineState::Interrupted) { m_snapshot.pendingAction.reset(); m_snapshot.pendingSavePath.reset(); }
+  if (result.state != PipelineState::Interrupted) { m_snapshot.pendingAction.reset(); m_snapshot.pendingSavePath.reset(); m_snapshot.pendingSaveArtifact.reset(); }
   m_snapshot.terminal = result.state != PipelineState::Interrupted; persist();
 }
 bool PipelineJournalRecorder::persist() {

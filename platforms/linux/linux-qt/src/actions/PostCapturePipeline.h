@@ -92,6 +92,18 @@ struct ActionRequest {
   const CancellationToken &cancellation;
 };
 
+// ES-011/012: a paired save has two independently acknowledged outcomes.
+// These facts never grant restart authority. `absent` means the empty-document
+// sidecar policy completed without a companion file (ES-014).
+struct ArtifactOutcome {
+  QString artifact;
+  ActionState state = ActionState::Skipped;
+  std::optional<QString> diagnostic;
+  bool absent = false;
+};
+bool validSavedOutputOutcomes(const QString &action, ActionState state, const std::vector<ArtifactOutcome> &outcomes);
+bool hasAcknowledgedPartialRaster(const QString &action, ActionState state, const std::vector<ArtifactOutcome> &outcomes);
+
 struct ActionOutcome {
   // Succeeded, Failed, or Cancelled; the engine alone decides Skipped.
   ActionState state = ActionState::Succeeded;
@@ -103,6 +115,7 @@ struct ActionOutcome {
   // Stop as interrupted and keep its write-ahead intent pending; inventing a
   // failed/cancelled action result would authorize an unsafe repeat.
   bool outcomeUnknown = false;
+  std::vector<ArtifactOutcome> artifacts = {};
 };
 
 class ActionExecutor {
@@ -127,6 +140,7 @@ struct ActionResult {
   std::optional<QString> missingArtifact;
   std::optional<QString> inputArtifact;
   bool cancellationArrivedDuring = false;
+  std::vector<ArtifactOutcome> artifacts = {};
 };
 
 // Settings snapshot taken before execution (SPEC "Definitions and model").
@@ -148,6 +162,7 @@ struct PipelineRetryLink {
   QString previousTaskId;
   int attempt = 1;
   QStringList preservedSuccessfulActions;
+  QStringList preservedRasterActions = {};
 };
 
 struct PipelineResult {

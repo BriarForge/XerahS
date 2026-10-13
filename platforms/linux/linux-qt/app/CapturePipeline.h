@@ -17,6 +17,7 @@ struct CapturePipelineResult {
   std::vector<CaptureFile> files;
   QImage workingMedia;
   std::optional<xerahs::editor::AnnotationDocument> annotationDocument;
+  bool sidecarIntent = false;
   QString diagnostic;
   // Immutable native settings used by this capture, including after save
   // failure. Retry never reads the current preferences or decodes a saved path.

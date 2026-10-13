@@ -54,7 +54,9 @@ PCA-018. A failed Save can fall back to successful Save As without inventing a
 Save result. Notifications use the actual artifact for the action acknowledged.
 
 Explicit shared Retry admits a failed Save As, reuses retained pixels and frozen
-settings and asks for a new path. It never repeats a successful Save As, Save,
+settings and asks for a new path when PNG publication failed. A paired-save
+companion failure instead repairs the existing PNG's sidecar (PAIRED-SAVE.md).
+It never repeats a successful Save As, Save,
 clipboard or other successful action to repair failure. A consumer can use an
 original acknowledged file or the originally selected failed Save/Save As
 prerequisite. A retry that newly succeeds at Save thereafter prefers that file
@@ -109,5 +111,15 @@ catalogue/retry/media recovery, retention/cleanup and security/privacy/
 accessibility/parity/release reviews stay in the full Linux audit. Native
 [annotation handoff](ANNOTATION-HANDOFF.md) now returns edited pixels before
 save and offers explicit compatible persistence through the retained document
-editor. Next integrate sidecar intent and true companion-artifact outcomes into
+editor. PAIRED-SAVE.md now integrates sidecar intent and true companion-artifact outcomes into
 capture Save/Save As under ES-011/012/014/030.
+
+## Paired capture persistence checkpoint
+
+[PAIRED-SAVE.md](PAIRED-SAVE.md) indexes explicit companion intent for both Save
+aliases, typed raster/sidecar outcomes, known-PNG prerequisites without delete
+authority, companion-only repair with original PNG creators, and write-ahead
+known-PNG/unknown-companion restart review. Actual native/private-bus and
+killed-process fixtures verify these additive candidate seams. Workflow defaults,
+complete save/removal/format policy, shared persisted compatibility, catalogue
+recovery and all native/human acceptance gates remain Required.

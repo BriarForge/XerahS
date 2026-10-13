@@ -1,6 +1,7 @@
 #include "CaptureAnnotationDialog.h"
 #include "EditorCanvas.h"
 #include <QAction>
+#include <QCheckBox>
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QPushButton>
@@ -14,11 +15,15 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   m_session.setCreationStyle(style);
   auto *layout = new QVBoxLayout(this);
   auto *intro = new QLabel("Draw rectangles; select them to move, resize, rotate or delete. Apply sends the edited image to the remaining capture actions. "
-      "Cancel skips annotation and keeps the original capture. PNG capture saves contain rendered pixels. "
-      "After Apply, use Edit retained capture to re-edit and explicitly save an editable PNG/.xann copy.", this);
+      "Cancel skips annotation and keeps the original capture. PNG capture saves contain rendered pixels.", this);
   intro->setTextFormat(Qt::PlainText); intro->setWordWrap(true); layout->addWidget(intro);
   auto *bar = new QToolBar("Annotation controls", this); layout->addWidget(bar);
   m_canvas = new EditorCanvas(m_session, m_image, this, source.displayImage); layout->addWidget(m_canvas);
+  m_saveSidecar = new QCheckBox("Also save editable annotations beside each saved PNG (.xann)", this);
+  m_saveSidecar->setObjectName("captureSaveAnnotationSidecar"); layout->addWidget(m_saveSidecar);
+  auto *privacy = new QLabel("The companion contains the original capture and editable annotations. A companion failure keeps the PNG and the editable document for explicit retry. "
+      "You can also use Edit retained capture to save an editable copy later.", this);
+  privacy->setWordWrap(true); privacy->setTextFormat(Qt::PlainText); layout->addWidget(privacy);
   auto *undo = bar->addAction("Undo"); undo->setShortcut(QKeySequence::Undo); addAction(undo);
   auto *redo = bar->addAction("Redo"); redo->setShortcut(QKeySequence::Redo); addAction(redo);
   connect(undo, &QAction::triggered, this, [this] { if (!m_canvas->interactionActive()) { m_session.undo(); m_canvas->viewport()->update(); } });
@@ -38,6 +43,6 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
 CaptureAnnotationDialog::~CaptureAnnotationDialog() { delete m_canvas; m_canvas = nullptr; }
 void CaptureAnnotationDialog::accept() {
   if (m_canvas->interactionActive()) { m_status->setText("Finish or cancel the current gesture before applying annotations."); return; }
-  m_accepted = m_session.document(); QDialog::accept();
+  m_accepted = m_session.document(); m_sidecarIntent = m_saveSidecar->isChecked(); QDialog::accept();
 }
 } // namespace xerahs::app

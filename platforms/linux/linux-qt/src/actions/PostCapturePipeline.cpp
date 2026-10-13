@@ -36,8 +36,12 @@ public:
   }
 
   void add(const QStringList &artifacts) {
-    for (const QString &artifact : artifacts) { m_available.insert(artifact); m_created.insert(artifact); }
+    for (const QString &artifact : artifacts) {
+      if (!m_available.contains(artifact)) m_created.insert(artifact);
+      m_available.insert(artifact);
+    }
   }
+  void acknowledge(const QString &artifact) { m_available.insert(artifact); }
   bool created(const QString &artifact) const { return m_created.contains(artifact); }
 
   // PCA-018: `saved-file` resolves to save.file, then save-as.file.
@@ -186,6 +190,25 @@ QString pipelineStateName(PipelineState state) {
   return {};
 }
 
+bool validSavedOutputOutcomes(const QString &action, ActionState state, const std::vector<ArtifactOutcome> &outcomes) {
+  if (outcomes.empty()) return true;
+  if ((action != "save" && action != "save-as") || outcomes.size() != 2) return false;
+  const auto &raster = outcomes[0]; const auto &sidecar = outcomes[1];
+  if (raster.artifact != action + ".file" || sidecar.artifact != action + ".sidecar" || raster.absent ||
+      (sidecar.absent && sidecar.state != ActionState::Succeeded)) return false;
+  if (raster.state == ActionState::Succeeded) {
+    if (raster.diagnostic) return false;
+    return (state == ActionState::Succeeded && sidecar.state == ActionState::Succeeded && !sidecar.diagnostic) ||
+        (state == ActionState::Failed && sidecar.state == ActionState::Failed && sidecar.diagnostic);
+  }
+  return state == ActionState::Failed && raster.state == ActionState::Failed && raster.diagnostic &&
+      sidecar.state == ActionState::Skipped && !sidecar.diagnostic && !sidecar.absent;
+}
+bool hasAcknowledgedPartialRaster(const QString &action, ActionState state, const std::vector<ArtifactOutcome> &outcomes) {
+  return state == ActionState::Failed && !outcomes.empty() && validSavedOutputOutcomes(action, state, outcomes) &&
+      outcomes[0].state == ActionState::Succeeded;
+}
+
 PipelineResult runPipeline(const QString &taskId, const QStringList &selected,
                            const PipelineOptions &options, ActionExecutor &executor,
                            CancellationToken &cancellation, const PipelineHooks &hooks) {
@@ -280,8 +303,12 @@ PipelineResult runPipeline(const QString &taskId, const QStringList &selected,
       // Only the engine skips; an executor that claims a skip did not do the work.
       outcome.state = ActionState::Failed;
     }
+    if (!validSavedOutputOutcomes(action.id, outcome.state, outcome.artifacts)) {
+      outcome.state = ActionState::Failed; outcome.diagnostic = diagnostic::actionFailed; outcome.artifacts.clear();
+    }
     actionResult.state = outcome.state;
     actionResult.diagnostic = outcome.diagnostic;
+    actionResult.artifacts = outcome.artifacts;
     if (outcome.state == ActionState::Failed && !actionResult.diagnostic) {
       actionResult.diagnostic = diagnostic::actionFailed;
     }
@@ -295,6 +322,10 @@ PipelineResult runPipeline(const QString &taskId, const QStringList &selected,
       artifacts.add(action.produces);
       // PCA-003, PCA-022: the last successful transformation is the working media.
       if (action.kind == ActionKind::Transformation) result.finalWorkingMedia = action.id;
+    } else if (hasAcknowledgedPartialRaster(action.id, outcome.state, outcome.artifacts)) {
+      // Known PNG publication satisfies file consumers despite companion
+      // failure. Partial success grants no new delete authority.
+      artifacts.acknowledge(action.id + ".file");
     }
 
     switch (action.kind) {

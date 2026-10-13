@@ -33,11 +33,11 @@ int main(int argc, char **argv) {
     original.start(); return app.exec();
   }
   CaptureActionPorts ports;
-  if (mode == "annotation-before-publication") {
-    ports.annotation = [](const LoadedSource &source, const CancellationToken &) {
-      xerahs::editor::EditorSession session(*source.document); session.createRectangle({2, 2}, {6, 5}); return CaptureAnnotationChoice{session.document(), {}};
+  if (mode == "annotation-before-publication" || mode == "companion-before-publication") {
+    ports.annotation = [mode](const LoadedSource &source, const CancellationToken &) {
+      xerahs::editor::EditorSession session(*source.document); session.createRectangle({2, 2}, {6, 5}); return CaptureAnnotationChoice{session.document(), {}, mode == "companion-before-publication"};
     };
-    ports.save.beforePublish = [stop](const QString &) { stop(); };
+    ports.save.beforePublish = [stop, mode](const QString &path) { if (mode == "annotation-before-publication" || path.endsWith(".xann")) stop(); };
   }
   if (mode == "save-as-before-publication" || mode == "both-save-as-before-publication") {
     ports.chooseSaveAs = [directory = QString::fromLocal8Bit(argv[2])](const QString &, const CancellationToken &) {
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
   ports.clipboard = [mode, stop](const QImage &, const CancellationToken &) { if (mode == "after-save") stop(); return ActionOutcome{}; };
   QImage image(9, 7, QImage::Format_ARGB32); image.fill(Qt::red);
   QStringList selected{"save", "image-clipboard"};
-  if (mode == "annotation-before-publication") selected = {"annotation", "save"};
+  if (mode == "annotation-before-publication" || mode == "companion-before-publication") selected = {"annotation", "save"};
   if (mode == "save-as-before-publication") selected = {"save-as"};
   if (mode == "both-save-as-before-publication") selected = {"save", "save-as"};
   if (mode == "save-as-before-publication") QDir().mkpath(QString::fromLocal8Bit(argv[2]));

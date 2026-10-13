@@ -35,7 +35,7 @@ A successful save followed by failed clipboard retries clipboard only and
 keeps the saved file. Repeated failure requires another explicit command.
 Cancelled actions are not retry targets; resumption of cancelled work belongs
 to its separate lifecycle qualification. Editing retained pixels remains an
-independent explicit operation. Retrying failed Save As asks for a new PNG
+independent explicit operation. Retrying Save As that failed before PNG publication asks for a new PNG
 path; it does not silently reuse a failed destination or repeat the action
 selector. Acknowledged Save and Save As files both remain retained, with
 Save-first consumer precedence. The [Save As evidence](SAVE-AS.md) records
@@ -119,3 +119,13 @@ media is admitted without repeating the transformation, and its actual media
 ID enters both the Core result and pending retry journal. Missing native
 documents and unsupported failed transformations stay unavailable; full
 transformation/catalogue replay and restart media authority remain Required.
+
+## Paired capture persistence checkpoint
+
+[PAIRED-SAVE.md](PAIRED-SAVE.md) indexes explicit companion intent for both Save
+aliases, typed raster/sidecar outcomes, known-PNG prerequisites without delete
+authority, companion-only repair with original PNG creators, and write-ahead
+known-PNG/unknown-companion restart review. Actual native/private-bus and
+killed-process fixtures verify these additive candidate seams. Workflow defaults,
+complete save/removal/format policy, shared persisted compatibility, catalogue
+recovery and all native/human acceptance gates remain Required.

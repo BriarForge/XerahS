@@ -21,6 +21,9 @@ PipelineRetryPlan CapturePipelineResult::retryPlan() const {
   if (pipeline.finalWorkingMedia == "annotation" && !annotationDocument) return {{}, {}, "retry-media-unavailable"};
   bool save = false, saveAs = false;
   for (const auto &saved : savedFiles()) { save |= saved.artifact == "save.file"; saveAs |= saved.artifact == "save-as.file"; }
+  for (const auto &action : pipeline.orderedResults)
+    if (hasAcknowledgedPartialRaster(action.action, action.state, action.artifacts) && (!sidecarIntent || !annotationDocument))
+      return {{}, {}, "retry-media-unavailable"};
   return planRetainedCaptureRetry(pipeline, !workingMedia.isNull(), save, saveAs);
 }
 namespace {
@@ -85,7 +88,13 @@ class JournaledExecutor final : public ActionExecutor {
 public:
   JournaledExecutor(CaptureActions &actions, PipelineJournalRecorder &journal) : m_actions(actions), m_journal(journal) {}
   ActionOutcome run(const ActionRequest &request) override {
-    if (!m_journal.before(request.spec)) return {ActionState::Failed, QStringLiteral("pipeline-journal-unavailable"), {}};
+    if (!m_journal.before(request.spec)) {
+      ActionOutcome outcome{ActionState::Failed, QStringLiteral("pipeline-journal-unavailable"), {}};
+      if (m_actions.sidecarIntent() && (request.spec.id == "save" || request.spec.id == "save-as"))
+        for (const auto &file : m_actions.savedFiles()) if (file.artifact == request.spec.id + ".file")
+          outcome.artifacts = {{file.artifact, ActionState::Succeeded, {}}, {request.spec.id + ".sidecar", ActionState::Failed, outcome.diagnostic}};
+      return outcome;
+    }
     auto outcome = m_actions.run(request);
     if (outcome.outcomeUnknown) m_interruptionDiagnostic = outcome.diagnostic.value_or(diagnostic::actionFailed);
     return outcome;
@@ -192,12 +201,19 @@ void CapturePipeline::start() {
     PipelineJournalRecorder journal(storage, id, selected, QDateTime::currentDateTimeUtc(), retry.link,
                                     initialFacts, source ? source->pipeline.finalWorkingMedia : QStringLiteral("capture"));
     journal.begin(); // retry lineage/files precede any new external action
-    const auto externalPublish = ports.save.beforePublish;
-    ports.save.beforePublish = [&journal, externalPublish](const QString &path) {
-      if (!journal.beforePublish(path)) throw std::runtime_error("pipeline-journal-unavailable");
-      if (externalPublish) externalPublish(path);
+    const auto externalIntent = ports.save.publicationIntent;
+    ports.save.publicationIntent = [&journal, externalIntent](const QString &path, bool companion) {
+      if (!journal.beforePublish(path, companion)) throw std::runtime_error("pipeline-journal-unavailable");
+      if (externalIntent) externalIntent(path, companion);
     };
-    CaptureActions actions(media, directory, pattern, ports, {}, inheritedFiles, source ? source->annotationDocument : std::nullopt); JournaledExecutor executor(actions, journal);
+    const auto externalRaster = ports.rasterPublished;
+    ports.rasterPublished = [&journal, externalRaster, id](const std::vector<CaptureFile> &files) {
+      std::vector<SavedFileArtifact> facts;
+      for (auto file : files) { if (file.creatorTaskId.isEmpty()) file.creatorTaskId = id; facts.push_back(file); }
+      if (!journal.published(facts)) throw std::runtime_error("pipeline-journal-unavailable");
+      if (externalRaster) externalRaster(files);
+    };
+    CaptureActions actions(media, directory, pattern, ports, {}, inheritedFiles, source ? source->annotationDocument : std::nullopt, source && source->sidecarIntent); JournaledExecutor executor(actions, journal);
     const auto currentFiles = [&actions, id] {
       std::vector<SavedFileArtifact> facts;
       for (auto file : actions.savedFiles()) { if (file.creatorTaskId.isEmpty()) file.creatorTaskId = id; facts.push_back(file); }
@@ -220,6 +236,7 @@ void CapturePipeline::start() {
     }
     state->result->pipeline.retry = retry.link;
     state->result->workingMedia = actions.workingMedia(); state->result->annotationDocument = actions.annotationDocument();
+    state->result->sidecarIntent = actions.sidecarIntent();
     if (!executor.interruptionDiagnostic().isEmpty()) state->result->diagnostic = executor.interruptionDiagnostic();
     // Retain the live native binding; canonical/journal facts deliberately
     // slice it away and must never reconstruct authority from metadata.
@@ -270,7 +287,7 @@ void CapturePipeline::poll() {
         auto *dialog = new CaptureAnnotationDialog(annotation->source, m_selectionParent, m_ports.annotationStyle); m_annotationDialog = dialog;
         const auto parent = m_selectionParent;
         connect(dialog, &QDialog::finished, this, [state, annotation, dialog, parent](int result) {
-          const CaptureAnnotationChoice choice = result == QDialog::Accepted ? CaptureAnnotationChoice{dialog->document(), {}} : CaptureAnnotationChoice{};
+          const CaptureAnnotationChoice choice = result == QDialog::Accepted ? CaptureAnnotationChoice{dialog->document(), {}, dialog->sidecarIntent()} : CaptureAnnotationChoice{};
           const auto ownedState = state; const auto ownedCall = annotation;
           if (parent) parent->activateWindow();
           completeAnnotation(ownedState, ownedCall, choice);

@@ -1,5 +1,6 @@
 #pragma once
 #include "actions/PipelineResultJson.h"
+#include "image-editor/AnnotationDocument.h"
 #include <QImage>
 #include <QJsonObject>
 #include <QString>
@@ -21,6 +22,9 @@ struct CaptureFile : xerahs::actions::SavedFileArtifact {
 };
 std::optional<CaptureFileIdentity> captureFileIdentity(int descriptor);
 QString validateCaptureFile(const CaptureFile &file);
+// Hash only an unchanged, privately owned publication through its bound
+// descriptor. Never borrow pixels or authority from an arbitrary path.
+QString captureFileHash(const CaptureFile &file, const xerahs::actions::CancellationToken &cancellation);
 struct CaptureSaveResult {
   std::optional<CaptureFile> file;
   QString diagnostic;
@@ -30,9 +34,19 @@ struct CaptureSaveResult {
 struct CaptureSaveHooks {
   std::function<bool(const QImage &, QIODevice *)> encode;
   std::function<void(const QString &)> beforePublish;
+  // Worker write-ahead boundary, called before the observer above. The writer
+  // supplies artifact kind explicitly; no path suffix grants authority.
+  std::function<void(const QString &, bool companion)> publicationIntent = {};
 };
 CaptureSaveResult saveCapture(const QImage &media, const QString &directory, const QString &pattern,
                               const CaptureSaveHooks &hooks = {});
 CaptureSaveResult saveCaptureAs(const QImage &media, const QString &path, const xerahs::actions::CancellationToken &cancellation,
                                const CaptureSaveHooks &hooks = {});
+struct CaptureSidecarResult {
+  bool succeeded = false;
+  std::optional<CaptureFile> file;
+  QString diagnostic;
+};
+CaptureSidecarResult saveCaptureSidecar(const CaptureFile &raster, const xerahs::editor::AnnotationDocument &document,
+    const xerahs::actions::CancellationToken &cancellation, const CaptureSaveHooks &hooks = {});
 } // namespace xerahs::app

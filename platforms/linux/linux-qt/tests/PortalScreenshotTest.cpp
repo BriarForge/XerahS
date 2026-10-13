@@ -143,6 +143,40 @@ class PortalScreenshotTest final : public QObject {
   static Outcome outcome(const QSignalSpy &spy) { return spy.at(0).at(0).value<Outcome>(); }
   static QImage resultImage(const QSignalSpy &spy) { return spy.at(0).at(1).value<QImage>(); }
 private slots:
+  void partialCompanionSaveHasHonestNotificationAndGuardedSharedRetry() {
+    using namespace xerahs::actions;
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto borrowed = bytes(path);
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    int encodes = 0, annotations = 0, consumers = 0; bool collision = false; CaptureActionPorts ports;
+    ports.annotation = [&](const LoadedSource &source, const CancellationToken &) {
+      ++annotations; xerahs::editor::EditorSession session(*source.document); session.createRectangle({4, 4}, {20, 18});
+      return CaptureAnnotationChoice{session.document(), {}, true};
+    };
+    ports.save.encode = [&](const QImage &image, QIODevice *output) { ++encodes; return image.save(output, "PNG"); };
+    ports.save.beforePublish = [&](const QString &target) { if (target.endsWith(".png")) collision = QDir().mkdir(target + ".xann"); };
+    ports.fileOutput = [&](const QString &, const CaptureFile &, const CancellationToken &) { ++consumers; return ActionOutcome{}; };
+    auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    CaptureController controller(dir.filePath("output"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, {}, ports, journal);
+    ApplicationWindow home({}); controller.setActionSelectionParent(&home); connect(&controller, &CaptureController::choosingActions, &home, &ApplicationWindow::activate);
+    CaptureRecoveryActions recovery(controller, &home, {}); QSignalSpy notifications(&controller, &CaptureController::notify);
+    controller.captureRegionWithActions(); QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35});
+    QTRY_VERIFY(qobject_cast<ActionSelectionDialog *>(QApplication::activeModalWidget())); auto *selection = qobject_cast<ActionSelectionDialog *>(QApplication::activeModalWidget());
+    selection->findChild<QCheckBox *>("capture-action-annotation")->setChecked(true);
+    selection->findChild<QCheckBox *>("capture-action-path-clipboard")->setChecked(true);
+    selection->findChild<QCheckBox *>("capture-action-image-clipboard")->setChecked(false); selection->accept();
+    QTRY_VERIFY(!controller.busy()); const auto source = controller.lastPipelineResult(); QVERIFY(collision && source->file && source->annotationDocument);
+    QVERIFY(recovery.retryAction()->isEnabled()); QVERIFY(notifications.last()[1].toString().contains("editable companion failed")); QVERIFY(!notifications.last()[2].toBool());
+    const auto original = bytes(source->file->path); recovery.retryAction()->trigger(); QTRY_VERIFY(qobject_cast<QMessageBox *>(QApplication::activeModalWidget()));
+    auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box->text().contains("retries only its .xann companion"));
+    QCOMPARE(box->defaultButton(), box->button(QMessageBox::Cancel)); QTest::keyClick(box, Qt::Key_Escape); QTRY_VERIFY(!QApplication::activeModalWidget());
+    QCOMPARE(controller.lastPipelineResult(), source); QCOMPARE(encodes, 1);
+    QVERIFY(QDir().rmdir(source->file->path + ".xann")); recovery.retryAction()->trigger(); QTRY_VERIFY(qobject_cast<QMessageBox *>(QApplication::activeModalWidget()));
+    box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); box->button(QMessageBox::Retry)->click();
+    QTRY_VERIFY(controller.lastPipelineResult() != source); QTRY_VERIFY(!controller.busy()); const auto repaired = controller.lastPipelineResult();
+    QCOMPARE(repaired->pipeline.orderedResults.size(), size_t(1)); QCOMPARE(repaired->pipeline.orderedResults[0].state, ActionState::Succeeded);
+    QCOMPARE(encodes, 1); QCOMPARE(annotations, 1); QCOMPARE(consumers, 1); QCOMPARE(portal.calls, 1); QCOMPARE(bytes(path), borrowed); QCOMPARE(bytes(source->file->path), original);
+    QVERIFY(xerahs::editor::readXann(bytes(source->file->path + ".xann")).document); QCOMPARE(repaired->file->creatorTaskId, source->pipeline.taskId);
+  }
   void selectedAnnotationReturnsToCaptureAndRecoveryKeepsTheEditableDocument() {
     QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto borrowed = bytes(path);
     FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString(); CaptureActionPorts ports;

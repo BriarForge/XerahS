@@ -27,18 +27,21 @@ QString CaptureActions::actionLabel(const QString &id) {
   return names.value(id, id);
 }
 
-CaptureActions::CaptureActions(QImage media, QString directory, QString pattern, CaptureActionPorts ports, std::optional<CaptureFile> inheritedFile, std::vector<CaptureFile> inheritedFiles, std::optional<xerahs::editor::AnnotationDocument> inheritedDocument)
+CaptureActions::CaptureActions(QImage media, QString directory, QString pattern, CaptureActionPorts ports, std::optional<CaptureFile> inheritedFile, std::vector<CaptureFile> inheritedFiles, std::optional<xerahs::editor::AnnotationDocument> inheritedDocument, bool sidecarIntent)
     : m_media(std::move(media)), m_directory(std::move(directory)), m_pattern(std::move(pattern)),
-      m_savedPath(inheritedFile ? std::optional<QString>(inheritedFile->path) : std::nullopt), m_savedFile(std::move(inheritedFile)), m_ports(std::move(ports)), m_annotationDocument(std::move(inheritedDocument)) {
+      m_savedPath(inheritedFile ? std::optional<QString>(inheritedFile->path) : std::nullopt), m_savedFile(std::move(inheritedFile)), m_ports(std::move(ports)), m_annotationDocument(std::move(inheritedDocument)), m_sidecarIntent(sidecarIntent) {
+  m_sidecars.reserve(2); // reserve acknowledgements before durable publication
   if (m_savedFile && m_savedFile->artifact == "save-as.file") { m_savedAsFile = m_savedFile; m_savedFile.reset(); }
   for (const auto &file : inheritedFiles) {
     if (file.artifact == "save.file") m_savedFile = file;
     else if (file.artifact == "save-as.file") m_savedAsFile = file;
+    else if (file.artifact == "save.sidecar" || file.artifact == "save-as.sidecar") m_sidecars.push_back(file);
   }
   if (m_savedFile) m_savedPath = m_savedFile->path; else if (m_savedAsFile) m_savedPath = m_savedAsFile->path;
 }
 std::vector<CaptureFile> CaptureActions::savedFiles() const {
-  std::vector<CaptureFile> files; if (m_savedFile) files.push_back(*m_savedFile); if (m_savedAsFile) files.push_back(*m_savedAsFile); return files;
+  std::vector<CaptureFile> files; if (m_savedFile) files.push_back(*m_savedFile); if (m_savedAsFile) files.push_back(*m_savedAsFile);
+  files.insert(files.end(), m_sidecars.begin(), m_sidecars.end()); return files;
 }
 
 ActionOutcome CaptureActions::run(const ActionRequest &request) {
@@ -46,7 +49,7 @@ ActionOutcome CaptureActions::run(const ActionRequest &request) {
     if (m_ports.actionStarted) m_ports.actionStarted(request.spec.id);
     if (request.spec.id == QStringLiteral("after-capture-window") && m_ports.selection) return m_ports.selection(request.cancellation);
     if (request.spec.id == "annotation") return annotate(request.cancellation);
-    if (request.spec.id == QStringLiteral("save")) return save();
+    if (request.spec.id == QStringLiteral("save")) return save(request.cancellation);
     if (request.spec.id == QStringLiteral("save-as")) return saveAs(request.cancellation);
     if (request.spec.id == QStringLiteral("image-clipboard")) return copyImage(request.cancellation);
     if (request.spec.id == "file-clipboard" || request.spec.id == "path-clipboard" || request.spec.id == "reveal") return outputFile(request);
@@ -70,13 +73,40 @@ ActionOutcome CaptureActions::annotate(const CancellationToken &cancellation) {
   const auto rendered = renderEditorImage(source.image, *parsed.document, control);
   if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
   if (rendered.image.isNull()) return failed(rendered.diagnostic);
-  m_media = rendered.image; m_annotationDocument = *parsed.document; return {};
+  m_media = rendered.image; m_annotationDocument = *parsed.document; m_sidecarIntent = choice.sidecarIntent; return {};
 }
-ActionOutcome CaptureActions::save() {
+ActionOutcome CaptureActions::failedSave(const QString &action, const QString &code) const {
+  auto outcome = failed(code);
+  if (m_sidecarIntent) outcome.artifacts = {{action + ".file", ActionState::Failed, code}, {action + ".sidecar", ActionState::Skipped, {}}};
+  return outcome;
+}
+ActionOutcome CaptureActions::finishSave(const QString &action, const CaptureFile &raster, const CancellationToken &cancellation) {
+  if (!m_sidecarIntent) return {};
+  CaptureSidecarResult companion{false, {}, xerahs::editor::diagnostic::sidecarSaveFailed};
+  try {
+    // A durable acknowledgement of the PNG must precede the companion intent.
+    // An observer/journal failure preserves the PNG and blocks the next write.
+    if (m_ports.rasterPublished) m_ports.rasterPublished(savedFiles());
+    if (m_annotationDocument) companion = saveCaptureSidecar(raster, *m_annotationDocument, cancellation, m_ports.save);
+  } catch (...) {}
+  if (companion.file) m_sidecars.push_back(*companion.file);
+  ActionOutcome outcome;
+  outcome.artifacts = {{action + ".file", ActionState::Succeeded, {}}, {action + ".sidecar", companion.succeeded ? ActionState::Succeeded : ActionState::Failed, {}}};
+  if (companion.succeeded) outcome.artifacts[1].absent = !companion.file;
+  else {
+    outcome.state = ActionState::Failed; outcome.diagnostic = companion.diagnostic;
+    outcome.artifacts[1].diagnostic = companion.diagnostic;
+  }
+  return outcome;
+}
+ActionOutcome CaptureActions::save(const CancellationToken &cancellation) {
+  // Only a linked, acknowledged partial save reaches this branch. It repairs
+  // the original path's companion; it must never encode or publish another PNG.
+  if (m_savedFile) return m_sidecarIntent ? finishSave("save", *m_savedFile, cancellation) : failed("retry-invalid-source");
   const auto result = saveCapture(m_media, m_directory, m_pattern, m_ports.save);
-  if (!result.file) return failed(result.diagnostic);
+  if (!result.file) return failedSave("save", result.diagnostic);
   m_savedFile = result.file; m_savedPath = result.file->path;
-  return ActionOutcome{ActionState::Succeeded, std::nullopt, std::nullopt};
+  return finishSave("save", *m_savedFile, cancellation);
 }
 
 ActionOutcome CaptureActions::copyImage(const CancellationToken &cancellation) {
@@ -84,14 +114,16 @@ ActionOutcome CaptureActions::copyImage(const CancellationToken &cancellation) {
   return copyImageToNativeClipboard(m_media);
 }
 ActionOutcome CaptureActions::saveAs(const CancellationToken &cancellation) {
+  if (m_savedAsFile) return m_sidecarIntent ? finishSave("save-as", *m_savedAsFile, cancellation) : failed("retry-invalid-source");
   if (!m_ports.chooseSaveAs) return failed(kActionUnavailable);
   const auto choice = m_ports.chooseSaveAs(m_directory, cancellation);
   if (cancellation.requested() || (!choice.path && choice.diagnostic.isEmpty())) return {ActionState::Cancelled, {}, {}};
   if (!choice.diagnostic.isEmpty()) return failed(choice.diagnostic);
   const auto result = saveCaptureAs(m_media, *choice.path, cancellation, m_ports.save);
   if (result.cancelled) return {ActionState::Cancelled, {}, {}};
-  if (!result.file) return failed(result.diagnostic);
-  m_savedAsFile = result.file; if (!m_savedFile) m_savedPath = result.file->path; return {};
+  if (!result.file) return failedSave("save-as", result.diagnostic);
+  m_savedAsFile = result.file; if (!m_savedFile) m_savedPath = result.file->path;
+  return finishSave("save-as", *m_savedAsFile, cancellation);
 }
 ActionOutcome CaptureActions::outputFile(const ActionRequest &request) {
   const auto &file = request.inputArtifact == QStringLiteral("save.file") ? m_savedFile : m_savedAsFile;

@@ -153,3 +153,13 @@ transformation before save intent. A killed annotated save retains that media
 ID and unknown pending publication; linked output retry inherits it without
 inventing another annotation result. Embedded source/document bytes stay only
 in the current native receipt and never enter this metadata store.
+
+## Paired capture persistence checkpoint
+
+[PAIRED-SAVE.md](PAIRED-SAVE.md) indexes explicit companion intent for both Save
+aliases, typed raster/sidecar outcomes, known-PNG prerequisites without delete
+authority, companion-only repair with original PNG creators, and write-ahead
+known-PNG/unknown-companion restart review. Actual native/private-bus and
+killed-process fixtures verify these additive candidate seams. Workflow defaults,
+complete save/removal/format policy, shared persisted compatibility, catalogue
+recovery and all native/human acceptance gates remain Required.
