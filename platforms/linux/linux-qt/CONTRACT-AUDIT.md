@@ -91,6 +91,10 @@ The [Save As evidence](app/SAVE-AS.md) records actual new-PNG picking/publicatio
 multiple artifacts, Save-first precedence, retained-pixel retry and killed-process
 recovery. Concrete replacement/format/paired-sidecar/shared-schema decisions
 and the supported native/human gates remain Required.
+The initial Save As baseline run exposed Qt 6.4 focused-field selection
+behavior in a fixture. Corrected focus/selected-path/Save-control fixtures and
+standard directory navigation retain the rejection/path assertions, with
+isolated Qt 6.4.2 reproduction and native verification indexed in SAVE-AS.md.
 
 1. Continue full native capture/operation qualification under
    RC-001/002/008/016/018 and CORE-004/005. The pending Screenshot lifecycle is

@@ -30,6 +30,7 @@
 #include <QToolButton>
 #include <QScreen>
 #include <QSettings>
+#include <QDialogButtonBox>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
@@ -157,13 +158,18 @@ private slots:
     selection->findChild<QCheckBox *>("capture-action-save")->setChecked(false); selection->findChild<QCheckBox *>("capture-action-image-clipboard")->setChecked(false);
     selection->findChild<QCheckBox *>("capture-action-save-as")->setChecked(true); selection->findChild<QCheckBox *>("capture-action-path-clipboard")->setChecked(true); selection->accept();
     QTRY_VERIFY(qobject_cast<CaptureSaveAsDialog *>(QApplication::activeModalWidget())); auto *dialog = qobject_cast<CaptureSaveAsDialog *>(QApplication::activeModalWidget());
-    QCOMPARE(dialog->parentWidget(), &home); QVERIFY(!overlayExists()); dialog->selectFile(dir.filePath("first.png")); dialog->accept(); QTRY_VERIFY(!controller.busy());
+    QCOMPARE(dialog->parentWidget(), &home); QVERIFY(!overlayExists()); auto *buttons = dialog->findChild<QDialogButtonBox *>(); QVERIFY(buttons);
+    buttons->button(QDialogButtonBox::Save)->setFocus(); dialog->selectFile(dir.filePath("first.png"));
+    QCOMPARE(dialog->selectedFiles().value(0), dir.filePath("first.png")); dialog->accept(); QTRY_VERIFY(!controller.busy());
     const auto original = controller.lastPipelineResult(); QVERIFY(original->files.empty()); QCOMPARE(original->workingMedia.size(), QSize(30, 25)); QCOMPARE(outputs, 0);
     QVERIFY(recovery.retryAction()->isEnabled()); recovery.retryAction()->trigger(); QTRY_VERIFY(qobject_cast<QMessageBox *>(QApplication::activeModalWidget()));
     auto *confirmation = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(confirmation->text().contains("Save image as new PNG")); confirmation->button(QMessageBox::Retry)->click();
     QTRY_VERIFY(qobject_cast<CaptureSaveAsDialog *>(QApplication::activeModalWidget())); dialog = qobject_cast<CaptureSaveAsDialog *>(QApplication::activeModalWidget());
-    QCOMPARE(dialog->parentWidget(), &home); dialog->selectFile(dir.filePath("recovered.png")); dialog->accept(); QTRY_VERIFY(!controller.busy());
+    QCOMPARE(dialog->parentWidget(), &home); buttons = dialog->findChild<QDialogButtonBox *>(); QVERIFY(buttons);
+    buttons->button(QDialogButtonBox::Save)->setFocus(); dialog->selectFile(dir.filePath("recovered.png"));
+    QCOMPARE(dialog->selectedFiles().value(0), dir.filePath("recovered.png")); dialog->accept(); QTRY_VERIFY(!controller.busy());
     const auto result = controller.lastPipelineResult(); QCOMPARE(result->files.size(), size_t(1)); QCOMPARE(result->file->artifact, QString("save-as.file"));
+    QCOMPARE(result->file->path, dir.filePath("recovered.png"));
     QCOMPARE(result->pipeline.orderedResults[1].inputArtifact, std::optional<QString>{"save-as.file"}); QCOMPARE(result->file->creatorTaskId, result->pipeline.taskId);
     QCOMPARE(QImage(result->file->path), original->workingMedia); QCOMPARE(portal.calls, 1); QCOMPARE(outputs, 1); QCOMPARE(bytes(path), borrowed);
     QVERIFY(journal->list().entries[0].parsed.record); QVERIFY(journal->list().entries[0].parsed.record->terminal);

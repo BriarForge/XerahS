@@ -3,9 +3,11 @@
 #include "actions/SaveAsTarget.h"
 #include <QApplication>
 #include <QDir>
+#include <QDialogButtonBox>
 #include <QFile>
 #include <QJsonArray>
 #include <QLabel>
+#include <QPushButton>
 #include <QSettings>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -18,6 +20,16 @@ CaptureSaveAsDialog *picker() { return qobject_cast<CaptureSaveAsDialog *>(QAppl
 CapturePipelineReceipt receipt(const QSignalSpy &spy) { return qvariant_cast<CapturePipelineReceipt>(spy.first().first()); }
 QByteArray bytes(const QString &path) { QFile file(path); return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray{}; }
 bool write(const QString &path, const QByteArray &data) { QFile file(path); return file.open(QIODevice::WriteOnly) && file.write(data) == data.size(); }
+bool choosePath(CaptureSaveAsDialog *dialog, const QString &path) {
+  auto *buttons = dialog->findChild<QDialogButtonBox *>();
+  if (!buttons || !buttons->button(QDialogButtonBox::Save)) return false;
+  // Qt 6.4 selectFile() intentionally leaves a focused filename field alone.
+  // Select through Qt's public API with Save focused, verify the actual path
+  // before the click, then exercise the real Save control.
+  buttons->button(QDialogButtonBox::Save)->setFocus(); dialog->selectFile(path);
+  if (!QTest::qWaitFor([&] { return dialog->selectedFiles().value(0) == path && buttons->button(QDialogButtonBox::Save)->isEnabled(); }, 3000)) return false;
+  QTest::mouseClick(buttons->button(QDialogButtonBox::Save), Qt::LeftButton); return true;
+}
 }
 class CaptureSaveAsTest final : public QObject {
   Q_OBJECT
@@ -38,7 +50,7 @@ private slots:
     QVERIFY(!captureSaveAsTarget("/" + QString(32767, 'a')).valid());
   }
   void realPickerRejectsExistingFilesThenPublishesChosenLiteralPngAndJournal() {
-    QTemporaryDir dir; QVERIFY(write(dir.filePath("keep.png"), "KEEP")); int outputs = 0; CaptureActionPorts ports;
+    QTemporaryDir dir; QVERIFY(write(dir.filePath("keep.png"), "KEEP")); QVERIFY(QDir().mkdir(dir.filePath("folder"))); int outputs = 0; CaptureActionPorts ports;
     ports.fileOutput = [&](const QString &, const CaptureFile &file, const CancellationToken &) {
       ++outputs; return validateCaptureFile(file).isEmpty() ? ActionOutcome{} : ActionOutcome{ActionState::Failed, "fixture-invalid-file", {}};
     };
@@ -46,11 +58,11 @@ private slots:
     CapturePipeline pipeline(pixels(), dir.path(), "default", {"save-as", "path-clipboard"}, nullptr, ports, journal);
     QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_VERIFY(picker()); QPointer<CaptureSaveAsDialog> dialog(picker());
     QCOMPARE(dialog->windowModality(), Qt::ApplicationModal); QVERIFY(!QFile::exists(dir.filePath("state")));
-    dialog->selectFile(dir.filePath("keep.png")); dialog->accept(); QVERIFY(dialog->isVisible()); QCOMPARE(done.count(), 0);
+    QVERIFY(choosePath(dialog, dir.filePath("keep.png"))); QVERIFY(dialog->isVisible()); QCOMPARE(done.count(), 0);
     QCOMPARE(bytes(dir.filePath("keep.png")), QByteArray("KEEP")); QVERIFY(dialog->findChild<QLabel *>("captureSaveAsStatus")->text().contains("save-as-destination-exists"));
-    QVERIFY(QDir().mkdir(dir.filePath("folder"))); dialog->selectFile(dir.filePath("folder")); dialog->accept();
+    QVERIFY(choosePath(dialog, dir.filePath("folder")));
     QVERIFY(dialog->isVisible()); QCOMPARE(dialog->directory().absolutePath(), dir.filePath("folder"));
-    dialog->selectFile(dir.filePath("100% chosen ü")); dialog->accept(); QTRY_COMPARE(done.count(), 1); QTRY_VERIFY(!dialog);
+    QVERIFY(choosePath(dialog, dir.filePath("100% chosen ü"))); QTRY_COMPARE(done.count(), 1); QTRY_VERIFY(!dialog);
     const auto result = receipt(done); QCOMPARE(result->files.size(), size_t(1)); QCOMPARE(result->file->artifact, QString("save-as.file"));
     QCOMPARE(result->file->path, dir.filePath("100% chosen ü.png")); QCOMPARE(QImage(result->file->path), pixels()); QCOMPARE(outputs, 1);
     QCOMPARE(result->pipeline.orderedResults[1].inputArtifact, std::optional<QString>{"save-as.file"});

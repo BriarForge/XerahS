@@ -21,7 +21,7 @@ void CaptureSaveAsDialog::accept() {
   // Apply the PNG suffix only after recognizing a directory. QFileDialog's
   // defaultSuffix also changes selectedFiles(), turning "folder" into
   // "folder.png" before our validation can distinguish navigation from saving.
-  if (QFileInfo(requested).isDir()) { setDirectory(requested); selectFile("capture.png"); return; }
+  if (QFileInfo(requested).isDir()) { QFileDialog::accept(); return; }
   const auto target = xerahs::actions::captureSaveAsTarget(requested);
   const QFileInfo info(target.path);
   const QString diagnostic = !target.valid() ? target.diagnostic :

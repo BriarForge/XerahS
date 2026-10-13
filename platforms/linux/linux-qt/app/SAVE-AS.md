@@ -89,6 +89,16 @@ outputs and journals; live Avalonia settings and real capture/upload commands
 are untouched. All 37 CTest targets include the unchanged 114 published vectors;
 exact pushed-revision baseline evidence comes from Ubuntu 24.04/Qt 6.4.2 CI.
 
+The initial baseline run exposed a fixture selection error: Qt 6.4's
+[`selectFile()` implementation](https://github.com/qt/qtbase/blob/v6.4.2/src/widgets/dialogs/qfiledialog.cpp#L972)
+keeps a visible, focused filename field unchanged. The corrected fixtures move
+focus to Save before Qt's public selection API, verify the actual chosen path,
+activate the real Save control, and assert the controller's final chosen path.
+They retain existing-file rejection and folder
+navigation assertions. Directory navigation delegates to Qt's normal handler;
+suffix validation remains in Core. The cached isolated Qt 6.4.2 runtime also
+reproduced the original failure and verifies the corrected native cases.
+
 Product/conformance owners still need to specify and qualify replacement consent
 and transaction policy for an existing Save As destination, supported capture
 formats/defaults and encoding options, raster/sidecar paired persistence,
