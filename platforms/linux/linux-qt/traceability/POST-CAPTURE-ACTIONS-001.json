@@ -30,7 +30,11 @@
     "platforms/linux/linux-qt/app/ActionSelectionDialog.cpp",
     "platforms/linux/linux-qt/app/CaptureFileIdentity.cpp",
     "platforms/linux/linux-qt/app/CaptureFileOutput.h",
-    "platforms/linux/linux-qt/app/CaptureFileOutput.cpp"
+    "platforms/linux/linux-qt/app/CaptureFileOutput.cpp",
+    "platforms/linux/linux-qt/src/actions/SaveAsTarget.h",
+    "platforms/linux/linux-qt/src/actions/SaveAsTarget.cpp",
+    "platforms/linux/linux-qt/app/CaptureSaveAsDialog.h",
+    "platforms/linux/linux-qt/app/CaptureSaveAsDialog.cpp"
   ],
   "requirements": {
     "PCA-001": {
@@ -63,10 +67,12 @@
         "ocr-clipboard-depends-on-ocr"
       ],
       "disposition": "Required",
-      "note": " Native file/path clipboard and reveal now consume only resolved save.file; missing or failed save records dependency-skipped consumers while independent image clipboard continues. Consumer failure preserves the file/media and later independent outputs.",
+      "note": "Native file/path clipboard and reveal consume the resolved save.file or save-as.file, preferring Save. Failed Save can fall back to successful Save As; picker cancellation skips only Save As while independent image clipboard continues. Missing both aliases produces dependency-skipped file consumers. Failure preserves both successful files and retained media.",
       "evidence": [
         "platforms/linux/linux-qt/app/FILE-OUTPUTS.md",
-        "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp",
+        "platforms/linux/linux-qt/app/SAVE-AS.md",
+        "platforms/linux/linux-qt/tests/CaptureSaveAsTest.cpp"
       ]
     },
     "PCA-005": {
@@ -74,14 +80,16 @@
       "vectors": [
         "clipboard-failure-continues"
       ],
-      "note": "Native pipeline receipts retain confirmed working media and completed save artifacts after output failure/cancellation. Shared tray/main-window recovery actions open an immutable snapshot as a new unsaved editor document without consuming or rereading the saved capture. Explicit Discard/Cancel confirmation clears only the expected current in-memory receipt; saved files, clipboard contents and existing editor snapshots are preserved. Busy state, missing opener, stale approval, callback exception/reentrancy and owner destruction have private native UI/controller tests; editor tests prove exact source ownership/profile/alpha, empty durable path, cancelled Save and explicit new-file persistence. Only the latest receipt is retained in memory. Complete history/restart recovery, retention policy, remaining actions and physical/human qualification remain Required. Actual file/path clipboard and asynchronous file-manager output now preserve saved bytes and retained pixels after rejection, changed identity, missing service and unknown delivery.",
+      "note": "Native pipeline receipts retain confirmed working media and completed save artifacts after output failure/cancellation. Shared tray/main-window recovery actions open an immutable snapshot as a new unsaved editor document without consuming or rereading the saved capture. Explicit Discard/Cancel confirmation clears only the expected current in-memory receipt; saved files, clipboard contents and existing editor snapshots are preserved. Busy state, missing opener, stale approval, callback exception/reentrancy and owner destruction have private native UI/controller tests; editor tests prove exact source ownership/profile/alpha, empty durable path, cancelled Save and explicit new-file persistence. Only the latest receipt is retained in memory. Complete history/restart recovery, retention policy, remaining actions and physical/human qualification remain Required. Actual file/path clipboard and asynchronous file-manager output now preserve saved bytes and retained pixels after rejection, changed identity, missing service and unknown delivery. Native Save As retains both completed files and immutable pixels after picker cancellation, publication rejection or later output failure; shared retry preserves earlier creator/bytes.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/app/FILE-OUTPUTS.md",
-        "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp",
+        "platforms/linux/linux-qt/app/SAVE-AS.md",
+        "platforms/linux/linux-qt/tests/CaptureSaveAsTest.cpp"
       ],
       "disposition": "Required"
     },
@@ -99,10 +107,12 @@
       "vectors": [
         "save-failure-fallbacks"
       ],
-      "note": "Native PNG saving encodes once into an owner-private temporary file and atomically publishes through Linux RENAME_NOREPLACE. Existing files, dangling symlinks and racing writers are never replaced; collisions retry fresh random names. CaptureActions records the absolute native path, actual media type/byte length and immutable filename-generation context. Independent native tests cover exact pixels, concurrent/racing publication, private permissions, cleanup and value-free failures. Production canonical result serialization now emits the actual save artifact under a namespaced extension. Complete artifact catalogue, durable recovery, configured counter/storage integration, all save variants and native review/target qualification remain Required.",
+      "note": "Native Save and Save As encode once into an owner-private temporary and atomically publish through Linux RENAME_NOREPLACE. Save retries fresh random names on collision; Save As attempts the exact user-chosen new PNG path once and never replaces an existing destination. Qt Core validates bounded literal paths; the asynchronous native picker supports folder navigation, suffix completion and visible existing-file rejection. Actual absolute path, type, length, immutable naming context and creator ID for both file aliases enter the canonical result and journal; live identity remains in memory. Native tests verify real pixels, private publication, racing collision, failure cleanup, multiple artifacts and actual GUI selection. Full save variants/overwrite consent/formats, paired sidecars, configured storage/defaults, shared schema and native/human qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
-        "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp"
+        "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
+        "platforms/linux/linux-qt/app/SAVE-AS.md",
+        "platforms/linux/linux-qt/tests/CaptureSaveAsTest.cpp"
       ],
       "disposition": "Required"
     },
@@ -135,21 +145,23 @@
         "cancel-between-actions",
         "cancel-during-uninterruptible-action"
       ],
-      "note": "The same Qt Core engine runs native actions on a worker with a reachable cancellation token. Escape and Cancel Capture request cancellation while saving; an uninterruptible save may finish, records cancellation_arrived_during, and later clipboard work is cancelled. A claimed native clipboard call retains its actual outcome even if cancellation arrives during it; unclaimed calls cannot publish late. Native tests cover before-start, save/clipboard races, GUI responsiveness, destruction and actual overlay Escape. Full action catalogue and supported native matrix qualification remain Required. Native retry uses the same token and actual first-availability/owner-destruction fencing. Window Escape cancels capture/retry while modal dialogs retain Escape; retry cancellation preserves existing file/media and its durable lineage. Asynchronous native selection waits are cancellable on the worker; GUI close/destruction and admission cancellation cannot authorize late selected actions. File-output GUI claims use the same cancellable worker bridge. Unclaimed cancellation prevents mutation; a claimed ShowItems request waits for its real acknowledgement, records cancellation arrival and stops later actions. Lost acknowledgement interrupts rather than fabricating failure.",
+      "note": "The same Qt Core engine runs native actions on a worker with a reachable cancellation token. Escape and Cancel Capture request cancellation while saving; an uninterruptible save may finish, records cancellation_arrived_during, and later clipboard work is cancelled. A claimed native clipboard call retains its actual outcome even if cancellation arrives during it; unclaimed calls cannot publish late. Native tests cover before-start, save/clipboard races, GUI responsiveness, destruction and actual overlay Escape. Full action catalogue and supported native matrix qualification remain Required. Native retry uses the same token and actual first-availability/owner-destruction fencing. Window Escape cancels capture/retry while modal dialogs retain Escape; retry cancellation preserves existing file/media and its durable lineage. Asynchronous native selection waits are cancellable on the worker; GUI close/destruction and admission cancellation cannot authorize late selected actions. File-output GUI claims use the same cancellable worker bridge. Unclaimed cancellation prevents mutation; a claimed ShowItems request waits for its real acknowledgement, records cancellation arrival and stops later actions. Lost acknowledgement interrupts rather than fabricating failure. Save As waits cancellably for an asynchronous native picker and checks the token before encoding, after encoding and immediately before publication. Global cancellation and owner destruction release the worker; picker-only cancellation permits independent actions. Uninterruptible completion keeps its true outcome/cancellation arrival.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/ActionSelectionTest.cpp",
         "platforms/linux/linux-qt/app/ACTION-SELECTION.md",
         "platforms/linux/linux-qt/app/FILE-OUTPUTS.md",
-        "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp",
+        "platforms/linux/linux-qt/app/SAVE-AS.md",
+        "platforms/linux/linux-qt/tests/CaptureSaveAsTest.cpp"
       ],
       "disposition": "Required"
     },
     "PCA-011": {
       "status": "partial",
       "vectors": [],
-      "note": "Qt Core native-scope retry planning targets only known failed or dependency-skipped save/image-clipboard actions in catalogue order, excludes successful/cancelled/other skipped actions and rejects unsupported or interrupted/unknown outcomes. The shared tray/main-window command confirms one attempt, rechecks the exact retained pixel receipt, preserves prior successful save/clipboard actions and original native settings, and executes the same worker/GUI engine. Results and journals are append-only, with original/previous task IDs, bounded integer attempt index, preserved-success provenance and true file creator metadata under the native namespace. Native/domain/private-bus and real-process kill/reopen tests verify actual PNG/clipboard retry, cancellation, stale confirmations, owner destruction, unchanged files and storage failure. Generic prerequisite/artifact/catalogue retry, upload/idempotency, cancelled-work resumption, restart media recovery, shared vectors/schema, target matrix and human reviews remain Required. Native retry now covers failed/dependency-skipped file/path clipboard and reveal. A known successful save is reused through executor-validated native identity, or the original selected failed Save is retried as prerequisite. Unselected prerequisites, successful save repetition, and uncertain reveal delivery are rejected. Shared Retry labels identify actual outputs. Generic catalogue/multiple-artifact/Save As/upload retry remain Required.",
+      "note": "The Qt Core planner admits known failed or dependency-skipped Save/Save As/image/file/path clipboard/reveal actions in catalogue order, excludes successful/cancelled/other skipped actions and rejects unsupported or interrupted/unknown outcomes. File consumers require an acknowledged original Save/Save As or an originally selected failed save prerequisite; it never adds an unselected prerequisite or repeats successful non-idempotent work. Shared Retry confirms one attempt against the unchanged retained pixel receipt and frozen settings; failed Save As asks for a new path. Both file aliases retain earlier bytes and creator facts; a newly successful Save then receives consumer precedence. Results/journals append original/previous IDs, bounded attempt and preserved-success provenance. Native/private-bus and process-kill tests cover actual PNG/picker/output retry, cancellation, stale confirmation, owner destruction and storage failure. Remaining catalogue/prerequisite retry, uploads, cancelled-work resumption, restart media, shared schema/vectors and native/human qualification remain Required.",
       "disposition": "Required",
       "evidence": [
         "platforms/linux/linux-qt/src/actions/PipelineRetry.cpp",
@@ -159,13 +171,15 @@
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
         "platforms/linux/linux-qt/app/FILE-OUTPUTS.md",
-        "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp",
+        "platforms/linux/linux-qt/app/SAVE-AS.md",
+        "platforms/linux/linux-qt/tests/CaptureSaveAsTest.cpp"
       ]
     },
     "PCA-012": {
       "status": "partial",
       "vectors": [],
-      "note": "The actual native save/image-clipboard pipeline now uses a Qt Core write-ahead recorder and private atomic Linux journal. Save intent and unconfirmed publication paths precede native mutation; completed actions and canonical file facts are acknowledged afterwards. Reopened history retains completed/cancelled results and distinguishes interrupted unknown actions without retrying or inventing upload failure. Real-process kill/reopen, cancellation, storage failure, privacy/path and native review/forget fixtures verify this candidate seam. Full artifact/media recovery, retry authority, configured retention, crash-temporary cleanup, shared persisted compatibility, native target matrix and human review remain Required. Retry intent persists its new linked identity and inherited file facts before effects. Real-process tests kill linked save/clipboard attempts and recover an unchanged terminal original alongside an interrupted unknown new action. Effective per-run selections now reach the write-ahead recorder before output intent; real-process recovery preserves a successful selector and unknown chosen save without inventing deselected actions. File consumers use existing write-ahead intent. Live unknown reveal delivery stops the Core engine as interrupted without inventing an action result, leaving pending intent intact. Real-process killed file-clipboard recovery retains the acknowledged PNG and pending unknown action. Native file bindings stay in memory and are never reconstructed from restart metadata.",
+      "note": "The actual native save/image-clipboard pipeline now uses a Qt Core write-ahead recorder and private atomic Linux journal. Save intent and unconfirmed publication paths precede native mutation; completed actions and canonical file facts are acknowledged afterwards. Reopened history retains completed/cancelled results and distinguishes interrupted unknown actions without retrying or inventing upload failure. Real-process kill/reopen, cancellation, storage failure, privacy/path and native review/forget fixtures verify this candidate seam. Full artifact/media recovery, retry authority, configured retention, crash-temporary cleanup, shared persisted compatibility, native target matrix and human review remain Required. Retry intent persists its new linked identity and inherited file facts before effects. Real-process tests kill linked save/clipboard attempts and recover an unchanged terminal original alongside an interrupted unknown new action. Effective per-run selections now reach the write-ahead recorder before output intent; real-process recovery preserves a successful selector and unknown chosen save without inventing deselected actions. File consumers use existing write-ahead intent. Live unknown reveal delivery stops the Core engine as interrupted without inventing an action result, leaving pending intent intact. Real-process killed file-clipboard recovery retains the acknowledged PNG and pending unknown action. Native file bindings stay in memory and are never reconstructed from restart metadata. Native Save As persists its exact pending candidate before publication; canonical journals retain both acknowledged aliases. Real-process kills of Save-As-only and Save-then-Save-As preserve earlier success and unknown pending Save As. No journal is created merely while a Save-As-only picker awaits a path. This native parser extension still requires shared persisted upgrade compatibility qualification.",
       "disposition": "Required",
       "evidence": [
         "platforms/linux/linux-qt/src/actions/PipelineJournal.cpp",
@@ -177,7 +191,9 @@
         "platforms/linux/linux-qt/tests/ActionSelectionTest.cpp",
         "platforms/linux/linux-qt/app/ACTION-SELECTION.md",
         "platforms/linux/linux-qt/app/FILE-OUTPUTS.md",
-        "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp",
+        "platforms/linux/linux-qt/app/SAVE-AS.md",
+        "platforms/linux/linux-qt/tests/CaptureSaveAsTest.cpp"
       ]
     },
     "PCA-013": {
@@ -189,13 +205,15 @@
     "PCA-014": {
       "status": "implemented",
       "vectors": [],
-      "note": "One production Core runPipeline() engine serves default native capture, per-run native selection, explicit retry and conformance. The shared tray/main-window chooser returns typed outcomes to the worker engine; it creates no alternative ordering or result model. Full configured workflows, quick-task/catalogue entry-point parity and native/human qualification remain Required. The per-run chooser now enables native file/path clipboard and reveal through the same engine, result serializer and worker/GUI bridge; no shortcut creates an alternate effect path.",
+      "note": "One production Core runPipeline() engine serves default native capture, per-run native selection, explicit retry and conformance. The shared tray/main-window chooser returns typed outcomes to the worker engine; it creates no alternative ordering or result model. Full configured workflows, quick-task/catalogue entry-point parity and native/human qualification remain Required. The per-run chooser now enables native file/path clipboard and reveal through the same engine, result serializer and worker/GUI bridge; no shortcut creates an alternate effect path. Native Save As and its shared Retry picker execute through the same catalogue-ordered worker/Core engine; private-bus tests verify retained-pixel retry without another capture.",
       "disposition": "Required",
       "evidence": [
         "platforms/linux/linux-qt/app/ACTION-SELECTION.md",
         "platforms/linux/linux-qt/tests/ActionSelectionTest.cpp",
         "platforms/linux/linux-qt/app/FILE-OUTPUTS.md",
-        "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp",
+        "platforms/linux/linux-qt/app/SAVE-AS.md",
+        "platforms/linux/linux-qt/tests/CaptureSaveAsTest.cpp"
       ]
     },
     "PCA-015": {
@@ -215,13 +233,15 @@
       "vectors": [
         "all"
       ],
-      "note": "The application native receipt and thin adapter now call one Qt Core production canonical serializer. The four published result fields and applicable action/dependency/cancellation fields remain intact; actual task identity, UTC execution times and native saved-file path/type/integer byte-length/naming context are under extensions.com.xerahs.app version 1. Native shared tray/main-window review shows an immutable read-only report without retry, file, clipboard or receipt mutations. Published vectors and independent Core/native/privacy/UI fixtures cover this seam. Canonical serialization also feeds a separate versioned write-ahead journal and native restart history for save/image-clipboard. This does not accept full recovery, retry authority, the remaining artifact catalogue, shared persisted compatibility or human/native matrix gates; those remain Required. Optional retry linkage/preserved-success provenance and file creator IDs remain namespaced; native linked result review does not invent current execution results for past successes.",
+      "note": "The application native receipt and thin adapter now call one Qt Core production canonical serializer. The four published result fields and applicable action/dependency/cancellation fields remain intact; actual task identity, UTC execution times and native saved-file path/type/integer byte-length/naming context are under extensions.com.xerahs.app version 1. Native shared tray/main-window review shows an immutable read-only report without retry, file, clipboard or receipt mutations. Published vectors and independent Core/native/privacy/UI fixtures cover this seam. Canonical serialization also feeds a separate versioned write-ahead journal and native restart history for save/image-clipboard. This does not accept full recovery, retry authority, the remaining artifact catalogue, shared persisted compatibility or human/native matrix gates; those remain Required. Optional retry linkage/preserved-success provenance and file creator IDs remain namespaced; native linked result review does not invent current execution results for past successes. Native canonical file_artifacts now includes both actual Save aliases and preserved creator IDs without serializing live native bindings or truncating the result to its preferred single-file member.",
       "evidence": [
         "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
-        "platforms/linux/linux-qt/tests/PipelineHistoryDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/PipelineHistoryDialogTest.cpp",
+        "platforms/linux/linux-qt/app/SAVE-AS.md",
+        "platforms/linux/linux-qt/tests/CaptureSaveAsTest.cpp"
       ],
       "disposition": "Required"
     },
@@ -244,10 +264,12 @@
         "ocr-clipboard-depends-on-ocr"
       ],
       "disposition": "Required",
-      "note": " Explicit native retries can provide inherited save.file prerequisite availability without invented successful results. Actual native consumers revalidate a private owned regular file against an in-memory device/inode/size/timestamp binding at worker and GUI dispatch. Restart metadata does not supply this authority.",
+      "note": "Explicit native retry supplies inherited save.file and save-as.file availability without invented successful results. The engine resolves Save first, then Save As, including fallback after failed Save and new precedence after its successful retry. Actual native consumers validate their resolved private owned regular file against the in-memory publication identity on worker and GUI dispatch. Restart metadata cannot supply that authority.",
       "evidence": [
         "platforms/linux/linux-qt/app/FILE-OUTPUTS.md",
-        "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp",
+        "platforms/linux/linux-qt/app/SAVE-AS.md",
+        "platforms/linux/linux-qt/tests/CaptureSaveAsTest.cpp"
       ]
     },
     "PCA-019": {
@@ -273,10 +295,12 @@
         "delete-after-successful-upload"
       ],
       "disposition": "Required",
-      "note": " Core artifact bookkeeping distinguishes inherited availability from current-attempt creation. Delete is guarded for an inherited-only save even if prior consumers succeeded; published current-save deletion semantics remain intact. Native deletion is still unimplemented Required scope.",
+      "note": "Core bookkeeping separates inherited availability from current-attempt creation for both Save aliases. Delete is guarded for inherited-only Save or Save As even when prior consumers succeeded; published current-save deletion semantics stay intact. Native deletion remains unimplemented Required scope.",
       "evidence": [
         "platforms/linux/linux-qt/app/FILE-OUTPUTS.md",
-        "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp",
+        "platforms/linux/linux-qt/app/SAVE-AS.md",
+        "platforms/linux/linux-qt/tests/CaptureSaveAsTest.cpp"
       ]
     },
     "PCA-022": {

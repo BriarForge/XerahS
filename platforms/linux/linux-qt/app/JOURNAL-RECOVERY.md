@@ -1,8 +1,9 @@
 # Native capture result journal and recovery
 
 Candidate implementation evidence for PCA-012/013/015/016 and CORE-023.
-This is the save/image-clipboard production path, not acceptance of full
-history, all action recovery, shared persisted compatibility or human gates.
+This covers the native Save/Save As/clipboard/reveal production paths. Full
+history, all action recovery, shared persisted compatibility and human gates
+remain Required.
 
 ## Production behavior
 
@@ -130,6 +131,15 @@ Full media reconstruction, catalogue/prerequisite retry, search/pagination/reten
 action types, upgrade/recovery compatibility, filesystem/distro/compositor
 qualification and human security/privacy/accessibility/parity/release approvals
 remain Required. No gate is self-approved by these tests or this record.
+
+[Native Save As](SAVE-AS.md) now records its exact unconfirmed path before
+publication and retains both acknowledged Save aliases in the canonical file
+array. An unopened Save-As-only choice creates no journal; when an earlier file
+exists its metadata remains durable before the picker. Real-process fixtures
+kill Save-As-only and Save-then-Save-As attempts before publication, preserving
+the earlier acknowledgement and unknown pending Save As. This native parser
+extension still needs shared format/upgrade qualification; it grants no restart
+pixel, consumption or retry authority.
 
 [Native file/path clipboard and reveal](FILE-OUTPUTS.md) now extend the chooser
 and linked retry with original-save prerequisites and live file validation.

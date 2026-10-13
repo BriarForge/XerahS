@@ -24,6 +24,7 @@ QString validateCaptureFile(const CaptureFile &file);
 struct CaptureSaveResult {
   std::optional<CaptureFile> file;
   QString diagnostic;
+  bool cancelled = false;
 };
 // Native I/O ports: tests still execute real encoding/publication by default.
 struct CaptureSaveHooks {
@@ -32,4 +33,6 @@ struct CaptureSaveHooks {
 };
 CaptureSaveResult saveCapture(const QImage &media, const QString &directory, const QString &pattern,
                               const CaptureSaveHooks &hooks = {});
+CaptureSaveResult saveCaptureAs(const QImage &media, const QString &path, const xerahs::actions::CancellationToken &cancellation,
+                               const CaptureSaveHooks &hooks = {});
 } // namespace xerahs::app

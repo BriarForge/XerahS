@@ -7,10 +7,10 @@ supported native target matrix and human review/release gates remain Required.
 ## Actual operation and authority
 
 The per-run chooser now offers **Copy image file**, **Copy file path**, and
-**Show saved file in folder**, alongside Save and Copy image. These file
-consumers require Save in this run; the chooser states that prerequisite and
+**Show saved file in folder**, alongside Save, Save As and Copy image. These file
+consumers require Save or Save As in this run; the chooser states that prerequisite and
 that copying the file/path shares its saved location. It does not implicitly
-select Save. Without a successful save, the Core engine records each consumer
+select either save. Without a successful save, the Core engine records each consumer
 as dependency-skipped with `missing_artifact: save.file`. Independent image
 clipboard work continues after failed save. Defaults remain Save then Copy image.
 
@@ -62,15 +62,15 @@ or unknown outcomes; late replies cannot change a completed observation.
 
 ## Retry, provenance and recovery
 
-The Qt Core planner now covers save, image/file/path clipboard and reveal. It
+The Qt Core planner now covers Save, Save As, image/file/path clipboard and reveal. It
 targets only failed/dependency-skipped selected outputs and preserves successful
 actions. A file consumer can reuse an acknowledged original save, or run after
-the original selected failed Save is retried. It cannot implicitly add an
+the original selected failed Save or Save As is retried. It cannot implicitly add an
 unselected prerequisite, repeat a successful save to repair an externally changed
 file, or retry uncertain reveal delivery. A missing original prerequisite reports
 `retry-prerequisite-unavailable`.
 
-The engine receives inherited save availability only after native retry admission;
+The engine receives inherited Save/Save As availability only after native retry admission;
 the executor still validates the actual live artifact. Inherited prerequisites
 receive no invented action results/timings. They do not become files created by
 this attempt: the Core delete guard rejects deletion of an inherited-only save.
@@ -105,9 +105,12 @@ standard D-Bus `Timeout` and `TimedOut` spellings, `NoReply`, and `Disconnected`
 none can become a known failed action or retry permission. Concrete owner decisions include independently
 published unknown-outcome vectors and whether originally configured symlink
 save roots may be admitted through a bound directory identity; this candidate
-rejects symlink components while preserving the saved file. Native Save As/thumbnail, multiple artifact
-tracking, generic catalogue/prerequisite retry, uploads/editor handoffs,
+rejects symlink components while preserving the saved file. Native
+[Save As](SAVE-AS.md) now publishes a new chosen PNG and retains both file
+artifacts, with Save-first precedence, preserved creator facts and matching
+retry/journal coverage. Thumbnail save, complete save variants,
+generic catalogue/prerequisite retry, uploads/editor handoffs,
 configured workflows, restart media authority, retention/cleanup and all
 supported filesystem/distro/compositor/physical accessibility/security/privacy/
-parity/release reviews remain Required. Next implement native Save As with
-multiple-artifact tracking and matching retry/journal coverage.
+parity/release reviews remain Required. Next implement native annotation
+handoff and compatible re-editable persistence under PCA-008.

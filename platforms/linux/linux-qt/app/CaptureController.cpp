@@ -408,7 +408,7 @@ void CaptureController::runPipeline() {
 bool CaptureController::retryFailedActions(const CapturePipelineReceipt &expected) {
   if (m_busy || !expected || m_lastPipelineResult != expected || !expected->retryPlan().available()) return false;
   ++m_generation; m_busy = true; m_pendingPipelineCancellation = false;
-  auto *pipeline = new CapturePipeline(expected, this, m_actionPorts, m_journal);
+  auto *pipeline = new CapturePipeline(expected, this, m_actionPorts, m_journal, m_selectionParent);
   connectPipeline(pipeline);
   const QPointer<CaptureController> guard(this); const QPointer<CapturePipeline> operation(pipeline);
   emit busyChanged(true); // cancel/destruction can arrive at first availability
@@ -447,8 +447,9 @@ void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt) {
   for (const auto &action : result.orderedResults) {
     const auto label = CaptureActions::actionLabel(action.action);
     if (action.state == xerahs::actions::ActionState::Succeeded) {
-      if (action.action == QStringLiteral("save") && receipt->file) {
-        done.append(QStringLiteral("Saved %1").arg(QFileInfo(receipt->file->path).fileName()));
+      if (action.action == "save" || action.action == "save-as") {
+        for (const auto &file : receipt->savedFiles()) if (file.artifact == action.action + ".file")
+          done.append(QStringLiteral("Saved %1").arg(QFileInfo(file.path).fileName()));
       } else if (action.action == QStringLiteral("image-clipboard")) {
         done.append(QStringLiteral("copied to clipboard"));
       } else if (action.action == "file-clipboard") done.append(QStringLiteral("copied image file"));

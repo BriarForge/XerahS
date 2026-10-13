@@ -12,6 +12,7 @@
 #include <optional>
 
 namespace xerahs::app {
+struct CaptureSaveAsChoice { std::optional<QString> path; QString diagnostic; };
 struct CaptureActionPorts {
   // CapturePipeline invokes save/actionStarted on its worker and clipboard on
   // its GUI thread. Its selection bridge waits on the worker for asynchronous
@@ -24,11 +25,12 @@ struct CaptureActionPorts {
   // Worker bridge replaced by CapturePipeline; the injected actual boundary
   // runs on the GUI, like clipboard. It must report its actual outcome.
   std::function<xerahs::actions::ActionOutcome(const QString &, const CaptureFile &, const xerahs::actions::CancellationToken &)> fileOutput;
+  std::function<CaptureSaveAsChoice(const QString &, const xerahs::actions::CancellationToken &)> chooseSaveAs;
 };
 
 class CaptureActions final : public xerahs::actions::ActionExecutor {
 public:
-  CaptureActions(QImage media, QString directory, QString pattern, CaptureActionPorts ports = {}, std::optional<CaptureFile> inheritedFile = {});
+  CaptureActions(QImage media, QString directory, QString pattern, CaptureActionPorts ports = {}, std::optional<CaptureFile> inheritedFile = {}, std::vector<CaptureFile> inheritedFiles = {});
 
   xerahs::actions::ActionOutcome run(const xerahs::actions::ActionRequest &request) override;
   bool createTemporaryUploadFile() override { return false; }
@@ -36,6 +38,7 @@ public:
 
   const std::optional<QString> &savedPath() const { return m_savedPath; }
   const std::optional<CaptureFile> &savedFile() const { return m_savedFile; }
+  std::vector<CaptureFile> savedFiles() const;
   static xerahs::actions::ActionOutcome copyImageToNativeClipboard(const QImage &media);
   static QStringList selectableActions();
   static QString actionLabel(const QString &id);
@@ -46,6 +49,7 @@ public:
 
 private:
   xerahs::actions::ActionOutcome save();
+  xerahs::actions::ActionOutcome saveAs(const xerahs::actions::CancellationToken &cancellation);
   xerahs::actions::ActionOutcome copyImage(const xerahs::actions::CancellationToken &cancellation);
   xerahs::actions::ActionOutcome outputFile(const xerahs::actions::ActionRequest &request);
 
@@ -54,6 +58,7 @@ private:
   QString m_pattern;
   std::optional<QString> m_savedPath;
   std::optional<CaptureFile> m_savedFile;
+  std::optional<CaptureFile> m_savedAsFile;
   CaptureActionPorts m_ports;
 };
 

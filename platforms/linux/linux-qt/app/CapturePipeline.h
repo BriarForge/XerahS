@@ -9,9 +9,11 @@ class QTimer;
 class QWidget;
 namespace xerahs::app {
 class ActionSelectionDialog;
+class CaptureSaveAsDialog;
 struct CapturePipelineResult {
   xerahs::actions::PipelineResult pipeline;
   std::optional<CaptureFile> file;
+  std::vector<CaptureFile> files;
   QImage workingMedia;
   QString diagnostic;
   // Immutable native settings used by this capture, including after save
@@ -19,6 +21,7 @@ struct CapturePipelineResult {
   QString saveDirectory, filenamePattern;
   QJsonObject canonicalResult() const;
   xerahs::actions::PipelineRetryPlan retryPlan() const;
+  std::vector<CaptureFile> savedFiles() const;
 };
 using CapturePipelineReceipt = std::shared_ptr<const CapturePipelineResult>;
 struct CapturePipelineState;
@@ -30,7 +33,7 @@ class CapturePipeline final : public QObject {
 public:
   CapturePipeline(QImage media, QString directory, QString pattern, QStringList selected,
                   QObject *parent = nullptr, CaptureActionPorts ports = {}, PipelineJournalStorage journal = {}, QWidget *selectionParent = nullptr);
-  CapturePipeline(CapturePipelineReceipt source, QObject *parent = nullptr, CaptureActionPorts ports = {}, PipelineJournalStorage journal = {});
+  CapturePipeline(CapturePipelineReceipt source, QObject *parent = nullptr, CaptureActionPorts ports = {}, PipelineJournalStorage journal = {}, QWidget *selectionParent = nullptr);
   ~CapturePipeline() override;
   void start();
   void cancel();
@@ -54,6 +57,7 @@ private:
   bool m_finished = false;
   QPointer<ActionSelectionDialog> m_selectionDialog;
   QPointer<QWidget> m_selectionParent;
+  QPointer<CaptureSaveAsDialog> m_saveAsDialog;
 };
 } // namespace xerahs::app
 Q_DECLARE_METATYPE(xerahs::app::CapturePipelineReceipt)

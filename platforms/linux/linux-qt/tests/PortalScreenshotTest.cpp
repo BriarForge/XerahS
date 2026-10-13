@@ -6,6 +6,7 @@
 #include "ApplicationWindow.h"
 #include "ActionSelectionDialog.h"
 #include "CaptureFileOutput.h"
+#include "CaptureSaveAsDialog.h"
 #include "capture/RegionGeometry.h"
 #include "image-editor/AnnotationDocument.h"
 #include <QApplication>
@@ -28,6 +29,7 @@
 #include <QPushButton>
 #include <QToolButton>
 #include <QScreen>
+#include <QSettings>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
@@ -138,6 +140,34 @@ class PortalScreenshotTest final : public QObject {
   static Outcome outcome(const QSignalSpy &spy) { return spy.at(0).at(0).value<Outcome>(); }
   static QImage resultImage(const QSignalSpy &spy) { return spy.at(0).at(1).value<QImage>(); }
 private slots:
+  void nativeSaveAsAndSharedRetryUseRetainedPixelsWithoutAnotherPortalCapture() {
+    QTemporaryDir dir, preferences;
+    QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, preferences.path());
+    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, preferences.path());
+    const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto borrowed = bytes(path);
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString(); int encoded = 0, outputs = 0; CaptureActionPorts ports;
+    ports.save.encode = [&](const QImage &image, QIODevice *out) { return ++encoded > 1 && image.save(out, "PNG"); };
+    ports.fileOutput = [&](const QString &, const CaptureFile &, const xerahs::actions::CancellationToken &) { ++outputs; return xerahs::actions::ActionOutcome{}; };
+    auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, {}, ports, journal);
+    ApplicationWindow home({}); controller.setActionSelectionParent(&home); connect(&controller, &CaptureController::choosingActions, &home, &ApplicationWindow::activate);
+    CaptureRecoveryActions recovery(controller, &home, {});
+    controller.captureRegionWithActions(); QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35});
+    QTRY_VERIFY(qobject_cast<ActionSelectionDialog *>(QApplication::activeModalWidget())); auto *selection = qobject_cast<ActionSelectionDialog *>(QApplication::activeModalWidget());
+    selection->findChild<QCheckBox *>("capture-action-save")->setChecked(false); selection->findChild<QCheckBox *>("capture-action-image-clipboard")->setChecked(false);
+    selection->findChild<QCheckBox *>("capture-action-save-as")->setChecked(true); selection->findChild<QCheckBox *>("capture-action-path-clipboard")->setChecked(true); selection->accept();
+    QTRY_VERIFY(qobject_cast<CaptureSaveAsDialog *>(QApplication::activeModalWidget())); auto *dialog = qobject_cast<CaptureSaveAsDialog *>(QApplication::activeModalWidget());
+    QCOMPARE(dialog->parentWidget(), &home); QVERIFY(!overlayExists()); dialog->selectFile(dir.filePath("first.png")); dialog->accept(); QTRY_VERIFY(!controller.busy());
+    const auto original = controller.lastPipelineResult(); QVERIFY(original->files.empty()); QCOMPARE(original->workingMedia.size(), QSize(30, 25)); QCOMPARE(outputs, 0);
+    QVERIFY(recovery.retryAction()->isEnabled()); recovery.retryAction()->trigger(); QTRY_VERIFY(qobject_cast<QMessageBox *>(QApplication::activeModalWidget()));
+    auto *confirmation = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(confirmation->text().contains("Save image as new PNG")); confirmation->button(QMessageBox::Retry)->click();
+    QTRY_VERIFY(qobject_cast<CaptureSaveAsDialog *>(QApplication::activeModalWidget())); dialog = qobject_cast<CaptureSaveAsDialog *>(QApplication::activeModalWidget());
+    QCOMPARE(dialog->parentWidget(), &home); dialog->selectFile(dir.filePath("recovered.png")); dialog->accept(); QTRY_VERIFY(!controller.busy());
+    const auto result = controller.lastPipelineResult(); QCOMPARE(result->files.size(), size_t(1)); QCOMPARE(result->file->artifact, QString("save-as.file"));
+    QCOMPARE(result->pipeline.orderedResults[1].inputArtifact, std::optional<QString>{"save-as.file"}); QCOMPARE(result->file->creatorTaskId, result->pipeline.taskId);
+    QCOMPARE(QImage(result->file->path), original->workingMedia); QCOMPARE(portal.calls, 1); QCOMPARE(outputs, 1); QCOMPARE(bytes(path), borrowed);
+    QVERIFY(journal->list().entries[0].parsed.record); QVERIFY(journal->list().entries[0].parsed.record->terminal);
+  }
   void selectedFileOutputsAndSharedRetryKeepTheSameSavedArtifactWithoutNewCapture() {
     QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
     FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString(); QStringList outputs; bool denied = true;

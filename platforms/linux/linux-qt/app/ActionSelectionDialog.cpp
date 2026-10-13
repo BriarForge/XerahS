@@ -13,7 +13,7 @@ namespace {
 QString label(const QString &id) {
   static const QMap<QString, QString> names{
     {"image-effects", "Apply image effects"}, {"annotation", "Annotate image"}, {"save", "Save image"},
-    {"save-as", "Save image as…"}, {"save-thumbnail", "Save thumbnail"}, {"image-clipboard", "Copy image to clipboard"},
+    {"save-as", "Save image as new PNG…"}, {"save-thumbnail", "Save thumbnail"}, {"image-clipboard", "Copy image to clipboard"},
     {"before-upload-window", "Confirm before upload"}, {"upload", "Upload image"}, {"ocr", "Recognize text (OCR)"},
     {"ocr-clipboard", "Copy recognized text"}, {"qr-scan", "Scan QR code"}, {"pin", "Pin image on screen"},
     {"print", "Print image"}, {"custom-actions", "Run custom actions"}, {"file-clipboard", "Copy image file"},
@@ -31,7 +31,7 @@ ActionSelectionDialog::ActionSelectionDialog(const QStringList &configured, cons
       "Cancel or Escape stops these actions and keeps the captured image available in XerahS.\n"
       "Leave all actions unchecked to keep the capture without saving or copying it.").arg(dimensions.width()).arg(dimensions.height()), this);
   intro->setWordWrap(true); intro->setTextFormat(Qt::PlainText); layout->addWidget(intro);
-  auto *scope = new QLabel(QStringLiteral("Workflow defaults stay unchanged. File/path clipboard and Show saved file need Save image. "
+  auto *scope = new QLabel(QStringLiteral("Workflow defaults stay unchanged. File/path clipboard and Show saved file need Save image or Save As. "
       "Copying a file or path shares its saved location; Show saved file requests your file manager. Unavailable actions are listed below."), this);
   scope->setWordWrap(true); layout->addWidget(scope);
   auto *scroll = new QScrollArea(this); scroll->setWidgetResizable(true);

@@ -11,5 +11,5 @@ bool validPipelineRetryLink(const PipelineRetryLink &link, const QString &taskId
 // Native save/image/file/path clipboard and reveal retry. Working media is supplied by
 // the immutable in-memory receipt, not inferred from a restart record or path.
 // Catalogue-wide prerequisite/artifact retry remains separately Required.
-PipelineRetryPlan planRetainedCaptureRetry(const PipelineResult &source, bool mediaAvailable, bool savedFileAvailable);
+PipelineRetryPlan planRetainedCaptureRetry(const PipelineResult &source, bool mediaAvailable, bool savedFileAvailable, bool savedAsFileAvailable = false);
 } // namespace xerahs::actions

@@ -31,6 +31,20 @@ void write(const QString &path, const QByteArray &data) { QFile file(path); if (
 class PipelineJournalTest final : public QObject {
   Q_OBJECT
 private slots:
+  void killedSaveAsHasItsOwnUnknownCandidateAndPreservesEarlierArtifacts_data() {
+    QTest::addColumn<bool>("earlierSave"); QTest::newRow("Save As only") << false; QTest::newRow("Save then Save As") << true;
+  }
+  void killedSaveAsHasItsOwnUnknownCandidateAndPreservesEarlierArtifacts() {
+    QFETCH(bool, earlierSave); QTemporaryDir dir; QProcess process;
+    process.start(QCoreApplication::applicationDirPath() + "/pipeline-journal-fixture", {dir.filePath("state"), dir.filePath("output"), earlierSave ? "both-save-as-before-publication" : "save-as-before-publication"});
+    QVERIFY(process.waitForStarted(3000)); QTRY_VERIFY_WITH_TIMEOUT(process.canReadLine() || process.state() == QProcess::NotRunning, 5000);
+    QCOMPARE(process.readLine().trimmed(), QByteArray("checkpoint")); process.kill(); QVERIFY(process.waitForFinished(3000));
+    NativePipelineJournal storage(dir.filePath("state")); const auto listing = storage.list(); QCOMPARE(listing.entries.size(), size_t(1));
+    const auto &record = listing.entries[0].parsed.record; QVERIFY(record); QVERIFY(!record->terminal);
+    QCOMPARE(*record->pendingAction, QString("save-as")); QCOMPARE(*record->pendingSavePath, dir.filePath("output/chosen.png"));
+    QCOMPARE(record->report.value("ordered_results").toArray().size(), earlierSave ? 1 : 0);
+    QVERIFY(!QFile::exists(dir.filePath("output/chosen.png"))); if (earlierSave) QCOMPARE(QImage(dir.filePath("output/capture.png")), pixels());
+  }
   void killedSavedFileConsumerPreservesTheFileAndUnknownPendingAction() {
     QTemporaryDir dir; QProcess process;
     process.start(QCoreApplication::applicationDirPath() + "/pipeline-journal-fixture", {dir.filePath("state"), dir.filePath("output"), "file-output"});

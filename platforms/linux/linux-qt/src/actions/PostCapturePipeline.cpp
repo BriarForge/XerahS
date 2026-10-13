@@ -30,8 +30,9 @@ struct Resolution {
 
 class ArtifactSet {
 public:
-  explicit ArtifactSet(bool inheritedSave) {
+  ArtifactSet(bool inheritedSave, bool inheritedSaveAs) {
     m_available.insert(kWorkingMedia); if (inheritedSave) m_available.insert(kSaveFile);
+    if (inheritedSaveAs) m_available.insert(kSaveAsFile);
   }
 
   void add(const QStringList &artifacts) {
@@ -194,7 +195,7 @@ PipelineResult runPipeline(const QString &taskId, const QStringList &selected,
   PipelineResult result;
   result.taskId = taskId;
   std::vector<int> plan = planFor(selected, -1, &result.ignoredSelection);
-  ArtifactSet artifacts(options.inheritedSaveAvailable);
+  ArtifactSet artifacts(options.inheritedSaveAvailable, options.inheritedSaveAsAvailable);
   bool uploadDeclined = false;
   bool cancellationPreventedStart = false;
   bool selectionCancelled = false;

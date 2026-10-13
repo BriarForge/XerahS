@@ -137,6 +137,7 @@ struct PipelineOptions {
   // admission. The executor still validates its native file at consumption.
   // This grants prerequisite availability, never authority to delete it.
   bool inheritedSaveAvailable = false;
+  bool inheritedSaveAsAvailable = false;
 };
 
 // PCA-011: append-only attempt identity. Preserved successes are provenance,

@@ -21,6 +21,8 @@ add_library(xerahs_core STATIC
   src/actions/PostCapturePipeline.h
   src/actions/ActionSelection.cpp
   src/actions/ActionSelection.h
+  src/actions/SaveAsTarget.cpp
+  src/actions/SaveAsTarget.h
   src/actions/PipelineResultJson.cpp
   src/actions/PipelineResultJson.h
   src/actions/PipelineRetry.cpp
@@ -97,7 +99,8 @@ target_include_directories(xerahs_file_output PUBLIC app)
 target_link_libraries(xerahs_file_output PUBLIC xerahs_core Qt6::Gui Qt6::DBus)
 target_compile_options(xerahs_file_output PRIVATE -Wall -Wextra -Wpedantic)
 
-add_library(xerahs_action_selection STATIC app/ActionSelectionDialog.cpp app/ActionSelectionDialog.h)
+add_library(xerahs_action_selection STATIC app/ActionSelectionDialog.cpp app/ActionSelectionDialog.h
+  app/CaptureSaveAsDialog.cpp app/CaptureSaveAsDialog.h)
 set_target_properties(xerahs_action_selection PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_action_selection PUBLIC app)
 target_link_libraries(xerahs_action_selection PUBLIC xerahs_core Qt6::Widgets)
@@ -212,6 +215,13 @@ target_link_libraries(capture-file-output-test PRIVATE xerahs_file_output xerahs
 add_test(NAME capture-file-output COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-file-output-test>)
 set_tests_properties(capture-file-output PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+add_executable(capture-save-as-test tests/CaptureSaveAsTest.cpp app/CapturePipeline.cpp app/CapturePipeline.h
+  app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h)
+set_target_properties(capture-save-as-test PROPERTIES AUTOMOC ON)
+target_link_libraries(capture-save-as-test PRIVATE xerahs_file_output xerahs_action_selection xerahs_pipeline_journal Qt6::Test)
+add_test(NAME capture-save-as COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-save-as-test>)
+set_tests_properties(capture-save-as PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 add_executable(capture-save-test tests/CaptureSaveTest.cpp app/CaptureSave.cpp app/CaptureSave.h)
 set_target_properties(capture-save-test PROPERTIES AUTOMOC ON)
 target_include_directories(capture-save-test PRIVATE app)

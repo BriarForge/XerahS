@@ -2,6 +2,7 @@
 #include "ActionSelectionDialog.h"
 #include <QApplication>
 #include <QCheckBox>
+#include <QDir>
 #include <QThread>
 #include <QTimer>
 #include <cstdio>
@@ -32,11 +33,20 @@ int main(int argc, char **argv) {
     original.start(); return app.exec();
   }
   CaptureActionPorts ports;
+  if (mode == "save-as-before-publication" || mode == "both-save-as-before-publication") {
+    ports.chooseSaveAs = [directory = QString::fromLocal8Bit(argv[2])](const QString &, const CancellationToken &) {
+      return CaptureSaveAsChoice{directory + "/chosen.png", {}};
+    };
+    ports.save.beforePublish = [stop](const QString &path) { if (path.endsWith("/chosen.png")) stop(); };
+  }
   if (mode == "file-output") ports.fileOutput = [stop](const QString &, const CaptureFile &, const CancellationToken &) { stop(); return ActionOutcome{}; };
   if (mode == "before-publication" || mode == "selection-before-publication") ports.save.beforePublish = [stop](const QString &) { stop(); };
   ports.clipboard = [mode, stop](const QImage &, const CancellationToken &) { if (mode == "after-save") stop(); return ActionOutcome{}; };
   QImage image(9, 7, QImage::Format_ARGB32); image.fill(Qt::red);
   QStringList selected{"save", "image-clipboard"};
+  if (mode == "save-as-before-publication") selected = {"save-as"};
+  if (mode == "both-save-as-before-publication") selected = {"save", "save-as"};
+  if (mode == "save-as-before-publication") QDir().mkpath(QString::fromLocal8Bit(argv[2]));
   if (mode == "file-output") selected = {"save", "file-clipboard"};
   QTimer selection;
   if (mode == "selection-before-publication") {

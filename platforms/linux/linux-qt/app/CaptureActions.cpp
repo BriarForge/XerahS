@@ -18,23 +18,34 @@ ActionOutcome failed(const QString &diagnostic) {
 }  // namespace
 
 const QString CaptureActions::kActionUnavailable = QStringLiteral("action-unavailable");
-QStringList CaptureActions::selectableActions() { return {"save", "image-clipboard", "file-clipboard", "path-clipboard", "reveal"}; }
+QStringList CaptureActions::selectableActions() { return {"save", "save-as", "image-clipboard", "file-clipboard", "path-clipboard", "reveal"}; }
 QString CaptureActions::actionLabel(const QString &id) {
-  static const QMap<QString, QString> names{{"save", "Save image"}, {"image-clipboard", "Copy image to clipboard"},
+  static const QMap<QString, QString> names{{"save", "Save image"}, {"save-as", "Save image as new PNG…"}, {"image-clipboard", "Copy image to clipboard"},
       {"file-clipboard", "Copy image file"}, {"path-clipboard", "Copy file path"}, {"reveal", "Show saved file in folder"},
       {"after-capture-window", "Choose capture actions"}};
   return names.value(id, id);
 }
 
-CaptureActions::CaptureActions(QImage media, QString directory, QString pattern, CaptureActionPorts ports, std::optional<CaptureFile> inheritedFile)
+CaptureActions::CaptureActions(QImage media, QString directory, QString pattern, CaptureActionPorts ports, std::optional<CaptureFile> inheritedFile, std::vector<CaptureFile> inheritedFiles)
     : m_media(std::move(media)), m_directory(std::move(directory)), m_pattern(std::move(pattern)),
-      m_savedPath(inheritedFile ? std::optional<QString>(inheritedFile->path) : std::nullopt), m_savedFile(std::move(inheritedFile)), m_ports(std::move(ports)) {}
+      m_savedPath(inheritedFile ? std::optional<QString>(inheritedFile->path) : std::nullopt), m_savedFile(std::move(inheritedFile)), m_ports(std::move(ports)) {
+  if (m_savedFile && m_savedFile->artifact == "save-as.file") { m_savedAsFile = m_savedFile; m_savedFile.reset(); }
+  for (const auto &file : inheritedFiles) {
+    if (file.artifact == "save.file") m_savedFile = file;
+    else if (file.artifact == "save-as.file") m_savedAsFile = file;
+  }
+  if (m_savedFile) m_savedPath = m_savedFile->path; else if (m_savedAsFile) m_savedPath = m_savedAsFile->path;
+}
+std::vector<CaptureFile> CaptureActions::savedFiles() const {
+  std::vector<CaptureFile> files; if (m_savedFile) files.push_back(*m_savedFile); if (m_savedAsFile) files.push_back(*m_savedAsFile); return files;
+}
 
 ActionOutcome CaptureActions::run(const ActionRequest &request) {
   try {
     if (m_ports.actionStarted) m_ports.actionStarted(request.spec.id);
     if (request.spec.id == QStringLiteral("after-capture-window") && m_ports.selection) return m_ports.selection(request.cancellation);
     if (request.spec.id == QStringLiteral("save")) return save();
+    if (request.spec.id == QStringLiteral("save-as")) return saveAs(request.cancellation);
     if (request.spec.id == QStringLiteral("image-clipboard")) return copyImage(request.cancellation);
     if (request.spec.id == "file-clipboard" || request.spec.id == "path-clipboard" || request.spec.id == "reveal") return outputFile(request);
     return failed(kActionUnavailable);
@@ -52,11 +63,22 @@ ActionOutcome CaptureActions::copyImage(const CancellationToken &cancellation) {
   if (m_ports.clipboard) return m_ports.clipboard(m_media, cancellation);
   return copyImageToNativeClipboard(m_media);
 }
+ActionOutcome CaptureActions::saveAs(const CancellationToken &cancellation) {
+  if (!m_ports.chooseSaveAs) return failed(kActionUnavailable);
+  const auto choice = m_ports.chooseSaveAs(m_directory, cancellation);
+  if (cancellation.requested() || (!choice.path && choice.diagnostic.isEmpty())) return {ActionState::Cancelled, {}, {}};
+  if (!choice.diagnostic.isEmpty()) return failed(choice.diagnostic);
+  const auto result = saveCaptureAs(m_media, *choice.path, cancellation, m_ports.save);
+  if (result.cancelled) return {ActionState::Cancelled, {}, {}};
+  if (!result.file) return failed(result.diagnostic);
+  m_savedAsFile = result.file; if (!m_savedFile) m_savedPath = result.file->path; return {};
+}
 ActionOutcome CaptureActions::outputFile(const ActionRequest &request) {
-  if (!m_savedFile || request.inputArtifact != QStringLiteral("save.file")) return failed("saved-file-unavailable");
-  const auto validation = validateCaptureFile(*m_savedFile); if (!validation.isEmpty()) return failed(validation);
+  const auto &file = request.inputArtifact == QStringLiteral("save.file") ? m_savedFile : m_savedAsFile;
+  if (!file || request.inputArtifact != file->artifact) return failed("saved-file-unavailable");
+  const auto validation = validateCaptureFile(*file); if (!validation.isEmpty()) return failed(validation);
   if (!m_ports.fileOutput) return failed(kActionUnavailable);
-  return m_ports.fileOutput(request.spec.id, *m_savedFile, request.cancellation);
+  return m_ports.fileOutput(request.spec.id, *file, request.cancellation);
 }
 
 ActionOutcome CaptureActions::copyImageToNativeClipboard(const QImage &media) {

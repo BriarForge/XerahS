@@ -1,6 +1,6 @@
 # Linux contract scope audit
 
-Audit date: 12 October 2026; evidence updated 13 October 2026. Starting implementation: `82ef55e` on `main`.
+Audit date: 12 October 2026; evidence updated 14 October 2026. Starting implementation: `82ef55e` on `main`.
 Source of truth: Product Contract 0.3.1, its capability specifications,
 scenarios, published vectors, parity ledgers and [readiness gates](../../../product-contract/READINESS.md).
 This is an implementation audit and work ordering record, not an acceptance,
@@ -31,7 +31,7 @@ entire specification and linked ledger rows, not just the examples listed.
 |---|---|---|
 | `CORE-PLATFORM-001` | All 37 CORE rows traced; native lifetime lock, authenticated bounded activation, real-process failure/recovery and actual-application forwarding tests; native command window sharing tray actions | Complete main application/onboarding, shared profile/activation qualification, localization, notification authority/privacy, updates, migration, credential services, global shortcuts, general capture, recording/audio, media, uploads, plugins, history, automation/watch folders/assistant, diagnostics and distribution remain Required. Native candidate evidence does not accept human reviews or full CORE scope. |
 | `FILENAME-GENERATION-001` | `src/naming/`, adapter and 51 vectors | Complete native preference/input integration, filename preview and destination workflow qualification remain Required. Core expansion evidence alone does not accept all native usage paths. |
-| `POST-CAPTURE-ACTIONS-001` | `src/actions/`, adapter and 17 vectors; `CapturePipeline` runs native PNG publication and GUI clipboard dispatch through the Core engine, with cancellation, activity, actual artifact metadata and in-memory receipts with shared edit/discard/review controls; native save/clipboard write-ahead records and multi-record restart history preserve acknowledged results and distinguish interrupted unknown actions; explicit native linked retry reuses retained pixels/settings and preserves previous successes; the application and adapter share the canonical result serializer with namespaced task/timing/file/retry facts; a cancellable native per-run chooser selects Save/Copy/empty with effective-plan journal recovery; native file/path clipboard and asynchronous ShowItems reveal consume a live file binding and support linked prerequisite retry | Full native action catalogue, configured workflow selection/persistence, annotation/effects/output handoffs, uploads, complete catalogue/prerequisite retry, full durable media/artifact recovery, configured retention/pagination, crash cleanup authority, shared persisted compatibility, privacy and consent qualification remain Required. |
+| `POST-CAPTURE-ACTIONS-001` | `src/actions/`, adapter and 17 vectors; `CapturePipeline` runs native PNG publication and GUI clipboard dispatch through the Core engine, with cancellation, activity, actual artifact metadata and in-memory receipts with shared edit/discard/review controls; native write-ahead records and multi-record restart history preserve acknowledged results and distinguish interrupted unknown actions; explicit native linked retry reuses retained pixels/settings and preserves previous successes; the application and adapter share the canonical result serializer with namespaced task/timing/file/retry facts; a cancellable per-run chooser selects outputs/empty with effective-plan recovery; native file/path clipboard and asynchronous ShowItems reveal consume a live file binding; native Save As chooses a new PNG path, retains both Save aliases with Save-first precedence and has actual picker, linked retry and process-kill journal evidence | Full save variants, native action catalogue, configured workflow selection/persistence, annotation/effects/output handoffs, uploads, complete catalogue/prerequisite retry, full durable media/artifact recovery, configured retention/pagination, crash cleanup authority, shared persisted compatibility, privacy and consent qualification remain Required. |
 | `REGION-CAPTURE-001` | `src/capture/`, 21 vectors; `PortalScreenshot`, `CaptureController`, `RegionOverlay`; native portal lifecycle/failure tests, worker composition with accessible progress and responsive cancellation, independent pixel fixtures and stale-worker isolation tests | The controller assumes a uniform desktop scale; per-monitor physical source mapping, rotation/colour/availability, mixed displays, cursor settings, HDR conversion, interactive handles/snapping/magnifier, persisted last-region invocation, physical accessibility and performance remain Required. |
 | `EDITOR-SESSION-001` | Document/sidecar, source binding, rectangle history/rendering, native editor, 19 vectors | Full contracted annotation/effect/canvas/output integration, complete persistence compatibility, native parity, visual goldens and human reviews remain Required. |
 | `EDITOR-ANNOTATIONS-001` | Rectangle creation/selection/style/rotation/order in the session and canvas | No complete EA trace. All 20 stable tools, curves/freehand/text/balloons/steps/image/emoji/cursor, redaction/magnifier/spotlight/eraser/cut-out, object clipboard/duplicate, complete persistence and accessible tool controls remain Required. |
@@ -75,7 +75,8 @@ marked implemented in a core trace file.
 
 ## Next production work
 
-The 13 October journal/recovery, linked native retry, per-run selection and saved-file output checkpoints passed all 36 local CTest targets
+The 14 October Save As/multiple-file checkpoint extends journal/recovery,
+linked native retry, per-run selection and saved-file outputs. It passed all 37 local CTest targets
 (native tests and all 114 published vectors for the six implemented vector
 packages), contract lint/backlog checks, their 25 unit tests and the seven
 conformance-runner unit tests. The production-path real-process fixtures use
@@ -86,6 +87,10 @@ The [journal evidence](app/JOURNAL-RECOVERY.md) indexes verified behavior and
 concrete retention, crash-temporary and shared recovery-format decisions.
 The [retry evidence](app/RETRY-POLICY.md) records actual native eligibility,
 append-only results, file provenance, cancellation and remaining retry scope.
+The [Save As evidence](app/SAVE-AS.md) records actual new-PNG picking/publication,
+multiple artifacts, Save-first precedence, retained-pixel retry and killed-process
+recovery. Concrete replacement/format/paired-sidecar/shared-schema decisions
+and the supported native/human gates remain Required.
 
 1. Continue full native capture/operation qualification under
    RC-001/002/008/016/018 and CORE-004/005. The pending Screenshot lifecycle is
@@ -107,9 +112,12 @@ append-only results, file provenance, cancellation and remaining retry scope.
    resolves original save prerequisites in explicit retry and leaves uncertain
    reveal delivery interrupted. The [file-output evidence](app/FILE-OUTPUTS.md)
    records actual native behavior, path-race limits and remaining human/native
-   qualification. Next implement native Save As with multiple-artifact tracking
-   and matching retry/journal coverage. Continue full workflow configuration
-   and media/artifact recovery alongside that work.
+   qualification. Native Save As now retains both files, checks cancellation at
+   safe publication boundaries and preserves earlier success in retry/recovery.
+   Next implement the native annotation handoff and compatible re-editable
+   persistence under PCA-008, before save, with truthful raster failure and
+   cancellation behavior. Continue full workflow configuration, remaining save
+   variants and media/artifact recovery alongside that work.
 4. Maintain requirement-level traces and meaningful failure/consent evidence;
    qualify the complete supported target matrix and prepare all human gates.
 

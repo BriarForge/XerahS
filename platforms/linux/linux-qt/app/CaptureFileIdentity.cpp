@@ -17,7 +17,7 @@ std::optional<CaptureFileIdentity> captureFileIdentity(int descriptor) {
       info.st_mtim.tv_nsec, info.st_ctim.tv_sec, info.st_ctim.tv_nsec};
 }
 QString validateCaptureFile(const CaptureFile &file) {
-  if (!file.identity || file.artifact != "save.file" || !QDir::isAbsolutePath(file.path) || file.path.contains(QChar::Null))
+  if (!file.identity || (file.artifact != "save.file" && file.artifact != "save-as.file") || !QDir::isAbsolutePath(file.path) || file.path.contains(QChar::Null))
     return QStringLiteral("saved-file-unavailable");
   const auto components = file.path.split('/', Qt::SkipEmptyParts);
   if (components.isEmpty()) return QStringLiteral("saved-file-unavailable");

@@ -20,7 +20,9 @@ Additional metadata lives in `extensions.com.xerahs.app`, version 1:
   starting receive no invented timestamps.
 - `file_artifacts` contains canonical artifact identity, absolute native path,
   media type, actual integer byte length and the immutable naming context.
-  Serialization never rereads, updates or removes a file.
+  Save and Save As retain separate file entries and actual creator IDs. Native
+  consumers prefer Save, then Save As. Serialization never rereads, updates or
+  removes a file or persists its live native identity binding.
 - `ignored_selection`, when present, reports unknown selected IDs that did not
   execute. This is report data, not an ordinary diagnostic.
 
@@ -57,3 +59,8 @@ failure, exact file/context facts and absence of private exception/pixel payload
 check the review surface, redacted outcomes, plain read-only JSON, Escape/owner
 cleanup and unchanged receipt, clipboard, borrowed source and saved file.
 Physical screen-reader/compositor qualification and human reviews remain Required.
+
+[Native Save As evidence](SAVE-AS.md) verifies both real PNG artifacts,
+canonical/journal facts and linked retries preserving the earlier creator and
+bytes. The preferred single-file compatibility member does not truncate the
+multiple-file report.

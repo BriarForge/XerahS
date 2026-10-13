@@ -109,9 +109,17 @@ in [action selection evidence](app/ACTION-SELECTION.md). Native saved-file clipb
 live in-memory publication binding, worker/GUI validation, asynchronous bounded
 ShowItems, truthful interruption on unknown delivery and linked original-save
 prerequisite retry. [File-output evidence](app/FILE-OUTPUTS.md) records actual
-verification and path-race/native/human limits. Continue native Save As with
-multiple-artifact tracking and matching retry/journal coverage, alongside full
-configured workflows and the remaining catalogue.
+verification and path-race/native/human limits. Native Save As now opens an
+asynchronous Qt new-PNG picker, publishes on the worker without replacement,
+and retains both file aliases with Save-first precedence. Picker cancellation
+skips only that action; global cancellation stops later actions. Explicit retry
+keeps known successes/creator facts and asks again only for failed Save As;
+write-ahead recovery preserves earlier files and unknown pending publication.
+[Save As evidence](app/SAVE-AS.md) indexes actual picker/private-bus/process-kill
+tests and concrete remaining replacement/format/sidecar/shared-schema decisions.
+Next implement native annotation handoff and compatible re-editable persistence
+under PCA-008 before save, including truthful raster failure and cancellation,
+alongside full configured workflows, remaining save variants and catalogue.
 
 Each checkpoint updates requirement traceability, runs native tests and the
 implemented shared vectors, and lands on `main`. Passing the small pilot vector

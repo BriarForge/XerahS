@@ -16,6 +16,15 @@ PipelineResult result(ActionState save, ActionState clipboard) {
 class PipelineRetryTest final : public QObject {
   Q_OBJECT
 private slots:
+  void saveAsArtifactsSatisfyConsumersAndDoNotAuthorizeSuccessfulSaveReplay() {
+    PipelineResult source; source.taskId = id(); source.orderedResults = {ActionResult{"save-as", ActionState::Succeeded}, ActionResult{"path-clipboard", ActionState::Failed}};
+    const auto plan = planRetainedCaptureRetry(source, true, false, true); QVERIFY(plan.available()); QCOMPARE(plan.selected, QStringList{"path-clipboard"});
+    QCOMPARE(plan.link->preservedSuccessfulActions, QStringList{"save-as"});
+    QCOMPARE(planRetainedCaptureRetry(source, true, false, false).diagnostic, QString("retry-artifact-unavailable"));
+    source.orderedResults[0].state = ActionState::Failed; source.orderedResults[1].state = ActionState::Skipped;
+    source.orderedResults[1].diagnostic = diagnostic::dependencyUnavailable;
+    QCOMPARE(planRetainedCaptureRetry(source, true, false, false).selected, (QStringList{"save-as", "path-clipboard"}));
+  }
   void fileConsumersReuseKnownSaveOrRetryOnlyItsOriginallyFailedPrerequisite() {
     auto source = result(ActionState::Succeeded, ActionState::Succeeded);
     source.orderedResults.push_back(ActionResult{"file-clipboard", ActionState::Succeeded});

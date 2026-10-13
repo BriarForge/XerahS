@@ -112,7 +112,7 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
     record.pendingAction = id;
   }
   if (value.contains("pending_save_path")) {
-    if (record.pendingAction != QStringLiteral("save") || !pathValue(value.value("pending_save_path"))) return invalid();
+    if ((record.pendingAction != QStringLiteral("save") && record.pendingAction != QStringLiteral("save-as")) || !pathValue(value.value("pending_save_path"))) return invalid();
     record.pendingSavePath = value.value("pending_save_path").toString();
   }
   if (record.terminal && completed.size() != record.selected.size()) return invalid();
@@ -138,6 +138,9 @@ bool PipelineJournalRecorder::begin() {
 bool PipelineJournalRecorder::before(const ActionSpec &action) {
   if (!m_storage) return true;
   const bool required = action.id == "save" || action.kind == ActionKind::Network || !m_snapshot.files.empty();
+  // Save As may still be cancelled without a destination or durable effect.
+  // Once chosen, beforePublish() persists both intent and exact candidate path.
+  if (action.id == "save-as" && !required && !m_expected) { m_snapshot.pendingAction = action.id; return true; }
   if (!required && !m_expected) return true;
   m_snapshot.pendingAction = action.id; m_snapshot.pendingSavePath.reset();
   const bool stored = persist();

@@ -1,6 +1,7 @@
 #include "CapturePipeline.h"
 #include "ActionSelectionDialog.h"
 #include "CaptureFileOutput.h"
+#include "CaptureSaveAsDialog.h"
 #include <QPointer>
 #include <QThread>
 #include <QTimer>
@@ -11,11 +12,14 @@
 namespace xerahs::app {
 using namespace xerahs::actions;
 QJsonObject CapturePipelineResult::canonicalResult() const {
-  return pipelineResultJson(pipeline, file ? std::vector<SavedFileArtifact>{*file}
-                                         : std::vector<SavedFileArtifact>{});
+  std::vector<SavedFileArtifact> facts; for (const auto &saved : savedFiles()) facts.push_back(saved);
+  return pipelineResultJson(pipeline, facts);
 }
+std::vector<CaptureFile> CapturePipelineResult::savedFiles() const { return files.empty() && file ? std::vector<CaptureFile>{*file} : files; }
 PipelineRetryPlan CapturePipelineResult::retryPlan() const {
-  return planRetainedCaptureRetry(pipeline, !workingMedia.isNull(), bool(file));
+  bool save = false, saveAs = false;
+  for (const auto &saved : savedFiles()) { save |= saved.artifact == "save.file"; saveAs |= saved.artifact == "save-as.file"; }
+  return planRetainedCaptureRetry(pipeline, !workingMedia.isNull(), save, saveAs);
 }
 namespace {
 struct ClipboardCall {
@@ -26,10 +30,12 @@ struct ClipboardCall {
 };
 struct SelectionCall { bool done = false; ActionOutcome result; };
 struct FileOutputCall { QString action; std::optional<CaptureFile> file; bool claimed = false, done = false; ActionOutcome result; };
+struct SaveAsCall { QString directory; bool done = false; CaptureSaveAsChoice choice; };
 void completeSelection(const std::shared_ptr<CapturePipelineState> &state, const std::shared_ptr<SelectionCall> &call, ActionOutcome result);
 ActionOutcome cancelled() { return {ActionState::Cancelled, {}, {}}; }
 QString actionActivity(const QString &id) {
   if (id == "save") return QStringLiteral("Saving capture. Escape or Cancel Capture stops later actions.");
+  if (id == "save-as") return QStringLiteral("Choose a new PNG path. Cancel skips Save As; Cancel Capture stops later actions.");
   if (id == "image-clipboard") return QStringLiteral("Copying capture to the clipboard.");
   if (id == "after-capture-window") return QStringLiteral("Choose actions for this capture. Escape cancels before saving or copying.");
   if (id == "file-clipboard") return QStringLiteral("Copying the saved file to the clipboard.");
@@ -45,11 +51,16 @@ struct CapturePipelineState {
   std::shared_ptr<ClipboardCall> clipboard;
   std::shared_ptr<SelectionCall> selection;
   std::shared_ptr<FileOutputCall> fileOutput;
+  std::shared_ptr<SaveAsCall> saveAs;
   std::shared_ptr<CapturePipelineResult> result = std::make_shared<CapturePipelineResult>();
   QString activity;
   bool ready = false;
 };
 namespace {
+void completeSaveAs(const std::shared_ptr<CapturePipelineState> &state, const std::shared_ptr<SaveAsCall> &call, CaptureSaveAsChoice choice) {
+  { std::lock_guard<std::mutex> lock(state->mutex); if (call->done) return; call->choice = std::move(choice); call->done = true; }
+  state->changed.notify_all();
+}
 void completeFileOutput(const std::shared_ptr<CapturePipelineState> &state, const std::shared_ptr<FileOutputCall> &call, ActionOutcome outcome) {
   { std::lock_guard<std::mutex> lock(state->mutex); if (call->done) return; call->result = std::move(outcome); call->done = true; }
   state->changed.notify_all();
@@ -86,9 +97,9 @@ CapturePipeline::CapturePipeline(QImage media, QString directory, QString patter
   qRegisterMetaType<CapturePipelineReceipt>();
   m_timer = new QTimer(this); m_timer->setInterval(10); connect(m_timer, &QTimer::timeout, this, &CapturePipeline::poll);
 }
-CapturePipeline::CapturePipeline(CapturePipelineReceipt source, QObject *parent, CaptureActionPorts ports, PipelineJournalStorage journal)
+CapturePipeline::CapturePipeline(CapturePipelineReceipt source, QObject *parent, CaptureActionPorts ports, PipelineJournalStorage journal, QWidget *selectionParent)
     : CapturePipeline(source ? source->workingMedia : QImage{}, source ? source->saveDirectory : QString{},
-                      source ? source->filenamePattern : QString{}, {}, parent, std::move(ports), std::move(journal)) {
+                      source ? source->filenamePattern : QString{}, {}, parent, std::move(ports), std::move(journal), selectionParent) {
   m_retryRequested = true; m_retrySource = std::move(source);
 }
 CapturePipeline::~CapturePipeline() {
@@ -96,6 +107,7 @@ CapturePipeline::~CapturePipeline() {
   { std::lock_guard<std::mutex> lock(m_state->mutex); m_state->cancellation.request(); }
   m_state->changed.notify_all();
   if (m_selectionDialog) { disconnect(m_selectionDialog, nullptr, this, nullptr); delete m_selectionDialog.data(); }
+  if (m_saveAsDialog) { disconnect(m_saveAsDialog, nullptr, this, nullptr); delete m_saveAsDialog.data(); }
 }
 void CapturePipeline::start() {
   if (m_started) return;
@@ -134,6 +146,14 @@ void CapturePipeline::start() {
     state->changed.wait(lock, [&] { return call->done || (token.requested() && !call->claimed); });
     return call->done ? call->result : cancelled();
   };
+  ports.chooseSaveAs = [state](const QString &directory, const CancellationToken &token) {
+    if (token.requested()) return CaptureSaveAsChoice{};
+    auto call = std::make_shared<SaveAsCall>(); call->directory = directory;
+    std::unique_lock<std::mutex> lock(state->mutex); state->saveAs = call;
+    state->changed.wait(lock, [&] { return call->done || token.requested(); });
+    if (!token.requested() && call->choice.path) state->activity = QStringLiteral("Saving capture to the chosen PNG path. Cancel Capture stops publication at the next safe boundary.");
+    return token.requested() ? CaptureSaveAsChoice{} : call->choice;
+  };
   auto *worker = QThread::create([state, ports, media = m_media, directory = m_directory,
                                   pattern = m_pattern, selected = m_selected, storage = m_journal,
                                   retryRequested = m_retryRequested, source = m_retrySource]() mutable {
@@ -148,28 +168,32 @@ void CapturePipeline::start() {
       std::lock_guard<std::mutex> lock(state->mutex); state->ready = true; return;
     }
     if (retryRequested) selected = retry.selected;
-    auto inheritedFile = source ? source->file : std::optional<CaptureFile>{};
-    if (inheritedFile && inheritedFile->creatorTaskId.isEmpty()) inheritedFile->creatorTaskId = source->pipeline.taskId;
+    auto inheritedFiles = source ? source->savedFiles() : std::vector<CaptureFile>{};
+    std::vector<SavedFileArtifact> initialFacts;
+    for (auto &file : inheritedFiles) { if (file.creatorTaskId.isEmpty()) file.creatorTaskId = source->pipeline.taskId; initialFacts.push_back(file); }
     PipelineJournalRecorder journal(storage, id, selected, QDateTime::currentDateTimeUtc(), retry.link,
-                                    inheritedFile ? std::vector<SavedFileArtifact>{*inheritedFile} : std::vector<SavedFileArtifact>{});
+                                    initialFacts);
     journal.begin(); // retry lineage/files precede any new external action
     const auto externalPublish = ports.save.beforePublish;
     ports.save.beforePublish = [&journal, externalPublish](const QString &path) {
       if (!journal.beforePublish(path)) throw std::runtime_error("pipeline-journal-unavailable");
       if (externalPublish) externalPublish(path);
     };
-    CaptureActions actions(media, directory, pattern, ports, inheritedFile); JournaledExecutor executor(actions, journal);
+    CaptureActions actions(media, directory, pattern, ports, {}, inheritedFiles); JournaledExecutor executor(actions, journal);
     const auto currentFiles = [&actions, id] {
-      auto file = actions.savedFile(); if (!file) return std::vector<SavedFileArtifact>{};
-      if (file->creatorTaskId.isEmpty()) file->creatorTaskId = id;
-      return std::vector<SavedFileArtifact>{*file};
+      std::vector<SavedFileArtifact> facts;
+      for (auto file : actions.savedFiles()) { if (file.creatorTaskId.isEmpty()) file.creatorTaskId = id; facts.push_back(file); }
+      return facts;
     };
     PipelineHooks hooks;
     hooks.selectionChanged = [&journal](const QStringList &effective) { journal.selectionChanged(effective); };
     hooks.actionFinished = [state, &journal, currentFiles](const ActionResult &result) {
       state->result->pipeline.orderedResults.push_back(result); journal.completed(result, currentFiles());
     };
-    PipelineOptions options; options.inheritedSaveAvailable = retryRequested && bool(inheritedFile);
+    PipelineOptions options;
+    if (retryRequested) for (const auto &file : inheritedFiles) {
+      options.inheritedSaveAvailable |= file.artifact == "save.file"; options.inheritedSaveAsAvailable |= file.artifact == "save-as.file";
+    }
     try { state->result->pipeline = runPipeline(id, selected, options, executor, state->cancellation, hooks); }
     catch (...) {
       state->result->pipeline.taskId = id; state->result->pipeline.state = PipelineState::Interrupted;
@@ -179,8 +203,9 @@ void CapturePipeline::start() {
     if (!executor.interruptionDiagnostic().isEmpty()) state->result->diagnostic = executor.interruptionDiagnostic();
     // Retain the live native binding; canonical/journal facts deliberately
     // slice it away and must never reconstruct authority from metadata.
-    state->result->file = actions.savedFile();
-    if (state->result->file && state->result->file->creatorTaskId.isEmpty()) state->result->file->creatorTaskId = id;
+    state->result->files = actions.savedFiles();
+    for (auto &file : state->result->files) if (file.creatorTaskId.isEmpty()) file.creatorTaskId = id;
+    if (!state->result->files.empty()) state->result->file = state->result->files.front();
     const auto files = currentFiles();
     journal.finish(state->result->pipeline, files);
     if (!journal.diagnostic().isEmpty()) state->result->diagnostic = journal.diagnostic();
@@ -195,6 +220,8 @@ void CapturePipeline::cancel() {
   const QPointer<CapturePipeline> guard(this);
   if (m_selectionDialog) m_selectionDialog->reject();
   if (!guard) return;
+  if (m_saveAsDialog) m_saveAsDialog->reject();
+  if (!guard) return;
   emit activityChanged(QStringLiteral("Cancellation requested. Finishing the current action safely."));
 }
 void CapturePipeline::poll() {
@@ -205,6 +232,32 @@ void CapturePipeline::poll() {
   const QPointer<CapturePipeline> guard(this);
   if (!activity.isEmpty() && activity != m_activity && !state->cancellation.requested()) {
     m_activity = activity; emit activityChanged(activity); if (!guard) return;
+  }
+  std::shared_ptr<SaveAsCall> saveAs;
+  { std::lock_guard<std::mutex> lock(state->mutex); saveAs = std::move(state->saveAs); }
+  if (saveAs) {
+    if (state->cancellation.requested()) completeSaveAs(state, saveAs, {});
+    else {
+      emit choosingActions(); if (!guard) return;
+      if (state->cancellation.requested()) completeSaveAs(state, saveAs, {});
+      else if (const auto chooser = m_ports.chooseSaveAs) {
+        try { completeSaveAs(state, saveAs, chooser(saveAs->directory, state->cancellation)); }
+        catch (...) { completeSaveAs(state, saveAs, {{}, diagnostic::actionFailed}); }
+        if (!guard) return;
+      } else {
+        auto *dialog = new CaptureSaveAsDialog(saveAs->directory, m_selectionParent); m_saveAsDialog = dialog;
+        const auto parent = m_selectionParent;
+        connect(dialog, &QDialog::finished, this, [state, saveAs, dialog, parent](int result) {
+          const CaptureSaveAsChoice choice = result == QDialog::Accepted ? CaptureSaveAsChoice{dialog->targetPath(), {}} : CaptureSaveAsChoice{};
+          const auto ownedState = state; const auto ownedCall = saveAs;
+          if (parent) parent->activateWindow(); completeSaveAs(ownedState, ownedCall, choice);
+        });
+        connect(dialog, &QObject::destroyed, this, [state, saveAs] { completeSaveAs(state, saveAs, {}); });
+        dialog->show(); if (!guard || !m_saveAsDialog) return;
+        dialog->raise(); if (!guard || !m_saveAsDialog) return;
+        dialog->activateWindow(); if (!guard) return;
+      }
+    }
   }
   std::shared_ptr<SelectionCall> selection;
   { std::lock_guard<std::mutex> lock(state->mutex); selection = std::move(state->selection); }

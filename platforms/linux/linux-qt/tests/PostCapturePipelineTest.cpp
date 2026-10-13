@@ -66,6 +66,15 @@ class PostCapturePipelineTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void inheritedSaveAsSuppliesFallbackWithoutAuthorizingDeletion() {
+    ScriptedExecutor executor; CancellationToken token; PipelineOptions options; options.inheritedSaveAsAvailable = true;
+    const auto result = runPipeline("save-as-fixture", {"path-clipboard", "delete"}, options, executor, token);
+    QCOMPARE(result.orderedResults[0].inputArtifact, std::optional<QString>{"save-as.file"});
+    QCOMPARE(result.orderedResults[1].diagnostic, std::optional<QString>{"delete-guard"});
+    ScriptedExecutor both; CancellationToken second; options.inheritedSaveAvailable = true;
+    const auto preferred = runPipeline("both-fixture", {"path-clipboard"}, options, both, second);
+    QCOMPARE(preferred.orderedResults[0].inputArtifact, std::optional<QString>{"save.file"});
+  }
   void unknownExternalOutcomeInterruptsWithoutInventingFailedResultsOrStartingLaterActions() {
     class UnknownExecutor final : public ActionExecutor {
     public:

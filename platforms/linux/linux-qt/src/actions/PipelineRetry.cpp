@@ -6,7 +6,7 @@ namespace xerahs::actions {
 namespace {
 PipelineRetryPlan unavailable(const char *code) { return {{}, {}, QString::fromLatin1(code)}; }
 bool fileConsumer(const QString &id) { return id == "file-clipboard" || id == "path-clipboard" || id == "reveal"; }
-bool nativeAction(const QString &id) { return id == "save" || id == "image-clipboard" || fileConsumer(id); }
+bool nativeAction(const QString &id) { return id == "save" || id == "save-as" || id == "image-clipboard" || fileConsumer(id); }
 }
 bool validPipelineRetryLink(const PipelineRetryLink &link, const QString &taskId) {
   if (!validJournalTaskId(taskId) || !validJournalTaskId(link.originalTaskId) || !validJournalTaskId(link.previousTaskId) ||
@@ -19,7 +19,7 @@ bool validPipelineRetryLink(const PipelineRetryLink &link, const QString &taskId
   }
   return true;
 }
-PipelineRetryPlan planRetainedCaptureRetry(const PipelineResult &source, bool mediaAvailable, bool savedFileAvailable) {
+PipelineRetryPlan planRetainedCaptureRetry(const PipelineResult &source, bool mediaAvailable, bool savedFileAvailable, bool savedAsFileAvailable) {
   if (!validJournalTaskId(source.taskId) || (source.retry && !validPipelineRetryLink(*source.retry, source.taskId)))
     return unavailable("retry-invalid-source");
   if (source.state == PipelineState::Interrupted) return unavailable("retry-outcome-unknown");
@@ -48,14 +48,17 @@ PipelineRetryPlan planRetainedCaptureRetry(const PipelineResult &source, bool me
     // permission to silently create a second copy. File prerequisites are
     // checked below without implicitly selecting an unrequested save.
     if (result.action == "save" && savedFileAvailable) return unavailable("retry-invalid-source");
+    if (result.action == "save-as" && savedAsFileAvailable) return unavailable("retry-invalid-source");
     if (successes.contains(result.action)) return unavailable("retry-invalid-source");
     plan.selected.append(result.action);
   }
   for (const auto &action : catalogue()) if (successes.contains(action.id)) link.preservedSuccessfulActions.append(action.id);
   if (savedFileAvailable && !successes.contains("save")) return unavailable("retry-invalid-source");
   if (successes.contains("save") && !savedFileAvailable) return unavailable("retry-artifact-unavailable");
+  if (savedAsFileAvailable && !successes.contains("save-as")) return unavailable("retry-invalid-source");
+  if (successes.contains("save-as") && !savedAsFileAvailable) return unavailable("retry-artifact-unavailable");
   for (const auto &action : plan.selected)
-    if (fileConsumer(action) && !savedFileAvailable && !plan.selected.contains("save"))
+    if (fileConsumer(action) && !savedFileAvailable && !savedAsFileAvailable && !plan.selected.contains("save") && !plan.selected.contains("save-as"))
       return unavailable("retry-prerequisite-unavailable");
   if (plan.selected.isEmpty()) return unavailable("retry-no-failed-actions");
   plan.link = link; return plan;

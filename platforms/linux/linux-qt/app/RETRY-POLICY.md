@@ -8,9 +8,9 @@ shared compatibility and human parity/release reviews remain Required.
 
 The tray and main window share **Retry failed capture actions…**. The command
 is available only for an idle controller's current immutable pixel receipt
-with known failed save, image/file/path clipboard or reveal actions, or
+with known failed Save, Save As, image/file/path clipboard or reveal actions, or
 dependency-skipped versions of those actions. File consumers require either the
-original acknowledged save or its originally selected failed Save prerequisite. The Core planner uses catalogue order. It excludes successful,
+original acknowledged Save/Save As or an originally selected failed save prerequisite. The Core planner uses catalogue order. It excludes successful,
 cancelled and other skipped actions, rejects unsupported failed actions instead
 of silently omitting them, and blocks interrupted/unknown outcomes or missing
 pixels. A restart metadata record is not a pixel receipt or retry authority.
@@ -35,7 +35,11 @@ A successful save followed by failed clipboard retries clipboard only and
 keeps the saved file. Repeated failure requires another explicit command.
 Cancelled actions are not retry targets; resumption of cancelled work belongs
 to its separate lifecycle qualification. Editing retained pixels remains an
-independent explicit operation.
+independent explicit operation. Retrying failed Save As asks for a new PNG
+path; it does not silently reuse a failed destination or repeat the action
+selector. Acknowledged Save and Save As files both remain retained, with
+Save-first consumer precedence. The [Save As evidence](SAVE-AS.md) records
+actual picker, retry and multiple-file coverage.
 
 ## Append-only results and journal
 
@@ -93,7 +97,7 @@ read-only except for its explicitly confirmed unchanged-record removal.
   preserve the earlier terminal result and unknown current outcome.
 
 The 114 published vectors retain their approved expected values. No generic
-catalogue/multiple-artifact prerequisite replay, upload/network retry, annotation/
+catalogue prerequisite replay beyond Save/Save As, upload/network retry, annotation/
 effect replay, cancelled-work resumption, durable failed-save settings schema,
 restart pixel reconstruction, shared recovery/retry vectors, automatic retry
 policy, retention/cleanup acceptance or physical accessibility/native matrix
@@ -106,4 +110,5 @@ and linked retry with original-save prerequisites and live file validation.
 Uncertain reveal delivery interrupts the engine and retains pending journal
 intent; it cannot authorize retry. Native identity is deliberately excluded
 from persisted metadata. The linked evidence records verification and remaining
-multiple-artifact/catalogue/shared/native/human scope.
+catalogue/shared/native/human scope. Both Save aliases now have actual
+multiple-file prerequisite and creator preservation evidence in SAVE-AS.md.
