@@ -11,6 +11,7 @@
 #include <QScreen>
 #include <QThread>
 #include <QTimer>
+#include <QWidget>
 
 #include <cmath>
 #include <atomic>
@@ -65,14 +66,25 @@ QString CaptureController::instructions() {
 }
 
 void CaptureController::captureRegion() {
+  beginCapture(kDefaultActions);
+}
+void CaptureController::captureRegionWithActions() {
+  auto selected = kDefaultActions; selected.prepend(QStringLiteral("after-capture-window"));
+  beginCapture(std::move(selected));
+}
+void CaptureController::setActionSelectionParent(QWidget *parent) { m_selectionParent = parent; }
+void CaptureController::beginCapture(QStringList selected) {
   if (m_busy) return;
+  m_selectedActions = std::move(selected);
   ++m_generation;
   m_pendingPipelineCancellation = false;
   m_busy = true;
   m_portal = m_screenshotFactory ? m_screenshotFactory(this) : new PortalScreenshot(this);
   if (!m_portal) {
+    const QPointer<CaptureController> guard(this);
     emit busyChanged(true);
-    emit notify(QStringLiteral("Region capture failed"), diagnostic::captureSourceFailed, false); finish(); return;
+    if (!guard) return;
+    emit notify(QStringLiteral("Region capture failed"), diagnostic::captureSourceFailed, false); if (guard) finish(); return;
   }
   auto *portal = m_portal.data();
   connect(portal, &PortalScreenshot::finished, this,
@@ -82,9 +94,10 @@ void CaptureController::captureRegion() {
             m_portal = nullptr; portal->setParent(nullptr); portal->retire();
             onSnapshot(static_cast<int>(outcome), image, detail);
           });
+  const QPointer<CaptureController> guard(this);
   emit busyChanged(true);
   // Availability listeners may synchronously cancel before acquisition starts.
-  if (m_busy && m_portal == portal) portal->request();
+  if (guard && m_busy && m_portal == portal) portal->request();
 }
 
 void CaptureController::onSnapshot(int outcome, const QImage &image, const QString &detail) {
@@ -384,9 +397,9 @@ void CaptureController::onOutcome(const SessionOutcome &outcome) {
 }
 
 void CaptureController::runPipeline() {
-  // Keep overlays/focus until native clipboard dispatch; the worker never
-  // accesses UI or controller state. The receipt retains confirmed media.
-  auto *pipeline = new CapturePipeline(*m_captured, m_saveDirectory, kCapturePattern, kDefaultActions, this, m_actionPorts, m_journal);
+  // The default path keeps overlay focus until clipboard dispatch. A chooser
+  // releases overlays before taking focus; both retain the same frozen media.
+  auto *pipeline = new CapturePipeline(*m_captured, m_saveDirectory, kCapturePattern, m_selectedActions, this, m_actionPorts, m_journal, m_selectionParent);
   connectPipeline(pipeline);
   const QPointer<CapturePipeline> pipelineGuard(pipeline);
   if (m_pendingPipelineCancellation) pipeline->cancel();
@@ -404,6 +417,11 @@ bool CaptureController::retryFailedActions(const CapturePipelineReceipt &expecte
 }
 void CaptureController::connectPipeline(CapturePipeline *pipeline) {
   m_pipeline = pipeline;
+  connect(pipeline, &CapturePipeline::choosingActions, this, [this, pipeline] {
+    if (m_pipeline != pipeline) return;
+    const QPointer<CaptureController> guard(this); closeOverlays();
+    if (guard) emit choosingActions();
+  });
   connect(pipeline, &CapturePipeline::activityChanged, this, [this, pipeline](const QString &text) {
     if (m_pipeline != pipeline) return;
     m_pipelineActivity = text;
@@ -428,7 +446,8 @@ void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt) {
   QStringList failed;
   for (const auto &action : result.orderedResults) {
     const auto label = action.action == QStringLiteral("save") ? QStringLiteral("Save image") :
-        action.action == QStringLiteral("image-clipboard") ? QStringLiteral("Copy image") : action.action;
+        action.action == QStringLiteral("image-clipboard") ? QStringLiteral("Copy image") :
+        action.action == QStringLiteral("after-capture-window") ? QStringLiteral("Choose capture actions") : action.action;
     if (action.state == xerahs::actions::ActionState::Succeeded) {
       if (action.action == QStringLiteral("save") && receipt->file) {
         done.append(QStringLiteral("Saved %1").arg(QFileInfo(receipt->file->path).fileName()));
@@ -444,6 +463,7 @@ void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt) {
   }
   const QString size = QStringLiteral("%1 × %2").arg(receipt->workingMedia.width()).arg(receipt->workingMedia.height());
   QString body = done.join(QStringLiteral(", "));
+  if (body.isEmpty() && failed.isEmpty() && !receipt->file) body = QStringLiteral("Captured image kept in memory.");
   if (!failed.isEmpty()) body += (body.isEmpty() ? QString() : QStringLiteral("; ")) + failed.join(QStringLiteral("; "));
   if (!receipt->diagnostic.isEmpty()) body += QStringLiteral("; ") + receipt->diagnostic;
   const auto title = result.state == xerahs::actions::PipelineState::Cancelled ? QStringLiteral("Capture actions cancelled · %1") :
@@ -468,6 +488,7 @@ void CaptureController::finish() {
   m_session.reset();
   m_desktop = QImage();
   m_captured.reset();
+  m_selectedActions.clear();
   m_keyboardCursor.reset();
   m_keyboardSelecting = false;
   m_busy = false;

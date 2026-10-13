@@ -31,6 +31,19 @@ void write(const QString &path, const QByteArray &data) { QFile file(path); if (
 class PipelineJournalTest final : public QObject {
   Q_OBJECT
 private slots:
+  void killedSelectedRunRetainsTheChangedPlanAndOnlyTheActualUnknownAction() {
+    QTemporaryDir dir; QProcess process;
+    process.start(QCoreApplication::applicationDirPath() + "/pipeline-journal-fixture", {dir.filePath("state"), dir.filePath("output"), "selection-before-publication"});
+    QVERIFY(process.waitForStarted(3000)); QTRY_VERIFY_WITH_TIMEOUT(process.canReadLine() || process.state() == QProcess::NotRunning, 5000);
+    QCOMPARE(process.readLine().trimmed(), QByteArray("checkpoint")); process.kill(); QVERIFY(process.waitForFinished(3000));
+    NativePipelineJournal storage(dir.filePath("state")); const auto listing = storage.list(); QCOMPARE(listing.entries.size(), size_t(1));
+    const auto &parsed = listing.entries[0].parsed; QVERIFY(parsed.record); QVERIFY(!parsed.record->terminal);
+    QCOMPARE(parsed.record->selected, (QStringList{"after-capture-window", "save"})); QCOMPARE(*parsed.record->pendingAction, QString("save"));
+    const auto ordered = parsed.record->report.value("ordered_results").toArray(); QCOMPARE(ordered.size(), 1);
+    QCOMPARE(ordered[0].toObject(), (QJsonObject{{"action", "after-capture-window"}, {"state", "succeeded"}}));
+    QCOMPARE(parsed.record->report.value("pipeline_state"), QJsonValue("interrupted")); QVERIFY(!parsed.record->report.value("working_media_retained").toBool());
+    QVERIFY(!QFileInfo::exists(dir.filePath("output/capture.png")));
+  }
   void killedLinkedRetryKeepsTheOriginalRecordAndUnknownNewOutcome_data() {
     QTest::addColumn<QString>("mode"); QTest::newRow("save") << QString("retry-before-publication"); QTest::newRow("clipboard") << QString("retry-clipboard");
   }

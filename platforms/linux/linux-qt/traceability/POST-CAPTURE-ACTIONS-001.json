@@ -23,7 +23,11 @@
     "platforms/linux/linux-qt/src/actions/PipelineJournal.h",
     "platforms/linux/linux-qt/src/actions/PipelineJournal.cpp",
     "platforms/linux/linux-qt/app/NativePipelineJournal.cpp",
-    "platforms/linux/linux-qt/app/PipelineResultDialog.cpp"
+    "platforms/linux/linux-qt/app/PipelineResultDialog.cpp",
+    "platforms/linux/linux-qt/src/actions/ActionSelection.h",
+    "platforms/linux/linux-qt/src/actions/ActionSelection.cpp",
+    "platforms/linux/linux-qt/app/ActionSelectionDialog.h",
+    "platforms/linux/linux-qt/app/ActionSelectionDialog.cpp"
   ],
   "requirements": {
     "PCA-001": {
@@ -106,8 +110,13 @@
         "selection-cancel",
         "selection-window-replaces-action-set"
       ],
-      "note": "Selection cancel and replacement are implemented. Persisting a workflow change only on explicit user choice arrives with the selection UI.",
-      "disposition": "Required"
+      "note": "Core selection cancellation/replacement now drives an actual native application-modal per-run chooser before save/clipboard mutation. Shared tray/main-window capture controls choose Save, Copy, both or no outputs; Cancel/Escape/default Enter/close, operation cancellation and owner destruction retain captured pixels and start no later actions. Qt Core draft validation rejects unavailable/unknown requests, while the remaining catalogue is visibly unavailable. No workflow preferences are changed; the next default capture remains Save then Copy. Full quick-task/configured workflow selection and explicit persistent editing, remaining catalogue, supported native matrix and human accessibility/privacy/parity qualification remain Required.",
+      "disposition": "Required",
+      "evidence": [
+        "platforms/linux/linux-qt/app/ACTION-SELECTION.md",
+        "platforms/linux/linux-qt/tests/ActionSelectionTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+      ]
     },
     "PCA-010": {
       "status": "implemented",
@@ -116,10 +125,12 @@
         "cancel-between-actions",
         "cancel-during-uninterruptible-action"
       ],
-      "note": "The same Qt Core engine runs native actions on a worker with a reachable cancellation token. Escape and Cancel Capture request cancellation while saving; an uninterruptible save may finish, records cancellation_arrived_during, and later clipboard work is cancelled. A claimed native clipboard call retains its actual outcome even if cancellation arrives during it; unclaimed calls cannot publish late. Native tests cover before-start, save/clipboard races, GUI responsiveness, destruction and actual overlay Escape. Full action catalogue and supported native matrix qualification remain Required. Native retry uses the same token and actual first-availability/owner-destruction fencing. Window Escape cancels capture/retry while modal dialogs retain Escape; retry cancellation preserves existing file/media and its durable lineage.",
+      "note": "The same Qt Core engine runs native actions on a worker with a reachable cancellation token. Escape and Cancel Capture request cancellation while saving; an uninterruptible save may finish, records cancellation_arrived_during, and later clipboard work is cancelled. A claimed native clipboard call retains its actual outcome even if cancellation arrives during it; unclaimed calls cannot publish late. Native tests cover before-start, save/clipboard races, GUI responsiveness, destruction and actual overlay Escape. Full action catalogue and supported native matrix qualification remain Required. Native retry uses the same token and actual first-availability/owner-destruction fencing. Window Escape cancels capture/retry while modal dialogs retain Escape; retry cancellation preserves existing file/media and its durable lineage. Asynchronous native selection waits are cancellable on the worker; GUI close/destruction and admission cancellation cannot authorize late selected actions.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
-        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/ActionSelectionTest.cpp",
+        "platforms/linux/linux-qt/app/ACTION-SELECTION.md"
       ],
       "disposition": "Required"
     },
@@ -140,7 +151,7 @@
     "PCA-012": {
       "status": "partial",
       "vectors": [],
-      "note": "The actual native save/image-clipboard pipeline now uses a Qt Core write-ahead recorder and private atomic Linux journal. Save intent and unconfirmed publication paths precede native mutation; completed actions and canonical file facts are acknowledged afterwards. Reopened history retains completed/cancelled results and distinguishes interrupted unknown actions without retrying or inventing upload failure. Real-process kill/reopen, cancellation, storage failure, privacy/path and native review/forget fixtures verify this candidate seam. Full artifact/media recovery, retry authority, configured retention, crash-temporary cleanup, shared persisted compatibility, native target matrix and human review remain Required. Retry intent persists its new linked identity and inherited file facts before effects. Real-process tests kill linked save/clipboard attempts and recover an unchanged terminal original alongside an interrupted unknown new action.",
+      "note": "The actual native save/image-clipboard pipeline now uses a Qt Core write-ahead recorder and private atomic Linux journal. Save intent and unconfirmed publication paths precede native mutation; completed actions and canonical file facts are acknowledged afterwards. Reopened history retains completed/cancelled results and distinguishes interrupted unknown actions without retrying or inventing upload failure. Real-process kill/reopen, cancellation, storage failure, privacy/path and native review/forget fixtures verify this candidate seam. Full artifact/media recovery, retry authority, configured retention, crash-temporary cleanup, shared persisted compatibility, native target matrix and human review remain Required. Retry intent persists its new linked identity and inherited file facts before effects. Real-process tests kill linked save/clipboard attempts and recover an unchanged terminal original alongside an interrupted unknown new action. Effective per-run selections now reach the write-ahead recorder before output intent; real-process recovery preserves a successful selector and unknown chosen save without inventing deselected actions.",
       "disposition": "Required",
       "evidence": [
         "platforms/linux/linux-qt/src/actions/PipelineJournal.cpp",
@@ -148,7 +159,9 @@
         "platforms/linux/linux-qt/app/PipelineHistoryDialog.cpp",
         "platforms/linux/linux-qt/app/JOURNAL-RECOVERY.md",
         "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
-        "platforms/linux/linux-qt/tests/PipelineHistoryDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/PipelineHistoryDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/ActionSelectionTest.cpp",
+        "platforms/linux/linux-qt/app/ACTION-SELECTION.md"
       ]
     },
     "PCA-013": {
@@ -160,16 +173,22 @@
     "PCA-014": {
       "status": "implemented",
       "vectors": [],
-      "note": "One engine, runPipeline(), serves configured workflows, quick actions, and conformance. No UI surface exists yet.",
-      "disposition": "Required"
+      "note": "One production Core runPipeline() engine serves default native capture, per-run native selection, explicit retry and conformance. The shared tray/main-window chooser returns typed outcomes to the worker engine; it creates no alternative ordering or result model. Full configured workflows, quick-task/catalogue entry-point parity and native/human qualification remain Required.",
+      "disposition": "Required",
+      "evidence": [
+        "platforms/linux/linux-qt/app/ACTION-SELECTION.md",
+        "platforms/linux/linux-qt/tests/ActionSelectionTest.cpp"
+      ]
     },
     "PCA-015": {
       "status": "implemented",
       "vectors": [],
-      "note": "Core seams and native worker jobs isolate selected-action snapshots, media, files, receipts and cancellation by unique task ID. Real parallel native pipelines prove one cancelled job cannot corrupt another successful job. Configured workflow counters, temporary upload files, remaining actions and full persistence/target qualification remain Required.",
+      "note": "Core seams and native worker jobs isolate selected-action snapshots, media, files, receipts and cancellation by unique task ID. Real parallel native pipelines prove one cancelled job cannot corrupt another successful job. Configured workflow counters, temporary upload files, remaining actions and full persistence/target qualification remain Required. Per-run selection snapshots do not alter subsequent default captures; native/private-bus tests verify cancelled and accepted selection isolation.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
-        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/ActionSelectionTest.cpp",
+        "platforms/linux/linux-qt/app/ACTION-SELECTION.md"
       ],
       "disposition": "Required"
     },
@@ -249,7 +268,14 @@
         "selection-window-replaces-action-set",
         "legacy-flags-map-to-actions"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "note": "The actual native per-run chooser normalizes executor-available Save/Copy choices through the Qt Core catalogue and the same replacement engine used by published vectors. A Core hook publishes the effective full plan before recording the selector and beginning later actions, so journals and recovered results contain only chosen remaining work. Native PNG/clipboard/empty, cancellation, retry and real-process kill/reopen fixtures verify this seam. Legacy import and full configured/quick-task/catalogue UI/shared/native/human qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
+        "platforms/linux/linux-qt/tests/ActionSelectionTest.cpp",
+        "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
+        "platforms/linux/linux-qt/app/ACTION-SELECTION.md"
+      ]
     }
   }
 }

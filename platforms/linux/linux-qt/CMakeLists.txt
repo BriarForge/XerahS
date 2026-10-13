@@ -19,6 +19,8 @@ add_library(xerahs_core STATIC
   src/shell/ActivationProtocol.h
   src/actions/PostCapturePipeline.cpp
   src/actions/PostCapturePipeline.h
+  src/actions/ActionSelection.cpp
+  src/actions/ActionSelection.h
   src/actions/PipelineResultJson.cpp
   src/actions/PipelineResultJson.h
   src/actions/PipelineRetry.cpp
@@ -91,6 +93,12 @@ target_include_directories(xerahs_pipeline_journal PUBLIC app)
 target_link_libraries(xerahs_pipeline_journal PUBLIC xerahs_core)
 target_compile_options(xerahs_pipeline_journal PRIVATE -Wall -Wextra -Wpedantic)
 
+add_library(xerahs_action_selection STATIC app/ActionSelectionDialog.cpp app/ActionSelectionDialog.h)
+set_target_properties(xerahs_action_selection PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_action_selection PUBLIC app)
+target_link_libraries(xerahs_action_selection PUBLIC xerahs_core Qt6::Widgets)
+target_compile_options(xerahs_action_selection PRIVATE -Wall -Wextra -Wpedantic)
+
 # The XerahS application (D-LIN-001: Qt Widgets). Product logic stays in
 # xerahs_core; app/ only wires it to Qt and the desktop.
 add_executable(xerahs
@@ -150,7 +158,7 @@ add_executable(xerahs
   app/main.cpp
 )
 set_target_properties(xerahs PROPERTIES AUTOMOC ON)
-target_link_libraries(xerahs PRIVATE xerahs_pipeline_journal xerahs_native_instance xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus)
+target_link_libraries(xerahs PRIVATE xerahs_action_selection xerahs_pipeline_journal xerahs_native_instance xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus)
 target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
 enable_testing()
@@ -162,11 +170,11 @@ find_program(XERAHS_DBUS_RUN_SESSION dbus-run-session REQUIRED)
 add_executable(pipeline-journal-fixture tests/PipelineJournalFixture.cpp app/CapturePipeline.cpp app/CapturePipeline.h
   app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h)
 set_target_properties(pipeline-journal-fixture PROPERTIES AUTOMOC ON)
-target_link_libraries(pipeline-journal-fixture PRIVATE xerahs_pipeline_journal Qt6::Gui)
+target_link_libraries(pipeline-journal-fixture PRIVATE xerahs_action_selection xerahs_pipeline_journal Qt6::Gui)
 add_executable(pipeline-journal-test tests/PipelineJournalTest.cpp app/CapturePipeline.cpp app/CapturePipeline.h
   app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h)
 set_target_properties(pipeline-journal-test PROPERTIES AUTOMOC ON)
-target_link_libraries(pipeline-journal-test PRIVATE xerahs_pipeline_journal Qt6::Gui Qt6::Test)
+target_link_libraries(pipeline-journal-test PRIVATE xerahs_action_selection xerahs_pipeline_journal Qt6::Gui Qt6::Test)
 add_dependencies(pipeline-journal-test pipeline-journal-fixture)
 add_test(NAME pipeline-journal COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:pipeline-journal-test>)
@@ -182,10 +190,17 @@ add_executable(capture-pipeline-test tests/CapturePipelineTest.cpp app/CapturePi
   app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h)
 set_target_properties(capture-pipeline-test PROPERTIES AUTOMOC ON)
 target_include_directories(capture-pipeline-test PRIVATE app)
-target_link_libraries(capture-pipeline-test PRIVATE xerahs_pipeline_journal Qt6::Gui Qt6::Test)
+target_link_libraries(capture-pipeline-test PRIVATE xerahs_action_selection xerahs_pipeline_journal Qt6::Gui Qt6::Test)
 add_test(NAME capture-pipeline COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-pipeline-test>)
 set_tests_properties(capture-pipeline PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
+add_executable(action-selection-test tests/ActionSelectionTest.cpp app/CapturePipeline.cpp app/CapturePipeline.h
+  app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h)
+set_target_properties(action-selection-test PROPERTIES AUTOMOC ON)
+target_link_libraries(action-selection-test PRIVATE xerahs_action_selection xerahs_pipeline_journal Qt6::Test)
+add_test(NAME action-selection COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:action-selection-test>)
+set_tests_properties(action-selection PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 add_executable(capture-save-test tests/CaptureSaveTest.cpp app/CaptureSave.cpp app/CaptureSave.h)
 set_target_properties(capture-save-test PROPERTIES AUTOMOC ON)
 target_include_directories(capture-save-test PRIVATE app)
@@ -260,7 +275,7 @@ add_executable(portal-screenshot-test tests/PortalScreenshotTest.cpp app/PortalS
                app/SnapshotComposition.cpp app/SnapshotComposition.h
                app/RegionOverlay.cpp app/RegionOverlay.h)
 set_target_properties(portal-screenshot-test PROPERTIES AUTOMOC ON)
-target_link_libraries(portal-screenshot-test PRIVATE xerahs_pipeline_journal xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
+target_link_libraries(portal-screenshot-test PRIVATE xerahs_action_selection xerahs_pipeline_journal xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
 target_include_directories(portal-screenshot-test PRIVATE app)
 add_test(NAME portal-screenshot COMMAND "${XERAHS_DBUS_RUN_SESSION}"
          "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf" -- $<TARGET_FILE:portal-screenshot-test>)

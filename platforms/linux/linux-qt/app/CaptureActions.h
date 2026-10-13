@@ -14,10 +14,13 @@
 namespace xerahs::app {
 struct CaptureActionPorts {
   // CapturePipeline invokes save/actionStarted on its worker and clipboard on
-  // its GUI thread. External observers must respect those native boundaries.
+  // its GUI thread. Its selection bridge waits on the worker for asynchronous
+  // GUI completion. External observers must respect those native boundaries.
   CaptureSaveHooks save;
   std::function<xerahs::actions::ActionOutcome(const QImage &, const xerahs::actions::CancellationToken &)> clipboard;
   std::function<void(const QString &)> actionStarted;
+  // Internal worker-to-GUI selection bridge supplied by CapturePipeline.
+  std::function<xerahs::actions::ActionOutcome(const xerahs::actions::CancellationToken &)> selection;
 };
 
 class CaptureActions final : public xerahs::actions::ActionExecutor {
@@ -31,6 +34,7 @@ public:
   const std::optional<QString> &savedPath() const { return m_savedPath; }
   const std::optional<CaptureFile> &savedFile() const { return m_savedFile; }
   static xerahs::actions::ActionOutcome copyImageToNativeClipboard(const QImage &media);
+  static QStringList selectableActions();
 
   // Pending clarification (ROOT-ESCALATE-001): the contract names no code for
   // an action this build cannot perform yet.

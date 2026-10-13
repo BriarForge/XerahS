@@ -99,7 +99,15 @@ catalogue/prerequisite retry and artifact/media recovery, configured
 retention/pagination, crash-temporary authority,
 shared persisted compatibility, the remaining catalogue and native/human
 qualification under app/JOURNAL-RECOVERY.md. Continue those native capture requirements alongside the full
-application domains recorded in the audit.
+application domains recorded in the audit. Native per-run action selection now
+shares the capture/controller/worker engine, with an asynchronous cancellable
+Qt chooser, explicit Save/Copy/empty choices and visible unavailable catalogue
+actions. Default workflows remain unchanged; cancellation creates no outputs
+or journal, and the effective selected plan precedes save intent in recovery.
+Native/private-bus keyboard and real-process kill/reopen fixtures are indexed
+in [action selection evidence](app/ACTION-SELECTION.md). Continue saved-file
+clipboard/path/reveal actions with prerequisite/provenance/cancellation/retry
+evidence, alongside full configured workflows and the remaining catalogue.
 
 Each checkpoint updates requirement traceability, runs native tests and the
 implemented shared vectors, and lands on `main`. Passing the small pilot vector

@@ -55,9 +55,11 @@ public:
   CapturePipelineReceipt lastPipelineResult() const { return m_lastPipelineResult; }
   bool discardRetainedResult(const CapturePipelineReceipt &expected);
   bool retryFailedActions(const CapturePipelineReceipt &expected);
+  void setActionSelectionParent(QWidget *parent);
 
 public slots:
   void captureRegion();
+  void captureRegionWithActions();
 
 signals:
   void busyChanged(bool busy);
@@ -66,8 +68,10 @@ signals:
   void compositionProgressChanged(int percent);
   void pipelineActivityChanged(const QString &text);
   void retainedResultChanged();
+  void choosingActions();
 
 private:
+  void beginCapture(QStringList selected);
   void onSnapshot(int outcome, const QImage &image, const QString &detail);
   void onOutcome(const xerahs::capture::SessionOutcome &outcome);
   void afterInput();
@@ -89,6 +93,8 @@ private:
   int m_reportedProgress = -1;
   quint64 m_generation = 0;
   CaptureActionPorts m_actionPorts;
+  QStringList m_selectedActions;
+  QPointer<QWidget> m_selectionParent;
   PipelineJournalStorage m_journal;
   QPointer<CapturePipeline> m_pipeline;
   QString m_pipelineActivity;

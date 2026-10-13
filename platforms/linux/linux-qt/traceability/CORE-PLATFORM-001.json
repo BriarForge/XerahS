@@ -48,7 +48,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native Screenshot acquisition, worker pixel composition, post-capture PNG saving/action dispatch and editor loading have cancellation/failure evidence. Known composition progress is determinate; codec/action stages expose accessible indeterminate activity. Cancellation during an uninterruptible action retains its real outcome and prevents later actions; unclaimed obsolete requests cannot mutate the clipboard. Native receipts retain working media and completed files in memory. Full action/workflow/recording/upload/utility coverage, durable recovery, configured privacy policy and physical accessibility/performance qualification remain Required. Native recovery can edit retained confirmed pixels after failed output and independently discard the current receipt by explicit confirmation without removing completed outputs.",
+      "note": "Native Screenshot acquisition, worker pixel composition, post-capture PNG saving/action dispatch and editor loading have cancellation/failure evidence. Known composition progress is determinate; codec/action stages expose accessible indeterminate activity. Cancellation during an uninterruptible action retains its real outcome and prevents later actions; unclaimed obsolete requests cannot mutate the clipboard. Native receipts retain working media and completed files in memory. Full action/workflow/recording/upload/utility coverage, durable recovery, configured privacy policy and physical accessibility/performance qualification remain Required. Native recovery can edit retained confirmed pixels after failed output and independently discard the current receipt by explicit confirmation without removing completed outputs. Native per-run selection has a responsive GUI with a cancellable worker wait; cancelled/empty choices keep pixels without outputs, and accepted work uses the same pipeline.",
       "evidence": [
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
@@ -57,18 +57,20 @@
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
         "platforms/linux/linux-qt/app/CAPTURE-POLICY.md",
         "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
-        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
+        "platforms/linux/linux-qt/app/ACTION-SELECTION.md"
       ]
     },
     "CORE-005": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native portal consent and kernel-credential activation checks have isolated tests. Least-authority coverage for all sensitive operations and human security/privacy review remain Required. Shared retained-capture Retry confirms one attempt against an unchanged source, reports real outcomes/activity and keeps cancellation reachable through the command window and tray; lifecycle fixtures cover stale approval, initial cancellation and synchronous controller destruction.",
+      "note": "Native portal consent and kernel-credential activation checks have isolated tests. Least-authority coverage for all sensitive operations and human security/privacy review remain Required. Shared retained-capture Retry confirms one attempt against an unchanged source, reports real outcomes/activity and keeps cancellation reachable through the command window and tray; lifecycle fixtures cover stale approval, initial cancellation and synchronous controller destruction. Per-run Save/Copy selection explicitly authorizes current-run outputs only; cancellation before mutation and unchanged defaults are covered by private-bus/native fixtures.",
       "evidence": [
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
-        "platforms/linux/linux-qt/app/ACTIVATION-POLICY.md"
+        "platforms/linux/linux-qt/app/ACTIVATION-POLICY.md",
+        "platforms/linux/linux-qt/app/ACTION-SELECTION.md"
       ]
     },
     "CORE-006": {
@@ -89,13 +91,14 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "A native command window reuses actual tray actions and current capture availability, supports keyboard/accessible activation and preserves true capture results. Default repeated launch shows/restores the window. Region/Open activation shares the production dispatcher. Full main UI, workflow catalogue, global hotkeys, command palette, all surface availability and physical assistive-technology qualification remain Required. Shared tray/main-window recovery actions expose real current availability and immutable capture-to-editor handoff, plus explicit guarded discard of the in-memory result; private native keyboard/callback/confirmation tests cover these commands.",
+      "note": "A native command window reuses actual tray actions and current capture availability, supports keyboard/accessible activation and preserves true capture results. Default repeated launch shows/restores the window. Region/Open activation shares the production dispatcher. Full main UI, workflow catalogue, global hotkeys, command palette, all surface availability and physical assistive-technology qualification remain Required. Shared tray/main-window recovery actions expose real current availability and immutable capture-to-editor handoff, plus explicit guarded discard of the in-memory result; private native keyboard/callback/confirmation tests cover these commands. Capture region and choose actions shares a tray/main/menu QAction and existing busy/modal admission; its actual Qt chooser exposes available output choices and visible disabled catalogue rows.",
       "evidence": [
         "platforms/linux/linux-qt/app/ApplicationWindow.cpp",
         "platforms/linux/linux-qt/app/main.cpp",
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
         "platforms/linux/linux-qt/app/CaptureRecoveryActions.cpp",
-        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/app/ACTION-SELECTION.md"
       ]
     },
     "CORE-008": {

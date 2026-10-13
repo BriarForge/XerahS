@@ -126,6 +126,7 @@ int main(int argc, char *argv[]) {
   tray.setToolTip(QStringLiteral("XerahS"));
   QMenu menu;
   QAction *region = menu.addAction(QStringLiteral("Capture region"));
+  QAction *chooseCapture = menu.addAction(QStringLiteral("Capture region and choose actions…"));
   QAction *cancelCapture = menu.addAction(QStringLiteral("Cancel capture"));
   cancelCapture->setEnabled(false);
   QObject::connect(cancelCapture, &QAction::triggered, &capture, &CaptureController::cancel);
@@ -140,8 +141,12 @@ int main(int argc, char *argv[]) {
   menu.addSeparator();
   QAction *quit = menu.addAction(QStringLiteral("Quit XerahS"));
   tray.setContextMenu(&menu);
-  xerahs::app::ApplicationWindow home({{"capture-region", region}, {"cancel-capture", cancelCapture},
+  xerahs::app::ApplicationWindow home({{"capture-region", region}, {"capture-region-choose-actions", chooseCapture}, {"cancel-capture", cancelCapture},
       {"new-image", newImage}, {"open-image", openImage}, {"captures-folder", folder}, {"capture-history", history}, {"editor-appearance", appearance}, {"quit", quit}});
+  // Leave a focus-capable native window behind the chooser. In particular,
+  // Wayland clipboard dispatch must not follow closure of our last window.
+  capture.setActionSelectionParent(&home);
+  QObject::connect(&capture, &CaptureController::choosingActions, &home, &xerahs::app::ApplicationWindow::activate);
   QPointer<xerahs::app::PipelineHistoryDialog> historyDialog;
   QObject::connect(history, &QAction::triggered, &home, [&] {
     if (historyDialog) { historyDialog->show(); historyDialog->raise(); historyDialog->activateWindow(); return; }
@@ -171,9 +176,10 @@ int main(int argc, char *argv[]) {
   QObject::connect(quit, &QAction::triggered, &app, &QApplication::quit);
   QObject::connect(appearance, &QAction::triggered, [] { xerahs::app::manageEditorAppearance(); });
   // CORE-007: availability is shown, not faked.
-  QObject::connect(&capture, &CaptureController::busyChanged, region, [region, cancelCapture, &capture](bool) {
+  QObject::connect(&capture, &CaptureController::busyChanged, region, [region, chooseCapture, cancelCapture, &capture](bool) {
     const bool busy = capture.busy();
     region->setEnabled(!busy);
+    chooseCapture->setEnabled(!busy);
     cancelCapture->setEnabled(busy);
     region->setText(busy ? QStringLiteral("Capture region (in progress)") : QStringLiteral("Capture region"));
   });
@@ -201,16 +207,19 @@ int main(int argc, char *argv[]) {
     if (!diagnostic.isEmpty()) { home.showResult(QStringLiteral("Activation"), activationFailureMessage(diagnostic), false); home.activate(); }
   };
   QObject::connect(&instance, &xerahs::app::NativeInstance::activationRequested, &home, dispatch);
-  const auto invokeLocal = [&dispatcher, &dispatch, &home](ActivationAction action, const QString &path = QString{}) {
+  const auto invokeLocal = [&dispatcher, &dispatch, &home, &capture](ActivationAction action, const QString &path = QString{}, bool chooseActions = false) {
     const auto local = makeActivationRequest(action, path);
     const auto admitted = dispatcher.admit(local);
-    if (admitted == ActivationReplyState::Accepted) dispatch(local);
+    if (admitted == ActivationReplyState::Accepted) {
+      if (chooseActions) capture.captureRegionWithActions(); else dispatch(local);
+    }
     else {
       home.showResult(QStringLiteral("Activation"), activationFailureMessage(admitted == ActivationReplyState::Busy ? QStringLiteral("activation-busy") : QStringLiteral("activation-unavailable")), false);
       home.activate();
     }
   };
   QObject::connect(region, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureRegion); });
+  QObject::connect(chooseCapture, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureRegion, {}, true); });
   QObject::connect(openImage, &QAction::triggered, &home, [&invokeLocal, &capture, &home] {
     const auto path = QFileDialog::getOpenFileName(&home, QStringLiteral("Open image"), capture.saveDirectory(), xerahs::app::imageFileFilter());
     if (!path.isEmpty()) invokeLocal(ActivationAction::EditImage, path);

@@ -1,11 +1,15 @@
 #include "CapturePipeline.h"
-#include <QGuiApplication>
+#include "ActionSelectionDialog.h"
+#include <QApplication>
+#include <QCheckBox>
 #include <QThread>
+#include <QTimer>
 #include <cstdio>
 using namespace xerahs::app;
 using namespace xerahs::actions;
 int main(int argc, char **argv) {
-  QGuiApplication app(argc, argv);
+  QApplication app(argc, argv);
+  app.setQuitOnLastWindowClosed(false); // production tray lifetime, including after selector acceptance
   if (argc != 4) return 2;
   auto journal = std::make_shared<NativePipelineJournal>(QString::fromLocal8Bit(argv[1]));
   const auto mode = QString::fromLocal8Bit(argv[3]);
@@ -28,10 +32,19 @@ int main(int argc, char **argv) {
     original.start(); return app.exec();
   }
   CaptureActionPorts ports;
-  if (mode == "before-publication") ports.save.beforePublish = [stop](const QString &) { stop(); };
+  if (mode == "before-publication" || mode == "selection-before-publication") ports.save.beforePublish = [stop](const QString &) { stop(); };
   ports.clipboard = [mode, stop](const QImage &, const CancellationToken &) { if (mode == "after-save") stop(); return ActionOutcome{}; };
   QImage image(9, 7, QImage::Format_ARGB32); image.fill(Qt::red);
-  CapturePipeline pipeline(image, QString::fromLocal8Bit(argv[2]), "capture", {"save", "image-clipboard"}, nullptr, ports, journal);
+  QStringList selected{"save", "image-clipboard"};
+  QTimer selection;
+  if (mode == "selection-before-publication") {
+    selected.prepend("after-capture-window"); selection.setInterval(10);
+    QObject::connect(&selection, &QTimer::timeout, &app, [&] {
+      auto *dialog = qobject_cast<ActionSelectionDialog *>(QApplication::activeModalWidget()); if (!dialog) return;
+      dialog->findChild<QCheckBox *>("capture-action-image-clipboard")->setChecked(false); selection.stop(); dialog->accept();
+    }); selection.start();
+  }
+  CapturePipeline pipeline(image, QString::fromLocal8Bit(argv[2]), "capture", selected, nullptr, ports, journal);
   QObject::connect(&pipeline, &CapturePipeline::finished, &app, &QCoreApplication::quit);
   pipeline.start(); return app.exec();
 }

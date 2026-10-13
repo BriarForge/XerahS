@@ -50,6 +50,7 @@ public:
   bool begin();
   bool before(const ActionSpec &action);
   bool beforePublish(const QString &path);
+  void selectionChanged(const QStringList &selected);
   void completed(const ActionResult &result, const std::vector<SavedFileArtifact> &files);
   void finish(const PipelineResult &result, const std::vector<SavedFileArtifact> &files);
   const QString &diagnostic() const { return m_diagnostic; }

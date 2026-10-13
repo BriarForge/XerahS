@@ -1,4 +1,5 @@
 #include "CapturePipeline.h"
+#include "ActionSelectionDialog.h"
 #include <QPointer>
 #include <QThread>
 #include <QTimer>
@@ -22,10 +23,13 @@ struct ClipboardCall {
   bool done = false;
   ActionOutcome result;
 };
+struct SelectionCall { bool done = false; ActionOutcome result; };
+void completeSelection(const std::shared_ptr<CapturePipelineState> &state, const std::shared_ptr<SelectionCall> &call, ActionOutcome result);
 ActionOutcome cancelled() { return {ActionState::Cancelled, {}, {}}; }
 QString actionActivity(const QString &id) {
   if (id == "save") return QStringLiteral("Saving capture. Escape or Cancel Capture stops later actions.");
   if (id == "image-clipboard") return QStringLiteral("Copying capture to the clipboard.");
+  if (id == "after-capture-window") return QStringLiteral("Choose actions for this capture. Escape cancels before saving or copying.");
   return QStringLiteral("Running capture action.");
 }
 }
@@ -34,11 +38,19 @@ struct CapturePipelineState {
   std::mutex mutex;
   std::condition_variable changed;
   std::shared_ptr<ClipboardCall> clipboard;
+  std::shared_ptr<SelectionCall> selection;
   std::shared_ptr<CapturePipelineResult> result = std::make_shared<CapturePipelineResult>();
   QString activity;
   bool ready = false;
 };
 namespace {
+void completeSelection(const std::shared_ptr<CapturePipelineState> &state, const std::shared_ptr<SelectionCall> &call, ActionOutcome result) {
+  { std::lock_guard<std::mutex> lock(state->mutex);
+    if (call->done) return;
+    call->result = state->cancellation.requested() ? cancelled() : std::move(result); call->done = true;
+  }
+  state->changed.notify_all();
+}
 class JournaledExecutor final : public ActionExecutor {
 public:
   JournaledExecutor(CaptureActions &actions, PipelineJournalRecorder &journal) : m_actions(actions), m_journal(journal) {}
@@ -54,9 +66,9 @@ private:
 };
 }
 CapturePipeline::CapturePipeline(QImage media, QString directory, QString pattern, QStringList selected,
-                                 QObject *parent, CaptureActionPorts ports, PipelineJournalStorage journal)
+                                 QObject *parent, CaptureActionPorts ports, PipelineJournalStorage journal, QWidget *selectionParent)
     : QObject(parent), m_state(std::make_shared<CapturePipelineState>()), m_media(std::move(media)),
-      m_directory(std::move(directory)), m_pattern(std::move(pattern)), m_selected(std::move(selected)), m_ports(std::move(ports)), m_journal(std::move(journal)) {
+      m_directory(std::move(directory)), m_pattern(std::move(pattern)), m_selected(std::move(selected)), m_ports(std::move(ports)), m_journal(std::move(journal)), m_selectionParent(selectionParent) {
   qRegisterMetaType<CapturePipelineReceipt>();
   m_timer = new QTimer(this); m_timer->setInterval(10); connect(m_timer, &QTimer::timeout, this, &CapturePipeline::poll);
 }
@@ -69,6 +81,7 @@ CapturePipeline::~CapturePipeline() {
   m_timer->stop();
   { std::lock_guard<std::mutex> lock(m_state->mutex); m_state->cancellation.request(); }
   m_state->changed.notify_all();
+  if (m_selectionDialog) { disconnect(m_selectionDialog, nullptr, this, nullptr); delete m_selectionDialog.data(); }
 }
 void CapturePipeline::start() {
   if (m_started) return;
@@ -92,6 +105,13 @@ void CapturePipeline::start() {
     std::unique_lock<std::mutex> lock(state->mutex); state->clipboard = call;
     state->changed.wait(lock, [&] { return call->done || (token.requested() && !call->claimed); });
     return call->done ? call->result : cancelled();
+  };
+  ports.selection = [state](const CancellationToken &token) {
+    if (token.requested()) return cancelled();
+    auto call = std::make_shared<SelectionCall>();
+    std::unique_lock<std::mutex> lock(state->mutex); state->selection = call;
+    state->changed.wait(lock, [&] { return call->done || token.requested(); });
+    return token.requested() ? cancelled() : call->result;
   };
   auto *worker = QThread::create([state, ports, media = m_media, directory = m_directory,
                                   pattern = m_pattern, selected = m_selected, storage = m_journal,
@@ -124,6 +144,7 @@ void CapturePipeline::start() {
       return std::vector<SavedFileArtifact>{*file};
     };
     PipelineHooks hooks;
+    hooks.selectionChanged = [&journal](const QStringList &effective) { journal.selectionChanged(effective); };
     hooks.actionFinished = [state, &journal, currentFiles](const ActionResult &result) {
       state->result->pipeline.orderedResults.push_back(result); journal.completed(result, currentFiles());
     };
@@ -144,6 +165,9 @@ void CapturePipeline::cancel() {
   if (m_finished) return;
   { std::lock_guard<std::mutex> lock(m_state->mutex); m_state->cancellation.request(); }
   m_state->changed.notify_all();
+  const QPointer<CapturePipeline> guard(this);
+  if (m_selectionDialog) m_selectionDialog->reject();
+  if (!guard) return;
   emit activityChanged(QStringLiteral("Cancellation requested. Finishing the current action safely."));
 }
 void CapturePipeline::poll() {
@@ -154,6 +178,34 @@ void CapturePipeline::poll() {
   const QPointer<CapturePipeline> guard(this);
   if (!activity.isEmpty() && activity != m_activity && !state->cancellation.requested()) {
     m_activity = activity; emit activityChanged(activity); if (!guard) return;
+  }
+  std::shared_ptr<SelectionCall> selection;
+  { std::lock_guard<std::mutex> lock(state->mutex); selection = std::move(state->selection); }
+  if (selection) {
+    if (state->cancellation.requested()) completeSelection(state, selection, cancelled());
+    else {
+      // The controller releases capture overlays before this application-modal
+      // window claims focus. No nested event loop or GUI access on the worker.
+      emit choosingActions(); if (!guard) return;
+      if (state->cancellation.requested()) completeSelection(state, selection, cancelled());
+      else {
+        auto *dialog = new ActionSelectionDialog(m_selected, m_media.size(), m_selectionParent); m_selectionDialog = dialog;
+        const QPointer<QWidget> selectionParent(m_selectionParent);
+        connect(dialog, &QDialog::finished, this, [state, selection, dialog, selectionParent](int result) {
+          auto outcome = result == QDialog::Accepted
+              ? ActionOutcome{ActionState::Succeeded, {}, dialog->selectedActions()} : cancelled();
+          const auto ownedState = state; const auto ownedCall = selection;
+          // Restore the transient owner before acknowledging selection to the
+          // worker. Clipboard dispatch still belongs to the GUI thread.
+          if (selectionParent) selectionParent->activateWindow();
+          completeSelection(ownedState, ownedCall, std::move(outcome));
+        });
+        connect(dialog, &QObject::destroyed, this, [state, selection] { completeSelection(state, selection, cancelled()); });
+        dialog->show(); if (!guard || !m_selectionDialog) return;
+        dialog->raise(); if (!guard || !m_selectionDialog) return;
+        dialog->activateWindow(); if (!guard) return;
+      }
+    }
   }
   std::shared_ptr<ClipboardCall> call;
   { std::lock_guard<std::mutex> lock(state->mutex); call = std::move(state->clipboard); if (call) call->claimed = true; }

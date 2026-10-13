@@ -3,9 +3,12 @@
 #include "NativePipelineJournal.h"
 #include "actions/PipelineRetry.h"
 #include <QObject>
+#include <QPointer>
 #include <memory>
 class QTimer;
+class QWidget;
 namespace xerahs::app {
+class ActionSelectionDialog;
 struct CapturePipelineResult {
   xerahs::actions::PipelineResult pipeline;
   std::optional<CaptureFile> file;
@@ -19,13 +22,14 @@ struct CapturePipelineResult {
 };
 using CapturePipelineReceipt = std::shared_ptr<const CapturePipelineResult>;
 struct CapturePipelineState;
-// Worker-owned action engine and native file I/O; clipboard is dispatched only
-// by this QObject on its Qt GUI thread. Destruction cancels without joining.
+// Worker-owned action engine and native file I/O; clipboard and asynchronous
+// selection UI stay on this QObject's GUI thread. Destruction cancels without
+// joining, and closes any owned selection window.
 class CapturePipeline final : public QObject {
   Q_OBJECT
 public:
   CapturePipeline(QImage media, QString directory, QString pattern, QStringList selected,
-                  QObject *parent = nullptr, CaptureActionPorts ports = {}, PipelineJournalStorage journal = {});
+                  QObject *parent = nullptr, CaptureActionPorts ports = {}, PipelineJournalStorage journal = {}, QWidget *selectionParent = nullptr);
   CapturePipeline(CapturePipelineReceipt source, QObject *parent = nullptr, CaptureActionPorts ports = {}, PipelineJournalStorage journal = {});
   ~CapturePipeline() override;
   void start();
@@ -33,6 +37,7 @@ public:
 signals:
   void activityChanged(const QString &text);
   void finished(const xerahs::app::CapturePipelineReceipt &result);
+  void choosingActions();
 private:
   void poll();
   std::shared_ptr<CapturePipelineState> m_state;
@@ -47,6 +52,8 @@ private:
   QTimer *m_timer = nullptr;
   bool m_started = false;
   bool m_finished = false;
+  QPointer<ActionSelectionDialog> m_selectionDialog;
+  QPointer<QWidget> m_selectionParent;
 };
 } // namespace xerahs::app
 Q_DECLARE_METATYPE(xerahs::app::CapturePipelineReceipt)

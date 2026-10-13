@@ -120,6 +120,12 @@ The following owner/conformance clarifications remain concrete release work:
 new linked journal, preserving original/previous identity, actual file creator
 and earlier successful actions. Restart records themselves never dispatch retry.
 
+[Native per-run selection](ACTION-SELECTION.md) updates the recorder's effective
+plan before a chosen output begins. A real-process kill before selected PNG
+publication recovers the successful selector and unknown save; deselected Copy
+is absent. Cancelled selection creates no output or journal store. The native
+fixture keeps the production tray lifetime when the chooser closes.
+
 Full media reconstruction, catalogue/prerequisite retry, search/pagination/retention, all artifact and
 action types, upgrade/recovery compatibility, filesystem/distro/compositor
 qualification and human security/privacy/accessibility/parity/release approvals

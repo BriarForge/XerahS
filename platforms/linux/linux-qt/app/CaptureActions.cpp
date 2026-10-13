@@ -17,6 +17,7 @@ ActionOutcome failed(const QString &diagnostic) {
 }  // namespace
 
 const QString CaptureActions::kActionUnavailable = QStringLiteral("action-unavailable");
+QStringList CaptureActions::selectableActions() { return {QStringLiteral("save"), QStringLiteral("image-clipboard")}; }
 
 CaptureActions::CaptureActions(QImage media, QString directory, QString pattern, CaptureActionPorts ports, std::optional<CaptureFile> inheritedFile)
     : m_media(std::move(media)), m_directory(std::move(directory)), m_pattern(std::move(pattern)),
@@ -25,6 +26,7 @@ CaptureActions::CaptureActions(QImage media, QString directory, QString pattern,
 ActionOutcome CaptureActions::run(const ActionRequest &request) {
   try {
     if (m_ports.actionStarted) m_ports.actionStarted(request.spec.id);
+    if (request.spec.id == QStringLiteral("after-capture-window") && m_ports.selection) return m_ports.selection(request.cancellation);
     if (request.spec.id == QStringLiteral("save")) return save();
     if (request.spec.id == QStringLiteral("image-clipboard")) return copyImage(request.cancellation);
     return failed(kActionUnavailable);

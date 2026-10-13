@@ -158,6 +158,11 @@ void PipelineJournalRecorder::completed(const ActionResult &result, const std::v
   m_snapshot.pendingAction.reset(); m_snapshot.pendingSavePath.reset(); m_snapshot.files = files;
   if (m_expected) persist();
 }
+void PipelineJournalRecorder::selectionChanged(const QStringList &selected) {
+  // The engine supplies its complete effective plan. completed() records the
+  // selector and persists both together if a journal already exists.
+  m_snapshot.selected = selected;
+}
 void PipelineJournalRecorder::finish(const PipelineResult &result, const std::vector<SavedFileArtifact> &files) {
   if (!m_expected) return;
   m_snapshot.result = result; m_snapshot.files = files;

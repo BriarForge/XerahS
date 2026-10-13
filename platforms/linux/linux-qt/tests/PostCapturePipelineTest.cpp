@@ -4,6 +4,7 @@
 
 #include "actions/PostCapturePipeline.h"
 #include "actions/PipelineResultJson.h"
+#include "actions/ActionSelection.h"
 
 #include <QFile>
 #include <QJsonArray>
@@ -65,6 +66,41 @@ class PostCapturePipelineTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void selectionValidationPreservesAvailabilityAndPerRunCatalogueSemantics() {
+    const QStringList available{"save", "image-clipboard"};
+    const auto accepted = validateActionSelection("after-capture-window", {"image-clipboard", "save", "save", "quick-task-menu", "after-capture-window"}, available);
+    QVERIFY(accepted.accepted); QCOMPARE(accepted.selected, (QStringList{"save", "image-clipboard"}));
+    const auto empty = validateActionSelection("after-capture-window", {}, available); QVERIFY(empty.accepted); QVERIFY(empty.selected.isEmpty());
+    const auto unsupported = validateActionSelection("after-capture-window", {"save", "upload"}, available);
+    QVERIFY(!unsupported.accepted); QVERIFY(unsupported.selected.isEmpty()); QCOMPARE(unsupported.diagnostic, QString("selection-action-unavailable"));
+    const auto unknown = validateActionSelection("after-capture-window", {"private untrusted value"}, available);
+    QCOMPARE(unknown.diagnostic, QString("selection-unknown-action")); QVERIFY(!unknown.diagnostic.contains("private"));
+    QVERIFY(!validateActionSelection("save", {"image-clipboard"}, available).accepted);
+    const auto choices = actionSelectionChoices("after-capture-window", {"save", "upload"}, available); QCOMPARE(choices.size(), size_t(19));
+    int enabled = 0; bool selectedUnavailable = false;
+    for (const auto &choice : choices) { if (choice.available) ++enabled; if (choice.action == "upload") selectedUnavailable = choice.selected && !choice.available; }
+    QCOMPARE(enabled, 2); QVERIFY(selectedUnavailable);
+  }
+  void replacementObserverSeesEffectivePlanBeforeRecordingAndStartingLaterActions() {
+    class SelectionExecutor final : public ActionExecutor {
+    public:
+      QStringList events;
+      ActionOutcome run(const ActionRequest &request) override {
+        events.append(request.spec.id);
+        if (request.spec.kind == ActionKind::Selection) return {ActionState::Succeeded, {}, QStringList{"save", "after-capture-window", "save"}};
+        return {};
+      }
+      bool createTemporaryUploadFile() override { return false; }
+      void removeTemporaryUploadFile() override {}
+    } executor;
+    PipelineHooks hooks; QStringList observed;
+    hooks.selectionChanged = [&](const QStringList &selected) { observed = selected; executor.events.append("plan changed"); };
+    hooks.actionFinished = [&](const ActionResult &result) { executor.events.append("record " + result.action); };
+    CancellationToken token; const auto result = runPipeline("selection-fixture", {"after-capture-window", "image-clipboard"}, {}, executor, token, hooks);
+    QCOMPARE(observed, (QStringList{"after-capture-window", "save"}));
+    QCOMPARE(executor.events, (QStringList{"after-capture-window", "plan changed", "record after-capture-window", "save", "record save"}));
+    QCOMPARE(result.orderedResults.size(), size_t(2)); QCOMPARE(result.orderedResults.back().action, QString("save"));
+  }
   void canonicalResultUsesContractFieldsAndNamespacedActualMetadata() {
     ScriptedExecutor executor; executor.states["image-clipboard"] = ActionState::Failed;
     CancellationToken token; PipelineHooks hooks;

@@ -15,6 +15,15 @@ using namespace xerahs::app;
 class ApplicationWindowTest final : public QObject {
   Q_OBJECT
 private slots:
+  void chooseActionsUsesTheSharedMainAndMenuActionAndAvailability() {
+    QAction choose(QStringLiteral("Capture region and choose actions…"));
+    ApplicationWindow window({{"capture-region-choose-actions", &choose}}); window.activate();
+    auto *button = window.findChild<QToolButton *>("capture-region-choose-actions"); QVERIFY(button);
+    QSignalSpy invoked(&choose, &QAction::triggered); button->setFocus(); QTest::keyClick(button, Qt::Key_Space); QCOMPARE(invoked.count(), 1);
+    bool found = false;
+    for (auto *action : window.menuBar()->actions()) if (auto *menu = action->menu()) found |= menu->actions().contains(&choose);
+    QVERIFY(found); choose.setEnabled(false); QVERIFY(!button->isEnabled()); QTest::keyClick(button, Qt::Key_Space); QCOMPARE(invoked.count(), 1);
+  }
   void preparingProgressIsAccessibleAndCancellationDoesNotReplacePublishedResults() {
     ApplicationWindow window({}); window.activate();
     auto *progress = window.findChild<QProgressBar *>("operationProgress");

@@ -299,6 +299,11 @@ PipelineResult runPipeline(const QString &taskId, const QStringList &selected,
           std::vector<int> replacement = planFor(*outcome.replacementSelection, index, &result.ignoredSelection);
           plan.resize(position + 1);
           plan.insert(plan.end(), replacement.begin(), replacement.end());
+          if (hooks.selectionChanged) {
+            QStringList effective;
+            for (const int item : plan) effective.append(actions[size_t(item)].id);
+            hooks.selectionChanged(effective);
+          }
         }
         // Pending clarification (ROOT-ESCALATE-001): the contract does not say
         // what a failed selection window does. It is treated as an independent

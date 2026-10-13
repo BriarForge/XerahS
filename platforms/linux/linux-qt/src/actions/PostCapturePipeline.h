@@ -155,6 +155,10 @@ struct PipelineHooks {
   // considered, so a caller can request cancellation between actions.
   std::function<void(const ActionResult &)> actionFinished;
   std::function<QDateTime()> clock;
+  // Effective full plan after a successful per-run replacement, before its
+  // selector result is recorded. Journals update their plan in that same
+  // observation, before any newly selected action can begin.
+  std::function<void(const QStringList &)> selectionChanged;
 };
 
 // Runs one pipeline. Every call is isolated: no state is shared between runs
