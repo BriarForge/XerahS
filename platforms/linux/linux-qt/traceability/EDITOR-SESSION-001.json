@@ -39,7 +39,10 @@
     "platforms/linux/linux-qt/app/CaptureFileIdentity.cpp",
     "platforms/linux/linux-qt/src/actions/PipelineJournal.cpp",
     "platforms/linux/linux-qt/src/actions/PipelineRetry.cpp",
-    "platforms/linux/linux-qt/src/actions/PipelineResultJson.cpp"
+    "platforms/linux/linux-qt/src/actions/PipelineResultJson.cpp",
+    "platforms/linux/linux-qt/app/EditorSave.h",
+    "platforms/linux/linux-qt/app/EditorSave.cpp",
+    "platforms/linux/linux-qt/app/EditorSaveProgress.cpp"
   ],
   "requirements": {
     "ES-001": {
@@ -100,7 +103,13 @@
     "ES-008": {
       "status": "implemented",
       "vectors": [],
-      "note": "Escape cancels a draw or move gesture. Native dirty close and New/Open Image replacement offer Save, Discard and Cancel; replacement defaults to Cancel and waits for fully validated preparation. Untitled images are dirty without prior edits and Save prompts for a PNG destination. Native window tests verify cancelled close/replacement/destination, successful save/discard, failed raster or sidecar save, preserved prior source/history/selection/viewport and rebound canvas actions. The editor remains alive until modal preparation workers finish. Native Open tests also verify same-file and untitled overlapping Save reload the persisted source/sidecar, while cancelled pickers, loading and invalid sources preserve the current session. Canvas teardown occurs while its referenced session/image remain alive."
+      "note": "Escape cancels a draw or move gesture. Native dirty close and New/Open Image replacement offer Save, Discard and Cancel; replacement defaults to Cancel and waits for fully validated preparation. Untitled images are dirty without prior edits and Save prompts for a PNG destination. Native window tests verify cancelled close/replacement/destination, successful save/discard, failed raster or sidecar save, preserved prior source/history/selection/viewport and rebound canvas actions. The editor remains alive until modal preparation workers finish. Native Open tests also verify same-file and untitled overlapping Save reload the persisted source/sidecar, while cancelled pickers, loading and invalid sources preserve the current session. Canvas teardown occurs while its referenced session/image remain alive. Native editor Save now freezes an owned snapshot on a cancellable worker; busy close/replacement/reentrant actions are refused, and cancelled or incomplete persistence leaves the editable session open. Parent destruction releases the bridge without joining or retaining GUI/stack references. Actual window tests cover cancellation and owner deletion during work, completion and busy restoration; full shutdown/physical qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/EDITOR-SAVE.md",
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
     },
     "ES-009": {
       "status": "partial",
@@ -126,7 +135,7 @@
     "ES-011": {
       "status": "partial",
       "vectors": [],
-      "note": "Native save uses QSaveFile atomic raster replacement and marks the checkpoint only after raster and required sidecar persistence succeed. New Image tests verify a blank initial source stays dirty until a successful destination save, and failed raster/sidecar persistence prevents dirty replacement. Full save/output qualification remains pending. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required.",
+      "note": "Native save uses guarded atomic raster replacement and marks the checkpoint only after raster and required sidecar persistence succeed. New Image tests verify a blank initial source stays dirty until a successful destination save, and failed raster/sidecar persistence prevents dirty replacement. Full save/output qualification remains pending. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Editor Save now uses descriptor-bound same-directory private temporaries, fsynced bytes and guarded atomic publication rather than QSaveFile plus whole-file rereading. Complete persistence acknowledges the exported history state. Failed Save As keeps the previous durable path until explicit companion repair fully succeeds. Full format/permission/ACL/power-loss/native/human qualification remains Required; details and actual fixtures are indexed in EDITOR-SAVE.md.",
       "evidence": [
         "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
@@ -138,13 +147,16 @@
         "platforms/linux/linux-qt/tests/PipelineRetryTest.cpp",
         "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
         "platforms/linux/linux-qt/tests/PipelineHistoryDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp"
+        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
+        "platforms/linux/linux-qt/app/EDITOR-SAVE.md",
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ]
     },
     "ES-012": {
       "status": "implemented",
       "vectors": [],
-      "note": "A sidecar failure keeps the session dirty and reports sidecar-save-failed (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Native replacement tests force a sidecar write failure after raster persistence, report Save incomplete, and retain the current editable session/history/selection/checkpoint. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required.",
+      "note": "A sidecar failure keeps the session dirty and reports sidecar-save-failed (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Native replacement tests force a sidecar write failure after raster persistence, report Save incomplete, and retain the current editable session/history/selection/checkpoint. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. An unchanged split editor save now invalidates its clean checkpoint. The native failure dialog discloses PNG success and required companion failure, keeps the document/PNG and offers explicit default-Cancel companion-only repair. Changed history disables repair; Undo restores eligibility without truncating Redo. Repair verifies the original PNG identity/hash and never re-encodes it. Direct and GUI tests cover cancellation after PNG, repeated failure and complete repair.",
       "evidence": [
         "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
@@ -156,13 +168,16 @@
         "platforms/linux/linux-qt/tests/PipelineRetryTest.cpp",
         "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
         "platforms/linux/linux-qt/tests/PipelineHistoryDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp"
+        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
+        "platforms/linux/linux-qt/app/EDITOR-SAVE.md",
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ]
     },
     "ES-013": {
       "status": "partial",
       "vectors": [],
-      "note": "gzip-wrapped UTF-8 JSON with schema fields round-trips. Native load/save computes raster SHA-256, embeds immutable unannotated PNG and records timestamps. New Image starts without file identity and retains the selected profile through PNG/xann round trips. Full document compatibility qualification remains pending. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required.",
+      "note": "gzip-wrapped UTF-8 JSON with schema fields round-trips. Native load/save computes raster SHA-256, embeds immutable unannotated PNG and records timestamps. New Image starts without file identity and retains the selected profile through PNG/xann round trips. Full document compatibility qualification remains pending. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Editor save hashes the actual encoded PNG descriptor in bounded cancellable chunks before publication, retains the immutable unannotated embedded source, and reopens a real pair without compounding objects. Sparse oversized temporaries fail without publication or whole-file buffering. Complete shared document/colour/format qualification remains Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/PAIRED-SAVE.md",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
@@ -170,7 +185,11 @@
         "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
         "platforms/linux/linux-qt/tests/PipelineHistoryDialogTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp"
+        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
+        "platforms/linux/linux-qt/app/EDITOR-SAVE.md",
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ]
     },
     "ES-014": {
@@ -178,7 +197,7 @@
       "vectors": [
         "empty-document-removes-sidecar"
       ],
-      "note": " Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required.",
+      "note": "Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Explicit editor Save supplies sidecar intent; empty documents remove only the unchanged owned, regular, single-link, supported default companion, return no sidecar path and retain the raster. The writer preserves future-major, damaged, foreign-owner, colliding and symlink companions; native tests verify future-major/symlink/collision preservation and known compatible removal. Full consent/alternate-name/race/compatibility qualification remains Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/PAIRED-SAVE.md",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
@@ -186,7 +205,11 @@
         "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
         "platforms/linux/linux-qt/tests/PipelineHistoryDialogTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp"
+        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
+        "platforms/linux/linux-qt/app/EDITOR-SAVE.md",
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ]
     },
     "ES-015": {
@@ -195,7 +218,13 @@
         "newer-version-read-only-failure",
         "unknown-fields-and-types-round-trip"
       ],
-      "note": "Unknown additive fields and annotation types round-trip in the core. Native opening fails closed for newer, unreadable or corrupt sidecars and embedded sources. Unsupported objects are shown as labelled, accessible native dock placeholders, including hidden state, and survive flatten/clear undo. Core, file and window tests verify preservation, failure without rewriting and placeholder presentation."
+      "note": "Unknown additive fields and annotation types round-trip in the core. Native opening fails closed for newer, unreadable or corrupt sidecars and embedded sources. Unsupported objects are shown as labelled, accessible native dock placeholders, including hidden state, and survive flatten/clear undo. Core, file and window tests verify preservation, failure without rewriting and placeholder presentation. The native editor save boundary also preserves unsupported future-major or damaged existing companions instead of rewriting/removing them; partial PNG acknowledgement remains honest. EditorSaveTest verifies future-major and symlink preservation. Shared compatibility and physical qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/EDITOR-SAVE.md",
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
     },
     "ES-016": {
       "status": "implemented",
@@ -278,7 +307,13 @@
         "undo-to-checkpoint-is-clean",
         "truncated-checkpoint-stays-dirty"
       ],
-      "note": "Saved sessions retain stable checkpoint IDs. Newly created sources use an absent initial checkpoint, so Undo to initial pixels remains dirty until successful persistence. EditorSessionTest and EditorWindowTest verify unsaved initial/Undo/Redo, cancelled Save and complete/incomplete native persistence."
+      "note": "Saved sessions retain stable checkpoint IDs. Newly created sources use an absent initial checkpoint, so Undo to initial pixels remains dirty until successful persistence. EditorSessionTest and EditorWindowTest verify unsaved initial/Undo/Redo, cancelled Save and complete/incomplete native persistence. recordSnapshotSave acknowledges the immutable exported state instead of the current state. EditorSessionTest covers later edits, Undo to the saved snapshot, split-save invalidation and an unreachable truncated checkpoint; EditorWindowTest preserves Redo through companion-only repair.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/EDITOR-SAVE.md",
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
     },
     "ES-028": {
       "status": "implemented",

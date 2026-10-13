@@ -61,10 +61,11 @@ review limits; this is not a security approval.
 For an empty document, absence of a default sidecar satisfies this new-path
 policy and returns no sidecar path. A colliding unowned companion is preserved
 and reported failed. Capture has no prior companion deletion authority merely
-because a filename ends in `.xann`. The Core ES-014 removal vector and explicit
-editor save behavior remain unchanged. A complete owned-companion replacement/
-removal consent policy is Required; this conservative capture case does not
-claim full ES-014 native qualification.
+because a filename ends in `.xann`. The Core ES-014 removal vector remains unchanged.
+The subsequent [editor-save checkpoint](EDITOR-SAVE.md) adds explicit supported
+companion replacement/removal and bounded worker repair for editor Save. Complete
+shared consent/compatibility policy and native qualification remain Required;
+this conservative capture case does not claim full ES-014 qualification.
 
 The write-ahead recorder acknowledges PNG file facts while the save action is
 still pending, before permitting the companion effect. A failed acknowledgement
@@ -116,9 +117,10 @@ affected targets also run against cached Qt 6.4.2; exact pushed-SHA Ubuntu
 these checks does not close human security/privacy/accessibility, parity,
 golden/compatibility, supported-distro/compositor, packaging or release gates.
 
-Next extend explicit editor Save to the same bounded immutable worker-output
-and partial-repair model under EO-001/003/005/006/014/015 and ES-011/012, including
-validated replacement/owned-companion authority, cancellation and retained
-dirty-state evidence. Continue full annotation tools, formats, workflow/default
+The subsequent [editor-save evidence](EDITOR-SAVE.md) records bounded immutable
+worker output, explicit companion repair, guarded replacement/removal and actual
+cancellation/dirty-state/lifetime fixtures under EO-001/003/005/006/014/015 and
+ES-011/012. Next implement explicit PNG/JPEG/WebP save options and retain all
+recorded qualification limits. Continue full annotation tools, formats, workflow/default
 configuration, capture topology, recording/audio, uploads/credentials,
 catalogues and every other domain in CONTRACT-AUDIT.md alongside that work.

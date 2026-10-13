@@ -129,11 +129,19 @@ each artifact separately. Partial save keeps the PNG/document for companion-only
 repair, admits acknowledged PNG consumers without delete authority, and records
 known PNG facts before unknown companion intent. Native/private-bus and real-process
 fixtures verify both Save aliases, actual re-editing, unchanged bytes/creators,
-cancellation, private-store failure and honest normal/restart review. Next extend
-explicit editor Save to the same bounded immutable worker-output and partial-repair
-model under EO-001/003/005/006/014/015 and ES-011/012, including validated replacement/
-owned-companion authority, cancellation and retained dirty-state evidence, alongside
-complete annotation tools, configured workflows, remaining save variants and catalogue.
+cancellation, private-store failure and honest normal/restart review.
+[Editor Save](app/EDITOR-SAVE.md) now freezes an owned snapshot on a cancellable
+worker, publishes through descriptor-bound same-directory temporaries, acknowledges
+the exported history state and keeps split saves dirty. Explicit default-Cancel
+companion repair preserves the PNG and Redo; failed Save As keeps the current path
+until full repair. Native tests cover actual cancellation, concurrent caller changes,
+old-destination/future-companion preservation, bounded hashing, owner destruction,
+completion exceptions and refused non-PNG destinations. Full path-race, filesystem,
+shutdown, physical and human qualification remain Required. Next implement explicit
+PNG/JPEG/WebP alpha/quality/extension/overwrite/profile choices under EO-004/005/006,
+resolve the format-policy clarification recorded in EDITOR-SAVE.md and continue decided independent work,
+alongside complete annotation tools, configured workflows, remaining save variants
+and catalogue.
 
 Each checkpoint updates requirement traceability, runs native tests and the
 implemented shared vectors, and lands on `main`. Passing the small pilot vector

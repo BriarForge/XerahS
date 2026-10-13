@@ -9,7 +9,6 @@
 #include <QDateTime>
 #include <QFile>
 #include <QFileInfo>
-#include <QSaveFile>
 
 #include <new>
 #include <algorithm>
@@ -20,18 +19,6 @@ namespace xerahs::app {
 namespace {
 
 using namespace xerahs::editor;
-
-class FileSidecarStore final : public SidecarStore {
-public:
-  bool exists(const QString &path) override { return QFileInfo::exists(path); }
-  bool write(const QString &path, const QByteArray &bytes) override {
-    QSaveFile file(path);
-    if (!file.open(QIODevice::WriteOnly)) return false;
-    if (file.write(bytes) != bytes.size()) return false;
-    return file.commit();
-  }
-  bool remove(const QString &path) override { return QFile::remove(path); }
-};
 
 QString now() { return QDateTime::currentDateTimeUtc().toString(Qt::ISODate); }
 
@@ -238,31 +225,4 @@ RenderedEditorImage renderEditorImage(const QImage &source, const AnnotationDocu
   }
   return {out, {}};
 }
-SaveOutcome saveEdit(const QString &rasterPath, const QImage &source, const AnnotationDocument &document) {
-  SaveOutcome outcome;
-  const auto rendered = renderEditorImage(source, document);
-  if (rendered.image.isNull()) { outcome.rasterError = "The image or annotation geometry is invalid and cannot be exported."; return outcome; }
-  QSaveFile raster(rasterPath);
-  if (raster.open(QIODevice::WriteOnly) && rendered.image.save(&raster, "PNG") && raster.commit()) {
-    outcome.rasterSaved = true;
-  } else {
-    outcome.rasterError = raster.errorString();
-    return outcome;
-  }
-
-  // The sidecar embeds the unannotated source, so the saved raster can be
-  // re-edited without compounding annotations.
-  AnnotationDocument saved = document;
-  saved.imagePath = rasterPath;
-  QFile written(rasterPath);
-  QByteArray writtenBytes;
-  if (written.open(QIODevice::ReadOnly)) writtenBytes = written.readAll();
-  saved.imageHash = QStringLiteral("sha256:") +
-                    QString::fromLatin1(QCryptographicHash::hash(writtenBytes, QCryptographicHash::Sha256).toHex());
-  saved.modifiedAt = now();
-  FileSidecarStore store;
-  outcome.sidecarSaved = saveSidecar(store, rasterPath, saved, true).ok;
-  return outcome;
-}
-
 }  // namespace xerahs::app

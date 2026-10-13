@@ -66,6 +66,16 @@ review limits. With no tray host, the window provides the current commands.
 
 - **Open image** (tray menu or `xerahs --edit FILE`) opens the editor. Editor **File → Open Image…**, Ctrl+O, replaces the current session after loading succeeds and a dirty document's Save/Discard/Cancel confirmation. Loading exposes progress and cancellation; failed or cancelled opening preserves the current session. Saving to the same candidate path reloads the newly saved raster and sidecar before replacement.
 
+- **Save / Save As…** in the editor saves one owned document snapshot on a worker
+  with progress and Cancel. PNG and required editable annotations must both
+  persist before the document is clean; failed Save As keeps the current path.
+  **File → Retry annotation save…** confirms repair of a partial save's companion
+  while keeping its PNG. Changing the document disables that repair until Undo
+  returns to its saved state. Non-PNG destinations are visibly refused until
+  the remaining formats are implemented. The [editor-save evidence](app/EDITOR-SAVE.md)
+  records actual native failure, cancellation, lifetime and repair coverage,
+  along with remaining format and qualification work.
+
 - **Recent Images → Manage Recent Images…** (editor File menu or tray) offers explicit opt-in, a maximum of 1..100 entries (default 10), Remove Selected and Clear All. Apply atomically saves the private list and preferences; Cancel leaves active and stored values unchanged. Only successful openings and complete raster/sidecar saves after opt-in add paths. Selecting an entry uses the same validated Open and dirty confirmation flow; missing entries remain removable. Preferences survive restart. Remove, Clear, trim and opt-out remove forgotten paths from the current and retained previous settings together. A preference-save failure preserves the old list and visibly reports the problem while leaving a successful image operation successful.
 
 - **Preferences → Drawing Defaults…** changes stroke colour, fill colour and thickness for new annotations in every open editor and after restart. Colours accept `#RRGGBB` or `#AARRGGBB` and retain alpha; thickness is 1..10000 pixels. Apply saves all fields together before publishing; Cancel and Reset followed by Cancel leave preferences unchanged. Existing annotations, selection, dirty state and undo/redo stay intact. Invalid input, a stale draft or a write failure keeps the dialog open with an error. The stroke/fill and thickness toolbar controls explicitly edit selected objects and save the resulting creation defaults. A preference-save failure leaves the document edit undoable and shows a persistent status message.

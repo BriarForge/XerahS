@@ -34,6 +34,8 @@
 #include <QPushButton>
 #include <QSignalBlocker>
 #include <QScopedValueRollback>
+#include <QScopeGuard>
+#include <QPointer>
 #include <QSpinBox>
 #include <QStatusBar>
 #include <QToolBar>
@@ -337,6 +339,9 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   });
   // Fixed command menus remain available even with an empty custom toolbar.
   fileMenu->addSeparator(); fileMenu->addAction(saveAction); fileMenu->addAction(saveAs);
+  m_retrySave = fileMenu->addAction("Retry &annotation save…"); m_retrySave->setObjectName("retryEditorSidecar");
+  m_retrySave->setStatusTip("Retry only the incomplete annotation companion. Keep the already saved PNG.");
+  addAction(m_retrySave); connect(m_retrySave, &QAction::triggered, this, [this] { retrySave(); });
   auto *closeEditor = fileMenu->addAction(QStringLiteral("Close Editor"));
   closeEditor->setObjectName(QStringLiteral("closeEditor")); closeEditor->setShortcut(QKeySequence::Close);
   connect(closeEditor, &QAction::triggered, this, [this] { close(); });
@@ -384,7 +389,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   };
   for (auto *action : m_toolbarActions) { action->setParent(this); addAction(action); }
   m_toolbarController = new NativeEditorToolbar(*this, *bar, m_toolbarActions, [this] {
-    return m_canvas && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive();
+    return m_canvas && !m_canvasOperationPending && !m_closePending && !m_savePending && !m_canvas->interactionActive();
   });
 
   m_windowState = new NativeEditorWindowState(*this, {std::min(m_image.width() + 40, 1400), std::min(m_image.height() + 120, 900)});
@@ -409,6 +414,7 @@ void EditorWindow::persistDrawingDefaults() {
 }
 
 void EditorWindow::refresh() {
+  if (m_saveMessageState != m_session->stateId()) { m_saveMessage.clear(); m_saveMessageState.reset(); }
   if (m_placeholderState != m_session->stateId()) {
     m_placeholderState = m_session->stateId(); m_unsupportedObjects->clear();
     for (const Annotation &a : m_session->document().annotations) if (const auto *object = std::get_if<UnsupportedAnnotation>(&a)) {
@@ -426,11 +432,15 @@ void EditorWindow::refresh() {
       m_canvas->sourceChanged();
     }
   }
-  m_undo->setEnabled(m_session->undoCount() > 0);
-  m_redo->setEnabled(m_session->redoCount() > 0);
-  m_delete->setEnabled(!m_session->selection().isEmpty());
-  m_rotate->setEnabled(!m_session->selection().isEmpty());
-  m_clearAnnotations->setEnabled(!m_session->document().annotations.empty());
+  m_undo->setEnabled(!m_savePending && m_session->undoCount() > 0);
+  m_redo->setEnabled(!m_savePending && m_session->redoCount() > 0);
+  m_delete->setEnabled(!m_savePending && !m_session->selection().isEmpty());
+  m_rotate->setEnabled(!m_savePending && !m_session->selection().isEmpty());
+  m_clearAnnotations->setEnabled(!m_savePending && !m_session->document().annotations.empty());
+  m_retrySave->setEnabled(!m_savePending && m_partialSave && m_partialSaveState == m_session->stateId());
+  m_retrySave->setToolTip(m_partialSave && m_partialSaveState != m_session->stateId()
+      ? "The document changed since this PNG was saved. Undo to that state before retrying its annotations, or save a new snapshot."
+      : m_retrySave->statusTip());
   setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName(),
                                                     m_session->dirty() ? QStringLiteral(" •") : QString()));
   QString status = QStringLiteral("%1 × %2 · %3 annotation(s) · %4 selected · %5%")
@@ -441,15 +451,18 @@ void EditorWindow::refresh() {
       .arg(editorPreferenceDiagnosticMessage(m_preferenceDiagnostic));
   if (!m_drawingPreferenceDiagnostic.isEmpty()) status += QStringLiteral(" · Drawing defaults could not be saved: %1")
       .arg(editorPreferenceDiagnosticMessage(m_drawingPreferenceDiagnostic));
+  if (!m_saveMessage.isEmpty()) status += " · " + m_saveMessage;
   statusBar()->showMessage(status);
   m_canvas->viewport()->update();
 }
 
 void EditorWindow::newImage() {
-  if (m_canvasOperationPending) return;
-  const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
+  if (m_canvasOperationPending || m_savePending) return;
+  const QPointer<EditorWindow> guard(this); m_canvasOperationPending = true;
+  const auto pending = qScopeGuard([guard] { if (guard) guard->m_canvasOperationPending = false; });
   NewImageDialog dialog(this);
   if (dialog.exec() != QDialog::Accepted) return;
+  dialog.setParent(nullptr);
   auto prepared = dialog.takeImage();
   if (!prepared) return;
   std::unique_ptr<EditorSession> next;
@@ -465,6 +478,7 @@ void EditorWindow::newImage() {
 }
 
 int EditorWindow::confirmReplacement(const QString &replacement) {
+  const QPointer<EditorWindow> guard(this);
   if (m_session->dirty()) {
     QMessageBox box(QMessageBox::Question, QStringLiteral("Replace current image"),
         QStringLiteral("Save changes to %1 before replacing it with %2?")
@@ -472,6 +486,8 @@ int EditorWindow::confirmReplacement(const QString &replacement) {
         QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, this);
     box.setDefaultButton(QMessageBox::Cancel);
     const int choice = box.exec();
+    box.setParent(nullptr); // no completed stack dialog remains owned during Save
+    if (!guard) return QMessageBox::Cancel;
     if (choice == QMessageBox::Save && !save(false)) return QMessageBox::Cancel;
     return choice == QMessageBox::Save || choice == QMessageBox::Discard ? choice : QMessageBox::Cancel;
   }
@@ -487,14 +503,17 @@ void EditorWindow::adoptSession(std::unique_ptr<EditorSession> next, const QStri
   m_image = std::move(source);
   m_sourceBytes = m_session->document().sourceImagePng;
   m_path = path; m_placeholderState.reset();
+  m_partialSave.reset(); m_partialSaveState.reset();
+  m_saveMessage.clear(); m_saveMessageState.reset();
   m_canvas->resetDocument(*m_session, display);
   findChild<QAction *>(QStringLiteral("cropTool"))->setChecked(false);
   refresh(); m_canvas->setFocus();
 }
 
 bool EditorWindow::openImage(const QString &path) {
-  if (m_canvasOperationPending) return false;
-  const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
+  if (m_canvasOperationPending || m_savePending) return false;
+  const QPointer<EditorWindow> guard(this); m_canvasOperationPending = true;
+  const auto pending = qScopeGuard([guard] { if (guard) guard->m_canvasOperationPending = false; });
   QString target = path;
   if (target.isEmpty()) target = QFileDialog::getOpenFileName(this, QStringLiteral("Open image"), m_path, imageFileFilter());
   if (target.isEmpty()) return false;
@@ -661,6 +680,7 @@ void EditorWindow::clearImage() {
     box.button(QMessageBox::Discard)->setText(QStringLiteral("Clear without Saving"));
   } else box.button(QMessageBox::Ok)->setText(QStringLiteral("Clear"));
   const int answer = box.exec();
+  box.setParent(nullptr);
   if (answer == QMessageBox::Save && !save(false)) return;
   if (answer != QMessageBox::Save && answer != QMessageBox::Discard && answer != QMessageBox::Ok) return;
   CanvasOperation op; op.action = CanvasAction::ClearImageAndAnnotations; applyCanvas(op);
@@ -737,50 +757,112 @@ void EditorWindow::commitCanvas(PreparedCanvasEdit prepared, quint64 state) {
 }
 
 bool EditorWindow::save(bool chooseFile) {
+  if (m_savePending || m_canvas->interactionActive()) return false;
+  const QPointer<EditorWindow> guard(this);
   QString target = m_path;
   if (chooseFile || m_path.isEmpty()) {
-    target = QFileDialog::getSaveFileName(this, QStringLiteral("Save image"),
-        m_path.isEmpty() ? QStringLiteral("Untitled.png") : m_path, QStringLiteral("PNG image (*.png)"));
-    if (target.isEmpty()) return false;
+    QPointer<QFileDialog> picker(new QFileDialog(this, "Save image", m_path.isEmpty() ? "Untitled.png" : m_path, "PNG image (*.png)"));
+    picker->setObjectName("editorSaveAsDialog"); picker->setAccessibleName("Save image destination");
+    picker->setOption(QFileDialog::DontUseNativeDialog); picker->setAcceptMode(QFileDialog::AcceptSave);
+    picker->setFileMode(QFileDialog::AnyFile); picker->setDefaultSuffix("png");
+    const auto accepted = picker->exec();
+    target = picker && accepted == QDialog::Accepted ? picker->selectedFiles().value(0) : QString{};
+    delete picker.data();
+    if (!guard || target.isEmpty()) return false;
     if (QFileInfo(target).suffix().isEmpty()) target += QStringLiteral(".png");
   }
-  const SaveOutcome outcome = saveEdit(target, m_image, m_session->document());
+  if (QFileInfo(target).suffix().compare("png", Qt::CaseInsensitive) != 0) {
+    QMessageBox::warning(this, "Format unavailable", "This editor currently saves PNG. Use Save As with a .png destination; the existing file has been kept."); return false;
+  }
+  return performSave(target);
+}
+bool EditorWindow::retrySave() {
+  if (m_savePending || !m_partialSave || m_partialSaveState != m_session->stateId() || m_canvas->interactionActive()) return false;
+  const QPointer<EditorWindow> guard(this); const auto expected = m_partialSave; const auto state = m_partialSaveState;
+  QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, "Retry annotation save?",
+      QString("Retry the editable annotations for %1? The already saved PNG will be kept without rewriting it.").arg(QFileInfo(expected->path).fileName()),
+      QMessageBox::Retry | QMessageBox::Cancel, this));
+  box->setTextFormat(Qt::PlainText);
+  box->setObjectName("retryEditorSidecarDialog"); box->setDefaultButton(QMessageBox::Cancel); box->setEscapeButton(QMessageBox::Cancel);
+  const auto choice = box->exec(); delete box.data();
+  if (!guard || choice != QMessageBox::Retry || m_savePending || m_partialSave != expected || m_partialSaveState != state || state != m_session->stateId()) return false;
+  return performSave(expected->path, expected);
+}
+bool EditorWindow::performSave(const QString &target, const EditorSaveReceiptPtr &repair) {
+  if (m_savePending || m_canvas->interactionActive()) return false;
+  const QPointer<EditorWindow> guard(this);
+  const auto state = m_session->stateId(); const auto document = m_session->document(); const auto source = m_image; const auto hooks = m_saveHooks;
+  QMap<QAction *, bool> enabled;
+  for (auto *action : m_toolbarActions) enabled.insert(action, action->isEnabled());
+  const bool canvasEnabled = m_canvas->isEnabled(), menusEnabled = menuBar()->isEnabled();
+  m_savePending = true;
+  const auto restore = qScopeGuard([guard, enabled, canvasEnabled, menusEnabled] {
+    if (!guard) return;
+    guard->m_savePending = false; guard->m_canvas->setEnabled(canvasEnabled); if (!guard) return;
+    guard->menuBar()->setEnabled(menusEnabled); if (!guard) return;
+    for (auto it = enabled.cbegin(); it != enabled.cend(); ++it) { it.key()->setEnabled(it.value()); if (!guard) return; }
+    guard->refresh();
+  });
+  for (auto it = enabled.cbegin(); it != enabled.cend(); ++it) { it.key()->setEnabled(false); if (!guard) return false; }
+  m_retrySave->setEnabled(false); if (!guard) return false;
+  m_canvas->setEnabled(false); if (!guard) return false;
+  menuBar()->setEnabled(false); if (!guard) return false;
+  const SaveOutcome outcome = runEditorSave(target, source, document, this, hooks, repair);
+  if (!guard) return false;
+  if (outcome.cancelled && !outcome.rasterSaved) {
+    emit saveFinished(false, false, true); return false;
+  }
   // ES-012: clean only when both artifacts persisted; say which one failed.
-  const QStringList failed = m_session->recordSave(outcome.rasterSaved, outcome.sidecarSaved);
+  const QStringList failed = m_session->recordSnapshotSave(state, outcome.rasterSaved, outcome.sidecarSaved);
+  if (outcome.rasterSaved && !outcome.sidecarSaved && outcome.receipt) { m_partialSave = outcome.receipt; m_partialSaveState = state; }
   if (!failed.isEmpty()) {
-    QMessageBox::warning(this, QStringLiteral("Save incomplete"),
-                         QStringLiteral("Not saved: %1%2").arg(failed.join(QStringLiteral(", ")),
-                                                              outcome.rasterError.isEmpty() ? QString() : QStringLiteral("\n") + outcome.rasterError));
-    refresh();
+    refresh(); emit saveFinished(outcome.rasterSaved, outcome.sidecarSaved, outcome.cancelled); if (!guard) return false;
+    QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, "Save incomplete",
+        outcome.rasterSaved ? "PNG saved; editable annotation persistence failed. The document remains unsaved. Retry annotation save keeps the PNG."
+                            : "PNG was not saved. The previous destination and editable document have been kept.", QMessageBox::Ok, this));
+    box->setTextFormat(Qt::PlainText);
+    box->setInformativeText(QString("Destination: %1\nFormat: PNG\n%2").arg(target, failed.join(", "))); box->exec(); delete box.data();
     return false;
   }
+  m_partialSave.reset(); m_partialSaveState.reset();
+  m_saveMessage = outcome.sidecarPath ? "Saved PNG and editable annotations" : "Saved PNG; no annotation companion needed";
+  if (outcome.cancelled) m_saveMessage += " (completed despite cancellation)";
+  m_saveMessageState = state;
   m_path = target;
   recordRecentImage(absoluteImagePath(target));
-  return true;
+  if (!guard) return false;
+  emit saveFinished(true, true, outcome.cancelled);
+  return bool(guard);
 }
 
 void EditorWindow::recordRecentImage(const QString &absolutePath) {
-  m_preferenceDiagnostic = rememberEditorImage(absolutePath);
+  const QPointer<EditorWindow> guard(this);
+  const auto diagnostic = rememberEditorImage(absolutePath);
+  if (!guard) return;
+  m_preferenceDiagnostic = diagnostic;
   refresh();
 }
 
 void EditorWindow::closeEvent(QCloseEvent *event) {
   // A cancelled progress window can hide before its worker exits. Keep the
   // editor and its stack-owned modal objects alive until preparation completes.
-  if (m_canvasOperationPending || m_closePending) { event->ignore(); return; }
-  const QScopedValueRollback<bool> closing(m_closePending, true);
+  if (m_canvasOperationPending || m_closePending || m_savePending) { event->ignore(); return; }
+  const QPointer<EditorWindow> guard(this); m_closePending = true;
+  const auto closing = qScopeGuard([guard] { if (guard) guard->m_closePending = false; });
   if (m_session->dirty()) {
     // ES-008: Save, Discard, Cancel.
     QMessageBox box(QMessageBox::Question, QStringLiteral("Unsaved changes"),
                     QStringLiteral("Save changes to %1?").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName()),
                     QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, this);
     box.setDefaultButton(QMessageBox::Save);
-    switch (box.exec()) {
+    const auto choice = box.exec(); box.setParent(nullptr);
+    switch (choice) {
       case QMessageBox::Save: if (!save(false)) { event->ignore(); return; } break;
       case QMessageBox::Discard: break;
       default: event->ignore(); return;
     }
   }
+  if (!guard) { event->ignore(); return; }
   const auto diagnostic = m_windowState->remember();
   if (!diagnostic.isEmpty()) QMessageBox::warning(this, QStringLiteral("Window preferences not saved"), editorPreferenceDiagnosticMessage(diagnostic));
   event->accept();

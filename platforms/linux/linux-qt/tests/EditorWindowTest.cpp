@@ -44,6 +44,10 @@
 #include <QTableWidget>
 #include <QToolBar>
 #include <QScopeGuard>
+#include <QSignalSpy>
+#include <QThread>
+#include <atomic>
+#include <thread>
 #include <cmath>
 
 using namespace xerahs::app;
@@ -76,6 +80,20 @@ void trigger(EditorWindow &window, const QString &name) {
 void drawRectangle(EditorCanvas &canvas) {
   QTest::mousePress(canvas.viewport(), Qt::LeftButton, Qt::NoModifier, canvas.viewState().toView({8, 8}).toPoint());
   QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, Qt::NoModifier, canvas.viewState().toView({22, 16}).toPoint());
+}
+struct SaveGate {
+  std::atomic<bool> entered{false}, released{false}, finished{false}, workerThread{false};
+  EditorSaveArtifact stage = EditorSaveArtifact::Raster;
+};
+EditorSaveHooks gatedSave(const std::shared_ptr<SaveGate> &gate) {
+  EditorSaveHooks hooks;
+  hooks.beforePublish = [gate](EditorSaveArtifact stage, const QString &) {
+    if (stage != gate->stage) return;
+    gate->workerThread.store(QThread::currentThread() != QApplication::instance()->thread()); gate->entered.store(true);
+    while (!gate->released.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    gate->finished.store(true);
+  };
+  return hooks;
 }
 QByteArray storedBytes(const QString &path) {
   QFile file(path); return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray{};
@@ -132,7 +150,10 @@ void saveUntitled(EditorWindow &window, const QString &target = {}) {
       if (deadline.elapsed() > 5000) { timedOut = true; picker->reject(); return; }
       picked = true;
       if (target.isEmpty()) picker->reject();
-      else { picker->selectFile(target); QMetaObject::invokeMethod(picker, "accept"); }
+      else {
+        if (auto *buttons = picker->findChild<QDialogButtonBox *>()) if (auto *save = buttons->button(QDialogButtonBox::Save)) save->setFocus();
+        picker->selectFile(target); QCOMPARE(picker->selectedFiles().value(0), target); QMetaObject::invokeMethod(picker, "accept");
+      }
     }
   });
   timer.start(5); trigger(window, QStringLiteral("saveImage")); timer.stop(); QVERIFY(picked && !timedOut);
@@ -181,6 +202,111 @@ private slots:
   }
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  void saveRunsOnWorkerWithResponsiveCancellationAndNoReentrantActions_data() {
+    QTest::addColumn<bool>("afterRaster"); QTest::newRow("before PNG") << false; QTest::newRow("after PNG") << true;
+  }
+  void saveRunsOnWorkerWithResponsiveCancellationAndNoReentrantActions() {
+    QFETCH(bool, afterRaster); QTemporaryDir dir; const auto path = dir.filePath("image.png"); QVERIFY(fixture().save(path)); const auto original = storedBytes(path);
+    QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty());
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); drawRectangle(*canvas);
+    const auto gate = std::make_shared<SaveGate>(); if (afterRaster) gate->stage = EditorSaveArtifact::Sidecar; window->setSaveHooks(gatedSave(gate));
+    QSignalSpy saved(window.get(), &EditorWindow::saveFinished); QTimer timer; bool observed = false, failure = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      if (auto *progress = qobject_cast<QProgressDialog *>(QApplication::activeModalWidget()); progress && gate->entered.load() && !observed) {
+        observed = true; QCOMPARE(progress->objectName(), QString("saveImageProgress")); QVERIFY(!canvas->isEnabled()); QVERIFY(!window->close());
+        QVERIFY(!window->findChild<QAction *>("saveImage")->isEnabled()); QVERIFY(!window->findChild<QAction *>("undo")->isEnabled());
+        QVERIFY(!window->openImage(path)); trigger(*window, "saveImage");
+        auto *cancel = progress->findChild<QPushButton *>(); QVERIFY(cancel); cancel->click(); gate->released.store(true);
+      } else if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); box && box->windowTitle() == "Save incomplete") { failure = true; box->accept(); }
+    });
+    timer.start(5); trigger(*window, "saveImage"); timer.stop(); QVERIFY(observed && gate->workerThread.load()); QCOMPARE(failure, afterRaster);
+    QCOMPARE(saved.count(), 1); QCOMPARE(saved.first()[0].toBool(), afterRaster); QVERIFY(!saved.first()[1].toBool()); QVERIFY(saved.first()[2].toBool());
+    QVERIFY(window->windowTitle().contains(QChar(0x2022))); QVERIFY(canvas->isEnabled()); QVERIFY(window->findChild<QAction *>("saveImage")->isEnabled());
+    QCOMPARE(window->findChild<QAction *>("retryEditorSidecar")->isEnabled(), afterRaster); QVERIFY(!QFile::exists(path + ".xann"));
+    if (!afterRaster) QCOMPARE(storedBytes(path), original); else QVERIFY(storedBytes(path) != original);
+  }
+  void incompleteSaveOffersDefaultCancelCompanionOnlyRepairAndKeepsRedo() {
+    QTemporaryDir dir; const auto path = dir.filePath("image.png"); QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty());
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); drawRectangle(*canvas);
+    QVERIFY(QDir().mkdir(path + ".xann")); int encodes = 0; EditorSaveHooks hooks;
+    hooks.encode = [&](const QImage &image, QIODevice *device) { ++encodes; return image.save(device, "PNG"); }; window->setSaveHooks(hooks);
+    QSignalSpy saved(window.get(), &EditorWindow::saveFinished); QTimer timer; bool reported = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box || box->windowTitle() != "Save incomplete") return;
+      reported = true; QVERIFY(box->text().contains("PNG saved")); QVERIFY(box->informativeText().contains("sidecar-save-failed")); box->accept();
+    });
+    timer.start(5); trigger(*window, "saveImage"); timer.stop(); QVERIFY(reported); const auto original = storedBytes(path);
+    auto *retry = window->findChild<QAction *>("retryEditorSidecar"); QVERIFY(retry && retry->isEnabled()); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+    trigger(*window, "deleteSelection"); QVERIFY(!retry->isEnabled()); trigger(*window, "undo"); QVERIFY(retry->isEnabled()); QVERIFY(window->findChild<QAction *>("redo")->isEnabled());
+    QTimer confirm; bool cancelled = false;
+    connect(&confirm, &QTimer::timeout, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box || box->objectName() != "retryEditorSidecarDialog") return;
+      QCOMPARE(box->defaultButton(), box->button(QMessageBox::Cancel)); cancelled = true; box->button(QMessageBox::Cancel)->click();
+    });
+    confirm.start(5); retry->trigger(); confirm.stop(); QVERIFY(cancelled); QCOMPARE(saved.count(), 1); QCOMPARE(encodes, 1); QCOMPARE(storedBytes(path), original);
+    QVERIFY(QDir().rmdir(path + ".xann")); QTimer accept; bool confirmed = false;
+    connect(&accept, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (box && box->objectName() == "retryEditorSidecarDialog") { confirmed = true; box->button(QMessageBox::Retry)->click(); } });
+    accept.start(5); retry->trigger(); accept.stop(); QVERIFY(confirmed); QCOMPARE(encodes, 1); QCOMPARE(storedBytes(path), original);
+    QCOMPARE(saved.count(), 2); QVERIFY(saved.last()[0].toBool() && saved.last()[1].toBool()); QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+    QVERIFY(!retry->isEnabled()); QVERIFY(window->findChild<QAction *>("redo")->isEnabled()); QCOMPARE(loadSource(path).document->annotations.size(), size_t(1));
+    trigger(*window, "redo"); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+  }
+  void partialSaveAsKeepsTheCurrentPathUntilItsCompanionRepairCompletes() {
+    QTemporaryDir dir; const auto path = dir.filePath("current.png"), target = dir.filePath("chosen.png"); QVERIFY(fixture().save(path)); const auto original = storedBytes(path);
+    QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); drawRectangle(*window->findChild<EditorCanvas *>());
+    EditorSaveHooks hooks; bool collision = false; int encodes = 0;
+    hooks.encode = [&](const QImage &image, QIODevice *device) { ++encodes; return image.save(device, "PNG"); };
+    hooks.beforePublish = [&](EditorSaveArtifact kind, const QString &chosen) { if (kind == EditorSaveArtifact::Raster) collision = QDir().mkdir(chosen + ".xann"); };
+    window->setSaveHooks(hooks); QTimer timer; bool picked = false, reported = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      if (auto *picker = qobject_cast<QFileDialog *>(QApplication::activeModalWidget()); picker && !picked) {
+        picked = true; auto *buttons = picker->findChild<QDialogButtonBox *>(); QVERIFY(buttons); buttons->button(QDialogButtonBox::Save)->setFocus();
+        picker->selectFile(target); QCOMPARE(picker->selectedFiles().value(0), target); QMetaObject::invokeMethod(picker, "accept");
+      }
+      else if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); box && box->windowTitle() == "Save incomplete") {
+        reported = true; QVERIFY(box->informativeText().contains(target)); QVERIFY(box->informativeText().contains("PNG")); QCOMPARE(box->textFormat(), Qt::PlainText); box->accept();
+      }
+    });
+    timer.start(5); trigger(*window, "saveAsImage"); timer.stop(); QVERIFY(picked && reported && collision); QVERIFY(window->windowTitle().startsWith("current.png"));
+    QCOMPARE(storedBytes(path), original); QVERIFY(QFile::exists(target)); const auto rendered = storedBytes(target); QVERIFY(QDir().rmdir(target + ".xann"));
+    bool confirmed = false; QTimer confirm;
+    connect(&confirm, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (box && box->objectName() == "retryEditorSidecarDialog") { confirmed = true; box->button(QMessageBox::Retry)->click(); } });
+    confirm.start(5); trigger(*window, "retryEditorSidecar"); confirm.stop(); QVERIFY(confirmed); QCOMPARE(encodes, 1); QCOMPARE(storedBytes(target), rendered); QCOMPARE(storedBytes(path), original);
+    QVERIFY(window->windowTitle().startsWith("chosen.png")); QVERIFY(!window->windowTitle().contains(QChar(0x2022))); QVERIFY(loadSource(target).document);
+  }
+  void destructionDuringSaveCancelsTheOwnedWorkerWithoutWaitingOrPublishing() {
+    QTemporaryDir dir; const auto path = dir.filePath("image.png"); QVERIFY(fixture().save(path)); const auto original = storedBytes(path);
+    QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); drawRectangle(*window->findChild<EditorCanvas *>());
+    const auto gate = std::make_shared<SaveGate>(); window->setSaveHooks(gatedSave(gate)); QTimer timer; bool destroyed = false;
+    connect(&timer, &QTimer::timeout, [&] { if (gate->entered.load() && !destroyed) { destroyed = true; window.reset(); } });
+    timer.start(5); trigger(*window, "saveImage"); timer.stop(); QVERIFY(destroyed); QVERIFY(!gate->finished.load()); gate->released.store(true);
+    QTRY_VERIFY(gate->finished.load()); QTRY_VERIFY(QDir(dir.path()).entryList({".xerahs-editor-*"}, QDir::Files | QDir::Hidden).isEmpty());
+    QCOMPARE(storedBytes(path), original); QVERIFY(!QFile::exists(path + ".xann"));
+  }
+  void completionCanDestroyItsOwnerWithoutInvalidatingWorkerResults_data() {
+    QTest::addColumn<bool>("onRestore"); QTest::newRow("acknowledgement") << false; QTest::newRow("busy restoration") << true;
+  }
+  void completionCanDestroyItsOwnerWithoutInvalidatingWorkerResults() {
+    QFETCH(bool, onRestore); QTemporaryDir dir; const auto path = dir.filePath("image.png"); QVERIFY(fixture().save(path));
+    QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);
+    window->show(); drawRectangle(*window->findChild<EditorCanvas *>()); bool acknowledged = false;
+    connect(window.get(), &EditorWindow::saveFinished, this, [&](bool raster, bool sidecar, bool cancel) {
+      QVERIFY(raster && sidecar && !cancel); acknowledged = true; if (!onRestore) window.reset();
+    });
+    auto *undo = window->findChild<QAction *>("undo");
+    connect(undo, &QAction::changed, this, [&] { if (onRestore && acknowledged && undo->isEnabled()) window.reset(); });
+    trigger(*window, "saveImage"); QVERIFY(acknowledged); QVERIFY(!window); const auto loaded = loadSource(path); QVERIFY(loaded.document); QCOMPARE(loaded.document->annotations.size(), size_t(1));
+  }
+  void saveRefusesAnUnavailableFormatWithoutEncodingOrChangingFiles() {
+    QTemporaryDir dir; const auto path = dir.filePath("image.jpg"); QVERIFY(fixture().save(path, "JPEG")); const auto original = storedBytes(path);
+    QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);
+    window->show(); drawRectangle(*window->findChild<EditorCanvas *>()); int encodes = 0; EditorSaveHooks hooks;
+    hooks.encode = [&](const QImage &image, QIODevice *device) { ++encodes; return image.save(device, "PNG"); }; window->setSaveHooks(hooks);
+    QTimer timer; bool reported = false;
+    connect(&timer, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (box && box->windowTitle() == "Format unavailable") { reported = true; box->accept(); } });
+    timer.start(5); trigger(*window, "saveImage"); timer.stop(); QVERIFY(reported); QCOMPARE(encodes, 0); QCOMPARE(storedBytes(path), original);
+    QVERIFY(!QFile::exists(path + ".xann")); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+  }
   void retainedAnnotatedDocumentOpensUnsavedAndPersistsAnEditablePair() {
     QTemporaryDir dir; QVERIFY(initializeNativeEditorPreferences(dir.filePath("settings/editor.json")).isEmpty());
     auto source = prepareCapturedSource(fixture()); QVERIFY(source.document); EditorSession session(*source.document); session.createRectangle({8, 8}, {22, 16});
@@ -595,11 +721,12 @@ private slots:
     QVERIFY(QDir().mkdir(image + ".xann"));
     auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas);
     bool reported = false;
-    QTimer::singleShot(0, [&] {
-      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box);
+    QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return;
       reported = box->windowTitle() == u"Save incomplete"; box->accept();
     });
-    trigger(*window, QStringLiteral("saveImage")); QVERIFY(reported); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+    timer.start(5); trigger(*window, QStringLiteral("saveImage")); timer.stop(); QVERIFY(reported); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
     QVERIFY(recentImageHistory().paths().isEmpty()); QVERIFY(file.open(QIODevice::ReadOnly)); QCOMPARE(file.readAll(), before); file.close();
     QVERIFY(initializeNativeEditorPreferences(preferences).isEmpty()); QVERIFY(recentImageHistory().paths().isEmpty());
   }

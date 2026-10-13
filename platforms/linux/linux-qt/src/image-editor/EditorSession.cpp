@@ -230,10 +230,14 @@ bool EditorSession::commitCanvas(AnnotationDocument next, quint64 expectedState)
 }
 
 QStringList EditorSession::recordSave(bool rasterSaved, bool sidecarSaved) {
+  return recordSnapshotSave(stateId(), rasterSaved, sidecarSaved);
+}
+QStringList EditorSession::recordSnapshotSave(quint64 state, bool rasterSaved, bool sidecarSaved) {
   QStringList failures;
   if (!rasterSaved) failures.append(diagnostic::rasterSaveFailed);
   if (!sidecarSaved) failures.append(diagnostic::sidecarSaveFailed);
-  if (failures.isEmpty()) markSaved();  // ES-012: otherwise stay dirty
+  if (failures.isEmpty()) m_checkpoint = state;
+  else if (rasterSaved) m_checkpoint.reset(); // ES-012: even an unchanged split save is dirty
   return failures;
 }
 

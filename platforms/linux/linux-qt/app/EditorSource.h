@@ -6,6 +6,7 @@
 #include "image-editor/EditorSession.h"
 #include "image-editor/SourceBinding.h"
 #include "image-editor/AnnotationRenderer.h"
+#include "EditorSave.h"
 
 #include <QImage>
 #include <QString>
@@ -47,15 +48,5 @@ RenderedEditorImage renderEditorImage(const QImage &source, const xerahs::editor
 // Uses the validated snapshots shown by the chooser, without rereading files.
 LoadedSource resolveSourceChoice(const LoadedSource &pending, xerahs::editor::SourceChoice choice,
                                 const xerahs::editor::RenderControl &control = {});
-
-struct SaveOutcome {
-  bool rasterSaved = false;
-  bool sidecarSaved = false;
-  QString rasterError;           // render or write failure detail
-};
-
-// Renders the authoritative export of `document` over `source`, replaces
-// `rasterPath` atomically, then writes or removes the sidecar.
-SaveOutcome saveEdit(const QString &rasterPath, const QImage &source, const xerahs::editor::AnnotationDocument &document);
 
 }  // namespace xerahs::app

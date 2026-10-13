@@ -62,6 +62,9 @@ public:
   // ES-011, ES-012: a save is clean only when the raster and the sidecar both
   // reached persistence. Returns the diagnostics of the failed artifacts.
   QStringList recordSave(bool rasterSaved, bool sidecarSaved);
+  // EO-001/ES-027: acknowledge the exported history state, never a later edit.
+  // An unreachable saved state stays dirty after branch truncation.
+  QStringList recordSnapshotSave(quint64 state, bool rasterSaved, bool sidecarSaved);
 
 private:
   struct HistoryState {

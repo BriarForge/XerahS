@@ -64,6 +64,17 @@ class EditorSessionTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void snapshotSaveAcknowledgesItsHistoryStateAndSplitSaveInvalidatesCleanState() {
+    EditorSession session(document()); QVERIFY(session.createRectangle({2, 2}, {10, 10}));
+    const auto saved = session.stateId(); QVERIFY(session.moveSelection(2, 0));
+    QVERIFY(session.recordSnapshotSave(saved, true, true).isEmpty()); QVERIFY(session.dirty());
+    QVERIFY(session.undo()); QVERIFY(!session.dirty());
+    QCOMPARE(session.recordSnapshotSave(saved, true, false), QStringList{diagnostic::sidecarSaveFailed}); QVERIFY(session.dirty());
+    QVERIFY(session.recordSnapshotSave(saved, true, true).isEmpty()); QVERIFY(!session.dirty());
+    QVERIFY(session.undo()); QVERIFY(session.createRectangle({12, 12}, {18, 18}));
+    QVERIFY(session.recordSnapshotSave(saved, true, true).isEmpty()); QVERIFY(session.dirty());
+    QVERIFY(session.undo()); QVERIFY(session.dirty()); // truncated saved snapshot is unreachable
+  }
   void creationDefaultsLeaveSelectedObjectsCheckpointAndRedoIntact() {
     EditorSession session(document());
     const auto id = session.createRectangle({1, 1}, {4, 4}); QVERIFY(id);
