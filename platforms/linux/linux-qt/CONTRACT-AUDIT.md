@@ -31,7 +31,7 @@ entire specification and linked ledger rows, not just the examples listed.
 |---|---|---|
 | `CORE-PLATFORM-001` | All 37 CORE rows traced; native lifetime lock, authenticated bounded activation, real-process failure/recovery and actual-application forwarding tests; native command window sharing tray actions | Complete main application/onboarding, shared profile/activation qualification, localization, notification authority/privacy, updates, migration, credential services, global shortcuts, general capture, recording/audio, media, uploads, plugins, history, automation/watch folders/assistant, diagnostics and distribution remain Required. Native candidate evidence does not accept human reviews or full CORE scope. |
 | `FILENAME-GENERATION-001` | `src/naming/`, adapter and 51 vectors | Complete native preference/input integration, filename preview and destination workflow qualification remain Required. Core expansion evidence alone does not accept all native usage paths. |
-| `POST-CAPTURE-ACTIONS-001` | `src/actions/`, adapter and 17 vectors; `CapturePipeline` runs native PNG publication and GUI clipboard dispatch through the Core engine, with cancellation, activity, actual artifact metadata and in-memory receipts with shared edit/discard/review controls; native save/clipboard write-ahead records and multi-record restart history preserve acknowledged results and distinguish interrupted unknown actions; explicit native linked retry reuses retained pixels/settings and preserves previous successes; the application and adapter share the canonical result serializer with namespaced task/timing/file/retry facts; a cancellable native per-run chooser selects Save/Copy/empty with effective-plan journal recovery | Full native action catalogue, configured workflow selection/persistence, annotation/effects/output handoffs, uploads, complete catalogue/prerequisite retry, full durable media/artifact recovery, configured retention/pagination, crash cleanup authority, shared persisted compatibility, privacy and consent qualification remain Required. |
+| `POST-CAPTURE-ACTIONS-001` | `src/actions/`, adapter and 17 vectors; `CapturePipeline` runs native PNG publication and GUI clipboard dispatch through the Core engine, with cancellation, activity, actual artifact metadata and in-memory receipts with shared edit/discard/review controls; native save/clipboard write-ahead records and multi-record restart history preserve acknowledged results and distinguish interrupted unknown actions; explicit native linked retry reuses retained pixels/settings and preserves previous successes; the application and adapter share the canonical result serializer with namespaced task/timing/file/retry facts; a cancellable native per-run chooser selects Save/Copy/empty with effective-plan journal recovery; native file/path clipboard and asynchronous ShowItems reveal consume a live file binding and support linked prerequisite retry | Full native action catalogue, configured workflow selection/persistence, annotation/effects/output handoffs, uploads, complete catalogue/prerequisite retry, full durable media/artifact recovery, configured retention/pagination, crash cleanup authority, shared persisted compatibility, privacy and consent qualification remain Required. |
 | `REGION-CAPTURE-001` | `src/capture/`, 21 vectors; `PortalScreenshot`, `CaptureController`, `RegionOverlay`; native portal lifecycle/failure tests, worker composition with accessible progress and responsive cancellation, independent pixel fixtures and stale-worker isolation tests | The controller assumes a uniform desktop scale; per-monitor physical source mapping, rotation/colour/availability, mixed displays, cursor settings, HDR conversion, interactive handles/snapping/magnifier, persisted last-region invocation, physical accessibility and performance remain Required. |
 | `EDITOR-SESSION-001` | Document/sidecar, source binding, rectangle history/rendering, native editor, 19 vectors | Full contracted annotation/effect/canvas/output integration, complete persistence compatibility, native parity, visual goldens and human reviews remain Required. |
 | `EDITOR-ANNOTATIONS-001` | Rectangle creation/selection/style/rotation/order in the session and canvas | No complete EA trace. All 20 stable tools, curves/freehand/text/balloons/steps/image/emoji/cursor, redaction/magnifier/spotlight/eraser/cut-out, object clipboard/duplicate, complete persistence and accessible tool controls remain Required. |
@@ -75,7 +75,7 @@ marked implemented in a core trace file.
 
 ## Next production work
 
-The 13 October journal/recovery, linked native retry and per-run action selection checkpoints passed all 35 local CTest targets
+The 13 October journal/recovery, linked native retry, per-run selection and saved-file output checkpoints passed all 36 local CTest targets
 (native tests and all 114 published vectors for the six implemented vector
 packages), contract lint/backlog checks, their 25 unit tests and the seven
 conformance-runner unit tests. The production-path real-process fixtures use
@@ -103,9 +103,13 @@ append-only results, file provenance, cancellation and remaining retry scope.
    output mutation, preserves defaults and records the effective plan before
    output intent. The [selection evidence](app/ACTION-SELECTION.md) indexes
    actual native keyboard/I/O/recovery behavior and remaining qualification.
-   Next implement native saved-file clipboard/path/reveal outputs, including
-   artifact prerequisites, provenance, cancellation and linked retry. Continue
-   full workflow configuration and media/artifact recovery alongside them.
+   Native saved-file clipboard/path/reveal now validates live publication identity,
+   resolves original save prerequisites in explicit retry and leaves uncertain
+   reveal delivery interrupted. The [file-output evidence](app/FILE-OUTPUTS.md)
+   records actual native behavior, path-race limits and remaining human/native
+   qualification. Next implement native Save As with multiple-artifact tracking
+   and matching retry/journal coverage. Continue full workflow configuration
+   and media/artifact recovery alongside that work.
 4. Maintain requirement-level traces and meaningful failure/consent evidence;
    qualify the complete supported target matrix and prepare all human gates.
 

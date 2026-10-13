@@ -66,6 +66,30 @@ class PostCapturePipelineTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void unknownExternalOutcomeInterruptsWithoutInventingFailedResultsOrStartingLaterActions() {
+    class UnknownExecutor final : public ActionExecutor {
+    public:
+      QStringList ran;
+      ActionOutcome run(const ActionRequest &request) override {
+        ran.append(request.spec.id);
+        return request.spec.id == "reveal" ? ActionOutcome{ActionState::Failed, "reveal-outcome-unknown", {}, true} : ActionOutcome{};
+      }
+      bool createTemporaryUploadFile() override { return false; }
+      void removeTemporaryUploadFile() override {}
+    } executor;
+    CancellationToken token; int recorded = 0; PipelineHooks hooks; hooks.actionFinished = [&](const ActionResult &) { ++recorded; };
+    const auto value = runPipeline("unknown-fixture", {"save", "reveal", "analyze"}, {}, executor, token, hooks);
+    QCOMPARE(value.state, PipelineState::Interrupted); QCOMPARE(executor.ran, (QStringList{"save", "reveal"}));
+    QCOMPARE(recorded, 1); QCOMPARE(value.orderedResults.size(), size_t(1)); QCOMPARE(value.orderedResults[0].state, ActionState::Succeeded);
+    QVERIFY(value.workingMediaRetained);
+  }
+  void inheritedSaveSatisfiesConsumerPrerequisitesWithoutAuthorizingDelete() {
+    ScriptedExecutor executor; CancellationToken token; PipelineOptions options; options.inheritedSaveAvailable = true;
+    const auto value = runPipeline("linked-fixture", {"file-clipboard", "path-clipboard", "reveal", "delete"}, options, executor, token);
+    QCOMPARE(executor.ran, (QStringList{"file-clipboard", "path-clipboard", "reveal"}));
+    for (size_t i = 0; i < 3; ++i) QCOMPARE(value.orderedResults[i].inputArtifact, std::optional<QString>{"save.file"});
+    QCOMPARE(value.orderedResults.back().state, ActionState::Skipped); QCOMPARE(value.orderedResults.back().diagnostic, std::optional<QString>{"delete-guard"});
+  }
   void selectionValidationPreservesAvailabilityAndPerRunCatalogueSemantics() {
     const QStringList available{"save", "image-clipboard"};
     const auto accepted = validateActionSelection("after-capture-window", {"image-clipboard", "save", "save", "quick-task-menu", "after-capture-window"}, available);

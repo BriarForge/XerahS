@@ -8,8 +8,9 @@ shared compatibility and human parity/release reviews remain Required.
 
 The tray and main window share **Retry failed capture actions…**. The command
 is available only for an idle controller's current immutable pixel receipt
-with known failed save/image-clipboard actions, or dependency-skipped versions
-of those actions. The Core planner uses catalogue order. It excludes successful,
+with known failed save, image/file/path clipboard or reveal actions, or
+dependency-skipped versions of those actions. File consumers require either the
+original acknowledged save or its originally selected failed Save prerequisite. The Core planner uses catalogue order. It excludes successful,
 cancelled and other skipped actions, rejects unsupported failed actions instead
 of silently omitting them, and blocks interrupted/unknown outcomes or missing
 pixels. A restart metadata record is not a pixel receipt or retry authority.
@@ -51,10 +52,12 @@ Native saved-file facts optionally carry `creator_task_id`. A new successful
 save identifies the current task; a retry's inherited file retains its actual
 earlier creator, path, byte length and naming context. Older in-memory native
 receipts without that field bind it to their originating task. These are
-observations of successful publication, not proof that an externally changed
-file still exists, and never deletion or upload authority. Clipboard retry
-uses retained pixels without reading or modifying that path. Future file
-consumers must validate their own artifact/permission boundary.
+observations of successful publication, never deletion or upload authority.
+Image-clipboard retry uses retained pixels without reading or modifying that
+path. Native file consumers validate a separate live device/inode/size/timestamp
+binding on the worker and GUI. That binding is not persisted or reconstructed
+from history. Changed/unavailable files fail without repeating successful Save;
+URI/path consumers can still observe later external changes.
 
 The [write-ahead recorder](JOURNAL-RECOVERY.md) publishes retry lineage and known
 files before new external work, even if cancellation arrived before start.
@@ -90,10 +93,17 @@ read-only except for its explicitly confirmed unchanged-record removal.
   preserve the earlier terminal result and unknown current outcome.
 
 The 114 published vectors retain their approved expected values. No generic
-prerequisite replay, file-consuming retry, upload/network retry, annotation/
+catalogue/multiple-artifact prerequisite replay, upload/network retry, annotation/
 effect replay, cancelled-work resumption, durable failed-save settings schema,
 restart pixel reconstruction, shared recovery/retry vectors, automatic retry
 policy, retention/cleanup acceptance or physical accessibility/native matrix
 qualification is inferred. Those remain in the full Linux audit, together with
 the product/conformance-owner decisions and human review gates. No contract
 requirement or platform disposition has been weakened or self-approved.
+
+[Native file/path clipboard and reveal](FILE-OUTPUTS.md) now extend the chooser
+and linked retry with original-save prerequisites and live file validation.
+Uncertain reveal delivery interrupts the engine and retains pending journal
+intent; it cannot authorize retry. Native identity is deliberately excluded
+from persisted metadata. The linked evidence records verification and remaining
+multiple-artifact/catalogue/shared/native/human scope.

@@ -14,7 +14,7 @@ CaptureRecoveryActions::CaptureRecoveryActions(CaptureController &capture, QWidg
   m_review = new QAction(QStringLiteral("Review retained capture result…"), this); m_review->setObjectName(QStringLiteral("reviewRetainedCaptureResult"));
   m_review->setStatusTip(QStringLiteral("Inspect action outcomes and saved-file metadata without repeating actions."));
   m_retry = new QAction(QStringLiteral("Retry failed capture actions…"), this); m_retry->setObjectName(QStringLiteral("retryRetainedCaptureActions"));
-  m_retry->setStatusTip(QStringLiteral("Make one linked attempt at failed save/clipboard actions using retained pixels. Earlier successful actions are kept."));
+  m_retry->setStatusTip(QStringLiteral("Make one linked attempt at failed capture outputs. Earlier successful actions are kept."));
   connect(m_edit, &QAction::triggered, this, &CaptureRecoveryActions::edit);
   connect(m_discard, &QAction::triggered, this, &CaptureRecoveryActions::discard);
   connect(m_review, &QAction::triggered, this, &CaptureRecoveryActions::review);
@@ -45,7 +45,7 @@ void CaptureRecoveryActions::retry() {
   const auto expected = m_capture->lastPipelineResult(); if (!expected) return;
   const auto plan = expected->retryPlan(); if (!plan.available()) return;
   QStringList labels;
-  for (const auto &id : plan.selected) labels.append(id == "save" ? QStringLiteral("Save image") : QStringLiteral("Copy image to clipboard"));
+  for (const auto &id : plan.selected) labels.append(CaptureActions::actionLabel(id));
   const auto operation = ++m_operation; m_running = true;
   const QPointer<CaptureRecoveryActions> guard(this); updateAvailability(); if (!guard) return;
   auto *box = new QMessageBox(QMessageBox::Question, QStringLiteral("Retry failed capture actions?"),

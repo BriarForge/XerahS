@@ -445,15 +445,15 @@ void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt) {
   QStringList done;
   QStringList failed;
   for (const auto &action : result.orderedResults) {
-    const auto label = action.action == QStringLiteral("save") ? QStringLiteral("Save image") :
-        action.action == QStringLiteral("image-clipboard") ? QStringLiteral("Copy image") :
-        action.action == QStringLiteral("after-capture-window") ? QStringLiteral("Choose capture actions") : action.action;
+    const auto label = CaptureActions::actionLabel(action.action);
     if (action.state == xerahs::actions::ActionState::Succeeded) {
       if (action.action == QStringLiteral("save") && receipt->file) {
         done.append(QStringLiteral("Saved %1").arg(QFileInfo(receipt->file->path).fileName()));
       } else if (action.action == QStringLiteral("image-clipboard")) {
         done.append(QStringLiteral("copied to clipboard"));
-      }
+      } else if (action.action == "file-clipboard") done.append(QStringLiteral("copied image file"));
+      else if (action.action == "path-clipboard") done.append(QStringLiteral("copied file path"));
+      else if (action.action == "reveal") done.append(QStringLiteral("file manager acknowledged the show request"));
       if (action.cancellationArrivedDuring) done.append(QStringLiteral("%1 finished after cancellation was requested").arg(label));
     } else {
       auto description = label + QStringLiteral(" ") + xerahs::actions::actionStateName(action.state);

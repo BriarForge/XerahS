@@ -31,7 +31,8 @@ ActionSelectionDialog::ActionSelectionDialog(const QStringList &configured, cons
       "Cancel or Escape stops these actions and keeps the captured image available in XerahS.\n"
       "Leave all actions unchecked to keep the capture without saving or copying it.").arg(dimensions.width()).arg(dimensions.height()), this);
   intro->setWordWrap(true); intro->setTextFormat(Qt::PlainText); layout->addWidget(intro);
-  auto *scope = new QLabel(QStringLiteral("Workflow defaults stay unchanged. Unavailable actions are listed below."), this);
+  auto *scope = new QLabel(QStringLiteral("Workflow defaults stay unchanged. File/path clipboard and Show saved file need Save image. "
+      "Copying a file or path shares its saved location; Show saved file requests your file manager. Unavailable actions are listed below."), this);
   scope->setWordWrap(true); layout->addWidget(scope);
   auto *scroll = new QScrollArea(this); scroll->setWidgetResizable(true);
   auto *choices = new QWidget(scroll); auto *rows = new QVBoxLayout(choices);

@@ -32,10 +32,12 @@ int main(int argc, char **argv) {
     original.start(); return app.exec();
   }
   CaptureActionPorts ports;
+  if (mode == "file-output") ports.fileOutput = [stop](const QString &, const CaptureFile &, const CancellationToken &) { stop(); return ActionOutcome{}; };
   if (mode == "before-publication" || mode == "selection-before-publication") ports.save.beforePublish = [stop](const QString &) { stop(); };
   ports.clipboard = [mode, stop](const QImage &, const CancellationToken &) { if (mode == "after-save") stop(); return ActionOutcome{}; };
   QImage image(9, 7, QImage::Format_ARGB32); image.fill(Qt::red);
   QStringList selected{"save", "image-clipboard"};
+  if (mode == "file-output") selected = {"save", "file-clipboard"};
   QTimer selection;
   if (mode == "selection-before-publication") {
     selected.prepend("after-capture-window"); selection.setInterval(10);

@@ -5,7 +5,8 @@
 namespace xerahs::actions {
 namespace {
 PipelineRetryPlan unavailable(const char *code) { return {{}, {}, QString::fromLatin1(code)}; }
-bool nativeAction(const QString &id) { return id == "save" || id == "image-clipboard"; }
+bool fileConsumer(const QString &id) { return id == "file-clipboard" || id == "path-clipboard" || id == "reveal"; }
+bool nativeAction(const QString &id) { return id == "save" || id == "image-clipboard" || fileConsumer(id); }
 }
 bool validPipelineRetryLink(const PipelineRetryLink &link, const QString &taskId) {
   if (!validJournalTaskId(taskId) || !validJournalTaskId(link.originalTaskId) || !validJournalTaskId(link.previousTaskId) ||
@@ -42,9 +43,10 @@ PipelineRetryPlan planRetainedCaptureRetry(const PipelineResult &source, bool me
     if (result.state != ActionState::Failed &&
         !(result.state == ActionState::Skipped && result.diagnostic == diagnostic::dependencyUnavailable)) continue;
     if (!nativeAction(result.action)) return unavailable("retry-action-unavailable");
-    // These two actions require only retained working media. A saved file
-    // paired with failed save is inconsistent authority, never a reason to
-    // silently create a second saved copy.
+    if (result.action == "reveal" && result.diagnostic == QStringLiteral("reveal-outcome-unknown")) return unavailable("retry-outcome-unknown");
+    // A saved file paired with failed save is inconsistent authority, never
+    // permission to silently create a second copy. File prerequisites are
+    // checked below without implicitly selecting an unrequested save.
     if (result.action == "save" && savedFileAvailable) return unavailable("retry-invalid-source");
     if (successes.contains(result.action)) return unavailable("retry-invalid-source");
     plan.selected.append(result.action);
@@ -52,6 +54,9 @@ PipelineRetryPlan planRetainedCaptureRetry(const PipelineResult &source, bool me
   for (const auto &action : catalogue()) if (successes.contains(action.id)) link.preservedSuccessfulActions.append(action.id);
   if (savedFileAvailable && !successes.contains("save")) return unavailable("retry-invalid-source");
   if (successes.contains("save") && !savedFileAvailable) return unavailable("retry-artifact-unavailable");
+  for (const auto &action : plan.selected)
+    if (fileConsumer(action) && !savedFileAvailable && !plan.selected.contains("save"))
+      return unavailable("retry-prerequisite-unavailable");
   if (plan.selected.isEmpty()) return unavailable("retry-no-failed-actions");
   plan.link = link; return plan;
 }

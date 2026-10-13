@@ -130,3 +130,10 @@ Full media reconstruction, catalogue/prerequisite retry, search/pagination/reten
 action types, upgrade/recovery compatibility, filesystem/distro/compositor
 qualification and human security/privacy/accessibility/parity/release approvals
 remain Required. No gate is self-approved by these tests or this record.
+
+[Native file/path clipboard and reveal](FILE-OUTPUTS.md) now extend the chooser
+and linked retry with original-save prerequisites and live file validation.
+Uncertain reveal delivery interrupts the engine and retains pending journal
+intent; it cannot authorize retry. Native identity is deliberately excluded
+from persisted metadata. The linked evidence records verification and remaining
+multiple-artifact/catalogue/shared/native/human scope.

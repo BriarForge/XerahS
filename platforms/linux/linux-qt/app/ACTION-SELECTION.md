@@ -19,11 +19,12 @@ The command window preserves maximized state and stays available for native
 focus and clipboard ownership when its transient chooser closes. The chooser
 shows image dimensions, per-run scope, retained-pixel behavior, keyboard
 cancellation and all 19 remaining catalogue choices.
-Save image and Copy image are currently available; the other choices are
+Save image, image/file/path clipboard and Show saved file are available; the other choices are
 disabled with visible and accessible unavailability explanations. These are
 unfinished Required actions, not accepted Degraded/Unavailable dispositions.
 
-The user explicitly runs Save, Copy, both, or neither. Empty selection keeps
+The user explicitly chooses available outputs, or no outputs. File consumers
+require a successful Save; they do not implicitly enable that prerequisite. Empty selection keeps
 the captured pixels in memory without saving or changing the clipboard.
 Cancel, Escape, default Enter, window close, cancellation of the operation or
 dialog destruction cancels the selector and later actions before mutation.
@@ -90,5 +91,12 @@ Complete quick-task and configured selection, explicit persistent workflow
 editing, the remaining catalogue and editor handoffs, prerequisite/artifact
 retry and recovery, supported distro/compositor/physical focus and assistive
 technology qualification, and all human gates remain Required. Next independent
-catalogue work is native saved-file clipboard/path/reveal output, including
-artifact prerequisites, provenance, cancellation and linked retry behavior.
+catalogue work is native Save As with multiple-artifact tracking and matching
+retry/journal coverage.
+
+[Native file/path clipboard and reveal](FILE-OUTPUTS.md) now extend the chooser
+and linked retry with original-save prerequisites and live file validation.
+Uncertain reveal delivery interrupts the engine and retains pending journal
+intent; it cannot authorize retry. Native identity is deliberately excluded
+from persisted metadata. The linked evidence records verification and remaining
+multiple-artifact/catalogue/shared/native/human scope.

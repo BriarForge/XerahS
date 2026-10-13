@@ -21,6 +21,9 @@ struct CaptureActionPorts {
   std::function<void(const QString &)> actionStarted;
   // Internal worker-to-GUI selection bridge supplied by CapturePipeline.
   std::function<xerahs::actions::ActionOutcome(const xerahs::actions::CancellationToken &)> selection;
+  // Worker bridge replaced by CapturePipeline; the injected actual boundary
+  // runs on the GUI, like clipboard. It must report its actual outcome.
+  std::function<xerahs::actions::ActionOutcome(const QString &, const CaptureFile &, const xerahs::actions::CancellationToken &)> fileOutput;
 };
 
 class CaptureActions final : public xerahs::actions::ActionExecutor {
@@ -35,6 +38,7 @@ public:
   const std::optional<CaptureFile> &savedFile() const { return m_savedFile; }
   static xerahs::actions::ActionOutcome copyImageToNativeClipboard(const QImage &media);
   static QStringList selectableActions();
+  static QString actionLabel(const QString &id);
 
   // Pending clarification (ROOT-ESCALATE-001): the contract names no code for
   // an action this build cannot perform yet.
@@ -43,6 +47,7 @@ public:
 private:
   xerahs::actions::ActionOutcome save();
   xerahs::actions::ActionOutcome copyImage(const xerahs::actions::CancellationToken &cancellation);
+  xerahs::actions::ActionOutcome outputFile(const xerahs::actions::ActionRequest &request);
 
   QImage m_media;
   QString m_directory;

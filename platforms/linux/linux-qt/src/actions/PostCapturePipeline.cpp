@@ -30,11 +30,14 @@ struct Resolution {
 
 class ArtifactSet {
 public:
-  ArtifactSet() { m_available.insert(kWorkingMedia); }
+  explicit ArtifactSet(bool inheritedSave) {
+    m_available.insert(kWorkingMedia); if (inheritedSave) m_available.insert(kSaveFile);
+  }
 
   void add(const QStringList &artifacts) {
-    for (const QString &artifact : artifacts) m_available.insert(artifact);
+    for (const QString &artifact : artifacts) { m_available.insert(artifact); m_created.insert(artifact); }
   }
+  bool created(const QString &artifact) const { return m_created.contains(artifact); }
 
   // PCA-018: `saved-file` resolves to save.file, then save-as.file.
   std::optional<QString> savedFile() const {
@@ -75,6 +78,7 @@ public:
 
 private:
   QSet<QString> m_available;
+  QSet<QString> m_created;
 };
 
 bool requiresSavedFile(const ActionSpec &action) {
@@ -190,7 +194,7 @@ PipelineResult runPipeline(const QString &taskId, const QStringList &selected,
   PipelineResult result;
   result.taskId = taskId;
   std::vector<int> plan = planFor(selected, -1, &result.ignoredSelection);
-  ArtifactSet artifacts;
+  ArtifactSet artifacts(options.inheritedSaveAvailable);
   bool uploadDeclined = false;
   bool cancellationPreventedStart = false;
   bool selectionCancelled = false;
@@ -247,7 +251,7 @@ PipelineResult runPipeline(const QString &taskId, const QStringList &selected,
             return earlierIndex && requiresSavedFile(actions[static_cast<std::size_t>(*earlierIndex)]) &&
                    earlier.state != ActionState::Succeeded;
           });
-      if (guarded) {
+      if (guarded || !resolution.inputArtifact || !artifacts.created(*resolution.inputArtifact)) {
         actionResult.state = ActionState::Skipped;
         actionResult.diagnostic = diagnostic::deleteGuard;
         record(std::move(actionResult));
@@ -266,6 +270,7 @@ PipelineResult runPipeline(const QString &taskId, const QStringList &selected,
     }
 
     ActionOutcome outcome = executor.run(ActionRequest{action, resolution.inputArtifact, cancellation});
+    if (outcome.outcomeUnknown) { result.state = PipelineState::Interrupted; return result; }
     actionResult.finishedAt = now();
     if (outcome.state == ActionState::Skipped) {
       // Only the engine skips; an executor that claims a skip did not do the work.

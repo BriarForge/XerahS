@@ -16,6 +16,24 @@ PipelineResult result(ActionState save, ActionState clipboard) {
 class PipelineRetryTest final : public QObject {
   Q_OBJECT
 private slots:
+  void fileConsumersReuseKnownSaveOrRetryOnlyItsOriginallyFailedPrerequisite() {
+    auto source = result(ActionState::Succeeded, ActionState::Succeeded);
+    source.orderedResults.push_back(ActionResult{"file-clipboard", ActionState::Succeeded});
+    source.orderedResults.push_back(ActionResult{"path-clipboard", ActionState::Failed});
+    source.orderedResults.push_back(ActionResult{"reveal", ActionState::Failed});
+    auto plan = planRetainedCaptureRetry(source, true, true); QVERIFY(plan.available());
+    QCOMPARE(plan.selected, (QStringList{"path-clipboard", "reveal"}));
+    QCOMPARE(plan.link->preservedSuccessfulActions, (QStringList{"save", "image-clipboard", "file-clipboard"}));
+    source.orderedResults[0].state = ActionState::Failed;
+    source.orderedResults[2].state = ActionState::Skipped; source.orderedResults[2].diagnostic = diagnostic::dependencyUnavailable;
+    plan = planRetainedCaptureRetry(source, true, false); QVERIFY(plan.available());
+    QCOMPARE(plan.selected, (QStringList{"save", "file-clipboard", "path-clipboard", "reveal"}));
+    source.orderedResults.erase(source.orderedResults.begin());
+    QCOMPARE(planRetainedCaptureRetry(source, true, false).diagnostic, QString("retry-prerequisite-unavailable"));
+    source = result(ActionState::Succeeded, ActionState::Succeeded);
+    source.orderedResults.push_back(ActionResult{"reveal", ActionState::Failed}); source.orderedResults.back().diagnostic = "reveal-outcome-unknown";
+    QCOMPARE(planRetainedCaptureRetry(source, true, true).diagnostic, QString("retry-outcome-unknown"));
+  }
   void retriesOnlyFailedOrDependencySkippedNativeActionsInCatalogueOrder() {
     const auto failedSave = result(ActionState::Failed, ActionState::Succeeded);
     const auto savePlan = planRetainedCaptureRetry(failedSave, true, false); QVERIFY(savePlan.available());

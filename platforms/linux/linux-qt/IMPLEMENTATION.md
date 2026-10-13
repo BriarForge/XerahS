@@ -105,9 +105,13 @@ Qt chooser, explicit Save/Copy/empty choices and visible unavailable catalogue
 actions. Default workflows remain unchanged; cancellation creates no outputs
 or journal, and the effective selected plan precedes save intent in recovery.
 Native/private-bus keyboard and real-process kill/reopen fixtures are indexed
-in [action selection evidence](app/ACTION-SELECTION.md). Continue saved-file
-clipboard/path/reveal actions with prerequisite/provenance/cancellation/retry
-evidence, alongside full configured workflows and the remaining catalogue.
+in [action selection evidence](app/ACTION-SELECTION.md). Native saved-file clipboard/path/reveal now uses
+live in-memory publication binding, worker/GUI validation, asynchronous bounded
+ShowItems, truthful interruption on unknown delivery and linked original-save
+prerequisite retry. [File-output evidence](app/FILE-OUTPUTS.md) records actual
+verification and path-race/native/human limits. Continue native Save As with
+multiple-artifact tracking and matching retry/journal coverage, alongside full
+configured workflows and the remaining catalogue.
 
 Each checkpoint updates requirement traceability, runs native tests and the
 implemented shared vectors, and lands on `main`. Passing the small pilot vector

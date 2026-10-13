@@ -8,7 +8,19 @@
 class QIODevice;
 namespace xerahs::app {
 // Native PCA-007 artifact. Keep private paths/context out of ordinary diagnostics.
-using CaptureFile = xerahs::actions::SavedFileArtifact;
+struct CaptureFileIdentity {
+  quint64 device = 0, inode = 0;
+  qint64 length = 0, modifiedSeconds = 0, modifiedNanos = 0, changedSeconds = 0, changedNanos = 0;
+  bool operator==(const CaptureFileIdentity &other) const;
+};
+// This live native identity is never serialized or reconstructed from history.
+struct CaptureFile : xerahs::actions::SavedFileArtifact {
+  CaptureFile(QString path, QString type, qint64 length, QJsonObject context)
+      : SavedFileArtifact{std::move(path), std::move(type), length, std::move(context)} {}
+  std::optional<CaptureFileIdentity> identity;
+};
+std::optional<CaptureFileIdentity> captureFileIdentity(int descriptor);
+QString validateCaptureFile(const CaptureFile &file);
 struct CaptureSaveResult {
   std::optional<CaptureFile> file;
   QString diagnostic;

@@ -1,5 +1,6 @@
 #include "CapturePipeline.h"
 #include "ActionSelectionDialog.h"
+#include "CaptureFileOutput.h"
 #include <QPointer>
 #include <QThread>
 #include <QTimer>
@@ -24,12 +25,16 @@ struct ClipboardCall {
   ActionOutcome result;
 };
 struct SelectionCall { bool done = false; ActionOutcome result; };
+struct FileOutputCall { QString action; std::optional<CaptureFile> file; bool claimed = false, done = false; ActionOutcome result; };
 void completeSelection(const std::shared_ptr<CapturePipelineState> &state, const std::shared_ptr<SelectionCall> &call, ActionOutcome result);
 ActionOutcome cancelled() { return {ActionState::Cancelled, {}, {}}; }
 QString actionActivity(const QString &id) {
   if (id == "save") return QStringLiteral("Saving capture. Escape or Cancel Capture stops later actions.");
   if (id == "image-clipboard") return QStringLiteral("Copying capture to the clipboard.");
   if (id == "after-capture-window") return QStringLiteral("Choose actions for this capture. Escape cancels before saving or copying.");
+  if (id == "file-clipboard") return QStringLiteral("Copying the saved file to the clipboard.");
+  if (id == "path-clipboard") return QStringLiteral("Copying the saved file path to the clipboard.");
+  if (id == "reveal") return QStringLiteral("Showing the saved file in your file manager.");
   return QStringLiteral("Running capture action.");
 }
 }
@@ -39,11 +44,16 @@ struct CapturePipelineState {
   std::condition_variable changed;
   std::shared_ptr<ClipboardCall> clipboard;
   std::shared_ptr<SelectionCall> selection;
+  std::shared_ptr<FileOutputCall> fileOutput;
   std::shared_ptr<CapturePipelineResult> result = std::make_shared<CapturePipelineResult>();
   QString activity;
   bool ready = false;
 };
 namespace {
+void completeFileOutput(const std::shared_ptr<CapturePipelineState> &state, const std::shared_ptr<FileOutputCall> &call, ActionOutcome outcome) {
+  { std::lock_guard<std::mutex> lock(state->mutex); if (call->done) return; call->result = std::move(outcome); call->done = true; }
+  state->changed.notify_all();
+}
 void completeSelection(const std::shared_ptr<CapturePipelineState> &state, const std::shared_ptr<SelectionCall> &call, ActionOutcome result) {
   { std::lock_guard<std::mutex> lock(state->mutex);
     if (call->done) return;
@@ -56,13 +66,17 @@ public:
   JournaledExecutor(CaptureActions &actions, PipelineJournalRecorder &journal) : m_actions(actions), m_journal(journal) {}
   ActionOutcome run(const ActionRequest &request) override {
     if (!m_journal.before(request.spec)) return {ActionState::Failed, QStringLiteral("pipeline-journal-unavailable"), {}};
-    return m_actions.run(request);
+    auto outcome = m_actions.run(request);
+    if (outcome.outcomeUnknown) m_interruptionDiagnostic = outcome.diagnostic.value_or(diagnostic::actionFailed);
+    return outcome;
   }
   bool createTemporaryUploadFile() override { return m_actions.createTemporaryUploadFile(); }
   void removeTemporaryUploadFile() override { m_actions.removeTemporaryUploadFile(); }
+  const QString &interruptionDiagnostic() const { return m_interruptionDiagnostic; }
 private:
   CaptureActions &m_actions;
   PipelineJournalRecorder &m_journal;
+  QString m_interruptionDiagnostic;
 };
 }
 CapturePipeline::CapturePipeline(QImage media, QString directory, QString pattern, QStringList selected,
@@ -113,6 +127,13 @@ void CapturePipeline::start() {
     state->changed.wait(lock, [&] { return call->done || token.requested(); });
     return token.requested() ? cancelled() : call->result;
   };
+  ports.fileOutput = [state](const QString &action, const CaptureFile &file, const CancellationToken &token) {
+    if (token.requested()) return cancelled();
+    auto call = std::make_shared<FileOutputCall>(); call->action = action; call->file = file;
+    std::unique_lock<std::mutex> lock(state->mutex); state->fileOutput = call;
+    state->changed.wait(lock, [&] { return call->done || (token.requested() && !call->claimed); });
+    return call->done ? call->result : cancelled();
+  };
   auto *worker = QThread::create([state, ports, media = m_media, directory = m_directory,
                                   pattern = m_pattern, selected = m_selected, storage = m_journal,
                                   retryRequested = m_retryRequested, source = m_retrySource]() mutable {
@@ -148,13 +169,19 @@ void CapturePipeline::start() {
     hooks.actionFinished = [state, &journal, currentFiles](const ActionResult &result) {
       state->result->pipeline.orderedResults.push_back(result); journal.completed(result, currentFiles());
     };
-    try { state->result->pipeline = runPipeline(id, selected, {}, executor, state->cancellation, hooks); }
+    PipelineOptions options; options.inheritedSaveAvailable = retryRequested && bool(inheritedFile);
+    try { state->result->pipeline = runPipeline(id, selected, options, executor, state->cancellation, hooks); }
     catch (...) {
       state->result->pipeline.taskId = id; state->result->pipeline.state = PipelineState::Interrupted;
       state->result->diagnostic = diagnostic::actionFailed;
     }
     state->result->pipeline.retry = retry.link;
-    const auto files = currentFiles(); if (!files.empty()) state->result->file = files.front();
+    if (!executor.interruptionDiagnostic().isEmpty()) state->result->diagnostic = executor.interruptionDiagnostic();
+    // Retain the live native binding; canonical/journal facts deliberately
+    // slice it away and must never reconstruct authority from metadata.
+    state->result->file = actions.savedFile();
+    if (state->result->file && state->result->file->creatorTaskId.isEmpty()) state->result->file->creatorTaskId = id;
+    const auto files = currentFiles();
     journal.finish(state->result->pipeline, files);
     if (!journal.diagnostic().isEmpty()) state->result->diagnostic = journal.diagnostic();
     { std::lock_guard<std::mutex> lock(state->mutex); state->ready = true; }
@@ -216,6 +243,20 @@ void CapturePipeline::poll() {
     catch (...) { result = {ActionState::Failed, diagnostic::actionFailed, {}}; }
     { std::lock_guard<std::mutex> lock(state->mutex); call->result = std::move(result); call->done = true; }
     state->changed.notify_all();
+    if (!guard) return;
+  }
+  std::shared_ptr<FileOutputCall> output;
+  { std::lock_guard<std::mutex> lock(state->mutex); output = std::move(state->fileOutput); if (output) output->claimed = true; }
+  if (output) {
+    const auto native = m_ports.fileOutput;
+    try {
+      const auto validation = validateCaptureFile(*output->file);
+      if (state->cancellation.requested()) completeFileOutput(state, output, cancelled());
+      else if (!validation.isEmpty()) completeFileOutput(state, output, {ActionState::Failed, validation, {}});
+      else if (native) completeFileOutput(state, output, native(output->action, *output->file, state->cancellation));
+      else if (output->action == "reveal") revealCaptureFile(*output->file, this, [state, output](ActionOutcome result) { completeFileOutput(state, output, std::move(result)); });
+      else completeFileOutput(state, output, copyCaptureFile(output->action, *output->file));
+    } catch (...) { completeFileOutput(state, output, {ActionState::Failed, diagnostic::actionFailed, {}}); }
     if (!guard) return;
   }
   bool ready;

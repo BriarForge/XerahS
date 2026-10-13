@@ -5,6 +5,7 @@
 #include "CaptureRecoveryActions.h"
 #include "ApplicationWindow.h"
 #include "ActionSelectionDialog.h"
+#include "CaptureFileOutput.h"
 #include "capture/RegionGeometry.h"
 #include "image-editor/AnnotationDocument.h"
 #include <QApplication>
@@ -137,6 +138,37 @@ class PortalScreenshotTest final : public QObject {
   static Outcome outcome(const QSignalSpy &spy) { return spy.at(0).at(0).value<Outcome>(); }
   static QImage resultImage(const QSignalSpy &spy) { return spy.at(0).at(1).value<QImage>(); }
 private slots:
+  void selectedFileOutputsAndSharedRetryKeepTheSameSavedArtifactWithoutNewCapture() {
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString(); QStringList outputs; bool denied = true;
+    CaptureActionPorts ports; ports.fileOutput = [&](const QString &action, const CaptureFile &file, const xerahs::actions::CancellationToken &) {
+      outputs.append(action);
+      if (action == "reveal") return denied ? xerahs::actions::ActionOutcome{xerahs::actions::ActionState::Failed, "reveal-unavailable", {}} : xerahs::actions::ActionOutcome{};
+      copyCaptureFile(action, file); return xerahs::actions::ActionOutcome{}; // fixture acknowledges its local clipboard payload
+    };
+    auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, {}, ports, journal);
+    ApplicationWindow home({}); controller.setActionSelectionParent(&home); connect(&controller, &CaptureController::choosingActions, &home, &ApplicationWindow::activate);
+    CaptureRecoveryActions recovery(controller, &home, {});
+    controller.captureRegionWithActions(); QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35});
+    QTRY_VERIFY(qobject_cast<ActionSelectionDialog *>(QApplication::activeModalWidget())); auto *dialog = qobject_cast<ActionSelectionDialog *>(QApplication::activeModalWidget());
+    dialog->findChild<QCheckBox *>("capture-action-image-clipboard")->setChecked(false);
+    for (const auto &id : {"file-clipboard", "path-clipboard", "reveal"}) {
+      auto *box = dialog->findChild<QCheckBox *>(QString("capture-action-") + id); QVERIFY(box && box->isEnabled()); box->setChecked(true);
+    }
+    dialog->accept(); QTRY_VERIFY(!controller.busy()); const auto original = controller.lastPipelineResult(); QVERIFY(original->file);
+    const auto saved = bytes(original->file->path); QCOMPARE(outputs, (QStringList{"file-clipboard", "path-clipboard", "reveal"}));
+    QCOMPARE(QApplication::clipboard()->text(), original->file->path); QCOMPARE(original->pipeline.orderedResults.size(), size_t(5));
+    QVERIFY(recovery.retryAction()->isEnabled()); recovery.retryAction()->trigger(); QTRY_VERIFY(QApplication::activeModalWidget());
+    auto *confirmation = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(confirmation); QVERIFY(confirmation->text().contains("Show saved file in folder"));
+    QTest::keyClick(confirmation, Qt::Key_Escape); QTRY_VERIFY(!QApplication::activeModalWidget()); QCOMPARE(outputs.size(), 3);
+    denied = false; recovery.retryAction()->trigger(); QTRY_VERIFY(QApplication::activeModalWidget());
+    confirmation = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); confirmation->button(QMessageBox::Retry)->click(); QTRY_VERIFY(!controller.busy());
+    const auto result = controller.lastPipelineResult(); QCOMPARE(outputs, (QStringList{"file-clipboard", "path-clipboard", "reveal", "reveal"}));
+    QCOMPARE(portal.calls, 1); QCOMPARE(result->file->path, original->file->path); QCOMPARE(bytes(original->file->path), saved);
+    QCOMPARE(result->pipeline.orderedResults.size(), size_t(1)); QCOMPARE(result->pipeline.orderedResults[0].inputArtifact, std::optional<QString>{"save.file"});
+    QCOMPARE(journal->list().entries.size(), size_t(2));
+  }
   void perRunSelectionCancelsBeforeEffectsAndDoesNotChangeTheNextDefaultCapture() {
     QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto before = bytes(path);
     FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString(); int copies = 0;

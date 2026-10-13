@@ -59,6 +59,7 @@ CaptureSaveResult saveCapture(const QImage &media, const QString &directory, con
       // Unsupported filesystems fail explicitly; never fall back to replacement.
       if (::syscall(SYS_renameat2, AT_FDCWD, source.constData(), AT_FDCWD, target.constData(), RENAME_NOREPLACE) == 0) {
         encoded.setAutoRemove(false);
+        artifact.identity = captureFileIdentity(encoded.handle());
         return {std::move(artifact), {}};
       }
       if (errno != EEXIST) return failure(QStringLiteral("save-write-failed"));

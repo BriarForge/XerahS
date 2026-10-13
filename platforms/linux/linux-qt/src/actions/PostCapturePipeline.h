@@ -99,6 +99,10 @@ struct ActionOutcome {
   // PCA-009, PCA-023: a successful selection window MAY replace the action set
   // for this run.
   std::optional<QStringList> replacementSelection;
+  // No acknowledgement can determine whether an external effect occurred.
+  // Stop as interrupted and keep its write-ahead intent pending; inventing a
+  // failed/cancelled action result would authorize an unsafe repeat.
+  bool outcomeUnknown = false;
 };
 
 class ActionExecutor {
@@ -129,6 +133,10 @@ struct ActionResult {
 struct PipelineOptions {
   bool uploadTemporaryAllowed = true;            // PCA-019 default
   bool removeTemporaryFileAfterUpload = true;    // PCA-019 cleanup policy
+  // A caller-owned previous save, supplied only after explicit linked retry
+  // admission. The executor still validates its native file at consumption.
+  // This grants prerequisite availability, never authority to delete it.
+  bool inheritedSaveAvailable = false;
 };
 
 // PCA-011: append-only attempt identity. Preserved successes are provenance,
