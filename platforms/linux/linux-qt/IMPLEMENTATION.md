@@ -148,10 +148,17 @@ pending: owned worker composition, bounded alpha-preserving PNG plus native
 image offers, GUI-only acknowledgement, explicit unknown delivery, unchanged
 dirty/history/files and default-Cancel known-failure replay. Fixed Ctrl+C and
 customized hotkeys share native text/modal/busy precedence. Save and Copy now
-share one guarded busy/lifetime scope. Next continue native Print's immutable,
-non-mutating snapshot/preview/cancellation flow under EO-008/014/015 while
-resolving the format policy and all other contracted output/capture/application
-domains. Physical clipboard/color/accessibility, shutdown and human gates remain
+share one guarded busy/lifetime scope with [native Print Image](app/EDITOR-PRINT.md).
+Print now adds immutable source/annotation/white-paper preparation, explicit
+page/margins/scale/orientation/colour preview and native printer confirmation,
+worker submission, truthful submitted/unknown outcomes and confirmed known-failure
+replay under EO-001/008/014/015/016. Source/history/Redo/files/preferences/clipboard
+remain unchanged. Physical printer/permission/queue/cancellation/colour/shutdown
+and full supported-target/human qualification remain Required. Continue owned
+native annotation duplication/object clipboard under EA-016/017, owned native
+output service handoffs and remaining annotation tools alongside the
+format policy and all other contracted output/capture/application domains.
+Physical clipboard/color/accessibility, shutdown and human gates remain
 Required; this does not accept full output conformance or parity.
 
 Each checkpoint updates requirement traceability, runs native tests and the

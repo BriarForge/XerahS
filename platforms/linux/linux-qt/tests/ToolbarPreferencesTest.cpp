@@ -48,6 +48,9 @@ private slots:
       QCOMPARE(toolbarHotkeyDiagnostic(*parseToolbarHotkey(key), "crop-image"), QString("toolbar-reserved-hotkey"));
     QVERIFY(toolbarHotkeyDiagnostic(*parseToolbarHotkey("Ctrl+S"), "save").isEmpty());
     QVERIFY(knownToolbarAction("copy-rendered-image"));
+    QVERIFY(knownToolbarAction("print"));
+    QVERIFY(validateToolbarItems(QJsonArray{item("print", "Ctrl+Shift+P")}).valid);
+    QCOMPARE(toolbarHotkeyDiagnostic(*parseToolbarHotkey("Ctrl+P"), "print"), QString("toolbar-protected-hotkey"));
     QVERIFY(validateToolbarItems(QJsonArray{item("copy-rendered-image", "Ctrl+C")}).valid);
     QCOMPARE(toolbarHotkeyDiagnostic(*parseToolbarHotkey("Ctrl+Shift+C"), "copy-rendered-image"), QString("toolbar-protected-hotkey"));
     QVERIFY(toolbarHotkeyDiagnostic(*parseToolbarHotkey("F6"), "fit-image").isEmpty());

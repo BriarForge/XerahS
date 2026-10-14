@@ -44,7 +44,12 @@
     "platforms/linux/linux-qt/app/EditorSave.cpp",
     "platforms/linux/linux-qt/app/EditorSaveProgress.cpp",
     "platforms/linux/linux-qt/app/EditorCopy.h",
-    "platforms/linux/linux-qt/app/EditorCopy.cpp"
+    "platforms/linux/linux-qt/app/EditorCopy.cpp",
+    "platforms/linux/linux-qt/src/image-editor/PrintLayout.h",
+    "platforms/linux/linux-qt/src/image-editor/PrintLayout.cpp",
+    "platforms/linux/linux-qt/app/EditorPrint.h",
+    "platforms/linux/linux-qt/app/EditorPrint.cpp",
+    "platforms/linux/linux-qt/app/EditorPrintDialog.cpp"
   ],
   "requirements": {
     "ES-001": {
@@ -118,7 +123,7 @@
       "vectors": [
         "render-stroke-coverage"
       ],
-      "note": "The authoritative PNG compositor and atomic save preserve the source colour profile. Native tests verify profile and alpha across canvas edits, New Image creation and persisted PNG/sidecar reopening. Annotation colour composition for non-sRGB sources, additional export formats, requested profile conversion and cross-platform golden coverage remain pending. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Native Copy Image now renders one owned snapshot through the existing sRGB conversion and strict Core compositor, prepares native QImage plus bounded PNG with alpha, and refuses visible unsupported objects before publication. Native tests verify independent stroke/alpha pixels, linear-to-sRGB conversion, frozen caller data and source/profile preservation. Complete colors/backgrounds/formats/goldens and native/human qualification remain Required; evidence is indexed in EDITOR-COPY.md.",
+      "note": "The authoritative PNG compositor and atomic save preserve the source colour profile. Native tests verify profile and alpha across canvas edits, New Image creation and persisted PNG/sidecar reopening. Annotation colour composition for non-sRGB sources, additional export formats, requested profile conversion and cross-platform golden coverage remain pending. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Native Copy Image now renders one owned snapshot through the existing sRGB conversion and strict Core compositor, prepares native QImage plus bounded PNG with alpha, and refuses visible unsupported objects before publication. Native tests verify independent stroke/alpha pixels, linear-to-sRGB conversion, frozen caller data and source/profile preservation. Complete colors/backgrounds/formats/goldens and native/human qualification remain Required; evidence is indexed in EDITOR-COPY.md. Native Print Image now uses owned worker snapshots, explicit page/scale/orientation/colour preview and native printer confirmation, cancellable worker submission and honest submitted/unknown outcomes. Confirmed known-failure retry preserves document/history/Redo/files/preferences/clipboard; missing services and owner/reentrant boundaries are tested. Candidate EO-001/008/014/015/016 evidence is indexed in EDITOR-PRINT.md and EDITOR-PRINT-EVIDENCE.json. Full physical printer/target/colour/shutdown/a11y/privacy/security and human qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
@@ -126,7 +131,11 @@
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/app/EDITOR-COPY.md",
-        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/app/EDITOR-PRINT.md",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
       ]
     },
     "ES-010": {
@@ -251,11 +260,15 @@
     "ES-019": {
       "status": "partial",
       "vectors": [],
-      "note": "Canvas is focusable with a visible focus ring, accessible names, a dashed two-tone selection outline, fixed-width outlines and six-screen-pixel hit targets under zoom. Native tests cover low-zoom selection. Toolbars and scrollbars are keyboard reachable; screen-reader annotation state and full high-contrast review remain pending. New Image fields have native labels/buddies and accessible names, keyboard operation and a named progress control; native accessibility interfaces verify the dimensions name and Linux profile label relation/current value. Native Copy Image exposes a fixed menu/protected Ctrl+C, named cancellable progress, disabled/busy state, completion/failure and explicit default-Cancel known-failure retry. Local text copy retains precedence; unknown delivery cannot authorize retry. Actual GUI/keyboard and unavailable-service fixtures are indexed in EDITOR-COPY.md; physical assistive-technology and target qualification remain Required.",
+      "note": "Canvas is focusable with a visible focus ring, accessible names, a dashed two-tone selection outline, fixed-width outlines and six-screen-pixel hit targets under zoom. Native tests cover low-zoom selection. Toolbars and scrollbars are keyboard reachable; screen-reader annotation state and full high-contrast review remain pending. New Image fields have native labels/buddies and accessible names, keyboard operation and a named progress control; native accessibility interfaces verify the dimensions name and Linux profile label relation/current value. Native Copy Image exposes a fixed menu/protected Ctrl+C, named cancellable progress, disabled/busy state, completion/failure and explicit default-Cancel known-failure retry. Local text copy retains precedence; unknown delivery cannot authorize retry. Actual GUI/keyboard and unavailable-service fixtures are indexed in EDITOR-COPY.md; physical assistive-technology and target qualification remain Required. Native Print Image now uses owned worker snapshots, explicit page/scale/orientation/colour preview and native printer confirmation, cancellable worker submission and honest submitted/unknown outcomes. Confirmed known-failure retry preserves document/history/Redo/files/preferences/clipboard; missing services and owner/reentrant boundaries are tested. Candidate EO-001/008/014/015/016 evidence is indexed in EDITOR-PRINT.md and EDITOR-PRINT-EVIDENCE.json. Full physical printer/target/colour/shutdown/a11y/privacy/security and human qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/EDITOR-COPY.md",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/app/EDITOR-PRINT.md",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
       ]
     },
     "ES-020": {
@@ -316,14 +329,18 @@
         "undo-to-checkpoint-is-clean",
         "truncated-checkpoint-stays-dirty"
       ],
-      "note": "Saved sessions retain stable checkpoint IDs. Newly created sources use an absent initial checkpoint, so Undo to initial pixels remains dirty until successful persistence. EditorSessionTest and EditorWindowTest verify unsaved initial/Undo/Redo, cancelled Save and complete/incomplete native persistence. recordSnapshotSave acknowledges the immutable exported state instead of the current state. EditorSessionTest covers later edits, Undo to the saved snapshot, split-save invalidation and an unreachable truncated checkpoint; EditorWindowTest preserves Redo through companion-only repair. Copy does not record a save or mutate history/checkpoint. Native window tests preserve dirty state, Undo/Redo, viewport, settings and files through success, cancellation, failure and known-failure replay; changed history disables retry and Undo restores its eligibility.",
+      "note": "Saved sessions retain stable checkpoint IDs. Newly created sources use an absent initial checkpoint, so Undo to initial pixels remains dirty until successful persistence. EditorSessionTest and EditorWindowTest verify unsaved initial/Undo/Redo, cancelled Save and complete/incomplete native persistence. recordSnapshotSave acknowledges the immutable exported state instead of the current state. EditorSessionTest covers later edits, Undo to the saved snapshot, split-save invalidation and an unreachable truncated checkpoint; EditorWindowTest preserves Redo through companion-only repair. Copy does not record a save or mutate history/checkpoint. Native window tests preserve dirty state, Undo/Redo, viewport, settings and files through success, cancellation, failure and known-failure replay; changed history disables retry and Undo restores its eligibility. Native Print Image now uses owned worker snapshots, explicit page/scale/orientation/colour preview and native printer confirmation, cancellable worker submission and honest submitted/unknown outcomes. Confirmed known-failure retry preserves document/history/Redo/files/preferences/clipboard; missing services and owner/reentrant boundaries are tested. Candidate EO-001/008/014/015/016 evidence is indexed in EDITOR-PRINT.md and EDITOR-PRINT-EVIDENCE.json. Full physical printer/target/colour/shutdown/a11y/privacy/security and human qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/EDITOR-SAVE.md",
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/app/EDITOR-COPY.md",
-        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/app/EDITOR-PRINT.md",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
       ]
     },
     "ES-028": {

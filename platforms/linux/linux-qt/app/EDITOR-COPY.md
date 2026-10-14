@@ -112,7 +112,7 @@ review remain Required. The existing host contract and fixture evidence do not
 accept those gates or imply another platform's disposition.
 
 EO-004-LINUX-2026-10-14 in EDITOR-SAVE.md remains pending; this independent output
-work does not decide the draft format defaults. Next continue the decided output
-surface with native Print's non-mutating snapshot/preview/cancellation flow under
-EO-008/014/015, while resolving PNG/JPEG/WebP policy and retaining every domain
+work does not decide the draft format defaults. The subsequent
+[Print checkpoint](EDITOR-PRINT.md) now adds the non-mutating native print flow.
+Continue owned output service handoffs, PNG/JPEG/WebP policy and all domains
 in CONTRACT-AUDIT.md.

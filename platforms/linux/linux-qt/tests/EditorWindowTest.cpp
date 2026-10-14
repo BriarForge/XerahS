@@ -30,6 +30,7 @@
 #include <QLockFile>
 #include <QProgressBar>
 #include <QProgressDialog>
+#include <QPrinter>
 #include <QScreen>
 #include <QSettings>
 #include <QMessageBox>
@@ -201,9 +202,82 @@ private slots:
   void initTestCase() {
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());
+    qputenv("CUPS_SERVER", dialogPreferences.filePath("unavailable-cups.sock").toLocal8Bit());
   }
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  void printMenuAndShortcutSubmitWithoutSavingOrChangingHistoryFilesPreferencesOrClipboard() {
+    QTemporaryDir dir; const auto path = dir.filePath("image.png"); QVERIFY(fixture().save(path)); const auto original = storedBytes(path);
+    QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);
+    window->show(); auto *canvas = window->findChild<EditorCanvas *>(); drawRectangle(*canvas); trigger(*window, "deleteSelection"); trigger(*window, "undo"); canvas->zoomIn();
+    const auto title = window->windowTitle(); const auto preferences = nativeEditorPreferences().values; const auto view = canvas->viewState();
+    QApplication::clipboard()->setText("KEEP"); EditorPrintPorts ports; int configurations = 0, submissions = 0; bool gui = false, worker = false, busy = false; EditorPrintSnapshotPtr snapshot;
+    ports.configure = [&](const EditorPrintSnapshot &value, QWidget *) {
+      ++configurations; gui = QThread::currentThread() == QApplication::instance()->thread(); snapshot = std::make_shared<EditorPrintSnapshot>(value);
+      busy = !window->findChild<QAction *>("saveImage")->isEnabled() && !window->findChild<QAction *>("copyImage")->isEnabled() && !window->findChild<QAction *>("printImage")->isEnabled() && !canvas->isEnabled() && !window->close();
+      trigger(*window, "printImage"); trigger(*window, "saveImage");
+      auto printer = std::make_shared<QPrinter>(); printer->setOutputFormat(QPrinter::PdfFormat); printer->setOutputFileName(dir.filePath("printed.pdf")); return EditorPrintChoice{{}, printer, 100};
+    };
+    ports.submit = [&](QPrinter &printer, const EditorPrintSnapshot &value, double scale, const std::atomic<bool> &cancel) { ++submissions; worker = QThread::currentThread() != QApplication::instance()->thread(); return submitEditorPrint(printer, value, scale, cancel); };
+    window->setPrintPorts(ports); QSignalSpy printed(window.get(), &EditorWindow::printFinished), saved(window.get(), &EditorWindow::saveFinished);
+    auto *action = window->findChild<QAction *>("printImage"); QVERIFY(action && action->isEnabled()); QCOMPARE(action->shortcut(), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_P)); QVERIFY(!action->autoRepeat());
+    trigger(*window, "printImage"); QCOMPARE(configurations, 1); QCOMPARE(submissions, 1); QVERIFY(gui && worker && busy && snapshot); QCOMPARE(printed.at(0).at(0).toString(), QString("succeeded"));
+    window->activateWindow(); canvas->setFocus(); QTest::qWait(10); QTest::keyClick(canvas, Qt::Key_P, Qt::ControlModifier | Qt::ShiftModifier); QCOMPARE(submissions, 2);
+    QCOMPARE(window->windowTitle(), title); QVERIFY(window->findChild<QAction *>("undo")->isEnabled()); QVERIFY(window->findChild<QAction *>("redo")->isEnabled()); QCOMPARE(canvas->viewState().zoom(), view.zoom()); QCOMPARE(canvas->viewState().offset(), view.offset());
+    QCOMPARE(nativeEditorPreferences().values, preferences); QCOMPARE(storedBytes(path), original); QVERIFY(!QFile::exists(path + ".xann")); QCOMPARE(QApplication::clipboard()->text(), QString("KEEP")); QCOMPARE(saved.count(), 0);
+    QVERIFY(window->statusBar()->currentMessage().contains("physical delivery is not confirmed")); QVERIFY(QFile::exists(dir.filePath("printed.pdf")));
+  }
+  void knownPrintFailureRetryUsesFrozenSnapshotAndFreshConfirmationWithDefaultCancel() {
+    QTemporaryDir dir; std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedImage(fixture())); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>();
+    drawRectangle(*canvas); trigger(*window, "deleteSelection"); trigger(*window, "undo"); const auto title = window->windowTitle();
+    EditorPrintPorts ports; int renders = 0, configurations = 0, submissions = 0; bool fail = true, same = false; QImage first;
+    ports.beforeRender = [&] { ++renders; }; ports.configure = [&](const EditorPrintSnapshot &, QWidget *) { ++configurations; auto printer = std::make_shared<QPrinter>(); printer->setOutputFormat(QPrinter::PdfFormat); return EditorPrintChoice{{}, printer, 100}; };
+    ports.submit = [&](QPrinter &, const EditorPrintSnapshot &value, double, const std::atomic<bool> &) { ++submissions; if (first.isNull()) first = value.colour; else same = first == value.colour; return fail ? xerahs::actions::ActionOutcome{xerahs::actions::ActionState::Failed, "PRIVATE", std::nullopt} : xerahs::actions::ActionOutcome{}; };
+    window->setPrintPorts(ports); bool warned = false, confirmed = false, approve = false; QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return;
+      if (box->objectName() == "retryImagePrintDialog") { confirmed = true; QCOMPARE(box->defaultButton(), box->button(QMessageBox::Cancel)); box->button(approve ? QMessageBox::Retry : QMessageBox::Cancel)->click(); }
+      else { warned = true; QVERIFY(!box->informativeText().contains("PRIVATE")); box->accept(); }
+    });
+    timer.start(5); trigger(*window, "printImage"); QVERIFY(warned); auto *retry = window->findChild<QAction *>("retryImagePrint"); QVERIFY(retry->isEnabled());
+    trigger(*window, "retryImagePrint"); QVERIFY(confirmed); QCOMPARE(submissions, 1); approve = true; fail = false; trigger(*window, "retryImagePrint"); timer.stop();
+    QCOMPARE(renders, 1); QCOMPARE(configurations, 2); QCOMPARE(submissions, 2); QVERIFY(same && !retry->isEnabled()); QCOMPARE(window->windowTitle(), title); QVERIFY(window->findChild<QAction *>("redo")->isEnabled());
+    fail = true; timer.start(5); trigger(*window, "printImage"); timer.stop(); QVERIFY(retry->isEnabled()); trigger(*window, "redo"); QVERIFY(!retry->isEnabled()); trigger(*window, "undo"); QVERIFY(retry->isEnabled());
+  }
+  void unknownPrintDeliveryCannotAuthorizeRetryAndMissingServiceIsVisible() {
+    std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedImage(fixture())); QVERIFY(window); window->show(); EditorPrintPorts ports;
+    ports.configure = [](const EditorPrintSnapshot &, QWidget *) { auto printer = std::make_shared<QPrinter>(); printer->setOutputFormat(QPrinter::PdfFormat); return EditorPrintChoice{{}, printer, 100}; };
+    ports.submit = [](QPrinter &, const EditorPrintSnapshot &, double, const std::atomic<bool> &) -> xerahs::actions::ActionOutcome { throw std::runtime_error("PRIVATE callback"); };
+    window->setPrintPorts(ports); bool warned = false; QSignalSpy printed(window.get(), &EditorWindow::printFinished); QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] { if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) { warned = true; QVERIFY(box->text().contains("queue")); QVERIFY(!box->informativeText().contains("PRIVATE")); box->accept(); } });
+    timer.start(5); trigger(*window, "printImage"); timer.stop(); QVERIFY(warned); QCOMPARE(printed.at(0).at(0).toString(), QString("unknown")); QVERIFY(!window->findChild<QAction *>("retryImagePrint")->isEnabled());
+    ports.configure = {}; window->setPrintPorts(ports); auto *action = window->findChild<QAction *>("printImage"); QVERIFY(!action->isEnabled()); QVERIFY(action->toolTip().contains("no print service"));
+  }
+  void printCancellationKeepsTheEditorResponsiveAndRefusesReentrantActions() {
+    std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedImage(fixture())); QVERIFY(window); window->show(); const auto title = window->windowTitle(); auto *canvas = window->findChild<EditorCanvas *>();
+    const auto gate = std::make_shared<SaveGate>(); EditorPrintPorts ports; int configurations = 0;
+    ports.beforeRender = [gate] { gate->entered.store(true); while (!gate->released.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1)); gate->finished.store(true); };
+    ports.configure = [&](const EditorPrintSnapshot &, QWidget *) { ++configurations; return EditorPrintChoice{}; }; window->setPrintPorts(ports); bool acted = false; QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] { if (!gate->entered.load() || acted) return; acted = true; QVERIFY(!window->close()); QVERIFY(!window->openImage()); QVERIFY(!canvas->isEnabled());
+      trigger(*window, "copyImage"); trigger(*window, "printImage"); trigger(*window, "saveImage"); auto *progress = qobject_cast<QProgressDialog *>(QApplication::activeModalWidget()); QVERIFY(progress); progress->findChild<QPushButton *>()->click(); gate->released.store(true); });
+    timer.start(5); trigger(*window, "printImage"); timer.stop(); QVERIFY(acted && gate->finished.load()); QCOMPARE(configurations, 0); QCOMPARE(window->windowTitle(), title); QVERIFY(canvas->isEnabled()); QVERIFY(window->findChild<QAction *>("printImage")->isEnabled());
+  }
+  void printCompletionObserverExceptionKeepsAcknowledgementAndNeverRepeatsTheJob() {
+    std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedImage(fixture())); QVERIFY(window); window->show(); EditorPrintPorts ports; int submissions = 0;
+    ports.configure = [](const EditorPrintSnapshot &, QWidget *) { auto printer = std::make_shared<QPrinter>(); printer->setOutputFormat(QPrinter::PdfFormat); return EditorPrintChoice{{}, printer, 100}; };
+    ports.submit = [&](QPrinter &, const EditorPrintSnapshot &, double, const std::atomic<bool> &) { ++submissions; return xerahs::actions::ActionOutcome{}; }; window->setPrintPorts(ports);
+    QSignalSpy finished(window.get(), &EditorWindow::printFinished);
+    connect(window.get(), &EditorWindow::printFinished, this, [] { throw std::runtime_error("PRIVATE observer"); });
+    trigger(*window, "printImage"); QCOMPARE(submissions, 1); QCOMPARE(finished.count(), 1); QCOMPARE(finished.at(0).at(0).toString(), QString("succeeded"));
+    QVERIFY(window->statusBar()->currentMessage().contains("completion observer failed")); QVERIFY(window->findChild<QAction *>("printImage")->isEnabled()); QVERIFY(!window->findChild<QAction *>("retryImagePrint")->isEnabled());
+  }
+  void printConfigurationAndCompletionCanDestroyTheirOwner_data() { QTest::addColumn<bool>("duringConfiguration"); QTest::newRow("configuration") << true; QTest::newRow("completion") << false; }
+  void printConfigurationAndCompletionCanDestroyTheirOwner() {
+    QFETCH(bool, duringConfiguration); QPointer<EditorWindow> window(EditorWindow::fromCapturedImage(fixture())); QVERIFY(window); window->show(); EditorPrintPorts ports; bool acknowledged = false;
+    ports.configure = [&](const EditorPrintSnapshot &, QWidget *) { if (duringConfiguration) { delete window.data(); return EditorPrintChoice{}; } auto printer = std::make_shared<QPrinter>(); printer->setOutputFormat(QPrinter::PdfFormat); return EditorPrintChoice{{}, printer, 100}; };
+    ports.submit = [](QPrinter &, const EditorPrintSnapshot &, double, const std::atomic<bool> &) { return xerahs::actions::ActionOutcome{}; }; window->setPrintPorts(ports);
+    connect(window, &EditorWindow::printFinished, this, [&](const QString &state, const QString &, bool) { acknowledged = state == "succeeded"; trigger(*window, "printImage"); delete window.data(); });
+    auto *action = window->findChild<QAction *>("printImage"); action->trigger(); QVERIFY(!window); QCOMPARE(acknowledged, !duringConfiguration);
+  }
   void copyMenuAndShortcutPublishOneSnapshotWithoutSavingOrClearingHistory() {
     QTemporaryDir dir; const auto path = dir.filePath("image.png"); QVERIFY(fixture().save(path)); const auto original = storedBytes(path);
     QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);

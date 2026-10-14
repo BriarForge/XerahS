@@ -321,7 +321,7 @@ Core tests cover independent gesture references, collection/type/length bounds,
 protected/reserved collisions, explicit empty layouts, nullable groups, isolated
 recovery, reset, extensions, inactive future data, real private storage and
 restart. Native `ToolbarDialog` provides reorder, show/hide, nullable grouping,
-additional hotkeys and draft reset for the 38 currently registered editor
+additional hotkeys and draft reset for the 39 currently registered editor
 commands. Apply saves before publishing to every open editor; Cancel,
 invalid/locked/stale/read-only writes leave the layout and preferences intact.
 The active native hotkey cell editor is committed before Apply reads the draft.
@@ -339,3 +339,8 @@ windows, restart, dispatch, text undo, preserved recent-list authority and
 actual editor files/checkpoints/redo. Complete contracted command coverage,
 physical keyboard/accessibility qualification and shared ID/default/format
 and compatibility acceptance remain Required.
+
+Print is the 39th native command, hidden in the unchanged defaults; Ctrl+Shift+P
+retains Print ownership and Ctrl+P retains pin-to-screen ownership. Its native
+output controls and remaining qualification are indexed in
+[EDITOR-PRINT.md](../../app/EDITOR-PRINT.md).

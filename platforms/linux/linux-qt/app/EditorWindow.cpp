@@ -342,6 +342,13 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   m_retrySave = fileMenu->addAction("Retry &annotation save…"); m_retrySave->setObjectName("retryEditorSidecar");
   m_retrySave->setStatusTip("Retry only the incomplete annotation companion. Keep the already saved PNG.");
   addAction(m_retrySave); connect(m_retrySave, &QAction::triggered, this, [this] { retrySave(); });
+  m_printAction = fileMenu->addAction("&Print Image…"); m_printAction->setObjectName("printImage");
+  m_printAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_P)); m_printAction->setAutoRepeat(false);
+  m_printAction->setStatusTip("Print one snapshot of the source and visible supported annotations on white paper using sRGB. Preview and native printer settings precede submission; the document stays unsaved.");
+  connect(m_printAction, &QAction::triggered, this, [this] { printImage(); });
+  m_retryPrint = fileMenu->addAction("Retry image &print…"); m_retryPrint->setObjectName("retryImagePrint");
+  m_retryPrint->setStatusTip("Retry a known failed print with the unchanged prepared snapshot and fresh native printer confirmation.");
+  addAction(m_retryPrint); connect(m_retryPrint, &QAction::triggered, this, [this] { retryPrint(); });
   auto *closeEditor = fileMenu->addAction(QStringLiteral("Close Editor"));
   closeEditor->setObjectName(QStringLiteral("closeEditor")); closeEditor->setShortcut(QKeySequence::Close);
   connect(closeEditor, &QAction::triggered, this, [this] { close(); });
@@ -394,7 +401,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     {"flatten-image", flatten}, {"clear-annotations", m_clearAnnotations}, {"clear-image", clear},
     {"compare-images", compare}, {"drawing-defaults", drawingDefaults}, {"appearance-preferences", appearance},
     {"remember-window-state", rememberWindow}, {"customize-toolbar", customizeToolbar},
-    {"toggle-toolbars", toggleToolbar}, {"close-editor", closeEditor}, {"copy-rendered-image", m_copyAction}
+    {"toggle-toolbars", toggleToolbar}, {"close-editor", closeEditor}, {"copy-rendered-image", m_copyAction}, {"print", m_printAction}
   };
   for (auto *action : m_toolbarActions) { action->setParent(this); addAction(action); }
   m_toolbarController = new NativeEditorToolbar(*this, *bar, m_toolbarActions, [this] {
@@ -423,6 +430,7 @@ void EditorWindow::persistDrawingDefaults() {
 }
 
 void EditorWindow::refresh() {
+  if (m_printMessageState != m_session->stateId()) { m_printMessage.clear(); m_printMessageState.reset(); }
   if (m_copyMessageState != m_session->stateId()) { m_copyMessage.clear(); m_copyMessageState.reset(); }
   if (m_saveMessageState != m_session->stateId()) { m_saveMessage.clear(); m_saveMessageState.reset(); }
   if (m_placeholderState != m_session->stateId()) {
@@ -456,6 +464,12 @@ void EditorWindow::refresh() {
   m_retryCopy->setEnabled(!m_outputPending && m_copyPorts.publish && m_failedCopy && m_failedCopyState == m_session->stateId());
   m_retryCopy->setToolTip(m_failedCopy && m_failedCopyState != m_session->stateId()
       ? "The document changed. Undo to the failed snapshot before retrying it, or use Copy Image for a new snapshot." : m_retryCopy->statusTip());
+  const bool printAvailable = m_printPorts.configure && m_printPorts.submit;
+  m_printAction->setEnabled(!m_outputPending && printAvailable);
+  m_printAction->setToolTip(printAvailable ? m_printAction->statusTip() : "Print Image is unavailable: no print service was provided.");
+  m_retryPrint->setEnabled(!m_outputPending && printAvailable && m_failedPrint && m_failedPrintState == m_session->stateId());
+  m_retryPrint->setToolTip(m_failedPrint && m_failedPrintState != m_session->stateId()
+      ? "The document changed. Undo to the failed snapshot before retrying it, or use Print Image for a new snapshot." : m_retryPrint->statusTip());
   setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName(),
                                                     m_session->dirty() ? QStringLiteral(" •") : QString()));
   QString status = QStringLiteral("%1 × %2 · %3 annotation(s) · %4 selected · %5%")
@@ -468,6 +482,7 @@ void EditorWindow::refresh() {
       .arg(editorPreferenceDiagnosticMessage(m_drawingPreferenceDiagnostic));
   if (!m_saveMessage.isEmpty()) status += " · " + m_saveMessage;
   if (!m_copyMessage.isEmpty()) status += " · " + m_copyMessage;
+  if (!m_printMessage.isEmpty()) status += " · " + m_printMessage;
   statusBar()->showMessage(status);
   m_canvas->viewport()->update();
 }
@@ -522,6 +537,7 @@ void EditorWindow::adoptSession(std::unique_ptr<EditorSession> next, const QStri
   m_partialSave.reset(); m_partialSaveState.reset();
   m_saveMessage.clear(); m_saveMessageState.reset();
   m_failedCopy.reset(); m_failedCopyState.reset(); m_copyMessage.clear(); m_copyMessageState.reset();
+  m_failedPrint.reset(); m_failedPrintState.reset(); m_printMessage.clear(); m_printMessageState.reset();
   m_canvas->resetDocument(*m_session, display);
   findChild<QAction *>(QStringLiteral("cropTool"))->setChecked(false);
   refresh(); m_canvas->setFocus();
@@ -822,6 +838,7 @@ bool EditorWindow::withOutputBusy(const std::function<bool()> &operation) {
   for (auto it = enabled.cbegin(); it != enabled.cend(); ++it) { it.key()->setEnabled(false); if (!guard) return false; }
   m_retrySave->setEnabled(false); if (!guard) return false;
   m_retryCopy->setEnabled(false); if (!guard) return false;
+  m_retryPrint->setEnabled(false); if (!guard) return false;
   m_canvas->setEnabled(false); if (!guard) return false;
   menuBar()->setEnabled(false); if (!guard) return false;
   return operation();
@@ -904,6 +921,49 @@ bool EditorWindow::retryCopy() {
   const auto choice = box->exec(); delete box.data();
   if (!guard || choice != QMessageBox::Retry || m_outputPending || m_failedCopy != expected || m_failedCopyState != state || state != m_session->stateId()) return false;
   return copyImage(expected);
+}
+
+void EditorWindow::setPrintPorts(EditorPrintPorts ports) { m_printPorts = std::move(ports); refresh(); }
+bool EditorWindow::printImage(const EditorPrintSnapshotPtr &retry) {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || !m_printPorts.configure || !m_printPorts.submit || m_canvas->interactionActive()) return false;
+  const QPointer<EditorWindow> guard(this);
+  const auto state = m_session->stateId(); const auto document = m_session->document(); const auto source = m_image; const auto ports = m_printPorts;
+  return withOutputBusy([this, guard, state, document, source, ports, retry] {
+    const auto printed = runEditorPrint(source, document, this, ports, retry); if (!guard) return false;
+    const auto &action = printed.action; const bool success = action.state == xerahs::actions::ActionState::Succeeded && !action.outcomeUnknown;
+    m_failedPrint.reset(); m_failedPrintState.reset();
+    if (success) m_printMessage = "Image submitted to the printer; physical delivery is not confirmed";
+    else if (action.outcomeUnknown) m_printMessage = "Print delivery is unknown. Check the printer queue before starting another print";
+    else if (action.state == xerahs::actions::ActionState::Failed) {
+      m_failedPrint = printed.snapshot; m_failedPrintState = printed.snapshot ? std::optional<quint64>{state} : std::nullopt;
+      m_printMessage = "Print failed before a confirmed submission; the document is unchanged";
+    } else m_printMessage = "Print cancelled before submission; the document is unchanged";
+    if (printed.cancellationArrivedDuring) m_printMessage += " (cancellation requested during submission)";
+    m_printMessageState = state;
+    const auto diagnostic = action.diagnostic.value_or(QString{});
+    try { emit printFinished(action.outcomeUnknown ? "unknown" : xerahs::actions::actionStateName(action.state), diagnostic, printed.cancellationArrivedDuring); }
+    catch (...) { if (guard) m_printMessage += " (completion observer failed)"; }
+    if (!guard) return false;
+    if (action.state == xerahs::actions::ActionState::Failed || action.outcomeUnknown) {
+      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, "Image print incomplete",
+          action.outcomeUnknown ? "The printer may have received the job. Check its queue before a new Print Image action. Automatic retry is unavailable; the editable document is kept."
+                               : diagnostic == "print-annotation-unsupported" ? "A visible unsupported annotation cannot be printed without losing it. The editable document is kept."
+                               : printed.snapshot ? "The image was not submitted. Retry image print can reuse this snapshot with fresh printer confirmation. The editable document is kept."
+                                                  : "The image could not be prepared. Use Print Image to try again. The editable document is kept.", QMessageBox::Ok, this));
+      box->setTextFormat(Qt::PlainText); box->setInformativeText(diagnostic); box->exec(); delete box.data();
+    }
+    return success && bool(guard);
+  });
+}
+bool EditorWindow::retryPrint() {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || !m_printPorts.configure || !m_printPorts.submit || !m_failedPrint || m_failedPrintState != m_session->stateId() || m_canvas->interactionActive()) return false;
+  const QPointer<EditorWindow> guard(this); const auto expected = m_failedPrint; const auto state = m_failedPrintState;
+  QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, "Retry image print?",
+      "Prepare the unchanged snapshot for a new native printer confirmation? No pixels will be rendered again. A print is submitted only after confirmation.", QMessageBox::Retry | QMessageBox::Cancel, this));
+  box->setObjectName("retryImagePrintDialog"); box->setDefaultButton(QMessageBox::Cancel); box->setEscapeButton(QMessageBox::Cancel);
+  const auto choice = box->exec(); delete box.data();
+  if (!guard || choice != QMessageBox::Retry || m_outputPending || m_failedPrint != expected || m_failedPrintState != state || state != m_session->stateId()) return false;
+  return printImage(expected);
 }
 
 void EditorWindow::recordRecentImage(const QString &absolutePath) {

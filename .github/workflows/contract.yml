@@ -15,7 +15,7 @@ jobs:
         run: |
           apt-get update
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-            ca-certificates git cmake ninja-build g++ qt6-base-dev zlib1g-dev python3 dbus-daemon
+            ca-certificates git cmake ninja-build g++ qt6-base-dev zlib1g-dev python3 dbus-daemon poppler-utils
       - uses: actions/checkout@v4
       - name: Configure native Linux
         run: cmake -S platforms/linux/linux-qt -B platforms/linux/linux-qt/build -G Ninja

@@ -1,0 +1,110 @@
+{
+  "capability": "EDITOR-OUTPUT-ACTIONS-001",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "kind": "partial-native-candidate-evidence",
+  "acceptance": "Required; shared vectors/full capability and human review not accepted",
+  "requirements": {
+    "EO-001": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/src/image-editor/PrintLayout.h",
+        "platforms/linux/linux-qt/src/image-editor/PrintLayout.cpp",
+        "platforms/linux/linux-qt/app/EditorPrint.h",
+        "platforms/linux/linux-qt/app/EditorPrint.cpp",
+        "platforms/linux/linux-qt/app/EditorPrintDialog.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/EDITOR-PRINT.md",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Owned immutable source/visible supported annotations. Separate backgrounds/full tools, resource/colour and shutdown qualification remain Required."
+    },
+    "EO-008": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/src/image-editor/PrintLayout.h",
+        "platforms/linux/linux-qt/src/image-editor/PrintLayout.cpp",
+        "platforms/linux/linux-qt/app/EditorPrint.h",
+        "platforms/linux/linux-qt/app/EditorPrint.cpp",
+        "platforms/linux/linux-qt/app/EditorPrintDialog.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/EDITOR-PRINT.md",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Native preview controls and Qt printer flow with worker submission; document remains unsaved/unchanged. Physical printer/target matrix and full page/scale/colour qualification remain Required."
+    },
+    "EO-014": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/src/image-editor/PrintLayout.h",
+        "platforms/linux/linux-qt/src/image-editor/PrintLayout.cpp",
+        "platforms/linux/linux-qt/app/EditorPrint.h",
+        "platforms/linux/linux-qt/app/EditorPrint.cpp",
+        "platforms/linux/linux-qt/app/EditorPrintDialog.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/EDITOR-PRINT.md",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Explicit GUI configuration/worker submission ownership, cancellation, lifetime, stable diagnostics, unknown delivery and reentrancy semantics. Full native failure/security/privacy review remain Required."
+    },
+    "EO-015": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/src/image-editor/PrintLayout.h",
+        "platforms/linux/linux-qt/src/image-editor/PrintLayout.cpp",
+        "platforms/linux/linux-qt/app/EditorPrint.h",
+        "platforms/linux/linux-qt/app/EditorPrint.cpp",
+        "platforms/linux/linux-qt/app/EditorPrintDialog.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/EDITOR-PRINT.md",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Fixed/protected Ctrl+Shift+P, named controls/progress, missing service/printer explanation, busy guard, typed acknowledgement and confirmed same-state known-failure replay. Physical a11y/input qualification remains Required."
+    },
+    "EO-016": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/src/image-editor/PrintLayout.h",
+        "platforms/linux/linux-qt/src/image-editor/PrintLayout.cpp",
+        "platforms/linux/linux-qt/app/EditorPrint.h",
+        "platforms/linux/linux-qt/app/EditorPrint.cpp",
+        "platforms/linux/linux-qt/app/EditorPrintDialog.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/EDITOR-PRINT.md",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Native/private temporary PDF success/cancellation/unavailable/exception/unknown fixtures. Complete permission/disk/resource/overwrite/split matrix on all targets remains Required."
+    }
+  }
+}

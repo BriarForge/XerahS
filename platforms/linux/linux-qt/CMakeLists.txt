@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # D-LIN-001: Qt 6, dynamically linked.
-find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Widgets DBus Network Test)
+find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Widgets DBus Network Test PrintSupport)
 # .xann gzip container (ES-013); zlib licence is GPL-compatible.
 find_package(ZLIB REQUIRED)
 
@@ -41,6 +41,8 @@ add_library(xerahs_core STATIC
   src/image-editor/CanvasOperations.h
   src/image-editor/EditorSession.cpp
   src/image-editor/EditorSession.h
+  src/image-editor/PrintLayout.cpp
+  src/image-editor/PrintLayout.h
   src/image-editor/EditorViewport.cpp
   src/image-editor/EditorViewport.h
   src/image-editor/SourceBinding.cpp
@@ -99,9 +101,9 @@ target_include_directories(xerahs_file_output PUBLIC app)
 target_link_libraries(xerahs_file_output PUBLIC xerahs_core Qt6::Gui Qt6::DBus)
 target_compile_options(xerahs_file_output PRIVATE -Wall -Wextra -Wpedantic)
 
-add_library(xerahs_editor_source STATIC app/EditorSource.cpp app/EditorSource.h app/EditorSave.cpp app/EditorSave.h app/EditorSaveProgress.cpp app/EditorCopy.cpp app/EditorCopy.h)
+add_library(xerahs_editor_source STATIC app/EditorSource.cpp app/EditorSource.h app/EditorSave.cpp app/EditorSave.h app/EditorSaveProgress.cpp app/EditorCopy.cpp app/EditorCopy.h app/EditorPrint.cpp app/EditorPrint.h app/EditorPrintDialog.cpp)
 target_include_directories(xerahs_editor_source PUBLIC app)
-target_link_libraries(xerahs_editor_source PUBLIC xerahs_editor_codecs Qt6::Widgets)
+target_link_libraries(xerahs_editor_source PUBLIC xerahs_editor_codecs Qt6::Widgets Qt6::PrintSupport)
 target_compile_options(xerahs_editor_source PRIVATE -Wall -Wextra -Wpedantic)
 add_library(xerahs_editor_canvas STATIC app/EditorCanvas.cpp app/EditorCanvas.h)
 set_target_properties(xerahs_editor_canvas PROPERTIES AUTOMOC ON)
@@ -176,6 +178,14 @@ target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
 find_program(XERAHS_DBUS_RUN_SESSION dbus-run-session REQUIRED)
 enable_testing()
+find_program(XERAHS_PDFTOPPM pdftoppm REQUIRED)
+add_executable(editor-print-test tests/EditorPrintTest.cpp)
+set_target_properties(editor-print-test PROPERTIES AUTOMOC ON)
+target_link_libraries(editor-print-test PRIVATE xerahs_editor_source Qt6::Test)
+target_compile_definitions(editor-print-test PRIVATE XERAHS_PDFTOPPM="${XERAHS_PDFTOPPM}")
+add_test(NAME editor-print COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:editor-print-test>)
+set_tests_properties(editor-print PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 45)
 add_executable(editor-copy-test tests/EditorCopyTest.cpp)
 set_target_properties(editor-copy-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-copy-test PRIVATE xerahs_editor_source Qt6::Test)
