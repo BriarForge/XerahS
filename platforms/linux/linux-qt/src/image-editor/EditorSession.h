@@ -52,6 +52,10 @@ public:
   bool resizeSelection(double dw, double dh);
   // Rotation is clockwise degrees about the bounds centre, normalized to [0, 360).
   bool rotateSelection(double degrees);
+  bool rotateSelection(double degrees, quint64 expectedState, const QSet<QUuid> &expectedSelection);
+  // Native rotation is available only for visible, unlocked selections with
+  // at least one represented rectangle. Compatible unknown objects stay inert.
+  bool canRotateSelection() const;
   enum class Order { Forward, Backward, Front, Back };
   bool reorderSelection(Order order);
   bool deleteSelection();

@@ -28,8 +28,10 @@ public:
   QString toolInstructions() const;
   void setCropTool(bool active);
   void sourceChanged();
-  bool interactionActive() const { return m_drag.has_value() || m_move.has_value() || m_panning || m_resize.has_value() || m_propertiesPending; }
+  bool interactionActive() const { return m_drag.has_value() || m_move.has_value() || m_panning || m_resize.has_value() || m_annotationDialogPending; }
   bool canEditRectangle() const;
+  bool canRotateSelection() const { return m_session->canRotateSelection(); }
+  bool rotateSelection(QWidget *parent);
   // Capture uses the same owned native dialog and Core edit as the main editor.
   bool editRectangleProperties(QWidget *parent);
   bool createRectangle(QWidget *parent);
@@ -101,7 +103,7 @@ private:
     std::optional<QHash<QUuid, xerahs::editor::RectangleProperties>> preview;
   };
   std::optional<MoveGesture> m_move;
-  bool m_propertiesPending = false;
+  bool m_annotationDialogPending = false;
   bool m_initialFit = true;
   Tool m_tool = Tool::Rectangle;
   bool m_spaceHeld = false;

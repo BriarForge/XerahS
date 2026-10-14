@@ -1,5 +1,6 @@
 #include "EditorCanvas.h"
 #include "RectanglePropertiesDialog.h"
+#include "SelectionRotationDialog.h"
 
 #include <QColorSpace>
 #include <QKeyEvent>
@@ -120,7 +121,7 @@ QString EditorCanvas::toolInstructions() const {
 }
 
 void EditorCanvas::setTool(Tool tool) {
-  if (!isEnabled() || m_propertiesPending) { emit toolChanged(); return; }
+  if (!isEnabled() || m_annotationDialogPending) { emit toolChanged(); return; }
   cancelGesture();
   m_tool = tool;
   setAccessibleDescription(toolInstructions());
@@ -147,12 +148,30 @@ bool EditorCanvas::editRectangleProperties(QWidget *parent) {
 bool EditorCanvas::createRectangle(QWidget *parent) {
   return rectangleDialog(parent, true);
 }
+bool EditorCanvas::rotateSelection(QWidget *parent) {
+  if (!isEnabled() || interactionActive() || !canRotateSelection()) return false;
+  AnnotationDocument document; QSet<QUuid> selection;
+  try { document = m_session->document(); selection = m_session->selection(); }
+  catch (const std::bad_alloc &) { emit editRejected("annotation-edit-failed"); return false; }
+  const auto state = m_session->stateId(), generation = m_documentGeneration;
+  const QPointer<EditorCanvas> owner(this); m_annotationDialogPending = true;
+  const auto restore = qScopeGuard([owner] { if (owner) { owner->m_annotationDialogPending = false; emit owner->changed(); } });
+  emit changed(); if (!owner) return false;
+  const auto choice = chooseSelectionRotation(document, selection, parent); if (!owner) return false;
+  QString diagnostic = choice.diagnostic; bool changed = false;
+  if (choice.degrees) {
+    if (generation != m_documentGeneration) diagnostic = "annotation-edit-stale";
+    else { changed = m_session->rotateSelection(*choice.degrees, state, selection); diagnostic = m_session->editDiagnostic(); }
+  }
+  viewport()->update(); if (!diagnostic.isEmpty()) { emit editRejected(diagnostic); if (!owner) return false; }
+  return changed;
+}
 bool EditorCanvas::rectangleDialog(QWidget *parent, bool creation) {
   if (!isEnabled() || interactionActive() || (!creation && !canEditRectangle())) return false;
   const auto snapshot = creation ? RectangleAnnotation{} : *m_session->selectedRectangle();
   const auto style = m_session->toolStyle(); const auto state = m_session->stateId(); const auto selection = m_session->selection();
-  const QPointer<EditorCanvas> owner(this); m_propertiesPending = true;
-  const auto restore = qScopeGuard([owner] { if (owner) { owner->m_propertiesPending = false; emit owner->changed(); } });
+  const QPointer<EditorCanvas> owner(this); m_annotationDialogPending = true;
+  const auto restore = qScopeGuard([owner] { if (owner) { owner->m_annotationDialogPending = false; emit owner->changed(); } });
   emit changed(); if (!owner) return false;
   const auto properties = creation ? chooseRectangleCreation(style, m_displaySource.size(), parent) : chooseRectangleProperties(snapshot, parent);
   if (!owner || !properties) return false;

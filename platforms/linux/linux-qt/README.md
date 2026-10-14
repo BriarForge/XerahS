@@ -134,6 +134,8 @@ An unreadable, corrupt or newer sidecar stops opening and leaves both files unto
 
 **Moving a group:** Drag any selected rectangle to preview the group's move in source pixels. Release creates one undo step against the selection and document captured at press; intervening edits or selection changes reject the drag. Escape, focus/tool/viewport/source changes cancel it. [Candidate evidence](app/ANNOTATION-MOVE.md) records copied previews, geometry/protection guards and actual editor/capture output.
 
+**Rotating a group:** Rotate Selection in the editor or capture annotation controls previews each selected rectangle's resulting angle. Enter a finite clockwise delta, choose Rotate, or cancel with Escape. One guarded undo step applies to the opening document and selection. [Candidate evidence](app/ANNOTATION-ROTATION.md) records native input, stale/lifetime refusal and actual save/reopen/publication.
+
 **Keyboard object selection:** View → Select Annotations… focuses the native object list; capture annotation shares it. Arrow/Shift keys select rows and ranges, Control+Space toggles, Control+A selects all, Escape clears, and Enter returns to the canvas. Text markers identify selection and hidden/locked protection. [Candidate evidence](app/ANNOTATION-OBJECTS.md) records UUID/history/source synchronization, native input and remaining physical/human qualification.
 
 **Viewport:** Zoom In/Out, 100% and Fit actions expose keyboard shortcuts (Ctrl+plus/minus, Ctrl+0, Ctrl+9). Ctrl+wheel or pinch zooms around the pointer. Scrollbars, wheel, middle-button drag, Space+drag, and arrows with no selection pan. Zoom and pan never alter pixels, annotations, history, or dirty state.

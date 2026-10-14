@@ -56,6 +56,7 @@ QString annotationEditMessage(const QString &diagnostic) {
   if (diagnostic == "annotation-style-invalid") return "The rectangle style contains invalid values. The document was kept.";
   if (diagnostic == "annotation-geometry-invalid") return "The edit was rejected because the bounds would be empty, invalid or too large. The document was kept.";
   if (diagnostic == "annotation-selection-protected") return "Hidden or locked objects cannot be edited. The document was kept.";
+  if (diagnostic == "annotation-type-unsupported") return "Unsupported annotation types are preserved but cannot be transformed. Select a supported rectangle.";
   return "The annotation edit could not be prepared. The document was kept.";
 }
 } // namespace xerahs::app

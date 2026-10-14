@@ -15,6 +15,7 @@
 #include "NativeEditorToolbar.h"
 #include "NativeAnnotationTools.h"
 #include "RectanglePropertiesDialog.h"
+#include "SelectionRotationDialog.h"
 #include "AnnotationObjectNavigator.h"
 #include <algorithm>
 
@@ -28,7 +29,6 @@
 #include <QEventLoop>
 #include <QFileDialog>
 #include <QFileInfo>
-#include <QInputDialog>
 #include <QLabel>
 #include <QListWidget>
 #include <QFormLayout>
@@ -318,13 +318,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(m_undo, &QAction::triggered, this, [this] { m_session->undo(); refresh(); });
   connect(m_redo, &QAction::triggered, this, [this] { m_session->redo(); refresh(); });
   connect(m_delete, &QAction::triggered, this, [this] { m_session->deleteSelection(); refresh(); });
-  connect(m_rotate, &QAction::triggered, this, [this] {
-    bool accepted = false;
-    const double degrees = QInputDialog::getDouble(this, QStringLiteral("Rotate selection"),
-        QStringLiteral("Clockwise angle in degrees (negative turns counter-clockwise):"),
-        0, -360, 360, 2, &accepted);
-    if (accepted) { m_session->rotateSelection(degrees); refresh(); }
-  });
+  connect(m_rotate, &QAction::triggered, this, [this] { rotateSelected(); });
   connect(stroke, &QAction::triggered, this, [this] {
     if (m_canvasOperationPending) return;
     const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
@@ -472,6 +466,26 @@ bool EditorWindow::rectangleDialog(bool creation) {
   });
 }
 
+bool EditorWindow::rotateSelected() {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive() || !m_session->canRotateSelection()) return false;
+  AnnotationDocument document; QSet<QUuid> selection;
+  try { document = m_session->document(); selection = m_session->selection(); }
+  catch (const std::bad_alloc &) {
+    m_annotationMessage = annotationEditMessage("annotation-edit-failed"); m_annotationMessageState = m_session->stateId(); refresh(); return false;
+  }
+  const auto state = m_session->stateId(), generation = m_canvas->documentGeneration(); const QPointer<EditorWindow> owner(this);
+  return withOutputBusy([owner, document, selection, state, generation] {
+    const auto choice = chooseSelectionRotation(document, selection, owner); if (!owner) return false;
+    bool changed = false; QString diagnostic = choice.diagnostic;
+    if (choice.degrees) {
+      if (generation != owner->m_canvas->documentGeneration()) diagnostic = "annotation-edit-stale";
+      else { changed = owner->m_session->rotateSelection(*choice.degrees, state, selection); diagnostic = owner->m_session->editDiagnostic(); }
+    }
+    owner->m_annotationMessage = diagnostic.isEmpty() ? QString() : annotationEditMessage(diagnostic);
+    owner->m_annotationMessageState = owner->m_session->stateId(); owner->refresh(); return changed;
+  });
+}
+
 void EditorWindow::applyCreationDefaults() {
   const auto defaults = drawingStyleFromPreferences(nativeEditorPreferences());
   auto style = m_session->toolStyle();
@@ -516,9 +530,9 @@ void EditorWindow::refresh() {
   m_undo->setEnabled(ready && m_session->undoCount() > 0);
   m_redo->setEnabled(ready && m_session->redoCount() > 0);
   m_delete->setEnabled(ready && m_session->selectionEditable());
-  m_rotate->setEnabled(ready && m_session->selectionEditable());
+  m_rotate->setEnabled(ready && m_session->canRotateSelection());
   m_delete->setToolTip(m_session->selectionEditable() ? "Delete selected annotations" : "Hidden or locked selections are protected from editing.");
-  m_rotate->setToolTip(m_session->selectionEditable() ? "Rotate selected annotations" : "Hidden or locked selections are protected from editing.");
+  m_rotate->setToolTip(m_session->canRotateSelection() ? "Rotate selected rectangles about their own bounds centres" : "Select visible, unlocked rectangles. Hidden, locked and unsupported objects cannot rotate.");
   m_clearAnnotations->setEnabled(ready && !m_session->document().annotations.empty());
   m_retrySave->setEnabled(ready && m_partialSave && m_partialSaveState == m_session->stateId());
   m_retrySave->setToolTip(m_partialSave && m_partialSaveState != m_session->stateId()

@@ -184,9 +184,14 @@ geometry, exact selection, history state and document generation at press;
 previews share Core translation/finite validation and release commits one guarded
 group edit. Stale/cancel/no-op/protected/overflow failures retain committed state,
 Redo and checkpoints. Native editor save/reopen and capture publication preserve
-source, IDs, styles, assets and compatible unknown fields. Next guard the native
-multi-object rotation dialog against intervening state/selection and owner
-destruction while resolving the shared Ellipse decision, alongside
+source, IDs, styles, assets and compatible unknown fields. [Guarded group rotation](app/ANNOTATION-ROTATION.md)
+now owns a native per-object angle preview in the editor and capture, shares Core
+finite/normalized rotation validation, and commits against frozen history,
+selection and document generation. Cancel/invalid/stale/no-op/protected/owner
+failure preserves committed state; actual editor/capture output and exact
+history retain source, fields and defaults. Next guard native stroke/fill color
+dialogs against stale document/selection and owner destruction while preserving
+their selected/default style semantics and resolving the shared Ellipse decision, alongside
 owned native output service handoffs, remaining tools and the
 format policy and all other contracted output/capture/application domains.
 Physical clipboard/color/accessibility, shutdown and human gates remain

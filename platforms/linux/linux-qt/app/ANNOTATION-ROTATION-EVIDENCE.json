@@ -1,0 +1,95 @@
+{
+  "capability": "EDITOR-ANNOTATIONS-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial-candidate-evidence",
+  "implementation": [
+    "platforms/linux/linux-qt/src/image-editor/RectangleGeometry.h",
+    "platforms/linux/linux-qt/src/image-editor/RectangleGeometry.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+    "platforms/linux/linux-qt/app/SelectionRotationDialog.h",
+    "platforms/linux/linux-qt/app/SelectionRotationDialog.cpp",
+    "platforms/linux/linux-qt/app/EditorCanvas.h",
+    "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+    "platforms/linux/linux-qt/app/EditorWindow.h",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp",
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+    "platforms/linux/linux-qt/app/NativeAnnotationTools.cpp"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/app/ANNOTATION-ROTATION.md",
+    "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+    "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp"
+  ],
+  "requirements": {
+    "EA-003": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Shared native rotation works for selected visible/unlocked rectangles and preserves mixed unknown objects inertly. Frozen state/selection/generation prevent stale commits. Full multi-tool transformation coverage remains Required."
+    },
+    "EA-005": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Rectangle rotation preserves bounds/IDs/order/other styles/unknown fields and validates normalized finite derived geometry. Complete Rectangle fields and governed Ellipse schema/rasterization remain Required."
+    },
+    "EA-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Preview/cancel/invalid/stale/no-op/owner refusal preserves history and checkpoints; accepted group rotation commits once with exact Undo/Redo selection. Full mutation/recovery qualification remains Required."
+    },
+    "EA-018": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Native degree entry, text before/after preview, names/descriptions, read-only state, Tab/mnemonics/Escape and modal control guards are exercised. Full physical AT/high-contrast/control/native/human qualification remains Required."
+    },
+    "EA-019": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Actual editor PNG/.xann save/reopen and capture publication retain source, IDs, bounds, styles, assets and unknown compatible payloads. No new recognized annotation fields or schema are inferred. Full tools/fields/interchange remain Required."
+    },
+    "EA-020": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Shared finite/normalized/derived geometry validation and typed whole-batch stale/protected/invalid/allocation/lifetime refusal precede mutation. Temporary fixtures/private buses avoid real capture/upload/print. Full resource/performance/privacy/security/native/human acceptance remains Required."
+    }
+  },
+  "verification": {
+    "local_ctest": {
+      "passed": 44,
+      "failed": 0,
+      "seconds": 39.36
+    },
+    "published_vectors": {
+      "passed": 114,
+      "failed": 0,
+      "expected_results_changed": false
+    },
+    "tooling_tests": {
+      "contract_linter": 16,
+      "contract_backlog": 9,
+      "conformance_runner": 7,
+      "failed": 0
+    },
+    "minimum_qt": {
+      "version": "6.4.2",
+      "affected_ctest_targets": 6,
+      "failed": 0,
+      "seconds": 15.56,
+      "targets": [
+        "capture-annotation",
+        "editor-session",
+        "editor-canvas",
+        "annotation-object-navigator",
+        "editor-window",
+        "conformance"
+      ]
+    },
+    "visual_review": "Native dialog inspected: finite degree entry has visible focus; the text list shows original/resulting angles and UUIDs, with explicit Rotate and default Cancel. Physical AT/high-contrast and supported desktop qualification remain Required.",
+    "ci": "The checkpoint report verifies the exact pushed revision; local evidence does not approve human or release gates."
+  }
+}

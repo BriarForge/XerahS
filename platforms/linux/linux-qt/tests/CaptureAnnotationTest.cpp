@@ -3,6 +3,7 @@
 #include "EditorCanvas.h"
 #include "RectanglePropertiesDialog.h"
 #include "AnnotationObjectNavigator.h"
+#include "SelectionRotationDialog.h"
 #include <QApplication>
 #include <QAction>
 #include <QLabel>
@@ -35,6 +36,37 @@ CaptureAnnotationChoice rectangle(const LoadedSource &source) {
 class CaptureAnnotationTest final : public QObject {
   Q_OBJECT
 private slots:
+  void nativeGroupRotationInCaptureHasExplicitApplyCancelAndPublication_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"apply", "cancel", "destroy"}) QTest::newRow(mode) << QString(mode);
+  }
+  void nativeGroupRotationInCaptureHasExplicitApplyCancelAndPublication() {
+    using namespace xerahs::editor; QFETCH(QString, mode); QTemporaryDir dir; CaptureActionPorts ports; ports.annotationStyle = {0xFF112233, 0xFF00FF00, 1, 0, 1};
+    CapturePipeline pipeline(pixels(), dir.path(), "rotation", {"annotation", "save"}, nullptr, ports); QSignalSpy done(&pipeline, &CapturePipeline::finished);
+    pipeline.start(); QTRY_VERIFY(dialog()); const QPointer<CaptureAnnotationDialog> capture(dialog()); auto *canvas = capture->findChild<EditorCanvas *>(); auto *objects = capture->findChild<AnnotationObjectNavigator *>(); canvas->zoomToFit();
+    for (const QPointF origin : {QPointF(10, 10), QPointF(45, 30)}) { QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView(origin).toPoint()); QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView(origin + QPointF(20, 10)).toPoint()); }
+    objects->setFocus(); QTest::keyClick(objects, Qt::Key_A, Qt::ControlModifier); QTest::keyClick(objects, Qt::Key_Return); const auto original = canvas->annotationDocument(); const auto selection = canvas->annotationSelection(); const auto before = serializeDocument(original);
+    auto *action = capture->findChild<QAction *>("rotateSelection"); QVERIFY(action && action->isEnabled()); auto *button = qobject_cast<QToolButton *>(capture->findChild<QToolBar *>()->widgetForAction(action)); QVERIFY(button && button->focusPolicy() & Qt::TabFocus);
+    bool acted = false; QTimer timer; connect(&timer, &QTimer::timeout, [&] {
+      auto *editor = qobject_cast<SelectionRotationDialog *>(QApplication::activeModalWidget()); if (!editor || acted) return; acted = true;
+      const QPointer<SelectionRotationDialog> owner(editor); const auto close = qScopeGuard([owner] { if (owner && owner->isVisible()) owner->reject(); });
+      editor->activateWindow(); QTRY_VERIFY(editor->isActiveWindow());
+      QVERIFY(canvas->interactionActive()); QVERIFY(!action->isEnabled()); QVERIFY(!objects->isEnabled()); capture->accept(); QVERIFY(capture->isVisible()); QCOMPARE(done.count(), 0);
+      QCOMPARE(serializeDocument(canvas->annotationDocument()), before); editor->findChild<QLineEdit *>("selectionRotationDegrees")->setText("90");
+      if (mode == "destroy") { delete capture.data(); return; }
+      QTest::keyClick(editor, mode == "apply" ? Qt::Key_R : Qt::Key_Escape, mode == "apply" ? Qt::AltModifier : Qt::NoModifier);
+      QTRY_VERIFY(!editor->isVisible());
+    });
+    button->setFocus(); QTRY_COMPARE(QApplication::focusWidget(), button); timer.start(5); QTest::keyClick(button, Qt::Key_Space); timer.stop(); QVERIFY(acted);
+    if (!capture) { QTRY_COMPARE(done.count(), 1); QCOMPARE(receipt(done)->workingMedia, pixels()); return; }
+    QVERIFY(!canvas->interactionActive()); QVERIFY(action->isEnabled()); auto expected = original;
+    if (mode == "apply") for (auto &a : expected.annotations) std::get<RectangleAnnotation>(a).style.rotationDegrees = 90;
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); QCOMPARE(canvas->annotationSelection(), selection);
+    capture->activateWindow(); canvas->setFocus(); QTRY_VERIFY(capture->isActiveWindow()); QTRY_COMPARE(QApplication::focusWidget(), canvas);
+    if (mode == "apply") { QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier); QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier | Qt::ShiftModifier); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); }
+    capture->accept(); QTRY_COMPARE(done.count(), 1); const auto result = receipt(done); QVERIFY(result->annotationDocument); QCOMPARE(serializeDocument(*result->annotationDocument), serializeDocument(expected));
+    QVERIFY(result->file); QCOMPARE(QImage(result->file->path), result->workingMedia); QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), pixels());
+    QCOMPARE(result->workingMedia.pixelColor(20, 7), mode == "apply" ? QColor(Qt::green) : QColor(Qt::blue)); QCOMPARE(result->workingMedia.pixelColor(12, 15), mode == "apply" ? QColor(Qt::blue) : QColor(Qt::green));
+  }
   void nativeGroupMoveCommitsOnceBeforeActualCapturePublication() {
     using namespace xerahs::editor; QTemporaryDir dir; CaptureActionPorts ports; ports.annotationStyle = {0xFF112233, 0xFF00FF00, 1, 0, 1};
     CapturePipeline pipeline(pixels(), dir.path(), "group-move", {"annotation", "save"}, nullptr, ports); QSignalSpy done(&pipeline, &CapturePipeline::finished);

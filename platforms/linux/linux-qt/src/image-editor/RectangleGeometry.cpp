@@ -40,6 +40,14 @@ RectangleMoveResult moveRectangleGeometry(const RectangleProperties &original, P
   if (const auto invalid = rectanglePropertiesDiagnostic(next); !invalid.isEmpty()) return {{}, invalid};
   return {next, {}};
 }
+RectangleRotationResult rotateRectangleGeometry(const RectangleProperties &original, double degrees) {
+  if (!std::isfinite(degrees)) return {{}, "annotation-geometry-invalid"};
+  auto next = original;
+  next.style.rotationDegrees = std::fmod(std::fmod(original.style.rotationDegrees, 360.0) + std::fmod(degrees, 360.0), 360.0);
+  if (next.style.rotationDegrees < 0) next.style.rotationDegrees += 360.0;
+  if (const auto invalid = rectanglePropertiesDiagnostic(next); !invalid.isEmpty()) return {{}, invalid};
+  return {next, {}};
+}
 RectangleResizeResult resizeRectangleGeometry(const RectangleAnnotation &r, RectangleHandle handle, PointF delta) {
   const RectangleProperties original{r.start, r.end, r.style};
   if (const auto invalid = rectanglePropertiesDiagnostic(original); !invalid.isEmpty()) return {{}, invalid};

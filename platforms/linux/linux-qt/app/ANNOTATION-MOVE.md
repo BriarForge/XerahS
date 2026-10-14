@@ -83,9 +83,10 @@ privacy/security, shared goldens, parity and human acceptance remain Required.
 
 ## Remaining work
 
-Next guard the existing native multi-object rotation dialog against intervening
-document/selection changes and owner destruction. Its current modal path applies
-the accepted angle to the selection present on return. Keep the pending shared
+The subsequent [rotation checkpoint](ANNOTATION-ROTATION.md) guards the native
+multi-object rotation dialog against intervening document/selection changes and
+owner destruction. Next guard the native stroke/fill color pickers' frozen
+selection and lifetime. Keep the pending shared
 Ellipse, clipboard/assets and output-format decisions in ANNOTATION-TOOLS.md,
 ANNOTATION-TRANSFER.md and EDITOR-SAVE.md; continue all other contracted tools,
 effects, workflows, captures, recording/audio, uploads, compatibility and release

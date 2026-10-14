@@ -11,6 +11,8 @@
 #include "NativeEditorAppearance.h"
 #include "RectanglePropertiesDialog.h"
 #include "AnnotationObjectNavigator.h"
+#include "SelectionRotationDialog.h"
+#include <QPlainTextEdit>
 #include <QItemSelectionModel>
 
 #include <QAction>
@@ -271,6 +273,50 @@ private slots:
       QCOMPARE(actual.id, wanted.id); QCOMPARE(actual.start, wanted.start); QCOMPARE(actual.end, wanted.end); QCOMPARE(actual.style.rotationDegrees, wanted.style.rotationDegrees);
       QCOMPARE(actual.style.strokeColor, wanted.style.strokeColor); QCOMPARE(actual.style.fillColor, wanted.style.fillColor); QCOMPARE(actual.style.strokeWidth, wanted.style.strokeWidth); QCOMPARE(actual.style.opacity, wanted.style.opacity); QCOMPARE(actual.extra, wanted.extra); }
     QCOMPARE(std::get<UnsupportedAnnotation>(reopened.document->annotations[2]).raw, future.raw); QCOMPARE(storedBytes(prefs), preferences); QVERIFY(!window->windowTitle().contains(" •"));
+  }
+  void nativeGroupRotationHasOwnedPreviewAndActualPersistence_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"apply", "cancel", "invalid", "destroy"}) QTest::newRow(mode) << QString(mode);
+  }
+  void nativeGroupRotationHasOwnedPreviewAndActualPersistence() {
+    QFETCH(QString, mode); QTemporaryDir dir; const auto path = dir.filePath("rotation.png"), prefs = dir.filePath("prefs.json"); QVERIFY(fixture().save(path));
+    QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty()); QVERIFY(applyToolbarPreferences(QJsonArray{QJsonObject{{"Id", "rotate-selection"}, {"Hotkey", "F10"}, {"IsVisible", false}}}, nativeEditorPreferenceRevision()).saved);
+    auto loaded = loadSource(path); QVERIFY(loaded.document); auto doc = *loaded.document;
+    RectangleAnnotation a; a.id = QUuid::createUuid(); a.start = {4, 5}; a.end = {16, 15}; a.style = {0x80112233, 0x4000FF00, 1.5, 350, .75}; a.extra = {{"vendor", "keep"}};
+    auto b = a; b.id = QUuid::createUuid(); b.start = {30, 20}; b.end = {44, 32}; b.style.rotationDegrees = 37.25;
+    const auto futureId = QUuid::createUuid(); const UnsupportedAnnotation future{futureId, {{"id", futureId.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"vendor", "keep"}}};
+    doc.annotations = {a, b, future}; doc.embeddedImages = {{"asset", doc.sourceImagePng}}; QVERIFY(saveEdit(path, fixture(), doc).sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); auto *objects = window->findChild<AnnotationObjectNavigator *>();
+    objects->focusObjects(); QTest::keyClick(objects, Qt::Key_A, Qt::ControlModifier); QTest::keyClick(objects, Qt::Key_Return); QTRY_COMPARE(QApplication::focusWidget(), canvas);
+    const auto before = serializeDocument(canvas->annotationDocument()); const auto selection = canvas->annotationSelection(); const auto png = storedBytes(path), companion = storedBytes(path + ".xann"), preferences = storedBytes(prefs);
+    bool acted = false; QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *dialog = qobject_cast<SelectionRotationDialog *>(QApplication::activeModalWidget()); if (!dialog || acted) return; acted = true;
+      const QPointer<SelectionRotationDialog> owner(dialog); const auto close = qScopeGuard([owner] { if (owner && owner->isVisible()) owner->reject(); });
+      dialog->activateWindow(); QTRY_VERIFY(dialog->isActiveWindow());
+      QVERIFY(!canvas->isEnabled()); QVERIFY(!objects->isEnabled()); QVERIFY(!window->close()); QVERIFY(!window->findChild<QAction *>("saveImage")->isEnabled());
+      QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QCOMPARE(storedBytes(path), png); QCOMPARE(storedBytes(path + ".xann"), companion); QCOMPARE(storedBytes(prefs), preferences);
+      auto *angle = dialog->findChild<QLineEdit *>("selectionRotationDegrees"); QTest::keyClick(dialog, Qt::Key_A, Qt::AltModifier); QCOMPARE(QApplication::focusWidget(), angle);
+      QTest::keyClick(angle, Qt::Key_A, Qt::ControlModifier); QTest::keyClicks(angle, "17.25"); const auto *preview = dialog->findChild<QPlainTextEdit *>("selectionRotationPreview");
+      QVERIFY(preview->isReadOnly()); QVERIFY(preview->toPlainText().contains("350° → 7.25°")); QVERIFY(preview->toPlainText().contains("37.25° → 54.5°")); QVERIFY(preview->toPlainText().contains("Unsupported object"));
+      if (mode == "destroy") { window.reset(); return; }
+      if (mode == "invalid") { angle->setText("inf"); dialog->accept(); QVERIFY(dialog->isVisible()); dialog->reject(); return; }
+      QTest::keyClick(dialog, mode == "apply" ? Qt::Key_R : Qt::Key_Escape, mode == "apply" ? Qt::AltModifier : Qt::NoModifier);
+      QTRY_VERIFY(!dialog->isVisible());
+    });
+    window->activateWindow(); canvas->setFocus(); QTRY_VERIFY(window->isActiveWindow()); timer.start(5); QTest::keyClick(canvas, Qt::Key_F10); timer.stop(); QVERIFY(acted);
+    QCOMPARE(storedBytes(path), png); QCOMPARE(storedBytes(path + ".xann"), companion); QCOMPARE(storedBytes(prefs), preferences); if (!window) return;
+    QVERIFY(canvas->isEnabled()); QVERIFY(objects->isEnabled()); QCOMPARE(canvas->annotationSelection(), selection);
+    if (mode != "apply") { QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QVERIFY(!window->windowTitle().contains(" •")); return; }
+    auto expected = canvas->annotationDocument(); std::get<RectangleAnnotation>(expected.annotations[0]).style.rotationDegrees = 350; std::get<RectangleAnnotation>(expected.annotations[1]).style.rotationDegrees = 37.25;
+    QCOMPARE(serializeDocument(expected), before); const auto rotated = serializeDocument(canvas->annotationDocument());
+    QCOMPARE(std::get<RectangleAnnotation>(canvas->annotationDocument().annotations[0]).style.rotationDegrees, 7.25); QCOMPARE(std::get<RectangleAnnotation>(canvas->annotationDocument().annotations[1]).style.rotationDegrees, 54.5);
+    trigger(*window, "undo"); QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QCOMPARE(canvas->annotationSelection(), selection); QVERIFY(!window->windowTitle().contains(" •"));
+    trigger(*window, "redo"); QCOMPARE(serializeDocument(canvas->annotationDocument()), rotated); trigger(*window, "saveImage"); const auto reopened = loadSource(path); QVERIFY(reopened.document);
+    QCOMPARE(reopened.image, fixture()); QCOMPARE(reopened.document->sourceImagePng, doc.sourceImagePng); QCOMPARE(reopened.document->embeddedImages, doc.embeddedImages);
+    const auto &first = std::get<RectangleAnnotation>(reopened.document->annotations[0]), &second = std::get<RectangleAnnotation>(reopened.document->annotations[1]);
+    QCOMPARE(first.id, a.id); QCOMPARE(first.start, a.start); QCOMPARE(first.end, a.end); QCOMPARE(first.style.rotationDegrees, 7.25); QCOMPARE(first.style.strokeColor, a.style.strokeColor); QCOMPARE(first.style.fillColor, a.style.fillColor); QCOMPARE(first.style.opacity, a.style.opacity); QCOMPARE(first.style.strokeWidth, a.style.strokeWidth); QCOMPARE(first.extra, a.extra);
+    QCOMPARE(second.id, b.id); QCOMPARE(second.start, b.start); QCOMPARE(second.end, b.end); QCOMPARE(second.style.rotationDegrees, 54.5); QCOMPARE(std::get<UnsupportedAnnotation>(reopened.document->annotations[2]).raw, future.raw);
+    QVERIFY(!window->windowTitle().contains(" •")); QCOMPARE(storedBytes(prefs), preferences);
   }
   void keyboardRectangleCreationSavesFrozenStyleAndPreservesSource_data() {
     QTest::addColumn<QString>("mode"); for (const auto *mode : {"apply", "cancel", "destroy"}) QTest::newRow(mode) << QString(mode);

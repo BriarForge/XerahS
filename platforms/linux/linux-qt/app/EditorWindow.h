@@ -74,6 +74,7 @@ private:
   bool retryPrint();
   bool transferAnnotations(const QString &command);
   bool rectangleDialog(bool creation);
+  bool rotateSelected();
   void recordRecentImage(const QString &absolutePath);
   void applyCreationDefaults();
   void persistDrawingDefaults();

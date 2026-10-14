@@ -64,6 +64,47 @@ class EditorSessionTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void guardedGroupRotationPreservesFieldsDefaultsAndExactHistory() {
+    auto d = document(); auto a = rectangle(1, 2, 4, 6), b = rectangle(5, 6, 9, 10), untouched = rectangle(-5, -4, -2, -1);
+    a.style = {0x80112233, 0x40223344, 2.5, 350, .25}; a.extra = {{"vendor", "keep"}}; b.style.rotationDegrees = 37.25;
+    const auto futureId = QUuid::createUuid(); const UnsupportedAnnotation future{futureId, {{"id", futureId.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"vendor", "keep"}}};
+    d.annotations = {a, future, b, untouched}; d.embeddedImages = {{"asset", kOnePixelPng}}; d.extra = {{"vendor", "keep"}};
+    EditorSession session(d); session.select({a.id, b.id, futureId}); const auto selection = session.selection(); const auto before = serializeDocument(d);
+    RectangleStyle defaults; defaults.rotationDegrees = 90; defaults.strokeWidth = 9; QVERIFY(session.setCreationStyle(defaults)); QVERIFY(session.canRotateSelection());
+    QVERIFY(session.rotateSelection(17.25, session.stateId(), selection)); auto expected = d;
+    std::get<RectangleAnnotation>(expected.annotations[0]).style.rotationDegrees = 7.25; std::get<RectangleAnnotation>(expected.annotations[2]).style.rotationDegrees = 54.5;
+    QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(session.selection(), selection); QCOMPARE(session.undoCount(), 1); QVERIFY(session.dirty());
+    QCOMPARE(session.toolStyle().rotationDegrees, 90.0); QCOMPARE(session.toolStyle().strokeWidth, 9.0);
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.selection(), selection); QVERIFY(!session.dirty());
+    QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(session.selection(), selection);
+    session.select({futureId}); QVERIFY(!session.canRotateSelection());
+  }
+  void rotationRefusesStaleAndInvalidGroupsWithoutTruncatingRedo() {
+    auto d = document(); const auto a = rectangle(1, 1, 4, 4), large = rectangle(1.2e308, 1, 1.3e308, 4); d.annotations = {a, large};
+    EditorSession session(d); QVERIFY(session.createRectangle({5, 5}, {6, 6})); QVERIFY(session.undo()); session.select({a.id, large.id});
+    const auto state = session.stateId(); const auto before = serializeDocument(session.document()); const auto selection = session.selection();
+    for (double degrees : {std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::infinity(), 90.0}) {
+      QVERIFY(!session.rotateSelection(degrees, state, selection)); QCOMPARE(session.editDiagnostic(), QString("annotation-geometry-invalid"));
+      QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), 0); QCOMPARE(session.redoCount(), 1); QCOMPARE(session.selection(), selection); QVERIFY(!session.dirty());
+    }
+    for (double degrees : {0.0, 360.0, -720.0}) { QVERIFY(!session.rotateSelection(degrees, state, selection)); QVERIFY(session.editDiagnostic().isEmpty()); QCOMPARE(session.redoCount(), 1); }
+    session.select({a.id}); QVERIFY(!session.rotateSelection(17.25, state, selection)); QCOMPARE(session.editDiagnostic(), QString("annotation-edit-stale"));
+    QVERIFY(session.redo()); const auto intervening = serializeDocument(session.document()); QVERIFY(!session.rotateSelection(17.25, state, session.selection()));
+    QCOMPARE(session.editDiagnostic(), QString("annotation-edit-stale")); QCOMPARE(serializeDocument(session.document()), intervening);
+    const auto huge = rotateRectangleGeometry({a.start, a.end, a.style}, 1e308); QVERIFY(huge.properties); QVERIFY(std::isfinite(huge.properties->style.rotationDegrees));
+    QVERIFY(huge.properties->style.rotationDegrees >= 0 && huge.properties->style.rotationDegrees < 360);
+  }
+  void rotationRefusesProtectedCompleteGroups_data() {
+    QTest::addColumn<QString>("protection"); for (const auto *p : {"hidden", "locked", "opaque-lock", "unknown-lock"}) QTest::newRow(p) << QString(p);
+  }
+  void rotationRefusesProtectedCompleteGroups() {
+    QFETCH(QString, protection); auto d = document(); const auto a = rectangle(1, 1, 3, 3); auto b = rectangle(4, 4, 6, 6);
+    if (protection == "hidden") b.visible = false; else b.extra = {{"locked", protection == "opaque-lock" ? QJsonValue("future") : QJsonValue(true)}};
+    d.annotations = {a, b}; if (protection == "unknown-lock") d.annotations[1] = UnsupportedAnnotation{b.id, {{"id", b.id.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"locked", true}}};
+    EditorSession session(d); session.select({a.id, b.id}); QVERIFY(!session.canRotateSelection()); const auto before = serializeDocument(d);
+    QVERIFY(!session.rotateSelection(17.25, 0, session.selection())); QCOMPARE(session.editDiagnostic(), QString("annotation-selection-protected"));
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), 0); QVERIFY(!session.dirty());
+  }
   void guardedGroupMovePreservesCompleteFieldsAndExactHistory() {
     auto d = document(); auto a = rectangle(1, 2, 3, 4), b = rectangle(5, 6, 9, 10), untouched = rectangle(-5, -4, -2, -1);
     a.style = {0x80112233, 0x40223344, 2.5, 37.25, .25}; a.extra = {{"future", "preserved"}};

@@ -83,7 +83,8 @@ Pending shared Ellipse, transfer-asset and output-format decisions remain
 recorded in ANNOTATION-TOOLS.md, ANNOTATION-TRANSFER.md and EDITOR-SAVE.md.
 The subsequent [group move checkpoint](ANNOTATION-MOVE.md) freezes pointer
 previews and commits against stale document/selection changes. Next independent
-work guards the native multi-object rotation dialog's state/selection and owner
-lifetime. Every other capture, recording/audio,
+work guards native stroke/fill color dialogs after the
+[rotation checkpoint](ANNOTATION-ROTATION.md) added frozen state/selection and
+owner lifetime. Every other capture, recording/audio,
 upload, workflow/settings, tool/effect/output, application/compatibility,
 packaging/native-matrix and human/release requirement remains in full scope.

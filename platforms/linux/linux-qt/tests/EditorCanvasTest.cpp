@@ -2,6 +2,8 @@
 #include "EditorCanvas.h"
 #include "NativeAnnotationTools.h"
 #include "RectanglePropertiesDialog.h"
+#include "SelectionRotationDialog.h"
+#include <QPlainTextEdit>
 
 #include <QAction>
 #include <QAccessible>
@@ -56,6 +58,61 @@ private slots:
   void initTestCase() {
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());
+  }
+  void nativeRotationDraftHasExplicitCommitAndStaleLifetimeGuards_data() {
+    QTest::addColumn<QString>("mode");
+    for (const auto *mode : {"apply", "cancel", "no-op", "invalid", "stale-document", "stale-selection", "replacement", "destroy", "dialog-destroy", "reject-destroy"}) QTest::newRow(mode) << QString(mode);
+  }
+  void nativeRotationDraftHasExplicitCommitAndStaleLifetimeGuards() {
+    QFETCH(QString, mode); const QImage source = image(); EditorSession prepared(document());
+    const auto a = *prepared.createRectangle({150, 180}, {230, 260}), b = *prepared.createRectangle({400, 240}, {480, 320});
+    EditorSession session(prepared.document()), replacement(prepared.document()); session.select({a, b}); replacement.select({a, b});
+    QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); const auto before = serializeDocument(session.document()); const auto selection = session.selection();
+    auto canvas = std::make_unique<EditorCanvas>(session, source); canvas->resize(900, 700); canvas->show(); QTest::qWait(10); canvas->resetZoom();
+    QSignalSpy rejected(canvas.get(), &EditorCanvas::editRejected); const auto tool = canvas->tool(); const auto zoom = canvas->viewState().zoom();
+    if (mode == "reject-destroy") connect(canvas.get(), &EditorCanvas::editRejected, [&] { canvas.reset(); });
+    auto expected = before; auto expectedSelection = selection; int expectedUndo = 0, expectedRedo = 1; bool acted = false; QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *dialog = qobject_cast<SelectionRotationDialog *>(QApplication::activeModalWidget()); if (!dialog || acted) return; acted = true;
+      const QPointer<SelectionRotationDialog> owner(dialog); const auto close = qScopeGuard([owner] { if (owner && owner->isVisible()) owner->reject(); });
+      dialog->activateWindow(); QTRY_VERIFY(dialog->isActiveWindow());
+      QVERIFY(canvas->interactionActive()); QVERIFY(!canvas->rotateSelection(canvas.get())); auto *preview = dialog->findChild<QPlainTextEdit *>("selectionRotationPreview"); QVERIFY(preview && preview->isReadOnly());
+      QCOMPARE(serializeDocument(session.document()), before); QVERIFY(!session.dirty()); auto *angle = dialog->findChild<QLineEdit *>("selectionRotationDegrees"); QVERIFY(angle);
+      QVERIFY(QAccessible::queryAccessibleInterface(angle)); QCOMPARE(QAccessible::queryAccessibleInterface(angle)->text(QAccessible::Name), QString("Clockwise degrees to add"));
+      QVERIFY(QAccessible::queryAccessibleInterface(preview)->state().readOnly);
+      canvas->setTool(EditorCanvas::Tool::Select); QCOMPARE(canvas->tool(), tool);
+      QTest::keyClick(dialog, Qt::Key_A, Qt::AltModifier); QCOMPARE(QApplication::focusWidget(), angle); QTest::keyClick(angle, Qt::Key_A, Qt::ControlModifier);
+      QTest::keyClicks(angle, mode == "no-op" ? "360" : "17.25"); QVERIFY(preview->toPlainText().contains("17.25") || mode == "no-op"); QVERIFY(!dialog->degrees());
+      if (mode == "invalid") { angle->setText("nan"); dialog->accept(); QVERIFY(dialog->isVisible()); QVERIFY(!dialog->findChild<QPushButton *>("applySelectionRotation")->isEnabled()); dialog->reject(); return; }
+      if (mode == "cancel") { QTest::keyClick(dialog, Qt::Key_Escape); return; }
+      if (mode == "destroy") { canvas.reset(); return; }
+      if (mode == "dialog-destroy") { delete dialog; return; }
+      if (mode == "stale-document") { QVERIFY(session.moveSelection(2, 0)); expectedUndo = 1; expectedRedo = 0; }
+      if (mode == "stale-selection" || mode == "reject-destroy") session.select({b});
+      if (mode == "replacement") canvas->resetDocument(replacement, source);
+      expected = serializeDocument(session.document()); expectedSelection = session.selection();
+      if (!qEnvironmentVariableIsEmpty("XERAHS_ANNOTATION_ROTATION_QA") && mode == "apply") QVERIFY(dialog->grab().save(qEnvironmentVariable("XERAHS_ANNOTATION_ROTATION_QA")));
+      QTest::keyClick(dialog, Qt::Key_R, Qt::AltModifier); QTRY_VERIFY(!dialog->isVisible());
+    });
+    timer.start(5); const bool changed = canvas->rotateSelection(canvas.get()); timer.stop(); QVERIFY(acted); QCOMPARE(changed, mode == "apply");
+    if (mode == "apply") {
+      auto expectedDoc = prepared.document(); for (auto &r : expectedDoc.annotations) std::get<RectangleAnnotation>(r).style.rotationDegrees = 17.25;
+      QCOMPARE(serializeDocument(session.document()), serializeDocument(expectedDoc)); QCOMPARE(session.undoCount(), 1); QCOMPARE(session.redoCount(), 0); QVERIFY(session.dirty());
+      QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.selection(), selection); QVERIFY(!session.dirty()); QVERIFY(session.redo());
+    } else {
+      QCOMPARE(serializeDocument(session.document()), expected); QCOMPARE(session.selection(), expectedSelection); QCOMPARE(session.undoCount(), expectedUndo); QCOMPARE(session.redoCount(), expectedRedo);
+      const bool stale = mode.startsWith("stale-") || mode == "replacement" || mode == "reject-destroy";
+      if (stale) { QCOMPARE(rejected.count(), 1); QCOMPARE(rejected[0][0].toString(), QString("annotation-edit-stale")); }
+      else QCOMPARE(rejected.count(), 0);
+    }
+    if (canvas) { QVERIFY(!canvas->interactionActive()); if (mode != "replacement") { QCOMPARE(canvas->tool(), tool); QCOMPARE(canvas->viewState().zoom(), zoom); } }
+    QCOMPARE(replacement.undoCount(), 0); QCOMPARE(replacement.selection(), selection); QCOMPARE(source, image());
+  }
+  void rotationPendingObserverCanDestroyCanvasBeforeOpeningTheDialog() {
+    const QImage source = image(); EditorSession session(document()); QVERIFY(session.createRectangle({10, 10}, {30, 30}));
+    auto canvas = std::make_unique<EditorCanvas>(session, source); const auto before = serializeDocument(session.document());
+    connect(canvas.get(), &EditorCanvas::changed, [&] { canvas.reset(); }); QVERIFY(!canvas->rotateSelection(canvas.get())); QVERIFY(!canvas);
+    QCOMPARE(serializeDocument(session.document()), before); QVERIFY(!QApplication::activeModalWidget());
   }
   void groupMovePreviewAndCommitUseFrozenSourcePixels_data() {
     QTest::addColumn<double>("angle"); QTest::addColumn<int>("zoomSteps");

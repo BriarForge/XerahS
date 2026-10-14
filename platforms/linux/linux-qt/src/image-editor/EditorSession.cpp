@@ -211,11 +211,21 @@ bool EditorSession::resizeSelection(double dw, double dh) {
 bool EditorSession::rotateSelection(double degrees) {
   if (!std::isfinite(degrees)) { m_editDiagnostic = "annotation-geometry-invalid"; return false; }
   return changeSelected([&](RectangleAnnotation &r) {
-    double next = std::fmod(std::fmod(r.style.rotationDegrees, 360.0) + std::fmod(degrees, 360.0), 360.0);
-    if (next < 0) next += 360.0;
-    if (next == r.style.rotationDegrees) return false;
-    r.style.rotationDegrees = next;
-    return true;
+    const auto prepared = rotateRectangleGeometry({r.start, r.end, r.style}, degrees);
+    if (!prepared.properties) { m_editDiagnostic = prepared.diagnostic; return; }
+    r.style.rotationDegrees = prepared.properties->style.rotationDegrees;
+  });
+}
+
+bool EditorSession::rotateSelection(double degrees, quint64 expectedState, const QSet<QUuid> &expectedSelection) {
+  m_editDiagnostic.clear();
+  if (stateId() != expectedState || m_selection != expectedSelection) { m_editDiagnostic = "annotation-edit-stale"; return false; }
+  return rotateSelection(degrees);
+}
+bool EditorSession::canRotateSelection() const {
+  if (!selectionEditable()) return false;
+  return std::any_of(document().annotations.cbegin(), document().annotations.cend(), [&](const Annotation &a) {
+    const auto *r = std::get_if<RectangleAnnotation>(&a); return r && m_selection.contains(r->id);
   });
 }
 
