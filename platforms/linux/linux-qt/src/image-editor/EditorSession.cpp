@@ -6,6 +6,21 @@
 
 namespace xerahs::editor {
 
+namespace {
+bool finiteGeometry(const RectangleAnnotation &r) {
+  return std::isfinite(r.start.x) && std::isfinite(r.start.y) && std::isfinite(r.end.x) &&
+      std::isfinite(r.end.y) && std::isfinite(r.end.x - r.start.x) && std::isfinite(r.end.y - r.start.y) &&
+      r.end.x > r.start.x && r.end.y > r.start.y && std::isfinite(r.style.rotationDegrees) &&
+      std::isfinite(r.style.strokeWidth) && r.style.strokeWidth > 0 && r.style.strokeWidth <= 10000 &&
+      std::isfinite(r.style.opacity) && r.style.opacity >= 0 && r.style.opacity <= 1;
+}
+bool sameEditableFields(const RectangleAnnotation &a, const RectangleAnnotation &b) {
+  return a.start == b.start && a.end == b.end && a.style.strokeWidth == b.style.strokeWidth &&
+      a.style.strokeColor == b.style.strokeColor && a.style.fillColor == b.style.fillColor &&
+      a.style.rotationDegrees == b.style.rotationDegrees && a.style.opacity == b.style.opacity;
+}
+} // namespace
+
 EditorSession::EditorSession(AnnotationDocument document, InitialPersistence persistence) {
   m_history.push_back(HistoryState{0, std::move(document), {}});
   m_checkpoint = persistence == InitialPersistence::Saved ? std::optional<quint64>(0) : std::nullopt;
@@ -20,35 +35,33 @@ bool EditorSession::setCreationStyle(const RectangleStyle &style) {
 }
 
 void EditorSession::commit(AnnotationDocument document) {
-  // Allocate before changing the redo branch or checkpoint identities.
-  if (m_history.capacity() < m_position + 2) m_history.reserve(std::max(m_position + 2, m_history.capacity() * 2));
-  HistoryState next{m_nextStateId, std::move(document), m_selection};
-  m_history.resize(m_position + 1);  // ES-006: a new mutation clears redo
-  m_history.push_back(std::move(next));
-  ++m_nextStateId;
-  ++m_position;
+  commitWithSelection(std::move(document), m_selection);
 }
 
 std::optional<QUuid> EditorSession::createRectangle(PointF start, PointF end) {
+  m_editDiagnostic.clear();
+  // Check both supplied points before min/max: a NaN in the second operand
+  // can otherwise disappear during normalization.
+  if (!std::isfinite(start.x) || !std::isfinite(start.y) || !std::isfinite(end.x) || !std::isfinite(end.y)) {
+    m_editDiagnostic = "annotation-geometry-invalid"; return std::nullopt;
+  }
   RectangleAnnotation rectangle;
   rectangle.id = QUuid::createUuid();
   rectangle.start = {std::min(start.x, end.x), std::min(start.y, end.y)};
   rectangle.end = {std::max(start.x, end.x), std::max(start.y, end.y)};
-  if (!std::isfinite(rectangle.start.x) || !std::isfinite(rectangle.start.y) || !std::isfinite(rectangle.end.x) ||
-      !std::isfinite(rectangle.end.y)) {
-    return std::nullopt;
-  }
-  // ES-003: zero area (zero width or zero height) is rejected.
-  if (rectangle.end.x - rectangle.start.x <= 0 || rectangle.end.y - rectangle.start.y <= 0) return std::nullopt;
   rectangle.style = m_tool;  // snapshot of the tool settings
-  AnnotationDocument next = document();
-  next.annotations.push_back(rectangle);  // ES-024: highest z-order
-  m_selection = {rectangle.id};          // ES-024: the only selected object
-  commit(std::move(next));
-  return rectangle.id;
+  // ES-003: zero area (zero width or zero height) is rejected.
+  if (!finiteGeometry(rectangle)) { m_editDiagnostic = "annotation-geometry-invalid"; return std::nullopt; }
+  try {
+    AnnotationDocument next = document();
+    next.annotations.push_back(rectangle);  // ES-024: highest z-order
+    commitWithSelection(std::move(next), {rectangle.id});
+    return rectangle.id;
+  } catch (const std::bad_alloc &) { m_editDiagnostic = "annotation-edit-failed"; return std::nullopt; }
 }
 
 void EditorSession::select(const QList<QUuid> &ids) {
+  m_editDiagnostic.clear();
   QSet<QUuid> selection;
   for (const Annotation &annotation : document().annotations) {
     if (ids.contains(annotationId(annotation))) selection.insert(annotationId(annotation));
@@ -64,23 +77,34 @@ bool EditorSession::selectionEditable() const {
 
 template <typename Change>
 bool EditorSession::changeSelected(Change change) {
-  if (!selectionEditable()) return false;
-  AnnotationDocument next = document();
-  bool changed = false;
-  for (Annotation &annotation : next.annotations) {
-    auto *rectangle = std::get_if<RectangleAnnotation>(&annotation);
-    if (rectangle && m_selection.contains(rectangle->id)) changed = change(*rectangle) || changed;
+  m_editDiagnostic.clear();
+  if (!selectionEditable()) {
+    if (!m_selection.isEmpty()) m_editDiagnostic = "annotation-selection-protected";
+    return false;
   }
-  // Pending clarification (ROOT-ESCALATE-001): ES-005 makes every
-  // user-visible mutation one operation; a command that leaves every selected
-  // object unchanged is not a mutation and records no history.
-  if (!changed) return false;
-  commit(std::move(next));
-  return true;
+  try {
+    AnnotationDocument next = document();
+    bool changed = false;
+    for (Annotation &annotation : next.annotations) {
+      auto *rectangle = std::get_if<RectangleAnnotation>(&annotation);
+      if (rectangle && m_selection.contains(rectangle->id)) {
+        const auto before = *rectangle;
+        change(*rectangle);
+        if (!finiteGeometry(*rectangle)) { m_editDiagnostic = "annotation-geometry-invalid"; return false; }
+        changed = !sameEditableFields(before, *rectangle) || changed;
+      }
+    }
+    // Pending clarification (ROOT-ESCALATE-001): ES-005 makes every
+    // user-visible mutation one operation; a command that leaves every selected
+    // object unchanged is not a mutation and records no history.
+    if (!changed) return false;
+    commit(std::move(next));
+    return true;
+  } catch (const std::bad_alloc &) { m_editDiagnostic = "annotation-edit-failed"; return false; }
 }
 
 bool EditorSession::moveSelection(double dx, double dy) {
-  if (!std::isfinite(dx) || !std::isfinite(dy)) return false;
+  if (!std::isfinite(dx) || !std::isfinite(dy)) { m_editDiagnostic = "annotation-geometry-invalid"; return false; }
   return changeSelected([&](RectangleAnnotation &r) {
     if (dx == 0 && dy == 0) return false;
     r.start = {r.start.x + dx, r.start.y + dy};
@@ -90,7 +114,7 @@ bool EditorSession::moveSelection(double dx, double dy) {
 }
 
 bool EditorSession::setStrokeWidth(double width) {
-  if (!std::isfinite(width) || width <= 0 || width > 10000) return false;
+  if (!std::isfinite(width) || width <= 0 || width > 10000) { m_editDiagnostic = "annotation-style-invalid"; return false; }
   m_tool.strokeWidth = width;  // ES-026: style changes update the tool default
   return changeSelected([&](RectangleAnnotation &r) {
     if (r.style.strokeWidth == width) return false;
@@ -118,7 +142,7 @@ bool EditorSession::setFillColor(Argb color) {
 }
 
 bool EditorSession::setOpacity(double opacity) {
-  if (!std::isfinite(opacity) || opacity < 0 || opacity > 1) return false;
+  if (!std::isfinite(opacity) || opacity < 0 || opacity > 1) { m_editDiagnostic = "annotation-style-invalid"; return false; }
   m_tool.opacity = opacity;
   return changeSelected([&](RectangleAnnotation &r) {
     if (r.style.opacity == opacity) return false;
@@ -128,15 +152,7 @@ bool EditorSession::setOpacity(double opacity) {
 }
 
 bool EditorSession::resizeSelection(double dw, double dh) {
-  if (!std::isfinite(dw) || !std::isfinite(dh) || (dw == 0 && dh == 0)) return false;
-  AnnotationDocument probe = document();
-  for (Annotation &annotation : probe.annotations) {
-    const auto *r = std::get_if<RectangleAnnotation>(&annotation);
-    if (r && m_selection.contains(r->id) &&
-        (r->end.x + dw - r->start.x <= 0 || r->end.y + dh - r->start.y <= 0)) {
-      return false;  // ES-003: never produce a zero-area rectangle
-    }
-  }
+  if (!std::isfinite(dw) || !std::isfinite(dh)) { m_editDiagnostic = "annotation-geometry-invalid"; return false; }
   return changeSelected([&](RectangleAnnotation &r) {
     r.end = {r.end.x + dw, r.end.y + dh};
     return true;
@@ -144,9 +160,9 @@ bool EditorSession::resizeSelection(double dw, double dh) {
 }
 
 bool EditorSession::rotateSelection(double degrees) {
-  if (!std::isfinite(degrees)) return false;
+  if (!std::isfinite(degrees)) { m_editDiagnostic = "annotation-geometry-invalid"; return false; }
   return changeSelected([&](RectangleAnnotation &r) {
-    double next = std::fmod(r.style.rotationDegrees + degrees, 360.0);
+    double next = std::fmod(std::fmod(r.style.rotationDegrees, 360.0) + std::fmod(degrees, 360.0), 360.0);
     if (next < 0) next += 360.0;
     if (next == r.style.rotationDegrees) return false;
     r.style.rotationDegrees = next;
@@ -155,50 +171,68 @@ bool EditorSession::rotateSelection(double degrees) {
 }
 
 bool EditorSession::reorderSelection(Order order) {
-  if (!selectionEditable()) return false;
-  AnnotationDocument next = document();
-  auto &list = next.annotations;
-  const auto selected = [&](const Annotation &a) { return m_selection.contains(annotationId(a)); };
-  if (m_selection.isEmpty() || !std::any_of(list.begin(), list.end(), selected)) return false;
-  const std::vector<Annotation> before = list;
-  if (order == Order::Front) {
-    std::stable_partition(list.begin(), list.end(), [&](const Annotation &a) { return !selected(a); });
-  } else if (order == Order::Back) {
-    std::stable_partition(list.begin(), list.end(), selected);
-  } else if (order == Order::Forward) {
-    for (std::size_t i = list.size(); i-- > 1;) {
-      if (selected(list[i - 1]) && !selected(list[i])) std::swap(list[i - 1], list[i]);
-    }
-  } else {
-    for (std::size_t i = 1; i < list.size(); ++i) {
-      if (selected(list[i]) && !selected(list[i - 1])) std::swap(list[i - 1], list[i]);
-    }
+  m_editDiagnostic.clear();
+  if (!selectionEditable()) {
+    if (!m_selection.isEmpty()) m_editDiagnostic = "annotation-selection-protected";
+    return false;
   }
-  bool same = true;
-  for (std::size_t i = 0; i < list.size(); ++i) same = same && annotationId(list[i]) == annotationId(before[i]);
-  if (same) return false;
-  commit(std::move(next));
-  return true;
+  try {
+    AnnotationDocument next = document();
+    auto &list = next.annotations;
+    const auto selected = [&](const Annotation &a) { return m_selection.contains(annotationId(a)); };
+    if (m_selection.isEmpty() || !std::any_of(list.begin(), list.end(), selected)) return false;
+    const std::vector<Annotation> before = list;
+    if (order == Order::Front) {
+      std::stable_partition(list.begin(), list.end(), [&](const Annotation &a) { return !selected(a); });
+    } else if (order == Order::Back) {
+      std::stable_partition(list.begin(), list.end(), selected);
+    } else if (order == Order::Forward) {
+      for (std::size_t i = list.size(); i-- > 1;) {
+        if (selected(list[i - 1]) && !selected(list[i])) std::swap(list[i - 1], list[i]);
+      }
+    } else {
+      for (std::size_t i = 1; i < list.size(); ++i) {
+        if (selected(list[i]) && !selected(list[i - 1])) std::swap(list[i - 1], list[i]);
+      }
+    }
+    bool same = true;
+    for (std::size_t i = 0; i < list.size(); ++i) same = same && annotationId(list[i]) == annotationId(before[i]);
+    if (same) return false;
+    commit(std::move(next));
+    return true;
+  } catch (const std::bad_alloc &) { m_editDiagnostic = "annotation-edit-failed"; return false; }
 }
 
 bool EditorSession::deleteSelection() {
-  if (!selectionEditable()) return false;
-  AnnotationDocument next = document();
-  const auto removed = std::remove_if(next.annotations.begin(), next.annotations.end(), [&](const Annotation &a) {
-    return m_selection.contains(annotationId(a));
-  });
-  if (removed == next.annotations.end()) return false;
-  next.annotations.erase(removed, next.annotations.end());
-  m_selection.clear();
-  commit(std::move(next));
-  return true;
+  m_editDiagnostic.clear();
+  if (!selectionEditable()) {
+    if (!m_selection.isEmpty()) m_editDiagnostic = "annotation-selection-protected";
+    return false;
+  }
+  try {
+    AnnotationDocument next = document();
+    const auto removed = std::remove_if(next.annotations.begin(), next.annotations.end(), [&](const Annotation &a) {
+      return m_selection.contains(annotationId(a));
+    });
+    if (removed == next.annotations.end()) return false;
+    next.annotations.erase(removed, next.annotations.end());
+    commitWithSelection(std::move(next), {});
+    return true;
+  } catch (const std::bad_alloc &) { m_editDiagnostic = "annotation-edit-failed"; return false; }
 }
 
-void EditorSession::commitTransfer(AnnotationDocument next, QSet<QUuid> selection) {
+void EditorSession::commitWithSelection(AnnotationDocument document, QSet<QUuid> selection) {
+  // Prepare all allocations before mutating the previous selection, redo
+  // branch or checkpoint. This is shared by ordinary and transfer edits.
+  HistoryState next{m_nextStateId, std::move(document), std::move(selection)};
   if (m_history.capacity() < m_position + 2) m_history.reserve(std::max(m_position + 2, m_history.capacity() * 2));
   m_history[m_position].selection = m_selection;
-  m_selection = std::move(selection);
-  commit(std::move(next));
+  m_selection = next.selection;
+  m_history.resize(m_position + 1);
+  m_history.push_back(std::move(next));
+  ++m_nextStateId;
+  ++m_position;
+  m_editDiagnostic.clear();
 }
 EditorSession::TransferEditResult EditorSession::duplicateSelection(double offset) {
   const auto selected = selectedAnnotationTransfer(document(), m_selection, false);
@@ -222,7 +256,7 @@ EditorSession::TransferEditResult EditorSession::insertAnnotations(const std::ve
     const auto invalid = annotationTransferDiagnostic(inserted); if (!invalid.isEmpty()) return {false, invalid, {}};
     if (expectedState != stateId()) return {false, "annotation-transfer-stale", {}};
     auto next = document(); next.annotations.insert(next.annotations.end(), inserted.begin(), inserted.end());
-    commitTransfer(std::move(next), std::move(selection)); return {true, {}, ids};
+    commitWithSelection(std::move(next), std::move(selection)); return {true, {}, ids};
   } catch (...) { return {false, "annotation-transfer-failed", {}}; }
 }
 EditorSession::TransferEditResult EditorSession::cutAnnotations(quint64 expectedState, const QSet<QUuid> &expectedSelection) {
@@ -232,11 +266,12 @@ EditorSession::TransferEditResult EditorSession::cutAnnotations(quint64 expected
   try {
     auto next = document(); auto &objects = next.annotations;
     objects.erase(std::remove_if(objects.begin(), objects.end(), [&](const Annotation &a) { return expectedSelection.contains(annotationId(a)); }), objects.end());
-    commitTransfer(std::move(next), {}); return {true, {}, {}};
+    commitWithSelection(std::move(next), {}); return {true, {}, {}};
   } catch (...) { return {false, "annotation-transfer-failed", {}}; }
 }
 
 bool EditorSession::undo() {
+  m_editDiagnostic.clear();
   if (m_position == 0) return false;
   // ES-006: restore the complete state before the most recent operation,
   // including the selection that state had.
@@ -246,6 +281,7 @@ bool EditorSession::undo() {
 }
 
 bool EditorSession::redo() {
+  m_editDiagnostic.clear();
   if (m_position + 1 >= m_history.size()) return false;
   ++m_position;
   m_selection = m_history[m_position].selection;
@@ -270,10 +306,7 @@ bool EditorSession::commitCanvas(AnnotationDocument next, quint64 expectedState)
     for (const Annotation &a : next.annotations) {
       if (m_selection.contains(annotationId(a))) retained.insert(annotationId(a));
     }
-    if (m_history.capacity() < m_position + 2) m_history.reserve(std::max(m_position + 2, m_history.capacity() * 2));
-    m_history[m_position].selection = m_selection;
-    m_selection = std::move(retained);
-    commit(std::move(next));
+    commitWithSelection(std::move(next), std::move(retained));
     return true;
   } catch (const std::bad_alloc &) { return false; }
 }

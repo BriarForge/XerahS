@@ -5,6 +5,7 @@
 #include <QMouseEvent>
 #include <QNativeGestureEvent>
 #include <QPainter>
+#include <QPointer>
 #include <QScrollBar>
 #include <QSignalBlocker>
 #include <QWheelEvent>
@@ -42,9 +43,7 @@ EditorCanvas::EditorCanvas(EditorSession &session, const QImage &image, QWidget 
   setObjectName(QStringLiteral("editorCanvas"));
   setFocusPolicy(Qt::StrongFocus);
   setAccessibleName(QStringLiteral("Image canvas"));
-  setAccessibleDescription(QStringLiteral(
-      "Drag to draw a rectangle. Arrow keys move selected objects. Control and wheel zoom; "
-      "Space and drag or the middle mouse button pan. With no selection, arrow keys pan."));
+  setAccessibleDescription(toolInstructions());
   horizontalScrollBar()->setAccessibleName(QStringLiteral("Horizontal image position"));
   verticalScrollBar()->setAccessibleName(QStringLiteral("Vertical image position"));
   // Persistent scrollbars keep viewport dimensions stable while zooming and
@@ -91,22 +90,44 @@ void EditorCanvas::zoomToFit() {
 }
 
 void EditorCanvas::setCropTool(bool active) {
+  setTool(active ? Tool::Crop : Tool::Rectangle);
+}
+
+QString EditorCanvas::toolInstructions() const {
+  QString text;
+  switch (m_tool) {
+    case Tool::Select:
+      text = "Select: click an object; Control-click adds or removes it. Drag selected objects to move. Blank canvas clears selection."; break;
+    case Tool::Rectangle:
+      text = "Rectangle stays active: drag on blank canvas to draw. Click an existing object to select or move it. Out-of-canvas bounds are allowed; export clips to the image."; break;
+    case Tool::Crop:
+      text = "Crop stays active: drag to choose the retained image region."; break;
+  }
+  return text + " Escape cancels a gesture. Arrows move; Alt+arrows resize; R rotates; Delete removes selected objects. Control+wheel zooms; Space+drag pans.";
+}
+
+void EditorCanvas::setTool(Tool tool) {
+  if (!isEnabled()) { emit toolChanged(); return; }
   cancelGesture();
-  m_cropTool = active;
-  viewport()->setCursor(active ? Qt::CrossCursor : Qt::ArrowCursor);
+  m_tool = tool;
+  setAccessibleDescription(toolInstructions());
+  viewport()->setCursor(m_tool == Tool::Crop ? Qt::CrossCursor : Qt::ArrowCursor);
+  emit toolChanged();
 }
 
 void EditorCanvas::resetDocument(EditorSession &session, const QImage &displaySource) {
   cancelGesture();
   m_session = &session;
   m_displaySource = displaySource;
-  m_cropTool = false;
+  m_tool = Tool::Rectangle;
+  setAccessibleDescription(toolInstructions());
   m_spaceHeld = false;
   viewport()->setCursor(Qt::ArrowCursor);
   m_view = EditorViewport(m_image.size());
   m_view.setViewSize(viewport()->size());
   m_view.fit();
   syncViewport();
+  emit toolChanged();
 }
 
 void EditorCanvas::sourceChanged() {
@@ -192,7 +213,7 @@ void EditorCanvas::mousePressEvent(QMouseEvent *event) {
   }
   if (event->button() != Qt::LeftButton) return;
   const QPointF at = m_view.toImage(event->position());
-  if (m_cropTool) {
+  if (m_tool == Tool::Crop) {
     m_drag = std::make_pair(at, at);
     viewport()->update();
     return;
@@ -213,7 +234,7 @@ void EditorCanvas::mousePressEvent(QMouseEvent *event) {
     m_moveStart = m_moveLast = at;
   } else {
     if (!(event->modifiers() & Qt::ControlModifier)) m_session->select({});
-    m_drag = std::make_pair(at, at);
+    if (m_tool == Tool::Rectangle) m_drag = std::make_pair(at, at);
   }
   viewport()->update();
   emit changed();
@@ -237,23 +258,31 @@ void EditorCanvas::mouseReleaseEvent(QMouseEvent *event) {
   if (m_panning && (event->button() == Qt::MiddleButton || event->button() == Qt::LeftButton)) {
     m_view.pan(event->position() - m_panLast);
     m_panning = false;
-    viewport()->setCursor(m_spaceHeld ? Qt::OpenHandCursor : (m_cropTool ? Qt::CrossCursor : Qt::ArrowCursor));
+    viewport()->setCursor(m_spaceHeld ? Qt::OpenHandCursor : (m_tool == Tool::Crop ? Qt::CrossCursor : Qt::ArrowCursor));
     syncViewport();
     return;
   }
   if (event->button() != Qt::LeftButton) return;
   const QPointF at = m_view.toImage(event->position());
+  QString rejection;
   if (m_drag) {
     const QPointF start = m_drag->first;
     m_drag.reset();
-    if (m_cropTool) emit cropRequested(start, at);
-    else m_session->createRectangle({start.x(), start.y()}, {at.x(), at.y()});
+    if (m_tool == Tool::Crop) emit cropRequested(start, at);
+    else {
+      m_session->createRectangle({start.x(), start.y()}, {at.x(), at.y()});
+      rejection = m_session->editDiagnostic();
+    }
   } else if (m_moving) {
     m_moving = false;
     const QPointF delta = at - m_moveStart;
     m_session->moveSelection(delta.x(), delta.y());
+    rejection = m_session->editDiagnostic();
   }
   viewport()->update();
+  if (!rejection.isEmpty()) {
+    const QPointer<EditorCanvas> owner(this); emit editRejected(rejection); if (!owner) return;
+  }
   emit changed();
 }
 
@@ -262,7 +291,7 @@ void EditorCanvas::cancelGesture() {
   m_moving = false;
   if (m_panning) m_view.setOffset(m_panOriginalOffset);
   m_panning = false;
-  viewport()->setCursor(m_spaceHeld ? Qt::OpenHandCursor : (m_cropTool ? Qt::CrossCursor : Qt::ArrowCursor));
+  viewport()->setCursor(m_spaceHeld ? Qt::OpenHandCursor : (m_tool == Tool::Crop ? Qt::CrossCursor : Qt::ArrowCursor));
   viewport()->update();
 }
 
@@ -298,6 +327,7 @@ bool EditorCanvas::viewportEvent(QEvent *event) {
 
 void EditorCanvas::keyPressEvent(QKeyEvent *event) {
   if (event->key() == Qt::Key_Space) {
+    if (!m_panning) cancelGesture();
     m_spaceHeld = true;
     viewport()->setCursor(m_panning ? Qt::ClosedHandCursor : Qt::OpenHandCursor);
     return;
@@ -307,6 +337,7 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
     syncViewport();
     return;
   }
+  if (interactionActive()) { event->accept(); return; }
   const double step = (event->modifiers() & Qt::ShiftModifier) ? 10 : 1;
   if (m_session->selection().isEmpty()) {
     switch (event->key()) {
@@ -345,13 +376,16 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
     }
   }
   viewport()->update();
+  if (!m_session->editDiagnostic().isEmpty()) {
+    const QPointer<EditorCanvas> owner(this); emit editRejected(m_session->editDiagnostic()); if (!owner) return;
+  }
   emit changed();
 }
 
 void EditorCanvas::keyReleaseEvent(QKeyEvent *event) {
   if (event->key() == Qt::Key_Space && !event->isAutoRepeat()) {
     m_spaceHeld = false;
-    viewport()->setCursor(m_panning ? Qt::ClosedHandCursor : (m_cropTool ? Qt::CrossCursor : Qt::ArrowCursor));
+    viewport()->setCursor(m_panning ? Qt::ClosedHandCursor : (m_tool == Tool::Crop ? Qt::CrossCursor : Qt::ArrowCursor));
     return;
   }
   QAbstractScrollArea::keyReleaseEvent(event);

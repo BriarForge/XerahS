@@ -22,6 +22,7 @@ public:
   const AnnotationDocument &document() const { return m_history[m_position].document; }
   const QSet<QUuid> &selection() const { return m_selection; }
   const RectangleStyle &toolStyle() const { return m_tool; }
+  const QString &editDiagnostic() const { return m_editDiagnostic; }
 
   // ESET-006: changing creation defaults never edits selection or history.
   bool setCreationStyle(const RectangleStyle &style);
@@ -86,7 +87,7 @@ private:
   // Commits `document` as one operation after the current position, clearing
   // the redo branch (ES-006).
   void commit(AnnotationDocument document);
-  void commitTransfer(AnnotationDocument, QSet<QUuid> selection);
+  void commitWithSelection(AnnotationDocument, QSet<QUuid> selection);
   template <typename Change>
   bool changeSelected(Change change);
 
@@ -96,6 +97,7 @@ private:
   std::optional<quint64> m_checkpoint = 0;
   QSet<QUuid> m_selection;
   RectangleStyle m_tool;
+  QString m_editDiagnostic;
 };
 
 }  // namespace xerahs::editor

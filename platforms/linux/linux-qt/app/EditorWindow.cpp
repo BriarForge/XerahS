@@ -13,6 +13,7 @@
 #include "NativeEditorAppearance.h"
 #include "AppearanceDialog.h"
 #include "NativeEditorToolbar.h"
+#include "NativeAnnotationTools.h"
 
 #include <QAction>
 #include <QCloseEvent>
@@ -149,6 +150,13 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     : m_path(path), m_image(std::move(image)), m_session(std::make_unique<EditorSession>(std::move(document), persistence)) {
   applyCreationDefaults();
   m_canvas = new EditorCanvas(*m_session, m_image, nullptr, displaySource);
+  const auto tools = annotationToolActions(*m_canvas, this);
+  auto *instructions = annotationToolInstructions(*m_canvas, this);
+  instructions->setMaximumWidth(460);
+  statusBar()->addPermanentWidget(instructions, 1);
+  connect(m_canvas, &EditorCanvas::editRejected, this, [this](const QString &diagnostic) {
+    m_annotationMessage = annotationEditMessage(diagnostic); m_annotationMessageState = m_session->stateId();
+  });
   m_sourceBytes = m_session->document().sourceImagePng;
   setCentralWidget(m_canvas);
   m_unsupportedDock = new QDockWidget(QStringLiteral("Unsupported annotations"), this);
@@ -218,16 +226,16 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
       [rememberWindow](bool enabled) { const QSignalBlocker blocker(rememberWindow); rememberWindow->setChecked(enabled); });
 
   auto *imageMenu = menuBar()->addMenu(QStringLiteral("&Image"));
+  auto *toolMenu = imageMenu->addMenu(QStringLiteral("Annotation Tools"));
+  for (const auto &id : {"select-tool", "rectangle-tool", "crop-tool"}) toolMenu->addAction(tools.value(id));
   QAction *crop = imageMenu->addAction(QStringLiteral("Crop Image…"));
   crop->setObjectName(QStringLiteral("cropImage"));
-  QAction *cropTool = imageMenu->addAction(QStringLiteral("Crop tool"));
-  cropTool->setCheckable(true);
-  cropTool->setObjectName(QStringLiteral("cropTool"));
+  QAction *cropTool = tools.value("crop-tool");
+  imageMenu->addAction(cropTool);
   connect(crop, &QAction::triggered, this, &EditorWindow::cropImage);
   QAction *autoCrop = imageMenu->addAction(QStringLiteral("Auto Crop…"));
   autoCrop->setObjectName(QStringLiteral("autoCrop"));
   connect(autoCrop, &QAction::triggered, this, &EditorWindow::autoCropImage);
-  connect(cropTool, &QAction::toggled, m_canvas, &EditorCanvas::setCropTool);
   connect(m_canvas, &EditorCanvas::cropRequested, this, [this](QPointF start, QPointF end) {
     CanvasOperation operation;
     operation.action = CanvasAction::Crop;
@@ -416,6 +424,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     {"toggle-toolbars", toggleToolbar}, {"close-editor", closeEditor}, {"copy-rendered-image", m_copyAction}, {"print", m_printAction}
   };
   for (auto it = m_annotationActions.cbegin(); it != m_annotationActions.cend(); ++it) m_toolbarActions.insert(it.key(), it.value());
+  for (auto it = tools.cbegin(); it != tools.cend(); ++it) m_toolbarActions.insert(it.key(), it.value());
   for (auto *action : m_toolbarActions) { action->setParent(this); addAction(action); }
   m_toolbarController = new NativeEditorToolbar(*this, *bar, m_toolbarActions, [this] {
     return m_canvas && !m_canvasOperationPending && !m_closePending && !m_outputPending && !m_canvas->interactionActive();

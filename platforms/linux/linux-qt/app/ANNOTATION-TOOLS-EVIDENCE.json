@@ -1,0 +1,237 @@
+{
+  "capability": "EDITOR-ANNOTATIONS-001",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial-candidate-evidence",
+  "clarifications": [
+    "EA-005-LINUX-2026-10-14",
+    "EA-016-LINUX-2026-10-14"
+  ],
+  "requirements": {
+    "EA-002": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/app/EditorCanvas.h",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.h",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TOOLS.md",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Native Select/Rectangle/Crop have one checked active mode, visible/accessibility instructions and explicit persistent creation behavior; the editor registry and capture controls use the same native actions. Complete twenty-tool/options/native qualification remains Required."
+    },
+    "EA-003": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/app/EditorCanvas.h",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.h",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TOOLS.md",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Select blank-canvas gestures cannot create objects; represented rectangles retain pointer/keyboard/additive selection and protected edits. Complete pointer resize handles, other types, all controls and physical qualification remain Required."
+    },
+    "EA-004": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/app/EditorCanvas.h",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.h",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TOOLS.md",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Rectangle reverse drags normalize; both input points and resulting batch geometry are validated before one atomic history commit. Non-finite/zero/overflow results and cancelled gestures preserve the document. Out-of-canvas bounds are explicitly allowed and export clips. Other tool geometries/resource qualification remain Required."
+    },
+    "EA-014": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/app/EditorCanvas.h",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.h",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TOOLS.md",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Existing Rectangle creation/style-default snapshot rules retained; failed batch edits preserve objects and source. Full creation/selected-style fields and all tools remain Required."
+    },
+    "EA-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/app/EditorCanvas.h",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.h",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TOOLS.md",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Ordinary create/edit/delete/order and prior transfer/canvas paths now share allocation-before-commit history with actual pre-command selection. Overflow/no-op refusal preserves Redo/checkpoints. Full tool/effect/mutation and recovery qualification remain Required."
+    },
+    "EA-018": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/app/EditorCanvas.h",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.h",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TOOLS.md",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Native checked actions and visible/accessible guidance, text/busy shortcut precedence, live-key blocking and Escape/tool-change cancellation have actual Qt fixtures. Complete controls/handles/options and physical assistive-technology/human acceptance remain Required."
+    },
+    "EA-020": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/app/EditorCanvas.h",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.h",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TOOLS.md",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Core rejects invalid/overflow geometry atomically and native messages use stable value-free diagnostics. Existing 114 vectors remain unchanged; no EA vectors exist. Full resource/native/target/privacy/security/human qualification remains Required."
+    },
+    "EA-005": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/app/EditorCanvas.h",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.h",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TOOLS.md",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Known Rectangle fields remain implemented without changing its persisted representation or ES-025 pixels. Ellipse document fields and stroke/coverage semantics require shared decision EA-005-LINUX-2026-10-14; existing unknown ellipse data remains inert and round-trippable. Full bounds/border/shadow/shape fields and native/human qualification remain Required."
+    }
+  },
+  "verification": {
+    "local_ctest": {
+      "passed": 43,
+      "failed": 0,
+      "seconds": 34.4
+    },
+    "published_vectors": {
+      "passed": 114,
+      "failed": 0,
+      "expected_results_changed": false
+    },
+    "minimum_qt": "6.4.2",
+    "minimum_qt_affected_ctest": {
+      "passed": 8,
+      "failed": 0,
+      "seconds": 10.3
+    },
+    "tooling_unit_tests": {
+      "passed": 32,
+      "failed": 0
+    },
+    "effective_instructions_paths": 24,
+    "visual_review": "Offscreen native editor frame inspected; compact instructions and checked Rectangle state are visible. Small-screen recovery assertion retained. Physical/human acceptance remains Required."
+  }
+}

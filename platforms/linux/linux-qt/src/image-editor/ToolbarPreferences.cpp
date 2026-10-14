@@ -18,7 +18,8 @@ const QVector<ToolbarAction> &toolbarActions() {
     {"flatten-image"}, {"clear-annotations"}, {"clear-image"}, {"compare-images"},
     {"drawing-defaults"}, {"appearance-preferences"}, {"remember-window-state"},
     {"customize-toolbar"}, {"toggle-toolbars"}, {"close-editor"}, {"copy-rendered-image"}, {"print"},
-    {"copy-annotation"}, {"cut-annotation"}, {"paste"}, {"duplicate-selection"}
+    {"copy-annotation"}, {"cut-annotation"}, {"paste"}, {"duplicate-selection"},
+    {"select-tool"}, {"rectangle-tool"}
   };
   return actions;
 }

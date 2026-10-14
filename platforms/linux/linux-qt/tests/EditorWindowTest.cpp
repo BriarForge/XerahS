@@ -208,6 +208,43 @@ private slots:
   }
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  void explicitToolsShareMenusHotkeysBusyGuardAndEditableSave() {
+    QTemporaryDir dir; const auto preferences = dir.filePath("preferences.json"), path = dir.filePath("tools.png");
+    QVERIFY(initializeNativeEditorPreferences(preferences).isEmpty());
+    QVERIFY(applyToolbarPreferences(QJsonArray{
+        QJsonObject{{"Id", "select-tool"}, {"Hotkey", "F6"}, {"IsVisible", true}},
+        QJsonObject{{"Id", "rectangle-tool"}, {"Hotkey", "F7"}, {"IsVisible", true}}}, nativeEditorPreferenceRevision()).saved);
+    QVERIFY(fixture().save(path)); const auto original = storedBytes(path);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); window->activateWindow();
+    const auto settings = storedBytes(preferences);
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas); canvas->setFocus(); QTRY_VERIFY(window->isActiveWindow());
+    auto *select = window->findChild<QAction *>("selectTool"), *rectangle = window->findChild<QAction *>("rectangleTool"), *crop = window->findChild<QAction *>("cropTool");
+    QVERIFY(select && rectangle && crop); auto *instructions = window->findChild<QLabel *>("annotationToolInstructions"); QVERIFY(instructions && instructions->isVisible());
+    QVERIFY(instructions->width() > 0 && instructions->height() > 0);
+    QTest::keyClick(canvas, Qt::Key_F6); QVERIFY(select->isChecked()); QVERIFY(!rectangle->isChecked());
+    drawRectangle(*canvas); QVERIFY(!window->windowTitle().contains(" •")); QCOMPARE(storedBytes(path), original);
+    QTest::keyClick(canvas, Qt::Key_F7); drawRectangle(*canvas); QVERIFY(rectangle->isChecked()); QVERIFY(window->windowTitle().contains(" •"));
+    QTest::keyClick(canvas, Qt::Key_F6); QVERIFY(select->isChecked()); trigger(*window, "saveImage");
+    QVERIFY(!window->windowTitle().contains(" •")); QVERIFY(storedBytes(path) != original);
+    const auto persisted = loadSource(path); QVERIFY(persisted.document); QCOMPARE(persisted.document->annotations.size(), size_t(1));
+    QCOMPARE(persisted.image, fixture()); const auto saved = storedBytes(path), sidecar = storedBytes(path + ".xann");
+    bool protectedTools = false, rejectedProgrammaticTool = false;
+    EditorCopyPorts ports; ports.publish = [&](const EditorCopyPayload &) {
+      protectedTools = !select->isEnabled() && !rectangle->isEnabled() && !crop->isEnabled();
+      rectangle->setChecked(true); rejectedProgrammaticTool = canvas->tool() == EditorCanvas::Tool::Select && select->isChecked();
+      return xerahs::actions::ActionOutcome{};
+    };
+    window->setCopyPorts(ports); trigger(*window, "copyImage"); QVERIFY(protectedTools && rejectedProgrammaticTool);
+    QVERIFY(select->isEnabled() && rectangle->isEnabled() && crop->isEnabled()); QVERIFY(select->isChecked());
+    QCOMPARE(storedBytes(path), saved); QCOMPARE(storedBytes(path + ".xann"), sidecar); QCOMPARE(storedBytes(preferences), settings);
+    auto *line = new QLineEdit(window.get()); line->show(); window->activateWindow(); line->setFocus();
+    QTRY_VERIFY(window->isActiveWindow()); QTRY_COMPARE(QApplication::focusWidget(), line); QTest::keyClick(line, Qt::Key_F7);
+    QVERIFY(select->isChecked()); delete line; canvas->setFocus(); QTRY_COMPARE(QApplication::focusWidget(), canvas);
+    QTest::keyClick(canvas, Qt::Key_F7); QVERIFY(rectangle->isChecked());
+    if (qEnvironmentVariableIsSet("XERAHS_TOOL_QA_IMAGE")) {
+      window->resize(1000, 700); QCoreApplication::processEvents(); QVERIFY(window->grab().save(qEnvironmentVariable("XERAHS_TOOL_QA_IMAGE")));
+    }
+  }
   void annotationCopyPasteCutAndDuplicateUseNativeMenusShortcutsAndOneHistoryPerMutation() {
     QTemporaryDir dir; const auto path = dir.filePath("source.png"); QVERIFY(fixture().save(path)); const auto original = storedBytes(path);
     QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();

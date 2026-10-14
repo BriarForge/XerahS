@@ -88,3 +88,5 @@ atomically inserts fresh identities or removes an acknowledged unchanged Cut
 selection, preserving previous selection/checkpoint/Redo on failure. Native
 clipboard/menu/input and pending shared tool/asset policy are indexed in
 [ANNOTATION-TRANSFER.md](../../app/ANNOTATION-TRANSFER.md).
+
+[Native annotation tool evidence](../../app/ANNOTATION-TOOLS.md) indexes explicit Select/Rectangle/Crop modes, cancellation, complete-batch finite geometry validation, rounded no-op history and actual pre-command selection recovery. Ellipse persistence and pixels await shared decision EA-005-LINUX-2026-10-14; unknown ellipse data remains inert and round-trippable. All remaining tool/field/target/human qualification stays Required.

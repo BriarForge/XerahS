@@ -20,6 +20,10 @@ public:
   void zoomOut();
   void resetZoom();
   void zoomToFit();
+  enum class Tool { Select, Rectangle, Crop };
+  Tool tool() const { return m_tool; }
+  void setTool(Tool);
+  QString toolInstructions() const;
   void setCropTool(bool active);
   void sourceChanged();
   bool interactionActive() const { return m_drag.has_value() || m_moving || m_panning; }
@@ -30,6 +34,8 @@ signals:
   void changed();
   void viewportChanged(double zoom);
   void cropRequested(QPointF start, QPointF end);
+  void toolChanged();
+  void editRejected(QString diagnostic);
 
 protected:
   void paintEvent(QPaintEvent *) override;
@@ -56,7 +62,7 @@ private:
   xerahs::editor::EditorViewport m_view;
   std::optional<std::pair<QPointF, QPointF>> m_drag;
   bool m_moving = false;
-  bool m_cropTool = false;
+  Tool m_tool = Tool::Rectangle;
   QPointF m_moveStart, m_moveLast;
   bool m_spaceHeld = false;
   bool m_panning = false;

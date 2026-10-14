@@ -64,6 +64,59 @@ class EditorSessionTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void rejectedCreationPreservesRedoCheckpointAndSelection_data() {
+    QTest::addColumn<double>("sx"); QTest::addColumn<double>("sy");
+    QTest::addColumn<double>("ex"); QTest::addColumn<double>("ey");
+    const double nan = std::numeric_limits<double>::quiet_NaN(), inf = std::numeric_limits<double>::infinity();
+    QTest::newRow("start-x-nan") << nan << 1.0 << 5.0 << 6.0;
+    QTest::newRow("start-y-nan") << 1.0 << nan << 5.0 << 6.0;
+    QTest::newRow("end-x-nan") << 1.0 << 1.0 << nan << 6.0;
+    QTest::newRow("end-y-nan") << 1.0 << 1.0 << 5.0 << nan;
+    QTest::newRow("infinite") << 1.0 << 1.0 << inf << 6.0;
+    QTest::newRow("span-overflow") << -1e308 << 1.0 << 1e308 << 6.0;
+    QTest::newRow("zero-width") << 1.0 << 1.0 << 1.0 << 6.0;
+    QTest::newRow("zero-height") << 1.0 << 1.0 << 5.0 << 1.0;
+  }
+  void rejectedCreationPreservesRedoCheckpointAndSelection() {
+    QFETCH(double, sx); QFETCH(double, sy); QFETCH(double, ex); QFETCH(double, ey);
+    EditorSession session(document()); const auto id = session.createRectangle({1, 1}, {4, 4}); QVERIFY(id);
+    session.markSaved(); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); session.select({*id});
+    const auto before = serializeDocument(session.document()); const auto state = session.stateId();
+    QVERIFY(!session.createRectangle({sx, sy}, {ex, ey}));
+    QCOMPARE(session.editDiagnostic(), QString("annotation-geometry-invalid"));
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.stateId(), state);
+    QCOMPARE(session.selection(), QSet<QUuid>{*id}); QCOMPARE(session.undoCount(), 1); QCOMPARE(session.redoCount(), 1); QVERIFY(!session.dirty());
+    QVERIFY(session.redo()); QCOMPARE(std::get<RectangleAnnotation>(session.document().annotations[0]).left(), 2.0);
+  }
+  void batchGeometryFailureAndRoundedNoopsNeverTruncateRedo() {
+    auto d = document(); const auto small = rectangle(1, 1, 4, 4), large = rectangle(1.2e308, 1, 1.3e308, 4);
+    d.annotations = {small, large}; EditorSession session(d);
+    QVERIFY(session.createRectangle({5, 5}, {6, 6})); QVERIFY(session.undo()); session.select({small.id, large.id});
+    const auto before = serializeDocument(session.document());
+    QVERIFY(!session.moveSelection(1e308, 0)); QVERIFY(!session.resizeSelection(1e308, 0));
+    QCOMPARE(session.editDiagnostic(), QString("annotation-geometry-invalid"));
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), 0); QCOMPARE(session.redoCount(), 1); QVERIFY(!session.dirty());
+    QCOMPARE(session.selection(), (QSet<QUuid>{small.id, large.id}));
+    session.select({large.id}); QVERIFY(!session.moveSelection(1, 0)); QVERIFY(!session.resizeSelection(1, 0));
+    QVERIFY(session.editDiagnostic().isEmpty()); QCOMPARE(session.redoCount(), 1); QCOMPARE(serializeDocument(session.document()), before);
+    // Finite angle additions must never overflow before normalization.
+    session.select({small.id}); QVERIFY(session.rotateSelection(1e308)); QVERIFY(session.rotateSelection(1e308));
+    const double angle = std::get<RectangleAnnotation>(session.document().annotations[0]).style.rotationDegrees;
+    QVERIFY(std::isfinite(angle)); QVERIFY(angle >= 0 && angle < 360);
+    QVERIFY(render(solidImage(10, 10, 0), session.document().annotations).image);
+  }
+  void everyEditRestoresTheActualPreCommandSelection() {
+    EditorSession session(document()); const auto a = *session.createRectangle({1, 1}, {4, 4});
+    const auto b = *session.createRectangle({5, 5}, {8, 8}); session.select({a}); session.markSaved();
+    QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); QCOMPARE(session.selection(), QSet<QUuid>{a}); QVERIFY(!session.dirty());
+    QVERIFY(session.redo()); session.select({b});
+    const auto c = *session.createRectangle({-5, -4}, {-2, -1});
+    QVERIFY(session.undo()); QCOMPARE(session.selection(), QSet<QUuid>{b});
+    QVERIFY(session.redo()); QCOMPARE(session.selection(), QSet<QUuid>{c});
+    session.select({a, b}); QVERIFY(session.deleteSelection());
+    QVERIFY(session.undo()); QCOMPARE(session.selection(), (QSet<QUuid>{a, b}));
+    QVERIFY(session.redo()); QVERIFY(session.selection().isEmpty()); QCOMPARE(session.document().annotations.size(), size_t(1));
+  }
   void snapshotSaveAcknowledgesItsHistoryStateAndSplitSaveInvalidatesCleanState() {
     EditorSession session(document()); QVERIFY(session.createRectangle({2, 2}, {10, 10}));
     const auto saved = session.stateId(); QVERIFY(session.moveSelection(2, 0));

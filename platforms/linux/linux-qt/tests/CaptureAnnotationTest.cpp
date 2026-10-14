@@ -2,6 +2,8 @@
 #include "CaptureAnnotationDialog.h"
 #include "EditorCanvas.h"
 #include <QApplication>
+#include <QAction>
+#include <QLabel>
 #include <QCheckBox>
 #include <QFile>
 #include <QJsonArray>
@@ -21,6 +23,22 @@ CaptureAnnotationChoice rectangle(const LoadedSource &source) {
 class CaptureAnnotationTest final : public QObject {
   Q_OBJECT
 private slots:
+  void captureToolModesDoNotCreateInSelectAndCancelLiveCreation() {
+    QTemporaryDir dir; CapturePipeline pipeline(pixels(), dir.path(), "tools", {"annotation", "save"});
+    QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_VERIFY(dialog());
+    auto *canvas = dialog()->findChild<EditorCanvas *>(); QVERIFY(canvas);
+    auto *select = dialog()->findChild<QAction *>("selectTool"), *rectangle = dialog()->findChild<QAction *>("rectangleTool");
+    QVERIFY(select && rectangle); auto *instructions = dialog()->findChild<QLabel *>("annotationToolInstructions"); QVERIFY(instructions && instructions->isVisible());
+    const auto a = canvas->viewState().toView({20, 20}).toPoint(), b = canvas->viewState().toView({40, 40}).toPoint();
+    select->trigger(); QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, a); QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, b);
+    rectangle->trigger(); QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, a); select->trigger();
+    QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, b);
+    rectangle->trigger(); QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, b); QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, a);
+    QVERIFY(rectangle->isChecked()); dialog()->accept(); QTRY_COMPARE(done.count(), 1);
+    const auto result = receipt(done); QVERIFY(result->annotationDocument); QCOMPARE(result->annotationDocument->annotations.size(), size_t(1));
+    QCOMPARE(result->workingMedia.pixel(20, 20), qRgb(255, 0, 0)); QCOMPARE(QImage(result->file->path), result->workingMedia);
+    QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), pixels());
+  }
   void actualCanvasApplyFeedsSaveAndClipboardAndOffersEditablePersistence() {
     QTemporaryDir dir; QImage input = pixels(), copied; CaptureActionPorts ports;
     ports.clipboard = [&](const QImage &image, const CancellationToken &) { copied = image; return ActionOutcome{}; };

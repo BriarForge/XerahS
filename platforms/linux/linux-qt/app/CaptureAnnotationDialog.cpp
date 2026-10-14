@@ -1,5 +1,6 @@
 #include "CaptureAnnotationDialog.h"
 #include "EditorCanvas.h"
+#include "NativeAnnotationTools.h"
 #include <QAction>
 #include <QCheckBox>
 #include <QDialogButtonBox>
@@ -14,11 +15,14 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   setWindowModality(Qt::ApplicationModal); setAttribute(Qt::WA_DeleteOnClose);
   m_session.setCreationStyle(style);
   auto *layout = new QVBoxLayout(this);
-  auto *intro = new QLabel("Draw rectangles; select them to move, resize, rotate or delete. Apply sends the edited image to the remaining capture actions. "
+  auto *intro = new QLabel("Select a tool to draw rectangles or edit existing objects. Apply sends the edited image to the remaining capture actions. "
       "Cancel skips annotation and keeps the original capture. PNG capture saves contain rendered pixels.", this);
   intro->setTextFormat(Qt::PlainText); intro->setWordWrap(true); layout->addWidget(intro);
   auto *bar = new QToolBar("Annotation controls", this); layout->addWidget(bar);
   m_canvas = new EditorCanvas(m_session, m_image, this, source.displayImage); layout->addWidget(m_canvas);
+  const auto tools = annotationToolActions(*m_canvas, this, false);
+  bar->addAction(tools.value("select-tool")); bar->addAction(tools.value("rectangle-tool"));
+  layout->insertWidget(2, annotationToolInstructions(*m_canvas, this));
   m_saveSidecar = new QCheckBox("Also save editable annotations beside each saved PNG (.xann)", this);
   m_saveSidecar->setObjectName("captureSaveAnnotationSidecar"); layout->addWidget(m_saveSidecar);
   auto *privacy = new QLabel("The companion contains the original capture and editable annotations. A companion failure keeps the PNG and the editable document for explicit retry. "
@@ -33,6 +37,7 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   connect(bar->addAction("100%"), &QAction::triggered, m_canvas, &EditorCanvas::resetZoom);
   connect(bar->addAction("Fit"), &QAction::triggered, m_canvas, &EditorCanvas::zoomToFit);
   m_status = new QLabel(this); m_status->setObjectName("captureAnnotationStatus"); m_status->setTextFormat(Qt::PlainText); layout->addWidget(m_status);
+  connect(m_canvas, &EditorCanvas::editRejected, this, [this](const QString &diagnostic) { m_status->setText(annotationEditMessage(diagnostic)); });
   auto *buttons = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
   auto *apply = buttons->addButton("Apply to capture", QDialogButtonBox::AcceptRole); apply->setObjectName("applyCaptureAnnotation"); apply->setAutoDefault(false);
   buttons->button(QDialogButtonBox::Cancel)->setDefault(true);

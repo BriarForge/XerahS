@@ -321,7 +321,7 @@ Core tests cover independent gesture references, collection/type/length bounds,
 protected/reserved collisions, explicit empty layouts, nullable groups, isolated
 recovery, reset, extensions, inactive future data, real private storage and
 restart. Native `ToolbarDialog` provides reorder, show/hide, nullable grouping,
-additional hotkeys and draft reset for the 43 currently registered editor
+additional hotkeys and draft reset for the 45 currently registered editor
 commands. Apply saves before publishing to every open editor; Cancel,
 invalid/locked/stale/read-only writes leave the layout and preferences intact.
 The active native hotkey cell editor is committed before Apply reads the draft.
@@ -348,3 +348,5 @@ output controls and remaining qualification are indexed in
 Annotation Cut/Copy/Paste/Duplicate add four hidden native commands (43 total).
 Their fixed protected shortcuts, text/modal/busy precedence and remaining
 qualification are indexed in [ANNOTATION-TRANSFER.md](../../app/ANNOTATION-TRANSFER.md).
+
+Select and Rectangle add hidden `select-tool` and `rectangle-tool` commands (45 current commands) with unchanged fourteen visible defaults. Checked native controls, text/busy shortcut precedence and explicit mode guidance are indexed in [ANNOTATION-TOOLS.md](../../app/ANNOTATION-TOOLS.md). Their ephemeral state creates no preference write or document mutation. Complete catalogue/physical qualification remains Required.
