@@ -19,7 +19,7 @@ const QVector<ToolbarAction> &toolbarActions() {
     {"drawing-defaults"}, {"appearance-preferences"}, {"remember-window-state"},
     {"customize-toolbar"}, {"toggle-toolbars"}, {"close-editor"}, {"copy-rendered-image"}, {"print"},
     {"copy-annotation"}, {"cut-annotation"}, {"paste"}, {"duplicate-selection"},
-    {"select-tool"}, {"rectangle-tool"}
+    {"select-tool"}, {"rectangle-tool"}, {"rectangle-properties"}
   };
   return actions;
 }

@@ -166,9 +166,15 @@ now add checked Select/Rectangle/Crop controls, shared capture guidance, live-ge
 cancellation, finite complete-batch geometry refusal, rounded no-op protection and
 actual pre-command selection recovery. The shared schema defines only Rectangle
 fields and ES-025 only Rectangle pixels: Ellipse remains an inert preserved unknown
-type pending EA-005-LINUX-2026-10-14. Next implement Rectangle pointer resize handles
-and complete selected-object controls under EA-003/005/018 while resolving that
-shared decision, alongside owned native output service handoffs, remaining tools and the
+type pending EA-005-LINUX-2026-10-14. [Rectangle edits](app/RECTANGLE-EDIT.md) now
+add eight native resize handles with fixed opposite points at rotation, copied
+previews and one validated commit, plus shared keyboard-accessible numeric/color/alpha
+properties. Creation defaults/source/assets/unknown fields remain intact through
+actual editor save/reopen and capture publication; invalid/stale/cancel/owner
+failures preserve this edit's state. Initial layout now fits the actual viewport
+while later resizes preserve user zoom. Next add keyboard-accessible Rectangle
+creation with frozen defaults and numeric bounds, while resolving the shared
+Ellipse decision, alongside owned native output service handoffs, remaining tools and the
 format policy and all other contracted output/capture/application domains.
 Physical clipboard/color/accessibility, shutdown and human gates remain
 Required; this does not accept full output conformance or parity.

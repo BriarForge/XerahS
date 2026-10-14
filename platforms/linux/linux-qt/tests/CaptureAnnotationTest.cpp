@@ -1,6 +1,7 @@
 #include "CapturePipeline.h"
 #include "CaptureAnnotationDialog.h"
 #include "EditorCanvas.h"
+#include "RectanglePropertiesDialog.h"
 #include <QApplication>
 #include <QAction>
 #include <QLabel>
@@ -10,6 +11,10 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QTimer>
+#include <QLineEdit>
+#include <QDialogButtonBox>
+#include <QPushButton>
 using namespace xerahs::app;
 using namespace xerahs::actions;
 namespace {
@@ -23,6 +28,32 @@ CaptureAnnotationChoice rectangle(const LoadedSource &source) {
 class CaptureAnnotationTest final : public QObject {
   Q_OBJECT
 private slots:
+  void selectedPropertiesApplyBeforeCaptureOutputAndKeepDefaults_data() {
+    QTest::addColumn<bool>("apply"); QTest::newRow("apply") << true; QTest::newRow("cancel") << false;
+  }
+  void selectedPropertiesApplyBeforeCaptureOutputAndKeepDefaults() {
+    QFETCH(bool, apply);
+    QTemporaryDir dir; CapturePipeline pipeline(pixels(), dir.path(), "properties", {"annotation", "save"}); QSignalSpy done(&pipeline, &CapturePipeline::finished);
+    pipeline.start(); QTRY_VERIFY(dialog()); auto *capture = dialog(); auto *canvas = capture->findChild<EditorCanvas *>(); QVERIFY(canvas); canvas->zoomToFit();
+    auto *properties = capture->findChild<QAction *>("rectangleProperties"); QVERIFY(properties); QVERIFY(!properties->isEnabled());
+    QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView({20, 20}).toPoint());
+    QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView({40, 40}).toPoint()); QVERIFY(properties->isEnabled());
+    bool acted = false; QTimer timer; connect(&timer, &QTimer::timeout, [&] {
+      auto *editor = qobject_cast<RectanglePropertiesDialog *>(QApplication::activeModalWidget()); if (!editor || acted) return; acted = true;
+      capture->accept(); QVERIFY(capture->isVisible()); QCOMPARE(done.count(), 0);
+      editor->findChild<QLineEdit *>("rectangleFillColor")->setText("#FF00FF00"); editor->findChild<QLineEdit *>("rectangleStrokeWidth")->setText("1");
+      editor->findChild<QDialogButtonBox *>()->button(apply ? QDialogButtonBox::Ok : QDialogButtonBox::Cancel)->click();
+    });
+    timer.start(5); properties->trigger(); timer.stop(); QVERIFY(acted); QVERIFY(properties->isEnabled());
+    capture->activateWindow(); canvas->setFocus(); QTRY_COMPARE(QApplication::activeModalWidget(), capture); QTRY_COMPARE(QApplication::focusWidget(), canvas);
+    QCOMPARE(canvas->tool(), EditorCanvas::Tool::Rectangle);
+    QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView({55, 20}).toPoint());
+    QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView({70, 40}).toPoint()); capture->accept(); QTRY_COMPARE(done.count(), 1);
+    const auto result = receipt(done); QVERIFY(result->annotationDocument); QCOMPARE(result->annotationDocument->annotations.size(), size_t(2));
+    QCOMPARE(result->workingMedia.pixel(30, 30), apply ? qRgb(0, 255, 0) : qRgb(0, 0, 255)); QCOMPARE(result->workingMedia.pixel(62, 30), qRgb(0, 0, 255));
+    QCOMPARE(QImage(result->file->path), result->workingMedia); QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), pixels());
+    QCOMPARE(std::get<xerahs::editor::RectangleAnnotation>(result->annotationDocument->annotations[1]).style.strokeWidth, 4.0);
+  }
   void captureToolModesDoNotCreateInSelectAndCancelLiveCreation() {
     QTemporaryDir dir; CapturePipeline pipeline(pixels(), dir.path(), "tools", {"annotation", "save"});
     QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_VERIFY(dialog());

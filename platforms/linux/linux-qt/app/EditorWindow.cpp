@@ -14,6 +14,7 @@
 #include "AppearanceDialog.h"
 #include "NativeEditorToolbar.h"
 #include "NativeAnnotationTools.h"
+#include "RectanglePropertiesDialog.h"
 
 #include <QAction>
 #include <QCloseEvent>
@@ -361,6 +362,9 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   closeEditor->setObjectName(QStringLiteral("closeEditor")); closeEditor->setShortcut(QKeySequence::Close);
   connect(closeEditor, &QAction::triggered, this, [this] { close(); });
   auto *edit = menuBar()->addMenu(QStringLiteral("&Edit"));
+  m_rectangleProperties = edit->addAction("Rectangle &Properties…"); m_rectangleProperties->setObjectName("rectangleProperties");
+  m_rectangleProperties->setAutoRepeat(false); m_rectangleProperties->setStatusTip("Edit the selected rectangle's bounds, stroke, fill, opacity and rotation. Creation defaults stay unchanged.");
+  connect(m_rectangleProperties, &QAction::triggered, this, [this] { editRectangleProperties(); });
   m_copyAction = edit->addAction("&Copy Image"); m_copyAction->setObjectName("copyImage");
   m_copyAction->setShortcut(QKeySequence::Copy);
   m_copyAction->setAutoRepeat(false);
@@ -402,6 +406,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(fit, &QAction::triggered, m_canvas, &EditorCanvas::zoomToFit);
   connect(m_canvas, &EditorCanvas::viewportChanged, this, &EditorWindow::refresh);
   connect(m_canvas, &EditorCanvas::changed, this, &EditorWindow::refresh);
+  connect(m_canvas, &EditorCanvas::toolChanged, this, &EditorWindow::refresh);
   auto *toggleToolbar = bar->toggleViewAction(); toggleToolbar->setText(QStringLiteral("Show Toolbar"));
   toggleToolbar->setObjectName(QStringLiteral("toggleToolbars")); toggleToolbar->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_H));
   view->addSeparator(); view->addAction(toggleToolbar);
@@ -425,6 +430,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   };
   for (auto it = m_annotationActions.cbegin(); it != m_annotationActions.cend(); ++it) m_toolbarActions.insert(it.key(), it.value());
   for (auto it = tools.cbegin(); it != tools.cend(); ++it) m_toolbarActions.insert(it.key(), it.value());
+  m_toolbarActions.insert("rectangle-properties", m_rectangleProperties);
   for (auto *action : m_toolbarActions) { action->setParent(this); addAction(action); }
   m_toolbarController = new NativeEditorToolbar(*this, *bar, m_toolbarActions, [this] {
     return m_canvas && !m_canvasOperationPending && !m_closePending && !m_outputPending && !m_canvas->interactionActive();
@@ -434,6 +440,20 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   new NativeEditorAppearance(*this);
   refresh();
   m_canvas->setFocus();
+}
+
+bool EditorWindow::editRectangleProperties() {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive() || !m_canvas->canEditRectangle()) return false;
+  const auto snapshot = *m_session->selectedRectangle(); const auto state = m_session->stateId(); const QPointer<EditorWindow> owner(this);
+  return withOutputBusy([owner, snapshot, state] {
+    if (!owner) return false;
+    const auto properties = chooseRectangleProperties(snapshot, owner);
+    if (!owner || !properties) return false;
+    const bool changed = owner->m_session->editRectangleProperties(snapshot.id, *properties, state);
+    owner->m_annotationMessage = owner->m_session->editDiagnostic().isEmpty() ? QString() : annotationEditMessage(owner->m_session->editDiagnostic());
+    owner->m_annotationMessageState = owner->m_session->stateId();
+    owner->m_canvas->viewport()->update(); owner->refresh(); return changed;
+  });
 }
 
 void EditorWindow::applyCreationDefaults() {
@@ -452,6 +472,8 @@ void EditorWindow::persistDrawingDefaults() {
 }
 
 void EditorWindow::refresh() {
+  m_rectangleProperties->setEnabled(!m_outputPending && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive() && m_canvas->canEditRectangle());
+  m_rectangleProperties->setToolTip(m_canvas->canEditRectangle() ? m_rectangleProperties->statusTip() : "Select one visible, unlocked rectangle to edit its properties.");
   if (m_annotationMessageState != m_session->stateId()) { m_annotationMessage.clear(); m_annotationMessageState.reset(); }
   for (auto it = m_annotationActions.cbegin(); it != m_annotationActions.cend(); ++it) {
     const bool available = it.key() == "duplicate-selection" || (it.key() == "paste" ? bool(m_annotationClipboard.read) : bool(m_annotationClipboard.publish));

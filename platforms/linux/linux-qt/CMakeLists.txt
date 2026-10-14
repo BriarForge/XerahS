@@ -43,6 +43,8 @@ add_library(xerahs_core STATIC
   src/image-editor/CanvasOperations.h
   src/image-editor/EditorSession.cpp
   src/image-editor/EditorSession.h
+  src/image-editor/RectangleGeometry.cpp
+  src/image-editor/RectangleGeometry.h
   src/image-editor/PrintLayout.cpp
   src/image-editor/PrintLayout.h
   src/image-editor/EditorViewport.cpp
@@ -108,7 +110,8 @@ target_include_directories(xerahs_editor_source PUBLIC app)
 target_link_libraries(xerahs_editor_source PUBLIC xerahs_editor_codecs Qt6::Widgets Qt6::PrintSupport)
 target_compile_options(xerahs_editor_source PRIVATE -Wall -Wextra -Wpedantic)
 add_library(xerahs_editor_canvas STATIC app/EditorCanvas.cpp app/EditorCanvas.h
-  app/NativeAnnotationTools.cpp app/NativeAnnotationTools.h)
+  app/NativeAnnotationTools.cpp app/NativeAnnotationTools.h
+  app/RectanglePropertiesDialog.cpp app/RectanglePropertiesDialog.h)
 set_target_properties(xerahs_editor_canvas PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_editor_canvas PUBLIC app)
 target_link_libraries(xerahs_editor_canvas PUBLIC xerahs_core Qt6::Widgets)

@@ -1,4 +1,5 @@
 #include "EditorCanvas.h"
+#include "RectanglePropertiesDialog.h"
 
 #include <QColorSpace>
 #include <QKeyEvent>
@@ -6,6 +7,7 @@
 #include <QNativeGestureEvent>
 #include <QPainter>
 #include <QPointer>
+#include <QScopeGuard>
 #include <QScrollBar>
 #include <QSignalBlocker>
 #include <QWheelEvent>
@@ -25,7 +27,7 @@ QTransform rotation(const RectangleAnnotation &r) {
   const QPointF centre{r.left() / 2 + r.right() / 2, r.top() / 2 + r.bottom() / 2};
   QTransform transform;
   transform.translate(centre.x(), centre.y());
-  transform.rotate(r.style.rotationDegrees);
+  transform.rotate(std::fmod(r.style.rotationDegrees, 360.0));
   transform.translate(-centre.x(), -centre.y());
   return transform;
 }
@@ -35,6 +37,15 @@ QPen outlinePen(QColor color, Qt::PenStyle style = Qt::SolidLine) {
   pen.setCosmetic(true);  // ES-019: fixed-width selection at every zoom
   return pen;
 }
+Qt::CursorShape resizeCursor(RectangleHandle handle, double rotation) {
+  double base = 0;
+  if (handle == RectangleHandle::Top || handle == RectangleHandle::Bottom) base = 90;
+  else if (handle == RectangleHandle::TopLeft || handle == RectangleHandle::BottomRight) base = 45;
+  else if (handle == RectangleHandle::TopRight || handle == RectangleHandle::BottomLeft) base = -45;
+  double angle = std::fmod(std::fmod(rotation, 180.0) + base, 180.0); if (angle < 0) angle += 180;
+  const std::array<Qt::CursorShape, 4> cursors{{Qt::SizeHorCursor, Qt::SizeFDiagCursor, Qt::SizeVerCursor, Qt::SizeBDiagCursor}};
+  return cursors[int(std::floor((angle + 22.5) / 45)) % 4];
+}
 }  // namespace
 
 EditorCanvas::EditorCanvas(EditorSession &session, const QImage &image, QWidget *parent, const QImage &displaySource)
@@ -42,6 +53,7 @@ EditorCanvas::EditorCanvas(EditorSession &session, const QImage &image, QWidget 
       m_displaySource(displaySource.isNull() ? displayCopy(image) : displaySource), m_view(image.size()) {
   setObjectName(QStringLiteral("editorCanvas"));
   setFocusPolicy(Qt::StrongFocus);
+  viewport()->setMouseTracking(true);
   setAccessibleName(QStringLiteral("Image canvas"));
   setAccessibleDescription(toolInstructions());
   horizontalScrollBar()->setAccessibleName(QStringLiteral("Horizontal image position"));
@@ -103,11 +115,12 @@ QString EditorCanvas::toolInstructions() const {
     case Tool::Crop:
       text = "Crop stays active: drag to choose the retained image region."; break;
   }
-  return text + " Escape cancels a gesture. Arrows move; Alt+arrows resize; R rotates; Delete removes selected objects. Control+wheel zooms; Space+drag pans.";
+  return text + " Drag a selected rectangle's square handles to resize; the opposite handle stays fixed. Rectangle Properties offers numeric bounds and style controls. "
+      "Escape cancels a gesture. Arrows move; Alt+arrows resize; R rotates; Delete removes selected objects. Control+wheel zooms; Space+drag pans.";
 }
 
 void EditorCanvas::setTool(Tool tool) {
-  if (!isEnabled()) { emit toolChanged(); return; }
+  if (!isEnabled() || m_propertiesPending) { emit toolChanged(); return; }
   cancelGesture();
   m_tool = tool;
   setAccessibleDescription(toolInstructions());
@@ -115,11 +128,50 @@ void EditorCanvas::setTool(Tool tool) {
   emit toolChanged();
 }
 
+bool EditorCanvas::canEditRectangle() const {
+  return m_session->selectedRectangle() && m_session->selectionEditable();
+}
+bool EditorCanvas::editRectangleProperties(QWidget *parent) {
+  if (!isEnabled() || interactionActive() || !canEditRectangle()) return false;
+  const RectangleAnnotation snapshot = *m_session->selectedRectangle(); const auto state = m_session->stateId();
+  const QPointer<EditorCanvas> owner(this); m_propertiesPending = true;
+  const auto restore = qScopeGuard([owner] { if (owner) { owner->m_propertiesPending = false; emit owner->changed(); } });
+  const auto properties = chooseRectangleProperties(snapshot, parent);
+  if (!owner || !properties) return false;
+  const bool changed = m_session->editRectangleProperties(snapshot.id, *properties, state);
+  viewport()->update();
+  if (!m_session->editDiagnostic().isEmpty()) { emit editRejected(m_session->editDiagnostic()); if (!owner) return false; }
+  return changed;
+}
+
+std::array<std::pair<RectangleHandle, QPointF>, 8> EditorCanvas::handles(const RectangleAnnotation &r) const {
+  const double gap = r.style.strokeWidth / 2 + 3 / m_view.zoom();
+  const double left = r.left() - gap, right = r.right() + gap, top = r.top() - gap, bottom = r.bottom() + gap;
+  const double cx = r.left() / 2 + r.right() / 2, cy = r.top() / 2 + r.bottom() / 2;
+  const auto point = [&](double x, double y) { return m_view.toView(rotation(r).map(QPointF(x, y))); };
+  return {{{RectangleHandle::TopLeft, point(left, top)}, {RectangleHandle::Top, point(cx, top)},
+      {RectangleHandle::TopRight, point(right, top)}, {RectangleHandle::Right, point(right, cy)},
+      {RectangleHandle::BottomRight, point(right, bottom)}, {RectangleHandle::Bottom, point(cx, bottom)},
+      {RectangleHandle::BottomLeft, point(left, bottom)}, {RectangleHandle::Left, point(left, cy)}}};
+}
+std::optional<RectangleHandle> EditorCanvas::handleAt(QPointF viewPoint) const {
+  if (m_tool == Tool::Crop || !canEditRectangle()) return {};
+  const auto *r = m_session->selectedRectangle();
+  if (!rectanglePropertiesDiagnostic({r->start, r->end, r->style}).isEmpty()) return {};
+  std::optional<RectangleHandle> nearest; double distance = 73;
+  for (const auto &[handle, at] : handles(*r)) {
+    const auto delta = viewPoint - at; const double squared = delta.x() * delta.x() + delta.y() * delta.y();
+    if (std::abs(delta.x()) <= 6 && std::abs(delta.y()) <= 6 && squared < distance) { nearest = handle; distance = squared; }
+  }
+  return nearest;
+}
+
 void EditorCanvas::resetDocument(EditorSession &session, const QImage &displaySource) {
   cancelGesture();
   m_session = &session;
   m_displaySource = displaySource;
   m_tool = Tool::Rectangle;
+  m_initialFit = false;
   setAccessibleDescription(toolInstructions());
   m_spaceHeld = false;
   viewport()->setCursor(Qt::ArrowCursor);
@@ -140,6 +192,9 @@ void EditorCanvas::sourceChanged() {
 void EditorCanvas::resizeEvent(QResizeEvent *event) {
   QAbstractScrollArea::resizeEvent(event);
   m_view.setViewSize(viewport()->size());
+  // Constructor geometry precedes the parent layout. Fit once to the actual
+  // initial canvas rather than retaining the tiny pre-layout viewport's zoom.
+  if (m_initialFit) { m_initialFit = false; m_view.fit(); }
   syncViewport();
 }
 
@@ -164,6 +219,11 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
   for (const Annotation &annotation : m_session->document().annotations) {
     const auto *r = std::get_if<RectangleAnnotation>(&annotation);
     if (!r || !r->visible) continue;
+    RectangleAnnotation resized;
+    if (m_resize && m_resize->preview && m_resize->state == m_session->stateId() &&
+        m_session->selection() == QSet<QUuid>{m_resize->original.id} && r->id == m_resize->original.id) {
+      resized = *r; resized.start = m_resize->preview->start; resized.end = m_resize->preview->end; r = &resized;
+    }
     const QRectF box(QPointF(r->left(), r->top()), QPointF(r->right(), r->bottom()));
     p.save();
     if (m_moving && m_session->selection().contains(r->id)) p.translate(m_moveLast - m_moveStart);
@@ -185,7 +245,23 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
       p.setPen(outlinePen(palette().highlight().color(), Qt::DashLine));
       p.drawRect(outline);
       p.restore();
+      if (m_tool != Tool::Crop && canEditRectangle() && rectanglePropertiesDiagnostic({r->start, r->end, r->style}).isEmpty()) {
+        p.save(); p.resetTransform(); p.setOpacity(1); p.setPen(QPen(Qt::black, 1)); p.setBrush(Qt::white);
+        for (const auto &[handle, at] : handles(*r)) {
+          Q_UNUSED(handle);
+          const auto previewAt = m_moving ? at + (m_moveLast - m_moveStart) * m_view.zoom() : at;
+          p.drawRect(QRectF(previewAt - QPointF(4, 4), QSizeF(8, 8)));
+        }
+        p.restore();
+      }
     }
+  }
+  if (m_resize && (!m_resize->preview || m_resize->state != m_session->stateId() || m_session->selection() != QSet<QUuid>{m_resize->original.id})) {
+    p.save(); p.resetTransform(); const QPointF at = m_view.toView(m_resize->last);
+    for (const QPen &pen : {QPen(Qt::white, 4), QPen(Qt::black, 2)}) {
+      p.setPen(pen); p.drawLine(at - QPointF(5, 5), at + QPointF(5, 5)); p.drawLine(at + QPointF(5, -5), at + QPointF(-5, 5));
+    }
+    p.restore();
   }
   if (m_drag) {
     p.setBrush(Qt::NoBrush);
@@ -218,6 +294,11 @@ void EditorCanvas::mousePressEvent(QMouseEvent *event) {
     viewport()->update();
     return;
   }
+  if (!(event->modifiers() & Qt::ControlModifier)) if (const auto handle = handleAt(event->position())) {
+    const auto original = *m_session->selectedRectangle();
+    m_resize = ResizeGesture{original, *handle, m_session->stateId(), at, at, RectangleProperties{original.start, original.end, original.style}};
+    viewport()->setCursor(resizeCursor(*handle, original.style.rotationDegrees)); viewport()->update(); emit changed(); return;
+  }
   if (const auto hit = topmostAt(at)) {
     const bool additive = event->modifiers() & Qt::ControlModifier;
     QList<QUuid> ids;
@@ -245,12 +326,20 @@ void EditorCanvas::mouseMoveEvent(QMouseEvent *event) {
     m_view.pan(event->position() - m_panLast);
     m_panLast = event->position();
     syncViewport();
+  } else if (m_resize) {
+    m_resize->last = m_view.toImage(event->position()); const auto delta = m_resize->last - m_resize->start;
+    m_resize->preview = resizeRectangleGeometry(m_resize->original, m_resize->handle, {delta.x(), delta.y()}).properties;
+    viewport()->update();
   } else if (m_drag) {
     m_drag->second = m_view.toImage(event->position());
     viewport()->update();
   } else if (m_moving) {
     m_moveLast = m_view.toImage(event->position());
     viewport()->update();
+  } else if (!m_spaceHeld) {
+    const auto handle = handleAt(event->position());
+    viewport()->setCursor(handle ? resizeCursor(*handle, m_session->selectedRectangle()->style.rotationDegrees)
+        : (m_tool == Tool::Crop ? Qt::CrossCursor : Qt::ArrowCursor));
   }
 }
 
@@ -265,7 +354,11 @@ void EditorCanvas::mouseReleaseEvent(QMouseEvent *event) {
   if (event->button() != Qt::LeftButton) return;
   const QPointF at = m_view.toImage(event->position());
   QString rejection;
-  if (m_drag) {
+  if (m_resize) {
+    const auto gesture = *m_resize; m_resize.reset(); const auto delta = at - gesture.start;
+    m_session->resizeRectangle(gesture.original.id, gesture.handle, {delta.x(), delta.y()}, gesture.state);
+    rejection = m_session->editDiagnostic(); viewport()->setCursor(Qt::ArrowCursor);
+  } else if (m_drag) {
     const QPointF start = m_drag->first;
     m_drag.reset();
     if (m_tool == Tool::Crop) emit cropRequested(start, at);
@@ -288,6 +381,7 @@ void EditorCanvas::mouseReleaseEvent(QMouseEvent *event) {
 
 void EditorCanvas::cancelGesture() {
   m_drag.reset();
+  m_resize.reset();
   m_moving = false;
   if (m_panning) m_view.setOffset(m_panOriginalOffset);
   m_panning = false;
@@ -332,7 +426,7 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
     viewport()->setCursor(m_panning ? Qt::ClosedHandCursor : Qt::OpenHandCursor);
     return;
   }
-  if (event->key() == Qt::Key_Escape && (m_drag || m_moving || m_panning)) {
+  if (event->key() == Qt::Key_Escape && (m_drag || m_moving || m_panning || m_resize)) {
     cancelGesture();
     syncViewport();
     return;

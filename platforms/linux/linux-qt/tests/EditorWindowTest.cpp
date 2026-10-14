@@ -9,6 +9,7 @@
 #include "RecentImageMenu.h"
 #include "NativeEditorWindowState.h"
 #include "NativeEditorAppearance.h"
+#include "RectanglePropertiesDialog.h"
 
 #include <QAction>
 #include <QColorSpace>
@@ -208,6 +209,60 @@ private slots:
   }
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  void rectanglePropertiesHaveAtomicHistoryDefaultsAndActualSaveRecovery_data() {
+    QTest::addColumn<bool>("apply"); QTest::newRow("apply") << true; QTest::newRow("cancel") << false;
+  }
+  void rectanglePropertiesHaveAtomicHistoryDefaultsAndActualSaveRecovery() {
+    QFETCH(bool, apply); QTemporaryDir dir; const auto preferencePath = dir.filePath("prefs.json"), path = dir.filePath("edited.png");
+    QVERIFY(initializeNativeEditorPreferences(preferencePath).isEmpty());
+    QVERIFY(applyToolbarPreferences(QJsonArray{QJsonObject{{"Id", "rectangle-properties"}, {"Hotkey", "F8"}, {"IsVisible", false}}}, nativeEditorPreferenceRevision()).saved);
+    auto prepared = prepareCapturedSource(fixture()); QVERIFY(prepared.document); auto document = *prepared.document;
+    RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {4, 4}; r.end = {20, 16}; r.style = {0x80112233, 0x40223344, 3, 37.25, .42}; r.extra = {{"future", "kept"}};
+    document.annotations = {r}; document.embeddedImages = {{"kept", document.sourceImagePng}};
+    std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedDocument(document)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>();
+    auto *action = window->findChild<QAction *>("rectangleProperties"); QVERIFY(action); QVERIFY(!action->isEnabled());
+    QTest::mouseClick(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView({12, 10}).toPoint()); QVERIFY(action->isEnabled());
+    saveUntitled(*window, path); const auto original = storedBytes(path), companion = storedBytes(path + ".xann"), preferences = storedBytes(preferencePath);
+    const auto view = canvas->viewState().offset(); bool acted = false; QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *dialog = qobject_cast<RectanglePropertiesDialog *>(QApplication::activeModalWidget()); if (!dialog || acted) return; acted = true;
+      const auto close = qScopeGuard([dialog] { if (dialog->isVisible()) dialog->reject(); });
+      QVERIFY(!canvas->isEnabled()); QVERIFY(!action->isEnabled()); QVERIFY(!window->close());
+      QVERIFY(!window->findChild<QAction *>("saveImage")->isEnabled()); QVERIFY(!window->findChild<QAction *>("selectTool")->isEnabled());
+      QCOMPARE(storedBytes(path), original); QCOMPARE(storedBytes(path + ".xann"), companion);
+      dialog->findChild<QLineEdit *>("rectangleLeft")->setText("2.5"); dialog->findChild<QLineEdit *>("rectangleTop")->setText("3.75");
+      dialog->findChild<QLineEdit *>("rectangleWidth")->setText("24"); dialog->findChild<QLineEdit *>("rectangleHeight")->setText("12");
+      dialog->findChild<QLineEdit *>("rectangleStrokeWidth")->setText("1.5"); dialog->findChild<QLineEdit *>("rectangleRotation")->setText("90");
+      dialog->findChild<QLineEdit *>("rectangleOpacity")->setText("0.5"); dialog->findChild<QLineEdit *>("rectangleStrokeColor")->setText("#80334455");
+      dialog->findChild<QLineEdit *>("rectangleFillColor")->setText("#40445566");
+      if (apply && qEnvironmentVariableIsSet("XERAHS_RECTANGLE_PROPERTIES_QA"))
+        QVERIFY(dialog->grab().save(qEnvironmentVariable("XERAHS_RECTANGLE_PROPERTIES_QA")));
+      dialog->findChild<QDialogButtonBox *>()->button(apply ? QDialogButtonBox::Ok : QDialogButtonBox::Cancel)->click();
+    });
+    window->activateWindow(); canvas->setFocus(); QTRY_VERIFY(window->isActiveWindow()); timer.start(5); QTest::keyClick(canvas, Qt::Key_F8); timer.stop(); QVERIFY(acted);
+    QVERIFY(canvas->isEnabled()); QVERIFY(action->isEnabled()); QCOMPARE(canvas->viewState().offset(), view); QCOMPARE(storedBytes(preferencePath), preferences);
+    QCOMPARE(storedBytes(path), original); QCOMPARE(storedBytes(path + ".xann"), companion); QCOMPARE(window->windowTitle().contains(" •"), apply);
+    if (!apply) return;
+    trigger(*window, "undo"); QVERIFY(!window->windowTitle().contains(" •")); trigger(*window, "redo"); QVERIFY(window->windowTitle().contains(" •"));
+    trigger(*window, "saveImage"); const auto saved = loadSource(path); QVERIFY(saved.document); QCOMPARE(saved.image, fixture());
+    QCOMPARE(saved.document->embeddedImages, document.embeddedImages); const auto &edited = std::get<RectangleAnnotation>(saved.document->annotations[0]);
+    QCOMPARE(edited.id, r.id); QCOMPARE(edited.extra, r.extra); QCOMPARE(edited.start, (PointF{2.5, 3.75})); QCOMPARE(edited.end, (PointF{26.5, 15.75}));
+    QCOMPARE(edited.style.strokeWidth, 1.5); QCOMPARE(edited.style.rotationDegrees, 90.0); QCOMPARE(edited.style.opacity, .5); QCOMPARE(edited.style.strokeColor, Argb(0x80334455)); QCOMPARE(edited.style.fillColor, Argb(0x40445566));
+    QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView({38, 28}).toPoint());
+    QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView({52, 37}).toPoint()); trigger(*window, "saveImage");
+    const auto final = loadSource(path); QVERIFY(final.document); QCOMPARE(final.document->annotations.size(), size_t(2));
+    const auto &created = std::get<RectangleAnnotation>(final.document->annotations[1]); QCOMPARE(created.style.strokeWidth, 4.0); QCOMPARE(created.style.strokeColor, Argb(0xFFFF0000)); QCOMPARE(created.style.opacity, 1.0);
+    QCOMPARE(storedBytes(preferencePath), preferences);
+  }
+  void destroyingTheEditorDuringPropertiesDoesNotWriteFiles() {
+    QTemporaryDir dir; const auto path = dir.filePath("source.png"); QVERIFY(fixture().save(path)); const auto original = storedBytes(path);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); drawRectangle(*canvas);
+    bool acted = false; QTimer timer; connect(&timer, &QTimer::timeout, [&] {
+      if (!qobject_cast<RectanglePropertiesDialog *>(QApplication::activeModalWidget()) || acted) return; acted = true; window.reset();
+    });
+    timer.start(5); trigger(*window, "rectangleProperties"); timer.stop(); QVERIFY(acted); QVERIFY(!window);
+    QCOMPARE(storedBytes(path), original); QVERIFY(!QFile::exists(path + ".xann"));
+  }
   void explicitToolsShareMenusHotkeysBusyGuardAndEditableSave() {
     QTemporaryDir dir; const auto preferences = dir.filePath("preferences.json"), path = dir.filePath("tools.png");
     QVERIFY(initializeNativeEditorPreferences(preferences).isEmpty());

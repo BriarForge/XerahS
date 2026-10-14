@@ -4,6 +4,7 @@
 
 #include "image-editor/AnnotationDocument.h"
 #include "image-editor/AnnotationTransfer.h"
+#include "image-editor/RectangleGeometry.h"
 
 #include <QSet>
 
@@ -46,6 +47,12 @@ public:
   bool reorderSelection(Order order);
   bool deleteSelection();
   bool selectionEditable() const;
+  // Borrowed until the next document mutation; callers freeze a copy for UI.
+  const RectangleAnnotation *selectedRectangle() const;
+  // Absolute selected-object edits never change creation defaults. The state
+  // and exact single selection must still match the user's frozen snapshot.
+  bool editRectangleProperties(const QUuid &, const RectangleProperties &, quint64 expectedState);
+  bool resizeRectangle(const QUuid &, RectangleHandle, PointF delta, quint64 expectedState);
   struct TransferEditResult { bool changed = false; QString diagnostic; QList<QUuid> insertedIds; };
   TransferEditResult duplicateSelection(double offset = 10);
   // Caller owns this session exclusively. The identity factory is a pure,

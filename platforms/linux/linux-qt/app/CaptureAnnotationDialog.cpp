@@ -22,6 +22,13 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   m_canvas = new EditorCanvas(m_session, m_image, this, source.displayImage); layout->addWidget(m_canvas);
   const auto tools = annotationToolActions(*m_canvas, this, false);
   bar->addAction(tools.value("select-tool")); bar->addAction(tools.value("rectangle-tool"));
+  auto *properties = bar->addAction("Rectangle Properties…"); properties->setObjectName("rectangleProperties"); properties->setAutoRepeat(false);
+  properties->setToolTip("Edit one selected, visible and unlocked rectangle. Creation defaults stay unchanged.");
+  const auto refreshProperties = [this, properties] { properties->setEnabled(m_canvas->canEditRectangle() && !m_canvas->interactionActive()); };
+  connect(m_canvas, &EditorCanvas::changed, properties, refreshProperties);
+  connect(m_canvas, &EditorCanvas::toolChanged, properties, refreshProperties);
+  connect(m_canvas, &EditorCanvas::viewportChanged, properties, refreshProperties); refreshProperties();
+  connect(properties, &QAction::triggered, m_canvas, [this] { m_canvas->editRectangleProperties(this); });
   layout->insertWidget(2, annotationToolInstructions(*m_canvas, this));
   m_saveSidecar = new QCheckBox("Also save editable annotations beside each saved PNG (.xann)", this);
   m_saveSidecar->setObjectName("captureSaveAnnotationSidecar"); layout->addWidget(m_saveSidecar);
@@ -30,8 +37,8 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   privacy->setWordWrap(true); privacy->setTextFormat(Qt::PlainText); layout->addWidget(privacy);
   auto *undo = bar->addAction("Undo"); undo->setShortcut(QKeySequence::Undo); addAction(undo);
   auto *redo = bar->addAction("Redo"); redo->setShortcut(QKeySequence::Redo); addAction(redo);
-  connect(undo, &QAction::triggered, this, [this] { if (!m_canvas->interactionActive()) { m_session.undo(); m_canvas->viewport()->update(); } });
-  connect(redo, &QAction::triggered, this, [this] { if (!m_canvas->interactionActive()) { m_session.redo(); m_canvas->viewport()->update(); } });
+  connect(undo, &QAction::triggered, this, [this, refreshProperties] { if (!m_canvas->interactionActive()) { m_session.undo(); m_canvas->viewport()->update(); refreshProperties(); } });
+  connect(redo, &QAction::triggered, this, [this, refreshProperties] { if (!m_canvas->interactionActive()) { m_session.redo(); m_canvas->viewport()->update(); refreshProperties(); } });
   connect(bar->addAction("Zoom in"), &QAction::triggered, m_canvas, &EditorCanvas::zoomIn);
   connect(bar->addAction("Zoom out"), &QAction::triggered, m_canvas, &EditorCanvas::zoomOut);
   connect(bar->addAction("100%"), &QAction::triggered, m_canvas, &EditorCanvas::resetZoom);

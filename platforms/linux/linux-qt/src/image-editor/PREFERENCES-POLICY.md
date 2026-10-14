@@ -321,7 +321,7 @@ Core tests cover independent gesture references, collection/type/length bounds,
 protected/reserved collisions, explicit empty layouts, nullable groups, isolated
 recovery, reset, extensions, inactive future data, real private storage and
 restart. Native `ToolbarDialog` provides reorder, show/hide, nullable grouping,
-additional hotkeys and draft reset for the 45 currently registered editor
+additional hotkeys and draft reset for the 46 currently registered editor
 commands. Apply saves before publishing to every open editor; Cancel,
 invalid/locked/stale/read-only writes leave the layout and preferences intact.
 The active native hotkey cell editor is committed before Apply reads the draft.
@@ -349,4 +349,6 @@ Annotation Cut/Copy/Paste/Duplicate add four hidden native commands (43 total).
 Their fixed protected shortcuts, text/modal/busy precedence and remaining
 qualification are indexed in [ANNOTATION-TRANSFER.md](../../app/ANNOTATION-TRANSFER.md).
 
-Select and Rectangle add hidden `select-tool` and `rectangle-tool` commands (45 current commands) with unchanged fourteen visible defaults. Checked native controls, text/busy shortcut precedence and explicit mode guidance are indexed in [ANNOTATION-TOOLS.md](../../app/ANNOTATION-TOOLS.md). Their ephemeral state creates no preference write or document mutation. Complete catalogue/physical qualification remains Required.
+The tool-mode checkpoint added hidden `select-tool` and `rectangle-tool` commands (45 commands at that checkpoint) with unchanged fourteen visible defaults. Checked native controls, text/busy shortcut precedence and explicit mode guidance are indexed in [ANNOTATION-TOOLS.md](../../app/ANNOTATION-TOOLS.md). Their ephemeral state creates no preference write or document mutation. Complete catalogue/physical qualification remains Required.
+
+`rectangle-properties` adds a hidden selected-object command (46 current commands) without changing the fourteen visible defaults. It edits only the chosen rectangle; border/fill/thickness/opacity defaults and the private preference file remain unchanged. Native text/modal/busy and no-repeat rules apply. [Rectangle edit evidence](../../app/RECTANGLE-EDIT.md) covers actual subsequent editor/capture creation and save/reopen; full catalogue/human qualification stays Required.

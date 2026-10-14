@@ -52,6 +52,8 @@ QLabel *annotationToolInstructions(EditorCanvas &canvas, QWidget *parent) {
   return label;
 }
 QString annotationEditMessage(const QString &diagnostic) {
+  if (diagnostic == "annotation-edit-stale") return "The document or selection changed during the edit. The resize or properties edit was not applied.";
+  if (diagnostic == "annotation-style-invalid") return "The rectangle style contains invalid values. The document was kept.";
   if (diagnostic == "annotation-geometry-invalid") return "The edit was rejected because the bounds would be empty, invalid or too large. The document was kept.";
   if (diagnostic == "annotation-selection-protected") return "Hidden or locked objects cannot be edited. The document was kept.";
   return "The annotation edit could not be prepared. The document was kept.";

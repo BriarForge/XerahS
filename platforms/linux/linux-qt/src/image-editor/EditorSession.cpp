@@ -8,11 +8,7 @@ namespace xerahs::editor {
 
 namespace {
 bool finiteGeometry(const RectangleAnnotation &r) {
-  return std::isfinite(r.start.x) && std::isfinite(r.start.y) && std::isfinite(r.end.x) &&
-      std::isfinite(r.end.y) && std::isfinite(r.end.x - r.start.x) && std::isfinite(r.end.y - r.start.y) &&
-      r.end.x > r.start.x && r.end.y > r.start.y && std::isfinite(r.style.rotationDegrees) &&
-      std::isfinite(r.style.strokeWidth) && r.style.strokeWidth > 0 && r.style.strokeWidth <= 10000 &&
-      std::isfinite(r.style.opacity) && r.style.opacity >= 0 && r.style.opacity <= 1;
+  return rectanglePropertiesDiagnostic({r.start, r.end, r.style}).isEmpty();
 }
 bool sameEditableFields(const RectangleAnnotation &a, const RectangleAnnotation &b) {
   return a.start == b.start && a.end == b.end && a.style.strokeWidth == b.style.strokeWidth &&
@@ -73,6 +69,33 @@ bool EditorSession::selectionEditable() const {
   if (m_selection.isEmpty()) return false;
   for (const auto &a : document().annotations) if (m_selection.contains(annotationId(a)) && !annotationEditable(a)) return false;
   return true;
+}
+
+const RectangleAnnotation *EditorSession::selectedRectangle() const {
+  if (m_selection.size() != 1) return nullptr;
+  for (const auto &a : document().annotations) if (m_selection.contains(annotationId(a))) return std::get_if<RectangleAnnotation>(&a);
+  return nullptr;
+}
+
+bool EditorSession::editRectangleProperties(const QUuid &id, const RectangleProperties &properties, quint64 expectedState) {
+  m_editDiagnostic.clear();
+  if (expectedState != stateId() || m_selection.size() != 1 || !m_selection.contains(id)) { m_editDiagnostic = "annotation-edit-stale"; return false; }
+  const auto *selected = selectedRectangle();
+  if (!selected) { m_editDiagnostic = "annotation-type-unsupported"; return false; }
+  if (!selectionEditable()) { m_editDiagnostic = "annotation-selection-protected"; return false; }
+  m_editDiagnostic = rectanglePropertiesDiagnostic(properties); if (!m_editDiagnostic.isEmpty()) return false;
+  return changeSelected([&](RectangleAnnotation &r) { r.start = properties.start; r.end = properties.end; r.style = properties.style; });
+}
+
+bool EditorSession::resizeRectangle(const QUuid &id, RectangleHandle handle, PointF delta, quint64 expectedState) {
+  m_editDiagnostic.clear();
+  if (expectedState != stateId() || m_selection.size() != 1 || !m_selection.contains(id)) { m_editDiagnostic = "annotation-edit-stale"; return false; }
+  const auto *selected = selectedRectangle();
+  if (!selected) { m_editDiagnostic = "annotation-type-unsupported"; return false; }
+  if (!selectionEditable()) { m_editDiagnostic = "annotation-selection-protected"; return false; }
+  const auto prepared = resizeRectangleGeometry(*selected, handle, delta);
+  if (!prepared.properties) { m_editDiagnostic = prepared.diagnostic; return false; }
+  return editRectangleProperties(id, *prepared.properties, expectedState);
 }
 
 template <typename Change>
