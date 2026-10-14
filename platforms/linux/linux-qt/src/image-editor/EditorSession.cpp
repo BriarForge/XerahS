@@ -265,6 +265,15 @@ bool EditorSession::canRotateSelection() const {
   });
 }
 
+bool EditorSession::reorderSelection(Order order, quint64 expectedState, const QSet<QUuid> &expectedSelection) {
+  m_editDiagnostic.clear();
+  if (stateId() != expectedState || m_selection != expectedSelection) { m_editDiagnostic = "annotation-edit-stale"; return false; }
+  switch (order) {
+    case Order::Forward: case Order::Backward: case Order::Front: case Order::Back: break;
+    default: m_editDiagnostic = "annotation-order-invalid"; return false;
+  }
+  return reorderSelection(order);
+}
 bool EditorSession::reorderSelection(Order order) {
   m_editDiagnostic.clear();
   if (!selectionEditable()) {

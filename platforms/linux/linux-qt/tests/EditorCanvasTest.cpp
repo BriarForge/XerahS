@@ -59,6 +59,54 @@ private slots:
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());
   }
+  void catalogueAndBracketOrderingKeysCommitOneGroup_data() {
+    QTest::addColumn<int>("key"); QTest::addColumn<bool>("control"); QTest::addColumn<QString>("indices");
+    QTest::newRow("home") << int(Qt::Key_Home) << false << QString("02413");
+    QTest::newRow("end") << int(Qt::Key_End) << false << QString("13024");
+    QTest::newRow("page-up") << int(Qt::Key_PageUp) << false << QString("02143");
+    QTest::newRow("page-down") << int(Qt::Key_PageDown) << false << QString("10324");
+    QTest::newRow("front-alias") << int(Qt::Key_BracketRight) << true << QString("02413");
+    QTest::newRow("back-alias") << int(Qt::Key_BracketLeft) << true << QString("13024");
+    QTest::newRow("forward-alias") << int(Qt::Key_BracketRight) << false << QString("02143");
+    QTest::newRow("backward-alias") << int(Qt::Key_BracketLeft) << false << QString("10324");
+  }
+  void catalogueAndBracketOrderingKeysCommitOneGroup() {
+    QFETCH(int, key); QFETCH(bool, control); QFETCH(QString, indices); const auto source = image(); EditorSession prepared(document());
+    for (int i = 0; i < 5; ++i) QVERIFY(prepared.createRectangle({100.0 + i * 100, 100}, {160.0 + i * 100, 160}));
+    const auto d = prepared.document(); EditorSession session(d); session.select({annotationId(d.annotations[1]), annotationId(d.annotations[3])}); const auto selection = session.selection();
+    EditorCanvas canvas(session, source); canvas.resize(900, 700); canvas.show(); canvas.activateWindow(); canvas.setFocus(); QTRY_VERIFY(canvas.isActiveWindow());
+    QSignalSpy rejected(&canvas, &EditorCanvas::editRejected); QTest::keyClick(&canvas, Qt::Key(key), control ? Qt::ControlModifier : Qt::NoModifier);
+    auto expected = d; expected.annotations.clear(); for (auto c : indices) expected.annotations.push_back(d.annotations[c.digitValue()]);
+    QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(session.selection(), selection); QCOMPARE(session.undoCount(), 1); QCOMPARE(rejected.count(), 0);
+    QKeyEvent repeat(QEvent::KeyPress, key, control ? Qt::ControlModifier : Qt::NoModifier, {}, true); QApplication::sendEvent(&canvas, &repeat); QCOMPARE(session.undoCount(), 1);
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(d)); QCOMPARE(session.selection(), selection); QVERIFY(!session.dirty());
+    QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(source, image());
+  }
+  void nativeOrderingGuardsPendingStateSelectionReplacementAndOwner_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"apply", "defaults", "stale-state", "stale-selection", "replacement", "disabled", "begin-destroy", "reject-destroy"}) QTest::newRow(mode) << QString(mode);
+  }
+  void nativeOrderingGuardsPendingStateSelectionReplacementAndOwner() {
+    QFETCH(QString, mode); const auto source = image(); EditorSession prepared(document());
+    const auto a = *prepared.createRectangle({100, 100}, {160, 160}), b = *prepared.createRectangle({300, 100}, {360, 160}); const auto d = prepared.document();
+    EditorSession session(d), replacement(d); session.select({a}); replacement.select({a}); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo());
+    auto expected = serializeDocument(d); auto expectedSelection = session.selection(); int undo = 0, redo = 1; bool intervened = false;
+    auto canvas = std::make_unique<EditorCanvas>(session, source); QSignalSpy rejected(canvas.get(), &EditorCanvas::editRejected);
+    if (mode == "disabled") canvas->setEnabled(false); if (mode == "reject-destroy") connect(canvas.get(), &EditorCanvas::editRejected, [&] { canvas.reset(); });
+    connect(canvas.get(), &EditorCanvas::changed, [&] {
+      if (intervened || !canvas->interactionActive()) return; intervened = true; QVERIFY(!canvas->reorderSelection(EditorSession::Order::Back));
+      if (mode == "begin-destroy") { canvas.reset(); return; }
+      if (mode == "replacement") canvas->resetDocument(replacement, source);
+      if (mode == "stale-selection" || mode == "reject-destroy") { session.select({b}); expectedSelection = session.selection(); }
+      if (mode == "stale-state") { QVERIFY(session.moveSelection(2, 0)); expected = serializeDocument(session.document()); undo = 1; redo = 0; }
+      if (mode == "defaults") { auto defaults = session.toolStyle(); defaults.strokeWidth = 9; QVERIFY(session.setCreationStyle(defaults)); }
+    });
+    const bool changed = canvas->reorderSelection(EditorSession::Order::Front); QCOMPARE(changed, mode == "apply" || mode == "defaults"); QCOMPARE(intervened, mode != "disabled");
+    if (changed) { auto ordered = d; ordered.annotations = {d.annotations[1], d.annotations[0]}; QCOMPARE(serializeDocument(session.document()), serializeDocument(ordered)); QVERIFY(session.undo()); }
+    QCOMPARE(serializeDocument(session.document()), expected); QCOMPARE(session.selection(), expectedSelection); QCOMPARE(session.undoCount(), undo); QCOMPARE(session.redoCount(), redo); QCOMPARE(session.dirty(), mode == "stale-state");
+    QCOMPARE(session.toolStyle().strokeWidth, mode == "defaults" ? 9.0 : 4.0); QCOMPARE(replacement.undoCount(), 0); QCOMPARE(serializeDocument(replacement.document()), serializeDocument(d));
+    const bool stale = mode.startsWith("stale-") || mode == "replacement" || mode == "reject-destroy"; QCOMPARE(rejected.count(), stale ? 1 : 0); if (stale) QCOMPARE(rejected[0][0].toString(), QString("annotation-edit-stale"));
+    if (canvas) QVERIFY(!canvas->interactionActive());
+  }
   void colorPickerGuardsDocumentSelectionDefaultsAndOwner_data() {
     QTest::addColumn<bool>("fill"); QTest::addColumn<QString>("mode");
     for (bool fill : {false, true}) for (const auto *mode : {"apply", "cancel", "no-op", "defaults-only", "stale-document", "stale-selection", "stale-defaults", "replacement", "destroy", "dialog-destroy", "reject-destroy"})

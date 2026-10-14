@@ -77,6 +77,7 @@ private:
   bool rotateSelected();
   bool editColor(xerahs::editor::EditorSession::ColorTarget);
   bool changeStrokeWidth(bool increase);
+  bool reorderSelected(xerahs::editor::EditorSession::Order);
   void recordRecentImage(const QString &absolutePath);
   void applyCreationDefaults();
   void persistDrawingDefaults(quint64 expectedRevision);
@@ -100,6 +101,7 @@ private:
   NativeEditorWindowState *m_windowState = nullptr;
   NativeEditorToolbar *m_toolbarController = nullptr;
   QMap<QString, QAction *> m_toolbarActions;
+  QMap<QString, QAction *> m_orderActions;
   QAction *m_undo = nullptr;
   QAction *m_redo = nullptr;
   QAction *m_delete = nullptr;

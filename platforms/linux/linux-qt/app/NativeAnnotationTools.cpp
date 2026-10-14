@@ -3,9 +3,40 @@
 #include <QAction>
 #include <QLabel>
 #include <QSignalBlocker>
+#include <QPointer>
 #include <array>
 
 namespace xerahs::app {
+QMap<QString, QAction *> annotationOrderActions(EditorCanvas &canvas, QObject *owner,
+    std::function<void(xerahs::editor::EditorSession::Order)> dispatch, std::function<bool()> ready) {
+  using Order = xerahs::editor::EditorSession::Order;
+  struct Command { const char *id, *name, *label, *key; Order order; };
+  const QPointer<EditorCanvas> guarded(&canvas); QMap<QString, QAction *> actions;
+  for (const auto &entry : std::array<Command, 4>{{
+      {"bring-forward", "bringForward", "Bring Forward", "Page Up", Order::Forward},
+      {"send-backward", "sendBackward", "Send Backward", "Page Down", Order::Backward},
+      {"bring-to-front", "bringToFront", "Bring to Front", "Home", Order::Front},
+      {"send-to-back", "sendToBack", "Send to Back", "End", Order::Back}}}) {
+    auto *action = new QAction(QString::fromLatin1(entry.label), owner);
+    action->setObjectName(QString::fromLatin1(entry.name)); action->setAutoRepeat(false);
+    action->setStatusTip(QString("%1 on the canvas. Reorder the selected group in one undo step, keeping its relative order. Creation defaults stay unchanged.").arg(QString::fromLatin1(entry.key)));
+    action->setToolTip(action->statusTip());
+    // Keep default Home/End/Page navigation local to the canvas, rather than
+    // installing window shortcuts that steal native list or text navigation.
+    const auto update = [guarded, action, ready] {
+      action->setEnabled(guarded && guarded->isEnabled() && !guarded->interactionActive() && guarded->canOrderSelection() && (!ready || ready()));
+    };
+    QObject::connect(&canvas, &EditorCanvas::changed, action, update);
+    QObject::connect(&canvas, &EditorCanvas::toolChanged, action, update);
+    QObject::connect(&canvas, &EditorCanvas::viewportChanged, action, update); update();
+    QObject::connect(action, &QAction::triggered, &canvas, [guarded, dispatch, ready, order = entry.order] {
+      if (!guarded || !guarded->isEnabled() || guarded->interactionActive() || (ready && !ready())) return;
+      if (dispatch) dispatch(order); else guarded->reorderSelection(order);
+    });
+    actions.insert(QString::fromLatin1(entry.id), action);
+  }
+  return actions;
+}
 QMap<QString, QAction *> annotationToolActions(EditorCanvas &canvas, QObject *owner, bool includeCrop) {
   using Tool = EditorCanvas::Tool;
   QMap<QString, QAction *> actions;
@@ -52,6 +83,7 @@ QLabel *annotationToolInstructions(EditorCanvas &canvas, QWidget *parent) {
   return label;
 }
 QString annotationEditMessage(const QString &diagnostic) {
+  if (diagnostic == "annotation-order-invalid") return "The annotation ordering command is invalid. The document was kept.";
   if (diagnostic == "annotation-edit-stale") return "The document, selection or creation defaults changed during the edit. The annotation operation was not applied.";
   if (diagnostic == "annotation-style-invalid") return "The rectangle style contains invalid values. The document was kept.";
   if (diagnostic == "annotation-geometry-invalid") return "The edit was rejected because the bounds would be empty, invalid or too large. The document was kept.";

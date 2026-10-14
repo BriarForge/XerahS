@@ -1,6 +1,6 @@
 # Linux contract scope audit
 
-Audit date: 12 October 2026; evidence updated 14 October 2026. Starting implementation: `82ef55e` on `main`.
+Audit date: 12 October 2026; evidence updated 15 October 2026. Starting implementation: `82ef55e` on `main`.
 Source of truth: Product Contract 0.3.1, its capability specifications,
 scenarios, published vectors, parity ledgers and [readiness gates](../../../product-contract/READINESS.md).
 This is an implementation audit and work ordering record, not an acceptance,
@@ -186,8 +186,11 @@ clipboard/assets, target/resource/privacy/security/a11y/human gates remain Requi
    Numeric Rectangle drafts now fence generation and use an owned nested alpha
    picker; matching-state replacement and owner destruction preserve committed
    state. Thickness now guards document/default admission and editor publication;
-   capture controls keep defaults local with a visible numeric value. Next expose
-   guarded accessible ordering commands and catalogue gestures, while resolving Ellipse schema/rasterization clarification
+   capture controls keep defaults local with a visible numeric value. Four guarded
+   ordering commands now expose native editor/capture controls and canvas-local
+   candidate catalogue gestures, retaining group order and native text/list
+   precedence. Next guard Delete/Backspace and add a capture Delete control,
+   while resolving Ellipse schema/rasterization clarification
    EA-005-LINUX-2026-10-14 in ANNOTATION-TOOLS.md, full annotation/asset clipboard
    under EA-016/017 and native output
    service handoffs and full Print qualification under EO-008/014/015 while
@@ -292,5 +295,28 @@ seconds, 114 unchanged vectors and 32 tooling tests, plus six affected Qt 6.4.2
 targets in 21.28 seconds. Contract lint/backlog/effective instructions and exact
 pushed Ubuntu CI are reported with the checkpoint. Full scope, trace labels and
 native/resource/a11y/privacy/security/parity/human/release gates remain Required.
-Next expose four guarded native ordering controls and catalogue gestures with
-text/list/canvas precedence and actual history/persistence/publication evidence.
+The subsequent [ordering checkpoint](app/ANNOTATION-ORDER.md) supplies those four
+guarded native commands, canvas-local gestures, protected native text/list
+precedence and real history/persistence/publication evidence. The catalogue
+approval and physical/native/human gates remain Required.
+
+
+The [ordering evidence](app/ANNOTATION-ORDER.md) and candidate machine map index
+four guarded editor/capture controls, frozen state/selection/generation dispatch,
+one-step exact history and independently declared single/group/opaque array
+orders. Opaque payload, source, assets, fields and preferences survive actual
+editor PNG/.xann reopen and capture publication with independent overlap pixels.
+Empty/protected/no-op/stale/invalid/reentrant/owner refusal preserves committed
+state and files. Canvas-local candidate catalogue gestures and bracket aliases
+share admission; custom navigation yields to native list/text/modal/busy input.
+The Qt Page-key canonicalization regression is covered on both Qt versions.
+This checkpoint passed 44 local CTest targets in 44.38 seconds, 114 unchanged
+published vectors and 32 tooling tests, with eight affected Qt 6.4.2 targets in
+21.35 seconds. Lint/backlog/effective instructions and exact pushed Ubuntu CI
+are reported with the checkpoint. The native registry has 52 commands with
+fourteen visible defaults unchanged. Trace statuses/dispositions, full scope and
+native/resource/a11y/privacy/security/parity/human/release gates remain unchanged
+and Required; the shortcut catalogue still awaits product-owner approval.
+Next guard native Delete/Backspace state/selection/generation dispatch and add a
+focusable capture Delete control with protected/opaque group history, stale/owner
+refusal, text/modal precedence and actual editor/capture persistence evidence.

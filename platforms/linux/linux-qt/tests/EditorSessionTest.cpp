@@ -64,6 +64,48 @@ class EditorSessionTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void guardedOrderingPreservesGroupPayloadAndHistory_data() {
+    QTest::addColumn<int>("order"); QTest::addColumn<QString>("selected"); QTest::addColumn<QString>("indices");
+    // Independently declared array orders, including an opaque-only selection.
+    const QStringList group{"02143", "10324", "02413", "13024"};
+    const QStringList single{"02134", "10234", "02341", "10234"};
+    const QStringList opaque{"01324", "02134", "01342", "20134"};
+    for (int order = 0; order < 4; ++order) for (int selection = 0; selection < 3; ++selection)
+      QTest::newRow(qPrintable(QString("%1-%2").arg(order).arg(selection))) << order << QString(selection == 0 ? "13" : selection == 1 ? "1" : "2") << (selection == 0 ? group[order] : selection == 1 ? single[order] : opaque[order]);
+  }
+  void guardedOrderingPreservesGroupPayloadAndHistory() {
+    QFETCH(int, order); QFETCH(QString, selected); QFETCH(QString, indices); auto d = document();
+    for (int i = 0; i < 5; ++i) { auto r = rectangle(i, 1, i + 2, 4); r.style = {0x80112233, 0x40223344, 2.5, 37.25, .42}; r.extra = {{"vendor", i}}; d.annotations.push_back(r); }
+    const auto opaqueId = annotationId(d.annotations[2]); d.annotations[2] = UnsupportedAnnotation{opaqueId, {{"id", opaqueId.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"zIndex", 99}, {"payload", QJsonArray{42, "keep"}}}};
+    d.extra = {{"vendor", "root"}}; d.embeddedImages = {{"asset", kOnePixelPng}}; EditorSession session(d);
+    session.select({annotationId(d.annotations[0])}); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); QList<QUuid> ids;
+    for (auto c : selected) ids.append(annotationId(d.annotations[c.digitValue()])); session.select(ids); const auto selection = session.selection();
+    const auto defaults = session.toolStyle(); QVERIFY(session.canOrderSelection());
+    QVERIFY(session.reorderSelection(EditorSession::Order(order), session.stateId(), selection)); QVERIFY(session.editDiagnostic().isEmpty());
+    auto expected = d; expected.annotations.clear(); for (auto c : indices) expected.annotations.push_back(d.annotations[c.digitValue()]);
+    QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(session.selection(), selection); QCOMPARE(session.undoCount(), 1); QCOMPARE(session.redoCount(), 0); QVERIFY(session.dirty());
+    QCOMPARE(session.toolStyle().strokeWidth, defaults.strokeWidth); QCOMPARE(session.toolStyle().fillColor, defaults.fillColor);
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(d)); QCOMPARE(session.selection(), selection); QVERIFY(!session.dirty());
+    QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(session.selection(), selection);
+  }
+  void orderingNoopAndRefusalKeepCheckpointAndRedo_data() {
+    QTest::addColumn<QString>("mode");
+    for (const auto *mode : {"empty", "all", "front", "back", "forward-edge", "backward-edge", "hidden", "locked", "opaque-lock", "stale-state", "stale-selection", "invalid"}) QTest::newRow(mode) << QString(mode);
+  }
+  void orderingNoopAndRefusalKeepCheckpointAndRedo() {
+    QFETCH(QString, mode); auto d = document(); auto a = rectangle(1, 1, 3, 3), b = rectangle(4, 4, 7, 7);
+    if (mode == "hidden") b.visible = false; if (mode == "locked") b.extra = {{"locked", true}};
+    d.annotations = {a, b}; if (mode == "opaque-lock") d.annotations[1] = UnsupportedAnnotation{b.id, {{"id", b.id.toString(QUuid::WithoutBraces)}, {"type", "future"}, {"locked", "opaque"}}};
+    EditorSession session(d); session.select({a.id}); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo());
+    const bool group = mode == "all" || mode == "hidden" || mode.contains("lock"); session.select(group ? QList<QUuid>{a.id, b.id} : QList<QUuid>{b.id});
+    auto order = EditorSession::Order::Front; if (mode == "back" || mode == "backward-edge") { session.select({a.id}); order = mode == "back" ? EditorSession::Order::Back : EditorSession::Order::Backward; }
+    if (mode == "forward-edge") order = EditorSession::Order::Forward; if (mode == "empty") session.select({});
+    auto state = session.stateId(); const auto selection = session.selection(); if (mode == "stale-state") ++state; if (mode == "stale-selection") session.select({a.id});
+    if (mode == "invalid") order = EditorSession::Order(99); const auto before = serializeDocument(session.document()); const auto actualSelection = session.selection();
+    const bool protectedGroup = mode == "hidden" || mode.contains("lock"); QCOMPARE(session.canOrderSelection(), !protectedGroup && mode != "empty");
+    QVERIFY(!session.reorderSelection(order, state, selection)); const QString diagnostic = mode.startsWith("stale-") ? "annotation-edit-stale" : mode == "invalid" ? "annotation-order-invalid" : protectedGroup ? "annotation-selection-protected" : "";
+    QCOMPARE(session.editDiagnostic(), diagnostic); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.selection(), actualSelection); QCOMPARE(session.undoCount(), 0); QCOMPARE(session.redoCount(), 1); QVERIFY(!session.dirty());
+  }
   void guardedThicknessCommitsOneGroupAndSnapshotsDefaults_data() {
     QTest::addColumn<double>("width"); for (double width : {.25, 1.0, 7.5, 10000.0}) QTest::newRow(qPrintable(QString::number(width))) << width;
   }

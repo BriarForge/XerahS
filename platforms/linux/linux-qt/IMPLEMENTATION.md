@@ -201,10 +201,14 @@ Refusal and nested destruction preserve history/files; fresh editor save/reopen
 and original capture publication recover safely. [Guarded thickness](app/ANNOTATION-THICKNESS.md)
 now admits document/default changes together, fences native state/generation/
 preferences and guards owner lifetime during persistence. Capture has local
-keyboard controls and a visible numeric future-default label. Next expose the
-four ordering commands through guarded accessible native editor/capture controls
-with catalogue gestures and correct text/list/canvas precedence, while resolving
-the shared Ellipse decision, alongside
+keyboard controls and a visible numeric future-default label. [Guarded ordering](app/ANNOTATION-ORDER.md)
+now exposes four editor/capture commands and canvas-local catalogue gestures,
+freezes state/selection/generation, retains group and opaque payload order, and
+yields custom navigation keys to native lists/text. Real history, PNG/.xann
+reopen and capture publication are verified; shortcut-catalogue approval remains
+pending. Next guard native Delete/Backspace dispatch and add a capture Delete
+control with atomic protected/opaque group and lifetime/history/output evidence,
+while resolving the shared Ellipse decision, alongside
 owned native output service handoffs, remaining tools and the
 format policy and all other contracted output/capture/application domains.
 Physical clipboard/color/accessibility, shutdown and human gates remain

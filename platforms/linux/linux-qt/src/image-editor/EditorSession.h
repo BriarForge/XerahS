@@ -69,6 +69,10 @@ public:
   bool canRotateSelection() const;
   enum class Order { Forward, Backward, Front, Back };
   bool reorderSelection(Order order);
+  bool reorderSelection(Order, quint64 expectedState, const QSet<QUuid> &expectedSelection);
+  // Ordering opaque compatible objects changes only their position; it never
+  // interprets their payload. Hidden or locked members protect the whole group.
+  bool canOrderSelection() const { return !m_selection.isEmpty() && selectionEditable(); }
   bool deleteSelection();
   bool selectionEditable() const;
   // Borrowed until the next document mutation; callers freeze a copy for UI.

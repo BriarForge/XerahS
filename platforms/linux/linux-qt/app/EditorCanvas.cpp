@@ -118,7 +118,7 @@ QString EditorCanvas::toolInstructions() const {
       text = "Crop stays active: drag to choose the retained image region."; break;
   }
   return text + " Create Rectangle offers keyboard entry of bounds with captured creation defaults. Drag a selected rectangle's square handles to resize; the opposite handle stays fixed. Rectangle Properties offers numeric bounds and style controls. "
-      "Escape cancels a gesture. Arrows move; Alt+arrows resize; R rotates; Delete removes selected objects. Control+wheel zooms; Space+drag pans.";
+      "Escape cancels a gesture. Arrows move; Alt+arrows resize; R rotates; Delete removes selected objects. Home/End bring to front/send to back; Page Up/Down bring forward/send backward. Control+wheel zooms; Space+drag pans.";
 }
 
 void EditorCanvas::setTool(Tool tool) {
@@ -185,6 +185,18 @@ bool EditorCanvas::rectangleDialog(QWidget *parent, bool creation) {
   return changed;
 }
 
+bool EditorCanvas::reorderSelection(EditorSession::Order order) {
+  if (!isEnabled() || interactionActive() || !canOrderSelection()) return false;
+  const auto state = m_session->stateId(), generation = m_documentGeneration; const auto selection = m_session->selection();
+  const QPointer<EditorCanvas> owner(this); m_annotationDialogPending = true;
+  const auto restore = qScopeGuard([owner] { if (owner) { owner->m_annotationDialogPending = false; emit owner->changed(); } });
+  emit changed(); if (!owner) return false;
+  bool changed = false; QString diagnostic;
+  if (generation != m_documentGeneration) diagnostic = "annotation-edit-stale";
+  else { changed = m_session->reorderSelection(order, state, selection); diagnostic = m_session->editDiagnostic(); }
+  viewport()->update(); if (!diagnostic.isEmpty()) { emit editRejected(diagnostic); if (!owner) return false; }
+  return changed;
+}
 bool EditorCanvas::changeStrokeWidth(bool increase) {
   if (!isEnabled() || interactionActive() || !canEditStyle()) return false;
   const auto state = m_session->stateId(), generation = m_documentGeneration; const auto selection = m_session->selection();
@@ -549,6 +561,23 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
     return;
   }
   if (interactionActive()) { event->accept(); return; }
+  // Canvas-local navigation gestures leave native text/list navigation alone.
+  // Legacy bracket gestures dispatch the same frozen operation.
+  std::optional<EditorSession::Order> order;
+  const auto modifiers = event->modifiers();
+  if (modifiers == Qt::NoModifier) {
+    switch (event->key()) {
+      case Qt::Key_Home: order = EditorSession::Order::Front; break;
+      case Qt::Key_End: order = EditorSession::Order::Back; break;
+      case Qt::Key_PageUp: order = EditorSession::Order::Forward; break;
+      case Qt::Key_PageDown: order = EditorSession::Order::Backward; break;
+    }
+  }
+  if (!(modifiers & (Qt::AltModifier | Qt::MetaModifier))) {
+    if (event->key() == Qt::Key_BracketRight) order = modifiers & Qt::ControlModifier ? EditorSession::Order::Front : EditorSession::Order::Forward;
+    if (event->key() == Qt::Key_BracketLeft) order = modifiers & Qt::ControlModifier ? EditorSession::Order::Back : EditorSession::Order::Backward;
+  }
+  if (order) { event->accept(); if (!event->isAutoRepeat()) reorderSelection(*order); return; }
   const double step = (event->modifiers() & Qt::ShiftModifier) ? 10 : 1;
   if (m_session->selection().isEmpty()) {
     switch (event->key()) {
@@ -570,13 +599,8 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
       default: QAbstractScrollArea::keyPressEvent(event); return;
     }
   } else {
-    const bool toEdge = event->modifiers() & Qt::ControlModifier;
     switch (event->key()) {
       case Qt::Key_R: m_session->rotateSelection((event->modifiers() & Qt::ShiftModifier) ? -90 : 90); break;
-      case Qt::Key_BracketRight:
-        m_session->reorderSelection(toEdge ? EditorSession::Order::Front : EditorSession::Order::Forward); break;
-      case Qt::Key_BracketLeft:
-        m_session->reorderSelection(toEdge ? EditorSession::Order::Back : EditorSession::Order::Backward); break;
       case Qt::Key_Left: m_session->moveSelection(-step, 0); break;
       case Qt::Key_Right: m_session->moveSelection(step, 0); break;
       case Qt::Key_Up: m_session->moveSelection(0, -step); break;

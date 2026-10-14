@@ -75,12 +75,12 @@ high-contrast and complete desktop/target qualification remain Required.
 
 ## Next work and full scope
 
-Next expose the four ordering commands through accessible native editor/capture
-controls, with guarded state/selection/generation dispatch to the existing Core
-ordering logic, catalogue Home/End/PageUp/PageDown gestures with text/list/canvas
-precedence, exact relative-order/history and actual persistence/publication
-failure evidence. Current native ordering is reachable through canvas bracket
-shortcuts; visible editor/capture command surfaces remain unfinished.
+[Guarded native ordering](ANNOTATION-ORDER.md) now exposes four editor/capture
+commands and canvas-local catalogue gestures, with state/selection/generation
+admission, exact relative-order/history, native list/text precedence and actual
+PNG/.xann/capture publication evidence. Catalogue and native/human approval remain
+pending. Next guard native Delete/Backspace and expose capture Delete with atomic
+protected/opaque group history, stale/owner refusal and real persistence evidence.
 
 Ellipse schema/rasterization, clipboard assets and output-format decisions remain
 pending in ANNOTATION-TOOLS.md, ANNOTATION-TRANSFER.md and EDITOR-SAVE.md. All tools,

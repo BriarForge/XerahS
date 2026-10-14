@@ -37,6 +37,8 @@ public:
   bool canEditStyle() const { return m_session->canEditStyle(); }
   double creationStrokeWidth() const { return m_session->toolStyle().strokeWidth; }
   bool changeStrokeWidth(bool increase);
+  bool canOrderSelection() const { return m_session->canOrderSelection(); }
+  bool reorderSelection(xerahs::editor::EditorSession::Order);
   // Capture uses the same owned native dialog and Core edit as the main editor.
   bool editRectangleProperties(QWidget *parent);
   bool createRectangle(QWidget *parent);

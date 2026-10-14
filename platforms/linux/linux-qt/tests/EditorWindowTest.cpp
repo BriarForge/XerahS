@@ -215,6 +215,64 @@ private slots:
   }
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  void nativeOrderingCommandsPersistArrayOrderAndRenderedPixels_data() {
+    QTest::addColumn<QString>("name"); QTest::addColumn<QString>("indices"); QTest::addColumn<bool>("hotkey"); QTest::addColumn<bool>("blue");
+    for (bool hotkey : {false, true}) {
+      QTest::newRow(hotkey ? "forward-key" : "forward-menu") << QString("bringForward") << QString("02143") << hotkey << true;
+      QTest::newRow(hotkey ? "backward-key" : "backward-menu") << QString("sendBackward") << QString("10324") << hotkey << false;
+      QTest::newRow(hotkey ? "front-key" : "front-menu") << QString("bringToFront") << QString("02413") << hotkey << true;
+      QTest::newRow(hotkey ? "back-key" : "back-menu") << QString("sendToBack") << QString("13024") << hotkey << false;
+    }
+  }
+  void nativeOrderingCommandsPersistArrayOrderAndRenderedPixels() {
+    QFETCH(QString, name); QFETCH(QString, indices); QFETCH(bool, hotkey); QFETCH(bool, blue); QTemporaryDir dir; const auto path = dir.filePath("order.png"), prefs = dir.filePath("prefs.json"); QVERIFY(fixture().save(path));
+    QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty()); const QMap<QString, QString> ids{{"bringForward", "bring-forward"}, {"sendBackward", "send-backward"}, {"bringToFront", "bring-to-front"}, {"sendToBack", "send-to-back"}};
+    QVERIFY(applyToolbarPreferences(QJsonArray{QJsonObject{{"Id", ids.value(name)}, {"Hotkey", "F6"}, {"IsVisible", false}}}, nativeEditorPreferenceRevision()).saved);
+    auto doc = *loadSource(path).document; for (Argb color : {Argb(0xFFFF0000), Argb(0xFF00FF00), Argb(0), Argb(0xFF0000FF), Argb(0xFFFFFF00)}) {
+      RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {5, 5}; r.end = {40, 32}; r.style = {color, color, 1, 0, 1}; r.extra = {{"vendor", "keep"}}; doc.annotations.push_back(r);
+    }
+    const auto opaqueId = annotationId(doc.annotations[2]); const UnsupportedAnnotation opaque{opaqueId, {{"id", opaqueId.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"zIndex", 99}, {"payload", QJsonArray{"keep", 42}}}}; doc.annotations[2] = opaque; doc.embeddedImages = {{"asset", doc.sourceImagePng}}; doc.extra = {{"vendor", "root"}}; QVERIFY(saveEdit(path, fixture(), doc).sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); window->activateWindow(); auto *canvas = window->findChild<EditorCanvas *>(); auto *objects = window->findChild<AnnotationObjectNavigator *>(); canvas->setFocus(); QTRY_VERIFY(window->isActiveWindow());
+    QVERIFY(canvas->selectAnnotations({annotationId(doc.annotations[1]), annotationId(doc.annotations[3])}, canvas->annotationState(), canvas->documentGeneration())); const auto original = canvas->annotationDocument(); const auto selection = canvas->annotationSelection(); const auto preferences = storedBytes(prefs); const auto revision = nativeEditorPreferenceRevision();
+    QTest::keyClick(canvas, Qt::Key_Right); trigger(*window, "undo"); QVERIFY(window->findChild<QAction *>("redo")->isEnabled()); auto *action = window->findChild<QAction *>(name); QVERIFY(action && action->isEnabled());
+    bool inMenu = false; for (auto *menu : window->findChildren<QMenu *>()) inMenu |= menu->actions().contains(action); QVERIFY(inMenu); QVERIFY(action->shortcuts().isEmpty());
+    if (hotkey) QTest::keyClick(canvas, Qt::Key_F6); else action->trigger();
+    auto expected = original; expected.annotations.clear(); for (auto c : indices) expected.annotations.push_back(original.annotations[c.digitValue()]); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); QCOMPARE(canvas->annotationSelection(), selection); QVERIFY(window->windowTitle().contains(" •")); QVERIFY(!window->findChild<QAction *>("redo")->isEnabled());
+    for (int row = 0; row < 5; ++row) QCOMPARE(objects->model()->index(row, 0).data(Qt::UserRole).toUuid(), annotationId(expected.annotations[size_t(row)]));
+    trigger(*window, "undo"); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(original)); QCOMPARE(canvas->annotationSelection(), selection); QVERIFY(!window->windowTitle().contains(" •")); QVERIFY(!window->findChild<QAction *>("undo")->isEnabled());
+    trigger(*window, "redo"); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); QCOMPARE(storedBytes(prefs), preferences); QCOMPARE(nativeEditorPreferenceRevision(), revision);
+    trigger(*window, "saveImage"); QVERIFY(!window->windowTitle().contains(" •")); QCOMPARE(QImage(path).pixelColor(20, 20), QColor(blue ? Qt::blue : Qt::yellow));
+    const auto reopened = loadSource(path); QVERIFY(reopened.document); const auto saved = serializeDocument(*reopened.document); const auto wanted = serializeDocument(expected); QCOMPARE(saved.value("annotations"), wanted.value("annotations")); QCOMPARE(reopened.document->embeddedImages, expected.embeddedImages); QCOMPARE(reopened.document->sourceImagePng, expected.sourceImagePng); QCOMPARE(reopened.document->extra, expected.extra);
+    QCOMPARE(reopened.document->imageHash, QString("sha256:") + QString::fromLatin1(QCryptographicHash::hash(storedBytes(path), QCryptographicHash::Sha256).toHex())); QVERIFY(QDateTime::fromString(reopened.document->modifiedAt, Qt::ISODate).isValid()); QCOMPARE(storedBytes(prefs), preferences);
+  }
+  void orderingRefusalAndOwnerTeardownPreserveTheCurrentDocument_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"empty", "hidden", "locked", "no-op", "stale-selection", "replacement", "busy-destroy", "refusal-destroy"}) QTest::newRow(mode) << QString(mode);
+  }
+  void orderingRefusalAndOwnerTeardownPreserveTheCurrentDocument() {
+    QFETCH(QString, mode); QTemporaryDir dir; const auto path = dir.filePath("order-refusal.png"), prefs = dir.filePath("prefs.json"); QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty());
+    auto d = *loadSource(path).document; RectangleAnnotation a; a.id = QUuid::createUuid(); a.start = {5, 5}; a.end = {20, 20}; auto b = a; b.id = QUuid::createUuid(); b.start = {35, 20}; b.end = {45, 30}; if (mode == "hidden") b.visible = false; if (mode == "locked") b.extra = {{"locked", true}}; d.annotations = {a, b}; QVERIFY(saveEdit(path, fixture(), d).sidecarSaved);
+    EditorSession replacement(d); replacement.select({a.id}); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); window->activateWindow(); QTRY_VERIFY(window->isActiveWindow()); auto *canvas = window->findChild<EditorCanvas *>(); auto *objects = window->findChild<AnnotationObjectNavigator *>(); canvas->setFocus();
+    const bool protectedSelection = mode == "hidden" || mode == "locked"; QVERIFY(canvas->selectAnnotations({a.id}, canvas->annotationState(), canvas->documentGeneration())); QTest::keyClick(canvas, Qt::Key_Right); trigger(*window, "undo");
+    const QList<QUuid> wantedSelection = mode == "empty" ? QList<QUuid>{} : protectedSelection ? QList<QUuid>{a.id, b.id} : mode == "no-op" ? QList<QUuid>{b.id} : QList<QUuid>{a.id};
+    canvas->selectAnnotations(wantedSelection, canvas->annotationState(), canvas->documentGeneration()); QCOMPARE(canvas->annotationSelection(), QSet<QUuid>(wantedSelection.cbegin(), wantedSelection.cend()));
+    const auto before = serializeDocument(canvas->annotationDocument()), replaced = serializeDocument(replacement.document()); auto selection = canvas->annotationSelection(); const auto png = storedBytes(path), sidecar = storedBytes(path + ".xann"), preferences = storedBytes(prefs);
+    auto *action = window->findChild<QAction *>("bringToFront"); QCOMPARE(action->isEnabled(), !protectedSelection && mode != "empty"); bool intervened = false, restored = false;
+    connect(action, &QAction::changed, [&] {
+      if (intervened) {
+        if (action->isEnabled()) restored = true;
+        else if (mode == "refusal-destroy" && restored) window.reset();
+        return;
+      }
+      if (action->isEnabled()) return; intervened = true; QVERIFY(!window->close()); QVERIFY(!objects->isEnabled());
+      if (mode == "busy-destroy") { window.reset(); return; }
+      if (mode == "refusal-destroy") { QVERIFY(canvas->selectAnnotations({}, canvas->annotationState(), canvas->documentGeneration())); return; }
+      if (mode == "stale-selection") { QVERIFY(canvas->selectAnnotations({b.id}, canvas->annotationState(), canvas->documentGeneration())); selection = canvas->annotationSelection(); }
+      if (mode == "replacement") canvas->resetDocument(replacement, fixture());
+    });
+    action->trigger(); QCOMPARE(storedBytes(path), png); QCOMPARE(storedBytes(path + ".xann"), sidecar); QCOMPARE(storedBytes(prefs), preferences); if (!window) return;
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), mode == "replacement" ? replaced : before); QCOMPARE(canvas->annotationSelection(), selection); QVERIFY(!window->windowTitle().contains(" •")); QVERIFY(window->findChild<QAction *>("redo")->isEnabled()); QVERIFY(canvas->isEnabled() && objects->isEnabled());
+    if (mode == "stale-selection" || mode == "replacement") QVERIFY(window->statusBar()->currentMessage().contains("not applied")); QCOMPARE(replacement.undoCount(), 0);
+  }
   void annotationObjectsSupportKeyboardSelectionAndActualPersistence() {
     QTemporaryDir dir; const auto path = dir.filePath("objects.png"), prefs = dir.filePath("prefs.json"); QVERIFY(fixture().save(path));
     QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty());

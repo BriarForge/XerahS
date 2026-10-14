@@ -22,7 +22,7 @@ public:
 protected:
   bool eventFilter(QObject *object, QEvent *event) override;
 private:
-  bool canDispatch() const;
+  bool canDispatch(const QString &gesture = {}) const;
   QMainWindow &m_window;
   QToolBar &m_toolbar;
   ToolbarActionRegistry m_actions;

@@ -48,6 +48,10 @@ private slots:
       QCOMPARE(toolbarHotkeyDiagnostic(*parseToolbarHotkey(key), "crop-image"), QString("toolbar-reserved-hotkey"));
     QVERIFY(toolbarHotkeyDiagnostic(*parseToolbarHotkey("Ctrl+S"), "save").isEmpty());
     QVERIFY(knownToolbarAction("copy-rendered-image"));
+    for (const auto &entry : {std::pair{"bring-to-front", "Home"}, std::pair{"send-to-back", "End"}, std::pair{"bring-forward", "PageUp"}, std::pair{"send-backward", "PageDown"}}) {
+      QVERIFY(knownToolbarAction(entry.first)); QVERIFY(validateToolbarItems(QJsonArray{item(entry.first, entry.second)}).valid);
+      QCOMPARE(toolbarHotkeyDiagnostic(*parseToolbarHotkey(entry.second), "rotate-selection"), QString("toolbar-protected-hotkey"));
+    }
     for (const auto &entry : {std::pair{"select-tool", "F6"}, std::pair{"rectangle-tool", "F7"}, std::pair{"rectangle-properties", "F8"}, std::pair{"create-rectangle", "F9"}, std::pair{"focus-annotations", "F11"}}) {
       QVERIFY(knownToolbarAction(entry.first)); QVERIFY(validateToolbarItems(QJsonArray{item(entry.first, entry.second)}).valid);
     }

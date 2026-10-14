@@ -11,6 +11,7 @@
 #include <QLabel>
 #include <QJsonDocument>
 #include <QLineEdit>
+#include <QListWidget>
 #include <QLockFile>
 #include <QMainWindow>
 #include <QMenuBar>
@@ -198,6 +199,26 @@ private slots:
     harness.actions["save"]->setEnabled(true);
     QDialog modal(&harness.window); modal.setModal(true); modal.show(); QTest::keyClick(&modal, Qt::Key_F6); QCOMPARE(save.count(), 0); modal.reject();
     harness.focusCanvas(); QTest::keyClick(harness.canvas, Qt::Key_F6); QCOMPARE(save.count(), 1);
+  }
+  void customizedOrderingNavigationKeepsNativeListAndTextPrecedence() {
+    QVERIFY(applyToolbarPreferences(QJsonArray{item("bring-to-front", "Home", false), item("send-to-back", "End", false), item("bring-forward", "PageUp", false), item("send-backward", "PageDown", false)}, nativeEditorPreferenceRevision()).saved);
+    Harness harness; auto *list = new QListWidget(harness.window.centralWidget()); list->setMinimumHeight(120); harness.window.resize(500, 600);
+    qobject_cast<QVBoxLayout *>(harness.window.centralWidget()->layout())->addWidget(list);
+    for (int i = 0; i < 100; ++i) list->addItem(QString::number(i));
+    QSignalSpy front(harness.actions["bring-to-front"], &QAction::triggered), back(harness.actions["send-to-back"], &QAction::triggered), forward(harness.actions["bring-forward"], &QAction::triggered), backward(harness.actions["send-backward"], &QAction::triggered);
+    harness.focusCanvas(); QTest::keyClick(harness.canvas, Qt::Key_Home); QTest::keyClick(harness.canvas, Qt::Key_End); QTest::keyClick(harness.canvas, Qt::Key_PageUp); QTest::keyClick(harness.canvas, Qt::Key_PageDown);
+    QCOMPARE(front.count(), 1); QCOMPARE(back.count(), 1); QCOMPARE(forward.count(), 1); QCOMPARE(backward.count(), 1);
+    list->setCurrentRow(50); list->setFocus(); QTRY_COMPARE(QApplication::focusWidget(), list);
+    QTRY_VERIFY(list->viewport()->height() >= 80);
+    QTest::keyClick(list, Qt::Key_Home); QCOMPARE(list->currentRow(), 0); QTest::keyClick(list, Qt::Key_End); QCOMPARE(list->currentRow(), 99);
+    QTRY_VERIFY(list->visualItemRect(list->currentItem()).intersects(list->viewport()->rect()));
+    QTest::keyClick(list, Qt::Key_PageUp); QVERIFY(list->currentRow() < 99); const int row = list->currentRow(); QTest::keyClick(list, Qt::Key_PageDown); QVERIFY(list->currentRow() > row);
+    QCOMPARE(front.count(), 1); QCOMPARE(back.count(), 1); QCOMPARE(forward.count(), 1); QCOMPARE(backward.count(), 1);
+    harness.line->setText("native navigation"); harness.line->setFocus(); QTest::keyClick(harness.line, Qt::Key_Home); QCOMPARE(harness.line->cursorPosition(), 0);
+    QTest::keyClick(harness.line, Qt::Key_End); QCOMPARE(harness.line->cursorPosition(), harness.line->text().size()); QCOMPARE(front.count(), 1); QCOMPARE(back.count(), 1);
+    harness.focusCanvas(); harness.ready = false; QTest::keyClick(harness.canvas, Qt::Key_Home); QCOMPARE(front.count(), 1);
+    harness.ready = true; QDialog modal(&harness.window); modal.setModal(true); modal.show(); QTest::keyClick(&modal, Qt::Key_Home); QCOMPARE(front.count(), 1); modal.reject();
+    harness.focusCanvas(); QTest::keyClick(harness.canvas, Qt::Key_Home); QCOMPARE(front.count(), 2); QVERIFY(harness.layoutIds().isEmpty());
   }
   void extensionFutureDataAndRecentDraftAuthoritySurviveNativeApply() {
     QTemporaryDir temporary; const auto path = temporary.filePath("native/settings.json");

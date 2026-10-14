@@ -7,6 +7,7 @@
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QPushButton>
+#include <QPointer>
 #include <QSplitter>
 #include <QToolBar>
 #include <QVBoxLayout>
@@ -69,6 +70,18 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   connect(fill, &QAction::triggered, m_canvas, [this] { m_canvas->editColor(xerahs::editor::EditorSession::ColorTarget::Fill, this); });
   connect(width, &QAction::triggered, m_canvas, [this] { m_canvas->changeStrokeWidth(true); });
   connect(thin, &QAction::triggered, m_canvas, [this] { m_canvas->changeStrokeWidth(false); });
+  auto *orderBar = new QToolBar("Annotation order", this); orderBar->setObjectName("captureOrderToolbar"); layout->insertWidget(4, orderBar);
+  const auto orderActions = annotationOrderActions(*m_canvas, this);
+  for (const auto *id : {"bring-forward", "send-backward", "bring-to-front", "send-to-back"}) {
+    auto *action = orderActions.value(id); orderBar->addAction(action); orderBar->widgetForAction(action)->setFocusPolicy(Qt::StrongFocus);
+  }
+  const auto refreshOrder = [this, orderActions] {
+    const QPointer<CaptureAnnotationDialog> owner(this);
+    for (auto *action : orderActions) {
+      action->setEnabled(m_canvas->isEnabled() && !m_canvas->interactionActive() && m_canvas->canOrderSelection());
+      if (!owner) return;
+    }
+  };
   m_saveSidecar = new QCheckBox("Also save editable annotations beside each saved PNG (.xann)", this);
   m_saveSidecar->setObjectName("captureSaveAnnotationSidecar"); layout->addWidget(m_saveSidecar);
   auto *privacy = new QLabel("The companion contains the original capture and editable annotations. A companion failure keeps the PNG and the editable document for explicit retry. "
@@ -84,8 +97,8 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   connect(m_canvas, &EditorCanvas::changed, undo, refreshHistory);
   connect(m_canvas, &EditorCanvas::toolChanged, undo, refreshHistory);
   connect(m_canvas, &EditorCanvas::viewportChanged, undo, refreshHistory); refreshHistory();
-  connect(undo, &QAction::triggered, this, [this, refreshProperties, refreshHistory, refreshColors] { if (!m_canvas->interactionActive()) { m_session.undo(); m_canvas->viewport()->update(); m_annotationObjects->refresh(); refreshProperties(); refreshHistory(); refreshColors(); } });
-  connect(redo, &QAction::triggered, this, [this, refreshProperties, refreshHistory, refreshColors] { if (!m_canvas->interactionActive()) { m_session.redo(); m_canvas->viewport()->update(); m_annotationObjects->refresh(); refreshProperties(); refreshHistory(); refreshColors(); } });
+  connect(undo, &QAction::triggered, this, [this, refreshProperties, refreshHistory, refreshColors, refreshOrder] { if (!m_canvas->interactionActive()) { m_session.undo(); m_canvas->viewport()->update(); m_annotationObjects->refresh(); refreshProperties(); refreshHistory(); refreshColors(); refreshOrder(); } });
+  connect(redo, &QAction::triggered, this, [this, refreshProperties, refreshHistory, refreshColors, refreshOrder] { if (!m_canvas->interactionActive()) { m_session.redo(); m_canvas->viewport()->update(); m_annotationObjects->refresh(); refreshProperties(); refreshHistory(); refreshColors(); refreshOrder(); } });
   connect(bar->addAction("Zoom in"), &QAction::triggered, m_canvas, &EditorCanvas::zoomIn);
   connect(bar->addAction("Zoom out"), &QAction::triggered, m_canvas, &EditorCanvas::zoomOut);
   connect(bar->addAction("100%"), &QAction::triggered, m_canvas, &EditorCanvas::resetZoom);

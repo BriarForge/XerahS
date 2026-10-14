@@ -44,6 +44,48 @@ private slots:
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());
   }
+  void captureOrderingButtonsKeepGroupOrderThroughHistoryAndPublication_data() {
+    QTest::addColumn<QString>("name"); QTest::addColumn<QString>("indices"); QTest::addColumn<bool>("blue");
+    QTest::newRow("forward") << QString("bringForward") << QString("02143") << true;
+    QTest::newRow("backward") << QString("sendBackward") << QString("10324") << false;
+    QTest::newRow("front") << QString("bringToFront") << QString("02413") << true;
+    QTest::newRow("back") << QString("sendToBack") << QString("13024") << false;
+  }
+  void captureOrderingButtonsKeepGroupOrderThroughHistoryAndPublication() {
+    using namespace xerahs::editor; QFETCH(QString, name); QFETCH(QString, indices); QFETCH(bool, blue); QTemporaryDir dir; const auto prefs = dir.filePath("preferences.json"); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty());
+    const auto resetPreferences = qScopeGuard([] { initializeNativeEditorPreferences(); }); QVERIFY(applyDrawingDefaults({{"Thickness", 7}}, nativeEditorPreferenceRevision()).saved); const auto values = nativeEditorPreferences().values; const auto revision = nativeEditorPreferenceRevision(); QFile file(prefs); QVERIFY(file.open(QIODevice::ReadOnly)); const auto preferenceBytes = file.readAll(); file.close();
+    AnnotationDocument original, expected; bool acted = false; CaptureActionPorts ports; ports.annotationStyle.strokeWidth = 3;
+    // Use the production annotation port with a fixture-populated native
+    // dialog. The normal worker validates and publishes its accepted document.
+    ports.annotation = [&](const LoadedSource &source, const CancellationToken &) {
+      auto prepared = source; auto &doc = *prepared.document;
+      for (Argb color : {Argb(0xFFFF0000), Argb(0xFF00FF00), Argb(0), Argb(0xFF0000FF), Argb(0xFFFFFF00)}) {
+        RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {10, 10}; r.end = {60, 45}; r.style = {color, color, 1, 0, 1}; r.extra = {{"vendor", "keep"}}; doc.annotations.push_back(r);
+      }
+      const auto id = annotationId(doc.annotations[2]); doc.annotations[2] = UnsupportedAnnotation{id, {{"id", id.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"zIndex", 99}, {"payload", "keep"}}}; doc.embeddedImages = {{"asset", doc.sourceImagePng}}; original = doc;
+      QPointer<CaptureAnnotationDialog> capture(new CaptureAnnotationDialog(prepared, nullptr, ports.annotationStyle)); CaptureAnnotationChoice choice;
+      connect(capture, &QDialog::finished, capture, [&choice, capture] { if (capture) choice = {capture->document(), {}, capture->sidecarIntent()}; });
+      capture->exec(); if (capture) delete capture.data(); return choice;
+    };
+    QTimer timer; connect(&timer, &QTimer::timeout, [&] {
+      auto *capture = dialog(); if (!capture || acted) return; acted = true; const QPointer<CaptureAnnotationDialog> owner(capture); const auto close = qScopeGuard([owner] { if (owner && owner->isVisible()) owner->reject(); });
+      auto *canvas = capture->findChild<EditorCanvas *>(); auto *objects = capture->findChild<AnnotationObjectNavigator *>(); QVERIFY(canvas && objects); capture->activateWindow(); canvas->setFocus(); QTRY_VERIFY(capture->isActiveWindow());
+      QVERIFY(canvas->selectAnnotations({annotationId(original.annotations[1]), annotationId(original.annotations[3])}, canvas->annotationState(), canvas->documentGeneration())); const auto selection = canvas->annotationSelection(); auto *bar = capture->findChild<QToolBar *>("captureOrderToolbar"); auto *action = capture->findChild<QAction *>(name); QVERIFY(bar && action && action->isEnabled()); QCOMPARE(bar->actions().size(), 4);
+      auto *button = qobject_cast<QToolButton *>(bar->widgetForAction(action)); QVERIFY(button && button->isVisible()); QCOMPARE(button->focusPolicy(), Qt::StrongFocus); auto *accessible = QAccessible::queryAccessibleInterface(button); QVERIFY(accessible); QCOMPARE(accessible->role(), QAccessible::Button); QCOMPARE(accessible->text(QAccessible::Name), action->text());
+      button->setFocus(); QTest::keyClick(button, Qt::Key_Space); expected = original; expected.annotations.clear(); for (auto c : indices) expected.annotations.push_back(original.annotations[c.digitValue()]); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); QCOMPARE(canvas->annotationSelection(), selection); QCOMPARE(canvas->creationStrokeWidth(), 3.0);
+      for (int row = 0; row < 5; ++row) QCOMPARE(objects->model()->index(row, 0).data(Qt::UserRole).toUuid(), annotationId(expected.annotations[size_t(row)]));
+      canvas->setFocus(); QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(original)); QCOMPARE(canvas->annotationSelection(), selection); QVERIFY(!capture->findChild<QAction *>("undo")->isEnabled()); QVERIFY(action->isEnabled());
+      QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier | Qt::ShiftModifier); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); QCOMPARE(canvas->annotationSelection(), selection); QVERIFY(!capture->findChild<QAction *>("redo")->isEnabled());
+      QVERIFY(canvas->selectAnnotations({}, canvas->annotationState(), canvas->documentGeneration())); for (auto *orderAction : bar->actions()) QVERIFY(!orderAction->isEnabled());
+      QVERIFY(canvas->selectAnnotations(selection.values(), canvas->annotationState(), canvas->documentGeneration())); capture->findChild<QCheckBox *>("captureSaveAnnotationSidecar")->setChecked(true);
+      if (name == "bringToFront" && qEnvironmentVariableIsSet("XERAHS_ORDER_QA")) QVERIFY(capture->grab().save(qEnvironmentVariable("XERAHS_ORDER_QA")));
+      capture->accept();
+    });
+    timer.start(5); CapturePipeline pipeline(pixels(), dir.path(), "order", {"annotation", "save"}, nullptr, ports); QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_COMPARE(done.count(), 1); timer.stop(); QVERIFY(acted); const auto result = receipt(done); QVERIFY(result->annotationDocument && result->file && result->sidecarIntent); QCOMPARE(serializeDocument(*result->annotationDocument), serializeDocument(expected));
+    QCOMPARE(result->workingMedia.pixelColor(30, 30), QColor(blue ? Qt::blue : Qt::yellow)); QCOMPARE(result->workingMedia.pixelColor(70, 50), QColor(Qt::blue)); QCOMPARE(QImage(result->file->path), result->workingMedia); QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), pixels());
+    const auto reopened = loadSource(result->file->path); QVERIFY(reopened.document); QCOMPARE(serializeDocument(*reopened.document).value("annotations"), serializeDocument(expected).value("annotations")); QCOMPARE(reopened.document->embeddedImages, expected.embeddedImages);
+    QCOMPARE(nativeEditorPreferences().values, values); QCOMPARE(nativeEditorPreferenceRevision(), revision); QVERIFY(file.open(QIODevice::ReadOnly)); QCOMPARE(file.readAll(), preferenceBytes);
+  }
   void captureThicknessControlsStayLocalThroughHistoryAndPublication_data() {
     QTest::addColumn<bool>("increase"); QTest::addColumn<bool>("defaultsOnly");
     for (bool increase : {false, true}) for (bool defaultsOnly : {false, true}) QTest::newRow(qPrintable(QString("%1-%2").arg(increase ? "increase" : "decrease", defaultsOnly ? "defaults" : "selected"))) << increase << defaultsOnly;

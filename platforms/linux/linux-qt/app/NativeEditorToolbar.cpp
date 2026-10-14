@@ -4,6 +4,7 @@
 #include <QAction>
 #include <QApplication>
 #include <QAbstractSpinBox>
+#include <QAbstractItemView>
 #include <QComboBox>
 #include <QEvent>
 #include <QKeyEvent>
@@ -17,8 +18,17 @@ namespace xerahs::app {
 using namespace xerahs::editor;
 namespace {
 QString canonical(const QKeySequence &sequence) {
-  const auto value = parseToolbarHotkey(sequence.toString(QKeySequence::PortableText));
-  return value ? value->text : sequence.toString(QKeySequence::PortableText);
+  auto spelling = sequence.toString(QKeySequence::PortableText);
+  // Qt PortableText abbreviates Page keys (PgUp/PgDown); our persisted
+  // catalogue uses PageUp/PageDown. Compare the physical key before policy
+  // routing so a shortcut cannot consume native list navigation silently.
+  if (sequence.count() == 1) {
+    const auto key = sequence[0].key();
+    if (key == Qt::Key_PageUp || key == Qt::Key_PageDown)
+      spelling = spelling.left(spelling.lastIndexOf('+') + 1) + (key == Qt::Key_PageUp ? "PageUp" : "PageDown");
+  }
+  const auto value = parseToolbarHotkey(spelling);
+  return value ? value->text : spelling;
 }
 bool textEntry(QWidget *focus) {
   if (!focus) return false;
@@ -38,8 +48,12 @@ NativeEditorToolbar::~NativeEditorToolbar() {
   qApp->removeEventFilter(this);
   qDeleteAll(m_shortcuts);
 }
-bool NativeEditorToolbar::canDispatch() const {
+bool NativeEditorToolbar::canDispatch(const QString &gesture) const {
   auto *focus = QApplication::focusWidget();
+  if (gesture == "Home" || gesture == "End" || gesture == "PageUp" || gesture == "PageDown") {
+    for (auto *widget = focus; widget && widget != &m_window; widget = widget->parentWidget())
+      if (qobject_cast<QAbstractItemView *>(widget)) return false;
+  }
   return !QApplication::activeModalWidget() && !QApplication::activePopupWidget() &&
       (!focus || focus == &m_window || m_window.isAncestorOf(focus)) &&
       !textEntry(focus) && (!m_ready || m_ready());
@@ -49,7 +63,8 @@ bool NativeEditorToolbar::eventFilter(QObject *object, QEvent *event) {
   auto *widget = qobject_cast<QWidget *>(object);
   if (!widget || (widget != &m_window && !m_window.isAncestorOf(widget))) return false;
   const auto *key = static_cast<QKeyEvent *>(event);
-  if (!canDispatch() && m_gestures.contains(canonical(QKeySequence(key->keyCombination())))) {
+  const auto gesture = canonical(QKeySequence(key->keyCombination()));
+  if (!canDispatch(gesture) && m_gestures.contains(gesture)) {
     event->accept(); return true;
   }
   return false;
@@ -77,8 +92,8 @@ void NativeEditorToolbar::refresh() {
     shortcut->setObjectName(QStringLiteral("toolbarHotkey:") + placement.id);
     shortcut->setContext(Qt::WindowShortcut);
     shortcut->setAutoRepeat(action->autoRepeat());
-    connect(shortcut, &QShortcut::activated, this, [this, action] {
-      if (canDispatch() && action->isEnabled()) action->trigger();
+    connect(shortcut, &QShortcut::activated, this, [this, action, gesture = placement.hotkey.text] {
+      if (canDispatch(gesture) && action->isEnabled()) action->trigger();
     });
     m_shortcuts.append(shortcut);
   }

@@ -367,6 +367,11 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   annotationCommand("duplicate-selection", "duplicateAnnotations", "&Duplicate Annotations", QKeySequence(Qt::CTRL | Qt::Key_D));
   edit->addSeparator();
   for (auto *action : {m_undo, m_redo, m_delete, m_rotate, stroke, fill, width, thin}) edit->addAction(action);
+  edit->addSeparator();
+  m_orderActions = annotationOrderActions(*m_canvas, this, [this](EditorSession::Order order) { reorderSelected(order); }, [this] {
+    return !m_outputPending && !m_canvasOperationPending && !m_closePending;
+  });
+  for (const auto *id : {"bring-forward", "send-backward", "bring-to-front", "send-to-back"}) edit->addAction(m_orderActions.value(id));
   auto *view = menuBar()->addMenu(QStringLiteral("&View"));
   QAction *zoomIn = view->addAction(QStringLiteral("Zoom In"));
   zoomIn->setObjectName(QStringLiteral("zoomIn"));
@@ -417,6 +422,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   };
   for (auto it = m_annotationActions.cbegin(); it != m_annotationActions.cend(); ++it) m_toolbarActions.insert(it.key(), it.value());
   for (auto it = tools.cbegin(); it != tools.cend(); ++it) m_toolbarActions.insert(it.key(), it.value());
+  for (auto it = m_orderActions.cbegin(); it != m_orderActions.cend(); ++it) m_toolbarActions.insert(it.key(), it.value());
   m_toolbarActions.insert("rectangle-properties", m_rectangleProperties);
   m_toolbarActions.insert("create-rectangle", m_createRectangle);
   m_toolbarActions.insert("focus-annotations", objects);
@@ -504,6 +510,19 @@ bool EditorWindow::editColor(EditorSession::ColorTarget target) {
   });
 }
 
+bool EditorWindow::reorderSelected(EditorSession::Order order) {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive() || !m_session->canOrderSelection()) return false;
+  const auto state = m_session->stateId(), generation = m_canvas->documentGeneration(); const auto selection = m_session->selection();
+  const QPointer<EditorWindow> owner(this);
+  return withOutputBusy([owner, state, generation, selection, order] {
+    if (!owner) return false;
+    bool changed = false; QString diagnostic;
+    if (generation != owner->m_canvas->documentGeneration()) diagnostic = "annotation-edit-stale";
+    else { changed = owner->m_session->reorderSelection(order, state, selection); diagnostic = owner->m_session->editDiagnostic(); }
+    owner->m_annotationMessage = diagnostic.isEmpty() ? QString() : annotationEditMessage(diagnostic);
+    owner->m_annotationMessageState = owner->m_session->stateId(); owner->refresh(); return changed;
+  });
+}
 bool EditorWindow::changeStrokeWidth(bool increase) {
   if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive() || !m_session->canEditStyle()) return false;
   const auto state = m_session->stateId(), generation = m_canvas->documentGeneration(), revision = nativeEditorPreferenceRevision();
@@ -531,6 +550,11 @@ void EditorWindow::persistDrawingDefaults(quint64 expectedRevision) {
 
 void EditorWindow::refresh() {
   const bool ready = !m_outputPending && !m_canvas->interactionActive();
+  const QPointer<EditorWindow> orderOwner(this);
+  for (auto *action : m_orderActions) {
+    action->setEnabled(ready && !m_canvasOperationPending && !m_closePending && m_canvas->isEnabled() && m_session->canOrderSelection());
+    if (!orderOwner) return;
+  }
   for (const auto *id : {"save", "save-as"})
     m_toolbarActions.value(id)->setEnabled(ready);
   for (const auto *id : {"increase-stroke", "decrease-stroke"}) m_toolbarActions.value(id)->setEnabled(ready && m_session->canEditStyle());
