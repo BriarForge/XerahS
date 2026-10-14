@@ -22,13 +22,19 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   m_canvas = new EditorCanvas(m_session, m_image, this, source.displayImage); layout->addWidget(m_canvas);
   const auto tools = annotationToolActions(*m_canvas, this, false);
   bar->addAction(tools.value("select-tool")); bar->addAction(tools.value("rectangle-tool"));
+  auto *create = bar->addAction("Create Rectangle…"); create->setObjectName("createRectangle"); create->setAutoRepeat(false);
+  create->setToolTip("Enter numeric bounds and create one rectangle with captured defaults. The active tool stays unchanged.");
+  bar->widgetForAction(create)->setFocusPolicy(Qt::StrongFocus);
   auto *properties = bar->addAction("Rectangle Properties…"); properties->setObjectName("rectangleProperties"); properties->setAutoRepeat(false);
   properties->setToolTip("Edit one selected, visible and unlocked rectangle. Creation defaults stay unchanged.");
-  const auto refreshProperties = [this, properties] { properties->setEnabled(m_canvas->canEditRectangle() && !m_canvas->interactionActive()); };
+  const auto refreshProperties = [this, properties, create] {
+    properties->setEnabled(m_canvas->canEditRectangle() && !m_canvas->interactionActive()); create->setEnabled(!m_canvas->interactionActive());
+  };
   connect(m_canvas, &EditorCanvas::changed, properties, refreshProperties);
   connect(m_canvas, &EditorCanvas::toolChanged, properties, refreshProperties);
   connect(m_canvas, &EditorCanvas::viewportChanged, properties, refreshProperties); refreshProperties();
   connect(properties, &QAction::triggered, m_canvas, [this] { m_canvas->editRectangleProperties(this); });
+  connect(create, &QAction::triggered, m_canvas, [this] { m_canvas->createRectangle(this); });
   layout->insertWidget(2, annotationToolInstructions(*m_canvas, this));
   m_saveSidecar = new QCheckBox("Also save editable annotations beside each saved PNG (.xann)", this);
   m_saveSidecar->setObjectName("captureSaveAnnotationSidecar"); layout->addWidget(m_saveSidecar);

@@ -73,7 +73,7 @@ private:
   bool printImage(const EditorPrintSnapshotPtr &retry = {});
   bool retryPrint();
   bool transferAnnotations(const QString &command);
-  bool editRectangleProperties();
+  bool rectangleDialog(bool creation);
   void recordRecentImage(const QString &absolutePath);
   void applyCreationDefaults();
   void persistDrawingDefaults();
@@ -102,6 +102,7 @@ private:
   QAction *m_delete = nullptr;
   QAction *m_rotate = nullptr;
   QAction *m_rectangleProperties = nullptr;
+  QAction *m_createRectangle = nullptr;
   QAction *m_clearAnnotations = nullptr;
   QDockWidget *m_unsupportedDock = nullptr;
   QListWidget *m_unsupportedObjects = nullptr;

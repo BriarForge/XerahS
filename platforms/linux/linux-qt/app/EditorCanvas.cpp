@@ -115,7 +115,7 @@ QString EditorCanvas::toolInstructions() const {
     case Tool::Crop:
       text = "Crop stays active: drag to choose the retained image region."; break;
   }
-  return text + " Drag a selected rectangle's square handles to resize; the opposite handle stays fixed. Rectangle Properties offers numeric bounds and style controls. "
+  return text + " Create Rectangle offers keyboard entry of bounds with captured creation defaults. Drag a selected rectangle's square handles to resize; the opposite handle stays fixed. Rectangle Properties offers numeric bounds and style controls. "
       "Escape cancels a gesture. Arrows move; Alt+arrows resize; R rotates; Delete removes selected objects. Control+wheel zooms; Space+drag pans.";
 }
 
@@ -132,13 +132,22 @@ bool EditorCanvas::canEditRectangle() const {
   return m_session->selectedRectangle() && m_session->selectionEditable();
 }
 bool EditorCanvas::editRectangleProperties(QWidget *parent) {
-  if (!isEnabled() || interactionActive() || !canEditRectangle()) return false;
-  const RectangleAnnotation snapshot = *m_session->selectedRectangle(); const auto state = m_session->stateId();
+  return rectangleDialog(parent, false);
+}
+bool EditorCanvas::createRectangle(QWidget *parent) {
+  return rectangleDialog(parent, true);
+}
+bool EditorCanvas::rectangleDialog(QWidget *parent, bool creation) {
+  if (!isEnabled() || interactionActive() || (!creation && !canEditRectangle())) return false;
+  const auto snapshot = creation ? RectangleAnnotation{} : *m_session->selectedRectangle();
+  const auto style = m_session->toolStyle(); const auto state = m_session->stateId(); const auto selection = m_session->selection();
   const QPointer<EditorCanvas> owner(this); m_propertiesPending = true;
   const auto restore = qScopeGuard([owner] { if (owner) { owner->m_propertiesPending = false; emit owner->changed(); } });
-  const auto properties = chooseRectangleProperties(snapshot, parent);
+  emit changed(); if (!owner) return false;
+  const auto properties = creation ? chooseRectangleCreation(style, m_displaySource.size(), parent) : chooseRectangleProperties(snapshot, parent);
   if (!owner || !properties) return false;
-  const bool changed = m_session->editRectangleProperties(snapshot.id, *properties, state);
+  const bool changed = creation ? bool(m_session->createRectangle(*properties, state, selection))
+      : m_session->editRectangleProperties(snapshot.id, *properties, state);
   viewport()->update();
   if (!m_session->editDiagnostic().isEmpty()) { emit editRejected(m_session->editDiagnostic()); if (!owner) return false; }
   return changed;
@@ -315,7 +324,10 @@ void EditorCanvas::mousePressEvent(QMouseEvent *event) {
     m_moveStart = m_moveLast = at;
   } else {
     if (!(event->modifiers() & Qt::ControlModifier)) m_session->select({});
-    if (m_tool == Tool::Rectangle) m_drag = std::make_pair(at, at);
+    if (m_tool == Tool::Rectangle) {
+      m_drag = std::make_pair(at, at);
+      m_creation = CreationSnapshot{m_session->toolStyle(), m_session->stateId(), m_session->selection()};
+    }
   }
   viewport()->update();
   emit changed();
@@ -363,7 +375,8 @@ void EditorCanvas::mouseReleaseEvent(QMouseEvent *event) {
     m_drag.reset();
     if (m_tool == Tool::Crop) emit cropRequested(start, at);
     else {
-      m_session->createRectangle({start.x(), start.y()}, {at.x(), at.y()});
+      const auto creation = m_creation; m_creation.reset();
+      if (creation) m_session->createRectangle({{start.x(), start.y()}, {at.x(), at.y()}, creation->style}, creation->state, creation->selection);
       rejection = m_session->editDiagnostic();
     }
   } else if (m_moving) {
@@ -381,6 +394,7 @@ void EditorCanvas::mouseReleaseEvent(QMouseEvent *event) {
 
 void EditorCanvas::cancelGesture() {
   m_drag.reset();
+  m_creation.reset();
   m_resize.reset();
   m_moving = false;
   if (m_panning) m_view.setOffset(m_panOriginalOffset);

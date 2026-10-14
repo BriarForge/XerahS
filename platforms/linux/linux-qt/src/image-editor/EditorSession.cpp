@@ -35,7 +35,16 @@ void EditorSession::commit(AnnotationDocument document) {
 }
 
 std::optional<QUuid> EditorSession::createRectangle(PointF start, PointF end) {
+  return createRectangle({start, end, m_tool}, stateId(), m_selection);
+}
+
+std::optional<QUuid> EditorSession::createRectangle(const RectangleProperties &draft, quint64 expectedState,
+    const QSet<QUuid> &expectedSelection) {
   m_editDiagnostic.clear();
+  if (stateId() != expectedState || m_selection != expectedSelection) {
+    m_editDiagnostic = "annotation-edit-stale"; return std::nullopt;
+  }
+  const auto start = draft.start, end = draft.end;
   // Check both supplied points before min/max: a NaN in the second operand
   // can otherwise disappear during normalization.
   if (!std::isfinite(start.x) || !std::isfinite(start.y) || !std::isfinite(end.x) || !std::isfinite(end.y)) {
@@ -45,9 +54,10 @@ std::optional<QUuid> EditorSession::createRectangle(PointF start, PointF end) {
   rectangle.id = QUuid::createUuid();
   rectangle.start = {std::min(start.x, end.x), std::min(start.y, end.y)};
   rectangle.end = {std::max(start.x, end.x), std::max(start.y, end.y)};
-  rectangle.style = m_tool;  // snapshot of the tool settings
+  rectangle.style = draft.style;
   // ES-003: zero area (zero width or zero height) is rejected.
-  if (!finiteGeometry(rectangle)) { m_editDiagnostic = "annotation-geometry-invalid"; return std::nullopt; }
+  m_editDiagnostic = rectanglePropertiesDiagnostic({rectangle.start, rectangle.end, rectangle.style});
+  if (!m_editDiagnostic.isEmpty()) return std::nullopt;
   try {
     AnnotationDocument next = document();
     next.annotations.push_back(rectangle);  // ES-024: highest z-order

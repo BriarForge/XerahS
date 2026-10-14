@@ -30,6 +30,10 @@ public:
 
   // ES-003, ES-024: returns the new ID, or nullopt for a zero-area drag.
   std::optional<QUuid> createRectangle(PointF start, PointF end);
+  // Owned creation draft: normalize reverse bounds, retain its frozen style,
+  // and reject intervening document/selection changes before one insertion.
+  std::optional<QUuid> createRectangle(const RectangleProperties &, quint64 expectedState,
+      const QSet<QUuid> &expectedSelection);
   // ES-004, ES-026: selection is not a document mutation. Unknown IDs are ignored.
   void select(const QList<QUuid> &ids);
   // Each returns whether one history operation was committed (ES-005).

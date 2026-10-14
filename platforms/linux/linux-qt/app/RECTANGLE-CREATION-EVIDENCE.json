@@ -1,0 +1,104 @@
+{
+  "capability": "EDITOR-ANNOTATIONS-001",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial-candidate-evidence",
+  "clarifications": [
+    "EA-005-LINUX-2026-10-14",
+    "EA-016-LINUX-2026-10-14"
+  ],
+  "implementation": [
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+    "platforms/linux/linux-qt/app/RectanglePropertiesDialog.h",
+    "platforms/linux/linux-qt/app/RectanglePropertiesDialog.cpp",
+    "platforms/linux/linux-qt/app/EditorCanvas.h",
+    "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp",
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+    "platforms/linux/linux-qt/app/NativeAnnotationTools.cpp",
+    "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.cpp"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/app/RECTANGLE-CREATION.md",
+    "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+    "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+    "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+    "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+  ],
+  "requirements": {
+    "EA-002": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Explicit native numeric creation keeps the active tool unchanged and exposes pointer/keyboard instructions and a read-only creation style snapshot. Complete tools/options/physical qualification remains Required."
+    },
+    "EA-004": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Shared Core insertion normalizes pointer reverse drags, validates finite/positive/derived geometry, permits documented clipped bounds and commits one history operation. Full geometry/tool/resource qualification remains Required."
+    },
+    "EA-014": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Numeric and pointer creation freeze style at command/drag start; later defaults stay intact and do not affect the draft. Full tool/default/field qualification remains Required."
+    },
+    "EA-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Create is one history insertion with fresh selected identity, highest order and exact previous document/selection/checkpoint recovery. Cancel/stale/invalid/owner failure commits no part. Complete mutation/recovery qualification remains Required."
+    },
+    "EA-018": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Actual Tab field entry and Alt+R/Create, Escape/Cancel, F9 customization and capture Tab/Space button activation are exercised with accessible native names and textual validation. Full tool controls/physical AT/human qualification remains Required."
+    },
+    "EA-019": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Actual PNG/.xann save/reopen retains original pixels and created bounds/style/stable ID. Existing source/assets/objects stay intact through Core history. Full field/tool/interchange compatibility remains Required."
+    },
+    "EA-020": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Core/native invalid/stale/lifetime refusal and private output fixtures pass without changing shared vectors or renderer. Full resources/target/privacy/security/human acceptance remains Required."
+    }
+  },
+  "verification": {
+    "local_ctest": {
+      "passed": 43,
+      "failed": 0,
+      "seconds": 36.49
+    },
+    "published_vectors": {
+      "passed": 114,
+      "failed": 0,
+      "expected_results_changed": false
+    },
+    "tooling_tests": {
+      "contract_linter": 16,
+      "contract_backlog": 9,
+      "conformance_runner": 7,
+      "failed": 0
+    },
+    "minimum_qt": {
+      "version": "6.4.2",
+      "affected_ctest_targets": 7,
+      "failed": 0,
+      "seconds": 13.02,
+      "targets": [
+        "capture-annotation",
+        "toolbar-preferences",
+        "native-editor-toolbar",
+        "editor-session",
+        "editor-canvas",
+        "editor-window",
+        "conformance"
+      ]
+    },
+    "visual_review": "Native offscreen creation dialog inspected. Captured style values are exposed through the native accessibility description; physical assistive-technology and supported-desktop qualification remain Required.",
+    "ci": "The checkpoint report verifies the exact pushed revision. Local results do not approve human or release gates."
+  }
+}

@@ -56,6 +56,79 @@ private slots:
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());
   }
+  void pointerCreationFreezesStyleAndRejectsInterveningDocumentChanges() {
+    const QImage source = image(); EditorSession session(document()); RectangleStyle style; style.strokeColor = 0x80112233; style.strokeWidth = 7;
+    QVERIFY(session.setCreationStyle(style)); EditorCanvas canvas(session, source); canvas.resize(520, 440); canvas.show(); QTest::qWait(10); canvas.zoomToFit();
+    const auto a = canvas.viewState().toView({150, 150}).toPoint(), b = canvas.viewState().toView({100, 100}).toPoint();
+    QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, a); style.strokeWidth = 9; QVERIFY(session.setCreationStyle(style));
+    QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, b); QCOMPARE(session.undoCount(), 1); QCOMPARE(session.selectedRectangle()->style.strokeWidth, 7.0);
+    QCOMPARE(session.toolStyle().strokeWidth, 9.0); const auto id = session.selectedRectangle()->id;
+    const auto c = canvas.viewState().toView({300, 300}).toPoint(); QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, c);
+    QVERIFY(session.createRectangle({400, 400}, {450, 450})); const auto intervening = serializeDocument(session.document()); QSignalSpy rejected(&canvas, &EditorCanvas::editRejected);
+    QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, c + QPoint(20, 20)); QCOMPARE(serializeDocument(session.document()), intervening); QCOMPARE(session.undoCount(), 2);
+    QCOMPARE(rejected.count(), 1); QCOMPARE(rejected[0][0].toString(), QString("annotation-edit-stale")); QVERIFY(!canvas.interactionActive());
+    QVERIFY(session.undo()); session.select({id}); QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, c); QTest::keyClick(&canvas, Qt::Key_Escape);
+    QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, c + QPoint(20, 20)); QCOMPARE(session.undoCount(), 1); QCOMPARE(session.redoCount(), 1);
+  }
+  void pendingCreationObserverCanDestroyTheCanvasBeforeTheDialog() {
+    EditorSession session(document()); auto canvas = std::make_unique<EditorCanvas>(session, image());
+    connect(canvas.get(), &EditorCanvas::changed, [&] { canvas.reset(); });
+    QVERIFY(!canvas->createRectangle(canvas.get())); QVERIFY(!canvas); QCOMPARE(session.undoCount(), 0); QVERIFY(!session.dirty());
+    QVERIFY(!QApplication::activeModalWidget());
+  }
+  void keyboardCreationHasOwnedDraftCancellationAndGuardedCommit_data() {
+    QTest::addColumn<QString>("mode");
+    for (const auto *mode : {"apply", "unchanged", "cancel", "invalid", "stale-document", "stale-selection", "destroy"}) QTest::newRow(mode) << QString(mode);
+  }
+  void keyboardCreationHasOwnedDraftCancellationAndGuardedCommit() {
+    QFETCH(QString, mode); EditorSession session(document()); const auto originalId = *session.createRectangle({300, 300}, {350, 350}); session.markSaved();
+    RectangleStyle frozen{0x80112233, 0x40223344, 2.5, 37.25, .25}; QVERIFY(session.setCreationStyle(frozen));
+    auto canvas = std::make_unique<EditorCanvas>(session, image()); canvas->show(); canvas->setTool(EditorCanvas::Tool::Select);
+    const auto before = serializeDocument(session.document()); auto expected = before; bool acted = false; QTimer timer; QSignalSpy rejected(canvas.get(), &EditorCanvas::editRejected);
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *dialog = qobject_cast<RectanglePropertiesDialog *>(QApplication::activeModalWidget()); if (!dialog || acted) return; acted = true;
+      const QPointer<RectanglePropertiesDialog> owner(dialog); const auto close = qScopeGuard([owner] { if (owner && owner->isVisible()) owner->reject(); });
+      QCOMPARE(dialog->objectName(), QString("rectangleCreationDialog")); QVERIFY(canvas->interactionActive()); QVERIFY(!canvas->createRectangle(canvas.get()));
+      QVERIFY(!canvas->editRectangleProperties(canvas.get())); auto *label = dialog->findChild<QLabel *>("rectangleCreationStyle"); QVERIFY(label); QVERIFY(label->text().contains("#80112233"));
+      auto *accessible = QAccessible::queryAccessibleInterface(label); QVERIFY(accessible); QCOMPARE(accessible->text(QAccessible::Description), label->text());
+      QVERIFY(!dialog->findChild<QLineEdit *>("rectangleStrokeWidth")); QCOMPARE(serializeDocument(session.document()), before);
+      if (mode == "destroy") { canvas.reset(); return; }
+      const QStringList fields{"rectangleLeft", "rectangleTop", "rectangleWidth", "rectangleHeight"}; const QStringList values{"-5.25", "6.5", "20.5", "30.25"};
+      dialog->activateWindow(); dialog->findChild<QLineEdit *>(fields[0])->setFocus();
+      for (int i = 0; i < fields.size(); ++i) {
+        auto *field = dialog->findChild<QLineEdit *>(fields[i]); QTRY_COMPARE(QApplication::focusWidget(), field);
+        if (mode != "unchanged") { QTest::keyClick(field, Qt::Key_A, Qt::ControlModifier); QTest::keyClicks(field, values[i]); }
+        if (i != fields.size() - 1) QTest::keyClick(field, Qt::Key_Tab);
+      }
+      if (mode == "invalid") {
+        dialog->findChild<QLineEdit *>("rectangleWidth")->setText("0"); QTest::keyClick(dialog, Qt::Key_R, Qt::AltModifier);
+        QTRY_VERIFY(!dialog->findChild<QLabel *>("rectanglePropertiesStatus")->text().isEmpty());
+        QVERIFY(dialog->isVisible()); QCOMPARE(serializeDocument(session.document()), before);
+      }
+      if (mode == "cancel" || mode == "invalid") { QTest::keyClick(dialog, Qt::Key_Escape); return; }
+      if (mode == "stale-document") { QVERIFY(session.moveSelection(1, 0)); expected = serializeDocument(session.document()); }
+      if (mode == "stale-selection") session.select({});
+      RectangleStyle later = frozen; later.strokeWidth = 9; QVERIFY(session.setCreationStyle(later));
+      if (qEnvironmentVariableIsSet("XERAHS_RECTANGLE_CREATION_QA") && mode == "apply") QVERIFY(dialog->grab().save(qEnvironmentVariable("XERAHS_RECTANGLE_CREATION_QA")));
+      QTest::keyClick(dialog, Qt::Key_R, Qt::AltModifier);
+      QTRY_VERIFY(!dialog->isVisible());
+    });
+    timer.start(5); const bool changed = canvas->createRectangle(canvas.get()); timer.stop(); QVERIFY(acted);
+    const bool accepted = mode == "apply" || mode == "unchanged"; QCOMPARE(changed, accepted);
+    if (accepted) {
+      QCOMPARE(session.undoCount(), 2); const auto *r = session.selectedRectangle(); QVERIFY(r); QVERIFY(r->id != originalId);
+      QCOMPARE(r->start, (mode == "apply" ? PointF{-5.25, 6.5} : PointF{0, 0})); QCOMPARE(r->end, (mode == "apply" ? PointF{15.25, 36.75} : PointF{100, 100}));
+      QCOMPARE(r->style.strokeWidth, frozen.strokeWidth); QCOMPARE(r->style.strokeColor, frozen.strokeColor); QCOMPARE(r->style.fillColor, frozen.fillColor);
+      QCOMPARE(r->style.rotationDegrees, frozen.rotationDegrees); QCOMPARE(r->style.opacity, frozen.opacity); QCOMPARE(session.toolStyle().strokeWidth, 9.0);
+      QCOMPARE(canvas->tool(), EditorCanvas::Tool::Select); QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.selection(), QSet<QUuid>{originalId}); QVERIFY(!session.dirty());
+      QVERIFY(session.redo()); QCOMPARE(session.document().annotations.size(), size_t(2));
+    } else {
+      QCOMPARE(serializeDocument(session.document()), expected);
+      if (mode.startsWith("stale-")) { QCOMPARE(rejected.count(), 1); QCOMPARE(rejected[0][0].toString(), QString("annotation-edit-stale")); }
+      else { QCOMPARE(session.undoCount(), 1); QVERIFY(!session.dirty()); }
+    }
+    if (canvas) QVERIFY(!canvas->interactionActive());
+  }
   void initialLayoutFitsTheActualViewportWithoutMutatingTheSession() {
     const QImage source = image(); EditorSession session(document()); EditorCanvas canvas(session, source);
     canvas.resize(520, 440); canvas.show(); QTest::qWait(10);

@@ -64,6 +64,31 @@ class EditorSessionTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void frozenCreationNormalizesBoundsAndPreservesDefaultsAndHistory() {
+    auto d = document(); const auto original = rectangle(1, 2, 3, 4); d.annotations = {original}; d.embeddedImages = {{"kept", kOnePixelPng}};
+    EditorSession session(d); session.select({original.id}); const auto before = serializeDocument(session.document());
+    const RectangleStyle frozen{0x80112233, 0x40223344, 2.5, 37.25, .25};
+    RectangleStyle later; later.strokeWidth = 9; QVERIFY(session.setCreationStyle(later));
+    const auto id = session.createRectangle({{8.75, 9.125}, {-1.5, 2.25}, frozen}, session.stateId(), session.selection()); QVERIFY(id);
+    QVERIFY(*id != original.id); const auto *r = session.selectedRectangle(); QVERIFY(r); QCOMPARE(r->start, (PointF{-1.5, 2.25})); QCOMPARE(r->end, (PointF{8.75, 9.125}));
+    QCOMPARE(r->style.strokeColor, frozen.strokeColor); QCOMPARE(r->style.fillColor, frozen.fillColor); QCOMPARE(r->style.strokeWidth, frozen.strokeWidth);
+    QCOMPARE(r->style.rotationDegrees, frozen.rotationDegrees); QCOMPARE(r->style.opacity, frozen.opacity); QCOMPARE(session.toolStyle().strokeWidth, 9.0);
+    QCOMPARE(session.document().embeddedImages, d.embeddedImages); QCOMPARE(session.document().sourceImagePng, d.sourceImagePng); QCOMPARE(session.undoCount(), 1);
+    const auto created = serializeDocument(session.document()); QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before);
+    QCOMPARE(session.selection(), QSet<QUuid>{original.id}); QVERIFY(!session.dirty()); QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), created); QCOMPARE(session.selection(), QSet<QUuid>{*id});
+  }
+  void failedFrozenCreationPreservesRedoCheckpointAndInterveningState() {
+    EditorSession session(document()); const auto id = *session.createRectangle({1, 1}, {3, 3}); session.markSaved();
+    QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); const auto state = session.stateId(); const auto selection = session.selection();
+    const auto before = serializeDocument(session.document()); RectangleProperties draft{{2, 2}, {4, 4}, session.toolStyle()};
+    draft.end.x = draft.start.x; QVERIFY(!session.createRectangle(draft, state, selection)); QCOMPARE(session.editDiagnostic(), QString("annotation-geometry-invalid"));
+    draft.end.x = std::numeric_limits<double>::quiet_NaN(); QVERIFY(!session.createRectangle(draft, state, selection));
+    draft.end.x = 4; draft.style.opacity = 2; QVERIFY(!session.createRectangle(draft, state, selection)); QCOMPARE(session.editDiagnostic(), QString("annotation-style-invalid"));
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.redoCount(), 1); QCOMPARE(session.selection(), selection); QVERIFY(!session.dirty());
+    draft.style.opacity = 1; session.select({}); QVERIFY(!session.createRectangle(draft, state, selection)); QCOMPARE(session.editDiagnostic(), QString("annotation-edit-stale"));
+    session.select({id}); QVERIFY(session.redo()); const auto intervening = serializeDocument(session.document());
+    QVERIFY(!session.createRectangle(draft, state, selection)); QCOMPARE(session.editDiagnostic(), QString("annotation-edit-stale")); QCOMPARE(serializeDocument(session.document()), intervening);
+  }
   void pointerResizeHasFixedOppositeBounds_data() {
     QTest::addColumn<int>("handle"); QTest::addColumn<double>("left"); QTest::addColumn<double>("top");
     QTest::addColumn<double>("right"); QTest::addColumn<double>("bottom");

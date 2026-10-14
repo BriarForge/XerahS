@@ -172,9 +172,13 @@ previews and one validated commit, plus shared keyboard-accessible numeric/color
 properties. Creation defaults/source/assets/unknown fields remain intact through
 actual editor save/reopen and capture publication; invalid/stale/cancel/owner
 failures preserve this edit's state. Initial layout now fits the actual viewport
-while later resizes preserve user zoom. Next add keyboard-accessible Rectangle
-creation with frozen defaults and numeric bounds, while resolving the shared
-Ellipse decision, alongside owned native output service handoffs, remaining tools and the
+while later resizes preserve user zoom. [Keyboard Rectangle creation](app/RECTANGLE-CREATION.md)
+now owns numeric bounds and frozen defaults/state/selection in editor and capture.
+Pointer creation shares that guarded draft path. Actual Tab/Alt+R/F9/capture
+Tab-Space, cancel/stale/lifetime and save/reopen/publication fixtures preserve the
+active tool, defaults and source. Next add an accessible annotation object navigator
+for keyboard selection of existing objects while resolving the shared Ellipse
+decision, alongside owned native output service handoffs, remaining tools and the
 format policy and all other contracted output/capture/application domains.
 Physical clipboard/color/accessibility, shutdown and human gates remain
 Required; this does not accept full output conformance or parity.

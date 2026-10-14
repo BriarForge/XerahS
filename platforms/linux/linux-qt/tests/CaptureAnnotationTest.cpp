@@ -15,6 +15,11 @@
 #include <QLineEdit>
 #include <QDialogButtonBox>
 #include <QPushButton>
+#include <QToolBar>
+#include <QToolButton>
+#include <QAccessible>
+#include <QPointer>
+#include <QScopeGuard>
 using namespace xerahs::app;
 using namespace xerahs::actions;
 namespace {
@@ -28,6 +33,37 @@ CaptureAnnotationChoice rectangle(const LoadedSource &source) {
 class CaptureAnnotationTest final : public QObject {
   Q_OBJECT
 private slots:
+  void keyboardCreationInCaptureUsesSnapshotBeforeActualPublication_data() {
+    QTest::addColumn<bool>("apply"); QTest::newRow("apply") << true; QTest::newRow("cancel") << false;
+  }
+  void keyboardCreationInCaptureUsesSnapshotBeforeActualPublication() {
+    QFETCH(bool, apply); QTemporaryDir dir; CaptureActionPorts ports; ports.annotationStyle = {0xFF112233, 0xFF00FF00, 1, 0, 1};
+    CapturePipeline pipeline(pixels(), dir.path(), "keyboard", {"annotation", "save"}, nullptr, ports); QSignalSpy done(&pipeline, &CapturePipeline::finished);
+    pipeline.start(); QTRY_VERIFY(dialog()); auto *capture = dialog(); auto *canvas = capture->findChild<EditorCanvas *>(); QVERIFY(canvas);
+    capture->findChild<QAction *>("selectTool")->trigger(); auto *create = capture->findChild<QAction *>("createRectangle"); QVERIFY(create && create->isEnabled());
+    auto *button = qobject_cast<QToolButton *>(capture->findChild<QToolBar *>()->widgetForAction(create)); QVERIFY(button); QVERIFY(button->focusPolicy() & Qt::TabFocus);
+    auto *accessible = QAccessible::queryAccessibleInterface(button); QVERIFY(accessible); QVERIFY(accessible->text(QAccessible::Name).contains("Create Rectangle"));
+    bool acted = false; QTimer timer; connect(&timer, &QTimer::timeout, [&] {
+      auto *editor = qobject_cast<RectanglePropertiesDialog *>(QApplication::activeModalWidget()); if (!editor || acted) return; acted = true;
+      const QPointer<RectanglePropertiesDialog> owner(editor); const auto close = qScopeGuard([owner] { if (owner && owner->isVisible()) owner->reject(); });
+      QCOMPARE(editor->objectName(), QString("rectangleCreationDialog")); QVERIFY(!create->isEnabled()); capture->accept(); QVERIFY(capture->isVisible()); QCOMPARE(done.count(), 0);
+      editor->activateWindow();
+      for (const auto &entry : {std::pair{"rectangleLeft", "20"}, std::pair{"rectangleTop", "20"}, std::pair{"rectangleWidth", "20"}, std::pair{"rectangleHeight", "20"}}) {
+        auto *field = editor->findChild<QLineEdit *>(entry.first); field->setFocus(); QTRY_COMPARE(QApplication::focusWidget(), field);
+        QTest::keyClick(field, Qt::Key_A, Qt::ControlModifier); QTest::keyClicks(field, entry.second);
+      }
+      QTest::keyClick(editor, apply ? Qt::Key_R : Qt::Key_Escape, apply ? Qt::AltModifier : Qt::NoModifier);
+      QTRY_VERIFY(!editor->isVisible());
+    });
+    capture->activateWindow(); canvas->setFocus(); QTRY_COMPARE(QApplication::focusWidget(), canvas);
+    for (int i = 0; i < 30 && QApplication::focusWidget() != button; ++i) QTest::keyClick(QApplication::focusWidget(), Qt::Key_Tab);
+    QCOMPARE(QApplication::focusWidget(), button); timer.start(5); QTest::keyClick(button, Qt::Key_Space); timer.stop(); QVERIFY(acted); QVERIFY(create->isEnabled());
+    QCOMPARE(canvas->tool(), EditorCanvas::Tool::Select); capture->accept(); QTRY_COMPARE(done.count(), 1);
+    const auto result = receipt(done); QVERIFY(result->annotationDocument); QCOMPARE(result->annotationDocument->annotations.size(), apply ? size_t(1) : size_t(0));
+    QCOMPARE(result->workingMedia.pixel(30, 30), apply ? qRgb(0, 255, 0) : qRgb(0, 0, 255)); QCOMPARE(QImage(result->file->path), result->workingMedia);
+    QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), pixels());
+    if (apply) { const auto &r = std::get<xerahs::editor::RectangleAnnotation>(result->annotationDocument->annotations[0]); QCOMPARE(r.style.strokeWidth, 1.0); QCOMPARE(r.style.fillColor, quint32(0xFF00FF00)); QVERIFY(!r.id.isNull()); }
+  }
   void selectedPropertiesApplyBeforeCaptureOutputAndKeepDefaults_data() {
     QTest::addColumn<bool>("apply"); QTest::newRow("apply") << true; QTest::newRow("cancel") << false;
   }

@@ -209,6 +209,40 @@ private slots:
   }
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  void keyboardRectangleCreationSavesFrozenStyleAndPreservesSource_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"apply", "cancel", "destroy"}) QTest::newRow(mode) << QString(mode);
+  }
+  void keyboardRectangleCreationSavesFrozenStyleAndPreservesSource() {
+    QFETCH(QString, mode); QTemporaryDir dir; const auto path = dir.filePath("source.png"), settings = dir.filePath("prefs.json");
+    QVERIFY(fixture().save(path)); const auto original = storedBytes(path); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    QVERIFY(applyDrawingDefaults({{"Thickness", 3}, {"BorderColorHex", "#80112233"}, {"FillColorHex", "#40223344"}}, nativeEditorPreferenceRevision()).saved);
+    QVERIFY(applyToolbarPreferences(QJsonArray{QJsonObject{{"Id", "create-rectangle"}, {"Hotkey", "F9"}, {"IsVisible", false}}}, nativeEditorPreferenceRevision()).saved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>();
+    trigger(*window, "selectTool"); auto *create = window->findChild<QAction *>("createRectangle"); QVERIFY(create && create->isEnabled());
+    const auto prefs = storedBytes(settings); const auto offset = canvas->viewState().offset(); bool acted = false; QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *dialog = qobject_cast<RectanglePropertiesDialog *>(QApplication::activeModalWidget()); if (!dialog || acted) return; acted = true;
+      const QPointer<RectanglePropertiesDialog> owner(dialog); const auto close = qScopeGuard([owner] { if (owner && owner->isVisible()) owner->reject(); });
+      QCOMPARE(dialog->objectName(), QString("rectangleCreationDialog")); QVERIFY(!canvas->isEnabled()); QVERIFY(!create->isEnabled()); QVERIFY(!window->close());
+      QVERIFY(!window->findChild<QAction *>("saveImage")->isEnabled()); QCOMPARE(storedBytes(path), original); QVERIFY(!QFile::exists(path + ".xann"));
+      if (mode == "destroy") { window.reset(); return; }
+      dialog->findChild<QLineEdit *>("rectangleLeft")->setText("2.5"); dialog->findChild<QLineEdit *>("rectangleTop")->setText("3.75");
+      dialog->findChild<QLineEdit *>("rectangleWidth")->setText("24"); dialog->findChild<QLineEdit *>("rectangleHeight")->setText("12");
+      QTest::keyClick(dialog, mode == "apply" ? Qt::Key_R : Qt::Key_Escape, mode == "apply" ? Qt::AltModifier : Qt::NoModifier);
+      QTRY_VERIFY(!dialog->isVisible());
+    });
+    window->activateWindow(); canvas->setFocus(); QTRY_VERIFY(window->isActiveWindow()); timer.start(5); QTest::keyClick(canvas, Qt::Key_F9); timer.stop(); QVERIFY(acted);
+    QCOMPARE(storedBytes(path), original); QVERIFY(!QFile::exists(path + ".xann")); QCOMPARE(storedBytes(settings), prefs);
+    if (!window) { QCOMPARE(mode, QString("destroy")); return; }
+    QVERIFY(canvas->isEnabled()); QVERIFY(create->isEnabled()); QCOMPARE(canvas->tool(), EditorCanvas::Tool::Select); QCOMPARE(canvas->viewState().offset(), offset);
+    QCOMPARE(window->windowTitle().contains(" •"), mode == "apply"); if (mode != "apply") return;
+    trigger(*window, "undo"); QVERIFY(!window->windowTitle().contains(" •")); trigger(*window, "redo"); QVERIFY(window->windowTitle().contains(" •"));
+    trigger(*window, "saveImage"); const auto saved = loadSource(path); QVERIFY(saved.document); QCOMPARE(saved.image, fixture()); QCOMPARE(saved.document->annotations.size(), size_t(1));
+    const auto &r = std::get<RectangleAnnotation>(saved.document->annotations[0]); QCOMPARE(r.start, (PointF{2.5, 3.75})); QCOMPARE(r.end, (PointF{26.5, 15.75}));
+    QCOMPARE(r.style.strokeWidth, 3.0); QCOMPARE(r.style.strokeColor, Argb(0x80112233)); QCOMPARE(r.style.fillColor, Argb(0x40223344));
+    const auto id = r.id; QVERIFY(!id.isNull()); trigger(*window, "undo"); trigger(*window, "redo"); trigger(*window, "saveImage");
+    QCOMPARE(std::get<RectangleAnnotation>(loadSource(path).document->annotations[0]).id, id); QCOMPARE(storedBytes(settings), prefs);
+  }
   void rectanglePropertiesHaveAtomicHistoryDefaultsAndActualSaveRecovery_data() {
     QTest::addColumn<bool>("apply"); QTest::newRow("apply") << true; QTest::newRow("cancel") << false;
   }

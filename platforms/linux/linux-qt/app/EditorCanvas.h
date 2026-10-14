@@ -31,6 +31,7 @@ public:
   bool canEditRectangle() const;
   // Capture uses the same owned native dialog and Core edit as the main editor.
   bool editRectangleProperties(QWidget *parent);
+  bool createRectangle(QWidget *parent);
   // Adopt an already prepared session without rebuilding actions or controls.
   void resetDocument(xerahs::editor::EditorSession &session, const QImage &displaySource);
 
@@ -56,6 +57,7 @@ protected:
   void scrollContentsBy(int, int) override;
 
 private:
+  bool rectangleDialog(QWidget *parent, bool creation);
   std::optional<QUuid> topmostAt(QPointF imagePoint) const;
   std::optional<xerahs::editor::RectangleHandle> handleAt(QPointF viewPoint) const;
   std::array<std::pair<xerahs::editor::RectangleHandle, QPointF>, 8> handles(const xerahs::editor::RectangleAnnotation &) const;
@@ -67,6 +69,12 @@ private:
   QImage m_displaySource;
   xerahs::editor::EditorViewport m_view;
   std::optional<std::pair<QPointF, QPointF>> m_drag;
+  struct CreationSnapshot {
+    xerahs::editor::RectangleStyle style;
+    quint64 state;
+    QSet<QUuid> selection;
+  };
+  std::optional<CreationSnapshot> m_creation;
   struct ResizeGesture {
     xerahs::editor::RectangleAnnotation original;
     xerahs::editor::RectangleHandle handle;
