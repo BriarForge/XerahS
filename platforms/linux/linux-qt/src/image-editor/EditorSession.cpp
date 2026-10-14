@@ -194,15 +194,27 @@ bool EditorSession::setFillColor(Argb color) {
   });
 }
 
-bool EditorSession::canEditColor() const { return m_selection.isEmpty() || canRotateSelection(); }
+bool EditorSession::canEditStyle() const { return m_selection.isEmpty() || canRotateSelection(); }
+bool EditorSession::canEditColor() const { return canEditStyle(); }
+bool EditorSession::admitStyleEdit(quint64 expectedState, const QSet<QUuid> &expectedSelection, const RectangleStyle &expectedDefaults) {
+  m_editDiagnostic.clear();
+  if (stateId() != expectedState || m_selection != expectedSelection || !sameStyle(m_tool, expectedDefaults)) m_editDiagnostic = "annotation-edit-stale";
+  else if (!m_selection.isEmpty() && !selectionEditable()) m_editDiagnostic = "annotation-selection-protected";
+  else if (!canEditStyle()) m_editDiagnostic = "annotation-type-unsupported";
+  return m_editDiagnostic.isEmpty();
+}
+EditorSession::StyleEditResult EditorSession::editStrokeWidth(double width, quint64 expectedState,
+    const QSet<QUuid> &expectedSelection, const RectangleStyle &expectedDefaults) {
+  if (!std::isfinite(width) || width <= 0 || width > 10000) { m_editDiagnostic = "annotation-style-invalid"; return {false, false, false, m_editDiagnostic}; }
+  if (!admitStyleEdit(expectedState, expectedSelection, expectedDefaults)) return {false, false, false, m_editDiagnostic};
+  const auto before = m_tool; const bool changed = setStrokeWidth(width);
+  if (!m_editDiagnostic.isEmpty()) { m_tool = before; return {false, false, false, m_editDiagnostic}; }
+  return {true, changed, before.strokeWidth != width, {}};
+}
 EditorSession::ColorEditResult EditorSession::editColor(ColorTarget target, Argb color, quint64 expectedState,
     const QSet<QUuid> &expectedSelection, const RectangleStyle &expectedDefaults) {
-  m_editDiagnostic.clear();
-  if (target != ColorTarget::Stroke && target != ColorTarget::Fill) m_editDiagnostic = "annotation-style-invalid";
-  else if (stateId() != expectedState || m_selection != expectedSelection || !sameStyle(m_tool, expectedDefaults)) m_editDiagnostic = "annotation-edit-stale";
-  else if (!m_selection.isEmpty() && !selectionEditable()) m_editDiagnostic = "annotation-selection-protected";
-  else if (!canEditColor()) m_editDiagnostic = "annotation-type-unsupported";
-  if (!m_editDiagnostic.isEmpty()) return {false, false, false, m_editDiagnostic};
+  if (target != ColorTarget::Stroke && target != ColorTarget::Fill) { m_editDiagnostic = "annotation-style-invalid"; return {false, false, false, m_editDiagnostic}; }
+  if (!admitStyleEdit(expectedState, expectedSelection, expectedDefaults)) return {false, false, false, m_editDiagnostic};
   const auto before = m_tool;
   const bool defaultsChanged = (target == ColorTarget::Stroke ? before.strokeColor : before.fillColor) != color;
   const bool changed = target == ColorTarget::Stroke ? setStrokeColor(color) : setFillColor(color);

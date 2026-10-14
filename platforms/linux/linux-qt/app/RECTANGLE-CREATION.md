@@ -81,7 +81,8 @@ human dispositions are invented.
 Subsequent [object selection](ANNOTATION-OBJECTS.md), [movement](ANNOTATION-MOVE.md),
 [rotation](ANNOTATION-ROTATION.md), [colour](ANNOTATION-COLOR.md) and
 [numeric draft](RECTANGLE-DRAFTS.md) checkpoints add shared native controls,
-generation and owner guards. Next guard native thickness commands against
-default-only publication after a refused selected batch. All remaining tools/effects, capture topology,
+generation and owner guards. [Thickness](ANNOTATION-THICKNESS.md) now guards
+document/default admission and publication lifetime. Next expose guarded native
+ordering controls and catalogue gestures. All remaining tools/effects, capture topology,
 recording/audio, uploads, workflows, application/compatibility/packaging,
 supported Linux editions and human/release gates stay in full contract scope.

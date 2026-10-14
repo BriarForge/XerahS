@@ -86,7 +86,8 @@ previews and commits against stale document/selection changes. The
 [rotation checkpoint](ANNOTATION-ROTATION.md) added frozen state/selection and
 owner lifetime; the [colour checkpoint](ANNOTATION-COLOR.md) also guards defaults,
 generation and editor preferences. [Numeric drafts](RECTANGLE-DRAFTS.md) now guard
-matching-state replacement and nested colour lifetime. Next guard native thickness
-commands against default-only publication after a refused selected batch. Every other capture, recording/audio,
+matching-state replacement and nested colour lifetime. [Thickness](ANNOTATION-THICKNESS.md)
+now guards document/default admission and publication lifetime. Next expose guarded
+native ordering controls and catalogue gestures. Every other capture, recording/audio,
 upload, workflow/settings, tool/effect/output, application/compatibility,
 packaging/native-matrix and human/release requirement remains in full scope.

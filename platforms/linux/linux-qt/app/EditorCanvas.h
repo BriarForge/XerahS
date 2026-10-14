@@ -34,6 +34,9 @@ public:
   bool rotateSelection(QWidget *parent);
   bool canEditColor() const { return m_session->canEditColor(); }
   bool editColor(xerahs::editor::EditorSession::ColorTarget, QWidget *parent);
+  bool canEditStyle() const { return m_session->canEditStyle(); }
+  double creationStrokeWidth() const { return m_session->toolStyle().strokeWidth; }
+  bool changeStrokeWidth(bool increase);
   // Capture uses the same owned native dialog and Core edit as the main editor.
   bool editRectangleProperties(QWidget *parent);
   bool createRectangle(QWidget *parent);

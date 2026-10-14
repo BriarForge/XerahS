@@ -185,6 +185,20 @@ bool EditorCanvas::rectangleDialog(QWidget *parent, bool creation) {
   return changed;
 }
 
+bool EditorCanvas::changeStrokeWidth(bool increase) {
+  if (!isEnabled() || interactionActive() || !canEditStyle()) return false;
+  const auto state = m_session->stateId(), generation = m_documentGeneration; const auto selection = m_session->selection();
+  const auto defaults = m_session->toolStyle();
+  const double width = increase ? std::min(10000.0, defaults.strokeWidth + 1) : std::max(1.0, defaults.strokeWidth - 1);
+  const QPointer<EditorCanvas> owner(this); m_annotationDialogPending = true;
+  const auto restore = qScopeGuard([owner] { if (owner) { owner->m_annotationDialogPending = false; emit owner->changed(); } });
+  emit changed(); if (!owner) return false;
+  QString diagnostic; bool changed = false;
+  if (generation != m_documentGeneration) diagnostic = "annotation-edit-stale";
+  else { const auto edit = m_session->editStrokeWidth(width, state, selection, defaults); changed = edit.documentChanged; diagnostic = edit.diagnostic; }
+  viewport()->update(); if (!diagnostic.isEmpty()) { emit editRejected(diagnostic); if (!owner) return false; }
+  return changed;
+}
 bool EditorCanvas::editColor(EditorSession::ColorTarget target, QWidget *parent) {
   if (!isEnabled() || interactionActive() || !canEditColor()) return false;
   const auto state = m_session->stateId(), generation = m_documentGeneration; const auto selection = m_session->selection();

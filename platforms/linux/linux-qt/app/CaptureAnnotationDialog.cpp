@@ -46,21 +46,29 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   connect(create, &QAction::triggered, m_canvas, [this] { m_canvas->createRectangle(this); });
   connect(rotate, &QAction::triggered, m_canvas, [this] { m_canvas->rotateSelection(this); });
   layout->insertWidget(2, annotationToolInstructions(*m_canvas, this));
-  auto *colors = new QToolBar("Capture colour controls", this); colors->setObjectName("captureColorToolbar"); layout->insertWidget(3, colors);
+  auto *colors = new QToolBar("Capture style controls", this); colors->setObjectName("captureColorToolbar"); layout->insertWidget(3, colors);
   auto *stroke = colors->addAction("Stroke colour…"); stroke->setObjectName("strokeColour"); stroke->setAutoRepeat(false);
   auto *fill = colors->addAction("Fill colour…"); fill->setObjectName("fillColour"); fill->setAutoRepeat(false);
-  for (auto *action : {stroke, fill}) {
+  auto *width = colors->addAction("Stroke +"); width->setObjectName("increaseStroke"); width->setAutoRepeat(false);
+  auto *thin = colors->addAction("Stroke −"); thin->setObjectName("decreaseStroke"); thin->setAutoRepeat(false);
+  for (auto *action : {stroke, fill, width, thin}) {
     colors->widgetForAction(action)->setFocusPolicy(Qt::StrongFocus);
     action->setToolTip("Change selected rectangles and the default for new rectangles in this capture. Editor preferences stay unchanged.");
   }
-  const auto refreshColors = [this, stroke, fill] {
-    const bool ready = m_canvas->canEditColor() && !m_canvas->interactionActive(); stroke->setEnabled(ready); fill->setEnabled(ready);
+  auto *strokeWidth = new QLabel(colors); strokeWidth->setObjectName("captureStrokeWidth"); strokeWidth->setAccessibleName("New rectangle stroke width"); colors->addWidget(strokeWidth);
+  const auto refreshColors = [this, stroke, fill, width, thin, strokeWidth] {
+    const bool ready = m_canvas->canEditStyle() && !m_canvas->interactionActive();
+    for (auto *action : {stroke, fill, width, thin}) action->setEnabled(ready);
+    strokeWidth->setText(QString("New rectangles: %1 px").arg(QString::number(m_canvas->creationStrokeWidth(), 'g', 17)));
+    strokeWidth->setAccessibleDescription(strokeWidth->text());
   };
   connect(m_canvas, &EditorCanvas::changed, stroke, refreshColors);
   connect(m_canvas, &EditorCanvas::toolChanged, stroke, refreshColors);
   connect(m_canvas, &EditorCanvas::viewportChanged, stroke, refreshColors); refreshColors();
   connect(stroke, &QAction::triggered, m_canvas, [this] { m_canvas->editColor(xerahs::editor::EditorSession::ColorTarget::Stroke, this); });
   connect(fill, &QAction::triggered, m_canvas, [this] { m_canvas->editColor(xerahs::editor::EditorSession::ColorTarget::Fill, this); });
+  connect(width, &QAction::triggered, m_canvas, [this] { m_canvas->changeStrokeWidth(true); });
+  connect(thin, &QAction::triggered, m_canvas, [this] { m_canvas->changeStrokeWidth(false); });
   m_saveSidecar = new QCheckBox("Also save editable annotations beside each saved PNG (.xann)", this);
   m_saveSidecar->setObjectName("captureSaveAnnotationSidecar"); layout->addWidget(m_saveSidecar);
   auto *privacy = new QLabel("The companion contains the original capture and editable annotations. A companion failure keeps the PNG and the editable document for explicit retry. "
@@ -76,8 +84,8 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   connect(m_canvas, &EditorCanvas::changed, undo, refreshHistory);
   connect(m_canvas, &EditorCanvas::toolChanged, undo, refreshHistory);
   connect(m_canvas, &EditorCanvas::viewportChanged, undo, refreshHistory); refreshHistory();
-  connect(undo, &QAction::triggered, this, [this, refreshProperties, refreshHistory] { if (!m_canvas->interactionActive()) { m_session.undo(); m_canvas->viewport()->update(); m_annotationObjects->refresh(); refreshProperties(); refreshHistory(); } });
-  connect(redo, &QAction::triggered, this, [this, refreshProperties, refreshHistory] { if (!m_canvas->interactionActive()) { m_session.redo(); m_canvas->viewport()->update(); m_annotationObjects->refresh(); refreshProperties(); refreshHistory(); } });
+  connect(undo, &QAction::triggered, this, [this, refreshProperties, refreshHistory, refreshColors] { if (!m_canvas->interactionActive()) { m_session.undo(); m_canvas->viewport()->update(); m_annotationObjects->refresh(); refreshProperties(); refreshHistory(); refreshColors(); } });
+  connect(redo, &QAction::triggered, this, [this, refreshProperties, refreshHistory, refreshColors] { if (!m_canvas->interactionActive()) { m_session.redo(); m_canvas->viewport()->update(); m_annotationObjects->refresh(); refreshProperties(); refreshHistory(); refreshColors(); } });
   connect(bar->addAction("Zoom in"), &QAction::triggered, m_canvas, &EditorCanvas::zoomIn);
   connect(bar->addAction("Zoom out"), &QAction::triggered, m_canvas, &EditorCanvas::zoomOut);
   connect(bar->addAction("100%"), &QAction::triggered, m_canvas, &EditorCanvas::resetZoom);

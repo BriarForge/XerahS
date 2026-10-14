@@ -74,12 +74,11 @@ remains Required.
 
 ## Next work and full scope
 
-Next guard native thickness commands so a protected or invalid selected batch
-cannot publish only the changed creation default. Current increase/decrease
-callbacks call the legacy setter, which assigns its default before whole-batch
-admission, and then persist drawing defaults. Add a guarded production path with
-atomic document/default refusal, truthful preference failure and actual native
-history/restart/save evidence while preserving the published adapter semantics.
+The subsequent [thickness checkpoint](ANNOTATION-THICKNESS.md) guards complete
+document/default admission and native publication/lifetime while keeping capture
+defaults local. Next expose four guarded accessible ordering controls and the
+catalogue gestures, retaining text/list/canvas precedence and actual
+history/persistence/publication evidence.
 
 Shared Ellipse schema/rasterization, clipboard assets and output-format decisions
 remain pending in ANNOTATION-TOOLS.md, ANNOTATION-TRANSFER.md and EDITOR-SAVE.md.

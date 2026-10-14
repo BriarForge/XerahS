@@ -47,12 +47,16 @@ public:
   bool setStrokeColor(Argb color);
   bool setFillColor(Argb color);
   enum class ColorTarget { Stroke, Fill };
-  struct ColorEditResult { bool accepted = false; bool documentChanged = false; bool defaultsChanged = false; QString diagnostic; };
+  struct StyleEditResult { bool accepted = false; bool documentChanged = false; bool defaultsChanged = false; QString diagnostic; };
+  using ColorEditResult = StyleEditResult;
   // Freeze both the document/selection and the creation defaults across native
   // pickers. Failure leaves both unchanged; an empty selection edits only defaults.
   ColorEditResult editColor(ColorTarget, Argb, quint64 expectedState, const QSet<QUuid> &expectedSelection,
       const RectangleStyle &expectedDefaults);
   bool canEditColor() const;
+  bool canEditStyle() const;
+  StyleEditResult editStrokeWidth(double, quint64 expectedState, const QSet<QUuid> &expectedSelection,
+      const RectangleStyle &expectedDefaults);
   bool setOpacity(double opacity);
   // ES-004: keyboard and pointer parity operations, each one history operation.
   // Resizing moves the bottom-right corner; a result without positive area is rejected.
@@ -117,6 +121,7 @@ private:
   void commitWithSelection(AnnotationDocument, QSet<QUuid> selection);
   template <typename Change>
   bool changeSelected(Change change);
+  bool admitStyleEdit(quint64, const QSet<QUuid> &, const RectangleStyle &);
 
   std::vector<HistoryState> m_history;
   std::size_t m_position = 0;

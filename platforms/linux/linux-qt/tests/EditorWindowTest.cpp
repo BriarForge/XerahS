@@ -284,6 +284,54 @@ private slots:
     for (bool fill : {false, true}) for (const auto *mode : {"apply", "cancel", "defaults-only", "stale-preferences", "replacement", "preference-failure", "destroy", "dialog-destroy", "publish-destroy"})
       QTest::newRow(qPrintable(QString("%1-%2").arg(fill ? "fill" : "stroke", mode))) << fill << QString(mode);
   }
+  void thicknessCommandsGuardPreferencePublicationHistoryAndOwners_data() {
+    QTest::addColumn<bool>("increase"); QTest::addColumn<QString>("mode");
+    for (bool increase : {false, true}) for (const auto *mode : {"apply", "defaults-only", "boundary", "preference-failure", "stale-selection", "stale-preferences", "replacement", "busy-destroy", "publish-destroy", "hidden", "locked", "unknown-only"})
+      QTest::newRow(qPrintable(QString(increase ? "increase-" : "decrease-") + mode)) << increase << QString(mode);
+  }
+  void thicknessCommandsGuardPreferencePublicationHistoryAndOwners() {
+    QFETCH(bool, increase); QFETCH(QString, mode); QTemporaryDir dir; const auto path = dir.filePath("thickness.png"), prefs = dir.filePath("preferences.json"); QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty());
+    const double opening = mode == "boundary" ? (increase ? 10000 : 1) : 7, width = mode == "boundary" ? opening : opening + (increase ? 1 : -1);
+    QVERIFY(applyDrawingDefaults({{"Thickness", opening}}, nativeEditorPreferenceRevision()).saved);
+    QVERIFY(applyToolbarPreferences(QJsonArray{QJsonObject{{"Id", increase ? "increase-stroke" : "decrease-stroke"}, {"Hotkey", "F6"}, {"IsVisible", false}}}, nativeEditorPreferenceRevision()).saved);
+    auto loaded = loadSource(path); QVERIFY(loaded.document); auto doc = *loaded.document; RectangleAnnotation a;
+    a.id = QUuid::createUuid(); a.start = {4, 5}; a.end = {16, 15}; a.style = {0x80112233, 0x40223344, mode == "boundary" ? opening : 3, 37.25, .42}; a.extra = {{"vendor", "keep"}};
+    auto b = a; b.id = QUuid::createUuid(); b.start = {30, 20}; b.end = {44, 32}; if (mode == "hidden") b.visible = false; if (mode == "locked") b.extra = {{"locked", true}};
+    const auto id = QUuid::createUuid(); const UnsupportedAnnotation future{id, {{"id", id.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"vendor", "keep"}}}; doc.annotations = {a, b, future}; doc.embeddedImages = {{"asset", doc.sourceImagePng}}; QVERIFY(saveEdit(path, fixture(), doc).sidecarSaved);
+    EditorSession replacement(doc); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); window->activateWindow(); QTRY_VERIFY(window->isActiveWindow());
+    auto *canvas = window->findChild<EditorCanvas *>(); auto *objects = window->findChild<AnnotationObjectNavigator *>(); objects->focusObjects(); QTest::keyClick(objects, Qt::Key_A, Qt::ControlModifier); QTest::keyClick(objects, Qt::Key_Return); QTRY_COMPARE(QApplication::focusWidget(), canvas);
+    const bool protectedSelection = mode == "hidden" || mode == "locked" || mode == "unknown-only";
+    if (mode == "unknown-only") QVERIFY(canvas->selectAnnotations({id}, canvas->annotationState(), canvas->documentGeneration()));
+    if (!protectedSelection) { QTest::keyClick(canvas, Qt::Key_Right); trigger(*window, "undo"); QVERIFY(window->findChild<QAction *>("redo")->isEnabled()); }
+    if (mode == "defaults-only") QVERIFY(canvas->selectAnnotations({}, canvas->annotationState(), canvas->documentGeneration()));
+    replacement.select(canvas->annotationSelection().values()); const auto replacementBefore = serializeDocument(replacement.document()); const auto original = canvas->annotationDocument(); const auto before = serializeDocument(original); auto selection = canvas->annotationSelection();
+    const auto png = storedBytes(path), sidecar = storedBytes(path + ".xann"); auto preferences = storedBytes(prefs); const auto revision = nativeEditorPreferenceRevision();
+    auto *action = window->findChild<QAction *>(increase ? "increaseStroke" : "decreaseStroke"); QVERIFY(action); QCOMPARE(action->isEnabled(), !protectedSelection);
+    QLockFile lock(prefs + ".lock"); if (mode == "preference-failure") QVERIFY(lock.tryLock(0));
+    if (mode == "publish-destroy") connect(&nativeEditorPreferenceEvents(), &NativeEditorPreferenceEvents::drawingDefaultsChanged, window.get(), [&] { window.reset(); });
+    bool intervened = false; connect(action, &QAction::changed, [&] {
+      if (intervened || action->isEnabled()) return; intervened = true; QVERIFY(!window->close()); QVERIFY(!objects->isEnabled());
+      if (mode == "busy-destroy") { window.reset(); return; }
+      if (mode == "stale-selection") { QVERIFY(canvas->selectAnnotations({b.id}, canvas->annotationState(), canvas->documentGeneration())); selection = canvas->annotationSelection(); }
+      if (mode == "stale-preferences") { QVERIFY(applyDrawingDefaults({{"Thickness", 9}}, nativeEditorPreferenceRevision()).saved); preferences = storedBytes(prefs); }
+      if (mode == "replacement") canvas->resetDocument(replacement, fixture());
+    });
+    QTest::keyClick(canvas, Qt::Key_F6); QCOMPARE(storedBytes(path), png); QCOMPARE(storedBytes(path + ".xann"), sidecar);
+    if (!window) { QCOMPARE(nativeEditorPreferences().values.value("Thickness"), QJsonValue(mode == "publish-destroy" ? width : opening)); if (mode == "busy-destroy") QCOMPARE(storedBytes(prefs), preferences); return; }
+    QVERIFY(canvas->isEnabled()); QVERIFY(objects->isEnabled()); const bool applied = mode == "apply" || mode == "preference-failure";
+    if (!applied) { QCOMPARE(serializeDocument(canvas->annotationDocument()), mode == "replacement" ? replacementBefore : before); QCOMPARE(canvas->annotationSelection(), selection); QVERIFY(!window->windowTitle().contains(" •")); if (!protectedSelection) QVERIFY(window->findChild<QAction *>("redo")->isEnabled()); }
+    if (mode.startsWith("stale-") || mode == "replacement") { QVERIFY(window->statusBar()->currentMessage().contains("not applied")); QCOMPARE(storedBytes(prefs), preferences); QCOMPARE(replacement.undoCount(), 0); return; }
+    if (protectedSelection) { QCOMPARE(storedBytes(prefs), preferences); QCOMPARE(nativeEditorPreferenceRevision(), revision); return; }
+    if (mode == "preference-failure") { QCOMPARE(storedBytes(prefs), preferences); QCOMPARE(nativeEditorPreferences().values.value("Thickness"), QJsonValue(opening)); QVERIFY(window->statusBar()->currentMessage().contains("Drawing defaults could not be saved")); }
+    else QCOMPARE(nativeEditorPreferences().values.value("Thickness"), QJsonValue(width));
+    if (applied) {
+      auto expected = original; for (size_t i : {size_t(0), size_t(1)}) std::get<RectangleAnnotation>(expected.annotations[i]).style.strokeWidth = width;
+      QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); QCOMPARE(canvas->annotationSelection(), selection);
+      trigger(*window, "undo"); QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QVERIFY(!window->windowTitle().contains(" •")); trigger(*window, "redo"); lock.unlock(); trigger(*window, "saveImage");
+      const auto saved = loadSource(path); QVERIFY(saved.document); QCOMPARE(serializeAnnotationList(saved.document->annotations), serializeAnnotationList(expected.annotations)); QCOMPARE(saved.image, fixture()); QCOMPARE(saved.document->embeddedImages, doc.embeddedImages);
+    }
+    if (mode != "preference-failure") { window.reset(); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty()); QCOMPARE(nativeEditorPreferences().values.value("Thickness"), QJsonValue(width)); }
+  }
   void colorChoicesHaveGuardedDefaultsPublicationAndActualPersistence() {
     QFETCH(bool, fill); QFETCH(QString, mode); QTemporaryDir dir; const auto path = dir.filePath("colour.png"), prefs = dir.filePath("native/settings.json"); QVERIFY(fixture().save(path));
     QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty());

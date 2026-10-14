@@ -82,8 +82,9 @@ Physical AT/high-contrast/desktop/native acceptance remains Required.
 The subsequent [numeric draft checkpoint](RECTANGLE-DRAFTS.md) adds document-
 generation guards and an owned nested alpha picker to Rectangle creation/properties,
 including matching-state replacement and actual persistence/publication recovery.
-Next guard native thickness commands against default-only publication on protected
-or invalid selected batches. Complete tool and
+The [thickness checkpoint](ANNOTATION-THICKNESS.md) now guards document/default
+admission and publication lifetime. Next expose guarded native ordering controls
+and catalogue gestures. Complete tool and
 field coverage, shared Ellipse schema/rasterization, clipboard assets and output
 format decisions, resource/performance/native matrices, privacy/security/a11y/parity,
 packaging and human/release gates remain Required. All other contracted application,

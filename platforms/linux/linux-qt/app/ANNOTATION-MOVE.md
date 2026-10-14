@@ -88,8 +88,9 @@ multi-object rotation dialog against intervening document/selection changes and
 owner destruction. The subsequent [colour checkpoint](ANNOTATION-COLOR.md) guards
 the stroke/fill pickers' selection/defaults/generation/preferences and lifetime.
 [Numeric drafts](RECTANGLE-DRAFTS.md) now guard replacement documents with matching
-state and IDs and nested colour lifetime. Next guard native thickness commands
-against default-only publication after a refused selected batch. Keep the pending shared
+state and IDs and nested colour lifetime. [Thickness](ANNOTATION-THICKNESS.md) now
+guards document/default admission and publication lifetime. Next expose guarded
+native ordering controls and catalogue gestures. Keep the pending shared
 Ellipse, clipboard/assets and output-format decisions in ANNOTATION-TOOLS.md,
 ANNOTATION-TRANSFER.md and EDITOR-SAVE.md; continue all other contracted tools,
 effects, workflows, captures, recording/audio, uploads, compatibility and release

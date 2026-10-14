@@ -1,0 +1,111 @@
+{
+  "capability": "EDITOR-ANNOTATIONS-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial-candidate-evidence",
+  "related_capability": "EDITOR-SETTINGS-001",
+  "implementation": [
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+    "platforms/linux/linux-qt/app/EditorCanvas.h",
+    "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+    "platforms/linux/linux-qt/app/EditorWindow.h",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp",
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/app/ANNOTATION-THICKNESS.md",
+    "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+    "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp"
+  ],
+  "requirements": {
+    "EA-003": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Protected/unsupported selections refuse guarded thickness; native controls fence state/selection/defaults/generation. Full selection/multi-tool transforms remain Required."
+    },
+    "EA-005": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Known Rectangle widths retain other fields and assets across actual edit/save/reopen. Border/corner/shadow and governed Ellipse fields/rasterization remain Required."
+    },
+    "EA-014": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Selected widths change atomically with future defaults; empty selection changes only defaults, new objects snapshot the value, and capture defaults stay local. Full tool/default fields remain Required."
+    },
+    "EA-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "One group style commit restores exact Undo/Redo selection. No-op/default-only/refused batches preserve history/checkpoints/Redo as applicable. Full mutation coverage remains Required."
+    },
+    "EA-018": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Native hotkeys/buttons, focus, protection availability and accessible visible numeric default label are checked. Full physical AT/high-contrast/tool/native/human qualification remains Required."
+    },
+    "EA-019": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Actual editor PNG/.xann and capture PNG/receipt retain widths, source, assets and compatible unknown fields. Full schema/fields/interchange remain Required."
+    },
+    "EA-020": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Typed finite/range/protection/stale/geometry failures precede document/default publication; weak owners survive pending/rejection/preference destruction. Full resource/performance/privacy/security/native/human qualification remains Required."
+    },
+    "ESET-006": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Explicit selected widths and creation-only defaults have native history/restart evidence; capture changes never publish editor preferences. All remaining defaults remain Required."
+    },
+    "ESET-009": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Guarded widths reuse existing finite positive Core/10000 maximum and native 1..10000 clamps. Boundary/invalid/overflow refusal is exercised; full numeric/effect ledger coverage remains Required."
+    },
+    "ESET-015": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Actual private preference locking/stale revision/restart/publication destruction and output fixtures complement unchanged settings vectors. Full field/platform/native/human qualification remains Required."
+    }
+  },
+  "verification": {
+    "local_ctest": {
+      "passed": 44,
+      "failed": 0,
+      "seconds": 45.09
+    },
+    "published_vectors": {
+      "passed": 114,
+      "failed": 0,
+      "expected_results_changed": false
+    },
+    "tooling_tests": {
+      "contract_linter": 16,
+      "contract_backlog": 9,
+      "conformance_runner": 7,
+      "failed": 0
+    },
+    "minimum_qt": {
+      "version": "6.4.2",
+      "affected_ctest_targets": 6,
+      "failed": 0,
+      "seconds": 21.28,
+      "targets": [
+        "capture-annotation",
+        "editor-session",
+        "editor-canvas",
+        "annotation-object-navigator",
+        "editor-window",
+        "conformance"
+      ]
+    },
+    "visual_review": "Private capture frame inspected: colour/thickness controls, numeric future-default label, selected objects and Apply/Cancel are visible. Physical/native/human acceptance remains Required.",
+    "ci": "The checkpoint report verifies the exact pushed SHA; this evidence does not accept human or release gates."
+  }
+}

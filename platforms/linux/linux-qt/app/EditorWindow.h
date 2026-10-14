@@ -76,9 +76,10 @@ private:
   bool rectangleDialog(bool creation);
   bool rotateSelected();
   bool editColor(xerahs::editor::EditorSession::ColorTarget);
+  bool changeStrokeWidth(bool increase);
   void recordRecentImage(const QString &absolutePath);
   void applyCreationDefaults();
-  void persistDrawingDefaults();
+  void persistDrawingDefaults(quint64 expectedRevision);
   void refresh();
   void cropImage();
   void autoCropImage();

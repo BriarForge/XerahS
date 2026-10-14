@@ -64,6 +64,34 @@ private slots:
     for (bool fill : {false, true}) for (const auto *mode : {"apply", "cancel", "no-op", "defaults-only", "stale-document", "stale-selection", "stale-defaults", "replacement", "destroy", "dialog-destroy", "reject-destroy"})
       QTest::newRow(qPrintable(QString("%1-%2").arg(fill ? "fill" : "stroke", mode))) << fill << QString(mode);
   }
+  void thicknessCommandsFreezeStateDefaultsGenerationAndLifetime_data() {
+    QTest::addColumn<bool>("increase"); QTest::addColumn<QString>("mode");
+    for (bool increase : {false, true}) for (const auto *mode : {"apply", "defaults-only", "replacement", "stale-selection", "stale-defaults", "begin-destroy", "reject-destroy"})
+      QTest::newRow(qPrintable(QString(increase ? "increase-" : "decrease-") + mode)) << increase << QString(mode);
+  }
+  void thicknessCommandsFreezeStateDefaultsGenerationAndLifetime() {
+    QFETCH(bool, increase); QFETCH(QString, mode); const QImage source = image(); auto d = document(); RectangleAnnotation a;
+    a.id = QUuid::createUuid(); a.start = {150, 180}; a.end = {230, 260}; a.extra = {{"vendor", "keep"}}; auto b = a; b.id = QUuid::createUuid(); b.start = {400, 240}; b.end = {480, 320}; d.annotations = {a, b};
+    EditorSession session(d), replacement(d); session.select({a.id, b.id}); replacement.select({a.id, b.id}); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); if (mode == "defaults-only") session.select({});
+    const auto before = serializeDocument(session.document()); const auto defaults = session.toolStyle(); auto expectedSelection = session.selection(); auto expectedDefaults = defaults;
+    auto canvas = std::make_unique<EditorCanvas>(session, source); canvas->show(); QSignalSpy rejected(canvas.get(), &EditorCanvas::editRejected); bool intervened = false;
+    if (mode == "reject-destroy") connect(canvas.get(), &EditorCanvas::editRejected, [&] { canvas.reset(); });
+    connect(canvas.get(), &EditorCanvas::changed, [&] {
+      if (intervened || !canvas->interactionActive()) return; intervened = true; QVERIFY(!canvas->changeStrokeWidth(!increase));
+      if (mode == "begin-destroy") { canvas.reset(); return; }
+      if (mode == "replacement") canvas->resetDocument(replacement, source);
+      if (mode == "stale-selection" || mode == "reject-destroy") { session.select({b.id}); expectedSelection = session.selection(); }
+      if (mode == "stale-defaults") { expectedDefaults.strokeWidth = 9; QVERIFY(session.setCreationStyle(expectedDefaults)); }
+    });
+    const bool changed = canvas->changeStrokeWidth(increase); QCOMPARE(changed, mode == "apply"); QVERIFY(intervened); const double width = increase ? 5 : 3;
+    if (changed) { auto expected = d; for (auto &r : expected.annotations) std::get<RectangleAnnotation>(r).style.strokeWidth = width; QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(session.undoCount(), 1); QVERIFY(session.undo()); }
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.selection(), expectedSelection); QCOMPARE(session.redoCount(), 1); QVERIFY(!session.dirty());
+    if (mode == "apply" || mode == "defaults-only") expectedDefaults.strokeWidth = width;
+    QCOMPARE(session.toolStyle().strokeWidth, expectedDefaults.strokeWidth); QCOMPARE(session.toolStyle().strokeColor, defaults.strokeColor); QCOMPARE(session.toolStyle().fillColor, defaults.fillColor);
+    const bool stale = mode == "replacement" || mode.startsWith("stale-") || mode == "reject-destroy"; QCOMPARE(rejected.count(), stale ? 1 : 0);
+    if (stale) QCOMPARE(rejected[0][0].toString(), QString("annotation-edit-stale")); QCOMPARE(replacement.undoCount(), 0); QCOMPARE(serializeDocument(replacement.document()), before);
+    if (canvas) QVERIFY(!canvas->interactionActive()); QCOMPARE(source, image());
+  }
   void colorPickerGuardsDocumentSelectionDefaultsAndOwner() {
     QFETCH(bool, fill); QFETCH(QString, mode); const QImage source = image(); EditorSession prepared(document());
     const auto a = *prepared.createRectangle({150, 180}, {230, 260}), b = *prepared.createRectangle({400, 240}, {480, 320});

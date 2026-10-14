@@ -320,14 +320,9 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(m_rotate, &QAction::triggered, this, [this] { rotateSelected(); });
   connect(stroke, &QAction::triggered, this, [this] { editColor(EditorSession::ColorTarget::Stroke); });
   connect(fill, &QAction::triggered, this, [this] { editColor(EditorSession::ColorTarget::Fill); });
-  connect(width, &QAction::triggered, this, [this] {
-    if (m_canvasOperationPending) return;
-    m_session->setStrokeWidth(std::min(10000.0, m_session->toolStyle().strokeWidth + 1)); persistDrawingDefaults(); refresh();
-  });
-  connect(thin, &QAction::triggered, this, [this] {
-    if (m_canvasOperationPending) return;
-    m_session->setStrokeWidth(std::max(1.0, m_session->toolStyle().strokeWidth - 1)); persistDrawingDefaults(); refresh();
-  });
+  for (auto *action : {width, thin}) action->setToolTip("Change selected rectangles in one undo step and save the default for new rectangles in editor windows.");
+  connect(width, &QAction::triggered, this, [this] { changeStrokeWidth(true); });
+  connect(thin, &QAction::triggered, this, [this] { changeStrokeWidth(false); });
   // Fixed command menus remain available even with an empty custom toolbar.
   fileMenu->addSeparator(); fileMenu->addAction(saveAction); fileMenu->addAction(saveAs);
   m_retrySave = fileMenu->addAction("Retry &annotation save…"); m_retrySave->setObjectName("retryEditorSidecar");
@@ -499,10 +494,8 @@ bool EditorWindow::editColor(EditorSession::ColorTarget target) {
       else {
         const auto edit = owner->m_session->editColor(target, *choice.color, state, selection, defaults); diagnostic = edit.diagnostic; changed = edit.documentChanged;
         if (edit.accepted) {
-          const auto style = owner->m_session->toolStyle();
-          const auto written = applyDrawingDefaults({{"BorderColorHex", formatColor(style.strokeColor)}, {"FillColorHex", formatColor(style.fillColor)}, {"Thickness", style.strokeWidth}}, revision);
+          owner->persistDrawingDefaults(revision);
           if (!owner) return false;
-          owner->m_drawingPreferenceDiagnostic = written.diagnostic;
         }
       }
     }
@@ -511,18 +504,36 @@ bool EditorWindow::editColor(EditorSession::ColorTarget target) {
   });
 }
 
-void EditorWindow::persistDrawingDefaults() {
-  const auto &style = m_session->toolStyle();
+bool EditorWindow::changeStrokeWidth(bool increase) {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive() || !m_session->canEditStyle()) return false;
+  const auto state = m_session->stateId(), generation = m_canvas->documentGeneration(), revision = nativeEditorPreferenceRevision();
+  const auto selection = m_session->selection(); const auto defaults = m_session->toolStyle(); const QPointer<EditorWindow> owner(this);
+  const double width = increase ? std::min(10000.0, defaults.strokeWidth + 1) : std::max(1.0, defaults.strokeWidth - 1);
+  return withOutputBusy([owner, state, generation, revision, selection, defaults, width] {
+    if (!owner) return false;
+    bool changed = false; QString diagnostic;
+    if (generation != owner->m_canvas->documentGeneration() || revision != nativeEditorPreferenceRevision()) diagnostic = "annotation-edit-stale";
+    else {
+      const auto edit = owner->m_session->editStrokeWidth(width, state, selection, defaults); changed = edit.documentChanged; diagnostic = edit.diagnostic;
+      if (edit.accepted) { owner->persistDrawingDefaults(revision); if (!owner) return false; }
+    }
+    owner->m_annotationMessage = diagnostic.isEmpty() ? QString() : annotationEditMessage(diagnostic);
+    owner->m_annotationMessageState = owner->m_session->stateId(); owner->refresh(); return changed;
+  });
+}
+void EditorWindow::persistDrawingDefaults(quint64 expectedRevision) {
+  const auto style = m_session->toolStyle(); const QPointer<EditorWindow> owner(this);
   const auto written = applyDrawingDefaults({{QStringLiteral("BorderColorHex"), formatColor(style.strokeColor)},
       {QStringLiteral("FillColorHex"), formatColor(style.fillColor)}, {QStringLiteral("Thickness"), style.strokeWidth}},
-      nativeEditorPreferenceRevision());
-  m_drawingPreferenceDiagnostic = written.diagnostic;
+      expectedRevision);
+  if (owner) owner->m_drawingPreferenceDiagnostic = written.diagnostic;
 }
 
 void EditorWindow::refresh() {
   const bool ready = !m_outputPending && !m_canvas->interactionActive();
-  for (const auto *id : {"save", "save-as", "increase-stroke", "decrease-stroke"})
+  for (const auto *id : {"save", "save-as"})
     m_toolbarActions.value(id)->setEnabled(ready);
+  for (const auto *id : {"increase-stroke", "decrease-stroke"}) m_toolbarActions.value(id)->setEnabled(ready && m_session->canEditStyle());
   for (const auto *id : {"stroke-colour", "fill-colour"}) m_toolbarActions.value(id)->setEnabled(ready && m_session->canEditColor());
   m_createRectangle->setEnabled(!m_outputPending && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive());
   m_rectangleProperties->setEnabled(!m_outputPending && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive() && m_canvas->canEditRectangle());

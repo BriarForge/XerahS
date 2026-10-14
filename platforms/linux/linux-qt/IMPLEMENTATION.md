@@ -198,9 +198,13 @@ publication are verified. [Numeric Rectangle drafts](app/RECTANGLE-DRAFTS.md) no
 guard document generation, including replacement documents with matching state
 and IDs, and share the owned nested alpha picker with explicit draft-only scope.
 Refusal and nested destruction preserve history/files; fresh editor save/reopen
-and original capture publication recover safely. Next guard native thickness
-commands so protected/invalid selected batches cannot publish only a changed
-creation default, while resolving the shared Ellipse decision, alongside
+and original capture publication recover safely. [Guarded thickness](app/ANNOTATION-THICKNESS.md)
+now admits document/default changes together, fences native state/generation/
+preferences and guards owner lifetime during persistence. Capture has local
+keyboard controls and a visible numeric future-default label. Next expose the
+four ordering commands through guarded accessible native editor/capture controls
+with catalogue gestures and correct text/list/canvas precedence, while resolving
+the shared Ellipse decision, alongside
 owned native output service handoffs, remaining tools and the
 format policy and all other contracted output/capture/application domains.
 Physical clipboard/color/accessibility, shutdown and human gates remain

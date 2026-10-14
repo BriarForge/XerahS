@@ -64,6 +64,49 @@ class EditorSessionTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void guardedThicknessCommitsOneGroupAndSnapshotsDefaults_data() {
+    QTest::addColumn<double>("width"); for (double width : {.25, 1.0, 7.5, 10000.0}) QTest::newRow(qPrintable(QString::number(width))) << width;
+  }
+  void guardedThicknessCommitsOneGroupAndSnapshotsDefaults() {
+    QFETCH(double, width); auto d = document(); auto a = rectangle(1, 2, 4, 6), b = rectangle(5, 6, 9, 10); a.style = {0x80112233, 0x40223344, 2.5, 37.25, .25}; a.extra = {{"vendor", "keep"}};
+    const auto id = QUuid::createUuid(); const UnsupportedAnnotation future{id, {{"id", id.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"vendor", "keep"}}}; d.annotations = {a, future, b}; d.embeddedImages = {{"asset", kOnePixelPng}};
+    EditorSession session(d); session.select({a.id, b.id, id}); const auto selection = session.selection(); const auto defaults = session.toolStyle();
+    const auto edit = session.editStrokeWidth(width, session.stateId(), selection, defaults); QVERIFY(edit.accepted && edit.documentChanged && edit.defaultsChanged); QVERIFY(edit.diagnostic.isEmpty());
+    auto expected = d; for (size_t i : {size_t(0), size_t(2)}) std::get<RectangleAnnotation>(expected.annotations[i]).style.strokeWidth = width;
+    QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(session.undoCount(), 1); QCOMPARE(session.selection(), selection); QCOMPARE(session.toolStyle().strokeWidth, width);
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(d)); QCOMPARE(session.selection(), selection); QVERIFY(!session.dirty()); QCOMPARE(session.toolStyle().strokeWidth, width);
+    QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QVERIFY(session.createRectangle({-5, -4}, {-2, -1})); QCOMPARE(session.selectedRectangle()->style.strokeWidth, width);
+  }
+  void guardedThicknessRefusalPreservesDocumentDefaultsCheckpointAndRedo_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"hidden", "locked", "opaque-lock", "unknown-only", "geometry", "stale-document", "stale-selection", "stale-defaults", "zero", "negative", "too-large", "nan", "infinity"}) QTest::newRow(mode) << QString(mode);
+  }
+  void guardedThicknessRefusalPreservesDocumentDefaultsCheckpointAndRedo() {
+    QFETCH(QString, mode); auto d = document(); auto a = rectangle(1, 1, 4, 4), b = rectangle(5, 5, 8, 8); if (mode == "hidden") b.visible = false;
+    if (mode == "locked" || mode == "opaque-lock") b.extra = {{"locked", mode == "locked" ? QJsonValue(true) : QJsonValue("future")}};
+    if (mode == "geometry") { b.start.x = 1.2e308; b.end.x = 1.3e308; b.style.rotationDegrees = 90; }
+    d.annotations = {a, b}; if (mode == "unknown-only") d.annotations[1] = UnsupportedAnnotation{b.id, {{"id", b.id.toString(QUuid::WithoutBraces)}, {"type", "future-art"}}};
+    EditorSession session(d); session.select({a.id}); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); session.select(mode == "unknown-only" ? QList<QUuid>{b.id} : QList<QUuid>{a.id, b.id});
+    const auto state = session.stateId(); const auto selection = session.selection(); const auto defaults = session.toolStyle(); QString diagnostic = "annotation-style-invalid";
+    double width = 7; if (mode == "zero") width = 0; if (mode == "negative") width = -1; if (mode == "too-large") width = 10000.5;
+    if (mode == "nan") width = std::numeric_limits<double>::quiet_NaN(); if (mode == "infinity") width = std::numeric_limits<double>::infinity();
+    if (mode == "stale-document") { session.select({a.id}); QVERIFY(session.moveSelection(2, 0)); }
+    if (mode == "stale-selection") session.select({a.id});
+    if (mode == "stale-defaults") { auto later = defaults; later.fillColor = 0x80112233; QVERIFY(session.setCreationStyle(later)); }
+    if (mode.startsWith("stale-")) diagnostic = "annotation-edit-stale";
+    else if (mode == "geometry") diagnostic = "annotation-geometry-invalid";
+    else if (mode == "unknown-only") diagnostic = "annotation-type-unsupported";
+    else if (mode == "hidden" || mode.contains("lock")) diagnostic = "annotation-selection-protected";
+    const auto before = serializeDocument(session.document()); const auto actualSelection = session.selection(); const auto actualDefaults = session.toolStyle(); const int undo = session.undoCount(), redo = session.redoCount(); const bool dirty = session.dirty();
+    const auto result = session.editStrokeWidth(width, state, selection, defaults); QVERIFY(!result.accepted && !result.documentChanged && !result.defaultsChanged); QCOMPARE(result.diagnostic, diagnostic);
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.selection(), actualSelection); QCOMPARE(session.undoCount(), undo); QCOMPARE(session.redoCount(), redo); QCOMPARE(session.dirty(), dirty);
+    QCOMPARE(session.toolStyle().strokeWidth, actualDefaults.strokeWidth); QCOMPARE(session.toolStyle().strokeColor, actualDefaults.strokeColor); QCOMPARE(session.toolStyle().fillColor, actualDefaults.fillColor);
+  }
+  void thicknessNoopsAndDefaultsOnlyPreserveHistoryAndRedo() {
+    EditorSession session(document()); QVERIFY(session.createRectangle({1, 1}, {4, 4})); session.markSaved(); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); const auto before = serializeDocument(session.document());
+    auto edit = session.editStrokeWidth(4, session.stateId(), session.selection(), session.toolStyle()); QVERIFY(edit.accepted && !edit.documentChanged && !edit.defaultsChanged); QCOMPARE(session.redoCount(), 1); QVERIFY(!session.dirty());
+    session.select({}); edit = session.editStrokeWidth(7.5, session.stateId(), {}, session.toolStyle()); QVERIFY(edit.accepted && !edit.documentChanged && edit.defaultsChanged);
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), 1); QCOMPARE(session.redoCount(), 1); QVERIFY(!session.dirty()); QVERIFY(session.redo()); QCOMPARE(session.toolStyle().strokeWidth, 7.5);
+  }
   void guardedColorEditsCommitOneGroupAndUpdateFutureDefaults_data() {
     QTest::addColumn<bool>("fill"); QTest::newRow("stroke") << false; QTest::newRow("fill") << true;
   }

@@ -44,6 +44,37 @@ private slots:
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());
   }
+  void captureThicknessControlsStayLocalThroughHistoryAndPublication_data() {
+    QTest::addColumn<bool>("increase"); QTest::addColumn<bool>("defaultsOnly");
+    for (bool increase : {false, true}) for (bool defaultsOnly : {false, true}) QTest::newRow(qPrintable(QString("%1-%2").arg(increase ? "increase" : "decrease", defaultsOnly ? "defaults" : "selected"))) << increase << defaultsOnly;
+  }
+  void captureThicknessControlsStayLocalThroughHistoryAndPublication() {
+    using namespace xerahs::editor; QFETCH(bool, increase); QFETCH(bool, defaultsOnly); QTemporaryDir dir; const auto prefs = dir.filePath("preferences.json"); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty());
+    const auto resetPreferences = qScopeGuard([] { initializeNativeEditorPreferences(); }); QVERIFY(applyDrawingDefaults({{"Thickness", 7}}, nativeEditorPreferenceRevision()).saved);
+    const auto preferences = nativeEditorPreferences().values; const auto revision = nativeEditorPreferenceRevision(); QFile preferenceFile(prefs); QVERIFY(preferenceFile.open(QIODevice::ReadOnly)); const auto preferenceBytes = preferenceFile.readAll(); preferenceFile.close();
+    CaptureActionPorts ports; ports.annotationStyle = {0xFFFF0000, 0xFF00FF00, 4, 0, 1}; CapturePipeline pipeline(pixels(), dir.path(), "thickness", {"annotation", "save"}, nullptr, ports); QSignalSpy done(&pipeline, &CapturePipeline::finished);
+    pipeline.start(); QTRY_VERIFY(dialog()); const QPointer<CaptureAnnotationDialog> capture(dialog()); auto *canvas = capture->findChild<EditorCanvas *>(); auto *objects = capture->findChild<AnnotationObjectNavigator *>(); canvas->zoomToFit();
+    const auto draw = [&](QPointF start) { QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView(start).toPoint()); QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView(start + QPointF(15, 15)).toPoint()); };
+    if (!defaultsOnly) { draw({20, 20}); draw({55, 35}); objects->setFocus(); QTest::keyClick(objects, Qt::Key_A, Qt::ControlModifier); QTest::keyClick(objects, Qt::Key_Return); }
+    const auto original = canvas->annotationDocument(); const auto before = serializeDocument(original); const auto selection = canvas->annotationSelection(); auto *bar = capture->findChild<QToolBar *>("captureColorToolbar");
+    auto *action = capture->findChild<QAction *>(increase ? "increaseStroke" : "decreaseStroke"); QVERIFY(action && action->isEnabled()); auto *button = qobject_cast<QToolButton *>(bar->widgetForAction(action)); QVERIFY(button && button->focusPolicy() & Qt::TabFocus);
+    auto *accessible = QAccessible::queryAccessibleInterface(button); QVERIFY(accessible); QVERIFY(accessible->text(QAccessible::Name).contains("Stroke"));
+    capture->activateWindow(); button->setFocus(); QTRY_VERIFY(capture->isActiveWindow()); QTRY_COMPARE(QApplication::focusWidget(), button); QTest::keyClick(button, Qt::Key_Space);
+    const double width = increase ? 5 : 3; auto expected = original;
+    for (auto &r : expected.annotations) std::get<RectangleAnnotation>(r).style.strokeWidth = width;
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); QCOMPARE(canvas->annotationSelection(), selection); QCOMPARE(canvas->creationStrokeWidth(), width);
+    auto *label = capture->findChild<QLabel *>("captureStrokeWidth"); QVERIFY(label && label->isVisible()); QVERIFY(label->text().contains(QString::number(width)));
+    auto *labelAccess = QAccessible::queryAccessibleInterface(label); QVERIFY(labelAccess); QCOMPARE(labelAccess->text(QAccessible::Description), label->text());
+    capture->activateWindow(); canvas->setFocus(); QTRY_VERIFY(capture->isActiveWindow()); QTRY_COMPARE(QApplication::focusWidget(), canvas);
+    if (!defaultsOnly) { QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier); QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QCOMPARE(canvas->annotationSelection(), selection); QCOMPARE(canvas->creationStrokeWidth(), width); QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier | Qt::ShiftModifier); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); }
+    else { QVERIFY(!capture->findChild<QAction *>("undo")->isEnabled()); draw({20, 20}); expected = canvas->annotationDocument(); QCOMPARE(std::get<RectangleAnnotation>(expected.annotations[0]).style.strokeWidth, width); }
+    QVERIFY(!canvas->interactionActive()); QVERIFY(capture->findChild<QAction *>("undo")->isEnabled()); QVERIFY(capture->findChild<QAction *>("rotateSelection")->isEnabled());
+    if (increase && !defaultsOnly && qEnvironmentVariableIsSet("XERAHS_THICKNESS_QA")) QVERIFY(capture->grab().save(qEnvironmentVariable("XERAHS_THICKNESS_QA")));
+    QCOMPARE(nativeEditorPreferences().values, preferences); QCOMPARE(nativeEditorPreferenceRevision(), revision); QVERIFY(preferenceFile.open(QIODevice::ReadOnly)); QCOMPARE(preferenceFile.readAll(), preferenceBytes); preferenceFile.close();
+    capture->accept(); QTRY_COMPARE(done.count(), 1); const auto result = receipt(done); QVERIFY(result->annotationDocument && result->file); QCOMPARE(serializeDocument(*result->annotationDocument), serializeDocument(expected));
+    QCOMPARE(QImage(result->file->path), result->workingMedia); QCOMPARE(result->workingMedia.pixelColor(27, 27), QColor(Qt::green)); QCOMPARE(result->workingMedia.pixelColor(45, 20), QColor(Qt::blue)); QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), pixels());
+    QCOMPARE(nativeEditorPreferences().values, preferences); QCOMPARE(nativeEditorPreferenceRevision(), revision);
+  }
   void captureColorChoicesPreserveAlphaAndStayLocalBeforePublication_data() {
     QTest::addColumn<bool>("fill"); QTest::addColumn<QString>("mode");
     for (bool fill : {false, true}) for (const auto *mode : {"apply", "cancel", "defaults-only", "destroy"})

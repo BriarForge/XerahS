@@ -185,8 +185,9 @@ clipboard/assets, target/resource/privacy/security/a11y/human gates remain Requi
    truthful preference failure under EA-014/017/018/019/020 and ESET-006/007/015.
    Numeric Rectangle drafts now fence generation and use an owned nested alpha
    picker; matching-state replacement and owner destruction preserve committed
-   state. Next guard native thickness commands against publishing only a changed
-   creation default after a protected/invalid batch refusal, while resolving Ellipse schema/rasterization clarification
+   state. Thickness now guards document/default admission and editor publication;
+   capture controls keep defaults local with a visible numeric value. Next expose
+   guarded accessible ordering commands and catalogue gestures, while resolving Ellipse schema/rasterization clarification
    EA-005-LINUX-2026-10-14 in ANNOTATION-TOOLS.md, full annotation/asset clipboard
    under EA-016/017 and native output
    service handoffs and full Print qualification under EO-008/014/015 while
@@ -275,5 +276,21 @@ published vectors and all 32 tooling unit tests; the six affected targets passed
 against cached Qt 6.4.2 in 18.50 seconds. Contract lint/backlog/effective instruction
 checks and exact pushed Ubuntu 24.04 CI are reported with the checkpoint. Full
 scope, trace labels, native/resource/a11y/privacy/security/parity/human/release
-requirements remain unchanged and Required. Next guard thickness commands against
-publishing only a changed default after protected/invalid selected-batch refusal.
+requirements remain unchanged and Required. The subsequent thickness checkpoint
+adds atomic document/default admission and native publication/lifetime guards.
+
+The [thickness evidence](app/ANNOTATION-THICKNESS.md) and candidate machine map
+index guarded complete document/default admission, frozen native state/selection/
+defaults/generation/preferences, one-step history and no-op/default-only behavior.
+Protected/unsupported/invalid/stale batches preserve defaults and committed state;
+preference failures keep accepted edits undoable with honest diagnostics, and
+publication observers may destroy the owner safely. Capture controls show a
+numeric future-default value and preserve private editor preference bytes/revision.
+Actual editor save/reopen/restart and capture PNG/receipt retain source, fields,
+assets and unknown data. Verification passed 44 local CTest targets in 45.09
+seconds, 114 unchanged vectors and 32 tooling tests, plus six affected Qt 6.4.2
+targets in 21.28 seconds. Contract lint/backlog/effective instructions and exact
+pushed Ubuntu CI are reported with the checkpoint. Full scope, trace labels and
+native/resource/a11y/privacy/security/parity/human/release gates remain Required.
+Next expose four guarded native ordering controls and catalogue gestures with
+text/list/canvas precedence and actual history/persistence/publication evidence.
