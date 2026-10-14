@@ -132,6 +132,7 @@ bool EditorSession::changeSelected(Change change) {
       if (rectangle && m_selection.contains(rectangle->id)) {
         const auto before = *rectangle;
         change(*rectangle);
+        if (!m_editDiagnostic.isEmpty()) return false;
         if (!finiteGeometry(*rectangle)) { m_editDiagnostic = "annotation-geometry-invalid"; return false; }
         changed = !sameEditableFields(before, *rectangle) || changed;
       }
@@ -148,11 +149,17 @@ bool EditorSession::changeSelected(Change change) {
 bool EditorSession::moveSelection(double dx, double dy) {
   if (!std::isfinite(dx) || !std::isfinite(dy)) { m_editDiagnostic = "annotation-geometry-invalid"; return false; }
   return changeSelected([&](RectangleAnnotation &r) {
-    if (dx == 0 && dy == 0) return false;
-    r.start = {r.start.x + dx, r.start.y + dy};
-    r.end = {r.end.x + dx, r.end.y + dy};
-    return true;
+    const auto prepared = moveRectangleGeometry({r.start, r.end, r.style}, {dx, dy});
+    if (!prepared.properties) { m_editDiagnostic = prepared.diagnostic; return; }
+    r.start = prepared.properties->start;
+    r.end = prepared.properties->end;
   });
+}
+
+bool EditorSession::moveSelection(double dx, double dy, quint64 expectedState, const QSet<QUuid> &expectedSelection) {
+  m_editDiagnostic.clear();
+  if (stateId() != expectedState || m_selection != expectedSelection) { m_editDiagnostic = "annotation-edit-stale"; return false; }
+  return moveSelection(dx, dy);
 }
 
 bool EditorSession::setStrokeWidth(double width) {

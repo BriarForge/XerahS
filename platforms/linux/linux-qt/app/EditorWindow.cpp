@@ -488,13 +488,16 @@ void EditorWindow::persistDrawingDefaults() {
 }
 
 void EditorWindow::refresh() {
+  const bool ready = !m_outputPending && !m_canvas->interactionActive();
+  for (const auto *id : {"save", "save-as", "stroke-colour", "fill-colour", "increase-stroke", "decrease-stroke"})
+    m_toolbarActions.value(id)->setEnabled(ready);
   m_createRectangle->setEnabled(!m_outputPending && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive());
   m_rectangleProperties->setEnabled(!m_outputPending && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive() && m_canvas->canEditRectangle());
   m_rectangleProperties->setToolTip(m_canvas->canEditRectangle() ? m_rectangleProperties->statusTip() : "Select one visible, unlocked rectangle to edit its properties.");
   if (m_annotationMessageState != m_session->stateId()) { m_annotationMessage.clear(); m_annotationMessageState.reset(); }
   for (auto it = m_annotationActions.cbegin(); it != m_annotationActions.cend(); ++it) {
     const bool available = it.key() == "duplicate-selection" || (it.key() == "paste" ? bool(m_annotationClipboard.read) : bool(m_annotationClipboard.publish));
-    it.value()->setEnabled(!m_outputPending && available && (it.key() == "paste" || !m_session->selection().isEmpty()));
+    it.value()->setEnabled(ready && available && (it.key() == "paste" || !m_session->selection().isEmpty()));
     it.value()->setToolTip(available ? it.value()->statusTip() : "Annotation clipboard service is unavailable.");
   }
   if (m_printMessageState != m_session->stateId()) { m_printMessage.clear(); m_printMessageState.reset(); }
@@ -510,26 +513,26 @@ void EditorWindow::refresh() {
       m_canvas->sourceChanged();
     }
   }
-  m_undo->setEnabled(!m_outputPending && m_session->undoCount() > 0);
-  m_redo->setEnabled(!m_outputPending && m_session->redoCount() > 0);
-  m_delete->setEnabled(!m_outputPending && m_session->selectionEditable());
-  m_rotate->setEnabled(!m_outputPending && m_session->selectionEditable());
+  m_undo->setEnabled(ready && m_session->undoCount() > 0);
+  m_redo->setEnabled(ready && m_session->redoCount() > 0);
+  m_delete->setEnabled(ready && m_session->selectionEditable());
+  m_rotate->setEnabled(ready && m_session->selectionEditable());
   m_delete->setToolTip(m_session->selectionEditable() ? "Delete selected annotations" : "Hidden or locked selections are protected from editing.");
   m_rotate->setToolTip(m_session->selectionEditable() ? "Rotate selected annotations" : "Hidden or locked selections are protected from editing.");
-  m_clearAnnotations->setEnabled(!m_outputPending && !m_session->document().annotations.empty());
-  m_retrySave->setEnabled(!m_outputPending && m_partialSave && m_partialSaveState == m_session->stateId());
+  m_clearAnnotations->setEnabled(ready && !m_session->document().annotations.empty());
+  m_retrySave->setEnabled(ready && m_partialSave && m_partialSaveState == m_session->stateId());
   m_retrySave->setToolTip(m_partialSave && m_partialSaveState != m_session->stateId()
       ? "The document changed since this PNG was saved. Undo to that state before retrying its annotations, or save a new snapshot."
       : m_retrySave->statusTip());
-  m_copyAction->setEnabled(!m_outputPending && bool(m_copyPorts.publish));
+  m_copyAction->setEnabled(ready && bool(m_copyPorts.publish));
   m_copyAction->setToolTip(m_copyPorts.publish ? m_copyAction->statusTip() : "Copy Image is unavailable: no clipboard service was provided.");
-  m_retryCopy->setEnabled(!m_outputPending && m_copyPorts.publish && m_failedCopy && m_failedCopyState == m_session->stateId());
+  m_retryCopy->setEnabled(ready && m_copyPorts.publish && m_failedCopy && m_failedCopyState == m_session->stateId());
   m_retryCopy->setToolTip(m_failedCopy && m_failedCopyState != m_session->stateId()
       ? "The document changed. Undo to the failed snapshot before retrying it, or use Copy Image for a new snapshot." : m_retryCopy->statusTip());
   const bool printAvailable = m_printPorts.configure && m_printPorts.submit;
-  m_printAction->setEnabled(!m_outputPending && printAvailable);
+  m_printAction->setEnabled(ready && printAvailable);
   m_printAction->setToolTip(printAvailable ? m_printAction->statusTip() : "Print Image is unavailable: no print service was provided.");
-  m_retryPrint->setEnabled(!m_outputPending && printAvailable && m_failedPrint && m_failedPrintState == m_session->stateId());
+  m_retryPrint->setEnabled(ready && printAvailable && m_failedPrint && m_failedPrintState == m_session->stateId());
   m_retryPrint->setToolTip(m_failedPrint && m_failedPrintState != m_session->stateId()
       ? "The document changed. Undo to the failed snapshot before retrying it, or use Print Image for a new snapshot." : m_retryPrint->statusTip());
   setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName(),

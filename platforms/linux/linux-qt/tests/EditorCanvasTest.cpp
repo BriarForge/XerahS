@@ -23,6 +23,7 @@
 #include <QPointer>
 #include <QColorDialog>
 #include <QSettings>
+#include <QFocusEvent>
 #include <QTemporaryDir>
 #include <memory>
 
@@ -55,6 +56,86 @@ private slots:
   void initTestCase() {
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());
+  }
+  void groupMovePreviewAndCommitUseFrozenSourcePixels_data() {
+    QTest::addColumn<double>("angle"); QTest::addColumn<int>("zoomSteps");
+    for (double angle : {0.0, 90.0, 37.0}) for (int steps : {-2, 0, 1})
+      QTest::newRow(qPrintable(QString("rotation-%1-zoom-%2").arg(angle).arg(steps))) << angle << steps;
+  }
+  void groupMovePreviewAndCommitUseFrozenSourcePixels() {
+    QFETCH(double, angle); QFETCH(int, zoomSteps); const QImage source = image(); EditorSession session(document());
+    QVERIFY(session.setCreationStyle({0xFF112233, 0xFF00FF00, 2, angle, 1})); const auto a = *session.createRectangle({150, 180}, {230, 260});
+    const auto b = *session.createRectangle({400, 240}, {480, 320}); session.select({a, b}); session.markSaved();
+    const auto before = serializeDocument(session.document()); const auto original = session.document(); const auto selection = session.selection();
+    EditorCanvas canvas(session, source); canvas.resize(900, 700); canvas.show(); QTest::qWait(10); canvas.resetZoom();
+    for (int i = 0; i < std::abs(zoomSteps); ++i) { if (zoomSteps > 0) canvas.zoomIn(); else canvas.zoomOut(); }
+    const auto zoom = canvas.viewState().zoom(); const auto press = canvas.viewState().toView({190, 220}).toPoint(); const QPoint screenDelta(120, 50);
+    const PointF delta{120 / zoom, 50 / zoom}; QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, press); QVERIFY(canvas.interactionActive());
+    QTest::mouseMove(canvas.viewport(), press + screenDelta); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), 2); QVERIFY(!session.dirty());
+    const auto preview = canvas.viewport()->grab().toImage();
+    QCOMPARE(preview.pixelColor(canvas.viewState().toView({190 + delta.x, 220 + delta.y}).toPoint()), QColor(Qt::green));
+    QCOMPARE(preview.pixelColor(canvas.viewState().toView({440 + delta.x, 280 + delta.y}).toPoint()), QColor(Qt::green));
+    QCOMPARE(preview.pixelColor(canvas.viewState().toView({190, 220}).toPoint()), QColor(Qt::white));
+    if (angle == 37 && zoomSteps == 0 && !qEnvironmentVariableIsEmpty("XERAHS_ANNOTATION_MOVE_QA")) QVERIFY(canvas.grab().save(qEnvironmentVariable("XERAHS_ANNOTATION_MOVE_QA")));
+    QTest::keyClick(&canvas, Qt::Key_Delete); QCOMPARE(serializeDocument(session.document()), before);
+    QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, press + screenDelta); QVERIFY(!canvas.interactionActive()); QCOMPARE(session.undoCount(), 3); QVERIFY(session.dirty());
+    auto expected = original;
+    for (size_t i = 0; i < expected.annotations.size(); ++i) {
+      auto &r = std::get<RectangleAnnotation>(expected.annotations[i]); const auto &actual = std::get<RectangleAnnotation>(session.document().annotations[i]);
+      QVERIFY(std::abs(actual.start.x - (r.start.x + delta.x)) < 1e-10); QVERIFY(std::abs(actual.start.y - (r.start.y + delta.y)) < 1e-10);
+      QVERIFY(std::abs(actual.end.x - (r.end.x + delta.x)) < 1e-10); QVERIFY(std::abs(actual.end.y - (r.end.y + delta.y)) < 1e-10);
+      // The analytical displacement tolerates conversion rounding; all other
+      // fields and the saved history state remain exact comparisons.
+      r.start = actual.start; r.end = actual.end;
+    }
+    QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(session.selection(), selection); QCOMPARE(source, image());
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.selection(), selection); QVERIFY(!session.dirty());
+    QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(expected));
+  }
+  void groupMoveCancellationAndStaleReleasePreserveCommittedState_data() {
+    QTest::addColumn<QString>("mode");
+    for (const auto *mode : {"escape", "focus", "tool", "zoom", "wheel", "source", "replace", "stale-selection", "stale-document", "no-motion", "return-start"}) QTest::newRow(mode) << QString(mode);
+  }
+  void groupMoveCancellationAndStaleReleasePreserveCommittedState() {
+    QFETCH(QString, mode); const QImage source = image(); EditorSession session(document()), replacement(document());
+    QVERIFY(session.setCreationStyle({0xFF112233, 0xFF00FF00, 2, 37, 1})); const auto a = *session.createRectangle({150, 180}, {230, 260});
+    const auto b = *session.createRectangle({400, 240}, {480, 320}); session.select({a, b}); session.markSaved();
+    QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); const auto selection = session.selection();
+    EditorCanvas canvas(session, source); canvas.resize(900, 700); canvas.show(); QTest::qWait(10); canvas.resetZoom(); QSignalSpy rejected(&canvas, &EditorCanvas::editRejected);
+    const auto press = canvas.viewState().toView({190, 220}).toPoint(); auto release = press + QPoint(120, 50);
+    QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, press); QVERIFY(canvas.interactionActive());
+    if (mode != "no-motion") QTest::mouseMove(canvas.viewport(), release);
+    if (mode == "escape") QTest::keyClick(&canvas, Qt::Key_Escape);
+    else if (mode == "focus") { QFocusEvent event(QEvent::FocusOut); QApplication::sendEvent(&canvas, &event); }
+    else if (mode == "tool") canvas.setTool(EditorCanvas::Tool::Select);
+    else if (mode == "zoom") canvas.zoomIn();
+    else if (mode == "wheel") wheel(canvas, release, Qt::NoModifier);
+    else if (mode == "source") canvas.sourceChanged();
+    else if (mode == "replace") canvas.resetDocument(replacement, source);
+    else if (mode == "stale-selection") session.select({b});
+    else if (mode == "stale-document") QVERIFY(session.moveSelection(2, 0));
+    else { release = press; if (mode == "return-start") QTest::mouseMove(canvas.viewport(), press); }
+    const auto expected = serializeDocument(session.document()); const auto expectedSelection = session.selection(); const auto history = session.undoCount(); const auto redo = session.redoCount(); const auto dirty = session.dirty();
+    if (mode.startsWith("stale-")) {
+      QTest::mouseMove(canvas.viewport(), press + QPoint(120, 50)); const auto preview = canvas.viewport()->grab().toImage();
+      QCOMPARE(preview.pixelColor(canvas.viewState().toView({190, 220}).toPoint()), QColor(Qt::green));
+      QCOMPARE(preview.pixelColor(canvas.viewState().toView({330, 270}).toPoint()), QColor(Qt::white));
+    }
+    QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, release); QVERIFY(!canvas.interactionActive());
+    QCOMPARE(serializeDocument(session.document()), expected); QCOMPARE(session.selection(), expectedSelection); QCOMPARE(session.undoCount(), history); QCOMPARE(session.redoCount(), redo); QCOMPARE(session.dirty(), dirty);
+    if (mode.startsWith("stale-")) { QCOMPARE(rejected.count(), 1); QCOMPARE(rejected[0][0].toString(), QString("annotation-edit-stale")); }
+    else { QCOMPARE(rejected.count(), 0); QCOMPARE(session.selection(), selection); QCOMPARE(session.redoCount(), 1); QVERIFY(!session.dirty()); }
+    QCOMPARE(replacement.undoCount(), 0); QVERIFY(!replacement.dirty()); QCOMPARE(source, image());
+  }
+  void staleMoveRejectionCanDestroyCanvasWithoutAnotherNotification() {
+    const QImage source = image(); EditorSession session(document()); const auto a = *session.createRectangle({150, 180}, {230, 260});
+    const auto b = *session.createRectangle({400, 240}, {480, 320}); session.select({a, b});
+    auto canvas = std::make_unique<EditorCanvas>(session, source); canvas->resize(900, 700); canvas->show(); QTest::qWait(10); canvas->resetZoom();
+    const auto press = canvas->viewState().toView({190, 220}).toPoint(); QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, press); session.select({b});
+    const auto expected = serializeDocument(session.document()); int changed = 0;
+    connect(canvas.get(), &EditorCanvas::changed, [&] { ++changed; }); connect(canvas.get(), &EditorCanvas::editRejected, [&](const QString &diagnostic) { QCOMPARE(diagnostic, QString("annotation-edit-stale")); canvas.reset(); });
+    QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, press + QPoint(120, 50)); QVERIFY(!canvas); QCOMPARE(changed, 0);
+    QCOMPARE(serializeDocument(session.document()), expected); QCOMPARE(session.selection(), QSet<QUuid>{b}); QCOMPARE(session.undoCount(), 2);
   }
   void pointerCreationFreezesStyleAndRejectsInterveningDocumentChanges() {
     const QImage source = image(); EditorSession session(document()); RectangleStyle style; style.strokeColor = 0x80112233; style.strokeWidth = 7;

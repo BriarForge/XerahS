@@ -236,6 +236,42 @@ private slots:
     trigger(*window, "undo"); QCOMPARE(objects->selectionModel()->selectedRows()[0].data(Qt::UserRole).toUuid(), first.id);
     trigger(*window, "redo"); QVERIFY(!window->windowTitle().contains(" •")); QCOMPARE(storedBytes(prefs), preferences);
   }
+  void nativeGroupMoveSavesBothObjectsAndPreservesSourceAndUnknownFields() {
+    QTemporaryDir dir; const auto path = dir.filePath("group.png"), prefs = dir.filePath("prefs.json"); QVERIFY(fixture().save(path));
+    QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty()); auto loaded = loadSource(path); QVERIFY(loaded.document); auto doc = *loaded.document;
+    RectangleAnnotation a; a.id = QUuid::createUuid(); a.start = {4, 5}; a.end = {16, 15}; a.style = {0x80112233, 0x4000FF00, 1.5, 37, .75}; a.extra = {{"vendor", "keep"}};
+    auto b = a; b.id = QUuid::createUuid(); b.start = {30, 20}; b.end = {44, 32}; b.style.rotationDegrees = 90;
+    const auto futureId = QUuid::createUuid(); const UnsupportedAnnotation future{futureId, {{"id", futureId.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"vendor", "keep"}}};
+    doc.annotations = {a, b, future}; doc.embeddedImages = {{"unused", doc.sourceImagePng}}; QVERIFY(saveEdit(path, fixture(), doc).sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); auto *objects = window->findChild<AnnotationObjectNavigator *>(); QVERIFY(objects);
+    canvas->zoomToFit(); objects->focusObjects(); QTRY_COMPARE(QApplication::focusWidget(), objects);
+    QTest::keyClick(objects, Qt::Key_Home); QTest::keyClick(objects, Qt::Key_Down, Qt::ShiftModifier); QCOMPARE(canvas->annotationSelection(), (QSet<QUuid>{a.id, b.id}));
+    QTest::keyClick(objects, Qt::Key_Return); QTRY_COMPARE(QApplication::focusWidget(), canvas);
+    const auto original = canvas->annotationDocument();
+    const auto before = serializeDocument(original); const auto png = storedBytes(path), sidecar = storedBytes(path + ".xann"), preferences = storedBytes(prefs);
+    const auto press = canvas->viewState().toView({10, 10}).toPoint(); const QPoint pixels(32, 16); const auto zoom = canvas->viewState().zoom();
+    QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, press); QVERIFY(canvas->interactionActive()); QVERIFY(!objects->isEnabled());
+    for (const auto *name : {"saveImage", "undo", "deleteSelection", "rotateSelection", "copyImage", "printImage"}) {
+      auto *action = window->findChild<QAction *>(name); QVERIFY(action); QVERIFY(!action->isEnabled());
+    }
+    QTest::mouseMove(canvas->viewport(), press + pixels);
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QCOMPARE(storedBytes(path), png); QCOMPARE(storedBytes(path + ".xann"), sidecar); QVERIFY(!window->windowTitle().contains(" •"));
+    QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, press + pixels); QVERIFY(objects->isEnabled()); QVERIFY(window->windowTitle().contains(" •"));
+    auto expected = original;
+    for (size_t i : {size_t(0), size_t(1)}) { auto &r = std::get<RectangleAnnotation>(expected.annotations[i]); const auto &actual = std::get<RectangleAnnotation>(canvas->annotationDocument().annotations[i]);
+      QVERIFY(std::abs(actual.start.x - (r.start.x + 32 / zoom)) < 1e-10); QVERIFY(std::abs(actual.end.x - (r.end.x + 32 / zoom)) < 1e-10);
+      QVERIFY(std::abs(actual.start.y - (r.start.y + 16 / zoom)) < 1e-10); QVERIFY(std::abs(actual.end.y - (r.end.y + 16 / zoom)) < 1e-10); r.start = actual.start; r.end = actual.end;
+    }
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected));
+    trigger(*window, "undo"); QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QCOMPARE(canvas->annotationSelection(), (QSet<QUuid>{a.id, b.id})); QVERIFY(!window->windowTitle().contains(" •"));
+    trigger(*window, "redo"); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); trigger(*window, "saveImage");
+    const auto reopened = loadSource(path); QVERIFY(reopened.document); QCOMPARE(reopened.image, fixture()); QCOMPARE(reopened.document->sourceImagePng, doc.sourceImagePng);
+    QCOMPARE(reopened.document->embeddedImages, doc.embeddedImages); QCOMPARE(reopened.document->annotations.size(), size_t(3));
+    for (size_t i : {size_t(0), size_t(1)}) { const auto &actual = std::get<RectangleAnnotation>(reopened.document->annotations[i]); const auto &wanted = std::get<RectangleAnnotation>(expected.annotations[i]);
+      QCOMPARE(actual.id, wanted.id); QCOMPARE(actual.start, wanted.start); QCOMPARE(actual.end, wanted.end); QCOMPARE(actual.style.rotationDegrees, wanted.style.rotationDegrees);
+      QCOMPARE(actual.style.strokeColor, wanted.style.strokeColor); QCOMPARE(actual.style.fillColor, wanted.style.fillColor); QCOMPARE(actual.style.strokeWidth, wanted.style.strokeWidth); QCOMPARE(actual.style.opacity, wanted.style.opacity); QCOMPARE(actual.extra, wanted.extra); }
+    QCOMPARE(std::get<UnsupportedAnnotation>(reopened.document->annotations[2]).raw, future.raw); QCOMPARE(storedBytes(prefs), preferences); QVERIFY(!window->windowTitle().contains(" •"));
+  }
   void keyboardRectangleCreationSavesFrozenStyleAndPreservesSource_data() {
     QTest::addColumn<QString>("mode"); for (const auto *mode : {"apply", "cancel", "destroy"}) QTest::newRow(mode) << QString(mode);
   }

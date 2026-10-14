@@ -40,6 +40,9 @@ public:
   bool select(const QList<QUuid> &ids, quint64 expectedState);
   // Each returns whether one history operation was committed (ES-005).
   bool moveSelection(double dx, double dy);
+  // A pointer gesture owns its starting state and exact selection. A stale
+  // release must never translate an intervening edit or another selection.
+  bool moveSelection(double dx, double dy, quint64 expectedState, const QSet<QUuid> &expectedSelection);
   bool setStrokeWidth(double width);
   bool setStrokeColor(Argb color);
   bool setFillColor(Argb color);

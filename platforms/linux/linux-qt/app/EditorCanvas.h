@@ -6,6 +6,7 @@
 
 #include <QAbstractScrollArea>
 #include <QImage>
+#include <QHash>
 #include <array>
 
 namespace xerahs::app {
@@ -27,7 +28,7 @@ public:
   QString toolInstructions() const;
   void setCropTool(bool active);
   void sourceChanged();
-  bool interactionActive() const { return m_drag.has_value() || m_moving || m_panning || m_resize.has_value() || m_propertiesPending; }
+  bool interactionActive() const { return m_drag.has_value() || m_move.has_value() || m_panning || m_resize.has_value() || m_propertiesPending; }
   bool canEditRectangle() const;
   // Capture uses the same owned native dialog and Core edit as the main editor.
   bool editRectangleProperties(QWidget *parent);
@@ -69,6 +70,8 @@ private:
   std::array<std::pair<xerahs::editor::RectangleHandle, QPointF>, 8> handles(const xerahs::editor::RectangleAnnotation &) const;
   void syncViewport();
   void cancelGesture();
+  bool movePreviewCurrent() const;
+  void updateMovePreview(QPointF imagePoint);
 
   xerahs::editor::EditorSession *m_session;
   quint64 m_documentGeneration = 0;
@@ -90,11 +93,17 @@ private:
     std::optional<xerahs::editor::RectangleProperties> preview;
   };
   std::optional<ResizeGesture> m_resize;
+  struct MoveGesture {
+    quint64 state, generation;
+    QSet<QUuid> selection;
+    QHash<QUuid, xerahs::editor::RectangleProperties> originals;
+    QPointF start, last;
+    std::optional<QHash<QUuid, xerahs::editor::RectangleProperties>> preview;
+  };
+  std::optional<MoveGesture> m_move;
   bool m_propertiesPending = false;
   bool m_initialFit = true;
-  bool m_moving = false;
   Tool m_tool = Tool::Rectangle;
-  QPointF m_moveStart, m_moveLast;
   bool m_spaceHeld = false;
   bool m_panning = false;
   QPointF m_panLast, m_panOriginalOffset;

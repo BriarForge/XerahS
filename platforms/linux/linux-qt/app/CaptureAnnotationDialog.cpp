@@ -46,10 +46,18 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   auto *privacy = new QLabel("The companion contains the original capture and editable annotations. A companion failure keeps the PNG and the editable document for explicit retry. "
       "You can also use Edit retained capture to save an editable copy later.", this);
   privacy->setWordWrap(true); privacy->setTextFormat(Qt::PlainText); layout->addWidget(privacy);
-  auto *undo = bar->addAction("Undo"); undo->setShortcut(QKeySequence::Undo); addAction(undo);
-  auto *redo = bar->addAction("Redo"); redo->setShortcut(QKeySequence::Redo); addAction(redo);
-  connect(undo, &QAction::triggered, this, [this, refreshProperties] { if (!m_canvas->interactionActive()) { m_session.undo(); m_canvas->viewport()->update(); m_annotationObjects->refresh(); refreshProperties(); } });
-  connect(redo, &QAction::triggered, this, [this, refreshProperties] { if (!m_canvas->interactionActive()) { m_session.redo(); m_canvas->viewport()->update(); m_annotationObjects->refresh(); refreshProperties(); } });
+  auto *undo = bar->addAction("Undo"); undo->setObjectName("undo"); undo->setShortcut(QKeySequence::Undo); addAction(undo);
+  auto *redo = bar->addAction("Redo"); redo->setObjectName("redo");
+  redo->setShortcuts({QKeySequence(Qt::CTRL | Qt::Key_Y), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Z)}); addAction(redo);
+  const auto refreshHistory = [this, undo, redo] {
+    undo->setEnabled(!m_canvas->interactionActive() && m_session.undoCount() > 0);
+    redo->setEnabled(!m_canvas->interactionActive() && m_session.redoCount() > 0);
+  };
+  connect(m_canvas, &EditorCanvas::changed, undo, refreshHistory);
+  connect(m_canvas, &EditorCanvas::toolChanged, undo, refreshHistory);
+  connect(m_canvas, &EditorCanvas::viewportChanged, undo, refreshHistory); refreshHistory();
+  connect(undo, &QAction::triggered, this, [this, refreshProperties, refreshHistory] { if (!m_canvas->interactionActive()) { m_session.undo(); m_canvas->viewport()->update(); m_annotationObjects->refresh(); refreshProperties(); refreshHistory(); } });
+  connect(redo, &QAction::triggered, this, [this, refreshProperties, refreshHistory] { if (!m_canvas->interactionActive()) { m_session.redo(); m_canvas->viewport()->update(); m_annotationObjects->refresh(); refreshProperties(); refreshHistory(); } });
   connect(bar->addAction("Zoom in"), &QAction::triggered, m_canvas, &EditorCanvas::zoomIn);
   connect(bar->addAction("Zoom out"), &QAction::triggered, m_canvas, &EditorCanvas::zoomOut);
   connect(bar->addAction("100%"), &QAction::triggered, m_canvas, &EditorCanvas::resetZoom);

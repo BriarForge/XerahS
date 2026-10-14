@@ -81,7 +81,9 @@ or release gates.
 
 Pending shared Ellipse, transfer-asset and output-format decisions remain
 recorded in ANNOTATION-TOOLS.md, ANNOTATION-TRANSFER.md and EDITOR-SAVE.md.
-Next independent work: freeze multi-object pointer move previews and commits
-against stale document/selection changes. Every other capture, recording/audio,
+The subsequent [group move checkpoint](ANNOTATION-MOVE.md) freezes pointer
+previews and commits against stale document/selection changes. Next independent
+work guards the native multi-object rotation dialog's state/selection and owner
+lifetime. Every other capture, recording/audio,
 upload, workflow/settings, tool/effect/output, application/compatibility,
 packaging/native-matrix and human/release requirement remains in full scope.

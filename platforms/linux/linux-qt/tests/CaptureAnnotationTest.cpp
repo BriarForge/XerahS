@@ -35,6 +35,34 @@ CaptureAnnotationChoice rectangle(const LoadedSource &source) {
 class CaptureAnnotationTest final : public QObject {
   Q_OBJECT
 private slots:
+  void nativeGroupMoveCommitsOnceBeforeActualCapturePublication() {
+    using namespace xerahs::editor; QTemporaryDir dir; CaptureActionPorts ports; ports.annotationStyle = {0xFF112233, 0xFF00FF00, 1, 0, 1};
+    CapturePipeline pipeline(pixels(), dir.path(), "group-move", {"annotation", "save"}, nullptr, ports); QSignalSpy done(&pipeline, &CapturePipeline::finished);
+    pipeline.start(); QTRY_VERIFY(dialog()); auto *capture = dialog(); auto *canvas = capture->findChild<EditorCanvas *>(); auto *objects = capture->findChild<AnnotationObjectNavigator *>(); QVERIFY(objects);
+    canvas->zoomToFit();
+    for (const QPointF origin : {QPointF(10, 10), QPointF(45, 30)}) {
+      QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView(origin).toPoint());
+      QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView(origin + QPointF(15, 15)).toPoint());
+    }
+    QCOMPARE(objects->model()->rowCount(), 2); objects->setFocus(); QTest::keyClick(objects, Qt::Key_A, Qt::ControlModifier); QTest::keyClick(objects, Qt::Key_Return); QTRY_COMPARE(QApplication::focusWidget(), canvas);
+    const auto original = canvas->annotationDocument(); const auto before = serializeDocument(original); const auto selection = canvas->annotationSelection(); QCOMPARE(selection.size(), 2);
+    const auto zoom = canvas->viewState().zoom(); const auto press = canvas->viewState().toView({17.5, 17.5}).toPoint(); const QPoint screenDelta(24, 16);
+    QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, press); QVERIFY(canvas->interactionActive()); QVERIFY(!objects->isEnabled());
+    QVERIFY(!capture->findChild<QAction *>("undo")->isEnabled()); QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier);
+    QTest::mouseMove(canvas->viewport(), press + screenDelta); capture->accept(); QVERIFY(capture->isVisible()); QCOMPARE(done.count(), 0); QCOMPARE(serializeDocument(canvas->annotationDocument()), before);
+    QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, press + screenDelta); QVERIFY(objects->isEnabled()); QVERIFY(capture->findChild<QAction *>("undo")->isEnabled());
+    auto expected = original;
+    for (size_t i = 0; i < expected.annotations.size(); ++i) { auto &r = std::get<RectangleAnnotation>(expected.annotations[i]); const auto &actual = std::get<RectangleAnnotation>(canvas->annotationDocument().annotations[i]);
+      QVERIFY(std::abs(actual.start.x - (r.start.x + 24 / zoom)) < 1e-10); QVERIFY(std::abs(actual.end.x - (r.end.x + 24 / zoom)) < 1e-10);
+      QVERIFY(std::abs(actual.start.y - (r.start.y + 16 / zoom)) < 1e-10); QVERIFY(std::abs(actual.end.y - (r.end.y + 16 / zoom)) < 1e-10); r.start = actual.start; r.end = actual.end;
+    }
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier);
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QCOMPARE(canvas->annotationSelection(), selection); QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier | Qt::ShiftModifier);
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); capture->accept(); QTRY_COMPARE(done.count(), 1);
+    const auto result = receipt(done); QVERIFY(result->annotationDocument); QCOMPARE(serializeDocument(*result->annotationDocument), serializeDocument(expected));
+    QVERIFY(result->file); QCOMPARE(QImage(result->file->path), result->workingMedia); QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), pixels());
+    const auto &moved = std::get<RectangleAnnotation>(expected.annotations[0]); QCOMPARE(result->workingMedia.pixelColor(QPoint(qRound(moved.start.x + 7), qRound(moved.start.y + 7))), QColor(Qt::green));
+  }
   void keyboardObjectSelectionEditsBeforeCapturePublication() {
     QTemporaryDir dir; CapturePipeline pipeline(pixels(), dir.path(), "selected", {"annotation", "save"}); QSignalSpy done(&pipeline, &CapturePipeline::finished);
     pipeline.start(); QTRY_VERIFY(dialog()); auto *capture = dialog(); auto *canvas = capture->findChild<EditorCanvas *>(); auto *objects = capture->findChild<AnnotationObjectNavigator *>(); QVERIFY(objects);

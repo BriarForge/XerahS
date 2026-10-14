@@ -179,8 +179,14 @@ Tab-Space, cancel/stale/lifetime and save/reopen/publication fixtures preserve t
 active tool, defaults and source. [Native object selection](app/ANNOTATION-OBJECTS.md)
 now provides a shared UUID-based keyboard list, non-color-only protection/selection
 labels, pointer/history/source synchronization and guarded stale/busy/lifetime
-refusal. Next freeze multi-object pointer move previews/commits against stale
-document/selection changes while resolving the shared Ellipse decision, alongside
+refusal. [Frozen group movement](app/ANNOTATION-MOVE.md) now copies rectangle
+geometry, exact selection, history state and document generation at press;
+previews share Core translation/finite validation and release commits one guarded
+group edit. Stale/cancel/no-op/protected/overflow failures retain committed state,
+Redo and checkpoints. Native editor save/reopen and capture publication preserve
+source, IDs, styles, assets and compatible unknown fields. Next guard the native
+multi-object rotation dialog against intervening state/selection and owner
+destruction while resolving the shared Ellipse decision, alongside
 owned native output service handoffs, remaining tools and the
 format policy and all other contracted output/capture/application domains.
 Physical clipboard/color/accessibility, shutdown and human gates remain

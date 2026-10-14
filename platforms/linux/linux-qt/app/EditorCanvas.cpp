@@ -225,6 +225,7 @@ void EditorCanvas::scrollContentsBy(int, int) {
 }
 
 void EditorCanvas::paintEvent(QPaintEvent *) {
+  const bool moving = movePreviewCurrent();
   QPainter p(viewport());
   p.fillRect(viewport()->rect(), palette().dark());
   p.translate(m_view.offset());
@@ -239,14 +240,18 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
   for (const Annotation &annotation : m_session->document().annotations) {
     const auto *r = std::get_if<RectangleAnnotation>(&annotation);
     if (!r || !r->visible) continue;
-    RectangleAnnotation resized;
+    RectangleAnnotation displayed;
     if (m_resize && m_resize->preview && m_resize->state == m_session->stateId() &&
         m_session->selection() == QSet<QUuid>{m_resize->original.id} && r->id == m_resize->original.id) {
-      resized = *r; resized.start = m_resize->preview->start; resized.end = m_resize->preview->end; r = &resized;
+      displayed = *r; displayed.start = m_resize->preview->start; displayed.end = m_resize->preview->end; r = &displayed;
+    } else if (moving) {
+      const auto preview = m_move->preview->constFind(r->id);
+      if (preview != m_move->preview->cend()) {
+        displayed = *r; displayed.start = preview->start; displayed.end = preview->end; displayed.style = preview->style; r = &displayed;
+      }
     }
     const QRectF box(QPointF(r->left(), r->top()), QPointF(r->right(), r->bottom()));
     p.save();
-    if (m_moving && m_session->selection().contains(r->id)) p.translate(m_moveLast - m_moveStart);
     p.setWorldTransform(rotation(*r), true);
     p.setOpacity(r->style.opacity);
     p.setBrush(QColor::fromRgba(r->style.fillColor));
@@ -257,7 +262,6 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
       const double gap = r->style.strokeWidth / 2 + 3 / m_view.zoom();
       const QRectF outline = box.adjusted(-gap, -gap, gap, gap);
       p.save();
-      if (m_moving) p.translate(m_moveLast - m_moveStart);
       p.setWorldTransform(rotation(*r), true);
       p.setBrush(Qt::NoBrush);
       p.setPen(outlinePen(Qt::white));
@@ -269,15 +273,15 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
         p.save(); p.resetTransform(); p.setOpacity(1); p.setPen(QPen(Qt::black, 1)); p.setBrush(Qt::white);
         for (const auto &[handle, at] : handles(*r)) {
           Q_UNUSED(handle);
-          const auto previewAt = m_moving ? at + (m_moveLast - m_moveStart) * m_view.zoom() : at;
-          p.drawRect(QRectF(previewAt - QPointF(4, 4), QSizeF(8, 8)));
+          p.drawRect(QRectF(at - QPointF(4, 4), QSizeF(8, 8)));
         }
         p.restore();
       }
     }
   }
-  if (m_resize && (!m_resize->preview || m_resize->state != m_session->stateId() || m_session->selection() != QSet<QUuid>{m_resize->original.id})) {
-    p.save(); p.resetTransform(); const QPointF at = m_view.toView(m_resize->last);
+  if ((m_resize && (!m_resize->preview || m_resize->state != m_session->stateId() || m_session->selection() != QSet<QUuid>{m_resize->original.id})) ||
+      (m_move && !moving)) {
+    p.save(); p.resetTransform(); const QPointF at = m_view.toView(m_move ? m_move->last : m_resize->last);
     for (const QPen &pen : {QPen(Qt::white, 4), QPen(Qt::black, 2)}) {
       p.setPen(pen); p.drawLine(at - QPointF(5, 5), at + QPointF(5, 5)); p.drawLine(at + QPointF(5, -5), at + QPointF(-5, 5));
     }
@@ -331,8 +335,17 @@ void EditorCanvas::mousePressEvent(QMouseEvent *event) {
       for (const QUuid &id : m_session->selection()) ids << id;
     }
     m_session->select(ids);
-    m_moving = m_session->selection().contains(*hit) && m_session->selectionEditable();
-    m_moveStart = m_moveLast = at;
+    if (m_session->selection().contains(*hit) && m_session->selectionEditable()) {
+      try {
+        MoveGesture draft{m_session->stateId(), m_documentGeneration, m_session->selection(), {}, at, at, {}};
+        for (const auto &a : m_session->document().annotations) if (const auto *r = std::get_if<RectangleAnnotation>(&a); r && draft.selection.contains(r->id))
+          draft.originals.insert(r->id, {r->start, r->end, r->style});
+        m_move = std::move(draft);
+        updateMovePreview(at);
+      } catch (const std::bad_alloc &) {
+        m_move.reset(); const QPointer<EditorCanvas> owner(this); emit editRejected("annotation-edit-failed"); if (!owner) return;
+      }
+    }
   } else {
     if (!(event->modifiers() & Qt::ControlModifier)) m_session->select({});
     if (m_tool == Tool::Rectangle) {
@@ -356,8 +369,8 @@ void EditorCanvas::mouseMoveEvent(QMouseEvent *event) {
   } else if (m_drag) {
     m_drag->second = m_view.toImage(event->position());
     viewport()->update();
-  } else if (m_moving) {
-    m_moveLast = m_view.toImage(event->position());
+  } else if (m_move) {
+    updateMovePreview(m_view.toImage(event->position()));
     viewport()->update();
   } else if (!m_spaceHeld) {
     const auto handle = handleAt(event->position());
@@ -390,11 +403,14 @@ void EditorCanvas::mouseReleaseEvent(QMouseEvent *event) {
       if (creation) m_session->createRectangle({{start.x(), start.y()}, {at.x(), at.y()}, creation->style}, creation->state, creation->selection);
       rejection = m_session->editDiagnostic();
     }
-  } else if (m_moving) {
-    m_moving = false;
-    const QPointF delta = at - m_moveStart;
-    m_session->moveSelection(delta.x(), delta.y());
-    rejection = m_session->editDiagnostic();
+  } else if (m_move) {
+    const auto gesture = std::move(*m_move); m_move.reset();
+    const QPointF delta = at - gesture.start;
+    if (gesture.generation != m_documentGeneration) rejection = "annotation-edit-stale";
+    else {
+      m_session->moveSelection(delta.x(), delta.y(), gesture.state, gesture.selection);
+      rejection = m_session->editDiagnostic();
+    }
   }
   viewport()->update();
   if (!rejection.isEmpty()) {
@@ -407,11 +423,32 @@ void EditorCanvas::cancelGesture() {
   m_drag.reset();
   m_creation.reset();
   m_resize.reset();
-  m_moving = false;
+  m_move.reset();
   if (m_panning) m_view.setOffset(m_panOriginalOffset);
   m_panning = false;
   viewport()->setCursor(m_spaceHeld ? Qt::OpenHandCursor : (m_tool == Tool::Crop ? Qt::CrossCursor : Qt::ArrowCursor));
   viewport()->update();
+}
+
+bool EditorCanvas::movePreviewCurrent() const {
+  return m_move && m_move->preview && m_move->state == m_session->stateId() &&
+      m_move->generation == m_documentGeneration && m_move->selection == m_session->selection();
+}
+
+void EditorCanvas::updateMovePreview(QPointF imagePoint) {
+  m_move->last = imagePoint;
+  m_move->preview.reset();
+  if (m_move->state != m_session->stateId() || m_move->generation != m_documentGeneration || m_move->selection != m_session->selection()) return;
+  const auto delta = imagePoint - m_move->start;
+  try {
+    QHash<QUuid, RectangleProperties> preview;
+    for (auto it = m_move->originals.cbegin(); it != m_move->originals.cend(); ++it) {
+      const auto prepared = moveRectangleGeometry(it.value(), {delta.x(), delta.y()});
+      if (!prepared.properties) return;
+      preview.insert(it.key(), *prepared.properties);
+    }
+    m_move->preview = std::move(preview);
+  } catch (const std::bad_alloc &) { /* Keep committed geometry and show the rejection marker. */ }
 }
 
 void EditorCanvas::wheelEvent(QWheelEvent *event) {
@@ -451,7 +488,7 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
     viewport()->setCursor(m_panning ? Qt::ClosedHandCursor : Qt::OpenHandCursor);
     return;
   }
-  if (event->key() == Qt::Key_Escape && (m_drag || m_moving || m_panning || m_resize)) {
+  if (event->key() == Qt::Key_Escape && (m_drag || m_move || m_panning || m_resize)) {
     cancelGesture();
     syncViewport();
     return;

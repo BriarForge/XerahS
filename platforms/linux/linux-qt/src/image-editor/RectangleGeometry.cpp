@@ -30,6 +30,16 @@ QString rectanglePropertiesDiagnostic(const RectangleProperties &p) {
   }
   return {};
 }
+RectangleMoveResult moveRectangleGeometry(const RectangleProperties &original, PointF delta) {
+  if (!std::isfinite(delta.x) || !std::isfinite(delta.y)) return {{}, "annotation-geometry-invalid"};
+  RectangleProperties next = original;
+  if (delta.x != 0 || delta.y != 0) {
+    next.start = {original.start.x + delta.x, original.start.y + delta.y};
+    next.end = {original.end.x + delta.x, original.end.y + delta.y};
+  }
+  if (const auto invalid = rectanglePropertiesDiagnostic(next); !invalid.isEmpty()) return {{}, invalid};
+  return {next, {}};
+}
 RectangleResizeResult resizeRectangleGeometry(const RectangleAnnotation &r, RectangleHandle handle, PointF delta) {
   const RectangleProperties original{r.start, r.end, r.style};
   if (const auto invalid = rectanglePropertiesDiagnostic(original); !invalid.isEmpty()) return {{}, invalid};
