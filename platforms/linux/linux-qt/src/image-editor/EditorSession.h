@@ -46,6 +46,13 @@ public:
   bool setStrokeWidth(double width);
   bool setStrokeColor(Argb color);
   bool setFillColor(Argb color);
+  enum class ColorTarget { Stroke, Fill };
+  struct ColorEditResult { bool accepted = false; bool documentChanged = false; bool defaultsChanged = false; QString diagnostic; };
+  // Freeze both the document/selection and the creation defaults across native
+  // pickers. Failure leaves both unchanged; an empty selection edits only defaults.
+  ColorEditResult editColor(ColorTarget, Argb, quint64 expectedState, const QSet<QUuid> &expectedSelection,
+      const RectangleStyle &expectedDefaults);
+  bool canEditColor() const;
   bool setOpacity(double opacity);
   // ES-004: keyboard and pointer parity operations, each one history operation.
   // Resizing moves the bottom-right corner; a result without positive area is rejected.

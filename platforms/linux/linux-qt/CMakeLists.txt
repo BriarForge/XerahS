@@ -113,7 +113,8 @@ add_library(xerahs_editor_canvas STATIC app/EditorCanvas.cpp app/EditorCanvas.h
   app/NativeAnnotationTools.cpp app/NativeAnnotationTools.h
   app/AnnotationObjectNavigator.cpp app/AnnotationObjectNavigator.h
   app/RectanglePropertiesDialog.cpp app/RectanglePropertiesDialog.h
-  app/SelectionRotationDialog.cpp app/SelectionRotationDialog.h)
+  app/SelectionRotationDialog.cpp app/SelectionRotationDialog.h
+  app/AnnotationColorDialog.cpp app/AnnotationColorDialog.h)
 set_target_properties(xerahs_editor_canvas PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_editor_canvas PUBLIC app)
 target_link_libraries(xerahs_editor_canvas PUBLIC xerahs_core Qt6::Widgets)
@@ -263,7 +264,8 @@ add_test(NAME capture-save-as COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-save-as-test>)
 set_tests_properties(capture-save-as PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 add_executable(capture-annotation-test tests/CaptureAnnotationTest.cpp app/CapturePipeline.cpp app/CapturePipeline.h
-  app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h)
+  app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h
+  app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h)
 set_target_properties(capture-annotation-test PROPERTIES AUTOMOC ON)
 target_link_libraries(capture-annotation-test PRIVATE xerahs_file_output xerahs_action_selection xerahs_pipeline_journal Qt6::Test)
 add_test(NAME capture-annotation COMMAND ${XERAHS_DBUS_RUN_SESSION}

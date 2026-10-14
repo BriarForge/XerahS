@@ -75,6 +75,7 @@ private:
   bool transferAnnotations(const QString &command);
   bool rectangleDialog(bool creation);
   bool rotateSelected();
+  bool editColor(xerahs::editor::EditorSession::ColorTarget);
   void recordRecentImage(const QString &absolutePath);
   void applyCreationDefaults();
   void persistDrawingDefaults();

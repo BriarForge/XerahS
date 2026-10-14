@@ -277,6 +277,56 @@ private slots:
   void nativeGroupRotationHasOwnedPreviewAndActualPersistence_data() {
     QTest::addColumn<QString>("mode"); for (const auto *mode : {"apply", "cancel", "invalid", "destroy"}) QTest::newRow(mode) << QString(mode);
   }
+  void colorChoicesHaveGuardedDefaultsPublicationAndActualPersistence_data() {
+    QTest::addColumn<bool>("fill"); QTest::addColumn<QString>("mode");
+    for (bool fill : {false, true}) for (const auto *mode : {"apply", "cancel", "defaults-only", "stale-preferences", "replacement", "preference-failure", "destroy", "dialog-destroy", "publish-destroy"})
+      QTest::newRow(qPrintable(QString("%1-%2").arg(fill ? "fill" : "stroke", mode))) << fill << QString(mode);
+  }
+  void colorChoicesHaveGuardedDefaultsPublicationAndActualPersistence() {
+    QFETCH(bool, fill); QFETCH(QString, mode); QTemporaryDir dir; const auto path = dir.filePath("colour.png"), prefs = dir.filePath("native/settings.json"); QVERIFY(fixture().save(path));
+    QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty());
+    const auto command = fill ? "fill-colour" : "stroke-colour"; QVERIFY(applyToolbarPreferences(QJsonArray{QJsonObject{{"Id", command}, {"Hotkey", "F12"}, {"IsVisible", false}}}, nativeEditorPreferenceRevision()).saved);
+    auto loaded = loadSource(path); QVERIFY(loaded.document); auto doc = *loaded.document;
+    RectangleAnnotation a; a.id = QUuid::createUuid(); a.start = {4, 5}; a.end = {16, 15}; a.style = {0x80112233, 0x40223344, 1.5, 37.25, .75}; a.extra = {{"vendor", "keep"}};
+    auto b = a; b.id = QUuid::createUuid(); b.start = {30, 20}; b.end = {44, 32}; const auto futureId = QUuid::createUuid();
+    const UnsupportedAnnotation future{futureId, {{"id", futureId.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"vendor", "keep"}}};
+    doc.annotations = {a, b, future}; doc.embeddedImages = {{"asset", doc.sourceImagePng}}; QVERIFY(saveEdit(path, fixture(), doc).sidecarSaved);
+    EditorSession replacement(doc); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); auto *objects = window->findChild<AnnotationObjectNavigator *>();
+    objects->focusObjects(); QTest::keyClick(objects, Qt::Key_A, Qt::ControlModifier); if (mode == "defaults-only") QTest::keyClick(objects, Qt::Key_Escape); QTest::keyClick(objects, Qt::Key_Return); QTRY_COMPARE(QApplication::focusWidget(), canvas);
+    const auto before = serializeDocument(canvas->annotationDocument()); const auto selection = canvas->annotationSelection(); const auto png = storedBytes(path), companion = storedBytes(path + ".xann"); auto expectedPrefs = storedBytes(prefs);
+    QLockFile lock(prefs + ".lock"); if (mode == "preference-failure") QVERIFY(lock.tryLock(0));
+    if (mode == "publish-destroy") connect(&nativeEditorPreferenceEvents(), &NativeEditorPreferenceEvents::drawingDefaultsChanged, window.get(), [&] { window.reset(); });
+    bool acted = false; QTimer timer; connect(&timer, &QTimer::timeout, [&] {
+      auto *dialog = qobject_cast<QColorDialog *>(QApplication::activeModalWidget()); if (!dialog || acted) return; acted = true;
+      const QPointer<QColorDialog> owner(dialog); const auto close = qScopeGuard([owner] { if (owner && owner->isVisible()) owner->reject(); }); dialog->activateWindow(); QTRY_VERIFY(dialog->isActiveWindow());
+      QCOMPARE(dialog->objectName(), QString("annotationColorDialog")); QVERIFY(dialog->testOption(QColorDialog::ShowAlphaChannel)); QVERIFY(!canvas->isEnabled()); QVERIFY(!objects->isEnabled()); QVERIFY(!window->close()); QVERIFY(!window->findChild<QAction *>("saveImage")->isEnabled());
+      dialog->setCurrentColor(QColor::fromRgba(0x40667788)); QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QCOMPARE(storedBytes(path), png); QCOMPARE(storedBytes(path + ".xann"), companion); QCOMPARE(storedBytes(prefs), expectedPrefs);
+      if (mode == "destroy") { window.reset(); return; } if (mode == "dialog-destroy") { delete dialog; return; }
+      if (mode == "stale-preferences") { QVERIFY(applyDrawingDefaults({{"Thickness", 9}}, nativeEditorPreferenceRevision()).saved); expectedPrefs = storedBytes(prefs); }
+      if (mode == "replacement") canvas->resetDocument(replacement, fixture());
+      if (mode == "cancel") { QTest::keyClick(dialog, Qt::Key_Escape); return; }
+      auto *ok = dialog->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Ok); QVERIFY(ok); ok->setFocus(); QTest::keyClick(ok, Qt::Key_Space); QTRY_VERIFY(!dialog->isVisible());
+    });
+    window->activateWindow(); canvas->setFocus(); QTRY_VERIFY(window->isActiveWindow()); timer.start(5); QTest::keyClick(canvas, Qt::Key_F12); timer.stop(); QVERIFY(acted);
+    QCOMPARE(storedBytes(path), png); QCOMPARE(storedBytes(path + ".xann"), companion); if (!window) { if (mode == "publish-destroy") QCOMPARE(nativeEditorPreferences().values.value(fill ? "FillColorHex" : "BorderColorHex"), QJsonValue("#40667788")); return; }
+    QVERIFY(canvas->isEnabled()); QVERIFY(objects->isEnabled()); const bool applied = mode == "apply" || mode == "preference-failure", defaultsOnly = mode == "defaults-only";
+    if (mode == "replacement") { QCOMPARE(replacement.undoCount(), 0); QCOMPARE(storedBytes(prefs), expectedPrefs); QVERIFY(window->statusBar()->currentMessage().contains("not applied")); return; }
+    if (!applied) { QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QCOMPARE(canvas->annotationSelection(), selection); QVERIFY(!window->windowTitle().contains(" •")); }
+    if (mode == "stale-preferences") { QCOMPARE(storedBytes(prefs), expectedPrefs); QCOMPARE(nativeEditorPreferences().values.value("Thickness"), QJsonValue(9)); QVERIFY(window->statusBar()->currentMessage().contains("not applied")); }
+    else if (applied || defaultsOnly) {
+      if (mode == "preference-failure") { QCOMPARE(storedBytes(prefs), expectedPrefs); QVERIFY(window->statusBar()->currentMessage().contains("Drawing defaults could not be saved")); }
+      else QCOMPARE(nativeEditorPreferences().values.value(fill ? "FillColorHex" : "BorderColorHex"), QJsonValue("#40667788"));
+      if (applied) {
+        const auto edited = serializeDocument(canvas->annotationDocument()); auto expected = canvas->annotationDocument();
+        for (size_t i : {size_t(0), size_t(1)}) { auto &style = std::get<RectangleAnnotation>(expected.annotations[i]).style; (fill ? style.fillColor : style.strokeColor) = fill ? a.style.fillColor : a.style.strokeColor; }
+        QCOMPARE(serializeDocument(expected), before); QCOMPARE(canvas->annotationSelection(), selection); trigger(*window, "undo"); QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QVERIFY(!window->windowTitle().contains(" •")); trigger(*window, "redo"); QCOMPARE(serializeDocument(canvas->annotationDocument()), edited);
+        lock.unlock(); trigger(*window, "saveImage"); const auto saved = loadSource(path); QVERIFY(saved.document); QCOMPARE(saved.image, fixture()); QCOMPARE(saved.document->sourceImagePng, doc.sourceImagePng); QCOMPARE(saved.document->embeddedImages, doc.embeddedImages);
+        for (size_t i : {size_t(0), size_t(1)}) QCOMPARE(fill ? std::get<RectangleAnnotation>(saved.document->annotations[i]).style.fillColor : std::get<RectangleAnnotation>(saved.document->annotations[i]).style.strokeColor, Argb(0x40667788));
+        QCOMPARE(std::get<UnsupportedAnnotation>(saved.document->annotations[2]).raw, future.raw);
+      }
+      if (mode != "preference-failure") { window.reset(); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty()); QCOMPARE(nativeEditorPreferences().values.value(fill ? "FillColorHex" : "BorderColorHex"), QJsonValue("#40667788")); }
+    } else QCOMPARE(storedBytes(prefs), expectedPrefs);
+  }
   void nativeGroupRotationHasOwnedPreviewAndActualPersistence() {
     QFETCH(QString, mode); QTemporaryDir dir; const auto path = dir.filePath("rotation.png"), prefs = dir.filePath("prefs.json"); QVERIFY(fixture().save(path));
     QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty()); QVERIFY(applyToolbarPreferences(QJsonArray{QJsonObject{{"Id", "rotate-selection"}, {"Hotkey", "F10"}, {"IsVisible", false}}}, nativeEditorPreferenceRevision()).saved);

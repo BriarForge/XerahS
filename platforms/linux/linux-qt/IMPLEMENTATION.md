@@ -189,9 +189,14 @@ now owns a native per-object angle preview in the editor and capture, shares Cor
 finite/normalized rotation validation, and commits against frozen history,
 selection and document generation. Cancel/invalid/stale/no-op/protected/owner
 failure preserves committed state; actual editor/capture output and exact
-history retain source, fields and defaults. Next guard native stroke/fill color
-dialogs against stale document/selection and owner destruction while preserving
-their selected/default style semantics and resolving the shared Ellipse decision, alongside
+history retain source, fields and defaults. [Guarded stroke/fill choices](app/ANNOTATION-COLOR.md)
+now share an owned alpha picker, freeze document/selection/defaults/generation and
+editor preference revision, preserve one-step history, and keep capture defaults
+local. Preference-save failure retains the accepted undoable document edit with
+an explicit diagnostic; actual save/reopen and independent alpha-composited capture
+publication are verified. Next add document-generation guards to numeric Rectangle
+creation/properties, including replacement documents with matching state and IDs,
+while resolving the shared Ellipse decision, alongside
 owned native output service handoffs, remaining tools and the
 format policy and all other contracted output/capture/application domains.
 Physical clipboard/color/accessibility, shutdown and human gates remain

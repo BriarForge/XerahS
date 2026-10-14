@@ -63,7 +63,10 @@
     "platforms/linux/linux-qt/app/RectanglePropertiesDialog.h",
     "platforms/linux/linux-qt/app/RectanglePropertiesDialog.cpp",
     "platforms/linux/linux-qt/app/AnnotationObjectNavigator.h",
-    "platforms/linux/linux-qt/app/AnnotationObjectNavigator.cpp"
+    "platforms/linux/linux-qt/app/AnnotationObjectNavigator.cpp",
+    "platforms/linux/linux-qt/app/AnnotationColorDialog.h",
+    "platforms/linux/linux-qt/app/AnnotationColorDialog.cpp",
+    "platforms/linux/linux-qt/app/EditorWindow.h"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
@@ -79,7 +82,11 @@
     "platforms/linux/linux-qt/tests/NativeEditorAppearanceTest.cpp",
     "platforms/linux/linux-qt/tests/appearance-test-bus.conf",
     "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
-    "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+    "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
+    "platforms/linux/linux-qt/app/ANNOTATION-COLOR.md",
+    "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+    "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+    "platforms/linux/linux-qt/app/ANNOTATION-COLOR-EVIDENCE.json"
   ],
   "requirements": {
     "ESET-001": {
@@ -120,7 +127,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Persisted border/fill/thickness now initialize new/replaced native sessions and update creation defaults in all open editors only after successful persistence. Apply/Cancel and reset are draft operations; existing/selected annotations, source, checkpoint and undo/redo remain unchanged. Actual toolbar color/width edits keep explicit selection history and persist subsequent creation defaults; a failed preference save leaves the document edit intact with a persistent status diagnostic. Core/native multi-window, picker, sidecar, restart and redo tests cover this subset. Last tool and all remaining creation defaults remain Required. Native capture annotation now snapshots the persisted border/fill/thickness creation defaults into each pipeline and uses them in its private rectangle session. Later preference publication affects future pipelines; active annotation styles and existing objects remain unchanged. CaptureAnnotationTest verifies frozen style and real rendered pixels. Complete settings/downstream coverage and native/human qualification remain Required. Native keyboard Rectangle creation now owns numeric bounds and frozen style/state/selection, exposes explicit Create/Cancel in editor and capture, and commits one guarded insertion with exact earlier selection recovery. Pointer creation shares the frozen draft path. Actual Tab/Alt+R/F9/capture Tab-Space, stale/invalid/cancel/owner and save/reopen evidence is indexed in RECTANGLE-CREATION.md. The creation checkpoint registers 47 commands with fourteen visible defaults unchanged; all remaining tool/field/resource/physical/a11y/privacy/security/parity/human qualification remains Required.",
+      "note": "Persisted border/fill/thickness now initialize new/replaced native sessions and update creation defaults in all open editors only after successful persistence. Apply/Cancel and reset are draft operations; existing/selected annotations, source, checkpoint and undo/redo remain unchanged. Actual toolbar color/width edits keep explicit selection history and persist subsequent creation defaults; a failed preference save leaves the document edit intact with a persistent status diagnostic. Core/native multi-window, picker, sidecar, restart and redo tests cover this subset. Last tool and all remaining creation defaults remain Required. Native capture annotation now snapshots the persisted border/fill/thickness creation defaults into each pipeline and uses them in its private rectangle session. Later preference publication affects future pipelines; active annotation styles and existing objects remain unchanged. CaptureAnnotationTest verifies frozen style and real rendered pixels. Complete settings/downstream coverage and native/human qualification remain Required. Native keyboard Rectangle creation now owns numeric bounds and frozen style/state/selection, exposes explicit Create/Cancel in editor and capture, and commits one guarded insertion with exact earlier selection recovery. Pointer creation shares the frozen draft path. Actual Tab/Alt+R/F9/capture Tab-Space, stale/invalid/cancel/owner and save/reopen evidence is indexed in RECTANGLE-CREATION.md. The creation checkpoint registers 47 commands with fourteen visible defaults unchanged; all remaining tool/field/resource/physical/a11y/privacy/security/parity/human qualification remains Required. Guarded native stroke/fill choices freeze state, exact selection, full creation defaults and generation; editor choices also freeze preference revision. Selected rectangles change once with exact history, empty selections change only defaults, and capture choices remain local. Alpha-preserving actual persistence/publication, stale/protected/geometry/cancel/lifetime refusal and preference-save failure are indexed in ANNOTATION-COLOR.md. Full tool/field/resource/native/a11y/privacy/security/parity/human qualification remains Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
@@ -131,14 +138,24 @@
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
         "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
+        "platforms/linux/linux-qt/app/ANNOTATION-COLOR.md",
+        "platforms/linux/linux-qt/app/ANNOTATION-COLOR-EVIDENCE.json"
       ]
     },
     "ESET-007": {
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "BorderColorHex/FillColorHex load and persist uppercase alpha-preserving #AARRGGBB; compatible opaque #RRGGBB receives FF alpha. Invalid values recover per field with visible value-free diagnostics. Derived BorderColor/FillColor aliases are non-persistent and cannot override canonical fields; unknown color extensions survive. Native defaults and actual toolbar color pickers preserve alpha, reject malformed drafts atomically and persist through restart/sidecar saves. Other color fields and full shared metadata review remain Required. AccentColorHex now shares canonical alpha-preserving validation and computed-alias exclusion with independent core round-trip/recovery evidence; native alpha picking, atomic appearance controls and restart evidence are present; full shared metadata/compatibility review remains Required."
+      "note": "BorderColorHex/FillColorHex load and persist uppercase alpha-preserving #AARRGGBB; compatible opaque #RRGGBB receives FF alpha. Invalid values recover per field with visible value-free diagnostics. Derived BorderColor/FillColor aliases are non-persistent and cannot override canonical fields; unknown color extensions survive. Native defaults and actual toolbar color pickers preserve alpha, reject malformed drafts atomically and persist through restart/sidecar saves. Other color fields and full shared metadata review remain Required. AccentColorHex now shares canonical alpha-preserving validation and computed-alias exclusion with independent core round-trip/recovery evidence; native alpha picking, atomic appearance controls and restart evidence are present; full shared metadata/compatibility review remains Required. Guarded native stroke/fill choices freeze state, exact selection, full creation defaults and generation; editor choices also freeze preference revision. Selected rectangles change once with exact history, empty selections change only defaults, and capture choices remain local. Alpha-preserving actual persistence/publication, stale/protected/geometry/cancel/lifetime refusal and preference-save failure are indexed in ANNOTATION-COLOR.md. Full tool/field/resource/native/a11y/privacy/security/parity/human qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-COLOR.md",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/app/ANNOTATION-COLOR-EVIDENCE.json"
+      ]
     },
     "ESET-008": {
       "disposition": "Required",
@@ -213,7 +230,15 @@
         "recent-deduplication",
         "unknown-round-trip"
       ],
-      "note": "All three published operations call production code. Independent core and real native-control tests cover current field boundaries, missing markers, newer/unreadable preservation, unknown round-trip, atomic failures, private files, privacy-pruned recovery, restart, Apply/Cancel, capped stale revisions and actual image Open/Save. Every remaining field, supported upgrades, all other platform adapters and acceptance reviews remain Required. Drawing-default tests now add canonical alpha, non-persistent aliases, invalid/cancelled/reset/locked/stale drafts, actual color pickers, multi-window creation-only effects, preserved redo, session replacement and PNG/sidecar/restart evidence. Window boundary, type, independent geometry and disabled-memory recovery tests cover the production core; native port, actual editor lifecycle/display recovery, memory toggles, cancellation, failure, restart and preserved source/checkpoint/redo evidence are now present. Physical display and acceptance review remain Required. Appearance evidence adds independent sRGB references, core/desktop precedence and invalid boundaries, private D-Bus snapshot/signal/race/restart transport, native Apply/Cancel/reset/stale/locking/picker/focus/accessibility and actual editor image/history isolation. Toolbar evidence adds core collision/boundary/recovery references, real delegate editing, native Apply/Cancel/reset/failure/restart, inactive unknown preservation, multi-window layout and protected/additional dispatch with actual image/checkpoint/redo isolation."
+      "note": "All three published operations call production code. Independent core and real native-control tests cover current field boundaries, missing markers, newer/unreadable preservation, unknown round-trip, atomic failures, private files, privacy-pruned recovery, restart, Apply/Cancel, capped stale revisions and actual image Open/Save. Every remaining field, supported upgrades, all other platform adapters and acceptance reviews remain Required. Drawing-default tests now add canonical alpha, non-persistent aliases, invalid/cancelled/reset/locked/stale drafts, actual color pickers, multi-window creation-only effects, preserved redo, session replacement and PNG/sidecar/restart evidence. Window boundary, type, independent geometry and disabled-memory recovery tests cover the production core; native port, actual editor lifecycle/display recovery, memory toggles, cancellation, failure, restart and preserved source/checkpoint/redo evidence are now present. Physical display and acceptance review remain Required. Appearance evidence adds independent sRGB references, core/desktop precedence and invalid boundaries, private D-Bus snapshot/signal/race/restart transport, native Apply/Cancel/reset/stale/locking/picker/focus/accessibility and actual editor image/history isolation. Toolbar evidence adds core collision/boundary/recovery references, real delegate editing, native Apply/Cancel/reset/failure/restart, inactive unknown preservation, multi-window layout and protected/additional dispatch with actual image/checkpoint/redo isolation. Guarded native stroke/fill choices freeze state, exact selection, full creation defaults and generation; editor choices also freeze preference revision. Selected rectangles change once with exact history, empty selections change only defaults, and capture choices remain local. Alpha-preserving actual persistence/publication, stale/protected/geometry/cancel/lifetime refusal and preference-save failure are indexed in ANNOTATION-COLOR.md. Full tool/field/resource/native/a11y/privacy/security/parity/human qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-COLOR.md",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/app/ANNOTATION-COLOR-EVIDENCE.json"
+      ]
     },
     "ESET-016": {
       "disposition": "Required",

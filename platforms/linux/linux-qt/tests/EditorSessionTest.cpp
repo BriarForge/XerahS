@@ -64,6 +64,63 @@ class EditorSessionTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void guardedColorEditsCommitOneGroupAndUpdateFutureDefaults_data() {
+    QTest::addColumn<bool>("fill"); QTest::newRow("stroke") << false; QTest::newRow("fill") << true;
+  }
+  void guardedColorEditsCommitOneGroupAndUpdateFutureDefaults() {
+    QFETCH(bool, fill); auto d = document(); auto a = rectangle(1, 2, 4, 6), b = rectangle(5, 6, 9, 10);
+    a.style = {0x80112233, 0x40223344, 2.5, 37.25, .25}; a.extra = {{"vendor", "keep"}};
+    const auto futureId = QUuid::createUuid(); const UnsupportedAnnotation future{futureId, {{"id", futureId.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"vendor", "keep"}}};
+    d.annotations = {a, future, b}; d.embeddedImages = {{"asset", kOnePixelPng}}; EditorSession session(d); session.select({a.id, b.id, futureId});
+    const auto selection = session.selection(); const auto before = serializeDocument(d); const auto defaults = session.toolStyle();
+    const auto target = fill ? EditorSession::ColorTarget::Fill : EditorSession::ColorTarget::Stroke;
+    const auto edit = session.editColor(target, 0x40667788, 0, selection, defaults); QVERIFY(edit.accepted); QVERIFY(edit.documentChanged); QVERIFY(edit.defaultsChanged); QVERIFY(edit.diagnostic.isEmpty());
+    auto expected = d; for (size_t i : {size_t(0), size_t(2)}) { auto &style = std::get<RectangleAnnotation>(expected.annotations[i]).style; (fill ? style.fillColor : style.strokeColor) = 0x40667788; }
+    QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(session.selection(), selection); QCOMPARE(session.undoCount(), 1); QVERIFY(session.dirty());
+    QCOMPARE(fill ? session.toolStyle().fillColor : session.toolStyle().strokeColor, Argb(0x40667788));
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.selection(), selection); QVERIFY(!session.dirty());
+    QCOMPARE(fill ? session.toolStyle().fillColor : session.toolStyle().strokeColor, Argb(0x40667788)); QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(expected));
+    const auto fresh = session.createRectangle({-5, -4}, {-2, -1}); QVERIFY(fresh); QCOMPARE(fill ? session.selectedRectangle()->style.fillColor : session.selectedRectangle()->style.strokeColor, Argb(0x40667788));
+  }
+  void guardedColorFailuresPreserveDefaultsDocumentSelectionAndRedo() {
+    auto d = document(); const auto a = rectangle(1, 1, 4, 4); auto invalid = rectangle(1.2e308, 1, 1.3e308, 4); invalid.style.rotationDegrees = 90; d.annotations = {a, invalid};
+    EditorSession session(d); QVERIFY(session.createRectangle({5, 5}, {6, 6})); QVERIFY(session.undo()); session.select({a.id, invalid.id});
+    const auto before = serializeDocument(session.document()); const auto defaults = session.toolStyle(); const auto selection = session.selection();
+    for (auto target : {EditorSession::ColorTarget::Stroke, EditorSession::ColorTarget::Fill}) {
+      const auto edit = session.editColor(target, 0x40667788, 0, selection, defaults); QVERIFY(!edit.accepted); QCOMPARE(edit.diagnostic, QString("annotation-geometry-invalid"));
+      QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.selection(), selection); QCOMPARE(session.redoCount(), 1); QVERIFY(!session.dirty());
+      QCOMPARE(session.toolStyle().strokeColor, defaults.strokeColor); QCOMPARE(session.toolStyle().fillColor, defaults.fillColor);
+    }
+    session.select({a.id}); auto result = session.editColor(EditorSession::ColorTarget::Stroke, 0x40667788, 0, selection, defaults);
+    QVERIFY(!result.accepted); QCOMPARE(result.diagnostic, QString("annotation-edit-stale")); QCOMPARE(session.toolStyle().strokeColor, defaults.strokeColor);
+    auto changedDefaults = defaults; changedDefaults.strokeWidth = 9; QVERIFY(session.setCreationStyle(changedDefaults));
+    result = session.editColor(EditorSession::ColorTarget::Fill, 0x40667788, 0, session.selection(), defaults); QVERIFY(!result.accepted); QCOMPARE(result.diagnostic, QString("annotation-edit-stale")); QCOMPARE(session.toolStyle().strokeWidth, 9.0);
+    QVERIFY(session.redo()); const auto intervening = serializeDocument(session.document());
+    result = session.editColor(EditorSession::ColorTarget::Fill, 0x40667788, 0, session.selection(), session.toolStyle()); QVERIFY(!result.accepted); QCOMPARE(result.diagnostic, QString("annotation-edit-stale")); QCOMPARE(serializeDocument(session.document()), intervening);
+    result = session.editColor(EditorSession::ColorTarget(99), 0x40667788, session.stateId(), session.selection(), session.toolStyle()); QVERIFY(!result.accepted); QCOMPARE(result.diagnostic, QString("annotation-style-invalid"));
+  }
+  void colorNoopsAndDefaultsOnlyPreserveCheckpointAndRedo() {
+    EditorSession session(document()); const auto a = *session.createRectangle({1, 1}, {3, 3}); session.markSaved(); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo());
+    auto defaults = session.toolStyle(); const auto before = serializeDocument(session.document());
+    auto edit = session.editColor(EditorSession::ColorTarget::Stroke, defaults.strokeColor, session.stateId(), session.selection(), defaults);
+    QVERIFY(edit.accepted); QVERIFY(!edit.documentChanged); QVERIFY(!edit.defaultsChanged); QCOMPARE(session.redoCount(), 1); QVERIFY(!session.dirty());
+    session.select({}); edit = session.editColor(EditorSession::ColorTarget::Fill, 0x00667788, session.stateId(), {}, defaults);
+    QVERIFY(edit.accepted); QVERIFY(!edit.documentChanged); QVERIFY(edit.defaultsChanged); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.redoCount(), 1); QVERIFY(!session.dirty());
+    QCOMPARE(session.toolStyle().fillColor, Argb(0x00667788)); session.select({a}); QVERIFY(session.redo()); QCOMPARE(session.toolStyle().fillColor, Argb(0x00667788));
+  }
+  void guardedColorNeverUpdatesDefaultsForProtectedOrUnsupportedSelections_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"hidden", "locked", "opaque-lock", "unknown-only"}) QTest::newRow(mode) << QString(mode);
+  }
+  void guardedColorNeverUpdatesDefaultsForProtectedOrUnsupportedSelections() {
+    QFETCH(QString, mode); auto d = document(); auto a = rectangle(1, 1, 3, 3); if (mode == "hidden") a.visible = false; else if (mode != "unknown-only") a.extra = {{"locked", mode == "opaque-lock" ? QJsonValue("future") : QJsonValue(true)}};
+    d.annotations = {a}; if (mode == "unknown-only") d.annotations[0] = UnsupportedAnnotation{a.id, {{"id", a.id.toString(QUuid::WithoutBraces)}, {"type", "future-art"}}};
+    EditorSession session(d); session.select({a.id}); QVERIFY(!session.canEditColor()); const auto defaults = session.toolStyle(); const auto before = serializeDocument(d);
+    for (auto target : {EditorSession::ColorTarget::Stroke, EditorSession::ColorTarget::Fill}) {
+      const auto edit = session.editColor(target, 0x40667788, 0, session.selection(), defaults); QVERIFY(!edit.accepted);
+      QCOMPARE(edit.diagnostic, mode == "unknown-only" ? QString("annotation-type-unsupported") : QString("annotation-selection-protected"));
+      QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.toolStyle().strokeColor, defaults.strokeColor); QCOMPARE(session.toolStyle().fillColor, defaults.fillColor); QCOMPARE(session.undoCount(), 0); QVERIFY(!session.dirty());
+    }
+  }
   void guardedGroupRotationPreservesFieldsDefaultsAndExactHistory() {
     auto d = document(); auto a = rectangle(1, 2, 4, 6), b = rectangle(5, 6, 9, 10), untouched = rectangle(-5, -4, -2, -1);
     a.style = {0x80112233, 0x40223344, 2.5, 350, .25}; a.extra = {{"vendor", "keep"}}; b.style.rotationDegrees = 37.25;

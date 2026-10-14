@@ -85,8 +85,10 @@ privacy/security, shared goldens, parity and human acceptance remain Required.
 
 The subsequent [rotation checkpoint](ANNOTATION-ROTATION.md) guards the native
 multi-object rotation dialog against intervening document/selection changes and
-owner destruction. Next guard the native stroke/fill color pickers' frozen
-selection and lifetime. Keep the pending shared
+owner destruction. The subsequent [colour checkpoint](ANNOTATION-COLOR.md) guards
+the stroke/fill pickers' selection/defaults/generation/preferences and lifetime.
+Next guard native numeric Rectangle creation/properties against replacement
+documents with matching state and IDs. Keep the pending shared
 Ellipse, clipboard/assets and output-format decisions in ANNOTATION-TOOLS.md,
 ANNOTATION-TRANSFER.md and EDITOR-SAVE.md; continue all other contracted tools,
 effects, workflows, captures, recording/audio, uploads, compatibility and release

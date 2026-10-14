@@ -59,6 +59,59 @@ private slots:
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());
   }
+  void colorPickerGuardsDocumentSelectionDefaultsAndOwner_data() {
+    QTest::addColumn<bool>("fill"); QTest::addColumn<QString>("mode");
+    for (bool fill : {false, true}) for (const auto *mode : {"apply", "cancel", "no-op", "defaults-only", "stale-document", "stale-selection", "stale-defaults", "replacement", "destroy", "dialog-destroy", "reject-destroy"})
+      QTest::newRow(qPrintable(QString("%1-%2").arg(fill ? "fill" : "stroke", mode))) << fill << QString(mode);
+  }
+  void colorPickerGuardsDocumentSelectionDefaultsAndOwner() {
+    QFETCH(bool, fill); QFETCH(QString, mode); const QImage source = image(); EditorSession prepared(document());
+    const auto a = *prepared.createRectangle({150, 180}, {230, 260}), b = *prepared.createRectangle({400, 240}, {480, 320});
+    EditorSession session(prepared.document()), replacement(prepared.document()); session.select({a, b}); replacement.select({a, b});
+    QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); if (mode == "defaults-only") session.select({});
+    const auto before = serializeDocument(session.document()); const auto selection = session.selection(); const auto defaults = session.toolStyle();
+    const auto target = fill ? EditorSession::ColorTarget::Fill : EditorSession::ColorTarget::Stroke;
+    const Argb initial = fill ? defaults.fillColor : defaults.strokeColor, chosen = mode == "no-op" ? initial : 0x40667788;
+    auto canvas = std::make_unique<EditorCanvas>(session, source); canvas->resize(900, 700); canvas->show(); QTest::qWait(10); canvas->resetZoom(); QSignalSpy rejected(canvas.get(), &EditorCanvas::editRejected);
+    if (mode == "reject-destroy") connect(canvas.get(), &EditorCanvas::editRejected, [&] { canvas.reset(); });
+    auto expected = before; auto expectedSelection = selection; auto expectedDefaults = defaults; int undo = 0, redo = 1; bool acted = false; QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *dialog = qobject_cast<QColorDialog *>(QApplication::activeModalWidget()); if (!dialog || acted) return; acted = true;
+      const QPointer<QColorDialog> owner(dialog); const auto close = qScopeGuard([owner] { if (owner && owner->isVisible()) owner->reject(); });
+      dialog->activateWindow(); QTRY_VERIFY(dialog->isActiveWindow()); QCOMPARE(dialog->objectName(), QString("annotationColorDialog")); QCOMPARE(dialog->currentColor().rgba(), initial);
+      QVERIFY(dialog->testOption(QColorDialog::ShowAlphaChannel)); QVERIFY(dialog->findChild<QLabel *>("annotationColorScope")->isVisible());
+      QVERIFY(canvas->interactionActive()); QVERIFY(!canvas->editColor(target, canvas.get()));
+      dialog->setCurrentColor(QColor::fromRgba(chosen)); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.redoCount(), 1); QVERIFY(!session.dirty());
+      if (mode == "cancel") { QTest::keyClick(dialog, Qt::Key_Escape); return; }
+      if (mode == "destroy") { canvas.reset(); return; }
+      if (mode == "dialog-destroy") { delete dialog; return; }
+      if (mode == "stale-document") { QVERIFY(session.moveSelection(2, 0)); undo = 1; redo = 0; }
+      if (mode == "stale-selection" || mode == "reject-destroy") session.select({b});
+      if (mode == "stale-defaults") { expectedDefaults.strokeWidth = 9; QVERIFY(session.setCreationStyle(expectedDefaults)); }
+      if (mode == "replacement") canvas->resetDocument(replacement, source);
+      expected = serializeDocument(session.document()); expectedSelection = session.selection();
+      if (!qEnvironmentVariableIsEmpty("XERAHS_ANNOTATION_COLOR_QA") && fill && mode == "apply") QVERIFY(dialog->grab().save(qEnvironmentVariable("XERAHS_ANNOTATION_COLOR_QA")));
+      auto *buttons = dialog->findChild<QDialogButtonBox *>(); QVERIFY(buttons); auto *ok = buttons->button(QDialogButtonBox::Ok); QVERIFY(ok); ok->setFocus(); QTest::keyClick(ok, Qt::Key_Space); QTRY_VERIFY(!dialog->isVisible());
+    });
+    timer.start(5); const bool changed = canvas->editColor(target, canvas.get()); timer.stop(); QVERIFY(acted); QCOMPARE(changed, mode == "apply");
+    if (mode == "apply") {
+      auto expectedDoc = prepared.document(); for (auto &r : expectedDoc.annotations) { auto &style = std::get<RectangleAnnotation>(r).style; (fill ? style.fillColor : style.strokeColor) = chosen; }
+      QCOMPARE(serializeDocument(session.document()), serializeDocument(expectedDoc)); QCOMPARE(session.undoCount(), 1); QCOMPARE(session.redoCount(), 0); QVERIFY(session.dirty());
+      QCOMPARE(fill ? session.toolStyle().fillColor : session.toolStyle().strokeColor, chosen); QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.selection(), selection); QVERIFY(!session.dirty()); QVERIFY(session.redo());
+    } else {
+      QCOMPARE(serializeDocument(session.document()), expected); QCOMPARE(session.selection(), expectedSelection); QCOMPARE(session.undoCount(), undo); QCOMPARE(session.redoCount(), redo);
+      const bool stale = mode.startsWith("stale-") || mode == "replacement" || mode == "reject-destroy";
+      if (stale) { QCOMPARE(rejected.count(), 1); QCOMPARE(rejected[0][0].toString(), QString("annotation-edit-stale")); } else QCOMPARE(rejected.count(), 0);
+      if (mode == "defaults-only") (fill ? expectedDefaults.fillColor : expectedDefaults.strokeColor) = chosen;
+      QCOMPARE(session.toolStyle().strokeColor, expectedDefaults.strokeColor); QCOMPARE(session.toolStyle().fillColor, expectedDefaults.fillColor); QCOMPARE(session.toolStyle().strokeWidth, expectedDefaults.strokeWidth);
+    }
+    if (canvas) QVERIFY(!canvas->interactionActive()); QCOMPARE(replacement.undoCount(), 0); QCOMPARE(source, image());
+  }
+  void colorPendingObserverCanDestroyCanvasBeforeOpeningPicker() {
+    const QImage source = image(); EditorSession session(document()); auto canvas = std::make_unique<EditorCanvas>(session, source); const auto defaults = session.toolStyle();
+    connect(canvas.get(), &EditorCanvas::changed, [&] { canvas.reset(); }); QVERIFY(!canvas->editColor(EditorSession::ColorTarget::Stroke, canvas.get())); QVERIFY(!canvas);
+    QCOMPARE(session.undoCount(), 0); QCOMPARE(session.toolStyle().strokeColor, defaults.strokeColor); QVERIFY(!QApplication::activeModalWidget());
+  }
   void nativeRotationDraftHasExplicitCommitAndStaleLifetimeGuards_data() {
     QTest::addColumn<QString>("mode");
     for (const auto *mode : {"apply", "cancel", "no-op", "invalid", "stale-document", "stale-selection", "replacement", "destroy", "dialog-destroy", "reject-destroy"}) QTest::newRow(mode) << QString(mode);

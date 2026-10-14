@@ -16,6 +16,7 @@
 #include "NativeAnnotationTools.h"
 #include "RectanglePropertiesDialog.h"
 #include "SelectionRotationDialog.h"
+#include "AnnotationColorDialog.h"
 #include "AnnotationObjectNavigator.h"
 #include <algorithm>
 
@@ -56,8 +57,6 @@ namespace xerahs::app {
 using namespace xerahs::editor;
 
 namespace {
-
-QColor toColor(Argb argb) { return QColor::fromRgba(argb); }
 
 QString describe(const QString &diagnostic) {
   if (diagnostic == diagnostic::sourceUnsupported) return QStringLiteral("This file is not a supported image.");
@@ -319,20 +318,8 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(m_redo, &QAction::triggered, this, [this] { m_session->redo(); refresh(); });
   connect(m_delete, &QAction::triggered, this, [this] { m_session->deleteSelection(); refresh(); });
   connect(m_rotate, &QAction::triggered, this, [this] { rotateSelected(); });
-  connect(stroke, &QAction::triggered, this, [this] {
-    if (m_canvasOperationPending) return;
-    const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
-    const QColor c = QColorDialog::getColor(toColor(m_session->toolStyle().strokeColor), this,
-                                            QStringLiteral("Stroke colour"), QColorDialog::ShowAlphaChannel);
-    if (c.isValid()) { m_session->setStrokeColor(c.rgba()); persistDrawingDefaults(); refresh(); }
-  });
-  connect(fill, &QAction::triggered, this, [this] {
-    if (m_canvasOperationPending) return;
-    const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
-    const QColor c = QColorDialog::getColor(toColor(m_session->toolStyle().fillColor), this,
-                                            QStringLiteral("Fill colour"), QColorDialog::ShowAlphaChannel);
-    if (c.isValid()) { m_session->setFillColor(c.rgba()); persistDrawingDefaults(); refresh(); }
-  });
+  connect(stroke, &QAction::triggered, this, [this] { editColor(EditorSession::ColorTarget::Stroke); });
+  connect(fill, &QAction::triggered, this, [this] { editColor(EditorSession::ColorTarget::Fill); });
   connect(width, &QAction::triggered, this, [this] {
     if (m_canvasOperationPending) return;
     m_session->setStrokeWidth(std::min(10000.0, m_session->toolStyle().strokeWidth + 1)); persistDrawingDefaults(); refresh();
@@ -493,6 +480,33 @@ void EditorWindow::applyCreationDefaults() {
   m_session->setCreationStyle(style);
 }
 
+bool EditorWindow::editColor(EditorSession::ColorTarget target) {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive() || !m_session->canEditColor()) return false;
+  const auto state = m_session->stateId(), generation = m_canvas->documentGeneration(), revision = nativeEditorPreferenceRevision();
+  const auto selection = m_session->selection(); const auto defaults = m_session->toolStyle(); const QPointer<EditorWindow> owner(this);
+  const auto initial = target == EditorSession::ColorTarget::Stroke ? defaults.strokeColor : defaults.fillColor;
+  const QString scope = selection.isEmpty() ? "This colour changes only the default for new rectangles in editor windows. Current objects and history stay unchanged."
+      : "Selected rectangles change in one undo step. This colour also becomes the default for new rectangles in editor windows. Unsupported objects stay unchanged.";
+  return withOutputBusy([owner, target, state, generation, revision, selection, defaults, initial, scope] {
+    const auto choice = chooseAnnotationColor(target, initial, scope, owner); if (!owner) return false;
+    QString diagnostic = choice.diagnostic; bool changed = false;
+    if (choice.color) {
+      if (generation != owner->m_canvas->documentGeneration() || revision != nativeEditorPreferenceRevision()) diagnostic = "annotation-edit-stale";
+      else {
+        const auto edit = owner->m_session->editColor(target, *choice.color, state, selection, defaults); diagnostic = edit.diagnostic; changed = edit.documentChanged;
+        if (edit.accepted) {
+          const auto style = owner->m_session->toolStyle();
+          const auto written = applyDrawingDefaults({{"BorderColorHex", formatColor(style.strokeColor)}, {"FillColorHex", formatColor(style.fillColor)}, {"Thickness", style.strokeWidth}}, revision);
+          if (!owner) return false;
+          owner->m_drawingPreferenceDiagnostic = written.diagnostic;
+        }
+      }
+    }
+    owner->m_annotationMessage = diagnostic.isEmpty() ? QString() : annotationEditMessage(diagnostic);
+    owner->m_annotationMessageState = owner->m_session->stateId(); owner->refresh(); return changed;
+  });
+}
+
 void EditorWindow::persistDrawingDefaults() {
   const auto &style = m_session->toolStyle();
   const auto written = applyDrawingDefaults({{QStringLiteral("BorderColorHex"), formatColor(style.strokeColor)},
@@ -503,8 +517,9 @@ void EditorWindow::persistDrawingDefaults() {
 
 void EditorWindow::refresh() {
   const bool ready = !m_outputPending && !m_canvas->interactionActive();
-  for (const auto *id : {"save", "save-as", "stroke-colour", "fill-colour", "increase-stroke", "decrease-stroke"})
+  for (const auto *id : {"save", "save-as", "increase-stroke", "decrease-stroke"})
     m_toolbarActions.value(id)->setEnabled(ready);
+  for (const auto *id : {"stroke-colour", "fill-colour"}) m_toolbarActions.value(id)->setEnabled(ready && m_session->canEditColor());
   m_createRectangle->setEnabled(!m_outputPending && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive());
   m_rectangleProperties->setEnabled(!m_outputPending && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive() && m_canvas->canEditRectangle());
   m_rectangleProperties->setToolTip(m_canvas->canEditRectangle() ? m_rectangleProperties->statusTip() : "Select one visible, unlocked rectangle to edit its properties.");

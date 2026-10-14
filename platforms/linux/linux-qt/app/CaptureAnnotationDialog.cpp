@@ -46,6 +46,21 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   connect(create, &QAction::triggered, m_canvas, [this] { m_canvas->createRectangle(this); });
   connect(rotate, &QAction::triggered, m_canvas, [this] { m_canvas->rotateSelection(this); });
   layout->insertWidget(2, annotationToolInstructions(*m_canvas, this));
+  auto *colors = new QToolBar("Capture colour controls", this); colors->setObjectName("captureColorToolbar"); layout->insertWidget(3, colors);
+  auto *stroke = colors->addAction("Stroke colour…"); stroke->setObjectName("strokeColour"); stroke->setAutoRepeat(false);
+  auto *fill = colors->addAction("Fill colour…"); fill->setObjectName("fillColour"); fill->setAutoRepeat(false);
+  for (auto *action : {stroke, fill}) {
+    colors->widgetForAction(action)->setFocusPolicy(Qt::StrongFocus);
+    action->setToolTip("Change selected rectangles and the default for new rectangles in this capture. Editor preferences stay unchanged.");
+  }
+  const auto refreshColors = [this, stroke, fill] {
+    const bool ready = m_canvas->canEditColor() && !m_canvas->interactionActive(); stroke->setEnabled(ready); fill->setEnabled(ready);
+  };
+  connect(m_canvas, &EditorCanvas::changed, stroke, refreshColors);
+  connect(m_canvas, &EditorCanvas::toolChanged, stroke, refreshColors);
+  connect(m_canvas, &EditorCanvas::viewportChanged, stroke, refreshColors); refreshColors();
+  connect(stroke, &QAction::triggered, m_canvas, [this] { m_canvas->editColor(xerahs::editor::EditorSession::ColorTarget::Stroke, this); });
+  connect(fill, &QAction::triggered, m_canvas, [this] { m_canvas->editColor(xerahs::editor::EditorSession::ColorTarget::Fill, this); });
   m_saveSidecar = new QCheckBox("Also save editable annotations beside each saved PNG (.xann)", this);
   m_saveSidecar->setObjectName("captureSaveAnnotationSidecar"); layout->addWidget(m_saveSidecar);
   auto *privacy = new QLabel("The companion contains the original capture and editable annotations. A companion failure keeps the PNG and the editable document for explicit retry. "

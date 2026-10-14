@@ -4,13 +4,16 @@
 #include "RectanglePropertiesDialog.h"
 #include "AnnotationObjectNavigator.h"
 #include "SelectionRotationDialog.h"
+#include "NativeEditorPreferences.h"
 #include <QApplication>
 #include <QAction>
 #include <QLabel>
 #include <QCheckBox>
+#include <QColorDialog>
 #include <QFile>
 #include <QJsonArray>
 #include <QSignalSpy>
+#include <QSettings>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTimer>
@@ -35,7 +38,82 @@ CaptureAnnotationChoice rectangle(const LoadedSource &source) {
 }
 class CaptureAnnotationTest final : public QObject {
   Q_OBJECT
+  QTemporaryDir dialogPreferences;
 private slots:
+  void initTestCase() {
+    QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
+    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());
+  }
+  void captureColorChoicesPreserveAlphaAndStayLocalBeforePublication_data() {
+    QTest::addColumn<bool>("fill"); QTest::addColumn<QString>("mode");
+    for (bool fill : {false, true}) for (const auto *mode : {"apply", "cancel", "defaults-only", "destroy"})
+      QTest::newRow(qPrintable(QString(fill ? "fill-" : "stroke-") + mode)) << fill << QString(mode);
+  }
+  void captureColorChoicesPreserveAlphaAndStayLocalBeforePublication() {
+    using namespace xerahs::editor; QFETCH(bool, fill); QFETCH(QString, mode); QTemporaryDir dir;
+    const QString prefs = dir.filePath("editor-preferences.json"); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty());
+    const auto resetPreferences = qScopeGuard([] { initializeNativeEditorPreferences(); });
+    QVERIFY(applyDrawingDefaults({{"BorderColorHex", "#FF112233"}, {"FillColorHex", "#40223344"}}, nativeEditorPreferenceRevision()).saved);
+    const auto preferences = nativeEditorPreferences().values; const auto revision = nativeEditorPreferenceRevision();
+    QFile preferenceFile(prefs); QVERIFY(preferenceFile.open(QIODevice::ReadOnly)); const auto preferenceBytes = preferenceFile.readAll(); preferenceFile.close();
+    CapturePipeline pipeline(pixels(), dir.path(), "colour", {"annotation", "save"}); QSignalSpy done(&pipeline, &CapturePipeline::finished);
+    pipeline.start(); QTRY_VERIFY(dialog()); const QPointer<CaptureAnnotationDialog> capture(dialog());
+    auto *canvas = capture->findChild<EditorCanvas *>(); auto *objects = capture->findChild<AnnotationObjectNavigator *>(); QVERIFY(canvas && objects); canvas->zoomToFit();
+    const auto draw = [&](QPointF origin) {
+      QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView(origin).toPoint());
+      QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView(origin + QPointF(20, 20)).toPoint());
+    };
+    if (mode != "defaults-only") {
+      draw({10, 10}); draw({45, 30}); QCOMPARE(objects->model()->rowCount(), 2);
+      objects->setFocus(); QTest::keyClick(objects, Qt::Key_A, Qt::ControlModifier); QTest::keyClick(objects, Qt::Key_Return);
+    }
+    const auto original = canvas->annotationDocument(); const auto before = serializeDocument(original); const auto selection = canvas->annotationSelection();
+    auto *action = capture->findChild<QAction *>(fill ? "fillColour" : "strokeColour"); QVERIFY(action && action->isEnabled());
+    auto *bar = capture->findChild<QToolBar *>("captureColorToolbar"); QVERIFY(bar);
+    auto *button = qobject_cast<QToolButton *>(bar->widgetForAction(action)); QVERIFY(button && button->focusPolicy() & Qt::TabFocus);
+    auto *accessible = QAccessible::queryAccessibleInterface(button); QVERIFY(accessible); QVERIFY(accessible->text(QAccessible::Name).contains(fill ? "Fill" : "Stroke"));
+    constexpr Argb chosen = 0x8000FF00; bool acted = false; QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *picker = qobject_cast<QColorDialog *>(QApplication::activeModalWidget()); if (!picker || acted) return; acted = true;
+      const QPointer<QColorDialog> owner(picker); const auto close = qScopeGuard([owner] { if (owner && owner->isVisible()) owner->reject(); });
+      picker->activateWindow(); QTRY_VERIFY(picker->isActiveWindow()); QCOMPARE(picker->objectName(), QString("annotationColorDialog"));
+      QVERIFY(picker->testOption(QColorDialog::ShowAlphaChannel)); QCOMPARE(picker->currentColor().rgba(), fill ? quint32(0) : quint32(0xFFFF0000));
+      QVERIFY(picker->findChild<QLabel *>("annotationColorScope")->text().contains("this capture"));
+      QVERIFY(canvas->interactionActive()); QVERIFY(!action->isEnabled()); QVERIFY(!objects->isEnabled());
+      capture->accept(); QVERIFY(capture->isVisible()); QCOMPARE(done.count(), 0); picker->setCurrentColor(QColor::fromRgba(chosen));
+      QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QCOMPARE(nativeEditorPreferences().values, preferences);
+      if (mode == "destroy") { delete capture.data(); return; }
+      if (mode == "cancel") QTest::keyClick(picker, Qt::Key_Escape);
+      else { auto *ok = picker->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Ok); ok->setFocus(); QTRY_COMPARE(QApplication::focusWidget(), ok); QTest::keyClick(ok, Qt::Key_Space); }
+      QTRY_VERIFY(!picker->isVisible());
+    });
+    capture->activateWindow(); button->setFocus(); QTRY_COMPARE(QApplication::focusWidget(), button);
+    timer.start(5); QTest::keyClick(button, Qt::Key_Space); timer.stop(); QVERIFY(acted);
+    QCOMPARE(nativeEditorPreferences().values, preferences); QCOMPARE(nativeEditorPreferenceRevision(), revision);
+    QVERIFY(preferenceFile.open(QIODevice::ReadOnly)); QCOMPARE(preferenceFile.readAll(), preferenceBytes); preferenceFile.close();
+    if (!capture) { QTRY_COMPARE(done.count(), 1); QCOMPARE(receipt(done)->workingMedia, pixels()); return; }
+    QVERIFY(!canvas->interactionActive()); QVERIFY(action->isEnabled()); QCOMPARE(canvas->annotationSelection(), selection);
+    auto expected = original;
+    if (mode == "apply") for (auto &annotation : expected.annotations) {
+      auto &style = std::get<RectangleAnnotation>(annotation).style; (fill ? style.fillColor : style.strokeColor) = chosen;
+    }
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected));
+    capture->activateWindow(); canvas->setFocus(); QTRY_VERIFY(capture->isActiveWindow()); QTRY_COMPARE(QApplication::focusWidget(), canvas);
+    if (mode == "apply") {
+      QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier); QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QCOMPARE(canvas->annotationSelection(), selection);
+      QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier | Qt::ShiftModifier); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected));
+    } else if (mode == "defaults-only") {
+      QVERIFY(!capture->findChild<QAction *>("undo")->isEnabled()); draw({10, 10}); expected = canvas->annotationDocument();
+      QCOMPARE(expected.annotations.size(), size_t(1)); const auto &style = std::get<RectangleAnnotation>(expected.annotations[0]).style;
+      QCOMPARE(fill ? style.fillColor : style.strokeColor, chosen); QCOMPARE(fill ? style.strokeColor : style.fillColor, fill ? quint32(0xFFFF0000) : quint32(0));
+    }
+    capture->accept(); QTRY_COMPARE(done.count(), 1); const auto result = receipt(done); QVERIFY(result->annotationDocument && result->file);
+    QCOMPARE(serializeDocument(*result->annotationDocument), serializeDocument(expected)); QCOMPARE(QImage(result->file->path), result->workingMedia);
+    QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), pixels());
+    const QColor composed(0, 128, 127); QCOMPARE(result->workingMedia.pixelColor(fill ? QPoint(20, 20) : QPoint(10, 20)),
+      mode == "cancel" ? QColor(fill ? Qt::blue : Qt::red) : composed);
+    QCOMPARE(nativeEditorPreferences().values, preferences); QCOMPARE(nativeEditorPreferenceRevision(), revision);
+  }
   void nativeGroupRotationInCaptureHasExplicitApplyCancelAndPublication_data() {
     QTest::addColumn<QString>("mode"); for (const auto *mode : {"apply", "cancel", "destroy"}) QTest::newRow(mode) << QString(mode);
   }

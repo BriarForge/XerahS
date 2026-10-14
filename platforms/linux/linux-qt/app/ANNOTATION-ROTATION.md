@@ -84,11 +84,11 @@ and human release qualification remain Required.
 
 ## Remaining work
 
-Next guard the existing native stroke/fill color dialogs against stale document/
-selection changes and owner destruction while preserving their documented
-selected-object/default/history behavior. Their current callbacks hold a
-window-member rollback reference across a modal picker and apply to the selection
-present on return. Resolve the pending shared Ellipse, clipboard-asset and output-
+The subsequent [colour checkpoint](ANNOTATION-COLOR.md) guards stroke/fill choices
+against stale state/selection/defaults/generation/preferences and owner destruction,
+preserving selected-object/default/history behavior. Next add explicit document-
+generation guards to native numeric Rectangle creation/properties, including
+replacement documents with matching history state and IDs. Resolve the pending shared Ellipse, clipboard-asset and output-
 format decisions recorded in ANNOTATION-TOOLS.md, ANNOTATION-TRANSFER.md and
 EDITOR-SAVE.md while continuing all tools/effects/canvas/output, workflows,
 capture/recording/audio, uploads, compatibility, supported target/packaging and

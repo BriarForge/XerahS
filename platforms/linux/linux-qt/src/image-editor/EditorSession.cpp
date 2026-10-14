@@ -15,6 +15,10 @@ bool sameEditableFields(const RectangleAnnotation &a, const RectangleAnnotation 
       a.style.strokeColor == b.style.strokeColor && a.style.fillColor == b.style.fillColor &&
       a.style.rotationDegrees == b.style.rotationDegrees && a.style.opacity == b.style.opacity;
 }
+bool sameStyle(const RectangleStyle &a, const RectangleStyle &b) {
+  return a.strokeColor == b.strokeColor && a.fillColor == b.fillColor && a.strokeWidth == b.strokeWidth &&
+      a.rotationDegrees == b.rotationDegrees && a.opacity == b.opacity;
+}
 } // namespace
 
 EditorSession::EditorSession(AnnotationDocument document, InitialPersistence persistence) {
@@ -188,6 +192,26 @@ bool EditorSession::setFillColor(Argb color) {
     r.style.fillColor = color;
     return true;
   });
+}
+
+bool EditorSession::canEditColor() const { return m_selection.isEmpty() || canRotateSelection(); }
+EditorSession::ColorEditResult EditorSession::editColor(ColorTarget target, Argb color, quint64 expectedState,
+    const QSet<QUuid> &expectedSelection, const RectangleStyle &expectedDefaults) {
+  m_editDiagnostic.clear();
+  if (target != ColorTarget::Stroke && target != ColorTarget::Fill) m_editDiagnostic = "annotation-style-invalid";
+  else if (stateId() != expectedState || m_selection != expectedSelection || !sameStyle(m_tool, expectedDefaults)) m_editDiagnostic = "annotation-edit-stale";
+  else if (!m_selection.isEmpty() && !selectionEditable()) m_editDiagnostic = "annotation-selection-protected";
+  else if (!canEditColor()) m_editDiagnostic = "annotation-type-unsupported";
+  if (!m_editDiagnostic.isEmpty()) return {false, false, false, m_editDiagnostic};
+  const auto before = m_tool;
+  const bool defaultsChanged = (target == ColorTarget::Stroke ? before.strokeColor : before.fillColor) != color;
+  const bool changed = target == ColorTarget::Stroke ? setStrokeColor(color) : setFillColor(color);
+  if (!m_editDiagnostic.isEmpty()) {
+    // Legacy style commands update their default first; the guarded operation
+    // publishes it only after the complete selected batch was admitted.
+    m_tool = before; return {false, false, false, m_editDiagnostic};
+  }
+  return {true, changed, defaultsChanged, {}};
 }
 
 bool EditorSession::setOpacity(double opacity) {
