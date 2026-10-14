@@ -78,7 +78,10 @@ asset clipboard and export formats retain their recorded shared owner decisions.
 No recognized Ellipse fields, new tool IDs, shared expected pixels or accepted
 human dispositions are invented.
 
-Next independent work: an accessible annotation object navigator for keyboard
-selection of existing objects. All remaining tools/effects, capture topology,
+Subsequent [object selection](ANNOTATION-OBJECTS.md), [movement](ANNOTATION-MOVE.md),
+[rotation](ANNOTATION-ROTATION.md), [colour](ANNOTATION-COLOR.md) and
+[numeric draft](RECTANGLE-DRAFTS.md) checkpoints add shared native controls,
+generation and owner guards. Next guard native thickness commands against
+default-only publication after a refused selected batch. All remaining tools/effects, capture topology,
 recording/audio, uploads, workflows, application/compatibility/packaging,
 supported Linux editions and human/release gates stay in full contract scope.

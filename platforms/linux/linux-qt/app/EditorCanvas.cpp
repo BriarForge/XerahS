@@ -170,12 +170,14 @@ bool EditorCanvas::rotateSelection(QWidget *parent) {
 bool EditorCanvas::rectangleDialog(QWidget *parent, bool creation) {
   if (!isEnabled() || interactionActive() || (!creation && !canEditRectangle())) return false;
   const auto snapshot = creation ? RectangleAnnotation{} : *m_session->selectedRectangle();
-  const auto style = m_session->toolStyle(); const auto state = m_session->stateId(); const auto selection = m_session->selection();
+  const auto style = m_session->toolStyle(); const auto state = m_session->stateId(), generation = m_documentGeneration;
+  const auto selection = m_session->selection(); const QSize imageSize = m_displaySource.size();
   const QPointer<EditorCanvas> owner(this); m_annotationDialogPending = true;
   const auto restore = qScopeGuard([owner] { if (owner) { owner->m_annotationDialogPending = false; emit owner->changed(); } });
   emit changed(); if (!owner) return false;
-  const auto properties = creation ? chooseRectangleCreation(style, m_displaySource.size(), parent) : chooseRectangleProperties(snapshot, parent);
+  const auto properties = creation ? chooseRectangleCreation(style, imageSize, parent) : chooseRectangleProperties(snapshot, parent);
   if (!owner || !properties) return false;
+  if (generation != m_documentGeneration) { emit editRejected("annotation-edit-stale"); return false; }
   const bool changed = creation ? bool(m_session->createRectangle(*properties, state, selection))
       : m_session->editRectangleProperties(snapshot.id, *properties, state);
   viewport()->update();

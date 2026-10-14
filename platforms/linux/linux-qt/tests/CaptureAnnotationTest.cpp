@@ -188,6 +188,41 @@ private slots:
   void keyboardCreationInCaptureUsesSnapshotBeforeActualPublication_data() {
     QTest::addColumn<bool>("apply"); QTest::newRow("apply") << true; QTest::newRow("cancel") << false;
   }
+  void numericRectangleReplacementRefusalPreservesActualCapturePublication_data() {
+    QTest::addColumn<bool>("creation"); QTest::addColumn<bool>("cancel");
+    for (bool creation : {false, true}) for (bool cancel : {false, true})
+      QTest::newRow(qPrintable(QString("%1-%2").arg(creation ? "create" : "properties", cancel ? "cancel" : "accept"))) << creation << cancel;
+  }
+  void numericRectangleReplacementRefusalPreservesActualCapturePublication() {
+    using namespace xerahs::editor; QFETCH(bool, creation); QFETCH(bool, cancel); QTemporaryDir dir; std::unique_ptr<EditorSession> replacement;
+    CaptureActionPorts ports; ports.annotationStyle = {0xFF112233, 0xFF00FF00, 1, 0, 1};
+    CapturePipeline pipeline(pixels(), dir.path(), "replacement", {"annotation", "save"}, nullptr, ports); QSignalSpy done(&pipeline, &CapturePipeline::finished);
+    pipeline.start(); QTRY_VERIFY(dialog()); const QPointer<CaptureAnnotationDialog> capture(dialog()); auto *canvas = capture->findChild<EditorCanvas *>(); canvas->zoomToFit();
+    for (const QPointF origin : {QPointF(10, 10), QPointF(45, 30)}) {
+      QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView(origin).toPoint());
+      QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView(origin + QPointF(20, 20)).toPoint());
+    }
+    QTest::keyClick(canvas, Qt::Key_Right); QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier); const auto original = canvas->annotationDocument(); const auto before = serializeDocument(original);
+    auto next = original; next.extra = {{"replacement", true}}; replacement = std::make_unique<EditorSession>(next); replacement->select(canvas->annotationSelection().values());
+    QVERIFY(replacement->moveSelection(1, 0)); QVERIFY(replacement->moveSelection(-1, 0)); replacement->markSaved(); QVERIFY(replacement->moveSelection(1, 0)); QVERIFY(replacement->undo());
+    QCOMPARE(canvas->annotationState(), replacement->stateId()); QCOMPARE(canvas->annotationSelection(), replacement->selection()); const auto replaced = serializeDocument(replacement->document());
+    const auto generation = canvas->documentGeneration(); auto *action = capture->findChild<QAction *>(creation ? "createRectangle" : "rectangleProperties"); QVERIFY(action && action->isEnabled());
+    bool acted = false; QTimer timer; connect(&timer, &QTimer::timeout, [&] {
+      const QPointer<RectanglePropertiesDialog> editor(qobject_cast<RectanglePropertiesDialog *>(QApplication::activeModalWidget())); if (!editor || acted) return; acted = true;
+      const auto close = qScopeGuard([editor] { if (editor && editor->isVisible()) editor->reject(); }); editor->activateWindow(); QTRY_VERIFY(editor->isActiveWindow());
+      editor->findChild<QLineEdit *>("rectangleWidth")->setText("12"); QVERIFY(canvas->interactionActive()); QVERIFY(!action->isEnabled()); capture->accept(); QCOMPARE(done.count(), 0);
+      canvas->resetDocument(*replacement, pixels()); QCOMPARE(canvas->annotationState(), replacement->stateId()); QVERIFY(canvas->documentGeneration() != generation);
+      if (cancel) QTest::keyClick(editor, Qt::Key_Escape);
+      else { auto *ok = editor->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Ok); ok->setFocus(); QTest::keyClick(ok, Qt::Key_Space); }
+      QTRY_VERIFY(!editor->isVisible());
+    });
+    timer.start(5); action->trigger(); timer.stop(); QVERIFY(acted); QVERIFY(!canvas->interactionActive()); QCOMPARE(serializeDocument(replacement->document()), replaced);
+    QCOMPARE(replacement->undoCount(), 2); QCOMPARE(replacement->redoCount(), 1); QVERIFY(!replacement->dirty());
+    if (!cancel) QVERIFY(capture->findChild<QLabel *>("captureAnnotationStatus")->text().contains("not applied"));
+    capture->accept(); QTRY_COMPARE(done.count(), 1); const auto result = receipt(done); QVERIFY(result->annotationDocument && result->file);
+    QCOMPARE(serializeDocument(*result->annotationDocument), before); QCOMPARE(QImage(result->file->path), result->workingMedia); QCOMPARE(result->workingMedia.pixelColor(20, 20), QColor(Qt::green));
+    QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), pixels());
+  }
   void keyboardCreationInCaptureUsesSnapshotBeforeActualPublication() {
     QFETCH(bool, apply); QTemporaryDir dir; CaptureActionPorts ports; ports.annotationStyle = {0xFF112233, 0xFF00FF00, 1, 0, 1};
     CapturePipeline pipeline(pixels(), dir.path(), "keyboard", {"annotation", "save"}, nullptr, ports); QSignalSpy done(&pipeline, &CapturePipeline::finished);

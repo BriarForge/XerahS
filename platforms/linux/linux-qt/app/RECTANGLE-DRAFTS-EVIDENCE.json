@@ -1,0 +1,102 @@
+{
+  "capability": "EDITOR-ANNOTATIONS-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial-candidate-evidence",
+  "implementation": [
+    "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp",
+    "platforms/linux/linux-qt/app/RectanglePropertiesDialog.cpp",
+    "platforms/linux/linux-qt/app/AnnotationColorDialog.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS.md",
+    "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+    "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp"
+  ],
+  "requirements": {
+    "EA-003": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Numeric properties fence document generation as well as Core state/single selection; replacement and rejection-observer destruction preserve committed state. Full multi-tool transformations remain Required."
+    },
+    "EA-004": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Numeric creation freezes generation and opening source dimensions in addition to style/state/selection; matching-state replacement refuses before insertion. Complete tools/geometry qualification remains Required."
+    },
+    "EA-014": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned nested colour choices edit only the Rectangle properties draft; outer OK is required and creation defaults remain unchanged. Full tool/default fields remain Required."
+    },
+    "EA-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Stale numeric drafts preserve original/replacement documents, checkpoints, Redo and selection. Fresh accepted drafts retain one-operation history and actual recovery. Full mutation coverage remains Required."
+    },
+    "EA-018": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Native hotkeys/buttons/OK/Escape, names and visible draft-only alpha-picker scope are checked. Physical AT/high-contrast/control/native target and human acceptance remain Required."
+    },
+    "EA-019": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Actual fresh editor save/reopen preserves source, IDs, fields, assets and unknown data; refused capture drafts publish the original committed annotations/source. Full schema/fields/interchange remain Required."
+    },
+    "EA-020": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Typed generation refusal precedes mutation; owned nested pickers and weak widget owners survive destruction. Fixtures are private and existing vectors are unchanged. Full resources/performance/privacy/security/native/human qualification remains Required."
+    },
+    "ESET-006": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Numeric creation retains its frozen defaults and nested properties colours leave future defaults/editor preferences unchanged. Full defaults ledger remains Required."
+    },
+    "ESET-007": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Nested choices preserve RGBA and canonical text; existing actual sidecar/restart colour fixtures remain active. Full colour fields/metadata/compatibility qualification remains Required."
+    }
+  },
+  "verification": {
+    "local_ctest": {
+      "passed": 44,
+      "failed": 0,
+      "seconds": 42.2
+    },
+    "published_vectors": {
+      "passed": 114,
+      "failed": 0,
+      "expected_results_changed": false
+    },
+    "tooling_tests": {
+      "contract_linter": 16,
+      "contract_backlog": 9,
+      "conformance_runner": 7,
+      "failed": 0
+    },
+    "minimum_qt": {
+      "version": "6.4.2",
+      "targets": [
+        "capture-annotation",
+        "editor-session",
+        "editor-canvas",
+        "annotation-object-navigator",
+        "editor-window",
+        "conformance"
+      ],
+      "affected_ctest_targets": 6,
+      "failed": 0,
+      "seconds": 18.5
+    },
+    "visual_review": "Owned nested alpha picker inspected: focused OK/Cancel, alpha field and wrapped properties-draft-only scope are visible. Physical/native/human acceptance remains Required.",
+    "ci": "The checkpoint report verifies the exact pushed SHA; this evidence does not accept human or release gates."
+  }
+}

@@ -1,5 +1,5 @@
 #include "RectanglePropertiesDialog.h"
-#include <QColorDialog>
+#include "AnnotationColorDialog.h"
 #include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -46,10 +46,15 @@ RectanglePropertiesDialog::RectanglePropertiesDialog(const RectangleAnnotation &
     field->setAccessibleDescription("Alpha, red, green and blue hexadecimal bytes: #AARRGGBB."); m_fields.insert(key, field);
     auto *picker = new QPushButton("Choose…", row); picker->setObjectName(key + "Picker"); picker->setAccessibleName("Choose " + label);
     picker->setAutoDefault(false); horizontal->addWidget(field); horizontal->addWidget(picker); form->addRow(label + " (#AARRGGBB)", row);
-    connect(picker, &QPushButton::clicked, this, [field = QPointer<QLineEdit>(field), value, label] {
+    connect(picker, &QPushButton::clicked, this, [owner = QPointer<RectanglePropertiesDialog>(this), field = QPointer<QLineEdit>(field), value, key] {
+      if (!owner || !field) return;
       const auto current = parseColor(field->text());
-      const QColor chosen = QColorDialog::getColor(QColor::fromRgba(current.value_or(value)), field->window(), "Choose " + label, QColorDialog::ShowAlphaChannel);
-      if (field && chosen.isValid()) field->setText(formatColor(chosen.rgba()));
+      const auto target = key == "rectangleStrokeColor" ? EditorSession::ColorTarget::Stroke : EditorSession::ColorTarget::Fill;
+      const auto chosen = chooseAnnotationColor(target, current.value_or(value),
+          "This colour changes only this rectangle properties draft. Choose OK in Rectangle properties to apply it. Creation defaults stay unchanged.", owner);
+      if (!owner || !field) return;
+      if (chosen.color) field->setText(formatColor(*chosen.color));
+      if (!chosen.diagnostic.isEmpty()) owner->m_status->setText("The colour could not be selected. The properties draft was kept.");
     });
   };
   if (!creation) {

@@ -194,9 +194,13 @@ now share an owned alpha picker, freeze document/selection/defaults/generation a
 editor preference revision, preserve one-step history, and keep capture defaults
 local. Preference-save failure retains the accepted undoable document edit with
 an explicit diagnostic; actual save/reopen and independent alpha-composited capture
-publication are verified. Next add document-generation guards to numeric Rectangle
-creation/properties, including replacement documents with matching state and IDs,
-while resolving the shared Ellipse decision, alongside
+publication are verified. [Numeric Rectangle drafts](app/RECTANGLE-DRAFTS.md) now
+guard document generation, including replacement documents with matching state
+and IDs, and share the owned nested alpha picker with explicit draft-only scope.
+Refusal and nested destruction preserve history/files; fresh editor save/reopen
+and original capture publication recover safely. Next guard native thickness
+commands so protected/invalid selected batches cannot publish only a changed
+creation default, while resolving the shared Ellipse decision, alongside
 owned native output service handoffs, remaining tools and the
 format policy and all other contracted output/capture/application domains.
 Physical clipboard/color/accessibility, shutdown and human gates remain

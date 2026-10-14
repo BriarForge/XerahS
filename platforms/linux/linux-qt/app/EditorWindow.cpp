@@ -439,12 +439,16 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
 bool EditorWindow::rectangleDialog(bool creation) {
   if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive() || (!creation && !m_canvas->canEditRectangle())) return false;
   const auto snapshot = creation ? RectangleAnnotation{} : *m_session->selectedRectangle();
-  const auto style = m_session->toolStyle(); const auto state = m_session->stateId(); const auto selection = m_session->selection();
+  const auto style = m_session->toolStyle(); const auto state = m_session->stateId(), generation = m_canvas->documentGeneration(); const auto selection = m_session->selection();
   const QSize imageSize = m_image.size(); const QPointer<EditorWindow> owner(this);
-  return withOutputBusy([owner, snapshot, state, style, selection, imageSize, creation] {
+  return withOutputBusy([owner, snapshot, state, generation, style, selection, imageSize, creation] {
     if (!owner) return false;
     const auto properties = creation ? chooseRectangleCreation(style, imageSize, owner) : chooseRectangleProperties(snapshot, owner);
     if (!owner || !properties) return false;
+    if (generation != owner->m_canvas->documentGeneration()) {
+      owner->m_annotationMessage = annotationEditMessage("annotation-edit-stale"); owner->m_annotationMessageState = owner->m_session->stateId();
+      owner->refresh(); return false;
+    }
     const bool changed = creation ? bool(owner->m_session->createRectangle(*properties, state, selection))
         : owner->m_session->editRectangleProperties(snapshot.id, *properties, state);
     owner->m_annotationMessage = owner->m_session->editDiagnostic().isEmpty() ? QString() : annotationEditMessage(owner->m_session->editDiagnostic());

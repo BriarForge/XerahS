@@ -24,48 +24,50 @@
     "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
     "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
     "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
-    "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp"
+    "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+    "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS.md",
+    "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS-EVIDENCE.json"
   ],
   "requirements": {
     "EA-014": {
       "disposition": "Required",
       "status": "partial",
-      "note": "Guarded style edits update explicitly selected rectangles and future defaults; empty selections affect only defaults and new objects snapshot RGBA. Full tool/field/default coverage remains Required."
+      "note": "Guarded style edits update explicitly selected rectangles and future defaults; empty selections affect only defaults and new objects snapshot RGBA. Full tool/field/default coverage remains Required. The subsequent RECTANGLE-DRAFTS.md checkpoint adds numeric document-generation refusal and owned nested alpha-picker lifetime guards; full requirement acceptance remains Required."
     },
     "EA-017": {
       "disposition": "Required",
       "status": "partial",
-      "note": "Group colour edits commit one operation; cancel/no-op/stale/invalid/protected/default-only preserve history/checkpoints/Redo as applicable. Exact selection and default behavior survive Undo/Redo. Full mutation qualification remains Required."
+      "note": "Group colour edits commit one operation; cancel/no-op/stale/invalid/protected/default-only preserve history/checkpoints/Redo as applicable. Exact selection and default behavior survive Undo/Redo. Full mutation qualification remains Required. The subsequent RECTANGLE-DRAFTS.md checkpoint adds numeric document-generation refusal and owned nested alpha-picker lifetime guards; full requirement acceptance remains Required."
     },
     "EA-018": {
       "disposition": "Required",
       "status": "partial",
-      "note": "Shared owned alpha picker, visible scope, names/descriptions, keyboard input/focus and busy controls are exercised in editor/capture. Physical AT/high-contrast/desktop and full tool controls remain Required."
+      "note": "Shared owned alpha picker, visible scope, names/descriptions, keyboard input/focus and busy controls are exercised in editor/capture. Physical AT/high-contrast/desktop and full tool controls remain Required. The subsequent RECTANGLE-DRAFTS.md checkpoint adds numeric document-generation refusal and owned nested alpha-picker lifetime guards; full requirement acceptance remains Required."
     },
     "EA-019": {
       "disposition": "Required",
       "status": "partial",
-      "note": "Actual editor PNG/.xann save/reopen and capture PNG publication preserve source, IDs, order, assets, other style and unknown fields. No shared schema/recognized types are inferred. Full interchange remains Required."
+      "note": "Actual editor PNG/.xann save/reopen and capture PNG publication preserve source, IDs, order, assets, other style and unknown fields. No shared schema/recognized types are inferred. Full interchange remains Required. The subsequent RECTANGLE-DRAFTS.md checkpoint adds numeric document-generation refusal and owned nested alpha-picker lifetime guards; full requirement acceptance remains Required."
     },
     "EA-020": {
       "disposition": "Required",
       "status": "partial",
-      "note": "Typed state/selection/default/generation/preference/protection/geometry/lifetime refusal precedes editing; failed batches restore defaults. Private fixtures perform no real capture/upload/print. Full resource/performance/security/privacy/native/human qualification remains Required."
+      "note": "Typed state/selection/default/generation/preference/protection/geometry/lifetime refusal precedes editing; failed batches restore defaults. Private fixtures perform no real capture/upload/print. Full resource/performance/security/privacy/native/human qualification remains Required. The subsequent RECTANGLE-DRAFTS.md checkpoint adds numeric document-generation refusal and owned nested alpha-picker lifetime guards; full requirement acceptance remains Required."
     },
     "ESET-006": {
       "disposition": "Required",
       "status": "partial",
-      "note": "Editor toolbar choices update explicit selections and saved future defaults; capture choices remain local. Defaults-only/new-object behavior preserves existing objects/history. Full defaults ledger remains Required."
+      "note": "Editor toolbar choices update explicit selections and saved future defaults; capture choices remain local. Defaults-only/new-object behavior preserves existing objects/history. Full defaults ledger remains Required. The subsequent RECTANGLE-DRAFTS.md checkpoint adds numeric document-generation refusal and owned nested alpha-picker lifetime guards; full requirement acceptance remains Required."
     },
     "ESET-007": {
       "disposition": "Required",
       "status": "partial",
-      "note": "Native stroke/fill choices retain RGBA, persist canonical #AARRGGBB and survive restart. Independent capture alpha composition is checked. Full fields/metadata/compatibility qualification remains Required."
+      "note": "Native stroke/fill choices retain RGBA, persist canonical #AARRGGBB and survive restart. Independent capture alpha composition is checked. Full fields/metadata/compatibility qualification remains Required. The subsequent RECTANGLE-DRAFTS.md checkpoint adds numeric document-generation refusal and owned nested alpha-picker lifetime guards; full requirement acceptance remains Required."
     },
     "ESET-015": {
       "disposition": "Required",
       "status": "partial",
-      "note": "Native stale preference and locked-store failure preserve persisted/global values, with truthful undoable document edits and owner-safe publication. Existing settings vectors remain unchanged; full field/platform/native/human qualification remains Required."
+      "note": "Native stale preference and locked-store failure preserve persisted/global values, with truthful undoable document edits and owner-safe publication. Existing settings vectors remain unchanged; full field/platform/native/human qualification remains Required. The subsequent RECTANGLE-DRAFTS.md checkpoint adds numeric document-generation refusal and owned nested alpha-picker lifetime guards; full requirement acceptance remains Required."
     }
   },
   "verification": {

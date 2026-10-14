@@ -99,8 +99,11 @@ clarification EA-005-LINUX-2026-10-14 in ANNOTATION-TOOLS.md; transfer assets an
 export formats remain pending their recorded owner decisions. No approval or
 degraded disposition is inferred from these native controls.
 
-Next independent work: keyboard-accessible Rectangle creation with numeric
-bounds and a frozen creation style, sharing the editor/capture session history.
+Subsequent [creation](RECTANGLE-CREATION.md), [object selection](ANNOTATION-OBJECTS.md),
+[movement](ANNOTATION-MOVE.md), [rotation](ANNOTATION-ROTATION.md), [colour](ANNOTATION-COLOR.md)
+and [numeric draft](RECTANGLE-DRAFTS.md) checkpoints extend the native controls and
+identity/lifetime guards. Next guard native thickness commands against default-
+only publication after a refused selected batch.
 All remaining tools/effects, recording/audio, uploads, workflows, application,
 compatibility, packaging, supported Linux editions and human/release gates stay
 in the full contract scope.

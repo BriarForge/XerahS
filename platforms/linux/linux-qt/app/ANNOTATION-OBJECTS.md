@@ -85,7 +85,8 @@ The subsequent [group move checkpoint](ANNOTATION-MOVE.md) freezes pointer
 previews and commits against stale document/selection changes. The
 [rotation checkpoint](ANNOTATION-ROTATION.md) added frozen state/selection and
 owner lifetime; the [colour checkpoint](ANNOTATION-COLOR.md) also guards defaults,
-generation and editor preferences. Next guard numeric Rectangle creation/properties
-against matching-state replacement documents. Every other capture, recording/audio,
+generation and editor preferences. [Numeric drafts](RECTANGLE-DRAFTS.md) now guard
+matching-state replacement and nested colour lifetime. Next guard native thickness
+commands against default-only publication after a refused selected batch. Every other capture, recording/audio,
 upload, workflow/settings, tool/effect/output, application/compatibility,
 packaging/native-matrix and human/release requirement remains in full scope.

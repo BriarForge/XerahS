@@ -47,9 +47,11 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
+        "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS.md",
+        "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS-EVIDENCE.json"
       ],
-      "note": "Eight native single-Rectangle handles use frozen, copied previews and one Core commit with a fixed opposite point at rotation; typed stale/protected/invalid refusal preserves intervening state. Numeric bounds offer keyboard controls. Full selection/tool/target coverage remains Required."
+      "note": "Eight native single-Rectangle handles use frozen, copied previews and one Core commit with a fixed opposite point at rotation; typed stale/protected/invalid refusal preserves intervening state. Numeric bounds offer keyboard controls. Full selection/tool/target coverage remains Required. The subsequent RECTANGLE-DRAFTS.md checkpoint adds numeric document-generation refusal and owned nested alpha-picker lifetime guards; full requirement acceptance remains Required."
     },
     "EA-005": {
       "disposition": "Required",
@@ -75,9 +77,11 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
+        "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS.md",
+        "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS-EVIDENCE.json"
       ],
-      "note": "Known Rectangle bounds/stroke/fill/width/rotation/opacity retained through pointer/properties edits and actual .xann reopening. Full border/corner/shadow and Ellipse schema/pixels remain Required; EA-005-LINUX-2026-10-14 is pending."
+      "note": "Known Rectangle bounds/stroke/fill/width/rotation/opacity retained through pointer/properties edits and actual .xann reopening. Full border/corner/shadow and Ellipse schema/pixels remain Required; EA-005-LINUX-2026-10-14 is pending. The subsequent RECTANGLE-DRAFTS.md checkpoint adds numeric document-generation refusal and owned nested alpha-picker lifetime guards; full requirement acceptance remains Required."
     },
     "EA-014": {
       "disposition": "Required",
@@ -103,9 +107,11 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
+        "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS.md",
+        "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS-EVIDENCE.json"
       ],
-      "note": "Absolute selected-object properties and pointer resize leave creation defaults unchanged; subsequent native/editor/capture creation retains defaults. Complete tool/field/default qualification remains Required."
+      "note": "Absolute selected-object properties and pointer resize leave creation defaults unchanged; subsequent native/editor/capture creation retains defaults. Complete tool/field/default qualification remains Required. The subsequent RECTANGLE-DRAFTS.md checkpoint adds numeric document-generation refusal and owned nested alpha-picker lifetime guards; full requirement acceptance remains Required."
     },
     "EA-017": {
       "disposition": "Required",
@@ -131,9 +137,11 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
+        "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS.md",
+        "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS-EVIDENCE.json"
       ],
-      "note": "One release/accepted dialog is one history step; copied previews, cancel, stale/invalid/no-op and owner destruction do not commit this edit. Exact undo/redo/selection/checkpoint/source/assets preserved. Complete mutation/recovery qualification remains Required."
+      "note": "One release/accepted dialog is one history step; copied previews, cancel, stale/invalid/no-op and owner destruction do not commit this edit. Exact undo/redo/selection/checkpoint/source/assets preserved. Complete mutation/recovery qualification remains Required. The subsequent RECTANGLE-DRAFTS.md checkpoint adds numeric document-generation refusal and owned nested alpha-picker lifetime guards; full requirement acceptance remains Required."
     },
     "EA-018": {
       "disposition": "Required",
@@ -159,9 +167,11 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
+        "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS.md",
+        "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS-EVIDENCE.json"
       ],
-      "note": "Fixed-size contrasting square handles, rotation-aware cursors, invalid-X cue, Escape/cancel and real accessible native numeric/color/alpha controls tested. Complete keyboard creation, controls, physical AT and target/human qualification remain Required."
+      "note": "Fixed-size contrasting square handles, rotation-aware cursors, invalid-X cue, Escape/cancel and real accessible native numeric/color/alpha controls tested. Complete keyboard creation, controls, physical AT and target/human qualification remain Required. The subsequent RECTANGLE-DRAFTS.md checkpoint adds numeric document-generation refusal and owned nested alpha-picker lifetime guards; full requirement acceptance remains Required."
     },
     "EA-019": {
       "disposition": "Required",
@@ -187,9 +197,11 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
+        "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS.md",
+        "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS-EVIDENCE.json"
       ],
-      "note": "IDs, order, supported fields, assets, original source/profile and compatible unknown fields retained across real properties/save/reopen; unchanged numeric endpoints remain exact. Full fields/tool/interchange compatibility remains Required."
+      "note": "IDs, order, supported fields, assets, original source/profile and compatible unknown fields retained across real properties/save/reopen; unchanged numeric endpoints remain exact. Full fields/tool/interchange compatibility remains Required. The subsequent RECTANGLE-DRAFTS.md checkpoint adds numeric document-generation refusal and owned nested alpha-picker lifetime guards; full requirement acceptance remains Required."
     },
     "EA-020": {
       "disposition": "Required",
@@ -215,9 +227,11 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
+        "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS.md",
+        "platforms/linux/linux-qt/app/RECTANGLE-DRAFTS-EVIDENCE.json"
       ],
-      "note": "Finite fields and derived export bounds, complete preparation and stale/protected refusal have Core/native fixtures. Existing vectors remain unchanged. Full resources/native target/privacy/security/human acceptance remains Required."
+      "note": "Finite fields and derived export bounds, complete preparation and stale/protected refusal have Core/native fixtures. Existing vectors remain unchanged. Full resources/native target/privacy/security/human acceptance remains Required. The subsequent RECTANGLE-DRAFTS.md checkpoint adds numeric document-generation refusal and owned nested alpha-picker lifetime guards; full requirement acceptance remains Required."
     }
   }
 }

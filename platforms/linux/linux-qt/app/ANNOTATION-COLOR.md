@@ -79,11 +79,11 @@ Physical AT/high-contrast/desktop/native acceptance remains Required.
 
 ## Remaining work
 
-Next add explicit document-generation guards to native numeric Rectangle creation
-and properties: their current Core state/selection checks do not distinguish a
-replacement document with identical history state and IDs. Preserve the completed
-color, movement, rotation, creation and property behavior while adding matching-state
-replacement and actual persistence/publication failure evidence. Complete tool and
+The subsequent [numeric draft checkpoint](RECTANGLE-DRAFTS.md) adds document-
+generation guards and an owned nested alpha picker to Rectangle creation/properties,
+including matching-state replacement and actual persistence/publication recovery.
+Next guard native thickness commands against default-only publication on protected
+or invalid selected batches. Complete tool and
 field coverage, shared Ellipse schema/rasterization, clipboard assets and output
 format decisions, resource/performance/native matrices, privacy/security/a11y/parity,
 packaging and human/release gates remain Required. All other contracted application,

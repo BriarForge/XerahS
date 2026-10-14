@@ -267,6 +267,85 @@ private slots:
     QVERIFY(!canvas->createRectangle(canvas.get())); QVERIFY(!canvas); QCOMPARE(session.undoCount(), 0); QVERIFY(!session.dirty());
     QVERIFY(!QApplication::activeModalWidget());
   }
+  void numericRectangleDraftsRejectMatchingStateReplacement_data() {
+    QTest::addColumn<bool>("creation"); QTest::addColumn<QString>("mode");
+    for (bool creation : {false, true}) for (const auto *mode : {"replace", "early-replace", "cancel", "reject-destroy"})
+      QTest::newRow(qPrintable(QString(creation ? "create-" : "properties-") + mode)) << creation << QString(mode);
+  }
+  void numericRectangleDraftsRejectMatchingStateReplacement() {
+    QFETCH(bool, creation); QFETCH(QString, mode); const QImage source = image(); auto d = document(); RectangleAnnotation r;
+    r.id = QUuid::createUuid(); r.start = {150, 180}; r.end = {230, 260}; r.style = {0x80112233, 0x40223344, 2.5, 37.25, .25}; r.extra = {{"vendor", "keep"}};
+    d.annotations = {r}; d.embeddedImages = {{"asset", "retained"}}; EditorSession session(d); session.select({r.id}); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo());
+    auto next = d; next.extra = {{"replacement", true}}; EditorSession replacement(next); replacement.select({r.id}); QVERIFY(replacement.moveSelection(1, 0)); QVERIFY(replacement.undo());
+    QCOMPARE(session.stateId(), replacement.stateId()); QCOMPARE(session.selection(), replacement.selection()); const auto before = serializeDocument(session.document()), replaced = serializeDocument(replacement.document());
+    const auto defaults = session.toolStyle(); auto canvas = std::make_unique<EditorCanvas>(session, source); canvas->show(); QSignalSpy rejected(canvas.get(), &EditorCanvas::editRejected);
+    const auto generation = canvas->documentGeneration(); bool reset = false;
+    const auto replace = [&] { reset = true; canvas->resetDocument(replacement, source); };
+    if (mode == "early-replace") connect(canvas.get(), &EditorCanvas::changed, [&] { if (!reset && canvas->interactionActive()) replace(); });
+    if (mode == "reject-destroy") connect(canvas.get(), &EditorCanvas::editRejected, [&] { canvas.reset(); });
+    bool acted = false; QTimer timer; connect(&timer, &QTimer::timeout, [&] {
+      auto *editor = qobject_cast<RectanglePropertiesDialog *>(QApplication::activeModalWidget()); if (!editor || acted) return; acted = true;
+      const QPointer<RectanglePropertiesDialog> owner(editor); const auto close = qScopeGuard([owner] { if (owner && owner->isVisible()) owner->reject(); });
+      editor->activateWindow(); QTRY_VERIFY(editor->isActiveWindow()); QVERIFY(canvas->interactionActive());
+      QCOMPARE(editor->objectName(), QString(creation ? "rectangleCreationDialog" : "rectanglePropertiesDialog"));
+      editor->findChild<QLineEdit *>("rectangleWidth")->setText("45.5");
+      if (!reset) replace(); QCOMPARE(canvas->annotationState(), session.stateId()); QCOMPARE(canvas->annotationSelection(), session.selection()); QVERIFY(canvas->documentGeneration() != generation);
+      QCOMPARE(serializeDocument(canvas->annotationDocument()), replaced); QVERIFY(!canvas->createRectangle(canvas.get()));
+      if (mode == "cancel") QTest::keyClick(editor, Qt::Key_Escape);
+      else { auto *ok = editor->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Ok); ok->setFocus(); QTest::keyClick(ok, Qt::Key_Space); }
+      QTRY_VERIFY(!editor->isVisible());
+    });
+    timer.start(5); const bool changed = creation ? canvas->createRectangle(canvas.get()) : canvas->editRectangleProperties(canvas.get()); timer.stop(); QVERIFY(acted); QVERIFY(!changed);
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(serializeDocument(replacement.document()), replaced);
+    for (const auto *model : {&session, &replacement}) { QCOMPARE(model->undoCount(), 0); QCOMPARE(model->redoCount(), 1); QVERIFY(!model->dirty()); QCOMPARE(model->selection(), QSet<QUuid>{r.id}); QCOMPARE(model->toolStyle().strokeColor, defaults.strokeColor); }
+    QCOMPARE(rejected.count(), mode == "cancel" ? 0 : 1); if (rejected.count()) QCOMPARE(rejected[0][0].toString(), QString("annotation-edit-stale"));
+    if (canvas) { QVERIFY(!canvas->interactionActive()); QCOMPARE(serializeDocument(canvas->annotationDocument()), replaced); }
+    else QCOMPARE(mode, QString("reject-destroy"));
+    QCOMPARE(source, image()); QVERIFY(replacement.redo()); QVERIFY(session.redo());
+  }
+  void nestedRectangleColorsOwnDraftAndLifetime_data() {
+    QTest::addColumn<bool>("fill"); QTest::addColumn<QString>("mode");
+    for (bool fill : {false, true}) for (const auto *mode : {"apply", "draft-cancel", "picker-cancel", "picker-destroy", "properties-destroy", "canvas-destroy"})
+      QTest::newRow(qPrintable(QString(fill ? "fill-" : "stroke-") + mode)) << fill << QString(mode);
+  }
+  void nestedRectangleColorsOwnDraftAndLifetime() {
+    QFETCH(bool, fill); QFETCH(QString, mode); const QImage source = image(); auto d = document(); RectangleAnnotation r;
+    r.id = QUuid::createUuid(); r.start = {150, 180}; r.end = {230, 260}; r.style = {0x80112233, 0x40223344, 2.5, 37.25, .25}; r.extra = {{"vendor", "keep"}};
+    d.annotations = {r}; d.embeddedImages = {{"asset", "retained"}}; EditorSession session(d); session.select({r.id}); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo());
+    const auto before = serializeDocument(session.document()); const auto defaults = session.toolStyle(); auto canvas = std::make_unique<EditorCanvas>(session, source); canvas->show();
+    constexpr Argb chosen = 0x80010203; bool acted = false, picked = false; QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] {
+      const QPointer<RectanglePropertiesDialog> editor(qobject_cast<RectanglePropertiesDialog *>(QApplication::activeModalWidget())); if (!editor || acted) return; acted = true;
+      const auto close = qScopeGuard([editor] { if (editor && editor->isVisible()) editor->reject(); }); editor->activateWindow(); QTRY_VERIFY(editor->isActiveWindow());
+      const auto fieldName = fill ? "rectangleFillColor" : "rectangleStrokeColor"; const QPointer<QLineEdit> field(editor->findChild<QLineEdit *>(fieldName));
+      const auto initial = fill ? r.style.fillColor : r.style.strokeColor; QCOMPARE(field->text(), formatColor(initial)); QTimer pickerTimer;
+      connect(&pickerTimer, &QTimer::timeout, [&] {
+        const QPointer<QColorDialog> picker(qobject_cast<QColorDialog *>(QApplication::activeModalWidget())); if (!picker || picked) return; picked = true;
+        const auto closePicker = qScopeGuard([picker] { if (picker && picker->isVisible()) picker->reject(); }); picker->activateWindow(); QTRY_VERIFY(picker->isActiveWindow());
+        QCOMPARE(picker->objectName(), QString("annotationColorDialog")); QCOMPARE(picker->currentColor().rgba(), initial); QVERIFY(picker->testOption(QColorDialog::ShowAlphaChannel));
+        QVERIFY(picker->findChild<QLabel *>("annotationColorScope")->text().contains("properties draft")); picker->setCurrentColor(QColor::fromRgba(chosen));
+        if (fill && mode == "apply" && qEnvironmentVariableIsSet("XERAHS_RECTANGLE_NESTED_COLOR_QA")) QVERIFY(picker->grab().save(qEnvironmentVariable("XERAHS_RECTANGLE_NESTED_COLOR_QA")));
+        QCOMPARE(field->text(), formatColor(initial)); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.redoCount(), 1);
+        if (mode == "canvas-destroy") { canvas.reset(); return; } if (mode == "properties-destroy") { delete editor.data(); return; } if (mode == "picker-destroy") { delete picker.data(); return; }
+        if (mode == "picker-cancel") QTest::keyClick(picker, Qt::Key_Escape);
+        else { auto *ok = picker->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Ok); ok->setFocus(); QTest::keyClick(ok, Qt::Key_Space); }
+        QTRY_VERIFY(!picker->isVisible());
+      });
+      auto *button = editor->findChild<QPushButton *>(QString(fieldName) + "Picker"); QVERIFY(button); button->setFocus(); QTRY_COMPARE(QApplication::focusWidget(), button);
+      pickerTimer.start(5); QTest::keyClick(button, Qt::Key_Space); pickerTimer.stop(); QVERIFY(picked); if (!editor) return;
+      const bool chosenDraft = mode == "apply" || mode == "draft-cancel"; QCOMPARE(field->text(), formatColor(chosenDraft ? chosen : initial));
+      QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.toolStyle().strokeColor, defaults.strokeColor);
+      editor->activateWindow(); QTRY_VERIFY(editor->isActiveWindow());
+      if (mode == "draft-cancel") QTest::keyClick(editor, Qt::Key_Escape);
+      else { auto *ok = editor->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Ok); ok->setFocus(); QTest::keyClick(ok, Qt::Key_Space); }
+      QTRY_VERIFY(!editor->isVisible());
+    });
+    timer.start(5); const bool changed = canvas->editRectangleProperties(canvas.get()); timer.stop(); QVERIFY(acted && picked); QCOMPARE(changed, mode == "apply");
+    if (changed) { auto expected = d; auto &style = std::get<RectangleAnnotation>(expected.annotations[0]).style; (fill ? style.fillColor : style.strokeColor) = chosen; QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(session.undoCount(), 1); QVERIFY(session.undo()); }
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.redoCount(), 1); QCOMPARE(session.selection(), QSet<QUuid>{r.id}); QVERIFY(!session.dirty());
+    QCOMPARE(session.toolStyle().strokeColor, defaults.strokeColor); QCOMPARE(session.toolStyle().fillColor, defaults.fillColor); QCOMPARE(source, image());
+    if (canvas) QVERIFY(!canvas->interactionActive()); else QCOMPARE(mode, QString("canvas-destroy"));
+  }
   void keyboardCreationHasOwnedDraftCancellationAndGuardedCommit_data() {
     QTest::addColumn<QString>("mode");
     for (const auto *mode : {"apply", "unchanged", "cancel", "invalid", "stale-document", "stale-selection", "destroy"}) QTest::newRow(mode) << QString(mode);

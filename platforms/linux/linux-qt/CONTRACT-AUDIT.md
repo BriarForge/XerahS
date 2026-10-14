@@ -183,8 +183,10 @@ clipboard/assets, target/resource/privacy/security/a11y/human gates remain Requi
    stroke/fill choices now guard state/selection/defaults/generation/preferences
    and owner lifetime, preserving alpha, selected/default semantics, history and
    truthful preference failure under EA-014/017/018/019/020 and ESET-006/007/015.
-   Next guard native numeric Rectangle creation/properties against replacement
-   documents with matching history state and IDs, while resolving Ellipse schema/rasterization clarification
+   Numeric Rectangle drafts now fence generation and use an owned nested alpha
+   picker; matching-state replacement and owner destruction preserve committed
+   state. Next guard native thickness commands against publishing only a changed
+   creation default after a protected/invalid batch refusal, while resolving Ellipse schema/rasterization clarification
    EA-005-LINUX-2026-10-14 in ANNOTATION-TOOLS.md, full annotation/asset clipboard
    under EA-016/017 and native output
    service handoffs and full Print qualification under EO-008/014/015 while
@@ -260,3 +262,18 @@ contract lint/backlog checks. The six affected CTest targets also passed against
 cached Qt 6.4.2 in 18.24 seconds. The checkpoint report verifies Ubuntu 24.04 CI
 on the exact pushed SHA. These are candidate implementation checks, not human
 acceptance or full Linux completion.
+
+The [numeric Rectangle draft evidence](app/RECTANGLE-DRAFTS.md) and candidate
+machine map index document-generation fences for creation/properties, including
+replacement with equal history state/UUID selection and replacement during a
+pending notification. Owned nested alpha pickers change only properties drafts
+and survive dialog/editor/canvas destruction. Stale/Cancel/refusal preserves
+original/replacement state, defaults, checkpoints, Redo and files; fresh editor
+save/reopen and actual original-capture publication recover correctly.
+This checkpoint passed 44 local CTest targets in 42.20 seconds, 114 unchanged
+published vectors and all 32 tooling unit tests; the six affected targets passed
+against cached Qt 6.4.2 in 18.50 seconds. Contract lint/backlog/effective instruction
+checks and exact pushed Ubuntu 24.04 CI are reported with the checkpoint. Full
+scope, trace labels, native/resource/a11y/privacy/security/parity/human/release
+requirements remain unchanged and Required. Next guard thickness commands against
+publishing only a changed default after protected/invalid selected-batch refusal.
