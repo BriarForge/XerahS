@@ -131,6 +131,16 @@ void EditorCanvas::setTool(Tool tool) {
 bool EditorCanvas::canEditRectangle() const {
   return m_session->selectedRectangle() && m_session->selectionEditable();
 }
+bool EditorCanvas::selectAnnotations(const QList<QUuid> &ids, quint64 state, quint64 generation) {
+  if (!isEnabled() || interactionActive()) return false;
+  const QPointer<EditorCanvas> owner(this);
+  if (generation != m_documentGeneration) { emit editRejected("annotation-edit-stale"); return false; }
+  const bool changed = m_session->select(ids, state);
+  viewport()->update();
+  if (!m_session->editDiagnostic().isEmpty()) { emit editRejected(m_session->editDiagnostic()); if (!owner) return false; }
+  if (changed) emit this->changed();
+  return changed;
+}
 bool EditorCanvas::editRectangleProperties(QWidget *parent) {
   return rectangleDialog(parent, false);
 }
@@ -178,6 +188,7 @@ std::optional<RectangleHandle> EditorCanvas::handleAt(QPointF viewPoint) const {
 void EditorCanvas::resetDocument(EditorSession &session, const QImage &displaySource) {
   cancelGesture();
   m_session = &session;
+  ++m_documentGeneration;
   m_displaySource = displaySource;
   m_tool = Tool::Rectangle;
   m_initialFit = false;

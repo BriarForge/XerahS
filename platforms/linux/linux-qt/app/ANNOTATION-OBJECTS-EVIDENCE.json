@@ -1,0 +1,90 @@
+{
+  "capability": "EDITOR-ANNOTATIONS-001",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial-candidate-evidence",
+  "implementation": [
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+    "platforms/linux/linux-qt/app/EditorCanvas.h",
+    "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+    "platforms/linux/linux-qt/app/AnnotationObjectNavigator.h",
+    "platforms/linux/linux-qt/app/AnnotationObjectNavigator.cpp",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp",
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+    "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.cpp"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/app/ANNOTATION-OBJECTS.md",
+    "platforms/linux/linux-qt/tests/AnnotationObjectNavigatorTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+    "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+    "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+    "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+  ],
+  "requirements": {
+    "EA-003": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Native list selects known/unsupported/hidden/locked rows by UUID with single/range/additive/all/clear input, pointer/history/order/replacement synchronization and Core protection. Complete selection/tool/target coverage remains Required."
+    },
+    "EA-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Selection has no history/dirty mutation; existing selected-object edits retain exact undo/redo and Core checkpoint behavior. Full mutation/recovery qualification remains Required."
+    },
+    "EA-018": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Native names/descriptions/focus/selection state and textual selected/protection markers accompany actual keyboard input and focus return. Full tool/control/physical AT/high-contrast/human qualification remains Required."
+    },
+    "EA-019": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned UUIDs, bounded plain type hints and preserved raw unknown objects survive actual save/reopen and history. No new recognized payload or shared format is invented. Full fields/tools/interchange remain Required."
+    },
+    "EA-020": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Guarded stale/busy/source/lifetime refusal, duplicate/unknown filtering and 1000-object selection are exercised without changing vectors or renderer. Full resource/performance/native/privacy/security/human acceptance remains Required."
+    }
+  },
+  "verification": {
+    "local_ctest": {
+      "passed": 44,
+      "failed": 0,
+      "seconds": 36.53
+    },
+    "published_vectors": {
+      "passed": 114,
+      "failed": 0,
+      "expected_results_changed": false
+    },
+    "tooling_tests": {
+      "contract_linter": 16,
+      "contract_backlog": 9,
+      "conformance_runner": 7,
+      "failed": 0
+    },
+    "minimum_qt": {
+      "version": "6.4.2",
+      "affected_ctest_targets": 8,
+      "failed": 0,
+      "seconds": 13.14,
+      "targets": [
+        "capture-annotation",
+        "toolbar-preferences",
+        "native-editor-toolbar",
+        "editor-session",
+        "editor-canvas",
+        "annotation-object-navigator",
+        "editor-window",
+        "conformance"
+      ]
+    },
+    "visual_review": "Native offscreen object list inspected; text selection/protection markers and bounded type hints have native focus/scroll behavior. Physical assistive technology/high contrast and supported desktop qualification remain Required.",
+    "ci": "The checkpoint report verifies the exact pushed revision. Local results do not approve human or release gates."
+  }
+}

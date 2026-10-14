@@ -2,6 +2,7 @@
 #include "CaptureAnnotationDialog.h"
 #include "EditorCanvas.h"
 #include "RectanglePropertiesDialog.h"
+#include "AnnotationObjectNavigator.h"
 #include <QApplication>
 #include <QAction>
 #include <QLabel>
@@ -20,6 +21,7 @@
 #include <QAccessible>
 #include <QPointer>
 #include <QScopeGuard>
+#include <cmath>
 using namespace xerahs::app;
 using namespace xerahs::actions;
 namespace {
@@ -33,6 +35,18 @@ CaptureAnnotationChoice rectangle(const LoadedSource &source) {
 class CaptureAnnotationTest final : public QObject {
   Q_OBJECT
 private slots:
+  void keyboardObjectSelectionEditsBeforeCapturePublication() {
+    QTemporaryDir dir; CapturePipeline pipeline(pixels(), dir.path(), "selected", {"annotation", "save"}); QSignalSpy done(&pipeline, &CapturePipeline::finished);
+    pipeline.start(); QTRY_VERIFY(dialog()); auto *capture = dialog(); auto *canvas = capture->findChild<EditorCanvas *>(); auto *objects = capture->findChild<AnnotationObjectNavigator *>(); QVERIFY(objects);
+    canvas->zoomToFit(); QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView({20, 20}).toPoint());
+    QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView({40, 40}).toPoint()); QCOMPARE(objects->model()->rowCount(), 1);
+    objects->setFocus(); QTRY_COMPARE(QApplication::focusWidget(), objects); QTest::keyClick(objects, Qt::Key_Escape);
+    auto *properties = capture->findChild<QAction *>("rectangleProperties"); QVERIFY(!properties->isEnabled()); QTest::keyClick(objects, Qt::Key_Space, Qt::ControlModifier); QVERIFY(properties->isEnabled());
+    QTest::keyClick(objects, Qt::Key_Return); QTRY_COMPARE(QApplication::focusWidget(), canvas); QTest::keyClick(canvas, Qt::Key_Right);
+    capture->accept(); QTRY_COMPARE(done.count(), 1); const auto result = receipt(done); QVERIFY(result->annotationDocument);
+    QCOMPARE(result->annotationDocument->annotations.size(), size_t(1)); const auto &r = std::get<xerahs::editor::RectangleAnnotation>(result->annotationDocument->annotations[0]);
+    QVERIFY(std::abs(r.start.x - 21) < .2); QCOMPARE(QImage(result->file->path), result->workingMedia); QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), pixels());
+  }
   void keyboardCreationInCaptureUsesSnapshotBeforeActualPublication_data() {
     QTest::addColumn<bool>("apply"); QTest::newRow("apply") << true; QTest::newRow("cancel") << false;
   }

@@ -111,6 +111,7 @@ target_link_libraries(xerahs_editor_source PUBLIC xerahs_editor_codecs Qt6::Widg
 target_compile_options(xerahs_editor_source PRIVATE -Wall -Wextra -Wpedantic)
 add_library(xerahs_editor_canvas STATIC app/EditorCanvas.cpp app/EditorCanvas.h
   app/NativeAnnotationTools.cpp app/NativeAnnotationTools.h
+  app/AnnotationObjectNavigator.cpp app/AnnotationObjectNavigator.h
   app/RectanglePropertiesDialog.cpp app/RectanglePropertiesDialog.h)
 set_target_properties(xerahs_editor_canvas PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_editor_canvas PUBLIC app)
@@ -432,6 +433,12 @@ target_include_directories(editor-canvas-test PRIVATE app)
 target_link_libraries(editor-canvas-test PRIVATE xerahs_editor_canvas Qt6::Widgets Qt6::Test)
 add_test(NAME editor-canvas COMMAND editor-canvas-test)
 set_tests_properties(editor-canvas PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
+add_executable(annotation-object-navigator-test tests/AnnotationObjectNavigatorTest.cpp)
+set_target_properties(annotation-object-navigator-test PROPERTIES AUTOMOC ON)
+target_link_libraries(annotation-object-navigator-test PRIVATE xerahs_editor_canvas Qt6::Test)
+add_test(NAME annotation-object-navigator COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:annotation-object-navigator-test>)
+set_tests_properties(annotation-object-navigator PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 
 add_executable(canvas-operations-test tests/CanvasOperationsTest.cpp)
 set_target_properties(canvas-operations-test PROPERTIES AUTOMOC ON)

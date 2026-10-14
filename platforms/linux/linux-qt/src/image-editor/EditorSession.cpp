@@ -69,8 +69,9 @@ std::optional<QUuid> EditorSession::createRectangle(const RectangleProperties &d
 void EditorSession::select(const QList<QUuid> &ids) {
   m_editDiagnostic.clear();
   QSet<QUuid> selection;
+  const QSet<QUuid> requested(ids.begin(), ids.end());
   for (const Annotation &annotation : document().annotations) {
-    if (ids.contains(annotationId(annotation))) selection.insert(annotationId(annotation));
+    if (requested.contains(annotationId(annotation))) selection.insert(annotationId(annotation));
   }
   m_selection = selection;
 }
@@ -79,6 +80,14 @@ bool EditorSession::selectionEditable() const {
   if (m_selection.isEmpty()) return false;
   for (const auto &a : document().annotations) if (m_selection.contains(annotationId(a)) && !annotationEditable(a)) return false;
   return true;
+}
+
+bool EditorSession::select(const QList<QUuid> &ids, quint64 expectedState) {
+  m_editDiagnostic.clear();
+  if (stateId() != expectedState) { m_editDiagnostic = "annotation-edit-stale"; return false; }
+  const auto previous = m_selection;
+  select(ids);
+  return previous != m_selection;
 }
 
 const RectangleAnnotation *EditorSession::selectedRectangle() const {

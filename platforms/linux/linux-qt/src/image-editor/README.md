@@ -94,3 +94,5 @@ clipboard/menu/input and pending shared tool/asset policy are indexed in
 `RectangleGeometry` shares fixed-opposite-point pointer resize and supported-field/derived-export-bound validation with immutable previews and session commits. [Rectangle edit evidence](../../app/RECTANGLE-EDIT.md) indexes native numeric/color/alpha controls, creation-default isolation, exact persistence and remaining full-field/native/human qualification.
 
 The guarded owned Rectangle creation draft snapshots style/state/selection for numeric native creation and pointer drags. [Keyboard creation evidence](../../app/RECTANGLE-CREATION.md) records real keyboard input, exact history and actual save/reopen/capture output; full tools/fields/human qualification remains Required.
+
+Guarded Core selection filters requested UUIDs with a set, rejects stale displayed history, and preserves document/history/checkpoint state. The [native object-list evidence](../../app/ANNOTATION-OBJECTS.md) indexes keyboard selection, source generations, owned labels and physical/human limits.

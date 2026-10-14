@@ -321,7 +321,7 @@ Core tests cover independent gesture references, collection/type/length bounds,
 protected/reserved collisions, explicit empty layouts, nullable groups, isolated
 recovery, reset, extensions, inactive future data, real private storage and
 restart. Native `ToolbarDialog` provides reorder, show/hide, nullable grouping,
-additional hotkeys and draft reset for the 47 currently registered editor
+additional hotkeys and draft reset for the 48 currently registered editor
 commands. Apply saves before publishing to every open editor; Cancel,
 invalid/locked/stale/read-only writes leave the layout and preferences intact.
 The active native hotkey cell editor is committed before Apply reads the draft.
@@ -353,4 +353,6 @@ The tool-mode checkpoint added hidden `select-tool` and `rectangle-tool` command
 
 `rectangle-properties` added a hidden selected-object command (46 commands at that checkpoint) without changing the fourteen visible defaults. It edits only the chosen rectangle; border/fill/thickness/opacity defaults and the private preference file remain unchanged. Native text/modal/busy and no-repeat rules apply. [Rectangle edit evidence](../../app/RECTANGLE-EDIT.md) covers actual subsequent editor/capture creation and save/reopen; full catalogue/human qualification stays Required.
 
-`create-rectangle` adds one hidden native command (47 current commands) without changing the fourteen visible defaults. The numeric dialog and pointer drag freeze style at their start, preserve later default changes, and make one document-history insertion. Actual keyboard, temporary save/reopen/capture output and cancellation/lifetime evidence are indexed in [RECTANGLE-CREATION.md](../../app/RECTANGLE-CREATION.md); full field/tool/native/human qualification remains Required.
+`create-rectangle` added one hidden native command (47 commands at that checkpoint) without changing the fourteen visible defaults. The numeric dialog and pointer drag freeze style at their start, preserve later default changes, and make one document-history insertion. Actual keyboard, temporary save/reopen/capture output and cancellation/lifetime evidence are indexed in [RECTANGLE-CREATION.md](../../app/RECTANGLE-CREATION.md); full field/tool/native/human qualification remains Required.
+
+`focus-annotations` adds one hidden native command (48 current commands) with unchanged fourteen visible defaults. It exposes the ephemeral object list and records no preference/document mutation. Native list selection and Control+A retain their own input precedence. [ANNOTATION-OBJECTS.md](../../app/ANNOTATION-OBJECTS.md) indexes actual keyboard/history/persistence/capture evidence and remaining full/native/human qualification.

@@ -5,6 +5,7 @@ class QLabel;
 class QCheckBox;
 namespace xerahs::app {
 class EditorCanvas;
+class AnnotationObjectNavigator;
 class CaptureAnnotationDialog final : public QDialog {
   Q_OBJECT
 public:
@@ -18,6 +19,7 @@ private:
   QImage m_image;
   xerahs::editor::EditorSession m_session;
   EditorCanvas *m_canvas = nullptr;
+  AnnotationObjectNavigator *m_annotationObjects = nullptr;
   QLabel *m_status = nullptr;
   std::optional<xerahs::editor::AnnotationDocument> m_accepted;
   QCheckBox *m_saveSidecar = nullptr;

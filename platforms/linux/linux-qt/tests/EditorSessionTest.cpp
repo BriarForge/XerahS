@@ -64,6 +64,23 @@ class EditorSessionTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void largeSelectionFiltersUnknownAndDuplicateIdsWithoutDocumentMutation() {
+    auto d = document(); QList<QUuid> ids;
+    for (int i = 0; i < 1000; ++i) { const auto r = rectangle(1, 1, 3, 3); d.annotations.push_back(r); ids << r.id << r.id; }
+    ids << QUuid::createUuid(); EditorSession session(d); const auto before = serializeDocument(session.document());
+    QVERIFY(session.select(ids, 0)); QCOMPARE(session.selection().size(), 1000); QCOMPARE(session.undoCount(), 0); QVERIFY(!session.dirty());
+    QCOMPARE(serializeDocument(session.document()), before);
+  }
+  void guardedSelectionDoesNotMutateHistoryOrReplaceInterveningState() {
+    EditorSession session(document()); const auto id = *session.createRectangle({1, 1}, {3, 3}); session.markSaved();
+    const auto state = session.stateId(); const auto before = serializeDocument(session.document());
+    QVERIFY(session.select({}, state)); QVERIFY(session.select({id, QUuid::createUuid()}, state)); QCOMPARE(session.selection(), QSet<QUuid>{id});
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), 1); QVERIFY(!session.dirty());
+    QVERIFY(session.moveSelection(1, 0)); const auto intervening = serializeDocument(session.document());
+    QVERIFY(!session.select({}, state)); QCOMPARE(session.editDiagnostic(), QString("annotation-edit-stale")); QCOMPARE(session.selection(), QSet<QUuid>{id});
+    QCOMPARE(serializeDocument(session.document()), intervening); QVERIFY(session.undo());
+    QVERIFY(session.select({}, state)); QCOMPARE(session.redoCount(), 1); QVERIFY(!session.dirty());
+  }
   void frozenCreationNormalizesBoundsAndPreservesDefaultsAndHistory() {
     auto d = document(); const auto original = rectangle(1, 2, 3, 4); d.annotations = {original}; d.embeddedImages = {{"kept", kOnePixelPng}};
     EditorSession session(d); session.select({original.id}); const auto before = serializeDocument(session.document());

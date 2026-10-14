@@ -10,6 +10,8 @@
 #include "NativeEditorWindowState.h"
 #include "NativeEditorAppearance.h"
 #include "RectanglePropertiesDialog.h"
+#include "AnnotationObjectNavigator.h"
+#include <QItemSelectionModel>
 
 #include <QAction>
 #include <QColorSpace>
@@ -209,6 +211,31 @@ private slots:
   }
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  void annotationObjectsSupportKeyboardSelectionAndActualPersistence() {
+    QTemporaryDir dir; const auto path = dir.filePath("objects.png"), prefs = dir.filePath("prefs.json"); QVERIFY(fixture().save(path));
+    QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty());
+    QVERIFY(applyToolbarPreferences(QJsonArray{QJsonObject{{"Id", "focus-annotations"}, {"Hotkey", "F11"}, {"IsVisible", false}}}, nativeEditorPreferenceRevision()).saved);
+    auto source = loadSource(path); QVERIFY(source.document); auto doc = *source.document;
+    RectangleAnnotation first; first.id = QUuid::createUuid(); first.start = {1, 1}; first.end = {10, 10};
+    auto second = first; second.id = QUuid::createUuid(); second.start = {20, 20}; second.end = {35, 30};
+    auto hidden = first; hidden.id = QUuid::createUuid(); hidden.visible = false;
+    const auto id = QUuid::createUuid(); UnsupportedAnnotation future{id, {{"id", id.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"vendor", "keep"}}};
+    doc.annotations = {first, second, hidden, future}; QVERIFY(saveEdit(path, fixture(), doc).sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>();
+    auto *objects = window->findChild<AnnotationObjectNavigator *>(); QVERIFY(objects); QCOMPARE(objects->model()->rowCount(), 4);
+    const auto png = storedBytes(path), companion = storedBytes(path + ".xann"), preferences = storedBytes(prefs);
+    window->activateWindow(); canvas->setFocus(); QTRY_VERIFY(window->isActiveWindow()); QTest::keyClick(canvas, Qt::Key_F11); QTRY_COMPARE(QApplication::focusWidget(), objects);
+    QTest::keyClick(objects, Qt::Key_Down); QVERIFY(window->findChild<QAction *>("rectangleProperties")->isEnabled());
+    QTest::keyClick(objects, Qt::Key_Down, Qt::ShiftModifier); QVERIFY(!window->findChild<QAction *>("deleteSelection")->isEnabled());
+    QTest::keyClick(objects, Qt::Key_Escape); QVERIFY(!window->findChild<QAction *>("deleteSelection")->isEnabled());
+    QTest::keyClick(objects, Qt::Key_Home); QTest::keyClick(objects, Qt::Key_Return); QTRY_COMPARE(QApplication::focusWidget(), canvas);
+    QCOMPARE(storedBytes(path), png); QCOMPARE(storedBytes(path + ".xann"), companion); QCOMPARE(storedBytes(prefs), preferences); QVERIFY(!window->windowTitle().contains(" •"));
+    QTest::keyClick(canvas, Qt::Key_Right); trigger(*window, "saveImage"); const auto saved = loadSource(path); QVERIFY(saved.document); QCOMPARE(saved.image, fixture());
+    QCOMPARE(std::get<RectangleAnnotation>(saved.document->annotations[0]).start, (PointF{2, 1})); QCOMPARE(annotationId(saved.document->annotations[0]), first.id);
+    QCOMPARE(std::get<UnsupportedAnnotation>(saved.document->annotations[3]).raw.value("vendor").toString(), QString("keep"));
+    trigger(*window, "undo"); QCOMPARE(objects->selectionModel()->selectedRows()[0].data(Qt::UserRole).toUuid(), first.id);
+    trigger(*window, "redo"); QVERIFY(!window->windowTitle().contains(" •")); QCOMPARE(storedBytes(prefs), preferences);
+  }
   void keyboardRectangleCreationSavesFrozenStyleAndPreservesSource_data() {
     QTest::addColumn<QString>("mode"); for (const auto *mode : {"apply", "cancel", "destroy"}) QTest::newRow(mode) << QString(mode);
   }
@@ -1832,9 +1859,9 @@ private slots:
     loaded.document->annotations = {shown, hidden, future};
     const auto saved = saveEdit(path, original, *loaded.document); QVERIFY(saved.rasterSaved && saved.sidecarSaved);
     std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
-    auto *placeholders = window->findChild<QListWidget *>(QStringLiteral("unsupportedAnnotations")); QVERIFY(placeholders);
-    QCOMPARE(placeholders->count(), 1); QVERIFY(placeholders->isVisible());
-    QVERIFY(placeholders->item(0)->text().contains(QStringLiteral("future-art")));
+    auto *placeholders = window->findChild<AnnotationObjectNavigator *>(); QVERIFY(placeholders);
+    QCOMPARE(placeholders->model()->rowCount(), 3); QVERIFY(placeholders->isVisible());
+    QVERIFY(placeholders->model()->index(2, 0).data().toString().contains(QStringLiteral("future-art")));
     trigger(*window, QStringLiteral("flattenImage"));
     QVERIFY(window->statusBar()->currentMessage().contains(QStringLiteral("2 annotation(s)")));
     trigger(*window, QStringLiteral("saveImage"));
@@ -1860,10 +1887,10 @@ private slots:
     std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
     trigger(*window, QStringLiteral("clearAnnotations"));
     QVERIFY(!window->findChild<QAction *>(QStringLiteral("clearAnnotations"))->isEnabled());
-    QCOMPARE(window->findChild<QListWidget *>(QStringLiteral("unsupportedAnnotations"))->count(), 0);
+    QCOMPARE(window->findChild<AnnotationObjectNavigator *>()->model()->rowCount(), 0);
     trigger(*window, QStringLiteral("saveImage")); QCOMPARE(QImage(path), original); QVERIFY(!QFile::exists(path + ".xann"));
     trigger(*window, QStringLiteral("undo"));
-    QCOMPARE(window->findChild<QListWidget *>(QStringLiteral("unsupportedAnnotations"))->count(), 1);
+    QCOMPARE(window->findChild<AnnotationObjectNavigator *>()->model()->rowCount(), 1);
     trigger(*window, QStringLiteral("saveImage"));
     const auto restored = loadSource(path); QVERIFY(restored.document);
     QCOMPARE(std::get<UnsupportedAnnotation>(restored.document->annotations[0]).raw.value(u"vendor").toString(), QStringLiteral("preserve"));

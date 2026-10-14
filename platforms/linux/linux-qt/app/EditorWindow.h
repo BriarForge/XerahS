@@ -17,11 +17,11 @@
 
 class QAction;
 class QDockWidget;
-class QListWidget;
 
 namespace xerahs::app {
 
 class EditorCanvas;
+class AnnotationObjectNavigator;
 class NativeEditorWindowState;
 class NativeEditorToolbar;
 struct PreparedCanvasEdit;
@@ -104,9 +104,8 @@ private:
   QAction *m_rectangleProperties = nullptr;
   QAction *m_createRectangle = nullptr;
   QAction *m_clearAnnotations = nullptr;
-  QDockWidget *m_unsupportedDock = nullptr;
-  QListWidget *m_unsupportedObjects = nullptr;
-  std::optional<quint64> m_placeholderState;
+  QDockWidget *m_annotationsDock = nullptr;
+  AnnotationObjectNavigator *m_annotationObjects = nullptr;
   bool m_canvasOperationPending = false;
   bool m_closePending = false;
   bool m_outputPending = false;

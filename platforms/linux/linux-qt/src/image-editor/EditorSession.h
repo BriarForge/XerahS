@@ -36,6 +36,8 @@ public:
       const QSet<QUuid> &expectedSelection);
   // ES-004, ES-026: selection is not a document mutation. Unknown IDs are ignored.
   void select(const QList<QUuid> &ids);
+  // Native object lists freeze their displayed history state before dispatch.
+  bool select(const QList<QUuid> &ids, quint64 expectedState);
   // Each returns whether one history operation was committed (ES-005).
   bool moveSelection(double dx, double dy);
   bool setStrokeWidth(double width);

@@ -176,9 +176,12 @@ while later resizes preserve user zoom. [Keyboard Rectangle creation](app/RECTAN
 now owns numeric bounds and frozen defaults/state/selection in editor and capture.
 Pointer creation shares that guarded draft path. Actual Tab/Alt+R/F9/capture
 Tab-Space, cancel/stale/lifetime and save/reopen/publication fixtures preserve the
-active tool, defaults and source. Next add an accessible annotation object navigator
-for keyboard selection of existing objects while resolving the shared Ellipse
-decision, alongside owned native output service handoffs, remaining tools and the
+active tool, defaults and source. [Native object selection](app/ANNOTATION-OBJECTS.md)
+now provides a shared UUID-based keyboard list, non-color-only protection/selection
+labels, pointer/history/source synchronization and guarded stale/busy/lifetime
+refusal. Next freeze multi-object pointer move previews/commits against stale
+document/selection changes while resolving the shared Ellipse decision, alongside
+owned native output service handoffs, remaining tools and the
 format policy and all other contracted output/capture/application domains.
 Physical clipboard/color/accessibility, shutdown and human gates remain
 Required; this does not accept full output conformance or parity.

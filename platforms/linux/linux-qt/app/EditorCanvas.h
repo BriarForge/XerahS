@@ -32,6 +32,12 @@ public:
   // Capture uses the same owned native dialog and Core edit as the main editor.
   bool editRectangleProperties(QWidget *parent);
   bool createRectangle(QWidget *parent);
+  // Borrowed only until mutation; native list models copy their displayed rows.
+  const xerahs::editor::AnnotationDocument &annotationDocument() const { return m_session->document(); }
+  const QSet<QUuid> &annotationSelection() const { return m_session->selection(); }
+  quint64 annotationState() const { return m_session->stateId(); }
+  quint64 documentGeneration() const { return m_documentGeneration; }
+  bool selectAnnotations(const QList<QUuid> &, quint64 expectedState, quint64 expectedGeneration);
   // Adopt an already prepared session without rebuilding actions or controls.
   void resetDocument(xerahs::editor::EditorSession &session, const QImage &displaySource);
 
@@ -65,6 +71,7 @@ private:
   void cancelGesture();
 
   xerahs::editor::EditorSession *m_session;
+  quint64 m_documentGeneration = 0;
   const QImage &m_image;
   QImage m_displaySource;
   xerahs::editor::EditorViewport m_view;

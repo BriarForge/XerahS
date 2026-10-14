@@ -15,6 +15,8 @@
 #include "NativeEditorToolbar.h"
 #include "NativeAnnotationTools.h"
 #include "RectanglePropertiesDialog.h"
+#include "AnnotationObjectNavigator.h"
+#include <algorithm>
 
 #include <QAction>
 #include <QCloseEvent>
@@ -160,15 +162,14 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   });
   m_sourceBytes = m_session->document().sourceImagePng;
   setCentralWidget(m_canvas);
-  m_unsupportedDock = new QDockWidget(QStringLiteral("Unsupported annotations"), this);
-  m_unsupportedDock->setFeatures(QDockWidget::DockWidgetMovable);
-  m_unsupportedDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-  m_unsupportedObjects = new QListWidget(m_unsupportedDock);
-  m_unsupportedObjects->setObjectName(QStringLiteral("unsupportedAnnotations"));
-  m_unsupportedObjects->setAccessibleName(QStringLiteral("Unsupported annotations"));
-  m_unsupportedObjects->setAccessibleDescription(QStringLiteral("These objects are preserved in the document. Their tools are not available in this editor version."));
-  m_unsupportedDock->setWidget(m_unsupportedObjects);
-  addDockWidget(Qt::RightDockWidgetArea, m_unsupportedDock);
+  m_annotationsDock = new QDockWidget("Annotation objects", this);
+  m_annotationsDock->setObjectName("annotationObjectsDock");
+  m_annotationsDock->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetClosable);
+  m_annotationsDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+  m_annotationObjects = new AnnotationObjectNavigator(*m_canvas, m_annotationsDock, [this] { return !m_canvasOperationPending && !m_outputPending && !m_closePending; });
+  m_annotationsDock->setWidget(m_annotationObjects); addDockWidget(Qt::RightDockWidgetArea, m_annotationsDock);
+  m_annotationsDock->setVisible(std::any_of(m_session->document().annotations.begin(), m_session->document().annotations.end(),
+      [](const Annotation &a) { return std::holds_alternative<UnsupportedAnnotation>(a); }));
 
   auto *fileMenu = menuBar()->addMenu(QStringLiteral("&File"));
   auto *create = fileMenu->addAction(QStringLiteral("New Image…"));
@@ -413,6 +414,13 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   auto *toggleToolbar = bar->toggleViewAction(); toggleToolbar->setText(QStringLiteral("Show Toolbar"));
   toggleToolbar->setObjectName(QStringLiteral("toggleToolbars")); toggleToolbar->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_H));
   view->addSeparator(); view->addAction(toggleToolbar);
+  auto *objects = view->addAction("Select &Annotations…"); objects->setObjectName("focusAnnotationObjects"); objects->setAutoRepeat(false);
+  objects->setStatusTip("Focus the object list for keyboard selection. Enter returns to the canvas; Escape clears selection.");
+  connect(objects, &QAction::triggered, this, [this] {
+    if (m_canvasOperationPending || m_closePending || m_outputPending || m_canvas->interactionActive()) return;
+    const QPointer<EditorWindow> owner(this);
+    m_annotationsDock->show(); if (owner) m_annotationObjects->focusObjects();
+  });
   m_toolbarActions = {
     {"save", saveAction}, {"save-as", saveAs}, {"undo", m_undo}, {"redo", m_redo},
     {"delete-selection", m_delete}, {"rotate-selection", m_rotate},
@@ -435,6 +443,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   for (auto it = tools.cbegin(); it != tools.cend(); ++it) m_toolbarActions.insert(it.key(), it.value());
   m_toolbarActions.insert("rectangle-properties", m_rectangleProperties);
   m_toolbarActions.insert("create-rectangle", m_createRectangle);
+  m_toolbarActions.insert("focus-annotations", objects);
   for (auto *action : m_toolbarActions) { action->setParent(this); addAction(action); }
   m_toolbarController = new NativeEditorToolbar(*this, *bar, m_toolbarActions, [this] {
     return m_canvas && !m_canvasOperationPending && !m_closePending && !m_outputPending && !m_canvas->interactionActive();
@@ -491,15 +500,8 @@ void EditorWindow::refresh() {
   if (m_printMessageState != m_session->stateId()) { m_printMessage.clear(); m_printMessageState.reset(); }
   if (m_copyMessageState != m_session->stateId()) { m_copyMessage.clear(); m_copyMessageState.reset(); }
   if (m_saveMessageState != m_session->stateId()) { m_saveMessage.clear(); m_saveMessageState.reset(); }
-  if (m_placeholderState != m_session->stateId()) {
-    m_placeholderState = m_session->stateId(); m_unsupportedObjects->clear();
-    for (const Annotation &a : m_session->document().annotations) if (const auto *object = std::get_if<UnsupportedAnnotation>(&a)) {
-      auto *item = new QListWidgetItem(QStringLiteral("Unsupported: %1%2").arg(object->raw.value(u"type").toString(),
-          object->raw.value(u"visible").toBool(true) ? QString() : QStringLiteral(" (hidden)")), m_unsupportedObjects);
-      item->setData(Qt::UserRole, object->id.toString(QUuid::WithoutBraces));
-    }
-    m_unsupportedDock->setVisible(m_unsupportedObjects->count() > 0);
-  }
+  m_annotationObjects->refresh();
+  m_toolbarActions.value("focus-annotations")->setEnabled(!m_outputPending && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive());
   if (m_sourceBytes != m_session->document().sourceImagePng) {
     const QImage next = QImage::fromData(m_session->document().sourceImagePng, "PNG").convertToFormat(QImage::Format_ARGB32);
     if (!next.isNull()) {
@@ -594,7 +596,7 @@ void EditorWindow::adoptSession(std::unique_ptr<EditorSession> next, const QStri
   applyCreationDefaults();
   m_image = std::move(source);
   m_sourceBytes = m_session->document().sourceImagePng;
-  m_path = path; m_placeholderState.reset();
+  m_path = path;
   m_partialSave.reset(); m_partialSaveState.reset();
   m_saveMessage.clear(); m_saveMessageState.reset();
   m_failedCopy.reset(); m_failedCopyState.reset(); m_copyMessage.clear(); m_copyMessageState.reset();
@@ -897,6 +899,7 @@ bool EditorWindow::withOutputBusy(const std::function<bool()> &operation) {
     for (auto it = enabled.cbegin(); it != enabled.cend(); ++it) { it.key()->setEnabled(it.value()); if (!guard) return; }
     guard->refresh();
   });
+  m_annotationObjects->refresh(); if (!guard) return false;
   for (auto it = enabled.cbegin(); it != enabled.cend(); ++it) { it.key()->setEnabled(false); if (!guard) return false; }
   m_retrySave->setEnabled(false); if (!guard) return false;
   m_retryCopy->setEnabled(false); if (!guard) return false;

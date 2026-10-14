@@ -1,11 +1,13 @@
 #include "CaptureAnnotationDialog.h"
 #include "EditorCanvas.h"
 #include "NativeAnnotationTools.h"
+#include "AnnotationObjectNavigator.h"
 #include <QAction>
 #include <QCheckBox>
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QPushButton>
+#include <QSplitter>
 #include <QToolBar>
 #include <QVBoxLayout>
 namespace xerahs::app {
@@ -19,7 +21,10 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
       "Cancel skips annotation and keeps the original capture. PNG capture saves contain rendered pixels.", this);
   intro->setTextFormat(Qt::PlainText); intro->setWordWrap(true); layout->addWidget(intro);
   auto *bar = new QToolBar("Annotation controls", this); layout->addWidget(bar);
-  m_canvas = new EditorCanvas(m_session, m_image, this, source.displayImage); layout->addWidget(m_canvas);
+  auto *splitter = new QSplitter(this); layout->addWidget(splitter, 1);
+  m_canvas = new EditorCanvas(m_session, m_image, splitter, source.displayImage); splitter->addWidget(m_canvas);
+  m_annotationObjects = new AnnotationObjectNavigator(*m_canvas, splitter); splitter->addWidget(m_annotationObjects);
+  splitter->setStretchFactor(0, 3); splitter->setStretchFactor(1, 1); splitter->setSizes({560, 200});
   const auto tools = annotationToolActions(*m_canvas, this, false);
   bar->addAction(tools.value("select-tool")); bar->addAction(tools.value("rectangle-tool"));
   auto *create = bar->addAction("Create Rectangle…"); create->setObjectName("createRectangle"); create->setAutoRepeat(false);
@@ -43,8 +48,8 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   privacy->setWordWrap(true); privacy->setTextFormat(Qt::PlainText); layout->addWidget(privacy);
   auto *undo = bar->addAction("Undo"); undo->setShortcut(QKeySequence::Undo); addAction(undo);
   auto *redo = bar->addAction("Redo"); redo->setShortcut(QKeySequence::Redo); addAction(redo);
-  connect(undo, &QAction::triggered, this, [this, refreshProperties] { if (!m_canvas->interactionActive()) { m_session.undo(); m_canvas->viewport()->update(); refreshProperties(); } });
-  connect(redo, &QAction::triggered, this, [this, refreshProperties] { if (!m_canvas->interactionActive()) { m_session.redo(); m_canvas->viewport()->update(); refreshProperties(); } });
+  connect(undo, &QAction::triggered, this, [this, refreshProperties] { if (!m_canvas->interactionActive()) { m_session.undo(); m_canvas->viewport()->update(); m_annotationObjects->refresh(); refreshProperties(); } });
+  connect(redo, &QAction::triggered, this, [this, refreshProperties] { if (!m_canvas->interactionActive()) { m_session.redo(); m_canvas->viewport()->update(); m_annotationObjects->refresh(); refreshProperties(); } });
   connect(bar->addAction("Zoom in"), &QAction::triggered, m_canvas, &EditorCanvas::zoomIn);
   connect(bar->addAction("Zoom out"), &QAction::triggered, m_canvas, &EditorCanvas::zoomOut);
   connect(bar->addAction("100%"), &QAction::triggered, m_canvas, &EditorCanvas::resetZoom);
