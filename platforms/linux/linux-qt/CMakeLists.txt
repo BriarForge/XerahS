@@ -35,6 +35,8 @@ add_library(xerahs_core STATIC
   src/capture/RegionSession.h
   src/image-editor/AnnotationDocument.cpp
   src/image-editor/AnnotationDocument.h
+  src/image-editor/AnnotationTransfer.cpp
+  src/image-editor/AnnotationTransfer.h
   src/image-editor/AnnotationRenderer.cpp
   src/image-editor/AnnotationRenderer.h
   src/image-editor/CanvasOperations.cpp
@@ -101,7 +103,7 @@ target_include_directories(xerahs_file_output PUBLIC app)
 target_link_libraries(xerahs_file_output PUBLIC xerahs_core Qt6::Gui Qt6::DBus)
 target_compile_options(xerahs_file_output PRIVATE -Wall -Wextra -Wpedantic)
 
-add_library(xerahs_editor_source STATIC app/EditorSource.cpp app/EditorSource.h app/EditorSave.cpp app/EditorSave.h app/EditorSaveProgress.cpp app/EditorCopy.cpp app/EditorCopy.h app/EditorPrint.cpp app/EditorPrint.h app/EditorPrintDialog.cpp)
+add_library(xerahs_editor_source STATIC app/EditorSource.cpp app/EditorSource.h app/EditorSave.cpp app/EditorSave.h app/EditorSaveProgress.cpp app/EditorCopy.cpp app/EditorCopy.h app/EditorPrint.cpp app/EditorPrint.h app/EditorPrintDialog.cpp app/AnnotationClipboard.cpp app/AnnotationClipboard.h)
 target_include_directories(xerahs_editor_source PUBLIC app)
 target_link_libraries(xerahs_editor_source PUBLIC xerahs_editor_codecs Qt6::Widgets Qt6::PrintSupport)
 target_compile_options(xerahs_editor_source PRIVATE -Wall -Wextra -Wpedantic)
@@ -178,6 +180,10 @@ target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
 find_program(XERAHS_DBUS_RUN_SESSION dbus-run-session REQUIRED)
 enable_testing()
+add_executable(annotation-transfer-test tests/AnnotationTransferTest.cpp)
+set_target_properties(annotation-transfer-test PROPERTIES AUTOMOC ON)
+target_link_libraries(annotation-transfer-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME annotation-transfer COMMAND annotation-transfer-test)
 find_program(XERAHS_PDFTOPPM pdftoppm REQUIRED)
 add_executable(editor-print-test tests/EditorPrintTest.cpp)
 set_target_properties(editor-print-test PROPERTIES AUTOMOC ON)

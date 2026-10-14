@@ -81,3 +81,10 @@ The native editor in `app/EditorWindow.cpp` and `app/EditorCanvas.cpp` loads sou
 rectangles, exposes undo/redo and save, and reopens editable sidecars. See the
 edition [implementation plan](../../IMPLEMENTATION.md) and
 [traceability](../../traceability/) for remaining contract requirements.
+
+`AnnotationTransfer` provides bounded selected-object projection/private decoding
+and shares field validation/serialization with the document. `EditorSession`
+atomically inserts fresh identities or removes an acknowledged unchanged Cut
+selection, preserving previous selection/checkpoint/Redo on failure. Native
+clipboard/menu/input and pending shared tool/asset policy are indexed in
+[ANNOTATION-TRANSFER.md](../../app/ANNOTATION-TRANSFER.md).

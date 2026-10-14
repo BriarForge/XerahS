@@ -156,6 +156,12 @@ QString formatColor(Argb color) {
 QUuid annotationId(const Annotation &annotation) {
   return std::visit([](const auto &a) { return a.id; }, annotation);
 }
+bool annotationEditable(const Annotation &annotation) {
+  const auto *r = std::get_if<RectangleAnnotation>(&annotation);
+  const auto &extra = r ? r->extra : std::get<UnsupportedAnnotation>(annotation).raw;
+  const bool visible = r ? r->visible : !extra.contains("visible") || (extra.value("visible").isBool() && extra.value("visible").toBool());
+  return visible && (!extra.contains("locked") || (extra.value("locked").isBool() && !extra.value("locked").toBool()));
+}
 
 ParseResult parseDocument(const QJsonObject &payload) {
   ParseResult result;
@@ -218,16 +224,9 @@ ParseResult parseDocument(const QJsonObject &payload) {
   if (!annotations.isArray()) {
     findings.invalid = true;
   } else {
-    QSet<QUuid> ids;
-    for (const QJsonValue &item : annotations.toArray()) {
-      auto annotation = parseAnnotation(item, findings);
-      if (!annotation) continue;
-      const QUuid id = annotationId(*annotation);
-      // ES-017: duplicate IDs are rejected.
-      if (ids.contains(id)) findings.invalid = true;
-      ids.insert(id);
-      document.annotations.push_back(std::move(*annotation));
-    }
+    auto parsed = parseAnnotationList(annotations.toArray());
+    if (parsed.annotations) document.annotations = std::move(*parsed.annotations);
+    else findings.invalid = true;
   }
 
   for (auto it = payload.begin(); it != payload.end(); ++it) {
@@ -257,9 +256,24 @@ QJsonObject serializeDocument(const AnnotationDocument &document) {
   for (const auto &[key, png] : document.embeddedImages) embedded.insert(key, QString::fromLatin1(png.toBase64()));
   root.insert(QStringLiteral("embeddedImages"), embedded);
 
+  root.insert(QStringLiteral("annotations"), serializeAnnotationList(document.annotations));
+  return root;
+}
+
+AnnotationListResult parseAnnotationList(const QJsonArray &items) {
+  Findings findings; std::vector<Annotation> result; QSet<QUuid> ids;
+  for (const auto &item : items) {
+    auto annotation = parseAnnotation(item, findings); if (!annotation) continue;
+    const auto id = annotationId(*annotation); if (ids.contains(id)) findings.invalid = true;
+    ids.insert(id); result.push_back(std::move(*annotation));
+  }
+  if (findings.invalid) return {std::nullopt, diagnostic::documentInvalid};
+  return {std::move(result), {}};
+}
+QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
   QJsonArray annotations;
-  for (std::size_t index = 0; index < document.annotations.size(); ++index) {
-    const Annotation &annotation = document.annotations[index];
+  for (std::size_t index = 0; index < items.size(); ++index) {
+    const Annotation &annotation = items[index];
     if (const auto *unsupported = std::get_if<UnsupportedAnnotation>(&annotation)) {
       annotations.append(unsupported->raw);  // ES-015: verbatim
       continue;
@@ -282,8 +296,7 @@ QJsonObject serializeDocument(const AnnotationDocument &document) {
     o.insert(QStringLiteral("zIndex"), static_cast<qint64>(index));
     annotations.append(o);
   }
-  root.insert(QStringLiteral("annotations"), annotations);
-  return root;
+  return annotations;
 }
 
 ParseResult readXann(const QByteArray &gzip, qint64 maxJsonBytes) {

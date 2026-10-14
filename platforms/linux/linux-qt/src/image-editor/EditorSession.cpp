@@ -56,9 +56,15 @@ void EditorSession::select(const QList<QUuid> &ids) {
   m_selection = selection;
 }
 
+bool EditorSession::selectionEditable() const {
+  if (m_selection.isEmpty()) return false;
+  for (const auto &a : document().annotations) if (m_selection.contains(annotationId(a)) && !annotationEditable(a)) return false;
+  return true;
+}
+
 template <typename Change>
 bool EditorSession::changeSelected(Change change) {
-  if (m_selection.isEmpty()) return false;
+  if (!selectionEditable()) return false;
   AnnotationDocument next = document();
   bool changed = false;
   for (Annotation &annotation : next.annotations) {
@@ -149,6 +155,7 @@ bool EditorSession::rotateSelection(double degrees) {
 }
 
 bool EditorSession::reorderSelection(Order order) {
+  if (!selectionEditable()) return false;
   AnnotationDocument next = document();
   auto &list = next.annotations;
   const auto selected = [&](const Annotation &a) { return m_selection.contains(annotationId(a)); };
@@ -175,7 +182,7 @@ bool EditorSession::reorderSelection(Order order) {
 }
 
 bool EditorSession::deleteSelection() {
-  if (m_selection.isEmpty()) return false;
+  if (!selectionEditable()) return false;
   AnnotationDocument next = document();
   const auto removed = std::remove_if(next.annotations.begin(), next.annotations.end(), [&](const Annotation &a) {
     return m_selection.contains(annotationId(a));
@@ -185,6 +192,48 @@ bool EditorSession::deleteSelection() {
   m_selection.clear();
   commit(std::move(next));
   return true;
+}
+
+void EditorSession::commitTransfer(AnnotationDocument next, QSet<QUuid> selection) {
+  if (m_history.capacity() < m_position + 2) m_history.reserve(std::max(m_position + 2, m_history.capacity() * 2));
+  m_history[m_position].selection = m_selection;
+  m_selection = std::move(selection);
+  commit(std::move(next));
+}
+EditorSession::TransferEditResult EditorSession::duplicateSelection(double offset) {
+  const auto selected = selectedAnnotationTransfer(document(), m_selection, false);
+  if (!selected.ok()) return {false, selected.diagnostic, {}};
+  return insertAnnotations(selected.annotations, stateId(), offset);
+}
+EditorSession::TransferEditResult EditorSession::insertAnnotations(const std::vector<Annotation> &objects, quint64 expectedState, double offset, const std::function<QUuid()> &newId) {
+  if (expectedState != stateId()) return {false, "annotation-transfer-stale", {}};
+  try {
+    if (!std::isfinite(offset) || offset < 1 || offset > kMaxDimension) return {false, "annotation-transfer-invalid", {}};
+    const auto diagnostic = annotationTransferDiagnostic(objects); if (!diagnostic.isEmpty()) return {false, diagnostic, {}};
+    if (document().annotations.size() > kMaxTransferDocumentObjects - objects.size()) return {false, "annotation-transfer-too-large", {}};
+    QSet<QUuid> used; for (const auto &a : document().annotations) used.insert(annotationId(a));
+    auto inserted = objects; QSet<QUuid> selection; QList<QUuid> ids;
+    for (auto &a : inserted) {
+      auto &r = std::get<RectangleAnnotation>(a); const auto id = newId ? newId() : QUuid{};
+      if (id.isNull() || used.contains(id)) return {false, "annotation-identity-failed", {}};
+      used.insert(id); r.id = id; selection.insert(id); ids.append(id);
+      r.start.x += offset; r.start.y += offset; r.end.x += offset; r.end.y += offset;
+    }
+    const auto invalid = annotationTransferDiagnostic(inserted); if (!invalid.isEmpty()) return {false, invalid, {}};
+    if (expectedState != stateId()) return {false, "annotation-transfer-stale", {}};
+    auto next = document(); next.annotations.insert(next.annotations.end(), inserted.begin(), inserted.end());
+    commitTransfer(std::move(next), std::move(selection)); return {true, {}, ids};
+  } catch (...) { return {false, "annotation-transfer-failed", {}}; }
+}
+EditorSession::TransferEditResult EditorSession::cutAnnotations(quint64 expectedState, const QSet<QUuid> &expectedSelection) {
+  if (stateId() != expectedState || m_selection != expectedSelection) return {false, "annotation-transfer-stale", {}};
+  const auto selected = selectedAnnotationTransfer(document(), m_selection, true);
+  if (!selected.ok()) return {false, selected.diagnostic, {}};
+  try {
+    auto next = document(); auto &objects = next.annotations;
+    objects.erase(std::remove_if(objects.begin(), objects.end(), [&](const Annotation &a) { return expectedSelection.contains(annotationId(a)); }), objects.end());
+    commitTransfer(std::move(next), {}); return {true, {}, {}};
+  } catch (...) { return {false, "annotation-transfer-failed", {}}; }
 }
 
 bool EditorSession::undo() {

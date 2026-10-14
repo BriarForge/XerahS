@@ -7,6 +7,7 @@
 #include "EditorSave.h"
 #include "EditorCopy.h"
 #include "EditorPrint.h"
+#include "AnnotationClipboard.h"
 
 #include <QImage>
 #include <QMainWindow>
@@ -39,6 +40,7 @@ public:
   void setSaveHooks(EditorSaveHooks hooks) { m_saveHooks = std::move(hooks); }
   void setCopyPorts(EditorCopyPorts ports);
   void setPrintPorts(EditorPrintPorts ports);
+  void setAnnotationClipboardPorts(AnnotationClipboardPorts ports);
 signals:
   // GUI-thread acknowledgement after checkpoint/partial receipt recording;
   // emitted while Save is busy. Reentrant Save is ignored; owner deletion is safe.
@@ -49,6 +51,7 @@ signals:
   // from physical delivery. Owner deletion/reentrant calls are guarded.
   // Throwing completion observers are contained without repeating the job.
   void printFinished(const QString &state, const QString &diagnostic, bool cancellationArrivedDuring);
+  void annotationTransferFinished(const QString &command, const QString &state, const QString &diagnostic, bool changed);
 
 protected:
   void closeEvent(QCloseEvent *event) override;
@@ -69,6 +72,7 @@ private:
   bool retryCopy();
   bool printImage(const EditorPrintSnapshotPtr &retry = {});
   bool retryPrint();
+  bool transferAnnotations(const QString &command);
   void recordRecentImage(const QString &absolutePath);
   void applyCreationDefaults();
   void persistDrawingDefaults();
@@ -123,6 +127,12 @@ private:
   std::optional<quint64> m_failedPrintState;
   QString m_printMessage;
   std::optional<quint64> m_printMessageState;
+  QMap<QString, QAction *> m_annotationActions;
+  AnnotationClipboardPorts m_annotationClipboard;
+  QString m_annotationMessage;
+  std::optional<quint64> m_annotationMessageState;
+  QByteArray m_lastAnnotationPaste;
+  double m_annotationPasteOffset = 0;
 };
 
 }  // namespace xerahs::app

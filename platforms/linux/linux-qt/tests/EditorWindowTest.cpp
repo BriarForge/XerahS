@@ -35,6 +35,8 @@
 #include <QSettings>
 #include <QMessageBox>
 #include <QMenu>
+#include <QMimeData>
+#include <QJsonDocument>
 #include <QPushButton>
 #include <QListWidget>
 #include <QSpinBox>
@@ -206,6 +208,119 @@ private slots:
   }
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  void annotationCopyPasteCutAndDuplicateUseNativeMenusShortcutsAndOneHistoryPerMutation() {
+    QTemporaryDir dir; const auto path = dir.filePath("source.png"); QVERIFY(fixture().save(path)); const auto original = storedBytes(path);
+    QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas); const auto view = canvas->viewState(); const auto prefs = nativeEditorPreferences().values;
+    AnnotationClipboardPorts ports; QByteArray offer; int publications = 0;
+    ports.publish = [&](const QByteArray &bytes) { ++publications; offer = bytes; auto *mime = new QMimeData; mime->setData(annotationClipboardMime, bytes); QApplication::clipboard()->setMimeData(mime); return xerahs::actions::ActionOutcome{}; };
+    window->setAnnotationClipboardPorts(ports); QSignalSpy finished(window.get(), &EditorWindow::annotationTransferFinished), saved(window.get(), &EditorWindow::saveFinished);
+    trigger(*window, "copyAnnotations"); QCOMPARE(publications, 1); QVERIFY(!offer.contains(path.toUtf8()) && !offer.contains("sourceImagePng")); QVERIFY(parseAnnotationClipboard(offer).ok());
+    const auto copied = offer; const auto originalId = annotationId(parseAnnotationClipboard(copied).annotations[0]); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+    window->activateWindow(); canvas->setFocus(); QTest::qWait(10); QTest::keyClick(canvas, Qt::Key_C, Qt::ControlModifier | Qt::ShiftModifier); QCOMPARE(publications, 2);
+    QTest::keyClick(canvas, Qt::Key_V, Qt::ControlModifier); QVERIFY(window->statusBar()->currentMessage().contains("2 annotation(s)"));
+    QTest::keyClick(canvas, Qt::Key_V, Qt::ControlModifier); QVERIFY(window->statusBar()->currentMessage().contains("3 annotation(s)"));
+    trigger(*window, "copyAnnotations"); const auto pasted = parseAnnotationClipboard(offer); QVERIFY(pasted.ok()); QVERIFY(annotationId(pasted.annotations[0]) != originalId);
+    QCOMPARE(std::get<RectangleAnnotation>(pasted.annotations[0]).start.x, std::get<RectangleAnnotation>(parseAnnotationClipboard(copied).annotations[0]).start.x + 20);
+    QTest::keyClick(canvas, Qt::Key_D, Qt::ControlModifier); QVERIFY(window->statusBar()->currentMessage().contains("4 annotation(s)"));
+    trigger(*window, "undo"); QVERIFY(window->statusBar()->currentMessage().contains("3 annotation(s)")); QVERIFY(window->findChild<QAction *>("redo")->isEnabled());
+    QTest::keyClick(canvas, Qt::Key_X, Qt::ControlModifier); QVERIFY(window->statusBar()->currentMessage().contains("2 annotation(s)")); QVERIFY(!window->findChild<QAction *>("redo")->isEnabled());
+    trigger(*window, "undo"); QVERIFY(window->statusBar()->currentMessage().contains("3 annotation(s)"));
+    QCOMPARE(storedBytes(path), original); QVERIFY(!QFile::exists(path + ".xann")); QCOMPARE(saved.count(), 0); QCOMPARE(nativeEditorPreferences().values, prefs);
+    QCOMPARE(canvas->viewState().zoom(), view.zoom()); QCOMPARE(canvas->viewState().offset(), view.offset());
+    trigger(*window, "saveImage"); const auto reopened = loadSource(path); QVERIFY(reopened.document); QCOMPARE(reopened.document->annotations.size(), size_t(3));
+    QSet<QUuid> ids; for (const auto &a : reopened.document->annotations) ids.insert(annotationId(a)); QCOMPARE(ids.size(), 3);
+    QCOMPARE(finished.count(), 7); QVERIFY(window->findChild<QAction *>("copyImage")->shortcut() == QKeySequence::Copy);
+  }
+  void pastedObjectsHaveVisibleViewportOffsetEvenWhenZoomedOut() {
+    std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedImage(fixture())); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas);
+    AnnotationClipboardPorts ports; QByteArray bytes;
+    ports.publish = [&](const QByteArray &data) { bytes = data; auto *mime = new QMimeData; mime->setData(annotationClipboardMime, data); QApplication::clipboard()->setMimeData(mime); return xerahs::actions::ActionOutcome{}; }; window->setAnnotationClipboardPorts(ports);
+    trigger(*window, "copyAnnotations"); const auto original = std::get<RectangleAnnotation>(parseAnnotationClipboard(bytes).annotations[0]);
+    for (int i = 0; i < 8; ++i) canvas->zoomOut(); QVERIFY(canvas->viewState().zoom() < 1);
+    trigger(*window, "pasteAnnotations"); trigger(*window, "copyAnnotations"); const auto pasted = std::get<RectangleAnnotation>(parseAnnotationClipboard(bytes).annotations[0]);
+    const auto difference = canvas->viewState().toView({pasted.start.x, pasted.start.y}) - canvas->viewState().toView({original.start.x, original.start.y});
+    QVERIFY(std::abs(difference.x() - 10) < 1e-8); QVERIFY(std::abs(difference.y() - 10) < 1e-8);
+  }
+  void nativeDuplicationPreservesEmbeddedAssetsAndAssetClipboardRefusalKeepsEverything() {
+    QTemporaryDir dir; const auto prepared = prepareCapturedSource(fixture()); QVERIFY(prepared.document); auto document = *prepared.document;
+    RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {4, 4}; r.end = {20, 15}; r.extra = {{"assetReference", "retained"}}; document.annotations = {r}; document.embeddedImages = {{"retained", document.sourceImagePng}};
+    std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedDocument(document)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>();
+    QTest::mouseClick(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({7, 7}).toPoint()); trigger(*window, "duplicateAnnotations");
+    QVERIFY(window->statusBar()->currentMessage().contains("2 annotation(s)")); AnnotationClipboardPorts ports; int publications = 0;
+    ports.publish = [&](const QByteArray &) { ++publications; return xerahs::actions::ActionOutcome{}; }; window->setAnnotationClipboardPorts(ports); QApplication::clipboard()->setText("KEEP");
+    bool warned = false; QTimer timer; connect(&timer, &QTimer::timeout, [&] { if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) { warned = true; QVERIFY(box->text().contains("assets")); box->accept(); } });
+    timer.start(5); trigger(*window, "cutAnnotations"); timer.stop(); QVERIFY(warned); QCOMPARE(publications, 0); QCOMPARE(QApplication::clipboard()->text(), QString("KEEP")); QVERIFY(window->statusBar()->currentMessage().contains("2 annotation(s)"));
+    const auto path = dir.filePath("duplicated.png"); saveUntitled(*window, path); const auto loaded = loadSource(path); QVERIFY(loaded.document); QCOMPARE(loaded.document->embeddedImages, document.embeddedImages); QCOMPARE(loaded.document->annotations.size(), size_t(2));
+    QCOMPARE(std::get<RectangleAnnotation>(loaded.document->annotations[1]).extra, r.extra); QVERIFY(annotationId(loaded.document->annotations[1]) != r.id);
+  }
+  void lockedNativeSelectionsKeepGeometryAndDisableDirectDeleteAndRotation() {
+    const auto prepared = prepareCapturedSource(fixture()); auto document = *prepared.document; RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {4, 4}; r.end = {20, 15}; r.extra = {{"locked", true}}; document.annotations = {r};
+    std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedDocument(document)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>();
+    QTest::mouseClick(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({7, 7}).toPoint());
+    QVERIFY(!window->findChild<QAction *>("deleteSelection")->isEnabled()); QVERIFY(!window->findChild<QAction *>("rotateSelection")->isEnabled()); QVERIFY(window->findChild<QAction *>("deleteSelection")->toolTip().contains("protected"));
+    QTest::mousePress(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({7, 7}).toPoint()); QVERIFY(!canvas->interactionActive());
+    QTest::mouseMove(canvas->viewport(), canvas->viewState().toView({17, 17}).toPoint()); QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({17, 17}).toPoint());
+    QTest::keyClick(canvas, Qt::Key_Right); QTest::keyClick(canvas, Qt::Key_Delete); QVERIFY(!window->findChild<QAction *>("undo")->isEnabled());
+    QTemporaryDir dir; const auto path = dir.filePath("locked.png"); saveUntitled(*window, path); const auto loaded = loadSource(path); QVERIFY(loaded.document); QCOMPARE(serializeAnnotationList(loaded.document->annotations), serializeAnnotationList(document.annotations));
+  }
+  void annotationCompletionObserverExceptionKeepsOneCommittedMutation() {
+    std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedImage(fixture())); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); drawRectangle(*canvas);
+    QSignalSpy finished(window.get(), &EditorWindow::annotationTransferFinished); connect(window.get(), &EditorWindow::annotationTransferFinished, this, [] { throw std::runtime_error("PRIVATE"); });
+    trigger(*window, "duplicateAnnotations"); QCOMPARE(finished.count(), 1); QVERIFY(finished.at(0).at(3).toBool()); QVERIFY(window->statusBar()->currentMessage().contains("2 annotation(s)")); QVERIFY(window->statusBar()->currentMessage().contains("completion observer failed"));
+    trigger(*window, "undo"); QVERIFY(window->statusBar()->currentMessage().contains("1 annotation(s)"));
+  }
+  void annotationPublicationFailuresNeverCutAndCallbackDiagnosticsAreRedacted_data() {
+    QTest::addColumn<int>("kind"); for (int i = 0; i < 4; ++i) QTest::newRow(qPrintable(QString::number(i))) << i;
+  }
+  void annotationPublicationFailuresNeverCutAndCallbackDiagnosticsAreRedacted() {
+    QFETCH(int, kind); std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedImage(fixture())); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); drawRectangle(*canvas);
+    const auto title = window->windowTitle(); AnnotationClipboardPorts ports; int publications = 0; bool busy = false, warned = false;
+    QApplication::clipboard()->setText("KEEP");
+    ports.publish = [&](const QByteArray &bytes) -> xerahs::actions::ActionOutcome {
+      ++publications; busy = !canvas->isEnabled() && !window->close(); trigger(*window, "duplicateAnnotations"); trigger(*window, "pasteAnnotations"); trigger(*window, "saveImage");
+      if (kind) { auto *mime = new QMimeData; mime->setData(annotationClipboardMime, bytes); QApplication::clipboard()->setMimeData(mime); }
+      if (kind == 1) throw std::runtime_error("PRIVATE callback");
+      auto result = xerahs::actions::ActionOutcome{xerahs::actions::ActionState::Failed, "PRIVATE diagnostic", std::nullopt};
+      if (kind == 2) result.state = xerahs::actions::ActionState::Skipped;
+      if (kind == 3) result.outcomeUnknown = true;
+      return result;
+    };
+    window->setAnnotationClipboardPorts(ports); QSignalSpy finished(window.get(), &EditorWindow::annotationTransferFinished); QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] { if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) { warned = true; QVERIFY(!box->informativeText().contains("PRIVATE")); box->accept(); } });
+    timer.start(5); trigger(*window, "cutAnnotations"); timer.stop(); QVERIFY(warned && busy); QCOMPARE(publications, 1); QCOMPARE(window->windowTitle(), title); QVERIFY(window->statusBar()->currentMessage().contains("1 annotation(s)"));
+    QCOMPARE(finished.at(0).at(1).toString(), kind ? QString("unknown") : QString("failed")); QVERIFY(!finished.at(0).at(3).toBool()); QVERIFY(canvas->isEnabled());
+    if (!kind) QCOMPARE(QApplication::clipboard()->text(), QString("KEEP"));
+    trigger(*window, "undo"); QVERIFY(window->statusBar()->currentMessage().contains("0 annotation(s)"));
+  }
+  void malformedAndForeignClipboardReadsCannotMutateSessionAndTextEntryKeepsLocalEditing() {
+    std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedImage(fixture())); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); drawRectangle(*canvas);
+    const auto title = window->windowTitle(); bool warned = false; QTimer timer; connect(&timer, &QTimer::timeout, [&] { if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) { warned = true; box->accept(); } });
+    auto *mime = new QMimeData; mime->setData(annotationClipboardMime, "malformed"); QApplication::clipboard()->setMimeData(mime);
+    timer.start(5); trigger(*window, "pasteAnnotations"); timer.stop(); QVERIFY(warned); QCOMPARE(window->windowTitle(), title); QVERIFY(window->statusBar()->currentMessage().contains("1 annotation(s)"));
+    auto *field = new QLineEdit("LOCAL", window.get()); field->show(); field->setFocus(); field->selectAll(); QTest::qWait(10); QTest::keyClick(field, Qt::Key_X, Qt::ControlModifier); QCOMPARE(field->text(), QString()); QCOMPARE(QApplication::clipboard()->text(), QString("LOCAL"));
+    QTest::keyClick(field, Qt::Key_V, Qt::ControlModifier); QCOMPARE(field->text(), QString("LOCAL")); QVERIFY(window->statusBar()->currentMessage().contains("1 annotation(s)"));
+    AnnotationClipboardPorts ports; ports.publish = {}; ports.read = {}; window->setAnnotationClipboardPorts(ports);
+    QVERIFY(!window->findChild<QAction *>("copyAnnotations")->isEnabled()); QVERIFY(!window->findChild<QAction *>("cutAnnotations")->isEnabled()); QVERIFY(!window->findChild<QAction *>("pasteAnnotations")->isEnabled());
+    QVERIFY(window->findChild<QAction *>("copyAnnotations")->toolTip().contains("unavailable")); QVERIFY(window->findChild<QAction *>("duplicateAnnotations")->isEnabled());
+  }
+  void nativeAnnotationOfferAndReplacementReportActualOwnershipWithoutDeletingObjects() {
+    auto prepared = prepareCapturedSource(fixture()); RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {1, 1}; r.end = {15, 10}; prepared.document->annotations = {r};
+    const auto transfer = selectedAnnotationTransfer(*prepared.document, {r.id}, true); QVERIFY(transfer.ok()); QApplication::clipboard()->setText("KEEP");
+    const auto invalid = publishAnnotationClipboard("invalid"); QCOMPARE(invalid.state, xerahs::actions::ActionState::Failed); QCOMPARE(QApplication::clipboard()->text(), QString("KEEP"));
+    const auto offered = publishAnnotationClipboard(transfer.bytes); QVERIFY(QApplication::clipboard()->mimeData()->hasFormat(annotationClipboardMime)); QCOMPARE(readAnnotationClipboard().bytes, transfer.bytes);
+    QCOMPARE(offered.outcomeUnknown, !QApplication::clipboard()->ownsClipboard());
+    bool replaced = false; const auto connection = connect(QApplication::clipboard(), &QClipboard::dataChanged, [&] { if (!replaced) { replaced = true; QApplication::clipboard()->setText("FOREIGN"); } });
+    const auto unknown = publishAnnotationClipboard(transfer.bytes); disconnect(connection); QVERIFY(replaced && unknown.outcomeUnknown); QCOMPARE(QApplication::clipboard()->text(), QString("FOREIGN"));
+  }
+  void annotationPublicationReadAndCompletionCanDestroyTheirOwner_data() { QTest::addColumn<int>("kind"); QTest::newRow("publication") << 0; QTest::newRow("read") << 1; QTest::newRow("completion") << 2; }
+  void annotationPublicationReadAndCompletionCanDestroyTheirOwner() {
+    QFETCH(int, kind); QPointer<EditorWindow> window(EditorWindow::fromCapturedImage(fixture())); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); drawRectangle(*canvas); AnnotationClipboardPorts ports;
+    ports.publish = [&](const QByteArray &) { delete window.data(); return xerahs::actions::ActionOutcome{}; };
+    ports.read = [&] { delete window.data(); return AnnotationClipboardRead{}; }; window->setAnnotationClipboardPorts(ports); bool changed = false;
+    connect(window, &EditorWindow::annotationTransferFinished, this, [&](const QString &, const QString &, const QString &, bool edit) { changed = edit; delete window.data(); });
+    window->findChild<QAction *>(kind == 0 ? "cutAnnotations" : kind == 1 ? "pasteAnnotations" : "duplicateAnnotations")->trigger(); QVERIFY(!window); QCOMPARE(changed, kind == 2);
+  }
   void printMenuAndShortcutSubmitWithoutSavingOrChangingHistoryFilesPreferencesOrClipboard() {
     QTemporaryDir dir; const auto path = dir.filePath("image.png"); QVERIFY(fixture().save(path)); const auto original = storedBytes(path);
     QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);

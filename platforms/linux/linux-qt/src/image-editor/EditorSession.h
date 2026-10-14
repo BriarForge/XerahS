@@ -3,6 +3,7 @@
 #pragma once
 
 #include "image-editor/AnnotationDocument.h"
+#include "image-editor/AnnotationTransfer.h"
 
 #include <QSet>
 
@@ -43,6 +44,15 @@ public:
   enum class Order { Forward, Backward, Front, Back };
   bool reorderSelection(Order order);
   bool deleteSelection();
+  bool selectionEditable() const;
+  struct TransferEditResult { bool changed = false; QString diagnostic; QList<QUuid> insertedIds; };
+  TransferEditResult duplicateSelection(double offset = 10);
+  // Caller owns this session exclusively. The identity factory is a pure,
+  // caller-thread value provider; null/colliding IDs or a stale state reject
+  // the complete insertion before this operation mutates history.
+  TransferEditResult insertAnnotations(const std::vector<Annotation> &, quint64 expectedState,
+      double offset = 10, const std::function<QUuid()> &newId = QUuid::createUuid);
+  TransferEditResult cutAnnotations(quint64 expectedState, const QSet<QUuid> &expectedSelection);
 
   bool undo();
   bool redo();
@@ -76,6 +86,7 @@ private:
   // Commits `document` as one operation after the current position, clearing
   // the redo branch (ES-006).
   void commit(AnnotationDocument document);
+  void commitTransfer(AnnotationDocument, QSet<QUuid> selection);
   template <typename Change>
   bool changeSelected(Change change);
 

@@ -15,9 +15,12 @@ vector file yet.
 Neither that vector count nor a green Ubuntu CI run proves the full contract.
 
 The numbered desktop-spec inventory contains 324 requirements across 15
-packages. Current trace files label 81 as implemented and 67 as partial; 175 have no implemented/partial evidence, and CORE-029 records the
+packages. Current trace files label 81 as implemented and 67 as partial; 175 lack
+implemented/partial labels in those seven traces, and CORE-029 records the
 declared mobile scope outside Linux desktop. These are unweighted trace labels,
-not a production-readiness score: some implemented rows cover core seams only,
+not a production-readiness score. Additional partial native candidate maps are
+indexed separately until complete capability traces/vectors exist. In particular,
+some implemented rows cover core seams only,
 and individual catalogue requirements expand into hundreds of ledger items.
 No full native production-readiness percentage or release acceptance is proven.
 
@@ -34,7 +37,7 @@ entire specification and linked ledger rows, not just the examples listed.
 | `POST-CAPTURE-ACTIONS-001` | `src/actions/`, adapter and 17 vectors; `CapturePipeline` runs native PNG publication and GUI clipboard dispatch through the Core engine, with cancellation, activity, actual artifact metadata and in-memory receipts with shared edit/discard/review controls; native write-ahead records and multi-record restart history preserve acknowledged results and distinguish interrupted unknown actions; explicit native linked retry reuses retained pixels/settings and preserves previous successes; the application and adapter share the canonical result serializer with namespaced task/timing/file/retry facts; a cancellable per-run chooser selects outputs/empty with effective-plan recovery; native file/path clipboard and asynchronous ShowItems reveal consume a live file binding; native Save As retains both file aliases; native rectangle annotation returns edited pixels before output and retains its document for explicit compatible editor persistence, with actual canvas/recovery/retry/process-kill evidence | Full save variants, native action catalogue, configured workflow selection/persistence, annotation/effects/output handoffs, uploads, complete catalogue/prerequisite retry, full durable media/artifact recovery, configured retention/pagination, crash cleanup authority, shared persisted compatibility, privacy and consent qualification remain Required. |
 | `REGION-CAPTURE-001` | `src/capture/`, 21 vectors; `PortalScreenshot`, `CaptureController`, `RegionOverlay`; native portal lifecycle/failure tests, worker composition with accessible progress and responsive cancellation, independent pixel fixtures and stale-worker isolation tests | The controller assumes a uniform desktop scale; per-monitor physical source mapping, rotation/colour/availability, mixed displays, cursor settings, HDR conversion, interactive handles/snapping/magnifier, persisted last-region invocation, physical accessibility and performance remain Required. |
 | `EDITOR-SESSION-001` | Document/sidecar, source binding, rectangle history/rendering, native editor, 19 vectors; owned save worker acknowledges its exported state and explicit companion repair preserves PNG/Redo | Full contracted annotation/effect/canvas/output integration, complete persistence compatibility, native parity, visual goldens and human reviews remain Required. |
-| `EDITOR-ANNOTATIONS-001` | Rectangle creation/selection/style/rotation/order in the session and canvas | No complete EA trace. All 20 stable tools, curves/freehand/text/balloons/steps/image/emoji/cursor, redaction/magnifier/spotlight/eraser/cut-out, object clipboard/duplicate, complete persistence and accessible tool controls remain Required. |
+| `EDITOR-ANNOTATIONS-001` | Rectangle creation/selection/style/rotation/order and protected direct edits; native rectangle duplication/object Cut/Copy/Paste with owned MIME, bounded validation, fresh IDs and exact history | No complete EA trace. All 20 stable tools, curves/freehand/text/balloons/steps/image/emoji/cursor, redaction/magnifier/spotlight/eraser/cut-out, complete multi-tool/asset/shared clipboard and duplication, complete persistence and accessible tool controls remain Required. |
 | `EDITOR-EFFECTS-001` | General canvas pixel preparation/history exists | No complete EE trace or effect catalogue implementation. All 232 selected stable effect IDs, parameter semantics, preview/Apply, resource/colour/alpha/randomness rules, presets/favorites, cancellation and visual evidence remain Required. |
 | `EDITOR-CANVAS-001` | Native New/Open, zoom/pan, crop/auto-crop, resize/rotate/flip, represented-annotation flatten/clear and comparison; three vectors | Inserted images, background composition, general affine annotation transforms, complete flattening and native format/colour/resource/interaction qualification remain Required. |
 | `EDITOR-OUTPUT-ACTIONS-001` | PNG Save/Save As freeze an owned snapshot on a cancellable worker with guarded atomic publication, true partial receipt and explicit companion-only repair; Save As adopts its path only after full success. Native Copy Image offers one immutable sRGB/alpha image plus PNG with GUI acknowledgement, explicit unknown delivery and confirmed known-failure replay; native Print adds explicit page/margins/scale/orientation/colour preview, native printer confirmation and worker submission with truthful uncertainty, all preserving document/history/files | No complete EO trace or published EO vectors. Full immutable output catalogue/background integration, JPEG/WebP quality/alpha/metadata choices, permission/ACL/disk-full/shutdown/durability and physical accessibility qualification, complete clipboard/paste-target/color qualification, uploads, full print/printer qualification, pinning, result publication and destructive/exit consent qualification remain Required. |
@@ -75,11 +78,11 @@ marked implemented in a core trace file.
 
 ## Next production work
 
-The 14 October editor-print checkpoint extends editor Save, paired capture persistence,
+The 14 October annotation-transfer checkpoint extends editor Save, paired capture persistence,
 annotation handoff, Save As/multiple-file results, journal/recovery, linked retry
 and per-run selection with owned worker output, explicit editor companion repair,
-non-mutating native clipboard output and native Print with guarded known/unknown delivery.
-It passed all 42 local CTest targets
+non-mutating native clipboard output and native Print and annotation transfer with guarded known/unknown delivery.
+It passed all 43 local CTest targets
 (native tests and all 114 published vectors for the six implemented vector
 packages), contract lint/backlog checks, their 25 unit tests and the seven
 conformance-runner unit tests. The production-path real-process fixtures use
@@ -116,7 +119,7 @@ The [editor-copy evidence](app/EDITOR-COPY.md) indexes actual image/PNG/alpha
 offers, worker/GUI separation, frozen snapshots, Cancel/owner destruction,
 unknown ownership/foreign replacement, explicit known-failure replay, Ctrl+C
 text precedence and unchanged dirty/history/viewport/settings/files. The native
-toolbar now has 39 current commands while retaining its default layout.
+toolbar now has 43 current commands while retaining its default layout.
 EO-004-LINUX-2026-10-14 remains pending; Copy is independent specified output
 work, not a decision on those format defaults. Complete physical clipboard,
 color/alpha, shutdown, accessibility and privacy/security qualification remain Required.
@@ -128,6 +131,17 @@ known-failure replay and unchanged document/history/Redo/files/preferences/clipb
 All printer/permission/queue/device/colour/shutdown/physical accessibility and
 native target/human acceptance remain Required. The minimum Qt baseline is
 unchanged; PrintSupport is dynamic and Poppler is test-only.
+
+The [annotation transfer evidence](app/ANNOTATION-TRANSFER.md) and candidate
+requirement map index actual native rectangle duplication/object clipboard, new
+identities, viewport-visible offsets, atomic history/selection/checkpoint/Redo,
+protected direct edits and owned source/file/asset/default preservation. Native
+Cut requires acknowledged publication and keeps unknown outcomes unchanged.
+EA-016-LINUX-2026-10-14 remains pending for shared MIME/canonical/version rules,
+selected asset references/projection/collision handling, unknown/lock fields,
+offset/resource policy and deciding vectors. Asset-bearing clipboard copies are
+refused; local Duplicate preserves existing assets. Full tools, compatible
+clipboard/assets, target/resource/privacy/security/a11y/human gates remain Required.
 
 1. Continue full native capture/operation qualification under
    RC-001/002/008/016/018 and CORE-004/005. The pending Screenshot lifecycle is
@@ -164,7 +178,8 @@ unchanged; PrintSupport is dynamic and Poppler is test-only.
    policy, while continuing decided behavior and independent contract work.
    Native Copy Image now renders one owned snapshot and preserves document state
    through cancellation/failure/replay under EO-001/002/014/015. Next continue
-   native annotation duplication/object clipboard under EA-016/017, native output
+   native Ellipse's represented document/creation/selection/history/rendering
+   under EA-005, full annotation/asset clipboard under EA-016/017 and native output
    service handoffs and full Print qualification under EO-008/014/015 while
    resolving the format policy. Continue all
    annotation tools, full workflow configuration, remaining save variants and

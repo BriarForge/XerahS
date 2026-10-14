@@ -1,0 +1,142 @@
+{
+  "capability": "EDITOR-ANNOTATIONS-001",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "kind": "partial-native-candidate-evidence",
+  "acceptance": "Required; full capability/shared conformance/native/human gates not accepted",
+  "requirements": {
+    "EA-003": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationTransfer.h",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationTransfer.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/app/AnnotationClipboard.h",
+        "platforms/linux/linux-qt/app/AnnotationClipboard.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Selected hidden/locked/opaque lock data is protected in direct Core edits, deletion/order, transfers and native pointer move/delete/rotate. Full selection/lock controls/field/whole-document policy and target qualification remain Required."
+    },
+    "EA-016": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationTransfer.h",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationTransfer.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/app/AnnotationClipboard.h",
+        "platforms/linux/linux-qt/app/AnnotationClipboard.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Represented rectangle duplication/Cut/Copy/Paste with fresh IDs, owned private MIME bytes, visible view offsets, complete-batch refusal and validated acknowledgement before Cut. Full tool/asset/compatible shared transport policy remains Required; EA-016-LINUX-2026-10-14 is pending."
+    },
+    "EA-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationTransfer.h",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationTransfer.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/app/AnnotationClipboard.h",
+        "platforms/linux/linux-qt/app/AnnotationClipboard.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "New insertion/Cut records one history operation with actual preceding selection, retained checkpoints/source/assets, stable Redo IDs and no failed-operation truncation. Full tool/effect/canvas/mutation coverage remains Required."
+    },
+    "EA-018": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationTransfer.h",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationTransfer.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/app/AnnotationClipboard.h",
+        "platforms/linux/linux-qt/app/AnnotationClipboard.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Native fixed/protected shortcut/menu commands, busy/no-repeat/text precedence, unavailable services and named diagnostics are tested. Complete controls/non-colour cues and physical assistive technology remain Required."
+    },
+    "EA-019": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationTransfer.h",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationTransfer.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/app/AnnotationClipboard.h",
+        "platforms/linux/linux-qt/app/AnnotationClipboard.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Represented rectangle fields/extras retained across duplication, private transport and actual save/reopen; target source/assets preserved. Full tools/asset/key/reference/shared compatibility and unknown semantics remain Required."
+    },
+    "EA-020": {
+      "disposition": "Required",
+      "status": "partial",
+      "implementation": [
+        "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationTransfer.h",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationTransfer.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/app/AnnotationClipboard.h",
+        "platforms/linux/linux-qt/app/AnnotationClipboard.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ],
+      "note": "Bounded Core/private native fixtures reject malformed/unknown/protected/oversized/stale/identity failures without this operation partially mutating the document. No published EA vectors exist; complete native/resource/physical/privacy/security/parity acceptance remains Required."
+    }
+  }
+}

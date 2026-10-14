@@ -209,7 +209,7 @@ void EditorCanvas::mousePressEvent(QMouseEvent *event) {
       for (const QUuid &id : m_session->selection()) ids << id;
     }
     m_session->select(ids);
-    m_moving = m_session->selection().contains(*hit);
+    m_moving = m_session->selection().contains(*hit) && m_session->selectionEditable();
     m_moveStart = m_moveLast = at;
   } else {
     if (!(event->modifiers() & Qt::ControlModifier)) m_session->select({});

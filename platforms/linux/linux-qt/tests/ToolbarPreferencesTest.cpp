@@ -48,6 +48,10 @@ private slots:
       QCOMPARE(toolbarHotkeyDiagnostic(*parseToolbarHotkey(key), "crop-image"), QString("toolbar-reserved-hotkey"));
     QVERIFY(toolbarHotkeyDiagnostic(*parseToolbarHotkey("Ctrl+S"), "save").isEmpty());
     QVERIFY(knownToolbarAction("copy-rendered-image"));
+    for (const auto &entry : {std::pair{"copy-annotation", "Ctrl+Shift+C"}, std::pair{"cut-annotation", "Ctrl+X"}, std::pair{"paste", "Ctrl+V"}, std::pair{"duplicate-selection", "Ctrl+D"}}) {
+      QVERIFY(knownToolbarAction(entry.first)); QVERIFY(validateToolbarItems(QJsonArray{item(entry.first, entry.second)}).valid);
+    }
+    QCOMPARE(toolbarHotkeyDiagnostic(*parseToolbarHotkey("Ctrl+C"), "copy-annotation"), QString("toolbar-protected-hotkey"));
     QVERIFY(knownToolbarAction("print"));
     QVERIFY(validateToolbarItems(QJsonArray{item("print", "Ctrl+Shift+P")}).valid);
     QCOMPARE(toolbarHotkeyDiagnostic(*parseToolbarHotkey("Ctrl+P"), "print"), QString("toolbar-protected-hotkey"));

@@ -49,7 +49,11 @@
     "platforms/linux/linux-qt/src/image-editor/PrintLayout.cpp",
     "platforms/linux/linux-qt/app/EditorPrint.h",
     "platforms/linux/linux-qt/app/EditorPrint.cpp",
-    "platforms/linux/linux-qt/app/EditorPrintDialog.cpp"
+    "platforms/linux/linux-qt/app/EditorPrintDialog.cpp",
+    "platforms/linux/linux-qt/src/image-editor/AnnotationTransfer.h",
+    "platforms/linux/linux-qt/src/image-editor/AnnotationTransfer.cpp",
+    "platforms/linux/linux-qt/app/AnnotationClipboard.h",
+    "platforms/linux/linux-qt/app/AnnotationClipboard.cpp"
   ],
   "requirements": {
     "ES-001": {
@@ -80,7 +84,14 @@
     "ES-004": {
       "status": "implemented",
       "vectors": [],
-      "note": "Native selection outline and hit testing follow rotation. Pointer and keyboard move, Alt+arrow resize, R/Shift+R quarter turns, a cancellable Rotate selection dialog for arbitrary angles, ordering, and Delete are available. Rotation commits one session history entry."
+      "note": "Native selection outline and hit testing follow rotation. Pointer and keyboard move, Alt+arrow resize, R/Shift+R quarter turns, a cancellable Rotate selection dialog for arbitrary angles, ordering, and Delete are available. Rotation commits one session history entry. Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. Native commands bring current toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ]
     },
     "ES-005": {
       "status": "implemented",
@@ -88,6 +99,14 @@
         "reverse-drag-rectangle",
         "zero-area-rectangle-rejected",
         "undo-redo-move"
+      ],
+      "note": " Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. Native commands bring current toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
       ]
     },
     "ES-006": {
@@ -98,14 +117,28 @@
         "truncated-checkpoint-stays-dirty",
         "delete-and-undo-restores-selection"
       ],
-      "note": "Undo and redo restore the selection each state had (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Canvas history restores the source PNG and dimensions plus annotations and selection; CanvasOperationsTest and EditorWindowTest cover crop, resize and whole-image rotation."
+      "note": "Undo and redo restore the selection each state had (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Canvas history restores the source PNG and dimensions plus annotations and selection; CanvasOperationsTest and EditorWindowTest cover crop, resize and whole-image rotation. Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. Native commands bring current toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ]
     },
     "ES-007": {
       "status": "implemented",
       "vectors": [
         "delete-and-undo-restores-selection"
       ],
-      "note": "History snapshots hold immutable, implicitly shared source PNG and assets. Canvas edits create a separate encoded source before committing; undo/redo never modify a reachable prior source. Allocation is reserved before truncating the redo branch. New sessions distinguish saved and unsaved initial sources; immutable initial pixels survive Undo and have no clean checkpoint until successful persistence. New Image replacement reserves a complete fresh session before confirmation and preserves the existing history on cancel or incomplete save; adopting a new document intentionally discards the old history only after Save/Discard confirmation."
+      "note": "History snapshots hold immutable, implicitly shared source PNG and assets. Canvas edits create a separate encoded source before committing; undo/redo never modify a reachable prior source. Allocation is reserved before truncating the redo branch. New sessions distinguish saved and unsaved initial sources; immutable initial pixels survive Undo and have no clean checkpoint until successful persistence. New Image replacement reserves a complete fresh session before confirmation and preserves the existing history on cancel or incomplete save; adopting a new document intentionally discards the old history only after Save/Discard confirmation. Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. Native commands bring current toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ]
     },
     "ES-008": {
       "status": "implemented",
@@ -231,12 +264,16 @@
         "newer-version-read-only-failure",
         "unknown-fields-and-types-round-trip"
       ],
-      "note": "Unknown additive fields and annotation types round-trip in the core. Native opening fails closed for newer, unreadable or corrupt sidecars and embedded sources. Unsupported objects are shown as labelled, accessible native dock placeholders, including hidden state, and survive flatten/clear undo. Core, file and window tests verify preservation, failure without rewriting and placeholder presentation. The native editor save boundary also preserves unsupported future-major or damaged existing companions instead of rewriting/removing them; partial PNG acknowledgement remains honest. EditorSaveTest verifies future-major and symlink preservation. Shared compatibility and physical qualification remain Required.",
+      "note": "Unknown additive fields and annotation types round-trip in the core. Native opening fails closed for newer, unreadable or corrupt sidecars and embedded sources. Unsupported objects are shown as labelled, accessible native dock placeholders, including hidden state, and survive flatten/clear undo. Core, file and window tests verify preservation, failure without rewriting and placeholder presentation. The native editor save boundary also preserves unsupported future-major or damaged existing companions instead of rewriting/removing them; partial PNG acknowledgement remains honest. EditorSaveTest verifies future-major and symlink preservation. Shared compatibility and physical qualification remain Required. Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. Native commands bring current toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/EDITOR-SAVE.md",
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
       ]
     },
     "ES-016": {
@@ -250,7 +287,14 @@
         "duplicate-annotation-ids-rejected",
         "oversized-canvas-rejected-before-allocation"
       ],
-      "note": "Strict base64, PNG signature and IHDR limits, duplicate IDs, and finite numbers are checked before decode (platforms/linux/linux-qt/tests/EditorSessionTest.cpp)."
+      "note": "Strict base64, PNG signature and IHDR limits, duplicate IDs, and finite numbers are checked before decode (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. Native commands bring current toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ]
     },
     "ES-018": {
       "status": "not-started",
@@ -260,7 +304,7 @@
     "ES-019": {
       "status": "partial",
       "vectors": [],
-      "note": "Canvas is focusable with a visible focus ring, accessible names, a dashed two-tone selection outline, fixed-width outlines and six-screen-pixel hit targets under zoom. Native tests cover low-zoom selection. Toolbars and scrollbars are keyboard reachable; screen-reader annotation state and full high-contrast review remain pending. New Image fields have native labels/buddies and accessible names, keyboard operation and a named progress control; native accessibility interfaces verify the dimensions name and Linux profile label relation/current value. Native Copy Image exposes a fixed menu/protected Ctrl+C, named cancellable progress, disabled/busy state, completion/failure and explicit default-Cancel known-failure retry. Local text copy retains precedence; unknown delivery cannot authorize retry. Actual GUI/keyboard and unavailable-service fixtures are indexed in EDITOR-COPY.md; physical assistive-technology and target qualification remain Required. Native Print Image now uses owned worker snapshots, explicit page/scale/orientation/colour preview and native printer confirmation, cancellable worker submission and honest submitted/unknown outcomes. Confirmed known-failure retry preserves document/history/Redo/files/preferences/clipboard; missing services and owner/reentrant boundaries are tested. Candidate EO-001/008/014/015/016 evidence is indexed in EDITOR-PRINT.md and EDITOR-PRINT-EVIDENCE.json. Full physical printer/target/colour/shutdown/a11y/privacy/security and human qualification remain Required.",
+      "note": "Canvas is focusable with a visible focus ring, accessible names, a dashed two-tone selection outline, fixed-width outlines and six-screen-pixel hit targets under zoom. Native tests cover low-zoom selection. Toolbars and scrollbars are keyboard reachable; screen-reader annotation state and full high-contrast review remain pending. New Image fields have native labels/buddies and accessible names, keyboard operation and a named progress control; native accessibility interfaces verify the dimensions name and Linux profile label relation/current value. Native Copy Image exposes a fixed menu/protected Ctrl+C, named cancellable progress, disabled/busy state, completion/failure and explicit default-Cancel known-failure retry. Local text copy retains precedence; unknown delivery cannot authorize retry. Actual GUI/keyboard and unavailable-service fixtures are indexed in EDITOR-COPY.md; physical assistive-technology and target qualification remain Required. Native Print Image now uses owned worker snapshots, explicit page/scale/orientation/colour preview and native printer confirmation, cancellable worker submission and honest submitted/unknown outcomes. Confirmed known-failure retry preserves document/history/Redo/files/preferences/clipboard; missing services and owner/reentrant boundaries are tested. Candidate EO-001/008/014/015/016 evidence is indexed in EDITOR-PRINT.md and EDITOR-PRINT-EVIDENCE.json. Full physical printer/target/colour/shutdown/a11y/privacy/security and human qualification remain Required. Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. Native commands bring current toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/EDITOR-COPY.md",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
@@ -268,7 +312,9 @@
         "platforms/linux/linux-qt/app/EDITOR-PRINT.md",
         "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
         "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
+        "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp"
       ]
     },
     "ES-020": {
@@ -329,7 +375,7 @@
         "undo-to-checkpoint-is-clean",
         "truncated-checkpoint-stays-dirty"
       ],
-      "note": "Saved sessions retain stable checkpoint IDs. Newly created sources use an absent initial checkpoint, so Undo to initial pixels remains dirty until successful persistence. EditorSessionTest and EditorWindowTest verify unsaved initial/Undo/Redo, cancelled Save and complete/incomplete native persistence. recordSnapshotSave acknowledges the immutable exported state instead of the current state. EditorSessionTest covers later edits, Undo to the saved snapshot, split-save invalidation and an unreachable truncated checkpoint; EditorWindowTest preserves Redo through companion-only repair. Copy does not record a save or mutate history/checkpoint. Native window tests preserve dirty state, Undo/Redo, viewport, settings and files through success, cancellation, failure and known-failure replay; changed history disables retry and Undo restores its eligibility. Native Print Image now uses owned worker snapshots, explicit page/scale/orientation/colour preview and native printer confirmation, cancellable worker submission and honest submitted/unknown outcomes. Confirmed known-failure retry preserves document/history/Redo/files/preferences/clipboard; missing services and owner/reentrant boundaries are tested. Candidate EO-001/008/014/015/016 evidence is indexed in EDITOR-PRINT.md and EDITOR-PRINT-EVIDENCE.json. Full physical printer/target/colour/shutdown/a11y/privacy/security and human qualification remain Required.",
+      "note": "Saved sessions retain stable checkpoint IDs. Newly created sources use an absent initial checkpoint, so Undo to initial pixels remains dirty until successful persistence. EditorSessionTest and EditorWindowTest verify unsaved initial/Undo/Redo, cancelled Save and complete/incomplete native persistence. recordSnapshotSave acknowledges the immutable exported state instead of the current state. EditorSessionTest covers later edits, Undo to the saved snapshot, split-save invalidation and an unreachable truncated checkpoint; EditorWindowTest preserves Redo through companion-only repair. Copy does not record a save or mutate history/checkpoint. Native window tests preserve dirty state, Undo/Redo, viewport, settings and files through success, cancellation, failure and known-failure replay; changed history disables retry and Undo restores its eligibility. Native Print Image now uses owned worker snapshots, explicit page/scale/orientation/colour preview and native printer confirmation, cancellable worker submission and honest submitted/unknown outcomes. Confirmed known-failure retry preserves document/history/Redo/files/preferences/clipboard; missing services and owner/reentrant boundaries are tested. Candidate EO-001/008/014/015/016 evidence is indexed in EDITOR-PRINT.md and EDITOR-PRINT-EVIDENCE.json. Full physical printer/target/colour/shutdown/a11y/privacy/security and human qualification remain Required. Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. Native commands bring current toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/EDITOR-SAVE.md",
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
@@ -340,7 +386,9 @@
         "platforms/linux/linux-qt/app/EDITOR-PRINT.md",
         "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
         "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
+        "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp"
       ]
     },
     "ES-028": {
@@ -348,7 +396,14 @@
       "vectors": [
         "oversized-canvas-rejected-before-allocation"
       ],
-      "note": "Canvas and embedded-image limits are checked from JSON and PNG headers; readXann stops inflating at the JSON byte limit (platforms/linux/linux-qt/tests/EditorSessionTest.cpp)."
+      "note": "Canvas and embedded-image limits are checked from JSON and PNG headers; readXann stops inflating at the JSON byte limit (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. Native commands bring current toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+      ]
     },
     "ES-029": {
       "status": "partial",

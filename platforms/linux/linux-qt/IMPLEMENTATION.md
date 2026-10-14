@@ -154,9 +154,16 @@ page/margins/scale/orientation/colour preview and native printer confirmation,
 worker submission, truthful submitted/unknown outcomes and confirmed known-failure
 replay under EO-001/008/014/015/016. Source/history/Redo/files/preferences/clipboard
 remain unchanged. Physical printer/permission/queue/cancellation/colour/shutdown
-and full supported-target/human qualification remain Required. Continue owned
-native annotation duplication/object clipboard under EA-016/017, owned native
-output service handoffs and remaining annotation tools alongside the
+and full supported-target/human qualification remain Required. The subsequent
+[annotation transfer checkpoint](app/ANNOTATION-TRANSFER.md) adds
+represented-rectangle duplication and native object Cut/Copy/Paste under
+EA-003/016/017/018/019/020, bounded complete-batch validation, fresh identities,
+exact history/selection and protected direct edits, with source/assets/files/defaults
+kept and no Cut after unknown delivery. Shared transport/asset-reference/offset/lock
+policy EA-016-LINUX-2026-10-14 remains pending; asset-bearing clipboard copies
+are refused without a lossy fallback. Next implement native Ellipse's represented
+document/creation/selection/history/rendering under EA-005, alongside owned native
+output service handoffs, remaining annotation tools and the
 format policy and all other contracted output/capture/application domains.
 Physical clipboard/color/accessibility, shutdown and human gates remain
 Required; this does not accept full output conformance or parity.

@@ -6,6 +6,7 @@
 
 #include <QByteArray>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QString>
 #include <QStringList>
 #include <QUuid>
@@ -60,6 +61,9 @@ struct UnsupportedAnnotation {
 
 using Annotation = std::variant<RectangleAnnotation, UnsupportedAnnotation>;
 QUuid annotationId(const Annotation &annotation);
+// Hidden or explicitly locked compatible objects cannot be directly edited.
+// An opaque/non-boolean lock field is protected rather than interpreted.
+bool annotationEditable(const Annotation &annotation);
 
 struct AnnotationDocument {
   int version = 1;
@@ -102,6 +106,14 @@ struct ParseResult {
 // dimensions are read from PNG headers; no pixels are allocated.
 ParseResult parseDocument(const QJsonObject &payload);
 QJsonObject serializeDocument(const AnnotationDocument &document);
+struct AnnotationListResult {
+  std::optional<std::vector<Annotation>> annotations;
+  QString diagnostic;
+};
+// The document and object-transfer boundaries use the same field validation
+// and canonical serialization; unknown types remain inert document data.
+AnnotationListResult parseAnnotationList(const QJsonArray &);
+QJsonArray serializeAnnotationList(const std::vector<Annotation> &);
 
 // ES-013: gzip-wrapped UTF-8 JSON. readXann enforces the decompressed limit
 // while inflating.

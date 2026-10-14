@@ -362,6 +362,18 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   m_retryCopy->setStatusTip("Retry only a known failed clipboard publication of the unchanged rendered snapshot.");
   addAction(m_retryCopy); connect(m_retryCopy, &QAction::triggered, this, [this] { retryCopy(); });
   edit->addSeparator();
+  const auto annotationCommand = [&](const QString &id, const QString &name, const QString &label, const QKeySequence &key) {
+    auto *action = edit->addAction(label); action->setObjectName(name); action->setShortcut(key); action->setAutoRepeat(false);
+    action->setStatusTip(id == "paste" ? "Paste supported annotations with fresh identities and an offset; source pixels stay unchanged."
+        : id == "duplicate-selection" ? "Duplicate supported visible, unlocked annotations as one undoable operation; source pixels and embedded assets stay unchanged."
+        : "Copy selected supported annotations and their compatible fields. Source pixels, document paths and embedded assets are excluded; asset-bearing copies are refused.");
+    m_annotationActions.insert(id, action); connect(action, &QAction::triggered, this, [this, id] { transferAnnotations(id); });
+  };
+  annotationCommand("cut-annotation", "cutAnnotations", "Cu&t Annotations", QKeySequence::Cut);
+  annotationCommand("copy-annotation", "copyAnnotations", "Copy &Annotations", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C));
+  annotationCommand("paste", "pasteAnnotations", "&Paste Annotations", QKeySequence::Paste);
+  annotationCommand("duplicate-selection", "duplicateAnnotations", "&Duplicate Annotations", QKeySequence(Qt::CTRL | Qt::Key_D));
+  edit->addSeparator();
   for (auto *action : {m_undo, m_redo, m_delete, m_rotate, stroke, fill, width, thin}) edit->addAction(action);
   auto *view = menuBar()->addMenu(QStringLiteral("&View"));
   QAction *zoomIn = view->addAction(QStringLiteral("Zoom In"));
@@ -403,6 +415,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     {"remember-window-state", rememberWindow}, {"customize-toolbar", customizeToolbar},
     {"toggle-toolbars", toggleToolbar}, {"close-editor", closeEditor}, {"copy-rendered-image", m_copyAction}, {"print", m_printAction}
   };
+  for (auto it = m_annotationActions.cbegin(); it != m_annotationActions.cend(); ++it) m_toolbarActions.insert(it.key(), it.value());
   for (auto *action : m_toolbarActions) { action->setParent(this); addAction(action); }
   m_toolbarController = new NativeEditorToolbar(*this, *bar, m_toolbarActions, [this] {
     return m_canvas && !m_canvasOperationPending && !m_closePending && !m_outputPending && !m_canvas->interactionActive();
@@ -430,6 +443,12 @@ void EditorWindow::persistDrawingDefaults() {
 }
 
 void EditorWindow::refresh() {
+  if (m_annotationMessageState != m_session->stateId()) { m_annotationMessage.clear(); m_annotationMessageState.reset(); }
+  for (auto it = m_annotationActions.cbegin(); it != m_annotationActions.cend(); ++it) {
+    const bool available = it.key() == "duplicate-selection" || (it.key() == "paste" ? bool(m_annotationClipboard.read) : bool(m_annotationClipboard.publish));
+    it.value()->setEnabled(!m_outputPending && available && (it.key() == "paste" || !m_session->selection().isEmpty()));
+    it.value()->setToolTip(available ? it.value()->statusTip() : "Annotation clipboard service is unavailable.");
+  }
   if (m_printMessageState != m_session->stateId()) { m_printMessage.clear(); m_printMessageState.reset(); }
   if (m_copyMessageState != m_session->stateId()) { m_copyMessage.clear(); m_copyMessageState.reset(); }
   if (m_saveMessageState != m_session->stateId()) { m_saveMessage.clear(); m_saveMessageState.reset(); }
@@ -452,8 +471,10 @@ void EditorWindow::refresh() {
   }
   m_undo->setEnabled(!m_outputPending && m_session->undoCount() > 0);
   m_redo->setEnabled(!m_outputPending && m_session->redoCount() > 0);
-  m_delete->setEnabled(!m_outputPending && !m_session->selection().isEmpty());
-  m_rotate->setEnabled(!m_outputPending && !m_session->selection().isEmpty());
+  m_delete->setEnabled(!m_outputPending && m_session->selectionEditable());
+  m_rotate->setEnabled(!m_outputPending && m_session->selectionEditable());
+  m_delete->setToolTip(m_session->selectionEditable() ? "Delete selected annotations" : "Hidden or locked selections are protected from editing.");
+  m_rotate->setToolTip(m_session->selectionEditable() ? "Rotate selected annotations" : "Hidden or locked selections are protected from editing.");
   m_clearAnnotations->setEnabled(!m_outputPending && !m_session->document().annotations.empty());
   m_retrySave->setEnabled(!m_outputPending && m_partialSave && m_partialSaveState == m_session->stateId());
   m_retrySave->setToolTip(m_partialSave && m_partialSaveState != m_session->stateId()
@@ -483,6 +504,7 @@ void EditorWindow::refresh() {
   if (!m_saveMessage.isEmpty()) status += " · " + m_saveMessage;
   if (!m_copyMessage.isEmpty()) status += " · " + m_copyMessage;
   if (!m_printMessage.isEmpty()) status += " · " + m_printMessage;
+  if (!m_annotationMessage.isEmpty()) status += " · " + m_annotationMessage;
   statusBar()->showMessage(status);
   m_canvas->viewport()->update();
 }
@@ -538,6 +560,7 @@ void EditorWindow::adoptSession(std::unique_ptr<EditorSession> next, const QStri
   m_saveMessage.clear(); m_saveMessageState.reset();
   m_failedCopy.reset(); m_failedCopyState.reset(); m_copyMessage.clear(); m_copyMessageState.reset();
   m_failedPrint.reset(); m_failedPrintState.reset(); m_printMessage.clear(); m_printMessageState.reset();
+  m_annotationMessage.clear(); m_annotationMessageState.reset(); m_lastAnnotationPaste.clear(); m_annotationPasteOffset = 0;
   m_canvas->resetDocument(*m_session, display);
   findChild<QAction *>(QStringLiteral("cropTool"))->setChecked(false);
   refresh(); m_canvas->setFocus();
@@ -964,6 +987,77 @@ bool EditorWindow::retryPrint() {
   const auto choice = box->exec(); delete box.data();
   if (!guard || choice != QMessageBox::Retry || m_outputPending || m_failedPrint != expected || m_failedPrintState != state || state != m_session->stateId()) return false;
   return printImage(expected);
+}
+
+void EditorWindow::setAnnotationClipboardPorts(AnnotationClipboardPorts ports) { m_annotationClipboard = std::move(ports); refresh(); }
+bool EditorWindow::transferAnnotations(const QString &command) {
+  using namespace xerahs::actions;
+  if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive() || !m_annotationActions.contains(command)) return false;
+  const QPointer<EditorWindow> guard(this); const auto state = m_session->stateId(); const auto selection = m_session->selection(); const auto ports = m_annotationClipboard;
+  if ((command == "paste" && !ports.read) || ((command == "copy-annotation" || command == "cut-annotation") && !ports.publish)) return false;
+  return withOutputBusy([this, guard, state, selection, ports, command] {
+    ActionOutcome action{ActionState::Failed, "annotation-transfer-failed", std::nullopt}; bool changed = false, published = false;
+    const auto recordEdit = [&](const EditorSession::TransferEditResult &edit) { changed = edit.changed; action = changed ? ActionOutcome{} : ActionOutcome{ActionState::Failed, edit.diagnostic, std::nullopt}; };
+    const double step = std::max(1.0, 10.0 / m_canvas->viewState().zoom());
+    if (command == "duplicate-selection") recordEdit(m_session->duplicateSelection(step));
+    else if (command == "paste") {
+      AnnotationClipboardRead read;
+      try { read = ports.read(); } catch (...) { read.diagnostic = "annotation-clipboard-read-failed"; }
+      if (!guard) return false;
+      if (!read.diagnostic.isEmpty()) {
+        const auto code = read.diagnostic == "annotation-clipboard-format-unavailable" || read.diagnostic == "annotation-clipboard-unavailable" || read.diagnostic == "annotation-transfer-too-large" ? read.diagnostic : QString("annotation-clipboard-read-failed");
+        action.diagnostic = code;
+      } else {
+        const auto parsed = parseAnnotationClipboard(read.bytes);
+        if (!parsed.ok()) action.diagnostic = parsed.diagnostic;
+        else {
+          const double offset = m_lastAnnotationPaste == read.bytes ? m_annotationPasteOffset + step : step;
+          recordEdit(m_session->insertAnnotations(parsed.annotations, state, offset));
+          if (changed) { m_lastAnnotationPaste = std::move(read.bytes); m_annotationPasteOffset = offset; }
+        }
+      }
+    } else {
+      const auto prepared = selectedAnnotationTransfer(m_session->document(), selection, true);
+      if (!prepared.ok()) action.diagnostic = prepared.diagnostic;
+      else {
+        try { action = ports.publish(prepared.bytes); }
+        catch (...) { action.outcomeUnknown = true; }
+        if (!guard) return false;
+        if (action.outcomeUnknown || action.replacementSelection || !action.artifacts.empty() ||
+            (action.state != ActionState::Succeeded && action.state != ActionState::Failed && action.state != ActionState::Cancelled)) {
+          action = {ActionState::Failed, "annotation-clipboard-delivery-unknown", std::nullopt}; action.outcomeUnknown = true;
+        } else if (action.state == ActionState::Succeeded) { action = {}; published = true; }
+        else if (action.state == ActionState::Cancelled) action = {ActionState::Cancelled, std::nullopt, std::nullopt};
+        else action.diagnostic = action.diagnostic == std::optional<QString>{"annotation-clipboard-unavailable"} ? "annotation-clipboard-unavailable" : "annotation-clipboard-failed";
+        if (published && command == "cut-annotation") recordEdit(m_session->cutAnnotations(state, selection));
+      }
+    }
+    const bool partial = published && command == "cut-annotation" && !changed;
+    const bool success = action.state == ActionState::Succeeded && !action.outcomeUnknown;
+    if (action.outcomeUnknown) m_annotationMessage = "Clipboard delivery is unknown; selected annotations are kept. Check the clipboard before copying again";
+    else if (partial) m_annotationMessage = "Annotations were copied, but Cut did not complete; the selection is kept";
+    else if (success) m_annotationMessage = command == "copy-annotation" ? "Annotations copied; the document is unchanged" : command == "cut-annotation" ? "Annotations cut; Undo restores them" : command == "paste" ? "Annotations pasted as one undoable operation" : "Annotations duplicated as one undoable operation";
+    else if (action.state == ActionState::Cancelled) m_annotationMessage = "Annotation transfer cancelled; the document is unchanged";
+    else m_annotationMessage = "Annotation action failed; the document is unchanged";
+    m_annotationMessageState = m_session->stateId();
+    const auto diagnostic = action.diagnostic.value_or(QString{});
+    try { emit annotationTransferFinished(command, partial ? "partial" : action.outcomeUnknown ? "unknown" : actionStateName(action.state), diagnostic, changed); }
+    catch (...) { if (guard) m_annotationMessage += " (completion observer failed)"; }
+    if (!guard) return false;
+    if (!success && action.state != ActionState::Cancelled) {
+      const auto explanation = action.outcomeUnknown ? "The clipboard may have changed, so Cut kept the selected objects. Check the clipboard before copying again."
+          : partial ? "The clipboard contains the selected annotations, but they could not be removed. The editable document is kept."
+          : diagnostic == "annotation-clipboard-assets-unavailable" ? "Embedded-asset copying needs compatible asset support. No annotations or assets were dropped; the document and clipboard are kept."
+          : diagnostic == "annotation-type-unsupported" ? "This selection contains an unsupported annotation. The whole selection is kept; no supported subset is transferred."
+          : diagnostic == "annotation-selection-protected" ? "Hidden or locked annotations cannot be transferred by this command. The selection is kept."
+          : diagnostic == "annotation-clipboard-format-unavailable" ? "The clipboard has no supported annotation payload. Image and text clipboard contents are kept."
+          : diagnostic == "annotation-transfer-too-large" ? "The selection or clipboard data exceeds the transfer limit. Use fewer annotations or smaller annotation metadata. The document is kept."
+          : "The annotation transfer could not complete. The document is kept. Check the selection or copy supported annotations again.";
+      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, "Annotation action incomplete", explanation, QMessageBox::Ok, this));
+      box->setTextFormat(Qt::PlainText); box->setInformativeText(diagnostic); box->exec(); delete box.data();
+    }
+    return success && bool(guard);
+  });
 }
 
 void EditorWindow::recordRecentImage(const QString &absolutePath) {
