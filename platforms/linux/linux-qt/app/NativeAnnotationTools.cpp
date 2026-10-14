@@ -7,6 +7,22 @@
 #include <array>
 
 namespace xerahs::app {
+QAction *annotationDeleteAction(EditorCanvas &canvas, QObject *owner, std::function<void()> dispatch, std::function<bool()> ready) {
+  auto *action = new QAction("Delete", owner); action->setObjectName("deleteSelection"); action->setAutoRepeat(false);
+  action->setStatusTip("Delete selected annotations in one undo step. Hidden or locked objects protect the whole selection; source pixels, assets and creation defaults stay unchanged.");
+  action->setToolTip(action->statusTip()); const QPointer<EditorCanvas> guarded(&canvas);
+  const auto update = [guarded, action, ready] {
+    action->setEnabled(guarded && guarded->isEnabled() && !guarded->interactionActive() && guarded->canDeleteSelection() && (!ready || ready()));
+  };
+  QObject::connect(&canvas, &EditorCanvas::changed, action, update);
+  QObject::connect(&canvas, &EditorCanvas::toolChanged, action, update);
+  QObject::connect(&canvas, &EditorCanvas::viewportChanged, action, update); update();
+  QObject::connect(action, &QAction::triggered, &canvas, [guarded, dispatch, ready] {
+    if (!guarded || !guarded->isEnabled() || guarded->interactionActive() || (ready && !ready())) return;
+    if (dispatch) dispatch(); else guarded->deleteSelection();
+  });
+  return action;
+}
 QMap<QString, QAction *> annotationOrderActions(EditorCanvas &canvas, QObject *owner,
     std::function<void(xerahs::editor::EditorSession::Order)> dispatch, std::function<bool()> ready) {
   using Order = xerahs::editor::EditorSession::Order;

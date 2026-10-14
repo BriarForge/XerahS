@@ -28,6 +28,9 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   splitter->setStretchFactor(0, 3); splitter->setStretchFactor(1, 1); splitter->setSizes({560, 200});
   const auto tools = annotationToolActions(*m_canvas, this, false);
   bar->addAction(tools.value("select-tool")); bar->addAction(tools.value("rectangle-tool"));
+  auto *remove = annotationDeleteAction(*m_canvas, this); bar->addAction(remove);
+  bar->widgetForAction(remove)->setFocusPolicy(Qt::StrongFocus);
+  const auto refreshDelete = [this, remove] { remove->setEnabled(m_canvas->isEnabled() && !m_canvas->interactionActive() && m_canvas->canDeleteSelection()); };
   auto *create = bar->addAction("Create Rectangle…"); create->setObjectName("createRectangle"); create->setAutoRepeat(false);
   create->setToolTip("Enter numeric bounds and create one rectangle with captured defaults. The active tool stays unchanged.");
   bar->widgetForAction(create)->setFocusPolicy(Qt::StrongFocus);
@@ -37,7 +40,9 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   bar->widgetForAction(rotate)->setFocusPolicy(Qt::StrongFocus);
   properties->setToolTip("Edit one selected, visible and unlocked rectangle. Creation defaults stay unchanged.");
   const auto refreshProperties = [this, properties, create, rotate] {
-    properties->setEnabled(m_canvas->canEditRectangle() && !m_canvas->interactionActive()); create->setEnabled(!m_canvas->interactionActive());
+    const QPointer<CaptureAnnotationDialog> owner(this);
+    properties->setEnabled(m_canvas->canEditRectangle() && !m_canvas->interactionActive()); if (!owner) return;
+    create->setEnabled(!m_canvas->interactionActive()); if (!owner) return;
     rotate->setEnabled(m_canvas->canRotateSelection() && !m_canvas->interactionActive());
   };
   connect(m_canvas, &EditorCanvas::changed, properties, refreshProperties);
@@ -58,8 +63,9 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   }
   auto *strokeWidth = new QLabel(colors); strokeWidth->setObjectName("captureStrokeWidth"); strokeWidth->setAccessibleName("New rectangle stroke width"); colors->addWidget(strokeWidth);
   const auto refreshColors = [this, stroke, fill, width, thin, strokeWidth] {
+    const QPointer<CaptureAnnotationDialog> owner(this);
     const bool ready = m_canvas->canEditStyle() && !m_canvas->interactionActive();
-    for (auto *action : {stroke, fill, width, thin}) action->setEnabled(ready);
+    for (auto *action : {stroke, fill, width, thin}) { action->setEnabled(ready); if (!owner) return; }
     strokeWidth->setText(QString("New rectangles: %1 px").arg(QString::number(m_canvas->creationStrokeWidth(), 'g', 17)));
     strokeWidth->setAccessibleDescription(strokeWidth->text());
   };
@@ -91,14 +97,26 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   auto *redo = bar->addAction("Redo"); redo->setObjectName("redo");
   redo->setShortcuts({QKeySequence(Qt::CTRL | Qt::Key_Y), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Z)}); addAction(redo);
   const auto refreshHistory = [this, undo, redo] {
-    undo->setEnabled(!m_canvas->interactionActive() && m_session.undoCount() > 0);
+    const QPointer<CaptureAnnotationDialog> owner(this);
+    undo->setEnabled(!m_canvas->interactionActive() && m_session.undoCount() > 0); if (!owner) return;
     redo->setEnabled(!m_canvas->interactionActive() && m_session.redoCount() > 0);
   };
   connect(m_canvas, &EditorCanvas::changed, undo, refreshHistory);
   connect(m_canvas, &EditorCanvas::toolChanged, undo, refreshHistory);
   connect(m_canvas, &EditorCanvas::viewportChanged, undo, refreshHistory); refreshHistory();
-  connect(undo, &QAction::triggered, this, [this, refreshProperties, refreshHistory, refreshColors, refreshOrder] { if (!m_canvas->interactionActive()) { m_session.undo(); m_canvas->viewport()->update(); m_annotationObjects->refresh(); refreshProperties(); refreshHistory(); refreshColors(); refreshOrder(); } });
-  connect(redo, &QAction::triggered, this, [this, refreshProperties, refreshHistory, refreshColors, refreshOrder] { if (!m_canvas->interactionActive()) { m_session.redo(); m_canvas->viewport()->update(); m_annotationObjects->refresh(); refreshProperties(); refreshHistory(); refreshColors(); refreshOrder(); } });
+  const auto history = [this, refreshProperties, refreshHistory, refreshColors, refreshOrder, refreshDelete](bool redo) {
+    if (m_canvas->interactionActive()) return;
+    const QPointer<CaptureAnnotationDialog> owner(this);
+    if (redo) m_session.redo(); else m_session.undo();
+    m_canvas->viewport()->update(); m_annotationObjects->refresh(); if (!owner) return;
+    refreshProperties(); if (!owner) return;
+    refreshHistory(); if (!owner) return;
+    refreshColors(); if (!owner) return;
+    refreshOrder(); if (!owner) return;
+    refreshDelete();
+  };
+  connect(undo, &QAction::triggered, this, [history] { history(false); });
+  connect(redo, &QAction::triggered, this, [history] { history(true); });
   connect(bar->addAction("Zoom in"), &QAction::triggered, m_canvas, &EditorCanvas::zoomIn);
   connect(bar->addAction("Zoom out"), &QAction::triggered, m_canvas, &EditorCanvas::zoomOut);
   connect(bar->addAction("100%"), &QAction::triggered, m_canvas, &EditorCanvas::resetZoom);

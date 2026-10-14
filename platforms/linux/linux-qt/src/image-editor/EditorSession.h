@@ -74,6 +74,8 @@ public:
   // interprets their payload. Hidden or locked members protect the whole group.
   bool canOrderSelection() const { return !m_selection.isEmpty() && selectionEditable(); }
   bool deleteSelection();
+  bool deleteSelection(quint64 expectedState, const QSet<QUuid> &expectedSelection);
+  bool canDeleteSelection() const { return !m_selection.isEmpty() && selectionEditable(); }
   bool selectionEditable() const;
   // Borrowed until the next document mutation; callers freeze a copy for UI.
   const RectangleAnnotation *selectedRectangle() const;

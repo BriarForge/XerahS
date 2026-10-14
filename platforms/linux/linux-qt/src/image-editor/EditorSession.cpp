@@ -307,6 +307,11 @@ bool EditorSession::reorderSelection(Order order) {
   } catch (const std::bad_alloc &) { m_editDiagnostic = "annotation-edit-failed"; return false; }
 }
 
+bool EditorSession::deleteSelection(quint64 expectedState, const QSet<QUuid> &expectedSelection) {
+  m_editDiagnostic.clear();
+  if (stateId() != expectedState || m_selection != expectedSelection) { m_editDiagnostic = "annotation-edit-stale"; return false; }
+  return deleteSelection();
+}
 bool EditorSession::deleteSelection() {
   m_editDiagnostic.clear();
   if (!selectionEditable()) {

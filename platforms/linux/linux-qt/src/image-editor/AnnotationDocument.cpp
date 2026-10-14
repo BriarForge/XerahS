@@ -13,6 +13,11 @@
 namespace xerahs::editor {
 
 namespace {
+std::optional<QString> baselineSidecarPath(const QString &rasterPath) {
+  const qsizetype slash = rasterPath.lastIndexOf(QLatin1Char('/'));
+  const qsizetype dot = rasterPath.lastIndexOf(QLatin1Char('.'));
+  return dot > slash + 1 ? std::optional<QString>(rasterPath.left(dot) + QStringLiteral(".xann")) : std::nullopt;
+}
 
 const QStringList kKnownDocumentKeys = {
     QStringLiteral("version"),      QStringLiteral("imagePath"),  QStringLiteral("imageHash"),
@@ -365,12 +370,8 @@ SidecarPaths sidecarPaths(const QString &rasterPath, const std::function<bool(co
     return paths;
   }
   // ES-030 baseline fallback: last extension replaced by .xann.
-  const qsizetype slash = rasterPath.lastIndexOf(QLatin1Char('/'));
-  const qsizetype dot = rasterPath.lastIndexOf(QLatin1Char('.'));
-  if (dot > slash + 1) {
-    const QString baseline = rasterPath.left(dot) + QStringLiteral(".xann");
-    if (exists(baseline)) paths.readPath = baseline;
-  }
+  const auto baseline = baselineSidecarPath(rasterPath);
+  if (baseline && exists(*baseline)) paths.readPath = *baseline;
   return paths;
 }
 
@@ -379,6 +380,13 @@ SidecarSaveResult saveSidecar(SidecarStore &store, const QString &rasterPath, co
   SidecarSaveResult result;
   const QString path = sidecarPaths(rasterPath, [](const QString &) { return false; }).writePath;
   if (document.annotations.empty()) {
+    // ES-014 removes the default, while ES-030 then exposes a baseline alias.
+    // Until its archive/reconciliation policy is approved, never report an
+    // editable save complete while that older document would become visible.
+    const auto baseline = baselineSidecarPath(rasterPath);
+    if (sidecarIntent && baseline && store.exists(*baseline)) {
+      result.ok = false; result.diagnostic = diagnostic::sidecarSaveFailed; return result;
+    }
     // ES-014: an empty document removes the default sidecar only on explicit
     // intent, and never returns a sidecar path.
     if (sidecarIntent && store.exists(path) && !store.remove(path)) {

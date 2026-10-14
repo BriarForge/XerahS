@@ -78,6 +78,7 @@ private:
   bool editColor(xerahs::editor::EditorSession::ColorTarget);
   bool changeStrokeWidth(bool increase);
   bool reorderSelected(xerahs::editor::EditorSession::Order);
+  bool deleteSelected();
   void recordRecentImage(const QString &absolutePath);
   void applyCreationDefaults();
   void persistDrawingDefaults(quint64 expectedRevision);

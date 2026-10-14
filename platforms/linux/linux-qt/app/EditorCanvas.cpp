@@ -185,6 +185,18 @@ bool EditorCanvas::rectangleDialog(QWidget *parent, bool creation) {
   return changed;
 }
 
+bool EditorCanvas::deleteSelection() {
+  if (!isEnabled() || interactionActive() || !canDeleteSelection()) return false;
+  const auto state = m_session->stateId(), generation = m_documentGeneration; const auto selection = m_session->selection();
+  const QPointer<EditorCanvas> owner(this); m_annotationDialogPending = true;
+  const auto restore = qScopeGuard([owner] { if (owner) { owner->m_annotationDialogPending = false; emit owner->changed(); } });
+  emit changed(); if (!owner) return false;
+  bool changed = false; QString diagnostic;
+  if (generation != m_documentGeneration) diagnostic = "annotation-edit-stale";
+  else { changed = m_session->deleteSelection(state, selection); diagnostic = m_session->editDiagnostic(); }
+  viewport()->update(); if (!diagnostic.isEmpty()) { emit editRejected(diagnostic); if (!owner) return false; }
+  return changed;
+}
 bool EditorCanvas::reorderSelection(EditorSession::Order order) {
   if (!isEnabled() || interactionActive() || !canOrderSelection()) return false;
   const auto state = m_session->stateId(), generation = m_documentGeneration; const auto selection = m_session->selection();
@@ -565,6 +577,9 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
   // Legacy bracket gestures dispatch the same frozen operation.
   std::optional<EditorSession::Order> order;
   const auto modifiers = event->modifiers();
+  if (modifiers == Qt::NoModifier && (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace)) {
+    event->accept(); if (!event->isAutoRepeat()) deleteSelection(); return;
+  }
   if (modifiers == Qt::NoModifier) {
     switch (event->key()) {
       case Qt::Key_Home: order = EditorSession::Order::Front; break;
@@ -605,8 +620,6 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
       case Qt::Key_Right: m_session->moveSelection(step, 0); break;
       case Qt::Key_Up: m_session->moveSelection(0, -step); break;
       case Qt::Key_Down: m_session->moveSelection(0, step); break;
-      case Qt::Key_Delete:
-      case Qt::Key_Backspace: m_session->deleteSelection(); break;
       default: QAbstractScrollArea::keyPressEvent(event); return;
     }
   }

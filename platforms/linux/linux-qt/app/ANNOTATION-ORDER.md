@@ -90,11 +90,12 @@ review does not replace physical keyboard/AT/high-contrast/desktop qualification
 
 ## Next work and full scope
 
-Next route native Delete and Backspace through frozen state/selection/generation
-admission, add a focusable capture Delete control, and verify atomic protected/
-opaque group deletion, exact history, stale/owner refusal, text/modal precedence
-and real editor/capture persistence. Continue remaining annotation tools/fields
-and shared decisions in parallel with the full contract implementation sequence.
+[Guarded native deletion](ANNOTATION-DELETE.md) now supplies state/selection/
+generation admission, capture Delete and native lifetime/history/persistence
+coverage. Next guard keyboard move, Alt+arrow resize and quarter-turn R dispatch,
+retaining step/repeat semantics and exact group geometry/history, source/default
+preservation and stale/protected/owner failure evidence. Continue remaining
+annotation tools/fields and shared decisions with the full contract sequence.
 
 Ellipse schema/rasterization, clipboard assets and output-format decisions remain
 pending in ANNOTATION-TOOLS.md, ANNOTATION-TRANSFER.md and EDITOR-SAVE.md. All tools,

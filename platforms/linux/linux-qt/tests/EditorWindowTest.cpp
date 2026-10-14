@@ -215,6 +215,61 @@ private slots:
   }
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  void emptySaveWithBaselineCompanionReportsFailureWithoutDeletingEitherCompanion_data() {
+    QTest::addColumn<bool>("keepDefault"); QTest::addColumn<bool>("lateAlias"); QTest::newRow("default-and-baseline") << true << false; QTest::newRow("baseline-only") << false << false; QTest::newRow("late-baseline") << true << true;
+  }
+  void emptySaveWithBaselineCompanionReportsFailureWithoutDeletingEitherCompanion() {
+    QFETCH(bool, keepDefault); QFETCH(bool, lateAlias); QTemporaryDir dir; const auto path = dir.filePath("legacy.png"), alias = dir.filePath("legacy.xann"); QVERIFY(fixture().save(path)); auto d = *loadSource(path).document; RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {5, 5}; r.end = {20, 20}; d.annotations = {r}; const auto bytes = writeXann(d); QVERIFY(bytes); if (!lateAlias) { QFile legacy(alias); QVERIFY(legacy.open(QIODevice::WriteOnly)); QCOMPARE(legacy.write(*bytes), bytes->size()); } QVERIFY(saveEdit(path, fixture(), d).sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas->selectAnnotations({r.id}, canvas->annotationState(), canvas->documentGeneration())); trigger(*window, "deleteSelection"); QVERIFY(canvas->annotationDocument().annotations.empty()); const auto empty = serializeDocument(canvas->annotationDocument()); const auto companion = storedBytes(path + ".xann"); if (!keepDefault) QVERIFY(QFile::remove(path + ".xann"));
+    std::atomic<bool> planted{false}; if (lateAlias) { EditorSaveHooks hooks; hooks.beforePublish = [&](EditorSaveArtifact kind, const QString &) { if (kind != EditorSaveArtifact::Sidecar) return; QFile legacy(alias); planted = legacy.open(QIODevice::WriteOnly) && legacy.write(*bytes) == bytes->size(); }; window->setSaveHooks(hooks); }
+    bool warned = false; QTimer timer; connect(&timer, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return; warned = true; QVERIFY(box->text().contains("PNG saved")); box->accept(); }); timer.start(5); QSignalSpy finished(window.get(), &EditorWindow::saveFinished); trigger(*window, "saveImage"); timer.stop(); QVERIFY(warned); QCOMPARE(finished.count(), 1); QVERIFY(finished[0][0].toBool()); QVERIFY(!finished[0][1].toBool()); QVERIFY(window->windowTitle().contains(" •")); QCOMPARE(serializeDocument(canvas->annotationDocument()), empty); QCOMPARE(QImage(path), fixture()); QCOMPARE(storedBytes(alias), *bytes); if (lateAlias) QVERIFY(planted);
+    QCOMPARE(QFile::exists(path + ".xann"), keepDefault); if (keepDefault) QCOMPARE(storedBytes(path + ".xann"), companion);
+  }
+  void nativeDeletePersistsRemainingObjectsAndEmptySidecarPolicy_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"menu", "delete", "backspace", "hotkey", "all"}) QTest::newRow(mode) << QString(mode);
+  }
+  void nativeDeletePersistsRemainingObjectsAndEmptySidecarPolicy() {
+    QFETCH(QString, mode); QTemporaryDir dir; const auto path = dir.filePath("delete.png"), prefs = dir.filePath("prefs.json"); QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty());
+    QVERIFY(applyToolbarPreferences(QJsonArray{QJsonObject{{"Id", "delete-selection"}, {"Hotkey", "F6"}, {"IsVisible", false}}}, nativeEditorPreferenceRevision()).saved);
+    auto d = *loadSource(path).document; RectangleAnnotation a; a.id = QUuid::createUuid(); a.start = {5, 5}; a.end = {40, 30}; a.style = {0xFFFF0000, 0xFFFF0000, 1, 0, 1}; a.extra = {{"vendor", "keep"}}; auto b = a; b.id = QUuid::createUuid(); b.style.fillColor = b.style.strokeColor = 0xFF00FF00; const auto id = QUuid::createUuid(); const UnsupportedAnnotation opaque{id, {{"id", id.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"payload", "keep"}}}; d.annotations = {a, opaque, b}; d.embeddedImages = {{"asset", d.sourceImagePng}}; d.extra = {{"vendor", "root"}}; QVERIFY(saveEdit(path, fixture(), d).sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); window->activateWindow(); QTRY_VERIFY(window->isActiveWindow()); auto *canvas = window->findChild<EditorCanvas *>(); auto *objects = window->findChild<AnnotationObjectNavigator *>(); canvas->setFocus();
+    QVERIFY(canvas->selectAnnotations(mode == "all" ? QList<QUuid>{a.id, id, b.id} : QList<QUuid>{a.id, id}, canvas->annotationState(), canvas->documentGeneration())); const auto original = canvas->annotationDocument(); const auto selection = canvas->annotationSelection(); const auto preferences = storedBytes(prefs); const auto revision = nativeEditorPreferenceRevision();
+    QTest::keyClick(canvas, Qt::Key_Right); trigger(*window, "undo"); auto *action = window->findChild<QAction *>("deleteSelection"); QVERIFY(action && action->isEnabled() && !action->autoRepeat());
+    if (mode == "menu" || mode == "all") action->trigger(); else QTest::keyClick(canvas, mode == "hotkey" ? Qt::Key_F6 : mode == "delete" ? Qt::Key_Delete : Qt::Key_Backspace);
+    auto expected = original; expected.annotations = mode == "all" ? std::vector<Annotation>{} : std::vector<Annotation>{original.annotations[2]}; QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); QVERIFY(canvas->annotationSelection().isEmpty()); QCOMPARE(objects->model()->rowCount(), mode == "all" ? 0 : 1); QVERIFY(!action->isEnabled()); QVERIFY(!window->findChild<QAction *>("redo")->isEnabled()); QVERIFY(window->windowTitle().contains(" •"));
+    trigger(*window, "undo"); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(original)); QCOMPARE(canvas->annotationSelection(), selection); QVERIFY(action->isEnabled()); QVERIFY(!window->windowTitle().contains(" •")); QVERIFY(!window->findChild<QAction *>("undo")->isEnabled());
+    trigger(*window, "redo"); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); QVERIFY(canvas->annotationSelection().isEmpty()); trigger(*window, "saveImage"); QVERIFY(!window->windowTitle().contains(" •"));
+    QCOMPARE(QImage(path).pixelColor(20, 20), mode == "all" ? fixture().pixelColor(20, 20) : QColor(Qt::green)); const auto reopened = loadSource(path); QVERIFY(reopened.document);
+    if (mode == "all") { QVERIFY(!QFile::exists(path + ".xann")); QVERIFY(reopened.document->annotations.empty()); QCOMPARE(reopened.image, fixture()); QCOMPARE(canvas->annotationDocument().embeddedImages, original.embeddedImages); }
+    else { QCOMPARE(serializeDocument(*reopened.document).value("annotations"), serializeDocument(expected).value("annotations")); QCOMPARE(reopened.document->embeddedImages, expected.embeddedImages); QCOMPARE(reopened.document->sourceImagePng, expected.sourceImagePng); QCOMPARE(reopened.document->extra, expected.extra); }
+    QCOMPARE(storedBytes(prefs), preferences); QCOMPARE(nativeEditorPreferenceRevision(), revision);
+  }
+  void nativeDeleteRefusesStaleProtectedAndOwnerChanges_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"empty", "hidden", "locked", "opaque-lock", "stale-state", "stale-selection", "replacement", "busy-destroy", "refresh-delete-destroy", "refresh-cut-destroy", "refresh-list-destroy", "refresh-title-destroy", "refresh-status-destroy"}) QTest::newRow(mode) << QString(mode);
+  }
+  void nativeDeleteRefusesStaleProtectedAndOwnerChanges() {
+    QFETCH(QString, mode); QTemporaryDir dir; const auto path = dir.filePath("delete-refusal.png"), prefs = dir.filePath("prefs.json"); QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty()); auto d = *loadSource(path).document;
+    RectangleAnnotation a; a.id = QUuid::createUuid(); a.start = {5, 5}; a.end = {20, 20}; auto b = a; b.id = QUuid::createUuid(); b.start = {35, 20}; b.end = {45, 30}; if (mode == "hidden") b.visible = false; if (mode == "locked") b.extra = {{"locked", true}}; d.annotations = {a, b}; if (mode == "opaque-lock") d.annotations[1] = UnsupportedAnnotation{b.id, {{"id", b.id.toString(QUuid::WithoutBraces)}, {"type", "future"}, {"locked", "future-lock"}}}; QVERIFY(saveEdit(path, fixture(), d).sidecarSaved);
+    EditorSession replacement(d); replacement.select({a.id, b.id}); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); window->activateWindow(); QTRY_VERIFY(window->isActiveWindow()); auto *canvas = window->findChild<EditorCanvas *>(); auto *objects = window->findChild<AnnotationObjectNavigator *>(); canvas->setFocus(); QVERIFY(canvas->selectAnnotations({a.id}, canvas->annotationState(), canvas->documentGeneration())); QTest::keyClick(canvas, Qt::Key_Right); trigger(*window, "undo");
+    canvas->selectAnnotations(mode == "empty" ? QList<QUuid>{} : QList<QUuid>{a.id, b.id}, canvas->annotationState(), canvas->documentGeneration()); auto selected = canvas->annotationSelection(); auto expected = serializeDocument(canvas->annotationDocument()); const auto replaced = serializeDocument(replacement.document()); const auto png = storedBytes(path), companion = storedBytes(path + ".xann"), preferences = storedBytes(prefs); auto *remove = window->findChild<QAction *>("deleteSelection"); const bool protectedSelection = mode == "hidden" || mode.contains("lock"); QCOMPARE(remove->isEnabled(), !protectedSelection && mode != "empty"); bool began = false, restored = false; QJsonObject atDeath;
+    const auto destroy = [&] { atDeath = serializeDocument(canvas->annotationDocument()); window.reset(); };
+    connect(remove, &QAction::changed, [&] {
+      if (began) { if (remove->isEnabled()) restored = true; else if (restored && mode == "refresh-delete-destroy") destroy(); return; }
+      if (remove->isEnabled()) return; began = true; QVERIFY(!window->close()); QVERIFY(!objects->isEnabled());
+      if (mode == "busy-destroy") { destroy(); return; }
+      if (mode == "stale-state") { QTest::keyClick(canvas, Qt::Key_Right); expected = serializeDocument(canvas->annotationDocument()); }
+      if (mode == "stale-selection") { QVERIFY(canvas->selectAnnotations({b.id}, canvas->annotationState(), canvas->documentGeneration())); selected = canvas->annotationSelection(); }
+      if (mode == "replacement") canvas->resetDocument(replacement, fixture());
+    });
+    if (mode == "refresh-cut-destroy") { auto *cut = window->findChild<QAction *>("cutAnnotations"); connect(cut, &QAction::changed, [&] { if (began && restored && !cut->isEnabled()) destroy(); }); }
+    if (mode == "refresh-list-destroy") connect(objects->model(), &QAbstractItemModel::modelAboutToBeReset, [&] { if (began) destroy(); });
+    if (mode == "refresh-title-destroy") connect(window.get(), &QWidget::windowTitleChanged, [&] { if (began) destroy(); });
+    if (mode == "refresh-status-destroy") connect(window->statusBar(), &QStatusBar::messageChanged, [&] { if (began) destroy(); });
+    remove->trigger(); QCOMPARE(storedBytes(path), png); QCOMPARE(storedBytes(path + ".xann"), companion); QCOMPARE(storedBytes(prefs), preferences);
+    if (mode.contains("destroy")) { QVERIFY(!window); if (mode.startsWith("refresh-")) QVERIFY(atDeath.value("annotations").toArray().isEmpty()); return; }
+    QVERIFY(window); QCOMPARE(serializeDocument(canvas->annotationDocument()), mode == "replacement" ? replaced : expected); QCOMPARE(canvas->annotationSelection(), selected); QVERIFY(canvas->isEnabled() && objects->isEnabled()); QCOMPARE(window->windowTitle().contains(" •"), mode == "stale-state"); QCOMPARE(window->findChild<QAction *>("redo")->isEnabled(), mode != "stale-state");
+    if (mode.startsWith("stale-") || mode == "replacement") QVERIFY(window->statusBar()->currentMessage().contains("not applied")); QCOMPARE(replacement.undoCount(), 0);
+  }
   void nativeOrderingCommandsPersistArrayOrderAndRenderedPixels_data() {
     QTest::addColumn<QString>("name"); QTest::addColumn<QString>("indices"); QTest::addColumn<bool>("hotkey"); QTest::addColumn<bool>("blue");
     for (bool hotkey : {false, true}) {

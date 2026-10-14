@@ -59,6 +59,37 @@ private slots:
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());
   }
+  void nativeDeleteKeysRemoveOneGroupAndPreserveHistory_data() {
+    QTest::addColumn<int>("key"); for (auto key : {Qt::Key_Delete, Qt::Key_Backspace}) QTest::newRow(key == Qt::Key_Delete ? "delete" : "backspace") << int(key);
+  }
+  void nativeDeleteKeysRemoveOneGroupAndPreserveHistory() {
+    QFETCH(int, key); const auto source = image(); EditorSession prepared(document()); for (int i = 0; i < 3; ++i) QVERIFY(prepared.createRectangle({100.0 + i * 150, 100}, {160.0 + i * 150, 160}));
+    auto d = prepared.document(); const auto id = annotationId(d.annotations[1]); d.annotations[1] = UnsupportedAnnotation{id, {{"id", id.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"payload", "keep"}}}; EditorSession session(d); session.select({annotationId(d.annotations[0]), id}); const auto selection = session.selection();
+    EditorCanvas canvas(session, source); canvas.resize(900, 700); canvas.show(); canvas.activateWindow(); canvas.setFocus(); QTRY_VERIFY(canvas.isActiveWindow()); QTest::keyClick(&canvas, Qt::Key(key));
+    auto expected = d; expected.annotations = {d.annotations[2]}; QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QVERIFY(session.selection().isEmpty()); QCOMPARE(session.undoCount(), 1);
+    QKeyEvent repeat(QEvent::KeyPress, key, Qt::NoModifier, {}, true); QApplication::sendEvent(&canvas, &repeat); QCOMPARE(session.undoCount(), 1);
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(d)); QCOMPARE(session.selection(), selection); QVERIFY(!session.dirty()); QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(source, image());
+  }
+  void nativeDeleteGuardsStateSelectionGenerationAndOwner_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"apply", "defaults", "stale-state", "stale-selection", "replacement", "disabled", "begin-destroy", "reject-destroy", "finish-destroy"}) QTest::newRow(mode) << QString(mode);
+  }
+  void nativeDeleteGuardsStateSelectionGenerationAndOwner() {
+    QFETCH(QString, mode); const auto source = image(); EditorSession prepared(document()); const auto a = *prepared.createRectangle({100, 100}, {160, 160}), b = *prepared.createRectangle({300, 100}, {360, 160}); const auto d = prepared.document();
+    EditorSession session(d), replacement(d); session.select({a}); replacement.select({a}); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); auto expected = serializeDocument(d); auto selection = session.selection(); int undo = 0, redo = 1; bool intervened = false;
+    auto canvas = std::make_unique<EditorCanvas>(session, source); QSignalSpy rejected(canvas.get(), &EditorCanvas::editRejected); if (mode == "disabled") canvas->setEnabled(false); if (mode == "reject-destroy") connect(canvas.get(), &EditorCanvas::editRejected, [&] { canvas.reset(); });
+    connect(canvas.get(), &EditorCanvas::changed, [&] {
+      if (intervened) { if (canvas && !canvas->interactionActive() && mode == "finish-destroy") canvas.reset(); return; }
+      if (!canvas->interactionActive()) return; intervened = true; QVERIFY(!canvas->deleteSelection());
+      if (mode == "begin-destroy") { canvas.reset(); return; } if (mode == "replacement") canvas->resetDocument(replacement, source);
+      if (mode == "stale-selection" || mode == "reject-destroy") { session.select({b}); selection = session.selection(); }
+      if (mode == "stale-state") { QVERIFY(session.moveSelection(2, 0)); expected = serializeDocument(session.document()); undo = 1; redo = 0; }
+      if (mode == "defaults") { auto defaults = session.toolStyle(); defaults.strokeWidth = 9; QVERIFY(session.setCreationStyle(defaults)); }
+    });
+    const bool changed = canvas->deleteSelection(); const bool applied = mode == "apply" || mode == "defaults" || mode == "finish-destroy"; QCOMPARE(changed, applied); QCOMPARE(intervened, mode != "disabled");
+    if (applied) { auto deleted = d; deleted.annotations = {d.annotations[1]}; QCOMPARE(serializeDocument(session.document()), serializeDocument(deleted)); QVERIFY(session.selection().isEmpty()); QVERIFY(session.undo()); }
+    QCOMPARE(serializeDocument(session.document()), expected); QCOMPARE(session.selection(), selection); QCOMPARE(session.undoCount(), undo); QCOMPARE(session.redoCount(), redo); QCOMPARE(session.dirty(), mode == "stale-state"); QCOMPARE(session.toolStyle().strokeWidth, mode == "defaults" ? 9.0 : 4.0); QCOMPARE(replacement.undoCount(), 0); QCOMPARE(serializeDocument(replacement.document()), serializeDocument(d));
+    const bool stale = mode.startsWith("stale-") || mode == "replacement" || mode == "reject-destroy"; QCOMPARE(rejected.count(), stale ? 1 : 0); if (stale) QCOMPARE(rejected[0][0].toString(), QString("annotation-edit-stale")); if (canvas) QVERIFY(!canvas->interactionActive());
+  }
   void catalogueAndBracketOrderingKeysCommitOneGroup_data() {
     QTest::addColumn<int>("key"); QTest::addColumn<bool>("control"); QTest::addColumn<QString>("indices");
     QTest::newRow("home") << int(Qt::Key_Home) << false << QString("02413");

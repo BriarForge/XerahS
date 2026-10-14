@@ -200,6 +200,15 @@ private slots:
     QDialog modal(&harness.window); modal.setModal(true); modal.show(); QTest::keyClick(&modal, Qt::Key_F6); QCOMPARE(save.count(), 0); modal.reject();
     harness.focusCanvas(); QTest::keyClick(harness.canvas, Qt::Key_F6); QCOMPARE(save.count(), 1);
   }
+  void deleteCommandsYieldToTextModalAndBusyInput() {
+    QVERIFY(applyToolbarPreferences(QJsonArray{item("delete-selection", "F6", false)}, nativeEditorPreferenceRevision()).saved); Harness harness;
+    auto *action = harness.actions["delete-selection"]; action->setShortcut(QKeySequence(Qt::Key_Delete)); harness.controller->refresh(); QSignalSpy removed(action, &QAction::triggered);
+    harness.focusCanvas(); harness.line->setText("seed"); harness.line->setFocus(); harness.line->selectAll(); QTest::keyClick(harness.line, Qt::Key_Delete); QVERIFY(harness.line->text().isEmpty()); QCOMPARE(removed.count(), 0);
+    QTest::keyClicks(harness.line, "text"); QTest::keyClick(harness.line, Qt::Key_Backspace); QCOMPARE(harness.line->text(), QString("tex")); QTest::keyClick(harness.line, Qt::Key_F6); QCOMPARE(removed.count(), 0);
+    QDialog modal(&harness.window); modal.setModal(true); modal.show(); QTest::keyClick(&modal, Qt::Key_Delete); QTest::keyClick(&modal, Qt::Key_F6); QCOMPARE(removed.count(), 0); modal.reject();
+    harness.focusCanvas(); harness.ready = false; QTest::keyClick(harness.canvas, Qt::Key_Delete); QTest::keyClick(harness.canvas, Qt::Key_F6); QCOMPARE(removed.count(), 0);
+    harness.ready = true; QTest::keyClick(harness.canvas, Qt::Key_Delete); QCOMPARE(removed.count(), 1); QTest::keyClick(harness.canvas, Qt::Key_F6); QCOMPARE(removed.count(), 2); QVERIFY(harness.layoutIds().isEmpty());
+  }
   void customizedOrderingNavigationKeepsNativeListAndTextPrecedence() {
     QVERIFY(applyToolbarPreferences(QJsonArray{item("bring-to-front", "Home", false), item("send-to-back", "End", false), item("bring-forward", "PageUp", false), item("send-backward", "PageDown", false)}, nativeEditorPreferenceRevision()).saved);
     Harness harness; auto *list = new QListWidget(harness.window.centralWidget()); list->setMinimumHeight(120); harness.window.resize(500, 600);

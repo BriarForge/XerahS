@@ -299,8 +299,10 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   m_redo = bar->addAction(QStringLiteral("Redo"));
   m_redo->setObjectName(QStringLiteral("redo"));
   m_redo->setShortcuts({QKeySequence(Qt::CTRL | Qt::Key_Y), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Z)});
-  m_delete = bar->addAction(QStringLiteral("Delete"));
-  m_delete->setObjectName(QStringLiteral("deleteSelection"));
+  m_delete = annotationDeleteAction(*m_canvas, this, [this] { deleteSelected(); }, [this] {
+    return !m_outputPending && !m_canvasOperationPending && !m_closePending;
+  });
+  bar->addAction(m_delete);
   m_delete->setShortcut(QKeySequence(Qt::Key_Delete));
   m_rotate = bar->addAction(QStringLiteral("Rotate selection…"));
   m_rotate->setObjectName(QStringLiteral("rotateSelection"));
@@ -316,7 +318,6 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(saveAs, &QAction::triggered, this, [this] { save(true); });
   connect(m_undo, &QAction::triggered, this, [this] { m_session->undo(); refresh(); });
   connect(m_redo, &QAction::triggered, this, [this] { m_session->redo(); refresh(); });
-  connect(m_delete, &QAction::triggered, this, [this] { m_session->deleteSelection(); refresh(); });
   connect(m_rotate, &QAction::triggered, this, [this] { rotateSelected(); });
   connect(stroke, &QAction::triggered, this, [this] { editColor(EditorSession::ColorTarget::Stroke); });
   connect(fill, &QAction::triggered, this, [this] { editColor(EditorSession::ColorTarget::Fill); });
@@ -510,6 +511,19 @@ bool EditorWindow::editColor(EditorSession::ColorTarget target) {
   });
 }
 
+bool EditorWindow::deleteSelected() {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive() || !m_session->canDeleteSelection()) return false;
+  const auto state = m_session->stateId(), generation = m_canvas->documentGeneration(); const auto selection = m_session->selection();
+  const QPointer<EditorWindow> owner(this);
+  return withOutputBusy([owner, state, generation, selection] {
+    if (!owner) return false;
+    bool changed = false; QString diagnostic;
+    if (generation != owner->m_canvas->documentGeneration()) diagnostic = "annotation-edit-stale";
+    else { changed = owner->m_session->deleteSelection(state, selection); diagnostic = owner->m_session->editDiagnostic(); }
+    owner->m_annotationMessage = diagnostic.isEmpty() ? QString() : annotationEditMessage(diagnostic);
+    owner->m_annotationMessageState = owner->m_session->stateId(); owner->refresh(); return changed;
+  });
+}
 bool EditorWindow::reorderSelected(EditorSession::Order order) {
   if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive() || !m_session->canOrderSelection()) return false;
   const auto state = m_session->stateId(), generation = m_canvas->documentGeneration(); const auto selection = m_session->selection();
@@ -550,61 +564,73 @@ void EditorWindow::persistDrawingDefaults(quint64 expectedRevision) {
 
 void EditorWindow::refresh() {
   const bool ready = !m_outputPending && !m_canvas->interactionActive();
-  const QPointer<EditorWindow> orderOwner(this);
+  const QPointer<EditorWindow> owner(this);
   for (auto *action : m_orderActions) {
-    action->setEnabled(ready && !m_canvasOperationPending && !m_closePending && m_canvas->isEnabled() && m_session->canOrderSelection());
-    if (!orderOwner) return;
+    action->setEnabled(ready && !m_canvasOperationPending && !m_closePending && m_canvas->isEnabled() && m_session->canOrderSelection()); if (!owner) return;
   }
-  for (const auto *id : {"save", "save-as"})
-    m_toolbarActions.value(id)->setEnabled(ready);
-  for (const auto *id : {"increase-stroke", "decrease-stroke"}) m_toolbarActions.value(id)->setEnabled(ready && m_session->canEditStyle());
-  for (const auto *id : {"stroke-colour", "fill-colour"}) m_toolbarActions.value(id)->setEnabled(ready && m_session->canEditColor());
-  m_createRectangle->setEnabled(!m_outputPending && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive());
-  m_rectangleProperties->setEnabled(!m_outputPending && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive() && m_canvas->canEditRectangle());
+  for (const auto *id : {"save", "save-as"}) {
+    m_toolbarActions.value(id)->setEnabled(ready); if (!owner) return;
+  }
+  for (const auto *id : {"increase-stroke", "decrease-stroke"}) { m_toolbarActions.value(id)->setEnabled(ready && m_session->canEditStyle()); if (!owner) return; }
+  for (const auto *id : {"stroke-colour", "fill-colour"}) { m_toolbarActions.value(id)->setEnabled(ready && m_session->canEditColor()); if (!owner) return; }
+  m_createRectangle->setEnabled(!m_outputPending && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive()); if (!owner) return;
+  m_rectangleProperties->setEnabled(!m_outputPending && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive() && m_canvas->canEditRectangle()); if (!owner) return;
   m_rectangleProperties->setToolTip(m_canvas->canEditRectangle() ? m_rectangleProperties->statusTip() : "Select one visible, unlocked rectangle to edit its properties.");
+  if (!owner) return;
   if (m_annotationMessageState != m_session->stateId()) { m_annotationMessage.clear(); m_annotationMessageState.reset(); }
   for (auto it = m_annotationActions.cbegin(); it != m_annotationActions.cend(); ++it) {
     const bool available = it.key() == "duplicate-selection" || (it.key() == "paste" ? bool(m_annotationClipboard.read) : bool(m_annotationClipboard.publish));
-    it.value()->setEnabled(ready && available && (it.key() == "paste" || !m_session->selection().isEmpty()));
+    it.value()->setEnabled(ready && available && (it.key() == "paste" || !m_session->selection().isEmpty())); if (!owner) return;
     it.value()->setToolTip(available ? it.value()->statusTip() : "Annotation clipboard service is unavailable.");
+    if (!owner) return;
   }
   if (m_printMessageState != m_session->stateId()) { m_printMessage.clear(); m_printMessageState.reset(); }
   if (m_copyMessageState != m_session->stateId()) { m_copyMessage.clear(); m_copyMessageState.reset(); }
   if (m_saveMessageState != m_session->stateId()) { m_saveMessage.clear(); m_saveMessageState.reset(); }
   m_annotationObjects->refresh();
-  m_toolbarActions.value("focus-annotations")->setEnabled(!m_outputPending && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive());
+  if (!owner) return;
+  m_toolbarActions.value("focus-annotations")->setEnabled(!m_outputPending && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive()); if (!owner) return;
   if (m_sourceBytes != m_session->document().sourceImagePng) {
     const QImage next = QImage::fromData(m_session->document().sourceImagePng, "PNG").convertToFormat(QImage::Format_ARGB32);
     if (!next.isNull()) {
       m_sourceBytes = m_session->document().sourceImagePng;
       m_image = next;
       m_canvas->sourceChanged();
+      if (!owner) return;
     }
   }
-  m_undo->setEnabled(ready && m_session->undoCount() > 0);
-  m_redo->setEnabled(ready && m_session->redoCount() > 0);
-  m_delete->setEnabled(ready && m_session->selectionEditable());
-  m_rotate->setEnabled(ready && m_session->canRotateSelection());
-  m_delete->setToolTip(m_session->selectionEditable() ? "Delete selected annotations" : "Hidden or locked selections are protected from editing.");
+  m_undo->setEnabled(ready && m_session->undoCount() > 0); if (!owner) return;
+  m_redo->setEnabled(ready && m_session->redoCount() > 0); if (!owner) return;
+  m_delete->setEnabled(ready && m_session->canDeleteSelection()); if (!owner) return;
+  m_rotate->setEnabled(ready && m_session->canRotateSelection()); if (!owner) return;
+  m_delete->setToolTip(m_session->canDeleteSelection() ? m_delete->statusTip() : m_session->selection().isEmpty() ? "Select annotations to delete." : "Hidden or locked selections are protected from editing.");
+  if (!owner) return;
   m_rotate->setToolTip(m_session->canRotateSelection() ? "Rotate selected rectangles about their own bounds centres" : "Select visible, unlocked rectangles. Hidden, locked and unsupported objects cannot rotate.");
-  m_clearAnnotations->setEnabled(ready && !m_session->document().annotations.empty());
-  m_retrySave->setEnabled(ready && m_partialSave && m_partialSaveState == m_session->stateId());
+  if (!owner) return;
+  m_clearAnnotations->setEnabled(ready && !m_session->document().annotations.empty()); if (!owner) return;
+  m_retrySave->setEnabled(ready && m_partialSave && m_partialSaveState == m_session->stateId()); if (!owner) return;
   m_retrySave->setToolTip(m_partialSave && m_partialSaveState != m_session->stateId()
       ? "The document changed since this PNG was saved. Undo to that state before retrying its annotations, or save a new snapshot."
       : m_retrySave->statusTip());
-  m_copyAction->setEnabled(ready && bool(m_copyPorts.publish));
+  if (!owner) return;
+  m_copyAction->setEnabled(ready && bool(m_copyPorts.publish)); if (!owner) return;
   m_copyAction->setToolTip(m_copyPorts.publish ? m_copyAction->statusTip() : "Copy Image is unavailable: no clipboard service was provided.");
-  m_retryCopy->setEnabled(ready && m_copyPorts.publish && m_failedCopy && m_failedCopyState == m_session->stateId());
+  if (!owner) return;
+  m_retryCopy->setEnabled(ready && m_copyPorts.publish && m_failedCopy && m_failedCopyState == m_session->stateId()); if (!owner) return;
   m_retryCopy->setToolTip(m_failedCopy && m_failedCopyState != m_session->stateId()
       ? "The document changed. Undo to the failed snapshot before retrying it, or use Copy Image for a new snapshot." : m_retryCopy->statusTip());
+  if (!owner) return;
   const bool printAvailable = m_printPorts.configure && m_printPorts.submit;
-  m_printAction->setEnabled(ready && printAvailable);
+  m_printAction->setEnabled(ready && printAvailable); if (!owner) return;
   m_printAction->setToolTip(printAvailable ? m_printAction->statusTip() : "Print Image is unavailable: no print service was provided.");
-  m_retryPrint->setEnabled(ready && printAvailable && m_failedPrint && m_failedPrintState == m_session->stateId());
+  if (!owner) return;
+  m_retryPrint->setEnabled(ready && printAvailable && m_failedPrint && m_failedPrintState == m_session->stateId()); if (!owner) return;
   m_retryPrint->setToolTip(m_failedPrint && m_failedPrintState != m_session->stateId()
       ? "The document changed. Undo to the failed snapshot before retrying it, or use Print Image for a new snapshot." : m_retryPrint->statusTip());
+  if (!owner) return;
   setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName(),
                                                     m_session->dirty() ? QStringLiteral(" •") : QString()));
+  if (!owner) return;
   QString status = QStringLiteral("%1 × %2 · %3 annotation(s) · %4 selected · %5%")
                                .arg(m_image.width()).arg(m_image.height())
                                .arg(m_session->document().annotations.size()).arg(m_session->selection().size())
@@ -617,7 +643,12 @@ void EditorWindow::refresh() {
   if (!m_copyMessage.isEmpty()) status += " · " + m_copyMessage;
   if (!m_printMessage.isEmpty()) status += " · " + m_printMessage;
   if (!m_annotationMessage.isEmpty()) status += " · " + m_annotationMessage;
-  statusBar()->showMessage(status);
+  auto *bar = statusBar(); const bool notify = bar->currentMessage() != status;
+  // QStatusBar emits during its internal hide/show traversal. Complete that
+  // traversal before notifying observers that can destroy this window/bar.
+  { const QSignalBlocker blocker(bar); bar->showMessage(status); }
+  if (notify) emit bar->messageChanged(status);
+  if (!owner) return;
   m_canvas->viewport()->update();
 }
 

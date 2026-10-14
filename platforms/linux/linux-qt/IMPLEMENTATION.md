@@ -206,8 +206,15 @@ now exposes four editor/capture commands and canvas-local catalogue gestures,
 freezes state/selection/generation, retains group and opaque payload order, and
 yields custom navigation keys to native lists/text. Real history, PNG/.xann
 reopen and capture publication are verified; shortcut-catalogue approval remains
-pending. Next guard native Delete/Backspace dispatch and add a capture Delete
-control with atomic protected/opaque group and lifetime/history/output evidence,
+pending. [Guarded deletion](app/ANNOTATION-DELETE.md) now fences native
+state/selection/generation, adds capture Delete, retains exact group/assets history
+and verifies real output including explicit empty-sidecar removal.
+[ES-014/030 alias policy](app/EMPTY-SIDECAR-CLARIFICATION.md) now records a
+reappearance counterexample and conservative companion refusal/recovery until
+archive/reconciliation is decided. Native refresh
+and capture history guard owner teardown, including status notification after Qt
+traversal. Next guard canvas keyboard move, Alt+arrow resize and quarter-turn R
+dispatch while preserving steps/repeats/history and full native failure evidence,
 while resolving the shared Ellipse decision, alongside
 owned native output service handoffs, remaining tools and the
 format policy and all other contracted output/capture/application domains.

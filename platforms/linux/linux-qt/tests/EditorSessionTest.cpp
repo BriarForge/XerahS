@@ -64,6 +64,44 @@ class EditorSessionTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void emptySidecarSaveRefusesToExposeBaselineCompanion_data() {
+    QTest::addColumn<bool>("defaultExists"); QTest::addColumn<bool>("intent");
+    for (bool exists : {false, true}) for (bool intent : {false, true}) QTest::newRow(qPrintable(QString("%1-%2").arg(exists).arg(intent))) << exists << intent;
+  }
+  void emptySidecarSaveRefusesToExposeBaselineCompanion() {
+    QFETCH(bool, defaultExists); QFETCH(bool, intent); MapStore store; store.files["dir.with.dot/shot.xann"] = "LEGACY"; if (defaultExists) store.files["dir.with.dot/shot.png.xann"] = "DEFAULT"; const auto before = store.files;
+    const auto saved = saveSidecar(store, "dir.with.dot/shot.png", document(), intent); QCOMPARE(saved.ok, !intent); QVERIFY(!saved.sidecarPath); QCOMPARE(saved.diagnostic, intent ? std::optional<QString>(diagnostic::sidecarSaveFailed) : std::nullopt); QCOMPARE(store.files, before);
+  }
+  void guardedDeleteKeepsRemainingPayloadAssetsAndExactHistory_data() {
+    QTest::addColumn<QString>("selected"); QTest::addColumn<QString>("remaining");
+    QTest::newRow("single") << QString("1") << QString("0234");
+    QTest::newRow("mixed") << QString("02") << QString("134");
+    QTest::newRow("opaque") << QString("2") << QString("0134");
+    QTest::newRow("all") << QString("01234") << QString("");
+  }
+  void guardedDeleteKeepsRemainingPayloadAssetsAndExactHistory() {
+    QFETCH(QString, selected); QFETCH(QString, remaining); auto d = document();
+    for (int i = 0; i < 5; ++i) { auto r = rectangle(i, 1, i + 2, 5); r.extra = {{"vendor", i}}; d.annotations.push_back(r); }
+    for (size_t i : {size_t(2), size_t(4)}) { const auto id = annotationId(d.annotations[i]); d.annotations[i] = UnsupportedAnnotation{id, {{"id", id.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"zIndex", 99}, {"payload", QJsonArray{42, "keep"}}}}; }
+    d.embeddedImages = {{"asset", kOnePixelPng}}; d.extra = {{"vendor", "root"}}; EditorSession session(d); auto defaults = session.toolStyle(); defaults.strokeWidth = 7.5; defaults.fillColor = 0x40112233; QVERIFY(session.setCreationStyle(defaults));
+    session.select({annotationId(d.annotations[0])}); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); QList<QUuid> ids; for (auto c : selected) ids.append(annotationId(d.annotations[c.digitValue()])); session.select(ids); const auto selection = session.selection();
+    QVERIFY(session.canDeleteSelection()); QVERIFY(session.deleteSelection(session.stateId(), selection)); QVERIFY(session.editDiagnostic().isEmpty()); auto expected = d; expected.annotations.clear(); for (auto c : remaining) expected.annotations.push_back(d.annotations[c.digitValue()]);
+    QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QVERIFY(session.selection().isEmpty()); QVERIFY(!session.canDeleteSelection()); QCOMPARE(session.undoCount(), 1); QCOMPARE(session.redoCount(), 0); QVERIFY(session.dirty());
+    QCOMPARE(session.toolStyle().strokeWidth, defaults.strokeWidth); QCOMPARE(session.toolStyle().fillColor, defaults.fillColor);
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(d)); QCOMPARE(session.selection(), selection); QVERIFY(!session.dirty());
+    QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QVERIFY(session.selection().isEmpty()); QCOMPARE(session.document().embeddedImages, d.embeddedImages);
+  }
+  void guardedDeleteRefusalPreservesCheckpointRedoAndSelection_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"empty", "hidden", "locked", "opaque-hidden", "opaque-lock", "stale-state", "stale-selection"}) QTest::newRow(mode) << QString(mode);
+  }
+  void guardedDeleteRefusalPreservesCheckpointRedoAndSelection() {
+    QFETCH(QString, mode); auto d = document(); auto a = rectangle(1, 1, 3, 3), b = rectangle(4, 4, 8, 8); if (mode == "hidden") b.visible = false; if (mode == "locked") b.extra = {{"locked", true}}; d.annotations = {a, b};
+    if (mode.startsWith("opaque-")) d.annotations[1] = UnsupportedAnnotation{b.id, {{"id", b.id.toString(QUuid::WithoutBraces)}, {"type", "future"}, {mode == "opaque-hidden" ? "visible" : "locked", mode == "opaque-hidden" ? QJsonValue(false) : QJsonValue("future-lock")}}};
+    EditorSession session(d); session.select({a.id}); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); session.select(mode == "empty" ? QList<QUuid>{} : QList<QUuid>{a.id, b.id});
+    auto state = session.stateId(); const auto selected = session.selection(); if (mode == "stale-state") ++state; if (mode == "stale-selection") session.select({a.id}); const auto current = session.selection();
+    QVERIFY(!session.deleteSelection(state, selected)); QCOMPARE(session.editDiagnostic(), mode.startsWith("stale-") ? QString("annotation-edit-stale") : mode == "empty" ? QString{} : QString("annotation-selection-protected"));
+    QCOMPARE(serializeDocument(session.document()), serializeDocument(d)); QCOMPARE(session.selection(), current); QCOMPARE(session.undoCount(), 0); QCOMPARE(session.redoCount(), 1); QVERIFY(!session.dirty());
+  }
   void guardedOrderingPreservesGroupPayloadAndHistory_data() {
     QTest::addColumn<int>("order"); QTest::addColumn<QString>("selected"); QTest::addColumn<QString>("indices");
     // Independently declared array orders, including an opaque-only selection.

@@ -39,6 +39,8 @@ public:
   bool changeStrokeWidth(bool increase);
   bool canOrderSelection() const { return m_session->canOrderSelection(); }
   bool reorderSelection(xerahs::editor::EditorSession::Order);
+  bool canDeleteSelection() const { return m_session->canDeleteSelection(); }
+  bool deleteSelection();
   // Capture uses the same owned native dialog and Core edit as the main editor.
   bool editRectangleProperties(QWidget *parent);
   bool createRectangle(QWidget *parent);

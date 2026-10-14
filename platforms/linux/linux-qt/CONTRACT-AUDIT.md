@@ -15,7 +15,7 @@ vector file yet.
 Neither that vector count nor a green Ubuntu CI run proves the full contract.
 
 The numbered desktop-spec inventory contains 324 requirements across 15
-packages. Current trace files label 81 as implemented and 67 as partial; 175 lack
+packages. Current trace files label 80 as implemented and 68 as partial; 175 lack
 implemented/partial labels in those seven traces, and CORE-029 records the
 declared mobile scope outside Linux desktop. These are unweighted trace labels,
 not a production-readiness score. Additional partial native candidate maps are
@@ -189,7 +189,9 @@ clipboard/assets, target/resource/privacy/security/a11y/human gates remain Requi
    capture controls keep defaults local with a visible numeric value. Four guarded
    ordering commands now expose native editor/capture controls and canvas-local
    candidate catalogue gestures, retaining group order and native text/list
-   precedence. Next guard Delete/Backspace and add a capture Delete control,
+   precedence. Guarded deletion now adds capture Delete and fences native state/
+   selection/generation with exact group history, output and teardown evidence.
+   Next guard keyboard move/resize/quarter-turn dispatch,
    while resolving Ellipse schema/rasterization clarification
    EA-005-LINUX-2026-10-14 in ANNOTATION-TOOLS.md, full annotation/asset clipboard
    under EA-016/017 and native output
@@ -317,6 +319,39 @@ are reported with the checkpoint. The native registry has 52 commands with
 fourteen visible defaults unchanged. Trace statuses/dispositions, full scope and
 native/resource/a11y/privacy/security/parity/human/release gates remain unchanged
 and Required; the shortcut catalogue still awaits product-owner approval.
-Next guard native Delete/Backspace state/selection/generation dispatch and add a
-focusable capture Delete control with protected/opaque group history, stale/owner
-refusal, text/modal precedence and actual editor/capture persistence evidence.
+The subsequent [deletion evidence](app/ANNOTATION-DELETE.md) supplies native
+state/selection/generation guards, capture Delete and group/history/persistence/
+teardown coverage; full scope and approvals remain Required.
+
+
+The [deletion evidence](app/ANNOTATION-DELETE.md) and candidate machine map index
+single/mixed/opaque/all deletion, whole-group protection, exact Undo/Redo and
+reachable assets/defaults. Native admission freezes state/selection/generation
+before busy/pending notifications. Empty/protected/stale/reentrant/owner refusal
+keeps current state and files; editor menu/keys/custom hotkeys and capture native
+Button/input/list/history/publication are exercised. Actual remaining PNG/.xann
+reopen retains source/fields/assets; all-object explicit save follows ES-014
+removing the stale companion while retaining raster and owned session/receipt.
+Weak refresh guards contain action/model/title/status and capture history owner
+teardown. The deliberate status callback exposed a QStatusBar traversal crash;
+post-traversal notification fixes the tested path on Qt 6.11.2 and 6.4.2. Only
+private fixtures were involved; system config and real user data remain untouched.
+Verification passed 44 local CTest targets in 45.56 seconds, 114 unchanged vectors
+and 32 tooling tests, plus nine affected Qt 6.4.2 targets in 23.49 seconds.
+Lint/backlog/effective instructions and exact pushed Ubuntu CI are reported with
+the checkpoint. Registry/default layout and requirement scope/dispositions remain
+unchanged. ES-014 is now honestly labelled partial because the baseline-alias
+archive/reconciliation policy is unresolved. Full scope, all native/resource/a11y/privacy/security/parity/human/
+release gates and draft shortcut-catalogue approval remain Required.
+Next guard keyboard move, Alt+arrow resize and quarter-turn R dispatch with the
+existing one/ten-pixel steps and repeat semantics, exact batch geometry/history,
+source/default preservation and native stale/protected/owner failure evidence.
+
+The new [ES-014/030 clarification](app/EMPTY-SIDECAR-CLARIFICATION.md) records
+one deleted annotation reappearing from an intact baseline alias after a formerly
+successful default-companion removal. Candidate Core/native persistence now
+reports sidecar-save-failed for known or late aliases, preserving companions,
+raster and owned zero-annotation state with dirty/retry evidence. Archive or
+reconciliation with confirmation/rollback requires the pending product-owner
+policy and full privacy/security/compatibility review; no policy is inferred from
+continuation. Other contracted work continues independently.

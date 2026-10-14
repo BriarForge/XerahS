@@ -13,6 +13,7 @@ class EditorCanvas;
 QMap<QString, QAction *> annotationToolActions(EditorCanvas &, QObject *owner, bool includeCrop = true);
 QMap<QString, QAction *> annotationOrderActions(EditorCanvas &, QObject *owner,
     std::function<void(xerahs::editor::EditorSession::Order)> dispatch = {}, std::function<bool()> ready = {});
+QAction *annotationDeleteAction(EditorCanvas &, QObject *owner, std::function<void()> dispatch = {}, std::function<bool()> ready = {});
 QLabel *annotationToolInstructions(EditorCanvas &, QWidget *parent);
 QString annotationEditMessage(const QString &diagnostic);
 } // namespace xerahs::app

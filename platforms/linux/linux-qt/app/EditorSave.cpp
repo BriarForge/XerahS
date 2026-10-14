@@ -136,7 +136,13 @@ class NativeSidecarStore final : public SidecarStore {
 public:
   NativeSidecarStore(Directory &directory, const EditorSaveReceipt &receipt, const EditorSaveControl &control, const EditorSaveHooks &hooks)
       : directory(directory), receipt(receipt), control(control), hooks(hooks), name(QFile::encodeName(QFileInfo(receipt.path).fileName() + ".xann")) {}
-  bool exists(const QString &) override { return destination(directory.fd.value, name).kind != EditorDestinationKind::Missing; }
+  bool exists(const QString &path) override {
+    // Core queries the default and baseline sibling. Keep every lookup bound
+    // to this receipt's opened directory; no legacy companion is modified.
+    const QFileInfo candidate(path), raster(receipt.path);
+    if (candidate.absolutePath() != raster.absolutePath()) return true;
+    return destination(directory.fd.value, QFile::encodeName(candidate.fileName())).kind != EditorDestinationKind::Missing;
+  }
   bool write(const QString &path, const QByteArray &bytes) override {
     if (bytes.size() > maximumBytes || cancelled(control) || !supportedPreviousSidecar(directory, name, receipt.previousSidecar, control)) return false;
     Temporary temporary(directory); QFile output;
@@ -149,6 +155,9 @@ public:
   bool remove(const QString &path) override {
     if (!supportedPreviousSidecar(directory, name, receipt.previousSidecar, control)) return false;
     if (hooks.beforePublish) hooks.beforePublish(EditorSaveArtifact::Sidecar, path);
+    // Recheck after publication observers: removing the default must not
+    // expose a baseline companion that appeared since Core admission.
+    if (sidecarPaths(receipt.path, [this, &path](const QString &candidate) { return candidate != path && exists(candidate); }).readPath) return false;
     if (cancelled(control) || !boundRaster(directory, receipt, control, false) || !directory.current()) return false;
     const auto current = destination(directory.fd.value, name);
     if (current.kind == EditorDestinationKind::Missing) return true;
