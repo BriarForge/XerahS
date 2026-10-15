@@ -22,6 +22,8 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QMenu>
+#include <QJsonDocument>
+#include <QUuid>
 #include <QMessageBox>
 #include <QPainter>
 #include <QPainterPath>
@@ -37,6 +39,10 @@ using xerahs::app::CaptureController;
 
 namespace {
 QString activationFailureMessage(const QString &diagnostic) {
+  if (diagnostic == u"usage-invalid") return QStringLiteral("Choose one operation and use --help for supported arguments.");
+  if (diagnostic == u"workflow-id-invalid") return QStringLiteral("Use a full workflow UUID from Capture workflows.");
+  if (diagnostic == u"workflow-unavailable") return QStringLiteral("The saved workflow is missing or unavailable. Open Capture workflows to review its ID, actions and settings.");
+  if (diagnostic == u"presentation-required") return QStringLiteral("This operation needs the graphical XerahS application for capture, consent or editing. No operation was started.");
   if (diagnostic == u"activation-busy") return QStringLiteral("XerahS is busy. Try again after the current capture or dialog finishes.");
   if (diagnostic == u"instance-unavailable") return QStringLiteral("The running XerahS instance is not ready. Try again after startup finishes.");
   if (diagnostic == u"activation-delivery-unknown") return QStringLiteral("XerahS did not acknowledge the request. Check the running instance before retrying.");
@@ -45,6 +51,15 @@ QString activationFailureMessage(const QString &diagnostic) {
   if (diagnostic == u"activation-peer-denied") return QStringLiteral("XerahS could not authenticate the running instance. Check your per-user runtime environment.");
   if (diagnostic == u"activation-invalid" || diagnostic == u"activation-version-unsupported") return QStringLiteral("The activation request is invalid or incompatible. Check the command and installed XerahS version.");
   return QStringLiteral("XerahS could not accept the activation. Check the running instance and try again.");
+}
+
+void reportLaunch(const xerahs::shell::ActivationRequest &request, bool json, const QString &delivery = {}, const QString &diagnostic = {}) {
+  if (json) {
+    const auto bytes = QJsonDocument(xerahs::shell::activationLaunchResult(request, delivery, diagnostic)).toJson(QJsonDocument::Compact);
+    std::fwrite(bytes.constData(), 1, size_t(bytes.size()), stdout); std::fputc('\n', stdout); std::fflush(stdout);
+  }
+  if (!diagnostic.isEmpty()) std::fprintf(stderr, "xerahs: %s: %s\n", qPrintable(diagnostic), qPrintable(activationFailureMessage(
+      request.action == xerahs::shell::ActivationAction::RunWorkflow && diagnostic == "activation-unavailable" ? QStringLiteral("workflow-unavailable") : diagnostic)));
 }
 
 // Monochrome capture-frame mark, drawn so no asset pipeline is needed yet.
@@ -78,6 +93,40 @@ QIcon appIcon() {
 }  // namespace
 
 int main(int argc, char *argv[]) {
+  using namespace xerahs::shell;
+  QCommandLineParser parser;
+  parser.setApplicationDescription(QStringLiteral("XerahS screen capture. Capture requests require the graphical application; acknowledgement is not output completion."));
+  parser.addHelpOption();
+  const QCommandLineOption captureRegion(QStringLiteral("capture-region"), QStringLiteral("Start the saved default region workflow (in the running instance if any)."));
+  const QCommandLineOption edit(QStringLiteral("edit"), QStringLiteral("Open an image in the editor."), QStringLiteral("file"));
+  const QCommandLineOption runWorkflow(QStringLiteral("run-workflow"), QStringLiteral("Start a saved region workflow by full UUID from Capture workflows."), QStringLiteral("id"));
+  const QCommandLineOption jsonOption(QStringLiteral("json"), QStringLiteral("Print one versioned delivery acknowledgement; this is not capture/output completion."));
+  const QCommandLineOption nonInteractive(QStringLiteral("non-interactive"), QStringLiteral("Refuse operations requiring graphical interaction without starting them."));
+  parser.addOptions({captureRegion, edit, runWorkflow, jsonOption, nonInteractive});
+  const auto requested = [&]() -> ParsedActivation {
+    if (!parser.positionalArguments().isEmpty() || int(parser.isSet(edit)) + int(parser.isSet(captureRegion)) + int(parser.isSet(runWorkflow)) > 1) return {{}, "usage-invalid"};
+    if (parser.isSet(runWorkflow)) {
+      const QUuid id(parser.value(runWorkflow)); if (id.isNull()) return {{}, "workflow-id-invalid"};
+      return {makeActivationRequest(ActivationAction::RunWorkflow, {}, id.toString(QUuid::WithoutBraces)), {}};
+    }
+    return {makeActivationRequest(parser.isSet(edit) ? ActivationAction::EditImage : parser.isSet(captureRegion) ? ActivationAction::CaptureRegion : ActivationAction::Activate,
+        parser.isSet(edit) ? xerahs::app::absoluteImagePath(parser.value(edit)) : QString{}), {}};
+  };
+  // A headless refusal must not instantiate QApplication, connect to a display,
+  // elect an instance, initialize preferences or ask a portal for consent.
+  QStringList rawArguments; for (int i = 0; i < argc; ++i) rawArguments.append(QString::fromLocal8Bit(argv[i]));
+  const bool earlyCommand = rawArguments.contains("--json") || rawArguments.contains("--non-interactive") ||
+      std::any_of(rawArguments.cbegin(), rawArguments.cend(), [](const QString &argument) { return argument == "--run-workflow" || argument.startsWith("--run-workflow="); });
+  ParsedActivation launch;
+  if (earlyCommand) {
+    if (!parser.parse(rawArguments)) { reportLaunch(makeActivationRequest(ActivationAction::Activate), rawArguments.contains("--json"), {}, "usage-invalid"); return 1; }
+    if (parser.isSet("help") || parser.isSet("help-all")) {
+      QCoreApplication cli(argc, argv); cli.setApplicationName("XerahS"); std::fputs(qPrintable(parser.helpText()), stdout); return 0;
+    }
+    launch = requested();
+    if (!launch.request) { reportLaunch(makeActivationRequest(ActivationAction::Activate), parser.isSet(jsonOption), {}, launch.diagnostic); return 1; }
+    if (parser.isSet(nonInteractive)) { reportLaunch(*launch.request, parser.isSet(jsonOption), {}, "presentation-required"); return 1; }
+  }
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("XerahS"));
   QApplication::setApplicationDisplayName(QStringLiteral("XerahS"));
@@ -86,26 +135,22 @@ int main(int argc, char *argv[]) {
   QApplication::setQuitOnLastWindowClosed(false);
   QApplication::setWindowIcon(appIcon());
 
-  QCommandLineParser parser;
-  parser.setApplicationDescription(QStringLiteral("XerahS screen capture"));
-  parser.addHelpOption();
-  const QCommandLineOption captureRegion(QStringLiteral("capture-region"),
-                                         QStringLiteral("Start a region capture (in the running instance if any)."));
-  parser.addOption(captureRegion);
-  const QCommandLineOption edit(QStringLiteral("edit"), QStringLiteral("Open an image in the editor."),
-                                QStringLiteral("file"));
-  parser.addOption(edit);
-  parser.process(app);
-  using namespace xerahs::shell;
-  const auto request = makeActivationRequest(parser.isSet(edit) ? ActivationAction::EditImage :
-      parser.isSet(captureRegion) ? ActivationAction::CaptureRegion : ActivationAction::Activate,
-      parser.isSet(edit) ? xerahs::app::absoluteImagePath(parser.value(edit)) : QString{});
+  if (!earlyCommand && !parser.parse(app.arguments())) { reportLaunch(makeActivationRequest(ActivationAction::Activate), app.arguments().contains("--json"), {}, "usage-invalid"); return 1; }
+  if (parser.isSet("help") || parser.isSet("help-all")) parser.showHelp();
+  const bool json = parser.isSet(jsonOption); if (!earlyCommand) launch = requested();
+  if (!launch.request) { reportLaunch(makeActivationRequest(ActivationAction::Activate), json, {}, launch.diagnostic); return 1; }
+  const auto request = *launch.request;
   xerahs::app::NativeInstance instance(xerahs::app::NativeInstance::runtimeDirectory());
   const auto started = instance.start(request);
-  if (started.kind == xerahs::app::InstanceStart::Kind::Forwarded) return 0;
+  if (started.kind == xerahs::app::InstanceStart::Kind::Forwarded) { reportLaunch(request, json, "running-instance"); return 0; }
   if (started.kind != xerahs::app::InstanceStart::Kind::Primary) {
-    std::fprintf(stderr, "xerahs: %s: %s\n", qPrintable(started.diagnostic), qPrintable(activationFailureMessage(started.diagnostic)));
+    reportLaunch(request, json, {}, started.diagnostic);
     return started.kind == xerahs::app::InstanceStart::Kind::Busy ? 2 : 1;
+  }
+
+  xerahs::app::NativeCaptureWorkflows workflows(xerahs::app::NativeCaptureWorkflows::defaultPath());
+  if (request.action == ActivationAction::RunWorkflow && !workflows.resolve(QUuid(request.workflowId)).workflow) {
+    reportLaunch(request, json, {}, "activation-unavailable"); return 1;
   }
 
   // Initialize only in the winning native instance, before any editor opens.
@@ -122,7 +167,6 @@ int main(int argc, char *argv[]) {
   const QString pictures = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
   const auto journal = std::make_shared<xerahs::app::NativePipelineJournal>(xerahs::app::NativePipelineJournal::defaultDirectory());
   CaptureController capture(QDir(pictures.isEmpty() ? QDir::homePath() : pictures).filePath(QStringLiteral("XerahS")), nullptr, {}, {}, {}, journal);
-  xerahs::app::NativeCaptureWorkflows workflows(xerahs::app::NativeCaptureWorkflows::defaultPath());
   capture.setDefaultWorkflowResolver([&workflows] { return workflows.resolve(); });
   const auto refreshCaptureStyle = [&capture] { capture.setAnnotationStyle(xerahs::editor::drawingStyleFromPreferences(xerahs::app::nativeEditorPreferences())); };
   refreshCaptureStyle();
@@ -154,12 +198,6 @@ int main(int argc, char *argv[]) {
   // Leave a focus-capable native window behind the chooser. In particular,
   // Wayland clipboard dispatch must not follow closure of our last window.
   capture.setActionSelectionParent(&home);
-  QObject::connect(configureWorkflows, &QAction::triggered, &home, [&] {
-    const auto selected = xerahs::app::manageCaptureWorkflows(workflows, &home, [&capture] { return !capture.busy(); });
-    if (!selected) return;
-    if (capture.busy() || QApplication::activeModalWidget()) { home.showResult("Capture workflow", "XerahS is busy. Run the workflow after the current operation finishes.", false); return; }
-    home.activate(); capture.captureRegionWorkflow(*selected);
-  });
   const auto refreshWorkflow = [&] {
     const auto &catalog = workflows.store().current().catalog; QString label;
     if (catalog) for (const auto &w : catalog->entries) if (w.id == catalog->defaultId) label = w.name;
@@ -228,24 +266,32 @@ int main(int argc, char *argv[]) {
   });
   ActivationDispatcher dispatcher({[&home] { home.activate(); }, [&capture] { capture.captureRegion(); },
       [](const QString &path) { if (auto *window = xerahs::app::EditorWindow::open(path)) window->show(); },
-      [&capture] { return capture.busy(); }, [] { return QApplication::activeModalWidget() != nullptr; }});
+      [&capture] { return capture.busy(); }, [] { return QApplication::activeModalWidget() != nullptr; },
+      [&workflows, &capture, &home](const QString &id) -> std::function<void()> {
+        const auto choice = workflows.resolve(QUuid(id)); if (!choice.workflow) return {};
+        return [&capture, &home, snapshot = *choice.workflow] { home.activate(); capture.captureRegionWorkflow(snapshot); };
+      }, [&capture] { capture.captureRegionWithActions(); }});
   instance.setAdmission([&dispatcher](const ActivationRequest &incoming) { return dispatcher.admit(incoming); });
   const auto dispatch = [&dispatcher, &home](const ActivationRequest &incoming) {
     const auto diagnostic = dispatcher.dispatch(incoming);
     if (!diagnostic.isEmpty()) { home.showResult(QStringLiteral("Activation"), activationFailureMessage(diagnostic), false); home.activate(); }
   };
   QObject::connect(&instance, &xerahs::app::NativeInstance::activationRequested, &home, dispatch);
-  const auto invokeLocal = [&dispatcher, &dispatch, &home, &capture](ActivationAction action, const QString &path = QString{}, bool chooseActions = false) {
-    const auto local = makeActivationRequest(action, path);
+  const auto invokeLocal = [&dispatcher, &dispatch, &home](ActivationAction action, const QString &path = QString{}, bool chooseActions = false, const QString &workflowId = QString{}) {
+    const auto local = makeActivationRequest(chooseActions ? ActivationAction::CaptureRegionChooseActions : action, path, workflowId);
     const auto admitted = dispatcher.admit(local);
     if (admitted == ActivationReplyState::Accepted) {
-      if (chooseActions) capture.captureRegionWithActions(); else dispatch(local);
+      dispatch(local);
     }
     else {
       home.showResult(QStringLiteral("Activation"), activationFailureMessage(admitted == ActivationReplyState::Busy ? QStringLiteral("activation-busy") : QStringLiteral("activation-unavailable")), false);
       home.activate();
     }
   };
+  QObject::connect(configureWorkflows, &QAction::triggered, &home, [&] {
+    const auto selected = xerahs::app::manageCaptureWorkflows(workflows, &home, [&capture] { return !capture.busy(); });
+    if (selected) invokeLocal(ActivationAction::RunWorkflow, {}, false, selected->id.toString(QUuid::WithoutBraces));
+  });
   QObject::connect(region, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureRegion); });
   QObject::connect(chooseCapture, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureRegion, {}, true); });
   QObject::connect(openImage, &QAction::triggered, &home, [&invokeLocal, &capture, &home] {
@@ -263,6 +309,11 @@ int main(int argc, char *argv[]) {
   }
   app.setQuitOnLastWindowClosed(!trayAvailable);
   tray.show();
-  if (dispatcher.admit(request) == ActivationReplyState::Accepted) dispatch(request);
+  const auto admitted = dispatcher.admit(request);
+  if (admitted != ActivationReplyState::Accepted) {
+    reportLaunch(request, json, {}, admitted == ActivationReplyState::Busy ? "activation-busy" : "activation-unavailable");
+    instance.setAdmission({}); return admitted == ActivationReplyState::Busy ? 2 : 1;
+  }
+  reportLaunch(request, json, "started"); dispatch(request);
   const int result = app.exec(); instance.setAdmission({}); return result;
 }

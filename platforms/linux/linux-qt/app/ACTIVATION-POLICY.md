@@ -41,13 +41,21 @@ at most 4,096 bytes. Intake and delivery have a two-second deadline. At most
 The native application and tests use the same Qt Core validator and dispatcher.
 
 Requests have integer version `1`, a canonical non-null UUID `id` and one
-`action`: `activate`, `capture-region` or `edit-image`. Only `edit-image` accepts
+`action`: `activate`, `capture-region`, `edit-image`, `run-workflow` or
+`capture-region-choose-actions`. Only `edit-image` accepts
 a `path`, which must be absolute and contain no NUL. Unicode, whitespace and
 newlines in valid filenames are preserved. Unknown fields/operations, duplicate
 JSON keys (including escaped duplicates), invalid types, malformed UTF-8 and
 oversized input are rejected. A caller cannot assert consent through payload
 fields. A valid file path is an opening request; it does not bypass the editor's
 normal source validation and native consent boundaries.
+
+`run-workflow` requires only a canonical non-null `workflow_id` UUID. Its saved
+definition is validated and frozen by Core resolution during admission; requests
+cannot override actions, output settings or consent. Choose-actions uses a
+distinct reserved operation and releases it through ordinary dispatch. Older
+instances reject the new action names. See [workflow CLI](WORKFLOW-CLI.md) for
+flags, exit codes, safe versioned delivery JSON and pre-GUI headless refusal.
 
 The primary returns `accepted`, `busy` or `rejected`, with the UUID and a stable,
 value-free diagnostic for unsuccessful admission. Accepted means delivered and

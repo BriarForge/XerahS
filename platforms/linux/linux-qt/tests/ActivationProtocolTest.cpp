@@ -13,12 +13,14 @@ class ActivationProtocolTest final : public QObject {
   Q_OBJECT
 private slots:
   void validRequestsRetainExactPathsAndIndependentOperationNames() {
-    for (const auto &name : {QString("activate"), QString("capture-region"), QString("edit-image")}) {
+    for (const auto &name : {QString("activate"), QString("capture-region"), QString("edit-image"), QString("run-workflow"), QString("capture-region-choose-actions")}) {
       QJsonObject input{{"version", 1}, {"id", id}, {"action", name}};
       const QString path = QString::fromUtf8("/tmp/ λ file\nwith a newline .png ");
       if (name == u"edit-image") input.insert("path", path);
+      if (name == u"run-workflow") input.insert("workflow_id", id);
       const auto parsed = parseActivation(json(input)); QVERIFY(parsed.request); QVERIFY(parsed.diagnostic.isEmpty());
       QCOMPARE(parsed.request->id, id); QCOMPARE(parsed.request->path, name == u"edit-image" ? path : QString{});
+      QCOMPARE(parsed.request->workflowId, name == u"run-workflow" ? id : QString{});
       QCOMPARE(QJsonDocument::fromJson(serializeActivation(*parsed.request)).object(), input);
     }
     const auto generated = makeActivationRequest(ActivationAction::Activate); QVERIFY(generated.id != makeActivationRequest(ActivationAction::Activate).id);
@@ -112,6 +114,54 @@ private slots:
     QCOMPARE(dispatcher.dispatch(edit), QString("activation-handler-failed")); QCOMPARE(calls, 1);
     QCOMPARE(dispatcher.admit(edit), ActivationReplyState::Accepted);
     QCOMPARE(dispatcher.dispatch(edit), QString("activation-handler-failed")); QCOMPARE(calls, 2);
+  }
+  void workflowRequestsCannotCarryDefinitionsOrAmbiguousIds() {
+    const QJsonObject base{{"version", 1}, {"id", id}, {"action", "run-workflow"}, {"workflow_id", id}};
+    for (const auto &value : {QJsonValue(), QJsonValue(1), QJsonValue("name"), QJsonValue(id.left(8)), QJsonValue(id.toUpper()), QJsonValue("00000000-0000-0000-0000-000000000000")}) {
+      auto bad = base; bad.insert("workflow_id", value); QVERIFY(!parseActivation(json(bad)).request);
+    }
+    auto missing = base; missing.remove("workflow_id"); QVERIFY(!parseActivation(json(missing)).request);
+    for (const auto *field : {"path", "actions", "output", "approved", "workflowId"}) {
+      auto bad = base; bad.insert(field, "private fixture payload"); QVERIFY(!parseActivation(json(bad)).request);
+    }
+    auto other = base; other.insert("action", "capture-region"); QVERIFY(!parseActivation(json(other)).request);
+    auto duplicate = json(base); duplicate.chop(1); duplicate += ",\"workflow_id\":\"" + id.toUtf8() + "\"}"; QVERIFY(!parseActivation(duplicate).request);
+  }
+  void deliveryJsonDoesNotExposePathsDefinitionsOrUnknownErrors() {
+    auto request = makeActivationRequest(ActivationAction::RunWorkflow, "/private/path", id);
+    auto result = activationLaunchResult(request, "running-instance"); QCOMPARE(result.value("schemaVersion"), QJsonValue(1)); QCOMPARE(result.value("workflowId"), QJsonValue(id)); QCOMPARE(result.value("state"), QJsonValue("accepted"));
+    QVERIFY(!json(result).contains("private")); QVERIFY(!result.contains("outputs"));
+    result = activationLaunchResult(request, {}, "private secret diagnostic"); QVERIFY(!result.value("ok").toBool()); QCOMPARE(result.value("error").toObject().value("code"), QJsonValue("activation-handler-failed")); QVERIFY(!json(result).contains("secret"));
+    result = activationLaunchResult(request, "private delivery"); QVERIFY(!json(result).contains("private delivery"));
+    request.id = "private correlation"; request.workflowId = "private workflow"; QVERIFY(!json(activationLaunchResult(request, {}, "workflow-unavailable")).contains("private"));
+  }
+  void workflowAdmissionFreezesSettingsAndReservesBeforePreparation() {
+    QString setting = "original", used; bool busy = false, modal = false, nestedRefused = false; int prepared = 0, calls = 0, chooser = 0;
+    ActivationDispatcher *active = nullptr; ActivationOperations operations;
+    operations.captureRegion = [] {}; operations.captureBusy = [&] { return busy; }; operations.interactionBlocked = [&] { return modal; };
+    operations.captureRegionWithActions = [&] { ++chooser; };
+    operations.prepareWorkflow = [&](const QString &workflow) -> std::function<void()> {
+      ++prepared; if (workflow != id) return {};
+      const auto nested = makeActivationRequest(ActivationAction::CaptureRegion); nestedRefused = active->admit(nested) == ActivationReplyState::Busy;
+      return [&, snapshot = setting] { ++calls; used = snapshot; };
+    };
+    ActivationDispatcher dispatcher(operations); active = &dispatcher;
+    const auto request = makeActivationRequest(ActivationAction::RunWorkflow, {}, id);
+    busy = true; QCOMPARE(dispatcher.admit(request), ActivationReplyState::Busy); QCOMPARE(prepared, 0); busy = false;
+    QCOMPARE(dispatcher.admit(request), ActivationReplyState::Accepted); QVERIFY(nestedRefused); setting = "later";
+    QCOMPARE(dispatcher.admit(request), ActivationReplyState::Busy); auto changed = request; changed.workflowId = makeActivationRequest(ActivationAction::Activate).id;
+    QCOMPARE(dispatcher.dispatch(changed), QString("activation-invalid")); QVERIFY(dispatcher.dispatch(request).isEmpty()); QCOMPARE(calls, 1); QCOMPARE(used, QString("original"));
+    QCOMPARE(dispatcher.dispatch(request), QString("activation-invalid")); QCOMPARE(calls, 1);
+    QCOMPARE(dispatcher.admit(request), ActivationReplyState::Accepted); modal = true; QCOMPARE(dispatcher.dispatch(request), QString("activation-busy")); QCOMPARE(calls, 1); modal = false;
+    const auto choose = makeActivationRequest(ActivationAction::CaptureRegionChooseActions); QCOMPARE(dispatcher.admit(choose), ActivationReplyState::Accepted); QVERIFY(dispatcher.dispatch(choose).isEmpty()); QCOMPARE(chooser, 1);
+    QCOMPARE(dispatcher.admit(request), ActivationReplyState::Accepted); QVERIFY(dispatcher.dispatch(request).isEmpty()); QCOMPARE(used, QString("later"));
+  }
+  void rejectedOrThrowingWorkflowPreparationDoesNotLeaveAReservation() {
+    int calls = 0; bool throwing = false; ActivationOperations operations;
+    operations.prepareWorkflow = [&](const QString &) -> std::function<void()> { ++calls; if (throwing) throw std::runtime_error("private"); return {}; };
+    ActivationDispatcher dispatcher(operations); const auto request = makeActivationRequest(ActivationAction::RunWorkflow, {}, id);
+    QCOMPARE(dispatcher.admit(request), ActivationReplyState::Rejected); throwing = true; QCOMPARE(dispatcher.admit(request), ActivationReplyState::Rejected); throwing = false;
+    QCOMPARE(dispatcher.admit(request), ActivationReplyState::Rejected); QCOMPARE(calls, 3); QCOMPARE(dispatcher.dispatch(request), QString("activation-invalid"));
   }
 };
 QTEST_APPLESS_MAIN(ActivationProtocolTest)

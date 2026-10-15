@@ -2,6 +2,8 @@
 // bus. Every image, output directory and clipboard belongs to this fixture.
 #include "PortalScreenshot.h"
 #include "CaptureController.h"
+#include "CaptureActions.h"
+#include "shell/ActivationDispatcher.h"
 #include "CaptureRecoveryActions.h"
 #include "ApplicationWindow.h"
 #include "ActionSelectionDialog.h"
@@ -655,6 +657,32 @@ private slots:
   }
   void invalidConfiguredOutputIsRejectedBeforePortalAcquisition_data() {
     QTest::addColumn<QString>("mode"); for (const auto *mode : {"relative", "counter", "malformed", "file"}) QTest::newRow(mode) << QString(mode);
+  }
+  void admittedWorkflowUsesSavedSnapshotAndRealControllerOutput() {
+    using namespace xerahs::shell; using namespace xerahs::workflows;
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    xerahs::editor::FilePreferenceStorage storage(dir.filePath("workflows.json")); CaptureWorkflowStore store(storage); auto catalog = *store.current().catalog;
+    auto &profile = catalog.entries[0]; profile.actions = QStringList{"save"}; profile.name = "Admitted profile"; profile.output.directory = dir.filePath("first"); profile.output.pattern = "first-%width";
+    QVERIFY(store.save(catalog, store.revision()).saved); const auto workflowId = profile.id;
+    CaptureController controller(dir.filePath("fallback"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    ActivationOperations operations; operations.captureBusy = [&] { return controller.busy(); };
+    operations.prepareWorkflow = [&](const QString &id) -> std::function<void()> {
+      const auto choice = store.resolve(QUuid(id), CaptureActions::selectableActions()); if (!choice.workflow) return {};
+      return [&, snapshot = *choice.workflow] { controller.captureRegionWorkflow(snapshot); };
+    };
+    ActivationDispatcher dispatcher(operations); const auto original = makeActivationRequest(ActivationAction::RunWorkflow, {}, workflowId.toString(QUuid::WithoutBraces));
+    const auto request = parseActivation(serializeActivation(original)); QVERIFY(request.request);
+    QCOMPARE(dispatcher.admit(*request.request), ActivationReplyState::Accepted);
+    profile.name = "Changed later"; profile.output.directory = dir.filePath("second"); profile.output.pattern = "second-%width"; QVERIFY(store.save(catalog, store.revision()).saved);
+    QVERIFY(dispatcher.dispatch(*request.request).isEmpty()); QCOMPARE(dispatcher.admit(original), ActivationReplyState::Busy);
+    QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
+    auto saved = controller.lastPipelineResult(); QVERIFY(saved && saved->file); QCOMPARE(saved->file->path, dir.filePath("first/first-30.png")); QCOMPARE(QImage(saved->file->path).size(), QSize(30, 25));
+    QCOMPARE(saved->pipeline.workflowSnapshot.value("name"), QJsonValue("Admitted profile")); QVERIFY(!QFile::exists(dir.filePath("second")));
+    const auto next = makeActivationRequest(ActivationAction::RunWorkflow, {}, original.workflowId); QCOMPARE(dispatcher.admit(next), ActivationReplyState::Accepted); QVERIFY(dispatcher.dispatch(next).isEmpty());
+    QTRY_VERIFY(overlayExists()); controller.pointerDown({1, 1}); controller.pointerUp({8, 7}); QTRY_VERIFY(!controller.busy());
+    saved = controller.lastPipelineResult(); QVERIFY(saved && saved->file); QCOMPARE(saved->file->path, dir.filePath("second/second-7.png")); QCOMPARE(portal.calls, 2);
+    profile.actions = QStringList{"upload"}; QVERIFY(store.save(catalog, store.revision()).saved); QCOMPARE(dispatcher.admit(next), ActivationReplyState::Rejected); QCOMPARE(portal.calls, 2);
   }
   void invalidConfiguredOutputIsRejectedBeforePortalAcquisition() {
     QFETCH(QString, mode); QTemporaryDir dir; int acquisitions = 0; CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *) -> PortalScreenshot * { ++acquisitions; return nullptr; });

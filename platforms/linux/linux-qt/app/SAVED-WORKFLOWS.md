@@ -73,8 +73,9 @@ reported with the checkpoint; previous baseline CI was
 ## Remaining scope and next feature
 
 Per-profile save folders, filename patterns and preview now use existing Core
-naming and private atomic persistence. Next implement explicit-ID CLI/global
-entry points, followed by atomic counter reservation. Full catalogue families, recording/audio, uploads/credentials, shared
+naming and private atomic persistence. [Explicit-ID CLI activation](WORKFLOW-CLI.md)
+now shares the dispatcher and controller with Run selected. Next implement global
+workflow entry points, followed by atomic counter reservation. Full catalogue families, recording/audio, uploads/credentials, shared
 interchange/migration, full execution identity/status, resource/concurrency
 policies and target/human qualification remain Required. Existing Ellipse,
 clipboard-assets, export-format, legacy-companion and shortcut decisions remain

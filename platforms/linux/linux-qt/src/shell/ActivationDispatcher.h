@@ -10,6 +10,9 @@ struct ActivationOperations {
   std::function<void(const QString &)> editImage;
   std::function<bool()> captureBusy;
   std::function<bool()> interactionBlocked;
+  // Empty rejects admission. The closure owns the validated settings snapshot.
+  std::function<std::function<void()>(const QString &)> prepareWorkflow;
+  std::function<void()> captureRegionWithActions;
 };
 class ActivationDispatcher final {
 public:
@@ -24,5 +27,6 @@ private:
   ActivationOperations m_operations;
   std::optional<ActivationRequest> m_pending;
   bool m_dispatching = false;
+  std::function<void()> m_preparedWorkflow;
 };
 } // namespace xerahs::shell

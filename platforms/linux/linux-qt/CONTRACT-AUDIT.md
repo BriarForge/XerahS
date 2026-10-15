@@ -1,6 +1,6 @@
 # Linux contract scope audit
 
-Audit date: 12 October 2026; evidence updated 15 October 2026. Starting implementation: `82ef55e` on `main`.
+Audit date: 12 October 2026; evidence updated 16 October 2026. Starting implementation: `82ef55e` on `main`.
 Source of truth: Product Contract 0.3.1, its capability specifications,
 scenarios, published vectors, parity ledgers and [readiness gates](../../../product-contract/READINESS.md).
 This is an implementation audit and work ordering record, not an acceptance,
@@ -44,7 +44,7 @@ entire specification and linked ledger rows, not just the examples listed.
 | `EDITOR-SETTINGS-001` | Private atomic store, recents, creation-only border/fill/thickness, appearance, window state and toolbar controls; three vectors plus native tests | Complete field ledger/default/migration/downstream coverage, fonts/other tool defaults, numeric/effect settings, recent/favorite effects, convenience/automation preferences, independent whole-file recovery, shared semantics and physical/human reviews remain Required. |
 | `EDITOR-UTILITIES-001` | Canvas comparison support covers only a related image operation | No complete EU trace. Contracted utility tools, deterministic local processing, resource policy, progress/cancellation, accessibility and output integration remain Required. |
 | `SETTINGS-CATALOG-001` | Editor preference subset and inactive unknown preservation | No complete SETCAT trace. All 922 settings rows, profiles/scopes, shared schema, secure credential references, import/export/reset preview, full validation/migration and approval remain Required. |
-| `WORKFLOW-CATALOG-001` | All 18 WFCAT rows traced as partial/not-started; saved named region profiles, per-profile folder/pattern/preview, atomic editing/default/restart and actual window/tray/region CLI controller execution, frozen profile result/journal/retry metadata | All 436 ledger rows, remaining action families, complete destination/naming policy, explicit-ID CLI/global entry points, shared definitions/import/migration, complete execution identity/status/concurrency/cancellation/retry and privacy/permission/native qualification remain Required. No published WFCAT vectors or human acceptance yet. |
+| `WORKFLOW-CATALOG-001` | All 18 WFCAT rows traced as partial/not-started; saved named region profiles, per-profile folder/pattern/preview, atomic editing/default/restart and actual window/tray/workflow-ID CLI controller execution, frozen admission/result/journal/retry metadata | All 436 ledger rows, remaining action families, complete destination/naming policy, global entry points and complete CLI execution discovery/results, shared definitions/import/migration, complete execution identity/status/concurrency/cancellation/retry and privacy/permission/native qualification remain Required. No published WFCAT vectors or human acceptance yet. |
 | `INTERFACE-CATALOG-001` | Small native tray/editor/CLI subset | No complete IFCAT trace. All linked GUI/CLI/MCP surfaces, semantic equivalence, availability, versioned progress/error/cancellation and keyboard/assistive-technology qualification remain Required. |
 | `COMPATIBILITY-CATALOG-001` | `.xann` parsing/round-trip and current unknown editor preference preservation | No complete COMPCAT trace. Configuration/workflow/uploader/history/SXCU/plugin/effect/automation compatibility, isolated previewed imports, secret handling, resource validation, idempotent migration and rollback/goldens remain Required. |
 | `MOBILE-PLATFORM-001` | Its explicit scope is Android/iOS | Mobile requirements are not Linux desktop requirements; CORE-029 and mobile-scope rules remain authoritative. This does not waive any desktop capability or its cross-platform acceptance gate. |
@@ -78,9 +78,10 @@ marked implemented in a core trace file.
 
 ## Next production work
 
-Current priority: explicit workflow-ID CLI activation, then global workflow entry
-points and atomic counter reservation. The dated checkpoints at the end record
-current verification and remaining scope; the following notes retain earlier work.
+Current priority: saved-workflow global shortcut bindings, then execution
+discovery/result linkage and atomic counter reservation. Explicit-ID CLI admission
+and immutable saved settings now share the actual dispatcher/controller. The dated
+checkpoints at the end record current verification and remaining scope; the following notes retain earlier work.
 
 The 14 October annotation-transfer checkpoint extends editor Save, paired capture persistence,
 annotation handoff, Save As/multiple-file results, journal/recovery, linked retry
@@ -900,3 +901,44 @@ No shared contract/vector/schema/approval or requirement trace status/dispositio
 changed. All full-scope implementation and human/target/release gates remain
 Required. Next deliverable remains explicit workflow-ID CLI activation, followed
 by global workflow entry points and atomic counter reservation; timer stays active.
+
+## 2026-10-16 — Run saved workflows through native CLI activation
+
+Starting revision: `8f935c32186d56ac6f038d0d6313542e68207aff`, main. Its exact
+Ubuntu/Qt 6.4.2 [CI 38745592926](https://github.com/BriarForge/XerahS/actions/runs/38745592926)
+passed native job **116458269359** (51/51, 82.81 s) and lint **116458268877**.
+That verifies the preceding editor-test partition checkpoint; no prior successful
+step was restarted or shared expectation changed.
+
+[Workflow CLI evidence](app/WORKFLOW-CLI.md) documents the new full-UUID command,
+read-only manager ID, versioned delivery JSON, safe errors and pre-GUI
+non-interactive refusal. Primary admission resolves and owns the saved definition
+before acknowledging; profile edits affect future requests. Run selected and CLI
+reuse the production dispatcher/controller. Actual native child clients exercise
+accepted/busy/rejected/lost replies, invalid input, missing profiles and headless
+refusal without preferences or capture. Private portal/controller fixtures save
+synthetic PNGs with original admitted settings and then edited settings. The
+chooser's real delivery blocker is fixed: ordinary dispatch now releases its
+reserved operation instead of leaving all later captures/workflows busy.
+
+The latest rebuilt source passes **51/51 local CTest in 67.50 s**, including all
+**114 existing published vectors**. All **32 tooling tests** pass (16 linter,
+9 backlog, 7 runner). Private socket/bus fixtures needed sandbox escalation;
+initial sandbox failures did not establish product failures. Actual-app fixtures
+also clear inherited GTK platform-theme helpers when using offscreen Qt without
+a display. No assertion, deadline, shared schema/vector or requirement status was
+weakened. The previous cached minimum-Qt toolchain is absent in this environment;
+this checkpoint's minimum baseline will be checked on the exact pushed Ubuntu CI,
+reported in the continuation result rather than inferred from the previous run.
+
+CLI acknowledgement is admission/delivery, never consent, capture, output or
+upload success. Its request UUID is not pipeline task identity. This is a private
+candidate protocol, not accepted public CLI/MCP semantics. CORE/WFCAT remain
+partial and Required; there are still no published vectors for those packages.
+The 324 desktop requirements/15 packages, 922 settings/436 workflows/232 effects/
+20 tools, supported distributions/desktops, full capture/recording/audio/uploads,
+compatibility/packaging/migration/updates/rollback and human security/privacy/
+accessibility/parity/release gates remain in scope and unfinished. No completion
+percentage is established. Next implement saved-workflow global shortcut bindings,
+then execution discovery/result linkage and atomic counters. The continuation
+timer was confirmed active through a read-only user-service check and stays active.

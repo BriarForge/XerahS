@@ -51,6 +51,7 @@ public:
   quint64 revision() const { return m_revision; }
   xerahs::editor::PreferenceWrite save(const CaptureWorkflows &draft, quint64 expectedRevision);
   QString unchanged() const;
+  WorkflowChoice resolve(const QUuid &requested, const QStringList &available) const;
 private:
   xerahs::editor::PreferenceStorage &m_storage;
   xerahs::editor::PreferenceRead m_snapshot;

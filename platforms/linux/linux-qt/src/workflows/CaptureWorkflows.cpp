@@ -144,4 +144,13 @@ QString CaptureWorkflowStore::unchanged() const {
   if (actual.kind == PreferenceRead::Kind::Failed) return actual.diagnostic;
   return actual.kind == m_snapshot.kind && actual.bytes == m_snapshot.bytes ? QString{} : QStringLiteral("workflow-changed");
 }
+WorkflowChoice CaptureWorkflowStore::resolve(const QUuid &requested, const QStringList &available) const {
+  const auto diagnostic = unchanged(); if (!diagnostic.isEmpty()) return {{}, diagnostic};
+  const auto &catalog = *m_current.catalog; const auto id = requested.isNull() ? catalog.defaultId : requested;
+  for (const auto &workflow : catalog.entries) if (workflow.id == id) {
+    const auto unavailable = workflowAvailability(workflow, available);
+    return unavailable.isEmpty() ? WorkflowChoice{workflow, {}} : WorkflowChoice{{}, unavailable};
+  }
+  return {{}, "workflow-not-found"};
+}
 } // namespace xerahs::workflows

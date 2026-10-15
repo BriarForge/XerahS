@@ -219,6 +219,7 @@ private slots:
     }
     environment.insert("QT_QPA_PLATFORM", "offscreen");
     environment.insert("DBUS_SESSION_BUS_ADDRESS", "unix:path=" + temporary->filePath("no-host-bus"));
+    environment.insert("QT_QPA_PLATFORMTHEME", "");
     QProcess application; application.setProcessEnvironment(environment);
     const auto image = temporary->filePath(QString::fromUtf8(" λ\n private .png "));
     application.start(QCoreApplication::applicationDirPath() + "/xerahs", {"--edit", image});
@@ -241,6 +242,61 @@ private slots:
     int admissions = 0; instance.setAdmission([&](const ActivationRequest &) { ++admissions; return ActivationReplyState::Accepted; });
     const auto reply = exchange(instance, serializeActivation(makeActivationRequest(ActivationAction::Activate)) + '\n');
     QVERIFY(reply.isEmpty()); QCOMPARE(admissions, 0);
+  }
+  void actualApplicationForwardsWorkflowIdsAndReportsOnlyDelivery_data() {
+    QTest::addColumn<QString>("admission"); QTest::addColumn<int>("exitCode");
+    QTest::newRow("accepted") << QString("accept") << 0; QTest::newRow("busy") << QString("busy") << 2;
+    QTest::newRow("rejected") << QString("reject") << 1; QTest::newRow("unknown-delivery") << QString("ack-drop") << 1;
+  }
+  void actualApplicationForwardsWorkflowIdsAndReportsOnlyDelivery() {
+    QFETCH(QString, admission); QFETCH(int, exitCode); directory = temporary->filePath("com.xerahs.app"); auto *owner = launch(admission); awaitLine(*owner); QCOMPARE(line(owner->readLine()).value("event"), QJsonValue("primary"));
+    auto environment = QProcessEnvironment::systemEnvironment(); environment.insert("XDG_RUNTIME_DIR", temporary->path()); environment.insert("QT_QPA_PLATFORM", "offscreen");
+    environment.insert("DBUS_SESSION_BUS_ADDRESS", "unix:path=" + temporary->filePath("no-host-bus"));
+    for (const auto *key : {"XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME"}) environment.insert(key, temporary->filePath(key));
+    const QString workflow = "01234567-89ab-4cde-8123-456789abcdef";
+    environment.insert("QT_QPA_PLATFORMTHEME", "");
+    QProcess application; application.setProcessEnvironment(environment); application.start(QCoreApplication::applicationDirPath() + "/xerahs", {"--run-workflow", workflow.toUpper(), "--json"});
+    QVERIFY(application.waitForFinished(5000)); QCOMPARE(application.exitStatus(), QProcess::NormalExit); QCOMPARE(application.exitCode(), exitCode);
+    const auto output = application.readAllStandardOutput(); QCOMPARE(output.count('\n'), 1); const auto result = line(output);
+    QCOMPARE(result.value("schemaVersion"), QJsonValue(1)); QCOMPARE(result.value("workflowId"), QJsonValue(workflow)); QCOMPARE(result.value("ok").toBool(), exitCode == 0);
+    QVERIFY(!result.contains("outputs")); QVERIFY(!result.contains("path")); QVERIFY(!result.contains("name"));
+    if (exitCode == 0) { QCOMPARE(result.value("delivery"), QJsonValue("running-instance")); QCOMPARE(result.value("state"), QJsonValue("accepted")); }
+    else QCOMPARE(result.value("error").toObject().value("code"), QJsonValue(admission == "busy" ? "activation-busy" : admission == "reject" ? "activation-unavailable" : "activation-delivery-unknown"));
+    if (admission == "accept") { awaitLine(*owner); const auto request = line(owner->readLine()).value("request").toObject(); QCOMPARE(request.value("action"), QJsonValue("run-workflow")); QCOMPARE(request.value("workflow_id"), QJsonValue(workflow)); }
+    QVERIFY(!QFileInfo::exists(temporary->filePath("XDG_CONFIG_HOME"))); QVERIFY(!QFileInfo::exists(temporary->filePath("XDG_STATE_HOME")));
+  }
+  void workflowCliRefusesMalformedHeadlessAndMissingProfilesWithoutSideEffects_data() {
+    QTest::addColumn<QStringList>("arguments"); QTest::addColumn<QString>("error"); QTest::addColumn<bool>("headless");
+    const QString id = "01234567-89ab-4cde-8123-456789abcdef";
+    QTest::newRow("invalid-id") << QStringList{"--run-workflow", "private-name", "--json"} << QString("workflow-id-invalid") << false;
+    QTest::newRow("conflicting-actions") << QStringList{"--run-workflow", id, "--capture-region", "--json"} << QString("usage-invalid") << false;
+    QTest::newRow("unknown-private-argument") << QStringList{"--private-secret", "--json"} << QString("usage-invalid") << false;
+    QTest::newRow("non-interactive") << QStringList{"--run-workflow", id, "--non-interactive", "--json"} << QString("presentation-required") << true;
+    QTest::newRow("non-interactive-invalid") << QStringList{"--private-secret", "--non-interactive", "--json"} << QString("usage-invalid") << true;
+    QTest::newRow("missing-profile") << QStringList{"--run-workflow", id, "--json"} << QString("activation-unavailable") << false;
+  }
+  void duplicateWorkflowFramesReplayReceiptWithoutDispatchingAgain() {
+    NativeInstance instance(directory); QCOMPARE(instance.start(makeActivationRequest(ActivationAction::Activate)).kind, InstanceStart::Kind::Primary);
+    int admitted = 0; instance.setAdmission([&](const ActivationRequest &) { ++admitted; return ActivationReplyState::Accepted; }); QSignalSpy invoked(&instance, &NativeInstance::activationRequested);
+    const auto request = makeActivationRequest(ActivationAction::RunWorkflow, {}, "01234567-89ab-4cde-8123-456789abcdef"); const auto frame = serializeActivation(request) + '\n';
+    const auto first = exchange(instance, frame); QVERIFY(parseActivationReply(first.trimmed(), request.id)); QTRY_COMPARE(invoked.count(), 1);
+    QCOMPARE(exchange(instance, frame), first); QCOMPARE(admitted, 1); QCOMPARE(invoked.count(), 1);
+    auto changed = request; changed.workflowId = makeActivationRequest(ActivationAction::Activate).id;
+    const auto refused = parseActivationReply(exchange(instance, serializeActivation(changed) + '\n').trimmed(), request.id); QVERIFY(refused); QCOMPARE(refused->state, ActivationReplyState::Rejected); QCOMPARE(admitted, 1); QCOMPARE(invoked.count(), 1);
+  }
+  void workflowCliRefusesMalformedHeadlessAndMissingProfilesWithoutSideEffects() {
+    QFETCH(QStringList, arguments); QFETCH(QString, error); QFETCH(bool, headless);
+    auto environment = QProcessEnvironment::systemEnvironment(); environment.insert("XDG_RUNTIME_DIR", temporary->path());
+    for (const auto *key : {"XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME"}) environment.insert(key, temporary->filePath(key));
+    environment.insert("DBUS_SESSION_BUS_ADDRESS", "unix:path=" + temporary->filePath("no-host-bus"));
+    environment.insert("QT_QPA_PLATFORM", headless ? "xcb" : "offscreen"); environment.remove("DISPLAY"); environment.remove("WAYLAND_DISPLAY");
+    environment.insert("QT_QPA_PLATFORMTHEME", "");
+    QProcess application; application.setProcessEnvironment(environment); application.start(QCoreApplication::applicationDirPath() + "/xerahs", arguments);
+    QVERIFY(application.waitForFinished(5000)); QCOMPARE(application.exitStatus(), QProcess::NormalExit); QCOMPARE(application.exitCode(), 1);
+    const auto output = application.readAllStandardOutput(); QCOMPARE(output.count('\n'), 1); const auto result = line(output); QCOMPARE(result.value("error").toObject().value("code"), QJsonValue(error)); QVERIFY(!result.value("ok").toBool());
+    const auto errors = application.readAllStandardError(); QVERIFY(!errors.contains("private-secret")); QVERIFY(!errors.contains("private-name")); QVERIFY(!errors.contains("could not connect to display"));
+    QVERIFY(!QFileInfo::exists(temporary->filePath("XDG_CONFIG_HOME"))); QVERIFY(!QFileInfo::exists(temporary->filePath("XDG_STATE_HOME")));
+    if (error != "activation-unavailable") QVERIFY(!QFileInfo::exists(temporary->filePath("com.xerahs.app")));
   }
   void runtimeFilesHaveOwnerOnlyAccessAndProfilesAreIsolated() {
     NativeInstance one(directory), two(temporary->filePath("other-profile"));

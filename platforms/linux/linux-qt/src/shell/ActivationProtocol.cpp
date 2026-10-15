@@ -33,6 +33,8 @@ QString actionName(ActivationAction action) {
     case ActivationAction::Activate: return QStringLiteral("activate");
     case ActivationAction::CaptureRegion: return QStringLiteral("capture-region");
     case ActivationAction::EditImage: return QStringLiteral("edit-image");
+    case ActivationAction::RunWorkflow: return QStringLiteral("run-workflow");
+    case ActivationAction::CaptureRegionChooseActions: return QStringLiteral("capture-region-choose-actions");
   }
   return {};
 }
@@ -42,12 +44,13 @@ bool knownDiagnostic(const QString &value) {
   return values.contains(value);
 }
 }
-ActivationRequest makeActivationRequest(ActivationAction action, const QString &path) {
-  return {QUuid::createUuid().toString(QUuid::WithoutBraces), action, path};
+ActivationRequest makeActivationRequest(ActivationAction action, const QString &path, const QString &workflowId) {
+  return {QUuid::createUuid().toString(QUuid::WithoutBraces), action, path, workflowId};
 }
 QByteArray serializeActivation(const ActivationRequest &request) {
   QJsonObject value{{"version", 1}, {"id", request.id}, {"action", actionName(request.action)}};
   if (request.action == ActivationAction::EditImage) value.insert(QStringLiteral("path"), request.path);
+  if (request.action == ActivationAction::RunWorkflow) value.insert(QStringLiteral("workflow_id"), request.workflowId);
   return QJsonDocument(value).toJson(QJsonDocument::Compact);
 }
 ParsedActivation parseActivation(const QByteArray &bytes) {
@@ -64,8 +67,12 @@ ParsedActivation parseActivation(const QByteArray &bytes) {
   if (name == u"activate") action = ActivationAction::Activate;
   else if (name == u"capture-region") action = ActivationAction::CaptureRegion;
   else if (name == u"edit-image") action = ActivationAction::EditImage;
+  else if (name == u"run-workflow") action = ActivationAction::RunWorkflow;
+  else if (name == u"capture-region-choose-actions") action = ActivationAction::CaptureRegionChooseActions;
   else return invalid();
-  const QSet<QString> keys = action == ActivationAction::EditImage ? QSet<QString>{"version", "id", "action", "path"} : QSet<QString>{"version", "id", "action"};
+  QSet<QString> keys{"version", "id", "action"};
+  if (action == ActivationAction::EditImage) keys.insert("path");
+  if (action == ActivationAction::RunWorkflow) keys.insert("workflow_id");
   for (auto entry = value.begin(); entry != value.end(); ++entry) if (!keys.contains(entry.key())) return invalid();
   QString path;
   if (action == ActivationAction::EditImage) {
@@ -73,7 +80,12 @@ ParsedActivation parseActivation(const QByteArray &bytes) {
     path = value.value(u"path").toString();
     if (!QDir::isAbsolutePath(path) || path.contains(QChar(0))) return invalid();
   }
-  return {ActivationRequest{value.value(u"id").toString(), action, path}, {}};
+  QString workflow;
+  if (action == ActivationAction::RunWorkflow) {
+    if (!value.value(u"workflow_id").isString() || !validId(value.value(u"workflow_id").toString())) return invalid();
+    workflow = value.value(u"workflow_id").toString();
+  }
+  return {ActivationRequest{value.value(u"id").toString(), action, path, workflow}, {}};
 }
 QByteArray serializeActivationReply(const ActivationReply &reply) {
   const QString state = reply.state == ActivationReplyState::Accepted ? QStringLiteral("accepted") :
@@ -100,5 +112,19 @@ std::optional<ActivationReply> parseActivationReply(const QByteArray &bytes, con
 }
 bool authorizedActivationPeer(quint64 expectedUser, std::optional<quint64> peerUser) {
   return peerUser && *peerUser == expectedUser;
+}
+QJsonObject activationLaunchResult(const ActivationRequest &request, const QString &delivery, const QString &diagnostic) {
+  static const QSet<QString> errors{"usage-invalid", "workflow-id-invalid", "workflow-unavailable", "presentation-required",
+      "instance-unavailable", "instance-storage-denied", "instance-endpoint-conflict", "instance-already-started",
+      "instance-lock-failed", "instance-listen-failed", "activation-delivery-unknown"};
+  QString code = diagnostic;
+  if (!code.isEmpty() && !knownDiagnostic(code) && !errors.contains(code)) code = "activation-handler-failed";
+  if (code.isEmpty() && delivery != "started" && delivery != "running-instance") code = "activation-handler-failed";
+  QJsonObject result{{"schemaVersion", 1}, {"ok", code.isEmpty()}};
+  if (validId(request.id)) result.insert("requestId", request.id);
+  if (request.action == ActivationAction::RunWorkflow && validId(request.workflowId)) result.insert("workflowId", request.workflowId);
+  if (code.isEmpty()) { result.insert("delivery", delivery); result.insert("state", "accepted"); }
+  else result.insert("error", QJsonObject{{"code", code}});
+  return result;
 }
 } // namespace xerahs::shell

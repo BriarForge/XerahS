@@ -29,13 +29,7 @@ xerahs::editor::PreferenceWrite NativeCaptureWorkflows::save(const CaptureWorkfl
   const auto result = m_store.save(draft, revision); if (result.saved) emit changed(); return result;
 }
 WorkflowChoice NativeCaptureWorkflows::resolve(const QUuid &requested) const {
-  const auto unchanged = m_store.unchanged(); if (!unchanged.isEmpty()) return {{}, unchanged};
-  const auto &catalog = *m_store.current().catalog; const auto id = requested.isNull() ? catalog.defaultId : requested;
-  for (const auto &w : catalog.entries) if (w.id == id) {
-    const auto diagnostic = workflowAvailability(w, CaptureActions::selectableActions());
-    return diagnostic.isEmpty() ? WorkflowChoice{w, {}} : WorkflowChoice{{}, diagnostic};
-  }
-  return {{}, "workflow-not-found"};
+  return m_store.resolve(requested, CaptureActions::selectableActions());
 }
 QString workflowMessage(const QString &code) {
   if (code == "workflow-action-unavailable") return "This workflow contains unavailable actions. Remove those actions to run it, or keep it for a later version.";
@@ -71,6 +65,7 @@ public:
     m_default = new QLabel(this); m_default->setObjectName("captureDefaultWorkflow"); m_default->setTextFormat(Qt::PlainText); layout->addWidget(m_default);
     auto *form = new QFormLayout; layout->addLayout(form);
     m_name = new QLineEdit(this); m_name->setObjectName("captureWorkflowName"); m_name->setAccessibleName("Workflow name"); m_name->setMaxLength(128); form->addRow("Name", m_name);
+    m_id = new QLineEdit(this); m_id->setObjectName("captureWorkflowId"); m_id->setAccessibleName("Workflow ID for CLI"); m_id->setReadOnly(true); form->addRow("Workflow ID", m_id);
     m_capture = new QLabel(this); m_capture->setTextFormat(Qt::PlainText); form->addRow("Capture", m_capture);
     auto *folderRow = new QHBoxLayout;
     m_directory = new QLineEdit(this); m_directory->setObjectName("captureWorkflowSaveDirectory"); m_directory->setAccessibleName("Save folder"); m_directory->setMaxLength(32768);
@@ -151,6 +146,7 @@ private:
     m_directory->setEnabled(exists); m_pattern->setEnabled(exists); m_browse->setEnabled(exists);
     if (exists) {
       const auto &w = m_catalog->entries[index]; m_name->setText(w.name); m_capture->setText(w.capture == "region" ? "Region" : "Unavailable: " + w.capture); m_choose->setChecked(w.chooseActions);
+      m_id->setText(w.id.toString(QUuid::WithoutBraces));
       m_directory->setText(w.output.directory); m_pattern->setText(w.output.pattern); showPreview(w.output);
       const auto available = CaptureActions::selectableActions(); auto displayed = available;
       for (const auto &action : w.actions) if (!displayed.contains(action)) displayed.append(action);
@@ -159,7 +155,7 @@ private:
         item->setData(Qt::UserRole, action); item->setFlags(item->flags() | Qt::ItemIsUserCheckable); item->setCheckState(w.actions.contains(action) ? Qt::Checked : Qt::Unchecked);
       }
       for (const auto &entry : m_catalog->entries) if (entry.id == m_catalog->defaultId) m_default->setText("Default capture: " + entry.name);
-    } else { m_name->clear(); m_capture->clear(); m_default->clear(); m_directory->clear(); m_pattern->clear(); m_preview->clear(); m_patternHelp->clear(); }
+    } else { m_name->clear(); m_id->clear(); m_capture->clear(); m_default->clear(); m_directory->clear(); m_pattern->clear(); m_preview->clear(); m_patternHelp->clear(); }
     m_loading = false; availability();
   }
   void updateEntry() {
@@ -208,7 +204,7 @@ private:
   quint64 m_revision = 0;
   bool m_loading = false, m_dirty = false, m_saving = false;
   QListWidget *m_list = nullptr, *m_actions = nullptr;
-  QLineEdit *m_name = nullptr, *m_directory = nullptr, *m_pattern = nullptr, *m_preview = nullptr;
+  QLineEdit *m_name = nullptr, *m_id = nullptr, *m_directory = nullptr, *m_pattern = nullptr, *m_preview = nullptr;
   QCheckBox *m_choose = nullptr;
   QLabel *m_capture = nullptr, *m_default = nullptr, *m_status = nullptr, *m_patternHelp = nullptr;
   QPushButton *m_save = nullptr, *m_run = nullptr, *m_browse = nullptr;
