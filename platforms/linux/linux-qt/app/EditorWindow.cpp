@@ -47,16 +47,20 @@
 #include <QTimer>
 #include <QVBoxLayout>
 
-#include <atomic>
 #include <array>
 #include <cmath>
-#include <future>
 
 namespace xerahs::app {
 
 using namespace xerahs::editor;
 
 namespace {
+
+void disposeCanvasDialog(QPointer<QDialog> dialog) {
+  if (dialog) dialog->hide();
+  if (dialog) dialog->setParent(nullptr);
+  delete dialog.data();
+}
 
 QString describe(const QString &diagnostic) {
   if (diagnostic == diagnostic::sourceUnsupported) return QStringLiteral("This file is not a supported image.");
@@ -805,7 +809,7 @@ void EditorWindow::cropImage(CropRegion region) {
       // Main-editor crops remain valid after resize/rotation, which deliberately
       // invalidate the capture-only lineage proof. The frozen native admission
       // protects the ordinary Core canvas commit without requiring that proof.
-      changed = prepared->edit.result.document && owner->m_session->commitCanvas(*prepared->edit.result.document, state);
+      changed = prepared->edit.result.document && owner->m_session->commitCanvas(*prepared->edit.result.document, state, selection);
       if (!changed) diagnostic = owner->m_session->editDiagnostic().isEmpty() ? "document-invalid" : owner->m_session->editDiagnostic();
       else {
         owner->m_sourceBytes = owner->m_session->document().sourceImagePng;
@@ -821,56 +825,61 @@ void EditorWindow::cropImage(CropRegion region) {
 }
 
 void EditorWindow::autoCropImage() {
-  QDialog dialog(this);
-  dialog.setWindowTitle(QStringLiteral("Auto Crop"));
-  auto *form = new QFormLayout(&dialog);
-  auto *border = new QComboBox(&dialog);
+  editCanvas([](const QImage &, QWidget *parent) -> std::optional<CanvasOperation> {
+  QPointer<QDialog> dialog(new QDialog(parent));
+  dialog->setWindowTitle(QStringLiteral("Auto Crop"));
+  auto *form = new QFormLayout(dialog.data());
+  auto *border = new QComboBox(dialog.data());
   border->setObjectName(QStringLiteral("cropBorder"));
   border->addItems({QStringLiteral("Transparent pixels"), QStringLiteral("Match top-left pixel"), QStringLiteral("Match chosen colour")});
   form->addRow(QStringLiteral("Border rule"), border);
-  auto *alpha = new QSpinBox(&dialog), *tolerance = new QSpinBox(&dialog);
+  auto *alpha = new QSpinBox(dialog.data()), *tolerance = new QSpinBox(dialog.data());
   alpha->setObjectName(QStringLiteral("cropAlpha")); tolerance->setObjectName(QStringLiteral("cropTolerance"));
   alpha->setRange(0, 255); tolerance->setRange(0, 255); tolerance->setEnabled(false);
   form->addRow(QStringLiteral("Ignore alpha at or below"), alpha);
   form->addRow(QStringLiteral("RGBA channel tolerance"), tolerance);
   Argb selectedColor = 0xFFFFFFFF;
-  auto *color = new QPushButton(QStringLiteral("#FFFFFFFF"), &dialog); color->setEnabled(false);
+  auto *color = new QPushButton(QStringLiteral("#FFFFFFFF"), dialog.data()); color->setEnabled(false);
   form->addRow(QStringLiteral("Border colour"), color);
-  connect(color, &QPushButton::clicked, &dialog, [&] {
-    const QColor chosen = QColorDialog::getColor(QColor::fromRgba(selectedColor), &dialog, QStringLiteral("Border colour"), QColorDialog::ShowAlphaChannel);
-    if (chosen.isValid()) { selectedColor = chosen.rgba(); color->setText(chosen.name(QColor::HexArgb)); }
+  connect(color, &QPushButton::clicked, dialog.data(), [&] {
+    QPointer<QColorDialog> picker(new QColorDialog(QColor::fromRgba(selectedColor), dialog)); picker->setOption(QColorDialog::ShowAlphaChannel); picker->setWindowTitle("Border colour");
+    const auto accepted = picker->exec(); const auto chosen = picker && accepted == QDialog::Accepted ? picker->selectedColor() : QColor{};
+    disposeCanvasDialog(picker.data()); if (dialog && chosen.isValid()) { selectedColor = chosen.rgba(); color->setText(chosen.name(QColor::HexArgb)); }
   });
-  connect(border, &QComboBox::currentIndexChanged, &dialog, [&](int index) {
+  connect(border, &QComboBox::currentIndexChanged, dialog.data(), [&](int index) {
     tolerance->setEnabled(index != 0); color->setEnabled(index == 2);
   });
-  auto *annotations = new QCheckBox(QStringLiteral("Include visible annotations when finding bounds"), &dialog);
+  auto *annotations = new QCheckBox(QStringLiteral("Include visible annotations when finding bounds"), dialog.data());
   annotations->setObjectName(QStringLiteral("cropAnnotations")); annotations->setChecked(true); form->addRow(annotations);
   auto *rules = new QLabel(QStringLiteral("Trim complete background rows and columns from the four edges. "
       "Colour matching allows the stated difference in every RGBA channel. "
-      "An empty image or unchanged bounds leave the document unchanged."), &dialog);
+      "An empty image or unchanged bounds leave the document unchanged."), dialog.data());
   rules->setWordWrap(true); form->addRow(rules);
-  auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog); form->addRow(buttons);
-  connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-  connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-  if (dialog.exec() != QDialog::Accepted) return;
+  auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, dialog.data()); form->addRow(buttons);
+  connect(buttons, &QDialogButtonBox::accepted, dialog.data(), &QDialog::accept);
+  connect(buttons, &QDialogButtonBox::rejected, dialog.data(), &QDialog::reject);
+  const int answer = dialog->exec();
+  if (!dialog || answer != QDialog::Accepted) { disposeCanvasDialog(dialog); return std::nullopt; }
   CanvasOperation operation; operation.action = CanvasAction::AutoCrop;
   operation.autoCrop = {CropBorder(border->currentIndex()), alpha->value(), tolerance->value(), selectedColor, annotations->isChecked()};
-  applyCanvas(operation);
+  disposeCanvasDialog(dialog); return operation;
+  });
 }
 
 void EditorWindow::resizeImage(bool canvasOnly) {
-  QDialog dialog(this);
-  dialog.setWindowTitle(canvasOnly ? QStringLiteral("Resize Canvas") : QStringLiteral("Resize Image"));
-  auto *form = new QFormLayout(&dialog);
-  auto *width = new QSpinBox(&dialog), *height = new QSpinBox(&dialog);
+  editCanvas([canvasOnly](const QImage &source, QWidget *parent) -> std::optional<CanvasOperation> {
+  QPointer<QDialog> dialog(new QDialog(parent));
+  dialog->setWindowTitle(canvasOnly ? QStringLiteral("Resize Canvas") : QStringLiteral("Resize Image"));
+  auto *form = new QFormLayout(dialog.data());
+  auto *width = new QSpinBox(dialog.data()), *height = new QSpinBox(dialog.data());
   width->setObjectName(QStringLiteral("canvasWidth")); height->setObjectName(QStringLiteral("canvasHeight"));
   width->setRange(1, int(kMaxDimension)); height->setRange(1, int(kMaxDimension));
-  width->setValue(m_image.width()); height->setValue(m_image.height());
+  width->setValue(source.width()); height->setValue(source.height());
   width->setAccessibleName(QStringLiteral("Width in pixels")); height->setAccessibleName(QStringLiteral("Height in pixels"));
   form->addRow(QStringLiteral("Width (pixels)"), width); form->addRow(QStringLiteral("Height (pixels)"), height);
-  auto *choice = new QComboBox(&dialog);
-  auto *lock = new QCheckBox(QStringLiteral("Lock aspect ratio"), &dialog); lock->setChecked(true);
-  auto *color = new QPushButton(QStringLiteral("Transparent"), &dialog);
+  auto *choice = new QComboBox(dialog.data());
+  auto *lock = new QCheckBox(QStringLiteral("Lock aspect ratio"), dialog.data()); lock->setChecked(true);
+  auto *color = new QPushButton(QStringLiteral("Transparent"), dialog.data());
   Argb fill = 0;
   if (canvasOnly) {
     choice->addItems({QStringLiteral("Top left"), QStringLiteral("Top"), QStringLiteral("Top right"),
@@ -878,102 +887,91 @@ void EditorWindow::resizeImage(bool canvasOnly) {
                      QStringLiteral("Bottom left"), QStringLiteral("Bottom"), QStringLiteral("Bottom right")});
     choice->setCurrentIndex(4);
     form->addRow(QStringLiteral("Anchor"), choice); form->addRow(QStringLiteral("Added area"), color);
-    connect(color, &QPushButton::clicked, &dialog, [&] {
-      const QColor selected = QColorDialog::getColor(QColor::fromRgba(fill), &dialog, QStringLiteral("Added area colour"),
-                                                     QColorDialog::ShowAlphaChannel);
-      if (selected.isValid()) { fill = selected.rgba(); color->setText(selected.name(QColor::HexArgb)); }
+    connect(color, &QPushButton::clicked, dialog.data(), [&] {
+      QPointer<QColorDialog> picker(new QColorDialog(QColor::fromRgba(fill), dialog)); picker->setOption(QColorDialog::ShowAlphaChannel); picker->setWindowTitle("Added area colour");
+      const auto accepted = picker->exec(); const auto selected = picker && accepted == QDialog::Accepted ? picker->selectedColor() : QColor{};
+      disposeCanvasDialog(picker.data()); if (dialog && selected.isValid()) { fill = selected.rgba(); color->setText(selected.name(QColor::HexArgb)); }
     });
   } else {
     choice->addItems({QStringLiteral("Nearest neighbour"), QStringLiteral("Bilinear")});
     form->addRow(lock); form->addRow(QStringLiteral("Interpolation"), choice);
-    connect(width, &QSpinBox::valueChanged, &dialog, [&](int value) {
-      if (lock->isChecked()) { const QSignalBlocker block(height); height->setValue(int(std::floor(double(value) * m_image.height() / m_image.width() + .5))); }
+    connect(width, &QSpinBox::valueChanged, dialog.data(), [&](int value) {
+      if (lock->isChecked()) { const QSignalBlocker block(height); height->setValue(int(std::floor(double(value) * source.height() / source.width() + .5))); }
     });
-    connect(height, &QSpinBox::valueChanged, &dialog, [&](int value) {
-      if (lock->isChecked()) { const QSignalBlocker block(width); width->setValue(int(std::floor(double(value) * m_image.width() / m_image.height() + .5))); }
+    connect(height, &QSpinBox::valueChanged, dialog.data(), [&](int value) {
+      if (lock->isChecked()) { const QSignalBlocker block(width); width->setValue(int(std::floor(double(value) * source.width() / source.height() + .5))); }
     });
-    connect(lock, &QCheckBox::toggled, &dialog, [&](bool active) {
-      if (active) height->setValue(int(std::floor(double(width->value()) * m_image.height() / m_image.width() + .5)));
+    connect(lock, &QCheckBox::toggled, dialog.data(), [&](bool active) {
+      if (active) height->setValue(int(std::floor(double(width->value()) * source.height() / source.width() + .5)));
     });
   }
-  auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+  auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, dialog.data());
   form->addRow(buttons);
-  connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-  connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-  if (dialog.exec() != QDialog::Accepted) return;
+  connect(buttons, &QDialogButtonBox::accepted, dialog.data(), &QDialog::accept);
+  connect(buttons, &QDialogButtonBox::rejected, dialog.data(), &QDialog::reject);
+  const int answer = dialog->exec();
+  if (!dialog || answer != QDialog::Accepted) { disposeCanvasDialog(dialog); return std::nullopt; }
   CanvasOperation operation;
   operation.action = canvasOnly ? CanvasAction::ResizeCanvas : CanvasAction::ResizeImage;
   operation.width = width->value(); operation.height = height->value();
   operation.anchor = CanvasAnchor(choice->currentIndex()); operation.fill = fill;
   operation.interpolation = Interpolation(choice->currentIndex()); operation.lockAspect = lock->isChecked();
-  applyCanvas(operation);
+  disposeCanvasDialog(dialog); return operation;
+  });
 }
 
 void EditorWindow::rotateImage() {
-  const quint64 state = m_session->stateId();
-  CanvasRotationDialog dialog(m_session->document(), m_image, this);
-  if (dialog.exec() != QDialog::Accepted) return;
-  if (auto edit = dialog.takeEdit()) commitCanvas(std::move(*edit), state);
+  if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive()) return;
+  const auto state = m_session->stateId(), generation = m_canvas->documentGeneration(); const auto selection = m_session->selection();
+  const auto document = m_session->document(); const auto source = m_image; const auto hooks = m_canvasHooks; const QPointer<EditorWindow> owner(this);
+  withOutputBusy([owner, state, generation, selection, document, source, hooks] {
+    if (!owner) return false;
+    QPointer<CanvasRotationDialog> dialog(new CanvasRotationDialog(document, source, owner, hooks));
+    const auto answer = dialog->exec(); auto edit = dialog && answer == QDialog::Accepted ? dialog->takeEdit() : std::optional<PreparedCanvasEdit>{};
+    disposeCanvasDialog(dialog.data()); if (!owner || !edit) return false;
+    return owner->commitCanvas(std::move(*edit), state, selection, generation);
+  });
 }
 
 void EditorWindow::clearImage() {
-  const bool dirty = m_session->dirty();
-  QMessageBox box(QMessageBox::Warning, QStringLiteral("Clear Image and Annotations"),
-      QStringLiteral("Remove all pixels and annotation objects from this canvas, keeping its dimensions and colour profile? "
-                     "You can restore the current document with Undo."),
-      dirty ? QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel : QMessageBox::Ok | QMessageBox::Cancel, this);
-  box.setDefaultButton(QMessageBox::Cancel);
-  if (dirty) {
-    box.setInformativeText(QStringLiteral("Save the current changes before clearing?"));
-    box.button(QMessageBox::Save)->setText(QStringLiteral("Save, then Clear"));
-    box.button(QMessageBox::Discard)->setText(QStringLiteral("Clear without Saving"));
-  } else box.button(QMessageBox::Ok)->setText(QStringLiteral("Clear"));
-  const int answer = box.exec();
-  box.setParent(nullptr);
+  if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive()) return;
+  const auto state = m_session->stateId(), generation = m_canvas->documentGeneration(); const auto selection = m_session->selection();
+  const bool dirty = m_session->dirty(); const QPointer<EditorWindow> owner(this); int answer = QMessageBox::Cancel;
+  withOutputBusy([owner, dirty, &answer] {
+    if (!owner) return false;
+    QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, "Clear Image and Annotations",
+        "Remove all pixels and annotation objects from this canvas, keeping its dimensions and colour profile? You can restore the current document with Undo.",
+        dirty ? QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel : QMessageBox::Ok | QMessageBox::Cancel, owner));
+    box->setObjectName("clearImageConfirmation"); box->setTextFormat(Qt::PlainText); box->setDefaultButton(QMessageBox::Cancel);
+    if (dirty) {
+      box->setInformativeText("Save the current changes before clearing?"); box->button(QMessageBox::Save)->setText("Save, then Clear"); box->button(QMessageBox::Discard)->setText("Clear without Saving");
+    } else box->button(QMessageBox::Ok)->setText("Clear");
+    answer = box->exec(); disposeCanvasDialog(box.data()); return false;
+  });
+  if (!owner || (answer != QMessageBox::Save && answer != QMessageBox::Discard && answer != QMessageBox::Ok)) return;
+  const auto current = [&] { return state == m_session->stateId() && generation == m_canvas->documentGeneration() && selection == m_session->selection(); };
+  const auto stale = [&] { m_annotationMessage = annotationEditMessage("annotation-edit-stale"); m_annotationMessageState = m_session->stateId(); refresh(); };
+  if (!current()) { stale(); return; }
   if (answer == QMessageBox::Save && !save(false)) return;
-  if (answer != QMessageBox::Save && answer != QMessageBox::Discard && answer != QMessageBox::Ok) return;
-  CanvasOperation op; op.action = CanvasAction::ClearImageAndAnnotations; applyCanvas(op);
+  if (!owner) return;
+  if (!current()) { stale(); return; }
+  CanvasOperation operation; operation.action = CanvasAction::ClearImageAndAnnotations; applyCanvas(operation);
 }
 
 void EditorWindow::applyCanvas(CanvasOperation operation) {
-  if (m_canvasOperationPending || m_outputPending) return;
-  const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
-  const quint64 state = m_session->stateId();
-  const AnnotationDocument document = m_session->document();
-  const QImage source = m_image;
-  std::atomic<bool> cancelled{false};
-  std::atomic<int> progress{0};
-  QProgressDialog dialog(QStringLiteral("Editing image…"), QStringLiteral("Cancel"), 0, 100, this);
-  dialog.setWindowTitle(QStringLiteral("Image operation"));
-  dialog.setWindowModality(Qt::WindowModal);
-  dialog.setAutoClose(false); dialog.setAutoReset(false);
-  std::future<PreparedCanvasEdit> worker;
-  try {
-    worker = std::async(std::launch::async, [&] {
-      return prepareCanvasEdit(document, source, operation, CanvasControl{
-          [&] { return cancelled.load(); }, [&](int value) { progress.store(value); }});
-    });
-  } catch (const std::exception &) {
-    QMessageBox::warning(this, QStringLiteral("Cannot edit image"), QStringLiteral("The image operation could not be started. The document has been kept unchanged."));
-    return;
-  }
-  QEventLoop completion;
-  connect(&dialog, &QProgressDialog::canceled, &completion, [&] {
-    cancelled.store(true); dialog.setLabelText(QStringLiteral("Cancelling…")); dialog.setCancelButton(nullptr);
+  editCanvas([operation](const QImage &, QWidget *) { return std::optional<CanvasOperation>(operation); });
+}
+void EditorWindow::editCanvas(const std::function<std::optional<CanvasOperation>(const QImage &, QWidget *)> &choose) {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive()) return;
+  const auto state = m_session->stateId(), generation = m_canvas->documentGeneration(); const auto selection = m_session->selection();
+  const auto document = m_session->document(); const auto source = m_image; const auto hooks = m_canvasHooks; const QPointer<EditorWindow> owner(this);
+  withOutputBusy([owner, state, generation, selection, document, source, hooks, choose] {
+    if (!owner) return false;
+    const auto operation = choose(source, owner); if (!owner || !operation) return false;
+    auto prepared = runEditorCanvas(document, source, *operation, owner, hooks);
+    if (!owner || prepared.result.error == "canvas-cancelled") return false;
+    return owner->commitCanvas(std::move(prepared), state, selection, generation);
   });
-  connect(&dialog, &QDialog::rejected, &completion, [&] { cancelled.store(true); });
-  QTimer timer;
-  connect(&timer, &QTimer::timeout, &dialog, [&] {
-    dialog.setValue(progress.load());
-    if (worker.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) { dialog.accept(); completion.quit(); }
-  });
-  timer.start(20);
-  // Closing/cancelling the progress window does not release captured state.
-  // Keep processing native events until the same worker actually finishes.
-  dialog.open(); completion.exec();
-  auto prepared = worker.get();
-  if (cancelled.load() || prepared.result.error == QStringLiteral("canvas-cancelled")) return;
-  commitCanvas(std::move(prepared), state);
 }
 
 void EditorWindow::compareImages() {
@@ -983,7 +981,13 @@ void EditorWindow::compareImages() {
   dialog.exec();
 }
 
-void EditorWindow::commitCanvas(PreparedCanvasEdit prepared, quint64 state) {
+bool EditorWindow::commitCanvas(PreparedCanvasEdit prepared, quint64 state, const QSet<QUuid> &selection, quint64 generation) {
+  const QPointer<EditorWindow> owner(this);
+  if (generation != m_canvas->documentGeneration() || state != m_session->stateId() || selection != m_session->selection()) {
+    m_annotationMessage = annotationEditMessage("annotation-edit-stale"); m_annotationMessageState = m_session->stateId(); return false;
+  }
+  if (!prepared.result.error && prepared.result.changed && (!prepared.result.document ||
+      !m_session->commitCanvas(*prepared.result.document, state, selection))) prepared.result.error = m_session->editDiagnostic().isEmpty() ? "document-invalid" : m_session->editDiagnostic();
   if (prepared.result.error) {
     QString message = *prepared.result.error;
     if (message == u"canvas-annotation-shear-unsupported") message = QStringLiteral("Keep the aspect ratio locked to preserve rotated or stroked annotations.");
@@ -992,17 +996,17 @@ void EditorWindow::commitCanvas(PreparedCanvasEdit prepared, quint64 state) {
     else if (message == diagnostic::documentTooLarge) message = QStringLiteral("The requested image exceeds the editor's dimensions or memory limits.");
     else if (message == diagnostic::documentInvalid) message = QStringLiteral("The image or annotation data is invalid.");
     else if (message == u"canvas-encoding-failed") message = QStringLiteral("The edited source could not be encoded.");
-    QMessageBox::warning(this, QStringLiteral("Cannot edit image"), message);
-    return;
+    else if (message == u"canvas-preparation-failed") message = QStringLiteral("The image could not be prepared. The document has been kept unchanged. Try again.");
+    m_annotationMessage = message; m_annotationMessageState = m_session->stateId();
+    QPointer<QMessageBox> warning(new QMessageBox(QMessageBox::Warning, "Cannot edit image", message, QMessageBox::Ok, this));
+    warning->setObjectName("canvasOperationError"); warning->setTextFormat(Qt::PlainText); warning->exec(); disposeCanvasDialog(warning.data()); return false;
   }
-  if (!prepared.result.changed) return;
-  if (!m_session->commitCanvas(*prepared.result.document, state)) {
-    QMessageBox::warning(this, QStringLiteral("Cannot edit image"),
-                         m_session->stateId() != state ? QStringLiteral("The document changed while this operation was being prepared.") :
-                         QStringLiteral("The edited image could not be validated or stored in undo history."));
-    return;
+  if (!prepared.result.changed) return false;
+  if (m_sourceBytes != m_session->document().sourceImagePng) {
+    m_sourceBytes = m_session->document().sourceImagePng; m_image = std::move(prepared.source);
+    m_canvas->sourceChanged(prepared.displaySource); if (!owner) return false;
   }
-  refresh();
+  m_annotationMessage.clear(); m_annotationMessageState = m_session->stateId(); return true;
 }
 
 bool EditorWindow::save(bool chooseFile) {

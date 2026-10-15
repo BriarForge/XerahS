@@ -1,0 +1,206 @@
+{
+  "capability": "EDITOR-CANVAS-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial-candidate-evidence",
+  "related_capabilities": [
+    "EDITOR-SESSION-001",
+    "EDITOR-ANNOTATIONS-001"
+  ],
+  "implementation": [
+    "platforms/linux/linux-qt/app/EditorPreparation.h",
+    "platforms/linux/linux-qt/app/EditorPreparation.cpp",
+    "platforms/linux/linux-qt/app/EditorCanvasWorker.h",
+    "platforms/linux/linux-qt/app/EditorCanvasWorker.cpp",
+    "platforms/linux/linux-qt/app/EditorCanvasOperations.h",
+    "platforms/linux/linux-qt/app/EditorWindow.h",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp",
+    "platforms/linux/linux-qt/app/CanvasRotationDialog.h",
+    "platforms/linux/linux-qt/app/CanvasRotationDialog.cpp",
+    "platforms/linux/linux-qt/app/EditorHistory.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+    "platforms/linux/linux-qt/CMakeLists.txt"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
+    "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+  ],
+  "requirements": {
+    "EC-007": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "EC-008": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "EC-009": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "EC-010": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "EC-011": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "EC-012": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "EC-014": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "EC-015": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "EC-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "ES-002": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "ES-005": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "ES-006": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "ES-007": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "ES-008": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "ES-019": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "EA-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "EA-018": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "EA-019": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    },
+    "EA-020": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned native canvas preparation/preview, frozen state/selection/generation, atomic guarded commit, cancellation/owner recovery, source/profile/fields/assets/history/checkpoints and actual persistence are candidate evidence. Existing geometry/raster policy remains authoritative; complete native/tool/field/resource/privacy/security/a11y/compatibility/parity/human/release qualification remains Required."
+    }
+  },
+  "verification": {
+    "local_ctest": {
+      "passed": 44,
+      "failed": 0,
+      "full_run_seconds": 62.94,
+      "full_run_editor_window_seconds": 26.37,
+      "final_editor_window_retest_seconds": 26.1,
+      "successful_target_seconds_sum": 62.67,
+      "sequence": "The full run passed all 44 targets. Review then restored the old private-view sRGB assumption for untagged sources, added its regression case and gave generic preparation failures plain-language messages. The complete affected editor-window target passes on the final source; unchanged 43 successful targets were retained. No timeout was increased."
+    },
+    "published_vectors": {
+      "passed": 114,
+      "failed": 0,
+      "expected_results_changed": false,
+      "evidence": "The unchanged conformance target passed in full local and affected minimum-Qt runs."
+    },
+    "minimum_qt": {
+      "version": "6.4.2",
+      "affected_ctest_targets": 11,
+      "failed": 0,
+      "full_affected_run_seconds": 48.63,
+      "full_run_editor_window_seconds": 25.1,
+      "final_editor_window_retest_seconds": 25.07,
+      "successful_target_seconds_sum": 48.6,
+      "targets": [
+        "canvas-operations",
+        "capture-annotation",
+        "capture-paired-save",
+        "capture-pipeline",
+        "portal-screenshot",
+        "editor-source",
+        "editor-session",
+        "editor-canvas",
+        "editor-window",
+        "annotation-object-navigator",
+        "conformance"
+      ],
+      "sequence": "Eleven affected targets passed. The complete final editor-window retest passes after the private-view/error-presentation review; ten unchanged successful targets were retained."
+    },
+    "tooling_tests": {
+      "contract_linter": 16,
+      "contract_backlog": 9,
+      "conformance_runner": 7,
+      "failed": 0
+    },
+    "new_cases": {
+      "core_passed": 4,
+      "native_passed": 43,
+      "failed": 0,
+      "core": "Accepted, stale-state, stale-selection and invalid-source canvas commit with exact state/selection/assets/history/Redo preservation.",
+      "native": "Twelve mutation commands with independent pixel/profile/source/field/asset/history/output expectations; 22 standard/previews cancel/failure/stale/reentry/lifetime rows; eight configuration child/owner rows; one untagged working-source/private-sRGB-view row. Existing history, capture and native source cases pass through the shared preparation changes."
+    },
+    "visual_review": "Inspected synthetic ready 17-degree rotation: numeric angle, interpolation, canvas expansion, transparent fill, alpha checker/gradient source/red annotation composite, retained dimensions/progress/OK/Cancel are readable. Preparing-operation progress inspected. Offscreen candidate only; physical/native/human matrix remains Required.",
+    "review_findings": "Keep untagged working source untagged, but tag its private view with the existing canvas sRGB assumption. Preserve Display P3 working profile and convert only private views. Preparation failures retain fixed internal diagnostics and show plain-language retry messages without exception details. The old rotation cancel test was renamed to reflect nonblocking behavior; original no-commit/file assertions remain.",
+    "ci": "The checkpoint report verifies the exact pushed SHA and Ubuntu 24.04/Qt 6.4.2 native/lint jobs. This candidate does not accept human/release gates.",
+    "final_builds": "Local and Qt 6.4.2 builds pass after a whitespace-only cleanup of an introduced misleading-indentation warning. The final behavior was already covered by both complete editor-window retests; exact pushed CI is verified in the checkpoint report."
+  },
+  "prior_checkpoint_verification": {
+    "head_sha": "302066e1b87c4ec3e737eee2b14b22bcbce3ee05",
+    "ci_url": "https://github.com/BriarForge/XerahS/actions/runs/38681983130",
+    "conclusion": "success",
+    "native_job_id": 116248342994,
+    "lint_job_id": 116248343116,
+    "native_ctest_passed": 44,
+    "native_ctest_failed": 0,
+    "native_ctest_seconds": 58.97,
+    "qt_version": "6.4.2"
+  },
+  "next_action": "Migrate ImageComparisonDialog loading/previews to owned immutable workers and nonblocking cancellation/owner recovery, preserving validated file snapshots, alignment/divider controls and editor-history isolation.",
+  "remaining": "Comparison and New/Open dialogs retain earlier worker/owner paths; capture history retains its earlier asynchronous coordinator. Full tools/fields/resources/performance/native/a11y/privacy/security/compatibility/parity/human/release scope remains Required.",
+  "unresolved_decisions": [
+    "EA-005-LINUX-2026-10-14",
+    "EA-016-LINUX-2026-10-14",
+    "EO-004-LINUX-2026-10-14",
+    "ES-014-030-LINUX-2026-10-15",
+    "draft-native-equivalence-pending-product-owner-approval"
+  ]
+}

@@ -500,3 +500,47 @@ established. Next migrate remaining main-editor canvas operations from stack-own
 future/progress paths to owned preparation and frozen state/selection/generation
 admission, with nonblocking cancellation/owner teardown and unchanged geometry,
 source/profile, exact one-step history and actual persistence.
+
+
+[Owned canvas mutations](app/CANVAS-WORKERS.md) now prepare immutable source/
+document/operation snapshots and private displays on workers, with progress and
+nonblocking Cancel/Escape/child/owner recovery. The common native preparation
+helper also serves existing history restoration. Frozen state/exact selection/
+generation precede configuration and busy notifications; guarded Core commit
+preserves atomic history, surviving selection and reachable fields/assets.
+Publication sets source/cache/private display before refresh, avoiding GUI-thread
+decode/conversion. Untagged working source stays untagged with the old private
+sRGB assumption; Display P3 working source/profile is retained. Geometry, raster,
+unknown-object and output policies remain unchanged.
+
+Custom rotation now owns preview work without dialog captures or destructor joins.
+Only the latest complete angle/interpolation/expansion/fill draft can apply. Numeric
+resize/Auto Crop, colour pickers, clear confirmation and errors use owned dialogs;
+cleanup detaches before destruction observers can delete the parent. Clear keeps
+Save/Discard/Cancel and rechecks frozen admission before/after explicit Save.
+Existing incomplete-save recovery and all other native history/capture cases pass.
+
+Four new Core and 43 native cases cover twelve actual commands with independent
+pixels/profile/history/PNG/.xann expectations, untagged private-view interpretation,
+stale/failure/reentry, blocked-worker cancellation/teardown and configuration owner
+recovery. Ready rotation and operation-progress synthetic frames were inspected.
+The full local run passed 44 targets in 62.94 seconds; after the view-tag/retry-text
+review, the final affected editor-window retest passed in 26.10 seconds. Eleven
+Qt 6.4.2 targets passed in 48.63 seconds and its final editor retest passed in
+25.07 seconds. Unchanged successful targets were retained; the 30-second editor
+timeout was not increased. The 114 unchanged vectors and 32 tooling tests pass.
+Instruction/lint/backlog and exact pushed Ubuntu CI evidence are reported with
+the checkpoint. Prior history commit 302066e has verified successful CI 38681983130:
+44 Ubuntu 24.04/Qt 6.4.2 tests in 58.97 seconds, plus lint success.
+
+Requirement IDs/statuses/dispositions/vector references, 80 implemented/68 partial
+core labels, 52 registered commands and fourteen visible defaults remain unchanged.
+The full application/capture/recording/audio/upload/workflow/settings/editor/tools/
+effects/canvas/output/history/automation/compatibility/distribution/migration/
+updates/rollback scope, target matrix, resources/performance and human privacy/
+security/a11y/parity/release gates remain Required. Product decisions remain pending;
+no completion percentage or release acceptance is established. Next migrate
+ImageComparisonDialog loading/previews to owned immutable workers and nonblocking
+cancel/owner recovery, retaining validated file snapshots, alignment/divider controls
+and editor-history isolation; New/Open and capture-history ownership qualification
+also remain Required.

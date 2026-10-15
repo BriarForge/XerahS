@@ -10,6 +10,7 @@
 #include "AnnotationClipboard.h"
 #include "CanvasCropDialog.h"
 #include "EditorHistory.h"
+#include "EditorCanvasWorker.h"
 
 #include <QImage>
 #include <QMainWindow>
@@ -39,6 +40,7 @@ public:
   static EditorWindow *fromCapturedDocument(const xerahs::editor::AnnotationDocument &document, QWidget *parent = nullptr);
   // Empty path invokes the native picker; recent-file actions pass an explicit path.
   bool openImage(const QString &path = {});
+  void setCanvasHooks(EditorCanvasHooks hooks) { m_canvasHooks = std::move(hooks); }
   void setHistoryHooks(EditorHistoryHooks hooks) { m_historyHooks = std::move(hooks); }
   void setCropHooks(CanvasCropHooks hooks) { m_cropHooks = std::move(hooks); }
   void setSaveHooks(EditorSaveHooks hooks) { m_saveHooks = std::move(hooks); }
@@ -96,7 +98,8 @@ private:
   void compareImages();
   void resizeImage(bool canvasOnly);
   void applyCanvas(xerahs::editor::CanvasOperation operation);
-  void commitCanvas(PreparedCanvasEdit prepared, quint64 state);
+  void editCanvas(const std::function<std::optional<xerahs::editor::CanvasOperation>(const QImage &, QWidget *)> &choose);
+  bool commitCanvas(PreparedCanvasEdit prepared, quint64 state, const QSet<QUuid> &selection, quint64 generation);
 
   QString m_path;
   QString m_preferenceDiagnostic;
@@ -122,6 +125,7 @@ private:
   bool m_closePending = false;
   bool m_outputPending = false;
   QAction *m_retrySave = nullptr;
+  EditorCanvasHooks m_canvasHooks;
   EditorHistoryHooks m_historyHooks;
   CanvasCropHooks m_cropHooks;
   EditorSaveHooks m_saveHooks;

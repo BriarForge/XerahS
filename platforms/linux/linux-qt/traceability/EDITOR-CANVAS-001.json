@@ -57,7 +57,11 @@
     "platforms/linux/linux-qt/app/CaptureActions.cpp",
     "platforms/linux/linux-qt/app/CapturePipeline.cpp",
     "platforms/linux/linux-qt/app/EditorHistory.h",
-    "platforms/linux/linux-qt/app/EditorHistory.cpp"
+    "platforms/linux/linux-qt/app/EditorHistory.cpp",
+    "platforms/linux/linux-qt/app/EditorPreparation.h",
+    "platforms/linux/linux-qt/app/EditorPreparation.cpp",
+    "platforms/linux/linux-qt/app/EditorCanvasWorker.h",
+    "platforms/linux/linux-qt/app/EditorCanvasWorker.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorViewportTest.cpp",
@@ -76,7 +80,9 @@
     "platforms/linux/linux-qt/app/EDITOR-CROP.md",
     "platforms/linux/linux-qt/app/EDITOR-CROP-EVIDENCE.json",
     "platforms/linux/linux-qt/app/EDITOR-HISTORY.md",
-    "platforms/linux/linux-qt/app/EDITOR-HISTORY-EVIDENCE.json"
+    "platforms/linux/linux-qt/app/EDITOR-HISTORY-EVIDENCE.json",
+    "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
+    "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
   ],
   "requirements": {
     "EC-001": {
@@ -122,25 +128,35 @@
       "disposition": "Required",
       "status": "implemented",
       "vectors": [],
-      "note": "Crop Image and the Crop tool use one normalized/clipped rectangle and one history commit. Stroke-grown rotated intersection removes wholly outside rectangles, translates retained objects, and clips partial objects at export. CANVAS-POLICY.md documents the policy; native tests exercise pointer cancellation, dialog crop, undo/redo and sidecar reopening. Native capture Crop now shares normalized reverse/clipped numeric/pointer bounds, an owned worker preview and one guarded Core history commit. Private in-memory source regions compose through crops/history, while the capture worker independently reproduces original-source pixels before accepting changed source/dimensions. Actual objects/assets/alpha, no-op/Cancel, source/viewport Undo/Redo, typed unknown refusal, PNG/.xann reopen and retry are indexed in CAPTURE-CROP.md. Full tool/field/resource/privacy/security/a11y/compatibility/parity/native/human/release qualification remains Required. Main-editor numeric and pointer Crop now reuse the owned preview with frozen state/exact selection/generation, one canvas commit, prepared source/private display and nonblocking Cancel/child/owner teardown. Native keyboard/pointer, inverse-rotation compatibility, alpha/profile/fields/assets, exact history/checkpoint, stale/unknown refusal and actual PNG/.xann reopen are indexed in EDITOR-CROP.md.",
+      "note": "Crop Image and the Crop tool use one normalized/clipped rectangle and one history commit. Stroke-grown rotated intersection removes wholly outside rectangles, translates retained objects, and clips partial objects at export. CANVAS-POLICY.md documents the policy; native tests exercise pointer cancellation, dialog crop, undo/redo and sidecar reopening. Native capture Crop now shares normalized reverse/clipped numeric/pointer bounds, an owned worker preview and one guarded Core history commit. Private in-memory source regions compose through crops/history, while the capture worker independently reproduces original-source pixels before accepting changed source/dimensions. Actual objects/assets/alpha, no-op/Cancel, source/viewport Undo/Redo, typed unknown refusal, PNG/.xann reopen and retry are indexed in CAPTURE-CROP.md. Full tool/field/resource/privacy/security/a11y/compatibility/parity/native/human/release qualification remains Required. Main-editor numeric and pointer Crop now reuse the owned preview with frozen state/exact selection/generation, one canvas commit, prepared source/private display and nonblocking Cancel/child/owner teardown. Native keyboard/pointer, inverse-rotation compatibility, alpha/profile/fields/assets, exact history/checkpoint, stale/unknown refusal and actual PNG/.xann reopen are indexed in EDITOR-CROP.md. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/CAPTURE-CROP.md",
         "platforms/linux/linux-qt/app/CAPTURE-CROP-EVIDENCE.json",
         "platforms/linux/linux-qt/app/EDITOR-CROP.md",
-        "platforms/linux/linux-qt/app/EDITOR-CROP-EVIDENCE.json"
+        "platforms/linux/linux-qt/app/EDITOR-CROP-EVIDENCE.json",
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
       ]
     },
     "EC-008": {
       "disposition": "Required",
       "status": "implemented",
       "vectors": [],
-      "note": "Native Auto Crop exposes border reference, alpha threshold, inclusive RGBA channel tolerance and whether visible annotations contribute to bounds. The Qt Core engine renders without flattening, scans deterministically, and reuses the crop intersection policy. Empty/full bounds are no-ops with no history. Core and native-window tests cover exact bounds/pixels, alpha and colour thresholds, editable annotations, row-level cancellation, save/reopen and one-step undo."
+      "note": "Native Auto Crop exposes border reference, alpha threshold, inclusive RGBA channel tolerance and whether visible annotations contribute to bounds. The Qt Core engine renders without flattening, scans deterministically, and reuses the crop intersection policy. Empty/full bounds are no-ops with no history. Core and native-window tests cover exact bounds/pixels, alpha and colour thresholds, editable annotations, row-level cancellation, save/reopen and one-step undo. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
+      ]
     },
     "EC-009": {
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Native pixel resize has aspect locking, nearest and alpha-aware bilinear interpolation, dimension limits, and retained rectangle scaling. General non-uniform transforms of rotated or stroked annotations require affine object support; those cases currently fail atomically rather than distort or discard objects. Integer aspect rounding can also produce unequal scales. CanvasOperationsTest covers sampling, alpha and limits."
+      "note": "Native pixel resize has aspect locking, nearest and alpha-aware bilinear interpolation, dimension limits, and retained rectangle scaling. General non-uniform transforms of rotated or stroked annotations require affine object support; those cases currently fail atomically rather than distort or discard objects. Integer aspect rounding can also produce unequal scales. CanvasOperationsTest covers sampling, alpha and limits. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
+      ]
     },
     "EC-010": {
       "disposition": "Required",
@@ -148,7 +164,11 @@
       "vectors": [
         "center-expand-canvas"
       ],
-      "note": "Native Resize Canvas provides nine anchors, explicit alpha/colour fill, exact retained-pixel copies and annotation translation/removal. CANVAS-POLICY.md defines odd-size alignment and the intersection policy. Unit and native window tests cover expansion, shrink, anchors, colour/alpha, save and undo."
+      "note": "Native Resize Canvas provides nine anchors, explicit alpha/colour fill, exact retained-pixel copies and annotation translation/removal. CANVAS-POLICY.md defines odd-size alignment and the intersection policy. Unit and native window tests cover expansion, shrink, anchors, colour/alpha, save and undo. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
+      ]
     },
     "EC-011": {
       "disposition": "Required",
@@ -156,13 +176,21 @@
       "vectors": [
         "rotate-90-clockwise"
       ],
-      "note": "Native quarter turns, custom rotation and flips transform source pixels, dimensions, rectangle centres/orientations and pixel-centre coordinates atomically. Custom rotation has explicit expansion/cropping, background and sampling policies; exact expanded quarter turns are lossless. Tests cover independent pixel permutations, analytical 45-degree output, alpha-aware border interpolation, limits, editable persistence and undo. Directional/inserted assets await their tool implementations."
+      "note": "Native quarter turns, custom rotation and flips transform source pixels, dimensions, rectangle centres/orientations and pixel-centre coordinates atomically. Custom rotation has explicit expansion/cropping, background and sampling policies; exact expanded quarter turns are lossless. Tests cover independent pixel permutations, analytical 45-degree output, alpha-aware border interpolation, limits, editable persistence and undo. Directional/inserted assets await their tool implementations. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
+      ]
     },
     "EC-012": {
       "disposition": "Required",
       "status": "implemented",
       "vectors": [],
-      "note": "Native Rotate Image exposes angle, nearest/bilinear interpolation, expand/crop and uncovered-pixel ARGB controls. A cancellable worker prepares the complete source/document and authoritative rendered preview without entering session history. Changes invalidate obsolete previews; accepting commits exactly the prepared result with a state guard, once. Native tests exercise the cancelled 17-degree annotated/dirty scenario, rejection of an obsolete preview, controls, live-worker cancellation, save/reopen and one-step history; core tests verify independent sampling and atomic failures."
+      "note": "Native Rotate Image exposes angle, nearest/bilinear interpolation, expand/crop and uncovered-pixel ARGB controls. A cancellable worker prepares the complete source/document and authoritative rendered preview without entering session history. Changes invalidate obsolete previews; accepting commits exactly the prepared result with a state guard, once. Native tests exercise the cancelled 17-degree annotated/dirty scenario, rejection of an obsolete preview, controls, live-worker cancellation, save/reopen and one-step history; core tests verify independent sampling and atomic failures. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
+      ]
     },
     "EC-013": {
       "disposition": "Required",
@@ -173,13 +201,21 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Native Flatten composites the current source and supported visible annotations into an encoded immutable source, clearing only IDs with positive rendered coverage. Hidden, transparent, zero-opacity, off-canvas and hidden unsupported objects remain; visible unsupported types fail atomically. Assets remain reachable throughout history. Core and native file/window tests verify independent source-over pixels, profile preservation, represented-object filtering, selection/source undo, no-op repetition and live-worker cancellation. Separate background layers await EC-013; full flatten qualification remains pending."
+      "note": "Native Flatten composites the current source and supported visible annotations into an encoded immutable source, clearing only IDs with positive rendered coverage. Hidden, transparent, zero-opacity, off-canvas and hidden unsupported objects remain; visible unsupported types fail atomically. Assets remain reachable throughout history. Core and native file/window tests verify independent source-over pixels, profile preservation, represented-object filtering, selection/source undo, no-op repetition and live-worker cancellation. Separate background layers await EC-013; full flatten qualification remains pending. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
+      ]
     },
     "EC-015": {
       "disposition": "Required",
       "status": "implemented",
       "vectors": [],
-      "note": "Distinct native Clear Annotations and Clear Image and Annotations commands share atomic history. Annotation clear retains source PNG bytes exactly. Pixel clear uses an accessible native confirmation defaulting to Cancel, offers Save before Clear/Clear without Saving for dirty sessions, retains dimensions/profile and complete Undo recovery, and changes files only after explicit save. Core and native window tests cover cancellation, save/discard/clear choices, checkpoint and selection restoration, unsupported-object recovery and transparent PNG output. New Image replacement now prepares the complete new source before native Save/Discard/Cancel confirmation, defaulting to Cancel; cancellation and incomplete saves keep the current dirty session and history. Save and Discard intentionally adopt a fresh unsaved session only after success/confirmation. Native window tests cover all choices, untitled destination cancellation, failed raster and sidecar persistence, and preserved old files except explicit Save. Open-in-place now validates the candidate before the same confirmation; native tests verify Save/Discard/Cancel, unchanged state on invalid/cancelled input, clean adoption and reload of an explicitly saved overlapping candidate."
+      "note": "Distinct native Clear Annotations and Clear Image and Annotations commands share atomic history. Annotation clear retains source PNG bytes exactly. Pixel clear uses an accessible native confirmation defaulting to Cancel, offers Save before Clear/Clear without Saving for dirty sessions, retains dimensions/profile and complete Undo recovery, and changes files only after explicit save. Core and native window tests cover cancellation, save/discard/clear choices, checkpoint and selection restoration, unsupported-object recovery and transparent PNG output. New Image replacement now prepares the complete new source before native Save/Discard/Cancel confirmation, defaulting to Cancel; cancellation and incomplete saves keep the current dirty session and history. Save and Discard intentionally adopt a fresh unsaved session only after success/confirmation. Native window tests cover all choices, untitled destination cancellation, failed raster and sidecar persistence, and preserved old files except explicit Save. Open-in-place now validates the candidate before the same confirmation; native tests verify Save/Discard/Cancel, unchanged state on invalid/cancelled input, clean adoption and reload of an explicitly saved overlapping candidate. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
+      ]
     },
     "EC-016": {
       "disposition": "Required",
@@ -195,14 +231,16 @@
         "center-expand-canvas",
         "viewport-only"
       ],
-      "note": "All three published vectors pass through production calls and native PNG codecs. Preparation runs on a worker with progress/cancellation; dimension checks precede allocation, preparation/encoding failure preserves the session, and validated state-guarded commits are one undo step. Native tests verify restored source pixels, dimensions, selection, dirty checkpoints and color metadata. Remaining canvas operations and general affine annotation support are still required before full qualification. Comparison adds header validation, union-canvas limits, progress/cooperative cancellation and immutable worker snapshots; native tests verify failed/cancelled loads retain the prior comparison and never enter editor history. New Image validates dimensions/profile before allocation, prepares source/display/PNG/document off the UI thread, and publishes only a successful result. Native dialog tests cancel and close the same live worker without publishing; native window tests verify atomic replacement and save failure recovery. Native Open moves raster/sidecar reads, hashing, decode/encode and private display conversion off the UI thread, bounds encoded inputs before buffering and during growth, and waits for the same live worker after cancel/close. Loader tests cover cancellation at every exposed stage and sparse oversized files; native window tests preserve the old session on cancellation/errors and verify safe canvas/session teardown. Captured-source recovery uses a cancellable native worker to prepare owned pixel-normalized source/PNG/document and a private sRGB view, preserving alpha/profile and inferring no original save path. Native source/editor tests cover borrowed-buffer lifetime, pixel-ratio normalization, bounds, staged cancellation, redacted exceptions, unsaved history/close semantics and explicit Save As without touching the original capture. Capture crop preview and source-changing history use owned cancellable workers, named progress, frozen state/selection/generation and nonblocking owner cancellation. Native destruction/child recovery, rejected source proofs and pipeline cancel/save retry are verified; the reproduced child-recovery-after-parent-canvas-deletion crash is fixed by closing/disconnection guards. Evidence and private fixture findings are indexed in CAPTURE-CROP.md. Full tool/field/resource/privacy/security/a11y/compatibility/parity/native/human/release qualification remains Required. Main-editor Crop now prepares its current preview off the GUI thread and publishes only frozen-admitted source/private display. Blocked-worker Cancel/child/owner teardown, reentry, stale admission and failure are verified. Main-editor source-changing history still decodes on the GUI thread; other canvas operations retain older worker ownership. Full resource/native/human qualification remains Required. Main-editor source-changing Undo/Redo now prepares owned source/private display off the GUI thread before guarded Core history restoration; annotation-only history avoids a worker. Frozen state/exact selection/generation/target identity, replaced Redo branch refusal, cancel/child/owner recovery, alpha/profile/fields/assets/checkpoints and actual Save/reopen are indexed in EDITOR-HISTORY.md. Other canvas worker paths and full resource/native/a11y/privacy/security/parity/human/release qualification remain Required.",
+      "note": "All three published vectors pass through production calls and native PNG codecs. Preparation runs on a worker with progress/cancellation; dimension checks precede allocation, preparation/encoding failure preserves the session, and validated state-guarded commits are one undo step. Native tests verify restored source pixels, dimensions, selection, dirty checkpoints and color metadata. Remaining canvas operations and general affine annotation support are still required before full qualification. Comparison adds header validation, union-canvas limits, progress/cooperative cancellation and immutable worker snapshots; native tests verify failed/cancelled loads retain the prior comparison and never enter editor history. New Image validates dimensions/profile before allocation, prepares source/display/PNG/document off the UI thread, and publishes only a successful result. Native dialog tests cancel and close the same live worker without publishing; native window tests verify atomic replacement and save failure recovery. Native Open moves raster/sidecar reads, hashing, decode/encode and private display conversion off the UI thread, bounds encoded inputs before buffering and during growth, and waits for the same live worker after cancel/close. Loader tests cover cancellation at every exposed stage and sparse oversized files; native window tests preserve the old session on cancellation/errors and verify safe canvas/session teardown. Captured-source recovery uses a cancellable native worker to prepare owned pixel-normalized source/PNG/document and a private sRGB view, preserving alpha/profile and inferring no original save path. Native source/editor tests cover borrowed-buffer lifetime, pixel-ratio normalization, bounds, staged cancellation, redacted exceptions, unsaved history/close semantics and explicit Save As without touching the original capture. Capture crop preview and source-changing history use owned cancellable workers, named progress, frozen state/selection/generation and nonblocking owner cancellation. Native destruction/child recovery, rejected source proofs and pipeline cancel/save retry are verified; the reproduced child-recovery-after-parent-canvas-deletion crash is fixed by closing/disconnection guards. Evidence and private fixture findings are indexed in CAPTURE-CROP.md. Full tool/field/resource/privacy/security/a11y/compatibility/parity/native/human/release qualification remains Required. Main-editor Crop now prepares its current preview off the GUI thread and publishes only frozen-admitted source/private display. Blocked-worker Cancel/child/owner teardown, reentry, stale admission and failure are verified. Main-editor source-changing history still decodes on the GUI thread; other canvas operations retain older worker ownership. Full resource/native/human qualification remains Required. Main-editor source-changing Undo/Redo now prepares owned source/private display off the GUI thread before guarded Core history restoration; annotation-only history avoids a worker. Frozen state/exact selection/generation/target identity, replaced Redo branch refusal, cancel/child/owner recovery, alpha/profile/fields/assets/checkpoints and actual Save/reopen are indexed in EDITOR-HISTORY.md. Other canvas worker paths and full resource/native/a11y/privacy/security/parity/human/release qualification remain Required. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/CAPTURE-CROP.md",
         "platforms/linux/linux-qt/app/CAPTURE-CROP-EVIDENCE.json",
         "platforms/linux/linux-qt/app/EDITOR-CROP.md",
         "platforms/linux/linux-qt/app/EDITOR-CROP-EVIDENCE.json",
         "platforms/linux/linux-qt/app/EDITOR-HISTORY.md",
-        "platforms/linux/linux-qt/app/EDITOR-HISTORY-EVIDENCE.json"
+        "platforms/linux/linux-qt/app/EDITOR-HISTORY-EVIDENCE.json",
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
       ]
     }
   },

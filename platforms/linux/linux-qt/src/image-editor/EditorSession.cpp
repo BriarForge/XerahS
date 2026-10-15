@@ -442,6 +442,13 @@ bool EditorSession::commitCanvas(AnnotationDocument next, quint64 expectedState)
   } catch (const std::bad_alloc &) { return false; }
 }
 
+bool EditorSession::commitCanvas(AnnotationDocument next, quint64 state, const QSet<QUuid> &selection) {
+  m_editDiagnostic.clear();
+  if (stateId() != state || m_selection != selection) { m_editDiagnostic = "annotation-edit-stale"; return false; }
+  if (commitCanvas(std::move(next), state)) return true;
+  m_editDiagnostic = diagnostic::documentInvalid; return false;
+}
+
 bool EditorSession::commitCrop(AnnotationDocument next, CropRegion region, quint64 state, const QSet<QUuid> &selection) {
   m_editDiagnostic.clear();
   if (stateId() != state || m_selection != selection) { m_editDiagnostic = "annotation-edit-stale"; return false; }

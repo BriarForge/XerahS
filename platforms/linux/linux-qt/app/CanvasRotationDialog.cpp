@@ -1,6 +1,9 @@
 #include "CanvasRotationDialog.h"
 
 #include <QCheckBox>
+#include <QColorSpace>
+#include <QPointer>
+#include <QThreadPool>
 #include <QColorDialog>
 #include <QComboBox>
 #include <QDialogButtonBox>
@@ -42,10 +45,10 @@ private:
   QImage m_image;
 };
 
-CanvasRotationDialog::CanvasRotationDialog(AnnotationDocument document, QImage source, QWidget *parent)
-    : QDialog(parent), m_document(std::move(document)), m_source(std::move(source)) {
+CanvasRotationDialog::CanvasRotationDialog(AnnotationDocument document, QImage source, QWidget *parent, EditorCanvasHooks hooks)
+    : QDialog(parent), m_document(std::move(document)), m_source(std::move(source)), m_hooks(std::move(hooks)) {
   setObjectName(QStringLiteral("customRotationDialog"));
-  setWindowTitle(QStringLiteral("Rotate Image"));
+  setWindowTitle(QStringLiteral("Rotate Image")); setAccessibleName(windowTitle()); setWindowModality(Qt::WindowModal);
   auto *layout = new QVBoxLayout(this);
   auto *form = new QFormLayout;
   m_angle = new QDoubleSpinBox(this);
@@ -62,8 +65,13 @@ CanvasRotationDialog::CanvasRotationDialog(AnnotationDocument document, QImage s
   auto *color = new QPushButton(QStringLiteral("Transparent"), this);
   form->addRow(QStringLiteral("&Uncovered pixels"), color);
   connect(color, &QPushButton::clicked, this, [this, color] {
-    const QColor chosen = QColorDialog::getColor(QColor::fromRgba(m_fill), this, QStringLiteral("Uncovered pixels"), QColorDialog::ShowAlphaChannel);
-    if (chosen.isValid()) { m_fill = chosen.rgba(); color->setText(chosen.name(QColor::HexArgb)); requestPreview(); }
+    const QPointer<CanvasRotationDialog> owner(this); QPointer<QColorDialog> picker(new QColorDialog(QColor::fromRgba(m_fill), this));
+    picker->setWindowTitle("Uncovered pixels"); picker->setOption(QColorDialog::ShowAlphaChannel);
+    const auto answer = picker->exec(); const auto chosen = picker && answer == QDialog::Accepted ? picker->selectedColor() : QColor{};
+    if (picker) picker->hide();
+    if (picker) picker->setParent(nullptr);
+    delete picker.data();
+    if (owner && chosen.isValid()) { m_fill = chosen.rgba(); color->setText(chosen.name(QColor::HexArgb)); if (owner) requestPreview(); }
   });
   layout->addLayout(form);
   auto *rules = new QLabel(QStringLiteral("Rotate about the image centre. Without expansion, keep the current dimensions "
@@ -86,77 +94,75 @@ CanvasRotationDialog::CanvasRotationDialog(AnnotationDocument document, QImage s
   resize(560, 640);
 }
 
-CanvasRotationDialog::~CanvasRotationDialog() {
-  if (m_control) m_control->cancelled.store(true);
-  if (m_worker.valid()) m_worker.wait();
-}
+CanvasRotationDialog::~CanvasRotationDialog() { if (m_work) m_work->cancelled.store(true); }
 
 void CanvasRotationDialog::requestPreview() {
   if (m_closing) return;
-  ++m_revision;
-  if (m_control) m_control->cancelled.store(true);
+  const QPointer<CanvasRotationDialog> owner(this); ++m_revision;
+  if (m_work) m_work->cancelled.store(true);
   m_prepared.reset(); m_pending = true;
-  m_buttons->button(QDialogButtonBox::Ok)->setEnabled(false);
-  m_status->setText(QStringLiteral("Preparing preview…")); m_progress->setValue(0);
-  m_debounce.start(150);
+  m_buttons->button(QDialogButtonBox::Ok)->setEnabled(false); if (!owner) return;
+  m_status->setText("Preparing preview…"); if (!owner) return;
+  m_progress->setValue(0); if (!owner) return; m_debounce.start(150);
 }
-
 void CanvasRotationDialog::startPreview() {
-  if (m_closing || m_worker.valid() || !m_pending) return;
-  m_pending = false; m_jobRevision = m_revision;
+  if (m_closing || m_work || !m_pending) return;
+  m_pending = false;
   CanvasOperation operation; operation.action = CanvasAction::RotateCustom;
   operation.rotationDegrees = m_angle->value(); operation.expandCanvas = m_expand->isChecked();
   operation.interpolation = Interpolation(m_interpolation->currentIndex()); operation.fill = m_fill;
   try {
-    m_control = std::make_shared<WorkControl>();
-    m_worker = std::async(std::launch::async, [this, operation, control = m_control] {
-      return prepareCanvasPreview(m_document, m_source, operation,
-          {[control] { return control->cancelled.load(); }, [control](int p) { control->progress.store(p); }});
+    auto work = std::make_shared<Work>(); work->revision = m_revision;
+    const auto document = m_document; const auto source = m_source; const auto hooks = m_hooks;
+    QThreadPool::globalInstance()->start([work, document, source, hooks, operation] {
+      try {
+        if (hooks.beforePrepare) hooks.beforePrepare();
+        const CanvasControl control{[work] { return work->cancelled.load(); }, [work](int p) { work->progress.store(p); }};
+        work->preview = prepareCanvasPreview(document, source, operation, control); prepareCanvasDisplay(work->preview.edit, control);
+        if (!work->preview.edit.result.error && !work->preview.composite.colorSpace().isValid()) work->preview.composite.setColorSpace(QColorSpace::SRgb);
+        if (!work->preview.edit.result.error && work->preview.composite.colorSpace() != QColorSpace(QColorSpace::SRgb))
+          work->preview.composite = work->preview.composite.convertedToColorSpace(QColorSpace::SRgb);
+        if (!work->preview.edit.result.error && work->preview.composite.isNull()) work->preview.edit.result.error = diagnostic::documentTooLarge;
+      } catch (...) { work->preview.edit.result.error = "canvas-preparation-failed"; }
+      work->ready.store(true, std::memory_order_release);
     });
-  } catch (const std::bad_alloc &) {
-    m_status->setText(QStringLiteral("Not enough memory to prepare the preview."));
-  } catch (const std::system_error &) {
-    m_status->setText(QStringLiteral("A preview worker could not be started. Try again."));
-  }
+    m_work = std::move(work);
+  } catch (...) { m_status->setText("A preview worker could not be started. Change the angle to retry. The document was kept."); }
 }
-
 void CanvasRotationDialog::pollPreview() {
-  if (!m_worker.valid()) return;
-  if (!m_closing && m_jobRevision == m_revision) m_progress->setValue(m_control->progress.load());
-  if (m_worker.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) return;
-  CanvasPreview preview = m_worker.get();
-  if (m_closing) { QDialog::reject(); return; }
-  if (m_jobRevision == m_revision && !m_control->cancelled.load()) {
+  if (!m_work || m_closing) return;
+  const QPointer<CanvasRotationDialog> owner(this); const auto work = m_work;
+  if (work->revision == m_revision) m_progress->setValue(work->progress.load());
+  if (!owner || !work->ready.load(std::memory_order_acquire)) return;
+  m_work.reset();
+  if (work->revision == m_revision && !work->cancelled.load()) {
+    auto &preview = work->preview;
     if (preview.edit.result.error) {
       QString message = *preview.edit.result.error;
-      if (message == diagnostic::documentTooLarge) message = QStringLiteral("The expanded image exceeds the editor's dimensions or memory limits.");
-      else if (message == u"canvas-annotation-transform-unsupported") message = QStringLiteral("This document contains annotation types this editor cannot rotate yet.");
-      else if (message == diagnostic::documentInvalid) message = QStringLiteral("The document contains invalid image or annotation data.");
-      else if (message == u"canvas-encoding-failed") message = QStringLiteral("The rotated image could not be encoded.");
-      m_status->setText(message); m_preview->setImage({});
+      if (message == diagnostic::documentTooLarge) message = "The expanded image exceeds the editor's dimensions or memory limits.";
+      else if (message == "canvas-annotation-transform-unsupported") message = "This document contains annotation types this editor cannot rotate yet.";
+      else if (message == diagnostic::documentInvalid) message = "The document contains invalid image or annotation data.";
+      else if (message == "canvas-encoding-failed") message = "The rotated image could not be encoded.";
+      else if (message == "canvas-preparation-failed") message = "The rotation preview could not be prepared. Change the angle to retry. The document was kept.";
+      m_status->setText(message); if (!owner) return; m_preview->setImage({});
     } else {
-      m_status->setText(QStringLiteral("Preview: %1 × %2 pixels. %3")
-          .arg(preview.composite.width()).arg(preview.composite.height())
-          .arg(preview.edit.result.changed ? QStringLiteral("OK applies one undoable edit.") : QStringLiteral("No change to the document.")));
-      m_preview->setImage(std::move(preview.composite));
-      m_prepared = std::move(preview.edit);
-      m_progress->setValue(100); m_buttons->button(QDialogButtonBox::Ok)->setEnabled(true);
+      m_status->setText(QString("Preview: %1 × %2 pixels. %3").arg(preview.composite.width()).arg(preview.composite.height())
+          .arg(preview.edit.result.changed ? "OK applies one undoable edit." : "No change to the document.")); if (!owner) return;
+      m_preview->setImage(std::move(preview.composite)); m_prepared = std::move(preview.edit);
+      m_progress->setValue(100); if (!owner) return; m_buttons->button(QDialogButtonBox::Ok)->setEnabled(true); if (!owner) return;
     }
   }
   if (m_pending && !m_debounce.isActive()) startPreview();
 }
-
 void CanvasRotationDialog::accept() {
-  if (!m_closing && m_prepared && !m_pending && !m_worker.valid()) QDialog::accept();
+  if (!m_closing && m_prepared && !m_pending && !m_work) { m_closing = true; QDialog::accept(); }
 }
 void CanvasRotationDialog::reject() {
   m_closing = true; m_pending = false; m_debounce.stop(); m_prepared.reset();
-  if (m_control) m_control->cancelled.store(true);
-  if (!m_worker.valid()) { QDialog::reject(); return; }
-  m_status->setText(QStringLiteral("Cancelling preview…")); m_buttons->setEnabled(false);
+  if (m_work) m_work->cancelled.store(true);
+  QDialog::reject();
 }
 std::optional<PreparedCanvasEdit> CanvasRotationDialog::takeEdit() {
-  if (result() != QDialog::Accepted) return std::nullopt;
-  return std::exchange(m_prepared, std::nullopt);
+  return result() == QDialog::Accepted ? std::exchange(m_prepared, std::nullopt) : std::nullopt;
 }
-}  // namespace xerahs::app
+} // namespace xerahs::app

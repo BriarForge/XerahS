@@ -64,6 +64,19 @@ class EditorSessionTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void guardedCanvasCommitPreservesSelectionHistoryAndRefusesStaleAdmission_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"valid", "stale-state", "stale-selection", "invalid-source"}) QTest::newRow(mode) << QString(mode);
+  }
+  void guardedCanvasCommitPreservesSelectionHistoryAndRefusesStaleAdmission() {
+    QFETCH(QString, mode); auto d = document(1, 1); auto a = rectangle(0, 0, 1, 1), b = rectangle(.1, .1, .9, .9); d.annotations = {a, b}; d.embeddedImages = {{"asset", kOnePixelPng}}; d.extra = {{"vendor", "root"}};
+    EditorSession session(d); session.select({a.id}); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); const auto state = session.stateId(); const auto selection = session.selection(); const auto original = serializeDocument(session.document());
+    auto next = session.document(); next.annotations = {b}; if (mode == "invalid-source") next.sourceImagePng = "invalid";
+    const bool accepted = session.commitCanvas(next, mode == "stale-state" ? state + 1 : state, mode == "stale-selection" ? QSet<QUuid>{b.id} : selection);
+    QCOMPARE(accepted, mode == "valid");
+    if (!accepted) { QCOMPARE(serializeDocument(session.document()), original); QCOMPARE(session.selection(), selection); QCOMPARE(session.undoCount(), 0); QCOMPARE(session.redoCount(), 1); QVERIFY(!session.dirty()); QCOMPARE(session.editDiagnostic(), mode == "invalid-source" ? diagnostic::documentInvalid : QString("annotation-edit-stale")); }
+    else { QCOMPARE(serializeDocument(session.document()), serializeDocument(next)); QVERIFY(session.selection().isEmpty()); QCOMPARE(session.undoCount(), 1); QCOMPARE(session.redoCount(), 0); QVERIFY(session.dirty()); QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), original); QCOMPARE(session.selection(), selection); QVERIFY(!session.dirty()); QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(next)); }
+    QCOMPARE(session.document().embeddedImages, d.embeddedImages); QCOMPARE(session.document().extra, d.extra);
+  }
   void guardedHistoryAdmitsOnlyTheFrozenStateSelectionAndTarget_data() {
     QTest::addColumn<QString>("mode"); for (const auto *mode : {"undo", "redo", "stale-state", "stale-selection", "stale-target", "replaced-redo", "missing-target"}) QTest::newRow(mode) << QString(mode);
   }

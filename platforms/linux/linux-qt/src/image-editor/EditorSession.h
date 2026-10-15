@@ -113,6 +113,7 @@ public:
   // encoding succeeded, and only if the document being edited is still current.
   // Validation or a stale state leaves document, selection and history intact.
   bool commitCanvas(AnnotationDocument document, quint64 expectedState);
+  bool commitCanvas(AnnotationDocument document, quint64 expectedState, const QSet<QUuid> &expectedSelection);
   // Private in-memory lineage, never serialized into a shared document. Capture
   // independently reproduces this region from its original pixels at handoff.
   std::optional<CropRegion> retainedSourceRegion() const { return m_history[m_position].sourceRegion; }

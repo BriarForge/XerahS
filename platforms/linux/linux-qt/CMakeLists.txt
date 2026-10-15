@@ -107,7 +107,7 @@ target_include_directories(xerahs_file_output PUBLIC app)
 target_link_libraries(xerahs_file_output PUBLIC xerahs_core Qt6::Gui Qt6::DBus)
 target_compile_options(xerahs_file_output PRIVATE -Wall -Wextra -Wpedantic)
 
-add_library(xerahs_editor_source STATIC app/EditorSource.cpp app/EditorSource.h app/EditorHistory.cpp app/EditorHistory.h app/EditorSave.cpp app/EditorSave.h app/EditorSaveProgress.cpp app/EditorCopy.cpp app/EditorCopy.h app/EditorPrint.cpp app/EditorPrint.h app/EditorPrintDialog.cpp app/AnnotationClipboard.cpp app/AnnotationClipboard.h)
+add_library(xerahs_editor_source STATIC app/EditorSource.cpp app/EditorSource.h app/EditorHistory.cpp app/EditorHistory.h app/EditorPreparation.cpp app/EditorPreparation.h app/EditorCanvasWorker.cpp app/EditorCanvasWorker.h app/EditorSave.cpp app/EditorSave.h app/EditorSaveProgress.cpp app/EditorCopy.cpp app/EditorCopy.h app/EditorPrint.cpp app/EditorPrint.h app/EditorPrintDialog.cpp app/AnnotationClipboard.cpp app/AnnotationClipboard.h)
 target_include_directories(xerahs_editor_source PUBLIC app)
 target_link_libraries(xerahs_editor_source PUBLIC xerahs_editor_codecs Qt6::Widgets Qt6::PrintSupport)
 target_compile_options(xerahs_editor_source PRIVATE -Wall -Wextra -Wpedantic)

@@ -228,8 +228,12 @@ source/display admission and real Save/reopen. [Owned main-editor history](app/E
 display off the GUI thread, freezes current state/exact selection/generation/target
 ID, preserves exact history/checkpoints and releases cancelled or destroyed owners
 without joining blocked workers. Annotation-only history avoids image workers.
-Next migrate remaining main-editor canvas operations from stack-owned futures to
-owned worker preparation and frozen admission with nonblocking cancellation/teardown. All remaining tools, effects,
+[Owned canvas mutations](app/CANVAS-WORKERS.md) now prepare immutable snapshots
+and private displays, guard Core publication and release cancelled/destroyed owners
+without joining work. Custom rotation also owns its preview workers; configuration,
+colour, clear and error dialogs are owned and guarded. Next migrate comparison
+loading/previews to owned snapshots and nonblocking owner/cancel recovery, then
+complete New/Open worker ownership and full native/resource qualification. All remaining tools, effects,
 canvas/output, capture topology, recording/audio, uploads, workflows/settings/
 catalogues, compatibility, packaging/migration/updates/rollback, supported targets
 and native/human release qualification remain Required.

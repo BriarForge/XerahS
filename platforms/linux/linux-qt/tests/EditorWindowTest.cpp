@@ -205,7 +205,9 @@ void runRotationPreview(EditorWindow &window, bool accept) {
       QVERIFY(dialog->isVisible());
     }
     if (intermediateReady && status->text().startsWith(QStringLiteral("Preview: 70 × 56"))) {
-      previewReady = true; accept ? dialog->accept() : dialog->reject();
+      previewReady = true;
+      const auto qa = qEnvironmentVariable("XERAHS_ROTATION_READY_QA"); if (!qa.isEmpty()) QVERIFY(dialog->grab().save(qa));
+      accept ? dialog->accept() : dialog->reject();
     }
   });
   timer.start(10);
@@ -2074,6 +2076,88 @@ private slots:
     QVERIFY(sidecar.open(QIODevice::ReadOnly)); QCOMPARE(sidecar.readAll(), sidecarBefore);
   }
 
+  void canvasWorkerKeepsUntaggedWorkingSourceAndPreparesPrivateSRgbDisplay() {
+    QTemporaryDir dir; const auto path = dir.filePath("untagged-canvas.png"); QImage source(2, 3, QImage::Format_ARGB32); source.fill(qRgba(20, 40, 60, 128)); QVERIFY(!source.colorSpace().isValid()); QVERIFY(source.save(path)); const auto d = *loadSource(path).document;
+    QWidget owner; owner.show(); CanvasOperation op; op.action = CanvasAction::RotateClockwise; auto prepared = runEditorCanvas(d, source, op, &owner);
+    QVERIFY(!prepared.result.error); QVERIFY(prepared.result.changed && prepared.result.document); QVERIFY(!prepared.source.colorSpace().isValid()); QCOMPARE(prepared.displaySource.colorSpace(), QColorSpace(QColorSpace::SRgb)); QCOMPARE(prepared.source.size(), QSize(3, 2));
+    for (int y = 0; y < 2; ++y) for (int x = 0; x < 3; ++x) { QCOMPARE(prepared.source.pixel(x, y), source.pixel(y, 2 - x)); QCOMPARE(prepared.displaySource.pixel(x, y), prepared.source.pixel(x, y)); }
+    QVERIFY(!QImage::fromData(prepared.result.document->sourceImagePng).colorSpace().isValid()); QVERIFY(owner.findChildren<QProgressDialog *>().isEmpty());
+  }
+  void ownedCanvasCommandsPreservePixelsProfileHistoryAndSave_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"cw", "ccw", "half", "flip-h", "flip-v", "canvas", "resize", "auto", "flatten", "annotations", "clear", "custom"}) QTest::newRow(mode) << QString(mode);
+  }
+  void ownedCanvasCommandsPreservePixelsProfileHistoryAndSave() {
+    QFETCH(QString, mode); QTemporaryDir dir; const auto path = dir.filePath("owned-canvas.png"), prefs = dir.filePath("prefs.json"); auto source = fixture(); source.setColorSpace(QColorSpace(QColorSpace::DisplayP3));
+    for (int y = 0; y < source.height(); ++y) for (int x = 0; x < source.width(); ++x) { const auto p = source.pixel(x, y); source.setPixel(x, y, mode == "auto" && (x < 5 || x >= 55 || y < 6 || y >= 34) ? 0 : qRgba(qRed(p), qGreen(p), qBlue(p), x % 2 ? 128 : 255)); }
+    QVERIFY(source.save(path)); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty()); auto d = *loadSource(path).document; RectangleAnnotation a; a.id = QUuid::createUuid(); a.start = {8, 9}; a.end = {24, 25}; a.style = {0xFFFF0000, 0xFFFF0000, 1, 0, 1}; a.extra = {{"vendor", "object"}}; d.annotations = {a}; d.embeddedImages = {{"retained", d.sourceImagePng}}; d.extra = {{"vendor", "root"}}; QVERIFY(saveEdit(path, source, d).sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->resize(900, 600); window->show(); window->activateWindow(); QTRY_VERIFY(window->isActiveWindow()); auto *canvas = window->findChild<EditorCanvas *>(); canvas->setFocus(); QVERIFY(canvas->selectAnnotations({a.id}, canvas->annotationState(), canvas->documentGeneration())); QTest::keyClick(canvas, Qt::Key_Right); trigger(*window, "undo");
+    const auto before = canvas->annotationDocument(); const auto selection = canvas->annotationSelection(); const auto png = storedBytes(path), companion = storedBytes(path + ".xann"), preferences = storedBytes(prefs); const auto revision = nativeEditorPreferenceRevision(); const auto gate = std::make_shared<SaveGate>(); window->setCanvasHooks({[gate] { gate->entered.store(true); gate->workerThread.store(QThread::currentThread() != QApplication::instance()->thread()); }});
+    if (mode == "canvas" || mode == "resize") { acceptDimensions(mode == "canvas" ? 64 : 120, mode == "canvas" ? 44 : 80); trigger(*window, mode == "canvas" ? "resizeCanvas" : "resizeImage"); }
+    else if (mode == "custom") runRotationPreview(*window, true);
+    else if (mode == "auto") { QTimer::singleShot(0, [] { auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog && dialog->findChild<QSpinBox *>("cropAlpha")); dialog->accept(); }); trigger(*window, "autoCrop"); }
+    else if (mode == "clear") { QTimer::singleShot(0, [] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box); box->button(QMessageBox::Ok)->click(); }); trigger(*window, "clearImage"); }
+    else if (mode == "flatten" || mode == "annotations") trigger(*window, mode == "flatten" ? "flattenImage" : "clearAnnotations");
+    else { const auto action = mode == "cw" ? CanvasAction::RotateClockwise : mode == "ccw" ? CanvasAction::RotateCounterClockwise : mode == "half" ? CanvasAction::Rotate180 : mode == "flip-h" ? CanvasAction::FlipHorizontal : CanvasAction::FlipVertical; trigger(*window, QString("canvasAction%1").arg(int(action))); }
+    QVERIFY(gate->entered.load() && gate->workerThread.load()); const auto after = canvas->annotationDocument(); QVERIFY(window->windowTitle().contains(" •")); QVERIFY(!window->findChild<QAction *>("redo")->isEnabled()); QCOMPARE(after.embeddedImages, before.embeddedImages); QCOMPARE(after.extra, before.extra); QCOMPARE(storedBytes(path), png); QCOMPARE(storedBytes(path + ".xann"), companion); QCOMPARE(storedBytes(prefs), preferences); QCOMPARE(nativeEditorPreferenceRevision(), revision);
+    const bool empty = mode == "flatten" || mode == "annotations" || mode == "clear"; QCOMPARE(after.annotations.size(), empty ? size_t(0) : size_t(1)); QCOMPARE(canvas->annotationSelection(), empty ? QSet<QUuid>{} : selection); if (!empty) { const auto &r = std::get<RectangleAnnotation>(after.annotations[0]); QCOMPARE(r.id, a.id); QCOMPARE(r.extra, a.extra); }
+    const auto actual = QImage::fromData(after.sourceImagePng); QCOMPARE(actual.colorSpace(), source.colorSpace()); QCOMPARE(canvas->viewState().imageSize(), actual.size());
+    if (mode == "flatten") { QCOMPARE(actual.pixel(15, 15), QRgb(0xFFFF0000)); QCOMPARE(actual.pixel(39, 0), source.pixel(39, 0)); }
+    else if (mode == "custom") { QCOMPARE(actual.size(), QSize(70, 56)); QCOMPARE(actual.pixel(35, 28), source.pixel(30, 20)); QCOMPARE(qAlpha(actual.pixel(0, 0)), 0); }
+    else {
+      const QSize size = mode == "cw" || mode == "ccw" ? QSize(40, 60) : mode == "canvas" ? QSize(64, 44) : mode == "resize" ? QSize(120, 80) : mode == "auto" ? QSize(50, 28) : source.size(); QCOMPARE(actual.size(), size);
+      for (int y = 0; y < actual.height(); ++y) for (int x = 0; x < actual.width(); ++x) {
+        QRgb pixel = 0;
+        if (mode == "cw") pixel = source.pixel(y, 39 - x); else if (mode == "ccw") pixel = source.pixel(59 - y, x); else if (mode == "half") pixel = source.pixel(59 - x, 39 - y); else if (mode == "flip-h") pixel = source.pixel(59 - x, y); else if (mode == "flip-v") pixel = source.pixel(x, 39 - y); else if (mode == "resize") pixel = source.pixel(x / 2, y / 2); else if (mode == "auto") pixel = source.pixel(x + 5, y + 6); else if (mode == "canvas") { if (x >= 2 && x < 62 && y >= 2 && y < 42) pixel = source.pixel(x - 2, y - 2); } else if (mode == "annotations") pixel = source.pixel(x, y);
+        QCOMPARE(actual.pixel(x, y), pixel);
+      }
+    }
+    trigger(*window, "saveImage"); QVERIFY(!window->windowTitle().contains(" •")); const auto reopened = loadSource(path); QVERIFY(reopened.document); QCOMPARE(reopened.image, actual); QCOMPARE(reopened.image.colorSpace(), source.colorSpace()); if (!empty) { QCOMPARE(reopened.document->sourceImagePng, after.sourceImagePng); QCOMPARE(reopened.document->embeddedImages, after.embeddedImages); }
+    trigger(*window, "undo"); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(before)); QCOMPARE(canvas->annotationSelection(), selection); QCOMPARE(canvas->viewState().imageSize(), source.size()); QVERIFY(window->windowTitle().contains(" •")); trigger(*window, "redo"); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(after)); QVERIFY(!window->windowTitle().contains(" •"));
+  }
+  void ownedCanvasPreparationRejectsStaleAndReleasesOwners_data() {
+    QTest::addColumn<QString>("mode"); QTest::addColumn<bool>("custom"); for (bool custom : {false, true}) for (const auto *mode : {"cancel", "escape", "child-destroy", "owner-destroy", "worker-fail", "stale-state", "stale-selection", "replacement", "pending-destroy", "cleanup-destroy", "finish-destroy"}) QTest::newRow(qPrintable(QString("%1-%2").arg(custom ? "preview" : "operation", mode))) << QString(mode) << custom;
+  }
+  void ownedCanvasPreparationRejectsStaleAndReleasesOwners() {
+    QFETCH(QString, mode); QFETCH(bool, custom); QTemporaryDir dir; const auto path = dir.filePath("canvas-refusal.png"), prefs = dir.filePath("prefs.json"); QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty()); auto d = *loadSource(path).document; RectangleAnnotation a; a.id = QUuid::createUuid(); a.start = {8, 9}; a.end = {24, 25}; d.annotations = {a}; d.embeddedImages = {{"keep", d.sourceImagePng}}; QVERIFY(saveEdit(path, fixture(), d).sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); window->activateWindow(); QTRY_VERIFY(window->isActiveWindow()); auto *canvas = window->findChild<EditorCanvas *>(); canvas->setFocus(); QVERIFY(canvas->selectAnnotations({a.id}, canvas->annotationState(), canvas->documentGeneration())); QTest::keyClick(canvas, Qt::Key_Right); trigger(*window, "undo"); const auto before = canvas->annotationDocument(); EditorSession replacement(before); replacement.select({a.id});
+    auto expected = serializeDocument(before); auto selection = canvas->annotationSelection(); const auto png = storedBytes(path), companion = storedBytes(path + ".xann"), preferences = storedBytes(prefs); const auto revision = nativeEditorPreferenceRevision();
+    const auto gate = std::make_shared<SaveGate>(); const auto release = qScopeGuard([gate] { gate->released.store(true); }); window->setCanvasHooks({[gate, mode] { gate->entered.store(true); gate->workerThread.store(QThread::currentThread() != QApplication::instance()->thread()); while (!gate->released.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1)); gate->finished.store(true); if (mode == "worker-fail") throw std::runtime_error("private canvas detail"); }});
+    bool busy = false, configured = false, reported = false; QJsonObject atDeath; auto *save = window->findChild<QAction *>("saveImage"); const auto destroy = [&] { atDeath = serializeDocument(canvas->annotationDocument()); window.reset(); };
+    connect(save, &QAction::changed, [&] {
+      if (busy || save->isEnabled()) return; busy = true; if (mode == "pending-destroy") { destroy(); return; }
+      if (mode == "stale-state") { QTest::keyClick(canvas, Qt::Key_Right); expected = serializeDocument(canvas->annotationDocument()); }
+      if (mode == "stale-selection") { QVERIFY(canvas->selectAnnotations({}, canvas->annotationState(), canvas->documentGeneration())); selection = {}; }
+      if (mode == "replacement") { const auto generation = canvas->documentGeneration(); canvas->resetDocument(replacement, fixture()); QVERIFY(generation != canvas->documentGeneration()); }
+    });
+    if (mode == "finish-destroy") connect(window->statusBar(), &QStatusBar::messageChanged, [&] { if (configured) destroy(); });
+    QTimer timer; connect(&timer, &QTimer::timeout, [&] {
+      auto *modal = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!modal) return;
+      if (auto *error = qobject_cast<QMessageBox *>(modal)) { QVERIFY(mode == "worker-fail"); reported = true; QVERIFY(error->text().contains("could not be prepared")); QVERIFY(!error->text().contains("private canvas detail")); error->accept(); return; }
+      if (configured) return; configured = true;
+      auto *preview = qobject_cast<CanvasRotationDialog *>(modal); auto *progress = qobject_cast<QProgressDialog *>(modal); QCOMPARE(bool(preview), custom); QVERIFY(preview || progress); if (preview) preview->findChild<QDoubleSpinBox *>("rotationAngle")->setValue(17);
+      QVERIFY(!window->close()); QVERIFY(!canvas->isEnabled()); QTRY_VERIFY(gate->entered.load()); QVERIFY(gate->workerThread.load());
+      const auto frozen = serializeDocument(canvas->annotationDocument()); trigger(*window, "undo"); trigger(*window, "redo"); trigger(*window, QString("canvasAction%1").arg(int(CanvasAction::FlipHorizontal))); trigger(*window, "resizeImage"); QCOMPARE(serializeDocument(canvas->annotationDocument()), frozen);
+      const auto qa = qEnvironmentVariable(custom ? "XERAHS_ROTATION_QA" : "XERAHS_CANVAS_QA"); if (!qa.isEmpty() && mode == "cancel") QVERIFY(modal->grab().save(qa));
+      QElapsedTimer elapsed; elapsed.start();
+      if (mode == "cancel") modal->reject(); else if (mode == "escape") QTest::keyClick(modal, Qt::Key_Escape); else if (mode == "child-destroy") delete modal; else if (mode == "owner-destroy") destroy();
+      else {
+        if (mode == "cleanup-destroy") connect(modal, &QObject::destroyed, destroy); gate->released.store(true);
+        if (preview) { auto *ok = preview->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Ok); if (mode == "worker-fail") { QTRY_VERIFY(preview->findChild<QLabel *>("rotationStatus")->text().contains("could not be prepared")); QVERIFY(!ok->isEnabled()); reported = true; preview->reject(); } else { QTRY_VERIFY(ok->isEnabled()); ok->click(); } }
+      }
+      if (mode == "cancel" || mode == "escape" || mode == "child-destroy" || mode == "owner-destroy") QVERIFY(elapsed.elapsed() < 500);
+    }); timer.start(5); trigger(*window, custom ? QString("rotateImage") : QString("canvasAction%1").arg(int(CanvasAction::RotateClockwise))); timer.stop(); QVERIFY(busy); QCOMPARE(configured, mode != "pending-destroy"); QCOMPARE(reported, mode == "worker-fail"); QCOMPARE(storedBytes(path), png); QCOMPARE(storedBytes(path + ".xann"), companion); QCOMPARE(storedBytes(prefs), preferences); QCOMPARE(nativeEditorPreferenceRevision(), revision);
+    if (!window) { QVERIFY(mode.contains("destroy")); if (mode != "finish-destroy") QCOMPARE(atDeath, expected); else { QCOMPARE(atDeath.value("canvasWidth").toInt(), custom ? 70 : 40); QCOMPARE(atDeath.value("canvasHeight").toInt(), custom ? 56 : 60); } }
+    else { QCOMPARE(serializeDocument(canvas->annotationDocument()), expected); QCOMPARE(canvas->annotationSelection(), selection); QVERIFY(canvas->isEnabled()); QCOMPARE(window->findChild<QAction *>("redo")->isEnabled(), mode != "stale-state"); if (mode.startsWith("stale-") || mode == "replacement") QVERIFY(window->statusBar()->currentMessage().contains("not applied")); }
+    gate->released.store(true); if (configured) QTRY_VERIFY(gate->finished.load()); QCOMPARE(replacement.undoCount(), 0);
+  }
+  void canvasConfigurationDialogsReleaseDestroyedOwners_data() {
+    QTest::addColumn<QString>("command"); QTest::addColumn<bool>("owner"); for (const auto *command : {"resizeCanvas", "resizeImage", "autoCrop", "clearImage"}) for (bool owner : {false, true}) QTest::newRow(qPrintable(QString("%1-%2").arg(command, owner ? "owner" : "child"))) << QString(command) << owner;
+  }
+  void canvasConfigurationDialogsReleaseDestroyedOwners() {
+    QFETCH(QString, command); QFETCH(bool, owner); QTemporaryDir dir; const auto path = dir.filePath("canvas-dialog.png"); QVERIFY(fixture().save(path)); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); const auto before = serializeDocument(canvas->annotationDocument()); const auto png = storedBytes(path); bool destroyed = false;
+    QTimer::singleShot(0, [&] { auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog); destroyed = true; QVERIFY(!window->close()); if (owner) window.reset(); else delete dialog; }); trigger(*window, command); QVERIFY(destroyed); QCOMPARE(storedBytes(path), png); QVERIFY(!QFile::exists(path + ".xann")); if (window) { QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QVERIFY(canvas->isEnabled()); QVERIFY(!window->findChild<QAction *>("undo")->isEnabled()); }
+  }
+
   void ownedHistoryRestoresSourceSelectionAndSavedCheckpoint_data() {
     QTest::addColumn<QString>("mode"); for (const auto *mode : {"saved-before", "saved-crop", "saved-undo"}) QTest::newRow(mode) << QString(mode);
   }
@@ -2426,7 +2510,7 @@ private slots:
     QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
   }
 
-  void nativePreviewCancellationWaitsForTheLiveWorkerWithoutCommitting() {
+  void nativePreviewCancellationReleasesTheLiveWorkerWithoutCommitting() {
     QTemporaryDir dir; const QString path = dir.filePath("large-preview.png");
     QImage source(1500, 1000, QImage::Format_ARGB32); source.fill(Qt::red); QVERIFY(source.save(path));
     const auto loaded = loadSource(path); QVERIFY(loaded.document);

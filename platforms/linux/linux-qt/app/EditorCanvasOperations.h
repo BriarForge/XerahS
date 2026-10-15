@@ -11,6 +11,7 @@ namespace xerahs::app {
 struct PreparedCanvasEdit {
   xerahs::editor::CanvasResult result;
   QImage source;
+  QImage displaySource = {}; // optional native-only prepared view, never serialized
 };
 
 struct CanvasPreview {

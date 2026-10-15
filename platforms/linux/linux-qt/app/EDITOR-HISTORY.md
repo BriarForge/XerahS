@@ -79,13 +79,12 @@ verifies its exact pushed revision and Ubuntu 24.04/Qt 6.4.2 CI.
 
 ## Remaining work
 
-Other main-editor canvas operations still use the older stack-owned future and
-progress path, with source decoding in refresh after commit. Next migrate those
-operations to owned worker preparation, frozen state/selection/generation
-admission and nonblocking cancel/owner teardown, preserving existing geometry,
-source/profile, one-step history and actual persistence. Capture history uses
-its earlier owned asynchronous coordinator; it has not been migrated to this
-new main-editor helper/target guard.
+The subsequent [canvas worker checkpoint](CANVAS-WORKERS.md) migrates main-editor
+mutation preparation and custom rotation previews to owned workers and guarded
+publication, including numeric/clear dialog ownership and private view preparation.
+Next migrate comparison loading/previews and then remaining New/Open lifetime
+paths. Capture history retains its earlier asynchronous coordinator; full target-
+identity, shutdown and resource qualification remains Required.
 
 Full tools/fields/effects/canvas/output, capture topology, recording/audio,
 uploads/credentials, workflows/settings/catalogues, application/history/
