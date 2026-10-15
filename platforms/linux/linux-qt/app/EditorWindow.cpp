@@ -62,6 +62,11 @@ void disposeCanvasDialog(QPointer<QDialog> dialog) {
   delete dialog.data();
 }
 
+void editorWarning(QWidget *parent, const QString &title, const QString &text) {
+  QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, title, text, QMessageBox::Ok, parent));
+  box->setTextFormat(Qt::PlainText); box->exec(); disposeCanvasDialog(box.data());
+}
+
 QString describe(const QString &diagnostic) {
   if (diagnostic == diagnostic::sourceUnsupported) return QStringLiteral("This file is not a supported image.");
   if (diagnostic == diagnostic::sourceCorrupt) return QStringLiteral("This image is damaged and cannot be read.");
@@ -85,50 +90,49 @@ EditorWindow::~EditorWindow() {
 }
 
 EditorWindow *EditorWindow::open(const QString &path, QWidget *parent) {
-  std::optional<QScopedValueRollback<bool>> pending;
-  if (auto *owner = qobject_cast<EditorWindow *>(parent)) {
-    if (owner->m_canvasOperationPending) return nullptr;
-    pending.emplace(owner->m_canvasOperationPending, true);
-  }
-  const QString target = absoluteImagePath(path);
-  LoadedSource source = openSource(target, parent);
-  if (source.diagnostic == u"canvas-cancelled") return nullptr;
-  if (!source.document) {
-    QMessageBox::warning(parent, QStringLiteral("Cannot open image"),
-                         QStringLiteral("%1\n\n%2").arg(QFileInfo(path).fileName(), describe(source.diagnostic)));
-    return nullptr;
-  }
-  EditorWindow *window;
-  try { window = new EditorWindow(target, source.image, *source.document,
-      EditorSession::InitialPersistence::Saved, source.displayImage); }
-  catch (const std::bad_alloc &) { QMessageBox::warning(parent, QStringLiteral("Cannot open image"), describe(diagnostic::documentTooLarge)); return nullptr; }
-  window->setAttribute(Qt::WA_DeleteOnClose);
-  if (!source.warnings.isEmpty()) {
-    QMessageBox::information(window, QStringLiteral("Annotations"), source.warnings.join(QLatin1Char('\n')));
-  }
-  window->recordRecentImage(target);
-  return window;
+  const QPointer<QWidget> owner(parent); const auto editor = qobject_cast<EditorWindow *>(parent);
+  if (editor && (editor->m_canvasOperationPending || editor->m_closePending || editor->m_outputPending || editor->m_canvas->interactionActive())) return nullptr;
+  const auto hooks = editor ? editor->m_openHooks : EditorOpenHooks{};
+  QPointer<EditorWindow> window;
+  const auto operation = [owner, parent, path, hooks, &window] {
+    if (parent && !owner) return false;
+    const auto target = absoluteImagePath(path); auto source = openSource(target, owner, hooks);
+    if ((parent && !owner) || source.diagnostic == u"canvas-cancelled") return false;
+    if (!source.document) { editorWarning(owner, "Cannot open image", QStringLiteral("%1\n\n%2").arg(QFileInfo(path).fileName(), describe(source.diagnostic))); return false; }
+    try { window = new EditorWindow(target, std::move(source.image), std::move(*source.document), EditorSession::InitialPersistence::Saved, std::move(source.displayImage)); }
+    catch (const std::bad_alloc &) { editorWarning(owner, "Cannot open image", describe(diagnostic::documentTooLarge)); return false; }
+    window->setAttribute(Qt::WA_DeleteOnClose);
+    if (!source.warnings.isEmpty()) {
+      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Information, "Annotations", source.warnings.join(QLatin1Char('\n')), QMessageBox::Ok, window)); box->setTextFormat(Qt::PlainText); box->exec(); disposeCanvasDialog(box.data());
+    }
+    if (parent && !owner) { delete window.data(); return false; }
+    if (window) window->recordRecentImage(target);
+    return bool(window);
+  };
+  if (editor) editor->withOutputBusy(operation); else operation();
+  return window.data();
 }
 
 EditorWindow *EditorWindow::createNew(QWidget *parent) {
-  NewImageDialog dialog(parent);
-  if (dialog.exec() != QDialog::Accepted) return nullptr;
-  auto prepared = dialog.takeImage();
-  if (!prepared) return nullptr;
-  try {
-    auto *window = new EditorWindow({}, std::move(prepared->source), std::move(*prepared->document),
-        EditorSession::InitialPersistence::Unsaved, std::move(prepared->displaySource));
-    window->setAttribute(Qt::WA_DeleteOnClose);
-    return window;
-  } catch (const std::bad_alloc &) {
-    QMessageBox::warning(parent, QStringLiteral("Cannot create image"),
-                         QStringLiteral("There is not enough memory to open the new image."));
-    return nullptr;
-  }
+  const QPointer<QWidget> owner(parent); const auto editor = qobject_cast<EditorWindow *>(parent);
+  if (editor && (editor->m_canvasOperationPending || editor->m_closePending || editor->m_outputPending || editor->m_canvas->interactionActive())) return nullptr;
+  const auto hooks = editor ? editor->m_newImageHooks : NewImageHooks{}; QPointer<EditorWindow> window;
+  const auto operation = [parent, owner, hooks, &window] {
+    if (parent && !owner) return false;
+    QPointer<NewImageDialog> dialog(new NewImageDialog(owner, hooks)); const auto answer = dialog->exec();
+    auto prepared = dialog && answer == QDialog::Accepted ? dialog->takeImage() : std::optional<PreparedNewImage>{};
+    disposeCanvasDialog(dialog.data()); if ((parent && !owner) || !prepared) return false;
+    try { window = new EditorWindow({}, std::move(prepared->source), std::move(*prepared->document), EditorSession::InitialPersistence::Unsaved, std::move(prepared->displaySource)); window->setAttribute(Qt::WA_DeleteOnClose); }
+    catch (const std::bad_alloc &) { editorWarning(owner, "Cannot create image", "There is not enough memory to open the new image."); }
+    return bool(window);
+  };
+  if (editor) editor->withOutputBusy(operation); else operation();
+  return window.data();
 }
 
 EditorWindow *EditorWindow::fromCapturedImage(const QImage &image, QWidget *parent) {
-  auto source = openCapturedSource(image, parent);
+  const QPointer<QWidget> owner(parent); auto source = openCapturedSource(image, parent);
+  if (parent && !owner) return nullptr;
   if (source.diagnostic == u"canvas-cancelled") return nullptr;
   if (!source.document) {
     QMessageBox::warning(parent, QStringLiteral("Cannot edit retained capture"), describe(source.diagnostic)); return nullptr;
@@ -143,7 +147,8 @@ EditorWindow *EditorWindow::fromCapturedImage(const QImage &image, QWidget *pare
 }
 
 EditorWindow *EditorWindow::fromCapturedDocument(const AnnotationDocument &document, QWidget *parent) {
-  auto source = openCapturedDocument(document, parent);
+  const QPointer<QWidget> owner(parent); auto source = openCapturedDocument(document, parent);
+  if (parent && !owner) return nullptr;
   if (source.diagnostic == "canvas-cancelled") return nullptr;
   if (!source.document) { QMessageBox::warning(parent, "Cannot edit retained annotations", describe(source.diagnostic)); return nullptr; }
   try {
@@ -655,44 +660,54 @@ void EditorWindow::refresh() {
 }
 
 void EditorWindow::newImage() {
-  if (m_canvasOperationPending || m_outputPending) return;
-  const QPointer<EditorWindow> guard(this); m_canvasOperationPending = true;
-  const auto pending = qScopeGuard([guard] { if (guard) guard->m_canvasOperationPending = false; });
-  NewImageDialog dialog(this);
-  if (dialog.exec() != QDialog::Accepted) return;
-  dialog.setParent(nullptr);
-  auto prepared = dialog.takeImage();
-  if (!prepared) return;
+  if (m_canvasOperationPending || m_outputPending || m_closePending || m_canvas->interactionActive()) return;
+  const QPointer<EditorWindow> guard(this); const auto state = m_session->stateId(), generation = m_canvas->documentGeneration(); const auto selection = m_session->selection(); const auto hooks = m_newImageHooks;
+  m_canvasOperationPending = true;
+  const auto pending = qScopeGuard([guard] { if (guard) { guard->m_canvasOperationPending = false; guard->refresh(); } });
+  std::optional<PreparedNewImage> prepared;
+  withOutputBusy([guard, hooks, &prepared] {
+    if (!guard) return false;
+    QPointer<NewImageDialog> dialog(new NewImageDialog(guard, hooks)); const auto answer = dialog->exec();
+    if (dialog && answer == QDialog::Accepted) prepared = dialog->takeImage();
+    disposeCanvasDialog(dialog.data()); return bool(prepared);
+  });
+  if (!guard || !prepared) return;
+  const auto current = [&] { return replacementCurrent(state, generation, selection); };
+  if (!current()) return;
   std::unique_ptr<EditorSession> next;
-  try {
-    next = std::make_unique<EditorSession>(std::move(*prepared->document), EditorSession::InitialPersistence::Unsaved);
-  } catch (const std::bad_alloc &) {
-    QMessageBox::warning(this, QStringLiteral("Cannot create image"),
-                         QStringLiteral("There is not enough memory for a new session. The current document is unchanged."));
-    return;
-  }
-  if (confirmReplacement(QStringLiteral("the new image")) == QMessageBox::Cancel) return;
-  adoptSession(std::move(next), {}, std::move(prepared->source), prepared->displaySource);
+  try { next = std::make_unique<EditorSession>(std::move(*prepared->document), EditorSession::InitialPersistence::Unsaved); }
+  catch (const std::bad_alloc &) { editorWarning(this, "Cannot create image", "There is not enough memory for a new session. The current document is unchanged."); return; }
+  if (confirmReplacement(QStringLiteral("the new image")) == QMessageBox::Cancel || !guard) return;
+  if (!current()) return;
+  withOutputBusy([guard, &current, &next, &prepared] {
+    if (!guard || !current()) return false;
+    guard->adoptSession(std::move(next), {}, std::move(prepared->source), prepared->displaySource); return bool(guard);
+  });
 }
 
 int EditorWindow::confirmReplacement(const QString &replacement) {
-  const QPointer<EditorWindow> guard(this);
-  if (m_session->dirty()) {
-    QMessageBox box(QMessageBox::Question, QStringLiteral("Replace current image"),
-        QStringLiteral("Save changes to %1 before replacing it with %2?")
-            .arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName(), replacement),
-        QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, this);
-    box.setDefaultButton(QMessageBox::Cancel);
-    const int choice = box.exec();
-    box.setParent(nullptr); // no completed stack dialog remains owned during Save
-    if (!guard) return QMessageBox::Cancel;
-    if (choice == QMessageBox::Save && !save(false)) return QMessageBox::Cancel;
-    return choice == QMessageBox::Save || choice == QMessageBox::Discard ? choice : QMessageBox::Cancel;
-  }
-  return QMessageBox::Discard;
+  const QPointer<EditorWindow> guard(this); if (!m_session->dirty()) return QMessageBox::Discard;
+  const auto name = m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName(); int choice = QMessageBox::Cancel;
+  withOutputBusy([guard, replacement, name, &choice] {
+    if (!guard) return false;
+    QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, "Replace current image",
+        QStringLiteral("Save changes to %1 before replacing it with %2?").arg(name, replacement), QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, guard));
+    box->setObjectName("replaceImageConfirmation"); box->setTextFormat(Qt::PlainText); box->setDefaultButton(QMessageBox::Cancel);
+    choice = box->exec(); disposeCanvasDialog(box.data()); return false;
+  });
+  if (!guard) return QMessageBox::Cancel;
+  if (choice == QMessageBox::Save && !save(false)) return QMessageBox::Cancel;
+  if (!guard) return QMessageBox::Cancel;
+  return choice == QMessageBox::Save || choice == QMessageBox::Discard ? choice : QMessageBox::Cancel;
+}
+
+bool EditorWindow::replacementCurrent(quint64 state, quint64 generation, const QSet<QUuid> &selection) {
+  if (state == m_session->stateId() && generation == m_canvas->documentGeneration() && selection == m_session->selection()) return true;
+  m_annotationMessage = "The document or selection changed. The image was not replaced. Try again."; m_annotationMessageState = m_session->stateId(); refresh(); return false;
 }
 
 void EditorWindow::adoptSession(std::unique_ptr<EditorSession> next, const QString &path, QImage source, const QImage &display) {
+  const QPointer<EditorWindow> owner(this);
   // Keep the old session alive until the canvas has cancelled its gesture and
   // switched its session pointer. Retaining the widget preserves action bindings.
   auto previous = std::move(m_session);
@@ -707,43 +722,56 @@ void EditorWindow::adoptSession(std::unique_ptr<EditorSession> next, const QStri
   m_failedPrint.reset(); m_failedPrintState.reset(); m_printMessage.clear(); m_printMessageState.reset();
   m_annotationMessage.clear(); m_annotationMessageState.reset(); m_lastAnnotationPaste.clear(); m_annotationPasteOffset = 0;
   m_canvas->resetDocument(*m_session, display);
+  if (!owner) return;
   findChild<QAction *>(QStringLiteral("cropTool"))->setChecked(false);
-  refresh(); m_canvas->setFocus();
+  if (!owner) return;
+  refresh(); if (owner) m_canvas->setFocus();
 }
 
 bool EditorWindow::openImage(const QString &path) {
-  if (m_canvasOperationPending || m_outputPending) return false;
-  const QPointer<EditorWindow> guard(this); m_canvasOperationPending = true;
-  const auto pending = qScopeGuard([guard] { if (guard) guard->m_canvasOperationPending = false; });
-  QString target = path;
-  if (target.isEmpty()) target = QFileDialog::getOpenFileName(this, QStringLiteral("Open image"), m_path, imageFileFilter());
-  if (target.isEmpty()) return false;
-  target = absoluteImagePath(target);
-  auto source = openSource(target, this);
-  auto usable = [&] {
+  if (m_canvasOperationPending || m_outputPending || m_closePending || m_canvas->interactionActive()) return false;
+  const QPointer<EditorWindow> guard(this); const auto state = m_session->stateId(), generation = m_canvas->documentGeneration(); const auto selection = m_session->selection(); const auto hooks = m_openHooks; const auto oldPath = m_path;
+  m_canvasOperationPending = true;
+  const auto pending = qScopeGuard([guard] { if (guard) { guard->m_canvasOperationPending = false; guard->refresh(); } });
+  QString target = path; LoadedSource source;
+  withOutputBusy([guard, hooks, oldPath, &target, &source] {
+    if (!guard) return false;
+    if (target.isEmpty()) {
+      QPointer<QFileDialog> picker(new QFileDialog(guard, "Open image", oldPath, imageFileFilter())); picker->setObjectName("openImagePicker"); picker->setFileMode(QFileDialog::ExistingFile);
+      const auto answer = picker->exec(); if (picker && answer == QDialog::Accepted && !picker->selectedFiles().isEmpty()) target = picker->selectedFiles().first();
+      disposeCanvasDialog(picker.data()); if (!guard || target.isEmpty()) return false;
+    }
+    target = absoluteImagePath(target); source = openSource(target, guard, hooks); return bool(source.document);
+  });
+  if (!guard || target.isEmpty() || source.diagnostic == u"canvas-cancelled") return false;
+  const auto current = [&] { return replacementCurrent(state, generation, selection); };
+  if (!current()) return false;
+  const auto usable = [&] {
     if (source.diagnostic == u"canvas-cancelled") return false;
     if (source.document) return true;
-    QMessageBox::warning(this, QStringLiteral("Cannot open image"), QStringLiteral("%1\n\n%2").arg(QFileInfo(target).fileName(), describe(source.diagnostic)));
+    withOutputBusy([guard, target, diagnostic = source.diagnostic] { if (guard) editorWarning(guard, "Cannot open image", QStringLiteral("%1\n\n%2").arg(QFileInfo(target).fileName(), describe(diagnostic))); return false; });
     return false;
   };
-  if (!usable()) return false;
-  auto prepareSession = [&]() -> std::unique_ptr<EditorSession> {
+  if (!usable() || !guard) return false;
+  const auto prepareSession = [&]() -> std::unique_ptr<EditorSession> {
     try { return std::make_unique<EditorSession>(*source.document); }
-    catch (const std::bad_alloc &) { QMessageBox::warning(this, QStringLiteral("Cannot open image"), describe(diagnostic::documentTooLarge)); return {}; }
+    catch (const std::bad_alloc &) { editorWarning(guard, "Cannot open image", describe(diagnostic::documentTooLarge)); return {}; }
   };
-  auto next = prepareSession(); if (!next) return false;
+  auto next = prepareSession(); if (!guard || !next) return false;
   const int choice = confirmReplacement(QFileInfo(target).fileName());
-  if (choice == QMessageBox::Cancel) return false;
-  // Saving this very file changes the validated candidate. Reload the explicit
-  // save, including its sidecar, rather than adopting the older pre-save snapshot.
+  if (!guard || choice == QMessageBox::Cancel || !current()) return false;
   const QString savedIdentity = QFileInfo(m_path).canonicalFilePath();
   if (choice == QMessageBox::Save && !savedIdentity.isEmpty() && savedIdentity == QFileInfo(target).canonicalFilePath()) {
-    source = openSource(target, this); if (!usable()) return false;
-    next = prepareSession(); if (!next) return false;
+    withOutputBusy([guard, target, hooks, &source] { if (!guard) return false; source = openSource(target, guard, hooks); return bool(source.document); });
+    if (!guard || !current() || !usable() || !guard) return false;
+    next = prepareSession(); if (!guard || !next) return false;
   }
-  adoptSession(std::move(next), target, std::move(source.image), source.displayImage);
-  recordRecentImage(target);
-  return true;
+  const bool adopted = withOutputBusy([guard, &current, &next, &source, target] {
+    if (!guard || !current()) return false;
+    guard->adoptSession(std::move(next), target, std::move(source.image), source.displayImage); return bool(guard);
+  });
+  if (!guard || !adopted) return false;
+  recordRecentImage(target); return bool(guard);
 }
 
 void EditorWindow::restoreHistory(bool redo) {

@@ -221,6 +221,7 @@ class EditorWindowTest : public QObject {
   QTemporaryDir dialogPreferences;
 private slots:
   void initTestCase() {
+    QCoreApplication::setAttribute(Qt::AA_DontUseNativeDialogs);
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());
     qputenv("CUPS_SERVER", dialogPreferences.filePath("unavailable-cups.sock").toLocal8Bit());
@@ -1781,7 +1782,7 @@ private slots:
     QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
   }
 
-  void cancellingAndClosingOpenWaitForTheSameLiveWorker() {
+  void cancellingAndClosingOpenRetireTheLiveWorker() {
     QTemporaryDir dir; const QString path = dir.filePath("current.png"), target = dir.filePath("large.png");
     const QImage original = fixture(); QVERIFY(original.save(path));
     QImage large(4000, 4000, QImage::Format_ARGB32); large.fill(Qt::blue); QVERIFY(large.save(target));
@@ -1985,6 +1986,70 @@ private slots:
     QVERIFY(window->findChild<QAction *>("undo")->isEnabled()); QVERIFY(window->findChild<QAction *>("deleteSelection")->isEnabled());
     trigger(*window, QStringLiteral("undo")); QVERIFY(!window->findChild<QAction *>("undo")->isEnabled());
     QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+  }
+
+  void ownedReplacementPreparationReleasesBlockedWork_data() {
+    QTest::addColumn<bool>("create"); QTest::addColumn<QString>("mode");
+    for (bool create : {false, true}) for (const auto *mode : {"cancel", "child-destroy", "owner-destroy", "cleanup-owner-destroy", "stale-selection"}) QTest::newRow(qPrintable(QString("%1-%2").arg(create ? "new" : "open", mode))) << create << QString(mode);
+  }
+  void ownedReplacementPreparationReleasesBlockedWork() {
+    QFETCH(bool, create); QFETCH(QString, mode); QTemporaryDir dir; const auto path = dir.filePath("current.png"), target = dir.filePath("other.png"); QVERIFY(fixture().save(path)); QVERIFY(fixture().save(target));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas); canvas->zoomIn();
+    const auto before = serializeDocument(canvas->annotationDocument()); const auto state = canvas->annotationState(); const auto selected = canvas->annotationSelection(); const auto title = window->windowTitle(), status = window->statusBar()->currentMessage(); const auto zoom = canvas->viewState().zoom(); const auto offset = canvas->viewState().offset(); const auto png = storedBytes(path);
+    const auto gate = std::make_shared<SaveGate>(); const auto release = qScopeGuard([gate] { gate->released.store(true); }); const auto hook = [gate] { gate->workerThread.store(QThread::currentThread() != qApp->thread()); gate->entered.store(true); while (!gate->released.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1)); gate->finished.store(true); };
+    if (create) window->setNewImageHooks({hook}); else window->setOpenHooks({hook});
+    bool selectionChanged = false; auto *save = window->findChild<QAction *>("saveImage");
+    connect(save, &QAction::changed, [&] { if (mode == "stale-selection" && !selectionChanged && !save->isEnabled()) { selectionChanged = true; QVERIFY(canvas->selectAnnotations({}, canvas->annotationState(), canvas->documentGeneration())); } });
+    bool configured = false, acted = false, timedOut = false; QElapsedTimer deadline; deadline.start(); QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *modal = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!modal) return;
+      if (deadline.elapsed() > 5000) { timedOut = true; modal->reject(); return; }
+      if (create && !configured) { configured = true; auto *dialog = qobject_cast<NewImageDialog *>(modal); QVERIFY(dialog); configureNewImage(*dialog); dialog->accept(); return; }
+      if (!gate->entered.load() || acted) return; acted = true; QVERIFY(gate->workerThread.load()); QVERIFY(!canvas->isEnabled()); QVERIFY(!window->close()); QVERIFY(!window->openImage(path)); trigger(*window, "saveImage"); trigger(*window, "undo"); trigger(*window, "compareImages");
+      if (mode == "stale-selection") { QVERIFY(selectionChanged); gate->released.store(true); }
+      else if (mode == "owner-destroy") window.reset(); else if (mode == "child-destroy") delete modal;
+      else if (mode == "cleanup-owner-destroy") { connect(modal, &QObject::destroyed, [&] { window.reset(); }); gate->released.store(true); if (create) modal->reject(); }
+      else { if (create) { auto *dialog = qobject_cast<NewImageDialog *>(modal); dialog->findChild<QPushButton *>("cancelNewImageWork")->click(); QVERIFY(!gate->finished.load()); dialog->reject(); } else modal->findChild<QPushButton *>()->click(); }
+    });
+    timer.start(5); if (create) trigger(*window, "newImage"); else QVERIFY(!window->openImage(target)); timer.stop(); QVERIFY(acted && !timedOut);
+    if (mode != "cleanup-owner-destroy" && mode != "stale-selection") QVERIFY(!gate->finished.load());
+    if (mode == "owner-destroy" || mode == "cleanup-owner-destroy") QVERIFY(!window);
+    else { QVERIFY(window); QVERIFY(canvas->isEnabled()); QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QCOMPARE(canvas->annotationState(), state); QCOMPARE(canvas->annotationSelection(), mode == "stale-selection" ? QSet<QUuid>{} : selected); QCOMPARE(window->windowTitle(), title); if (mode == "stale-selection") QVERIFY(window->statusBar()->currentMessage().contains("not replaced")); else QCOMPARE(window->statusBar()->currentMessage(), status); QCOMPARE(canvas->viewState().zoom(), zoom); QCOMPARE(canvas->viewState().offset(), offset); QVERIFY(window->findChild<QAction *>("undo")->isEnabled()); }
+    gate->released.store(true); QTRY_VERIFY(gate->finished.load()); QCOMPARE(storedBytes(path), png); QVERIFY(!QFile::exists(path + ".xann")); QCOMPARE(QImage(target), fixture());
+  }
+
+  void ownedReplacementDialogsRecoverFromDestruction_data() {
+    QTest::addColumn<bool>("create"); QTest::addColumn<bool>("picker"); QTest::addColumn<QString>("mode");
+    for (bool create : {false, true}) for (const auto *mode : {"child", "owner", "cleanup-owner"}) QTest::newRow(qPrintable(QString("%1-confirm-%2").arg(create ? "new" : "open", mode))) << create << false << QString(mode);
+    for (const auto *mode : {"child", "owner", "cleanup-owner"}) QTest::newRow(qPrintable(QString("open-picker-%1").arg(mode))) << false << true << QString(mode);
+  }
+  void ownedReplacementDialogsRecoverFromDestruction() {
+    QFETCH(bool, create); QFETCH(bool, picker); QFETCH(QString, mode); QTemporaryDir dir; const auto path = dir.filePath("current.png"), target = dir.filePath("other.png"); QVERIFY(fixture().save(path)); QVERIFY(fixture().save(target));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas);
+    const auto document = serializeDocument(canvas->annotationDocument()); const auto selected = canvas->annotationSelection(); const auto title = window->windowTitle(), status = window->statusBar()->currentMessage(); const auto png = storedBytes(path);
+    bool configured = false, acted = false, timedOut = false; QElapsedTimer deadline; deadline.start(); QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *modal = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!modal) return;
+      if (deadline.elapsed() > 5000) { timedOut = true; modal->reject(); return; }
+      if (create && !configured) { auto *dialog = qobject_cast<NewImageDialog *>(modal); QVERIFY(dialog); configured = true; configureNewImage(*dialog); dialog->accept(); return; }
+      if (acted || (picker ? !qobject_cast<QFileDialog *>(modal) : !qobject_cast<QMessageBox *>(modal))) return;
+      acted = true; QVERIFY(!canvas->isEnabled()); QVERIFY(!window->close());
+      if (!picker) { auto *box = qobject_cast<QMessageBox *>(modal); QCOMPARE(box->objectName(), QString("replaceImageConfirmation")); QCOMPARE(box->defaultButton(), box->button(QMessageBox::Cancel)); }
+      if (mode == "child") delete modal; else if (mode == "owner") window.reset(); else { connect(modal, &QObject::destroyed, [&] { window.reset(); }); modal->reject(); }
+    });
+    timer.start(5); if (create) trigger(*window, "newImage"); else QVERIFY(!window->openImage(picker ? QString{} : target)); timer.stop(); QVERIFY(acted && !timedOut);
+    if (mode == "child") { QVERIFY(window); QVERIFY(canvas->isEnabled()); QCOMPARE(serializeDocument(canvas->annotationDocument()), document); QCOMPARE(canvas->annotationSelection(), selected); QCOMPARE(window->windowTitle(), title); QCOMPARE(window->statusBar()->currentMessage(), status); QVERIFY(window->findChild<QAction *>("undo")->isEnabled()); }
+    else QVERIFY(!window);
+    QCOMPARE(storedBytes(path), png); QVERIFY(!QFile::exists(path + ".xann")); QCOMPARE(QImage(target), fixture());
+  }
+
+  void standaloneCreationAndOpenReleaseDestroyedEditorParents_data() { QTest::addColumn<bool>("create"); QTest::newRow("new") << true; QTest::newRow("open") << false; }
+  void standaloneCreationAndOpenReleaseDestroyedEditorParents() {
+    QFETCH(bool, create); QTemporaryDir dir; const auto path = dir.filePath("input.png"); QVERIFY(fixture().save(path)); std::unique_ptr<EditorWindow> parent(EditorWindow::open(path)); parent->show();
+    const auto gate = std::make_shared<SaveGate>(); const auto release = qScopeGuard([gate] { gate->released.store(true); }); const auto hook = [gate] { gate->entered.store(true); while (!gate->released.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1)); gate->finished.store(true); };
+    if (create) parent->setNewImageHooks({hook}); else parent->setOpenHooks({hook}); bool configured = false, destroyed = false, timedOut = false; QTimer timer; QElapsedTimer deadline; deadline.start();
+    connect(&timer, &QTimer::timeout, [&] { auto *modal = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!modal) return; if (deadline.elapsed() > 5000) { timedOut = true; modal->reject(); return; } if (create && !configured) { configured = true; auto *dialog = qobject_cast<NewImageDialog *>(modal); QVERIFY(dialog); configureNewImage(*dialog); dialog->accept(); return; } if (gate->entered.load() && !destroyed) { destroyed = true; parent.reset(); } });
+    timer.start(5); std::unique_ptr<EditorWindow> result(create ? EditorWindow::createNew(parent.get()) : EditorWindow::open(path, parent.get())); timer.stop(); QVERIFY(destroyed && !timedOut && !result && !parent); QVERIFY(!gate->finished.load()); gate->released.store(true); QTRY_VERIFY(gate->finished.load()); QCOMPARE(QImage(path), fixture());
   }
 
   void ownedComparisonReleasesBlockedWorkers_data() {

@@ -493,6 +493,13 @@ add_test(NAME editor-window COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:editor-window-test>)
 set_tests_properties(editor-window PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 
+add_executable(editor-open-test tests/EditorOpenTest.cpp app/EditorOpen.cpp app/EditorOpen.h)
+set_target_properties(editor-open-test PROPERTIES AUTOMOC ON)
+target_link_libraries(editor-open-test PRIVATE xerahs_editor_source Qt6::Widgets Qt6::Test)
+add_test(NAME editor-open COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:editor-open-test>)
+set_tests_properties(editor-open PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+
 find_package(Python3 3.12 REQUIRED COMPONENTS Interpreter)
 # Capabilities with production implementation and requirement traceability.
 # Full requirement coverage remains in traceability, including partial rows.

@@ -4,8 +4,9 @@
 #include "RasterSource.h"
 #include <QDialog>
 #include <QTimer>
+#include <QPointer>
 #include <atomic>
-#include <future>
+#include <functional>
 #include <memory>
 #include <variant>
 
@@ -18,10 +19,11 @@ class QPushButton;
 class QSpinBox;
 
 namespace xerahs::app {
+struct NewImageHooks { std::function<void()> beforePrepare; }; // worker-only owned captures
 class NewImageDialog final : public QDialog {
   Q_OBJECT
 public:
-  explicit NewImageDialog(QWidget *parent = nullptr);
+  explicit NewImageDialog(QWidget *parent = nullptr, NewImageHooks hooks = {});
   ~NewImageDialog() override;
   std::optional<PreparedNewImage> takeImage();
   // Shared entry points used by the native file picker and clipboard action.
@@ -29,8 +31,13 @@ public:
   bool setInitialImage(const QImage &image, const QString &label);
   void accept() override;
   void reject() override;
+  void done(int result) override;
 private:
   void validateControls();
+  QString controlStatus() const;
+  void clearInitial();
+  void publishInitial(QImage image, const QString &label);
+  void cancelWork();
   void chooseFile();
   void useClipboard();
   void chooseColour();
@@ -38,8 +45,15 @@ private:
   void pollWork();
   void setBusy(bool busy);
   xerahs::editor::NewImageOptions options() const;
-  struct WorkControl { std::atomic<bool> cancelled{false}; std::atomic<int> progress{0}; };
   using WorkResult = std::variant<LoadedRaster, PreparedNewImage>;
+  struct Work {
+    std::atomic<bool> cancelled{false}, ready{false};
+    std::atomic<int> progress{0};
+    WorkResult result;
+    bool load = false;
+    QString label;
+  };
+  const NewImageHooks m_hooks;
   QWidget *m_controls;
   QSpinBox *m_width, *m_height;
   QComboBox *m_background, *m_profile;
@@ -50,10 +64,9 @@ private:
   QProgressBar *m_progress;
   QImage m_initial;
   QTimer m_poll;
-  std::shared_ptr<WorkControl> m_control;
-  std::future<WorkResult> m_worker;
+  std::shared_ptr<Work> m_work;
+  QPointer<QDialog> m_picker;
   std::optional<PreparedNewImage> m_prepared;
-  QString m_initialName;
-  bool m_loading = false, m_closing = false;
+  bool m_closing = false, m_transition = false, m_pickerOpen = false;
 };
 }  // namespace xerahs::app

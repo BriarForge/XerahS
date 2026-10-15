@@ -12,6 +12,8 @@
 #include "EditorHistory.h"
 #include "EditorCanvasWorker.h"
 #include "ImageComparisonDialog.h"
+#include "NewImageDialog.h"
+#include "EditorOpen.h"
 
 #include <QImage>
 #include <QMainWindow>
@@ -41,6 +43,8 @@ public:
   static EditorWindow *fromCapturedDocument(const xerahs::editor::AnnotationDocument &document, QWidget *parent = nullptr);
   // Empty path invokes the native picker; recent-file actions pass an explicit path.
   bool openImage(const QString &path = {});
+  void setNewImageHooks(NewImageHooks hooks) { m_newImageHooks = std::move(hooks); }
+  void setOpenHooks(EditorOpenHooks hooks) { m_openHooks = std::move(hooks); }
   void setCanvasHooks(EditorCanvasHooks hooks) { m_canvasHooks = std::move(hooks); }
   void setComparisonHooks(ComparisonHooks hooks) { m_comparisonHooks = std::move(hooks); }
   void setHistoryHooks(EditorHistoryHooks hooks) { m_historyHooks = std::move(hooks); }
@@ -70,6 +74,7 @@ private:
                QImage displaySource = {});
   void newImage();
   int confirmReplacement(const QString &replacement);
+  bool replacementCurrent(quint64 state, quint64 generation, const QSet<QUuid> &selection);
   void adoptSession(std::unique_ptr<xerahs::editor::EditorSession> session, const QString &path,
                     QImage source, const QImage &display);
   bool save(bool chooseFile);
@@ -127,6 +132,8 @@ private:
   bool m_closePending = false;
   bool m_outputPending = false;
   QAction *m_retrySave = nullptr;
+  NewImageHooks m_newImageHooks;
+  EditorOpenHooks m_openHooks;
   EditorCanvasHooks m_canvasHooks;
   ComparisonHooks m_comparisonHooks;
   EditorHistoryHooks m_historyHooks;

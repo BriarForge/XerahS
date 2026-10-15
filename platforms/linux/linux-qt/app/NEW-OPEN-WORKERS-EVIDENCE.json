@@ -1,0 +1,159 @@
+{
+  "capability": "EDITOR-CANVAS-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial-candidate-evidence",
+  "related_capabilities": [
+    "EDITOR-SESSION-001"
+  ],
+  "implementation": [
+    "platforms/linux/linux-qt/app/NewImageDialog.h",
+    "platforms/linux/linux-qt/app/NewImageDialog.cpp",
+    "platforms/linux/linux-qt/app/EditorOpen.h",
+    "platforms/linux/linux-qt/app/EditorOpen.cpp",
+    "platforms/linux/linux-qt/app/EditorPreparation.cpp",
+    "platforms/linux/linux-qt/app/EditorWindow.h",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/app/NEW-OPEN-WORKERS.md",
+    "platforms/linux/linux-qt/tests/NewImageDialogTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorOpenTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorSourceTest.cpp"
+  ],
+  "requirements": {
+    "EC-001": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged."
+    },
+    "EC-002": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged."
+    },
+    "EC-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged."
+    },
+    "ES-001": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged."
+    },
+    "ES-002": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged."
+    },
+    "ES-005": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged."
+    },
+    "ES-006": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged."
+    },
+    "ES-007": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged."
+    },
+    "ES-008": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged."
+    },
+    "ES-016": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged."
+    },
+    "ES-019": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged."
+    },
+    "ES-029": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged."
+    }
+  },
+  "verification": {
+    "local_ctest": {
+      "verified_targets": 45,
+      "failed_on_final_source": 0,
+      "full_attempt_seconds": 70.23,
+      "full_attempt_failed_targets": 1,
+      "final_editor_window_seconds": 24.66,
+      "final_new_dialog_seconds": 1.43,
+      "final_editor_open_seconds": 0.71,
+      "sequence": "The full attempt passed 44 targets; two new stale-selection fixture rows tried to edit an already disabled canvas and hit their deadlines, causing the editor target timeout. The injection now uses the existing early QAction changed boundary; the complete editor target passes. Final visual hooks were verified by both complete affected dialog/open targets. Forty-two other successful targets retained; no timeout/expected result changed. This is not one final full run."
+    },
+    "minimum_qt": {
+      "version": "6.4.2",
+      "verified_targets": 45,
+      "failed_on_final_source": 0,
+      "full_attempt_seconds": 67.58,
+      "full_attempt_failed_targets": 1,
+      "final_editor_window_seconds": 24.39,
+      "final_new_dialog_seconds": 1.28,
+      "final_editor_open_seconds": 0.67,
+      "sequence": "Full attempt passed 44 targets; the same stale-selection fixture correction is verified by the complete final editor retest. Final dialog/open targets pass; 42 other successful targets retained. Minimum-Qt full builds pass."
+    },
+    "published_vectors": {
+      "passed": 114,
+      "failed": 0,
+      "expected_results_changed": false
+    },
+    "new_native_cases": {
+      "passed": 74,
+      "failed": 0,
+      "new_image_dialog": 27,
+      "editor_open": 26,
+      "editor_window": 21,
+      "detail": "Cancelled late success/exception; nonblocking close/child/owner teardown; frozen initial pixels/options, profile/alpha, borrowed-buffer release, redacted failure/retry; file/colour/source/confirmation picker teardown and cleanup; initial publication/reentry; immutable old session, early stale-selection refusal and standalone editor parents."
+    },
+    "tooling_tests": {
+      "contract_linter": 16,
+      "contract_backlog": 9,
+      "conformance_runner": 7,
+      "failed": 0
+    },
+    "visual_review": "Inspected synthetic New Image dimensions/background ARGB/linear profile/initial controls/policy/Create/Cancel and Open progress/Cancel. Offscreen Qt widgets only; physical helpers and human a11y reviews remain Required.",
+    "review_findings": "New test includes were corrected; a new replacement fixture initially compared an untagged input QImage to the correctly sRGB-tagged output. It now asserts independent blue pixels, dimensions and selected sRGB profile. Stale-selection injection initially attempted a disabled canvas; moving it to the established early busy-notification boundary fixed the fixture and verifies actual refusal. Old no-result/history/file assertions remain. Private Qt pickers/QSettings replace unobservable offscreen theme-helper fixtures; production honors desktop helpers. No contracts, vectors or timeouts changed.",
+    "contract_checks": {
+      "lint": "passed",
+      "backlog": "valid; STATUS.md current",
+      "effective_instruction_files": 18,
+      "trace_labels": "unchanged; 80 implemented/68 partial"
+    }
+  },
+  "prior_checkpoint_verification": {
+    "head_sha": "c8272f022c2099b42dbaa90710348a4fef2045d6",
+    "ci_url": "https://github.com/BriarForge/XerahS/actions/runs/38704107190",
+    "conclusion": "success",
+    "native_job_id": 116319120480,
+    "lint_job_id": 116319120246,
+    "native_ctest_passed": 44,
+    "native_ctest_failed": 0,
+    "native_ctest_seconds": 65.14,
+    "qt_version": "6.4.2"
+  },
+  "next_action": "Migrate capture source-history coordination to immediate Cancel/Escape/child recovery, per-job identity and frozen target-ID guarded history restoration before source/display publication. Preserve capture source-region proof, exact history/assets/checkpoints and actual output/retry.",
+  "remaining": "Capture source-history still waits for cancelled work before restoring controls and lacks the main editor target-identity guard. Remaining native configuration/lifetime paths, full tools/effects/capture topology/recording/audio/uploads/workflows/settings/automation/compatibility/packaging/migration/updates/rollback, target matrix/resources/performance and human security/privacy/a11y/parity/release gates remain Required.",
+  "unresolved_decisions": [
+    "EA-005-LINUX-2026-10-14",
+    "EA-016-LINUX-2026-10-14",
+    "EO-004-LINUX-2026-10-14",
+    "ES-014-030-LINUX-2026-10-15",
+    "draft-native-equivalence-pending-product-owner-approval"
+  ]
+}

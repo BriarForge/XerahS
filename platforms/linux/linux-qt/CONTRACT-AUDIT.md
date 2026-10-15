@@ -589,3 +589,42 @@ and 28.44 seconds on Qt 6.4.2 (dialog 3.06, editor-window 25.38). The other 42
 successful local/four baseline targets remain unchanged; the earlier full-run
 times are not claimed as one final full run. Scope, labels, vectors and all
 remaining gates are unchanged.
+
+[Owned New/Open preparation](app/NEW-OPEN-WORKERS.md) now releases cancelled or
+destroyed owners without joining decoding/rendering and isolates late New Image
+results. Bounded initial/retained-pixel ingress owns borrowed buffers; expensive
+source/display/PNG preparation remains on workers. Owned file/colour/source-choice/
+confirmation/error dialogs, weak standalone parents and frozen state/exact selection/
+generation guard native replacement. Complete initial input/status precedes Create
+availability. Busy/reentry/stale refusal preserves the existing document, exact
+history/selection/viewport/files; dirty Save/Discard/Cancel and reload after saving
+over the candidate retain their existing semantics. Shared policies are unchanged.
+
+Seventy-four new native cases cover those production boundaries: 27 New Image,
+26 in the new dedicated Open target and 21 main-editor integration rows. Existing
+real inputs, alpha/profile/resource and actual Save/reopen assertions remain.
+All 45 targets are verified on local Qt and Qt 6.4.2: full attempts passed 44;
+incorrect stale-selection injection into an already disabled canvas caused editor
+timeouts. Its corrected early QAction boundary is verified by complete final
+editor targets (24.66/24.39 seconds). Complete final New Image/Open targets also
+pass (2.15/1.95 seconds), with 42 unchanged successes retained. These are sequences,
+not single final full runs. Independent pixel/profile expectations corrected a
+new untagged-versus-tagged QImage fixture comparison; test includes were fixed.
+No timeout, published expectation or original outcome assertion was weakened.
+All 114 unchanged vectors and 32 tooling tests pass. Synthetic New/Open controls
+and progress were inspected; physical helpers/human reviews remain unqualified.
+Final lint/backlog/instructions and exact pushed Ubuntu CI are reported with the
+checkpoint. Prior comparison commit c8272f0 has successful CI 38704107190: 44
+Ubuntu 24.04/Qt 6.4.2 tests in 65.14 seconds plus lint success.
+
+Requirement IDs/statuses/dispositions/vector references, 80 implemented/68 partial
+core labels, 52 registered commands and fourteen visible defaults remain unchanged.
+The full application/capture/recording/audio/upload/workflow/settings/editor/tools/
+effects/canvas/output/history/automation/compatibility/distribution/migration/
+updates/rollback scope, supported target matrix, resources/performance and human
+privacy/security/a11y/parity/release gates remain Required. Product decisions remain
+pending; no completion percentage or release acceptance is established. Next
+migrate capture source-history cancellation/coordinator identity and guarded
+adjacent-target admission, retaining original source-region proof, exact history/
+assets/checkpoints and actual output/retry. Other native configuration/lifetime
+qualification also remains Required.

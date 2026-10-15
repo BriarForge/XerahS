@@ -14,6 +14,8 @@
 #include <QProgressBar>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QScopeGuard>
+#include <QThreadPool>
 #include <QVBoxLayout>
 #include <utility>
 
@@ -30,8 +32,9 @@ QString describe(const QString &error) {
   return QStringLiteral("The new image data is invalid. Check the size, colour and profile.");
 }
 }
-NewImageDialog::NewImageDialog(QWidget *parent) : QDialog(parent) {
+NewImageDialog::NewImageDialog(QWidget *parent, NewImageHooks hooks) : QDialog(parent), m_hooks(std::move(hooks)) {
   setObjectName(QStringLiteral("newImageDialog")); setWindowTitle(QStringLiteral("New Image"));
+  setAccessibleName(windowTitle()); setWindowModality(Qt::WindowModal);
   auto *layout = new QVBoxLayout(this);
   m_controls = new QWidget(this); auto *form = new QFormLayout(m_controls);
   m_width = new QSpinBox(this); m_height = new QSpinBox(this);
@@ -58,7 +61,7 @@ NewImageDialog::NewImageDialog(QWidget *parent) : QDialog(parent) {
   m_profile->setAccessibleName(QStringLiteral("New image colour profile"));
   m_profile->addItems({QStringLiteral("sRGB"), QStringLiteral("Linear sRGB"), QStringLiteral("Display P3"), QStringLiteral("Adobe RGB")});
   form->addRow(QStringLiteral("Colour &profile"), m_profile);
-  m_initialLabel = new QLabel(QStringLiteral("No initial image"), this); m_initialLabel->setWordWrap(true);
+  m_initialLabel = new QLabel(QStringLiteral("No initial image"), this); m_initialLabel->setWordWrap(true); m_initialLabel->setTextFormat(Qt::PlainText);
   m_initialLabel->setObjectName(QStringLiteral("newImageInitial")); form->addRow(QStringLiteral("Initial pixels"), m_initialLabel);
   auto *file = new QPushButton(QStringLiteral("Choose initial image…"), this); file->setObjectName(QStringLiteral("chooseNewImageInitial"));
   auto *clipboard = new QPushButton(QStringLiteral("Use clipboard image"), this); clipboard->setObjectName(QStringLiteral("pasteNewImageInitial"));
@@ -66,21 +69,17 @@ NewImageDialog::NewImageDialog(QWidget *parent) : QDialog(parent) {
   auto *initialRow = new QHBoxLayout; initialRow->addWidget(file); initialRow->addWidget(clipboard); initialRow->addWidget(m_clearInitial); form->addRow(initialRow);
   connect(file, &QPushButton::clicked, this, &NewImageDialog::chooseFile);
   connect(clipboard, &QPushButton::clicked, this, &NewImageDialog::useClipboard);
-  connect(m_clearInitial, &QPushButton::clicked, this, [this] {
-    m_initial = {}; m_initialLabel->setText(QStringLiteral("No initial image")); validateControls();
-  });
+  connect(m_clearInitial, &QPushButton::clicked, this, &NewImageDialog::clearInitial);
   layout->addWidget(m_controls);
   auto *policy = new QLabel(QStringLiteral("Initial pixels keep their native size at the top left. The chosen dimensions "
       "crop excess pixels or pad with the background. Initial pixels and the sRGB background colour convert to the selected profile. "
       "Untagged initial images are treated as sRGB."), this); policy->setWordWrap(true); layout->addWidget(policy);
-  m_status = new QLabel(this); m_status->setObjectName(QStringLiteral("newImageStatus")); m_status->setWordWrap(true); layout->addWidget(m_status);
+  m_status = new QLabel(this); m_status->setObjectName(QStringLiteral("newImageStatus")); m_status->setWordWrap(true); m_status->setTextFormat(Qt::PlainText); layout->addWidget(m_status);
   m_progress = new QProgressBar(this); m_progress->setObjectName(QStringLiteral("newImageProgress")); m_progress->setRange(0, 100);
   m_progress->setAccessibleName(QStringLiteral("New image preparation progress"));
   m_cancelWork = new QPushButton(QStringLiteral("Cancel work"), this); m_cancelWork->setObjectName(QStringLiteral("cancelNewImageWork"));
   auto *workRow = new QHBoxLayout; workRow->addWidget(m_progress, 1); workRow->addWidget(m_cancelWork); layout->addLayout(workRow);
-  connect(m_cancelWork, &QPushButton::clicked, this, [this] {
-    if (m_control) { m_control->cancelled.store(true); m_cancelWork->setEnabled(false); m_status->setText(QStringLiteral("Cancelling…")); }
-  });
+  connect(m_cancelWork, &QPushButton::clicked, this, &NewImageDialog::cancelWork);
   m_buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
   m_buttons->button(QDialogButtonBox::Ok)->setText(QStringLiteral("Create"));
   connect(m_buttons, &QDialogButtonBox::accepted, this, &NewImageDialog::accept);
@@ -93,96 +92,167 @@ NewImageDialog::NewImageDialog(QWidget *parent) : QDialog(parent) {
   m_poll.setInterval(20); connect(&m_poll, &QTimer::timeout, this, &NewImageDialog::pollWork);
   setBusy(false); validateControls(); resize(620, sizeHint().height());
 }
-NewImageDialog::~NewImageDialog() { if (m_control) m_control->cancelled.store(true); if (m_worker.valid()) m_worker.wait(); }
+NewImageDialog::~NewImageDialog() { if (m_work) m_work->cancelled.store(true); }
 NewImageOptions NewImageDialog::options() const {
   return {m_width->value(), m_height->value(), m_background->currentIndex() == 0 ? Argb(0) : parseColor(m_colour->text()).value_or(0),
       NewImageProfile(m_profile->currentIndex())};
 }
-void NewImageDialog::validateControls() {
-  const bool chosen = m_background->currentIndex() != 0;
-  m_colour->setEnabled(chosen); m_chooseColour->setEnabled(chosen); m_clearInitial->setEnabled(!m_initial.isNull());
-  if (m_worker.valid() || m_closing) return;
+QString NewImageDialog::controlStatus() const {
   const auto error = validateNewImage(options());
-  const bool validColour = !chosen || parseColor(m_colour->text()).has_value();
-  m_buttons->button(QDialogButtonBox::Ok)->setEnabled(!error && validColour);
-  m_status->setText(error ? describe(*error) : !validColour ? QStringLiteral("Enter a colour as #AARRGGBB, including alpha.") :
-      QStringLiteral("Create prepares a new unsaved document. The current document stays unchanged until preparation succeeds."));
+  const bool validColour = m_background->currentIndex() == 0 || parseColor(m_colour->text()).has_value();
+  return error ? describe(*error) : !validColour ? QStringLiteral("Enter a colour as #AARRGGBB, including alpha.") :
+      QStringLiteral("Create prepares a new unsaved document. The current document stays unchanged until preparation succeeds.");
+}
+void NewImageDialog::validateControls() {
+  if (m_closing || m_work || m_transition || m_pickerOpen) return;
+  const QPointer<NewImageDialog> owner(this); m_transition = true;
+  const auto restore = qScopeGuard([owner] { if (owner) owner->m_transition = false; });
+  m_status->setText(controlStatus()); if (owner) setBusy(false);
+}
+void NewImageDialog::clearInitial() {
+  if (m_closing || m_work || m_transition || m_pickerOpen) return;
+  const QPointer<NewImageDialog> owner(this); m_transition = true;
+  const auto restore = qScopeGuard([owner] { if (owner) owner->m_transition = false; });
+  m_initial = {}; m_initialLabel->setText(QStringLiteral("No initial image"));
+  if (!owner) return;
+  m_status->setText(controlStatus()); if (owner) setBusy(false);
 }
 void NewImageDialog::chooseColour() {
-  const QColor colour = QColorDialog::getColor(QColor::fromRgba(parseColor(m_colour->text()).value_or(0xFFFFFFFF)), this,
-      QStringLiteral("New image background"), QColorDialog::ShowAlphaChannel);
-  if (colour.isValid()) m_colour->setText(formatColor(colour.rgba()));
+  if (m_closing || m_work || m_transition || m_pickerOpen) return;
+  const QPointer<NewImageDialog> owner(this); QColor chosen;
+  {
+    m_pickerOpen = true; const auto restore = qScopeGuard([owner] { if (owner) owner->m_pickerOpen = false; });
+    QPointer<QColorDialog> picker(new QColorDialog(QColor::fromRgba(parseColor(m_colour->text()).value_or(0xFFFFFFFF)), this));
+    m_picker = picker; picker->setObjectName("newImageColourPicker"); picker->setWindowTitle("New image background"); picker->setOption(QColorDialog::ShowAlphaChannel);
+    const auto answer = picker->exec(); if (picker && answer == QDialog::Accepted) chosen = picker->selectedColor();
+    if (picker) picker->hide();
+    if (picker) picker->setParent(nullptr);
+    delete picker.data();
+  }
+  if (owner && !m_closing && chosen.isValid()) m_colour->setText(formatColor(chosen.rgba()));
 }
 void NewImageDialog::chooseFile() {
-  QStringList patterns; for (const auto &format : QImageReader::supportedImageFormats()) patterns.append(QStringLiteral("*.%1").arg(QString::fromLatin1(format)));
-  const QString path = QFileDialog::getOpenFileName(this, QStringLiteral("Initial image pixels"), {},
-      QStringLiteral("Images (%1);;All files (*)").arg(patterns.join(QLatin1Char(' '))));
-  if (!path.isEmpty()) loadInitialFile(path);
+  if (m_closing || m_work || m_transition || m_pickerOpen) return;
+  const QPointer<NewImageDialog> owner(this); QString path;
+  {
+    m_pickerOpen = true; const auto restore = qScopeGuard([owner] { if (owner) owner->m_pickerOpen = false; });
+    QStringList patterns; for (const auto &format : QImageReader::supportedImageFormats()) patterns.append(QStringLiteral("*.%1").arg(QString::fromLatin1(format)));
+    QPointer<QFileDialog> picker(new QFileDialog(this, QStringLiteral("Initial image pixels"), {}, QStringLiteral("Images (%1);;All files (*)").arg(patterns.join(QLatin1Char(' ')))));
+    m_picker = picker; picker->setObjectName("newImageFilePicker"); picker->setFileMode(QFileDialog::ExistingFile);
+    const auto answer = picker->exec(); if (picker && answer == QDialog::Accepted && !picker->selectedFiles().isEmpty()) path = picker->selectedFiles().first();
+    if (picker) picker->hide();
+    if (picker) picker->setParent(nullptr);
+    delete picker.data();
+  }
+  if (owner && !path.isEmpty()) loadInitialFile(path);
 }
 void NewImageDialog::useClipboard() {
-  const QImage image = QApplication::clipboard()->image();
+  if (m_closing || m_work || m_transition || m_pickerOpen) return;
+  const QPointer<NewImageDialog> owner(this); QImage image;
+  { m_transition = true; const auto restore = qScopeGuard([owner] { if (owner) owner->m_transition = false; }); image = QApplication::clipboard()->image(); }
+  if (!owner || m_closing) return;
   if (image.isNull()) { m_status->setText(QStringLiteral("The clipboard does not contain a supported image. The initial image is unchanged.")); return; }
   setInitialImage(image, QStringLiteral("Clipboard image"));
 }
+void NewImageDialog::publishInitial(QImage image, const QString &label) {
+  const QPointer<NewImageDialog> owner(this);
+  const int width = image.width(), height = image.height(); m_initial = std::move(image);
+  // Block intermediate dimension notifications; observers see one complete input.
+  const QPointer<QSpinBox> w(m_width), h(m_height); const bool blockedW = w->blockSignals(true), blockedH = h->blockSignals(true);
+  const auto restore = qScopeGuard([w, h, blockedW, blockedH] { if (w) w->blockSignals(blockedW); if (h) h->blockSignals(blockedH); });
+  w->setValue(width); if (!owner) return;
+  h->setValue(height); if (!owner) return;
+  m_initialLabel->setText(QStringLiteral("%1 · %2 × %3 pixels").arg(label).arg(width).arg(height));
+  if (!owner) return;
+}
 bool NewImageDialog::setInitialImage(const QImage &image, const QString &label) {
-  if (m_closing || m_worker.valid()) return false;
+  if (m_closing || m_work || m_transition || m_pickerOpen) return false;
+  const QPointer<NewImageDialog> owner(this); m_transition = true;
+  const auto restore = qScopeGuard([owner] { if (owner) owner->m_transition = false; });
   if (auto error = validateNewImage({image.width(), image.height()})) { m_status->setText(describe(*error)); return false; }
-  m_initial = image; m_width->setValue(image.width()); m_height->setValue(image.height());
-  m_initialLabel->setText(QStringLiteral("%1 · %2 × %3 pixels").arg(label).arg(image.width()).arg(image.height()));
-  validateControls(); return true;
+  auto owned = image.copy(); if (owned.isNull()) { m_status->setText(describe(diagnostic::documentTooLarge)); return false; }
+  publishInitial(std::move(owned), label); if (!owner || m_closing) return false;
+  m_status->setText(controlStatus()); if (!owner || m_closing) return false;
+  setBusy(false); return owner && !m_closing;
 }
 bool NewImageDialog::loadInitialFile(const QString &path) { return !path.isEmpty() && startWork(path, true); }
 bool NewImageDialog::startWork(const QString &path, bool load) {
-  if (m_closing || m_worker.valid()) return false;
-  const auto requested = options(); const QImage initial = m_initial;
+  if (m_closing || m_work || m_transition || m_pickerOpen) return false;
+  const QPointer<NewImageDialog> owner(this); m_transition = true;
+  const auto restore = qScopeGuard([owner] { if (owner) owner->m_transition = false; });
+  const auto requested = options(); const QImage initial = m_initial; const auto hooks = m_hooks;
+  const auto work = std::make_shared<Work>(); work->load = load; work->label = QFileInfo(path).fileName(); m_work = work;
   try {
-    m_control = std::make_shared<WorkControl>();
-    m_worker = std::async(std::launch::async, [requested, initial, path, load, control = m_control]() -> WorkResult {
-      const RenderControl callbacks{[control] { return control->cancelled.load(); }, [control](int p) { control->progress.store(p); }};
-      if (load) return loadRaster(path, callbacks);
-      return prepareNewImage(requested, initial, callbacks);
+    QThreadPool::globalInstance()->start([requested, initial, path, hooks, work] {
+      const RenderControl callbacks{[work] { return work->cancelled.load(); }, [work](int p) { work->progress.store(p); }};
+      try {
+        if (work->cancelled.load()) { LoadedRaster failed; failed.diagnostic = "canvas-cancelled"; work->result = failed; }
+        else { if (hooks.beforePrepare) hooks.beforePrepare(); if (work->load) work->result = loadRaster(path, callbacks); else work->result = prepareNewImage(requested, initial, callbacks); }
+      } catch (...) { LoadedRaster failed; failed.diagnostic = "new-image-preparation-failed"; work->result = failed; }
+      work->ready.store(true, std::memory_order_release);
     });
-  } catch (const std::exception &) { m_status->setText(QStringLiteral("Image preparation could not start. The current document is unchanged.")); return false; }
-  m_loading = load; m_initialName = QFileInfo(path).fileName(); m_progress->setValue(0);
-  setBusy(true); m_status->setText(load ? QStringLiteral("Loading initial pixels…") : QStringLiteral("Preparing new image…")); m_poll.start(); return true;
+  } catch (...) { work->cancelled.store(true); m_work.reset(); m_status->setText(QStringLiteral("Image preparation could not start. The current document is unchanged.")); return false; }
+  m_status->setText(load ? QStringLiteral("Loading initial pixels…") : QStringLiteral("Preparing new image…")); if (!owner || m_closing || m_work != work) return false;
+  m_progress->setValue(0); if (!owner || m_closing || m_work != work) return false;
+  setBusy(true); if (!owner || m_closing || m_work != work) return false;
+  m_poll.start(); return true;
 }
 void NewImageDialog::setBusy(bool busy) {
-  m_controls->setEnabled(!busy && !m_closing); m_buttons->button(QDialogButtonBox::Ok)->setEnabled(!busy && !m_closing);
-  m_buttons->button(QDialogButtonBox::Cancel)->setEnabled(!m_closing); m_progress->setVisible(busy); m_cancelWork->setVisible(busy);
-  m_cancelWork->setEnabled(busy && !m_closing);
+  const QPointer<NewImageDialog> owner(this);
+  const auto current = [owner, busy] { return owner && !owner->m_closing && bool(owner->m_work) == busy; };
+  m_progress->setVisible(busy); if (!current()) return;
+  m_cancelWork->setVisible(busy); if (!current()) return;
+  m_cancelWork->setEnabled(busy); if (!current()) return;
+  const bool chosen = m_background->currentIndex() != 0;
+  m_colour->setEnabled(chosen); if (!current()) return;
+  m_chooseColour->setEnabled(chosen); if (!current()) return;
+  m_clearInitial->setEnabled(!m_initial.isNull()); if (!current()) return;
+  m_controls->setEnabled(!busy); if (!current()) return;
+  m_buttons->button(QDialogButtonBox::Cancel)->setEnabled(true); if (!current()) return;
+  const bool valid = !validateNewImage(options()) && (!chosen || parseColor(m_colour->text()).has_value());
+  m_buttons->button(QDialogButtonBox::Ok)->setEnabled(!busy && valid);
+}
+void NewImageDialog::cancelWork() {
+  if (m_closing || !m_work) return;
+  const QPointer<NewImageDialog> owner(this); const bool transition = m_transition; m_transition = true;
+  const auto restore = qScopeGuard([owner, transition] { if (owner) owner->m_transition = transition; });
+  m_work->cancelled.store(true); m_work.reset(); m_poll.stop();
+  m_status->setText(QStringLiteral("Work cancelled. The current document and prior initial image are unchanged."));
+  if (owner && !m_closing) setBusy(false);
 }
 void NewImageDialog::pollWork() {
-  if (!m_worker.valid()) return;
-  m_progress->setValue(m_control->progress.load());
-  if (m_worker.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) return;
-  std::optional<WorkResult> result;
-  try { result = m_worker.get(); } catch (const std::exception &) { /* Report below after restoring controls. */ }
-  m_poll.stop();
-  if (m_closing) { QDialog::reject(); return; }
-  setBusy(false); validateControls();
-  if (m_control->cancelled.load()) { m_status->setText(QStringLiteral("Work cancelled. The current document and prior initial image are unchanged.")); return; }
-  if (!result) { m_status->setText(QStringLiteral("Image preparation failed. The current document and prior initial image are unchanged.")); return; }
-  if (m_loading) {
-    auto &loaded = std::get<LoadedRaster>(*result);
-    if (!loaded.diagnostic.isEmpty()) { m_status->setText(describe(loaded.diagnostic)); return; }
-    setInitialImage(loaded.image, m_initialName); return;
+  if (m_closing || m_transition || !m_work) return;
+  const QPointer<NewImageDialog> owner(this); const auto work = m_work; m_transition = true;
+  const auto restore = qScopeGuard([owner] { if (owner) owner->m_transition = false; });
+  m_progress->setValue(work->progress.load()); if (!owner || m_closing || m_work != work || !work->ready.load(std::memory_order_acquire)) return;
+  m_progress->setValue(100); if (!owner || m_closing || m_work != work) return;
+  auto result = std::move(work->result); m_work.reset(); m_poll.stop();
+  if (work->cancelled.load()) m_status->setText(QStringLiteral("Work cancelled. The current document and prior initial image are unchanged."));
+  else if (auto *loaded = std::get_if<LoadedRaster>(&result)) {
+    if (loaded->diagnostic == u"new-image-preparation-failed") m_status->setText(QStringLiteral("Image preparation failed. The current document and prior initial image are unchanged."));
+    else if (!loaded->diagnostic.isEmpty()) m_status->setText(describe(loaded->diagnostic));
+    else if (work->load) { publishInitial(std::move(loaded->image), work->label); if (!owner || m_closing) return; m_status->setText(controlStatus()); }
+  } else {
+    auto prepared = std::get<PreparedNewImage>(std::move(result));
+    if (!prepared.document) m_status->setText(describe(prepared.diagnostic));
+    else { m_prepared = std::move(prepared); done(QDialog::Accepted); return; }
   }
-  auto prepared = std::get<PreparedNewImage>(std::move(*result));
-  if (!prepared.document) { m_status->setText(describe(prepared.diagnostic)); return; }
-  m_prepared = std::move(prepared); QDialog::accept();
+  if (owner && !m_closing) setBusy(false);
 }
 void NewImageDialog::accept() {
-  if (m_closing || m_worker.valid()) return;
-  validateControls(); if (!m_buttons->button(QDialogButtonBox::Ok)->isEnabled()) return;
+  if (m_closing || m_work || m_transition || m_pickerOpen) return;
+  if (validateNewImage(options()) || (m_background->currentIndex() != 0 && !parseColor(m_colour->text()))) { validateControls(); return; }
   startWork({}, false);
 }
-void NewImageDialog::reject() {
-  m_closing = true; if (m_control) m_control->cancelled.store(true);
-  if (!m_worker.valid()) { QDialog::reject(); return; }
-  setBusy(true); m_status->setText(QStringLiteral("Cancelling image preparation…"));
+void NewImageDialog::reject() { done(QDialog::Rejected); }
+void NewImageDialog::done(int result) {
+  if (m_closing || (result == QDialog::Accepted && !m_prepared)) return;
+  m_closing = true; if (m_work) m_work->cancelled.store(true); m_work.reset(); m_poll.stop();
+  if (result != QDialog::Accepted) m_prepared.reset();
+  const QPointer<NewImageDialog> owner(this); if (m_picker) m_picker->reject(); if (owner) QDialog::done(result);
 }
 std::optional<PreparedNewImage> NewImageDialog::takeImage() {
   if (result() != QDialog::Accepted || !m_prepared) return std::nullopt;
   return std::exchange(m_prepared, std::nullopt);
 }
-}  // namespace xerahs::app
+} // namespace xerahs::app

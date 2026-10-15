@@ -235,8 +235,12 @@ colour, clear and error dialogs are owned and guarded.
 [Owned comparison loading](app/COMPARISON-WORKERS.md) now freezes worker inputs
 and job identity, releases cancel/close/owner teardown without joining work,
 isolates late results, publishes complete pairs before enabling controls and uses
-owned picker/editor dialogs under the shared busy guard. Next complete New/Open
-worker/dialog ownership and full native/resource qualification. All remaining tools, effects,
+owned picker/editor dialogs under the shared busy guard. [Owned New/Open preparation](app/NEW-OPEN-WORKERS.md) now retires cancelled work
+without joining, isolates late New Image results, owns nested pickers/confirmations
+and guards main/standalone replacement. Frozen state/exact selection/generation,
+busy notifications, source/profile/alpha/history and explicit overlapping-save
+reload are verified. Next migrate capture source-history cancellation/coordinator
+identity and target admission, then complete remaining native/resource qualification. All remaining tools, effects,
 canvas/output, capture topology, recording/audio, uploads, workflows/settings/
 catalogues, compatibility, packaging/migration/updates/rollback, supported targets
 and native/human release qualification remain Required.

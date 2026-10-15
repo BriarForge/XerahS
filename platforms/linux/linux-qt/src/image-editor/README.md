@@ -100,3 +100,9 @@ clipboard/menu/input and pending shared tool/asset policy are indexed in
 The guarded owned Rectangle creation draft snapshots style/state/selection for numeric native creation and pointer drags. [Keyboard creation evidence](../../app/RECTANGLE-CREATION.md) records real keyboard input, exact history and actual save/reopen/capture output; full tools/fields/human qualification remains Required.
 
 Guarded Core selection filters requested UUIDs with a set, rejects stale displayed history, and preserves document/history/checkpoint state. The [native object-list evidence](../../app/ANNOTATION-OBJECTS.md) indexes keyboard selection, source generations, owned labels and physical/human limits.
+
+[Owned native New/Open preparation](../../app/NEW-OPEN-WORKERS.md) now owns
+worker inputs and result publication, releases cancellation/owner teardown without
+joining, guards nested dialogs and freezes session replacement admission. Borrowed
+QImage buffers are bounded/copied at native ingress; decoding, colour conversion,
+composition and PNG preparation remain on workers. Core policies remain unchanged.

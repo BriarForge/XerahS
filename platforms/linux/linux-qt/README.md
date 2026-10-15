@@ -155,6 +155,12 @@ Numeric creation and properties reject drafts from a replaced document even when
 
 **Flatten** makes rendered visible annotations part of a new immutable source, removing only objects represented in that composite. Hidden or off-canvas objects remain; visible unsupported types prevent flattening. **Clear Annotations** keeps source pixels intact. **Clear Image and Annotations…** resets the canvas to transparent pixels after confirmation, with Save before Clear, Clear without Saving and Cancel for dirty documents. These operations preserve full Undo/Redo recovery and colour metadata. Unsupported annotation types appear as preserved placeholders in the native Annotation objects list.
 
+[Owned New/Open preparation](app/NEW-OPEN-WORKERS.md) keeps Cancel and forced
+owner teardown responsive. New Image retains prior initial pixels on failed or
+cancelled loading and ignores late jobs. New/Open use owned pickers/confirmations,
+freeze editor state/selection/generation, guard outputs and mutations, and retain
+dirty replacement consent plus reload after saving over the candidate image.
+
 **Compare Images…** accepts two raster files or the current rendered editor
 image plus a file. Top-left and centered alignment retain native pixel sizes
 and show unmatched areas as transparent. Private display copies use sRGB,
