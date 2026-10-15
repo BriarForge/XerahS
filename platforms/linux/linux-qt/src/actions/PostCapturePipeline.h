@@ -11,6 +11,7 @@
 #include <QDateTime>
 #include <QString>
 #include <QStringList>
+#include <QJsonObject>
 
 #include <atomic>
 #include <functional>
@@ -173,6 +174,7 @@ struct PipelineResult {
   bool workingMediaRetained = true;
   QStringList ignoredSelection;  // unknown action IDs that never ran
   std::optional<PipelineRetryLink> retry;
+  QJsonObject workflowSnapshot;
 };
 
 struct PipelineHooks {

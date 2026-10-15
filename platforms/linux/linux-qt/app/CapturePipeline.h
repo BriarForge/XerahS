@@ -35,7 +35,7 @@ class CapturePipeline final : public QObject {
   Q_OBJECT
 public:
   CapturePipeline(QImage media, QString directory, QString pattern, QStringList selected,
-                  QObject *parent = nullptr, CaptureActionPorts ports = {}, PipelineJournalStorage journal = {}, QWidget *selectionParent = nullptr);
+                  QObject *parent = nullptr, CaptureActionPorts ports = {}, PipelineJournalStorage journal = {}, QWidget *selectionParent = nullptr, QJsonObject workflowSnapshot = {});
   CapturePipeline(CapturePipelineReceipt source, QObject *parent = nullptr, CaptureActionPorts ports = {}, PipelineJournalStorage journal = {}, QWidget *selectionParent = nullptr);
   ~CapturePipeline() override;
   void start();
@@ -50,6 +50,7 @@ private:
   QImage m_media;
   QString m_directory, m_pattern;
   QStringList m_selected;
+  QJsonObject m_workflowSnapshot;
   CaptureActionPorts m_ports;
   PipelineJournalStorage m_journal;
   CapturePipelineReceipt m_retrySource;

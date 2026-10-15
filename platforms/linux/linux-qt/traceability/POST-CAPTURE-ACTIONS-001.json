@@ -44,7 +44,11 @@
     "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
     "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
     "platforms/linux/linux-qt/app/CanvasCropDialog.h",
-    "platforms/linux/linux-qt/app/CanvasCropDialog.cpp"
+    "platforms/linux/linux-qt/app/CanvasCropDialog.cpp",
+    "platforms/linux/linux-qt/src/workflows/CaptureWorkflows.h",
+    "platforms/linux/linux-qt/src/workflows/CaptureWorkflows.cpp",
+    "platforms/linux/linux-qt/app/CaptureWorkflows.h",
+    "platforms/linux/linux-qt/app/CaptureWorkflows.cpp"
   ],
   "requirements": {
     "PCA-001": {
@@ -177,12 +181,15 @@
         "selection-cancel",
         "selection-window-replaces-action-set"
       ],
-      "note": "Core selection cancellation/replacement now drives an actual native application-modal per-run chooser before save/clipboard mutation. Shared tray/main-window capture controls choose Save, Copy, both or no outputs; Cancel/Escape/default Enter/close, operation cancellation and owner destruction retain captured pixels and start no later actions. Qt Core draft validation rejects unavailable/unknown requests, while the remaining catalogue is visibly unavailable. No workflow preferences are changed; the next default capture remains Save then Copy. Full quick-task/configured workflow selection and explicit persistent editing, remaining catalogue, supported native matrix and human accessibility/privacy/parity qualification remain Required.",
+      "note": "The per-run chooser does not change the saved profile. Capture workflows now explicitly creates/edits named region profiles, saves a default atomically and preserves it across restart. Run selected and the existing capture command resolve a saved profile; unsupported actions remain unavailable before acquisition. Full quick-task/action families, other entry points and native/human qualification remain Required.",
       "disposition": "Required",
       "evidence": [
         "platforms/linux/linux-qt/app/ACTION-SELECTION.md",
         "platforms/linux/linux-qt/tests/ActionSelectionTest.cpp",
-        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/app/SAVED-WORKFLOWS.md",
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
       ]
     },
     "PCA-010": {
@@ -289,7 +296,7 @@
     "PCA-014": {
       "status": "implemented",
       "vectors": [],
-      "note": "One production Core runPipeline() engine serves default native capture, per-run native selection, explicit retry and conformance. The shared tray/main-window chooser returns typed outcomes to the worker engine; it creates no alternative ordering or result model. Full configured workflows, quick-task/catalogue entry-point parity and native/human qualification remain Required. The per-run chooser now enables native file/path clipboard and reveal through the same engine, result serializer and worker/GUI bridge; no shortcut creates an alternate effect path. Native Save As and its shared Retry picker execute through the same catalogue-ordered worker/Core engine; private-bus tests verify retained-pixel retry without another capture. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required.",
+      "note": "One production Core runPipeline() engine serves default native capture, per-run native selection, explicit retry and conformance. The shared tray/main-window chooser returns typed outcomes to the worker engine; it creates no alternative ordering or result model. Full configured workflows, quick-task/catalogue entry-point parity and native/human qualification remain Required. The per-run chooser now enables native file/path clipboard and reveal through the same engine, result serializer and worker/GUI bridge; no shortcut creates an alternate effect path. Native Save As and its shared Retry picker execute through the same catalogue-ordered worker/Core engine; private-bus tests verify retained-pixel retry without another capture. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Saved profiles now reach that same production controller/engine through window/tray management and the existing region CLI activation. Full catalogue and explicit-ID/global entry points remain Required.",
       "disposition": "Required",
       "evidence": [
         "platforms/linux/linux-qt/app/ACTION-SELECTION.md",
@@ -302,13 +309,16 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/app/SAVED-WORKFLOWS.md",
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
       ]
     },
     "PCA-015": {
       "status": "implemented",
       "vectors": [],
-      "note": "Core seams and native worker jobs isolate selected-action snapshots, media, files, receipts and cancellation by unique task ID. Real parallel native pipelines prove one cancelled job cannot corrupt another successful job. Configured workflow counters, temporary upload files, remaining actions and full persistence/target qualification remain Required. Per-run selection snapshots do not alter subsequent default captures; native/private-bus tests verify cancelled and accepted selection isolation. Capture source-history now retires Cancel/Escape/close/deleted progress jobs immediately, isolates late jobs, and restores through the existing Core state/exact-selection/adjacent-target guard plus native generation. Exact source/profile/alpha/fields/assets/selection/composed source-region, owner teardown, stale refusal, failure/retry and actual capture PNG/.xann save retry evidence is indexed in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required; policies, vectors and labels are unchanged.",
+      "note": "Core seams and native worker jobs isolate selected-action snapshots, media, files, receipts and cancellation by unique task ID. Real parallel native pipelines prove one cancelled job cannot corrupt another successful job. Configured workflow counters, temporary upload files, remaining actions and full persistence/target qualification remain Required. Per-run selection snapshots do not alter subsequent default captures; native/private-bus tests verify cancelled and accepted selection isolation. Capture source-history now retires Cancel/Escape/close/deleted progress jobs immediately, isolates late jobs, and restores through the existing Core state/exact-selection/adjacent-target guard plus native generation. Exact source/profile/alpha/fields/assets/selection/composed source-region, owner teardown, stale refusal, failure/retry and actual capture PNG/.xann save retry evidence is indexed in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required; policies, vectors and labels are unchanged. Profile ID/name/actions/chooser intent freeze before acquisition. Native private-portal cases mutate the selected profile during acquisition: the active capture retains its original actions, and the following capture uses the new selection. Retained retry keeps the original profile snapshot.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
@@ -316,7 +326,10 @@
         "platforms/linux/linux-qt/app/ACTION-SELECTION.md",
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY.md",
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY-EVIDENCE.json",
-        "platforms/linux/linux-qt/tests/CaptureHistoryTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureHistoryTest.cpp",
+        "platforms/linux/linux-qt/app/SAVED-WORKFLOWS.md",
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
       ],
       "disposition": "Required"
     },
@@ -325,7 +338,7 @@
       "vectors": [
         "all"
       ],
-      "note": "The application native receipt and thin adapter now call one Qt Core production canonical serializer. The four published result fields and applicable action/dependency/cancellation fields remain intact; actual task identity, UTC execution times and native saved-file path/type/integer byte-length/naming context are under extensions.com.xerahs.app version 1. Native shared tray/main-window review shows an immutable read-only report without retry, file, clipboard or receipt mutations. Published vectors and independent Core/native/privacy/UI fixtures cover this seam. Canonical serialization also feeds a separate versioned write-ahead journal and native restart history for save/image-clipboard. This does not accept full recovery, retry authority, the remaining artifact catalogue, shared persisted compatibility or human/native matrix gates; those remain Required. Optional retry linkage/preserved-success provenance and file creator IDs remain namespaced; native linked result review does not invent current execution results for past successes. Native canonical file_artifacts now includes both actual Save aliases and preserved creator IDs without serializing live native bindings or truncating the result to its preferred single-file member. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required.",
+      "note": "The application native receipt and thin adapter now call one Qt Core production canonical serializer. The four published result fields and applicable action/dependency/cancellation fields remain intact; actual task identity, UTC execution times and native saved-file path/type/integer byte-length/naming context are under extensions.com.xerahs.app version 1. Native shared tray/main-window review shows an immutable read-only report without retry, file, clipboard or receipt mutations. Published vectors and independent Core/native/privacy/UI fixtures cover this seam. Canonical serialization also feeds a separate versioned write-ahead journal and native restart history for save/image-clipboard. This does not accept full recovery, retry authority, the remaining artifact catalogue, shared persisted compatibility or human/native matrix gates; those remain Required. Optional retry linkage/preserved-success provenance and file creator IDs remain namespaced; native linked result review does not invent current execution results for past successes. Native canonical file_artifacts now includes both actual Save aliases and preserved creator IDs without serializing live native bindings or truncating the result to its preferred single-file member. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Configured results and private restart journals now retain allowlisted profile ID/name/type/actions/chooser metadata under the native capture_workflow extension. Unknown profile extensions are excluded; empty/clipboard-only configured runs also retain terminal records. This is native-only metadata, not shared workflow interchange acceptance.",
       "evidence": [
         "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
@@ -340,7 +353,10 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/app/PAIRED-SAVE.md",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
-        "platforms/linux/linux-qt/tests/PipelineRetryTest.cpp"
+        "platforms/linux/linux-qt/tests/PipelineRetryTest.cpp",
+        "platforms/linux/linux-qt/app/SAVED-WORKFLOWS.md",
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
       ],
       "disposition": "Required"
     },

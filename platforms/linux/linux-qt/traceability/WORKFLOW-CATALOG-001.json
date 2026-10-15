@@ -1,0 +1,135 @@
+{
+  "capability": "WORKFLOW-CATALOG-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "implementation": [
+    "platforms/linux/linux-qt/src/workflows/CaptureWorkflows.h",
+    "platforms/linux/linux-qt/src/workflows/CaptureWorkflows.cpp",
+    "platforms/linux/linux-qt/app/CaptureWorkflows.h",
+    "platforms/linux/linux-qt/app/CaptureWorkflows.cpp",
+    "platforms/linux/linux-qt/app/CaptureController.cpp",
+    "platforms/linux/linux-qt/app/CapturePipeline.cpp",
+    "platforms/linux/linux-qt/src/actions/PipelineResultJson.cpp",
+    "platforms/linux/linux-qt/src/actions/PipelineJournal.cpp",
+    "platforms/linux/linux-qt/app/main.cpp",
+    "platforms/linux/linux-qt/app/ApplicationWindow.cpp"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/app/SAVED-WORKFLOWS.md",
+    "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+    "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+    "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+  ],
+  "requirements": {
+    "WFCAT-001": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Reuses only approved PCA action IDs for seven existing native actions; all 436 ledger mappings/action authorities and approval remain Required."
+    },
+    "WFCAT-002": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Configured captures freeze workflow ID/name/type/actions/chooser intent, use existing pipeline task IDs/timings/results, and retain safe snapshot metadata in private journals. Full invocation origin/settings/acquisition-failure coverage remains Required."
+    },
+    "WFCAT-003": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Window/tray share one workflow manager. Saved default feeds the existing capture command and --capture-region activation through the same controller and engine. Explicit workflow-ID CLI, global hotkeys, MCP/watch-folder/automation entry points remain Required."
+    },
+    "WFCAT-004": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Configured supported actions retain existing PCA succeeded/failed/skipped/cancelled and interruption facts; unavailable definitions fail before acquisition. Complete workflow status taxonomy/families remain Required."
+    },
+    "WFCAT-005": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Saved selections use the existing normative PCA engine order and independent/dependent failure policy. Remaining post-upload/action families remain Required."
+    },
+    "WFCAT-006": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Configured runs use existing observable controller/pipeline cancellation and retain their frozen profile in results/retry. Full family cancellation/cleanup matrices remain Required."
+    },
+    "WFCAT-007": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Named region profiles use the existing portal/overlay permission and capture path, with pre-acquisition validation. Mixed-display/DPI/cursor/HDR/recording scope and human permission review remain Required."
+    },
+    "WFCAT-008": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Profiles select existing image/file/path clipboard outputs; actual native GUI dispatch and saved-file prerequisites remain shared. Other clipboard input/format workflows and full privacy/target qualification remain Required."
+    },
+    "WFCAT-009": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Existing save/new-PNG/file-reveal validation and authority are reused. Workflow configuration is private/atomic, detects external changes and confirms profile deletion. Other file/folder/index/external/destructive families remain Required."
+    },
+    "WFCAT-010": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Uploads/destinations/credential and URL authority remain Required. Unavailable actions are preserved visibly and cannot execute."
+    },
+    "WFCAT-011": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Profiles can invoke the existing region-image annotation/output path. OCR/QR/hash/combine/split/effects/tools and complete family input/metadata schemas remain Required."
+    },
+    "WFCAT-012": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Recording control/session state machines remain Required; recording definitions are retained but unavailable."
+    },
+    "WFCAT-013": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Run Selected checks capture availability and current modal work, and uses an immutable saved definition. Full application-control/headless-authority behaviors remain Required."
+    },
+    "WFCAT-014": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Configured captures preserve existing single-controller busy arbitration and worker snapshots; changes affect future runs. Full concurrency policies across all resources and entry points remain Required."
+    },
+    "WFCAT-015": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Explicit retained retry keeps the original workflow snapshot and successful outputs after profile edits; no configuration reread/repeat is introduced. Other idempotency/remote families remain Required."
+    },
+    "WFCAT-016": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native-only v1 profiles use UUIDs and existing PCA IDs; validate bounded definitions/default membership before execution; preserve unknown compatible fields/actions; reject corrupt/newer/unsupported execution and detect stale writes. Shared interchange/migration/import/presets and compatibility/human review remain Required."
+    },
+    "WFCAT-017": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Results and private restart journals retain a known-field-only workflow snapshot and existing truthful outcomes. Unknown extensions are excluded from reports. Full notifications/log/privacy/terminal-state convergence remains Required."
+    },
+    "WFCAT-018": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Core/native UI/restart/real-output/private-portal cases cover the supported profile slice. No published WORKFLOW vectors exist; CMake reports that absence explicitly, following CORE precedent. All approved action-family vectors, platform adapters and human activation gates remain Required."
+    }
+  }
+}

@@ -13,6 +13,8 @@ find_package(ZLIB REQUIRED)
 set(XERAHS_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." CACHE PATH "BriarForge/XerahS repository root")
 
 add_library(xerahs_core STATIC
+  src/workflows/CaptureWorkflows.cpp
+  src/workflows/CaptureWorkflows.h
   src/shell/ActivationDispatcher.cpp
   src/shell/ActivationDispatcher.h
   src/shell/ActivationProtocol.cpp
@@ -133,6 +135,8 @@ target_compile_options(xerahs_action_selection PRIVATE -Wall -Wextra -Wpedantic)
 # The XerahS application (D-LIN-001: Qt Widgets). Product logic stays in
 # xerahs_core; app/ only wires it to Qt and the desktop.
 add_executable(xerahs
+  app/CaptureWorkflows.cpp
+  app/CaptureWorkflows.h
   app/ApplicationWindow.cpp
   app/ApplicationWindow.h
   app/PipelineHistoryDialog.cpp
@@ -523,15 +527,30 @@ add_test(NAME editor-open COMMAND ${XERAHS_DBUS_RUN_SESSION}
 set_tests_properties(editor-open PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 
 find_package(Python3 3.12 REQUIRED COMPONENTS Interpreter)
+add_executable(capture-workflows-test tests/CaptureWorkflowsTest.cpp)
+set_target_properties(capture-workflows-test PROPERTIES AUTOMOC ON)
+target_link_libraries(capture-workflows-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME capture-workflows COMMAND capture-workflows-test)
+add_executable(native-capture-workflows-test tests/NativeCaptureWorkflowsTest.cpp
+  app/CaptureWorkflows.cpp app/CaptureWorkflows.h app/CapturePipeline.cpp app/CapturePipeline.h
+  app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h
+  app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h
+  app/NativeEditorAppearance.cpp app/NativeEditorAppearance.h
+  app/NativeDesktopAppearance.cpp app/NativeDesktopAppearance.h)
+set_target_properties(native-capture-workflows-test PROPERTIES AUTOMOC ON)
+target_link_libraries(native-capture-workflows-test PRIVATE xerahs_file_output xerahs_action_selection xerahs_pipeline_journal Qt6::Widgets Qt6::DBus Qt6::Test)
+add_test(NAME native-capture-workflows COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:native-capture-workflows-test>)
+set_tests_properties(native-capture-workflows PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 # Capabilities with production implementation and requirement traceability.
 # Full requirement coverage remains in traceability, including partial rows.
 # The full suite runs without --capability and still fails for missing seams.
-set(XERAHS_IMPLEMENTED_CAPABILITIES CORE-PLATFORM-001 FILENAME-GENERATION-001 POST-CAPTURE-ACTIONS-001 REGION-CAPTURE-001 EDITOR-SESSION-001 EDITOR-CANVAS-001 EDITOR-SETTINGS-001)
+set(XERAHS_IMPLEMENTED_CAPABILITIES CORE-PLATFORM-001 FILENAME-GENERATION-001 POST-CAPTURE-ACTIONS-001 REGION-CAPTURE-001 EDITOR-SESSION-001 EDITOR-CANVAS-001 EDITOR-SETTINGS-001 WORKFLOW-CATALOG-001)
 set(XERAHS_CAPABILITY_ARGS)
 foreach(capability IN LISTS XERAHS_IMPLEMENTED_CAPABILITIES)
   if(EXISTS "${XERAHS_REPO_ROOT}/product-contract/capabilities/${capability}/test-vectors.json")
     list(APPEND XERAHS_CAPABILITY_ARGS --capability "${capability}")
-  elseif(capability STREQUAL "CORE-PLATFORM-001")
+  elseif(capability STREQUAL "CORE-PLATFORM-001" OR capability STREQUAL "WORKFLOW-CATALOG-001")
     message(STATUS "${capability}: no published test-vectors.json; native tests are partial evidence. Shared conformance and qualification remain Required.")
   else()
     message(FATAL_ERROR "${capability}: required published test-vectors.json is missing.")

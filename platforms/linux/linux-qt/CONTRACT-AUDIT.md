@@ -8,15 +8,15 @@ waiver, release approval or reduced completion condition.
 
 The full native Linux application is **unfinished**. The baseline's 1,592
 linked discovery rows establish contract routing, not implemented behavior.
-Seven capability packages now have Linux requirement trace files. Six have
+Eight capability packages now have Linux requirement trace files. Six have
 published vectors and a production conformance adapter; their 114 vectors
-cover only those seams. CORE has native/domain evidence and no published
-vector file yet.
+cover only those seams. CORE and WORKFLOW have native/domain evidence and no
+published vector files yet.
 Neither that vector count nor a green Ubuntu CI run proves the full contract.
 
 The numbered desktop-spec inventory contains 324 requirements across 15
-packages. Current trace files label 80 as implemented and 68 as partial; 175 lack
-implemented/partial labels in those seven traces, and CORE-029 records the
+packages. Current trace files label 80 as implemented and 84 as partial; 159 lack
+implemented/partial labels in those eight traces, and CORE-029 records the
 declared mobile scope outside Linux desktop. These are unweighted trace labels,
 not a production-readiness score. Additional partial native candidate maps are
 indexed separately until complete capability traces/vectors exist. In particular,
@@ -34,7 +34,7 @@ entire specification and linked ledger rows, not just the examples listed.
 |---|---|---|
 | `CORE-PLATFORM-001` | All 37 CORE rows traced; native lifetime lock, authenticated bounded activation, real-process failure/recovery and actual-application forwarding tests; native command window sharing tray actions | Complete main application/onboarding, shared profile/activation qualification, localization, notification authority/privacy, updates, migration, credential services, global shortcuts, general capture, recording/audio, media, uploads, plugins, history, automation/watch folders/assistant, diagnostics and distribution remain Required. Native candidate evidence does not accept human reviews or full CORE scope. |
 | `FILENAME-GENERATION-001` | `src/naming/`, adapter and 51 vectors | Complete native preference/input integration, filename preview and destination workflow qualification remain Required. Core expansion evidence alone does not accept all native usage paths. |
-| `POST-CAPTURE-ACTIONS-001` | `src/actions/`, adapter and 17 vectors; `CapturePipeline` runs native PNG publication and GUI clipboard dispatch through the Core engine, with cancellation, activity, actual artifact metadata and in-memory receipts with shared edit/discard/review controls; native write-ahead records and multi-record restart history preserve acknowledged results and distinguish interrupted unknown actions; explicit native linked retry reuses retained pixels/settings and preserves previous successes; the application and adapter share the canonical result serializer with namespaced task/timing/file/retry facts; a cancellable per-run chooser selects outputs/empty with effective-plan recovery; native file/path clipboard and asynchronous ShowItems reveal consume a live file binding; native Save As retains both file aliases; native rectangle annotation returns edited pixels before output and retains its document for explicit compatible editor persistence, with actual canvas/recovery/retry/process-kill evidence | Full save variants, native action catalogue, configured workflow selection/persistence, annotation/effects/output handoffs, uploads, complete catalogue/prerequisite retry, full durable media/artifact recovery, configured retention/pagination, crash cleanup authority, shared persisted compatibility, privacy and consent qualification remain Required. |
+| `POST-CAPTURE-ACTIONS-001` | `src/actions/`, adapter and 17 vectors; `CapturePipeline` runs native PNG publication and GUI clipboard dispatch through the Core engine, with cancellation, activity, actual artifact metadata and in-memory receipts with shared edit/discard/review controls; native write-ahead records and multi-record restart history preserve acknowledged results and distinguish interrupted unknown actions; explicit native linked retry reuses retained pixels/settings and preserves previous successes; the application and adapter share the canonical result serializer with namespaced task/timing/file/retry facts; a cancellable per-run chooser selects outputs/empty with effective-plan recovery; native file/path clipboard and asynchronous ShowItems reveal consume a live file binding; native Save As retains both file aliases; native rectangle annotation returns edited pixels before output and retains its document for explicit compatible editor persistence, with actual canvas/recovery/retry/process-kill evidence | Full save variants, native action catalogue, complete configured workflow families/entry points, annotation/effects/output handoffs, uploads, complete catalogue/prerequisite retry, full durable media/artifact recovery, configured retention/pagination, crash cleanup authority, shared persisted compatibility, privacy and consent qualification remain Required. |
 | `REGION-CAPTURE-001` | `src/capture/`, 21 vectors; `PortalScreenshot`, `CaptureController`, `RegionOverlay`; native portal lifecycle/failure tests, worker composition with accessible progress and responsive cancellation, independent pixel fixtures and stale-worker isolation tests | The controller assumes a uniform desktop scale; per-monitor physical source mapping, rotation/colour/availability, mixed displays, cursor settings, HDR conversion, interactive handles/snapping/magnifier, persisted last-region invocation, physical accessibility and performance remain Required. |
 | `EDITOR-SESSION-001` | Document/sidecar, source binding, rectangle history/rendering, native editor, 19 vectors; owned save worker acknowledges its exported state and explicit companion repair preserves PNG/Redo | Full contracted annotation/effect/canvas/output integration, complete persistence compatibility, native parity, visual goldens and human reviews remain Required. |
 | `EDITOR-ANNOTATIONS-001` | Explicit native Select/Rectangle/Crop modes, UUID-based keyboard object selection, numeric Rectangle creation with frozen defaults/state/selection, eight pointer resize handles and absolute numeric/color/alpha properties, frozen group pointer movement and native group rotation drafts, guarded stroke/fill choices with local capture defaults and saved editor defaults, gesture cancellation and finite atomic geometry/history; Rectangle creation/selection/style/rotation/order and protected direct edits; native rectangle duplication/object Cut/Copy/Paste with owned MIME, bounded validation, fresh IDs and exact history | No complete EA trace. All 20 stable tools, curves/freehand/text/balloons/steps/image/emoji/cursor, redaction/magnifier/spotlight/eraser/cut-out, complete multi-tool/asset/shared clipboard and duplication, complete persistence and accessible tool/option/handle controls remain Required. |
@@ -44,7 +44,7 @@ entire specification and linked ledger rows, not just the examples listed.
 | `EDITOR-SETTINGS-001` | Private atomic store, recents, creation-only border/fill/thickness, appearance, window state and toolbar controls; three vectors plus native tests | Complete field ledger/default/migration/downstream coverage, fonts/other tool defaults, numeric/effect settings, recent/favorite effects, convenience/automation preferences, independent whole-file recovery, shared semantics and physical/human reviews remain Required. |
 | `EDITOR-UTILITIES-001` | Canvas comparison support covers only a related image operation | No complete EU trace. Contracted utility tools, deterministic local processing, resource policy, progress/cancellation, accessibility and output integration remain Required. |
 | `SETTINGS-CATALOG-001` | Editor preference subset and inactive unknown preservation | No complete SETCAT trace. All 922 settings rows, profiles/scopes, shared schema, secure credential references, import/export/reset preview, full validation/migration and approval remain Required. |
-| `WORKFLOW-CATALOG-001` | Default save/clipboard capture, per-run native action selection and isolated pipeline model | No complete WFCAT trace. All 436 workflow/action rows, versioned definitions, consistent entry points, execution identity/results, concurrency, cancellation, retry and privacy/permission integration remain Required. |
+| `WORKFLOW-CATALOG-001` | All 18 WFCAT rows traced as partial/not-started; saved named region profiles, atomic editing/default/restart and actual window/tray/region CLI controller execution, frozen profile result/journal/retry metadata | All 436 ledger rows, remaining action families, per-profile destinations/naming, explicit-ID CLI/global entry points, shared definitions/import/migration, complete execution identity/status/concurrency/cancellation/retry and privacy/permission/native qualification remain Required. No published WFCAT vectors or human acceptance yet. |
 | `INTERFACE-CATALOG-001` | Small native tray/editor/CLI subset | No complete IFCAT trace. All linked GUI/CLI/MCP surfaces, semantic equivalence, availability, versioned progress/error/cancellation and keyboard/assistive-technology qualification remain Required. |
 | `COMPATIBILITY-CATALOG-001` | `.xann` parsing/round-trip and current unknown editor preference preservation | No complete COMPCAT trace. Configuration/workflow/uploader/history/SXCU/plugin/effect/automation compatibility, isolated previewed imports, secret handling, resource validation, idempotent migration and rollback/goldens remain Required. |
 | `MOBILE-PLATFORM-001` | Its explicit scope is Android/iOS | Mobile requirements are not Linux desktop requirements; CORE-029 and mobile-scope rules remain authoritative. This does not waive any desktop capability or its cross-platform acceptance gate. |
@@ -768,3 +768,53 @@ Next own Recent Images configuration and its stale/failure message dialogs,
 freeze revision/draft admission, and replace remaining raw editor preference
 guards. Preserve opt-in private paths, atomic removal/clear, incoming history,
 native selection and successful image output.
+
+## 2026-10-15 — Saved, selectable native capture workflows
+
+The previous `d11f51da74c3152d36ef8c38fcd75c1459d553fc` checkpoint has exact
+[Ubuntu 24.04/Qt 6.4.2 CI 38731722098](https://github.com/BriarForge/XerahS/actions/runs/38731722098):
+native job 116410862394 passed **47/47 in 75.72 s**, lint job 116410861898 passed.
+Those completed steps were retained. Work ordering now prioritizes missing usable
+features; the previous Recent Images maintenance item is deferred unless a
+demonstrated defect blocks feature delivery.
+
+[Saved capture workflows](app/SAVED-WORKFLOWS.md) adds actual window/tray
+management: create/name profiles, choose seven supported PCA actions or none,
+optionally ask after capture, choose a default, atomically Save, restart, Run
+selected and confirm Delete. Existing Capture region and region CLI activation
+resolve that default through the existing controller/PCA engine. The private
+native v1 format preserves compatible unknown fields and refuses unsupported
+execution, stale changes and corrupt/newer writes. It neither imports nor changes
+live Avalonia settings. Known profile fields freeze before acquisition and stay
+with results, private journals and retained retry after later profile changes.
+
+Final complete builds/CTest pass **49/49 locally in 70.18 s** and **49/49 with
+cached Qt 6.4.2 in 67.04 s**. Two new Core/native workflow targets cover real
+private save/restart/default/Run, confirmed deletion, cancelled/failed/stale writes,
+unknown compatibility, actual PNG pixels, empty/clipboard/chooser modes, journal
+recovery and retained retry after profile edits. Three additional controller cases
+verify default/explicit immutable acquisition snapshots and unsupported refusal
+before contacting the private portal; the complete portal target passes in
+8.03 s. A synthetic workflow-manager frame was inspected. The complete editor
+target stays within its unchanged 30 s deadline (24.60/24.49 s locally/minimum).
+All **114 existing published vectors** and **32 tooling tests** pass. Final
+contract lint, backlog freshness, effective-instruction and trace-metadata checks
+pass; pushed-revision CI is reported with the checkpoint.
+
+The new 18-row WFCAT trace keeps every disposition Required: 16 partial and two
+not-started. Existing trace statuses/dispositions/vector references and all shared
+contracts/schemas/vectors/approvals remain unchanged. Eight traced packages now
+label **80 implemented/84 partial**; these are unweighted partial-surface labels,
+not a production-readiness percentage. No WFCAT vectors are published; CMake
+explicitly reports missing shared qualification while retaining all existing
+published-vector checks.
+
+Next implement **per-profile save folders and filename patterns**, reusing Core
+naming and private atomic persistence, then explicit-ID CLI/global workflow entry
+points. Full 324-requirement/15-package scope, 922 settings/436 workflows/232
+effects/20 annotation tools, capture topology, recording/audio, uploads/credentials,
+history/automation/compatibility, packaging/migration/updates/rollback and the
+Ubuntu/Fedora/Arch GNOME/Plasma/wlroots Wayland/X11 matrix remain unfinished.
+Ellipse, clipboard-assets, export-format, legacy-companion and shortcut decisions
+and human security/privacy/accessibility/parity/release approvals remain pending.
+The continuation timer stays active.

@@ -166,15 +166,16 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
 }
 PipelineJournalRecorder::PipelineJournalRecorder(std::shared_ptr<const PipelineJournalStoragePort> storage, const QString &id,
                                                  const QStringList &selected, const QDateTime &createdAt,
-                                                 const std::optional<PipelineRetryLink> &retry, const std::vector<SavedFileArtifact> &initialFiles, const QString &initialWorkingMedia)
+                                                 const std::optional<PipelineRetryLink> &retry, const std::vector<SavedFileArtifact> &initialFiles, const QString &initialWorkingMedia, const QJsonObject &workflowSnapshot)
     : m_storage(std::move(storage)) {
   m_snapshot.result.taskId = id; m_snapshot.result.retry = retry; m_snapshot.files = initialFiles; m_snapshot.createdAt = createdAt;
+  m_snapshot.result.workflowSnapshot = workflowSnapshot;
   const auto media = catalogueIndex(initialWorkingMedia);
   if (media && catalogue()[size_t(*media)].kind == ActionKind::Transformation) m_snapshot.result.finalWorkingMedia = initialWorkingMedia;
   for (const auto &action : catalogue()) if (selected.contains(action.id)) m_snapshot.selected.append(action.id);
 }
 bool PipelineJournalRecorder::begin() {
-  return !m_storage || !m_snapshot.result.retry || persist();
+  return !m_storage || (!m_snapshot.result.retry && m_snapshot.result.workflowSnapshot.isEmpty()) || persist();
 }
 bool PipelineJournalRecorder::before(const ActionSpec &action) {
   if (!m_storage) return true;

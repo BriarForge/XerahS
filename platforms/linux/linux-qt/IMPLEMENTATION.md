@@ -248,9 +248,17 @@ annotation-only history and actual capture save retry remain intact.
 Appearance and Toolbar parent/picker/cleanup lifetimes, serialize Apply through
 atomic persistence/publication and keep the newest toolbar after reentrant updates.
 Editor busy guards preserve document/history and unchanged-default recovery.
-Next own Recent Images configuration, its stale/failure dialogs and remaining
-raw editor preference guards, preserving opt-in private paths and revision-checked
-atomic changes. All remaining tools, effects,
+[Saved capture workflows](app/SAVED-WORKFLOWS.md) now expose named region
+profiles, saved defaults, atomic editing/restart, explicit Run and existing
+window/tray/region CLI execution through the same controller and PCA engine.
+Profiles freeze before acquisition and survive in safe result/journal metadata
+and retained retry. Unsupported definitions cannot start capture.
+
+Prioritize missing usable features next: per-profile save folders and filename
+patterns using existing Core naming/private atomic persistence, then explicit-ID
+CLI and global workflow entry points. Further hardening should address a
+demonstrated defect or feature-delivery blocker. Recent Images dialog ownership
+remains a maintenance item rather than the automatic next feature. All remaining tools, effects,
 canvas/output, capture topology, recording/audio, uploads, workflows/settings/
 catalogues, compatibility, packaging/migration/updates/rollback, supported targets
 and native/human release qualification remain Required.

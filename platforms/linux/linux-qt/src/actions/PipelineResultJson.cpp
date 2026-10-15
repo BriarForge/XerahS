@@ -36,6 +36,12 @@ QJsonObject pipelineResultJson(const PipelineResult &result,
   }
   QJsonObject native{{"schema_version", 1}, {"task_id", result.taskId},
                      {"action_timings", timings}, {"file_artifacts", artifacts}};
+  if (!result.workflowSnapshot.isEmpty()) {
+    QJsonObject workflow;
+    for (const auto *key : {"definitionVersion", "id", "name", "capture", "actions", "chooseActions"})
+      if (result.workflowSnapshot.contains(QLatin1String(key))) workflow.insert(QLatin1String(key), result.workflowSnapshot.value(QLatin1String(key)));
+    native.insert("capture_workflow", workflow);
+  }
   if (!artifactOutcomes.isEmpty()) native.insert("artifact_outcomes", artifactOutcomes);
   if (!result.ignoredSelection.isEmpty()) native.insert("ignored_selection", QJsonArray::fromStringList(result.ignoredSelection));
   if (result.retry) native.insert("retry", QJsonObject{{"schema_version", 1},

@@ -2,6 +2,7 @@
 // Identity com.xerahs.app / "XerahS" (CORE-002, ROOT-IDENTITY-001).
 
 #include "CaptureController.h"
+#include "CaptureWorkflows.h"
 #include "CaptureRecoveryActions.h"
 #include "EditorWindow.h"
 #include "EditorOpen.h"
@@ -121,6 +122,8 @@ int main(int argc, char *argv[]) {
   const QString pictures = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
   const auto journal = std::make_shared<xerahs::app::NativePipelineJournal>(xerahs::app::NativePipelineJournal::defaultDirectory());
   CaptureController capture(QDir(pictures.isEmpty() ? QDir::homePath() : pictures).filePath(QStringLiteral("XerahS")), nullptr, {}, {}, {}, journal);
+  xerahs::app::NativeCaptureWorkflows workflows(xerahs::app::NativeCaptureWorkflows::defaultPath());
+  capture.setDefaultWorkflowResolver([&workflows] { return workflows.resolve(); });
   const auto refreshCaptureStyle = [&capture] { capture.setAnnotationStyle(xerahs::editor::drawingStyleFromPreferences(xerahs::app::nativeEditorPreferences())); };
   refreshCaptureStyle();
   QObject::connect(&xerahs::app::nativeEditorPreferenceEvents(), &xerahs::app::NativeEditorPreferenceEvents::drawingDefaultsChanged, &capture, refreshCaptureStyle);
@@ -130,6 +133,7 @@ int main(int argc, char *argv[]) {
   QMenu menu;
   QAction *region = menu.addAction(QStringLiteral("Capture region"));
   QAction *chooseCapture = menu.addAction(QStringLiteral("Capture region and choose actions…"));
+  QAction *configureWorkflows = menu.addAction(QStringLiteral("Capture workflows…"));
   QAction *cancelCapture = menu.addAction(QStringLiteral("Cancel capture"));
   cancelCapture->setEnabled(false);
   QObject::connect(cancelCapture, &QAction::triggered, &capture, &CaptureController::cancel);
@@ -145,10 +149,25 @@ int main(int argc, char *argv[]) {
   QAction *quit = menu.addAction(QStringLiteral("Quit XerahS"));
   tray.setContextMenu(&menu);
   xerahs::app::ApplicationWindow home({{"capture-region", region}, {"capture-region-choose-actions", chooseCapture}, {"cancel-capture", cancelCapture},
+      {"capture-workflows", configureWorkflows},
       {"new-image", newImage}, {"open-image", openImage}, {"captures-folder", folder}, {"capture-history", history}, {"editor-appearance", appearance}, {"quit", quit}});
   // Leave a focus-capable native window behind the chooser. In particular,
   // Wayland clipboard dispatch must not follow closure of our last window.
   capture.setActionSelectionParent(&home);
+  QObject::connect(configureWorkflows, &QAction::triggered, &home, [&] {
+    const auto selected = xerahs::app::manageCaptureWorkflows(workflows, &home, [&capture] { return !capture.busy(); });
+    if (!selected) return;
+    if (capture.busy() || QApplication::activeModalWidget()) { home.showResult("Capture workflow", "XerahS is busy. Run the workflow after the current operation finishes.", false); return; }
+    home.activate(); capture.captureRegionWorkflow(*selected);
+  });
+  const auto refreshWorkflow = [&] {
+    const auto &catalog = workflows.store().current().catalog; QString label;
+    if (catalog) for (const auto &w : catalog->entries) if (w.id == catalog->defaultId) label = w.name;
+    label.replace('&', "&&");
+    region->setText(capture.busy() ? "Capture region (in progress)" : label.isEmpty() ? "Capture region (configure workflows)" : "Capture region — " + label);
+  };
+  QObject::connect(&workflows, &xerahs::app::NativeCaptureWorkflows::changed, &home, refreshWorkflow);
+  QObject::connect(&capture, &CaptureController::busyChanged, &home, refreshWorkflow); refreshWorkflow();
   QObject::connect(&capture, &CaptureController::choosingActions, &home, &xerahs::app::ApplicationWindow::activate);
   QPointer<xerahs::app::PipelineHistoryDialog> historyDialog;
   QObject::connect(history, &QAction::triggered, &home, [&] {
@@ -188,7 +207,6 @@ int main(int argc, char *argv[]) {
     region->setEnabled(!busy);
     chooseCapture->setEnabled(!busy);
     cancelCapture->setEnabled(busy);
-    region->setText(busy ? QStringLiteral("Capture region (in progress)") : QStringLiteral("Capture region"));
   });
   QObject::connect(&capture, &CaptureController::notify, &tray,
                    [&tray](const QString &title, const QString &body, bool success) {

@@ -7,6 +7,7 @@
 #include "capture/RegionSession.h"
 #include "SnapshotComposition.h"
 #include "CapturePipeline.h"
+#include "workflows/CaptureWorkflows.h"
 
 #include <QImage>
 #include <QObject>
@@ -56,6 +57,8 @@ public:
   bool discardRetainedResult(const CapturePipelineReceipt &expected);
   bool retryFailedActions(const CapturePipelineReceipt &expected);
   void setActionSelectionParent(QWidget *parent);
+  void setDefaultWorkflowResolver(std::function<xerahs::workflows::WorkflowChoice()> resolver) { m_workflowResolver = std::move(resolver); }
+  void captureRegionWorkflow(const xerahs::workflows::CaptureWorkflow &workflow);
   // Future pipelines copy this GUI-thread preference value; active workers
   // retain the style already captured by their pipeline constructor.
   void setAnnotationStyle(const xerahs::editor::RectangleStyle &style) { m_actionPorts.annotationStyle = style; }
@@ -75,6 +78,7 @@ signals:
 
 private:
   void beginCapture(QStringList selected);
+  void beginConfiguredCapture(bool chooseActions);
   void onSnapshot(int outcome, const QImage &image, const QString &detail);
   void onOutcome(const xerahs::capture::SessionOutcome &outcome);
   void afterInput();
@@ -97,6 +101,8 @@ private:
   quint64 m_generation = 0;
   CaptureActionPorts m_actionPorts;
   QStringList m_selectedActions;
+  std::function<xerahs::workflows::WorkflowChoice()> m_workflowResolver;
+  QJsonObject m_workflowSnapshot;
   QPointer<QWidget> m_selectionParent;
   PipelineJournalStorage m_journal;
   QPointer<CapturePipeline> m_pipeline;
