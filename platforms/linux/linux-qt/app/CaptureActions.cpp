@@ -1,4 +1,5 @@
 #include "CaptureActions.h"
+#include "EditorCanvasOperations.h"
 
 #include <QClipboard>
 #include <QGuiApplication>
@@ -67,10 +68,24 @@ ActionOutcome CaptureActions::annotate(const CancellationToken &cancellation) {
   if (cancellation.requested() || (!choice.document && choice.diagnostic.isEmpty())) return {ActionState::Cancelled, {}, {}};
   if (!choice.diagnostic.isEmpty()) return failed(choice.diagnostic);
   const auto parsed = xerahs::editor::parseDocument(xerahs::editor::serializeDocument(*choice.document));
-  if (!parsed.document || parsed.document->sourceImagePng != source.document->sourceImagePng ||
+  if (!parsed.document) return failed(xerahs::editor::diagnostic::documentInvalid);
+  QImage acceptedSource = source.image;
+  if (choice.sourceRegion) {
+    const auto r = *choice.sourceRegion;
+    if (!xerahs::editor::validCropRegion(r, source.image.width(), source.image.height()) ||
+        parsed.document->canvasWidth != r.width || parsed.document->canvasHeight != r.height)
+      return failed(xerahs::editor::diagnostic::documentInvalid);
+    xerahs::editor::CanvasOperation op; op.action = xerahs::editor::CanvasAction::Crop;
+    op.start = {double(r.left), double(r.top)}; op.end = {double(r.left + r.width), double(r.top + r.height)};
+    const auto verified = prepareCanvasEdit(*source.document, source.image, op, {control.cancelled, {}});
+    if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
+    if (verified.result.error || !verified.result.document || verified.result.document->sourceImagePng != parsed.document->sourceImagePng)
+      return failed(xerahs::editor::diagnostic::documentInvalid);
+    acceptedSource = verified.source;
+  } else if (parsed.document->sourceImagePng != source.document->sourceImagePng ||
       parsed.document->canvasWidth != source.image.width() || parsed.document->canvasHeight != source.image.height())
     return failed(xerahs::editor::diagnostic::documentInvalid);
-  const auto rendered = renderEditorImage(source.image, *parsed.document, control);
+  const auto rendered = renderEditorImage(acceptedSource, *parsed.document, control);
   if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
   if (rendered.image.isNull()) return failed(rendered.diagnostic);
   m_media = rendered.image; m_annotationDocument = *parsed.document; m_sidecarIntent = choice.sidecarIntent; return {};

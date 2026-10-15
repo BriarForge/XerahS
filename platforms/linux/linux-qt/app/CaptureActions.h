@@ -14,7 +14,12 @@
 
 namespace xerahs::app {
 struct CaptureSaveAsChoice { std::optional<QString> path; QString diagnostic; };
-struct CaptureAnnotationChoice { std::optional<xerahs::editor::AnnotationDocument> document; QString diagnostic; bool sidecarIntent = false; };
+struct CaptureAnnotationChoice {
+  std::optional<xerahs::editor::AnnotationDocument> document;
+  QString diagnostic;
+  bool sidecarIntent = false;
+  std::optional<xerahs::editor::CropRegion> sourceRegion = {};
+};
 struct CaptureActionPorts {
   // CapturePipeline invokes save/actionStarted on its worker and clipboard on
   // its GUI thread. Its selection bridge waits on the worker for asynchronous

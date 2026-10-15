@@ -5,6 +5,12 @@
 #include "AnnotationObjectNavigator.h"
 #include "SelectionRotationDialog.h"
 #include "NativeEditorPreferences.h"
+#include "CanvasCropDialog.h"
+#include <QBuffer>
+#include <QColorSpace>
+#include <QElapsedTimer>
+#include <QProgressDialog>
+#include <QSpinBox>
 #include <QApplication>
 #include <QAction>
 #include <QLabel>
@@ -27,11 +33,22 @@
 #include <QPointer>
 #include <QScopeGuard>
 #include <cmath>
+#include <atomic>
+#include <thread>
+#include <limits>
 using namespace xerahs::app;
 using namespace xerahs::actions;
 namespace {
 QImage pixels() { QImage image(80, 60, QImage::Format_ARGB32); image.fill(Qt::blue); return image; }
+QImage cropPixels() { QImage image(80, 60, QImage::Format_ARGB32); image.setColorSpace(QColorSpace::SRgb); for (int y = 0; y < 60; ++y) for (int x = 0; x < 80; ++x) image.setPixel(x, y, qRgba(x * 3, y * 4, 90, x < 20 ? 128 : 255)); return image; }
 CaptureAnnotationDialog *dialog() { return qobject_cast<CaptureAnnotationDialog *>(QApplication::activeModalWidget()); }
+void setCropBounds(CanvasCropDialog &crop, int left, int top, int width, int height) {
+  crop.activateWindow(); QTRY_VERIFY(crop.isActiveWindow());
+  const QStringList names{"cropLeft", "cropTop", "cropWidth", "cropHeight"}; const QList<int> values{left, top, width, height};
+  for (int i = 0; i < 4; ++i) { auto *field = crop.findChild<QSpinBox *>(names[i]); QVERIFY(field); auto *accessible = QAccessible::queryAccessibleInterface(field); QVERIFY(accessible && accessible->role() == QAccessible::SpinBox); QVERIFY(!accessible->text(QAccessible::Name).contains('&')); field->setFocus(); QTest::keyClick(field, Qt::Key_A, Qt::ControlModifier); QTest::keyClicks(field, QString::number(values[i])); QTest::keyClick(field, Qt::Key_Tab); QCOMPARE(field->value(), values[i]); }
+  QTRY_VERIFY(crop.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply)->isEnabled());
+}
+void applyCrop(CanvasCropDialog &crop) { auto *apply = crop.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply); QVERIFY(apply->isEnabled()); apply->setFocus(); QTest::keyClick(apply, Qt::Key_Space); }
 CapturePipelineReceipt receipt(const QSignalSpy &spy) { return qvariant_cast<CapturePipelineReceipt>(spy.first().first()); }
 CaptureAnnotationChoice rectangle(const LoadedSource &source) {
   xerahs::editor::EditorSession session(*source.document); session.createRectangle({20, 20}, {40, 40}); return {session.document(), {}};
@@ -41,6 +58,137 @@ class CaptureAnnotationTest final : public QObject {
   Q_OBJECT
   QTemporaryDir dialogPreferences;
 private slots:
+  void globalCancelAndPipelineDestructionReleasePendingCropWorkers_data() {
+    QTest::addColumn<bool>("destroy"); QTest::newRow("cancel") << false; QTest::newRow("destroy") << true;
+  }
+  void globalCancelAndPipelineDestructionReleasePendingCropWorkers() {
+    QFETCH(bool, destroy); struct Gate { std::atomic<bool> entered{false}, released{false}, left{false}; }; const auto gate = std::make_shared<Gate>(); const auto release = qScopeGuard([gate] { gate->released.store(true); }); QTemporaryDir dir;
+    auto pipeline = std::make_unique<CapturePipeline>(cropPixels(), dir.path(), "cancelled-crop", QStringList{"annotation", "save"}); QSignalSpy done(pipeline.get(), &CapturePipeline::finished); pipeline->start(); QTRY_VERIFY(dialog()); QPointer<CaptureAnnotationDialog> capture(dialog());
+    capture->setCropHooks({[gate] { gate->entered.store(true); while (!gate->released.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1)); gate->left.store(true); }}); capture->findChild<QAction *>("cropImage")->trigger(); QTRY_VERIFY(gate->entered.load());
+    QElapsedTimer elapsed; elapsed.start(); if (destroy) pipeline.reset(); else pipeline->cancel(); QVERIFY(elapsed.elapsed() < 500);
+    if (!destroy) { QTRY_COMPARE(done.count(), 1); const auto result = receipt(done); QCOMPARE(result->pipeline.state, PipelineState::Cancelled); QVERIFY(result->files.empty()); QVERIFY(!result->annotationDocument); }
+    QTRY_VERIFY(!capture); QVERIFY(!QFile::exists(dir.filePath("cancelled-crop.png"))); gate->released.store(true); QTRY_VERIFY(gate->left.load());
+  }
+  void croppedCaptureRetryUsesRetainedPixelsWithoutAnotherAnnotation() {
+    using namespace xerahs::editor; QTemporaryDir dir; int annotations = 0, encodes = 0; CaptureActionPorts ports;
+    ports.annotation = [&](const LoadedSource &source, const CancellationToken &) { ++annotations; CanvasOperation op; op.action = CanvasAction::Crop; op.start = {10, 15}; op.end = {50, 45}; auto d = *source.document; RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {20, 20}; r.end = {30, 30}; d.annotations = {r}; auto prepared = prepareCanvasEdit(d, source.image, op); return CaptureAnnotationChoice{prepared.result.document, {}, true, CropRegion{10, 15, 40, 30}}; };
+    ports.save.encode = [&](const QImage &image, QIODevice *device) { ++encodes; return encodes == 1 ? false : image.save(device, "PNG"); };
+    const auto input = cropPixels(); CapturePipeline first(input, dir.path(), "crop-retry", {"annotation", "save"}, nullptr, ports); QSignalSpy firstDone(&first, &CapturePipeline::finished); first.start(); QTRY_COMPARE(firstDone.count(), 1); const auto retained = receipt(firstDone); QVERIFY(retained->annotationDocument && retained->retryPlan().available()); QVERIFY(retained->files.empty()); QCOMPARE(retained->workingMedia.size(), QSize(40, 30));
+    CapturePipeline retry(retained, nullptr, ports); QSignalSpy next(&retry, &CapturePipeline::finished); retry.start(); QTRY_COMPARE(next.count(), 1); const auto result = receipt(next); QCOMPARE(annotations, 1); QCOMPARE(encodes, 2); QVERIFY(result->file); QCOMPARE(result->workingMedia, retained->workingMedia); QCOMPARE(QImage(result->file->path), retained->workingMedia); const auto reopened = loadSource(result->file->path); QVERIFY(reopened.document); QCOMPARE(QImage::fromData(reopened.document->sourceImagePng, "PNG"), input.copy(10, 15, 40, 30)); QCOMPARE(serializeDocument(*reopened.document).value("annotations"), serializeDocument(*retained->annotationDocument).value("annotations"));
+  }
+  void cropAndSourceHistoryWorkersRespectCancellationReplacementAndOwner_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"crop-cancel", "crop-owner-destroy", "crop-child-destroy", "crop-worker-fail", "history-cancel", "history-owner-destroy", "history-replacement", "history-worker-fail", "start-destroy", "finish-destroy"}) QTest::newRow(mode) << QString(mode);
+  }
+  void cropAndSourceHistoryWorkersRespectCancellationReplacementAndOwner() {
+    QFETCH(QString, mode); using namespace xerahs::editor; struct Gate { std::atomic<bool> entered{false}, released{false}, left{false}; }; const auto gate = std::make_shared<Gate>(); const auto release = qScopeGuard([gate] { gate->released.store(true); });
+    auto loaded = prepareCapturedSource(cropPixels()); QVERIFY(loaded.document); std::optional<EditorSession> replacement;
+    QPointer<CaptureAnnotationDialog> capture(new CaptureAnnotationDialog(loaded)); const auto cleanup = qScopeGuard([&] { gate->released.store(true); if (capture) delete capture.data(); }); capture->show(); capture->activateWindow(); QTRY_VERIFY(capture->isActiveWindow()); auto *canvas = capture->findChild<EditorCanvas *>(); const auto original = serializeDocument(canvas->annotationDocument());
+    if (mode == "start-destroy" || mode == "finish-destroy") connect(canvas, &EditorCanvas::changed, capture, [capture, canvas, mode] { if (capture && canvas->isEnabled() == (mode == "finish-destroy")) delete capture.data(); });
+    if (!mode.startsWith("history-") && mode != "finish-destroy" && mode != "start-destroy") capture->setCropHooks({[gate, mode] { if (mode == "crop-worker-fail") throw std::runtime_error("private fixture"); gate->entered.store(true); while (!gate->released.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1)); gate->left.store(true); }});
+    capture->findChild<QAction *>("cropImage")->trigger(); if (mode == "start-destroy") { QVERIFY(!capture); return; }
+    QTRY_VERIFY(qobject_cast<CanvasCropDialog *>(QApplication::activeModalWidget())); QPointer<CanvasCropDialog> crop(qobject_cast<CanvasCropDialog *>(QApplication::activeModalWidget()));
+    if (mode.startsWith("history-") || mode == "finish-destroy") {
+      setCropBounds(*crop, 10, 15, 40, 30); applyCrop(*crop); if (mode == "finish-destroy") { QTRY_VERIFY(!capture); return; }
+      QTRY_COMPARE(canvas->annotationDocument().canvasWidth, 40); QTRY_VERIFY(canvas->isEnabled()); const auto cropped = serializeDocument(canvas->annotationDocument());
+      capture->setCropHooks({[gate, mode] { if (mode == "history-worker-fail") throw std::runtime_error("private fixture"); gate->entered.store(true); while (!gate->released.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1)); gate->left.store(true); }});
+      capture->findChild<QAction *>("undo")->trigger();
+      if (mode == "history-worker-fail") { QTRY_VERIFY(canvas->isEnabled()); QCOMPARE(serializeDocument(canvas->annotationDocument()), cropped); QVERIFY(capture->findChild<QLabel *>("captureAnnotationStatus")->text().contains("could not")); return; }
+      QTRY_VERIFY(gate->entered.load()); QVERIFY(!canvas->isEnabled()); QCOMPARE(serializeDocument(canvas->annotationDocument()), cropped);
+      if (mode == "history-owner-destroy") { QElapsedTimer elapsed; elapsed.start(); delete capture.data(); QVERIFY(!capture); QVERIFY(elapsed.elapsed() < 500); gate->released.store(true); QTRY_VERIFY(gate->left.load()); return; }
+      if (mode == "history-replacement") { replacement.emplace(canvas->annotationDocument()); canvas->resetDocument(*replacement, QImage::fromData(replacement->document().sourceImagePng, "PNG")); }
+      else { auto *progress = capture->findChild<QProgressDialog *>("captureHistoryProgress"); QVERIFY(progress); progress->findChild<QPushButton *>()->click(); }
+      gate->released.store(true); QTRY_VERIFY(canvas->isEnabled()); QCOMPARE(serializeDocument(canvas->annotationDocument()), cropped); QVERIFY(capture->findChild<QAction *>("undo")->isEnabled()); if (mode == "history-replacement") QVERIFY(capture->findChild<QLabel *>("captureAnnotationStatus")->text().contains("changed")); return;
+    }
+    if (mode == "crop-worker-fail") { QTRY_VERIFY(crop->findChild<QLabel *>("cropStatus")->text().contains("failed")); QVERIFY(!crop->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply)->isEnabled()); QTest::keyClick(crop, Qt::Key_Escape); QTRY_VERIFY(canvas->isEnabled()); QCOMPARE(serializeDocument(canvas->annotationDocument()), original); return; }
+    QTRY_VERIFY(gate->entered.load()); QVERIFY(!canvas->isEnabled()); QCOMPARE(serializeDocument(canvas->annotationDocument()), original);
+    if (mode == "crop-owner-destroy") { QElapsedTimer elapsed; elapsed.start(); delete capture.data(); QVERIFY(!capture); QVERIFY(elapsed.elapsed() < 500); }
+    else if (mode == "crop-child-destroy") { delete crop.data(); QVERIFY(!crop); QTRY_VERIFY(canvas->isEnabled()); QCOMPARE(serializeDocument(canvas->annotationDocument()), original); }
+    else { QTest::keyClick(crop, Qt::Key_Escape); QTRY_VERIFY(canvas->isEnabled()); QCOMPARE(serializeDocument(canvas->annotationDocument()), original); }
+    gate->released.store(true); QTRY_VERIFY(gate->left.load());
+  }
+  void nativeCropRetainsTranslatedObjectsAssetsAndTruthfulUnknownRefusal_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"apply", "unknown", "cancel", "all-outside"}) QTest::newRow(mode) << QString(mode);
+  }
+  void nativeCropRetainsTranslatedObjectsAssetsAndTruthfulUnknownRefusal() {
+    QFETCH(QString, mode); using namespace xerahs::editor; QTemporaryDir dir; AnnotationDocument original, expected; CaptureActionPorts ports; bool acted = false;
+    ports.annotation = [&](const LoadedSource &source, const CancellationToken &) {
+      auto loaded = source; auto &d = *loaded.document; RectangleAnnotation a; a.id = QUuid::createUuid(); a.start = {20, 20}; a.end = {35, 35}; a.style = {0xFFFF0000, 0xFFFF0000, 1, 0, 1}; a.extra = {{"vendor", "keep"}}; auto b = a; b.id = QUuid::createUuid(); b.start = {60, 45}; b.end = {70, 55}; auto c = a; c.id = QUuid::createUuid(); c.start = {5, 25}; c.end = {15, 40}; c.style.fillColor = c.style.strokeColor = 0xFF00FF00;
+      d.annotations = mode == "all-outside" ? std::vector<Annotation>{b} : std::vector<Annotation>{a, b, c}; if (mode == "unknown") { const auto id = QUuid::createUuid(); d.annotations.push_back(UnsupportedAnnotation{id, {{"id", id.toString(QUuid::WithoutBraces)}, {"type", "future"}, {"payload", "keep"}}}); } d.extra = {{"vendor", "root"}}; d.embeddedImages = {{"asset", d.sourceImagePng}}; original = d;
+      QPointer<CaptureAnnotationDialog> capture(new CaptureAnnotationDialog(loaded)); CaptureAnnotationChoice choice; connect(capture, &QDialog::finished, capture, [&choice, capture](int result) { if (capture && result == QDialog::Accepted) choice = {capture->document(), {}, capture->sidecarIntent(), capture->sourceRegion()}; }); capture->exec(); if (capture) delete capture.data(); return choice;
+    };
+    QTimer timer; connect(&timer, &QTimer::timeout, [&] {
+      auto *capture = dialog(); if (!capture || acted) return; acted = true; const QPointer<CaptureAnnotationDialog> owner(capture); const auto close = qScopeGuard([owner] { if (owner && owner->isVisible()) owner->reject(); }); auto *canvas = capture->findChild<EditorCanvas *>(); canvas->selectAnnotations({annotationId(original.annotations[0])}, canvas->annotationState(), canvas->documentGeneration());
+      capture->findChild<QAction *>("cropImage")->trigger(); QTRY_VERIFY(qobject_cast<CanvasCropDialog *>(QApplication::activeModalWidget())); auto *crop = qobject_cast<CanvasCropDialog *>(QApplication::activeModalWidget());
+      if (mode == "unknown") { crop->findChild<QSpinBox *>("cropLeft")->setValue(10); crop->findChild<QSpinBox *>("cropTop")->setValue(15); crop->findChild<QSpinBox *>("cropWidth")->setValue(40); crop->findChild<QSpinBox *>("cropHeight")->setValue(30); QTRY_VERIFY(crop->findChild<QLabel *>("cropStatus")->text().contains("unsupported")); QVERIFY(!crop->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply)->isEnabled()); QTest::keyClick(crop, Qt::Key_Escape); expected = original; }
+      else { setCropBounds(*crop, 10, 15, 40, 30); if (mode == "cancel") { QTest::keyClick(crop, Qt::Key_Escape); expected = original; }
+        else { applyCrop(*crop); QTRY_COMPARE(canvas->annotationDocument().canvasWidth, 40); expected = original; expected.canvasWidth = 40; expected.canvasHeight = 30;
+          if (mode == "all-outside") expected.annotations.clear(); else { auto a = std::get<RectangleAnnotation>(original.annotations[0]), c = std::get<RectangleAnnotation>(original.annotations[2]); a.start = {10, 5}; a.end = {25, 20}; c.start = {-5, 10}; c.end = {5, 25}; expected.annotations = {a, c}; }
+          QCOMPARE(serializeDocument(canvas->annotationDocument()).value("annotations"), serializeDocument(expected).value("annotations")); QCOMPARE(canvas->annotationDocument().embeddedImages, original.embeddedImages); }
+      }
+      QTRY_VERIFY(canvas->isEnabled()); capture->findChild<QCheckBox *>("captureSaveAnnotationSidecar")->setChecked(true); capture->accept();
+    });
+    timer.start(5); const auto input = cropPixels(); CapturePipeline pipeline(input, dir.path(), "objects", {"annotation", "save"}, nullptr, ports); QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_COMPARE(done.count(), 1); timer.stop(); QVERIFY(acted); const auto result = receipt(done); QVERIFY(result->annotationDocument && result->file); const bool cropped = mode == "apply" || mode == "all-outside"; QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), cropped ? input.copy(10, 15, 40, 30) : input); QCOMPARE(result->annotationDocument->embeddedImages, original.embeddedImages); QCOMPARE(result->annotationDocument->extra, original.extra);
+    if (mode == "apply") { QCOMPARE(result->workingMedia.pixelColor(15, 10), QColor(Qt::red)); QCOMPARE(result->workingMedia.pixelColor(1, 15), QColor(Qt::green)); QCOMPARE(result->workingMedia.pixelColor(35, 28), input.pixelColor(45, 43)); }
+    const auto reopened = loadSource(result->file->path); QVERIFY(reopened.document); QCOMPARE(serializeDocument(*reopened.document).value("annotations"), serializeDocument(expected).value("annotations"));
+    if (mode == "all-outside") { QVERIFY(!QFile::exists(result->file->path + ".xann")); QCOMPARE(result->workingMedia, input.copy(10, 15, 40, 30)); } else { QCOMPARE(reopened.document->sourceImagePng, result->annotationDocument->sourceImagePng); QCOMPARE(reopened.document->embeddedImages, original.embeddedImages); }
+  }
+  void captureWorkerIndependentlyVerifiesDeclaredCropSource_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"valid", "double", "identity", "missing-proof", "wrong-location", "tamper", "outside", "overflow", "wrong-size"}) QTest::newRow(mode) << QString(mode);
+  }
+  void captureWorkerIndependentlyVerifiesDeclaredCropSource() {
+    QFETCH(QString, mode); using namespace xerahs::editor; QTemporaryDir dir; CaptureActionPorts ports; CropRegion region{10, 15, 40, 30};
+    ports.annotation = [&](const LoadedSource &source, const CancellationToken &) {
+      auto d = *source.document; RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {20, 20}; r.end = {25, 25}; r.style.fillColor = 0xFFFF0000; d.annotations = {r}; d.extra = {{"vendor", "root"}}; d.embeddedImages = {{"asset", d.sourceImagePng}};
+      CanvasOperation op; op.action = CanvasAction::Crop; op.start = {10, 15}; op.end = {50, 45};
+      if (mode == "identity") { op.start = {0, 0}; op.end = {80, 60}; region = {0, 0, 80, 60}; }
+      auto prepared = prepareCanvasEdit(d, source.image, op);
+      if (mode == "double") { op.start = {5, 5}; op.end = {25, 15}; prepared = prepareCanvasEdit(*prepared.result.document, prepared.source, op); region = {15, 20, 20, 10}; }
+      CaptureAnnotationChoice choice{prepared.result.document, {}, true, region};
+      if (mode == "missing-proof") choice.sourceRegion.reset(); if (mode == "wrong-location") ++choice.sourceRegion->left; if (mode == "outside") choice.sourceRegion->left = -1; if (mode == "overflow") choice.sourceRegion->width = std::numeric_limits<qint64>::max(); if (mode == "wrong-size") ++choice.sourceRegion->width;
+      if (mode == "tamper") { auto image = prepared.source; image.setPixel(0, 0, qRgba(1, 2, 3, 255)); QBuffer buffer(&choice.document->sourceImagePng); buffer.open(QIODevice::WriteOnly | QIODevice::Truncate); image.save(&buffer, "PNG"); }
+      return choice;
+    };
+    const auto input = cropPixels(); CapturePipeline pipeline(input, dir.path(), "proof", {"annotation", "save"}, nullptr, ports); QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_COMPARE(done.count(), 1); const auto result = receipt(done); const bool valid = mode == "valid" || mode == "double" || mode == "identity"; QVERIFY(result->file);
+    if (!valid) { QCOMPARE(result->pipeline.orderedResults[0].state, ActionState::Failed); QCOMPARE(result->pipeline.orderedResults[0].diagnostic, std::optional<QString>("document-invalid")); QCOMPARE(result->workingMedia, input); QVERIFY(!result->annotationDocument); QVERIFY(!QFile::exists(result->file->path + ".xann")); }
+    else { QCOMPARE(result->pipeline.orderedResults[0].state, ActionState::Succeeded); QVERIFY(result->annotationDocument); const auto expected = input.copy(int(region.left), int(region.top), int(region.width), int(region.height)); QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), expected); QCOMPARE(result->workingMedia.pixelColor(0, 0), expected.pixelColor(0, 0)); auto reopened = loadSource(result->file->path); QVERIFY(reopened.document); QCOMPARE(reopened.document->sourceImagePng, result->annotationDocument->sourceImagePng); QCOMPARE(reopened.document->extra.value("vendor"), QJsonValue("root")); QCOMPARE(reopened.document->embeddedImages.front().second, prepareCapturedSource(input).document->sourceImagePng); }
+    QCOMPARE(QImage(result->file->path), result->workingMedia); QVERIFY(!result->canonicalResult().value("extensions").toObject().contains("sourceRegion"));
+  }
+  void nativeCropSharesPointerNumericHistoryAndVerifiedCapturePublication_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"numeric", "pointer", "double", "undo", "cancel-crop", "cancel-capture", "replacement", "no-op"}) QTest::newRow(mode) << QString(mode);
+  }
+  void nativeCropSharesPointerNumericHistoryAndVerifiedCapturePublication() {
+    QFETCH(QString, mode); using namespace xerahs::editor; QTemporaryDir dir; const auto prefs = dir.filePath("prefs.json"); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty()); const auto resetPreferences = qScopeGuard([] { initializeNativeEditorPreferences(); }); const auto revision = nativeEditorPreferenceRevision();
+    const QImage input = cropPixels(); CaptureActionPorts nativePorts; nativePorts.annotationStyle.strokeWidth = 3; CapturePipeline pipeline(input, dir.path(), "crop", {"annotation", "save"}, nullptr, nativePorts); QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_VERIFY(dialog()); const QPointer<CaptureAnnotationDialog> capture(dialog()); auto *canvas = capture->findChild<EditorCanvas *>(); capture->activateWindow(); canvas->setFocus(); QTRY_VERIFY(capture->isActiveWindow());
+    const QPoint a = canvas->viewState().toView({20, 20}).toPoint(), b = canvas->viewState().toView({30, 30}).toPoint(); QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, a); QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, b); QCOMPARE(canvas->annotationDocument().annotations.size(), size_t(1)); QTest::keyClick(canvas, Qt::Key_Right); QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier); QVERIFY(capture->findChild<QAction *>("redo")->isEnabled()); const auto original = canvas->annotationDocument(); const auto selection = canvas->annotationSelection(); EditorSession replacement(original); RectangleStyle replacementDefaults; replacementDefaults.strokeWidth = 3; QVERIFY(replacement.setCreationStyle(replacementDefaults));
+    auto *cropAction = capture->findChild<QAction *>("cropImage"); QVERIFY(cropAction && cropAction->isEnabled());
+    if (mode == "pointer") {
+      capture->findChild<QAction *>("cropTool")->setChecked(true); const auto from = canvas->viewState().toView({49.6, 44.6}).toPoint(), to = canvas->viewState().toView({10.4, 15.4}).toPoint(); QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, from); QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, to);
+    } else {
+      auto *bar = capture->findChild<QToolBar *>("captureCanvasToolbar"); auto *button = qobject_cast<QToolButton *>(bar->widgetForAction(cropAction)); QVERIFY(button && button->isVisible()); QCOMPARE(button->focusPolicy(), Qt::StrongFocus); auto *accessible = QAccessible::queryAccessibleInterface(button); QVERIFY(accessible && accessible->role() == QAccessible::Button); button->setFocus(); QTest::keyClick(button, Qt::Key_Space);
+    }
+    QTRY_VERIFY(qobject_cast<CanvasCropDialog *>(QApplication::activeModalWidget())); QPointer<CanvasCropDialog> crop(qobject_cast<CanvasCropDialog *>(QApplication::activeModalWidget())); QVERIFY(!canvas->isEnabled()); QVERIFY(!cropAction->isEnabled()); QVERIFY(!capture->findChild<QPushButton *>("applyCaptureAnnotation")->isEnabled()); capture->accept(); QVERIFY(capture->isVisible()); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(original));
+    if (mode == "pointer") { QCOMPARE(crop->findChild<QSpinBox *>("cropLeft")->value(), 10); QCOMPARE(crop->findChild<QSpinBox *>("cropTop")->value(), 15); QCOMPARE(crop->findChild<QSpinBox *>("cropWidth")->value(), 40); QCOMPARE(crop->findChild<QSpinBox *>("cropHeight")->value(), 30); }
+    if (mode == "no-op") setCropBounds(*crop, 0, 0, 80, 60); else setCropBounds(*crop, 10, 15, 40, 30);
+    if (mode == "numeric" && qEnvironmentVariableIsSet("XERAHS_CROP_PREVIEW_QA")) QVERIFY(crop->grab().save(qEnvironmentVariable("XERAHS_CROP_PREVIEW_QA")));
+    if (mode == "replacement") canvas->resetDocument(replacement, input);
+    if (mode == "cancel-crop") QTest::keyClick(crop, Qt::Key_Escape); else applyCrop(*crop);
+    QTRY_VERIFY(canvas->isEnabled()); capture->activateWindow(); canvas->setFocus(); QTRY_VERIFY(capture->isActiveWindow());
+    const bool applied = mode != "cancel-crop" && mode != "replacement" && mode != "no-op"; CropRegion retained = applied ? CropRegion{10, 15, 40, 30} : CropRegion{0, 0, 80, 60};
+    if (applied) {
+      QCOMPARE(canvas->annotationDocument().canvasWidth, 40); QCOMPARE(canvas->annotationDocument().canvasHeight, 30); QCOMPARE(QImage::fromData(canvas->annotationDocument().sourceImagePng, "PNG"), input.copy(10, 15, 40, 30)); QCOMPARE(canvas->viewState().imageSize(), QSizeF(40, 30)); const auto cropped = serializeDocument(canvas->annotationDocument());
+      QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier); QTRY_COMPARE(canvas->annotationDocument().canvasWidth, 80); QTRY_VERIFY(canvas->isEnabled()); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(original)); QCOMPARE(canvas->annotationSelection(), selection); QCOMPARE(canvas->viewState().imageSize(), QSizeF(80, 60));
+      capture->activateWindow(); canvas->setFocus(); QTRY_VERIFY(capture->isActiveWindow()); QTRY_COMPARE(QApplication::focusWidget(), canvas); QVERIFY(capture->findChild<QAction *>("redo")->isEnabled()); QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier | Qt::ShiftModifier); QTRY_COMPARE(canvas->annotationDocument().canvasWidth, 40); QTRY_VERIFY(canvas->isEnabled()); QCOMPARE(serializeDocument(canvas->annotationDocument()), cropped); QCOMPARE(canvas->annotationSelection(), selection);
+      if (mode == "double") { cropAction->trigger(); QTRY_VERIFY(qobject_cast<CanvasCropDialog *>(QApplication::activeModalWidget())); crop = qobject_cast<CanvasCropDialog *>(QApplication::activeModalWidget()); setCropBounds(*crop, 5, 5, 20, 10); applyCrop(*crop); QTRY_COMPARE(canvas->annotationDocument().canvasWidth, 20); QTRY_VERIFY(canvas->isEnabled()); retained = {15, 20, 20, 10}; }
+      if (mode == "undo") { capture->activateWindow(); canvas->setFocus(); QTRY_VERIFY(capture->isActiveWindow()); QTRY_COMPARE(QApplication::focusWidget(), canvas); QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier); QTRY_COMPARE(canvas->annotationDocument().canvasWidth, 80); QTRY_VERIFY(canvas->isEnabled()); retained = {0, 0, 80, 60}; }
+    } else if (mode == "cancel-crop" || mode == "no-op") { QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(original)); QVERIFY(capture->findChild<QAction *>("redo")->isEnabled()); }
+    QVERIFY(capture->sourceRegion() && *capture->sourceRegion() == retained); QCOMPARE(canvas->creationStrokeWidth(), 3.0); capture->findChild<QCheckBox *>("captureSaveAnnotationSidecar")->setChecked(true);
+    if (mode == "numeric" && qEnvironmentVariableIsSet("XERAHS_CROP_QA")) QVERIFY(capture->grab().save(qEnvironmentVariable("XERAHS_CROP_QA")));
+    if (mode == "cancel-capture") capture->reject(); else capture->accept(); QTRY_COMPARE(done.count(), 1); const auto result = receipt(done); QVERIFY(result->file); QCOMPARE(QImage(result->file->path), result->workingMedia);
+    if (mode == "cancel-capture") { QCOMPARE(result->workingMedia, input); QVERIFY(!result->annotationDocument); QVERIFY(!QFile::exists(result->file->path + ".xann")); }
+    else { QVERIFY(result->annotationDocument); const auto expectedSource = input.copy(int(retained.left), int(retained.top), int(retained.width), int(retained.height)); QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), expectedSource); QCOMPARE(result->workingMedia.size(), expectedSource.size()); const auto reopened = loadSource(result->file->path); QVERIFY(reopened.document); QCOMPARE(reopened.document->sourceImagePng, result->annotationDocument->sourceImagePng); QCOMPARE(serializeDocument(*reopened.document).value("annotations"), serializeDocument(*result->annotationDocument).value("annotations"));
+      QCOMPARE(result->workingMedia.pixelColor(0, 0), expectedSource.pixelColor(0, 0)); }
+    QCOMPARE(nativeEditorPreferenceRevision(), revision); QCOMPARE(input, cropPixels());
+  }
   void initTestCase() {
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());

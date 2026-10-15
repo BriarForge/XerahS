@@ -95,11 +95,11 @@ complete supported Linux matrices remain Required. The adjacent candidate
 
 ## Next work and full scope
 
-Add native capture Crop controls and an owned cancellable crop handoff using the
-existing Core canvas operation. Preserve explicit retained bounds, source/known
-annotation coordinate mapping, one history step, Undo/Redo, local defaults and
-truthful unknown-geometry refusal through accepted capture publication. Qualify
-both pointer and numeric keyboard paths without touching real capture settings.
+[Native capture Crop](CAPTURE-CROP.md) now adds owned preview, frozen admission,
+source/history restoration and independently verified crop handoff through real
+publication. Next migrate main-editor numeric/pointer Crop to the owned preview,
+retaining Core policy with frozen state/selection/generation and worker/close/
+owner guards, and continue the full native implementation sequence.
 
 The [ES-014/030 decision](EMPTY-SIDECAR-CLARIFICATION.md), Ellipse fields/rendering,
 shared clipboard/assets and PNG/JPEG/WebP output policies remain pending. No

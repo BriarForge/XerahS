@@ -45,7 +45,17 @@
     "platforms/linux/linux-qt/app/RecentImageMenu.cpp",
     "platforms/linux/linux-qt/src/image-editor/EditorPreferences.cpp",
     "platforms/linux/linux-qt/src/image-editor/EditorPreferenceStore.cpp",
-    "platforms/linux/linux-qt/app/NativeEditorPreferences.cpp"
+    "platforms/linux/linux-qt/app/NativeEditorPreferences.cpp",
+    "platforms/linux/linux-qt/src/image-editor/CropRegion.h",
+    "platforms/linux/linux-qt/src/image-editor/CropRegion.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+    "platforms/linux/linux-qt/app/CanvasCropDialog.h",
+    "platforms/linux/linux-qt/app/CanvasCropDialog.cpp",
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.h",
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+    "platforms/linux/linux-qt/app/CaptureActions.h",
+    "platforms/linux/linux-qt/app/CaptureActions.cpp",
+    "platforms/linux/linux-qt/app/CapturePipeline.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorViewportTest.cpp",
@@ -106,7 +116,11 @@
       "disposition": "Required",
       "status": "implemented",
       "vectors": [],
-      "note": "Crop Image and the Crop tool use one normalized/clipped rectangle and one history commit. Stroke-grown rotated intersection removes wholly outside rectangles, translates retained objects, and clips partial objects at export. CANVAS-POLICY.md documents the policy; native tests exercise pointer cancellation, dialog crop, undo/redo and sidecar reopening."
+      "note": "Crop Image and the Crop tool use one normalized/clipped rectangle and one history commit. Stroke-grown rotated intersection removes wholly outside rectangles, translates retained objects, and clips partial objects at export. CANVAS-POLICY.md documents the policy; native tests exercise pointer cancellation, dialog crop, undo/redo and sidecar reopening. Native capture Crop now shares normalized reverse/clipped numeric/pointer bounds, an owned worker preview and one guarded Core history commit. Private in-memory source regions compose through crops/history, while the capture worker independently reproduces original-source pixels before accepting changed source/dimensions. Actual objects/assets/alpha, no-op/Cancel, source/viewport Undo/Redo, typed unknown refusal, PNG/.xann reopen and retry are indexed in CAPTURE-CROP.md. Main-editor Crop still uses its older numeric/general-worker routes. Full tool/field/resource/privacy/security/a11y/compatibility/parity/native/human/release qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/CAPTURE-CROP.md",
+        "platforms/linux/linux-qt/app/CAPTURE-CROP-EVIDENCE.json"
+      ]
     },
     "EC-008": {
       "disposition": "Required",
@@ -173,7 +187,11 @@
         "center-expand-canvas",
         "viewport-only"
       ],
-      "note": "All three published vectors pass through production calls and native PNG codecs. Preparation runs on a worker with progress/cancellation; dimension checks precede allocation, preparation/encoding failure preserves the session, and validated state-guarded commits are one undo step. Native tests verify restored source pixels, dimensions, selection, dirty checkpoints and color metadata. Remaining canvas operations and general affine annotation support are still required before full qualification. Comparison adds header validation, union-canvas limits, progress/cooperative cancellation and immutable worker snapshots; native tests verify failed/cancelled loads retain the prior comparison and never enter editor history. New Image validates dimensions/profile before allocation, prepares source/display/PNG/document off the UI thread, and publishes only a successful result. Native dialog tests cancel and close the same live worker without publishing; native window tests verify atomic replacement and save failure recovery. Native Open moves raster/sidecar reads, hashing, decode/encode and private display conversion off the UI thread, bounds encoded inputs before buffering and during growth, and waits for the same live worker after cancel/close. Loader tests cover cancellation at every exposed stage and sparse oversized files; native window tests preserve the old session on cancellation/errors and verify safe canvas/session teardown. Captured-source recovery uses a cancellable native worker to prepare owned pixel-normalized source/PNG/document and a private sRGB view, preserving alpha/profile and inferring no original save path. Native source/editor tests cover borrowed-buffer lifetime, pixel-ratio normalization, bounds, staged cancellation, redacted exceptions, unsaved history/close semantics and explicit Save As without touching the original capture."
+      "note": "All three published vectors pass through production calls and native PNG codecs. Preparation runs on a worker with progress/cancellation; dimension checks precede allocation, preparation/encoding failure preserves the session, and validated state-guarded commits are one undo step. Native tests verify restored source pixels, dimensions, selection, dirty checkpoints and color metadata. Remaining canvas operations and general affine annotation support are still required before full qualification. Comparison adds header validation, union-canvas limits, progress/cooperative cancellation and immutable worker snapshots; native tests verify failed/cancelled loads retain the prior comparison and never enter editor history. New Image validates dimensions/profile before allocation, prepares source/display/PNG/document off the UI thread, and publishes only a successful result. Native dialog tests cancel and close the same live worker without publishing; native window tests verify atomic replacement and save failure recovery. Native Open moves raster/sidecar reads, hashing, decode/encode and private display conversion off the UI thread, bounds encoded inputs before buffering and during growth, and waits for the same live worker after cancel/close. Loader tests cover cancellation at every exposed stage and sparse oversized files; native window tests preserve the old session on cancellation/errors and verify safe canvas/session teardown. Captured-source recovery uses a cancellable native worker to prepare owned pixel-normalized source/PNG/document and a private sRGB view, preserving alpha/profile and inferring no original save path. Native source/editor tests cover borrowed-buffer lifetime, pixel-ratio normalization, bounds, staged cancellation, redacted exceptions, unsaved history/close semantics and explicit Save As without touching the original capture. Capture crop preview and source-changing history use owned cancellable workers, named progress, frozen state/selection/generation and nonblocking owner cancellation. Native destruction/child recovery, rejected source proofs and pipeline cancel/save retry are verified; the reproduced child-recovery-after-parent-canvas-deletion crash is fixed by closing/disconnection guards. Evidence and private fixture findings are indexed in CAPTURE-CROP.md. Full tool/field/resource/privacy/security/a11y/compatibility/parity/native/human/release qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/CAPTURE-CROP.md",
+        "platforms/linux/linux-qt/app/CAPTURE-CROP-EVIDENCE.json"
+      ]
     }
   },
   "capability_version": "0.1.0",

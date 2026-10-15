@@ -1,0 +1,154 @@
+{
+  "capability": "EDITOR-CANVAS-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial-candidate-evidence",
+  "related_capabilities": [
+    "EDITOR-ANNOTATIONS-001",
+    "EDITOR-SESSION-001",
+    "POST-CAPTURE-ACTIONS-001"
+  ],
+  "implementation": [
+    "platforms/linux/linux-qt/src/image-editor/CropRegion.h",
+    "platforms/linux/linux-qt/src/image-editor/CropRegion.cpp",
+    "platforms/linux/linux-qt/src/image-editor/CanvasOperations.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+    "platforms/linux/linux-qt/app/CanvasCropDialog.h",
+    "platforms/linux/linux-qt/app/CanvasCropDialog.cpp",
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.h",
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+    "platforms/linux/linux-qt/app/CaptureActions.h",
+    "platforms/linux/linux-qt/app/CaptureActions.cpp",
+    "platforms/linux/linux-qt/app/CapturePipeline.cpp",
+    "platforms/linux/linux-qt/app/EditorCanvas.cpp"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/app/CAPTURE-CROP.md",
+    "platforms/linux/linux-qt/tests/CanvasOperationsTest.cpp",
+    "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp"
+  ],
+  "requirements": {
+    "EC-007": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Native capture pointer/numeric crop shares existing Core retained bounds/intersection policy with owned preview, one guarded commit and actual publication. Main-editor crop still uses older routes; full tool/native/human qualification remains Required."
+    },
+    "EC-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned preview/history workers, finite bounds/source proof, stale admission and cancel/owner recovery are verified. Full resource/performance/codec/shutdown/target/native/human qualification remains Required."
+    },
+    "EA-013": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Capture Crop reaches pointer and numeric native controls with retained dimensions/known-object mapping; full Crop/CutOut/tools/native/human qualification remains Required."
+    },
+    "EA-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Crop and source-changing history retain exact document/selection/source-region history; full mutation/resource/native/human qualification remains Required."
+    },
+    "EA-018": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Native Button/SpinBox names/roles, actual keys/pointer, cancel and inspected preview/frame are candidate evidence. Full physical keyboard/AT/high-contrast/control/native/human qualification remains Required."
+    },
+    "EA-019": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Real PNG/.xann reopen retains cropped source, fields/IDs/order/assets and unknown payload on refusal. Full supported schema/tool/field/interchange/native/human qualification remains Required."
+    },
+    "EA-020": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Unknown geometry, forged source proof, stale/invalid/failed/cancelled/owner admission preserve current state; full resource/consent/privacy/security/native/human qualification remains Required."
+    },
+    "PCA-007": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Actual native capture crop uses an internally declared region independently reproduced from original pixels before annotation handoff. Full configured annotation/action/workflow/native/human qualification remains Required."
+    },
+    "PCA-008": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Failed-save retry retains cropped pixels/document without rerunning annotation; full retry/retention/recovery/native/human scope remains Required."
+    },
+    "ES-008": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Inner Cancel retains committed canvas; outer/global cancel and owner destruction release nested preview/history without later publication. Full close/shutdown/consent/native/human qualification remains Required."
+    }
+  },
+  "verification": {
+    "local_ctest": {
+      "passed": 44,
+      "failed": 0,
+      "full_run_seconds": 53.54,
+      "capture_retest_seconds": 9.72,
+      "successful_target_seconds_sum": 53.63,
+      "sequence": "The full run passed 43 targets; capture failed on a replacement fixture using 4 px defaults instead of the capture's 3 px. With matching defaults and final QA-only flags, the complete capture target passes. Unchanged 43 successful targets were retained."
+    },
+    "published_vectors": {
+      "passed": 114,
+      "failed": 0,
+      "expected_results_changed": false,
+      "evidence": "The unchanged conformance target passed in full local and affected minimum-Qt runs; six published packages still contain 114 vectors."
+    },
+    "minimum_qt": {
+      "version": "6.4.2",
+      "affected_ctest_targets": 10,
+      "failed": 0,
+      "targets": [
+        "annotation-object-navigator",
+        "canvas-operations",
+        "capture-annotation",
+        "capture-paired-save",
+        "capture-pipeline",
+        "conformance",
+        "editor-canvas",
+        "editor-session",
+        "editor-window",
+        "portal-screenshot"
+      ],
+      "capture_retest_seconds": 9.39,
+      "successful_target_seconds_sum": 38.8,
+      "sequence": "Nine affected targets passed; corrected/final capture target passes. Both versions contain the teardown and asynchronous focus regressions."
+    },
+    "tooling_tests": {
+      "contract_linter": 16,
+      "contract_backlog": 9,
+      "conformance_runner": 7,
+      "failed": 0
+    },
+    "native_regressions": {
+      "preview_destruction": "Child-only destruction initially left the canvas disabled. Recovery now matches the known child identity or cleared guarded pointer without restoring after closing.",
+      "pipeline_destruction": "Private fixture PID 4054432 on 2026-10-15 11:11:55 AWST received SIGSEGV in QWidget::setEnabled via CaptureAnnotationDialog::finishOperation during child destruction after parent canvas deletion. Parent teardown now marks closing/disconnects recovery; both Qt versions pass the blocked-worker destruction fixture. Coredump/QtTest stacks and journal confirm this path, with memory available. No extracted core copy or system changes.",
+      "focus_fixture": "Native Redo now waits for active capture/canvas focus to return after asynchronous history progress; actual key assertions remain.",
+      "replacement_fixture": "The generation-refusal fixture now matches 3 px creation defaults; no shared expected vector changed."
+    },
+    "visual_review": "Synthetic owned Crop preview and final cropped capture frame inspected. Numeric bounds, alpha checker/source/annotation preview, Apply Crop/Cancel, progress, selected handles/list, Crop controls, dimensions, local 3 px defaults and truthful companion disclosure are visible. Physical/native/human acceptance remains Required.",
+    "ci": "The checkpoint report verifies the exact pushed SHA and Ubuntu 24.04/Qt 6.4.2 CI; this candidate does not accept human/release gates."
+  },
+  "prior_checkpoint_verification": {
+    "head_sha": "1f07fb972ef2c3232dd6c67611dbdaece4fe7f78",
+    "ci_url": "https://github.com/BriarForge/XerahS/actions/runs/38671878807",
+    "conclusion": "success",
+    "native_job_id": 116216650512,
+    "lint_job_id": 116216650301,
+    "native_ctest_passed": 44,
+    "native_ctest_failed": 0,
+    "native_ctest_seconds": 49.39,
+    "qt_version": "6.4.2"
+  },
+  "next_action": "Move main-editor numeric/pointer Crop to the owned preview with frozen state/selection/generation and nonblocking worker/close/owner guards, retaining Core policy and real Save/reopen.",
+  "unresolved_decisions": [
+    "EA-005-LINUX-2026-10-14",
+    "EA-016-LINUX-2026-10-14",
+    "EO-004-LINUX-2026-10-14",
+    "ES-014-030-LINUX-2026-10-15",
+    "draft-native-equivalence-pending-product-owner-approval"
+  ]
+}

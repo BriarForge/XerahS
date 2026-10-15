@@ -5,6 +5,7 @@
 #include "image-editor/AnnotationDocument.h"
 #include "image-editor/AnnotationTransfer.h"
 #include "image-editor/RectangleGeometry.h"
+#include "image-editor/CropRegion.h"
 
 #include <QSet>
 
@@ -98,11 +99,19 @@ public:
   int undoCount() const { return static_cast<int>(m_position); }
   int redoCount() const { return static_cast<int>(m_history.size() - 1 - m_position); }
   quint64 stateId() const { return m_history[m_position].stateId; }
+  const AnnotationDocument *historyTarget(bool redo) const {
+    if (redo) return m_position + 1 < m_history.size() ? &m_history[m_position + 1].document : nullptr;
+    return m_position ? &m_history[m_position - 1].document : nullptr;
+  }
 
   // EC-017/ES-005: replace source and annotations only after preparation and
   // encoding succeeded, and only if the document being edited is still current.
   // Validation or a stale state leaves document, selection and history intact.
   bool commitCanvas(AnnotationDocument document, quint64 expectedState);
+  // Private in-memory lineage, never serialized into a shared document. Capture
+  // independently reproduces this region from its original pixels at handoff.
+  std::optional<CropRegion> retainedSourceRegion() const { return m_history[m_position].sourceRegion; }
+  bool commitCrop(AnnotationDocument, CropRegion relativeRegion, quint64 expectedState, const QSet<QUuid> &expectedSelection);
 
   // ES-027.
   bool dirty() const { return !m_checkpoint || m_history[m_position].stateId != *m_checkpoint; }
@@ -120,6 +129,7 @@ private:
     quint64 stateId;
     AnnotationDocument document;
     QSet<QUuid> selection;  // ES-006: selection restored with the state
+    std::optional<CropRegion> sourceRegion;
   };
 
   // Commits `document` as one operation after the current position, clearing

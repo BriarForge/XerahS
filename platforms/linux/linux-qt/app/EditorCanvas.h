@@ -27,7 +27,7 @@ public:
   void setTool(Tool);
   QString toolInstructions() const;
   void setCropTool(bool active);
-  void sourceChanged();
+  void sourceChanged(const QImage &preparedDisplay = {});
   bool interactionActive() const { return m_drag.has_value() || m_move.has_value() || m_panning || m_resize.has_value() || m_annotationDialogPending; }
   bool canEditRectangle() const;
   bool canRotateSelection() const { return m_session->canRotateSelection(); }

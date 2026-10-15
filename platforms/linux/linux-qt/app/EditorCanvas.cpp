@@ -303,9 +303,9 @@ void EditorCanvas::resetDocument(EditorSession &session, const QImage &displaySo
   emit toolChanged();
 }
 
-void EditorCanvas::sourceChanged() {
+void EditorCanvas::sourceChanged(const QImage &preparedDisplay) {
   cancelGesture();
-  m_displaySource = displayCopy(m_image);
+  m_displaySource = preparedDisplay.isNull() ? displayCopy(m_image) : preparedDisplay;
   m_view.setImageSize(m_image.size());
   syncViewport();
 }
@@ -498,7 +498,7 @@ void EditorCanvas::mouseReleaseEvent(QMouseEvent *event) {
   } else if (m_drag) {
     const QPointF start = m_drag->first;
     m_drag.reset();
-    if (m_tool == Tool::Crop) emit cropRequested(start, at);
+    if (m_tool == Tool::Crop) { const QPointer<EditorCanvas> owner(this); emit cropRequested(start, at); if (!owner) return; }
     else {
       const auto creation = m_creation; m_creation.reset();
       if (creation) m_session->createRectangle({{start.x(), start.y()}, {at.x(), at.y()}, creation->style}, creation->state, creation->selection);

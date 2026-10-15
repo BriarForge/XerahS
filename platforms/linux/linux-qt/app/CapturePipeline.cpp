@@ -287,7 +287,7 @@ void CapturePipeline::poll() {
         auto *dialog = new CaptureAnnotationDialog(annotation->source, m_selectionParent, m_ports.annotationStyle); m_annotationDialog = dialog;
         const auto parent = m_selectionParent;
         connect(dialog, &QDialog::finished, this, [state, annotation, dialog, parent](int result) {
-          const CaptureAnnotationChoice choice = result == QDialog::Accepted ? CaptureAnnotationChoice{dialog->document(), {}, dialog->sidecarIntent()} : CaptureAnnotationChoice{};
+          const CaptureAnnotationChoice choice = result == QDialog::Accepted ? CaptureAnnotationChoice{dialog->document(), {}, dialog->sidecarIntent(), dialog->sourceRegion()} : CaptureAnnotationChoice{};
           const auto ownedState = state; const auto ownedCall = annotation;
           if (parent) parent->activateWindow();
           completeAnnotation(ownedState, ownedCall, choice);

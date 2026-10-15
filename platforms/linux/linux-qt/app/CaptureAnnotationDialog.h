@@ -1,8 +1,11 @@
 #pragma once
 #include "EditorSource.h"
+#include "CanvasCropDialog.h"
 #include <QDialog>
+#include <QPointer>
 class QLabel;
 class QCheckBox;
+class QProgressDialog;
 namespace xerahs::app {
 class EditorCanvas;
 class AnnotationObjectNavigator;
@@ -13,9 +16,23 @@ public:
   ~CaptureAnnotationDialog() override;
   std::optional<xerahs::editor::AnnotationDocument> document() const { return m_accepted; }
   bool sidecarIntent() const { return m_sidecarIntent; }
+  std::optional<xerahs::editor::CropRegion> sourceRegion() const { return m_session.retainedSourceRegion(); }
+  void setCropHooks(CanvasCropHooks hooks) { m_cropHooks = std::move(hooks); }
 public slots:
   void accept() override;
+  void reject() override;
 private:
+  bool editingReady() const;
+  void cropImage(xerahs::editor::CropRegion);
+  void restoreHistory(bool redo);
+  void finishOperation();
+  struct HistoryWork;
+  std::shared_ptr<HistoryWork> m_historyWork;
+  QPointer<QProgressDialog> m_historyDialog;
+  QPointer<CanvasCropDialog> m_cropDialog;
+  CanvasCropHooks m_cropHooks;
+  bool m_operationPending = false;
+  bool m_closing = false;
   QImage m_image;
   xerahs::editor::EditorSession m_session;
   EditorCanvas *m_canvas = nullptr;

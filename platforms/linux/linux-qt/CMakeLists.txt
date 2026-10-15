@@ -41,6 +41,8 @@ add_library(xerahs_core STATIC
   src/image-editor/AnnotationRenderer.h
   src/image-editor/CanvasOperations.cpp
   src/image-editor/CanvasOperations.h
+  src/image-editor/CropRegion.cpp
+  src/image-editor/CropRegion.h
   src/image-editor/EditorSession.cpp
   src/image-editor/EditorSession.h
   src/image-editor/RectangleGeometry.cpp
@@ -121,7 +123,8 @@ target_link_libraries(xerahs_editor_canvas PUBLIC xerahs_core Qt6::Widgets)
 target_compile_options(xerahs_editor_canvas PRIVATE -Wall -Wextra -Wpedantic)
 
 add_library(xerahs_action_selection STATIC app/ActionSelectionDialog.cpp app/ActionSelectionDialog.h
-  app/CaptureSaveAsDialog.cpp app/CaptureSaveAsDialog.h app/CaptureAnnotationDialog.cpp app/CaptureAnnotationDialog.h)
+  app/CaptureSaveAsDialog.cpp app/CaptureSaveAsDialog.h app/CaptureAnnotationDialog.cpp app/CaptureAnnotationDialog.h
+  app/CanvasCropDialog.cpp app/CanvasCropDialog.h)
 set_target_properties(xerahs_action_selection PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_action_selection PUBLIC app)
 target_link_libraries(xerahs_action_selection PUBLIC xerahs_core xerahs_editor_source xerahs_editor_canvas Qt6::Widgets)

@@ -217,12 +217,18 @@ traversal. [Guarded keyboard transforms](app/ANNOTATION-KEYBOARD.md) now fence
 state/selection/generation and native owner admission while retaining steps,
 quarter turns, repeats and exact group history. Ordinary Close waits for active
 canvas interaction; actual editor/capture PNG/.xann, focus/modal/save-busy and
-source/default/asset isolation are verified. Next add capture Crop with an owned
-cancellable Core canvas handoff, pointer/numeric bounds, exact Undo/Redo,
-coordinate mapping and truthful unknown-geometry refusal through publication.
-All tools, effects, canvas/output, capture topology, recording/audio, uploads,
-workflows/settings/catalogues, compatibility, packaging/migration/updates/rollback,
-supported targets and native/human release qualification remain Required.
+source/default/asset isolation are verified. [Native capture Crop](app/CAPTURE-CROP.md)
+now adds pointer/numeric retained bounds, owned preview and one guarded history
+commit. Private source-region history composes crops; the capture worker
+independently reproduces source pixels before accepting changed dimensions.
+Worker history restoration updates source/viewport only after successful admission;
+Cancel/failure/owner teardown and actual PNG/.xann/retry are verified. Next migrate
+the main editor's numeric and pointer Crop routes to that owned preview with
+frozen state/selection/generation and worker/close/owner guards, retaining Core
+crop policy and real Save/reopen behavior. All remaining tools, effects,
+canvas/output, capture topology, recording/audio, uploads, workflows/settings/
+catalogues, compatibility, packaging/migration/updates/rollback, supported targets
+and native/human release qualification remain Required.
 
 Each checkpoint updates requirement traceability, runs native tests and the
 implemented shared vectors, and lands on `main`. Passing the small pilot vector

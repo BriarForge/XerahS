@@ -22,7 +22,8 @@ bool sameStyle(const RectangleStyle &a, const RectangleStyle &b) {
 } // namespace
 
 EditorSession::EditorSession(AnnotationDocument document, InitialPersistence persistence) {
-  m_history.push_back(HistoryState{0, std::move(document), {}});
+  const CropRegion full{0, 0, document.canvasWidth, document.canvasHeight};
+  m_history.push_back(HistoryState{0, std::move(document), {}, validCropRegion(full, full.width, full.height) ? std::optional<CropRegion>(full) : std::nullopt});
   m_checkpoint = persistence == InitialPersistence::Saved ? std::optional<quint64>(0) : std::nullopt;
 }
 
@@ -339,7 +340,10 @@ bool EditorSession::deleteSelection() {
 void EditorSession::commitWithSelection(AnnotationDocument document, QSet<QUuid> selection) {
   // Prepare all allocations before mutating the previous selection, redo
   // branch or checkpoint. This is shared by ordinary and transfer edits.
-  HistoryState next{m_nextStateId, std::move(document), std::move(selection)};
+  const auto region = document.sourceImagePng == this->document().sourceImagePng &&
+      document.canvasWidth == this->document().canvasWidth && document.canvasHeight == this->document().canvasHeight
+      ? retainedSourceRegion() : std::nullopt;
+  HistoryState next{m_nextStateId, std::move(document), std::move(selection), region};
   if (m_history.capacity() < m_position + 2) m_history.reserve(std::max(m_position + 2, m_history.capacity() * 2));
   m_history[m_position].selection = m_selection;
   m_selection = next.selection;
@@ -424,6 +428,18 @@ bool EditorSession::commitCanvas(AnnotationDocument next, quint64 expectedState)
     commitWithSelection(std::move(next), std::move(retained));
     return true;
   } catch (const std::bad_alloc &) { return false; }
+}
+
+bool EditorSession::commitCrop(AnnotationDocument next, CropRegion region, quint64 state, const QSet<QUuid> &selection) {
+  m_editDiagnostic.clear();
+  if (stateId() != state || m_selection != selection) { m_editDiagnostic = "annotation-edit-stale"; return false; }
+  const auto parent = retainedSourceRegion();
+  if (!parent || !validCropRegion(region, document().canvasWidth, document().canvasHeight) ||
+      next.canvasWidth != region.width || next.canvasHeight != region.height) { m_editDiagnostic = diagnostic::documentInvalid; return false; }
+  const CropRegion composed{parent->left + region.left, parent->top + region.top, region.width, region.height};
+  if (!commitCanvas(std::move(next), state)) { m_editDiagnostic = "annotation-edit-failed"; return false; }
+  m_history[m_position].sourceRegion = composed;
+  return true;
 }
 
 QStringList EditorSession::recordSave(bool rasterSaved, bool sidecarSaved) {

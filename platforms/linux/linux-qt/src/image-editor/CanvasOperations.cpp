@@ -1,4 +1,5 @@
 #include "image-editor/CanvasOperations.h"
+#include "image-editor/CropRegion.h"
 
 #include <algorithm>
 #include <array>
@@ -204,18 +205,10 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
   bool reflection = false;
   switch (op.action) {
     case CanvasAction::Crop: {
-      if (!finite(op.start) || !finite(op.end)) return failure(diagnostic::documentInvalid);
-      const auto edge = [](double value, qint64 extent, bool upper) {
-        value = std::clamp(value, 0.0, double(extent));
-        return qint64(upper ? std::ceil(value) : std::floor(value));
-      };
-      if (op.start.x == op.end.x || op.start.y == op.end.y) return failure(diagnostic::documentInvalid);
-      const qint64 left = edge(std::min(op.start.x, op.end.x), width, false);
-      const qint64 top = edge(std::min(op.start.y, op.end.y), height, false);
-      const qint64 right = edge(std::max(op.start.x, op.end.x), width, true);
-      const qint64 bottom = edge(std::max(op.start.y, op.end.y), height, true);
-      width = right - left; height = bottom - top;
-      transform.dx = -left; transform.dy = -top;
+      const auto region = normalizedCropRegion(width, height, op.start, op.end);
+      if (!region) return failure(diagnostic::documentInvalid);
+      width = region->width; height = region->height;
+      transform.dx = -region->left; transform.dy = -region->top;
       clipAnnotations = true;
       break;
     }

@@ -32,6 +32,28 @@ AnnotationDocument withSource(const QImage &source) {
 class CanvasOperationsTest : public QObject {
   Q_OBJECT
 private slots:
+  void cropRegionsNormalizeAndRejectUnsafeBounds() {
+    const auto region = normalizedCropRegion(10, 8, {8.2, 7.1}, {-3, 2.3}); QVERIFY(region); QCOMPARE(region->left, 0); QCOMPARE(region->top, 2); QCOMPARE(region->width, 9); QCOMPARE(region->height, 6);
+    for (auto start : {PointF{NAN, 0}, PointF{INFINITY, 0}, PointF{4, 4}}) QVERIFY(!normalizedCropRegion(10, 8, start, {4, 4}));
+    QVERIFY(!normalizedCropRegion(10, 8, {11, 9}, {12, 10}));
+    QVERIFY(!validCropRegion({std::numeric_limits<qint64>::max(), 0, 1, 1}, 10, 8)); QVERIFY(!validCropRegion({1, 0, std::numeric_limits<qint64>::max(), 1}, 10, 8));
+    QVERIFY(!validCropRegion({0, 0, 1, 1}, std::numeric_limits<qint64>::max(), 8));
+  }
+  void croppedSourceLineageFollowsExactHistoryAndRejectsStaleAdmission() {
+    QImage source(10, 8, QImage::Format_ARGB32); source.fill(Qt::blue); auto original = withSource(source); auto a = rectangle({3, 3}, {6, 6}); original.annotations = {a}; EditorSession session(original); session.select({a.id});
+    const CropRegion full{0, 0, 10, 8}; QCOMPARE(session.retainedSourceRegion(), std::optional<CropRegion>(full));
+    CanvasOperation op; op.action = CanvasAction::Crop; op.start = {2, 1}; op.end = {9, 7}; const auto first = xerahs::app::prepareCanvasEdit(session.document(), source, op); QVERIFY(first.result.changed);
+    const auto state = session.stateId(); const auto selection = session.selection(); session.select({}); QVERIFY(!session.commitCrop(*first.result.document, {2, 1, 7, 6}, state, selection)); QCOMPARE(session.editDiagnostic(), QString("annotation-edit-stale")); QCOMPARE(session.retainedSourceRegion(), std::optional<CropRegion>(full)); session.select({a.id});
+    QVERIFY(session.commitCrop(*first.result.document, {2, 1, 7, 6}, state, selection)); const CropRegion one{2, 1, 7, 6}; QCOMPARE(session.retainedSourceRegion(), std::optional<CropRegion>(one)); QCOMPARE(session.undoCount(), 1);
+    QVERIFY(session.moveSelection(1, 0)); QCOMPARE(session.retainedSourceRegion(), std::optional<CropRegion>(one)); QVERIFY(session.undo());
+    op.start = {1, 2}; op.end = {5, 5}; const auto second = xerahs::app::prepareCanvasEdit(session.document(), first.source, op); QVERIFY(second.result.changed); QVERIFY(session.commitCrop(*second.result.document, {1, 2, 4, 3}, session.stateId(), session.selection()));
+    const CropRegion two{3, 3, 4, 3}; QCOMPARE(session.retainedSourceRegion(), std::optional<CropRegion>(two)); QCOMPARE(session.undoCount(), 2); QCOMPARE(session.redoCount(), 0);
+    QVERIFY(session.undo()); QCOMPARE(session.retainedSourceRegion(), std::optional<CropRegion>(one)); QVERIFY(session.undo()); QCOMPARE(session.retainedSourceRegion(), std::optional<CropRegion>(full)); QCOMPARE(serializeDocument(session.document()), serializeDocument(original)); QCOMPARE(session.selection(), selection); QVERIFY(!session.dirty());
+    QVERIFY(session.redo()); QVERIFY(session.redo()); QCOMPARE(session.retainedSourceRegion(), std::optional<CropRegion>(two));
+    const auto before = serializeDocument(session.document()); QVERIFY(!session.commitCrop(*first.result.document, {0, 0, 99, 99}, session.stateId(), session.selection())); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.retainedSourceRegion(), std::optional<CropRegion>(two));
+    op.action = CanvasAction::RotateClockwise; const auto rotated = xerahs::app::prepareCanvasEdit(session.document(), second.source, op); QVERIFY(rotated.result.changed); QVERIFY(session.commitCanvas(*rotated.result.document, session.stateId())); QVERIFY(!session.retainedSourceRegion());
+    QVERIFY(session.undo()); QCOMPARE(session.retainedSourceRegion(), std::optional<CropRegion>(two));
+  }
   void rotationsAndFlipsPermutePixels_data() {
     QTest::addColumn<int>("action"); QTest::addColumn<int>("width"); QTest::addColumn<int>("height");
     QTest::addColumn<QList<quint32>>("expected");

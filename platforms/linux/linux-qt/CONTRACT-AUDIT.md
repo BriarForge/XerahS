@@ -192,8 +192,9 @@ clipboard/assets, target/resource/privacy/security/a11y/human gates remain Requi
    precedence. Guarded deletion now adds capture Delete and fences native state/
    selection/generation with exact group history, output and teardown evidence.
    Guarded keyboard transforms now retain steps/repeats, frozen admission,
-   exact group history and actual output, with pending Close refusal. Next add
-   native capture Crop using an owned cancellable Core canvas handoff,
+   exact group history and actual output, with pending Close refusal. Next migrate
+   the main editor Crop routes to the now-verified owned preview with frozen
+   state/selection/generation and worker/close/owner guards,
    while resolving Ellipse schema/rasterization clarification
    EA-005-LINUX-2026-10-14 in ANNOTATION-TOOLS.md, full annotation/asset clipboard
    under EA-016/017 and native output
@@ -347,9 +348,9 @@ archive/reconciliation policy is unresolved. Full scope, all native/resource/a11
 release gates and draft shortcut-catalogue approval remain Required.
 The subsequent [keyboard evidence](app/ANNOTATION-KEYBOARD.md) adds guarded
 move/resize/quarter-turn admission, preserved steps/repeats and exact native
-group history/output. Next add native capture Crop with owned cancellable
-Core canvas preparation, pointer/numeric bounds, coordinate mapping and
-truthful unknown-geometry refusal through publication.
+group history/output. Native capture Crop now supplies owned preview/history/source-proof publication,
+indexed in [CAPTURE-CROP.md](app/CAPTURE-CROP.md). Next migrate main-editor numeric/pointer Crop to that
+owned preview with frozen admission and worker/close/owner guards.
 
 The new [ES-014/030 clarification](app/EMPTY-SIDECAR-CLARIFICATION.md) records
 one deleted annotation reappearing from an intact baseline alias after a formerly
@@ -383,7 +384,42 @@ Requirement IDs/statuses/dispositions/vector references, 52 registered commands,
 fourteen visible defaults and full scope remain unchanged. All native/resource/
 a11y/privacy/security/compatibility/parity/human/release gates and the recorded
 Ellipse/clipboard-assets/output-format/legacy-companion/shortcut decisions remain
-Required or pending as recorded. Next add native capture Crop with an owned
-cancellable Core canvas handoff, pointer/numeric bounds, one history step and
-exact Undo/Redo, coordinate mapping, source/default isolation and truthful
-unknown-geometry refusal through accepted publication.
+Required or pending as recorded. Native capture Crop now supplies that owned
+preview/history/source handoff; next migrate main-editor numeric/pointer Crop
+with frozen admission and worker/close/owner guards.
+
+
+[Native capture Crop](app/CAPTURE-CROP.md) now supplies focusable pointer/numeric
+controls, owned retained-region preview and one guarded Core history commit.
+Crop-region normalization factors the existing canvas rules; unknown geometry
+refuses atomically. Private session lineage composes crops through exact history
+without changing shared document JSON. The capture worker independently reproduces
+that region from original source pixels and checks PNG/dimensions before accepting
+changed working media. Source-changing history prepares source/private display
+on a cancellable owned worker before admission. Actual objects/assets/alpha,
+viewport/selection/history, no-op/Cancel, source-proof tampering, nested/global
+cancel/owner recovery, real PNG/.xann publication and failed-save retry are verified.
+Preview and final native capture frames were inspected using only synthetic data.
+
+A private coordinator-destruction fixture exposed a child recovery callback after
+the parent's canvas deletion (SIGSEGV, PID 4054432, 15 October 11:11:55 AWST).
+Closing/disconnection guards fix the tested path on both Qt versions. Child-only
+recovery and asynchronous-focus/default fixture corrections are recorded in the
+candidate map; no core memory copy or system change was made. Full local
+verification covers 44 targets: 43 passed in the full 53.54-second run and the
+corrected complete capture target passed in 9.72 seconds. The 114 unchanged
+vectors, 32 tooling tests and ten affected Qt 6.4.2 targets pass; its final capture
+retest took 9.39 seconds. Contract lint/backlog/effective instructions and exact
+pushed Ubuntu CI are reported with the checkpoint. The prior keyboard commit
+1f07fb9 has verified successful CI 38671878807: 44 Ubuntu 24.04/Qt 6.4.2 tests
+in 49.39 seconds plus lint success.
+
+Trace IDs/statuses/dispositions/vector references, 80 implemented/68 partial core
+labels, 52 registered editor commands and fourteen visible defaults remain
+unchanged. Full tools/fields, effects, canvas/output, capture topology, recording/
+audio, uploads, workflows/settings/catalogues, application/history/automation/
+compatibility, distribution/migration/updates/rollback, supported targets, resource/
+performance, privacy/security/a11y/parity/human/release gates and recorded product
+decisions remain Required or pending. Next migrate main-editor numeric/pointer
+Crop to the owned preview with frozen state/selection/generation and worker/close/
+owner guards, retaining existing Core policy and actual Save/reopen evidence.

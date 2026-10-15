@@ -104,9 +104,10 @@ verification.
 
 [Guarded native keyboard transforms](ANNOTATION-KEYBOARD.md) now supply frozen
 state/selection/generation admission, repeat/history and editor/capture
-persistence/lifetime evidence. Next add native capture Crop and an owned
-cancellable Core canvas handoff with pointer/numeric bounds, exact history,
-coordinate mapping, source/default isolation and truthful unknown-geometry refusal.
+persistence/lifetime evidence. [Native capture Crop](CAPTURE-CROP.md) now supplies that owned preview/history/
+source handoff and actual publication. Next migrate main-editor numeric/pointer
+Crop to the owned preview with frozen admission and worker/close/owner guards;
+continue remaining tools/fields and the full contract sequence.
 
 All tools/fields, 232 effects, canvas/output, capture mapping/topology,
 recording/audio, uploads, 436 workflows, 922 settings, application/history/

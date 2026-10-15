@@ -16,6 +16,7 @@ public:
   double zoom() const { return m_zoom; }
   QPointF offset() const { return m_offset; }
   QSizeF viewSize() const { return m_viewSize; }
+  QSizeF imageSize() const { return m_imageSize; }
   QPointF toImage(QPointF viewPoint) const;
   QPointF toView(QPointF imagePoint) const;
 
