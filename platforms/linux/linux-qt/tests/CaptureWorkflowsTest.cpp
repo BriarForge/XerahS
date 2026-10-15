@@ -12,6 +12,22 @@ using namespace xerahs::actions;
 class CaptureWorkflowsTest final : public QObject {
   Q_OBJECT
 private slots:
+  void discoveryUsesSavedDefinitionsAndExcludesPrivateSettings() {
+    QTemporaryDir dir; FilePreferenceStorage storage(dir.filePath("absent/workflows.json")); CaptureWorkflowStore store(storage);
+    auto response = store.discovery(implementedCaptureActions()); QVERIFY(response.value("ok").toBool()); QCOMPARE(response.value("source"), QJsonValue("initial-defaults")); QVERIFY(!QFile::exists(dir.filePath("absent")));
+    auto catalog = *store.current().catalog; auto &first = catalog.entries[0]; first.name = QString::fromUtf8("CLI \"λ\" profile"); first.output.directory = "/private/destination"; first.output.pattern = "private-pattern";
+    first.extra = {{"privateReference", "must-not-report"}}; catalog.extra = {{"privateReference", "must-not-report"}};
+    const auto expectedName = first.name; auto second = first; second.id = QUuid::createUuid(); second.name = "Unavailable profile"; second.capture = "private-unrecognized-capture"; catalog.entries.append(second); catalog.defaultId = second.id;
+    QVERIFY(store.save(catalog, store.revision()).saved); const auto original = storage.read().bytes;
+    response = store.discovery(implementedCaptureActions()); QVERIFY(response.value("ok").toBool()); QCOMPARE(response.value("scope"), QJsonValue("saved-definitions")); QCOMPARE(response.value("source"), QJsonValue("saved-storage")); QCOMPARE(response.value("runtimeStatus"), QJsonValue("not-queried"));
+    QCOMPARE(response.value("defaultWorkflowId"), QJsonValue(second.id.toString(QUuid::WithoutBraces))); const auto entries = response.value("workflows").toArray(); QCOMPARE(entries.size(), 2);
+    QCOMPARE(entries[0].toObject().value("name"), QJsonValue(expectedName)); QVERIFY(entries[0].toObject().value("definitionAvailable").toBool());
+    QCOMPARE(entries[1].toObject().value("capture"), QJsonValue("unsupported")); QCOMPARE(entries[1].toObject().value("diagnosticCode"), QJsonValue("workflow-capture-unavailable"));
+    const auto bytes = QJsonDocument(response).toJson(); QVERIFY(!bytes.contains("private-")); QVERIFY(!bytes.contains("/private")); QVERIFY(!bytes.contains("must-not-report")); QVERIFY(!bytes.contains("actions")); QCOMPARE(storage.read().bytes, original);
+    auto updated = catalog; updated.entries[0].name = "Changed externally"; CaptureWorkflowStore other(storage); QVERIFY(other.save(updated, other.revision()).saved);
+    response = store.discovery(implementedCaptureActions()); QVERIFY(!response.value("ok").toBool()); QCOMPARE(response.value("error").toObject().value("code"), QJsonValue("workflow-changed")); QVERIFY(!response.contains("workflows"));
+    const auto opaque = QJsonDocument(workflowDiscoveryError("private exception /private/path")).toJson(); QVERIFY(!opaque.contains("private"));
+  }
   void defaultsAndUnknownFieldsRoundTripWithoutActivatingUnknownActions() {
     auto catalog = defaultCaptureWorkflows(); catalog.extra = {{"futureRoot", true}}; auto &w = catalog.entries[0];
     w.extra = {{"futureSecretReference", "private-fixture"}}; w.actions.append("future-action");

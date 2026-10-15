@@ -134,6 +134,11 @@ target_include_directories(xerahs_action_selection PUBLIC app)
 target_link_libraries(xerahs_action_selection PUBLIC xerahs_core xerahs_editor_source xerahs_editor_canvas Qt6::Widgets)
 target_compile_options(xerahs_action_selection PRIVATE -Wall -Wextra -Wpedantic)
 
+add_library(xerahs_workflow_discovery STATIC app/WorkflowDiscovery.cpp app/WorkflowDiscovery.h app/WorkflowStoragePath.h)
+target_include_directories(xerahs_workflow_discovery PUBLIC app)
+target_link_libraries(xerahs_workflow_discovery PUBLIC xerahs_core)
+target_compile_options(xerahs_workflow_discovery PRIVATE -Wall -Wextra -Wpedantic)
+
 add_library(xerahs_workflow_shortcuts STATIC app/PortalWorkflowShortcuts.cpp app/PortalWorkflowShortcuts.h
   app/WorkflowShortcutActions.cpp app/WorkflowShortcutActions.h)
 set_target_properties(xerahs_workflow_shortcuts PROPERTIES AUTOMOC ON)
@@ -198,7 +203,7 @@ add_executable(xerahs
   app/main.cpp
 )
 set_target_properties(xerahs PROPERTIES AUTOMOC ON)
-target_link_libraries(xerahs PRIVATE xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_native_instance xerahs_workflow_shortcuts xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus)
+target_link_libraries(xerahs PRIVATE xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_native_instance xerahs_workflow_shortcuts xerahs_workflow_discovery xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus)
 target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
 find_program(XERAHS_DBUS_RUN_SESSION dbus-run-session REQUIRED)

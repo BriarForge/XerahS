@@ -1,4 +1,5 @@
 #include "CaptureWorkflows.h"
+#include "WorkflowStoragePath.h"
 #include "CaptureActions.h"
 #include "NativeEditorAppearance.h"
 #include "NativeEditorPreferences.h"
@@ -22,8 +23,7 @@
 namespace xerahs::app {
 using namespace xerahs::workflows;
 QString NativeCaptureWorkflows::defaultPath() {
-  const auto directory = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
-  return directory.isEmpty() ? QString{} : QDir(directory).filePath("com.xerahs.app/linux-qt/capture-workflows.json");
+  return nativeCaptureWorkflowPath();
 }
 xerahs::editor::PreferenceWrite NativeCaptureWorkflows::save(const CaptureWorkflows &draft, quint64 revision) {
   const auto result = m_store.save(draft, revision); if (result.saved) emit changed(); return result;

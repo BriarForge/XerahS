@@ -44,8 +44,8 @@ entire specification and linked ledger rows, not just the examples listed.
 | `EDITOR-SETTINGS-001` | Private atomic store, recents, creation-only border/fill/thickness, appearance, window state and toolbar controls; three vectors plus native tests | Complete field ledger/default/migration/downstream coverage, fonts/other tool defaults, numeric/effect settings, recent/favorite effects, convenience/automation preferences, independent whole-file recovery, shared semantics and physical/human reviews remain Required. |
 | `EDITOR-UTILITIES-001` | Canvas comparison support covers only a related image operation | No complete EU trace. Contracted utility tools, deterministic local processing, resource policy, progress/cancellation, accessibility and output integration remain Required. |
 | `SETTINGS-CATALOG-001` | Editor preference subset and inactive unknown preservation | No complete SETCAT trace. All 922 settings rows, profiles/scopes, shared schema, secure credential references, import/export/reset preview, full validation/migration and approval remain Required. |
-| `WORKFLOW-CATALOG-001` | All 18 WFCAT rows traced as partial/not-started; saved named region profiles, per-profile folder/pattern/preview, atomic editing/default/restart and actual window/tray/workflow-ID CLI/session shortcut controller execution, frozen admission/result/journal/retry metadata | All 436 ledger rows, remaining action families, complete destination/naming policy, persisted/global entry-point qualification and complete CLI execution discovery/results, shared definitions/import/migration, complete execution identity/status/concurrency/cancellation/retry and privacy/permission/native qualification remain Required. No published WFCAT vectors or human acceptance yet. |
-| `INTERFACE-CATALOG-001` | Small native tray/editor/CLI subset | No complete IFCAT trace. All linked GUI/CLI/MCP surfaces, semantic equivalence, availability, versioned progress/error/cancellation and keyboard/assistive-technology qualification remain Required. |
+| `WORKFLOW-CATALOG-001` | All 18 WFCAT rows traced as partial/not-started; saved named region profiles, per-profile folder/pattern/preview, atomic editing/default/restart and actual window/tray/workflow-ID CLI/session shortcut controller execution, frozen admission/result/journal/retry metadata | All 436 ledger rows, remaining action families, complete destination/naming policy, persisted/global entry-point qualification and complete CLI execution identity/results, shared definitions/import/migration, complete execution identity/status/concurrency/cancellation/retry and privacy/permission/native qualification remain Required. No published WFCAT vectors or human acceptance yet. |
+| `INTERFACE-CATALOG-001` | Small native tray/editor/CLI subset, including headless saved-workflow metadata with explicit saved-definition scope | No complete IFCAT trace. All linked GUI/CLI/MCP surfaces, semantic equivalence, availability, versioned progress/error/cancellation and keyboard/assistive-technology qualification remain Required. |
 | `COMPATIBILITY-CATALOG-001` | `.xann` parsing/round-trip and current unknown editor preference preservation | No complete COMPCAT trace. Configuration/workflow/uploader/history/SXCU/plugin/effect/automation compatibility, isolated previewed imports, secret handling, resource validation, idempotent migration and rollback/goldens remain Required. |
 | `MOBILE-PLATFORM-001` | Its explicit scope is Android/iOS | Mobile requirements are not Linux desktop requirements; CORE-029 and mobile-scope rules remain authoritative. This does not waive any desktop capability or its cross-platform acceptance gate. |
 
@@ -78,8 +78,9 @@ marked implemented in a core trace file.
 
 ## Next production work
 
-Current priority: workflow discovery and execution/result linkage, then atomic
-counter reservation. Explicit session global shortcuts now share workflow-ID
+Current priority: admitted invocation/execution/result identity linkage, then atomic
+counter reservation. Headless discovery now supplies saved workflow IDs/default/support
+without GUI, instance activation or a runtime readiness claim. Explicit session global shortcuts now share workflow-ID
 admission and the production capture controller. Explicit-ID CLI admission
 and immutable saved settings now share the actual dispatcher/controller. The dated
 checkpoints at the end record current verification and remaining scope; the following notes retain earlier work.
@@ -998,3 +999,52 @@ unfinished. No production-readiness percentage is established. Next implement
 workflow discovery and execution/result linkage, then atomic counters and the
 remaining capture families. The continuation timer was confirmed active and stays
 active. No host shortcut, live capture, Avalonia setting or compositor file was changed.
+
+
+## 2026-10-16 — Headless saved-workflow discovery
+
+Starting revision: `1df816aea04ca12b07c03e4045942403f32abd62`, main. Exact prior
+Ubuntu/Qt 6.4.2 [CI 38776783185](https://github.com/BriarForge/XerahS/actions/runs/38776783185)
+passed native **116566374796** (52/52, 73.11 s) and lint **116566374360**.
+The preceding shortcut implementation was preserved, not restarted.
+
+[Workflow discovery](app/WORKFLOW-DISCOVERY.md) now supplies a complete native
+read-only CLI entry point: --list-workflows returns one versioned JSON object with
+saved UUIDs/names, default, source and definition support. Its saved-definition
+scope and unqueried runtime state are explicit. Non-interactive listing and plain
+help require no QApplication/display, instance election or desktop bus. Listing
+can read saved definitions while a primary is busy without activating it. Normal
+Run remains responsible for current loaded settings, consent and busy admission.
+The GUI and query share Core support IDs/store validation and one native path helper.
+
+Output excludes folders, patterns, action choices, unknown capture labels and
+extensions. Missing storage reports initial defaults without creating settings;
+v1/current bytes remain unchanged. Corrupt/newer/unsafe/symlink storage and changed
+snapshots fail without partial output or repair. Conflicting operations, invalid
+options/values and unexpected positionals fail before GUI or data initialization.
+Errors are allowlisted and never echo input/path/exception values. JSON suppresses
+human hints for listing; successful listing always returns JSON. Explicit workflow
+names are metadata returned only by this user-requested query.
+
+Full local verification passes **52/52 in 70.79 s**, including **114 existing
+published vectors**. Native-instance with actual CLI children passes **2.36 s**;
+Core workflow cases pass **0.01 s**. All **32 tooling tests** pass. Core projection,
+privacy/stale/default/availability and real headless child cases cover defaults,
+saved/v1/unavailable/corrupt/newer/unsafe/symlink stores, a busy primary, invalid
+arguments and help with no preference/runtime/state/cache side effects. An initial
+redaction assertion matched the literal word private in an intentional fixed error
+code; it was corrected to check the actual secret/path fixture values. No test
+case, production diagnostic, shared expectation or deadline was weakened. Exact
+pushed Ubuntu/Qt 6.4.2 CI is reported in the continuation result.
+
+No activation wire or persisted format changed. Requirement IDs/statuses/
+dispositions/vectors and all full-scope/target/human gates above remain intact.
+CORE/WFCAT still lack published vectors; IFCAT has no complete Linux trace or
+accepted shared CLI/MCP schema. Full app completion is unproven. Next create
+admitted invocation identity/start/origin records before acquisition, preserve
+permission-denied/cancelled outcomes and link the real pipeline terminal result;
+then implement atomic filename counters and remaining capture families. All 324
+requirements/15 packages, settings/workflow/effect/tool ledgers, recording/audio,
+uploads/credentials, compatibility/history/automation, packaging/migration/updates/
+rollback and target/privacy/security/accessibility/parity/release qualification
+remain in scope. The continuation timer was confirmed active and remains active.

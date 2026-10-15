@@ -50,6 +50,13 @@ CaptureOutputPreview previewCaptureOutput(const CaptureOutput &output, xerahs::n
   if (expanded.nextCounter != context.counter) return {expanded.value(), "workflow-counter-unavailable", {}};
   return {expanded.value(), {}, {}};
 }
+QStringList implementedCaptureActions() { return {"annotation", "save", "save-as", "image-clipboard", "file-clipboard", "path-clipboard", "reveal"}; }
+QJsonObject workflowDiscoveryError(const QString &diagnostic) {
+  static const QSet<QString> errors{"usage-invalid", "workflow-invalid", "workflow-too-large", "workflow-newer-version",
+      "workflow-upgrade-conflict", "workflow-changed", "settings-unsafe-path", "settings-private-storage-required",
+      "settings-too-large", "settings-read-failed", "workflow-storage-unavailable"};
+  return {{"schemaVersion", 1}, {"ok", false}, {"error", QJsonObject{{"code", errors.contains(diagnostic) ? diagnostic : QStringLiteral("workflow-storage-unavailable")}}}};
+}
 CaptureWorkflows defaultCaptureWorkflows() {
   CaptureWorkflow initial; initial.id = QUuid("8df729a2-7d23-49c0-8566-4e4f6d282729");
   initial.name = "Save and copy image"; initial.actions = {"save", "image-clipboard"};
@@ -143,6 +150,21 @@ QString CaptureWorkflowStore::unchanged() const {
   const auto actual = m_storage.read();
   if (actual.kind == PreferenceRead::Kind::Failed) return actual.diagnostic;
   return actual.kind == m_snapshot.kind && actual.bytes == m_snapshot.bytes ? QString{} : QStringLiteral("workflow-changed");
+}
+QJsonObject CaptureWorkflowStore::discovery(const QStringList &available) const {
+  const auto diagnostic = unchanged(); if (!diagnostic.isEmpty()) return workflowDiscoveryError(diagnostic);
+  QJsonArray entries;
+  for (const auto &workflow : m_current.catalog->entries) {
+    const auto unavailable = workflowAvailability(workflow, available);
+    QJsonObject entry{{"id", workflow.id.toString(QUuid::WithoutBraces)}, {"name", workflow.name},
+        {"capture", workflow.capture == "region" ? QStringLiteral("region") : QStringLiteral("unsupported")},
+        {"definitionAvailable", unavailable.isEmpty()}};
+    if (!unavailable.isEmpty()) entry.insert("diagnosticCode", unavailable);
+    entries.append(entry);
+  }
+  return {{"schemaVersion", 1}, {"ok", true}, {"scope", "saved-definitions"},
+      {"source", m_snapshot.kind == PreferenceRead::Kind::Missing ? "initial-defaults" : "saved-storage"},
+      {"runtimeStatus", "not-queried"}, {"defaultWorkflowId", m_current.catalog->defaultId.toString(QUuid::WithoutBraces)}, {"workflows", entries}};
 }
 WorkflowChoice CaptureWorkflowStore::resolve(const QUuid &requested, const QStringList &available) const {
   const auto diagnostic = unchanged(); if (!diagnostic.isEmpty()) return {{}, diagnostic};

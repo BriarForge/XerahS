@@ -111,3 +111,8 @@ No expected vector is weakened or invented to accept this checkpoint.
 Physical GNOME/Plasma/wlroots behavior, all target distributions, screen-lock
 conditions, profile integration, assistive technology, cross-platform parity
 and the required human reviews remain unverified.
+
+The [headless saved-definition query](WORKFLOW-DISCOVERY.md) is a separate read-only
+Core store operation. It does not elect or contact an instance, admit an activation,
+create a task, query live runtime permission or initialize GUI preferences. Its
+returned UUIDs may be used in normal RunWorkflow admission, which remains authoritative.

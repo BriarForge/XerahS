@@ -6,8 +6,10 @@ This is not approval of a shared CLI/MCP schema or full interface catalogue.
 
 ## Use
 
-Open **Capture workflows…**, select a saved profile and copy its read-only
-**Workflow ID**. Run the native build with that full UUID:
+Use `build/xerahs --list-workflows --non-interactive --json` to obtain saved IDs
+without a GUI, or open **Capture workflows…** and copy the read-only **Workflow ID**.
+[Discovery evidence](WORKFLOW-DISCOVERY.md) explains metadata and runtime limits.
+Run the native build with that full UUID:
 
 ```sh
 build/xerahs --run-workflow 12345678-1234-4234-8234-123456789abc --json
@@ -71,7 +73,7 @@ The full final suite and exact pushed Ubuntu/Qt 6.4.2 CI are recorded with the
 checkpoint in CONTRACT-AUDIT.md and its continuation report. All 114 existing
 published vectors remain unchanged; no CORE/WFCAT vectors are published yet.
 [Session global shortcuts](WORKFLOW-SHORTCUTS.md) now use the same workflow-ID
-admission path. Next implement discovery, execution/result linkage and atomic
-filename counters. Complete action families,
+admission path. [Headless discovery](WORKFLOW-DISCOVERY.md) now lists saved IDs/default/support.
+Next implement invocation/execution/result linkage and atomic filename counters. Complete action families,
 shared automation schemas, supported desktop matrix and human security/privacy/
 accessibility/parity/release qualification remain Required.

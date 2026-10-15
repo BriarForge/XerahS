@@ -36,6 +36,8 @@ struct CaptureWorkflows {
 };
 struct WorkflowRead { std::optional<CaptureWorkflows> catalog; QString diagnostic; };
 CaptureWorkflows defaultCaptureWorkflows();
+QStringList implementedCaptureActions();
+QJsonObject workflowDiscoveryError(const QString &diagnostic);
 QJsonObject workflowJson(const CaptureWorkflow &workflow, bool retainUnknown = true);
 QByteArray workflowsJson(const CaptureWorkflows &catalog);
 WorkflowRead parseCaptureWorkflows(const QByteArray &bytes);
@@ -51,6 +53,7 @@ public:
   quint64 revision() const { return m_revision; }
   xerahs::editor::PreferenceWrite save(const CaptureWorkflows &draft, quint64 expectedRevision);
   QString unchanged() const;
+  QJsonObject discovery(const QStringList &available) const;
   WorkflowChoice resolve(const QUuid &requested, const QStringList &available) const;
 private:
   xerahs::editor::PreferenceStorage &m_storage;

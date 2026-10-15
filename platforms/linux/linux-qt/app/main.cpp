@@ -4,6 +4,7 @@
 #include "CaptureController.h"
 #include "CaptureActions.h"
 #include "CaptureWorkflows.h"
+#include "WorkflowDiscovery.h"
 #include "WorkflowShortcutActions.h"
 #include "CaptureRecoveryActions.h"
 #include "EditorWindow.h"
@@ -55,10 +56,21 @@ QString activationFailureMessage(const QString &diagnostic) {
   return QStringLiteral("XerahS could not accept the activation. Check the running instance and try again.");
 }
 
+void writeCommandJson(const QJsonObject &result) {
+  const auto bytes = QJsonDocument(result).toJson(QJsonDocument::Compact);
+  std::fwrite(bytes.constData(), 1, size_t(bytes.size()), stdout); std::fputc('\n', stdout); std::fflush(stdout);
+}
+int reportDiscovery(const QJsonObject &result, bool quiet) {
+  writeCommandJson(result);
+  if (result.value("ok").toBool()) return 0;
+  if (!quiet) std::fprintf(stderr, "xerahs: %s: Saved workflows could not be listed. Check the command, or open Capture workflows to review and reload the saved configuration.\n",
+      qPrintable(result.value("error").toObject().value("code").toString()));
+  return 1;
+}
+
 void reportLaunch(const xerahs::shell::ActivationRequest &request, bool json, const QString &delivery = {}, const QString &diagnostic = {}) {
   if (json) {
-    const auto bytes = QJsonDocument(xerahs::shell::activationLaunchResult(request, delivery, diagnostic)).toJson(QJsonDocument::Compact);
-    std::fwrite(bytes.constData(), 1, size_t(bytes.size()), stdout); std::fputc('\n', stdout); std::fflush(stdout);
+    writeCommandJson(xerahs::shell::activationLaunchResult(request, delivery, diagnostic));
   }
   if (!diagnostic.isEmpty()) std::fprintf(stderr, "xerahs: %s: %s\n", qPrintable(diagnostic), qPrintable(activationFailureMessage(
       request.action == xerahs::shell::ActivationAction::RunWorkflow && diagnostic == "activation-unavailable" ? QStringLiteral("workflow-unavailable") : diagnostic)));
@@ -97,16 +109,17 @@ QIcon appIcon() {
 int main(int argc, char *argv[]) {
   using namespace xerahs::shell;
   QCommandLineParser parser;
-  parser.setApplicationDescription(QStringLiteral("XerahS screen capture. Capture requests require the graphical application; acknowledgement is not output completion."));
+  parser.setApplicationDescription(QStringLiteral("XerahS workflow discovery and screen capture. Capture requests require the graphical application; acknowledgement is not output completion."));
   parser.addHelpOption();
   const QCommandLineOption captureRegion(QStringLiteral("capture-region"), QStringLiteral("Start the saved default region workflow (in the running instance if any)."));
   const QCommandLineOption edit(QStringLiteral("edit"), QStringLiteral("Open an image in the editor."), QStringLiteral("file"));
-  const QCommandLineOption runWorkflow(QStringLiteral("run-workflow"), QStringLiteral("Start a saved region workflow by full UUID from Capture workflows."), QStringLiteral("id"));
-  const QCommandLineOption jsonOption(QStringLiteral("json"), QStringLiteral("Print one versioned delivery acknowledgement; this is not capture/output completion."));
+  const QCommandLineOption runWorkflow(QStringLiteral("run-workflow"), QStringLiteral("Start a saved region workflow by full UUID from --list-workflows or Capture workflows."), QStringLiteral("id"));
+  const QCommandLineOption listWorkflows(QStringLiteral("list-workflows"), QStringLiteral("List saved workflow IDs and definition availability as JSON without a GUI or capture."));
+  const QCommandLineOption jsonOption(QStringLiteral("json"), QStringLiteral("Print versioned JSON; launch acknowledgements are not capture/output completion."));
   const QCommandLineOption nonInteractive(QStringLiteral("non-interactive"), QStringLiteral("Refuse operations requiring graphical interaction without starting them."));
-  parser.addOptions({captureRegion, edit, runWorkflow, jsonOption, nonInteractive});
+  parser.addOptions({captureRegion, edit, runWorkflow, listWorkflows, jsonOption, nonInteractive});
   const auto requested = [&]() -> ParsedActivation {
-    if (!parser.positionalArguments().isEmpty() || int(parser.isSet(edit)) + int(parser.isSet(captureRegion)) + int(parser.isSet(runWorkflow)) > 1) return {{}, "usage-invalid"};
+    if (!parser.positionalArguments().isEmpty() || int(parser.isSet(edit)) + int(parser.isSet(captureRegion)) + int(parser.isSet(runWorkflow)) + int(parser.isSet(listWorkflows)) > 1) return {{}, "usage-invalid"};
     if (parser.isSet(runWorkflow)) {
       const QUuid id(parser.value(runWorkflow)); if (id.isNull()) return {{}, "workflow-id-invalid"};
       return {makeActivationRequest(ActivationAction::RunWorkflow, {}, id.toString(QUuid::WithoutBraces)), {}};
@@ -117,16 +130,25 @@ int main(int argc, char *argv[]) {
   // A headless refusal must not instantiate QApplication, connect to a display,
   // elect an instance, initialize preferences or ask a portal for consent.
   QStringList rawArguments; for (int i = 0; i < argc; ++i) rawArguments.append(QString::fromLocal8Bit(argv[i]));
-  const bool earlyCommand = rawArguments.contains("--json") || rawArguments.contains("--non-interactive") ||
+  const bool discoveryCommand = std::any_of(rawArguments.cbegin(), rawArguments.cend(), [](const QString &argument) { return argument == "--list-workflows" || argument.startsWith("--list-workflows="); });
+  const auto reportUsage = [&](const QString &diagnostic) {
+    if (discoveryCommand) return reportDiscovery(xerahs::workflows::workflowDiscoveryError(diagnostic), rawArguments.contains("--json"));
+    reportLaunch(makeActivationRequest(ActivationAction::Activate), rawArguments.contains("--json"), {}, diagnostic); return 1;
+  };
+  const bool earlyCommand = discoveryCommand || rawArguments.contains("--help") || rawArguments.contains("--help-all") || rawArguments.contains("-h") || rawArguments.contains("--json") || rawArguments.contains("--non-interactive") ||
       std::any_of(rawArguments.cbegin(), rawArguments.cend(), [](const QString &argument) { return argument == "--run-workflow" || argument.startsWith("--run-workflow="); });
   ParsedActivation launch;
   if (earlyCommand) {
-    if (!parser.parse(rawArguments)) { reportLaunch(makeActivationRequest(ActivationAction::Activate), rawArguments.contains("--json"), {}, "usage-invalid"); return 1; }
+    if (!parser.parse(rawArguments)) return reportUsage("usage-invalid");
     if (parser.isSet("help") || parser.isSet("help-all")) {
       QCoreApplication cli(argc, argv); cli.setApplicationName("XerahS"); std::fputs(qPrintable(parser.helpText()), stdout); return 0;
     }
     launch = requested();
-    if (!launch.request) { reportLaunch(makeActivationRequest(ActivationAction::Activate), parser.isSet(jsonOption), {}, launch.diagnostic); return 1; }
+    if (!launch.request) return reportUsage(launch.diagnostic);
+    if (parser.isSet(listWorkflows)) {
+      QCoreApplication cli(argc, argv); cli.setApplicationName("XerahS");
+      return reportDiscovery(xerahs::app::discoverNativeWorkflows(), parser.isSet(jsonOption));
+    }
     if (parser.isSet(nonInteractive)) { reportLaunch(*launch.request, parser.isSet(jsonOption), {}, "presentation-required"); return 1; }
   }
   QApplication app(argc, argv);

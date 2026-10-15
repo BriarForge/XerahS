@@ -75,8 +75,8 @@ reported with the checkpoint; previous baseline CI was
 Per-profile save folders, filename patterns and preview now use existing Core
 naming and private atomic persistence. [Explicit-ID CLI activation](WORKFLOW-CLI.md)
 now shares the dispatcher and controller with Run selected. [Session global shortcuts](WORKFLOW-SHORTCUTS.md) now provide explicit desktop
-binding and shared admission. Next implement workflow discovery and execution/result
-linkage, followed by atomic counter reservation. Full catalogue families, recording/audio, uploads/credentials, shared
+binding and shared admission. [Headless discovery](WORKFLOW-DISCOVERY.md) now lists saved IDs/default/support.
+Next implement invocation/execution/result linkage, followed by atomic counter reservation. Full catalogue families, recording/audio, uploads/credentials, shared
 interchange/migration, full execution identity/status, resource/concurrency
 policies and target/human qualification remain Required. Existing Ellipse,
 clipboard-assets, export-format, legacy-companion and shortcut decisions remain

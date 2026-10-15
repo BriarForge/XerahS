@@ -74,5 +74,6 @@ opt-in/autostart, backend-specific fallback, activation-token/window-parent focu
 locked-screen behavior, physical key/desktop/accessibility matrix or human privacy,
 security, parity and release gates. All remain Required. Complete workflow families,
 recording/audio, uploads, execution identity/result linkage and shared CLI/MCP
-schemas remain unfinished. Next implement workflow discovery and execution/result
-linkage, then atomic filename counters and the remaining native capture families.
+schemas remain unfinished. [Headless discovery](WORKFLOW-DISCOVERY.md) now exposes saved IDs/default/support.
+Next implement invocation/execution/result linkage, then atomic filename counters
+and the remaining native capture families.

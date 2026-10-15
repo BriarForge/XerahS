@@ -1,4 +1,6 @@
 #include "NativeInstance.h"
+#include "workflows/CaptureWorkflows.h"
+#include <QJsonArray>
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
@@ -242,6 +244,81 @@ private slots:
     int admissions = 0; instance.setAdmission([&](const ActivationRequest &) { ++admissions; return ActivationReplyState::Accepted; });
     const auto reply = exchange(instance, serializeActivation(makeActivationRequest(ActivationAction::Activate)) + '\n');
     QVERIFY(reply.isEmpty()); QCOMPARE(admissions, 0);
+  }
+  void workflowDiscoveryIsHeadlessReadOnlyAndDoesNotActivatePrimary_data() {
+    QTest::addColumn<QString>("mode"); QTest::addColumn<QString>("error");
+    for (const auto *mode : {"missing", "saved", "legacy", "unavailable"}) QTest::newRow(mode) << QString(mode) << QString{};
+    QTest::newRow("corrupt") << QString("corrupt") << QString("workflow-invalid");
+    QTest::newRow("newer") << QString("newer") << QString("workflow-newer-version");
+    QTest::newRow("unsafe") << QString("unsafe") << QString("settings-private-storage-required");
+    QTest::newRow("symlink") << QString("symlink") << QString("settings-unsafe-path");
+  }
+  void workflowDiscoveryIsHeadlessReadOnlyAndDoesNotActivatePrimary() {
+    using namespace xerahs::workflows; QFETCH(QString, mode); QFETCH(QString, error);
+    const auto config = temporary->filePath("config"); const auto parent = config + "/com.xerahs.app/linux-qt"; const auto path = parent + "/capture-workflows.json";
+    auto catalog = defaultCaptureWorkflows(); auto &profile = catalog.entries[0]; profile.name = QString::fromUtf8("CLI \"λ\" profile"); profile.output.directory = "/private/destination"; profile.output.pattern = "private-pattern"; profile.extra = {{"secret", "private-token"}};
+    if (mode == "unavailable") profile.actions = QStringList{"future-action"};
+    auto object = QJsonDocument::fromJson(workflowsJson(catalog)).object();
+    if (mode == "newer") object.insert("version", 3);
+    if (mode == "legacy") { object.insert("version", 1); auto entries = object.value("workflows").toArray(); auto entry = entries[0].toObject(); entry.remove("output"); entries[0] = entry; object.insert("workflows", entries); }
+    const QByteArray original = mode == "corrupt" ? QByteArray("private-token malformed") : QJsonDocument(object).toJson();
+    if (mode != "missing") {
+      QVERIFY(QDir().mkpath(parent)); QVERIFY(QFile::setPermissions(parent, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner));
+      QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); QCOMPARE(file.write(original), original.size()); file.close(); QVERIFY(file.setPermissions(QFile::ReadOwner | QFile::WriteOwner));
+      if (mode == "unsafe") QVERIFY(file.setPermissions(QFile::permissions(path) | QFile::ReadGroup));
+      if (mode == "symlink") { QVERIFY(QFile::rename(path, path + ".target")); QVERIFY(QFile::link(path + ".target", path)); }
+    }
+    int activations = 0; std::unique_ptr<NativeInstance> owner;
+    if (mode == "saved") {
+      owner = std::make_unique<NativeInstance>(temporary->filePath("com.xerahs.app")); QCOMPARE(owner->start(makeActivationRequest(ActivationAction::Activate)).kind, InstanceStart::Kind::Primary);
+      owner->setAdmission([&](const ActivationRequest &) { ++activations; return ActivationReplyState::Busy; });
+    }
+    auto environment = QProcessEnvironment::systemEnvironment(); environment.insert("XDG_RUNTIME_DIR", temporary->path()); environment.insert("XDG_CONFIG_HOME", config);
+    for (const auto *key : {"XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME"}) environment.insert(key, temporary->filePath(key));
+    environment.insert("DBUS_SESSION_BUS_ADDRESS", "unix:path=" + temporary->filePath("no-host-bus")); environment.insert("QT_QPA_PLATFORM", "xcb"); environment.remove("DISPLAY"); environment.remove("WAYLAND_DISPLAY");
+    QProcess application; application.setProcessEnvironment(environment); QStringList arguments{"--list-workflows"};
+    if (mode != "saved") arguments.append({"--non-interactive", "--json"});
+    application.start(QCoreApplication::applicationDirPath() + "/xerahs", arguments); QVERIFY(application.waitForFinished(5000)); QCOMPARE(application.exitStatus(), QProcess::NormalExit); QCOMPARE(application.exitCode(), error.isEmpty() ? 0 : 1);
+    const auto bytes = application.readAllStandardOutput(); QCOMPARE(bytes.count('\n'), 1); const auto result = line(bytes); QCOMPARE(result.value("schemaVersion"), QJsonValue(1)); QCOMPARE(result.value("ok").toBool(), error.isEmpty());
+    QVERIFY(!bytes.contains("private-token")); QVERIFY(!bytes.contains("private-pattern")); QVERIFY(!bytes.contains("/private")); QVERIFY(!bytes.contains(temporary->path().toUtf8())); QVERIFY(!result.contains("requestId"));
+    QVERIFY(application.readAllStandardError().isEmpty());
+    if (error.isEmpty()) {
+      QCOMPARE(result.value("source"), QJsonValue(mode == "missing" ? "initial-defaults" : "saved-storage")); QCOMPARE(result.value("runtimeStatus"), QJsonValue("not-queried"));
+      const auto workflows = result.value("workflows").toArray(); QCOMPARE(workflows.size(), 1); const auto workflow = workflows[0].toObject(); QCOMPARE(workflow.value("id"), QJsonValue(profile.id.toString(QUuid::WithoutBraces))); QCOMPARE(workflow.value("definitionAvailable").toBool(), mode != "unavailable");
+      if (mode != "missing") QCOMPARE(workflow.value("name"), QJsonValue(profile.name));
+    } else { QCOMPARE(result.value("error").toObject().value("code"), QJsonValue(error)); QVERIFY(!result.contains("workflows")); }
+    if (mode == "missing") QVERIFY(!QFileInfo::exists(config)); else QCOMPARE(fileBytes(path), original);
+    QCoreApplication::processEvents(); QCOMPARE(activations, 0); if (!owner) QVERIFY(!QFileInfo::exists(temporary->filePath("com.xerahs.app")));
+    QVERIFY(!QFileInfo::exists(path + ".lock")); QVERIFY(!QFileInfo::exists(temporary->filePath("XDG_STATE_HOME"))); QVERIFY(!QFileInfo::exists(temporary->filePath("XDG_DATA_HOME"))); QVERIFY(!QFileInfo::exists(temporary->filePath("XDG_CACHE_HOME")));
+  }
+  void workflowHelpDoesNotRequireADisplayOrReadPreferences_data() {
+    QTest::addColumn<QStringList>("arguments"); QTest::newRow("plain-help") << QStringList{"--help"}; QTest::newRow("query-help") << QStringList{"--list-workflows", "--non-interactive", "--help"};
+  }
+  void workflowHelpDoesNotRequireADisplayOrReadPreferences() {
+    QFETCH(QStringList, arguments); auto environment = QProcessEnvironment::systemEnvironment();
+    for (const auto *key : {"XDG_CONFIG_HOME", "XDG_RUNTIME_DIR", "XDG_STATE_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME"}) environment.insert(key, temporary->filePath(key));
+    environment.insert("QT_QPA_PLATFORM", "xcb"); environment.remove("DISPLAY"); environment.remove("WAYLAND_DISPLAY");
+    QProcess application; application.setProcessEnvironment(environment); application.start(QCoreApplication::applicationDirPath() + "/xerahs", arguments); QVERIFY(application.waitForFinished(5000)); QCOMPARE(application.exitStatus(), QProcess::NormalExit); QCOMPARE(application.exitCode(), 0);
+    const auto output = application.readAllStandardOutput(); QVERIFY(output.contains("--list-workflows")); QVERIFY(output.contains("--run-workflow")); QVERIFY(application.readAllStandardError().isEmpty());
+    for (const auto *key : {"XDG_CONFIG_HOME", "XDG_RUNTIME_DIR", "XDG_STATE_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME"}) QVERIFY(!QFileInfo::exists(temporary->filePath(key)));
+  }
+  void workflowDiscoveryRejectsConflictsAndInvalidArgumentsBeforePresentation_data() {
+    QTest::addColumn<QStringList>("arguments");
+    QTest::newRow("capture") << QStringList{"--list-workflows", "--capture-region"};
+    QTest::newRow("edit") << QStringList{"--list-workflows", "--edit", "/private/input"};
+    QTest::newRow("workflow") << QStringList{"--list-workflows", "--run-workflow", "private-name"};
+    QTest::newRow("unknown") << QStringList{"--list-workflows", "--private-secret", "--json"};
+    QTest::newRow("value") << QStringList{"--list-workflows=private-secret", "--non-interactive"};
+    QTest::newRow("positional") << QStringList{"--list-workflows", "private-secret"};
+  }
+  void workflowDiscoveryRejectsConflictsAndInvalidArgumentsBeforePresentation() {
+    QFETCH(QStringList, arguments); auto environment = QProcessEnvironment::systemEnvironment();
+    for (const auto *key : {"XDG_CONFIG_HOME", "XDG_RUNTIME_DIR", "XDG_STATE_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME"}) environment.insert(key, temporary->filePath(key));
+    environment.insert("QT_QPA_PLATFORM", "xcb"); environment.remove("DISPLAY"); environment.remove("WAYLAND_DISPLAY");
+    QProcess application; application.setProcessEnvironment(environment); application.start(QCoreApplication::applicationDirPath() + "/xerahs", arguments); QVERIFY(application.waitForFinished(5000)); QCOMPARE(application.exitStatus(), QProcess::NormalExit); QCOMPARE(application.exitCode(), 1);
+    const auto bytes = application.readAllStandardOutput(); QCOMPARE(bytes.count('\n'), 1); const auto result = line(bytes); QCOMPARE(result.value("error").toObject().value("code"), QJsonValue("usage-invalid")); QVERIFY(!result.value("ok").toBool()); QVERIFY(!result.contains("requestId"));
+    QVERIFY(!bytes.contains("private")); const auto errors = application.readAllStandardError(); QVERIFY(!errors.contains("private")); QVERIFY(!errors.contains("could not connect to display"));
+    for (const auto *key : {"XDG_CONFIG_HOME", "XDG_RUNTIME_DIR", "XDG_STATE_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME"}) QVERIFY(!QFileInfo::exists(temporary->filePath(key)));
   }
   void actualApplicationForwardsWorkflowIdsAndReportsOnlyDelivery_data() {
     QTest::addColumn<QString>("admission"); QTest::addColumn<int>("exitCode");
