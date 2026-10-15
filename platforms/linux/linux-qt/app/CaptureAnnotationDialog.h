@@ -1,8 +1,10 @@
 #pragma once
 #include "EditorSource.h"
 #include "CanvasCropDialog.h"
+#include "EditorHistory.h"
 #include <QDialog>
 #include <QPointer>
+#include <QTimer>
 class QLabel;
 class QCheckBox;
 class QProgressDialog;
@@ -17,20 +19,28 @@ public:
   std::optional<xerahs::editor::AnnotationDocument> document() const { return m_accepted; }
   bool sidecarIntent() const { return m_sidecarIntent; }
   std::optional<xerahs::editor::CropRegion> sourceRegion() const { return m_session.retainedSourceRegion(); }
+  void setHistoryHooks(EditorHistoryHooks hooks) { m_historyHooks = std::move(hooks); }
   void setCropHooks(CanvasCropHooks hooks) { m_cropHooks = std::move(hooks); }
 public slots:
   void accept() override;
   void reject() override;
+  void done(int result) override;
 private:
   bool editingReady() const;
   void cropImage(xerahs::editor::CropRegion);
   void restoreHistory(bool redo);
-  void finishOperation();
   struct HistoryWork;
+  void pollHistory();
+  void cancelHistory(const std::shared_ptr<HistoryWork> &work);
+  void closeHistoryDialog(bool defer);
+  void finishOperation();
   std::shared_ptr<HistoryWork> m_historyWork;
   QPointer<QProgressDialog> m_historyDialog;
   QPointer<CanvasCropDialog> m_cropDialog;
   CanvasCropHooks m_cropHooks;
+  EditorHistoryHooks m_historyHooks;
+  QTimer m_historyPoll;
+  bool m_historyTransition = false;
   bool m_operationPending = false;
   bool m_closing = false;
   QImage m_image;

@@ -628,3 +628,69 @@ migrate capture source-history cancellation/coordinator identity and guarded
 adjacent-target admission, retaining original source-region proof, exact history/
 assets/checkpoints and actual output/retry. Other native configuration/lifetime
 qualification also remains Required.
+
+
+## 2026-10-15 — Owned capture source-history and exact target admission
+
+Continued the clean synchronized `77bf623` New/Open checkpoint; prior successful
+work was retained. [Capture history evidence](app/CAPTURE-HISTORY.md) and its
+[machine-readable index](app/CAPTURE-HISTORY-EVIDENCE.json) cover the asynchronous
+capture coordinator's immediate Cancel/Escape/reject/close/progress-deletion
+recovery, per-job identity, immutable worker inputs/results and existing guarded
+Core history admission. Frozen state, exact selection, native generation and
+adjacent target are checked after progress cleanup, before Core restoration and
+prepared source/private display publication. Cancelled late success/exception
+cannot clobber a retry or later crop/annotation. Parent completion/teardown retires
+work without joining; busy direct Accepted completion cannot bypass Apply.
+
+Core's exact document, fields, source identity/bytes, assets, selection and private
+composed crop source-region are restored; the worker-normalized document is never
+adopted. Annotation-only history starts no image worker and explicitly schedules
+canvas repaint. Capture defaults, sidecar intent and actual output/retry remain
+intact. No shared policy/schema/vector, adapter, scope, expected result, timeout,
+requirement label/disposition or human approval changes.
+
+Final complete builds and CTest pass **46/46 locally in 68.77 s** and **46/46 on
+cached Ubuntu Qt 6.4.2 in 65.77 s**. Capture history passes in 4.02/3.84 s, capture
+annotation in 9.54/9.26 s. The separate capture-history target verifies **31 new
+behavior cases**, including Undo and Redo cancellation while decode remains
+blocked, exact P3/alpha/asset/identity/history/source lineage, stale cleanup,
+nonblocking owner boundaries, redacted failure/retry and real temporary PNG/.xann
+pipeline save failure/explicit retry. Global cancel/pipeline destruction publishes
+no files. Both final suites include the **114 unchanged published vectors**.
+
+Verification sequence: test API field names were corrected at compilation and
+asset fixtures made valid PNGs before execution. The first focused run passed
+30/31 behavior cases; its cleanup-selection observer was disconnected with the
+capture's own dialog observers. An independent guarded test receiver exercises
+that intended boundary and passes. Both complete suites then passed (68.87/66.00
+s). Final review added explicit annotation-only canvas repaint and a native paint
+delivery assertion; both complete final suites above verify that change. No old
+assertion, expected output or deadline was relaxed. Synthetic native progress QA
+shows readable restoring text, progress and Cancel; accessible name/Button role
+are asserted. Physical helpers/a11y and large-image performance remain unqualified.
+
+All **32 tooling tests** pass (16 linter, 9 backlog, 7 runner). Contract lint,
+backlog freshness, effective-instruction and unchanged trace-metadata checks pass;
+exact pushed CI is verified and linked in the checkpoint report. Previous exact
+New/Open CI **38708186717** succeeded for `77bf62339d75e50f368e010ad229ac9053a7c53a`:
+Ubuntu 24.04/Qt 6.4.2 native job **116332719883**, **45/45 tests in 62.88 s**,
+lint job **116332719696** succeeded.
+
+The full 324-requirement/15-package application remains unfinished. Trace labels
+remain 80 implemented/68 partial; 52 commands and fourteen visible defaults remain
+unchanged. Full application/onboarding/activation/localization/notifications,
+capture topology, recording/audio, destinations/uploads/credentials/plugins,
+922 settings, 436 workflows, 232 effects, all tools/canvas/output/utilities,
+history/automation/compatibility, tar/deb/rpm/AUR distribution, explicit migration,
+updates/rollback, supported Ubuntu/Fedora/Arch GNOME/Plasma/wlroots Wayland/X11
+matrix, resources/performance and human security/privacy/a11y/parity/release gates
+remain Required. Recorded Ellipse, clipboard-assets, output-format,
+legacy-companion and shortcut decisions remain pending. No production-readiness
+percentage or release acceptance is established; the continuation timer stays
+active.
+
+Next own Drawing Defaults and Appearance/Toolbar configuration/picker/parent
+lifetimes, preserving revision-checked atomic persistence and publication to open
+editors. Current source still uses stack-parented dialogs and static nested colour
+pickers there; owner teardown and stale/reentrant publication need native evidence.

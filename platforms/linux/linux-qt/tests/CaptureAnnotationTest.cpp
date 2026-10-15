@@ -90,7 +90,7 @@ private slots:
     if (mode.startsWith("history-") || mode == "finish-destroy") {
       setCropBounds(*crop, 10, 15, 40, 30); applyCrop(*crop); if (mode == "finish-destroy") { QTRY_VERIFY(!capture); return; }
       QTRY_COMPARE(canvas->annotationDocument().canvasWidth, 40); QTRY_VERIFY(canvas->isEnabled()); const auto cropped = serializeDocument(canvas->annotationDocument());
-      capture->setCropHooks({[gate, mode] { if (mode == "history-worker-fail") throw std::runtime_error("private fixture"); gate->entered.store(true); while (!gate->released.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1)); gate->left.store(true); }});
+      capture->setHistoryHooks({[gate, mode] { if (mode == "history-worker-fail") throw std::runtime_error("private fixture"); gate->entered.store(true); while (!gate->released.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1)); gate->left.store(true); }});
       capture->findChild<QAction *>("undo")->trigger();
       if (mode == "history-worker-fail") { QTRY_VERIFY(canvas->isEnabled()); QCOMPARE(serializeDocument(canvas->annotationDocument()), cropped); QVERIFY(capture->findChild<QLabel *>("captureAnnotationStatus")->text().contains("could not")); return; }
       QTRY_VERIFY(gate->entered.load()); QVERIFY(!canvas->isEnabled()); QCOMPARE(serializeDocument(canvas->annotationDocument()), cropped);

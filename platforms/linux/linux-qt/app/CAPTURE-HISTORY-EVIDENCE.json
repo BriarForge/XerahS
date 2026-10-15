@@ -1,0 +1,160 @@
+{
+  "capability": "EDITOR-CANVAS-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial-candidate-evidence",
+  "related_capabilities": [
+    "EDITOR-SESSION-001",
+    "POST-CAPTURE-ACTIONS-001"
+  ],
+  "implementation": [
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.h",
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/app/CAPTURE-HISTORY.md",
+    "platforms/linux/linux-qt/tests/CaptureHistoryTest.cpp",
+    "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+  ],
+  "requirements": {
+    "ES-002": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned asynchronous capture-history lifecycle, exact guarded Core restoration and native save/retry evidence in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required."
+    },
+    "ES-005": {
+      "disposition": "Required",
+      "status": "implemented",
+      "note": "Owned asynchronous capture-history lifecycle, exact guarded Core restoration and native save/retry evidence in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required."
+    },
+    "ES-006": {
+      "disposition": "Required",
+      "status": "implemented",
+      "note": "Owned asynchronous capture-history lifecycle, exact guarded Core restoration and native save/retry evidence in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required."
+    },
+    "ES-007": {
+      "disposition": "Required",
+      "status": "implemented",
+      "note": "Owned asynchronous capture-history lifecycle, exact guarded Core restoration and native save/retry evidence in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required."
+    },
+    "ES-008": {
+      "disposition": "Required",
+      "status": "implemented",
+      "note": "Owned asynchronous capture-history lifecycle, exact guarded Core restoration and native save/retry evidence in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required."
+    },
+    "ES-019": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned asynchronous capture-history lifecycle, exact guarded Core restoration and native save/retry evidence in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required."
+    },
+    "EC-007": {
+      "disposition": "Required",
+      "status": "implemented",
+      "note": "Owned asynchronous capture-history lifecycle, exact guarded Core restoration and native save/retry evidence in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required."
+    },
+    "EC-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned asynchronous capture-history lifecycle, exact guarded Core restoration and native save/retry evidence in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required."
+    },
+    "PCA-003": {
+      "disposition": "Required",
+      "status": "implemented",
+      "note": "Owned asynchronous capture-history lifecycle, exact guarded Core restoration and native save/retry evidence in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required."
+    },
+    "PCA-008": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned asynchronous capture-history lifecycle, exact guarded Core restoration and native save/retry evidence in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required."
+    },
+    "PCA-010": {
+      "disposition": "Required",
+      "status": "implemented",
+      "note": "Owned asynchronous capture-history lifecycle, exact guarded Core restoration and native save/retry evidence in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required."
+    },
+    "PCA-011": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned asynchronous capture-history lifecycle, exact guarded Core restoration and native save/retry evidence in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required."
+    },
+    "PCA-015": {
+      "disposition": "Required",
+      "status": "implemented",
+      "note": "Owned asynchronous capture-history lifecycle, exact guarded Core restoration and native save/retry evidence in CAPTURE-HISTORY.md. Full native/resource/target/human qualification remains Required."
+    }
+  },
+  "verification": {
+    "local_ctest": {
+      "targets": 46,
+      "passed": 46,
+      "failed": 0,
+      "seconds": 68.77,
+      "capture_history_seconds": 4.02,
+      "capture_annotation_seconds": 9.54,
+      "revision_note": "Final complete build and all 46 targets passed, including explicit annotation-only repaint verification."
+    },
+    "minimum_qt": {
+      "version": "6.4.2",
+      "targets": 46,
+      "passed": 46,
+      "failed": 0,
+      "seconds": 65.77,
+      "capture_history_seconds": 3.84,
+      "capture_annotation_seconds": 9.26,
+      "revision_note": "Final complete build and all 46 targets passed, including explicit annotation-only repaint verification."
+    },
+    "published_vectors": {
+      "passed": 114,
+      "failed": 0,
+      "expected_results_changed": false
+    },
+    "new_native_cases": {
+      "passed": 31,
+      "failed": 0,
+      "detail": "Ten Undo/Redo cancellation paths; six cancelled late success/exception vs retry/crop/annotation; ten owner/stale/failure/retry boundaries; exact profile/alpha/assets/source identity/lineage and worker-free annotation history; four actual pipeline save/retry/cancel/destruction cases."
+    },
+    "tooling_tests": {
+      "contract_linter": 16,
+      "contract_backlog": 9,
+      "conformance_runner": 7,
+      "failed": 0
+    },
+    "visual_review": "Inspected synthetic native progress frame with restoring text, progress and Cancel; native accessible name/Button role asserted. No physical/human qualification claimed.",
+    "review_findings": "Two test document field names corrected at compilation; invalid placeholder asset bytes were replaced by valid PNG fixtures before execution. First focused test passed 30/31 behavior cases; cleanup-selection fixture callback was disconnected with capture-owned observers and now uses an independent guarded test receiver. Both full suites then pass. Final review adds an explicit queued canvas repaint after history/operation refresh and verifies native paint delivery for annotation-only Undo. No expected result or timeout changed.",
+    "prior_full_successful_runs": {
+      "local_seconds": 68.87,
+      "minimum_qt_seconds": 66.0,
+      "note": "Both full runs passed before final review added an explicit queued canvas repaint and native paint-delivery assertion; final complete builds/runs above verify that addition."
+    },
+    "contract_checks": {
+      "lint": "passed",
+      "backlog": "valid; STATUS.md current",
+      "trace_metadata": "unchanged requirement IDs/statuses/dispositions/vector references; 80 implemented/68 partial core labels",
+      "effective_instruction_files": 15
+    }
+  },
+  "prior_checkpoint_verification": {
+    "head_sha": "77bf62339d75e50f368e010ad229ac9053a7c53a",
+    "ci_url": "https://github.com/BriarForge/XerahS/actions/runs/38708186717",
+    "conclusion": "success",
+    "native_job_id": 116332719883,
+    "lint_job_id": 116332719696,
+    "native_ctest_passed": 45,
+    "native_ctest_failed": 0,
+    "native_ctest_seconds": 62.88,
+    "qt_version": "6.4.2"
+  },
+  "next_action": "Own Drawing Defaults and Appearance/Toolbar configuration/picker/parent lifetimes; preserve revision-checked atomic persistence and publication to open editors.",
+  "remaining": "Large-image memory/performance, shutdown/physical progress helpers and full application/capture/recording/audio/uploads/workflows/settings/tools/effects/canvas/output/history/automation/compatibility/packaging/migration/updates/rollback, supported target matrix and human security/privacy/a11y/parity/release gates remain Required.",
+  "unresolved_decisions": [
+    "EA-005-LINUX-2026-10-14",
+    "EA-016-LINUX-2026-10-14",
+    "EO-004-LINUX-2026-10-14",
+    "ES-014-030-LINUX-2026-10-15",
+    "draft-native-equivalence-pending-product-owner-approval"
+  ]
+}

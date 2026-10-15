@@ -161,6 +161,12 @@ cancelled loading and ignores late jobs. New/Open use owned pickers/confirmation
 freeze editor state/selection/generation, guard outputs and mutations, and retain
 dirty replacement consent plus reload after saving over the candidate image.
 
+[Capture Undo/Redo](app/CAPTURE-HISTORY.md) restores complete crop history and
+source pixels on an owned worker. Cancel, Escape or closing progress returns
+controls immediately; late cancelled work cannot replace a newer edit. Failed or
+stale restoration keeps the committed canvas and history available for retry.
+Apply then saves the current canvas through the usual capture actions.
+
 **Compare Images…** accepts two raster files or the current rendered editor
 image plus a file. Top-left and centered alignment retain native pixel sizes
 and show unmatched areas as transparent. Private display copies use sRGB,

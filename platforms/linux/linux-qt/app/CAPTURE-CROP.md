@@ -46,6 +46,9 @@ media unchanged. A declared region alone cannot authorize arbitrary source pixel
 Source-changing Undo/Redo prepares a validated source and private sRGB display
 on an owned cancellable worker before changing history. Failure, cancellation,
 stale state/selection/generation or owner destruction keeps current history/source.
+The subsequent [capture-history checkpoint](CAPTURE-HISTORY.md) retires Cancel,
+Escape, closed or deleted progress jobs immediately, isolates late results and
+checks the exact adjacent history target before restoring Core state/source proof.
 Accepted restoration updates dimensions, viewport and native action/list state.
 Preview/history workers capture immutable values and shared cancellation state,
 with no GUI pointers. Closing/destroying their owner cancels and releases the UI
@@ -118,10 +121,11 @@ physical keyboard, assistive technology, high-contrast or target qualification.
 
 ## Next work and full scope
 
-Move the main editor's numeric and pointer Crop routes to the owned preview,
-freezing state/selection/generation and containing worker/close/owner lifetime
-while preserving the existing Core crop policy and real Save/reopen behavior.
-The older main-editor numeric dialog and general canvas worker remain separate.
+The subsequent main-editor crop and canvas-worker checkpoints migrate numeric
+and pointer Crop plus general mutations to owned preparation and guarded
+publication. Capture-history lifecycle/target admission is now indexed above.
+Next own Drawing Defaults and Appearance/Toolbar configuration/picker lifetimes,
+preserving revision-checked atomic persistence and live editor defaults.
 
 Ellipse, shared clipboard/assets, output-format, legacy-companion and shortcut
 decisions remain pending. All tools/fields, 232 effects, canvas/output, capture

@@ -20,6 +20,9 @@ struct CaptureAnnotationDialog::HistoryWork {
   std::atomic<bool> cancelled{false}, done{false};
   std::atomic<int> progress{0};
   LoadedSource source;
+  quint64 state = 0, generation = 0, target = 0;
+  QSet<QUuid> selection;
+  bool redo = false;
 };
 CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWidget *parent, const xerahs::editor::RectangleStyle &style)
     : QDialog(parent), m_image(source.image), m_session(*source.document, xerahs::editor::EditorSession::InitialPersistence::Unsaved) {
@@ -143,22 +146,26 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   buttons->button(QDialogButtonBox::Cancel)->setDefault(true);
   connect(buttons, &QDialogButtonBox::accepted, this, &CaptureAnnotationDialog::accept);
   connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject); layout->addWidget(buttons);
+  m_historyPoll.setInterval(20); connect(&m_historyPoll, &QTimer::timeout, this, &CaptureAnnotationDialog::pollHistory);
   resize(780, 600); m_canvas->setFocus();
 }
 CaptureAnnotationDialog::~CaptureAnnotationDialog() {
   m_closing = true;
   if (m_historyWork) m_historyWork->cancelled.store(true);
+  m_historyPoll.stop();
+  if (m_historyDialog) disconnect(m_historyDialog, nullptr, this, nullptr);
   if (m_cropDialog) disconnect(m_cropDialog, nullptr, this, nullptr);
   delete m_canvas; m_canvas = nullptr;
 }
 bool CaptureAnnotationDialog::editingReady() const { return !m_closing && !m_operationPending && m_canvas->isEnabled() && !m_canvas->interactionActive(); }
 void CaptureAnnotationDialog::finishOperation() {
   if (m_closing || !m_canvas) return;
-  const QPointer<CaptureAnnotationDialog> owner(this); m_operationPending = false; m_canvas->setEnabled(true); if (!owner) return;
+  const QPointer<CaptureAnnotationDialog> owner(this); m_operationPending = false; m_canvas->setEnabled(true); if (!owner || m_closing) return;
+  m_canvas->viewport()->update();
   emit m_canvas->changed();
 }
 void CaptureAnnotationDialog::cropImage(xerahs::editor::CropRegion region) {
-  if (!editingReady()) return;
+  if (m_historyTransition || !editingReady()) return;
   xerahs::editor::AnnotationDocument document; QImage source;
   try { document = m_session.document(); source = m_image; }
   catch (...) { m_status->setText("The crop snapshot could not be prepared. The canvas was kept."); return; }
@@ -178,54 +185,116 @@ void CaptureAnnotationDialog::cropImage(xerahs::editor::CropRegion region) {
       m_status->setText(QString("Cropped to %1 × %2 pixels. Undo restores the previous canvas.").arg(m_image.width()).arg(m_image.height()));
     });
     connect(crop, &QObject::destroyed, this, [this, crop] {
-      if (m_cropDialog.data() == crop || (m_operationPending && !m_cropDialog && !m_historyWork)) { m_cropDialog.clear(); finishOperation(); }
+      if (m_cropDialog.data() == crop || (m_operationPending && !m_cropDialog && !m_historyWork && !m_historyTransition)) { m_cropDialog.clear(); finishOperation(); }
     });
     crop->open();
   } catch (...) { if (owner) { m_status->setText("The crop dialog could not be opened. The canvas was kept."); if (owner) finishOperation(); } }
 }
+void CaptureAnnotationDialog::closeHistoryDialog(bool defer) {
+  const auto dialog = m_historyDialog; m_historyDialog.clear();
+  if (!dialog) return;
+  disconnect(dialog, nullptr, this, nullptr);
+  dialog->hide();
+  if (dialog) dialog->setParent(nullptr);
+  if (!dialog) return;
+  // Cancel/reject signals can still be on the widget's stack. Retire and hide
+  // immediately, then delete safely after signal delivery has returned.
+  if (defer) dialog->deleteLater(); else delete dialog.data();
+}
+void CaptureAnnotationDialog::cancelHistory(const std::shared_ptr<HistoryWork> &work) {
+  if (m_closing || m_historyWork != work) return;
+  const QPointer<CaptureAnnotationDialog> owner(this); const bool transition = m_historyTransition; m_historyTransition = true;
+  const auto restore = qScopeGuard([owner, transition] { if (owner) owner->m_historyTransition = transition; });
+  work->cancelled.store(true); m_historyWork.reset(); m_historyPoll.stop(); closeHistoryDialog(true);
+  if (!owner || m_closing) return;
+  m_status->setText("History cancelled. The canvas was kept.");
+  if (owner && !m_closing) finishOperation();
+}
 void CaptureAnnotationDialog::restoreHistory(bool redo) {
-  if (!editingReady()) return;
-  const auto *target = m_session.historyTarget(redo); if (!target) return;
+  if (m_historyTransition || !editingReady()) return;
+  const auto *target = m_session.historyTarget(redo); const auto targetId = m_session.historyTargetId(redo); if (!target || !targetId) return;
   const QPointer<CaptureAnnotationDialog> owner(this); const auto state = m_session.stateId(), generation = m_canvas->documentGeneration(); const auto selection = m_session.selection();
   if (target->sourceImagePng == m_session.document().sourceImagePng) {
-    m_operationPending = true; if (redo) m_session.redo(); else m_session.undo(); finishOperation(); return;
+    m_historyTransition = true;
+    const auto restore = qScopeGuard([owner] { if (owner) owner->m_historyTransition = false; });
+    m_operationPending = true;
+    m_session.restoreHistory(redo, state, selection, *targetId);
+    finishOperation(); return;
   }
-  xerahs::editor::AnnotationDocument document;
-  try { document = *target; } catch (...) { m_status->setText("Canvas history could not be prepared. History was kept."); return; }
-  m_operationPending = true; m_canvas->setEnabled(false); if (!owner) return; emit m_canvas->changed(); if (!owner || m_closing) return;
+  xerahs::editor::AnnotationDocument document; EditorHistoryHooks hooks;
+  try { document = *target; hooks = m_historyHooks; }
+  catch (...) { m_status->setText("Canvas history could not be prepared. History was kept."); return; }
+  m_historyTransition = true;
+  const auto restore = qScopeGuard([owner] { if (owner) owner->m_historyTransition = false; });
   try {
-    auto work = std::make_shared<HistoryWork>(); m_historyWork = work;
-    auto *progress = new QProgressDialog("Restoring canvas history…", "Cancel", 0, 100, this); progress->setObjectName("captureHistoryProgress"); progress->setWindowModality(Qt::WindowModal); progress->setAutoClose(false); progress->setAutoReset(false); m_historyDialog = progress;
-    connect(progress, &QProgressDialog::canceled, this, [work] { work->cancelled.store(true); });
-    connect(progress, &QDialog::rejected, this, [work] { work->cancelled.store(true); });
-    const auto hooks = m_cropHooks;
-    QThreadPool::globalInstance()->start([work, document, hooks] {
-      try { if (hooks.beforePrepare) hooks.beforePrepare(); work->source = prepareCapturedDocument(document, {[work] { return work->cancelled.load(); }, [work](int p) { work->progress.store(p); }}); }
-      catch (...) { work->source.diagnostic = "canvas-preparation-failed"; }
+    const auto work = std::make_shared<HistoryWork>(); work->state = state; work->generation = generation; work->selection = selection; work->target = *targetId; work->redo = redo;
+    m_historyWork = work; m_operationPending = true;
+    m_canvas->setEnabled(false); if (!owner || m_closing || m_historyWork != work) return;
+    emit m_canvas->changed(); if (!owner || m_closing || m_historyWork != work) return;
+    QPointer<QProgressDialog> progress(new QProgressDialog("Restoring canvas history…", "Cancel", 0, 100, this));
+    m_historyDialog = progress; progress->setObjectName("captureHistoryProgress"); progress->setAccessibleName("Restore capture history progress"); progress->setWindowTitle("Restore capture history");
+    progress->setWindowModality(Qt::WindowModal); progress->setAutoClose(false); progress->setAutoReset(false); progress->setMinimumDuration(0);
+    const auto cancel = [owner, work] { if (owner) owner->cancelHistory(work); };
+    connect(progress, &QProgressDialog::canceled, this, cancel);
+    connect(progress, &QDialog::rejected, this, cancel);
+    connect(progress, &QObject::destroyed, this, cancel);
+    QThreadPool::globalInstance()->start([work, document = std::move(document), hooks] {
+      try {
+        if (!work->cancelled.load()) {
+          if (hooks.beforePrepare) hooks.beforePrepare();
+          work->source = prepareCapturedDocument(document, {[work] { return work->cancelled.load(); }, [work](int p) { work->progress.store(p); }});
+        }
+      } catch (...) { work->source.diagnostic = "canvas-preparation-failed"; }
       work->done.store(true, std::memory_order_release);
     });
-    auto *timer = new QTimer(this); connect(timer, &QTimer::timeout, this, [this, owner, work, timer, state, generation, selection, redo] {
-      if (m_historyDialog) m_historyDialog->setValue(work->progress.load());
-      if (!owner || !work->done.load(std::memory_order_acquire)) return;
-      timer->stop(); timer->deleteLater(); m_historyWork.reset();
-      if (m_historyDialog) { const auto dialog = m_historyDialog; m_historyDialog.clear(); dialog->hide(); if (!owner) return; if (dialog) dialog->deleteLater(); }
-      const auto restore = qScopeGuard([owner] { if (owner) owner->finishOperation(); });
-      if (work->cancelled.load()) return;
-      if (state != m_session.stateId() || generation != m_canvas->documentGeneration() || selection != m_session.selection()) { m_status->setText("The document or selection changed. History was kept."); return; }
-      if (!work->source.document) { m_status->setText("Canvas history could not be decoded. History was kept."); return; }
-      if (redo) m_session.redo(); else m_session.undo(); m_image = std::move(work->source.image); m_canvas->sourceChanged(work->source.displayImage);
-    }); timer->start(20); progress->show();
-  } catch (...) { if (m_historyWork) m_historyWork->cancelled.store(true); m_historyWork.reset(); if (m_historyDialog) { m_historyDialog->deleteLater(); m_historyDialog.clear(); } if (owner) { m_status->setText("Canvas history could not be started. History was kept."); if (owner) finishOperation(); } }
+    m_status->setText("Restoring canvas history…"); if (!owner || m_closing || m_historyWork != work) return;
+    m_historyPoll.start(); progress->show();
+  } catch (...) {
+    if (!owner || m_closing) return;
+    if (m_historyWork) m_historyWork->cancelled.store(true);
+    m_historyWork.reset(); m_historyPoll.stop(); closeHistoryDialog(true);
+    if (!owner || m_closing) return;
+    m_status->setText("Canvas history could not be started. History was kept."); if (owner && !m_closing) finishOperation();
+  }
+}
+void CaptureAnnotationDialog::pollHistory() {
+  if (m_closing || m_historyTransition || !m_historyWork) return;
+  const auto work = m_historyWork; const QPointer<CaptureAnnotationDialog> owner(this); m_historyTransition = true;
+  const auto transition = qScopeGuard([owner] { if (owner) owner->m_historyTransition = false; });
+  if (m_historyDialog) m_historyDialog->setValue(work->progress.load());
+  if (!owner || m_closing || m_historyWork != work || !work->done.load(std::memory_order_acquire)) return;
+  // Keep controls busy until the retired dialog and its destruction observers
+  // finish. A deleted owner or replaced target cannot admit prepared pixels.
+  m_historyWork.reset(); m_historyPoll.stop(); closeHistoryDialog(false);
+  if (!owner || m_closing) return;
+  const auto restore = qScopeGuard([owner] { if (owner && !owner->m_closing) owner->finishOperation(); });
+  if (work->cancelled.load()) return;
+  if (work->state != m_session.stateId() || work->generation != m_canvas->documentGeneration() || work->selection != m_session.selection() || m_session.historyTargetId(work->redo) != work->target) {
+    m_status->setText("The document, selection or history target changed. History was kept."); return;
+  }
+  if (!work->source.document) { m_status->setText("Canvas history could not be decoded. History was kept."); return; }
+  if (!m_session.restoreHistory(work->redo, work->state, work->selection, work->target)) {
+    m_status->setText("The document, selection or history target changed. History was kept."); return;
+  }
+  m_image = std::move(work->source.image); m_canvas->sourceChanged(work->source.displayImage);
+  if (!owner || m_closing) return;
+  m_status->setText(QString("Restored canvas history: %1 × %2 pixels.").arg(m_image.width()).arg(m_image.height()));
 }
 void CaptureAnnotationDialog::accept() {
   if (!editingReady()) { m_status->setText("Finish or cancel the current gesture before applying annotations."); return; }
-  m_accepted = m_session.document(); m_sidecarIntent = m_saveSidecar->isChecked(); m_closing = true; QDialog::accept();
+  try { m_accepted = m_session.document(); }
+  catch (...) { m_status->setText("The annotations could not be prepared. The capture was kept."); return; }
+  m_sidecarIntent = m_saveSidecar->isChecked(); done(QDialog::Accepted);
 }
-void CaptureAnnotationDialog::reject() {
+void CaptureAnnotationDialog::reject() { done(QDialog::Rejected); }
+void CaptureAnnotationDialog::done(int result) {
+  if (m_closing) return;
+  if (result == QDialog::Accepted && !m_accepted) { accept(); return; }
   m_closing = true;
   const QPointer<CaptureAnnotationDialog> owner(this); if (m_historyWork) m_historyWork->cancelled.store(true);
+  m_historyWork.reset(); m_historyPoll.stop(); closeHistoryDialog(true); if (!owner) return;
   if (m_cropDialog) m_cropDialog->reject();
   if (!owner) return;
-  QDialog::reject();
+  QDialog::done(result);
 }
 } // namespace xerahs::app

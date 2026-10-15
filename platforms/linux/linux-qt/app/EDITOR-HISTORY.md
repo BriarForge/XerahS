@@ -82,9 +82,11 @@ verifies its exact pushed revision and Ubuntu 24.04/Qt 6.4.2 CI.
 The subsequent [canvas worker checkpoint](CANVAS-WORKERS.md) migrates main-editor
 mutation preparation and custom rotation previews to owned workers and guarded
 publication, including numeric/clear dialog ownership and private view preparation.
-Next migrate comparison loading/previews and then remaining New/Open lifetime
-paths. Capture history retains its earlier asynchronous coordinator; full target-
-identity, shutdown and resource qualification remains Required.
+The subsequent comparison and New/Open checkpoints own those preparation and
+picker lifetimes. [Capture source-history](CAPTURE-HISTORY.md) now retains its
+asynchronous UI while retiring cancelled jobs immediately and using the same
+guarded adjacent-target Core admission. Full shutdown, resource and native
+qualification remains Required.
 
 Full tools/fields/effects/canvas/output, capture topology, recording/audio,
 uploads/credentials, workflows/settings/catalogues, application/history/
