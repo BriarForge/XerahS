@@ -407,6 +407,18 @@ bool EditorSession::redo() {
   return true;
 }
 
+std::optional<quint64> EditorSession::historyTargetId(bool redo) const {
+  if (redo) return m_position + 1 < m_history.size() ? std::optional<quint64>(m_history[m_position + 1].stateId) : std::nullopt;
+  return m_position ? std::optional<quint64>(m_history[m_position - 1].stateId) : std::nullopt;
+}
+bool EditorSession::restoreHistory(bool redo, quint64 state, const QSet<QUuid> &selection, quint64 target) {
+  m_editDiagnostic.clear();
+  if (stateId() != state || m_selection != selection || historyTargetId(redo) != target) {
+    m_editDiagnostic = "annotation-edit-stale"; return false;
+  }
+  return redo ? this->redo() : undo();
+}
+
 bool EditorSession::commitCanvas(AnnotationDocument next, quint64 expectedState) {
   if (expectedState != stateId()) return false;
   try {

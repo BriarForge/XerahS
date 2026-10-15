@@ -9,6 +9,7 @@
 #include "EditorPrint.h"
 #include "AnnotationClipboard.h"
 #include "CanvasCropDialog.h"
+#include "EditorHistory.h"
 
 #include <QImage>
 #include <QMainWindow>
@@ -38,6 +39,7 @@ public:
   static EditorWindow *fromCapturedDocument(const xerahs::editor::AnnotationDocument &document, QWidget *parent = nullptr);
   // Empty path invokes the native picker; recent-file actions pass an explicit path.
   bool openImage(const QString &path = {});
+  void setHistoryHooks(EditorHistoryHooks hooks) { m_historyHooks = std::move(hooks); }
   void setCropHooks(CanvasCropHooks hooks) { m_cropHooks = std::move(hooks); }
   void setSaveHooks(EditorSaveHooks hooks) { m_saveHooks = std::move(hooks); }
   void setCopyPorts(EditorCopyPorts ports);
@@ -85,6 +87,7 @@ private:
   void applyCreationDefaults();
   void persistDrawingDefaults(quint64 expectedRevision);
   void refresh();
+  void restoreHistory(bool redo);
   void cropImage();
   void cropImage(xerahs::editor::CropRegion region);
   void autoCropImage();
@@ -119,6 +122,7 @@ private:
   bool m_closePending = false;
   bool m_outputPending = false;
   QAction *m_retrySave = nullptr;
+  EditorHistoryHooks m_historyHooks;
   CanvasCropHooks m_cropHooks;
   EditorSaveHooks m_saveHooks;
   EditorSaveReceiptPtr m_partialSave;

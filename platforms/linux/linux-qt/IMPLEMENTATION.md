@@ -224,9 +224,12 @@ independently reproduces source pixels before accepting changed dimensions.
 Worker history restoration updates source/viewport only after successful admission;
 Cancel/failure/owner teardown and actual PNG/.xann/retry are verified. [Main-editor Crop](app/EDITOR-CROP.md) now shares that preview with frozen
 state/selection/generation, nonblocking Cancel/child/owner teardown, prepared
-source/display admission and real Save/reopen. Next move main-editor source-changing
-Undo/Redo off the GUI thread onto owned preparation and cancellable progress,
-preserving exact history, selection, checkpoint and stale/owner guards. All remaining tools, effects,
+source/display admission and real Save/reopen. [Owned main-editor history](app/EDITOR-HISTORY.md) now prepares source/private
+display off the GUI thread, freezes current state/exact selection/generation/target
+ID, preserves exact history/checkpoints and releases cancelled or destroyed owners
+without joining blocked workers. Annotation-only history avoids image workers.
+Next migrate remaining main-editor canvas operations from stack-owned futures to
+owned worker preparation and frozen admission with nonblocking cancellation/teardown. All remaining tools, effects,
 canvas/output, capture topology, recording/audio, uploads, workflows/settings/
 catalogues, compatibility, packaging/migration/updates/rollback, supported targets
 and native/human release qualification remain Required.

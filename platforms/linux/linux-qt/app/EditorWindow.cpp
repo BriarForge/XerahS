@@ -314,8 +314,8 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
 
   connect(saveAction, &QAction::triggered, this, [this] { save(false); });
   connect(saveAs, &QAction::triggered, this, [this] { save(true); });
-  connect(m_undo, &QAction::triggered, this, [this] { m_session->undo(); refresh(); });
-  connect(m_redo, &QAction::triggered, this, [this] { m_session->redo(); refresh(); });
+  connect(m_undo, &QAction::triggered, this, [this] { restoreHistory(false); });
+  connect(m_redo, &QAction::triggered, this, [this] { restoreHistory(true); });
   connect(m_rotate, &QAction::triggered, this, [this] { rotateSelected(); });
   connect(stroke, &QAction::triggered, this, [this] { editColor(EditorSession::ColorTarget::Stroke); });
   connect(fill, &QAction::triggered, this, [this] { editColor(EditorSession::ColorTarget::Fill); });
@@ -742,6 +742,44 @@ bool EditorWindow::openImage(const QString &path) {
   return true;
 }
 
+void EditorWindow::restoreHistory(bool redo) {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive()) return;
+  const auto *target = m_session->historyTarget(redo); const auto targetId = m_session->historyTargetId(redo); if (!target || !targetId) return;
+  const auto state = m_session->stateId(), generation = m_canvas->documentGeneration(); const auto selection = m_session->selection();
+  const bool sourceChanged = target->sourceImagePng != m_session->document().sourceImagePng;
+  // A borrowed history target can be invalidated by busy notifications. Copy it
+  // first; only value-owned preparation crosses the worker boundary.
+  AnnotationDocument document;
+  try { if (sourceChanged) document = *target; }
+  catch (...) { m_annotationMessage = "Canvas history could not be prepared. History was kept."; m_annotationMessageState = state; refresh(); return; }
+  const auto hooks = m_historyHooks; const QPointer<EditorWindow> owner(this);
+  withOutputBusy([owner, redo, state, generation, selection, targetId, document, sourceChanged, hooks] {
+    if (!owner) return false;
+    LoadedSource prepared;
+    if (sourceChanged) prepared = runEditorHistory(document, owner, hooks);
+    if (!owner) return false;
+    if (prepared.diagnostic == "canvas-cancelled") return false;
+    QString diagnostic;
+    bool changed = false;
+    if (generation != owner->m_canvas->documentGeneration() || state != owner->m_session->stateId() || selection != owner->m_session->selection() || targetId != owner->m_session->historyTargetId(redo)) diagnostic = "annotation-edit-stale";
+    else if (sourceChanged && !prepared.document) diagnostic = prepared.diagnostic.isEmpty() ? "canvas-history-failed" : prepared.diagnostic;
+    else {
+      changed = owner->m_session->restoreHistory(redo, state, selection, *targetId);
+      if (!changed) diagnostic = owner->m_session->editDiagnostic();
+      else if (sourceChanged) {
+        owner->m_sourceBytes = owner->m_session->document().sourceImagePng;
+        owner->m_image = std::move(prepared.image);
+        owner->m_canvas->sourceChanged(prepared.displayImage);
+        if (!owner) return false;
+      }
+    }
+    owner->m_annotationMessage = diagnostic.isEmpty() ? QString() : diagnostic == "annotation-edit-stale" ? annotationEditMessage(diagnostic)
+        : QString("Canvas history could not be restored (%1). History was kept.").arg(diagnostic);
+    owner->m_annotationMessageState = owner->m_session->stateId();
+    return changed;
+  });
+}
+
 void EditorWindow::cropImage() {
   cropImage({0, 0, m_image.width(), m_image.height()});
 }
@@ -898,7 +936,7 @@ void EditorWindow::clearImage() {
 }
 
 void EditorWindow::applyCanvas(CanvasOperation operation) {
-  if (m_canvasOperationPending) return;
+  if (m_canvasOperationPending || m_outputPending) return;
   const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
   const quint64 state = m_session->stateId();
   const AnnotationDocument document = m_session->document();

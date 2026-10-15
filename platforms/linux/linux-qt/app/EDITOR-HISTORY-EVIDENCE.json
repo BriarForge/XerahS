@@ -1,0 +1,152 @@
+{
+  "capability": "EDITOR-SESSION-001",
+  "capability_version": "0.2.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial-candidate-evidence",
+  "related_capabilities": [
+    "EDITOR-CANVAS-001",
+    "EDITOR-ANNOTATIONS-001"
+  ],
+  "implementation": [
+    "platforms/linux/linux-qt/app/EditorHistory.h",
+    "platforms/linux/linux-qt/app/EditorHistory.cpp",
+    "platforms/linux/linux-qt/app/EditorWindow.h",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp",
+    "platforms/linux/linux-qt/app/EditorSource.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+    "platforms/linux/linux-qt/CMakeLists.txt"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/app/EDITOR-HISTORY.md",
+    "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+  ],
+  "requirements": {
+    "ES-002": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Actual source-changing history retains alpha/profile/dimensions and original Core source/identity while worker preparation handles decoding/private display; full source/native/human qualification remains Required."
+    },
+    "ES-005": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "One guarded history transition publishes prepared source/display only after exact current/selection/generation/target admission; full mutation/native/human qualification remains Required."
+    },
+    "ES-006": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Exact Undo/Redo, selection, saved checkpoints and replaced-Redo target refusal are verified; full history/resource/native/human qualification remains Required."
+    },
+    "ES-007": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Reachable source/document/assets and unrelated fields remain exact through history and failed/cancelled preparation; full memory/resource/native/human qualification remains Required."
+    },
+    "ES-008": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Cancel/Escape/child/owner destruction returns without joining blocked work; ordinary Close is refused while busy. Full shutdown/consent/native/human qualification remains Required."
+    },
+    "ES-019": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Native keyboard shortcuts, accessible progress name/Button role and inspected progress are candidate evidence. Physical keyboard/AT/contrast/focus/target/human qualification remains Required."
+    },
+    "EC-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned source/private-display preparation is off the GUI thread with progress/cancel and exact frozen admission. Other canvas workers and full resource/native/human qualification remain Required."
+    },
+    "EA-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Whole document/source/assets/selection/checkpoint history remains exact; full tool/mutation/resource/native/human qualification remains Required."
+    },
+    "EA-018": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Native Ctrl+Z/Ctrl+Y and Cancel/Space/Escape, labelled progress and refusal recovery are verified; full physical/a11y/target/human qualification remains Required."
+    },
+    "EA-020": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Stale/replaced-target/invalid/failure/cancel/owner preparation cannot publish a different source/history or write files. Full privacy/security/resource/native/human qualification remains Required."
+    }
+  },
+  "verification": {
+    "local_ctest": {
+      "passed": 44,
+      "failed": 0,
+      "seconds": 61.58,
+      "editor_window_seconds": 23.32
+    },
+    "new_core_cases": {
+      "passed": 7,
+      "failed": 0,
+      "evidence": "Guarded Undo/Redo, missing/stale current state/selection/target and replaced Redo branch while current state/selection match."
+    },
+    "new_native_cases": {
+      "passed": 28,
+      "failed": 0,
+      "evidence": "Three actual keyboard/source/selection/alpha/Display P3/checkpoint/persistence/fast-path rows; 22 bidirectional cancel/failure/stale/reentry/lifetime rows; three invalid-snapshot preparation rows. All are included in the final complete editor-window target."
+    },
+    "published_vectors": {
+      "passed": 114,
+      "failed": 0,
+      "expected_results_changed": false,
+      "evidence": "Unchanged conformance target passed in full local and affected minimum-Qt runs."
+    },
+    "minimum_qt": {
+      "version": "6.4.2",
+      "affected_ctest_targets": 11,
+      "failed": 0,
+      "seconds": 46.77,
+      "editor_window_seconds": 22.54,
+      "targets": [
+        "canvas-operations",
+        "capture-annotation",
+        "capture-paired-save",
+        "capture-pipeline",
+        "portal-screenshot",
+        "editor-source",
+        "editor-session",
+        "editor-canvas",
+        "editor-window",
+        "annotation-object-navigator",
+        "conformance"
+      ]
+    },
+    "tooling_tests": {
+      "contract_linter": 16,
+      "contract_backlog": 9,
+      "conformance_runner": 7,
+      "failed": 0
+    },
+    "fixture_corrections": "Compilation corrected QList UUID selection calls. The first focused native run passed 25 rows and failed three keyboard rows waiting for canvas focus after Crop. Final cases explicitly activate the parent and wait for focus; complete final local/minimum-Qt editor-window targets pass. No timeout, shared vector, expected result or production geometry policy was changed.",
+    "visual_review": "Synthetic native history progress inspected: restoring-history label, progress bar and readable Cancel button. Native accessible progress name and Button role are checked. Physical keyboard/AT/contrast/performance/target/human acceptance remains Required.",
+    "ci": "The checkpoint report verifies the exact pushed SHA and Ubuntu 24.04/Qt 6.4.2 native/lint jobs. This candidate does not accept human/release gates."
+  },
+  "prior_checkpoint_verification": {
+    "head_sha": "c4faa5cdeb3cff64e6aff86104c1b7dad3279d5f",
+    "ci_url": "https://github.com/BriarForge/XerahS/actions/runs/38679232412",
+    "conclusion": "success",
+    "native_job_id": 116239726137,
+    "lint_job_id": 116239726273,
+    "native_ctest_passed": 44,
+    "native_ctest_failed": 0,
+    "native_ctest_seconds": 50.77,
+    "qt_version": "6.4.2"
+  },
+  "remaining": "Other main-editor canvas operations retain the stack-owned future/progress path and GUI source decoding on commit; capture history retains its earlier owned asynchronous coordinator without the new main-editor helper/target guard. Full resource/shutdown/native/physical/a11y/privacy/security/parity/human/release qualification remains Required.",
+  "next_action": "Migrate remaining main-editor canvas operations to owned worker preparation and frozen state/selection/generation admission with nonblocking cancellation/owner teardown, preserving existing geometry, source/profile, exact one-step history and actual persistence.",
+  "unresolved_decisions": [
+    "EA-005-LINUX-2026-10-14",
+    "EA-016-LINUX-2026-10-14",
+    "EO-004-LINUX-2026-10-14",
+    "ES-014-030-LINUX-2026-10-15",
+    "draft-native-equivalence-pending-product-owner-approval"
+  ]
+}

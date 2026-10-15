@@ -64,6 +64,28 @@ class EditorSessionTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void guardedHistoryAdmitsOnlyTheFrozenStateSelectionAndTarget_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"undo", "redo", "stale-state", "stale-selection", "stale-target", "replaced-redo", "missing-target"}) QTest::newRow(mode) << QString(mode);
+  }
+  void guardedHistoryAdmitsOnlyTheFrozenStateSelectionAndTarget() {
+    QFETCH(QString, mode); auto d = document(); auto a = rectangle(1, 1, 4, 4); a.extra = {{"vendor", "retained"}}; d.annotations = {a}; d.embeddedImages = {{"asset", kOnePixelPng}}; d.extra = {{"vendor", "root"}};
+    EditorSession session(d); session.select({a.id}); QVERIFY(!session.historyTargetId(false)); QVERIFY(!session.historyTargetId(true)); QVERIFY(session.moveSelection(2, 3));
+    const auto moved = serializeDocument(session.document()); const auto movedId = session.stateId();
+    const bool redo = mode == "redo" || mode == "replaced-redo";
+    if (redo || mode == "missing-target") QVERIFY(session.undo());
+    const auto state = session.stateId(); const auto selection = session.selection();
+    const auto target = session.historyTargetId(redo).value_or(0);
+    if (mode == "replaced-redo") { QVERIFY(session.moveSelection(4, 0)); QVERIFY(session.undo()); QCOMPARE(session.stateId(), state); QCOMPARE(session.selection(), selection); QVERIFY(session.historyTargetId(true) != target); }
+    const auto before = serializeDocument(session.document()); const auto undoCount = session.undoCount(), redoCount = session.redoCount(); const bool dirty = session.dirty();
+    const bool accepted = session.restoreHistory(redo, mode == "stale-state" ? state + 100 : state, mode == "stale-selection" ? QSet<QUuid>{} : selection, mode == "stale-target" ? target + 100 : target);
+    QCOMPARE(accepted, mode == "undo" || mode == "redo");
+    if (accepted) {
+      QCOMPARE(serializeDocument(session.document()), redo ? moved : serializeDocument(d)); QCOMPARE(session.selection(), selection); QCOMPARE(session.dirty(), redo); QCOMPARE(session.stateId(), redo ? movedId : quint64(0)); QVERIFY(session.editDiagnostic().isEmpty());
+    } else {
+      QCOMPARE(session.editDiagnostic(), QString("annotation-edit-stale")); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.selection(), selection); QCOMPARE(session.undoCount(), undoCount); QCOMPARE(session.redoCount(), redoCount); QCOMPARE(session.dirty(), dirty);
+    }
+    QCOMPARE(session.document().embeddedImages, d.embeddedImages); QCOMPARE(session.document().extra, d.extra);
+  }
   void emptySidecarSaveRefusesToExposeBaselineCompanion_data() {
     QTest::addColumn<bool>("defaultExists"); QTest::addColumn<bool>("intent");
     for (bool exists : {false, true}) for (bool intent : {false, true}) QTest::newRow(qPrintable(QString("%1-%2").arg(exists).arg(intent))) << exists << intent;

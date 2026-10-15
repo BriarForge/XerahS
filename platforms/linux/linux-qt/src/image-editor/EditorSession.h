@@ -96,6 +96,11 @@ public:
 
   bool undo();
   bool redo();
+  // Admission for owned native history preparation. The target identity also
+  // fences a replaced Redo branch after an intervening edit and Undo.
+  std::optional<quint64> historyTargetId(bool redo) const;
+  bool restoreHistory(bool redo, quint64 expectedState, const QSet<QUuid> &expectedSelection,
+                      quint64 expectedTarget);
   int undoCount() const { return static_cast<int>(m_position); }
   int redoCount() const { return static_cast<int>(m_history.size() - 1 - m_position); }
   quint64 stateId() const { return m_history[m_position].stateId; }

@@ -350,7 +350,8 @@ The subsequent [keyboard evidence](app/ANNOTATION-KEYBOARD.md) adds guarded
 move/resize/quarter-turn admission, preserved steps/repeats and exact native
 group history/output. Native capture Crop now supplies owned preview/history/source-proof publication,
 indexed in [CAPTURE-CROP.md](app/CAPTURE-CROP.md). Main-editor Crop now shares that owned preview; see [EDITOR-CROP.md](app/EDITOR-CROP.md).
-Next move main-editor source-changing Undo/Redo to owned preparation.
+Main-editor owned history is now indexed in [EDITOR-HISTORY.md](app/EDITOR-HISTORY.md);
+next migrate the remaining canvas worker paths.
 
 The new [ES-014/030 clarification](app/EMPTY-SIDECAR-CLARIFICATION.md) records
 one deleted annotation reappearing from an intact baseline alias after a formerly
@@ -385,8 +386,8 @@ fourteen visible defaults and full scope remain unchanged. All native/resource/
 a11y/privacy/security/compatibility/parity/human/release gates and the recorded
 Ellipse/clipboard-assets/output-format/legacy-companion/shortcut decisions remain
 Required or pending as recorded. Native capture Crop now supplies that owned
-preview/history/source handoff; main-editor Crop now shares that preview; the next step is owned source-changing
-Undo/Redo preparation (see [EDITOR-CROP.md](app/EDITOR-CROP.md)).
+preview/history/source handoff; main-editor Crop now shares that preview; owned source-changing history is now indexed in [EDITOR-HISTORY.md](app/EDITOR-HISTORY.md).
+The next step is migration of remaining canvas worker paths.
 
 
 [Native capture Crop](app/CAPTURE-CROP.md) now supplies focusable pointer/numeric
@@ -420,9 +421,8 @@ unchanged. Full tools/fields, effects, canvas/output, capture topology, recordin
 audio, uploads, workflows/settings/catalogues, application/history/automation/
 compatibility, distribution/migration/updates/rollback, supported targets, resource/
 performance, privacy/security/a11y/parity/human/release gates and recorded product
-decisions remain Required or pending. Main-editor Crop now shares that preview, as recorded below. Next move main-editor
-source-changing Undo/Redo to owned worker preparation with exact history and
-checkpoint restoration.
+decisions remain Required or pending. Main-editor Crop now shares that preview, as recorded below. Owned main-editor source history is now indexed in [EDITOR-HISTORY.md](app/EDITOR-HISTORY.md).
+Next migrate remaining canvas operations to owned worker preparation.
 
 
 [Main-editor Crop](app/EDITOR-CROP.md) now sends numeric bounds and reverse pointer
@@ -454,7 +454,49 @@ unchanged. All full application/capture/recording/audio/upload/workflow/settings
 editor/effects/history/automation/compatibility/packaging/migration/updates/rollback
 scope, supported targets, resources/performance and human privacy/security/a11y/
 parity/release gates remain Required. Recorded product decisions remain pending;
-no production-readiness percentage is established. Next move main-editor
-source-changing Undo/Redo off GUI-thread refresh to owned source/private-display
-preparation and cancellable progress, with frozen state/selection/generation,
-nonblocking owner teardown and exact source/history/checkpoint admission.
+no production-readiness percentage is established. The following checkpoint implements owned main-editor source history. Next migrate
+remaining canvas operations to owned preparation and frozen admission.
+
+
+[Owned main-editor Undo/Redo](app/EDITOR-HISTORY.md) now copies its source-changing
+history target before busy notifications and validates/decodes/normalizes source
+and private display off the GUI thread. Guarded Core admission freezes current
+state, exact selection and target history ID; native admission also freezes
+canvas generation. A replaced Redo branch is refused even after an intervening
+edit and Undo return to matching current state/selection. Core restores its exact
+document, source/identity/fields/assets/selection and checkpoints; prepared source/
+display publication avoids GUI-thread source decoding. Annotation-only Undo/Redo
+uses guarded restoration without an image worker.
+
+Native Ctrl+Z/Ctrl+Y, alpha/Display P3 source history, saved-before/Crop/Undo
+checkpoints, actual PNG/.xann reopen, preference/file isolation, invalid snapshots,
+reentry, stale state/selection/generation, worker failure and both directions of
+Cancel/Escape/child/owner destruction are verified. Blocked preparation does not
+hold cancellation or forced teardown. Progress cleanup detaches the child before
+destruction observers can delete the parent; final-status/busy-owner deletion is
+also covered. The inspected synthetic native progress exposes readable text and
+Cancel with checked accessibility names/role. Physical/native/human acceptance
+is still Required.
+
+All 44 local CTest targets pass in 61.58 seconds, including the unchanged 114
+published vectors; all eleven affected Qt 6.4.2 targets pass in 46.77 seconds.
+Seven new Core and 28 new native rows are included, plus 32 passing tooling tests.
+The first focused keyboard fixtures needed active-parent/canvas focus after Crop;
+final complete editor-window targets pass on both Qt versions with no timeout or
+shared expected-result change. Compilation also corrected QList UUID fixture
+calls. Exact pushed Ubuntu CI and lint/backlog/effective instructions are recorded
+in the candidate evidence/checkpoint report. Prior main-editor Crop commit
+c4faa5c has verified successful CI 38679232412: 44 Ubuntu 24.04/Qt 6.4.2 tests in
+50.77 seconds and lint success.
+
+Requirement IDs/statuses/dispositions/vector references, 80 implemented/68 partial
+core labels, 52 registered commands and fourteen visible defaults remain
+unchanged. All full application/capture/recording/audio/uploads/workflows/settings/
+editor/tools/effects/canvas/output/history/automation/compatibility/packaging/
+migration/updates/rollback scope, supported targets, resources/performance and
+human privacy/security/a11y/parity/release gates remain Required. Product decisions
+remain pending; no production-readiness percentage or release acceptance is
+established. Next migrate remaining main-editor canvas operations from stack-owned
+future/progress paths to owned preparation and frozen state/selection/generation
+admission, with nonblocking cancellation/owner teardown and unchanged geometry,
+source/profile, exact one-step history and actual persistence.

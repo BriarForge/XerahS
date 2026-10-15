@@ -80,12 +80,11 @@ they were corrected without changing shared vectors or production behavior.
 
 ## Remaining work
 
-Main-editor source-changing Undo/Redo still decodes/converts source in refresh on
-the GUI thread. Other canvas operations still use the older stack-owned worker/
-progress path and must migrate before full resource/shutdown qualification.
-Next move main-editor source-changing Undo/Redo to owned worker preparation with
-frozen state/selection/generation, cancellable progress, exact admission and
-nonblocking owner teardown, preserving checkpoint/Redo semantics.
+The subsequent [owned history checkpoint](EDITOR-HISTORY.md) moves main-editor
+source-changing Undo/Redo preparation off the GUI thread with exact guarded
+admission and nonblocking cancellation/owner teardown. Other canvas operations
+still use the older stack-owned worker/progress path and must migrate before full
+resource/shutdown qualification; that migration is the next implementation step.
 
 All remaining annotation tools/fields, effects, inserted images/background,
 general affine canvas transforms, output formats, capture topology, recording/
