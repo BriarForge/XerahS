@@ -118,7 +118,7 @@ QString EditorCanvas::toolInstructions() const {
       text = "Crop stays active: drag to choose the retained image region."; break;
   }
   return text + " Create Rectangle offers keyboard entry of bounds with captured creation defaults. Drag a selected rectangle's square handles to resize; the opposite handle stays fixed. Rectangle Properties offers numeric bounds and style controls. "
-      "Escape cancels a gesture. Arrows move; Alt+arrows resize; R rotates; Delete removes selected objects. Home/End bring to front/send to back; Page Up/Down bring forward/send backward. Control+wheel zooms; Space+drag pans.";
+      "Escape cancels a gesture. Arrows move one image pixel; Shift+arrows move ten. Alt+arrows move the bottom-right corner one pixel; Alt+Shift+arrows move it ten. R rotates clockwise 90 degrees; Shift+R rotates counterclockwise. Held transform keys repeat. Delete removes selected objects. Home/End bring to front/send to back; Page Up/Down bring forward/send backward. Control+wheel zooms; Space+drag pans.";
 }
 
 void EditorCanvas::setTool(Tool tool) {
@@ -194,6 +194,28 @@ bool EditorCanvas::deleteSelection() {
   bool changed = false; QString diagnostic;
   if (generation != m_documentGeneration) diagnostic = "annotation-edit-stale";
   else { changed = m_session->deleteSelection(state, selection); diagnostic = m_session->editDiagnostic(); }
+  viewport()->update(); if (!diagnostic.isEmpty()) { emit editRejected(diagnostic); if (!owner) return false; }
+  return changed;
+}
+bool EditorCanvas::transformSelection(SelectionTransform transform, double x, double y) {
+  if (!isEnabled() || interactionActive()) return false;
+  const auto state = m_session->stateId(), generation = m_documentGeneration;
+  QSet<QUuid> selection;
+  try { selection = m_session->selection(); }
+  catch (const std::bad_alloc &) { emit editRejected("annotation-edit-failed"); return false; }
+  const QPointer<EditorCanvas> owner(this); m_annotationDialogPending = true;
+  const auto restore = qScopeGuard([owner] { if (owner) { owner->m_annotationDialogPending = false; emit owner->changed(); } });
+  emit changed(); if (!owner) return false;
+  bool changed = false; QString diagnostic;
+  if (generation != m_documentGeneration || !isEnabled()) diagnostic = "annotation-edit-stale";
+  else {
+    switch (transform) {
+      case SelectionTransform::Move: changed = m_session->moveSelection(x, y, state, selection); break;
+      case SelectionTransform::Resize: changed = m_session->resizeSelection(x, y, state, selection); break;
+      case SelectionTransform::Rotate: changed = m_session->rotateSelection(x, state, selection); break;
+    }
+    diagnostic = m_session->editDiagnostic();
+  }
   viewport()->update(); if (!diagnostic.isEmpty()) { emit editRejected(diagnostic); if (!owner) return false; }
   return changed;
 }
@@ -605,29 +627,20 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
     syncViewport();
     return;
   }
-  if (event->modifiers() & Qt::AltModifier) {
-    switch (event->key()) {
-      case Qt::Key_Left: m_session->resizeSelection(-step, 0); break;
-      case Qt::Key_Right: m_session->resizeSelection(step, 0); break;
-      case Qt::Key_Up: m_session->resizeSelection(0, -step); break;
-      case Qt::Key_Down: m_session->resizeSelection(0, step); break;
-      default: QAbstractScrollArea::keyPressEvent(event); return;
-    }
-  } else {
-    switch (event->key()) {
-      case Qt::Key_R: m_session->rotateSelection((event->modifiers() & Qt::ShiftModifier) ? -90 : 90); break;
-      case Qt::Key_Left: m_session->moveSelection(-step, 0); break;
-      case Qt::Key_Right: m_session->moveSelection(step, 0); break;
-      case Qt::Key_Up: m_session->moveSelection(0, -step); break;
-      case Qt::Key_Down: m_session->moveSelection(0, step); break;
-      default: QAbstractScrollArea::keyPressEvent(event); return;
-    }
+  const bool resize = modifiers & Qt::AltModifier;
+  if (!resize && event->key() == Qt::Key_R) {
+    event->accept(); transformSelection(SelectionTransform::Rotate, modifiers & Qt::ShiftModifier ? -90 : 90); return;
   }
-  viewport()->update();
-  if (!m_session->editDiagnostic().isEmpty()) {
-    const QPointer<EditorCanvas> owner(this); emit editRejected(m_session->editDiagnostic()); if (!owner) return;
+  double x = 0, y = 0;
+  switch (event->key()) {
+    case Qt::Key_Left: x = -step; break;
+    case Qt::Key_Right: x = step; break;
+    case Qt::Key_Up: y = -step; break;
+    case Qt::Key_Down: y = step; break;
+    default: QAbstractScrollArea::keyPressEvent(event); return;
   }
-  emit changed();
+  // Each repeated event remains one edit, with a fresh frozen snapshot.
+  event->accept(); transformSelection(resize ? SelectionTransform::Resize : SelectionTransform::Move, x, y);
 }
 
 void EditorCanvas::keyReleaseEvent(QKeyEvent *event) {

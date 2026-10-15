@@ -44,6 +44,7 @@
 #include <QMenu>
 #include <QMimeData>
 #include <QJsonDocument>
+#include <QKeyEvent>
 #include <QPushButton>
 #include <QListWidget>
 #include <QSpinBox>
@@ -224,6 +225,50 @@ private slots:
     std::atomic<bool> planted{false}; if (lateAlias) { EditorSaveHooks hooks; hooks.beforePublish = [&](EditorSaveArtifact kind, const QString &) { if (kind != EditorSaveArtifact::Sidecar) return; QFile legacy(alias); planted = legacy.open(QIODevice::WriteOnly) && legacy.write(*bytes) == bytes->size(); }; window->setSaveHooks(hooks); }
     bool warned = false; QTimer timer; connect(&timer, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return; warned = true; QVERIFY(box->text().contains("PNG saved")); box->accept(); }); timer.start(5); QSignalSpy finished(window.get(), &EditorWindow::saveFinished); trigger(*window, "saveImage"); timer.stop(); QVERIFY(warned); QCOMPARE(finished.count(), 1); QVERIFY(finished[0][0].toBool()); QVERIFY(!finished[0][1].toBool()); QVERIFY(window->windowTitle().contains(" •")); QCOMPARE(serializeDocument(canvas->annotationDocument()), empty); QCOMPARE(QImage(path), fixture()); QCOMPARE(storedBytes(alias), *bytes); if (lateAlias) QVERIFY(planted);
     QCOMPARE(QFile::exists(path + ".xann"), keepDefault); if (keepDefault) QCOMPARE(storedBytes(path + ".xann"), companion);
+  }
+  void keyboardTransformsPersistNativeGroupAndExactHistory_data() {
+    QTest::addColumn<int>("key"); QTest::addColumn<int>("modifiers"); QTest::addColumn<double>("dx"); QTest::addColumn<double>("dy"); QTest::addColumn<double>("angle");
+    QTest::newRow("move-one") << int(Qt::Key_Right) << int(Qt::NoModifier) << 1.0 << 0.0 << 0.0;
+    QTest::newRow("move-ten") << int(Qt::Key_Right) << int(Qt::ShiftModifier) << 10.0 << 0.0 << 0.0;
+    QTest::newRow("resize-one") << int(Qt::Key_Down) << int(Qt::AltModifier) << 0.0 << 1.0 << 0.0;
+    QTest::newRow("resize-ten") << int(Qt::Key_Down) << int(Qt::AltModifier | Qt::ShiftModifier) << 0.0 << 10.0 << 0.0;
+    QTest::newRow("clockwise") << int(Qt::Key_R) << int(Qt::NoModifier) << 0.0 << 0.0 << 90.0;
+    QTest::newRow("counterclockwise") << int(Qt::Key_R) << int(Qt::ShiftModifier) << 0.0 << 0.0 << 270.0;
+  }
+  void keyboardTransformsPersistNativeGroupAndExactHistory() {
+    QFETCH(int, key); QFETCH(int, modifiers); QFETCH(double, dx); QFETCH(double, dy); QFETCH(double, angle); QTemporaryDir dir; const auto path = dir.filePath("keyboard.png"), prefs = dir.filePath("prefs.json"); QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty());
+    auto d = *loadSource(path).document; RectangleAnnotation a; a.id = QUuid::createUuid(); a.start = {10, 10}; a.end = {30, 20}; a.style = {0xFFFF0000, 0xFFFF0000, 1, 0, 1}; a.extra = {{"vendor", "keep"}}; auto b = a; b.id = QUuid::createUuid(); b.start = {35, 25}; b.end = {45, 30}; b.style.fillColor = b.style.strokeColor = 0xFF00FF00;
+    const auto id = QUuid::createUuid(); d.annotations = {a, UnsupportedAnnotation{id, {{"id", id.toString(QUuid::WithoutBraces)}, {"type", "future"}, {"payload", "keep"}}}, b}; d.embeddedImages = {{"asset", d.sourceImagePng}}; d.extra = {{"vendor", "root"}}; QVERIFY(saveEdit(path, fixture(), d).sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); window->activateWindow(); QTRY_VERIFY(window->isActiveWindow()); auto *canvas = window->findChild<EditorCanvas *>(); auto *objects = window->findChild<AnnotationObjectNavigator *>(); canvas->setFocus();
+    QVERIFY(canvas->selectAnnotations({a.id, b.id, id}, canvas->annotationState(), canvas->documentGeneration())); QTest::keyClick(canvas, Qt::Key_Right); trigger(*window, "undo"); const auto original = canvas->annotationDocument(); const auto selection = canvas->annotationSelection(); const auto preferenceBytes = storedBytes(prefs); const auto revision = nativeEditorPreferenceRevision(); const auto defaults = canvas->creationStrokeWidth();
+    bool pending = false, completed = false; connect(canvas, &EditorCanvas::changed, window.get(), [&] { if (canvas->interactionActive()) { pending = true; QVERIFY(!window->close()); QVERIFY(!objects->isEnabled()); QVERIFY(!window->findChild<QAction *>("saveImage")->isEnabled()); } else if (pending) completed = true; });
+    QSignalSpy rejected(canvas, &EditorCanvas::editRejected); QTest::keyClick(canvas, Qt::Key(key), Qt::KeyboardModifiers(modifiers)); QVERIFY(pending && completed); QCOMPARE(rejected.count(), 0);
+    auto expected = original; for (int index : {0, 2}) { auto &r = std::get<RectangleAnnotation>(expected.annotations[index]); if (angle) r.style.rotationDegrees = angle; else { if (!(modifiers & Qt::AltModifier)) { r.start.x += dx; r.start.y += dy; } r.end.x += dx; r.end.y += dy; } }
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); QCOMPARE(canvas->annotationSelection(), selection); QCOMPARE(objects->model()->rowCount(), 3); QVERIFY(window->windowTitle().contains(" •")); QVERIFY(!window->findChild<QAction *>("redo")->isEnabled());
+    trigger(*window, "undo"); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(original)); QCOMPARE(canvas->annotationSelection(), selection); QVERIFY(!window->windowTitle().contains(" •")); QVERIFY(!window->findChild<QAction *>("undo")->isEnabled());
+    trigger(*window, "redo"); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); trigger(*window, "saveImage"); QVERIFY(!window->windowTitle().contains(" •")); const auto reopened = loadSource(path); QVERIFY(reopened.document); QCOMPARE(serializeDocument(*reopened.document).value("annotations"), serializeDocument(expected).value("annotations")); QCOMPARE(reopened.document->sourceImagePng, original.sourceImagePng); QCOMPARE(reopened.document->embeddedImages, original.embeddedImages); QCOMPARE(reopened.document->extra, original.extra);
+    if (angle) { QCOMPARE(QImage(path).pixelColor(12, 15), fixture().pixelColor(12, 15)); QCOMPARE(QImage(path).pixelColor(20, 7), QColor(Qt::red)); }
+    else if (modifiers & Qt::AltModifier) { QCOMPARE(QImage(path).pixelColor(15, int(20 + dy - 1)), QColor(Qt::red)); QCOMPARE(QImage(path).pixelColor(15, int(20 + dy + 2)), fixture().pixelColor(15, int(20 + dy + 2))); }
+    else { QCOMPARE(QImage(path).pixelColor(int(10 + dx - 2), 15), fixture().pixelColor(int(10 + dx - 2), 15)); QCOMPARE(QImage(path).pixelColor(int(30 + dx - 2), 15), QColor(Qt::red)); }
+    QCOMPARE(canvas->creationStrokeWidth(), defaults); QCOMPARE(storedBytes(prefs), preferenceBytes); QCOMPARE(nativeEditorPreferenceRevision(), revision);
+  }
+  void keyboardTransformsKeepNativeTextListModalAndBusyPrecedence() {
+    QTemporaryDir dir; const auto path = dir.filePath("key-focus.png"), prefs = dir.filePath("prefs.json"); QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty()); auto d = *loadSource(path).document;
+    RectangleAnnotation a; a.id = QUuid::createUuid(); a.start = {10, 10}; a.end = {30, 20}; auto b = a; b.id = QUuid::createUuid(); b.start = {35, 25}; b.end = {45, 30}; d.annotations = {a, b}; QVERIFY(saveEdit(path, fixture(), d).sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); window->activateWindow(); QTRY_VERIFY(window->isActiveWindow()); auto *canvas = window->findChild<EditorCanvas *>(); auto *objects = window->findChild<AnnotationObjectNavigator *>(); QVERIFY(canvas->selectAnnotations({a.id, b.id}, canvas->annotationState(), canvas->documentGeneration())); const auto original = serializeDocument(canvas->annotationDocument()); const auto state = canvas->annotationState();
+    auto *line = new QLineEdit(window.get()); line->setGeometry(30, 30, 180, 30); line->show(); line->setText("abcd"); line->setFocus(); QTRY_COMPARE(QApplication::focusWidget(), line); line->setCursorPosition(3); QTest::keyClick(line, Qt::Key_Left); QCOMPARE(line->cursorPosition(), 2); QTest::keyClicks(line, "r"); QCOMPARE(line->text(), QString("abrcd"));
+    QTest::keyClick(line, Qt::Key_Right, Qt::AltModifier | Qt::ShiftModifier); QCOMPARE(serializeDocument(canvas->annotationDocument()), original); QCOMPARE(canvas->annotationState(), state); QVERIFY(!window->findChild<QAction *>("undo")->isEnabled()); delete line;
+    objects->setFocus(); objects->setCurrentIndex(objects->model()->index(0, 0)); QTRY_COMPARE(QApplication::focusWidget(), objects); QTest::keyClick(objects, Qt::Key_Down); QCOMPARE(objects->currentIndex().row(), 1); QTest::keyClick(objects, Qt::Key_Up, Qt::ShiftModifier); QCOMPARE(objects->currentIndex().row(), 0); QTest::keyClick(objects, Qt::Key_R); QCOMPARE(serializeDocument(canvas->annotationDocument()), original); QCOMPARE(canvas->annotationState(), state);
+    QDialog modal(window.get()); auto *modalLine = new QLineEdit(&modal); modalLine->setGeometry(10, 10, 180, 30); modal.resize(220, 70); modal.setWindowModality(Qt::WindowModal); modal.show(); modal.activateWindow(); modalLine->setFocus(); QTRY_COMPARE(QApplication::focusWidget(), modalLine); QTest::keyClicks(modalLine, "r"); QTest::keyClick(modalLine, Qt::Key_Left); QCOMPARE(modalLine->text(), QString("r")); QCOMPARE(modalLine->cursorPosition(), 0); QCOMPARE(serializeDocument(canvas->annotationDocument()), original); modal.reject();
+    window->activateWindow(); canvas->setFocus(); QTRY_VERIFY(window->isActiveWindow()); canvas->selectAnnotations({a.id, b.id}, canvas->annotationState(), canvas->documentGeneration()); const QSet<QUuid> selection{a.id, b.id}; QCOMPARE(canvas->annotationSelection(), selection);
+    const auto gate = std::make_shared<SaveGate>(); window->setSaveHooks(gatedSave(gate)); bool observed = false; QTimer timer; QElapsedTimer deadline; deadline.start();
+    connect(&timer, &QTimer::timeout, [&] {
+      if (observed || (!gate->entered.load() && deadline.elapsed() < 5000)) return; observed = true; const auto release = qScopeGuard([gate] { gate->released.store(true); }); QVERIFY(gate->entered.load()); QVERIFY(!canvas->isEnabled()); QVERIFY(!window->close());
+      for (int transform = 0; transform < 3; ++transform) { QKeyEvent event(QEvent::KeyPress, transform == 2 ? Qt::Key_R : Qt::Key_Right, transform == 1 ? Qt::AltModifier : Qt::NoModifier); QApplication::sendEvent(canvas, &event); }
+      QCOMPARE(serializeDocument(canvas->annotationDocument()), original); QCOMPARE(canvas->annotationSelection(), selection); QCOMPARE(canvas->annotationState(), state);
+    });
+    timer.start(5); trigger(*window, "saveImage"); timer.stop(); QVERIFY(observed); QVERIFY(gate->finished.load()); QVERIFY(canvas->isEnabled()); QCOMPARE(canvas->annotationState(), state); QCOMPARE(canvas->annotationSelection(), selection); QVERIFY(!window->findChild<QAction *>("undo")->isEnabled());
+    QTest::keyClick(canvas, Qt::Key_Right); QVERIFY(window->findChild<QAction *>("undo")->isEnabled()); trigger(*window, "undo"); QCOMPARE(serializeDocument(canvas->annotationDocument()), original);
   }
   void nativeDeletePersistsRemainingObjectsAndEmptySidecarPolicy_data() {
     QTest::addColumn<QString>("mode"); for (const auto *mode : {"menu", "delete", "backspace", "hotkey", "all"}) QTest::newRow(mode) << QString(mode);

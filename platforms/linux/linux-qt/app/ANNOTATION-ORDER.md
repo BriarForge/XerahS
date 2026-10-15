@@ -92,10 +92,11 @@ review does not replace physical keyboard/AT/high-contrast/desktop qualification
 
 [Guarded native deletion](ANNOTATION-DELETE.md) now supplies state/selection/
 generation admission, capture Delete and native lifetime/history/persistence
-coverage. Next guard keyboard move, Alt+arrow resize and quarter-turn R dispatch,
-retaining step/repeat semantics and exact group geometry/history, source/default
-preservation and stale/protected/owner failure evidence. Continue remaining
-annotation tools/fields and shared decisions with the full contract sequence.
+coverage. [Guarded keyboard transforms](ANNOTATION-KEYBOARD.md) now retain native
+move/resize/quarter-turn steps and repeats with exact group history and output.
+Next add native capture Crop with an owned cancellable Core canvas handoff and
+truthful coordinate/history/source/default/unknown-geometry behavior. Continue
+remaining annotation tools/fields and shared decisions with the full contract sequence.
 
 Ellipse schema/rasterization, clipboard assets and output-format decisions remain
 pending in ANNOTATION-TOOLS.md, ANNOTATION-TRANSFER.md and EDITOR-SAVE.md. All tools,

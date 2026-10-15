@@ -61,6 +61,7 @@ public:
   // ES-004: keyboard and pointer parity operations, each one history operation.
   // Resizing moves the bottom-right corner; a result without positive area is rejected.
   bool resizeSelection(double dw, double dh);
+  bool resizeSelection(double dw, double dh, quint64 expectedState, const QSet<QUuid> &expectedSelection);
   // Rotation is clockwise degrees about the bounds centre, normalized to [0, 360).
   bool rotateSelection(double degrees);
   bool rotateSelection(double degrees, quint64 expectedState, const QSet<QUuid> &expectedSelection);

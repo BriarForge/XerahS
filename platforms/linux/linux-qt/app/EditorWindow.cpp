@@ -1215,7 +1215,7 @@ void EditorWindow::recordRecentImage(const QString &absolutePath) {
 void EditorWindow::closeEvent(QCloseEvent *event) {
   // A cancelled progress window can hide before its worker exits. Keep the
   // editor and its stack-owned modal objects alive until preparation completes.
-  if (m_canvasOperationPending || m_closePending || m_outputPending) { event->ignore(); return; }
+  if (m_canvasOperationPending || m_closePending || m_outputPending || m_canvas->interactionActive()) { event->ignore(); return; }
   const QPointer<EditorWindow> guard(this); m_closePending = true;
   const auto closing = qScopeGuard([guard] { if (guard) guard->m_closePending = false; });
   if (m_session->dirty()) {

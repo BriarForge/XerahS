@@ -75,6 +75,8 @@ protected:
   void scrollContentsBy(int, int) override;
 
 private:
+  enum class SelectionTransform { Move, Resize, Rotate };
+  bool transformSelection(SelectionTransform, double x, double y = 0);
   bool rectangleDialog(QWidget *parent, bool creation);
   std::optional<QUuid> topmostAt(QPointF imagePoint) const;
   std::optional<xerahs::editor::RectangleHandle> handleAt(QPointF viewPoint) const;

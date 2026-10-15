@@ -213,13 +213,16 @@ and verifies real output including explicit empty-sidecar removal.
 reappearance counterexample and conservative companion refusal/recovery until
 archive/reconciliation is decided. Native refresh
 and capture history guard owner teardown, including status notification after Qt
-traversal. Next guard canvas keyboard move, Alt+arrow resize and quarter-turn R
-dispatch while preserving steps/repeats/history and full native failure evidence,
-while resolving the shared Ellipse decision, alongside
-owned native output service handoffs, remaining tools and the
-format policy and all other contracted output/capture/application domains.
-Physical clipboard/color/accessibility, shutdown and human gates remain
-Required; this does not accept full output conformance or parity.
+traversal. [Guarded keyboard transforms](app/ANNOTATION-KEYBOARD.md) now fence
+state/selection/generation and native owner admission while retaining steps,
+quarter turns, repeats and exact group history. Ordinary Close waits for active
+canvas interaction; actual editor/capture PNG/.xann, focus/modal/save-busy and
+source/default/asset isolation are verified. Next add capture Crop with an owned
+cancellable Core canvas handoff, pointer/numeric bounds, exact Undo/Redo,
+coordinate mapping and truthful unknown-geometry refusal through publication.
+All tools, effects, canvas/output, capture topology, recording/audio, uploads,
+workflows/settings/catalogues, compatibility, packaging/migration/updates/rollback,
+supported targets and native/human release qualification remain Required.
 
 Each checkpoint updates requirement traceability, runs native tests and the
 implemented shared vectors, and lands on `main`. Passing the small pilot vector

@@ -1,0 +1,132 @@
+{
+  "capability": "EDITOR-ANNOTATIONS-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial-candidate-evidence",
+  "related_capabilities": [
+    "EDITOR-SESSION-001",
+    "EDITOR-SETTINGS-001"
+  ],
+  "implementation": [
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.h",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+    "platforms/linux/linux-qt/app/EditorCanvas.h",
+    "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/app/ANNOTATION-KEYBOARD.md",
+    "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+    "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp"
+  ],
+  "requirements": {
+    "EA-003": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Guarded native keyboard move/resize/quarter turns retain steps/repeats and whole-group protection; remaining selection/transform/tool/native qualification stays Required."
+    },
+    "EA-014": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Keyboard geometry edits preserve creation defaults and private editor preferences; complete tool/field/default qualification stays Required."
+    },
+    "EA-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Accepted key and repeat events commit one exact history operation each; rejection/no-op preserves Redo/checkpoints. Remaining mutation/history/resource/native scope stays Required."
+    },
+    "EA-018": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Accessible instructions, actual keys and text/list/modal/busy precedence are verified; physical AT/high-contrast/all tool/control/native/human qualification stays Required."
+    },
+    "EA-019": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Actual editor and capture PNG/.xann reopen preserves UUID/order/source/assets/root and compatible unknown fields; full model/interchange/native/compatibility gates stay Required."
+    },
+    "EA-020": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Finite atomic resize and typed stale/protection/owner failure paths preserve state. Complete resource/performance/consent/privacy/security/native/human qualification stays Required."
+    },
+    "ES-008": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Ordinary editor Close refuses an active canvas gesture/edit admission; capture cancellation/destruction retains original working pixels. Full close/shutdown/consent/native/human qualification stays Required."
+    },
+    "ESET-016": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Existing keyboard transform steps/repeats and native focus/modal/save-busy precedence remain, with explicit accessible instructions. Draft catalogue approval and full command/surface/native/human qualification stay Required."
+    }
+  },
+  "verification": {
+    "local_ctest": {
+      "passed": 44,
+      "failed": 0,
+      "sequence": "The full run took 48.77 seconds: 43 targets passed and editor-window failed on a redundant-selection fixture assertion. After correcting that assertion, the complete editor-window target passed in 14.70 seconds; all current targets are verified without restarting the unchanged 43 successes.",
+      "successful_target_seconds_sum": 48.13,
+      "editor_window_retest_seconds": 14.7
+    },
+    "published_vectors": {
+      "passed": 114,
+      "failed": 0,
+      "expected_results_changed": false,
+      "evidence": "The unchanged conformance target passed in the full local and minimum-Qt runs; six published capability packages still contain 114 vectors."
+    },
+    "tooling_tests": {
+      "contract_linter": 16,
+      "contract_backlog": 9,
+      "conformance_runner": 7,
+      "failed": 0
+    },
+    "minimum_qt": {
+      "version": "6.4.2",
+      "affected_ctest_targets": 7,
+      "failed": 0,
+      "targets": [
+        "annotation-object-navigator",
+        "capture-annotation",
+        "conformance",
+        "editor-canvas",
+        "editor-session",
+        "editor-window",
+        "native-editor-toolbar"
+      ],
+      "successful_target_seconds_sum": 24.73,
+      "sequence": "Five targets passed in the initial run. Capture passed after its accepted-state fixture adopted the established finished-signal lifecycle; editor-window passed after the real pending Close guard fix and redundant-selection assertion correction. The final full editor-window retest passed in 13.92 seconds.",
+      "editor_window_retest_seconds": 13.92
+    },
+    "native_regressions": {
+      "close": "A clean editor previously accepted Close during keyboard edit admission and persisted window preferences. The ordinary Close guard now refuses active canvas interaction on both Qt versions.",
+      "capture_fixture": "The new fixture initially queried an established delete-on-close dialog after exec; collecting only accepted state on finished fixes the fixture without changing product capture lifetime.",
+      "selection_fixture": "Replacing a selection with the identical selected IDs is a no-op, not a mutation. The focus fixture now asserts the exact resulting UUID set without requiring a true changed return. Shared expected vectors were not changed."
+    },
+    "visual_review": "Private capture row 1-apply was inspected: selected resized rectangles with outlined selection, list, local 3 px default, companion disclosure and Apply/Cancel. Physical/native/human acceptance remains Required.",
+    "ci": "Exact pushed revision and Ubuntu 24.04/Qt 6.4.2 Product Contract CI are verified in the checkpoint report; no human/release gate is accepted."
+  },
+  "prior_checkpoint_verification": {
+    "head_sha": "9d47c34e9090c5c8aea589911f114db6542f9ea8",
+    "ci_url": "https://github.com/BriarForge/XerahS/actions/runs/38654736774",
+    "conclusion": "success",
+    "native_job_id": 116161695758,
+    "lint_job_id": 116161695955,
+    "native_ctest_passed": 44,
+    "native_ctest_failed": 0,
+    "native_ctest_seconds": 46.01,
+    "qt_version": "6.4.2"
+  },
+  "next_action": "Add native capture Crop and owned cancellable Core canvas preparation with pointer/numeric bounds, exact history, coordinate mapping and truthful unknown-geometry refusal.",
+  "unresolved_decisions": [
+    "EA-005-LINUX-2026-10-14",
+    "EA-016-LINUX-2026-10-14",
+    "EO-004-LINUX-2026-10-14",
+    "ES-014-030-LINUX-2026-10-15",
+    "draft-native-equivalence-pending-product-owner-approval"
+  ]
+}

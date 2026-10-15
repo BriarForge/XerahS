@@ -191,7 +191,9 @@ clipboard/assets, target/resource/privacy/security/a11y/human gates remain Requi
    candidate catalogue gestures, retaining group order and native text/list
    precedence. Guarded deletion now adds capture Delete and fences native state/
    selection/generation with exact group history, output and teardown evidence.
-   Next guard keyboard move/resize/quarter-turn dispatch,
+   Guarded keyboard transforms now retain steps/repeats, frozen admission,
+   exact group history and actual output, with pending Close refusal. Next add
+   native capture Crop using an owned cancellable Core canvas handoff,
    while resolving Ellipse schema/rasterization clarification
    EA-005-LINUX-2026-10-14 in ANNOTATION-TOOLS.md, full annotation/asset clipboard
    under EA-016/017 and native output
@@ -343,9 +345,11 @@ the checkpoint. Registry/default layout and requirement scope/dispositions remai
 unchanged. ES-014 is now honestly labelled partial because the baseline-alias
 archive/reconciliation policy is unresolved. Full scope, all native/resource/a11y/privacy/security/parity/human/
 release gates and draft shortcut-catalogue approval remain Required.
-Next guard keyboard move, Alt+arrow resize and quarter-turn R dispatch with the
-existing one/ten-pixel steps and repeat semantics, exact batch geometry/history,
-source/default preservation and native stale/protected/owner failure evidence.
+The subsequent [keyboard evidence](app/ANNOTATION-KEYBOARD.md) adds guarded
+move/resize/quarter-turn admission, preserved steps/repeats and exact native
+group history/output. Next add native capture Crop with owned cancellable
+Core canvas preparation, pointer/numeric bounds, coordinate mapping and
+truthful unknown-geometry refusal through publication.
 
 The new [ES-014/030 clarification](app/EMPTY-SIDECAR-CLARIFICATION.md) records
 one deleted annotation reappearing from an intact baseline alias after a formerly
@@ -355,3 +359,31 @@ raster and owned zero-annotation state with dirty/retry evidence. Archive or
 reconciliation with confirmation/rollback requires the pending product-owner
 policy and full privacy/security/compatibility review; no policy is inferred from
 continuation. Other contracted work continues independently.
+
+
+The [keyboard transform evidence](app/ANNOTATION-KEYBOARD.md) and candidate map
+index actual one/ten-pixel move/resize, both quarter turns, held-key repeat,
+whole-group finite/protection admission, exact history/default/source/assets,
+stale selection/state/generation and pending/rejection/completion owner failure.
+Real editor/capture PNG/.xann reopen and independently sampled pixels retain
+accepted edits; capture Cancel/destruction keeps the original working image.
+The new clean-window pending Close regression now refuses active canvas
+interaction. Text/list/modal and gated native-save focus/busy/recovery are
+verified. Full local verification covers all 44 targets: the full run passed 43
+and, after a redundant-selection fixture correction, the complete editor-window
+retest passed in 14.70 seconds. The unchanged 114 vectors and 32 tooling tests
+pass; seven affected Qt 6.4.2 targets are verified, with the final editor-window
+retest in 13.92 seconds. The candidate map records the sequences and fixture/Close
+findings honestly. Contract lint/backlog/effective instructions and exact pushed
+Ubuntu CI are reported with the checkpoint. Prior deletion commit 9d47c34 has
+verified successful CI run 38654736774: 44 Ubuntu 24.04/Qt 6.4.2 tests in 46.01
+seconds, plus lint success.
+
+Requirement IDs/statuses/dispositions/vector references, 52 registered commands,
+fourteen visible defaults and full scope remain unchanged. All native/resource/
+a11y/privacy/security/compatibility/parity/human/release gates and the recorded
+Ellipse/clipboard-assets/output-format/legacy-companion/shortcut decisions remain
+Required or pending as recorded. Next add native capture Crop with an owned
+cancellable Core canvas handoff, pointer/numeric bounds, one history step and
+exact Undo/Redo, coordinate mapping, source/default isolation and truthful
+unknown-geometry refusal through accepted publication.

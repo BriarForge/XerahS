@@ -59,6 +59,64 @@ private slots:
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());
   }
+  void keyboardTransformsUseImagePixelsAndKeepRepeatHistory_data() {
+    QTest::addColumn<int>("key"); QTest::addColumn<int>("modifiers"); QTest::addColumn<double>("dx"); QTest::addColumn<double>("dy"); QTest::addColumn<double>("angle");
+    for (bool resize : {false, true}) for (bool shift : {false, true}) for (int direction = 0; direction < 4; ++direction) {
+      const int keys[] = {Qt::Key_Left, Qt::Key_Right, Qt::Key_Up, Qt::Key_Down}; const double step = shift ? 10 : 1;
+      QTest::newRow(qPrintable(QString("%1-%2-%3").arg(resize ? "resize" : "move").arg(shift ? 10 : 1).arg(direction)))
+          << keys[direction] << int((resize ? Qt::AltModifier : Qt::NoModifier) | (shift ? Qt::ShiftModifier : Qt::NoModifier))
+          << (direction == 0 ? -step : direction == 1 ? step : 0) << (direction == 2 ? -step : direction == 3 ? step : 0) << 0.0;
+    }
+    QTest::newRow("clockwise") << int(Qt::Key_R) << int(Qt::NoModifier) << 0.0 << 0.0 << 90.0;
+    QTest::newRow("counterclockwise") << int(Qt::Key_R) << int(Qt::ShiftModifier) << 0.0 << 0.0 << -90.0;
+  }
+  void keyboardTransformsUseImagePixelsAndKeepRepeatHistory() {
+    QFETCH(int, key); QFETCH(int, modifiers); QFETCH(double, dx); QFETCH(double, dy); QFETCH(double, angle);
+    const auto source = image(); EditorSession prepared(document()); const auto a = *prepared.createRectangle({100, 100}, {160, 180}), b = *prepared.createRectangle({300, 200}, {380, 270}); QVERIFY(prepared.createRectangle({500, 300}, {560, 360}));
+    auto d = prepared.document(); const auto id = QUuid::createUuid(); d.annotations.insert(d.annotations.begin() + 1, UnsupportedAnnotation{id, {{"id", id.toString(QUuid::WithoutBraces)}, {"type", "future"}, {"payload", "keep"}}}); d.embeddedImages = {{"asset", "keep pixels"}}; d.extra = {{"vendor", "root"}};
+    std::get<RectangleAnnotation>(d.annotations[0]).style.rotationDegrees = 37.25; std::get<RectangleAnnotation>(d.annotations[2]).style.rotationDegrees = 90;
+    EditorSession session(d); session.select({a}); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); session.select({a, b, id}); const auto selection = session.selection(); const auto defaults = session.toolStyle();
+    EditorCanvas canvas(session, source); canvas.resize(450, 350); canvas.show(); canvas.activateWindow(); canvas.setFocus(); QTRY_VERIFY(canvas.isActiveWindow()); canvas.zoomToFit(); const auto zoom = canvas.viewState().zoom(); const auto offset = canvas.viewState().offset();
+    QVERIFY(canvas.accessibleDescription().contains("Shift+arrows")); QVERIFY(canvas.accessibleDescription().contains("Held transform keys repeat")); QSignalSpy rejected(&canvas, &EditorCanvas::editRejected);
+    auto expected = d; const auto advance = [&] {
+      for (int index : {0, 2}) { auto &r = std::get<RectangleAnnotation>(expected.annotations[index]); if (angle) { r.style.rotationDegrees += angle; if (r.style.rotationDegrees >= 360) r.style.rotationDegrees -= 360; if (r.style.rotationDegrees < 0) r.style.rotationDegrees += 360; }
+        else { if (!(modifiers & Qt::AltModifier)) { r.start.x += dx; r.start.y += dy; } r.end.x += dx; r.end.y += dy; } }
+    };
+    QTest::keyClick(&canvas, Qt::Key(key), Qt::KeyboardModifiers(modifiers)); advance(); QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(session.undoCount(), 1); QCOMPARE(session.redoCount(), 0);
+    const auto first = serializeDocument(expected); QKeyEvent repeat(QEvent::KeyPress, key, Qt::KeyboardModifiers(modifiers), {}, true); QApplication::sendEvent(&canvas, &repeat); advance();
+    QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(session.undoCount(), 2); QCOMPARE(session.selection(), selection); QCOMPARE(rejected.count(), 0); QVERIFY(session.dirty());
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), first); QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(d)); QCOMPARE(session.selection(), selection); QVERIFY(!session.dirty());
+    QVERIFY(session.redo()); QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(session.toolStyle().strokeWidth, defaults.strokeWidth); QCOMPARE(session.toolStyle().rotationDegrees, defaults.rotationDegrees); QCOMPARE(canvas.viewState().zoom(), zoom); QCOMPARE(canvas.viewState().offset(), offset); QCOMPARE(source, image());
+  }
+  void keyboardTransformsGuardPendingStateSelectionGenerationAndOwner_data() {
+    QTest::addColumn<int>("key"); QTest::addColumn<int>("modifiers"); QTest::addColumn<QString>("mode");
+    for (int transform = 0; transform < 3; ++transform) for (const auto *mode : {"apply", "defaults", "stale-state", "stale-selection", "replacement", "disabled", "late-disabled", "hidden", "locked", "opaque-lock", "unknown-only", "begin-destroy", "reject-destroy", "finish-destroy"})
+      QTest::newRow(qPrintable(QString("%1-%2").arg(transform).arg(mode))) << int(transform == 2 ? Qt::Key_R : Qt::Key_Right) << int(transform == 1 ? Qt::AltModifier : Qt::NoModifier) << QString(mode);
+  }
+  void keyboardTransformsGuardPendingStateSelectionGenerationAndOwner() {
+    QFETCH(int, key); QFETCH(int, modifiers); QFETCH(QString, mode); const auto source = image(); EditorSession prepared(document()); const auto a = *prepared.createRectangle({100, 100}, {160, 160}), b = *prepared.createRectangle({300, 100}, {360, 160}); auto d = prepared.document();
+    if (mode == "hidden") std::get<RectangleAnnotation>(d.annotations[1]).visible = false; if (mode == "locked") std::get<RectangleAnnotation>(d.annotations[1]).extra = {{"locked", true}};
+    if (mode == "opaque-lock" || mode == "unknown-only") d.annotations[1] = UnsupportedAnnotation{b, {{"id", b.toString(QUuid::WithoutBraces)}, {"type", "future"}, {"locked", mode == "opaque-lock" ? QJsonValue("future-lock") : QJsonValue(false)}}};
+    EditorSession session(d), replacement(d); session.select({a}); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); session.select(mode == "unknown-only" ? QList<QUuid>{b} : QList<QUuid>{a, b}); replacement.select({a, b});
+    auto expected = serializeDocument(d); auto selection = session.selection(); int undo = 0, redo = 1; bool intervened = false; int notifications = 0;
+    auto canvas = std::make_unique<EditorCanvas>(session, source); QSignalSpy rejected(canvas.get(), &EditorCanvas::editRejected); if (mode == "disabled") canvas->setEnabled(false); if (mode == "reject-destroy") connect(canvas.get(), &EditorCanvas::editRejected, [&] { canvas.reset(); });
+    connect(canvas.get(), &EditorCanvas::changed, [&] {
+      ++notifications; if (intervened) { if (canvas && !canvas->interactionActive() && mode == "finish-destroy") canvas.reset(); return; }
+      if (!canvas->interactionActive()) return; intervened = true; QKeyEvent nested(QEvent::KeyPress, Qt::Key_Left, Qt::NoModifier); QApplication::sendEvent(canvas.get(), &nested); QCOMPARE(serializeDocument(session.document()), expected);
+      if (mode == "begin-destroy") { canvas.reset(); return; } if (mode == "replacement") canvas->resetDocument(replacement, source); if (mode == "late-disabled") canvas->setEnabled(false);
+      if (mode == "stale-selection" || mode == "reject-destroy") { session.select({b}); selection = session.selection(); }
+      if (mode == "stale-state") { QVERIFY(session.moveSelection(2, 0)); expected = serializeDocument(session.document()); undo = 1; redo = 0; }
+      if (mode == "defaults") { auto style = session.toolStyle(); style.strokeWidth = 9; QVERIFY(session.setCreationStyle(style)); }
+    });
+    QKeyEvent event(QEvent::KeyPress, key, Qt::KeyboardModifiers(modifiers)); QApplication::sendEvent(canvas.get(), &event); QCOMPARE(intervened, mode != "disabled");
+    const bool applied = mode == "apply" || mode == "defaults" || mode == "finish-destroy";
+    if (applied) { auto changed = d; for (auto &annotation : changed.annotations) { auto &r = std::get<RectangleAnnotation>(annotation); if (key == Qt::Key_R) r.style.rotationDegrees = 90; else { if (!(modifiers & Qt::AltModifier)) ++r.start.x; ++r.end.x; } }
+      QCOMPARE(serializeDocument(session.document()), serializeDocument(changed)); QCOMPARE(session.selection(), selection); QCOMPARE(session.undoCount(), 1); QVERIFY(session.undo()); }
+    QCOMPARE(serializeDocument(session.document()), expected); QCOMPARE(session.selection(), selection); QCOMPARE(session.undoCount(), undo); QCOMPARE(session.redoCount(), redo); QCOMPARE(session.dirty(), mode == "stale-state"); QCOMPARE(session.toolStyle().strokeWidth, mode == "defaults" ? 9.0 : 4.0); QCOMPARE(replacement.undoCount(), 0); QCOMPARE(serializeDocument(replacement.document()), serializeDocument(d));
+    const bool stale = mode.startsWith("stale-") || mode == "replacement" || mode == "late-disabled" || mode == "reject-destroy", protectedSelection = mode == "hidden" || mode.contains("lock");
+    QCOMPARE(rejected.count(), stale || protectedSelection ? 1 : 0); if (stale || protectedSelection) QCOMPARE(rejected[0][0].toString(), QString(stale ? "annotation-edit-stale" : "annotation-selection-protected"));
+    if (mode == "disabled") QCOMPARE(notifications, 0); if (mode == "begin-destroy" || mode == "reject-destroy") QCOMPARE(notifications, 1); if (canvas) QVERIFY(!canvas->interactionActive()); QCOMPARE(source, image());
+  }
   void nativeDeleteKeysRemoveOneGroupAndPreserveHistory_data() {
     QTest::addColumn<int>("key"); for (auto key : {Qt::Key_Delete, Qt::Key_Backspace}) QTest::newRow(key == Qt::Key_Delete ? "delete" : "backspace") << int(key);
   }
@@ -703,7 +761,7 @@ private slots:
     connect(canvas.get(), &EditorCanvas::changed, [&] { ++changed; });
     connect(canvas.get(), &EditorCanvas::editRejected, [&] { ++rejected; canvas.reset(); });
     QKeyEvent event(QEvent::KeyPress, Qt::Key_Left, Qt::AltModifier); QApplication::sendEvent(canvas.get(), &event);
-    QVERIFY(!canvas); QCOMPARE(rejected, 1); QCOMPARE(changed, 0); QVERIFY(!session.dirty()); QCOMPARE(session.undoCount(), 1);
+    QVERIFY(!canvas); QCOMPARE(rejected, 1); QCOMPARE(changed, 1); QVERIFY(!session.dirty()); QCOMPARE(session.undoCount(), 1);
   }
   void drawAndMoveUseImagePixelsAfterZoom() {
     const QImage source = image();

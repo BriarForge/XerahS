@@ -102,11 +102,11 @@ verification.
 
 ## Next work and full scope
 
-Next guard canvas keyboard move, Alt+arrow resize and quarter-turn R dispatch,
-retaining one/ten-pixel steps, repeat semantics, exact batch geometry/history,
-source/default preservation and native stale/protected/owner/failure evidence.
-Continue the shared Ellipse, clipboard-assets, output-format and shortcut
-clarifications and the rest of the full implementation sequence.
+[Guarded native keyboard transforms](ANNOTATION-KEYBOARD.md) now supply frozen
+state/selection/generation admission, repeat/history and editor/capture
+persistence/lifetime evidence. Next add native capture Crop and an owned
+cancellable Core canvas handoff with pointer/numeric bounds, exact history,
+coordinate mapping, source/default isolation and truthful unknown-geometry refusal.
 
 All tools/fields, 232 effects, canvas/output, capture mapping/topology,
 recording/audio, uploads, 436 workflows, 922 settings, application/history/

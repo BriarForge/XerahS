@@ -253,6 +253,12 @@ bool EditorSession::rotateSelection(double degrees) {
   });
 }
 
+bool EditorSession::resizeSelection(double dw, double dh, quint64 expectedState, const QSet<QUuid> &expectedSelection) {
+  m_editDiagnostic.clear();
+  if (stateId() != expectedState || m_selection != expectedSelection) { m_editDiagnostic = "annotation-edit-stale"; return false; }
+  return resizeSelection(dw, dh);
+}
+
 bool EditorSession::rotateSelection(double degrees, quint64 expectedState, const QSet<QUuid> &expectedSelection) {
   m_editDiagnostic.clear();
   if (stateId() != expectedState || m_selection != expectedSelection) { m_editDiagnostic = "annotation-edit-stale"; return false; }

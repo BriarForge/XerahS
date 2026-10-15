@@ -18,6 +18,7 @@
 #include <QTest>
 #include <QTimer>
 #include <QLineEdit>
+#include <QKeyEvent>
 #include <QDialogButtonBox>
 #include <QPushButton>
 #include <QToolBar>
@@ -43,6 +44,45 @@ private slots:
   void initTestCase() {
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());
+  }
+  void captureKeyboardTransformsPublishAcceptedStateAndPreserveSource_data() {
+    QTest::addColumn<int>("transform"); QTest::addColumn<QString>("mode");
+    for (int transform = 0; transform < 3; ++transform) for (const auto *mode : {"apply", "protected", "cancel", "begin-destroy", "finish-destroy"}) QTest::newRow(qPrintable(QString("%1-%2").arg(transform).arg(mode))) << transform << QString(mode);
+  }
+  void captureKeyboardTransformsPublishAcceptedStateAndPreserveSource() {
+    QFETCH(int, transform); QFETCH(QString, mode); using namespace xerahs::editor; QTemporaryDir dir; const auto prefs = dir.filePath("preferences.json"); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty()); const auto resetPreferences = qScopeGuard([] { initializeNativeEditorPreferences(); });
+    QVERIFY(applyDrawingDefaults({{"Thickness", 7}}, nativeEditorPreferenceRevision()).saved); const auto revision = nativeEditorPreferenceRevision(); QFile pref(prefs); QVERIFY(pref.open(QIODevice::ReadOnly)); const auto preferenceBytes = pref.readAll(); pref.close();
+    AnnotationDocument original, expected; bool acted = false; CaptureActionPorts ports; ports.annotationStyle.strokeWidth = 3;
+    ports.annotation = [&](const LoadedSource &source, const CancellationToken &) {
+      auto prepared = source; auto &d = *prepared.document; RectangleAnnotation a; a.id = QUuid::createUuid(); a.start = {10, 10}; a.end = {30, 20}; a.style = {0xFFFF0000, 0xFFFF0000, 1, 0, 1}; a.extra = {{"vendor", "keep"}}; auto b = a; b.id = QUuid::createUuid(); b.start = {45, 30}; b.end = {65, 40}; b.style.fillColor = b.style.strokeColor = 0xFF00FF00; if (mode == "protected") b.extra = {{"locked", true}};
+      const auto id = QUuid::createUuid(); d.annotations = {a, UnsupportedAnnotation{id, {{"id", id.toString(QUuid::WithoutBraces)}, {"type", "future"}, {"payload", "keep"}}}, b}; d.embeddedImages = {{"asset", d.sourceImagePng}}; d.extra = {{"vendor", "root"}}; original = d;
+      QPointer<CaptureAnnotationDialog> capture(new CaptureAnnotationDialog(prepared, nullptr, ports.annotationStyle)); CaptureAnnotationChoice choice;
+      connect(capture, &QDialog::finished, capture, [&choice, capture](int outcome) { if (capture && outcome == QDialog::Accepted) choice = {capture->document(), {}, capture->sidecarIntent()}; });
+      capture->exec(); if (capture) delete capture.data(); return choice;
+    };
+    QTimer timer; connect(&timer, &QTimer::timeout, [&] {
+      auto *capture = dialog(); if (!capture || acted) return; acted = true; const QPointer<CaptureAnnotationDialog> owner(capture); const auto close = qScopeGuard([owner] { if (owner && owner->isVisible()) owner->reject(); }); auto *canvas = capture->findChild<EditorCanvas *>(); auto *objects = capture->findChild<AnnotationObjectNavigator *>(); QVERIFY(canvas && objects); capture->activateWindow(); canvas->setFocus(); QTRY_VERIFY(capture->isActiveWindow());
+      QVERIFY(canvas->selectAnnotations({annotationId(original.annotations[0]), annotationId(original.annotations[1]), annotationId(original.annotations[2])}, canvas->annotationState(), canvas->documentGeneration())); const auto selection = canvas->annotationSelection(); QCOMPARE(canvas->creationStrokeWidth(), 3.0); QVERIFY(canvas->accessibleDescription().contains("Shift+arrows"));
+      const int key = transform == 2 ? Qt::Key_R : transform == 1 ? Qt::Key_Down : Qt::Key_Right; const auto modifiers = transform == 2 ? Qt::NoModifier : transform == 1 ? Qt::AltModifier | Qt::ShiftModifier : Qt::ShiftModifier;
+      if (mode.contains("destroy")) connect(canvas, &EditorCanvas::changed, capture, [owner, canvas, mode] { if (owner && canvas->interactionActive() == (mode == "begin-destroy")) delete owner.data(); });
+      QSignalSpy rejected(canvas, &EditorCanvas::editRejected); if (mode.contains("destroy")) { QKeyEvent event(QEvent::KeyPress, key, modifiers); QApplication::sendEvent(canvas, &event); QVERIFY(!owner); return; }
+      QTest::keyClick(canvas, Qt::Key(key), modifiers); expected = original;
+      if (mode != "protected") for (int index : {0, 2}) { auto &r = std::get<RectangleAnnotation>(expected.annotations[index]); if (transform == 2) r.style.rotationDegrees = 90; else if (transform == 1) r.end.y += 10; else { r.start.x += 10; r.end.x += 10; } }
+      QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); QCOMPARE(canvas->annotationSelection(), selection); QCOMPARE(rejected.count(), mode == "protected" ? 1 : 0); QCOMPARE(objects->model()->rowCount(), 3); QCOMPARE(canvas->creationStrokeWidth(), 3.0);
+      if (mode == "protected") { QCOMPARE(rejected[0][0].toString(), QString("annotation-selection-protected")); QVERIFY(!capture->findChild<QAction *>("undo")->isEnabled()); }
+      else { QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(original)); QCOMPARE(canvas->annotationSelection(), selection); QVERIFY(!capture->findChild<QAction *>("undo")->isEnabled());
+        QTest::keyClick(canvas, Qt::Key_Z, Qt::ControlModifier | Qt::ShiftModifier); QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(expected)); QCOMPARE(canvas->annotationSelection(), selection); QVERIFY(!capture->findChild<QAction *>("redo")->isEnabled()); }
+      if (mode == "cancel") { capture->reject(); return; } capture->findChild<QCheckBox *>("captureSaveAnnotationSidecar")->setChecked(true);
+      if (transform == 1 && mode == "apply" && qEnvironmentVariableIsSet("XERAHS_KEYBOARD_QA")) QVERIFY(capture->grab().save(qEnvironmentVariable("XERAHS_KEYBOARD_QA"))); capture->accept();
+    });
+    timer.start(5); CapturePipeline pipeline(pixels(), dir.path(), "keyboard", {"annotation", "save"}, nullptr, ports); QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_COMPARE(done.count(), 1); timer.stop(); QVERIFY(acted); const auto result = receipt(done); QVERIFY(result->file); QCOMPARE(QImage(result->file->path), result->workingMedia);
+    if (mode.contains("destroy") || mode == "cancel") { QVERIFY(!result->annotationDocument); QCOMPARE(result->workingMedia, pixels()); QVERIFY(!QFile::exists(result->file->path + ".xann")); }
+    else { QVERIFY(result->annotationDocument && result->sidecarIntent); QCOMPARE(serializeDocument(*result->annotationDocument), serializeDocument(expected)); QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), pixels()); const auto reopened = loadSource(result->file->path); QVERIFY(reopened.document); QCOMPARE(serializeDocument(*reopened.document).value("annotations"), serializeDocument(expected).value("annotations")); QCOMPARE(reopened.document->embeddedImages, original.embeddedImages); QCOMPARE(reopened.document->sourceImagePng, original.sourceImagePng); QCOMPARE(reopened.document->extra, original.extra);
+      if (mode == "protected") QCOMPARE(result->workingMedia.pixelColor(15, 15), QColor(Qt::red)); else if (transform == 0) { QCOMPARE(result->workingMedia.pixelColor(15, 15), QColor(Qt::blue)); QCOMPARE(result->workingMedia.pixelColor(35, 15), QColor(Qt::red)); }
+      else if (transform == 1) { QCOMPARE(result->workingMedia.pixelColor(15, 25), QColor(Qt::red)); QCOMPARE(result->workingMedia.pixelColor(15, 35), QColor(Qt::blue)); }
+      else { QCOMPARE(result->workingMedia.pixelColor(12, 15), QColor(Qt::blue)); QCOMPARE(result->workingMedia.pixelColor(20, 7), QColor(Qt::red)); }
+    }
+    QCOMPARE(nativeEditorPreferenceRevision(), revision); QVERIFY(pref.open(QIODevice::ReadOnly)); QCOMPARE(pref.readAll(), preferenceBytes);
   }
   void captureDeleteIsKeyboardAccessibleAndPublishesOnlyAcceptedState_data() {
     QTest::addColumn<QString>("mode"); for (const auto *mode : {"button", "delete", "backspace", "all", "legacy-alias", "empty", "hidden", "locked", "opaque-lock", "start-destroy", "finish-destroy", "undo-destroy"}) QTest::newRow(mode) << QString(mode);

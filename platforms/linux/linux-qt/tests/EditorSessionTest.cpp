@@ -244,6 +244,37 @@ private slots:
       QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.toolStyle().strokeColor, defaults.strokeColor); QCOMPARE(session.toolStyle().fillColor, defaults.fillColor); QCOMPARE(session.undoCount(), 0); QVERIFY(!session.dirty());
     }
   }
+  void guardedGroupResizePreservesFieldsAssetsDefaultsAndHistory() {
+    auto d = document(); auto a = rectangle(1, 2, 4, 6), b = rectangle(5, 6, 9, 10), untouched = rectangle(-5, -4, -2, -1);
+    a.style = {0x80112233, 0x40223344, 2.5, 37.25, .25}; a.extra = {{"vendor", "keep"}}; b.style.rotationDegrees = 90;
+    const auto futureId = QUuid::createUuid(); const UnsupportedAnnotation future{futureId, {{"id", futureId.toString(QUuid::WithoutBraces)}, {"type", "future-art"}, {"payload", "keep"}}};
+    d.annotations = {a, future, b, untouched}; d.embeddedImages = {{"asset", kOnePixelPng}}; d.extra = {{"vendor", "root"}};
+    EditorSession session(d); session.select({a.id}); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo()); session.select({a.id, b.id, futureId}); const auto selection = session.selection();
+    RectangleStyle defaults; defaults.strokeWidth = 9; defaults.rotationDegrees = 17.25; QVERIFY(session.setCreationStyle(defaults));
+    QVERIFY(session.resizeSelection(1.5, -2.25, session.stateId(), selection)); auto expected = d;
+    std::get<RectangleAnnotation>(expected.annotations[0]).end = {5.5, 3.75}; std::get<RectangleAnnotation>(expected.annotations[2]).end = {10.5, 7.75};
+    QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(session.selection(), selection); QCOMPARE(session.undoCount(), 1); QCOMPARE(session.redoCount(), 0); QVERIFY(session.dirty());
+    QCOMPARE(session.toolStyle().strokeWidth, 9.0); QCOMPARE(session.toolStyle().rotationDegrees, 17.25);
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(d)); QCOMPARE(session.selection(), selection); QVERIFY(!session.dirty());
+    QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), serializeDocument(expected)); QCOMPARE(session.selection(), selection);
+  }
+  void guardedResizeRefusalsKeepCompleteStateAndRedo_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"empty", "unknown-only", "hidden", "locked", "opaque-lock", "unknown-lock", "stale-state", "stale-selection", "collapse", "nan", "infinity", "overflow", "zero", "rounding"}) QTest::newRow(mode) << QString(mode);
+  }
+  void guardedResizeRefusalsKeepCompleteStateAndRedo() {
+    QFETCH(QString, mode); auto d = document(); auto a = rectangle(1, 1, 4, 4), b = rectangle(5, 5, 6, 6);
+    if (mode == "hidden") b.visible = false; if (mode == "locked") b.extra = {{"locked", true}}; if (mode == "opaque-lock") b.extra = {{"locked", "future-lock"}};
+    if (mode == "overflow" || mode == "rounding") { b.start = {1.2e308, 1}; b.end = {1.3e308, 4}; }
+    d.annotations = {a, b}; if (mode == "unknown-lock" || mode == "unknown-only") d.annotations[1] = UnsupportedAnnotation{b.id, {{"id", b.id.toString(QUuid::WithoutBraces)}, {"type", "future"}, {"locked", mode == "unknown-lock"}}};
+    EditorSession session(d); session.select({a.id}); QVERIFY(session.moveSelection(1, 0)); QVERIFY(session.undo());
+    session.select(mode == "empty" ? QList<QUuid>{} : mode == "rounding" || mode == "unknown-only" ? QList<QUuid>{b.id} : QList<QUuid>{a.id, b.id});
+    const auto state = session.stateId(); const auto frozen = session.selection(); if (mode == "stale-selection") session.select({a.id});
+    if (mode == "stale-state") QVERIFY(session.redo()); const auto before = serializeDocument(session.document()); const auto selection = session.selection(); const auto undo = session.undoCount(), redo = session.redoCount(); const auto dirty = session.dirty();
+    const double dw = mode == "collapse" ? -1 : mode == "nan" ? std::numeric_limits<double>::quiet_NaN() : mode == "infinity" ? std::numeric_limits<double>::infinity() : mode == "overflow" ? 1e308 : mode == "zero" ? 0 : 1;
+    QVERIFY(!session.resizeSelection(dw, 0, state, frozen));
+    const auto diagnostic = mode.startsWith("stale-") ? "annotation-edit-stale" : mode == "hidden" || mode.contains("lock") ? "annotation-selection-protected" : mode == "collapse" || mode == "nan" || mode == "infinity" || mode == "overflow" ? "annotation-geometry-invalid" : "";
+    QCOMPARE(session.editDiagnostic(), QString(diagnostic)); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.selection(), selection); QCOMPARE(session.undoCount(), undo); QCOMPARE(session.redoCount(), redo); QCOMPARE(session.dirty(), dirty);
+  }
   void guardedGroupRotationPreservesFieldsDefaultsAndExactHistory() {
     auto d = document(); auto a = rectangle(1, 2, 4, 6), b = rectangle(5, 6, 9, 10), untouched = rectangle(-5, -4, -2, -1);
     a.style = {0x80112233, 0x40223344, 2.5, 350, .25}; a.extra = {{"vendor", "keep"}}; b.style.rotationDegrees = 37.25;
