@@ -73,7 +73,8 @@ This session-only subset does not accept the full shortcut catalogue, persisted
 opt-in/autostart, backend-specific fallback, activation-token/window-parent focus,
 locked-screen behavior, physical key/desktop/accessibility matrix or human privacy,
 security, parity and release gates. All remain Required. Complete workflow families,
-recording/audio, uploads, execution identity/result linkage and shared CLI/MCP
-schemas remain unfinished. [Headless discovery](WORKFLOW-DISCOVERY.md) now exposes saved IDs/default/support.
-Next implement invocation/execution/result linkage, then atomic filename counters
-and the remaining native capture families.
+recording/audio, uploads and shared CLI/MCP schemas remain unfinished.
+[Admitted executions](WORKFLOW-EXECUTIONS.md) now record shortcut origin and link
+region invocation/early outcomes to actual pipeline results. [Headless discovery](WORKFLOW-DISCOVERY.md) now exposes saved IDs/default/support.
+Next add execution metadata retention controls, atomic filename counters and
+the remaining native capture families.

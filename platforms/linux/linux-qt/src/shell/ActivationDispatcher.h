@@ -13,6 +13,8 @@ struct ActivationOperations {
   // Empty rejects admission. The closure owns the validated settings snapshot.
   std::function<std::function<void()>(const QString &)> prepareWorkflow;
   std::function<void()> captureRegionWithActions;
+  // Request-aware capture preparation runs before ACK; owns durable identity.
+  std::function<std::function<void()>(const ActivationRequest &)> prepareCapture = {};
 };
 class ActivationDispatcher final {
 public:

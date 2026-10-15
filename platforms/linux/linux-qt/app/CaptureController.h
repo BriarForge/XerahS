@@ -8,6 +8,7 @@
 #include "SnapshotComposition.h"
 #include "CapturePipeline.h"
 #include "workflows/CaptureWorkflows.h"
+#include "workflows/WorkflowExecution.h"
 
 #include <QImage>
 #include <QObject>
@@ -58,6 +59,8 @@ public:
   bool retryFailedActions(const CapturePipelineReceipt &expected);
   void setActionSelectionParent(QWidget *parent);
   void setDefaultWorkflowResolver(std::function<xerahs::workflows::WorkflowChoice()> resolver) { m_workflowResolver = std::move(resolver); }
+  std::function<void()> prepareWorkflowCapture(const xerahs::workflows::CaptureWorkflow &workflow, const QString &requestId,
+      const QString &origin, xerahs::workflows::WorkflowExecution::Writer writer);
   void captureRegionWorkflow(const xerahs::workflows::CaptureWorkflow &workflow);
   // Future pipelines copy this GUI-thread preference value; active workers
   // retain the style already captured by their pipeline constructor.
@@ -86,9 +89,10 @@ private:
   void pollComposition();
   void runPipeline();
   void connectPipeline(CapturePipeline *pipeline);
-  void publishPipeline(const CapturePipelineReceipt &result);
+  void publishPipeline(const CapturePipelineReceipt &result, bool executionConfirmed = true);
   void closeOverlays();
   void finish();
+  void recordCaptureOutcome(const QString &state, const QString &diagnostic = {});
   void repaint();
   void announce();
 
@@ -103,6 +107,7 @@ private:
   QStringList m_selectedActions;
   std::function<xerahs::workflows::WorkflowChoice()> m_workflowResolver;
   QJsonObject m_workflowSnapshot;
+  std::shared_ptr<xerahs::workflows::WorkflowExecution> m_execution;
   xerahs::workflows::CaptureOutput m_captureOutput;
   QPointer<QWidget> m_selectionParent;
   PipelineJournalStorage m_journal;

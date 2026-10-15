@@ -74,3 +74,9 @@ known-PNG/unknown-companion restart review. Actual native/private-bus and
 killed-process fixtures verify these additive candidate seams. Workflow defaults,
 complete save/removal/format policy, shared persisted compatibility, catalogue
 recovery and all native/human acceptance gates remain Required.
+
+[Workflow executions](WORKFLOW-EXECUTIONS.md) now add an optional namespaced
+workflow_execution_id to admitted region reports and write-ahead journals. It
+links the separate pipeline task back to its pre-acquisition request/execution;
+explicit retained retries keep that reference and their own pipeline lineage.
+Reports without an injected ID and shared canonical vectors remain unchanged.

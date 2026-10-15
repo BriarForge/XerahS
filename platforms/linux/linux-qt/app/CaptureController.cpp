@@ -83,6 +83,27 @@ void CaptureController::beginConfiguredCapture(bool chooseActions) {
   if (!choice.workflow) { emit notify("Capture workflow unavailable", "Open Capture workflows to review or reload the saved configuration. " + choice.diagnostic, false); return; }
   choice.workflow->chooseActions |= chooseActions; captureRegionWorkflow(*choice.workflow);
 }
+std::function<void()> CaptureController::prepareWorkflowCapture(const xerahs::workflows::CaptureWorkflow &workflow,
+    const QString &requestId, const QString &origin, xerahs::workflows::WorkflowExecution::Writer writer) {
+  if (m_busy || !xerahs::workflows::workflowAvailability(workflow, CaptureActions::selectableActions()).isEmpty()) return {};
+  auto effective = workflow;
+  if (effective.output.directory.isEmpty()) effective.output.directory = m_saveDirectory;
+  auto execution = std::make_shared<xerahs::workflows::WorkflowExecution>(requestId, origin, effective, std::move(writer));
+  if (!execution->admit()) {
+    emit notify("Capture not started", "Private workflow execution storage is unavailable or full. No capture was admitted. Review storage ownership, permissions and retained records before retrying.", false);
+    return {};
+  } // No capture/ACK without durable admission.
+  return [guard = QPointer<CaptureController>(this), effective, execution] {
+    if (!guard || guard->busy()) return; // RAII records not-started on release.
+    if (!execution->start()) { emit guard->notify("Capture not started", "Workflow execution storage is unavailable. No capture was started.", false); return; }
+    guard->m_execution = execution;
+    guard->captureRegionWorkflow(effective);
+  };
+}
+void CaptureController::recordCaptureOutcome(const QString &state, const QString &diagnostic) {
+  if (m_execution && !m_execution->finish(state, diagnostic))
+    emit notify("Execution result not recorded", "Workflow storage could not confirm the outcome. Check capture result history before retrying.", false);
+}
 void CaptureController::captureRegionWorkflow(const xerahs::workflows::CaptureWorkflow &workflow) {
   if (m_busy) return;
   const auto diagnostic = xerahs::workflows::workflowAvailability(workflow, CaptureActions::selectableActions());
@@ -105,6 +126,7 @@ void CaptureController::beginCapture(QStringList selected) {
     const QPointer<CaptureController> guard(this);
     emit busyChanged(true);
     if (!guard) return;
+    recordCaptureOutcome("failed", diagnostic::captureSourceFailed); if (!guard) return;
     emit notify(QStringLiteral("Region capture failed"), diagnostic::captureSourceFailed, false); if (guard) finish(); return;
   }
   auto *portal = m_portal.data();
@@ -122,12 +144,15 @@ void CaptureController::beginCapture(QStringList selected) {
 }
 
 void CaptureController::onSnapshot(int outcome, const QImage &image, const QString &detail) {
+  const QPointer<CaptureController> guard(this);
   const auto result = static_cast<PortalScreenshot::Outcome>(outcome);
-  if (result == PortalScreenshot::Outcome::Cancelled) { finish(); return; }
+  if (result == PortalScreenshot::Outcome::Cancelled) { recordCaptureOutcome("cancelled"); if (guard) finish(); return; }
   if (result == PortalScreenshot::Outcome::Failed) {
+    recordCaptureOutcome("failed", diagnostic::captureSourceFailed);
+    if (!guard) return;
     emit notify(QStringLiteral("Region capture failed"),
                 detail.isEmpty() ? diagnostic::captureSourceFailed : detail, false);
-    finish();
+    if (guard) finish();
     return;
   }
 
@@ -162,10 +187,12 @@ void CaptureController::onSnapshot(int outcome, const QImage &image, const QStri
   // not match the layout is a capture-source failure, not a guess.
   if (std::abs(image.height() - bounds.height() * scale) > 2.0) {
     m_session.reset();
+    recordCaptureOutcome("failed", diagnostic::captureSourceFailed);
+    if (!guard) return;
     emit notify(QStringLiteral("Region capture failed"),
                 QStringLiteral("%1: snapshot does not match the display layout").arg(diagnostic::captureSourceFailed),
                 false);
-    finish();
+    if (guard) finish();
     return;
   }
   m_desktop = image; // immutable source; pixel preparation happens on the worker
@@ -405,7 +432,11 @@ void CaptureController::onOutcome(const SessionOutcome &outcome) {
     if (outcome.state == SessionState::Completed && outcome.rectangle && m_captured) {
       runPipeline();
       return; // cleanup follows the actual pipeline receipt
-    } else if (outcome.diagnostic) {
+    }
+    recordCaptureOutcome(outcome.diagnostic == diagnostic::capturePermissionDenied ? QStringLiteral("permission-denied") :
+        outcome.state == SessionState::Cancelled ? QStringLiteral("cancelled") : QStringLiteral("failed"), outcome.diagnostic.value_or(QString{}));
+    if (!guard) return;
+    if (outcome.diagnostic) {
       const QString title = outcome.state == SessionState::Failed ? QStringLiteral("Region capture failed")
                                                                   : QStringLiteral("Region capture cancelled");
       emit notify(title, *outcome.diagnostic, false);
@@ -421,7 +452,13 @@ void CaptureController::runPipeline() {
   // The default path keeps overlay focus until clipboard dispatch. A chooser
   // releases overlays before taking focus; both retain the same frozen media.
   auto *pipeline = new CapturePipeline(*m_captured, m_captureOutput.directory.isEmpty() ? m_saveDirectory : m_captureOutput.directory,
-      m_captureOutput.pattern, m_selectedActions, this, m_actionPorts, m_journal, m_selectionParent, m_workflowSnapshot);
+      m_captureOutput.pattern, m_selectedActions, this, m_actionPorts, m_journal, m_selectionParent, m_workflowSnapshot, m_execution ? m_execution->record().id : QString{});
+  if (m_execution && !m_execution->processing(pipeline->taskId())) {
+    delete pipeline;
+    const QPointer<CaptureController> guard(this);
+    emit notify("Capture actions not started", "Workflow execution storage is unavailable. No post-capture action was started.", false);
+    if (guard) { closeOverlays(); finish(); } return;
+  }
   connectPipeline(pipeline);
   const QPointer<CapturePipeline> pipelineGuard(pipeline);
   if (m_pendingPipelineCancellation) pipeline->cancel();
@@ -455,13 +492,14 @@ void CaptureController::connectPipeline(CapturePipeline *pipeline) {
     if (m_pipeline != pipeline || !m_busy) return;
     m_pipeline = nullptr; pipeline->deleteLater(); m_lastPipelineResult = result;
     const QPointer<CaptureController> guard(this);
+    const bool executionConfirmed = !m_execution || m_execution->complete(result->pipeline);
     emit retainedResultChanged(); if (!guard) return;
-    publishPipeline(result);
+    publishPipeline(result, executionConfirmed);
     if (guard) { closeOverlays(); finish(); }
   });
 }
 
-void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt) {
+void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt, bool executionConfirmed) {
   const auto &result = receipt->pipeline;
 
   QStringList done;
@@ -493,10 +531,11 @@ void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt) {
   if (body.isEmpty() && failed.isEmpty() && !receipt->file) body = QStringLiteral("Captured image kept in memory.");
   if (!failed.isEmpty()) body += (body.isEmpty() ? QString() : QStringLiteral("; ")) + failed.join(QStringLiteral("; "));
   if (!receipt->diagnostic.isEmpty()) body += QStringLiteral("; ") + receipt->diagnostic;
+  if (!executionConfirmed) body += QStringLiteral("; Workflow execution storage could not confirm the outcome. Completed outputs remain in capture result history; check before retrying.");
   const auto title = result.state == xerahs::actions::PipelineState::Cancelled ? QStringLiteral("Capture actions cancelled · %1") :
       result.state == xerahs::actions::PipelineState::Interrupted ? QStringLiteral("Capture actions interrupted · %1") :
       result.retry ? QStringLiteral("Capture actions retried · %1") : QStringLiteral("Region captured · %1");
-  emit notify(title.arg(size), body, failed.isEmpty() && receipt->diagnostic.isEmpty());
+  emit notify(title.arg(size), body, executionConfirmed && failed.isEmpty() && receipt->diagnostic.isEmpty());
 }
 
 void CaptureController::closeOverlays() {
@@ -518,6 +557,7 @@ void CaptureController::finish() {
   m_selectedActions.clear();
   m_keyboardCursor.reset();
   m_keyboardSelecting = false;
+  m_execution.reset();
   m_busy = false;
   emit busyChanged(false);
 }

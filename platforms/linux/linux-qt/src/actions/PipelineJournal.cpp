@@ -83,6 +83,7 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
   const auto metadata = record.report.value("extensions").toObject().value("com.xerahs.app").toObject();
   if (metadata.value("schema_version") != QJsonValue(1) || metadata.value("task_id") != expectedTaskId ||
       !metadata.value("action_timings").isArray() || !metadata.value("file_artifacts").isArray()) return invalid();
+  if (metadata.contains("workflow_execution_id") && !validJournalTaskId(metadata.value("workflow_execution_id").toString())) return invalid();
   for (const auto &entry : metadata.value("action_timings").toArray()) {
     const auto timing = entry.toObject();
     if (!entry.isObject() || !completed.contains(timing.value("action").toString())) return invalid();
@@ -166,10 +167,10 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
 }
 PipelineJournalRecorder::PipelineJournalRecorder(std::shared_ptr<const PipelineJournalStoragePort> storage, const QString &id,
                                                  const QStringList &selected, const QDateTime &createdAt,
-                                                 const std::optional<PipelineRetryLink> &retry, const std::vector<SavedFileArtifact> &initialFiles, const QString &initialWorkingMedia, const QJsonObject &workflowSnapshot)
+                                                 const std::optional<PipelineRetryLink> &retry, const std::vector<SavedFileArtifact> &initialFiles, const QString &initialWorkingMedia, const QJsonObject &workflowSnapshot, const QString &workflowExecutionId)
     : m_storage(std::move(storage)) {
   m_snapshot.result.taskId = id; m_snapshot.result.retry = retry; m_snapshot.files = initialFiles; m_snapshot.createdAt = createdAt;
-  m_snapshot.result.workflowSnapshot = workflowSnapshot;
+  m_snapshot.result.workflowSnapshot = workflowSnapshot; m_snapshot.result.workflowExecutionId = workflowExecutionId;
   const auto media = catalogueIndex(initialWorkingMedia);
   if (media && catalogue()[size_t(*media)].kind == ActionKind::Transformation) m_snapshot.result.finalWorkingMedia = initialWorkingMedia;
   for (const auto &action : catalogue()) if (selected.contains(action.id)) m_snapshot.selected.append(action.id);

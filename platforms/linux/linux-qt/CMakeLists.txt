@@ -13,6 +13,8 @@ find_package(ZLIB REQUIRED)
 set(XERAHS_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." CACHE PATH "BriarForge/XerahS repository root")
 
 add_library(xerahs_core STATIC
+  src/workflows/WorkflowExecution.cpp
+  src/workflows/WorkflowExecution.h
   src/workflows/CaptureWorkflows.cpp
   src/workflows/CaptureWorkflows.h
   src/workflows/WorkflowShortcuts.cpp
@@ -102,7 +104,9 @@ target_include_directories(xerahs_native_instance PUBLIC app)
 target_link_libraries(xerahs_native_instance PUBLIC xerahs_core Qt6::Network)
 target_compile_options(xerahs_native_instance PRIVATE -Wall -Wextra -Wpedantic)
 
-add_library(xerahs_pipeline_journal STATIC app/NativePipelineJournal.cpp app/NativePipelineJournal.h)
+add_library(xerahs_pipeline_journal STATIC app/NativePipelineJournal.cpp app/NativePipelineJournal.h
+  app/NativePrivateRecords.cpp app/NativePrivateRecords.h
+  app/NativeWorkflowExecutions.cpp app/NativeWorkflowExecutions.h)
 target_include_directories(xerahs_pipeline_journal PUBLIC app)
 target_link_libraries(xerahs_pipeline_journal PUBLIC xerahs_core)
 target_compile_options(xerahs_pipeline_journal PRIVATE -Wall -Wextra -Wpedantic)
@@ -383,6 +387,7 @@ add_executable(portal-screenshot-test tests/PortalScreenshotTest.cpp app/PortalS
 set_target_properties(portal-screenshot-test PROPERTIES AUTOMOC ON)
 target_link_libraries(portal-screenshot-test PRIVATE xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
 target_include_directories(portal-screenshot-test PRIVATE app)
+add_dependencies(portal-screenshot-test xerahs)
 add_test(NAME portal-screenshot COMMAND "${XERAHS_DBUS_RUN_SESSION}"
          "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf" -- $<TARGET_FILE:portal-screenshot-test>)
 set_tests_properties(portal-screenshot PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 45)
@@ -591,3 +596,10 @@ add_test(NAME conformance
           --adapter $<TARGET_FILE:xerahs-conformance-adapter>
           --platform linux --edition linux-qt ${XERAHS_CAPABILITY_ARGS}
   WORKING_DIRECTORY "${XERAHS_REPO_ROOT}")
+
+add_executable(workflow-execution-test tests/WorkflowExecutionTest.cpp)
+set_target_properties(workflow-execution-test PROPERTIES AUTOMOC ON)
+target_link_libraries(workflow-execution-test PRIVATE xerahs_pipeline_journal Qt6::Test)
+add_dependencies(workflow-execution-test xerahs)
+add_test(NAME workflow-execution COMMAND workflow-execution-test)
+set_tests_properties(workflow-execution PROPERTIES TIMEOUT 30)

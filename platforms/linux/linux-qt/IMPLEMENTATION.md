@@ -4,8 +4,11 @@ Implement the approved English Product Contract in the `linux-qt` reference
 edition. Keep shared expected results independent of Linux, and record partial
 requirements honestly until native behavior and evidence cover their full scope.
 
-Current next deliverable: admitted invocation/execution/result identity linkage,
-followed by atomic filename-counter reservation. [Headless workflow discovery](app/WORKFLOW-DISCOVERY.md)
+Current next deliverable: execution metadata retention controls and atomic
+filename-counter reservation. [Admitted execution tracking](app/WORKFLOW-EXECUTIONS.md)
+now persists identity/start/origin/effective settings before acquisition, records
+early denial/cancellation/failure and links the real pipeline through read-only
+headless lookup. Full families, retry invocation indexing and human gates remain Required. [Headless workflow discovery](app/WORKFLOW-DISCOVERY.md)
 now lists saved IDs/default/support without a GUI or activation. Session global
 shortcuts now share the workflow dispatcher; see [shortcut evidence](app/WORKFLOW-SHORTCUTS.md).
 Explicit-ID CLI activation now shares authenticated admission, immutable saved

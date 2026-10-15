@@ -78,8 +78,9 @@ marked implemented in a core trace file.
 
 ## Next production work
 
-Current priority: admitted invocation/execution/result identity linkage, then atomic
-counter reservation. Headless discovery now supplies saved workflow IDs/default/support
+Current priority: execution metadata retention controls, atomic filename-counter
+reservation and remaining capture families. [Admitted executions](app/WORKFLOW-EXECUTIONS.md) now link launch IDs,
+early outcomes and real pipeline reports through private headless lookup. Headless discovery now supplies saved workflow IDs/default/support
 without GUI, instance activation or a runtime readiness claim. Explicit session global shortcuts now share workflow-ID
 admission and the production capture controller. Explicit-ID CLI admission
 and immutable saved settings now share the actual dispatcher/controller. The dated
@@ -1077,3 +1078,63 @@ in the continuation result. Full application, target matrix and all required hum
 approvals remain unfinished. Next delivery remains pre-acquisition invocation
 identity/start/origin, truthful denied/cancelled records and real pipeline-result
 linkage; then counters and remaining capture families. Timer stays active.
+
+
+## 2026-10-16 — Admitted region execution identity and result lookup
+
+Starting revision: `9f8a6505f52a7b2fa43a8047fc8996f0d2df99d9`, main. Exact prior
+Ubuntu/Qt 6.4.2 [CI 38782380772](https://github.com/BriarForge/XerahS/actions/runs/38782380772)
+passed native **116585616484** (52/52, 72.96 s) and lint **116585616275**.
+The successful discovery, shortcuts, native workflows and picker correction were
+preserved. No published vector, requirement status or disposition was changed.
+
+[Execution observations](app/WORKFLOW-EXECUTIONS.md) now connect actual native
+admission to capture outcomes. Default, choose-actions, saved-ID, shared native
+shell and shortcut paths prepare one request-aware capture. Before ACK, private
+atomic storage records the request/execution UUID, admission start, trusted entry
+boundary and frozen known effective settings. Start persists before acquisition;
+the actual pipeline ID persists before post-capture actions. Canonical private
+reports/journals link back through an optional namespaced execution ID. Pipeline
+task identity and all existing output/retry semantics are preserved.
+
+Early permission denial, portal/selection/composition cancellation and source
+failure finish that execution without inventing a PCA task. Normal abandoned
+prepared dispatch records not-started. Actual ordered PCA receipts supply final
+states. Restart/in-flight destruction or missing terminal durability stays
+outcome-unconfirmed; querying disk never asserts liveness or repeats work.
+Admission/start/link write failure blocks the next boundary. Terminal write
+failure retains completed outputs and remains visible in the final notification.
+Explicit retained retry preserves the original execution reference and its own
+existing pipeline attempt lineage without rewriting the original outcome.
+
+The actual installed-binary --workflow-result REQUEST_UUID [--non-interactive]
+[--json] query requires no display/instance/desktop services and prints one compact
+versioned result or allowlisted error. It returns IDs/times/origin/ordered states,
+fixed diagnostics and a task reference, excluding private settings/names/paths/
+patterns/extensions. Missing stores are not created. Corrupt/future/unsafe/symlink
+records and malformed/conflicting arguments fail closed. NativePrivateRecords
+extracts existing descriptor storage without changing PCA format, locks, owner/
+private-mode/no-follow/link checks, exact CAS, capacity or fsync protections.
+
+Full local native verification passes **53/53 in 72.42 s**, including all **114
+unchanged published vectors**. New execution/Core/storage/actual headless CLI tests
+pass; real private-portal/controller cases cover new-primary and forwarded ACK-to-
+denial lookup, actual PNG and immutable settings, link-before-output, retry with
+unchanged files/original outcome, early failure/cancellation/destruction and write
+faults at admission/start/link/terminal boundaries. All **32 tooling tests** pass;
+contract lint/backlog and effective-instruction checks pass. Existing killed-worker
+journal/storage tests pass through the extracted I/O. All fixtures are temporary
+and private; no live capture/upload, Avalonia configuration or compositor file was
+touched. Exact pushed Ubuntu/Qt 6.4.2 CI is reported in the continuation result.
+
+Execution history retention controls remain Required (bounded stores fail without
+automatic pruning), along with complete retry invocation indexing, status/action
+families, wait/cancel/live progress, all entry points/shared schemas and complete
+settings/acquisition coverage. No CORE/WFCAT vectors are published. All 324 desktop
+requirements/15 packages, 922 settings/436 workflows/232 effects/20 tools, remaining
+capture/display mapping, recording/audio, uploads/credentials/plugins, compatibility/
+history/automation, packaging/migration/updates/rollback and supported target/human
+privacy/security/accessibility/parity/release gates remain in scope and unfinished.
+Next add explicit execution metadata retention controls and atomic filename-counter
+reservation, then remaining capture families. The continuation timer was confirmed
+active and stays active. This is candidate implementation evidence, not human approval.

@@ -70,12 +70,11 @@ no private fixture paths/patterns/extensions. All stores and peers are temporary
 The full suite, tooling and exact pushed Ubuntu/Qt 6.4.2 CI are recorded with this
 checkpoint in the audit and continuation report. Shared expectations stay intact.
 
-Execution identity, invocation origin/settings/acquisition failure records, terminal
-result lookup/wait/cancel, full workflow/interface families and shared schemas remain
-Required. All supported desktop/privacy/security/accessibility/parity/release gates
-remain human or target qualification work. Next link admitted invocations to durable
-execution/result identity, then implement atomic filename counters and remaining
-capture families. Passing this query does not establish full app completion.
+[Admitted executions](WORKFLOW-EXECUTIONS.md) now provide private identity,
+origin/settings/early-outcome records and headless result linkage for region captures.
+Live wait/cancel, full workflow/interface families and shared schemas remain Required. All supported desktop/privacy/security/accessibility/parity/release gates
+remain human or target qualification work. Next add execution metadata retention controls, atomic filename counters and
+remaining capture families. Passing this query does not establish full app completion.
 
 
 The first exact Ubuntu/Qt 6.4.2 run, 38780652747, passed discovery/native-instance,

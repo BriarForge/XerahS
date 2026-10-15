@@ -5,6 +5,8 @@
 #include "CaptureActions.h"
 #include "CaptureWorkflows.h"
 #include "WorkflowDiscovery.h"
+#include "NativeWorkflowExecutions.h"
+#include <QScopedValueRollback>
 #include "WorkflowShortcutActions.h"
 #include "CaptureRecoveryActions.h"
 #include "EditorWindow.h"
@@ -44,8 +46,9 @@ namespace {
 QString activationFailureMessage(const QString &diagnostic) {
   if (diagnostic == u"usage-invalid") return QStringLiteral("Choose one operation and use --help for supported arguments.");
   if (diagnostic == u"workflow-id-invalid") return QStringLiteral("Use a full workflow UUID from Capture workflows.");
-  if (diagnostic == u"workflow-unavailable") return QStringLiteral("The saved workflow is missing or unavailable. Open Capture workflows to review its ID, actions and settings.");
+  if (diagnostic == u"workflow-unavailable") return QStringLiteral("The saved workflow is missing or unavailable, or private execution storage could not be written. Review Capture workflows and private workflow storage before retrying.");
   if (diagnostic == u"presentation-required") return QStringLiteral("This operation needs the graphical XerahS application for capture, consent or editing. No operation was started.");
+  if (diagnostic == u"activation-unavailable") return QStringLiteral("The operation is unavailable. Review the saved workflow and private execution storage ownership, permissions and capacity before retrying.");
   if (diagnostic == u"activation-busy") return QStringLiteral("XerahS is busy. Try again after the current capture or dialog finishes.");
   if (diagnostic == u"instance-unavailable") return QStringLiteral("The running XerahS instance is not ready. Try again after startup finishes.");
   if (diagnostic == u"activation-delivery-unknown") return QStringLiteral("XerahS did not acknowledge the request. Check the running instance before retrying.");
@@ -115,11 +118,12 @@ int main(int argc, char *argv[]) {
   const QCommandLineOption edit(QStringLiteral("edit"), QStringLiteral("Open an image in the editor."), QStringLiteral("file"));
   const QCommandLineOption runWorkflow(QStringLiteral("run-workflow"), QStringLiteral("Start a saved region workflow by full UUID from --list-workflows or Capture workflows."), QStringLiteral("id"));
   const QCommandLineOption listWorkflows(QStringLiteral("list-workflows"), QStringLiteral("List saved workflow IDs and definition availability as JSON without a GUI or capture."));
+  const QCommandLineOption workflowResult(QStringLiteral("workflow-result"), QStringLiteral("Read a private execution summary by full launch request UUID without a GUI. Unfinished records have an unconfirmed outcome."), QStringLiteral("request-id"));
   const QCommandLineOption jsonOption(QStringLiteral("json"), QStringLiteral("Print versioned JSON; launch acknowledgements are not capture/output completion."));
   const QCommandLineOption nonInteractive(QStringLiteral("non-interactive"), QStringLiteral("Refuse operations requiring graphical interaction without starting them."));
-  parser.addOptions({captureRegion, edit, runWorkflow, listWorkflows, jsonOption, nonInteractive});
+  parser.addOptions({captureRegion, edit, runWorkflow, listWorkflows, workflowResult, jsonOption, nonInteractive});
   const auto requested = [&]() -> ParsedActivation {
-    if (!parser.positionalArguments().isEmpty() || int(parser.isSet(edit)) + int(parser.isSet(captureRegion)) + int(parser.isSet(runWorkflow)) + int(parser.isSet(listWorkflows)) > 1) return {{}, "usage-invalid"};
+    if (!parser.positionalArguments().isEmpty() || int(parser.isSet(edit)) + int(parser.isSet(captureRegion)) + int(parser.isSet(runWorkflow)) + int(parser.isSet(listWorkflows)) + int(parser.isSet(workflowResult)) > 1) return {{}, "usage-invalid"};
     if (parser.isSet(runWorkflow)) {
       const QUuid id(parser.value(runWorkflow)); if (id.isNull()) return {{}, "workflow-id-invalid"};
       return {makeActivationRequest(ActivationAction::RunWorkflow, {}, id.toString(QUuid::WithoutBraces)), {}};
@@ -131,11 +135,13 @@ int main(int argc, char *argv[]) {
   // elect an instance, initialize preferences or ask a portal for consent.
   QStringList rawArguments; for (int i = 0; i < argc; ++i) rawArguments.append(QString::fromLocal8Bit(argv[i]));
   const bool discoveryCommand = std::any_of(rawArguments.cbegin(), rawArguments.cend(), [](const QString &argument) { return argument == "--list-workflows" || argument.startsWith("--list-workflows="); });
+  const bool resultCommand = std::any_of(rawArguments.cbegin(), rawArguments.cend(), [](const QString &argument) { return argument == "--workflow-result" || argument.startsWith("--workflow-result="); });
   const auto reportUsage = [&](const QString &diagnostic) {
+    if (resultCommand) { writeCommandJson(xerahs::workflows::workflowExecutionError(diagnostic)); return 1; }
     if (discoveryCommand) return reportDiscovery(xerahs::workflows::workflowDiscoveryError(diagnostic), rawArguments.contains("--json"));
     reportLaunch(makeActivationRequest(ActivationAction::Activate), rawArguments.contains("--json"), {}, diagnostic); return 1;
   };
-  const bool earlyCommand = discoveryCommand || rawArguments.contains("--help") || rawArguments.contains("--help-all") || rawArguments.contains("-h") || rawArguments.contains("--json") || rawArguments.contains("--non-interactive") ||
+  const bool earlyCommand = resultCommand || discoveryCommand || rawArguments.contains("--help") || rawArguments.contains("--help-all") || rawArguments.contains("-h") || rawArguments.contains("--json") || rawArguments.contains("--non-interactive") ||
       std::any_of(rawArguments.cbegin(), rawArguments.cend(), [](const QString &argument) { return argument == "--run-workflow" || argument.startsWith("--run-workflow="); });
   ParsedActivation launch;
   if (earlyCommand) {
@@ -145,6 +151,13 @@ int main(int argc, char *argv[]) {
     }
     launch = requested();
     if (!launch.request) return reportUsage(launch.diagnostic);
+    if (parser.isSet(workflowResult)) {
+      QCoreApplication cli(argc, argv); cli.setApplicationName("XerahS");
+      const auto result = xerahs::app::NativeWorkflowExecutions(xerahs::app::NativeWorkflowExecutions::defaultDirectory()).result(parser.value(workflowResult));
+      writeCommandJson(result);
+      if (!result.value("ok").toBool() && !parser.isSet(jsonOption)) std::fprintf(stderr, "xerahs: Execution could not be read. Use the full launch request UUID and check private workflow storage.\n");
+      return result.value("ok").toBool() ? 0 : 1;
+    }
     if (parser.isSet(listWorkflows)) {
       QCoreApplication cli(argc, argv); cli.setApplicationName("XerahS");
       return reportDiscovery(xerahs::app::discoverNativeWorkflows(), parser.isSet(jsonOption));
@@ -296,20 +309,29 @@ int main(int argc, char *argv[]) {
   QObject::connect(&capture, &CaptureController::busyChanged, &home, [&home](bool busy) {
     if (!busy) home.cancelPendingProgress();
   });
+  const xerahs::app::NativeWorkflowExecutions executions(xerahs::app::NativeWorkflowExecutions::defaultDirectory());
+  QString invocationOrigin = QStringLiteral("command-line");
   ActivationDispatcher dispatcher({[&home] { home.activate(); }, [&capture] { capture.captureRegion(); },
       [](const QString &path) { if (auto *window = xerahs::app::EditorWindow::open(path)) window->show(); },
       [&capture] { return capture.busy(); }, [&shortcutActions] { return QApplication::activeModalWidget() != nullptr || shortcutActions.pending(); },
-      [&workflows, &capture, &home](const QString &id) -> std::function<void()> {
-        const auto choice = workflows.resolve(QUuid(id)); if (!choice.workflow) return {};
-        return [&capture, &home, snapshot = *choice.workflow] { home.activate(); capture.captureRegionWorkflow(snapshot); };
-      }, [&capture] { capture.captureRegionWithActions(); }});
-  instance.setAdmission([&dispatcher](const ActivationRequest &incoming) { return dispatcher.admit(incoming); });
+      {}, {}, [&workflows, &capture, &home, &executions, &invocationOrigin](const ActivationRequest &incoming) -> std::function<void()> {
+        auto choice = incoming.action == ActivationAction::RunWorkflow ? workflows.resolve(QUuid(incoming.workflowId)) : workflows.resolve();
+        if (!choice.workflow) return {};
+        choice.workflow->chooseActions |= incoming.action == ActivationAction::CaptureRegionChooseActions;
+        auto run = capture.prepareWorkflowCapture(*choice.workflow, incoming.id, invocationOrigin, executions.writer());
+        if (!run) return {};
+        return [&home, run = std::move(run)] { home.activate(); run(); };
+      }});
+  instance.setAdmission([&dispatcher, &invocationOrigin](const ActivationRequest &incoming) {
+    const QScopedValueRollback<QString> origin(invocationOrigin, QStringLiteral("external-activation")); return dispatcher.admit(incoming);
+  });
   const auto dispatch = [&dispatcher, &home](const ActivationRequest &incoming) {
     const auto diagnostic = dispatcher.dispatch(incoming);
     if (!diagnostic.isEmpty()) { home.showResult(QStringLiteral("Activation"), activationFailureMessage(diagnostic), false); home.activate(); }
   };
   QObject::connect(&instance, &xerahs::app::NativeInstance::activationRequested, &home, dispatch);
-  const auto invokeLocal = [&dispatcher, &dispatch, &home](ActivationAction action, const QString &path = QString{}, bool chooseActions = false, const QString &workflowId = QString{}) {
+  const auto invokeLocal = [&dispatcher, &dispatch, &home, &invocationOrigin](ActivationAction action, const QString &path = QString{}, bool chooseActions = false, const QString &workflowId = QString{}, const QString &source = QStringLiteral("native-shell")) {
+    const QScopedValueRollback<QString> origin(invocationOrigin, source);
     const auto local = makeActivationRequest(chooseActions ? ActivationAction::CaptureRegionChooseActions : action, path, workflowId);
     const auto admitted = dispatcher.admit(local);
     if (admitted == ActivationReplyState::Accepted) {
@@ -320,7 +342,7 @@ int main(int argc, char *argv[]) {
       home.activate();
     }
   };
-  QObject::connect(&shortcutActions, &xerahs::app::WorkflowShortcutActions::workflowRequested, &home, [&invokeLocal](const QString &id) { invokeLocal(ActivationAction::RunWorkflow, {}, false, id); });
+  QObject::connect(&shortcutActions, &xerahs::app::WorkflowShortcutActions::workflowRequested, &home, [&invokeLocal](const QString &id) { invokeLocal(ActivationAction::RunWorkflow, {}, false, id, "global-shortcut"); });
   QObject::connect(configureWorkflows, &QAction::triggered, &home, [&] {
     const auto selected = xerahs::app::manageCaptureWorkflows(workflows, &home, [&capture] { return !capture.busy(); });
     if (selected) invokeLocal(ActivationAction::RunWorkflow, {}, false, selected->id.toString(QUuid::WithoutBraces));

@@ -25,12 +25,14 @@ and unknown flags fail rather than selecting an operation by precedence.
 {"schemaVersion":1,"ok":true,"requestId":"…","workflowId":"…","delivery":"running-instance","state":"accepted"}
 ```
 
-The request ID correlates activation, not a pipeline task or terminal result.
+The request ID now also identifies the admitted capture execution; its separate
+pipeline task/result is linked by [execution lookup](WORKFLOW-EXECUTIONS.md).
 Exit 0 from a forwarding client means accepted; 2 means busy; 1 means rejected,
 invalid, unavailable or unknown delivery. A newly started primary prints
 `delivery: started` after admission and continues its normal GUI lifetime.
 Neither acknowledgement proves consent, acquisition, output or upload success.
-There is no CLI wait, cancel, progress or terminal-result lookup in this slice.
+The read-only --workflow-result REQUEST_UUID command now reports durable
+execution observations without a GUI. Wait, cancel and live progress APIs remain Required.
 
 `--non-interactive` refuses graphical operations with `presentation-required`
 before QApplication, display connection, instance election, preferences or portal
@@ -74,6 +76,7 @@ checkpoint in CONTRACT-AUDIT.md and its continuation report. All 114 existing
 published vectors remain unchanged; no CORE/WFCAT vectors are published yet.
 [Session global shortcuts](WORKFLOW-SHORTCUTS.md) now use the same workflow-ID
 admission path. [Headless discovery](WORKFLOW-DISCOVERY.md) now lists saved IDs/default/support.
-Next implement invocation/execution/result linkage and atomic filename counters. Complete action families,
+Admitted execution/result linkage is now implemented for this region slice.
+Next add metadata retention controls and atomic filename counters. Complete action families,
 shared automation schemas, supported desktop matrix and human security/privacy/
 accessibility/parity/release qualification remain Required.

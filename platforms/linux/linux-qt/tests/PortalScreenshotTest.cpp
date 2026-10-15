@@ -2,6 +2,7 @@
 // bus. Every image, output directory and clipboard belongs to this fixture.
 #include "PortalScreenshot.h"
 #include "CaptureController.h"
+#include "NativeWorkflowExecutions.h"
 #include "CaptureActions.h"
 #include "shell/ActivationDispatcher.h"
 #include "CaptureRecoveryActions.h"
@@ -25,6 +26,9 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QPointer>
+#include <QProcess>
+#include <QProcessEnvironment>
+#include <QScopeGuard>
 #include <QPlainTextEdit>
 #include <QJsonDocument>
 #include <QLabel>
@@ -145,6 +149,136 @@ class PortalScreenshotTest final : public QObject {
   static Outcome outcome(const QSignalSpy &spy) { return spy.at(0).at(0).value<Outcome>(); }
   static QImage resultImage(const QSignalSpy &spy) { return spy.at(0).at(1).value<QImage>(); }
 private slots:
+  void actualApplicationLaunchAcknowledgementFindsItsDeniedExecutionHeadlessly() {
+    using namespace xerahs::workflows;
+    QTemporaryDir dir; FakeScreenshotPortal portal(server); portal.error = "org.freedesktop.portal.Error.NotAllowed";
+    auto environment = QProcessEnvironment::systemEnvironment();
+    for (const auto *key : {"XDG_CONFIG_HOME", "XDG_RUNTIME_DIR", "XDG_STATE_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME"}) environment.insert(key, dir.filePath(key));
+    environment.insert("QT_QPA_PLATFORM", "offscreen"); environment.insert("QT_QPA_PLATFORMTHEME", ""); environment.remove("DISPLAY"); environment.remove("WAYLAND_DISPLAY");
+    QVERIFY(QDir().mkpath(environment.value("XDG_RUNTIME_DIR"))); QVERIFY(QFile::setPermissions(environment.value("XDG_RUNTIME_DIR"), QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner));
+    auto catalog = defaultCaptureWorkflows(); auto &profile = catalog.entries[0]; profile.actions = QStringList{"save"}; profile.output.directory = dir.filePath("outputs");
+    xerahs::editor::FilePreferenceStorage storage(dir.filePath("XDG_CONFIG_HOME/com.xerahs.app/linux-qt/capture-workflows.json"));
+    CaptureWorkflowStore saved(storage); QVERIFY(saved.save(catalog, saved.revision()).saved);
+    QProcess primary; primary.setProcessEnvironment(environment);
+    const auto cleanup = qScopeGuard([&] { primary.terminate(); if (!primary.waitForFinished(1000)) { primary.kill(); primary.waitForFinished(1000); } });
+    primary.start(QCoreApplication::applicationDirPath() + "/xerahs", {"--run-workflow", profile.id.toString(QUuid::WithoutBraces), "--json"});
+    QVERIFY(primary.waitForStarted(1000)); QTRY_VERIFY(primary.canReadLine());
+    const auto first = QJsonDocument::fromJson(primary.readLine()).object(); QVERIFY(first.value("ok").toBool()); QCOMPARE(first.value("state"), QJsonValue("accepted")); QCOMPARE(first.value("delivery"), QJsonValue("started"));
+    NativeWorkflowExecutions executions(dir.filePath("XDG_STATE_HOME/com.xerahs.app/workflow-executions")); const auto firstId = first.value("requestId").toString(); QVERIFY(!QUuid(firstId).isNull());
+    QTRY_COMPARE(executions.result(firstId).value("state"), QJsonValue("permission-denied")); QCOMPARE(executions.result(firstId).value("origin"), QJsonValue("command-line")); QCOMPARE(portal.calls, 1);
+    // The same installed binary forwards the next request through the actual
+    // primary, then looks up that acknowledgement without graphical startup.
+    QProcess secondary; secondary.setProcessEnvironment(environment); secondary.start(QCoreApplication::applicationDirPath() + "/xerahs", {"--run-workflow", profile.id.toString(QUuid::WithoutBraces), "--json"});
+    QTRY_COMPARE(secondary.state(), QProcess::NotRunning); QCOMPARE(secondary.exitCode(), 0);
+    const auto second = QJsonDocument::fromJson(secondary.readAllStandardOutput()).object(); QCOMPARE(second.value("delivery"), QJsonValue("running-instance"));
+    const auto secondId = second.value("requestId").toString(); QVERIFY(secondId != firstId); QVERIFY(!QUuid(secondId).isNull());
+    QTRY_COMPARE(executions.result(secondId).value("state"), QJsonValue("permission-denied")); QCOMPARE(executions.result(secondId).value("origin"), QJsonValue("external-activation")); QCOMPARE(portal.calls, 2);
+    environment.insert("QT_QPA_PLATFORM", "xcb"); environment.insert("DBUS_SESSION_BUS_ADDRESS", "unix:path=" + dir.filePath("no-query-bus"));
+    QProcess lookup; lookup.setProcessEnvironment(environment); lookup.start(QCoreApplication::applicationDirPath() + "/xerahs", {"--workflow-result", secondId, "--non-interactive", "--json"});
+    QVERIFY(lookup.waitForFinished(5000)); QCOMPARE(lookup.exitCode(), 0); QCOMPARE(lookup.exitStatus(), QProcess::NormalExit);
+    const auto output = lookup.readAllStandardOutput(); QCOMPARE(output.count('\n'), 1); const auto result = QJsonDocument::fromJson(output).object();
+    QCOMPARE(result.value("requestId"), QJsonValue(secondId)); QCOMPARE(result.value("state"), QJsonValue("permission-denied")); QVERIFY(result.value("terminal").toBool()); QVERIFY(!result.contains("pipelineTaskId"));
+    QVERIFY(!output.contains(dir.path().toUtf8())); QVERIFY(lookup.readAllStandardError().isEmpty()); QVERIFY(!QFile::exists(dir.filePath("outputs"))); QCOMPARE(portal.calls, 2); QCOMPARE(primary.state(), QProcess::Running);
+  }
+  void admittedExecutionLinksRealPipelineBeforeOutputAndSurvivesRestart() {
+    using namespace xerahs::workflows; using namespace xerahs::shell;
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto source = bytes(path);
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    NativeWorkflowExecutions executions(dir.filePath("executions")); auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("pipelines"));
+    auto workflow = defaultCaptureWorkflows().entries[0]; workflow.name = "Frozen private profile"; workflow.actions = QStringList{"save"}; workflow.output.directory = dir.filePath("original"); workflow.output.pattern = "shot-%width";
+    const auto request = makeActivationRequest(ActivationAction::RunWorkflow, {}, workflow.id.toString(QUuid::WithoutBraces)); std::atomic<bool> linkedBeforeOutput{false};
+    CaptureActionPorts ports; ports.save.publicationIntent = [&](const QString &, bool) {
+      const auto query = executions.result(request.id); linkedBeforeOutput.store(query.value("lastRecordedState") == "processing" && !query.value("pipelineTaskId").toString().isEmpty());
+    };
+    CaptureController controller(dir.filePath("fallback"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, {}, ports, journal);
+    ActivationOperations ops; ops.captureBusy = [&] { return controller.busy(); };
+    ops.prepareCapture = [&](const ActivationRequest &incoming) { return controller.prepareWorkflowCapture(workflow, incoming.id, "external-activation", executions.writer()); };
+    ActivationDispatcher dispatcher(ops); QCOMPARE(dispatcher.admit(request), ActivationReplyState::Accepted);
+    QCOMPARE(portal.calls, 0); QCOMPARE(executions.result(request.id).value("lastRecordedState"), QJsonValue("admitted"));
+    workflow.output.directory = dir.filePath("changed"); workflow.output.pattern = "changed"; workflow.name = "Changed";
+    QVERIFY(dispatcher.dispatch(request).isEmpty()); QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
+    const auto receipt = controller.lastPipelineResult(); QVERIFY(receipt && receipt->file); QCOMPARE(receipt->file->path, dir.filePath("original/shot-30.png")); QCOMPARE(QImage(receipt->file->path).size(), QSize(30, 25));
+    QCOMPARE(receipt->canonicalResult().value("extensions").toObject().value("com.xerahs.app").toObject().value("workflow_execution_id"), QJsonValue(request.id));
+    QVERIFY(linkedBeforeOutput.load()); const auto query = NativeWorkflowExecutions(dir.filePath("executions")).result(request.id);
+    QCOMPARE(query.value("state"), QJsonValue("succeeded")); QCOMPARE(query.value("pipelineTaskId"), QJsonValue(receipt->pipeline.taskId)); QCOMPARE(query.value("steps").toArray().size(), 2);
+    QCOMPARE(query.value("origin"), QJsonValue("external-activation")); QVERIFY(!QJsonDocument(query).toJson().contains("Frozen private")); QVERIFY(!QJsonDocument(query).toJson().contains(dir.path().toUtf8()));
+    const auto stored = journal->list(); QCOMPARE(stored.entries.size(), size_t(1)); QVERIFY(stored.entries[0].parsed.record); QVERIFY(stored.entries[0].parsed.record->terminal); QCOMPARE(stored.entries[0].taskId, receipt->pipeline.taskId);
+    QCOMPARE(stored.entries[0].parsed.record->report.value("extensions").toObject().value("com.xerahs.app").toObject().value("workflow_execution_id"), QJsonValue(request.id));
+    QCOMPARE(bytes(path), source); QVERIFY(!QFile::exists(dir.filePath("changed"))); QCOMPARE(portal.calls, 1);
+  }
+  void explicitRetryKeepsExecutionReferenceWithoutRewritingOriginalOutcome() {
+    using namespace xerahs::workflows; using namespace xerahs::actions;
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    NativeWorkflowExecutions executions(dir.filePath("executions")); auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("pipelines"));
+    bool failCopy = true; int copies = 0; CaptureActionPorts ports; ports.clipboard = [&](const QImage &, const CancellationToken &) { ++copies; return failCopy ? ActionOutcome{ActionState::Failed, QStringLiteral("action-failed"), {}} : ActionOutcome{}; };
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, {}, ports, journal);
+    auto workflow = defaultCaptureWorkflows().entries[0]; workflow.actions = QStringList{"save", "image-clipboard"};
+    const auto id = QUuid::createUuid().toString(QUuid::WithoutBraces); auto run = controller.prepareWorkflowCapture(workflow, id, "global-shortcut", executions.writer()); QVERIFY(run); run(); run = {};
+    QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
+    const auto original = controller.lastPipelineResult(); QVERIFY(original && original->file); const auto savedBytes = bytes(original->file->path); const auto recordBytes = bytes(dir.filePath("executions/" + id + ".json"));
+    QCOMPARE(executions.result(id).value("state"), QJsonValue("partial")); failCopy = false; QVERIFY(controller.retryFailedActions(original)); QTRY_VERIFY(!controller.busy());
+    const auto retry = controller.lastPipelineResult(); QVERIFY(retry && retry != original); QCOMPARE(retry->pipeline.workflowExecutionId, id); QVERIFY(retry->pipeline.retry); QCOMPARE(retry->pipeline.retry->originalTaskId, original->pipeline.taskId);
+    QCOMPARE(retry->pipeline.orderedResults.size(), size_t(1)); QCOMPARE(retry->pipeline.orderedResults[0].action, QString("image-clipboard")); QCOMPARE(retry->pipeline.orderedResults[0].state, ActionState::Succeeded);
+    QCOMPARE(bytes(original->file->path), savedBytes); QCOMPARE(bytes(dir.filePath("executions/" + id + ".json")), recordBytes); QCOMPARE(executions.result(id).value("pipelineTaskId"), QJsonValue(original->pipeline.taskId)); QCOMPARE(portal.calls, 1); QCOMPARE(copies, 2);
+    const auto records = journal->list(); QCOMPARE(records.entries.size(), size_t(2)); for (const auto &entry : records.entries) { QVERIFY(entry.parsed.record); QCOMPARE(entry.parsed.record->report.value("extensions").toObject().value("com.xerahs.app").toObject().value("workflow_execution_id"), QJsonValue(id)); }
+  }
+  void executionPreservesPrePipelineOutcomes_data() {
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"denied", "portal-cancel", "cancel-before-acquisition", "cancel-pending", "cancel-selection", "source-failure", "composition-failure", "destroy-pending"}) QTest::newRow(mode) << QString::fromLatin1(mode);
+  }
+  void executionPreservesPrePipelineOutcomes() {
+    using namespace xerahs::workflows;
+    QFETCH(QString, mode); QTemporaryDir dir; FakeScreenshotPortal portal(server);
+    const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto source = bytes(path);
+    portal.uri = QUrl::fromLocalFile(path).toString();
+    if (mode == "denied") portal.error = "org.freedesktop.portal.Error.NotAllowed";
+    if (mode == "source-failure") portal.error = "org.freedesktop.portal.Error.Failed";
+    if (mode == "portal-cancel") { portal.early = true; portal.code = 1; }
+    if (mode == "cancel-selection" || mode == "composition-failure") portal.early = true;
+    NativeWorkflowExecutions executions(dir.filePath("executions")); auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("pipelines"));
+    auto workflow = defaultCaptureWorkflows().entries[0]; workflow.actions = QStringList{"save"};
+    SnapshotComposer composer; if (mode == "composition-failure") composer = [](const QImage &, const xerahs::capture::PhysicalRect &, const xerahs::capture::Topology &, const xerahs::capture::CompositeControl &) { ComposedSnapshot result; result.diagnostic = "capture-source-failed"; return result; };
+    auto controller = std::make_unique<CaptureController>(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, composer, CaptureActionPorts{}, journal);
+    QApplication::clipboard()->setText("untouched execution fixture clipboard");
+    if (mode == "cancel-before-acquisition") connect(controller.get(), &CaptureController::busyChanged, controller.get(), [&](bool busy) { if (busy) controller->cancel(); });
+    const auto id = QUuid::createUuid().toString(QUuid::WithoutBraces); auto run = controller->prepareWorkflowCapture(workflow, id, "native-shell", executions.writer()); QVERIFY(run); run(); run = {};
+    if (mode == "cancel-pending" || mode == "destroy-pending") {
+      QTRY_COMPARE(portal.calls, 1);
+      if (mode == "cancel-pending") { controller->cancel(); controller->cancel(); } else controller.reset();
+    }
+    if (mode == "cancel-selection" || mode == "composition-failure") {
+      QTRY_VERIFY(overlayExists()); if (mode == "cancel-selection") controller->cancel(); else { controller->pointerDown({10, 10}); controller->pointerUp({40, 35}); }
+    }
+    if (controller) { QTRY_VERIFY(!controller->busy()); QVERIFY(!controller->lastPipelineResult()); }
+    const auto query = NativeWorkflowExecutions(dir.filePath("executions")).result(id);
+    QCOMPARE(query.value("state"), QJsonValue(mode == "denied" ? "permission-denied" : mode == "source-failure" || mode == "composition-failure" ? "failed" : mode == "destroy-pending" ? "outcome-unconfirmed" : "cancelled"));
+    QVERIFY(!query.contains("pipelineTaskId")); QCOMPARE(query.value("terminal").toBool(), mode != "destroy-pending");
+    QVERIFY(!QFile::exists(dir.filePath("outputs"))); QVERIFY(!QFile::exists(dir.filePath("pipelines"))); QVERIFY(!overlayExists()); QCOMPARE(bytes(path), source);
+    QCOMPARE(QApplication::clipboard()->text(), QString("untouched execution fixture clipboard"));
+    if (mode == "cancel-before-acquisition") QCOMPARE(portal.calls, 0);
+  }
+  void executionStorageFailureStopsNewActionsAndPreservesCompletedOutput_data() {
+    QTest::addColumn<int>("failWrite"); QTest::newRow("admission") << 1; QTest::newRow("start") << 2; QTest::newRow("pipeline-link") << 3; QTest::newRow("terminal") << 4;
+  }
+  void executionStorageFailureStopsNewActionsAndPreservesCompletedOutput() {
+    using namespace xerahs::workflows;
+    QFETCH(int, failWrite); QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    NativeWorkflowExecutions executions(dir.filePath("executions")); const auto writer = executions.writer(); int writes = 0;
+    auto guardedWriter = [&](const QString &id, const std::optional<QByteArray> &expected, const QByteArray &bytes) { return ++writes == failWrite ? xerahs::actions::JournalWrite{false, "private exception"} : writer(id, expected, bytes); };
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }); QSignalSpy notices(&controller, &CaptureController::notify);
+    auto workflow = defaultCaptureWorkflows().entries[0]; workflow.actions = QStringList{"save"}; const auto id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    auto run = controller.prepareWorkflowCapture(workflow, id, "command-line", guardedWriter);
+    if (failWrite == 1) { QVERIFY(!run); QCOMPARE(portal.calls, 0); return; }
+    QVERIFY(run); run(); run = {};
+    if (failWrite > 2) { QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); }
+    QTRY_VERIFY(!controller.busy()); QVERIFY(!notices.isEmpty()); bool storageFailure = false;
+    for (const auto &notice : notices) storageFailure |= !notice[2].toBool() && notice[1].toString().contains("storage"); QVERIFY(storageFailure);
+    QCOMPARE(executions.result(id).value("state"), QJsonValue("outcome-unconfirmed"));
+    if (failWrite == 4) { QVERIFY(!notices.last()[2].toBool()); QVERIFY(notices.last()[1].toString().contains("storage")); const auto receipt = controller.lastPipelineResult(); QVERIFY(receipt && receipt->file); QVERIFY(QFile::exists(receipt->file->path)); QCOMPARE(QImage(receipt->file->path).size(), QSize(30, 25)); }
+    else { QVERIFY(!QFile::exists(dir.filePath("outputs"))); QVERIFY(!controller.lastPipelineResult()); }
+    if (failWrite == 2) QCOMPARE(portal.calls, 0);
+  }
   void partialCompanionSaveHasHonestNotificationAndGuardedSharedRetry() {
     using namespace xerahs::actions;
     QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto borrowed = bytes(path);

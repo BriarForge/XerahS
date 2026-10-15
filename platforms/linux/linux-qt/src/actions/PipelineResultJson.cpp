@@ -36,6 +36,7 @@ QJsonObject pipelineResultJson(const PipelineResult &result,
   }
   QJsonObject native{{"schema_version", 1}, {"task_id", result.taskId},
                      {"action_timings", timings}, {"file_artifacts", artifacts}};
+  if (!result.workflowExecutionId.isEmpty()) native.insert("workflow_execution_id", result.workflowExecutionId);
   if (!result.workflowSnapshot.isEmpty()) {
     QJsonObject workflow;
     for (const auto *key : {"definitionVersion", "id", "name", "capture", "actions", "chooseActions"})

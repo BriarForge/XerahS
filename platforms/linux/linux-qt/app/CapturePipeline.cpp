@@ -109,10 +109,12 @@ private:
 };
 }
 CapturePipeline::CapturePipeline(QImage media, QString directory, QString pattern, QStringList selected,
-                                 QObject *parent, CaptureActionPorts ports, PipelineJournalStorage journal, QWidget *selectionParent, QJsonObject workflowSnapshot)
+                                 QObject *parent, CaptureActionPorts ports, PipelineJournalStorage journal, QWidget *selectionParent, QJsonObject workflowSnapshot, QString workflowExecutionId)
     : QObject(parent), m_state(std::make_shared<CapturePipelineState>()), m_media(std::move(media)),
       m_directory(std::move(directory)), m_pattern(std::move(pattern)), m_selected(std::move(selected)), m_ports(std::move(ports)), m_journal(std::move(journal)), m_selectionParent(selectionParent) {
   qRegisterMetaType<CapturePipelineReceipt>();
+  m_workflowExecutionId = std::move(workflowExecutionId);
+  m_taskId = QUuid::createUuid().toString(QUuid::WithoutBraces);
   m_workflowSnapshot = std::move(workflowSnapshot);
   m_timer = new QTimer(this); m_timer->setInterval(10); connect(m_timer, &QTimer::timeout, this, &CapturePipeline::poll);
 }
@@ -120,7 +122,7 @@ CapturePipeline::CapturePipeline(CapturePipelineReceipt source, QObject *parent,
     : CapturePipeline(source ? source->workingMedia : QImage{}, source ? source->saveDirectory : QString{},
                       source ? source->filenamePattern : QString{}, {}, parent, std::move(ports), std::move(journal), selectionParent) {
   m_retryRequested = true; m_retrySource = std::move(source);
-  if (m_retrySource) m_workflowSnapshot = m_retrySource->pipeline.workflowSnapshot;
+  if (m_retrySource) { m_workflowSnapshot = m_retrySource->pipeline.workflowSnapshot; m_workflowExecutionId = m_retrySource->pipeline.workflowExecutionId; }
 }
 CapturePipeline::~CapturePipeline() {
   m_timer->stop();
@@ -185,11 +187,10 @@ void CapturePipeline::start() {
   };
   auto *worker = QThread::create([state, ports, media = m_media, directory = m_directory,
                                   pattern = m_pattern, selected = m_selected, storage = m_journal,
-                                  retryRequested = m_retryRequested, source = m_retrySource, workflow = m_workflowSnapshot]() mutable {
+                                  retryRequested = m_retryRequested, source = m_retrySource, workflow = m_workflowSnapshot, id = m_taskId, executionId = m_workflowExecutionId]() mutable {
     state->result->workingMedia = media;
-    state->result->pipeline.workflowSnapshot = workflow;
+    state->result->pipeline.workflowSnapshot = workflow; state->result->pipeline.workflowExecutionId = executionId;
     state->result->saveDirectory = directory; state->result->filenamePattern = pattern;
-    const auto id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     const auto retry = source ? source->retryPlan() : PipelineRetryPlan{};
     if (retryRequested && !retry.available()) {
       state->result->pipeline.taskId = id; // rejected admission: no action started
@@ -202,7 +203,7 @@ void CapturePipeline::start() {
     std::vector<SavedFileArtifact> initialFacts;
     for (auto &file : inheritedFiles) { if (file.creatorTaskId.isEmpty()) file.creatorTaskId = source->pipeline.taskId; initialFacts.push_back(file); }
     PipelineJournalRecorder journal(storage, id, selected, QDateTime::currentDateTimeUtc(), retry.link,
-                                    initialFacts, source ? source->pipeline.finalWorkingMedia : QStringLiteral("capture"), workflow);
+                                    initialFacts, source ? source->pipeline.finalWorkingMedia : QStringLiteral("capture"), workflow, executionId);
     journal.begin(); // retry lineage/files precede any new external action
     const auto externalIntent = ports.save.publicationIntent;
     ports.save.publicationIntent = [&journal, externalIntent](const QString &path, bool companion) {
@@ -238,7 +239,7 @@ void CapturePipeline::start() {
       state->result->diagnostic = diagnostic::actionFailed;
     }
     state->result->pipeline.retry = retry.link;
-    state->result->pipeline.workflowSnapshot = workflow;
+    state->result->pipeline.workflowSnapshot = workflow; state->result->pipeline.workflowExecutionId = executionId;
     state->result->workingMedia = actions.workingMedia(); state->result->annotationDocument = actions.annotationDocument();
     state->result->sidecarIntent = actions.sidecarIntent();
     if (!executor.interruptionDiagnostic().isEmpty()) state->result->diagnostic = executor.interruptionDiagnostic();

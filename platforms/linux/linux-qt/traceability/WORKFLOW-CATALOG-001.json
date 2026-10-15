@@ -28,7 +28,13 @@
     "platforms/linux/linux-qt/app/WorkflowShortcutActions.cpp",
     "platforms/linux/linux-qt/app/WorkflowDiscovery.cpp",
     "platforms/linux/linux-qt/app/WorkflowDiscovery.h",
-    "platforms/linux/linux-qt/app/WorkflowStoragePath.h"
+    "platforms/linux/linux-qt/app/WorkflowStoragePath.h",
+    "platforms/linux/linux-qt/src/workflows/WorkflowExecution.h",
+    "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
+    "platforms/linux/linux-qt/app/NativeWorkflowExecutions.h",
+    "platforms/linux/linux-qt/app/NativeWorkflowExecutions.cpp",
+    "platforms/linux/linux-qt/app/NativePrivateRecords.h",
+    "platforms/linux/linux-qt/app/NativePrivateRecords.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/app/SAVED-WORKFLOWS.md",
@@ -40,7 +46,9 @@
     "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
     "platforms/linux/linux-qt/app/WORKFLOW-SHORTCUTS.md",
     "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
-    "platforms/linux/linux-qt/app/WORKFLOW-DISCOVERY.md"
+    "platforms/linux/linux-qt/app/WORKFLOW-DISCOVERY.md",
+    "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+    "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
   ],
   "requirements": {
     "WFCAT-001": {
@@ -53,7 +61,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Configured captures freeze workflow ID/name/type/actions/chooser intent, use existing pipeline task IDs/timings/results, and retain safe snapshot metadata in private journals. Full invocation origin/settings/acquisition-failure coverage remains Required. Effective output folder/pattern now freeze before acquisition and remain in known-field result/journal/retry snapshots. Explicit-ID invocation freezes the saved profile/output at primary admission before acknowledgement. Private portal/controller evidence proves original output after a profile edit, then changed output on the next invocation. Activation request ID is not the pipeline task ID; origin/result linkage remains Required. Desktop shortcut activation now reaches the same workflow-ID admission snapshot and actual controller as Run selected/CLI. Synthetic private-portal output evidence verifies saved settings and actual PNG pixels; full execution-origin/task/result linkage remains Required.",
+      "note": "Configured captures freeze workflow ID/name/type/actions/chooser intent, use existing pipeline task IDs/timings/results, and retain safe snapshot metadata in private journals. Full invocation origin/settings/acquisition-failure coverage remains Required. Effective output folder/pattern now freeze before acquisition and remain in known-field result/journal/retry snapshots. Explicit-ID invocation freezes the saved profile/output at primary admission before acknowledgement. Private portal/controller evidence proves original output after a profile edit, then changed output on the next invocation. Activation request ID is not the pipeline task ID; origin/result linkage remains Required. Desktop shortcut activation now reaches the same workflow-ID admission snapshot and actual controller as Run selected/CLI. Synthetic private-portal output evidence verifies saved settings and actual PNG pixels; full execution-origin/task/result linkage remains Required. Admitted region captures now durably record request/execution UUID, admission start, trusted boundary origin and frozen effective settings before ACK/acquisition; early denial/cancellation/source failure and actual pipeline terminal/order are linked to a separate task ID. Canonical/private PCA metadata links back to the execution. Headless read-only lookup reports nonterminal observations as unconfirmed without querying runtime. Full families/settings, retry invocation indexing, retention and target/human gates remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
@@ -64,14 +72,16 @@
         "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
         "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-SHORTCUTS.md",
-        "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
+        "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
       ]
     },
     "WFCAT-003": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Explicit full-UUID CLI activation now shares the authenticated dispatcher and actual controller with Run selected. Read-only workflow IDs are available in the manager. Global hotkeys, discovery, MCP/watch-folder/automation entry points remain Required. Explicit session global shortcut Enable/Configure/Disable now uses supported saved workflow IDs and the shared dispatcher/controller. Desktop chooses keys; held repeats are suppressed. Saving/reloading workflows disables obsolete session bindings. Persisted opt-in, full catalogue, MCP/watch-folder/automation and all target/human qualification remain Required. Read-only CLI discovery now supplies saved IDs/default/definition support for normal full-UUID execution without GUI initialization or primary activation. Saved disk scope and unqueried runtime state are explicit; the running primary still admits execution independently. Invocation/execution/result correlation, full interface families and shared schemas remain Required.",
+      "note": "Explicit full-UUID CLI activation now shares the authenticated dispatcher and actual controller with Run selected. Read-only workflow IDs are available in the manager. Global hotkeys, discovery, MCP/watch-folder/automation entry points remain Required. Explicit session global shortcut Enable/Configure/Disable now uses supported saved workflow IDs and the shared dispatcher/controller. Desktop chooses keys; held repeats are suppressed. Saving/reloading workflows disables obsolete session bindings. Persisted opt-in, full catalogue, MCP/watch-folder/automation and all target/human qualification remain Required. Read-only CLI discovery now supplies saved IDs/default/definition support for normal full-UUID execution without GUI initialization or primary activation. Saved disk scope and unqueried runtime state are explicit; the running primary still admits execution independently. Invocation/execution/result correlation, full interface families and shared schemas remain Required. Default/choose-actions, explicit-ID, native-shell and accepted shortcut capture admission now share request-aware Core preparation and controller execution observations. Headless execution lookup is read-only. All other entry points and shared schemas remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-CLI.md",
         "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
@@ -81,14 +91,20 @@
         "platforms/linux/linux-qt/app/WORKFLOW-SHORTCUTS.md",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-DISCOVERY.md",
-        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
       ]
     },
     "WFCAT-004": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Configured supported actions retain existing PCA succeeded/failed/skipped/cancelled and interruption facts; unavailable definitions fail before acquisition. Complete workflow status taxonomy/families remain Required."
+      "note": "Configured supported actions retain existing PCA succeeded/failed/skipped/cancelled and interruption facts; unavailable definitions fail before acquisition. Complete workflow status taxonomy/families remain Required. Region execution records now distinguish early permission-denied, cancelled, failed and undispatched not-started; actual PCA receipts supply succeeded/partial/cancelled/interrupted states. Missing terminal durability or in-flight destruction remains outcome-unconfirmed. Full family status taxonomy remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
+      ]
     },
     "WFCAT-005": {
       "status": "partial",
@@ -100,7 +116,11 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Configured runs use existing observable controller/pipeline cancellation and retain their frozen profile in results/retry. Full family cancellation/cleanup matrices remain Required."
+      "note": "Configured runs use existing observable controller/pipeline cancellation and retain their frozen profile in results/retry. Full family cancellation/cleanup matrices remain Required. Early portal/selection/composition cancellation is durable without inventing a pipeline. Failed admission/start/link persistence blocks the next boundary; terminal write failure keeps completed outputs and reports unconfirmed storage. Full family cancellation/cleanup remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
+      ]
     },
     "WFCAT-007": {
       "status": "partial",
@@ -164,7 +184,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Configured captures preserve existing single-controller busy arbitration and worker snapshots; changes affect future runs. Full concurrency policies across all resources and entry points remain Required. Workflow admission reserves a single pending operation and snapshots saved settings; busy/modal conflicts and preparation reentry fail without acquisition. Late conflicts release the reservation. Choose-actions now uses ordinary dispatch so subsequent workflows can run. Full resource/concurrency policy remains Required. Pending desktop binding blocks conflicting capture admission; bound presses use existing single-operation admission and are never queued. Repeats remain held through a refused busy press until release. Binding updates preserve held accepted keys; disable/invalidation clears authority. All-resource concurrency policies remain Required.",
+      "note": "Configured captures preserve existing single-controller busy arbitration and worker snapshots; changes affect future runs. Full concurrency policies across all resources and entry points remain Required. Workflow admission reserves a single pending operation and snapshots saved settings; busy/modal conflicts and preparation reentry fail without acquisition. Late conflicts release the reservation. Choose-actions now uses ordinary dispatch so subsequent workflows can run. Full resource/concurrency policy remains Required. Pending desktop binding blocks conflicting capture admission; bound presses use existing single-operation admission and are never queued. Repeats remain held through a refused busy press until release. Binding updates preserve held accepted keys; disable/invalidation clears authority. All-resource concurrency policies remain Required. Request-aware preparation persists only after existing busy/modal checks. Normal abandoned/late-busy dispatch records not-started and duplicate/stale private IDs cannot overwrite or restart captures. Complete arbitration remains Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-CLI.md",
         "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
@@ -172,14 +192,16 @@
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-SHORTCUTS.md",
-        "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
+        "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
       ]
     },
     "WFCAT-015": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Explicit retained retry keeps the original workflow snapshot and successful outputs after profile edits; no configuration reread/repeat is introduced. Other idempotency/remote families remain Required. Retained save retry now proves original folder/pattern use after the profile destination/name changes. Private activation UUID/payload receipts prevent duplicate dispatch within the bounded primary lifetime; changed workflow payload with the same request ID is rejected and missing acknowledgement never auto-resends. This does not establish durable exactly-once or remote idempotency.",
+      "note": "Explicit retained retry keeps the original workflow snapshot and successful outputs after profile edits; no configuration reread/repeat is introduced. Other idempotency/remote families remain Required. Retained save retry now proves original folder/pattern use after the profile destination/name changes. Private activation UUID/payload receipts prevent duplicate dispatch within the bounded primary lifetime; changed workflow payload with the same request ID is rejected and missing acknowledgement never auto-resends. This does not establish durable exactly-once or remote idempotency. Explicit retained retries preserve original execution metadata plus independent pipeline attempt lineage; complete retry invocation/execution indexing and all-family idempotency remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
@@ -188,7 +210,9 @@
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-CLI.md",
         "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
       ]
     },
     "WFCAT-016": {
@@ -214,7 +238,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Results and private restart journals retain a known-field-only workflow snapshot and existing truthful outcomes. Unknown extensions are excluded from reports. Full notifications/log/privacy/terminal-state convergence remains Required. Nested output extensions are excluded from reports while known private folder/pattern fields stay available to explicit review. Versioned CLI JSON contains admission/delivery, stable errors and valid opaque IDs only; it does not publish private names/actions/folders/patterns or claim terminal output success. Complete result convergence and execution/result lookup remain Required. The native command window reports actual desktop binding descriptions/empty results and fixed setup failures as plain accessible text; registration does not claim capture success. Full terminal-state convergence, origin/result linkage and human privacy/accessibility qualification remain Required. Explicit discovery reveals saved workflow IDs/names and fixed definition diagnostics while excluding private output fields, action choices and unknown extensions/capture labels. It creates no execution ID or terminal-success claim and queries no runtime permissions. Complete execution/result linkage, privacy and shared convergence remain Required.",
+      "note": "Results and private restart journals retain a known-field-only workflow snapshot and existing truthful outcomes. Unknown extensions are excluded from reports. Full notifications/log/privacy/terminal-state convergence remains Required. Nested output extensions are excluded from reports while known private folder/pattern fields stay available to explicit review. Versioned CLI JSON contains admission/delivery, stable errors and valid opaque IDs only; it does not publish private names/actions/folders/patterns or claim terminal output success. Complete result convergence and execution/result lookup remain Required. The native command window reports actual desktop binding descriptions/empty results and fixed setup failures as plain accessible text; registration does not claim capture success. Full terminal-state convergence, origin/result linkage and human privacy/accessibility qualification remain Required. Explicit discovery reveals saved workflow IDs/names and fixed definition diagnostics while excluding private output fields, action choices and unknown extensions/capture labels. It creates no execution ID or terminal-success claim and queries no runtime permissions. Complete execution/result linkage, privacy and shared convergence remain Required. Explicit headless lookup reports only IDs, trusted origin, times, ordered action/state pairs, fixed diagnostics and pipeline link. Known private settings stay in owner-only execution storage; canonical history/report includes execution reference. Unfinished/failed-persistence observations remain unconfirmed, completed outputs are kept. Full convergence, retention and human privacy/security review remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
@@ -226,14 +250,16 @@
         "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-SHORTCUTS.md",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
-        "platforms/linux/linux-qt/app/WORKFLOW-DISCOVERY.md"
+        "platforms/linux/linux-qt/app/WORKFLOW-DISCOVERY.md",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
       ]
     },
     "WFCAT-018": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Core/native UI/restart/real-output/private-portal cases cover the supported profile slice. No published WORKFLOW vectors exist; CMake reports that absence explicitly, following CORE precedent. All approved action-family vectors, platform adapters and human activation gates remain Required. Core protocol/dispatcher, actual child application and private-portal real-controller tests now cover workflow-ID admission, safe JSON, headless refusal, profile snapshots, failure/busy/unknown delivery and reservation release. Published WFCAT vectors, full target matrix and human gates remain Required. New private-bus Core/native-action/actual-controller tests cover early/normal replies, wrong owner/session/ID, held keys and changes, denial/cancellation/unavailability/timeout, invalid bindings, late cleanup, replacement/session loss, busy refusal and synthetic real PNG output. Published WFCAT vectors and all supported desktop/human acceptance gates remain Required. Core projection/stale/privacy tests and actual headless child application cases cover initial/saved/v1/unavailable/corrupt/newer/unsafe/symlink storage, busy primary without activation, conflicting/invalid arguments and help without display or preference writes. Full action-family scenarios, published WFCAT vectors and target/human gates remain Required.",
+      "note": "Core/native UI/restart/real-output/private-portal cases cover the supported profile slice. No published WORKFLOW vectors exist; CMake reports that absence explicitly, following CORE precedent. All approved action-family vectors, platform adapters and human activation gates remain Required. Core protocol/dispatcher, actual child application and private-portal real-controller tests now cover workflow-ID admission, safe JSON, headless refusal, profile snapshots, failure/busy/unknown delivery and reservation release. Published WFCAT vectors, full target matrix and human gates remain Required. New private-bus Core/native-action/actual-controller tests cover early/normal replies, wrong owner/session/ID, held keys and changes, denial/cancellation/unavailability/timeout, invalid bindings, late cleanup, replacement/session loss, busy refusal and synthetic real PNG output. Published WFCAT vectors and all supported desktop/human acceptance gates remain Required. Core projection/stale/privacy tests and actual headless child application cases cover initial/saved/v1/unavailable/corrupt/newer/unsafe/symlink storage, busy primary without activation, conflicting/invalid arguments and help without display or preference writes. Full action-family scenarios, published WFCAT vectors and target/human gates remain Required. Additional Core/native/private-portal/actual-app tests verify new-primary and forwarded ACK-to-denial lookup, real PNG link-before-output, early denial/cancel/failure/destruction, admission/start/link/terminal storage faults, duplicates/stale/unsafe/malformed/future records and headless read-only CLI. All published vectors and target/human acceptance gates remain unchanged.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-CLI.md",
         "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
@@ -243,7 +269,9 @@
         "platforms/linux/linux-qt/app/WORKFLOW-SHORTCUTS.md",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-DISCOVERY.md",
-        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
       ]
     }
   }

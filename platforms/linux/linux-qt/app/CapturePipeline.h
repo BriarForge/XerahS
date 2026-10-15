@@ -35,9 +35,10 @@ class CapturePipeline final : public QObject {
   Q_OBJECT
 public:
   CapturePipeline(QImage media, QString directory, QString pattern, QStringList selected,
-                  QObject *parent = nullptr, CaptureActionPorts ports = {}, PipelineJournalStorage journal = {}, QWidget *selectionParent = nullptr, QJsonObject workflowSnapshot = {});
+                  QObject *parent = nullptr, CaptureActionPorts ports = {}, PipelineJournalStorage journal = {}, QWidget *selectionParent = nullptr, QJsonObject workflowSnapshot = {}, QString workflowExecutionId = {});
   CapturePipeline(CapturePipelineReceipt source, QObject *parent = nullptr, CaptureActionPorts ports = {}, PipelineJournalStorage journal = {}, QWidget *selectionParent = nullptr);
   ~CapturePipeline() override;
+  QString taskId() const { return m_taskId; }
   void start();
   void cancel();
 signals:
@@ -48,6 +49,7 @@ private:
   void poll();
   std::shared_ptr<CapturePipelineState> m_state;
   QImage m_media;
+  QString m_taskId, m_workflowExecutionId;
   QString m_directory, m_pattern;
   QStringList m_selected;
   QJsonObject m_workflowSnapshot;

@@ -175,6 +175,7 @@ struct PipelineResult {
   QStringList ignoredSelection;  // unknown action IDs that never ran
   std::optional<PipelineRetryLink> retry;
   QJsonObject workflowSnapshot;
+  QString workflowExecutionId = {}; // optional admitted invocation, not task identity
 };
 
 struct PipelineHooks {
