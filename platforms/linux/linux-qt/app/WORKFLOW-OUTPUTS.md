@@ -70,7 +70,7 @@ take 7.57/12.41/4.85 s locally, 7.87/12.08/4.60 s minimum. All 32 tooling tests
 pass. Exact pushed CI is reported with the checkpoint. Shared expectations and
 all per-process deadlines stay intact.
 [Explicit workflow-ID CLI activation](WORKFLOW-CLI.md) now uses the same dispatcher
-and controller, freezing output settings at admission. Next implement global entry
-points and atomic counter reservation. Complete
+and controller, freezing output settings at admission. [Session global shortcuts](WORKFLOW-SHORTCUTS.md) now share that path. Next implement
+workflow discovery and execution/result linkage, then atomic counter reservation. Complete
 token-help/context/grant coverage, workflow/action families, target matrix and
 human security/privacy/accessibility/parity/release qualification remain Required.

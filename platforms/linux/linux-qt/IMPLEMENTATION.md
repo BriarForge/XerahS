@@ -4,8 +4,9 @@ Implement the approved English Product Contract in the `linux-qt` reference
 edition. Keep shared expected results independent of Linux, and record partial
 requirements honestly until native behavior and evidence cover their full scope.
 
-Current next deliverable: saved-workflow global shortcut bindings, followed by
-execution discovery/result linkage and atomic filename-counter reservation.
+Current next deliverable: workflow discovery and execution/result linkage, followed
+by atomic filename-counter reservation. Session global shortcuts now share the
+workflow dispatcher; see [shortcut evidence](app/WORKFLOW-SHORTCUTS.md).
 Explicit-ID CLI activation now shares authenticated admission, immutable saved
 snapshots and the real controller; see [CLI evidence](app/WORKFLOW-CLI.md).
 Named profiles and per-profile output folders, patterns and preview are implemented;
@@ -269,8 +270,9 @@ Private v2 definitions read v1 defaults and upgrade only on explicit Save; nativ
 counter and random-file authority remain unavailable pending implementation.
 
 Explicit workflow-ID CLI activation now shares frozen admission with Run selected.
-Prioritize global workflow shortcut bindings next, then execution discovery/result
-linkage, atomic counter reservation and complete naming context/grants. Further hardening should address a
+Session global shortcut enable/configure/disable now uses desktop-managed bindings
+and the same admission/controller. Prioritize workflow discovery and execution/result
+linkage next, then atomic counter reservation and complete naming context/grants. Further hardening should address a
 demonstrated defect or feature-delivery blocker. Recent Images dialog ownership
 remains a maintenance item rather than the automatic next feature. All remaining tools, effects,
 canvas/output, capture topology, recording/audio, uploads, workflows/settings/

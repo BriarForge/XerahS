@@ -15,6 +15,8 @@ set(XERAHS_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." CACHE PATH "BriarFor
 add_library(xerahs_core STATIC
   src/workflows/CaptureWorkflows.cpp
   src/workflows/CaptureWorkflows.h
+  src/workflows/WorkflowShortcuts.cpp
+  src/workflows/WorkflowShortcuts.h
   src/shell/ActivationDispatcher.cpp
   src/shell/ActivationDispatcher.h
   src/shell/ActivationProtocol.cpp
@@ -132,6 +134,13 @@ target_include_directories(xerahs_action_selection PUBLIC app)
 target_link_libraries(xerahs_action_selection PUBLIC xerahs_core xerahs_editor_source xerahs_editor_canvas Qt6::Widgets)
 target_compile_options(xerahs_action_selection PRIVATE -Wall -Wextra -Wpedantic)
 
+add_library(xerahs_workflow_shortcuts STATIC app/PortalWorkflowShortcuts.cpp app/PortalWorkflowShortcuts.h
+  app/WorkflowShortcutActions.cpp app/WorkflowShortcutActions.h)
+set_target_properties(xerahs_workflow_shortcuts PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_workflow_shortcuts PUBLIC app)
+target_link_libraries(xerahs_workflow_shortcuts PUBLIC xerahs_core Qt6::DBus Qt6::Widgets)
+target_compile_options(xerahs_workflow_shortcuts PRIVATE -Wall -Wextra -Wpedantic)
+
 # The XerahS application (D-LIN-001: Qt Widgets). Product logic stays in
 # xerahs_core; app/ only wires it to Qt and the desktop.
 add_executable(xerahs
@@ -189,7 +198,7 @@ add_executable(xerahs
   app/main.cpp
 )
 set_target_properties(xerahs PROPERTIES AUTOMOC ON)
-target_link_libraries(xerahs PRIVATE xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_native_instance xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus)
+target_link_libraries(xerahs PRIVATE xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_native_instance xerahs_workflow_shortcuts xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus)
 target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
 find_program(XERAHS_DBUS_RUN_SESSION dbus-run-session REQUIRED)
@@ -547,6 +556,17 @@ target_link_libraries(native-capture-workflows-test PRIVATE xerahs_file_output x
 add_test(NAME native-capture-workflows COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:native-capture-workflows-test>)
 set_tests_properties(native-capture-workflows PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+add_executable(workflow-shortcuts-test tests/WorkflowShortcutsTest.cpp
+  app/PortalScreenshot.cpp app/PortalScreenshot.h app/CaptureController.cpp app/CaptureController.h
+  app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h
+  app/CapturePipeline.cpp app/CapturePipeline.h app/SnapshotComposition.cpp app/SnapshotComposition.h
+  app/RegionOverlay.cpp app/RegionOverlay.h app/ApplicationWindow.cpp app/ApplicationWindow.h)
+set_target_properties(workflow-shortcuts-test PROPERTIES AUTOMOC ON)
+target_link_libraries(workflow-shortcuts-test PRIVATE xerahs_workflow_shortcuts xerahs_file_output xerahs_action_selection xerahs_pipeline_journal Qt6::Test)
+add_test(NAME workflow-shortcuts COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:workflow-shortcuts-test>)
+set_tests_properties(workflow-shortcuts PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
 # Capabilities with production implementation and requirement traceability.
 # Full requirement coverage remains in traceability, including partial rows.
 # The full suite runs without --capability and still fails for missing seams.

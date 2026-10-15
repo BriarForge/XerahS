@@ -2,7 +2,9 @@
 // Identity com.xerahs.app / "XerahS" (CORE-002, ROOT-IDENTITY-001).
 
 #include "CaptureController.h"
+#include "CaptureActions.h"
 #include "CaptureWorkflows.h"
+#include "WorkflowShortcutActions.h"
 #include "CaptureRecoveryActions.h"
 #include "EditorWindow.h"
 #include "EditorOpen.h"
@@ -172,12 +174,18 @@ int main(int argc, char *argv[]) {
   refreshCaptureStyle();
   QObject::connect(&xerahs::app::nativeEditorPreferenceEvents(), &xerahs::app::NativeEditorPreferenceEvents::drawingDefaultsChanged, &capture, refreshCaptureStyle);
 
+  xerahs::app::WorkflowShortcutActions shortcutActions([&workflows] {
+    const auto diagnostic = workflows.store().unchanged();
+    if (!diagnostic.isEmpty()) return xerahs::workflows::WorkflowShortcutPlan{{}, 0, diagnostic};
+    return xerahs::workflows::workflowShortcutPlan(*workflows.store().current().catalog, xerahs::app::CaptureActions::selectableActions());
+  }, [&capture] { return !capture.busy() && !QApplication::activeModalWidget(); });
   QSystemTrayIcon tray(appIcon());
   tray.setToolTip(QStringLiteral("XerahS"));
   QMenu menu;
   QAction *region = menu.addAction(QStringLiteral("Capture region"));
   QAction *chooseCapture = menu.addAction(QStringLiteral("Capture region and choose actions…"));
   QAction *configureWorkflows = menu.addAction(QStringLiteral("Capture workflows…"));
+  menu.addAction(shortcutActions.enableAction()); menu.addAction(shortcutActions.disableAction());
   QAction *cancelCapture = menu.addAction(QStringLiteral("Cancel capture"));
   cancelCapture->setEnabled(false);
   QObject::connect(cancelCapture, &QAction::triggered, &capture, &CaptureController::cancel);
@@ -193,11 +201,13 @@ int main(int argc, char *argv[]) {
   QAction *quit = menu.addAction(QStringLiteral("Quit XerahS"));
   tray.setContextMenu(&menu);
   xerahs::app::ApplicationWindow home({{"capture-region", region}, {"capture-region-choose-actions", chooseCapture}, {"cancel-capture", cancelCapture},
-      {"capture-workflows", configureWorkflows},
+      {"capture-workflows", configureWorkflows}, {"enable-workflow-shortcuts", shortcutActions.enableAction()}, {"disable-workflow-shortcuts", shortcutActions.disableAction()},
       {"new-image", newImage}, {"open-image", openImage}, {"captures-folder", folder}, {"capture-history", history}, {"editor-appearance", appearance}, {"quit", quit}});
   // Leave a focus-capable native window behind the chooser. In particular,
   // Wayland clipboard dispatch must not follow closure of our last window.
   capture.setActionSelectionParent(&home);
+  QObject::connect(&shortcutActions, &xerahs::app::WorkflowShortcutActions::notify, &home, [&home](const QString &body, bool success) { home.showResult("Workflow shortcuts", body, success); });
+  QObject::connect(&workflows, &xerahs::app::NativeCaptureWorkflows::changed, &shortcutActions, &xerahs::app::WorkflowShortcutActions::invalidate);
   const auto refreshWorkflow = [&] {
     const auto &catalog = workflows.store().current().catalog; QString label;
     if (catalog) for (const auto &w : catalog->entries) if (w.id == catalog->defaultId) label = w.name;
@@ -266,7 +276,7 @@ int main(int argc, char *argv[]) {
   });
   ActivationDispatcher dispatcher({[&home] { home.activate(); }, [&capture] { capture.captureRegion(); },
       [](const QString &path) { if (auto *window = xerahs::app::EditorWindow::open(path)) window->show(); },
-      [&capture] { return capture.busy(); }, [] { return QApplication::activeModalWidget() != nullptr; },
+      [&capture] { return capture.busy(); }, [&shortcutActions] { return QApplication::activeModalWidget() != nullptr || shortcutActions.pending(); },
       [&workflows, &capture, &home](const QString &id) -> std::function<void()> {
         const auto choice = workflows.resolve(QUuid(id)); if (!choice.workflow) return {};
         return [&capture, &home, snapshot = *choice.workflow] { home.activate(); capture.captureRegionWorkflow(snapshot); };
@@ -288,6 +298,7 @@ int main(int argc, char *argv[]) {
       home.activate();
     }
   };
+  QObject::connect(&shortcutActions, &xerahs::app::WorkflowShortcutActions::workflowRequested, &home, [&invokeLocal](const QString &id) { invokeLocal(ActivationAction::RunWorkflow, {}, false, id); });
   QObject::connect(configureWorkflows, &QAction::triggered, &home, [&] {
     const auto selected = xerahs::app::manageCaptureWorkflows(workflows, &home, [&capture] { return !capture.busy(); });
     if (selected) invokeLocal(ActivationAction::RunWorkflow, {}, false, selected->id.toString(QUuid::WithoutBraces));

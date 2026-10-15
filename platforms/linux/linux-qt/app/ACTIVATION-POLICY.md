@@ -90,6 +90,10 @@ a tray host, the visible native window supplies the current commands and normal
 last-window exit behavior. This is an application shell subset: onboarding,
 history/settings chrome, complete workflow surfaces, global shortcuts,
 command palette, localization and native notification authority remain Required.
+[Session global shortcuts](WORKFLOW-SHORTCUTS.md) now feed explicit workflow-ID
+activation into this dispatcher. Pending desktop setup blocks conflicting capture
+admission; failed/busy presses are not queued or repeated on key hold. Persisted
+opt-in, all shortcut families and physical desktop/human qualification remain Required.
 
 `ActivationProtocolTest` exercises production validation, reservation,
 reentrancy, changed availability and redacted exceptions. `NativeInstanceTest`

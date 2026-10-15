@@ -70,7 +70,8 @@ The socket/bus fixtures require execution outside this host's restricted sandbox
 The full final suite and exact pushed Ubuntu/Qt 6.4.2 CI are recorded with the
 checkpoint in CONTRACT-AUDIT.md and its continuation report. All 114 existing
 published vectors remain unchanged; no CORE/WFCAT vectors are published yet.
-Next implement saved-workflow global shortcut bindings, followed by discovery,
-execution/result linkage and atomic filename counters. Complete action families,
+[Session global shortcuts](WORKFLOW-SHORTCUTS.md) now use the same workflow-ID
+admission path. Next implement discovery, execution/result linkage and atomic
+filename counters. Complete action families,
 shared automation schemas, supported desktop matrix and human security/privacy/
 accessibility/parity/release qualification remain Required.

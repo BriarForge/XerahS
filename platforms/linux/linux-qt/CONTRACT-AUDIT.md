@@ -44,7 +44,7 @@ entire specification and linked ledger rows, not just the examples listed.
 | `EDITOR-SETTINGS-001` | Private atomic store, recents, creation-only border/fill/thickness, appearance, window state and toolbar controls; three vectors plus native tests | Complete field ledger/default/migration/downstream coverage, fonts/other tool defaults, numeric/effect settings, recent/favorite effects, convenience/automation preferences, independent whole-file recovery, shared semantics and physical/human reviews remain Required. |
 | `EDITOR-UTILITIES-001` | Canvas comparison support covers only a related image operation | No complete EU trace. Contracted utility tools, deterministic local processing, resource policy, progress/cancellation, accessibility and output integration remain Required. |
 | `SETTINGS-CATALOG-001` | Editor preference subset and inactive unknown preservation | No complete SETCAT trace. All 922 settings rows, profiles/scopes, shared schema, secure credential references, import/export/reset preview, full validation/migration and approval remain Required. |
-| `WORKFLOW-CATALOG-001` | All 18 WFCAT rows traced as partial/not-started; saved named region profiles, per-profile folder/pattern/preview, atomic editing/default/restart and actual window/tray/workflow-ID CLI controller execution, frozen admission/result/journal/retry metadata | All 436 ledger rows, remaining action families, complete destination/naming policy, global entry points and complete CLI execution discovery/results, shared definitions/import/migration, complete execution identity/status/concurrency/cancellation/retry and privacy/permission/native qualification remain Required. No published WFCAT vectors or human acceptance yet. |
+| `WORKFLOW-CATALOG-001` | All 18 WFCAT rows traced as partial/not-started; saved named region profiles, per-profile folder/pattern/preview, atomic editing/default/restart and actual window/tray/workflow-ID CLI/session shortcut controller execution, frozen admission/result/journal/retry metadata | All 436 ledger rows, remaining action families, complete destination/naming policy, persisted/global entry-point qualification and complete CLI execution discovery/results, shared definitions/import/migration, complete execution identity/status/concurrency/cancellation/retry and privacy/permission/native qualification remain Required. No published WFCAT vectors or human acceptance yet. |
 | `INTERFACE-CATALOG-001` | Small native tray/editor/CLI subset | No complete IFCAT trace. All linked GUI/CLI/MCP surfaces, semantic equivalence, availability, versioned progress/error/cancellation and keyboard/assistive-technology qualification remain Required. |
 | `COMPATIBILITY-CATALOG-001` | `.xann` parsing/round-trip and current unknown editor preference preservation | No complete COMPCAT trace. Configuration/workflow/uploader/history/SXCU/plugin/effect/automation compatibility, isolated previewed imports, secret handling, resource validation, idempotent migration and rollback/goldens remain Required. |
 | `MOBILE-PLATFORM-001` | Its explicit scope is Android/iOS | Mobile requirements are not Linux desktop requirements; CORE-029 and mobile-scope rules remain authoritative. This does not waive any desktop capability or its cross-platform acceptance gate. |
@@ -78,8 +78,9 @@ marked implemented in a core trace file.
 
 ## Next production work
 
-Current priority: saved-workflow global shortcut bindings, then execution
-discovery/result linkage and atomic counter reservation. Explicit-ID CLI admission
+Current priority: workflow discovery and execution/result linkage, then atomic
+counter reservation. Explicit session global shortcuts now share workflow-ID
+admission and the production capture controller. Explicit-ID CLI admission
 and immutable saved settings now share the actual dispatcher/controller. The dated
 checkpoints at the end record current verification and remaining scope; the following notes retain earlier work.
 
@@ -942,3 +943,58 @@ accessibility/parity/release gates remain in scope and unfinished. No completion
 percentage is established. Next implement saved-workflow global shortcut bindings,
 then execution discovery/result linkage and atomic counters. The continuation
 timer was confirmed active through a read-only user-service check and stays active.
+
+
+## 2026-10-16 — Desktop-managed saved workflow shortcuts
+
+Starting revision: `35057fb31355d80c31eb65ee214c2d115fa320a7`, main. Its exact
+Ubuntu/Qt 6.4.2 [CI 38771148727](https://github.com/BriarForge/XerahS/actions/runs/38771148727)
+passed native job **116546981102** (51/51, 71.19 s) and lint **116546981499**.
+That proves the preceding CLI checkpoint; this continuation did not repeat its
+implementation or modify its activation protocol/schema.
+
+[Global shortcut evidence](app/WORKFLOW-SHORTCUTS.md) adds actual shared native
+Enable/Configure/Disable actions to the window, Capture menu and tray. Explicit
+setup offers supported saved UUID/name pairs to the desktop GlobalShortcuts
+portal without assigning keys. Returned accepted subsets/descriptions, including
+empty results and later changes, determine actual authority. Presses use the same
+workflow-ID dispatcher and real CaptureController. Busy/modal/setup conflicts
+reject rather than queue; held-key repeats cannot start another acquisition.
+Workflow save/reload invalidates old session bindings. Disable cancels pending
+setup without cancelling an already running capture or deleting saved settings.
+
+QtCore production code owns projection, accepted-subset and held-key policy.
+The native adapter correlates early/normal request replies, unique portal owner,
+session path and canonical offered IDs; owner replacement/Closed fails closed
+without implicit reconnect. Cancellation closes pending requests and the session,
+including a CreateSession reply arriving late. Fixed errors expose manual Run/CLI
+fallback. Registration passes only workflow names/UUIDs, never saved actions,
+output paths/patterns, credentials or automatic capture consent. Only existing
+native profile semantics are used; no persisted or public compatibility changes.
+
+The full local suite passes **52/52 in 70.35 s**, including all **114 published
+vectors**. The new private-bus target passes in **2.89 s** and covers Core policy,
+actual native keyboard actions, serialized portal fields, wrong owner/session/ID,
+held presses, binding changes, malformed/duplicate results, unavailable/denied/
+cancelled service, timeout, late cleanup, replacement/session closure and real
+synthetic PNG output through CaptureController. One initial full run caught a new
+fixture bug: its missing-service case emitted an invalid empty session path.
+The fixture was corrected to send a valid unrelated path; all refusal assertions
+remain. Final full regression above passes. All **32 tooling tests** pass. Final rebuilt application/shortcut/shell checks pass 3/3; exact pushed
+Ubuntu/Qt 6.4.2 CI is reported in the continuation result. The existing
+com.xerahs.app identity is preserved. No test deadline or shared expected result was weakened.
+
+Enablement is explicitly session-only: enable again after restart or workflow
+changes. Persisted opt-in/autostart, the complete shortcut catalogue, alternative
+backends, activation-token/window-parent focus, screen-lock and physical key/
+desktop/accessibility qualification remain Required. This is native candidate
+implementation evidence, not human security/privacy/parity/release approval.
+No CORE/WFCAT published vectors exist yet; all requirement IDs, statuses,
+dispositions and vectors are preserved. The entire 324-requirement/15-package
+scope, 922 settings/436 workflows/232 effects/20 tools, capture/display mapping,
+recording/audio/uploads/credentials/plugins, compatibility/history/automation,
+packaging/migration/updates/rollback and all supported targets/human gates remain
+unfinished. No production-readiness percentage is established. Next implement
+workflow discovery and execution/result linkage, then atomic counters and the
+remaining capture families. The continuation timer was confirmed active and stays
+active. No host shortcut, live capture, Avalonia setting or compositor file was changed.
