@@ -12,6 +12,8 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QProgressBar>
+#include <QScopeGuard>
+#include <QThreadPool>
 #include <QPushButton>
 #include <QSlider>
 #include <QVBoxLayout>
@@ -122,7 +124,9 @@ void ComparisonView::revealAt(QPointF point) {
 }
 void ComparisonView::mousePressEvent(QMouseEvent *event) {
   if (event->button() == Qt::LeftButton && m_layout) {
+    const QPointer<ComparisonView> owner(this);
     setFocus();
+    if (!owner) return;
     m_dragging = true;
     revealAt(event->position());
   } else
@@ -160,10 +164,12 @@ void ComparisonView::focusOutEvent(QFocusEvent *event) {
   QWidget::focusOutEvent(event);
 }
 
-ImageComparisonDialog::ImageComparisonDialog(AnnotationDocument document, QImage source, QWidget *parent)
-    : QDialog(parent), m_document(std::move(document)), m_source(std::move(source)) {
+ImageComparisonDialog::ImageComparisonDialog(AnnotationDocument document, QImage source, QWidget *parent, ComparisonHooks hooks)
+    : QDialog(parent), m_document(std::move(document)), m_source(std::move(source)), m_hooks(std::move(hooks)) {
   setObjectName(QStringLiteral("imageComparisonDialog"));
   setWindowTitle(QStringLiteral("Compare Images"));
+  setAccessibleName(windowTitle());
+  setWindowModality(Qt::WindowModal);
   auto *layout = new QVBoxLayout(this);
   auto *form = new QFormLayout;
   for (int input = 0; input < 2; ++input) {
@@ -171,6 +177,7 @@ ImageComparisonDialog::ImageComparisonDialog(AnnotationDocument document, QImage
     m_inputLabels[input] = new QLabel(QStringLiteral("No image selected"), this);
     m_inputLabels[input]->setObjectName(QStringLiteral("comparisonInput%1").arg(input));
     m_inputLabels[input]->setWordWrap(true);
+    m_inputLabels[input]->setTextFormat(Qt::PlainText);
     row->addWidget(m_inputLabels[input], 1);
     m_inputButtons[input] = new QPushButton(QStringLiteral("Choose image…"), this);
     m_inputButtons[input]->setObjectName(QStringLiteral("chooseComparisonInput%1").arg(input));
@@ -221,6 +228,7 @@ ImageComparisonDialog::ImageComparisonDialog(AnnotationDocument document, QImage
   m_status = new QLabel(this);
   m_status->setObjectName(QStringLiteral("comparisonStatus"));
   m_status->setWordWrap(true);
+  m_status->setTextFormat(Qt::PlainText);
   layout->addWidget(m_status);
   m_progress = new QProgressBar(this);
   m_progress->setRange(0, 100);
@@ -232,19 +240,15 @@ ImageComparisonDialog::ImageComparisonDialog(AnnotationDocument document, QImage
   progressRow->addWidget(m_progress, 1);
   progressRow->addWidget(m_cancelLoad);
   layout->addLayout(progressRow);
-  connect(m_cancelLoad, &QPushButton::clicked, this, [this] {
-    if (m_control) {
-      m_control->cancelled.store(true);
-      m_status->setText(QStringLiteral("Cancelling load…"));
-      m_cancelLoad->setEnabled(false);
-    }
-  });
+  connect(m_cancelLoad, &QPushButton::clicked, this, &ImageComparisonDialog::cancelLoad);
   m_buttons = new QDialogButtonBox(QDialogButtonBox::Close, this);
   connect(m_buttons, &QDialogButtonBox::rejected, this, &ImageComparisonDialog::reject);
   layout->addWidget(m_buttons);
   connect(m_alignment, &QComboBox::currentIndexChanged, this, [this] { updateView(); });
   connect(m_reveal, &QSlider::valueChanged, this, [this](int p) {
+    const QPointer<ImageComparisonDialog> owner(this);
     m_view->setReveal(p);
+    if (!owner) return;
     m_percent->setText(QStringLiteral("&First image: %1%").arg(p));
   });
   connect(m_view, &ComparisonView::revealRequested, m_reveal, &QSlider::setValue);
@@ -258,20 +262,32 @@ ImageComparisonDialog::ImageComparisonDialog(AnnotationDocument document, QImage
   QTimer::singleShot(0, this, [this] { useCurrentImage(); });
 }
 ImageComparisonDialog::~ImageComparisonDialog() {
-  if (m_control)
-    m_control->cancelled.store(true);
-  if (m_worker.valid())
-    m_worker.wait();
+  if (m_work) m_work->cancelled.store(true);
 }
 void ImageComparisonDialog::chooseFile(int input) {
-  QStringList patterns;
-  for (const auto &format : QImageReader::supportedImageFormats())
-    patterns.append(QStringLiteral("*.%1").arg(QString::fromLatin1(format)));
-  const QString path = QFileDialog::getOpenFileName(
-      this, input == 0 ? QStringLiteral("Compare first raster image") : QStringLiteral("Compare second raster image"),
-      {}, QStringLiteral("Images (%1);;All files (*)").arg(patterns.join(QLatin1Char(' '))));
-  if (!path.isEmpty())
-    loadFile(input, path);
+  if (m_closing || m_work || m_transition || m_pickerOpen) return;
+  const QPointer<ImageComparisonDialog> owner(this);
+  QString path;
+  {
+    m_pickerOpen = true;
+    const auto restore = qScopeGuard([owner] { if (owner) owner->m_pickerOpen = false; });
+    QStringList patterns;
+    for (const auto &format : QImageReader::supportedImageFormats())
+      patterns.append(QStringLiteral("*.%1").arg(QString::fromLatin1(format)));
+    QPointer<QFileDialog> picker(new QFileDialog(this,
+        input == 0 ? QStringLiteral("Compare first raster image") : QStringLiteral("Compare second raster image"),
+        {}, QStringLiteral("Images (%1);;All files (*)").arg(patterns.join(QLatin1Char(' ')))));
+    m_picker = picker;
+    picker->setObjectName(QStringLiteral("comparisonFilePicker"));
+    picker->setFileMode(QFileDialog::ExistingFile);
+    picker->setWindowModality(Qt::WindowModal);
+    const int answer = picker->exec();
+    if (picker && answer == QDialog::Accepted && !picker->selectedFiles().isEmpty()) path = picker->selectedFiles().first();
+    if (picker) picker->hide();
+    if (picker) picker->setParent(nullptr);
+    delete picker.data();
+  }
+  if (owner && !path.isEmpty()) loadFile(input, path);
 }
 bool ImageComparisonDialog::loadFile(int input, const QString &path) {
   return startLoad(input, path, false);
@@ -280,83 +296,137 @@ bool ImageComparisonDialog::useCurrentImage() {
   return startLoad(0, {}, true);
 }
 bool ImageComparisonDialog::startLoad(int input, const QString &path, bool current) {
-  if (m_closing || m_worker.valid() || input < 0 || input > 1 || (!current && path.isEmpty()))
+  if (m_closing || m_work || m_transition || m_pickerOpen || input < 0 || input > 1 || (!current && path.isEmpty()))
     return false;
-  m_jobInput = input;
-  m_jobLabel = current ? QStringLiteral("Current rendered image") : QFileInfo(path).fileName();
+  const QPointer<ImageComparisonDialog> owner(this);
+  m_transition = true;
+  const auto restore = qScopeGuard([owner] { if (owner) owner->m_transition = false; });
+  // Freeze owned inputs before any native notification can reenter or destroy us.
+  const auto source = m_source;
+  const auto annotations = m_document.annotations;
+  const auto hooks = m_hooks;
+  const auto work = std::make_shared<Work>();
+  work->input = input;
+  work->label = current ? QStringLiteral("Current rendered image") : QFileInfo(path).fileName();
+  m_work = work;
   try {
-    m_control = std::make_shared<WorkControl>();
-    m_worker = std::async(std::launch::async, [this, path, current, control = m_control] {
-      const RenderControl callbacks{[control] { return control->cancelled.load(); },
-                                    [control](int p) { control->progress.store(p); }};
-      return current ? prepareComparisonImage(m_source, m_document.annotations, callbacks)
-                     : loadComparisonImage(path, callbacks);
+    QThreadPool::globalInstance()->start([source, annotations, hooks, path, current, work] {
+      const RenderControl callbacks{[work] { return work->cancelled.load(); },
+                                    [work](int p) { work->progress.store(p); }};
+      try {
+        if (work->cancelled.load()) work->prepared = {{}, QStringLiteral("canvas-cancelled")};
+        else {
+          if (hooks.beforePrepare) hooks.beforePrepare();
+          work->prepared = current ? prepareComparisonImage(source, annotations, callbacks)
+                                   : loadComparisonImage(path, callbacks);
+        }
+      } catch (...) {
+        work->prepared = {{}, QStringLiteral("comparison-preparation-failed")};
+      }
+      work->ready.store(true, std::memory_order_release);
     });
-  } catch (const std::exception &) {
+  } catch (...) {
+    work->cancelled.store(true);
+    m_work.reset();
     m_status->setText(QStringLiteral("Image loading could not be started. The previous comparison is kept."));
     return false;
   }
-  m_status->setText(QStringLiteral("Preparing %1…").arg(m_jobLabel));
+  m_status->setText(QStringLiteral("Preparing %1…").arg(work->label));
+  if (!owner || m_closing || m_work != work) return false;
   m_progress->setValue(0);
+  if (!owner || m_closing || m_work != work) return false;
   setBusy(true);
+  if (!owner || m_closing || m_work != work) return false;
   m_poll.start();
   return true;
 }
 void ImageComparisonDialog::setBusy(bool busy) {
-  for (auto *button : m_inputButtons)
-    button->setEnabled(!busy && !m_closing);
-  m_alignment->setEnabled(!busy && !m_closing);
+  const QPointer<ImageComparisonDialog> owner(this);
+  const auto current = [owner, busy] { return owner && !owner->m_closing && bool(owner->m_work) == busy; };
   m_progress->setVisible(busy);
+  if (!current()) return;
   m_cancelLoad->setVisible(busy);
+  if (!current()) return;
   m_cancelLoad->setEnabled(busy && !m_closing);
+  if (!current()) return;
+  m_alignment->setEnabled(!busy && !m_closing);
+  if (!current()) return;
+  for (auto *button : m_inputButtons) {
+    button->setEnabled(!busy && !m_closing);
+    if (!current()) return;
+  }
+}
+void ImageComparisonDialog::cancelLoad() {
+  if (m_closing || !m_work) return;
+  const QPointer<ImageComparisonDialog> owner(this);
+  const bool transition = m_transition;
+  m_transition = true;
+  const auto restore = qScopeGuard([owner, transition] { if (owner) owner->m_transition = transition; });
+  m_work->cancelled.store(true);
+  m_work.reset();
+  m_poll.stop();
+  m_status->setText(QStringLiteral("Load cancelled. The previous comparison is kept."));
+  if (owner && !m_closing) setBusy(false);
 }
 void ImageComparisonDialog::pollLoad() {
-  if (!m_worker.valid())
-    return;
-  m_progress->setValue(m_control->progress.load());
-  if (m_worker.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready)
-    return;
-  auto prepared = m_worker.get();
+  if (m_closing || m_transition || !m_work) return;
+  const auto work = m_work;
+  const QPointer<ImageComparisonDialog> owner(this);
+  m_transition = true;
+  const auto restore = qScopeGuard([owner] { if (owner) owner->m_transition = false; });
+  m_progress->setValue(work->progress.load());
+  if (!owner || m_closing || m_work != work || !work->ready.load(std::memory_order_acquire)) return;
+  if (work->prepared.diagnostic.isEmpty()) {
+    m_progress->setValue(100);
+    if (!owner || m_closing || m_work != work) return;
+  }
+  auto prepared = std::move(work->prepared);
   m_poll.stop();
-  if (m_closing) {
-    QDialog::reject();
-    return;
-  }
-  setBusy(false);
-  if (m_control->cancelled.load() || prepared.diagnostic == u"canvas-cancelled") {
-    m_status->setText(QStringLiteral("Load cancelled. The previous comparison is kept."));
-    return;
-  }
-  if (!prepared.diagnostic.isEmpty()) {
-    m_status->setText(describe(prepared.diagnostic));
-    return;
-  }
-  auto candidate = m_inputs;
-  candidate[m_jobInput] = {std::move(prepared.image), m_jobLabel};
-  if (!candidate[0].image.isNull() && !candidate[1].image.isNull()) {
-    const auto geometry = comparisonLayout({candidate[0].image.width(), candidate[0].image.height()},
-                                           {candidate[1].image.width(), candidate[1].image.height()},
-                                           ComparisonAlignment(m_alignment->currentIndex()));
-    if (geometry.error) {
-      m_status->setText(describe(*geometry.error));
-      return;
+  m_work.reset();
+  // Retire this identity before native publication. Reentrant loads stay blocked
+  // until the complete pair, geometry, status and enabled controls are published.
+  QString status;
+  if (work->cancelled.load() || prepared.diagnostic == u"canvas-cancelled") {
+    status = QStringLiteral("Load cancelled. The previous comparison is kept.");
+  } else if (!prepared.diagnostic.isEmpty()) {
+    status = describe(prepared.diagnostic);
+  } else {
+    auto candidate = m_inputs;
+    candidate[work->input] = {std::move(prepared.image), work->label};
+    if (candidate[work->input].image.isNull()) {
+      status = describe(diagnostic::documentInvalid);
+    } else if (!candidate[0].image.isNull() && !candidate[1].image.isNull()) {
+      const auto geometry = comparisonLayout({candidate[0].image.width(), candidate[0].image.height()},
+                                             {candidate[1].image.width(), candidate[1].image.height()},
+                                             ComparisonAlignment(m_alignment->currentIndex()));
+      if (geometry.error) status = describe(*geometry.error);
+    }
+    if (status.isEmpty()) {
+      m_inputs = std::move(candidate);
+      status = m_inputs[0].image.isNull() || m_inputs[1].image.isNull()
+                   ? QStringLiteral("Choose the other image to compare.")
+                   : QStringLiteral("Move the divider or use arrow keys, Home and End.");
+      updateView();
+      if (!owner || m_closing) return;
     }
   }
-  m_inputs = std::move(candidate);
-  updateView();
-  m_status->setText(m_inputs[0].image.isNull() || m_inputs[1].image.isNull()
-                        ? QStringLiteral("Choose the other image to compare.")
-                        : QStringLiteral("Move the divider or use arrow keys, Home and End."));
+  m_status->setText(status);
+  if (owner && !m_closing) setBusy(false);
 }
 void ImageComparisonDialog::updateView() {
-  for (int input = 0; input < 2; ++input)
+  if (m_closing) return;
+  const QPointer<ImageComparisonDialog> owner(this);
+  for (int input = 0; input < 2; ++input) {
     if (!m_inputs[input].image.isNull())
       m_inputLabels[input]->setText(QStringLiteral("%1 · %2 × %3")
                                         .arg(m_inputs[input].label)
                                         .arg(m_inputs[input].image.width())
                                         .arg(m_inputs[input].image.height()));
+    if (!owner || m_closing) return;
+  }
   const bool ready = !m_inputs[0].image.isNull() && !m_inputs[1].image.isNull();
   m_reveal->setEnabled(ready);
+  if (!owner || m_closing) return;
   if (!ready) {
     m_geometry->setText(QStringLiteral("Both images must be validated before comparison."));
     return;
@@ -369,20 +439,20 @@ void ImageComparisonDialog::updateView() {
     return;
   }
   m_view->setImages(m_inputs[0].image, m_inputs[1].image, *geometry.layout);
+  if (!owner || m_closing) return;
   m_geometry->setText(QStringLiteral("Comparison canvas: %1 × %2 pixels. No image resizing.")
                           .arg(geometry.layout->canvas.width)
                           .arg(geometry.layout->canvas.height));
 }
-void ImageComparisonDialog::reject() {
+void ImageComparisonDialog::reject() { done(QDialog::Rejected); }
+void ImageComparisonDialog::done(int result) {
+  if (m_closing) return;
   m_closing = true;
-  if (m_control)
-    m_control->cancelled.store(true);
-  if (!m_worker.valid()) {
-    QDialog::reject();
-    return;
-  }
-  setBusy(true);
-  m_buttons->setEnabled(false);
-  m_status->setText(QStringLiteral("Cancelling load…"));
+  if (m_work) m_work->cancelled.store(true);
+  m_work.reset();
+  m_poll.stop();
+  const QPointer<ImageComparisonDialog> owner(this);
+  if (m_picker) m_picker->reject();
+  if (owner) QDialog::done(result);
 }
 } // namespace xerahs::app

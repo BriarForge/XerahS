@@ -11,6 +11,7 @@
 #include "CanvasCropDialog.h"
 #include "EditorHistory.h"
 #include "EditorCanvasWorker.h"
+#include "ImageComparisonDialog.h"
 
 #include <QImage>
 #include <QMainWindow>
@@ -41,6 +42,7 @@ public:
   // Empty path invokes the native picker; recent-file actions pass an explicit path.
   bool openImage(const QString &path = {});
   void setCanvasHooks(EditorCanvasHooks hooks) { m_canvasHooks = std::move(hooks); }
+  void setComparisonHooks(ComparisonHooks hooks) { m_comparisonHooks = std::move(hooks); }
   void setHistoryHooks(EditorHistoryHooks hooks) { m_historyHooks = std::move(hooks); }
   void setCropHooks(CanvasCropHooks hooks) { m_cropHooks = std::move(hooks); }
   void setSaveHooks(EditorSaveHooks hooks) { m_saveHooks = std::move(hooks); }
@@ -126,6 +128,7 @@ private:
   bool m_outputPending = false;
   QAction *m_retrySave = nullptr;
   EditorCanvasHooks m_canvasHooks;
+  ComparisonHooks m_comparisonHooks;
   EditorHistoryHooks m_historyHooks;
   CanvasCropHooks m_cropHooks;
   EditorSaveHooks m_saveHooks;

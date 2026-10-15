@@ -231,9 +231,12 @@ without joining blocked workers. Annotation-only history avoids image workers.
 [Owned canvas mutations](app/CANVAS-WORKERS.md) now prepare immutable snapshots
 and private displays, guard Core publication and release cancelled/destroyed owners
 without joining work. Custom rotation also owns its preview workers; configuration,
-colour, clear and error dialogs are owned and guarded. Next migrate comparison
-loading/previews to owned snapshots and nonblocking owner/cancel recovery, then
-complete New/Open worker ownership and full native/resource qualification. All remaining tools, effects,
+colour, clear and error dialogs are owned and guarded.
+[Owned comparison loading](app/COMPARISON-WORKERS.md) now freezes worker inputs
+and job identity, releases cancel/close/owner teardown without joining work,
+isolates late results, publishes complete pairs before enabling controls and uses
+owned picker/editor dialogs under the shared busy guard. Next complete New/Open
+worker/dialog ownership and full native/resource qualification. All remaining tools, effects,
 canvas/output, capture topology, recording/audio, uploads, workflows/settings/
 catalogues, compatibility, packaging/migration/updates/rollback, supported targets
 and native/human release qualification remain Required.

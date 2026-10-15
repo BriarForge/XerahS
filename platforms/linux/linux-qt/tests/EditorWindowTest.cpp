@@ -1987,6 +1987,36 @@ private slots:
     QVERIFY(window->windowTitle().contains(QChar(0x2022)));
   }
 
+  void ownedComparisonReleasesBlockedWorkers_data() {
+    QTest::addColumn<QString>("mode");
+    for (const auto *mode : {"reject", "child-destroy", "owner-destroy", "cleanup-owner-destroy"}) QTest::newRow(mode) << QString(mode);
+  }
+  void ownedComparisonReleasesBlockedWorkers() {
+    QFETCH(QString, mode); QTemporaryDir dir; const auto path = dir.filePath("current.png"); const auto source = fixture(); QVERIFY(source.save(path));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas); canvas->zoomIn();
+    const auto document = serializeDocument(canvas->annotationDocument()); const auto state = canvas->annotationState(); const auto selection = canvas->annotationSelection();
+    const auto title = window->windowTitle(), status = window->statusBar()->currentMessage(); const auto zoom = canvas->viewState().zoom(); const auto offset = canvas->viewState().offset(); const auto png = storedBytes(path);
+    const auto gate = std::make_shared<SaveGate>(); const auto release = qScopeGuard([gate] { gate->released.store(true); });
+    window->setComparisonHooks({[gate] { gate->workerThread.store(QThread::currentThread() != qApp->thread()); gate->entered.store(true); while (!gate->released.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1)); gate->finished.store(true); }});
+    bool acted = false, timedOut = false; QElapsedTimer deadline; deadline.start(); QTimer timer;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *dialog = qobject_cast<ImageComparisonDialog *>(QApplication::activeModalWidget()); if (!dialog) return;
+      if (deadline.elapsed() > 5000) { timedOut = true; dialog->reject(); return; }
+      if (!gate->entered.load() || acted) return; acted = true; QVERIFY(gate->workerThread.load()); QVERIFY(!canvas->isEnabled()); QVERIFY(!window->close()); QVERIFY(!window->openImage(path));
+      trigger(*window, "saveImage"); trigger(*window, "copyImage"); trigger(*window, "printImage"); trigger(*window, "undo"); trigger(*window, "compareImages");
+      QElapsedTimer elapsed; elapsed.start();
+      if (mode == "owner-destroy") window.reset();
+      else if (mode == "child-destroy") delete dialog;
+      else { if (mode == "cleanup-owner-destroy") connect(dialog, &QObject::destroyed, [&] { window.reset(); }); dialog->reject(); }
+      QVERIFY(elapsed.elapsed() < 500); QVERIFY(!gate->finished.load());
+    });
+    timer.start(5); trigger(*window, "compareImages"); timer.stop(); QVERIFY(acted && !timedOut); QVERIFY(!gate->finished.load()); QCOMPARE(storedBytes(path), png); QVERIFY(!QFile::exists(path + ".xann"));
+    if (mode == "owner-destroy" || mode == "cleanup-owner-destroy") QVERIFY(!window);
+    else { QVERIFY(window); QVERIFY(canvas->isEnabled()); QCOMPARE(canvas->annotationState(), state); QCOMPARE(canvas->annotationSelection(), selection); QCOMPARE(serializeDocument(canvas->annotationDocument()), document); QCOMPARE(window->windowTitle(), title); QCOMPARE(window->statusBar()->currentMessage(), status); QCOMPARE(canvas->viewState().zoom(), zoom); QCOMPARE(canvas->viewState().offset(), offset); QVERIFY(window->findChild<QAction *>("undo")->isEnabled()); }
+    gate->released.store(true); QTRY_VERIFY(gate->finished.load());
+    if (window) { QTest::qWait(30); QCOMPARE(canvas->annotationState(), state); QCOMPARE(serializeDocument(canvas->annotationDocument()), document); }
+  }
+
   void comparisonPreservesDirtyHistorySelectionViewportAndFiles() {
     QTemporaryDir dir;
     const QString path = dir.filePath("current.png"), otherPath = dir.filePath("other.png");
@@ -2015,7 +2045,9 @@ private slots:
       if (!slider->isEnabled()) return;
       dialog->findChild<QComboBox *>("comparisonAlignment")->setCurrentIndex(1);
       slider->setValue(75); QTest::keyClick(slider, Qt::Key_Left); QCOMPARE(slider->value(), 74);
-      QVERIFY(!window->close());  // snapshots stay alive until the comparison closes
+      QVERIFY(!canvas->isEnabled());
+      trigger(*window, "saveImage"); trigger(*window, "copyImage"); trigger(*window, "printImage"); trigger(*window, "undo"); trigger(*window, "redo"); trigger(*window, "compareImages");
+      QVERIFY(!window->close());  // comparison keeps the frozen editor busy until it closes
       exercised = true; dialog->reject();
     });
     timer.start(10); trigger(*window, QStringLiteral("compareImages")); timer.stop();

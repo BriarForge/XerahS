@@ -22,7 +22,11 @@ anchor, sampling and history policies and remaining work.
 `ImageComparison` validates native-size layouts, computes divider columns and
 composes immutable pixel buffers. The native `ImageComparisonDialog` shares
 that layout/split, provides accessible keyboard and pointer controls, and
-prepares private sRGB display copies on a cancellable worker. `RasterSource`
+prepares private sRGB display copies on owned immutable workers. Cancel/Close/
+owner teardown never joins decoding; job identity isolates late results, complete
+publication precedes control re-enabling, and the owned picker/main-editor busy
+boundary preserve history and files. See [owned comparison loading](../../app/COMPARISON-WORKERS.md).
+`RasterSource`
 is the shared Qt image-decoder boundary used by editor opening and comparison;
 editing sidecar resolution remains exclusively in `EditorSource`.
 

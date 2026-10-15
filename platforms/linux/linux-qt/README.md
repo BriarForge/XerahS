@@ -163,6 +163,10 @@ arrows, or Home/End. Loading and current-image rendering expose progress and
 cancellation; failed or cancelled replacement keeps the prior pair. Comparison
 leaves editor history, dirty state, selection, viewport and files unchanged.
 File comparisons use the raster itself and do not load its editing sidecar.
+[Owned comparison workers](app/COMPARISON-WORKERS.md) release Cancel, Close and
+owner teardown immediately. A new load can proceed while cancelled decoding
+finishes; late results are ignored. The owned file picker and editor busy guard
+preserve the current pair and all editor state across cancellation/destruction.
 
 The canvas adapter also exposes `compare-images` over injected `first` and
 `second` objects containing `size` and either row-major `pixels` (ARGB hex

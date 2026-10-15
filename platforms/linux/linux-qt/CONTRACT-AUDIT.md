@@ -544,3 +544,39 @@ ImageComparisonDialog loading/previews to owned immutable workers and nonblockin
 cancel/owner recovery, retaining validated file snapshots, alignment/divider controls
 and editor-history isolation; New/Open and capture-history ownership qualification
 also remain Required.
+
+[Owned comparison loading](app/COMPARISON-WORKERS.md) now freezes source/
+annotation/path/job values on workers, retires cancelled work without joining and
+isolates late success/exception from newer loads. Pair/union validation and complete
+UI publication precede enabled controls. Native picker/comparison dialogs and the
+main-editor busy boundary guard cancellation, child/owner destruction, cleanup
+reentry and unchanged editor source/history/selection/viewport/files. Existing
+native-size alignment, transparent padding, private sRGB interpretation and Core
+geometry/raster policy remain unchanged.
+
+Twenty-six new native cases cover blocked cancellation/teardown, immutable
+rendering, redacted failure/retry, union limits, progress/enable reentry, owned
+file pickers and main-editor lifetime. Existing actual divider keys/pointer,
+independent pixel/layout, sidecar isolation, exact Undo/Redo and real PNG/.xann
+save/reopen cases are retained/strengthened. The full local 44-target run passes
+in 65.53 seconds (editor-window 26.62); six affected Qt 6.4.2 targets pass in
+33.42 seconds (editor-window 25.38). All 114 unchanged published vectors and 32
+tooling tests pass; no timeout or expected result changed. The synthetic ready
+comparison frame was inspected. An initial offscreen GTK-helper fixture timeout
+was resolved by selecting Qt owned picker controls in the fixture only, with
+private QSettings; physical desktop helpers remain unqualified. A new union-test
+compile error was corrected to independent width/height assertions. Final checks
+and exact pushed native/lint CI are reported with the checkpoint. Prior canvas
+commit 57a547a has verified successful CI 38700573514: 44 Ubuntu 24.04/Qt 6.4.2
+targets in 63.36 seconds and lint success.
+
+Requirement IDs/statuses/dispositions/vector references, 80 implemented/68 partial
+core labels, 52 registered commands and fourteen visible defaults remain unchanged.
+The full application/capture/recording/audio/upload/workflow/settings/editor/tools/
+effects/canvas/output/history/automation/compatibility/distribution/migration/
+updates/rollback scope, supported target matrix, resources/performance and human
+privacy/security/a11y/parity/release gates remain Required. Product decisions remain
+pending; no completion percentage or release acceptance is established. Next
+migrate New Image/Open preparation and configuration to owned workers/dialogs and
+nonblocking child/owner/cancel recovery, preserving dirty replacement, explicit
+save/reload, source/profile/alpha and exact old-session history.

@@ -975,10 +975,15 @@ void EditorWindow::editCanvas(const std::function<std::optional<CanvasOperation>
 }
 
 void EditorWindow::compareImages() {
-  if (m_canvasOperationPending) return;
-  const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
-  ImageComparisonDialog dialog(m_session->document(), m_image, this);
-  dialog.exec();
+  if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive()) return;
+  const auto document = m_session->document(); const auto source = m_image; const auto hooks = m_comparisonHooks;
+  const QPointer<EditorWindow> owner(this);
+  withOutputBusy([owner, document, source, hooks] {
+    if (!owner) return false;
+    QPointer<ImageComparisonDialog> dialog(new ImageComparisonDialog(document, source, owner, hooks));
+    dialog->exec(); disposeCanvasDialog(dialog.data());
+    return false;
+  });
 }
 
 bool EditorWindow::commitCanvas(PreparedCanvasEdit prepared, quint64 state, const QSet<QUuid> &selection, quint64 generation) {
