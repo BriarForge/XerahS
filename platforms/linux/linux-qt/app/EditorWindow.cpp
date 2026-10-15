@@ -233,15 +233,13 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   crop->setObjectName(QStringLiteral("cropImage"));
   QAction *cropTool = tools.value("crop-tool");
   imageMenu->addAction(cropTool);
-  connect(crop, &QAction::triggered, this, &EditorWindow::cropImage);
+  connect(crop, &QAction::triggered, this, [this] { cropImage(); });
   QAction *autoCrop = imageMenu->addAction(QStringLiteral("Auto Crop…"));
   autoCrop->setObjectName(QStringLiteral("autoCrop"));
   connect(autoCrop, &QAction::triggered, this, &EditorWindow::autoCropImage);
   connect(m_canvas, &EditorCanvas::cropRequested, this, [this](QPointF start, QPointF end) {
-    CanvasOperation operation;
-    operation.action = CanvasAction::Crop;
-    operation.start = {start.x(), start.y()}; operation.end = {end.x(), end.y()};
-    applyCanvas(operation);
+    const auto region = normalizedCropRegion(m_image.width(), m_image.height(), {start.x(), start.y()}, {end.x(), end.y()});
+    if (region) cropImage(*region);
   });
   QAction *resizePixels = imageMenu->addAction(QStringLiteral("Resize Image…"));
   resizePixels->setObjectName(QStringLiteral("resizeImage"));
@@ -745,29 +743,43 @@ bool EditorWindow::openImage(const QString &path) {
 }
 
 void EditorWindow::cropImage() {
-  QDialog dialog(this);
-  dialog.setWindowTitle(QStringLiteral("Crop Image"));
-  auto *form = new QFormLayout(&dialog);
-  const auto number = [&](const QString &label, int value, int maximum) {
-    auto *spin = new QSpinBox(&dialog); spin->setRange(0, maximum); spin->setValue(value);
-    spin->setAccessibleName(label); form->addRow(label, spin); return spin;
-  };
-  auto *left = number(QStringLiteral("Left (pixels)"), 0, m_image.width() - 1);
-  auto *top = number(QStringLiteral("Top (pixels)"), 0, m_image.height() - 1);
-  auto *width = number(QStringLiteral("Width (pixels)"), m_image.width(), m_image.width()); width->setMinimum(1);
-  auto *height = number(QStringLiteral("Height (pixels)"), m_image.height(), m_image.height()); height->setMinimum(1);
-  left->setObjectName(QStringLiteral("cropLeft")); top->setObjectName(QStringLiteral("cropTop"));
-  width->setObjectName(QStringLiteral("canvasWidth")); height->setObjectName(QStringLiteral("canvasHeight"));
-  auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
-  form->addRow(buttons);
-  connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-  connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-  if (dialog.exec() != QDialog::Accepted) return;
-  CanvasOperation operation;
-  operation.action = CanvasAction::Crop;
-  operation.start = {double(left->value()), double(top->value())};
-  operation.end = {double(left->value() + width->value()), double(top->value() + height->value())};
-  applyCanvas(operation);
+  cropImage({0, 0, m_image.width(), m_image.height()});
+}
+void EditorWindow::cropImage(CropRegion region) {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive()) return;
+  // Freeze before disabling controls: native notifications may replace the
+  // session, change its selection, or delete this window.
+  const auto state = m_session->stateId(), generation = m_canvas->documentGeneration();
+  const auto selection = m_session->selection(); const auto document = m_session->document();
+  const auto source = m_image; const auto hooks = m_cropHooks; const QPointer<EditorWindow> owner(this);
+  withOutputBusy([owner, state, generation, selection, document, source, region, hooks] {
+    if (!owner) return false;
+    QPointer<CanvasCropDialog> dialog(new CanvasCropDialog(document, source, region, owner, hooks));
+    const int answer = dialog->exec();
+    auto prepared = dialog && answer == QDialog::Accepted ? dialog->takeEdit() : std::optional<PreparedCropEdit>{};
+    delete dialog.data();
+    if (!owner || !prepared) return false;
+    QString diagnostic;
+    bool changed = false;
+    if (generation != owner->m_canvas->documentGeneration() || state != owner->m_session->stateId() || selection != owner->m_session->selection()) diagnostic = "annotation-edit-stale";
+    else if (prepared->edit.result.error) diagnostic = *prepared->edit.result.error;
+    else if (prepared->edit.result.changed) {
+      // Main-editor crops remain valid after resize/rotation, which deliberately
+      // invalidate the capture-only lineage proof. The frozen native admission
+      // protects the ordinary Core canvas commit without requiring that proof.
+      changed = prepared->edit.result.document && owner->m_session->commitCanvas(*prepared->edit.result.document, state);
+      if (!changed) diagnostic = owner->m_session->editDiagnostic().isEmpty() ? "document-invalid" : owner->m_session->editDiagnostic();
+      else {
+        owner->m_sourceBytes = owner->m_session->document().sourceImagePng;
+        owner->m_image = std::move(prepared->edit.source);
+        owner->m_canvas->sourceChanged(prepared->displaySource);
+        if (!owner) return false;
+      }
+    }
+    owner->m_annotationMessage = diagnostic.isEmpty() ? QString() : annotationEditMessage(diagnostic);
+    owner->m_annotationMessageState = owner->m_session->stateId();
+    return changed;
+  });
 }
 
 void EditorWindow::autoCropImage() {

@@ -222,10 +222,11 @@ now adds pointer/numeric retained bounds, owned preview and one guarded history
 commit. Private source-region history composes crops; the capture worker
 independently reproduces source pixels before accepting changed dimensions.
 Worker history restoration updates source/viewport only after successful admission;
-Cancel/failure/owner teardown and actual PNG/.xann/retry are verified. Next migrate
-the main editor's numeric and pointer Crop routes to that owned preview with
-frozen state/selection/generation and worker/close/owner guards, retaining Core
-crop policy and real Save/reopen behavior. All remaining tools, effects,
+Cancel/failure/owner teardown and actual PNG/.xann/retry are verified. [Main-editor Crop](app/EDITOR-CROP.md) now shares that preview with frozen
+state/selection/generation, nonblocking Cancel/child/owner teardown, prepared
+source/display admission and real Save/reopen. Next move main-editor source-changing
+Undo/Redo off the GUI thread onto owned preparation and cancellable progress,
+preserving exact history, selection, checkpoint and stale/owner guards. All remaining tools, effects,
 canvas/output, capture topology, recording/audio, uploads, workflows/settings/
 catalogues, compatibility, packaging/migration/updates/rollback, supported targets
 and native/human release qualification remain Required.

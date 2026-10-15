@@ -1,0 +1,137 @@
+{
+  "capability": "EDITOR-CANVAS-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial-candidate-evidence",
+  "related_capabilities": [
+    "EDITOR-ANNOTATIONS-001",
+    "EDITOR-SESSION-001"
+  ],
+  "implementation": [
+    "platforms/linux/linux-qt/app/EditorWindow.h",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp",
+    "platforms/linux/linux-qt/app/CanvasCropDialog.h",
+    "platforms/linux/linux-qt/app/CanvasCropDialog.cpp",
+    "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+    "platforms/linux/linux-qt/app/EditorCanvasOperations.cpp",
+    "platforms/linux/linux-qt/CMakeLists.txt"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/app/EDITOR-CROP.md",
+    "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+  ],
+  "requirements": {
+    "EC-007": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Main editor and capture numeric/pointer Crop share normalized retained bounds and one guarded Core commit; full canvas/native/human qualification remains Required."
+    },
+    "EC-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned preview off the GUI thread, stale/cancel/failure/owner guards and prepared source/display admission are verified; main-editor history and other canvas worker migrations remain Required."
+    },
+    "EA-013": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Main-editor numeric and pointer Crop reach the shared native preview; complete Crop/CutOut/all-tool qualification remains Required."
+    },
+    "EA-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "One-step exact source/selection/history/checkpoint restoration and no-op/Cancel retain Redo; full mutation/resource/native/human qualification remains Required."
+    },
+    "EA-018": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Native keyboard/pointer controls, Button/SpinBox roles/names and inspected preview are candidate evidence; physical keyboard/AT/contrast/target/human review remains Required."
+    },
+    "EA-019": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Real PNG/.xann reopen retains cropped source/alpha/profile and represented fields/IDs/assets; full schema/tool/interchange/native/human qualification remains Required."
+    },
+    "EA-020": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Unknown geometry and stale/failure/cancel/child/owner admission preserve current state and files; full consent/privacy/security/resource/native/human qualification remains Required."
+    },
+    "ES-008": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Busy ordinary Close refusal and forced child/owner teardown avoid joining the worker or later publication; full close/shutdown/consent/native/human scope remains Required."
+    }
+  },
+  "verification": {
+    "local_ctest": {
+      "passed": 44,
+      "failed": 0,
+      "seconds": 55.12
+    },
+    "focused_native_cases": {
+      "passed": 15,
+      "failed": 0,
+      "qt_test_including_setup_cleanup": 17,
+      "seconds": 1.335
+    },
+    "published_vectors": {
+      "passed": 114,
+      "failed": 0,
+      "expected_results_changed": false,
+      "evidence": "Unchanged conformance target passes in local full run and affected minimum-Qt run."
+    },
+    "minimum_qt": {
+      "version": "6.4.2",
+      "affected_ctest_targets": 10,
+      "failed": 0,
+      "targets": [
+        "canvas-operations",
+        "capture-annotation",
+        "capture-paired-save",
+        "capture-pipeline",
+        "portal-screenshot",
+        "editor-session",
+        "editor-canvas",
+        "editor-window",
+        "annotation-object-navigator",
+        "conformance"
+      ],
+      "seconds": 38.77
+    },
+    "tooling_tests": {
+      "contract_linter": 16,
+      "contract_backlog": 9,
+      "conformance_runner": 7,
+      "failed": 0
+    },
+    "native_cases": {
+      "production": "Numeric keyboard controls/Apply; reverse pointer drag; Crop after inverse canvas rotations; full-image no-op; Cancel. Actual alpha/profile/source/object/selection/asset/field/history/checkpoint/viewport/PNG/.xann persistence is verified.",
+      "refusal_lifetime": "Blocked-worker Cancel/child destruction/owner destruction; redacted worker failure; unknown geometry; stale state/selection; equal-state/selection replacement generation; busy-admission owner deletion; final-status owner deletion. Forced teardown returns under 500 ms while the private worker remains blocked; no later output.",
+      "fixture_corrections": "Focused first run incorrectly compared save-time binding hash/timestamp with a pre-save snapshot, and looked up dimensions under canvas.width instead of canvasWidth. Final fixtures assert the PNG SHA-256 binding and actual schema key; all 15 cases pass. Shared vectors/expected results are unchanged."
+    },
+    "visual_review": "Synthetic 540x620 main-editor preview inspected: readable numeric labels/values, alpha checker/gradient source/red annotation composite, retained rectangle/status/progress/Apply Crop/Cancel and truthful Undo/asset retention disclosure. Offscreen candidate only; physical/native/human acceptance remains Required.",
+    "ci": "The checkpoint report verifies the exact pushed SHA and Ubuntu 24.04/Qt 6.4.2 CI. This candidate does not accept human/release gates."
+  },
+  "prior_checkpoint_verification": {
+    "head_sha": "4f9e6120cb461c5ce4bcbcf88cfabf1756f2b2dc",
+    "ci_url": "https://github.com/BriarForge/XerahS/actions/runs/38676044414",
+    "conclusion": "success",
+    "native_job_id": 116229757336,
+    "lint_job_id": 116229756924,
+    "native_ctest_passed": 44,
+    "native_ctest_failed": 0,
+    "native_ctest_seconds": 48.28,
+    "qt_version": "6.4.2"
+  },
+  "remaining": "Main-editor source-changing Undo/Redo still decodes/converts in GUI refresh. Other canvas operations retain older stack-owned worker/progress paths. All full tools/fields/resources/performance/native/a11y/privacy/security/compatibility/parity/human/release scope remains Required.",
+  "next_action": "Move main-editor source-changing Undo/Redo to owned worker source/private-display preparation, cancellable progress and frozen state/selection/generation admission with exact history/checkpoint semantics and nonblocking owner teardown.",
+  "unresolved_decisions": [
+    "EA-005-LINUX-2026-10-14",
+    "EA-016-LINUX-2026-10-14",
+    "EO-004-LINUX-2026-10-14",
+    "ES-014-030-LINUX-2026-10-15",
+    "draft-native-equivalence-pending-product-owner-approval"
+  ]
+}

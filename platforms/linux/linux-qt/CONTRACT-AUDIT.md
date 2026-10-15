@@ -349,8 +349,8 @@ release gates and draft shortcut-catalogue approval remain Required.
 The subsequent [keyboard evidence](app/ANNOTATION-KEYBOARD.md) adds guarded
 move/resize/quarter-turn admission, preserved steps/repeats and exact native
 group history/output. Native capture Crop now supplies owned preview/history/source-proof publication,
-indexed in [CAPTURE-CROP.md](app/CAPTURE-CROP.md). Next migrate main-editor numeric/pointer Crop to that
-owned preview with frozen admission and worker/close/owner guards.
+indexed in [CAPTURE-CROP.md](app/CAPTURE-CROP.md). Main-editor Crop now shares that owned preview; see [EDITOR-CROP.md](app/EDITOR-CROP.md).
+Next move main-editor source-changing Undo/Redo to owned preparation.
 
 The new [ES-014/030 clarification](app/EMPTY-SIDECAR-CLARIFICATION.md) records
 one deleted annotation reappearing from an intact baseline alias after a formerly
@@ -385,8 +385,8 @@ fourteen visible defaults and full scope remain unchanged. All native/resource/
 a11y/privacy/security/compatibility/parity/human/release gates and the recorded
 Ellipse/clipboard-assets/output-format/legacy-companion/shortcut decisions remain
 Required or pending as recorded. Native capture Crop now supplies that owned
-preview/history/source handoff; next migrate main-editor numeric/pointer Crop
-with frozen admission and worker/close/owner guards.
+preview/history/source handoff; main-editor Crop now shares that preview; the next step is owned source-changing
+Undo/Redo preparation (see [EDITOR-CROP.md](app/EDITOR-CROP.md)).
 
 
 [Native capture Crop](app/CAPTURE-CROP.md) now supplies focusable pointer/numeric
@@ -420,6 +420,41 @@ unchanged. Full tools/fields, effects, canvas/output, capture topology, recordin
 audio, uploads, workflows/settings/catalogues, application/history/automation/
 compatibility, distribution/migration/updates/rollback, supported targets, resource/
 performance, privacy/security/a11y/parity/human/release gates and recorded product
-decisions remain Required or pending. Next migrate main-editor numeric/pointer
-Crop to the owned preview with frozen state/selection/generation and worker/close/
-owner guards, retaining existing Core policy and actual Save/reopen evidence.
+decisions remain Required or pending. Main-editor Crop now shares that preview, as recorded below. Next move main-editor
+source-changing Undo/Redo to owned worker preparation with exact history and
+checkpoint restoration.
+
+
+[Main-editor Crop](app/EDITOR-CROP.md) now sends numeric bounds and reverse pointer
+drags through the shared owned preview. Frozen document/source/state/exact
+selection/generation precede busy notifications. One accepted crop publishes the
+prepared source/private display, preserving fields/assets and exact surviving
+selection/history/checkpoints; full-image no-op and Cancel preserve Redo. Native
+keyboard controls/roles, Crop after inverse rotations, alpha/profile/pixels,
+unknown/stale refusal, reentry, blocked-worker Cancel/child/owner destruction,
+busy-admission/final-status owner deletion and actual PNG/.xann reopen are verified.
+No source decode/conversion repeats on the GUI thread at crop admission. The
+shared native editor-canvas module owns the dialog, preserving Core-only logic,
+dynamic Qt and existing shared compatibility. The inspected synthetic preview
+explicitly explains that Undo and embedded assets can retain earlier pixels.
+
+All 44 local CTest targets passed in 55.12 seconds, including the unchanged 114
+published vectors. The 15 focused native Crop cases (17 with setup/cleanup) pass;
+32 tooling tests and ten affected Qt 6.4.2 targets (38.77 seconds) pass.
+Instruction/lint/backlog verification and exact pushed Ubuntu CI are indexed in
+the candidate evidence/checkpoint report.
+The previous capture Crop commit 4f9e612 has verified successful CI 38676044414:
+44 Ubuntu 24.04/Qt 6.4.2 tests in 48.28 seconds plus lint success. Focused fixture
+corrections account for expected save-time binding changes and the actual JSON
+dimension key; shared vectors and production behavior were not altered to fit.
+
+Requirement IDs/statuses/dispositions/vector references, 80 implemented/68 partial
+core labels, 52 registered editor commands and fourteen visible defaults remain
+unchanged. All full application/capture/recording/audio/upload/workflow/settings/
+editor/effects/history/automation/compatibility/packaging/migration/updates/rollback
+scope, supported targets, resources/performance and human privacy/security/a11y/
+parity/release gates remain Required. Recorded product decisions remain pending;
+no production-readiness percentage is established. Next move main-editor
+source-changing Undo/Redo off GUI-thread refresh to owned source/private-display
+preparation and cancellable progress, with frozen state/selection/generation,
+nonblocking owner teardown and exact source/history/checkpoint admission.

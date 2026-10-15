@@ -116,15 +116,15 @@ add_library(xerahs_editor_canvas STATIC app/EditorCanvas.cpp app/EditorCanvas.h
   app/AnnotationObjectNavigator.cpp app/AnnotationObjectNavigator.h
   app/RectanglePropertiesDialog.cpp app/RectanglePropertiesDialog.h
   app/SelectionRotationDialog.cpp app/SelectionRotationDialog.h
-  app/AnnotationColorDialog.cpp app/AnnotationColorDialog.h)
+  app/AnnotationColorDialog.cpp app/AnnotationColorDialog.h
+  app/CanvasCropDialog.cpp app/CanvasCropDialog.h)
 set_target_properties(xerahs_editor_canvas PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_editor_canvas PUBLIC app)
-target_link_libraries(xerahs_editor_canvas PUBLIC xerahs_core Qt6::Widgets)
+target_link_libraries(xerahs_editor_canvas PUBLIC xerahs_core xerahs_editor_codecs Qt6::Widgets)
 target_compile_options(xerahs_editor_canvas PRIVATE -Wall -Wextra -Wpedantic)
 
 add_library(xerahs_action_selection STATIC app/ActionSelectionDialog.cpp app/ActionSelectionDialog.h
-  app/CaptureSaveAsDialog.cpp app/CaptureSaveAsDialog.h app/CaptureAnnotationDialog.cpp app/CaptureAnnotationDialog.h
-  app/CanvasCropDialog.cpp app/CanvasCropDialog.h)
+  app/CaptureSaveAsDialog.cpp app/CaptureSaveAsDialog.h app/CaptureAnnotationDialog.cpp app/CaptureAnnotationDialog.h)
 set_target_properties(xerahs_action_selection PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_action_selection PUBLIC app)
 target_link_libraries(xerahs_action_selection PUBLIC xerahs_core xerahs_editor_source xerahs_editor_canvas Qt6::Widgets)

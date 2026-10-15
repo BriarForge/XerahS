@@ -29,7 +29,7 @@ private:
 };
 CanvasCropDialog::CanvasCropDialog(AnnotationDocument document, QImage source, CropRegion region, QWidget *parent, CanvasCropHooks hooks)
     : QDialog(parent), m_document(std::move(document)), m_source(std::move(source)), m_hooks(std::move(hooks)) {
-  setObjectName("canvasCropDialog"); setWindowTitle("Crop capture"); setAccessibleName(windowTitle()); setWindowModality(Qt::WindowModal);
+  setObjectName("canvasCropDialog"); setWindowTitle("Crop Image"); setAccessibleName(windowTitle()); setWindowModality(Qt::WindowModal);
   auto *layout = new QVBoxLayout(this); auto *form = new QFormLayout; layout->addLayout(form);
   const auto number = [&](const char *name, const QString &label, int minimum, int maximum, int value) {
     auto *field = new QSpinBox(this); field->setObjectName(name); auto accessible = label; accessible.remove('&'); field->setAccessibleName(accessible); field->setRange(minimum, maximum); field->setValue(value); form->addRow(label, field); return field;
@@ -39,7 +39,7 @@ CanvasCropDialog::CanvasCropDialog(AnnotationDocument document, QImage source, C
   m_width = number("cropWidth", "&Width (pixels)", 1, m_source.width() - m_left->value(), int(region.width));
   m_height = number("cropHeight", "&Height (pixels)", 1, m_source.height() - m_top->value(), int(region.height));
   auto *rules = new QLabel("Keep only the declared rectangle of source pixels. Known annotations are translated; objects wholly outside are removed, and intersecting objects retain their geometry and are clipped at export. "
-      "Unsupported annotation geometry blocks cropping. Apply Crop adds one undo step; Cancel keeps the canvas unchanged.", this); rules->setWordWrap(true); rules->setTextFormat(Qt::PlainText); layout->addWidget(rules);
+      "Unsupported annotation geometry blocks cropping. Apply Crop adds one undo step; Cancel keeps the canvas unchanged. Undo history and embedded image assets can retain earlier pixels.", this); rules->setWordWrap(true); rules->setTextFormat(Qt::PlainText); layout->addWidget(rules);
   m_preview = new CropPreview(this); layout->addWidget(m_preview, 1);
   m_status = new QLabel(this); m_status->setObjectName("cropStatus"); m_status->setTextFormat(Qt::PlainText); m_status->setWordWrap(true); layout->addWidget(m_status);
   m_progress = new QProgressBar(this); m_progress->setRange(0, 100); m_progress->setAccessibleName("Crop preview progress"); layout->addWidget(m_progress);
