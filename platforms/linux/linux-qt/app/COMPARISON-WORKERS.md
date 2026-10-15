@@ -72,10 +72,16 @@ slider values, independent expected native pixels/padding/alignment, invalid fil
 and sidecar isolation remain tested. Existing main-editor Undo/Redo and actual
 PNG/.xann save/reopen assertions remain in place.
 
-The full local run passes 44 targets in 65.53 s, including comparison dialog
-3.19 s and editor window 26.62 s. Six affected Qt 6.4.2 targets pass in 33.42 s,
-including comparison dialog 3.08 s and editor window 25.38 s. All 114 unchanged
-published vectors and 32 tooling tests pass. No timeout was increased. The
+The full local run passed 44 targets in 65.53 s, including comparison dialog
+3.19 s and editor window 26.62 s. Six affected Qt 6.4.2 targets passed in 33.42 s,
+including comparison dialog 3.08 s and editor window 25.38 s. Final review found
+that the divider could become available before geometry/status publication.
+Enabling now follows complete publication, and its native enable observer asserts
+layout/geometry/status plus nested-load refusal. Both complete affected targets
+pass on the final source: 29.58 s locally (dialog 3.18 s, editor 26.40 s) and
+28.44 s on Qt 6.4.2 (dialog 3.06 s, editor 25.38 s). The 42 unchanged local/four
+unchanged baseline targets were retained. All 114 unchanged published vectors
+and 32 tooling tests pass. No timeout was increased. The
 synthetic 800 × 650 ready comparison frame was inspected for readable controls,
 focus/divider, native-size policy, transparent padding and status. Machine-readable
 verification is in `COMPARISON-WORKERS-EVIDENCE.json`; the checkpoint report

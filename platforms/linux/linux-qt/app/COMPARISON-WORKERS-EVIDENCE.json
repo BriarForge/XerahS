@@ -66,9 +66,20 @@
     "local_ctest": {
       "passed": 44,
       "failed": 0,
-      "seconds": 65.53,
-      "editor_window_seconds": 26.62,
-      "comparison_dialog_seconds": 3.19
+      "full_run_seconds": 65.53,
+      "full_run_editor_window_seconds": 26.62,
+      "full_run_comparison_dialog_seconds": 3.19,
+      "final_affected_retest": {
+        "targets": [
+          "image-comparison-dialog",
+          "editor-window"
+        ],
+        "failed": 0,
+        "seconds": 29.58,
+        "comparison_dialog_seconds": 3.18,
+        "editor_window_seconds": 26.4
+      },
+      "sequence": "The full run passed 44 targets. Final review moved divider enabling after layout/geometry/status publication and added its enable-notification observer assertions. Both complete affected targets pass on the final source; 42 unchanged successful targets retained. No timeout or expected result changed."
     },
     "published_vectors": {
       "passed": 114,
@@ -79,9 +90,9 @@
       "version": "6.4.2",
       "affected_ctest_targets": 6,
       "failed": 0,
-      "seconds": 33.42,
-      "editor_window_seconds": 25.38,
-      "comparison_dialog_seconds": 3.08,
+      "full_affected_run_seconds": 33.42,
+      "full_run_editor_window_seconds": 25.38,
+      "full_run_comparison_dialog_seconds": 3.08,
       "targets": [
         "editor-canvas",
         "canvas-operations",
@@ -89,7 +100,18 @@
         "image-comparison-dialog",
         "editor-window",
         "conformance"
-      ]
+      ],
+      "final_affected_retest": {
+        "targets": [
+          "image-comparison-dialog",
+          "editor-window"
+        ],
+        "failed": 0,
+        "seconds": 28.44,
+        "comparison_dialog_seconds": 3.06,
+        "editor_window_seconds": 25.38
+      },
+      "sequence": "Six affected targets passed. Both complete final affected GUI targets pass after divider-publication review; four unchanged successful targets retained."
     },
     "tooling_tests": {
       "contract_linter": 16,
@@ -105,13 +127,14 @@
       "detail": "Four late-success/exception replacement rows, five nonblocking close/destruction rows, two immutable snapshot/redacted failure rows, one union-limit refusal, two publication notification rows, eight owned picker rows and four main-editor worker lifetime rows. Existing actual key/pointer/pixel/alignment/accessibility/file/history cases retained and strengthened."
     },
     "visual_review": "Inspected synthetic 800x650 ready comparison: labels, native-size policy, checker padding, divider/focus, accessible percent, geometry/status and Close are readable. Offscreen candidate evidence; physical desktop/native-theme/a11y/human matrix remains Required.",
-    "review_findings": "An initial offscreen picker fixture timed out inside the external GTK theme helper. The fixture now explicitly selects Qt owned picker controls and private QSettings; production still honors desktop theme helpers. A new test initially compared ImageExtent without its nonexistent equality operator; scalar width/height assertions fixed the fixture. Final full local and affected minimum-Qt runs pass; no timeout or expected result was changed.",
+    "review_findings": "An initial offscreen picker fixture timed out inside the external GTK theme helper. The fixture now explicitly selects Qt owned picker controls and private QSettings; production still honors desktop theme helpers. A new test initially compared ImageExtent without its nonexistent equality operator; scalar width/height assertions fixed the fixture. Final full local and affected minimum-Qt runs pass; no timeout or expected result was changed. Final review caught divider availability preceding layout/status; enabling now follows complete publication, and the existing notification rows assert visible geometry/status from the divider enable observer.",
     "instruction_lint_backlog": "Final checks and exact pushed native/lint CI are verified in the checkpoint report.",
     "contract_checks": {
       "lint": "passed",
       "backlog": "valid; STATUS.md current",
       "effective_instruction_files": 14,
-      "changed_trace_labels": "Requirement IDs/statuses/dispositions/vector references unchanged; aggregate 80 implemented/68 partial labels unchanged."
+      "changed_trace_labels": "Requirement IDs/statuses/dispositions/vector references unchanged; aggregate 80 implemented/68 partial labels unchanged.",
+      "final_followup_instruction_files": 5
     }
   },
   "prior_checkpoint_verification": {

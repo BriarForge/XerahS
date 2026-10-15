@@ -349,6 +349,8 @@ void ImageComparisonDialog::setBusy(bool busy) {
   if (!current()) return;
   m_cancelLoad->setEnabled(busy && !m_closing);
   if (!current()) return;
+  m_reveal->setEnabled(!m_inputs[0].image.isNull() && !m_inputs[1].image.isNull());
+  if (!current()) return;
   m_alignment->setEnabled(!busy && !m_closing);
   if (!current()) return;
   for (auto *button : m_inputButtons) {
@@ -425,8 +427,6 @@ void ImageComparisonDialog::updateView() {
     if (!owner || m_closing) return;
   }
   const bool ready = !m_inputs[0].image.isNull() && !m_inputs[1].image.isNull();
-  m_reveal->setEnabled(ready);
-  if (!owner || m_closing) return;
   if (!ready) {
     m_geometry->setText(QStringLiteral("Both images must be validated before comparison."));
     return;

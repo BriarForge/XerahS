@@ -580,3 +580,12 @@ pending; no completion percentage or release acceptance is established. Next
 migrate New Image/Open preparation and configuration to owned workers/dialogs and
 nonblocking child/owner/cancel recovery, preserving dirty replacement, explicit
 save/reload, source/profile/alpha and exact old-session history.
+
+Final comparison review caught divider availability preceding geometry/status
+publication. The follow-up moves enabling after complete publication and adds
+native divider-enable observer assertions. Both complete affected targets pass
+on the final source: 29.58 seconds locally (dialog 3.18, editor-window 26.40)
+and 28.44 seconds on Qt 6.4.2 (dialog 3.06, editor-window 25.38). The other 42
+successful local/four baseline targets remain unchanged; the earlier full-run
+times are not claimed as one final full run. Scope, labels, vectors and all
+remaining gates are unchanged.

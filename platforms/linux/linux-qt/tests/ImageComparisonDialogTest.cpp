@@ -351,18 +351,27 @@ private slots:
     ImageComparisonDialog dialog({}, solid(4, 2, Qt::red)); dialog.show();
     auto *first = dialog.findChild<QLabel *>("comparisonInput0"); QTRY_VERIFY(first->text().startsWith("Current rendered image"));
     auto *second = dialog.findChild<QLabel *>("comparisonInput1"); auto *progress = dialog.findChild<QProgressBar *>("comparisonProgress"); auto *button = dialog.findChild<QPushButton *>("chooseComparisonInput0"); auto *slider = dialog.findChild<QSlider *>("comparisonDivider");
-    bool observed = false; EnabledObserver observer;
+    bool observed = false, dividerObserved = false; EnabledObserver observer, dividerObserver;
     observer.changed = [&] {
       if (!button->isEnabled()) return; observed = true;
       QVERIFY(!dialog.loadFile(0, path)); QVERIFY(!dialog.useCurrentImage());
       if (!cancel) { QVERIFY(slider->isEnabled()); QVERIFY(second->text().startsWith("second.png")); QVERIFY(dialog.findChild<ComparisonView *>()->comparisonLayout()); }
     };
     button->installEventFilter(&observer);
+    dividerObserver.changed = [&] {
+      if (!slider->isEnabled()) return;
+      dividerObserved = true;
+      QVERIFY(!cancel); QVERIFY(!dialog.loadFile(0, path));
+      QVERIFY(dialog.findChild<ComparisonView *>()->comparisonLayout());
+      QCOMPARE(dialog.findChild<QLabel *>("comparisonGeometry")->text(), QString("Comparison canvas: 4 × 4 pixels. No image resizing."));
+      QCOMPARE(dialog.findChild<QLabel *>("comparisonStatus")->text(), QString("Move the divider or use arrow keys, Home and End."));
+    };
+    slider->installEventFilter(&dividerObserver);
     connect(progress, &QProgressBar::valueChanged, &dialog, [&](int value) { if (cancel && value == 100) dialog.findChild<QPushButton *>("cancelComparisonLoad")->click(); });
     QVERIFY(dialog.loadFile(1, path)); QTRY_VERIFY(observed);
     if (cancel) { QCOMPARE(second->text(), QString("No image selected")); QVERIFY(!slider->isEnabled()); QVERIFY(dialog.findChild<QLabel *>("comparisonStatus")->text().startsWith("Load cancelled")); }
-    else QVERIFY(slider->isEnabled());
-    button->removeEventFilter(&observer); disconnect(progress, nullptr, &dialog, nullptr);
+    else { QVERIFY(slider->isEnabled()); QVERIFY(dividerObserved); }
+    button->removeEventFilter(&observer); slider->removeEventFilter(&dividerObserver); disconnect(progress, nullptr, &dialog, nullptr);
     if (cancel) { QVERIFY(dialog.loadFile(1, path)); QTRY_VERIFY(slider->isEnabled()); }
     dialog.reject();
   }
