@@ -694,3 +694,77 @@ Next own Drawing Defaults and Appearance/Toolbar configuration/picker/parent
 lifetimes, preserving revision-checked atomic persistence and publication to open
 editors. Current source still uses stack-parented dialogs and static nested colour
 pickers there; owner teardown and stale/reentrant publication need native evidence.
+
+
+## 2026-10-15 — Owned native configuration and serialized preference Apply
+
+Continued the clean synchronized `3397954` capture-history checkpoint. Its exact
+Ubuntu 24.04/Qt 6.4.2 CI **38715036892** succeeded for
+`33979541d26efe3bada92400e781a317ae1be005`: native job **116355550886**, **46/46
+in 67.66 s**, and lint job **116355551244**. Prior completed work is retained.
+
+[Owned preference dialogs](app/PREFERENCE-DIALOGS.md) and the
+[machine-readable evidence](app/PREFERENCE-DIALOGS-EVIDENCE.json) index Drawing
+Defaults/Appearance/Toolbar dialog, colour picker, parent and cleanup ownership.
+The native-only boundary serializes picker/Apply/reset admission through atomic
+persistence, live publication and failure recovery. Direct Accepted completion
+cannot bypass Apply. Existing Core validation, revision checks, unknown entries,
+private atomic storage, shortcut policy and defaults remain unchanged. No worker
+or new persistence engine is introduced. Successfully committed preferences
+survive later owner deletion without repeating or reverting the write.
+
+Actual editors now guard canvas/output/replacement/recursive configuration and
+restore surviving controls through weak ownership. Successful unchanged Drawing
+Defaults Apply still recovers global defaults after failed local persistence.
+Toolbar drafts freeze available command labels/IDs; live reconstruction uses weak
+actions, guarded traversal and a queued newest-preference refresh after reentry.
+Dialog-owned appearance controllers keep all three forms synchronized with the
+existing resolved theme. The drawing preference test now uses a private bus.
+
+Final full builds and CTest pass **47/47 locally in 69.68 s** and **47/47 with
+cached Qt 6.4.2 in 66.52 s**. Native configuration passes in **0.67/0.57 s**;
+complete editor-window tests in **24.86/24.65 s**, native drawing preferences in
+**0.18/0.13 s**. The new separate private-bus target verifies **59 behavior cases**
+(61 including init/cleanup): parent/dialog/picker deletion; Escape; parent rejection
+while picking; cleanup-time deletion; alpha; Apply/Reset refusal while picking;
+serialized Apply/reentry/publication; committed-write owner deletion; locked
+failure/retry; actual editor busy/restoration/document isolation; newest toolbar
+publication; and unchanged-default failure recovery. Actual temporary settings
+reopen. Existing multi-window, stale/read-only/invalid/hotkey/unknown-field and
+cancel/reset assertions remain. All **114 published vectors** are unchanged and
+pass in both final suites.
+
+Verification sequence: one mixed-type auto declaration was split at compilation.
+The first four-target focused run passed (51 initial new cases). An initial full
+local run passed 47 targets in 69.33 s. Review added parent-picker rejection,
+publication teardown and queued latest-toolbar handling; complete local/minimum
+suites passed in 69.39/66.24 s. Final review preserved unchanged-default recovery
+and added live Drawing Defaults theme handling after synthetic contrast QA; the
+final complete builds/runs above verify those changes. No expected result,
+assertion or timeout was relaxed. Inspected synthetic Drawing Defaults,
+Appearance, Toolbar and alpha-picker frames; physical desktop helpers, themes,
+screen readers and full high-contrast/target acceptance remain Required.
+
+All **32 tooling tests** pass (16 linter, 9 backlog, 7 runner). Contract lint,
+backlog freshness, effective instruction and unchanged trace-metadata checks
+pass; exact pushed CI is linked in the checkpoint report.
+Requirement IDs/statuses/dispositions/vector references remain unchanged,
+including 80 implemented/68 partial core trace labels, 52 registered commands and
+fourteen visible defaults. No shared contract/schema/vector/default/approval or
+platform scope was modified.
+
+Full 324-requirement/15-package production scope remains unfinished: application/
+onboarding/activation/localization/notifications, capture topology, recording/
+audio, destinations/uploads/credentials/plugins, 922 settings/436 workflows/
+232 effects/all tools/canvas/output/utilities, history/automation/compatibility,
+tar/deb/rpm/AUR distribution, explicit migration/updates/rollback, supported
+Ubuntu/Fedora/Arch GNOME/Plasma/wlroots Wayland/X11 matrix, resources/performance
+and human security/privacy/a11y/parity/release gates remain Required. Ellipse,
+clipboard-assets, output-format, legacy-companion and shortcut decisions remain
+pending. No production-readiness percentage or release approval is proven. The
+continuation timer stays active.
+
+Next own Recent Images configuration and its stale/failure message dialogs,
+freeze revision/draft admission, and replace remaining raw editor preference
+guards. Preserve opt-in private paths, atomic removal/clear, incoming history,
+native selection and successful image output.

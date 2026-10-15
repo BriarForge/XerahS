@@ -1,0 +1,148 @@
+{
+  "capability": "EDITOR-SETTINGS-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial-candidate-evidence",
+  "related_capabilities": [
+    "EDITOR-SESSION-001"
+  ],
+  "implementation": [
+    "platforms/linux/linux-qt/app/PreferenceDialog.h",
+    "platforms/linux/linux-qt/app/DrawingDefaultsDialog.cpp",
+    "platforms/linux/linux-qt/app/AppearanceDialog.cpp",
+    "platforms/linux/linux-qt/app/ToolbarDialog.cpp",
+    "platforms/linux/linux-qt/app/NativeEditorToolbar.h",
+    "platforms/linux/linux-qt/app/NativeEditorToolbar.cpp",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS.md",
+    "platforms/linux/linux-qt/tests/PreferenceDialogTest.cpp",
+    "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+    "platforms/linux/linux-qt/tests/NativeEditorAppearanceTest.cpp",
+    "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
+    "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+  ],
+  "requirements": {
+    "ESET-003": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned configuration/picker/parent lifetimes, serialized atomic Apply, editor guards and live publication candidate evidence in PREFERENCE-DIALOGS.md. Full field/native/resource/target/human qualification remains Required."
+    },
+    "ESET-004": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned configuration/picker/parent lifetimes, serialized atomic Apply, editor guards and live publication candidate evidence in PREFERENCE-DIALOGS.md. Full field/native/resource/target/human qualification remains Required."
+    },
+    "ESET-006": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned configuration/picker/parent lifetimes, serialized atomic Apply, editor guards and live publication candidate evidence in PREFERENCE-DIALOGS.md. Full field/native/resource/target/human qualification remains Required."
+    },
+    "ESET-007": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned configuration/picker/parent lifetimes, serialized atomic Apply, editor guards and live publication candidate evidence in PREFERENCE-DIALOGS.md. Full field/native/resource/target/human qualification remains Required."
+    },
+    "ESET-010": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned configuration/picker/parent lifetimes, serialized atomic Apply, editor guards and live publication candidate evidence in PREFERENCE-DIALOGS.md. Full field/native/resource/target/human qualification remains Required."
+    },
+    "ESET-011": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned configuration/picker/parent lifetimes, serialized atomic Apply, editor guards and live publication candidate evidence in PREFERENCE-DIALOGS.md. Full field/native/resource/target/human qualification remains Required."
+    },
+    "ESET-016": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned configuration/picker/parent lifetimes, serialized atomic Apply, editor guards and live publication candidate evidence in PREFERENCE-DIALOGS.md. Full field/native/resource/target/human qualification remains Required."
+    },
+    "ES-008": {
+      "disposition": "Required",
+      "status": "implemented",
+      "note": "Owned configuration/picker/parent lifetimes, serialized atomic Apply, editor guards and live publication candidate evidence in PREFERENCE-DIALOGS.md. Full field/native/resource/target/human qualification remains Required."
+    },
+    "ES-019": {
+      "disposition": "Required",
+      "status": "partial",
+      "note": "Owned configuration/picker/parent lifetimes, serialized atomic Apply, editor guards and live publication candidate evidence in PREFERENCE-DIALOGS.md. Full field/native/resource/target/human qualification remains Required."
+    }
+  },
+  "verification": {
+    "local_ctest": {
+      "verified_targets": 47,
+      "failed": 0,
+      "seconds": 69.68,
+      "native-preference-dialogs_seconds": 0.67,
+      "native-editor-preferences_seconds": 0.18,
+      "editor-window_seconds": 24.86
+    },
+    "minimum_qt": {
+      "version": "6.4.2",
+      "verified_targets": 47,
+      "failed": 0,
+      "seconds": 66.52,
+      "native-preference-dialogs_seconds": 0.57,
+      "native-editor-preferences_seconds": 0.13,
+      "editor-window_seconds": 24.65
+    },
+    "published_vectors": {
+      "passed": 114,
+      "failed": 0,
+      "expected_results_changed": false
+    },
+    "new_native_cases": {
+      "total": 59,
+      "initial_verified_cases": 51,
+      "detail": "12 owned dialog/parent/cleanup/direct Accepted; 18 alpha picker/Escape/deletion/reject-parent/cleanup and Apply/Reset refusal; 12 serial publication/owner/reentry/locked retry; 15 real editor owner/busy/Apply; newest reentrant toolbar; unchanged-default failure recovery.",
+      "passed": 59,
+      "failed": 0
+    },
+    "tooling_tests": {
+      "contract_linter": 16,
+      "contract_backlog": 9,
+      "conformance_runner": 7,
+      "failed": 0
+    },
+    "prior_runs": {
+      "focused_targets_passed": 4,
+      "focused_seconds": 1.06,
+      "initial_complete_local_targets": 47,
+      "initial_complete_local_seconds": 69.33,
+      "review_complete_local_seconds": 69.39,
+      "review_complete_minimum_qt_seconds": 66.24
+    },
+    "review_findings": "One mixed-type auto declaration was split at compilation. Focused cases and complete suites passed. Review added picker-parent rejection, editor publication teardown, queued newest-toolbar refresh and unchanged Drawing Defaults Apply recovery. Synthetic QA then prompted the same owned live appearance controller in Drawing Defaults; its existing native preference target now uses a private bus. No expected result or deadline was weakened.",
+    "visual_review": "Inspected Drawing Defaults, Appearance, Toolbar and alpha picker. Final Drawing Defaults frame has readable live resolved theme contrast across native states. Native colour alpha and picker names are asserted; physical helpers/screen readers/high-contrast combinations remain Required.",
+    "contract_checks": {
+      "lint": "passed",
+      "backlog": "valid; STATUS.md current",
+      "effective_instruction_files": 19,
+      "trace_metadata": "Requirement IDs/statuses/dispositions/vector references unchanged; 80 implemented/68 partial core trace labels"
+    }
+  },
+  "prior_checkpoint_verification": {
+    "head_sha": "33979541d26efe3bada92400e781a317ae1be005",
+    "ci_url": "https://github.com/BriarForge/XerahS/actions/runs/38715036892",
+    "conclusion": "success",
+    "native_job_id": 116355550886,
+    "lint_job_id": 116355551244,
+    "native_ctest_passed": 46,
+    "native_ctest_failed": 0,
+    "native_ctest_seconds": 67.66,
+    "qt_version": "6.4.2"
+  },
+  "next_action": "Own Recent Images configuration and stale/failure dialogs plus remaining raw editor preference guards; preserve opt-in private paths, frozen revision/draft admission, atomic removal/clear, incoming history and successful output.",
+  "remaining": "Full settings fields, native helpers, application/capture topology/recording/audio/uploads/workflows/tools/effects/canvas/output/history/automation/compatibility/packaging/migration/updates/rollback, supported target/resource matrix and human security/privacy/a11y/parity/release gates remain Required.",
+  "unresolved_decisions": [
+    "EA-005-LINUX-2026-10-14",
+    "EA-016-LINUX-2026-10-14",
+    "EO-004-LINUX-2026-10-14",
+    "ES-014-030-LINUX-2026-10-15",
+    "draft-native-equivalence-pending-product-owner-approval"
+  ]
+}

@@ -2,6 +2,7 @@
 #include <QKeySequence>
 #include <QMap>
 #include <QObject>
+#include <QPointer>
 #include <QSet>
 #include <functional>
 class QAction;
@@ -25,11 +26,13 @@ private:
   bool canDispatch(const QString &gesture = {}) const;
   QMainWindow &m_window;
   QToolBar &m_toolbar;
-  ToolbarActionRegistry m_actions;
+  QMap<QString, QPointer<QAction>> m_actions;
   std::function<bool()> m_ready;
   QList<QShortcut *> m_shortcuts;
   QList<QAction *> m_separators;
   QSet<QString> m_gestures;
+  bool m_refreshing = false;
+  bool m_refreshPending = false;
 };
 bool manageEditorToolbar(QWidget *parent, const ToolbarActionRegistry &actions);
 } // namespace xerahs::app

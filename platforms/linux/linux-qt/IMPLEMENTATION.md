@@ -243,10 +243,14 @@ reload are verified. [Capture source-history](app/CAPTURE-HISTORY.md) now retire
 cancelled/deleted progress jobs without joining, isolates late results and checks
 frozen state/exact selection/generation/adjacent-target identity before exact Core
 restoration and source/display publication. Native crop lineage, fields/assets,
-annotation-only history and actual capture save retry remain intact. Next migrate
-Drawing Defaults and Appearance/Toolbar configuration to owned dialogs and weak
-parent/picker guards, preserving revision-checked atomic persistence and live
-editor defaults. All remaining tools, effects,
+annotation-only history and actual capture save retry remain intact.
+[Owned preference dialogs](app/PREFERENCE-DIALOGS.md) now guard Drawing Defaults,
+Appearance and Toolbar parent/picker/cleanup lifetimes, serialize Apply through
+atomic persistence/publication and keep the newest toolbar after reentrant updates.
+Editor busy guards preserve document/history and unchanged-default recovery.
+Next own Recent Images configuration, its stale/failure dialogs and remaining
+raw editor preference guards, preserving opt-in private paths and revision-checked
+atomic changes. All remaining tools, effects,
 canvas/output, capture topology, recording/audio, uploads, workflows/settings/
 catalogues, compatibility, packaging/migration/updates/rollback, supported targets
 and native/human release qualification remain Required.

@@ -12,8 +12,10 @@
 #include <QMainWindow>
 #include <QPlainTextEdit>
 #include <QShortcut>
+#include <QScopeGuard>
 #include <QTextEdit>
 #include <QToolBar>
+#include <QTimer>
 namespace xerahs::app {
 using namespace xerahs::editor;
 namespace {
@@ -39,7 +41,8 @@ bool textEntry(QWidget *focus) {
 }
 NativeEditorToolbar::NativeEditorToolbar(QMainWindow &window, QToolBar &toolbar,
     ToolbarActionRegistry actions, std::function<bool()> ready)
-    : QObject(&window), m_window(window), m_toolbar(toolbar), m_actions(std::move(actions)), m_ready(std::move(ready)) {
+    : QObject(&window), m_window(window), m_toolbar(toolbar), m_ready(std::move(ready)) {
+  for (auto it = actions.cbegin(); it != actions.cend(); ++it) m_actions.insert(it.key(), it.value());
   setObjectName(QStringLiteral("nativeEditorToolbar"));
   connect(&nativeEditorPreferenceEvents(), &NativeEditorPreferenceEvents::toolbarChanged, this, &NativeEditorToolbar::refresh);
   qApp->installEventFilter(this); refresh();
@@ -70,30 +73,47 @@ bool NativeEditorToolbar::eventFilter(QObject *object, QEvent *event) {
   return false;
 }
 void NativeEditorToolbar::refresh() {
-  for (auto *shortcut : m_shortcuts) { shortcut->setEnabled(false); shortcut->deleteLater(); }
+  if (m_refreshing) { m_refreshPending = true; return; }
+  const QPointer<NativeEditorToolbar> owner(this); m_refreshing = true;
+  const auto restore = qScopeGuard([owner] {
+    if (!owner) return;
+    owner->m_refreshing = false;
+    if (owner->m_refreshPending) {
+      owner->m_refreshPending = false;
+      QTimer::singleShot(0, owner, [owner] { if (owner) owner->refresh(); });
+    }
+  });
+  const auto placements = effectiveToolbarItems(nativeEditorPreferences().values.value(u"ToolbarItems").toArray());
+  const auto actions = m_actions; const auto shortcuts = m_shortcuts;
   m_shortcuts.clear(); m_gestures.clear();
-  m_toolbar.clear(); qDeleteAll(m_separators); m_separators.clear();
-  for (auto *action : m_actions)
+  for (auto *shortcut : shortcuts) { shortcut->setEnabled(false); if (!owner) return; shortcut->deleteLater(); }
+  m_toolbar.clear(); if (!owner) return;
+  const auto separators = m_separators; m_separators.clear();
+  for (auto *separator : separators) { delete separator; if (!owner) return; }
+  for (const auto &action : actions) if (action)
     for (const auto &key : action->shortcuts()) if (!key.isEmpty()) m_gestures.insert(canonical(key));
   bool haveVisible = false, pendingGroup = false;
-  for (const auto &placement : effectiveToolbarItems(nativeEditorPreferences().values.value(u"ToolbarItems").toArray())) {
-    auto *action = m_actions.value(placement.id); if (!action) continue;
+  for (const auto &placement : placements) {
+    const auto action = actions.value(placement.id); if (!action) continue;
     pendingGroup = pendingGroup || placement.beginGroup;
     if (placement.visible) {
-      if (pendingGroup && haveVisible) m_separators.append(m_toolbar.addSeparator());
-      m_toolbar.addAction(action); haveVisible = true; pendingGroup = false;
+      if (pendingGroup && haveVisible) { auto *separator = m_toolbar.addSeparator(); if (!owner) return; m_separators.append(separator); }
+      m_toolbar.addAction(action); if (!owner) return;
+      haveVisible = true; pendingGroup = false;
     }
-    if (placement.hotkey.text.isEmpty()) continue;
+    if (!action || placement.hotkey.text.isEmpty()) continue;
     m_gestures.insert(placement.hotkey.text);
     bool alreadyBound = false;
     for (const auto &key : action->shortcuts()) if (canonical(key) == placement.hotkey.text) alreadyBound = true;
     if (alreadyBound) continue;
     auto *shortcut = new QShortcut(QKeySequence(QKeyCombination(placement.hotkey.modifiers, placement.hotkey.key)), &m_window);
+    if (!owner) return;
+    if (!action) { shortcut->deleteLater(); continue; }
     shortcut->setObjectName(QStringLiteral("toolbarHotkey:") + placement.id);
     shortcut->setContext(Qt::WindowShortcut);
     shortcut->setAutoRepeat(action->autoRepeat());
     connect(shortcut, &QShortcut::activated, this, [this, action, gesture = placement.hotkey.text] {
-      if (canDispatch(gesture) && action->isEnabled()) action->trigger();
+      if (action && canDispatch(gesture) && action->isEnabled()) action->trigger();
     });
     m_shortcuts.append(shortcut);
   }

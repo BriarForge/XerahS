@@ -84,9 +84,10 @@ report verifies its exact pushed Ubuntu 24.04/Qt 6.4.2 CI revision.
 
 ## Remaining work
 
-Next own Drawing Defaults and Appearance/Toolbar configuration dialogs and their
-nested colour-picker/parent lifetimes, preserving revision checks, atomic writes
-and publication to open editors. Large-image memory/performance, application
+The subsequent [preference-dialog checkpoint](PREFERENCE-DIALOGS.md) owns Drawing
+Defaults and Appearance/Toolbar configuration, picker and parent lifetimes while
+preserving atomic persistence and live publication. Next own Recent Images
+configuration/stale/failure dialogs and remaining raw editor preference guards. Large-image memory/performance, application
 shutdown and physical progress/helper qualification remain Required.
 
 All application/onboarding/activation/localization/notifications, capture topology,

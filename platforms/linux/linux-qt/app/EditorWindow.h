@@ -81,6 +81,7 @@ private:
   bool retrySave();
   bool performSave(const QString &target, const EditorSaveReceiptPtr &repair = {});
   bool withOutputBusy(const std::function<bool()> &operation);
+  bool configurePreferences(const std::function<bool()> &operation);
   bool copyImage(const EditorCopyPayloadPtr &retry = {});
   bool retryCopy();
   bool printImage(const EditorPrintSnapshotPtr &retry = {});

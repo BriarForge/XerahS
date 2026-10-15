@@ -77,6 +77,11 @@ reuses actual editor actions, keeps fixed menus and protected shortcuts
 reachable with an empty toolbar, and gives text/modal/busy input precedence.
 Native tests cover atomic failure/cancellation, live editing and dispatch,
 multiple windows, restart and preserved image/checkpoint/history state.
+The native-only [owned preference dialog boundary](../../app/PREFERENCE-DIALOGS.md)
+coordinates weak parent/picker/cleanup lifetimes and serial Apply while the
+existing host/Core store retains all validation and atomic persistence. Native
+editor busy guards and queued toolbar reconstruction preserve the newest live
+settings and unchanged-default recovery without document history changes.
 Full field coverage and review gates remain required;
 [PREFERENCES-POLICY.md](PREFERENCES-POLICY.md)
 records implemented metadata, compatibility/recovery limits and review gates.

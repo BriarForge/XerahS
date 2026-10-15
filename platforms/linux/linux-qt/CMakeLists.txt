@@ -387,11 +387,14 @@ add_test(NAME editor-window-placement COMMAND editor-window-placement-test)
 add_executable(native-editor-preferences-test tests/NativeEditorPreferencesTest.cpp
                app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h
                app/DrawingDefaultsDialog.cpp app/DrawingDefaultsDialog.h
+               app/NativeDesktopAppearance.cpp app/NativeDesktopAppearance.h
+               app/NativeEditorAppearance.cpp app/NativeEditorAppearance.h
                app/RecentImageMenu.cpp app/RecentImageMenu.h)
 set_target_properties(native-editor-preferences-test PROPERTIES AUTOMOC ON)
-target_link_libraries(native-editor-preferences-test PRIVATE xerahs_core Qt6::Widgets Qt6::Test)
+target_link_libraries(native-editor-preferences-test PRIVATE xerahs_core Qt6::Widgets Qt6::DBus Qt6::Test)
 target_include_directories(native-editor-preferences-test PRIVATE app)
-add_test(NAME native-editor-preferences COMMAND native-editor-preferences-test)
+add_test(NAME native-editor-preferences COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:native-editor-preferences-test>)
 set_tests_properties(native-editor-preferences PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 
 add_executable(native-editor-window-state-test tests/NativeEditorWindowStateTest.cpp
@@ -500,6 +503,17 @@ target_link_libraries(editor-window-test PRIVATE xerahs_editor_source xerahs_edi
 add_test(NAME editor-window COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:editor-window-test>)
 set_tests_properties(editor-window PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+
+# Exercise the real configuration/editor surface without growing the existing
+# editor suite's deadline. Reuse its production sources, not its test fixture.
+get_target_property(XERAHS_PREFERENCE_TEST_SOURCES editor-window-test SOURCES)
+list(REMOVE_ITEM XERAHS_PREFERENCE_TEST_SOURCES tests/EditorWindowTest.cpp)
+add_executable(native-preference-dialogs-test tests/PreferenceDialogTest.cpp ${XERAHS_PREFERENCE_TEST_SOURCES})
+set_target_properties(native-preference-dialogs-test PROPERTIES AUTOMOC ON)
+target_link_libraries(native-preference-dialogs-test PRIVATE xerahs_editor_source xerahs_editor_canvas xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
+add_test(NAME native-preference-dialogs COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:native-preference-dialogs-test>)
+set_tests_properties(native-preference-dialogs PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 
 add_executable(editor-open-test tests/EditorOpenTest.cpp app/EditorOpen.cpp app/EditorOpen.h)
 set_target_properties(editor-open-test PROPERTIES AUTOMOC ON)

@@ -196,15 +196,14 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   auto *customizeToolbar = preferences->addAction(QStringLiteral("Toolbar…"));
   customizeToolbar->setObjectName(QStringLiteral("customizeToolbar"));
   connect(customizeToolbar, &QAction::triggered, this, [this] {
-    if (m_canvasOperationPending || m_closePending || m_canvas->interactionActive()) return;
-    const QScopedValueRollback<bool> pending(m_canvasOperationPending, true); manageEditorToolbar(this, m_toolbarActions);
+    configurePreferences([this] { return manageEditorToolbar(this, m_toolbarActions); });
   });
   auto *drawingDefaults = preferences->addAction(QStringLiteral("Drawing Defaults…"));
   drawingDefaults->setObjectName(QStringLiteral("drawingDefaults"));
   connect(drawingDefaults, &QAction::triggered, this, [this] {
-    if (m_canvasOperationPending) return;
-    const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
-    if (manageDrawingDefaults(this)) { applyCreationDefaults(); m_drawingPreferenceDiagnostic.clear(); refresh(); }
+    const QPointer<EditorWindow> owner(this);
+    const bool saved = configurePreferences([this] { return manageDrawingDefaults(this); });
+    if (owner && saved) { applyCreationDefaults(); m_drawingPreferenceDiagnostic.clear(); refresh(); }
   });
   connect(&nativeEditorPreferenceEvents(), &NativeEditorPreferenceEvents::drawingDefaultsChanged, this, [this] {
     applyCreationDefaults(); m_drawingPreferenceDiagnostic.clear(); refresh();
@@ -212,8 +211,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   auto *rememberWindow = preferences->addAction(QStringLiteral("Remember Window Size and Maximized State"));
   auto *appearance = preferences->addAction(QStringLiteral("Appearance…")); appearance->setObjectName(QStringLiteral("manageAppearance"));
   connect(appearance, &QAction::triggered, this, [this] {
-    if (m_canvasOperationPending || m_closePending) return;
-    const QScopedValueRollback<bool> pending(m_canvasOperationPending, true); manageEditorAppearance(this);
+    configurePreferences([this] { return manageEditorAppearance(this); });
   });
   rememberWindow->setObjectName(QStringLiteral("rememberWindowState")); rememberWindow->setCheckable(true);
   rememberWindow->setChecked(windowPreferencesFromPreferences(nativeEditorPreferences()).remember);
@@ -1073,6 +1071,12 @@ bool EditorWindow::retrySave() {
   const auto choice = box->exec(); delete box.data();
   if (!guard || choice != QMessageBox::Retry || m_outputPending || m_partialSave != expected || m_partialSaveState != state || state != m_session->stateId()) return false;
   return performSave(expected->path, expected);
+}
+bool EditorWindow::configurePreferences(const std::function<bool()> &operation) {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive()) return false;
+  const QPointer<EditorWindow> owner(this); m_canvasOperationPending = true;
+  const auto restore = qScopeGuard([owner] { if (owner) { owner->m_canvasOperationPending = false; owner->refresh(); } });
+  return withOutputBusy([owner, operation] { return owner ? operation() : false; });
 }
 bool EditorWindow::withOutputBusy(const std::function<bool()> &operation) {
   if (m_outputPending || m_canvas->interactionActive()) return false;
