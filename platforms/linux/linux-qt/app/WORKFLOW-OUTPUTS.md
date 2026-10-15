@@ -57,10 +57,18 @@ Private-portal cases verify both default/explicit acquisition snapshots, the nex
 profile's actual output and refusal before acquisition. Invalid native Save
 patterns now fail before directory creation or encoding. Synthetic UI inspected.
 
-Full CTest passes 49/49 locally (70.88 s) and cached Qt 6.4.2 (67.68 s),
-including all 114 existing published vectors. All 32 tooling tests pass. Exact
-pushed CI results are reported with the checkpoint; the prior saved-workflow
-revision passed Ubuntu CI 38737940876 (49/49, 68.61 s). Existing shared vectors, expectations and deadlines stay intact.
+The initial product change passes 49/49 locally (70.88 s) and cached Qt 6.4.2
+(67.68 s). Its Ubuntu CI 38743958392 passed the workflow tests and conformance,
+but the existing aggregate editor-window class exceeded its 30 s deadline.
+That class now discovers its actual 103 Qt test slots and distributes them over
+three private-bus runs, each keeping the 30 s deadline. Comparing full completed
+output proves all 323 prior behavior cases still pass exactly once on both Qt
+versions; no case/assertion was removed. Manual unpartitioned invocation remains.
+Final full CTest passes **51/51 locally (70.70 s)** and **51/51 cached Qt 6.4.2
+(67.52 s)**, including all 114 existing published vectors. The three editor runs
+take 7.57/12.41/4.85 s locally, 7.87/12.08/4.60 s minimum. All 32 tooling tests
+pass. Exact pushed CI is reported with the checkpoint. Shared expectations and
+all per-process deadlines stay intact.
 Next implement explicit workflow-ID activation/CLI through the same dispatcher
 and controller, then global entry points and atomic counter reservation. Complete
 token-help/context/grant coverage, workflow/action families, target matrix and

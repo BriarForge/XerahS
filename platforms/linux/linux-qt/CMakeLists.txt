@@ -504,9 +504,14 @@ add_executable(editor-window-test tests/EditorWindowTest.cpp app/EditorWindow.cp
                app/NewImageDialog.cpp app/NewImageDialog.h)
 set_target_properties(editor-window-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-window-test PRIVATE xerahs_editor_source xerahs_editor_canvas xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
-add_test(NAME editor-window COMMAND ${XERAHS_DBUS_RUN_SESSION}
-  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:editor-window-test>)
-set_tests_properties(editor-window PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+# The aggregate class has 323 behavior rows and exceeded its 30 s CI deadline.
+# Partition actual Qt slots without omitting rows or raising any deadline.
+foreach(partition RANGE 0 2)
+  math(EXPR part_number "${partition} + 1")
+  add_test(NAME editor-window-${part_number} COMMAND ${XERAHS_DBUS_RUN_SESSION}
+    --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:editor-window-test> --partition=${partition}/3)
+  set_tests_properties(editor-window-${part_number} PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+endforeach()
 
 # Exercise the real configuration/editor surface without growing the existing
 # editor suite's deadline. Reuse its production sources, not its test fixture.

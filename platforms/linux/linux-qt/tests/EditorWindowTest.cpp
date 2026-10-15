@@ -4,6 +4,7 @@
 #include "EditorCanvas.h"
 #include "CanvasCropDialog.h"
 #include <QAccessible>
+#include <QMetaMethod>
 #include "EditorSource.h"
 #include "CanvasRotationDialog.h"
 #include "ImageComparisonDialog.h"
@@ -2773,5 +2774,29 @@ private slots:
   }
 };
 
-QTEST_MAIN(EditorWindowTest)
+int main(int argc, char **argv) {
+  QApplication app(argc, argv); app.setAttribute(Qt::AA_Use96Dpi, true);
+  EditorWindowTest test;
+  QTEST_SET_MAIN_SOURCE_PATH
+  auto arguments = QCoreApplication::arguments();
+  for (int i = 1; i < arguments.size(); ++i) {
+    if (!arguments[i].startsWith("--partition=")) continue;
+    const auto parts = arguments.takeAt(i).mid(12).split('/'); bool indexOk = false, countOk = false;
+    const int index = parts.value(0).toInt(&indexOk), count = parts.value(1).toInt(&countOk);
+    if (parts.size() != 2 || !indexOk || !countOk || count < 1 || count > 64 || index < 0 || index >= count) return 2;
+    // Discover actual Qt test slots, not a hand-maintained allowlist. Every data
+    // row stays with its function; new functions automatically enter one part.
+    const auto *meta = test.metaObject(); QStringList selected; int ordinal = 0;
+    for (int method = meta->methodOffset(); method < meta->methodCount(); ++method) {
+      const auto slot = meta->method(method); const auto name = QString::fromLatin1(slot.name());
+      if (slot.methodType() != QMetaMethod::Slot || slot.parameterCount() != 0 || name.endsWith("_data") ||
+          name == "initTestCase" || name == "cleanupTestCase" || name == "init" || name == "cleanup") continue;
+      if (ordinal++ % count == index) selected.append(name);
+    }
+    if (selected.isEmpty()) return 2;
+    arguments.append(selected); break;
+  }
+  // Without --partition, manual QtTest invocation still runs the complete class.
+  return QTest::qExec(&test, arguments);
+}
 #include "EditorWindowTest.moc"

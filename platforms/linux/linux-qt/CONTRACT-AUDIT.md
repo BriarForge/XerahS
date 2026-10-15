@@ -870,3 +870,33 @@ packaging/migration/updates/rollback and security/privacy/accessibility/parity/
 release scope above remains Required. Next implement **explicit workflow-ID CLI
 activation** through the existing authenticated dispatcher/controller, then global
 workflow entry points and atomic counter reservation. The timer remains active.
+
+## 2026-10-15 — Preserve editor coverage within CI deadlines
+
+The output-profile feature was committed/pushed as
+`37cd74cfcd21babedc35de5dee404536ef2c6707`. Its exact
+[CI 38743958392](https://github.com/BriarForge/XerahS/actions/runs/38743958392)
+passed lint job **116452576192**, build, new workflow targets and all published
+vectors. Native job **116452576513** failed solely because the existing aggregate
+editor-window test exceeded **30.00 s**. This is a demonstrated verification
+blocker; no product editor hardening was added.
+
+The same editor executable now discovers its actual **103 Qt test slots** and
+distributes functions round-robin over three independent private-bus CTest runs.
+Data rows remain together, new slots join automatically, and each run retains
+the existing **30 s** deadline. Without the partition flag, manual QtTest still
+runs the full class. Existing QApplication/96-DPI setup and per-case initialization
+and cleanup remain. No assertion, data row or product code changed in this repair.
+
+Complete builds/CTest pass **51/51 locally in 70.70 s** and **51/51 cached Qt
+6.4.2 in 67.52 s**, including all **114 published vectors**. Comparing full
+completed output with the pre-partition baseline proves all **323 editor behavior
+cases** pass **exactly once** in both suites. Editor groups take **7.57/12.41/4.85
+s** locally and **7.87/12.08/4.60 s** minimum. Workflow product behavior from the
+preceding checkpoint is retained. Final lint/backlog/effective-instruction checks
+pass; the exact follow-up CI is reported with the checkpoint.
+
+No shared contract/vector/schema/approval or requirement trace status/disposition
+changed. All full-scope implementation and human/target/release gates remain
+Required. Next deliverable remains explicit workflow-ID CLI activation, followed
+by global workflow entry points and atomic counter reservation; timer stays active.
