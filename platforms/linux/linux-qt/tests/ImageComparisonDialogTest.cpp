@@ -13,6 +13,7 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QLabel>
+#include <QLineEdit>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QSignalSpy>
@@ -394,7 +395,13 @@ private slots:
       else if (mode == "dialog-destroy") delete dialog.data();
       else if (mode == "owner-destroy") delete parent.data();
       else if (mode == "close-comparison") dialog->reject();
-      else if (mode.startsWith("choose")) { picker->selectFile(path); static_cast<QDialog *>(picker)->accept(); }
+      else if (mode.startsWith("choose")) {
+        // Qt 6.4 selectFile() preserves a focused visible filename edit. Enter
+        // the actual field so acceptance cannot depend on initial focus.
+        picker->setDirectory(dir.path());
+        auto *name = picker->findChild<QLineEdit *>("fileNameEdit"); QVERIFY(name); name->setFocus(); name->setText(path);
+        QCOMPARE(picker->selectedFiles(), QStringList{path}); static_cast<QDialog *>(picker)->accept();
+      }
       else { if (mode == "cleanup-owner-destroy") connect(picker, &QObject::destroyed, [&] { delete parent.data(); }); picker->reject(); }
     });
     timer.start(5); dialog->findChild<QPushButton *>(mode == "choose-second" ? "chooseComparisonInput1" : "chooseComparisonInput0")->click(); timer.stop();

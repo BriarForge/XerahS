@@ -76,3 +76,15 @@ Required. All supported desktop/privacy/security/accessibility/parity/release ga
 remain human or target qualification work. Next link admitted invocations to durable
 execution/result identity, then implement atomic filename counters and remaining
 capture families. Passing this query does not establish full app completion.
+
+
+The first exact Ubuntu/Qt 6.4.2 run, 38780652747, passed discovery/native-instance,
+Core workflows, shortcuts and conformance. Three existing picker accept cases in
+ImageComparisonDialogTest and NewImageDialogTest failed: Qt 6.4 selectFile leaves
+a visible focused filename field unchanged. These fixtures now navigate to the fixture directory, set the
+actual fileNameEdit and assert selectedFiles before normal acceptance. All prior
+reentry, lifetime, pixel/file and timeout assertions remain. No product editor or
+capture behavior, shared expectation, test case or deadline changes to fit CI.
+The deciding [Qt 6.4.2 implementation](https://raw.githubusercontent.com/qt/qtbase/v6.4.2/src/widgets/dialogs/qfiledialog.cpp)
+is selectFile's visible/focused field condition. Final CI is reported with the
+follow-up verification checkpoint.

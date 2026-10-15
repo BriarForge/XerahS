@@ -239,7 +239,17 @@ private slots:
       auto *picker = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!picker || picker == dialog) return;
       if (deadline.elapsed() > 5000) { timedOut = true; picker->reject(); return; } if (acted) return; acted = true; QVERIFY(!dialog->loadInitialFile(path)); QVERIFY(!dialog->setInitialImage(fixture(), "reentry"));
       if (mode == "child-destroy") delete picker; else if (mode == "owner-destroy") delete parent.data(); else if (mode == "close-wizard") dialog->reject();
-      else if (mode == "accept") { if (colour) qobject_cast<QColorDialog *>(picker)->setCurrentColor(QColor(20, 40, 60, 80)); else qobject_cast<QFileDialog *>(picker)->selectFile(path); picker->accept(); }
+      else if (mode == "accept") {
+        if (colour) qobject_cast<QColorDialog *>(picker)->setCurrentColor(QColor(20, 40, 60, 80));
+        else {
+          // A visible focused Qt 6.4 filename edit is not changed by selectFile.
+          auto *file = qobject_cast<QFileDialog *>(picker); QVERIFY(file);
+          file->setDirectory(dir.path());
+          auto *name = file->findChild<QLineEdit *>("fileNameEdit"); QVERIFY(name); name->setFocus(); name->setText(path);
+          QCOMPARE(file->selectedFiles(), QStringList{path});
+        }
+        picker->accept();
+      }
       else { if (mode == "cleanup-owner-destroy") connect(picker, &QObject::destroyed, [&] { delete parent.data(); }); picker->reject(); }
     });
     timer.start(5); dialog->findChild<QPushButton *>(colour ? "chooseNewImageColour" : "chooseNewImageInitial")->click(); timer.stop(); QVERIFY(acted && !timedOut);

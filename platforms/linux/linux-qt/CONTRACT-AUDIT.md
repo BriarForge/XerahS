@@ -1048,3 +1048,32 @@ requirements/15 packages, settings/workflow/effect/tool ledgers, recording/audio
 uploads/credentials, compatibility/history/automation, packaging/migration/updates/
 rollback and target/privacy/security/accessibility/parity/release qualification
 remain in scope. The continuation timer was confirmed active and remains active.
+
+
+## 2026-10-16 — Deterministic picker setup on the supported Qt baseline
+
+Exact discovery revision `d8354b955b345a9ef5572166beb5916df42e8231` built on
+Ubuntu/Qt 6.4.2 in [CI 38780652747](https://github.com/BriarForge/XerahS/actions/runs/38780652747).
+Lint **116579664608**, discovery/native-instance, Core workflows, shortcuts and
+all 114 vectors passed. Native job **116579665185** failed only three existing
+accept rows in the comparison/new-image picker fixtures, at their unchanged 5 s
+interaction deadline. The deciding Qt 6.4.2 selectFile implementation preserves
+a focused visible filename edit, making those programmatic selections depend on
+initial offscreen focus. This was a demonstrated verification blocker.
+
+The two existing fixtures now navigate to their temporary directory, set the
+actual fileNameEdit and assert the exact selected path before ordinary QFileDialog
+acceptance. No product editor/capture behavior changed. All reentry, destruction,
+input-pixel/file preservation and retry checks remain, as do every test case and
+all deadlines. Their existing EDITOR-CANVAS trace references remain valid; no
+requirement status, disposition or vector changes. The diagnosis/source is linked
+in [discovery evidence](app/WORKFLOW-DISCOVERY.md).
+
+Both full corrected targets pass locally (3.05/1.27 s), then final full regression
+passes **52/52, 70.81 s**, including the unchanged 114 published vectors. Contract
+lint/backlog and effective-instruction checks pass; the previously verified 32
+tooling cases are unaffected. Exact pushed follow-up Ubuntu/Qt 6.4.2 CI is reported
+in the continuation result. Full application, target matrix and all required human
+approvals remain unfinished. Next delivery remains pre-acquisition invocation
+identity/start/origin, truthful denied/cancelled records and real pipeline-result
+linkage; then counters and remaining capture families. Timer stays active.
