@@ -33,13 +33,16 @@ CaptureSaveResult saveCapture(const QImage &media, const QString &directory, con
   try {
     if (media.isNull()) return failure(QStringLiteral("save-write-failed"));
     const QDir destination(QDir(directory).absolutePath());
-    if (!QDir().mkpath(destination.absolutePath())) return failure(QStringLiteral("save-directory-unavailable"));
     auto random = makeSystemRandomSource(); NoFileAccess files;
     const auto now = QDateTime::currentDateTime();
     ExpansionContext context;
     context.date = now.date(); context.time = now.time(); context.unixTime = now.toSecsSinceEpoch();
     context.locale = QLocale::system(); context.counter = 0;
     context.width = media.width(); context.height = media.height(); context.random = random.get(); context.files = &files;
+    auto name = expand({pattern, ParseMode::Filename, QStringLiteral("png"), std::nullopt}, context);
+    if (!name.ok()) return failure(QStringLiteral("filename-") + errorCodeName(name.error().code));
+    // Validation precedes directory creation and private encoding (FN-026).
+    if (!QDir().mkpath(destination.absolutePath())) return failure(QStringLiteral("save-directory-unavailable"));
     // The filename context is immutable for this action. Random collisions use
     // fresh randomness; workflow counter persistence remains separate work.
     QJsonObject filenameContext{{"pattern", pattern}, {"mode", "filename"}, {"extension", "png"},
@@ -53,7 +56,7 @@ CaptureSaveResult saveCapture(const QImage &media, const QString &directory, con
     const auto length = encoded.size();
     const auto source = QFile::encodeName(encoded.fileName());
     for (int attempt = 0; attempt < 3; ++attempt) {
-      const auto name = expand({pattern, ParseMode::Filename, QStringLiteral("png"), std::nullopt}, context);
+      if (attempt) name = expand({pattern, ParseMode::Filename, QStringLiteral("png"), std::nullopt}, context);
       if (!name.ok()) return failure(QStringLiteral("filename-") + errorCodeName(name.error().code));
       const auto path = destination.filePath(name.value());
       filenameContext.insert("next_counter", name.nextCounter);

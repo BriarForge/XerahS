@@ -103,6 +103,7 @@ private:
   QStringList m_selectedActions;
   std::function<xerahs::workflows::WorkflowChoice()> m_workflowResolver;
   QJsonObject m_workflowSnapshot;
+  xerahs::workflows::CaptureOutput m_captureOutput;
   QPointer<QWidget> m_selectionParent;
   PipelineJournalStorage m_journal;
   QPointer<CapturePipeline> m_pipeline;

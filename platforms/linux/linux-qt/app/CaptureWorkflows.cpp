@@ -6,6 +6,7 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QFormLayout>
+#include <QFileDialog>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -40,6 +41,11 @@ QString workflowMessage(const QString &code) {
   if (code == "workflow-action-unavailable") return "This workflow contains unavailable actions. Remove those actions to run it, or keep it for a later version.";
   if (code == "workflow-capture-unavailable") return "This capture type is unavailable. The workflow has been kept.";
   if (code == "workflow-newer-version") return "These workflows need a newer XerahS version. The file has been kept unchanged.";
+  if (code == "workflow-upgrade-conflict") return "A version 1 workflow has an unknown output field. It has been kept unchanged; explicit migration is required before assigning output settings.";
+  if (code == "workflow-directory-invalid") return "Use an absolute save folder without . or .. components, or leave it blank for the standard capture folder.";
+  if (code == "workflow-pattern-invalid") return "Use a filename pattern of at most 4096 characters with valid Unicode text.";
+  if (code == "workflow-counter-unavailable") return "Counter patterns are unavailable until atomic counter persistence is implemented. Use date, dimensions or random tokens.";
+  if (code.startsWith("filename-")) return "The filename pattern cannot run: " + code.mid(9) + ". Random-file tokens have no file-read permission.";
   if (code == "workflow-changed") return "Workflows changed elsewhere. Reload before saving or running.";
   if (code == "workflow-not-found") return "The selected workflow no longer exists. Reload and select another workflow.";
   if (code == "workflow-invalid" || code == "workflow-too-large") return "Workflows are invalid or exceed limits. Use unique IDs, names of 1–128 characters and at most 64 workflows. The saved file has been kept.";
@@ -66,9 +72,16 @@ public:
     auto *form = new QFormLayout; layout->addLayout(form);
     m_name = new QLineEdit(this); m_name->setObjectName("captureWorkflowName"); m_name->setAccessibleName("Workflow name"); m_name->setMaxLength(128); form->addRow("Name", m_name);
     m_capture = new QLabel(this); m_capture->setTextFormat(Qt::PlainText); form->addRow("Capture", m_capture);
+    auto *folderRow = new QHBoxLayout;
+    m_directory = new QLineEdit(this); m_directory->setObjectName("captureWorkflowSaveDirectory"); m_directory->setAccessibleName("Save folder"); m_directory->setMaxLength(32768);
+    m_directory->setPlaceholderText("Standard capture folder"); folderRow->addWidget(m_directory);
+    m_browse = new QPushButton("Browse…", this); m_browse->setObjectName("browseCaptureWorkflowDirectory"); folderRow->addWidget(m_browse); form->addRow("Save folder", folderRow);
+    m_pattern = new QLineEdit(this); m_pattern->setObjectName("captureWorkflowFilenamePattern"); m_pattern->setAccessibleName("Filename pattern"); m_pattern->setMaxLength(4096); form->addRow("Filename pattern", m_pattern);
+    m_preview = new QLineEdit(this); m_preview->setObjectName("captureWorkflowFilenamePreview"); m_preview->setAccessibleName("Example PNG filename"); m_preview->setReadOnly(true); form->addRow("Example PNG name", m_preview);
+    m_patternHelp = new QLabel(this); m_patternHelp->setObjectName("captureWorkflowPatternHelp"); m_patternHelp->setTextFormat(Qt::PlainText); m_patternHelp->setWordWrap(true); layout->addWidget(m_patternHelp);
     m_actions = new QListWidget(this); m_actions->setObjectName("captureWorkflowActions"); m_actions->setAccessibleName("Actions after capture"); layout->addWidget(m_actions);
     m_choose = new QCheckBox("Ask which actions to run after each capture", this); m_choose->setObjectName("captureWorkflowChooseActions"); layout->addWidget(m_choose);
-    auto *dependencies = new QLabel("File/path clipboard and Show in folder need Save or Save As. Missing saved files are reported as skipped. Save locations and creation defaults use the existing capture settings.", this);
+    auto *dependencies = new QLabel("Save uses the folder and filename pattern above; blank folder uses the standard capture folder. Save As asks for a new PNG path. Existing files are kept; a fixed name can report a collision. File/path clipboard and Show in folder need a successful Save or Save As.", this);
     dependencies->setWordWrap(true); layout->addWidget(dependencies);
     m_status = new QLabel(this); m_status->setObjectName("captureWorkflowStatus"); m_status->setTextFormat(Qt::PlainText); m_status->setWordWrap(true); layout->addWidget(m_status);
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, this); layout->addWidget(buttons);
@@ -79,6 +92,9 @@ public:
     connect(m_name, &QLineEdit::textEdited, this, [this] { updateEntry(); });
     connect(m_choose, &QCheckBox::toggled, this, [this] { updateEntry(); });
     connect(m_actions, &QListWidget::itemChanged, this, [this] { updateEntry(); });
+    connect(m_directory, &QLineEdit::textChanged, this, [this] { updateEntry(); });
+    connect(m_pattern, &QLineEdit::textChanged, this, [this] { updateEntry(); });
+    connect(m_browse, &QPushButton::clicked, this, [this] { browseDirectory(); });
     connect(add, &QPushButton::clicked, this, [this] {
       if (!m_catalog || m_catalog->entries.size() >= 64) return;
       CaptureWorkflow w; w.id = QUuid::createUuid(); w.name = "New workflow"; w.actions = {"save"};
@@ -99,7 +115,7 @@ public:
       selected = choice.workflow; accept();
     });
     auto *timer = new QTimer(this); timer->setInterval(200); connect(timer, &QTimer::timeout, this, [this] { availability(); }); timer->start();
-    load(); resize(600, 660);
+    load(); resize(680, 810);
   }
   std::optional<CaptureWorkflow> selected;
 private:
@@ -107,6 +123,15 @@ private:
     const QPointer<WorkflowDialog> owner(this); QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, "Capture workflows", question, QMessageBox::Discard | QMessageBox::Cancel, this));
     box->setTextFormat(Qt::PlainText); box->setDefaultButton(QMessageBox::Cancel); box->setEscapeButton(QMessageBox::Cancel);
     const int answer = box->exec(); if (box) box->setParent(nullptr); delete box.data(); return owner && answer == QMessageBox::Discard;
+  }
+  void browseDirectory() {
+    const QPointer<WorkflowDialog> owner(this); QPointer<QFileDialog> picker(new QFileDialog(this, "Choose workflow save folder"));
+    picker->setObjectName("captureWorkflowDirectoryPicker"); picker->setFileMode(QFileDialog::Directory); picker->setOption(QFileDialog::ShowDirsOnly);
+    if (!m_directory->text().isEmpty()) picker->setDirectory(m_directory->text());
+    const int answer = picker->exec(); const auto files = picker ? picker->selectedFiles() : QStringList{};
+    if (picker) picker->setParent(nullptr);
+    delete picker.data();
+    if (owner && answer == QDialog::Accepted && files.size() == 1) m_directory->setText(files.first());
   }
   void load() {
     m_host.reload(); m_catalog = m_host.store().current().catalog; m_revision = m_host.store().revision(); m_dirty = false;
@@ -123,8 +148,10 @@ private:
   void showEntry(int index) {
     m_loading = true; m_actions->clear(); const bool exists = m_catalog && index >= 0 && index < m_catalog->entries.size();
     m_name->setEnabled(exists); m_actions->setEnabled(exists); m_choose->setEnabled(exists);
+    m_directory->setEnabled(exists); m_pattern->setEnabled(exists); m_browse->setEnabled(exists);
     if (exists) {
       const auto &w = m_catalog->entries[index]; m_name->setText(w.name); m_capture->setText(w.capture == "region" ? "Region" : "Unavailable: " + w.capture); m_choose->setChecked(w.chooseActions);
+      m_directory->setText(w.output.directory); m_pattern->setText(w.output.pattern); showPreview(w.output);
       const auto available = CaptureActions::selectableActions(); auto displayed = available;
       for (const auto &action : w.actions) if (!displayed.contains(action)) displayed.append(action);
       for (const auto &action : displayed) {
@@ -132,17 +159,24 @@ private:
         item->setData(Qt::UserRole, action); item->setFlags(item->flags() | Qt::ItemIsUserCheckable); item->setCheckState(w.actions.contains(action) ? Qt::Checked : Qt::Unchecked);
       }
       for (const auto &entry : m_catalog->entries) if (entry.id == m_catalog->defaultId) m_default->setText("Default capture: " + entry.name);
-    } else { m_name->clear(); m_capture->clear(); m_default->clear(); }
+    } else { m_name->clear(); m_capture->clear(); m_default->clear(); m_directory->clear(); m_pattern->clear(); m_preview->clear(); m_patternHelp->clear(); }
     m_loading = false; availability();
   }
   void updateEntry() {
     if (m_loading || !m_catalog) return;
     const int index = m_list->currentRow(); if (index < 0) return;
     auto &w = m_catalog->entries[index]; w.name = m_name->text(); w.chooseActions = m_choose->isChecked(); w.actions.clear();
+    w.output.directory = m_directory->text(); w.output.pattern = m_pattern->text(); showPreview(w.output);
     for (int row = 0; row < m_actions->count(); ++row) if (m_actions->item(row)->checkState() == Qt::Checked) w.actions.append(m_actions->item(row)->data(Qt::UserRole).toString());
     m_list->item(index)->setText(w.name + (w.id == m_catalog->defaultId ? " (default)" : ""));
     if (w.id == m_catalog->defaultId) m_default->setText("Default capture: " + w.name);
     m_dirty = true; m_status->setText("Unsaved changes. Save changes to run this workflow."); availability();
+  }
+  void showPreview(const CaptureOutput &output) {
+    const auto preview = previewCaptureOutput(output); m_preview->setText(preview.filename);
+    QString hint = preview.diagnostic.isEmpty() ? QStringLiteral("Example: 2 Jan 2026, 15:04:05, 1920×1080. %y/%mo/%d = year/month/day; %h/%mi/%s = hour/minute/second; %width/%height = pixel dimensions; %ra{10} = 10 random letters/digits; %% = literal %. Unknown tokens are kept. PNG extension is added automatically. Counters and random-file reads are unavailable.") : workflowMessage(preview.diagnostic);
+    if (preview.error) hint += " Token " + preview.error->token.value_or(QString{}) + ", character " + QString::number(preview.error->offset) + " (zero-based).";
+    m_patternHelp->setText(hint);
   }
   void availability() {
     const auto index = m_list->currentRow(); const bool exists = m_catalog && index >= 0 && index < m_catalog->entries.size();
@@ -174,10 +208,10 @@ private:
   quint64 m_revision = 0;
   bool m_loading = false, m_dirty = false, m_saving = false;
   QListWidget *m_list = nullptr, *m_actions = nullptr;
-  QLineEdit *m_name = nullptr;
+  QLineEdit *m_name = nullptr, *m_directory = nullptr, *m_pattern = nullptr, *m_preview = nullptr;
   QCheckBox *m_choose = nullptr;
-  QLabel *m_capture = nullptr, *m_default = nullptr, *m_status = nullptr;
-  QPushButton *m_save = nullptr, *m_run = nullptr;
+  QLabel *m_capture = nullptr, *m_default = nullptr, *m_status = nullptr, *m_patternHelp = nullptr;
+  QPushButton *m_save = nullptr, *m_run = nullptr, *m_browse = nullptr;
 };
 }
 std::optional<CaptureWorkflow> manageCaptureWorkflows(NativeCaptureWorkflows &host, QWidget *parent, const std::function<bool()> &canRun) {

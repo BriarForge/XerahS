@@ -17,8 +17,10 @@ The selectable actions are `annotation`, `save`, `save-as`, `image-clipboard`,
 `file-clipboard`, `path-clipboard` and `reveal`. An empty selection is allowed.
 Existing PCA ordering, file prerequisites, chooser cancellation, independent
 failures, annotation, worker output and explicit retry remain the execution path.
-Per-run chooser changes do not rewrite profiles. Save uses the existing capture
-folder and filename pattern; Save As retains its explicit new-PNG picker.
+Per-run chooser changes do not rewrite profiles. Save uses the profile
+folder and filename pattern with a deterministic preview; blank folder inherits
+the standard capture folder. Save As retains its explicit new-PNG picker.
+[Output-setting evidence](WORKFLOW-OUTPUTS.md) records validation and versioning.
 
 The controller freezes the selected definition before requesting the screenshot.
 Changes during acquisition affect future captures. Retained-action retry uses
@@ -29,7 +31,8 @@ be replaced by Run selected. Unsupported profiles are refused before acquisition
 
 The private native file is
 `${XDG_CONFIG_HOME:-~/.config}/com.xerahs.app/linux-qt/capture-workflows.json`.
-It uses format `com.xerahs.app/linux-qt/capture-workflows`, version 1, UUID profile
+It uses format `com.xerahs.app/linux-qt/capture-workflows`, version 2 (reads
+version 1 and upgrades only on explicit Save), UUID profile
 IDs and the existing PCA action IDs. It is not the shared workflow interchange
 format and does not read or modify Avalonia settings. Missing storage supplies
 the initial **Save and copy image** profile without writing until explicit Save.
@@ -69,9 +72,9 @@ reported with the checkpoint; previous baseline CI was
 
 ## Remaining scope and next feature
 
-Next implement per-profile save folders and filename patterns through existing
-Core naming and private atomic persistence, then explicit-ID CLI/global entry
-points. Full catalogue families, recording/audio, uploads/credentials, shared
+Per-profile save folders, filename patterns and preview now use existing Core
+naming and private atomic persistence. Next implement explicit-ID CLI/global
+entry points, followed by atomic counter reservation. Full catalogue families, recording/audio, uploads/credentials, shared
 interchange/migration, full execution identity/status, resource/concurrency
 policies and target/human qualification remain Required. Existing Ellipse,
 clipboard-assets, export-format, legacy-companion and shortcut decisions remain

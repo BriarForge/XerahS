@@ -14,7 +14,8 @@
     "platforms/linux/linux-qt/src/actions/PipelineResultJson.cpp",
     "platforms/linux/linux-qt/src/actions/PipelineJournal.cpp",
     "platforms/linux/linux-qt/app/main.cpp",
-    "platforms/linux/linux-qt/app/ApplicationWindow.cpp"
+    "platforms/linux/linux-qt/app/ApplicationWindow.cpp",
+    "platforms/linux/linux-qt/app/CaptureSave.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/app/SAVED-WORKFLOWS.md",
@@ -33,7 +34,14 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Configured captures freeze workflow ID/name/type/actions/chooser intent, use existing pipeline task IDs/timings/results, and retain safe snapshot metadata in private journals. Full invocation origin/settings/acquisition-failure coverage remains Required."
+      "note": "Configured captures freeze workflow ID/name/type/actions/chooser intent, use existing pipeline task IDs/timings/results, and retain safe snapshot metadata in private journals. Full invocation origin/settings/acquisition-failure coverage remains Required. Effective output folder/pattern now freeze before acquisition and remain in known-field result/journal/retry snapshots.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
+      ]
     },
     "WFCAT-003": {
       "status": "partial",
@@ -75,7 +83,14 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Existing save/new-PNG/file-reveal validation and authority are reused. Workflow configuration is private/atomic, detects external changes and confirms profile deletion. Other file/folder/index/external/destructive families remain Required."
+      "note": "Existing save/new-PNG/file-reveal validation and authority are reused. Workflow configuration is private/atomic, detects external changes and confirms profile deletion. Other file/folder/index/external/destructive families remain Required. Profiles now save absolute folders and portable filename patterns. Folder validation rejects relative/traversal/control input; production Save validates before I/O and retains no-replacement collisions. Native picker and independent failure behavior are verified; complete filesystem/authority review remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
+      ]
     },
     "WFCAT-010": {
       "status": "not-started",
@@ -111,19 +126,40 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Explicit retained retry keeps the original workflow snapshot and successful outputs after profile edits; no configuration reread/repeat is introduced. Other idempotency/remote families remain Required."
+      "note": "Explicit retained retry keeps the original workflow snapshot and successful outputs after profile edits; no configuration reread/repeat is introduced. Other idempotency/remote families remain Required. Retained save retry now proves original folder/pattern use after the profile destination/name changes.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
+      ]
     },
     "WFCAT-016": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native-only v1 profiles use UUIDs and existing PCA IDs; validate bounded definitions/default membership before execution; preserve unknown compatible fields/actions; reject corrupt/newer/unsupported execution and detect stale writes. Shared interchange/migration/import/presets and compatibility/human review remain Required."
+      "note": "Native-only v1 profiles use UUIDs and existing PCA IDs; validate bounded definitions/default membership before execution; preserve unknown compatible fields/actions; reject corrupt/newer/unsupported execution and detect stale writes. Shared interchange/migration/import/presets and compatibility/human review remain Required. Private v2 output definitions read v1 default semantics and upgrade only on explicit Save. Unknown v1 output authority is refused/preserved; nested compatible v2 output fields round-trip. Native unsupported counters/file reads are explicit.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
+      ]
     },
     "WFCAT-017": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Results and private restart journals retain a known-field-only workflow snapshot and existing truthful outcomes. Unknown extensions are excluded from reports. Full notifications/log/privacy/terminal-state convergence remains Required."
+      "note": "Results and private restart journals retain a known-field-only workflow snapshot and existing truthful outcomes. Unknown extensions are excluded from reports. Full notifications/log/privacy/terminal-state convergence remains Required. Nested output extensions are excluded from reports while known private folder/pattern fields stay available to explicit review.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
+      ]
     },
     "WFCAT-018": {
       "status": "partial",

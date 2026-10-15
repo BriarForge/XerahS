@@ -32,9 +32,6 @@ struct CaptureComposition {
 
 namespace {
 
-// FILENAME-GENERATION-001 default capture pattern.
-const QString kCapturePattern = QStringLiteral("%y%mo%dT%h%mi_%ra{10}");
-
 // Fallback for embedded callers without a workflow host. The application
 // installs its persisted default resolver before exposing capture commands.
 const QStringList kDefaultActions = {QStringLiteral("save"), QStringLiteral("image-clipboard")};
@@ -69,12 +66,14 @@ void CaptureController::captureRegion() {
   if (m_workflowResolver) { beginConfiguredCapture(false); return; }
   if (m_busy) return;
   m_workflowSnapshot = {};
+  m_captureOutput = {};
   beginCapture(kDefaultActions);
 }
 void CaptureController::captureRegionWithActions() {
   if (m_workflowResolver) { beginConfiguredCapture(true); return; }
   if (m_busy) return;
   m_workflowSnapshot = {};
+  m_captureOutput = {};
   auto selected = kDefaultActions; selected.prepend(QStringLiteral("after-capture-window"));
   beginCapture(std::move(selected));
 }
@@ -88,7 +87,10 @@ void CaptureController::captureRegionWorkflow(const xerahs::workflows::CaptureWo
   if (m_busy) return;
   const auto diagnostic = xerahs::workflows::workflowAvailability(workflow, CaptureActions::selectableActions());
   if (!diagnostic.isEmpty()) { emit notify("Capture workflow unavailable", "Open Capture workflows to review the selected actions. " + diagnostic, false); return; }
-  m_workflowSnapshot = xerahs::workflows::workflowSnapshot(workflow);
+  auto effective = workflow;
+  if (effective.output.directory.isEmpty()) effective.output.directory = m_saveDirectory;
+  m_captureOutput = effective.output;
+  m_workflowSnapshot = xerahs::workflows::workflowSnapshot(effective);
   beginCapture(xerahs::workflows::workflowActions(workflow));
 }
 void CaptureController::setActionSelectionParent(QWidget *parent) { m_selectionParent = parent; }
@@ -418,7 +420,8 @@ void CaptureController::onOutcome(const SessionOutcome &outcome) {
 void CaptureController::runPipeline() {
   // The default path keeps overlay focus until clipboard dispatch. A chooser
   // releases overlays before taking focus; both retain the same frozen media.
-  auto *pipeline = new CapturePipeline(*m_captured, m_saveDirectory, kCapturePattern, m_selectedActions, this, m_actionPorts, m_journal, m_selectionParent, m_workflowSnapshot);
+  auto *pipeline = new CapturePipeline(*m_captured, m_captureOutput.directory.isEmpty() ? m_saveDirectory : m_captureOutput.directory,
+      m_captureOutput.pattern, m_selectedActions, this, m_actionPorts, m_journal, m_selectionParent, m_workflowSnapshot);
   connectPipeline(pipeline);
   const QPointer<CapturePipeline> pipelineGuard(pipeline);
   if (m_pendingPipelineCancellation) pipeline->cancel();

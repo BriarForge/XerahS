@@ -4,7 +4,14 @@ Implement the approved English Product Contract in the `linux-qt` reference
 edition. Keep shared expected results independent of Linux, and record partial
 requirements honestly until native behavior and evidence cover their full scope.
 
-The next editor work follows these dependencies:
+Current next deliverable: explicit workflow-ID CLI activation through the existing
+authenticated dispatcher/controller, followed by global workflow entry points and
+atomic filename-counter reservation. Named profiles and per-profile output folders,
+patterns and preview are implemented; see the latest audit checkpoints. Prioritize
+missing usable behavior, with hardening limited to demonstrated delivery blockers.
+
+The editor dependency record below includes completed checkpoints and remaining
+work; it does not supersede that current priority:
 
 1. Complete arbitrary-angle rectangle export under ES-025 using exact polygon
    coverage. Expose native selection rotation, preserve atomic session history,
@@ -254,9 +261,14 @@ window/tray/region CLI execution through the same controller and PCA engine.
 Profiles freeze before acquisition and survive in safe result/journal metadata
 and retained retry. Unsupported definitions cannot start capture.
 
-Prioritize missing usable features next: per-profile save folders and filename
-patterns using existing Core naming/private atomic persistence, then explicit-ID
-CLI and global workflow entry points. Further hardening should address a
+[Per-profile capture output](app/WORKFLOW-OUTPUTS.md) now persists save folders
+and filename patterns, exposes deterministic production preview/errors, validates
+before acquisition and retains the original destination/name settings on retry.
+Private v2 definitions read v1 defaults and upgrade only on explicit Save; native
+counter and random-file authority remain unavailable pending implementation.
+
+Prioritize explicit workflow-ID CLI activation and global workflow entry points
+next, then atomic counter reservation and complete naming context/grants. Further hardening should address a
 demonstrated defect or feature-delivery blocker. Recent Images dialog ownership
 remains a maintenance item rather than the automatic next feature. All remaining tools, effects,
 canvas/output, capture topology, recording/audio, uploads, workflows/settings/

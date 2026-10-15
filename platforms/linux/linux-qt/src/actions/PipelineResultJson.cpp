@@ -40,6 +40,11 @@ QJsonObject pipelineResultJson(const PipelineResult &result,
     QJsonObject workflow;
     for (const auto *key : {"definitionVersion", "id", "name", "capture", "actions", "chooseActions"})
       if (result.workflowSnapshot.contains(QLatin1String(key))) workflow.insert(QLatin1String(key), result.workflowSnapshot.value(QLatin1String(key)));
+    if (result.workflowSnapshot.value("output").isObject()) {
+      const auto source = result.workflowSnapshot.value("output").toObject(); QJsonObject output;
+      for (const auto *key : {"directory", "pattern"}) if (source.contains(QLatin1String(key))) output.insert(QLatin1String(key), source.value(QLatin1String(key)));
+      workflow.insert("output", output);
+    }
     native.insert("capture_workflow", workflow);
   }
   if (!artifactOutcomes.isEmpty()) native.insert("artifact_outcomes", artifactOutcomes);

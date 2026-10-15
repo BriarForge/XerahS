@@ -6,7 +6,13 @@
   "edition": "linux-qt",
   "implementation": [
     "platforms/linux/linux-qt/src/naming/FilenameGenerator.h",
-    "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp"
+    "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+    "platforms/linux/linux-qt/src/workflows/CaptureWorkflows.h",
+    "platforms/linux/linux-qt/src/workflows/CaptureWorkflows.cpp",
+    "platforms/linux/linux-qt/app/CaptureWorkflows.cpp",
+    "platforms/linux/linux-qt/app/CaptureController.cpp",
+    "platforms/linux/linux-qt/app/CaptureSave.cpp",
+    "platforms/linux/linux-qt/app/main.cpp"
   ],
   "requirements": {
     "FN-001": {
@@ -14,7 +20,14 @@
       "vectors": [
         "all"
       ],
-      "note": "expand() takes the context by const reference and reads each value once per parse."
+      "note": "expand() takes the context by const reference and reads each value once per parse. Native profile output freezes folder/pattern before acquisition; Save continues to capture one time/locale/size context per expansion. Actual controller snapshots and later-profile output are verified.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
+      ]
     },
     "FN-002": {
       "status": "implemented",
@@ -88,7 +101,14 @@
         "random-file-permission-denied",
         "random-file-empty"
       ],
-      "note": "Expansion honours the caller's grant through RandomFileAccess. The production grant prompt arrives with the pattern editor UI."
+      "note": "Expansion honours the caller's grant through RandomFileAccess. The production grant prompt arrives with the pattern editor UI. The native pattern editor now visibly denies random-file tokens without a read grant, before saving/running. Full grant UI/authority qualification remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
+      ]
     },
     "FN-010": {
       "status": "implemented",
@@ -137,6 +157,14 @@
       "status": "implemented",
       "vectors": [
         "preview-does-not-commit"
+      ],
+      "note": " Native workflow editing now calls production deterministic preview, presents a read-only PNG example and typed token/scalar-offset errors, and creates no directories or persistent counters.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
       ]
     },
     "FN-016": {
@@ -144,7 +172,14 @@
       "vectors": [
         "invalid-repeat-does-not-consume-counter"
       ],
-      "note": "expand() never commits; it returns next_counter for the caller to commit after reserving the name. Atomic persistence arrives with the saving capability."
+      "note": "expand() never commits; it returns next_counter for the caller to commit after reserving the name. Atomic persistence arrives with the saving capability. Native saved profiles refuse counter patterns before acquisition rather than use the helper seam's non-persistent zero counter. Atomic reservation/counter persistence remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
+      ]
     },
     "FN-017": {
       "status": "implemented",
@@ -253,6 +288,14 @@
         "random-file-line",
         "random-file-permission-denied",
         "random-file-empty"
+      ],
+      "note": " Malformed native Save patterns now fail before directory creation or encoding. Profile preview exposes production error token/Unicode-scalar offset; invalid folders/patterns preserve saved settings.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
       ]
     },
     "FN-027": {
@@ -262,6 +305,14 @@
       ],
       "tests": [
         "filename-generator-test"
+      ],
+      "note": " Native profile previews repeat fixed sample context and the existing 0..255 wrapping preview source without committing anything.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
       ]
     }
   }

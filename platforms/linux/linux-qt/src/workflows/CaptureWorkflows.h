@@ -1,10 +1,24 @@
 #pragma once
 #include "image-editor/EditorPreferenceStore.h"
+#include "naming/FilenameGenerator.h"
 #include <QJsonObject>
 #include <QUuid>
 #include <QVector>
 
 namespace xerahs::workflows {
+struct CaptureOutput {
+  // Empty directory inherits the application's standard capture folder.
+  QString directory;
+  QString pattern = QStringLiteral("%y%mo%dT%h%mi_%ra{10}");
+  QJsonObject extra;
+};
+struct CaptureOutputPreview {
+  QString filename, diagnostic;
+  std::optional<xerahs::naming::ExpansionError> error;
+};
+QString captureDirectoryDiagnostic(const QString &directory);
+xerahs::naming::ExpansionContext captureOutputExample();
+CaptureOutputPreview previewCaptureOutput(const CaptureOutput &output, xerahs::naming::ExpansionContext context = captureOutputExample());
 struct CaptureWorkflow {
   QUuid id;
   QString name;
@@ -12,6 +26,7 @@ struct CaptureWorkflow {
   QStringList actions;
   bool chooseActions = false;
   QJsonObject extra;
+  CaptureOutput output;
 };
 struct WorkflowChoice { std::optional<CaptureWorkflow> workflow; QString diagnostic; };
 struct CaptureWorkflows {

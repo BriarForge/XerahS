@@ -29,7 +29,7 @@ private slots:
   void invalidDefinitionsAreRejected() {
     QFETCH(QString, mode); auto root = QJsonDocument::fromJson(workflowsJson(defaultCaptureWorkflows())).object(); auto array = root.value("workflows").toArray(); auto w = array[0].toObject();
     if (mode == "json") { QVERIFY(!parseCaptureWorkflows("broken").catalog); return; }
-    if (mode == "future-version") root.insert("version", 2);
+    if (mode == "future-version") root.insert("version", 3);
     if (mode == "duplicate-id") array.append(w);
     if (mode == "duplicate-action") w.insert("actions", QJsonArray{"save", "save"});
     if (mode == "empty-name") w.insert("name", " ");
@@ -59,11 +59,67 @@ private slots:
   void workflowSelectionSurvivesReportAndJournalRecoveryWithoutUnknownFields() {
     auto w = defaultCaptureWorkflows().entries[0]; w.extra = {{"secret", "must-not-report"}};
     PipelineJournalSnapshot snapshot; snapshot.result.taskId = QUuid::createUuid().toString(QUuid::WithoutBraces); snapshot.createdAt = QDateTime::currentDateTimeUtc(); snapshot.terminal = true;
+    w.output.directory = "/private/captures"; w.output.pattern = "%width-%height"; w.output.extra = {{"secret", "must-not-report"}};
     snapshot.result.workflowSnapshot = workflowSnapshot(w); snapshot.result.workflowSnapshot.insert("secret", "must-not-report");
+    auto rawOutput = snapshot.result.workflowSnapshot.value("output").toObject(); rawOutput.insert("secret", "must-not-report"); snapshot.result.workflowSnapshot.insert("output", rawOutput);
     const auto bytes = serializePipelineJournal(snapshot); QVERIFY(!bytes.contains("must-not-report"));
     const auto recovered = parsePipelineJournal(bytes, snapshot.result.taskId); QVERIFY(recovered.record);
     const auto metadata = recovered.record->report.value("extensions").toObject().value("com.xerahs.app").toObject().value("capture_workflow").toObject();
     QCOMPARE(metadata.value("id"), QJsonValue(w.id.toString(QUuid::WithoutBraces))); QCOMPARE(metadata.value("actions"), QJsonValue(QJsonArray::fromStringList(w.actions)));
+    QCOMPARE(metadata.value("output").toObject().value("directory"), QJsonValue(w.output.directory)); QCOMPARE(metadata.value("output").toObject().value("pattern"), QJsonValue(w.output.pattern));
+  }
+  void legacyDefinitionsKeepTheirDefaultsAndOnlyUpgradeOnExplicitSave() {
+    auto root = QJsonDocument::fromJson(workflowsJson(defaultCaptureWorkflows())).object(); root.insert("version", 1);
+    auto entries = root.value("workflows").toArray(); auto entry = entries[0].toObject(); entry.remove("output"); entry.insert("futureField", "keep"); entries[0] = entry; root.insert("workflows", entries);
+    const auto original = QJsonDocument(root).toJson(); QTemporaryDir dir; const auto path = dir.filePath("legacy.json");
+    QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); QVERIFY(file.setPermissions(QFile::ReadOwner | QFile::WriteOwner)); QCOMPARE(file.write(original), original.size()); file.close();
+    FilePreferenceStorage storage(path); CaptureWorkflowStore store(storage); QVERIFY(store.current().catalog);
+    const auto draft = *store.current().catalog; QVERIFY(draft.entries[0].output.directory.isEmpty()); QCOMPARE(draft.entries[0].output.pattern, CaptureOutput{}.pattern);
+    QCOMPARE(storage.read().bytes, original); QVERIFY(store.save(draft, store.revision()).saved);
+    const auto upgraded = QJsonDocument::fromJson(storage.read().bytes).object(); QCOMPARE(upgraded.value("version"), QJsonValue(2));
+    const auto parsed = parseCaptureWorkflows(storage.read().bytes); QVERIFY(parsed.catalog); QCOMPARE(parsed.catalog->entries[0].extra.value("futureField"), QJsonValue("keep"));
+    entry.insert("output", QJsonObject{{"futureAuthority", true}}); entries[0] = entry; root.insert("workflows", entries);
+    const auto conflict = parseCaptureWorkflows(QJsonDocument(root).toJson()); QVERIFY(!conflict.catalog); QCOMPARE(conflict.diagnostic, QString("workflow-upgrade-conflict"));
+  }
+  void outputPreviewUsesProductionRulesWithoutCommittingOrReadingFiles_data() {
+    QTest::addColumn<QString>("pattern"); QTest::addColumn<QString>("expected"); QTest::addColumn<QString>("diagnostic");
+    QTest::newRow("date-size") << QStringLiteral("shot-%y%mo%d-%h%mi%s-%widthx%height") << QStringLiteral("shot-20260102-150405-1920x1080.png") << QStringLiteral("");
+    QTest::newRow("sanitized") << QStringLiteral("CON:<shot>/foo?") << QStringLiteral("CON_shot_foo_.png") << QStringLiteral("");
+    QTest::newRow("reserved") << QStringLiteral("CON") << QStringLiteral("_CON.png") << QStringLiteral("");
+    QTest::newRow("unknown-literal-percent") << QStringLiteral("%%i_%future") << QStringLiteral("%i_%future.png") << QStringLiteral("");
+    QTest::newRow("random") << QStringLiteral("%rn{4}") << QStringLiteral("0123.png") << QStringLiteral("");
+    QTest::newRow("blank") << QStringLiteral("   ") << QStringLiteral("_.png") << QStringLiteral("");
+    QTest::newRow("invalid-repeat") << QStringLiteral("%ra{0}") << QStringLiteral("") << QStringLiteral("filename-invalid-argument");
+    QTest::newRow("unterminated") << QStringLiteral("%ra{4") << QStringLiteral("") << QStringLiteral("filename-unterminated-argument");
+    QTest::newRow("random-file-denied") << QStringLiteral("%rf{/private/file}") << QStringLiteral("") << QStringLiteral("filename-file-permission-denied");
+    QTest::newRow("counter") << QStringLiteral("%i{3}") << QStringLiteral("001.png") << QStringLiteral("workflow-counter-unavailable");
+  }
+  void outputPreviewUsesProductionRulesWithoutCommittingOrReadingFiles() {
+    QFETCH(QString, pattern); QFETCH(QString, expected); QFETCH(QString, diagnostic);
+    CaptureOutput output; output.pattern = pattern; const auto first = previewCaptureOutput(output), second = previewCaptureOutput(output);
+    QCOMPARE(first.filename, expected); QCOMPARE(first.diagnostic, diagnostic); QCOMPARE(second.filename, first.filename); QCOMPARE(second.diagnostic, first.diagnostic);
+    if (first.error) { QCOMPARE(first.error->offset, qint64(0)); QVERIFY(first.error->token); }
+    output.pattern = QString::fromUtf8("😀%ra{0}"); const auto scalar = previewCaptureOutput(output); QVERIFY(scalar.error); QCOMPARE(scalar.error->offset, qint64(1));
+  }
+  void outputValidationPreservesUnknownFieldsAndRefusesInvalidSave_data() {
+    QTest::addColumn<QString>("mode");
+    for (const auto *mode : {"relative", "traversal", "dot", "control", "oversize", "counter", "file", "malformed", "unknown"}) QTest::newRow(mode) << QString(mode);
+  }
+  void outputValidationPreservesUnknownFieldsAndRefusesInvalidSave() {
+    QFETCH(QString, mode); QTemporaryDir dir; FilePreferenceStorage storage(dir.filePath("workflows.json")); CaptureWorkflowStore store(storage); auto draft = *store.current().catalog; auto &output = draft.entries[0].output;
+    output.directory = dir.filePath("new/nested"); output.pattern = "shot-%width-%height"; output.extra = {{"futureOutput", QJsonObject{{"private", true}}}};
+    if (mode == "relative") output.directory = "relative";
+    if (mode == "traversal") output.directory += "/../escape";
+    if (mode == "dot") output.directory += "/./child";
+    if (mode == "control") output.directory += QChar(0);
+    if (mode == "oversize") output.pattern = QString(4097, 'x');
+    if (mode == "counter") output.pattern = "%iX";
+    if (mode == "file") output.pattern = "%rf{/private/input}";
+    if (mode == "malformed") output.pattern = "%ra{257}";
+    const auto saved = store.save(draft, store.revision()); QCOMPARE(saved.saved, mode == "unknown");
+    QVERIFY(!QFile::exists(dir.filePath("new")));
+    if (saved.saved) { CaptureWorkflowStore reopened(storage); QCOMPARE(workflowsJson(*reopened.current().catalog), workflowsJson(draft)); }
+    else { QVERIFY(!QFile::exists(dir.filePath("workflows.json"))); QVERIFY(!saved.diagnostic.isEmpty()); }
   }
 };
 QTEST_GUILESS_MAIN(CaptureWorkflowsTest)

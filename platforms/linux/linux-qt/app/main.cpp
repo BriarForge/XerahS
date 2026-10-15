@@ -195,9 +195,12 @@ int main(int argc, char *argv[]) {
   QObject::connect(newImage, &QAction::triggered, [] {
     if (auto *window = xerahs::app::EditorWindow::createNew()) window->show();
   });
-  QObject::connect(folder, &QAction::triggered, [&capture] {
-    QDir().mkpath(capture.saveDirectory());
-    QDesktopServices::openUrl(QUrl::fromLocalFile(capture.saveDirectory()));
+  QObject::connect(folder, &QAction::triggered, &home, [&] {
+    const auto choice = workflows.resolve();
+    if (!choice.workflow) { home.showResult("Capture folder unavailable", xerahs::app::workflowMessage(choice.diagnostic), false); return; }
+    const auto directory = choice.workflow->output.directory.isEmpty() ? capture.saveDirectory() : choice.workflow->output.directory;
+    if (!QDir().mkpath(directory) || !QDesktopServices::openUrl(QUrl::fromLocalFile(directory)))
+      home.showResult("Capture folder unavailable", "The saved default workflow's folder could not be opened. Review its save folder in Capture workflows.", false);
   });
   QObject::connect(quit, &QAction::triggered, &app, &QApplication::quit);
   QObject::connect(appearance, &QAction::triggered, [] { xerahs::app::manageEditorAppearance(); });

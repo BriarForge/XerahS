@@ -63,6 +63,11 @@ private slots:
     QVERIFY(!result.file); QCOMPARE(result.diagnostic, QString("save-write-failed")); QCOMPARE(entries(dir), QStringList{"keep.txt"});
     QCOMPARE(bytes(dir.filePath("keep.txt")), QByteArray("keep"));
   }
+  void invalidPatternDoesNotCreateDirectoryOrEncode() {
+    QTemporaryDir dir; int encodes = 0;
+    const auto result = saveCapture(pixels(), dir.filePath("absent/nested"), "%ra{0}", {[&](const QImage &, QIODevice *) { ++encodes; return false; }, {}});
+    QVERIFY(!result.file); QCOMPARE(result.diagnostic, QString("filename-invalid-argument")); QCOMPARE(encodes, 0); QVERIFY(entries(dir).isEmpty());
+  }
 };
 QTEST_GUILESS_MAIN(CaptureSaveTest)
 #include "CaptureSaveTest.moc"

@@ -4,6 +4,7 @@
 #include <QJsonDocument>
 #include <QRegularExpression>
 #include <QSet>
+#include <QDir>
 namespace xerahs::workflows {
 using namespace xerahs::editor;
 namespace {
@@ -14,6 +15,40 @@ bool label(const QString &value, int limit) {
   return true;
 }
 WorkflowRead invalid(const char *code = "workflow-invalid") { return {{}, QString::fromLatin1(code)}; }
+bool validText(const QString &text) {
+  for (qsizetype i = 0; i < text.size(); ++i) {
+    if (text[i].isLowSurrogate()) return false;
+    if (text[i].isHighSurrogate() && (++i >= text.size() || !text[i].isLowSurrogate())) return false;
+  }
+  return true;
+}
+QJsonObject outputJson(const CaptureOutput &output, bool retainUnknown) {
+  auto object = retainUnknown ? output.extra : QJsonObject{};
+  object.insert("directory", output.directory); object.insert("pattern", output.pattern); return object;
+}
+}
+QString captureDirectoryDiagnostic(const QString &directory) {
+  if (directory.isEmpty()) return {};
+  if (directory.size() > 32768 || !QDir::isAbsolutePath(directory) || !validText(directory)) return "workflow-directory-invalid";
+  for (const auto c : directory) if (c.unicode() < 32 || c.unicode() == 127) return "workflow-directory-invalid";
+  for (const auto &part : directory.split('/', Qt::SkipEmptyParts)) if (part == "." || part == "..") return "workflow-directory-invalid";
+  return {};
+}
+xerahs::naming::ExpansionContext captureOutputExample() {
+  xerahs::naming::ExpansionContext context;
+  context.date = QDate(2026, 1, 2); context.time = QTime(15, 4, 5); context.unixTime = 1767366245;
+  context.locale = QLocale("en_US"); context.width = 1920; context.height = 1080; return context;
+}
+CaptureOutputPreview previewCaptureOutput(const CaptureOutput &output, xerahs::naming::ExpansionContext context) {
+  const auto directory = captureDirectoryDiagnostic(output.directory); if (!directory.isEmpty()) return {{}, directory, {}};
+  if (output.pattern.size() > 4096 || !validText(output.pattern)) return {{}, "workflow-pattern-invalid", {}};
+  // Never borrow file authority from a caller while previewing a definition.
+  context.files = nullptr;
+  const auto expanded = xerahs::naming::preview({output.pattern, xerahs::naming::ParseMode::Filename, QStringLiteral("png"), {}}, context);
+  if (!expanded.ok()) return {{}, "filename-" + xerahs::naming::errorCodeName(expanded.error().code), expanded.error()};
+  // Native save has no atomic persistent counter reservation yet (FN-016).
+  if (expanded.nextCounter != context.counter) return {expanded.value(), "workflow-counter-unavailable", {}};
+  return {expanded.value(), {}, {}};
 }
 CaptureWorkflows defaultCaptureWorkflows() {
   CaptureWorkflow initial; initial.id = QUuid("8df729a2-7d23-49c0-8566-4e4f6d282729");
@@ -24,13 +59,14 @@ QJsonObject workflowJson(const CaptureWorkflow &w, bool retainUnknown) {
   auto object = retainUnknown ? w.extra : QJsonObject{};
   object.insert("id", w.id.toString(QUuid::WithoutBraces)); object.insert("name", w.name);
   object.insert("capture", w.capture); object.insert("actions", QJsonArray::fromStringList(w.actions)); object.insert("chooseActions", w.chooseActions);
+  object.insert("output", outputJson(w.output, retainUnknown));
   return object;
 }
-QJsonObject workflowSnapshot(const CaptureWorkflow &w) { auto result = workflowJson(w, false); result.insert("definitionVersion", 1); return result; }
+QJsonObject workflowSnapshot(const CaptureWorkflow &w) { auto result = workflowJson(w, false); result.insert("definitionVersion", 2); return result; }
 QByteArray workflowsJson(const CaptureWorkflows &c) {
   auto root = c.extra; QJsonArray entries;
   for (const auto &w : c.entries) entries.append(workflowJson(w));
-  root.insert("format", format); root.insert("version", 1); root.insert("defaultId", c.defaultId.toString(QUuid::WithoutBraces)); root.insert("workflows", entries);
+  root.insert("format", format); root.insert("version", 2); root.insert("defaultId", c.defaultId.toString(QUuid::WithoutBraces)); root.insert("workflows", entries);
   return QJsonDocument(root).toJson(QJsonDocument::Indented);
 }
 WorkflowRead parseCaptureWorkflows(const QByteArray &bytes) {
@@ -38,8 +74,9 @@ WorkflowRead parseCaptureWorkflows(const QByteArray &bytes) {
   QJsonParseError error; const auto document = QJsonDocument::fromJson(bytes, &error);
   if (error.error != QJsonParseError::NoError || !document.isObject()) return invalid();
   auto root = document.object();
-  if (root.value("version").toDouble() > 1) return invalid("workflow-newer-version");
-  if (root.value("format") != format || root.value("version") != QJsonValue(1) || !root.value("workflows").isArray() || !root.value("defaultId").isString()) return invalid();
+  if (root.value("version").toDouble() > 2) return invalid("workflow-newer-version");
+  if (root.value("format") != format || (root.value("version") != QJsonValue(1) && root.value("version") != QJsonValue(2)) || !root.value("workflows").isArray() || !root.value("defaultId").isString()) return invalid();
+  const bool legacy = root.value("version") == QJsonValue(1);
   CaptureWorkflows catalog; catalog.defaultId = QUuid(root.value("defaultId").toString());
   const auto entries = root.value("workflows").toArray(); if (entries.isEmpty() || entries.size() > 64) return invalid();
   QSet<QUuid> ids;
@@ -49,6 +86,16 @@ WorkflowRead parseCaptureWorkflows(const QByteArray &bytes) {
     if (!raw.value("id").isString() || !raw.value("name").isString() || !raw.value("capture").isString() || !raw.value("actions").isArray() || !raw.value("chooseActions").isBool()) return invalid();
     w.id = QUuid(raw.value("id").toString()); w.name = raw.value("name").toString(); w.capture = raw.value("capture").toString(); w.chooseActions = raw.value("chooseActions").toBool();
     if (w.id.isNull() || ids.contains(w.id) || !label(w.name, 128) || !label(w.capture, 64)) return invalid();
+    // Do not silently give a formerly unknown v1 field new execution authority.
+    if (legacy && raw.contains("output")) return invalid("workflow-upgrade-conflict");
+    if (!legacy) {
+      if (!raw.value("output").isObject()) return invalid();
+      auto output = raw.value("output").toObject();
+      if (!output.value("directory").isString() || !output.value("pattern").isString()) return invalid();
+      w.output.directory = output.value("directory").toString(); w.output.pattern = output.value("pattern").toString();
+      if (!captureDirectoryDiagnostic(w.output.directory).isEmpty() || w.output.pattern.size() > 4096 || !validText(w.output.pattern)) return invalid();
+      output.remove("directory"); output.remove("pattern"); w.output.extra = output; raw.remove("output");
+    }
     ids.insert(w.id); const auto actions = raw.value("actions").toArray(); if (actions.size() > 128) return invalid();
     QSet<QString> unique; static const QRegularExpression actionId("^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$");
     for (const auto &action : actions) {
@@ -67,6 +114,7 @@ QString workflowAvailability(const CaptureWorkflow &w, const QStringList &availa
   CaptureWorkflows one{{w}, w.id, {}};
   if (!parseCaptureWorkflows(workflowsJson(one)).catalog) return "workflow-invalid";
   if (w.capture != "region") return "workflow-capture-unavailable";
+  const auto preview = previewCaptureOutput(w.output); if (!preview.diagnostic.isEmpty()) return preview.diagnostic;
   for (const auto &action : w.actions) if (!xerahs::actions::catalogueIndex(action) || !available.contains(action)) return "workflow-action-unavailable";
   return {};
 }
@@ -84,6 +132,9 @@ PreferenceWrite CaptureWorkflowStore::save(const CaptureWorkflows &draft, quint6
   if (m_revision != expectedRevision) return {false, "workflow-changed"};
   const auto bytes = workflowsJson(draft); const auto verified = parseCaptureWorkflows(bytes);
   if (!verified.catalog) return {false, verified.diagnostic};
+  for (const auto &workflow : draft.entries) {
+    const auto preview = previewCaptureOutput(workflow.output); if (!preview.diagnostic.isEmpty()) return {false, preview.diagnostic};
+  }
   const auto result = m_storage.replace(m_snapshot, bytes); if (!result.saved) return result;
   m_snapshot = {PreferenceRead::Kind::Readable, bytes, {}}; m_current = verified; ++m_revision; return {true, {}};
 }
