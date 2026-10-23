@@ -938,3 +938,27 @@ if(TARGET xerahs_video_converter)
   add_test(NAME gst-conversion-runner-lifetime COMMAND gst-conversion-runner-lifetime-test)
   set_tests_properties(gst-conversion-runner-lifetime PROPERTIES TIMEOUT 30)
 endif()
+
+# EDITOR-UTILITIES-001 / EU-007: icon converter. Append-only; main.cpp wires the tray.
+add_library(xerahs_icon_converter STATIC
+  app/IconWriter.cpp
+  app/IconWriter.h
+  app/IconConverterDialog.cpp
+  app/IconConverterDialog.h)
+set_target_properties(xerahs_icon_converter PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_icon_converter PUBLIC app)
+target_link_libraries(xerahs_icon_converter PUBLIC xerahs_core Qt6::Widgets)
+target_compile_options(xerahs_icon_converter PRIVATE -Wall -Wextra -Wpedantic)
+target_link_libraries(xerahs PRIVATE xerahs_icon_converter)
+
+add_executable(icon-writer-test tests/IconWriterTest.cpp)
+set_target_properties(icon-writer-test PROPERTIES AUTOMOC ON)
+target_link_libraries(icon-writer-test PRIVATE xerahs_icon_converter Qt6::Test)
+add_test(NAME icon-writer COMMAND icon-writer-test)
+set_tests_properties(icon-writer PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
+add_executable(icon-converter-dialog-test tests/IconConverterDialogTest.cpp)
+set_target_properties(icon-converter-dialog-test PROPERTIES AUTOMOC ON)
+target_link_libraries(icon-converter-dialog-test PRIVATE xerahs_icon_converter Qt6::Test)
+add_test(NAME icon-converter-dialog COMMAND icon-converter-dialog-test)
+set_tests_properties(icon-converter-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
