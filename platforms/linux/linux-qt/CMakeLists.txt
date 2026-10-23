@@ -93,6 +93,8 @@ add_library(xerahs_core STATIC
   src/uploads/DestinationCatalog.h
   src/uploads/SxcuImport.cpp
   src/uploads/SxcuImport.h
+  src/tools/ColorFormats.cpp
+  src/tools/ColorFormats.h
 )
 target_include_directories(xerahs_core PUBLIC src)
 # Qt Gui (private) supplies QPainter for shape painting shared with the canvas.
@@ -734,3 +736,8 @@ set_target_properties(upload-destinations-dialog-test PROPERTIES AUTOMOC ON)
 target_link_libraries(upload-destinations-dialog-test PRIVATE xerahs_upload_destinations Qt6::Test)
 add_test(NAME upload-destinations-dialog COMMAND upload-destinations-dialog-test)
 set_tests_properties(upload-destinations-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+add_executable(color-formats-test tests/ColorFormatsTest.cpp)
+set_target_properties(color-formats-test PROPERTIES AUTOMOC ON)
+# QColor lives in Qt Gui, which xerahs_core links privately.
+target_link_libraries(color-formats-test PRIVATE xerahs_core Qt6::Gui Qt6::Test)
+add_test(NAME color-formats COMMAND color-formats-test)
