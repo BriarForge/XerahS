@@ -55,11 +55,16 @@ inline const QString speechBalloon = QStringLiteral("speech-balloon");
 inline const QString magnify = QStringLiteral("magnify");
 inline const QString spotlight = QStringLiteral("spotlight");
 inline const QString smartEraser = QStringLiteral("smart-eraser");
+inline const QString image = QStringLiteral("image");
+inline const QString emoji = QStringLiteral("emoji");
+inline const QString cursor = QStringLiteral("cursor");
 }  // namespace shape
 QStringList shapeTypes();
 // Path types draw through `points`; region types sample source pixels.
 bool isPathShape(const QString &type);
 bool isTextShape(const QString &type);
+// EA-010: Image, Emoji and Cursor draw an embedded PNG named by imageKey.
+bool isAssetShape(const QString &type);
 // Types whose `strength` is user editable (blur, pixelate, magnify, spotlight).
 bool hasShapeStrength(const QString &type);
 
@@ -72,6 +77,7 @@ struct ShapeContent {
   double fontSize = 0;    // text and step; 0 uses the type default
   qint64 stepValue = 0;   // EA-009: the displayed step number
   double strength = 0;    // blur radius or pixelate cell; 0 uses the default
+  QString imageKey;       // asset types: key into AnnotationDocument::embeddedImages
 };
 
 struct RectangleAnnotation {
@@ -100,6 +106,7 @@ struct UnsupportedAnnotation {
 // Every known shape type uses the same box-bounded record.
 using ShapeAnnotation = RectangleAnnotation;
 using Annotation = std::variant<RectangleAnnotation, UnsupportedAnnotation>;
+using EmbeddedImages = std::vector<std::pair<QString, QByteArray>>;
 QUuid annotationId(const Annotation &annotation);
 // Hidden or explicitly locked compatible objects cannot be directly edited.
 // An opaque/non-boolean lock field is protected rather than interpreted.
@@ -114,7 +121,7 @@ struct AnnotationDocument {
   QString createdAt;
   QString modifiedAt;
   QByteArray sourceImagePng;               // decoded from base64
-  std::vector<std::pair<QString, QByteArray>> embeddedImages;  // key -> PNG bytes
+  EmbeddedImages embeddedImages;  // key -> PNG bytes
   std::vector<Annotation> annotations;     // document (z) order
   QJsonObject extra;                       // ES-015: unknown top-level properties
 };

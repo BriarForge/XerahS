@@ -24,7 +24,7 @@ public:
   void zoomToFit();
   // EA-001: creation tools after Crop map to document shape types.
   enum class Tool { Select, Rectangle, Crop, Ellipse, Line, Arrow, Freehand, Text, Step, Highlight, Blur, Pixelate,
-                    SpeechBalloon, Magnify, Spotlight, SmartEraser };
+                    SpeechBalloon, Magnify, Spotlight, SmartEraser, Image, Emoji, Cursor };
   static QString shapeType(Tool tool);
   Tool tool() const { return m_tool; }
   void setTool(Tool);
@@ -108,6 +108,7 @@ private:
     QSet<QUuid> selection;
   };
   std::optional<CreationSnapshot> m_creation;
+  bool createAsset(const QString &type, const std::vector<xerahs::editor::PointF> &gesture, const CreationSnapshot &creation);
   struct ResizeGesture {
     xerahs::editor::RectangleAnnotation original;
     xerahs::editor::RectangleHandle handle;

@@ -1,6 +1,10 @@
 #include "image-editor/ShapePainter.h"
 
+#include <QBuffer>
+#include <QCryptographicHash>
 #include <QFont>
+#include <QHash>
+#include <QImageReader>
 #include <QPainter>
 #include <QPainterPath>
 
@@ -161,7 +165,25 @@ double shapeStrength(const RectangleAnnotation &shape) {
   return 12.0;
 }
 
-void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImage &source) {
+QImage decodeAsset(const QByteArray &png) {
+  // Per-thread cache: renders run on workers and the canvas repaints often.
+  thread_local QHash<QByteArray, QImage> cache;
+  const QByteArray digest = QCryptographicHash::hash(png, QCryptographicHash::Sha1);
+  if (const auto found = cache.constFind(digest); found != cache.cend()) return *found;
+  QBuffer buffer;
+  buffer.setData(png);
+  QImageReader reader(&buffer, "png");
+  const QSize size = reader.size();
+  if (!size.isValid() || size.width() > kMaxDimension || size.height() > kMaxDimension ||
+      qint64(size.width()) * size.height() > 64LL * 1024 * 1024) return {};
+  QImage image = reader.read();
+  if (image.isNull()) return {};
+  if (cache.size() >= 64) cache.clear();
+  cache.insert(digest, image);
+  return image;
+}
+
+void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImage &source, const EmbeddedImages *assets) {
   if (!shape.visible) return;
   const RectangleStyle &style = shape.style;
   const QRectF box = bounds(shape);
@@ -240,6 +262,23 @@ void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImag
     QPainterPath hole;
     hole.addEllipse(box);
     painter.fillPath(outside.subtracted(hole), QColor(0, 0, 0, std::clamp(int(std::lround(shapeStrength(shape) * 2.55)), 0, 255)));
+  } else if (isAssetShape(type)) {
+    QImage asset;
+    if (assets)
+      for (const auto &[key, png] : *assets) if (key == shape.content.imageKey) { asset = decodeAsset(png); break; }
+    if (asset.isNull()) {
+      painter.setBrush(Qt::NoBrush);
+      painter.setPen(QPen(Qt::gray, 1, Qt::DashLine));
+      painter.drawRect(box);
+      painter.drawLine(box.topLeft(), box.bottomRight());
+      painter.drawLine(box.topRight(), box.bottomLeft());
+    } else {
+      // EA-010: keep the asset's aspect ratio, centred in its bounds.
+      const QSizeF fitted = QSizeF(asset.size()).scaled(box.size(), Qt::KeepAspectRatio);
+      const QRectF target(box.center() - QPointF(fitted.width() / 2, fitted.height() / 2), fitted);
+      painter.setRenderHint(QPainter::SmoothPixmapTransform);
+      painter.drawImage(target, asset);
+    }
   } else if (type == shape::smartEraser) {
     painter.fillRect(box, ringColour(source, box.toAlignedRect()));
   }

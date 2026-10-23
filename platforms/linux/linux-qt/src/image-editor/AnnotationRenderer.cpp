@@ -149,6 +149,11 @@ ArgbImage fromQImage(const QImage &image) {
 }
 }  // namespace
 
+RenderResult renderDocument(const ArgbImage &source, const AnnotationDocument &document, RenderControl control) {
+  control.assets = &document.embeddedImages;
+  return render(source, document.annotations, control);
+}
+
 ArgbImage solidImage(qint64 width, qint64 height, Argb color) {
   return ArgbImage{width, height, std::vector<Argb>(static_cast<std::size_t>(width * height), color)};
 }
@@ -189,7 +194,7 @@ RenderResult render(const ArgbImage &source, const std::vector<Annotation> &anno
       QImage canvas = toQImage(image).convertToFormat(QImage::Format_ARGB32_Premultiplied);
       {
         QPainter painter(&canvas);
-        paintShape(painter, *rectangle, sourcePixels);
+        paintShape(painter, *rectangle, sourcePixels, control.assets);
       }
       image = fromQImage(canvas);
       composited.push_back(rectangle->id);

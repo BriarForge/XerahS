@@ -51,7 +51,7 @@ std::optional<QUuid> EditorSession::createRectangle(const RectangleProperties &d
 }
 
 std::optional<QUuid> EditorSession::createShape(const RectangleProperties &draft, const ShapeContent &content,
-    quint64 expectedState, const QSet<QUuid> &expectedSelection) {
+    quint64 expectedState, const QSet<QUuid> &expectedSelection, const EmbeddedImages &newAssets) {
   m_editDiagnostic.clear();
   if (!shapeTypes().contains(content.type) || (isPathShape(content.type) && content.points.size() < 2)) {
     m_editDiagnostic = "annotation-geometry-invalid"; return std::nullopt;
@@ -76,6 +76,7 @@ std::optional<QUuid> EditorSession::createShape(const RectangleProperties &draft
   if (!m_editDiagnostic.isEmpty()) return std::nullopt;
   try {
     AnnotationDocument next = document();
+    for (const auto &asset : newAssets) next.embeddedImages.push_back(asset);
     next.annotations.push_back(rectangle);  // ES-024: highest z-order
     commitWithSelection(std::move(next), {rectangle.id});
     return rectangle.id;

@@ -93,7 +93,7 @@ CanvasPreview prepareCanvasPreview(const AnnotationDocument &document, const QIm
       std::copy_n(reinterpret_cast<const QRgb *>(argb.constScanLine(y)), argb.width(), input.pixels.begin() + std::size_t(y) * argb.width());
       progress(control, 60 + (y + 1) * 5 / argb.height());
     }
-    auto rendered = render(input, preview.edit.result.document->annotations,
+    auto rendered = renderDocument(input, *preview.edit.result.document,
         {control.cancelled, [&](int p) { progress(control, 65 + p * 30 / 100); }});
     if (rendered.error) return {fail(*rendered.error == RenderError::Cancelled ? QStringLiteral("canvas-cancelled") : diagnostic::documentInvalid), {}};
     QImage composite(argb.size(), QImage::Format_ARGB32);

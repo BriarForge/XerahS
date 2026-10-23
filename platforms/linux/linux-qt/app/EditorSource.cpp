@@ -211,7 +211,7 @@ RenderedEditorImage renderEditorImage(const QImage &source, const AnnotationDocu
     const auto *row = reinterpret_cast<const QRgb *>(argb.constScanLine(y));
     for (int x = 0; x < argb.width(); ++x) input.pixels[static_cast<std::size_t>(y) * input.width + x] = row[x];
   }
-  const RenderResult rendered = render(input, document.annotations, control);
+  const RenderResult rendered = renderDocument(input, document, control);
   if (!rendered.image) {
     return {{}, rendered.error == RenderError::Cancelled ? QStringLiteral("canvas-cancelled") : diagnostic::documentInvalid};
   }

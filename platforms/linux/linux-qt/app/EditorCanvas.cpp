@@ -5,7 +5,12 @@
 #include "AnnotationColorDialog.h"
 
 #include <QColorSpace>
+#include <QBuffer>
+#include <QFileDialog>
+#include <QImageReader>
 #include <QInputDialog>
+#include <QMessageBox>
+#include <QPainterPath>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QNativeGestureEvent>
@@ -135,6 +140,9 @@ QString EditorCanvas::shapeType(Tool tool) {
     case Tool::Magnify: return shape::magnify;
     case Tool::Spotlight: return shape::spotlight;
     case Tool::SmartEraser: return shape::smartEraser;
+    case Tool::Image: return shape::image;
+    case Tool::Emoji: return shape::emoji;
+    case Tool::Cursor: return shape::cursor;
   }
   return {};
 }
@@ -155,6 +163,9 @@ QString EditorCanvas::toolInstructions() const {
     case Tool::Magnify: text = "Magnify stays active: drag the area to show enlarged."; break;
     case Tool::Spotlight: text = "Spotlight stays active: drag the area to keep bright; the rest is dimmed."; break;
     case Tool::SmartEraser: text = "Smart eraser stays active: drag over the area to fill with its surrounding colour."; break;
+    case Tool::Image: text = "Image stays active: click or drag where the image goes, then choose an image file."; break;
+    case Tool::Emoji: text = "Emoji stays active: click or drag where the emoji goes, then choose an emoji."; break;
+    case Tool::Cursor: text = "Cursor stays active: click to place a mouse pointer."; break;
     case Tool::Select:
       text = "Select: click an object; Control-click adds or removes it. Drag selected objects to move. Blank canvas clears selection."; break;
     case Tool::Rectangle:
@@ -397,7 +408,7 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
       }
     }
     const QRectF box(QPointF(r->left(), r->top()), QPointF(r->right(), r->bottom()));
-    paintShape(p, *r, m_displaySource.isNull() ? m_image : m_displaySource);
+    paintShape(p, *r, m_displaySource.isNull() ? m_image : m_displaySource, &m_session->document().embeddedImages);
     if (m_session->selection().contains(r->id)) {
       const double gap = r->style.strokeWidth / 2 + 3 / m_view.zoom();
       const QRectF outline = box.adjusted(-gap, -gap, gap, gap);
@@ -587,6 +598,7 @@ bool EditorCanvas::createFromGesture(const std::vector<PointF> &gesture) {
   const auto creation = m_creation; m_creation.reset();
   const QString type = shapeType(m_tool);
   if (!creation || type.isEmpty() || gesture.empty()) return false;
+  if (isAssetShape(type)) return createAsset(type, gesture, *creation);
   const auto geometry = shapeGeometry(type, gesture);
   ShapeContent content;
   content.type = type;
@@ -659,6 +671,83 @@ void EditorCanvas::mouseDoubleClickEvent(QMouseEvent *event) {
   m_session->select({*hit});
   emit changed();
   editShapeContent(this);
+}
+
+namespace {
+QImage emojiImage(const QString &emoji) {
+  QImage image(128, 128, QImage::Format_ARGB32_Premultiplied);
+  image.fill(Qt::transparent);
+  QPainter painter(&image);
+  QFont font = painter.font();
+  font.setFamilies({QStringLiteral("Noto Color Emoji"), QStringLiteral("Apple Color Emoji"), QStringLiteral("Segoe UI Emoji"), font.family()});
+  font.setPixelSize(104);
+  painter.setFont(font);
+  painter.drawText(image.rect(), Qt::AlignCenter, emoji);
+  return image;
+}
+QImage cursorImage() {
+  // A standard arrow pointer: black with a white outline.
+  QImage image(32, 48, QImage::Format_ARGB32_Premultiplied);
+  image.fill(Qt::transparent);
+  QPainter painter(&image);
+  painter.setRenderHint(QPainter::Antialiasing);
+  QPainterPath arrow;
+  arrow.moveTo(2, 2); arrow.lineTo(2, 38); arrow.lineTo(11, 29); arrow.lineTo(17, 44); arrow.lineTo(23, 41);
+  arrow.lineTo(17, 27); arrow.lineTo(29, 27); arrow.closeSubpath();
+  painter.setPen(QPen(Qt::white, 2.5, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+  painter.setBrush(Qt::black);
+  painter.drawPath(arrow);
+  return image;
+}
+}  // namespace
+
+// EA-010: picks or generates the asset, embeds it as PNG and inserts the
+// object in one history step. A click uses the asset's natural size.
+bool EditorCanvas::createAsset(const QString &type, const std::vector<PointF> &gesture, const CreationSnapshot &creation) {
+  if (gesture.empty()) return false;
+  const QPointer<EditorCanvas> owner(this);
+  QImage asset;
+  m_annotationDialogPending = true;
+  if (type == shape::image) {
+    const QString path = QFileDialog::getOpenFileName(this, "Insert Image", {}, "Images (*.png *.jpg *.jpeg *.bmp *.gif *.webp)");
+    if (!owner) return false;
+    if (!path.isEmpty()) {
+      QImageReader reader(path);
+      const QSize size = reader.size();
+      // ES-028: reject oversized images before decoding.
+      if (size.isValid() && size.width() <= 16384 && size.height() <= 16384 && qint64(size.width()) * size.height() <= 64LL * 1024 * 1024)
+        asset = reader.read();
+      if (asset.isNull()) QMessageBox::warning(this, "Insert Image", "The image could not be read, or it is larger than 16384 pixels or 64 megapixels.");
+      if (!owner) return false;
+    }
+  } else if (type == shape::emoji) {
+    bool accepted = false;
+    const QStringList emojis{"😀", "😂", "😍", "🤔", "😮", "😢", "😡", "👍", "👎", "👏", "🙏", "👉", "👆", "✅", "❌", "⚠️",
+                             "❗", "❓", "⭐", "🔥", "💡", "🎉", "❤️", "🐞"};
+    const QString chosen = QInputDialog::getItem(this, "Insert Emoji", "Emoji:", emojis, 0, true, &accepted);
+    if (!owner) return false;
+    if (accepted && !chosen.trimmed().isEmpty()) asset = emojiImage(chosen.trimmed().left(16));
+  } else {
+    asset = cursorImage();
+  }
+  m_annotationDialogPending = false;
+  if (asset.isNull()) return false;
+  QByteArray png;
+  QBuffer buffer(&png);
+  if (!buffer.open(QIODevice::WriteOnly) || !asset.save(&buffer, "PNG")) { emit editRejected("annotation-edit-failed"); return false; }
+  const PointF first = gesture.front(), last = gesture.back();
+  PointF start{std::min(first.x, last.x), std::min(first.y, last.y)}, end{std::max(first.x, last.x), std::max(first.y, last.y)};
+  if (end.x - start.x < 4 || end.y - start.y < 4) {
+    QSizeF natural = type == shape::emoji ? QSizeF(64, 64) : QSizeF(asset.size());
+    const QSizeF limit(std::max(32, m_image.width() * 3 / 4), std::max(32, m_image.height() * 3 / 4));
+    if (natural.width() > limit.width() || natural.height() > limit.height()) natural = natural.scaled(limit, Qt::KeepAspectRatio);
+    start = first; end = {first.x + natural.width(), first.y + natural.height()};
+  }
+  ShapeContent content;
+  content.type = type;
+  content.imageKey = "asset-" + QUuid::createUuid().toString(QUuid::WithoutBraces);
+  m_session->createShape({start, end, creation.style}, content, creation.state, creation.selection, {{content.imageKey, png}});
+  return true;
 }
 
 void EditorCanvas::cancelGesture() {

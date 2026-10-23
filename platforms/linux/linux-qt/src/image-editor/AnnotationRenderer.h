@@ -39,9 +39,13 @@ struct RenderResult {
 struct RenderControl {
   std::function<bool()> cancelled;
   std::function<void(int)> progress;
+  // EA-010: the document's embedded images for Image, Emoji and Cursor.
+  const EmbeddedImages *assets = nullptr;
 };
 
 RenderResult render(const ArgbImage &source, const std::vector<Annotation> &annotations,
                     const RenderControl &control = {});
+// Renders a document's annotations with its embedded images.
+RenderResult renderDocument(const ArgbImage &source, const AnnotationDocument &document, RenderControl control = {});
 
 }  // namespace xerahs::editor

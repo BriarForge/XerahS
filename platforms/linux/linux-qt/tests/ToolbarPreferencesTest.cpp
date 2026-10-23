@@ -22,7 +22,8 @@ private slots:
     QCOMPARE(visible, QStringList({"save", "save-as", "undo", "redo", "delete-selection", "rotate-selection",
         "stroke-colour", "fill-colour", "increase-stroke", "decrease-stroke", "zoom-in", "zoom-out", "reset-zoom", "fit-image",
         "select-tool", "rectangle-tool", "ellipse-tool", "line-tool", "arrow-tool", "freehand-tool", "text-tool", "step-tool",
-        "highlight-tool", "blur-tool", "pixelate-tool", "speechballoon-tool", "magnify-tool", "spotlight-tool", "smarteraser-tool"}));
+        "highlight-tool", "blur-tool", "pixelate-tool", "speechballoon-tool", "magnify-tool", "spotlight-tool", "smarteraser-tool",
+        "image-tool", "emoji-tool", "cursor-tool"}));
     QCOMPARE(defaults.fields.value("ToolbarItems"), PreferenceFieldState::Missing);
     auto empty = loadEditorPreferences({{"ToolbarItems", QJsonArray{}}});
     QVERIFY(empty.diagnostics.isEmpty()); QVERIFY(effectiveToolbarItems(empty.values.value("ToolbarItems").toArray()).isEmpty());

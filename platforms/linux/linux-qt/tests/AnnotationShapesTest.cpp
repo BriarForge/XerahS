@@ -6,6 +6,7 @@
 #include "image-editor/ShapePainter.h"
 
 #include <QApplication>
+#include <QBuffer>
 #include <QTest>
 
 using namespace xerahs::app;
@@ -139,6 +140,24 @@ private slots:
     QCOMPARE(result.image->at(30, 20), Argb(0xFF2040A0));
   }
 
+  void embeddedAssetsRenderWithTheirAspectRatioOrAPlaceholder() {
+    QImage green(20, 10, QImage::Format_ARGB32); green.fill(QColor(0, 200, 0));
+    QByteArray png; QBuffer buffer(&png); QVERIFY(buffer.open(QIODevice::WriteOnly)); QVERIFY(green.save(&buffer, "PNG"));
+    auto d = document(100, 100);
+    auto image = shapeOf(shape::image, {0, 0}, {40, 40}); image.content.imageKey = "asset-1";
+    d.embeddedImages = {{"asset-1", png}}; d.annotations = {image};
+    const auto parsed = parseDocument(serializeDocument(d));
+    QVERIFY(parsed.document);
+    QCOMPARE(std::get<RectangleAnnotation>(parsed.document->annotations[0]).content.imageKey, QString("asset-1"));
+    const auto result = renderDocument(solidImage(100, 100, 0xFFFFFFFF), d);
+    QVERIFY(result.image);
+    QCOMPARE(result.image->at(20, 20), Argb(0xFF00C800));  // centred 40x20 band
+    QCOMPARE(result.image->at(20, 5), Argb(0xFFFFFFFF));   // letterboxed, aspect kept
+    auto missing = image; missing.content.imageKey = "absent";
+    const auto placeholder = render(solidImage(100, 100, 0xFFFFFFFF), {missing});
+    QVERIFY(placeholder.image); QVERIFY(!same(*placeholder.image, solidImage(100, 100, 0xFFFFFFFF), 0, 0, 40, 40));
+  }
+
   void stepNumbersFollowTheHighestExistingStep() {
     auto d = document();
     auto one = shapeOf(shape::step, {0, 0}, {10, 10}); one.content.stepValue = 1;
@@ -175,6 +194,7 @@ private slots:
     QTest::newRow("blur") << int(EditorCanvas::Tool::Blur) << shape::blur;
     QTest::newRow("spotlight") << int(EditorCanvas::Tool::Spotlight) << shape::spotlight;
     QTest::newRow("smart-eraser") << int(EditorCanvas::Tool::SmartEraser) << shape::smartEraser;
+    QTest::newRow("cursor") << int(EditorCanvas::Tool::Cursor) << shape::cursor;
   }
   void canvasDragCreatesEachToolsShapeAsOneHistoryStep() {
     QFETCH(int, tool); QFETCH(QString, type);
@@ -193,6 +213,11 @@ private slots:
     QCOMPARE(created.type(), type);
     if (type == shape::step) QCOMPARE(created.content.stepValue, qint64(1));
     if (type == shape::freehand) QVERIFY(created.content.points.size() >= 3);
+    if (type == shape::cursor) {
+      QCOMPARE(session.document().embeddedImages.size(), std::size_t(1));
+      QCOMPARE(session.document().embeddedImages[0].first, created.content.imageKey);
+      QVERIFY(session.undo()); QVERIFY(session.document().embeddedImages.empty());  // one history step
+    }
     QCOMPARE(canvas.tool(), EditorCanvas::Tool(tool));  // the tool stays active
   }
 };

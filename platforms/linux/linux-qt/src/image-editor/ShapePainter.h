@@ -22,7 +22,13 @@ double shapeStrength(const RectangleAnnotation &shape);
 // Paints `shape` in document coordinates on a painter whose transform maps
 // document pixels. Region types (blur, pixelate) sample `source`, the
 // immutable source pixels, never earlier annotations (EA-011).
-void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImage &source);
+// Asset types look up their PNG in `assets`; a missing or undecodable asset
+// paints a visible placeholder rather than failing the export.
+void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImage &source,
+                const EmbeddedImages *assets = nullptr);
+
+// EA-010: decodes an embedded PNG within the ES-028 limits, or a null image.
+QImage decodeAsset(const QByteArray &png);
 
 // EA-004: turns a creation gesture (pointer samples in document pixels) into
 // bounds and content. Path types keep their ordered points as fractions of

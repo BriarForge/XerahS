@@ -22,7 +22,7 @@ const QVector<ToolbarAction> &toolbarActions() {
     {"select-tool", true}, {"rectangle-tool", true}, {"ellipse-tool", true}, {"line-tool", true}, {"arrow-tool", true},
     {"freehand-tool", true}, {"text-tool", true}, {"step-tool", true}, {"highlight-tool", true}, {"blur-tool", true},
     {"pixelate-tool", true}, {"speechballoon-tool", true}, {"magnify-tool", true}, {"spotlight-tool", true},
-    {"smarteraser-tool", true}, {"rectangle-properties"}, {"create-rectangle"}, {"focus-annotations"},
+    {"smarteraser-tool", true}, {"image-tool", true}, {"emoji-tool", true}, {"cursor-tool", true}, {"rectangle-properties"}, {"create-rectangle"}, {"focus-annotations"},
     {"bring-forward"}, {"send-backward"}, {"bring-to-front"}, {"send-to-back"}
   };
   return actions;

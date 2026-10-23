@@ -120,7 +120,7 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
         if (const auto *unsupported = std::get_if<UnsupportedAnnotation>(&annotation))
           if (unsupported->raw.value(u"visible").toBool(true)) return failure(QStringLiteral("canvas-annotation-render-unsupported"));
       }
-      auto rendered = render(source, document.annotations, {control.cancelled, control.progress});
+      auto rendered = renderDocument(source, document, {control.cancelled, control.progress});
       if (rendered.error) return failure(*rendered.error == RenderError::Cancelled ? QStringLiteral("canvas-cancelled") : diagnostic::documentInvalid);
       const QSet<QUuid> represented(rendered.compositedAnnotations.begin(), rendered.compositedAnnotations.end());
       result.changed = !represented.isEmpty();
@@ -161,7 +161,7 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
           if (!std::holds_alternative<RectangleAnnotation>(annotation))
             return failure(QStringLiteral("canvas-annotation-transform-unsupported"));
         }
-        auto rendered = render(source, document.annotations,
+        auto rendered = renderDocument(source, document,
             {control.cancelled, [&](int p) { progress(control, p * 30 / 100); }});
         if (rendered.error) return failure(*rendered.error == RenderError::Cancelled ? QStringLiteral("canvas-cancelled") : diagnostic::documentInvalid);
         composite = std::move(rendered.image);

@@ -36,8 +36,10 @@ public:
   std::optional<QUuid> createRectangle(const RectangleProperties &, quint64 expectedState,
       const QSet<QUuid> &expectedSelection);
   // EA-004: the same owned creation for every box-bounded shape type.
+  // Asset types add their PNG to the document's embedded images in the same
+  // history step (EA-010).
   std::optional<QUuid> createShape(const RectangleProperties &, const ShapeContent &, quint64 expectedState,
-      const QSet<QUuid> &expectedSelection);
+      const QSet<QUuid> &expectedSelection, const EmbeddedImages &newAssets = {});
   // ES-004, ES-026: selection is not a document mutation. Unknown IDs are ignored.
   void select(const QList<QUuid> &ids);
   // Native object lists freeze their displayed history state before dispatch.

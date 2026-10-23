@@ -237,7 +237,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   auto *toolMenu = imageMenu->addMenu(QStringLiteral("Annotation Tools"));
   for (const auto &id : {"select-tool", "rectangle-tool", "ellipse-tool", "line-tool", "arrow-tool", "freehand-tool", "text-tool",
                          "step-tool", "highlight-tool", "blur-tool", "pixelate-tool", "speechballoon-tool", "magnify-tool", "spotlight-tool",
-                         "smarteraser-tool", "crop-tool"}) toolMenu->addAction(tools.value(id));
+                         "smarteraser-tool", "image-tool", "emoji-tool", "cursor-tool", "crop-tool"}) toolMenu->addAction(tools.value(id));
   QAction *crop = imageMenu->addAction(QStringLiteral("Crop Image…"));
   crop->setObjectName(QStringLiteral("cropImage"));
   QAction *cropTool = tools.value("crop-tool");
