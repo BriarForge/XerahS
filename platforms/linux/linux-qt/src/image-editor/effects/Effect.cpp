@@ -128,10 +128,12 @@ QVector<const EffectSpec *> EffectRegistry::specs() const {
 }
 
 void registerAdjustmentEffects(EffectRegistry &registry);
+void registerMoreAdjustmentEffects(EffectRegistry &registry);
 const EffectRegistry &builtinEffects() {
   static const EffectRegistry registry = [] {
     EffectRegistry result;
     registerAdjustmentEffects(result);
+    registerMoreAdjustmentEffects(result);
     return result;
   }();
   return registry;

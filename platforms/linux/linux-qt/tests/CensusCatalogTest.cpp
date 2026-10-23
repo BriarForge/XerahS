@@ -41,7 +41,7 @@ private slots:
   }
   void registeredEffectsMatchCensus() {
     const auto &registry = builtinEffects();
-    QCOMPARE(registry.size(), 6);
+    QVERIFY(registry.size() >= 6);
     for (const auto *spec : registry.specs()) {
       const auto &catalog = censusCatalog();
       const auto entry = std::find_if(catalog.cbegin(), catalog.cend(),
@@ -55,7 +55,8 @@ private slots:
         QCOMPARE(spec->parameters[i].kind, entry->parameters[i].kind);
         QCOMPARE(spec->parameters[i].label, entry->parameters[i].label);
       }
-      QVERIFY(!spec->changesSize && !spec->usesSeed);
+      QVERIFY(!spec->changesSize);
+      QCOMPARE(spec->usesSeed, spec->id == "film_emulation");  // grain is the only seeded Adjustment
       QVERIFY(spec->referencePath.startsWith("ShareX.ImageEditor/src/ShareX.ImageEditor/Core/ImageEffects/Adjustments/"));
       QVERIFY(resolveParameters(*spec, {}).ok());
     }

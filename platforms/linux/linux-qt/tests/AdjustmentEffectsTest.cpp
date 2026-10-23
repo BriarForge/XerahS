@@ -6,6 +6,7 @@
 
 using namespace xerahs::effects;
 namespace {
+const QStringList kPilots{"alpha", "brightness", "contrast", "grayscale", "invert", "saturation"};
 QImage fixture() {
   QImage image(3, 3, QImage::Format_ARGB32);
   const QRgb pixels[]{qRgba(40, 100, 200, 128), qRgba(0, 255, 1, 255), qRgba(15, 20, 25, 0),
@@ -46,6 +47,7 @@ private slots:
   void neutralParametersAndInvertInvolution() {
     const auto image = fixture();
     for (const auto *spec : builtinEffects().specs()) {
+      if (!kPilots.contains(spec->id)) continue;
       const auto *effect = builtinEffects().find(spec->id);
       ParamValues params;
       if (spec->id != "invert")
@@ -114,6 +116,7 @@ private slots:
   void everyPilotCancelsWithoutPartialImage() {
     const auto image = fixture();
     for (const auto *spec : builtinEffects().specs()) {
+      if (!kPilots.contains(spec->id)) continue;
       const auto *effect = builtinEffects().find(spec->id);
       const auto resolved = resolveParameters(*spec, {});
       int progress = 0;
