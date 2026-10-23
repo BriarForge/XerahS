@@ -133,4 +133,16 @@ QImage loadImageFile(const QString &path);
 // Header-only validation (no pixel decode) with the same rules.
 bool validateImageFile(const QString &path);
 
+// ---- blur ------------------------------------------------------------------------
+// Samples outside the image are transparent (Decal, Skia's default blur tile) or the
+// edge pixel (Clamp).
+enum class BlurBorder { Decal, Clamp };
+
+// Separable Gaussian with a 3-sigma kernel on premultiplied pixels, unpremultiplied
+// back to straight ARGB32. Skia SKImageFilter.CreateBlur is the same association; its
+// internal window is not reproduced exactly. sigma <= 0 copies. A null image means
+// cancellation or allocation failure.
+QImage approximateGaussianBlur(const QImage &source, float sigma, BlurBorder border, const EffectContext &context,
+                               int progressLo = 0, int progressHi = 100);
+
 }  // namespace xerahs::effects::support
