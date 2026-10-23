@@ -132,6 +132,7 @@ void registerMoreAdjustmentEffects(EffectRegistry &registry);
 void registerDrawingEffects(EffectRegistry &registry);
 void registerManipulationEffects(EffectRegistry &registry);
 void registerFilterEffects1(EffectRegistry &registry);
+void registerManipulationEffects2(EffectRegistry &registry);
 const EffectRegistry &builtinEffects() {
   static const EffectRegistry registry = [] {
     EffectRegistry result;
@@ -140,6 +141,7 @@ const EffectRegistry &builtinEffects() {
     registerDrawingEffects(result);
     registerManipulationEffects(result);
     registerFilterEffects1(result);
+    registerManipulationEffects2(result);
     return result;
   }();
   return registry;

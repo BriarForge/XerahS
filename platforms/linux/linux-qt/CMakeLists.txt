@@ -1088,13 +1088,14 @@ add_library(xerahs_effects STATIC
   src/image-editor/effects/EffectSupport.cpp
   src/image-editor/effects/DrawingEffects.cpp
   src/image-editor/effects/FilterEffects1.cpp
+  src/image-editor/effects/ManipulationEffects2.cpp
   src/image-editor/effects/ManipulationEffects.cpp)
 target_include_directories(xerahs_effects PUBLIC src)
 target_link_libraries(xerahs_effects PUBLIC Qt6::Core Qt6::Gui)
 target_compile_options(xerahs_effects PRIVATE -Wall -Wextra -Wpedantic -ffp-contract=off)
 target_link_libraries(xerahs PRIVATE xerahs_effects)
 
-foreach(effect_test IN ITEMS EffectFramework CensusCatalog AdjustmentEffects AdjustmentEffects2 DrawingEffects FilterEffects1 ManipulationEffects)
+foreach(effect_test IN ITEMS EffectFramework CensusCatalog AdjustmentEffects AdjustmentEffects2 DrawingEffects FilterEffects1 ManipulationEffects ManipulationEffects2)
   add_executable(${effect_test}-test tests/${effect_test}Test.cpp)
   set_target_properties(${effect_test}-test PROPERTIES AUTOMOC ON)
   target_link_libraries(${effect_test}-test PRIVATE xerahs_effects Qt6::Test)
@@ -1113,3 +1114,6 @@ target_link_libraries(effects-dialog-test PRIVATE xerahs_editor_source xerahs_ed
 add_test(NAME effects-dialog COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:effects-dialog-test>)
 set_tests_properties(effects-dialog PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+
+# EDITOR-EFFECTS-001: geometry effects reuse the core canvas pixel operations.
+target_link_libraries(xerahs_effects PUBLIC xerahs_core)
