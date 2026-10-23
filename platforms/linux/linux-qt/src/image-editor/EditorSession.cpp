@@ -13,7 +13,9 @@ bool finiteGeometry(const RectangleAnnotation &r) {
 bool sameEditableFields(const RectangleAnnotation &a, const RectangleAnnotation &b) {
   return a.start == b.start && a.end == b.end && a.style.strokeWidth == b.style.strokeWidth &&
       a.style.strokeColor == b.style.strokeColor && a.style.fillColor == b.style.fillColor &&
-      a.style.rotationDegrees == b.style.rotationDegrees && a.style.opacity == b.style.opacity;
+      a.style.rotationDegrees == b.style.rotationDegrees && a.style.opacity == b.style.opacity &&
+      a.content.text == b.content.text && a.content.fontSize == b.content.fontSize &&
+      a.content.stepValue == b.content.stepValue && a.content.strength == b.content.strength;
 }
 bool sameStyle(const RectangleStyle &a, const RectangleStyle &b) {
   return a.strokeColor == b.strokeColor && a.fillColor == b.fillColor && a.strokeWidth == b.strokeWidth &&
@@ -118,6 +120,24 @@ bool EditorSession::editRectangleProperties(const QUuid &id, const RectangleProp
   if (!selectionEditable()) { m_editDiagnostic = "annotation-selection-protected"; return false; }
   m_editDiagnostic = rectanglePropertiesDiagnostic(properties); if (!m_editDiagnostic.isEmpty()) return false;
   return changeSelected([&](RectangleAnnotation &r) { r.start = properties.start; r.end = properties.end; r.style = properties.style; });
+}
+
+bool EditorSession::editShapeContent(const QUuid &id, const ShapeContent &content, quint64 expectedState) {
+  m_editDiagnostic.clear();
+  if (expectedState != stateId() || m_selection.size() != 1 || !m_selection.contains(id)) { m_editDiagnostic = "annotation-edit-stale"; return false; }
+  const auto *selected = selectedRectangle();
+  if (!selected) { m_editDiagnostic = "annotation-type-unsupported"; return false; }
+  if (!selectionEditable()) { m_editDiagnostic = "annotation-selection-protected"; return false; }
+  if (content.type != selected->type() || !std::isfinite(content.fontSize) || content.fontSize < 0 || content.fontSize > 2000 ||
+      !std::isfinite(content.strength) || content.strength < 0 || content.strength > 1000 || content.stepValue < 0 ||
+      (content.type == shape::text && content.text.isEmpty())) {
+    m_editDiagnostic = "annotation-style-invalid"; return false;
+  }
+  // Points stay with the geometry; only the type-specific values change.
+  return changeSelected([&](RectangleAnnotation &r) {
+    r.content.text = content.text; r.content.fontSize = content.fontSize;
+    r.content.stepValue = content.stepValue; r.content.strength = content.strength;
+  });
 }
 
 bool EditorSession::resizeRectangle(const QUuid &id, RectangleHandle handle, PointF delta, quint64 expectedState) {

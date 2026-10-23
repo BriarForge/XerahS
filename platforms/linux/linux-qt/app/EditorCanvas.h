@@ -46,6 +46,9 @@ public:
   // Capture uses the same owned native dialog and Core edit as the main editor.
   bool editRectangleProperties(QWidget *parent);
   bool createRectangle(QWidget *parent);
+  // Text, Step, Blur and Pixelate: edit the selected object's own values.
+  bool canEditShapeContent() const;
+  bool editShapeContent(QWidget *parent);
   // Borrowed only until mutation; native list models copy their displayed rows.
   const xerahs::editor::AnnotationDocument &annotationDocument() const { return m_session->document(); }
   const QSet<QUuid> &annotationSelection() const { return m_session->selection(); }
@@ -69,6 +72,7 @@ protected:
   void mousePressEvent(QMouseEvent *) override;
   void mouseMoveEvent(QMouseEvent *) override;
   void mouseReleaseEvent(QMouseEvent *) override;
+  void mouseDoubleClickEvent(QMouseEvent *) override;
   void wheelEvent(QWheelEvent *) override;
   void keyPressEvent(QKeyEvent *) override;
   void keyReleaseEvent(QKeyEvent *) override;

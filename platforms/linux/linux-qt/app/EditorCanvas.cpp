@@ -146,7 +146,7 @@ QString EditorCanvas::toolInstructions() const {
       text = "Crop stays active: drag to choose the retained image region."; break;
   }
   return text + " Create Rectangle offers keyboard entry of bounds with captured creation defaults. Drag a selected rectangle's square handles to resize; the opposite handle stays fixed. Rectangle Properties offers numeric bounds and style controls. "
-      "Escape cancels a gesture. Arrows move one image pixel; Shift+arrows move ten. Alt+arrows move the bottom-right corner one pixel; Alt+Shift+arrows move it ten. R rotates clockwise 90 degrees; Shift+R rotates counterclockwise. Held transform keys repeat. Delete removes selected objects. Home/End bring to front/send to back; Page Up/Down bring forward/send backward. Control+wheel zooms; Space+drag pans.";
+      "Double-click or F2 edits the selected text, step number, blur radius or pixel size. Escape cancels a gesture. Arrows move one image pixel; Shift+arrows move ten. Alt+arrows move the bottom-right corner one pixel; Alt+Shift+arrows move it ten. R rotates clockwise 90 degrees; Shift+R rotates counterclockwise. Held transform keys repeat. Delete removes selected objects. Home/End bring to front/send to back; Page Up/Down bring forward/send backward. Control+wheel zooms; Space+drag pans.";
 }
 
 void EditorCanvas::setTool(Tool tool) {
@@ -593,6 +593,53 @@ bool EditorCanvas::createFromGesture(const std::vector<PointF> &gesture) {
   return true;
 }
 
+bool EditorCanvas::canEditShapeContent() const {
+  const auto *selected = m_session->selectedRectangle();
+  if (!selected || !m_session->selectionEditable()) return false;
+  const QString &type = selected->type();
+  return isTextShape(type) || type == shape::blur || type == shape::pixelate;
+}
+
+bool EditorCanvas::editShapeContent(QWidget *parent) {
+  if (!canEditShapeContent() || interactionActive()) return false;
+  const RectangleAnnotation selected = *m_session->selectedRectangle();
+  const quint64 state = m_session->stateId();
+  ShapeContent content = selected.content;
+  const QPointer<EditorCanvas> owner(this);
+  bool accepted = false;
+  m_annotationDialogPending = true;
+  if (selected.type() == shape::text) {
+    content.text = QInputDialog::getMultiLineText(parent, "Edit Text", "Text:", content.text, &accepted);
+    if (owner && accepted) content.fontSize = QInputDialog::getInt(parent, "Edit Text", "Font size (pixels):",
+        int(std::lround(shapeFontSize(selected))), 1, 2000, 1, &accepted);
+  } else if (selected.type() == shape::step) {
+    content.stepValue = QInputDialog::getInt(parent, "Edit Step", "Step number:", int(content.stepValue), 0, 1000000, 1, &accepted);
+  } else {
+    const QString label = selected.type() == shape::blur ? "Blur radius (pixels):" : "Pixel cell size (pixels):";
+    content.strength = QInputDialog::getInt(parent, selected.type() == shape::blur ? "Edit Blur" : "Edit Pixelate", label,
+        int(std::lround(shapeStrength(selected))), 1, 1000, 1, &accepted);
+  }
+  if (!owner) return false;
+  m_annotationDialogPending = false;
+  if (!accepted) return false;
+  const bool edited = m_session->editShapeContent(selected.id, content, state);
+  const QString rejection = m_session->editDiagnostic();
+  viewport()->update();
+  if (!rejection.isEmpty()) { emit editRejected(rejection); if (!owner) return false; }
+  if (edited) emit changed();
+  return edited;
+}
+
+void EditorCanvas::mouseDoubleClickEvent(QMouseEvent *event) {
+  if (event->button() != Qt::LeftButton || m_tool == Tool::Crop) return;
+  const auto hit = topmostAt(m_view.toImage(event->position()));
+  if (!hit) return;
+  cancelGesture();
+  m_session->select({*hit});
+  emit changed();
+  editShapeContent(this);
+}
+
 void EditorCanvas::cancelGesture() {
   m_drag.reset();
   m_path.clear();
@@ -673,6 +720,9 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
   // Legacy bracket gestures dispatch the same frozen operation.
   std::optional<EditorSession::Order> order;
   const auto modifiers = event->modifiers();
+  if (modifiers == Qt::NoModifier && event->key() == Qt::Key_F2 && canEditShapeContent()) {
+    editShapeContent(this); return;
+  }
   if (modifiers == Qt::NoModifier && (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace)) {
     event->accept(); if (!event->isAutoRepeat()) deleteSelection(); return;
   }

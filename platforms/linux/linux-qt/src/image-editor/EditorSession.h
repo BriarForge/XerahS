@@ -87,6 +87,9 @@ public:
   // Absolute selected-object edits never change creation defaults. The state
   // and exact single selection must still match the user's frozen snapshot.
   bool editRectangleProperties(const QUuid &, const RectangleProperties &, quint64 expectedState);
+  // EA-008/009/011: one undoable edit of a selected shape's text, font size,
+  // step number or effect strength.
+  bool editShapeContent(const QUuid &, const ShapeContent &, quint64 expectedState);
   bool resizeRectangle(const QUuid &, RectangleHandle, PointF delta, quint64 expectedState);
   struct TransferEditResult { bool changed = false; QString diagnostic; QList<QUuid> insertedIds; };
   TransferEditResult duplicateSelection(double offset = 10);

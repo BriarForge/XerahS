@@ -132,6 +132,24 @@ private slots:
     QCOMPARE(nextStepValue(d), qint64(5));
   }
 
+  void shapeContentEditsAreOneUndoableStep() {
+    EditorSession session(document());
+    ShapeContent text; text.type = shape::text; text.text = "Before";
+    const auto id = session.createShape({{10, 10}, {100, 40}, {}}, text, session.stateId(), session.selection());
+    QVERIFY(id); session.select({*id});
+    auto changed = text; changed.text = "After"; changed.fontSize = 30;
+    QVERIFY(session.editShapeContent(*id, changed, session.stateId()));
+    const auto &edited = std::get<RectangleAnnotation>(session.document().annotations[0]);
+    QCOMPARE(edited.content.text, QString("After")); QCOMPARE(edited.content.fontSize, 30.0); QCOMPARE(session.undoCount(), 2);
+    QVERIFY(!session.editShapeContent(*id, changed, session.stateId()));  // no-op records no history
+    auto empty = changed; empty.text.clear();
+    QVERIFY(!session.editShapeContent(*id, empty, session.stateId())); QCOMPARE(session.editDiagnostic(), QString("annotation-style-invalid"));
+    auto wrongType = changed; wrongType.type = shape::step;
+    QVERIFY(!session.editShapeContent(*id, wrongType, session.stateId()));
+    QVERIFY(session.undo());
+    QCOMPARE(std::get<RectangleAnnotation>(session.document().annotations[0]).content.text, QString("Before"));
+  }
+
   void canvasDragCreatesEachToolsShapeAsOneHistoryStep_data() {
     QTest::addColumn<int>("tool"); QTest::addColumn<QString>("type");
     QTest::newRow("ellipse") << int(EditorCanvas::Tool::Ellipse) << shape::ellipse;
