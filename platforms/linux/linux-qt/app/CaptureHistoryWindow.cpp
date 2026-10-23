@@ -51,6 +51,12 @@ QString sourceName(const QString &source) {
   if (source == "active-window") return QStringLiteral("Active window");
   return source;
 }
+// Upload receipts live in the record report; history only reads the public
+// fields an uploader published, never anything else from the extension.
+QString uploadField(const xerahs::actions::RecoveredPipelineJournal &record, const char *key) {
+  return record.report.value("extensions").toObject().value("com.xerahs.app").toObject()
+      .value("upload_result").toObject().value(QLatin1String(key)).toString();
+}
 }
 struct CaptureHistoryJob {
   enum Kind { List, Thumbnails, Erase } kind = List;
@@ -64,7 +70,8 @@ struct CaptureHistoryJob {
 };
 
 CaptureHistoryWindow::CaptureHistoryWindow(PipelineJournalStorage storage, std::function<bool()> captureBusy, EditCallback edit, QWidget *parent)
-    : QWidget(parent, Qt::Window), m_storage(std::move(storage)), m_captureBusy(std::move(captureBusy)), m_edit(std::move(edit)) {
+    : QWidget(parent, Qt::Window), m_storage(std::move(storage)), m_captureBusy(std::move(captureBusy)), m_edit(std::move(edit)),
+      m_openUrl([](const QUrl &url) { return QDesktopServices::openUrl(url); }) {
   setObjectName(QStringLiteral("captureHistoryWindow")); setWindowTitle(QStringLiteral("Capture history"));
   setAttribute(Qt::WA_DeleteOnClose); resize(900, 620);
   auto *layout = new QVBoxLayout(this);
@@ -91,10 +98,19 @@ CaptureHistoryWindow::CaptureHistoryWindow(PipelineJournalStorage storage, std::
   m_reveal = button(row, "revealHistoryCapture", QStringLiteral("Show in &folder"));
   auto *copyUrl = button(row, "copyHistoryUrl", QStringLiteral("Copy URL"));
   connect(copyUrl, &QPushButton::clicked, this, [this] {
-    const auto *item = selectedItem(); if (!item) return;
-    const auto entry = m_entries.value(item->taskId); if (!entry.parsed.record) return;
-    const auto url = entry.parsed.record->report.value("extensions").toObject().value("com.xerahs.app").toObject()
-        .value("upload_result").toObject().value("url").toString();
+    const auto url = selectedUploadField("url");
+    if (!url.isEmpty()) QApplication::clipboard()->setText(url);
+  });
+  m_openUrlButton = button(row, "openHistoryUrl", QStringLiteral("Open URL"));
+  connect(m_openUrlButton, &QPushButton::clicked, this, [this] {
+    const QUrl target(selectedUploadField("url"));
+    // An uploader may publish any scheme; only web URLs reach the opener.
+    if (target.scheme() != "http" && target.scheme() != "https") return;
+    if (!m_openUrl(target)) m_status->setText(QStringLiteral("No application could open this URL."));
+  });
+  m_copyDeletionUrl = button(row, "copyHistoryDeletionUrl", QStringLiteral("Copy deletion URL"));
+  connect(m_copyDeletionUrl, &QPushButton::clicked, this, [this] {
+    const auto url = selectedUploadField("deletion_url");
     if (!url.isEmpty()) QApplication::clipboard()->setText(url);
   });
   row->addStretch();
@@ -125,6 +141,7 @@ CaptureHistoryWindow::CaptureHistoryWindow(PipelineJournalStorage storage, std::
 }
 CaptureHistoryWindow::~CaptureHistoryWindow() = default;
 void CaptureHistoryWindow::setRecordsOpener(std::function<void()> open) { m_technical = std::move(open); m_records->setVisible(bool(m_technical)); }
+void CaptureHistoryWindow::setUrlOpener(std::function<bool(const QUrl &)> open) { m_openUrl = std::move(open); }
 
 const xerahs::history::CaptureHistoryItem *CaptureHistoryWindow::selectedItem() const {
   const auto *item = m_list->currentItem(); if (!item || !item->isSelected()) return nullptr;
@@ -135,18 +152,20 @@ const xerahs::history::CaptureHistoryItem *CaptureHistoryWindow::selectedItem() 
 QString CaptureHistoryWindow::selectedPath() const {
   const auto *item = selectedItem(); return item ? item->files.front().path : QString{};
 }
+QString CaptureHistoryWindow::selectedUploadField(const char *key) const {
+  const auto *item = selectedItem(); if (!item) return {};
+  const auto entry = m_entries.value(item->taskId); if (!entry.parsed.record) return {};
+  return uploadField(*entry.parsed.record, key);
+}
 void CaptureHistoryWindow::updateAvailability() {
   const auto path = selectedPath(); const bool idle = !m_job && !m_confirming;
   const bool busy = m_captureBusy && m_captureBusy();
   const bool present = !path.isEmpty() && !m_missing.contains(path);
   const bool image = present && !m_thumbnails.value(path).isNull();
-  QString url;
-  if (const auto *item = selectedItem()) {
-    const auto entry = m_entries.value(item->taskId);
-    if (entry.parsed.record) url = entry.parsed.record->report.value("extensions").toObject().value("com.xerahs.app").toObject()
-        .value("upload_result").toObject().value("url").toString();
-  }
+  const auto url = selectedUploadField("url"), deletion = selectedUploadField("deletion_url");
   findChild<QPushButton *>("copyHistoryUrl")->setEnabled(!url.isEmpty());
+  m_openUrlButton->setEnabled(!url.isEmpty());
+  m_copyDeletionUrl->setEnabled(!deletion.isEmpty());
   m_open->setEnabled(present); m_editButton->setEnabled(image && bool(m_edit)); m_copyImage->setEnabled(image);
   m_copyPath->setEnabled(!path.isEmpty()); m_reveal->setEnabled(present);
   m_details->setEnabled(!path.isEmpty()); m_trash->setEnabled(present && idle);
@@ -240,8 +259,7 @@ void CaptureHistoryWindow::rebuild() {
     QString tip = file.path;
     const auto record = m_entries.value(entry.taskId);
     if (record.parsed.record) {
-      const auto url = record.parsed.record->report.value("extensions").toObject().value("com.xerahs.app").toObject()
-          .value("upload_result").toObject().value("url").toString();
+      const auto url = uploadField(*record.parsed.record, "url");
       if (!url.isEmpty()) { tip += "\nURL: " + url; item->setText(item->text() + "\n" + url); }
     }
     if (!entry.workflowName.isEmpty()) tip += QStringLiteral("\nWorkflow: ") + entry.workflowName;

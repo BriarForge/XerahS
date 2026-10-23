@@ -8,6 +8,7 @@
 #include <QPushButton>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QUrl>
 #include <QUuid>
 using namespace xerahs::app;
 using namespace xerahs::actions;
@@ -110,6 +111,53 @@ private slots:
     QVERIFY(list->item(0)->text().contains("https://example.test/image"));
     auto *copy = window->findChild<QPushButton *>("copyHistoryUrl"); QVERIFY(copy); QVERIFY(copy->isEnabled());
     QApplication::clipboard()->setText("before"); copy->click(); QCOMPARE(QApplication::clipboard()->text(), QString("https://example.test/image"));
+  }
+  void uploadUrlActionsOpenTheUrlAndCopyTheDeletionUrl() {
+    QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    const auto path = writePng(dir.filePath("receipt.png"), Qt::green); const auto id = newId();
+    auto snapshot = record(id, QDateTime::currentDateTimeUtc(), {png(path, id)});
+    snapshot.result.upload = UploadResult{"https://example.test/image", "https://example.test/thumb", "https://example.test/delete", {}};
+    QVERIFY(storage->replace(id, {}, serializePipelineJournal(snapshot)).stored);
+    QList<QUrl> opened; QWidget owner; auto *window = new CaptureHistoryWindow(storage, [] { return false; }, {}, &owner);
+    window->setUrlOpener([&opened](const QUrl &url) { opened << url; return true; });
+    window->show();
+    auto *list = window->findChild<QListWidget *>("captureHistoryItems"); QTRY_COMPARE(list->count(), 1);
+    list->setCurrentItem(list->item(0));
+    auto *openUrl = window->findChild<QPushButton *>("openHistoryUrl");
+    auto *copyDeletion = window->findChild<QPushButton *>("copyHistoryDeletionUrl");
+    QVERIFY(openUrl); QVERIFY(copyDeletion); QTRY_VERIFY(openUrl->isEnabled()); QTRY_VERIFY(copyDeletion->isEnabled());
+    QApplication::clipboard()->setText("before"); copyDeletion->click();
+    QCOMPARE(QApplication::clipboard()->text(), QString("https://example.test/delete"));
+    openUrl->click(); QCOMPARE(opened.size(), 1);
+    QCOMPARE(opened.first().toString(), QString("https://example.test/image"));
+  }
+  void uploadUrlActionsAreDisabledWithoutAnUpload() {
+    QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    const auto path = writePng(dir.filePath("local.png"), Qt::green); const auto id = newId();
+    QVERIFY(storage->replace(id, {}, serializePipelineJournal(record(id, QDateTime::currentDateTimeUtc(), {png(path, id)}))).stored);
+    QList<QUrl> opened; QWidget owner; auto *window = new CaptureHistoryWindow(storage, [] { return false; }, {}, &owner);
+    window->setUrlOpener([&opened](const QUrl &url) { opened << url; return true; });
+    window->show();
+    auto *list = window->findChild<QListWidget *>("captureHistoryItems"); QTRY_COMPARE(list->count(), 1);
+    list->setCurrentItem(list->item(0));
+    auto *openUrl = window->findChild<QPushButton *>("openHistoryUrl");
+    auto *copyDeletion = window->findChild<QPushButton *>("copyHistoryDeletionUrl");
+    QVERIFY(openUrl); QVERIFY(copyDeletion); QTRY_VERIFY(!openUrl->isEnabled()); QTRY_VERIFY(!copyDeletion->isEnabled());
+    QVERIFY(!window->findChild<QPushButton *>("copyHistoryUrl")->isEnabled());
+  }
+  void openUrlRefusesANonWebUploadUrl() {
+    QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    const auto path = writePng(dir.filePath("script.png"), Qt::green); const auto id = newId();
+    auto snapshot = record(id, QDateTime::currentDateTimeUtc(), {png(path, id)});
+    snapshot.result.upload = UploadResult{"javascript:alert(1)", {}, {}, {}};
+    QVERIFY(storage->replace(id, {}, serializePipelineJournal(snapshot)).stored);
+    QList<QUrl> opened; QWidget owner; auto *window = new CaptureHistoryWindow(storage, [] { return false; }, {}, &owner);
+    window->setUrlOpener([&opened](const QUrl &url) { opened << url; return true; });
+    window->show();
+    auto *list = window->findChild<QListWidget *>("captureHistoryItems"); QTRY_COMPARE(list->count(), 1);
+    list->setCurrentItem(list->item(0));
+    auto *openUrl = window->findChild<QPushButton *>("openHistoryUrl"); QVERIFY(openUrl); QTRY_VERIFY(openUrl->isEnabled());
+    openUrl->click(); QVERIFY(opened.isEmpty());
   }
   void forgetRemovesTheRecordAndKeepsTheFile() {
     QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
