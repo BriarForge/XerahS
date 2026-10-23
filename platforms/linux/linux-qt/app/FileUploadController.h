@@ -49,6 +49,7 @@ signals:
   void progress(qint64 sent, qint64 total);
   // Emitted when the queue has drained or been cancelled.
   void finished();
+  void fileCompleted(const QString &path, bool success, const QString &error);
 
 private:
   void startNext();
@@ -65,6 +66,7 @@ private:
   qint64 m_cap = 0;
   QStringList m_queue;
   QString m_currentName;
+  QString m_currentPath;
   bool m_busy = false;
   bool m_preparing = false;
   bool m_transferring = false;

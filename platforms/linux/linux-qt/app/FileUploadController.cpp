@@ -63,6 +63,7 @@ void FileUploadController::startNext() {
     return;
   }
   const auto path = m_queue.takeFirst();
+  m_currentPath = path;
   m_currentName = fileNameOf(path);
   const QFileInfo info(path);
   if (!info.exists()) { showFailure(m_currentName, QStringLiteral("The file does not exist.")); return; }
@@ -136,6 +137,7 @@ void FileUploadController::closeProgress() {
 }
 
 void FileUploadController::showFailure(const QString &fileName, const QString &message, bool missingDestination) {
+  emit fileCompleted(m_currentPath, false, message);
   closeProgress();
   auto *dialog = new FileUploadResultDialog(fileName, message, missingDestination ? m_ports.openDestinations : std::function<void()>{},
                                             m_dialogParent);
@@ -144,6 +146,7 @@ void FileUploadController::showFailure(const QString &fileName, const QString &m
 }
 
 void FileUploadController::showSuccess(const QString &fileName, const uploads::UploadOutcome &outcome) {
+  emit fileCompleted(m_currentPath, true, {});
   closeProgress();
   auto *dialog = new FileUploadResultDialog(fileName, outcome, m_dialogParent);
   dialog->show();

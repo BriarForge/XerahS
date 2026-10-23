@@ -12,6 +12,8 @@
 #include "SettingsDialog.h"
 #include "UploadDestinationsDialog.h"
 #include "FileUploadController.h"
+#include "WatchFolderService.h"
+#include "WatchFoldersDialog.h"
 #include "ColorPickerDialog.h"
 #include "SecretServiceCredentialStore.h"
 #include "settings/ApplicationSettings.h"
@@ -275,6 +277,7 @@ int main(int argc, char *argv[]) {
   QAction *history = menu.addAction(QStringLiteral("Capture history…"));
   QAction *uploadFile = menu.addAction(QStringLiteral("Upload file…"));
   QAction *uploadDestinations = menu.addAction(QStringLiteral("Upload destinations…"));
+  QAction *watchFolders = menu.addAction(QStringLiteral("Watch folders…"));
   QAction *settingsAction = menu.addAction(QStringLiteral("Settings…"));
   QAction *appearance = menu.addAction(QStringLiteral("Editor appearance…"));
   menu.addSeparator();
@@ -301,6 +304,20 @@ int main(int argc, char *argv[]) {
       &home, &home);
   QObject::connect(uploadFile, &QAction::triggered, fileUpload, &xerahs::app::FileUploadController::chooseAndUpload);
   QObject::connect(&home, &xerahs::app::ApplicationWindow::filesDropped, fileUpload, &xerahs::app::FileUploadController::upload);
+  xerahs::watch::WatchFolders watchStore(QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath("watch"));
+  xerahs::app::FileUploadController watchUploads(
+      xerahs::app::FileUploadPorts{uploadCatalogPath, uploadCredentials, [uploadDestinations] { uploadDestinations->trigger(); }, {}}, &home);
+  xerahs::app::WatchFolderService watchService(watchStore, watchUploads,
+      [&] { return settings.current().values.value("saveFolder").toString(); });
+  QObject::connect(&watchService, &xerahs::app::WatchFolderService::notify, &home, [&](const QString &message, bool success) {
+    home.showResult("Watch folders", message, success);
+    tray.showMessage("Watch folders", message, success ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning);
+  });
+  QObject::connect(watchFolders, &QAction::triggered, &home, [&] {
+    xerahs::app::WatchFoldersDialog dialog(watchService, &home); dialog.exec();
+  });
+  QObject::connect(&app, &QCoreApplication::aboutToQuit, &watchService, &xerahs::app::WatchFolderService::stop);
+  watchService.start();
   for (auto *childMenu : home.menuBar()->findChildren<QMenu *>()) {
     if (childMenu->title() == "&Capture") for (auto *action : recordingActions.actions()) childMenu->addAction(action);
   }

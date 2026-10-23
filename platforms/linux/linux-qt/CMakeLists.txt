@@ -13,6 +13,8 @@ find_package(ZLIB REQUIRED)
 set(XERAHS_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." CACHE PATH "BriarForge/XerahS repository root")
 
 add_library(xerahs_core STATIC
+  src/watch/WatchFolders.cpp
+  src/watch/WatchFolders.h
   src/settings/HotkeyBindings.cpp
   src/settings/ApplicationSettings.cpp
   src/workflows/WorkflowExecution.cpp
@@ -860,3 +862,24 @@ set_target_properties(hash-checker-dialog-test PROPERTIES AUTOMOC ON)
 target_link_libraries(hash-checker-dialog-test PRIVATE xerahs_hash_checker Qt6::Test)
 add_test(NAME hash-checker-dialog COMMAND hash-checker-dialog-test)
 set_tests_properties(hash-checker-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+# CORE-024, CORE-025: native watch-folder consent and action dispatch.
+add_library(xerahs_watch_folders STATIC
+  app/WatchFolderService.cpp app/WatchFolderService.h
+  app/WatchFoldersDialog.cpp app/WatchFoldersDialog.h)
+set_target_properties(xerahs_watch_folders PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_watch_folders PUBLIC app)
+target_link_libraries(xerahs_watch_folders PUBLIC xerahs_core xerahs_file_upload Qt6::Widgets)
+target_compile_options(xerahs_watch_folders PRIVATE -Wall -Wextra -Wpedantic)
+target_link_libraries(xerahs PRIVATE xerahs_watch_folders)
+
+add_executable(watch-folders-test tests/WatchFoldersTest.cpp)
+set_target_properties(watch-folders-test PROPERTIES AUTOMOC ON)
+target_link_libraries(watch-folders-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME watch-folders COMMAND watch-folders-test)
+set_tests_properties(watch-folders PROPERTIES TIMEOUT 30)
+
+add_executable(watch-folder-service-test tests/WatchFolderServiceTest.cpp)
+set_target_properties(watch-folder-service-test PROPERTIES AUTOMOC ON)
+target_link_libraries(watch-folder-service-test PRIVATE xerahs_watch_folders Qt6::Test)
+add_test(NAME watch-folder-service COMMAND watch-folder-service-test)
+set_tests_properties(watch-folder-service PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
