@@ -179,13 +179,21 @@ private slots:
     }
     QCOMPARE(step.legacy, legacy);
     if (!step.id.isEmpty()) QVERIFY(step.diagnostics.contains("preset-property-unsupported:Future"));
-    QCOMPARE(step.supported, entry.value("renderer").toBool());
+    // Supported exactly when the census effect is registered and its assets are present;
+    // fixture renderer:true entries must stay supported as more effects land.
+    const bool registered = !step.id.isEmpty() && xerahs::effects::builtinEffects().find(step.id) != nullptr;
+    const bool invalid = std::any_of(step.diagnostics.cbegin(), step.diagnostics.cend(),
+                                     [](const QString &d) { return d.startsWith("effect-invalid-parameter"); });
+    QCOMPARE(step.supported, registered && !invalid && !step.diagnostics.contains("preset-asset-effect-unsupported"));
+    if (entry.value("renderer").toBool()) QVERIFY(step.supported);
     const auto bytes = writeXsiePreset(p); const auto again = readXsiePreset(bytes);
     QVERIFY(again.ok()); QCOMPARE(writeXsiePreset(again), bytes); QCOMPARE(again.steps[0].legacy, legacy);
     if (!step.supported) {
-      QVERIFY(step.diagnostics.contains("preset-effect-unsupported") || step.diagnostics.contains("preset-asset-effect-unsupported"));
+      QVERIFY(step.diagnostics.contains("preset-effect-unsupported") || step.diagnostics.contains("preset-asset-effect-unsupported") || invalid);
       return;
     }
+    // Size and pixel expectations are hand-written only for fixture-declared renderers.
+    if (!entry.value("renderer").toBool()) return;
     const auto sourceSize = entry.value("source").toArray();
     QImage image(sourceSize[0].toInt(), sourceSize[1].toInt(), QImage::Format_ARGB32); image.fill(QColor(entry.value("fill").toString()));
     const auto check = entry.value("check").toString();
@@ -309,7 +317,8 @@ private slots:
     }
     for (const auto &type : {"ShareX.ImageEffectsLib.Shadow", "ShareX.ImageEffectsLib.Glow"}) {
       const auto p = import({{"$type", type}, {"Darkness", 4}, {"Unknown", QJsonArray{1, "keep"}}});
-      QVERIFY(!p.steps[0].supported); QCOMPARE(writeXsiePreset(readXsiePreset(writeXsiePreset(p))), writeXsiePreset(p));
+      QCOMPARE(p.steps[0].supported, xerahs::effects::builtinEffects().find(p.steps[0].id) != nullptr);
+      QCOMPARE(writeXsiePreset(readXsiePreset(writeXsiePreset(p))), writeXsiePreset(p));
       QCOMPARE(p.steps[0].legacy.value("Unknown"), QJsonValue(QJsonArray{1, "keep"}));
     }
   }
