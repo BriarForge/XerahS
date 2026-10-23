@@ -30,12 +30,13 @@ ActionOutcome failed(const QString &diagnostic) {
 }  // namespace
 
 const QString CaptureActions::kActionUnavailable = QStringLiteral("action-unavailable");
-QStringList CaptureActions::selectableActions() { auto actions = xerahs::workflows::implementedCaptureActions(); actions.append("upload"); return actions; }
+QStringList CaptureActions::selectableActions() { auto actions = xerahs::workflows::implementedCaptureActions(); actions.append({"upload", "url-clipboard"}); return actions; }
 QString CaptureActions::actionLabel(const QString &id) {
   static const QMap<QString, QString> names{{"save", "Save image"}, {"save-as", "Save image as new PNG…"}, {"image-clipboard", "Copy image to clipboard"},
       {"file-clipboard", "Copy image file"}, {"path-clipboard", "Copy file path"}, {"reveal", "Show saved file in folder"},
       {"after-capture-window", "Choose capture actions"}};
   if (id == "upload") return "Upload capture";
+  if (id == "url-clipboard") return "Copy URL to clipboard";
   if (id == "annotation") return "Annotate capture";
   return names.value(id, id);
 }
@@ -62,6 +63,7 @@ ActionOutcome CaptureActions::run(const ActionRequest &request) {
     if (m_ports.actionStarted) m_ports.actionStarted(request.spec.id);
     if (request.spec.id == QStringLiteral("after-capture-window") && m_ports.selection) return m_ports.selection(request.cancellation);
     if (request.spec.id == "upload") return upload(request);
+    if (request.spec.id == "url-clipboard") return copyUrl(request.cancellation);
     if (request.spec.id == "annotation") return annotate(request.cancellation);
     if (request.spec.id == QStringLiteral("save")) return save(request.cancellation);
     if (request.spec.id == QStringLiteral("save-as")) return saveAs(request.cancellation);
@@ -114,7 +116,15 @@ ActionOutcome CaptureActions::upload(const ActionRequest &request) {
   cancellation.start(); executor.start(*built.request); loop.exec();
   if (response.code == "cancelled") return {ActionState::Cancelled, {}, {}};
   if (!response.code.isEmpty()) return failure(response.code, response.errorMessage);
+  m_uploadUrl = response.url;
   ActionOutcome out; out.upload = UploadResult{response.url, response.thumbnailUrl, response.deletionUrl, {}}; return out;
+}
+
+// PCA-024: only the upload URL, as plain text; a clipboard failure fails this action alone.
+ActionOutcome CaptureActions::copyUrl(const CancellationToken &cancellation) {
+  if (m_uploadUrl.isEmpty()) return failed("upload-url-unavailable");
+  if (m_ports.textClipboard) return m_ports.textClipboard(m_uploadUrl, cancellation);
+  return copyTextToNativeClipboard(m_uploadUrl);
 }
 
 ActionOutcome CaptureActions::annotate(const CancellationToken &cancellation) {
@@ -214,6 +224,15 @@ ActionOutcome CaptureActions::copyImageToNativeClipboard(const QImage &media) {
   clipboard->setImage(media);
   // CORE-007: report success only when this process actually owns the
   // clipboard afterwards.
+  if (!clipboard->ownsClipboard()) return failed(QStringLiteral("clipboard-unavailable"));
+  return ActionOutcome{ActionState::Succeeded, std::nullopt, std::nullopt};
+}
+
+ActionOutcome CaptureActions::copyTextToNativeClipboard(const QString &text) {
+  const auto *application = qobject_cast<QGuiApplication *>(QCoreApplication::instance());
+  if (!application || QThread::currentThread() != application->thread()) return failed(QStringLiteral("clipboard-unavailable"));
+  QClipboard *clipboard = QGuiApplication::clipboard();
+  clipboard->setText(text);
   if (!clipboard->ownsClipboard()) return failed(QStringLiteral("clipboard-unavailable"));
   return ActionOutcome{ActionState::Succeeded, std::nullopt, std::nullopt};
 }

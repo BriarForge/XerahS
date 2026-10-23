@@ -92,7 +92,7 @@ private slots:
   void unavailableCatalogueIsAccessibleAndCannotBeAccepted() {
     QTemporaryDir dir; CapturePipeline pipeline(pixels(), dir.filePath("output"), "capture", configured);
     QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_VERIFY(chooser()); auto *dialog = chooser();
-    const auto boxes = dialog->findChildren<QCheckBox *>(); QCOMPARE(boxes.size(), 19);
+    const auto boxes = dialog->findChildren<QCheckBox *>(); QCOMPARE(boxes.size(), 20);
     auto *implementedUpload = dialog->findChild<QCheckBox *>("capture-action-upload"); QVERIFY(implementedUpload); QVERIFY(implementedUpload->isEnabled());
     auto *upload = dialog->findChild<QCheckBox *>("capture-action-ocr"); QVERIFY(upload); QVERIFY(!upload->isEnabled());
     QVERIFY(upload->text().contains("unavailable")); auto *interface = QAccessible::queryAccessibleInterface(upload); QVERIFY(interface);

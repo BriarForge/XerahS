@@ -46,3 +46,16 @@ Feature: Ordered and recoverable post-capture actions
     When post-capture actions execute
     Then delete is skipped with diagnostic "delete-guard"
     And the saved file remains on disk
+
+  Scenario: The upload URL is copied after a successful upload
+    Given save, upload, and URL clipboard are selected
+    When post-capture actions execute and upload succeeds
+    Then the clipboard holds the upload URL as plain text
+    And URL clipboard runs after upload
+
+  Scenario: URL clipboard is skipped when upload fails
+    Given save, upload, URL clipboard, and reveal are selected
+    And upload fails
+    When post-capture actions execute
+    Then URL clipboard is skipped with diagnostic "dependency-unavailable"
+    And reveal still runs

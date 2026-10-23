@@ -139,7 +139,7 @@ private slots:
     const auto unknown = validateActionSelection("after-capture-window", {"private untrusted value"}, available);
     QCOMPARE(unknown.diagnostic, QString("selection-unknown-action")); QVERIFY(!unknown.diagnostic.contains("private"));
     QVERIFY(!validateActionSelection("save", {"image-clipboard"}, available).accepted);
-    const auto choices = actionSelectionChoices("after-capture-window", {"save", "upload"}, available); QCOMPARE(choices.size(), size_t(19));
+    const auto choices = actionSelectionChoices("after-capture-window", {"save", "upload"}, available); QCOMPARE(choices.size(), size_t(20));
     int enabled = 0; bool selectedUnavailable = false;
     for (const auto &choice : choices) { if (choice.available) ++enabled; if (choice.action == "upload") selectedUnavailable = choice.selected && !choice.available; }
     QCOMPARE(enabled, 2); QVERIFY(selectedUnavailable);

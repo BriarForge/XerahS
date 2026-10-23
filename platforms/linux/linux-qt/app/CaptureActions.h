@@ -33,6 +33,8 @@ struct CaptureActionPorts {
   std::shared_ptr<xerahs::uploads::CredentialStore> uploadCredentials;
 
   std::function<xerahs::actions::ActionOutcome(const QImage &, const xerahs::actions::CancellationToken &)> clipboard;
+  // PCA-024: plain-text clipboard; like clipboard it runs on the GUI thread.
+  std::function<xerahs::actions::ActionOutcome(const QString &, const xerahs::actions::CancellationToken &)> textClipboard;
   std::function<void(const QString &)> actionStarted;
   // Internal worker-to-GUI selection bridge supplied by CapturePipeline.
   std::function<xerahs::actions::ActionOutcome(const xerahs::actions::CancellationToken &)> selection;
@@ -60,6 +62,7 @@ public:
   const std::optional<xerahs::editor::AnnotationDocument> &annotationDocument() const { return m_annotationDocument; }
   bool sidecarIntent() const { return m_sidecarIntent; }
   static xerahs::actions::ActionOutcome copyImageToNativeClipboard(const QImage &media);
+  static xerahs::actions::ActionOutcome copyTextToNativeClipboard(const QString &text);
   static QStringList selectableActions();
   static QString actionLabel(const QString &id);
 
@@ -77,6 +80,8 @@ private:
   xerahs::actions::ActionOutcome outputFile(const xerahs::actions::ActionRequest &request);
 
   xerahs::actions::ActionOutcome upload(const xerahs::actions::ActionRequest &request);
+  xerahs::actions::ActionOutcome copyUrl(const xerahs::actions::CancellationToken &cancellation);
+  QString m_uploadUrl;
   QByteArray m_uploadBytes;
   QImage m_media;
   QString m_directory;

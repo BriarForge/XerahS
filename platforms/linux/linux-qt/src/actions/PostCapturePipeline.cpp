@@ -126,6 +126,7 @@ const std::vector<ActionSpec> &catalogue() {
       spec("image-clipboard", {"CopyImageToClipboard"}, K::Output, {"working-media"}, {}, false),
       spec("before-upload-window", {"ShowBeforeUploadWindow"}, K::Confirmation, {"working-media"}, {}, true),
       spec("upload", {"UploadImageToHost"}, K::Network, {"saved-file|temporary.file"}, {"upload.result"}, false),
+      spec("url-clipboard", {"CopyURLToClipboard"}, K::Output, {"upload.result"}, {}, false),  // PCA-024
       spec("ocr", {"DoOCR"}, K::Analysis, {"working-media"}, {"ocr.text"}, true),
       spec("ocr-clipboard", {"CopyOcrTextToClipboard"}, K::Output, {"ocr.text"}, {}, false),
       spec("qr-scan", {"ScanQRCode"}, K::Analysis, {"working-media"}, {"qr.text"}, true),

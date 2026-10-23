@@ -24,6 +24,7 @@
     { "id": "image-clipboard", "legacy_flags": ["CopyImageToClipboard"], "kind": "output", "requires": ["working-media"], "produces": [], "interruptible": false },
     { "id": "before-upload-window", "legacy_flags": ["ShowBeforeUploadWindow"], "kind": "confirmation", "requires": ["working-media"], "produces": [], "interruptible": true, "applies_to": "upload" },
     { "id": "upload", "legacy_flags": ["UploadImageToHost"], "kind": "network", "requires": ["saved-file|temporary.file"], "produces": ["upload.result"], "interruptible": false },
+    { "id": "url-clipboard", "legacy_flags": ["CopyURLToClipboard"], "kind": "output", "requires": ["upload.result"], "produces": [], "interruptible": false },
     { "id": "ocr", "legacy_flags": ["DoOCR"], "kind": "analysis", "requires": ["working-media"], "produces": ["ocr.text"], "interruptible": true },
     { "id": "ocr-clipboard", "legacy_flags": ["CopyOcrTextToClipboard"], "kind": "output", "requires": ["ocr.text"], "produces": [], "interruptible": false },
     { "id": "qr-scan", "legacy_flags": ["ScanQRCode"], "kind": "analysis", "requires": ["working-media"], "produces": ["qr.text"], "interruptible": true },

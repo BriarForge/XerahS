@@ -121,6 +121,14 @@ future runs.
   contain the selection window followed by those remaining actions only. Legacy flag sets MUST map to action IDs
   through `legacy_flags`, and the obsolete `AnnotateImage` flag MUST map to
   `annotation`.
+- **PCA-024:** `url-clipboard` MUST place the URL from `upload.result` on the
+  clipboard as plain text, and only that URL. It runs immediately after
+  `upload` in catalogue order. When upload failed, was skipped or was
+  cancelled, `url-clipboard` MUST be skipped with diagnostic
+  `dependency-unavailable` and missing artifact `upload.result`. A clipboard
+  failure MUST fail only this action and MUST NOT change the upload result.
+  The baseline `AfterUploadTasks.CopyURLToClipboard` flag MUST map to
+  `url-clipboard`.
 
 ## Supported action inventory
 
@@ -128,7 +136,7 @@ This contract governs the ordering and result semantics of all baseline
 `AfterCaptureTasks` values: quick-task menu, after-capture window, image effects,
 annotation, image/file/path/OCR clipboard actions, pin, print, save variants,
 thumbnail save, custom actions, reveal, analyze, QR, OCR, before-upload window,
-upload, and delete. Detailed behavior of each action belongs to its own
+upload, URL clipboard, and delete. Detailed behavior of each action belongs to its own
 capability contract; until then its ledger row remains inventoried.
 
 ## Native adaptation, accessibility, privacy, and performance

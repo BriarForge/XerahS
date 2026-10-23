@@ -6,7 +6,7 @@
   "result_schema": "post-capture-result-v1",
   "input_defaults": { "injected_outcomes": {}, "options": { "upload_temporary_allowed": true } },
   "notes": "An action absent from injected_outcomes succeeds. cancel_after requests cancellation after the named action finishes; cancel_during requests it while the named action runs.",
-  "requirement_ids": ["PCA-001", "PCA-002", "PCA-003", "PCA-004", "PCA-005", "PCA-006", "PCA-007", "PCA-008", "PCA-009", "PCA-010", "PCA-014", "PCA-016", "PCA-017", "PCA-018", "PCA-019", "PCA-020", "PCA-021", "PCA-022", "PCA-023"],
+  "requirement_ids": ["PCA-001", "PCA-002", "PCA-003", "PCA-004", "PCA-005", "PCA-006", "PCA-007", "PCA-008", "PCA-009", "PCA-010", "PCA-014", "PCA-016", "PCA-017", "PCA-018", "PCA-019", "PCA-020", "PCA-021", "PCA-022", "PCA-023", "PCA-024"],
   "vectors": [
     {
       "id": "clipboard-failure-continues",
@@ -212,6 +212,33 @@
           { "action": "ocr", "state": "failed" },
           { "action": "ocr-clipboard", "state": "skipped", "diagnostic": "dependency-unavailable", "missing_artifact": "ocr.text" },
           { "action": "qr-scan", "state": "succeeded" }
+        ]
+      }
+    },
+    {
+      "id": "url-clipboard-after-upload",
+      "requirements": ["PCA-004", "PCA-024"],
+      "input": { "selected": ["save", "url-clipboard", "upload"] },
+      "expected": {
+        "pipeline_state": "completed",
+        "ordered_results": [
+          { "action": "save", "state": "succeeded" },
+          { "action": "upload", "state": "succeeded", "input_artifact": "save.file" },
+          { "action": "url-clipboard", "state": "succeeded" }
+        ]
+      }
+    },
+    {
+      "id": "url-clipboard-depends-on-upload",
+      "requirements": ["PCA-004", "PCA-018", "PCA-024"],
+      "input": { "selected": ["save", "upload", "url-clipboard", "reveal"], "injected_outcomes": { "upload": "failed" } },
+      "expected": {
+        "pipeline_state": "completed",
+        "ordered_results": [
+          { "action": "save", "state": "succeeded" },
+          { "action": "upload", "state": "failed", "input_artifact": "save.file" },
+          { "action": "url-clipboard", "state": "skipped", "diagnostic": "dependency-unavailable", "missing_artifact": "upload.result" },
+          { "action": "reveal", "state": "succeeded", "input_artifact": "save.file" }
         ]
       }
     },

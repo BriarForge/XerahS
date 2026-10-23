@@ -3,6 +3,7 @@
 #include "uploads/DestinationCatalog.h"
 #include <QApplication>
 #include <QClipboard>
+#include <QGuiApplication>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -101,6 +102,45 @@ private slots:
     const auto report = QJsonDocument(receipt->canonicalResult()).toJson(); QVERIFY(!report.contains("fixture-secret"));
     const auto listing = journal->list(); QCOMPARE(listing.entries.size(), size_t(1)); QVERIFY(listing.entries.front().parsed.record);
     QCOMPARE(uploadJson(listing.entries.front().parsed.record->report), uploadJson(receipt->canonicalResult()));
+  }
+  // PCA-024: url-clipboard copies only the upload URL; skipped when upload fails; clipboard failure leaves upload intact.
+  void urlClipboard_data() {
+    QTest::addColumn<QString>("mode");
+    for (const auto *mode : {"copied", "upload-failed", "clipboard-failed"}) QTest::newRow(mode) << QString(mode);
+  }
+  void urlClipboard() {
+    QFETCH(QString, mode);
+    QTemporaryDir dir; HttpFixture http; QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    http.status = mode == "upload-failed" ? 500 : 200;
+    const auto destination = http.destination(); DestinationCatalog catalog(dir.filePath("destinations.json"));
+    QVERIFY(catalog.add(destination).isEmpty());
+    auto credentials = std::make_shared<MemoryCredentialStore>(); QVERIFY(credentials->store(destination.id, "token", "fixture-secret").ok());
+    CaptureActionPorts ports; ports.uploadCatalogPath = dir.filePath("destinations.json"); ports.uploadCredentials = credentials;
+    QGuiApplication::clipboard()->setText("before"); int calls = 0; bool onGui = false;
+    ports.textClipboard = [&](const QString &text, const CancellationToken &) -> ActionOutcome {
+      ++calls; onGui = QThread::currentThread() == qApp->thread();
+      if (mode == "clipboard-failed") return {ActionState::Failed, QString("clipboard-unavailable"), {}};
+      QGuiApplication::clipboard()->setText(text); return {};
+    };
+    CapturePipeline pipeline(pixels(), dir.filePath("captures"), "fixture", {"upload", "url-clipboard", "save"}, nullptr, ports);
+    QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start();
+    QTRY_COMPARE_WITH_TIMEOUT(done.count(), 1, 7000);
+    const auto receipt = qvariant_cast<CapturePipelineReceipt>(done.first().first()); QVERIFY(receipt);
+    const auto &results = receipt->pipeline.orderedResults; QCOMPARE(results.size(), size_t(3));
+    QCOMPARE(results[0].action, QString("save")); QCOMPARE(results[0].state, ActionState::Succeeded);  // catalogue order: save precedes upload
+    QCOMPARE(results[1].action, QString("upload")); QCOMPARE(results[2].action, QString("url-clipboard"));
+    if (mode == "copied") {
+      QCOMPARE(results[1].state, ActionState::Succeeded); QCOMPARE(results[2].state, ActionState::Succeeded);
+      QVERIFY(onGui); QCOMPARE(calls, 1); QCOMPARE(QGuiApplication::clipboard()->text(), QString("https://example.test/image"));
+    } else if (mode == "upload-failed") {
+      QCOMPARE(results[1].state, ActionState::Failed); QCOMPARE(results[2].state, ActionState::Skipped);
+      QCOMPARE(results[2].diagnostic, std::optional<QString>("dependency-unavailable")); QCOMPARE(results[2].missingArtifact, std::optional<QString>("upload.result"));
+      QCOMPARE(calls, 0); QCOMPARE(QGuiApplication::clipboard()->text(), QString("before"));
+    } else {
+      QCOMPARE(results[1].state, ActionState::Succeeded); QVERIFY(receipt->pipeline.upload);
+      QCOMPARE(receipt->pipeline.upload->url, QString("https://example.test/image"));
+      QCOMPARE(results[2].state, ActionState::Failed); QCOMPARE(results[2].diagnostic, std::optional<QString>("clipboard-unavailable")); QCOMPARE(calls, 1);
+    }
   }
   void oldRecordsLoadWithoutUploadFields() {
     QTemporaryDir dir; auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
