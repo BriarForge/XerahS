@@ -7,6 +7,7 @@
 #include <QColorSpace>
 #include <QImage>
 #include <QString>
+#include <array>
 #include <cstdint>
 #include <functional>
 
@@ -114,6 +115,15 @@ public:
 private:
   quint64 m_state;
 };
+
+// ---- convolution (the Skia matrix-convolution equivalent) ----------------------
+// 3x3 kernel over the straight-alpha ARGB32 source with Skia's semantics: the kernel is
+// centred (offset 1,1), samples outside the image clamp to the edge (tile mode Clamp), the
+// weighted sum is scaled by gain and shifted by bias, then clamped to the byte gamut and
+// rounded to the nearest byte. convolveAlpha convolves the alpha channel with the same
+// kernel; otherwise the source alpha is copied unchanged.
+EffectResult convolve3x3(const QImage &source, const std::array<float, 9> &kernel, float gain, float bias,
+                         bool convolveAlpha, const EffectContext &context);
 
 // ---- file inputs (EE-007, EE-018) -----------------------------------------------
 constexpr int kMaxImageSide = 16384;
