@@ -89,6 +89,8 @@ add_library(xerahs_core STATIC
   src/uploads/UploadDestination.h
   src/uploads/CredentialStore.cpp
   src/uploads/CredentialStore.h
+  src/uploads/DestinationCatalog.cpp
+  src/uploads/DestinationCatalog.h
   src/uploads/SxcuImport.cpp
   src/uploads/SxcuImport.h
 )
@@ -716,3 +718,8 @@ target_link_libraries(secret-service-credential-store-test PRIVATE xerahs_secret
 add_test(NAME secret-service-credential-store COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:secret-service-credential-store-test>)
 set_tests_properties(secret-service-credential-store PROPERTIES TIMEOUT 30)
+
+add_executable(destination-catalog-test tests/DestinationCatalogTest.cpp)
+set_target_properties(destination-catalog-test PROPERTIES AUTOMOC ON)
+target_link_libraries(destination-catalog-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME destination-catalog COMMAND destination-catalog-test)
