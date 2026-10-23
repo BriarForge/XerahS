@@ -47,6 +47,65 @@ QListWidgetItem *find(QListWidget *list, const QString &fileName) {
 class CaptureHistoryWindowTest final : public QObject {
   Q_OBJECT
 private slots:
+  void uploadOnlyRowsRetainUrlsAndProtectSourceFiles_data() {
+    QTest::addColumn<bool>("image");
+    QTest::newRow("existing-image") << true;
+    QTest::newRow("existing-file") << false;
+  }
+  void uploadOnlyRowsRetainUrlsAndProtectSourceFiles() {
+    QFETCH(bool, image);
+    QTemporaryDir dir; const auto directory = dir.filePath("state");
+    auto storage = std::make_shared<NativePipelineJournal>(directory);
+    const auto path = image ? writePng(dir.filePath("external.png"), Qt::blue) : dir.filePath("external.txt");
+    if (!image) { QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); file.write("source file"); }
+    FileUploadHistoryRecord upload;
+    upload.taskId = newId(); upload.path = path; upload.origin = "file-upload";
+    upload.destinationName = "Destination fixture"; upload.createdAt = QDateTime::currentDateTimeUtc();
+    upload.result = {"https://example.test/upload", "https://example.test/thumb", "https://example.test/delete", {}};
+    QVERIFY(storage->recordFileUpload(upload).stored);
+    QWidget owner; int edits = 0;
+    auto *window = new CaptureHistoryWindow(std::make_shared<NativePipelineJournal>(directory), [] { return false; },
+        [&](const QString &, QWidget *) { ++edits; }, &owner);
+    QList<QUrl> opened; window->setUrlOpener([&](const QUrl &url) { opened << url; return true; }); window->show();
+    auto *list = window->findChild<QListWidget *>("captureHistoryItems"); QTRY_COMPARE(list->count(), 1);
+    list->setCurrentItem(list->item(0));
+    auto *search = window->findChild<QLineEdit *>("captureHistorySearch");
+    search->setText("EXTERNAL"); QCOMPARE(list->count(), 1);
+    search->setText("DESTINATION fixture"); QCOMPARE(list->count(), 1);
+    list->setCurrentItem(list->item(0));
+    auto button = [&](const char *name) { return window->findChild<QPushButton *>(name); };
+    QTRY_VERIFY(button("openHistoryCapture")->isEnabled());
+    QTRY_VERIFY(button("forgetHistoryCapture")->isEnabled());
+    QVERIFY(button("revealHistoryCapture")->isEnabled());
+    QVERIFY(!button("editHistoryCapture")->isEnabled()); QVERIFY(!button("copyHistoryImage")->isEnabled());
+    QVERIFY(!button("trashHistoryCapture")->isEnabled());
+    QVERIFY(button("copyHistoryPath")->isEnabled());
+    button("copyHistoryUrl")->click(); QCOMPARE(QApplication::clipboard()->text(), upload.result.url);
+    button("copyHistoryDeletionUrl")->click(); QCOMPARE(QApplication::clipboard()->text(), upload.result.deletionUrl);
+    button("openHistoryUrl")->click(); QCOMPARE(opened, QList<QUrl>{QUrl(upload.result.url)});
+    QVERIFY(list->item(0)->text().contains("file-upload")); QVERIFY(list->item(0)->text().contains(upload.destinationName));
+    QVERIFY(QFile::remove(path)); window->refresh();
+    QTRY_VERIFY(list->count() == 1 && list->item(0)->text().contains("File missing"));
+    list->setCurrentItem(list->item(0));
+    QVERIFY(!button("openHistoryCapture")->isEnabled()); QVERIFY(!button("revealHistoryCapture")->isEnabled());
+    QVERIFY(button("copyHistoryUrl")->isEnabled()); QVERIFY(button("openHistoryUrl")->isEnabled());
+    QCOMPARE(edits, 0);
+  }
+  void failedUploadMessageIsVisible() {
+    QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    FileUploadHistoryRecord upload;
+    upload.taskId = newId(); upload.path = dir.filePath("failed.txt"); upload.origin = "watch-folder";
+    upload.destinationName = "Offline fixture"; upload.createdAt = QDateTime::currentDateTimeUtc();
+    upload.failureCode = "network-error"; upload.result.errorMessage = "network-error: The server could not be reached.";
+    QVERIFY(storage->recordFileUpload(upload).stored);
+    QWidget owner; auto *window = new CaptureHistoryWindow(storage, [] { return false; }, {}, &owner); window->show();
+    auto *list = window->findChild<QListWidget *>("captureHistoryItems"); QTRY_COMPARE(list->count(), 1);
+    QVERIFY(list->item(0)->text().contains(upload.result.errorMessage));
+    QVERIFY(list->item(0)->text().contains("watch-folder"));
+    list->setCurrentItem(list->item(0));
+    QVERIFY(!window->findChild<QPushButton *>("copyHistoryUrl")->isEnabled());
+  }
+
   void itemsKeepOnlyFilesTheirRunCreatedNewestFirst() {
     QTemporaryDir dir; const auto a = newId(), b = newId(), c = newId();
     const auto first = writePng(dir.filePath("first.png"), Qt::red), second = writePng(dir.filePath("second.png"), Qt::blue);

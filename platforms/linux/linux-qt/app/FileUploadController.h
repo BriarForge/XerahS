@@ -1,9 +1,9 @@
 // CORE-020, CORE-023: upload an existing local file through the default destination.
-// Capture history is a pipeline journal of files a capture run created. This
-// upload does not write one.
+// Existing source files are retained as upload-only pipeline journal records.
 #pragma once
 
 #include "uploads/CredentialStore.h"
+#include "NativePipelineJournal.h"
 
 #include <QObject>
 #include <QStringList>
@@ -31,6 +31,7 @@ struct FileUploadPorts {
   std::function<void()> openDestinations;
   // Empty uses the upload engine's maxInputBytes.
   std::optional<qint64> maxInputBytes;
+  PipelineJournalStorage history = {};  // empty uses the shared default journal directory
 };
 
 class FileUploadController final : public QObject {
@@ -42,6 +43,7 @@ public:
 
   // Paths upload one after another. Further calls wait behind the current file.
   void upload(const QStringList &paths);
+  void uploadFromWatchFolder(const QString &path);
   void chooseAndUpload();
   void cancel();
 
@@ -52,7 +54,9 @@ signals:
   void fileCompleted(const QString &path, bool success, const QString &error);
 
 private:
+  void enqueue(const QStringList &paths, const QString &origin);
   void startNext();
+  void recordCompletion(const uploads::UploadOutcome &outcome, std::function<void(QString)> done);
   void showProgress(const QString &fileName);
   void closeProgress();
   void showFailure(const QString &fileName, const QString &message, bool missingDestination = false);
@@ -64,7 +68,11 @@ private:
   FileUploadPorts m_ports;
   QWidget *m_dialogParent = nullptr;
   qint64 m_cap = 0;
-  QStringList m_queue;
+  struct QueuedFile { QString path, origin; };
+  QList<QueuedFile> m_queue;
+  FileUploadHistoryRecord m_historyRecord;
+  bool m_existingFile = false;
+  QStringList m_sensitiveValues;
   QString m_currentName;
   QString m_currentPath;
   bool m_busy = false;

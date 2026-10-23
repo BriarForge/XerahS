@@ -89,7 +89,7 @@ void WatchFolderService::rescan() {
     const auto key = watch::fingerprint(candidate.path);
     if (key.isEmpty() || m_store.processed(key) || m_attempted.contains(key)) continue;
     m_pendingPath = candidate.path; m_pendingKey = key; m_attempted.insert(key);
-    if (candidate.action == watch::Action::Upload) { m_uploads.upload({candidate.path}); return; }
+    if (candidate.action == watch::Action::Upload) { m_uploads.uploadFromWatchFolder(candidate.path); return; }
     const auto targetDirectory = m_captures();
     QString error;
     if (!QDir().mkpath(targetDirectory)) error = "watch-capture-directory-failed";

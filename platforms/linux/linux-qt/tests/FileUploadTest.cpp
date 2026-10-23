@@ -2,6 +2,7 @@
 #include "ApplicationWindow.h"
 #include "FileUploadController.h"
 #include "FileUploadResultDialog.h"
+#include "history/CaptureHistory.h"
 #include "uploads/CatalogPath.h"
 #include "uploads/DestinationCatalog.h"
 
@@ -125,6 +126,7 @@ QList<FileUploadResultDialog *> dialogs() {
 FileUploadPorts portsFor(const QString &catalogPath, const std::shared_ptr<CredentialStore> &credentials) {
   FileUploadPorts ports;
   ports.catalogPath = catalogPath;
+  ports.history = std::make_shared<NativePipelineJournal>(QFileInfo(catalogPath).absolutePath() + "/history");
   ports.credentials = credentials;
   return ports;
 }
@@ -133,6 +135,66 @@ FileUploadPorts portsFor(const QString &catalogPath, const std::shared_ptr<Crede
 class FileUploadTest final : public QObject {
   Q_OBJECT
 private slots:
+  void existingFileReceiptsSurviveRestart_data() {
+    QTest::addColumn<int>("status");
+    QTest::newRow("success") << 200;
+    QTest::newRow("failure") << 500;
+    QTest::newRow("local-preparation-failure") << 0;
+  }
+  void existingFileReceiptsSurviveRestart() {
+    QFETCH(int, status);
+    QTemporaryDir dir; HttpFixture http; http.status = status;
+    QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    const auto destination = http.destination();
+    auto credentials = std::make_shared<MemoryCredentialStore>();
+    QVERIFY(credentials->store(destination.id, "token", "fixture-secret").ok());
+    auto ports = portsFor(dir.filePath("destinations.json"), credentials);
+    if (status == 0) ports.maxInputBytes = 1;
+    DestinationCatalog catalog(ports.catalogPath); QVERIFY(catalog.add(destination).isEmpty());
+    const auto path = writeFile(dir, "retained-note.txt", "existing file");
+    QVERIFY(!path.isEmpty());
+    {
+      QWidget owner; FileUploadController controller(ports, &owner);
+      QSignalSpy idle(&controller, &FileUploadController::finished);
+      controller.upload({path, path});
+      QTRY_COMPARE_WITH_TIMEOUT(idle.count(), 1, 7000);
+    }
+    NativePipelineJournal restarted(dir.filePath("history"));
+    const auto listing = restarted.list(); QVERIFY(listing.diagnostic.isEmpty());
+    QCOMPARE(listing.entries.size(), std::size_t(2));
+    std::vector<xerahs::actions::RecoveredPipelineJournal> records;
+    for (const auto &entry : listing.entries) {
+      QVERIFY(entry.parsed.record); QVERIFY(!entry.bytes.contains("fixture-secret"));
+      records.push_back(*entry.parsed.record);
+    }
+    const auto items = xerahs::history::captureHistoryItems(records);
+    QCOMPARE(items.size(), std::size_t(2)); QVERIFY(items[0].taskId != items[1].taskId);
+    const auto &item = items.front();
+    QCOMPARE(item.origin, QString("file-upload")); QCOMPARE(item.destinationName, destination.name);
+    QCOMPARE(item.files.front().path, path); QVERIFY(item.createdAt.isValid()); QVERIFY(item.uploadOnly());
+    QVERIFY(xerahs::history::matchesHistoryQuery(item, "RETAINED-note"));
+    QVERIFY(xerahs::history::matchesHistoryQuery(item, "FIXTURE"));
+    const auto receipt = records.front().report.value("extensions").toObject().value("com.xerahs.app").toObject().value("upload_result").toObject();
+    if (status == 200) {
+      QCOMPARE(receipt.value("url").toString(), QString("https://example.test/image"));
+      QCOMPARE(receipt.value("thumbnail_url").toString(), QString("https://example.test/thumb"));
+      QCOMPARE(receipt.value("deletion_url").toString(), QString("https://example.test/delete"));
+      QVERIFY(item.failureMessage.isEmpty());
+    } else {
+      QCOMPARE(item.state, QString("failed"));
+      if (status == 0) {
+        QVERIFY(item.failureMessage.startsWith("input-too-large: ")); QCOMPARE(http.received, 0);
+      } else {
+        QVERIFY(item.failureMessage.startsWith("http-error: "));
+        QVERIFY(item.failureMessage.contains("HTTP 500")); QVERIFY(item.failureMessage.contains("[redacted]"));
+      }
+      QVERIFY(receipt.value("url").toString().isEmpty());
+    }
+    QVERIFY(QFile::remove(path));
+    QVERIFY(!QFileInfo::exists(item.files.front().path));
+    QCOMPARE(xerahs::history::captureHistoryItems(records).size(), std::size_t(2));
+  }
+
   void catalogPathKeepsAnExplicitFileAndOtherwiseUsesTheSharedConfigFile() {
     QCOMPARE(defaultCatalogPath(QStringLiteral("/tmp/upload-destinations.json")), QStringLiteral("/tmp/upload-destinations.json"));
     QVERIFY(defaultCatalogPath({}).endsWith(QStringLiteral("upload-destinations.json")));

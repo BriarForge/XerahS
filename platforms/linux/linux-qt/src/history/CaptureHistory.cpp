@@ -15,10 +15,20 @@ std::vector<CaptureHistoryItem> captureHistoryItems(const std::vector<xerahs::ac
     item.taskId = record.taskId;
     item.createdAt = record.createdAt;
     item.state = record.terminal ? record.report.value("pipeline_state").toString() : QStringLiteral("interrupted");
+    const auto upload = native.value("file_upload").toObject();
+    const auto origin = upload.value("origin").toString();
+    const auto path = upload.value("path").toString();
+    if ((origin == "file-upload" || origin == "watch-folder") && QFileInfo(path).isAbsolute()) {
+      item.origin = origin;
+      item.destinationName = upload.value("destination_name").toString();
+      item.failureMessage = native.value("upload_result").toObject().value("error_message").toString();
+      if (!upload.value("failure_code").toString().isEmpty()) item.state = "failed";
+      item.files.push_back({path});
+    }
     const QJsonObject workflow = native.value("capture_workflow").toObject();
     item.workflowName = workflow.value("name").toString();
     item.captureSource = workflow.value("capture").toString();
-    for (const auto &value : native.value("file_artifacts").toArray()) {
+    if (!item.uploadOnly()) for (const auto &value : native.value("file_artifacts").toArray()) {
       const QJsonObject file = value.toObject();
       const QString creator = file.value("creator_task_id").toString();
       // Retries list earlier files too; each file belongs to the run that made it.
@@ -42,7 +52,7 @@ bool matchesHistoryQuery(const CaptureHistoryItem &item, const QString &query) {
   const QString needle = query.trimmed();
   if (needle.isEmpty()) return true;
   const auto has = [&](const QString &text) { return text.contains(needle, Qt::CaseInsensitive); };
-  if (has(item.workflowName) || has(item.captureSource) || has(item.createdAt.toLocalTime().toString(QStringLiteral("yyyy-MM-dd"))))
+  if (has(item.origin) || has(item.destinationName) || has(item.workflowName) || has(item.captureSource) || has(item.createdAt.toLocalTime().toString(QStringLiteral("yyyy-MM-dd"))))
     return true;
   return std::any_of(item.files.begin(), item.files.end(), [&](const CaptureHistoryFile &file) { return has(file.path); });
 }

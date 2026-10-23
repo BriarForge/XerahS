@@ -1,6 +1,6 @@
 // CORE-023: the browsable capture history built from durable pipeline result
-// records. Each item keeps the record's stable task ID and the files that run
-// created; missing files are tolerated and shown, never silently dropped.
+// records. Each item keeps its stable task ID and created files or uploaded
+// source file; missing files are shown, never silently dropped.
 #pragma once
 
 #include "actions/PipelineJournal.h"
@@ -24,14 +24,18 @@ struct CaptureHistoryItem {
   QString state;          // pipeline_state, or "interrupted" for unfinished records
   QString workflowName;   // empty for captures without a saved workflow
   QString captureSource;  // region, full-screen, monitor or empty
-  std::vector<CaptureHistoryFile> files;  // created by this run, PNG first
+  QString origin;  // empty for captures; file-upload or watch-folder for existing files
+  QString destinationName;
+  QString failureMessage;
+  bool uploadOnly() const { return !origin.isEmpty(); }
+  std::vector<CaptureHistoryFile> files;  // capture-created files (PNG first), or one uploaded source file
 };
 
-// Newest first. Records without a file this run created are left out: their
-// pixels were never stored (clipboard-only or failed saves).
+// Newest first. Captures without created files are omitted; upload-only items
+// retain a reference to the existing source file.
 std::vector<CaptureHistoryItem> captureHistoryItems(const std::vector<xerahs::actions::RecoveredPipelineJournal> &records);
 
-// Case-insensitive match on file name, folder, workflow name, source and the
+// Case-insensitive match on file name, folder, workflow name, source, upload origin/destination and the
 // local date (yyyy-MM-dd). An empty query matches everything.
 bool matchesHistoryQuery(const CaptureHistoryItem &item, const QString &query);
 

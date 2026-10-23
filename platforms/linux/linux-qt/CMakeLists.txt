@@ -1026,3 +1026,6 @@ set_target_properties(qr-code-dialog-test PROPERTIES AUTOMOC ON)
 target_link_libraries(qr-code-dialog-test PRIVATE xerahs_qr_code Qt6::Test)
 add_test(NAME qr-code-dialog COMMAND qr-code-dialog-test)
 set_tests_properties(qr-code-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
+# CORE-020, CORE-023: existing-file receipts share the native pipeline journal.
+target_link_libraries(xerahs_file_upload PUBLIC xerahs_pipeline_journal)

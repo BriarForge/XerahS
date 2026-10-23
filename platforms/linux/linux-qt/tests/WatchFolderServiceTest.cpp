@@ -2,6 +2,7 @@
 #include "FileUploadController.h"
 #include "WatchFolderService.h"
 #include "WatchFoldersDialog.h"
+#include "history/CaptureHistory.h"
 #include "uploads/DestinationCatalog.h"
 #include <QApplication>
 #include <QCheckBox>
@@ -35,6 +36,7 @@ QByteArray readFile(const QString &path) {
 FileUploadPorts portsFor(const QTemporaryDir &dir) {
   FileUploadPorts ports;
   ports.catalogPath = dir.filePath("destinations.json");
+  ports.history = std::make_shared<NativePipelineJournal>(dir.filePath("history"));
   ports.credentials = std::make_shared<MemoryCredentialStore>();
   return ports;
 }
@@ -190,6 +192,13 @@ private slots:
       QCOMPARE(processed.count(), 1);
       service.stop();
     }
+    const auto journalHistory = NativePipelineJournal(dir.filePath("history")).list();
+    QCOMPARE(journalHistory.entries.size(), std::size_t(1)); QVERIFY(journalHistory.entries.front().parsed.record);
+    QVERIFY(!journalHistory.entries.front().bytes.contains("watch-fixture-secret"));
+    const auto items = history::captureHistoryItems({*journalHistory.entries.front().parsed.record});
+    QCOMPARE(items.size(), std::size_t(1)); QCOMPARE(items.front().origin, QString("watch-folder"));
+    QCOMPARE(items.front().destinationName, QString("Watch fixture")); QCOMPARE(items.front().files.front().path, source);
+    QVERIFY(journalHistory.entries.front().bytes.contains("https://example.test/watched"));
     FileUploadController uploads(ports, &owner);
     watch::WatchFolders restarted(dir.filePath("store"));
     QVERIFY(restarted.loadError().isEmpty());
