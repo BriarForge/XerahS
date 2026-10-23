@@ -1,6 +1,7 @@
 #include "CaptureWorkflows.h"
 #include "WorkflowStoragePath.h"
 #include "CaptureActions.h"
+#include "naming/CounterStore.h"
 #include "NativeEditorAppearance.h"
 #include "NativeEditorPreferences.h"
 #include <QCheckBox>
@@ -39,7 +40,6 @@ QString workflowMessage(const QString &code) {
   if (code == "workflow-upgrade-conflict") return "A version 1 workflow has an unknown output field. It has been kept unchanged; explicit migration is required before assigning output settings.";
   if (code == "workflow-directory-invalid") return "Use an absolute save folder without . or .. components, or leave it blank for the standard capture folder.";
   if (code == "workflow-pattern-invalid") return "Use a filename pattern of at most 4096 characters with valid Unicode text.";
-  if (code == "workflow-counter-unavailable") return "Counter patterns are unavailable until atomic counter persistence is implemented. Use date, dimensions or random tokens.";
   if (code.startsWith("filename-")) return "The filename pattern cannot run: " + code.mid(9) + ". Random-file tokens have no file-read permission.";
   if (code == "workflow-changed") return "Workflows changed elsewhere. Reload before saving or running.";
   if (code == "workflow-not-found") return "The selected workflow no longer exists. Reload and select another workflow.";
@@ -152,7 +152,7 @@ private:
       if (m_capture->findData(w.capture) < 0) m_capture->addItem("Unavailable: " + w.capture, w.capture);
       m_capture->setCurrentIndex(m_capture->findData(w.capture));
       m_id->setText(w.id.toString(QUuid::WithoutBraces));
-      m_directory->setText(w.output.directory); m_pattern->setText(w.output.pattern); showPreview(w.output);
+      m_directory->setText(w.output.directory); m_pattern->setText(w.output.pattern); showPreview(w.output, w.id);
       const auto available = CaptureActions::selectableActions(); auto displayed = available;
       for (const auto &action : w.actions) if (!displayed.contains(action)) displayed.append(action);
       for (const auto &action : displayed) {
@@ -168,15 +168,21 @@ private:
     const int index = m_list->currentRow(); if (index < 0) return;
     auto &w = m_catalog->entries[index]; w.name = m_name->text(); w.chooseActions = m_choose->isChecked(); w.actions.clear();
     if (m_capture->currentIndex() >= 0) w.capture = m_capture->currentData().toString();
-    w.output.directory = m_directory->text(); w.output.pattern = m_pattern->text(); showPreview(w.output);
+    w.output.directory = m_directory->text(); w.output.pattern = m_pattern->text(); showPreview(w.output, w.id);
     for (int row = 0; row < m_actions->count(); ++row) if (m_actions->item(row)->checkState() == Qt::Checked) w.actions.append(m_actions->item(row)->data(Qt::UserRole).toString());
     m_list->item(index)->setText(w.name + (w.id == m_catalog->defaultId ? " (default)" : ""));
     if (w.id == m_catalog->defaultId) m_default->setText("Default capture: " + w.name);
     m_dirty = true; m_status->setText("Unsaved changes. Save changes to run this workflow."); availability();
   }
-  void showPreview(const CaptureOutput &output) {
-    const auto preview = previewCaptureOutput(output); m_preview->setText(preview.filename);
-    QString hint = preview.diagnostic.isEmpty() ? QStringLiteral("Example: 2 Jan 2026, 15:04:05, 1920×1080. %y/%mo/%d = year/month/day; %h/%mi/%s = hour/minute/second; %width/%height = pixel dimensions; %ra{10} = 10 random letters/digits; %% = literal %. Unknown tokens are kept. PNG extension is added automatically. Counters and random-file reads are unavailable.") : workflowMessage(preview.diagnostic);
+  void showPreview(const CaptureOutput &output, const QUuid &id = {}) {
+    // FN-015: preview shows the stored next counter without reserving it.
+    auto context = captureOutputExample();
+    if (!id.isNull()) {
+      const auto peek = xerahs::naming::CounterStore(defaultCounterPath()).peek(id.toString(QUuid::WithoutBraces));
+      if (peek.error == xerahs::naming::CounterError::None) context.counter = peek.value;
+    }
+    const auto preview = previewCaptureOutput(output, context); m_preview->setText(preview.filename);
+    QString hint = preview.diagnostic.isEmpty() ? QStringLiteral("Example: 2 Jan 2026, 15:04:05, 1920×1080. %y/%mo/%d = year/month/day; %h/%mi/%s = hour/minute/second; %width/%height = pixel dimensions; %ra{10} = 10 random letters/digits; %i{3} = counter (also %ia, %iA, %ix, %iX) showing the next value; %% = literal %. Unknown tokens are kept. PNG extension is added automatically. Random-file reads are unavailable.") : workflowMessage(preview.diagnostic);
     if (preview.error) hint += " Token " + preview.error->token.value_or(QString{}) + ", character " + QString::number(preview.error->offset) + " (zero-based).";
     m_patternHelp->setText(hint);
   }

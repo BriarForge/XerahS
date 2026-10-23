@@ -25,6 +25,8 @@ QString validateCaptureFile(const CaptureFile &file);
 // Hash only an unchanged, privately owned publication through its bound
 // descriptor. Never borrow pixels or authority from an arbitrary path.
 QString captureFileHash(const CaptureFile &file, const xerahs::actions::CancellationToken &cancellation);
+// Default location of the persisted filename counters (app config folder).
+QString defaultCounterPath();
 struct CaptureSaveResult {
   std::optional<CaptureFile> file;
   QString diagnostic;
@@ -37,6 +39,9 @@ struct CaptureSaveHooks {
   // Worker write-ahead boundary, called before the observer above. The writer
   // supplies artifact kind explicitly; no path suffix grants authority.
   std::function<void(const QString &, bool companion)> publicationIntent = {};
+  // FN-016: workflow id whose persisted counter a counter token uses; empty
+  // means an ad-hoc save with a non-persisted counter. Empty path = app config.
+  QString counterProfile = {}, counterPath = {};
 };
 CaptureSaveResult saveCapture(const QImage &media, const QString &directory, const QString &pattern,
                               const CaptureSaveHooks &hooks = {});

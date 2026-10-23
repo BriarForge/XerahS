@@ -85,6 +85,8 @@ add_library(xerahs_core STATIC
   src/image-editor/EditorWindowPlacement.h
   src/naming/FilenameGenerator.cpp
   src/naming/FilenameGenerator.h
+  src/naming/CounterStore.cpp
+  src/naming/CounterStore.h
   src/uploads/UploadDestination.cpp
   src/uploads/UploadDestination.h
   src/uploads/CredentialStore.cpp
@@ -479,6 +481,10 @@ add_executable(filename-generator-test tests/FilenameGeneratorTest.cpp)
 set_target_properties(filename-generator-test PROPERTIES AUTOMOC ON)
 target_link_libraries(filename-generator-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME filename-generator COMMAND filename-generator-test)
+add_executable(counter-store-test tests/CounterStoreTest.cpp)
+set_target_properties(counter-store-test PROPERTIES AUTOMOC ON)
+target_link_libraries(counter-store-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME counter-store COMMAND counter-store-test)
 
 add_executable(upload-destination-test tests/UploadDestinationTest.cpp)
 set_target_properties(upload-destination-test PROPERTIES AUTOMOC ON)

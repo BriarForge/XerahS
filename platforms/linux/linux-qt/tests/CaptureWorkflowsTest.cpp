@@ -111,7 +111,7 @@ private slots:
     QTest::newRow("invalid-repeat") << QStringLiteral("%ra{0}") << QStringLiteral("") << QStringLiteral("filename-invalid-argument");
     QTest::newRow("unterminated") << QStringLiteral("%ra{4") << QStringLiteral("") << QStringLiteral("filename-unterminated-argument");
     QTest::newRow("random-file-denied") << QStringLiteral("%rf{/private/file}") << QStringLiteral("") << QStringLiteral("filename-file-permission-denied");
-    QTest::newRow("counter") << QStringLiteral("%i{3}") << QStringLiteral("001.png") << QStringLiteral("workflow-counter-unavailable");
+    QTest::newRow("counter") << QStringLiteral("%i{3}") << QStringLiteral("001.png") << QStringLiteral("");
   }
   void outputPreviewUsesProductionRulesWithoutCommittingOrReadingFiles() {
     QFETCH(QString, pattern); QFETCH(QString, expected); QFETCH(QString, diagnostic);
@@ -132,7 +132,7 @@ private slots:
     if (mode == "dot") output.directory += "/./child";
     if (mode == "control") output.directory += QChar(0);
     if (mode == "oversize") output.pattern = QString(4097, 'x');
-    if (mode == "counter") output.pattern = "%iX";
+    if (mode == "counter") output.pattern = "%iX{0}"; // counters are valid (FN-016); only a bad width is refused
     if (mode == "file") output.pattern = "%rf{/private/input}";
     if (mode == "malformed") output.pattern = "%ra{257}";
     const auto saved = store.save(draft, store.revision()); QCOMPARE(saved.saved, mode == "unknown");

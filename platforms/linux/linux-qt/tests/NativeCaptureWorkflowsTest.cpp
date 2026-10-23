@@ -5,6 +5,7 @@
 #include <QCheckBox>
 #include <QDialog>
 #include <QFile>
+#include <QFileInfo>
 #include <QFileDialog>
 #include <QLabel>
 #include <QJsonDocument>
@@ -104,6 +105,22 @@ private slots:
     CapturePipeline retry(retained, nullptr, ports); QSignalSpy retried(&retry, &CapturePipeline::finished); retry.start(); QTRY_COMPARE(retried.count(), 1); const auto result = receipt(retried);
     QVERIFY(result->file); QCOMPARE(result->file->path, dir.filePath("original/original-12.png")); QVERIFY(!QFile::exists(dir.filePath("changed"))); QCOMPARE(encodes, 2); QCOMPARE(result->pipeline.workflowSnapshot.value("name"), QJsonValue("Original save")); QCOMPARE(result->pipeline.workflowSnapshot.value("actions"), QJsonValue(QJsonArray{"save"}));
   }
+  void counterWorkflowAdvancesOnlyOnPublishedNames() {
+    QTemporaryDir dir; auto workflow = defaultCaptureWorkflows().entries[0]; workflow.actions = QStringList{"save"}; workflow.output.directory = dir.filePath("out"); workflow.output.pattern = "n%i{3}";
+    const auto counters = dir.filePath("counters.json"); bool fail = false; CaptureActionPorts ports; ports.save.counterPath = counters;
+    ports.save.encode = [&](const QImage &image, QIODevice *device) { return !fail && image.save(device, "PNG"); };
+    QImage image(12, 8, QImage::Format_ARGB32); image.fill(Qt::blue);
+    QString name; const auto run = [&] {
+      CapturePipeline pipeline(image, workflow.output.directory, workflow.output.pattern, workflowActions(workflow), nullptr, ports, {}, nullptr, workflowSnapshot(workflow)); QSignalSpy done(&pipeline, &CapturePipeline::finished);
+      pipeline.start(); QTRY_COMPARE(done.count(), 1); name = receipt(done)->file ? QFileInfo(receipt(done)->file->path).fileName() : QString{};
+    };
+    run(); QCOMPARE(name, QString("n001.png")); run(); QCOMPARE(name, QString("n002.png"));  // FN-007: zero-based store, advanced before expansion
+    fail = true; run(); QVERIFY(name.isEmpty()); fail = false;                          // FN-016: failed save consumes nothing
+    run(); QCOMPARE(name, QString("n003.png"));
+    workflow.actions = QStringList{"save", "image-clipboard"};  // a later action failing still consumes the reserved name
+    ports.clipboard = [&](const QImage &, const CancellationToken &) { ActionOutcome failed; failed.state = ActionState::Failed; failed.diagnostic = "clipboard-unavailable"; return failed; };
+    run(); QCOMPARE(name, QString("n004.png")); run(); QCOMPARE(name, QString("n005.png"));
+  }
   void savedUploadActionIsAvailable() {
     QTemporaryDir dir; NativeCaptureWorkflows host(dir.filePath("workflows.json")); auto catalog = *host.store().current().catalog;
     catalog.entries[0].actions = QStringList{"upload"};
@@ -145,7 +162,7 @@ private slots:
       auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog); const QPointer<QDialog> weak(dialog); const auto close = qScopeGuard([weak] { if (weak) weak->reject(); });
       auto *folder = dialog->findChild<QLineEdit *>("captureWorkflowSaveDirectory"); auto *pattern = dialog->findChild<QLineEdit *>("captureWorkflowFilenamePattern");
       folder->setText(mode == "relative" ? "relative/folder" : dir.filePath("chosen"));
-      pattern->setText(mode == "counter" ? "%i" : mode == "repeat" ? "x%ra{0}" : mode == "file" ? "%rf{/private/input}" : "valid");
+      pattern->setText(mode == "counter" ? "%i{257}" : mode == "repeat" ? "x%ra{0}" : mode == "file" ? "%rf{/private/input}" : "valid");
       QVERIFY(!dialog->findChild<QPushButton *>("runCaptureWorkflow")->isEnabled()); dialog->findChild<QPushButton *>("saveCaptureWorkflows")->click();
       QCOMPARE(bytes(path), original); QVERIFY(!dialog->findChild<QLabel *>("captureWorkflowPatternHelp")->text().isEmpty());
       folder->setText(dir.filePath("chosen")); pattern->setText("valid-%width"); QCOMPARE(dialog->findChild<QLineEdit *>("captureWorkflowFilenamePreview")->text(), QString("valid-1920.png"));

@@ -891,7 +891,7 @@ private slots:
   void invalidConfiguredOutputIsRejectedBeforePortalAcquisition() {
     QFETCH(QString, mode); QTemporaryDir dir; int acquisitions = 0; CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *) -> PortalScreenshot * { ++acquisitions; return nullptr; });
     auto workflow = xerahs::workflows::defaultCaptureWorkflows().entries[0]; workflow.output.directory = mode == "relative" ? "relative" : dir.filePath("chosen");
-    workflow.output.pattern = mode == "counter" ? "%i" : mode == "malformed" ? "%ra{0}" : mode == "file" ? "%rf{/private/input}" : "valid";
+    workflow.output.pattern = mode == "counter" ? "%i{257}" : mode == "malformed" ? "%ra{0}" : mode == "file" ? "%rf{/private/input}" : "valid";
     QSignalSpy notify(&controller, &CaptureController::notify); controller.captureWorkflow(workflow);
     QCOMPARE(acquisitions, 0); QVERIFY(!controller.busy()); QCOMPARE(notify.count(), 1); QVERIFY(!QFile::exists(dir.filePath("chosen")));
   }

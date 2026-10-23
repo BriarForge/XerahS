@@ -46,8 +46,6 @@ CaptureOutputPreview previewCaptureOutput(const CaptureOutput &output, xerahs::n
   context.files = nullptr;
   const auto expanded = xerahs::naming::preview({output.pattern, xerahs::naming::ParseMode::Filename, QStringLiteral("png"), {}}, context);
   if (!expanded.ok()) return {{}, "filename-" + xerahs::naming::errorCodeName(expanded.error().code), expanded.error()};
-  // Native save has no atomic persistent counter reservation yet (FN-016).
-  if (expanded.nextCounter != context.counter) return {expanded.value(), "workflow-counter-unavailable", {}};
   return {expanded.value(), {}, {}};
 }
 QStringList implementedCaptureSources() { return {"region", "full-screen", "monitor", "active-window"}; }

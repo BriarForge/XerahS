@@ -1,5 +1,7 @@
 #include "CaptureSave.h"
 #include "naming/FilenameGenerator.h"
+#include "naming/CounterStore.h"
+#include <QStandardPaths>
 #include "actions/SaveAsTarget.h"
 #include <QDateTime>
 #include <QDir>
@@ -27,6 +29,7 @@ bool encodePrivatePng(QTemporaryFile &encoded, const QImage &media, const Captur
   return written && encoded.flush() && ::fsync(encoded.handle()) == 0 && encoded.size() > 0;
 }
 }
+QString defaultCounterPath() { return QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath(QStringLiteral("filename-counters.json")); }
 CaptureSaveResult saveCapture(const QImage &media, const QString &directory, const QString &pattern,
                               const CaptureSaveHooks &hooks) {
   using namespace xerahs::naming;
@@ -41,10 +44,22 @@ CaptureSaveResult saveCapture(const QImage &media, const QString &directory, con
     context.width = media.width(); context.height = media.height(); context.random = random.get(); context.files = &files;
     auto name = expand({pattern, ParseMode::Filename, QStringLiteral("png"), std::nullopt}, context);
     if (!name.ok()) return failure(QStringLiteral("filename-") + errorCodeName(name.error().code));
+    // FN-007/FN-016: a counter token reserves the persisted value now (lock held
+    // across publication) and commits only after the name is published; every
+    // earlier return rolls back by destroying the reservation.
+    CounterStore counters(hooks.counterPath.isEmpty() ? defaultCounterPath() : hooks.counterPath);
+    CounterReservation reservation;
+    if (name.nextCounter != context.counter && !hooks.counterProfile.isEmpty()) {
+      auto reserved = counters.reserve(hooks.counterProfile);
+      if (reserved.error != CounterError::None) return failure(counterErrorName(reserved.error));
+      reservation = std::move(reserved.reservation); context.counter = reservation.value();
+      name = expand({pattern, ParseMode::Filename, QStringLiteral("png"), std::nullopt}, context);
+      if (!name.ok()) return failure(QStringLiteral("filename-") + errorCodeName(name.error().code));
+    }
     // Validation precedes directory creation and private encoding (FN-026).
     if (!QDir().mkpath(destination.absolutePath())) return failure(QStringLiteral("save-directory-unavailable"));
     // The filename context is immutable for this action. Random collisions use
-    // fresh randomness; workflow counter persistence remains separate work.
+    // fresh randomness; a counter collision advances the reserved counter.
     QJsonObject filenameContext{{"pattern", pattern}, {"mode", "filename"}, {"extension", "png"},
         {"date", context.date.toString(Qt::ISODate)}, {"time", context.time.toString(Qt::ISODateWithMs)},
         {"unix_time", context.unixTime}, {"locale", context.locale.name()}, {"counter", context.counter},
@@ -56,7 +71,7 @@ CaptureSaveResult saveCapture(const QImage &media, const QString &directory, con
     const auto length = encoded.size();
     const auto source = QFile::encodeName(encoded.fileName());
     for (int attempt = 0; attempt < 3; ++attempt) {
-      if (attempt) name = expand({pattern, ParseMode::Filename, QStringLiteral("png"), std::nullopt}, context);
+      if (attempt) { if (reservation) context.counter = name.nextCounter; name = expand({pattern, ParseMode::Filename, QStringLiteral("png"), std::nullopt}, context); }
       if (!name.ok()) return failure(QStringLiteral("filename-") + errorCodeName(name.error().code));
       const auto path = destination.filePath(name.value());
       filenameContext.insert("next_counter", name.nextCounter);
@@ -70,6 +85,9 @@ CaptureSaveResult saveCapture(const QImage &media, const QString &directory, con
       if (::syscall(SYS_renameat2, AT_FDCWD, source.constData(), AT_FDCWD, target.constData(), RENAME_NOREPLACE) == 0) {
         encoded.setAutoRemove(false);
         artifact.identity = captureFileIdentity(encoded.handle());
+        // The name is published; a failed commit cannot unpublish it and the
+        // exclusive rename already guards against reuse (FN-016).
+        if (reservation) counters.commit(reservation, name.nextCounter);
         return {std::move(artifact), {}};
       }
       if (errno != EEXIST) return failure(QStringLiteral("save-write-failed"));

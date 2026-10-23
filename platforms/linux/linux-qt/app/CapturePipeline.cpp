@@ -199,6 +199,7 @@ void CapturePipeline::start() {
                                   retryRequested = m_retryRequested, source = m_retrySource, workflow = m_workflowSnapshot, id = m_taskId, executionId = m_workflowExecutionId]() mutable {
     state->result->workingMedia = media;
     state->result->pipeline.workflowSnapshot = workflow; state->result->pipeline.workflowExecutionId = executionId;
+    if (ports.save.counterProfile.isEmpty()) ports.save.counterProfile = workflow.value("id").toString(); // FN-016
     state->result->saveDirectory = directory; state->result->filenamePattern = pattern;
     const auto retry = source ? source->retryPlan() : PipelineRetryPlan{};
     if (retryRequested && !retry.available()) {
