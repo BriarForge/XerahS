@@ -59,6 +59,10 @@ private slots:
         QVERIFY(!spec->changesSize);
         QCOMPARE(spec->usesSeed, spec->id == "film_emulation");  // grain is the only seeded Adjustment
         QVERIFY(spec->referencePath.startsWith("ShareX.ImageEditor/src/ShareX.ImageEditor/Core/ImageEffects/Adjustments/"));
+      } else if (spec->category == Category::Manipulations) {
+        // Exact output sizes are checked per effect in ManipulationEffectsTest; the
+        // category mixes size-keeping and size-changing effects.
+        QVERIFY(spec->referencePath.startsWith("ShareX.ImageEditor/src/ShareX.ImageEditor/Core/ImageEffects/Manipulations/"));
       } else {
         QVERIFY(spec->referencePath.startsWith("ShareX.ImageEditor/src/ShareX.ImageEditor/Core/ImageEffects/"));
       }
