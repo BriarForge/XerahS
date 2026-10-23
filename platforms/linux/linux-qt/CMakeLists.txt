@@ -883,3 +883,10 @@ set_target_properties(watch-folder-service-test PROPERTIES AUTOMOC ON)
 target_link_libraries(watch-folder-service-test PRIVATE xerahs_watch_folders Qt6::Test)
 add_test(NAME watch-folder-service COMMAND watch-folder-service-test)
 set_tests_properties(watch-folder-service PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
+# CORE-004, EU-017: the shared owner-bound worker helper (header only).
+add_executable(owned-work-test tests/OwnedWorkTest.cpp app/OwnedWork.h)
+set_target_properties(owned-work-test PROPERTIES AUTOMOC ON)
+target_include_directories(owned-work-test PRIVATE app)
+target_link_libraries(owned-work-test PRIVATE Qt6::Core Qt6::Test)
+add_test(NAME owned-work COMMAND owned-work-test)
