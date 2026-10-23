@@ -110,6 +110,23 @@ private slots:
     box->button(QMessageBox::Discard)->click();
     QTRY_COMPARE(list->count(), 0); QVERIFY(storage->list().entries.empty()); QVERIFY(QFile::exists(path));
   }
+  void activeWindowSourceShowsItsLabel() {
+    QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    const auto path = writePng(dir.filePath("active.png"), Qt::darkGray); const auto id = newId();
+    QVERIFY(storage->replace(id, {}, serializePipelineJournal(record(id, QDateTime::currentDateTimeUtc(), {png(path, id)}, "active-window"))).stored);
+    QWidget owner; auto *window = new CaptureHistoryWindow(storage, [] { return false; }, {}, &owner); window->show();
+    auto *list = window->findChild<QListWidget *>("captureHistoryItems"); QTRY_COMPARE(list->count(), 1);
+    QVERIFY(list->item(0)->text().contains(QStringLiteral("Active window")));
+    QVERIFY(!list->item(0)->text().contains(QStringLiteral("active-window")));
+  }
+  void unknownSourceStillShowsItsRawId() {
+    QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    const auto path = writePng(dir.filePath("future.png"), Qt::lightGray); const auto id = newId();
+    QVERIFY(storage->replace(id, {}, serializePipelineJournal(record(id, QDateTime::currentDateTimeUtc(), {png(path, id)}, "future-source"))).stored);
+    QWidget owner; auto *window = new CaptureHistoryWindow(storage, [] { return false; }, {}, &owner); window->show();
+    auto *list = window->findChild<QListWidget *>("captureHistoryItems"); QTRY_COMPARE(list->count(), 1);
+    QVERIFY(list->item(0)->text().contains(QStringLiteral("future-source")));
+  }
   void runningCaptureDefersTheRead() {
     QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
     const auto path = writePng(dir.filePath("later.png"), Qt::magenta); const auto id = newId();

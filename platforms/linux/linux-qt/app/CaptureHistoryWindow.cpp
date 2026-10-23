@@ -40,11 +40,15 @@ QIcon placeholder(const QString &text, const QPalette &palette) {
   painter.drawText(image.rect(), Qt::AlignCenter, text);
   return QIcon(QPixmap::fromImage(image));
 }
+// History labels are deliberately local: workflows::captureSourceLabel names
+// "monitor" "Monitor under pointer" and has no "window" entry, so sharing it
+// would change labels already shown in history. Unknown ids stay visible.
 QString sourceName(const QString &source) {
   if (source == "full-screen") return QStringLiteral("Full screen");
   if (source == "monitor") return QStringLiteral("Monitor");
   if (source == "window") return QStringLiteral("Window");
   if (source == "region") return QStringLiteral("Region");
+  if (source == "active-window") return QStringLiteral("Active window");
   return source;
 }
 }
