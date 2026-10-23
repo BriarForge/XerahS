@@ -1,12 +1,14 @@
 // COMPAT-SXIE-001, EE-003, EE-007..EE-008, EE-015..EE-016, ROOT-SECURITY-001.
 // Behavioural reference: ShareX.ImageEffectsLib/{ImageEffectPackager,ImageEffectPreset,
-// Adjustments/{Brightness,Alpha,Grayscale,Saturation,Gamma}}.cs (ShareX Team, GPLv3).
+// {Adjustments,Drawings,Filters,Manipulations}/*.cs}. ShareX Team, GPLv3.
 #include "SxiePreset.h"
 #include "SxieArchive.h"
 #include <QBuffer>
 #include <QImageReader>
 #include <QJsonDocument>
+#include <QRegularExpression>
 #include <cmath>
+#include <limits>
 namespace xerahs::effects {
 quint64 defaultEffectSeed(const QString &id) {
   quint64 seed = 14695981039346656037ull;
@@ -14,22 +16,21 @@ quint64 defaultEffectSeed(const QString &id) {
   return seed;
 }
 namespace {
-struct Mapping { const char *type, *id, *property, *parameter; double scale, offset, initial; };
-const Mapping mappings[] = {
-  {"ShareX.ImageEffectsLib.Brightness", "brightness", "Value", "amount", 100, 0, 0},
-  {"ShareX.ImageEffectsLib.Alpha", "alpha", "Value", "amount", 100, 0, 1},
-  {"ShareX.ImageEffectsLib.Gamma", "gamma", "Value", "amount", 1, 0, 1},
-  {"ShareX.ImageEffectsLib.Hue", "hue", "Angle", "amount", 1, 0, 0},
-  {"ShareX.ImageEffectsLib.Pixelate", "pixelate", "Size", "size", 1, 0, 10},
-  {"ShareX.ImageEffectsLib.Inverse", "invert", "", "", 1, 0, 0},
-  {"ShareX.ImageEffectsLib.BlackWhite", "black_and_white", "", "", 1, 0, 0},
-  {"ShareX.ImageEffectsLib.Polaroid", "polaroid", "", "", 1, 0, 0},
-  {"ShareX.ImageEffectsLib.Emboss", "emboss", "", "", 1, 0, 0},
-  {"ShareX.ImageEffectsLib.MeanRemoval", "mean_removal", "", "", 1, 0, 0},
-  {"ShareX.ImageEffectsLib.Smooth", "smooth", "", "", 1, 0, 0},
-  {"ShareX.ImageEffectsLib.EdgeDetect", "edge_detect", "", "", 1, 0, 0},
-  {"ShareX.ImageEffectsLib.Sharpen", "sharpen", "", "strength", 1, 0, 100}
+enum class Conversion { Direct, Number, Color, Enum, Point, Size, Margins, Font, Sides, Asset, Unsupported, TintMatrix };
+enum class Choices { None, Placement, Border, Dash, SizeMode, RotateFlip, Interpolation, Compositing };
+struct PropertyMapping {
+  const char *property, *parameters;
+  Conversion conversion;
+  QJsonValue initial;
+  double scale = 1, offset = 0;
+  Choices choices = Choices::None;
 };
+struct Mapping {
+  const char *type, *id;
+  QVector<PropertyMapping> properties;
+  ParamValues defaults;
+};
+#include "SxieMappingTable.cpp"
 EffectPreset fail(const QString &code) { EffectPreset p; p.error = code; return p; }
 bool validateAsset(const QByteArray &bytes) {
   QBuffer buffer; buffer.setData(bytes); if (!buffer.open(QIODevice::ReadOnly)) return false;
@@ -53,61 +54,209 @@ void validateStep(PresetStep &step, const EffectRegistry &registry, const QMap<Q
   else { step.supported = true; step.parameters = resolved.values; }
 }
 
-bool enumValue(const QJsonValue &value, const QStringList &legacy, const QStringList &native, QString *result) {
-  int index = value.isDouble() && value.toDouble() == value.toInt(-1) ? value.toInt(-1) : legacy.indexOf(value.toString());
+bool integral(const QJsonValue &value, int *result) {
+  if (!value.isDouble() || !std::isfinite(value.toDouble()) || value.toDouble() < std::numeric_limits<int>::min() ||
+      value.toDouble() > std::numeric_limits<int>::max() || std::trunc(value.toDouble()) != value.toDouble()) return false;
+  *result = int(value.toDouble()); return true;
+}
+bool components(const QJsonValue &value, const QStringList &names, QVector<int> *result) {
+  if (value.isString()) {
+    const auto parts = value.toString().split(',');
+    if (parts.size() != names.size() && !(names.size() == 4 && parts.size() == 1)) return false;
+    for (int i = 0; i < names.size(); ++i) {
+      bool ok; int n = parts[parts.size() == 1 ? 0 : i].trimmed().toInt(&ok);
+      if (!ok) return false;
+      result->append(n);
+    }
+    return true;
+  }
+  const auto object = value.toObject();
+  if (!value.isObject() || object.size() != names.size()) return false;
+  for (const auto &name : names) { int n; if (!integral(object.value(name), &n)) return false; result->append(n); }
+  return true;
+}
+bool legacyColor(const QJsonValue &value, QColor *color) {
+  if (value.isDouble()) {
+    const double n = value.toDouble();
+    if (std::trunc(n) != n || n < -2147483648.0 || n > 4294967295.0) return false;
+    *color = QColor::fromRgba(QRgb(qint64(n))); return true;
+  }
+  if (!value.isString()) return false;
+  const auto text = value.toString().trimmed();
+  // ColorConverter writes known names or invariant A, R, G, B / R, G, B strings.
+  if (text.contains(',')) {
+    const auto parts = text.split(',');
+    if (parts.size() != 3 && parts.size() != 4) return false;
+    QVector<int> c;
+    for (const auto &part : parts) { bool ok; int n = part.trimmed().toInt(&ok); if (!ok || n < 0 || n > 255) return false; c.append(n); }
+    *color = parts.size() == 4 ? QColor(c[1], c[2], c[3], c[0]) : QColor(c[0], c[1], c[2]);
+  } else if (text.compare("Transparent", Qt::CaseInsensitive) == 0) *color = QColor(255, 255, 255, 0);
+  else if (text.compare("LightGray", Qt::CaseInsensitive) == 0 || text.compare("LightGrey", Qt::CaseInsensitive) == 0) *color = QColor(211, 211, 211);
+  else {
+    if (text.startsWith('#') && text.size() != 7 && text.size() != 9) return false;
+    *color = QColor(text);
+  }
+  return color->isValid();
+}
+bool choice(const QJsonValue &value, Choices kind, QString *result) {
+  QStringList legacy, native; QList<int> numbers;
+  switch (kind) {
+  case Choices::Placement:
+    legacy = {"TopLeft", "TopCenter", "TopRight", "MiddleLeft", "MiddleCenter", "MiddleRight", "BottomLeft", "BottomCenter", "BottomRight"};
+    native = {"top_left", "top_center", "top_right", "middle_left", "middle_center", "middle_right", "bottom_left", "bottom_center", "bottom_right"};
+    numbers = {1, 2, 4, 16, 32, 64, 256, 512, 1024}; break;
+  case Choices::Border: legacy = {"Outside", "Inside"}; native = {"outside", "inside"}; break;
+  case Choices::Dash: legacy = {"Solid", "Dash", "Dot", "DashDot"}; native = {"solid", "dash", "dot", "dash_dot"}; break;
+  case Choices::SizeMode:
+    legacy = {"DontResize", "AbsoluteSize", "PercentageOfWatermark", "PercentageOfCanvas"};
+    native = {"dont_resize", "absolute_size", "percentage_of_watermark", "percentage_of_canvas"}; break;
+  case Choices::RotateFlip:
+    legacy = {"None", "Rotate90", "Rotate180", "Rotate270", "FlipX", "Rotate90FlipX", "FlipY", "Rotate90FlipY"};
+    native = {"none", "rotate_90", "rotate_180", "rotate_270", "flip_x", "rotate_90_flip_x", "flip_y", "rotate_90_flip_y"}; break;
+  case Choices::Interpolation:
+    legacy = {"HighQualityBicubic", "Bicubic", "HighQualityBilinear", "Bilinear", "NearestNeighbor"};
+    native = {"high_quality_bicubic", "bicubic", "high_quality_bilinear", "bilinear", "nearest_neighbor"}; break;
+  case Choices::Compositing: legacy = {"SourceOver", "SourceCopy"}; native = {"source_over", "source_copy"}; break;
+  case Choices::None: return false;
+  }
+  int index = -1, n;
+  if (integral(value, &n)) index = numbers.isEmpty() ? n : numbers.indexOf(n);
+  else if (value.isString()) index = legacy.indexOf(value.toString());
   if (index < 0 || index >= native.size()) return false;
   *result = native[index]; return true;
 }
-bool pairValue(const QJsonValue &value, const QString &first, const QString &second, int *a, int *b) {
-  if (value.isString()) {
-    const auto parts = value.toString().split(','); bool okA = false, okB = false;
-    if (parts.size() != 2) return false;
-    *a = parts[0].trimmed().toInt(&okA); *b = parts[1].trimmed().toInt(&okB); return okA && okB;
+bool sides(const QJsonValue &value, int *flags) {
+  if (integral(value, flags)) return *flags >= 0 && *flags <= 15;
+  if (!value.isString()) return false;
+  const QMap<QString, int> names{{"None", 0}, {"Top", 1}, {"Bottom", 2}, {"Left", 4}, {"Right", 8}};
+  *flags = 0;
+  for (const auto &part : value.toString().split(',')) {
+    if (!names.contains(part.trimmed())) return false;
+    *flags |= names.value(part.trimmed());
   }
-  const auto o = value.toObject();
-  if (o.size() != 2 || !o.value(first).isDouble() || !o.value(second).isDouble()) return false;
-  *a = o.value(first).toInt(); *b = o.value(second).toInt();
-  return o.value(first).toDouble() == *a && o.value(second).toDouble() == *b;
+  return true;
 }
-void mapDrawImage(PresetStep &step, const EffectRegistry &registry, const QMap<QString, QByteArray> &assets) {
-  step.id = "draw_image"; step.seed = defaultEffectSeed(step.id); bool valid = true;
-  const QMap<QString, QString> direct{{"Tile", "tile"}, {"AutoHide", "auto_hide"}, {"Opacity", "opacity"}};
-  const QMap<QString, QPair<QStringList, QStringList>> enums{
-    {"Placement", {{"TopLeft", "TopCenter", "TopRight", "MiddleLeft", "MiddleCenter", "MiddleRight", "BottomLeft", "BottomCenter", "BottomRight"},
-                   {"top_left", "top_center", "top_right", "middle_left", "middle_center", "middle_right", "bottom_left", "bottom_center", "bottom_right"}}},
-    {"SizeMode", {{"DontResize", "AbsoluteSize", "PercentageOfWatermark", "PercentageOfCanvas"}, {"dont_resize", "absolute_size", "percentage_of_watermark", "percentage_of_canvas"}}},
-    {"RotateFlip", {{"None", "Rotate90", "Rotate180", "Rotate270", "FlipX", "Rotate90FlipX", "FlipY", "Rotate90FlipY"}, {"none", "rotate_90", "rotate_180", "rotate_270", "flip_x", "rotate_90_flip_x", "flip_y", "rotate_90_flip_y"}}},
-    {"InterpolationMode", {{"HighQualityBicubic", "Bicubic", "HighQualityBilinear", "Bilinear", "NearestNeighbor"}, {"high_quality_bicubic", "bicubic", "high_quality_bilinear", "bilinear", "nearest_neighbor"}}},
-    {"CompositingMode", {{"SourceOver", "SourceCopy"}, {"source_over", "source_copy"}}}
-  };
-  const QMap<QString, QString> enumIds{{"Placement", "placement"}, {"SizeMode", "size_mode"}, {"RotateFlip", "rotate_flip"}, {"InterpolationMode", "interpolation_mode"}, {"CompositingMode", "compositing_mode"}};
-  for (auto it = step.legacy.begin(); it != step.legacy.end(); ++it) {
-    if (it.key() == "$type" || it.key() == "Enabled") continue;
-    if (it.key() == "ImageLocation") {
-      // This is an archive key lookup, never a host path or URL expansion.
-      const auto key = it.value().toString();
-      if (!it.value().isString() || !assets.contains(key)) { valid = false; step.diagnostics.append("preset-asset-missing"); }
-      else step.parameters.insert("image_location", "asset:" + key);
-    } else if (direct.contains(it.key())) step.parameters.insert(direct.value(it.key()), it.value().toVariant());
-    else if (enums.contains(it.key())) {
-      QString choice; const auto choices = enums.value(it.key());
-      auto value = it.value();
-      if (it.key() == "Placement" && value.isDouble()) {
-        const QList<int> flags{1, 2, 4, 16, 32, 64, 256, 512, 1024};
-        const auto index = flags.indexOf(value.toInt(-1));
-        if (index >= 0 && value.toDouble() == flags[index]) value = choices.first[index];
-        else value = QJsonValue();
-      }
-      if (!enumValue(value, choices.first, choices.second, &choice)) { valid = false; step.diagnostics.append("effect-invalid-parameter:" + enumIds.value(it.key())); }
-      else step.parameters.insert(enumIds.value(it.key()), choice);
-    } else if (it.key() == "Offset" || it.key() == "Size") {
-      int a = 0, b = 0; const bool offset = it.key() == "Offset";
-      if (!pairValue(it.value(), offset ? "X" : "Width", offset ? "Y" : "Height", &a, &b)) { valid = false; step.diagnostics.append("effect-invalid-parameter:" + it.key()); }
-      else { step.parameters.insert(offset ? "offset_x" : "size_width", a); step.parameters.insert(offset ? "offset_y" : "size_height", b); }
-    } else step.diagnostics.append("preset-property-unsupported:" + it.key());
+bool font(const QJsonValue &value, PresetStep &step, const QString &property) {
+  if (!value.isString()) return false;
+  static const QRegularExpression pattern(QStringLiteral("^(.+),\\s*([0-9]+(?:\\.[0-9]+)?)(pt|px|in|doc|mm|world|display)(?:,\\s*style=(.*))?$"));
+  const auto match = pattern.match(value.toString());
+  if (!match.hasMatch()) return false;
+  const QMap<QString, double> units{{"pt", 96.0 / 72}, {"px", 1}, {"in", 96}, {"doc", 96.0 / 300}, {"mm", 96.0 / 25.4}, {"world", 1}, {"display", 1}};
+  bool bold = false, italic = false;
+  for (const auto &part : match.captured(4).split(',')) {
+    const auto style = part.trimmed();
+    if (style == "Bold") bold = true;
+    else if (style == "Italic") italic = true;
+    else if (!style.isEmpty() && style != "Regular") {
+      step.diagnostics.append("preset-property-unsupported:" + property + ".Style"); return false;
+    }
   }
-  if (valid) validateStep(step, registry, assets);
+  step.parameters.insert("font_family", match.captured(1).trimmed());
+  step.parameters.insert("font_size", match.captured(2).toDouble() * units.value(match.captured(3)));
+  step.parameters.insert("bold", bold); step.parameters.insert("italic", italic); return true;
 }
+bool convertProperty(const PropertyMapping &rule, const QJsonValue &value, PresetStep &step,
+                     const QMap<QString, QByteArray> &assets) {
+  const auto ids = QString::fromLatin1(rule.parameters).split('|');
+  switch (rule.conversion) {
+  case Conversion::Direct: step.parameters.insert(ids[0], value.toVariant()); return true;
+  case Conversion::Number:
+    if (!value.isDouble()) return false;
+    if (!ids[0].isEmpty()) step.parameters.insert(ids[0], value.toDouble() * rule.scale + rule.offset);
+    return true;
+  case Conversion::Color: {
+    QColor color; if (!legacyColor(value, &color)) return false;
+    step.parameters.insert(ids[0], color); return true;
+  }
+  case Conversion::Enum: {
+    QString result; if (!choice(value, rule.choices, &result)) return false;
+    step.parameters.insert(ids[0], result); return true;
+  }
+  case Conversion::Point:
+  case Conversion::Size:
+  case Conversion::Margins: {
+    const QStringList names = rule.conversion == Conversion::Margins ? QStringList{"Left", "Top", "Right", "Bottom"} :
+        rule.conversion == Conversion::Size ? QStringList{"Width", "Height"} : QStringList{"X", "Y"};
+    QVector<int> numbers; if (!components(value, names, &numbers)) return false;
+    if (rule.scale < 0) for (const int number : numbers) if (number < 0) return false;
+    for (int i = 0; i < ids.size(); ++i) step.parameters.insert(ids[i], numbers[i] * rule.scale);
+    return true;
+  }
+  case Conversion::Font: return font(value, step, QString::fromLatin1(rule.property));
+  case Conversion::Sides: {
+    int flags; if (!sides(value, &flags)) return false;
+    for (int i = 0; i < 4; ++i) step.parameters.insert(ids[i], bool(flags & (1 << i)));
+    return true;
+  }
+  case Conversion::Asset: {
+    // Exact archive-key lookup only; never expand a host path, URL or environment token.
+    const auto key = value.toString();
+    if (!value.isString() || !assets.contains(key)) { step.diagnostics.append("preset-asset-missing"); return false; }
+    step.parameters.insert(ids[0], "asset:" + key); return true;
+  }
+  case Conversion::TintMatrix: {
+    QColor color; if (!legacyColor(value, &color)) return false;
+    const auto amount = step.legacy.value("Value");
+    if (!amount.isUndefined() && !amount.isDouble()) return false;
+    const double strength = amount.toDouble(0);
+    const double weights[]{.212671, .715160, .072169};
+    const double channels[]{color.redF(), color.greenF(), color.blueF()};
+    const char *ids[3][3]{{"rr", "rg", "rb"}, {"gr", "gg", "gb"}, {"br", "bg", "bb"}};
+    for (int row = 0; row < 3; ++row) for (int col = 0; col < 3; ++col)
+      step.parameters.insert(ids[row][col], strength * channels[row] * weights[col] + (row == col ? 1 - strength : 0));
+    return true;
+  }
+  case Conversion::Unsupported: return true;
+  }
+  return false;
+}
+bool neutralProperty(const PropertyMapping &rule, const QJsonValue &value, const PresetStep &step) {
+  if (rule.initial.isNull() || rule.initial.isUndefined()) return true;
+  const QString property = QLatin1String(rule.property);
+  if (property == "Sides") { int flags; return sides(value, &flags) && flags == 15; }
+  if (property == "Clip") {
+    // Upsize ignores Clip; otherwise only the clipping variant matches auto_resize=false.
+    return value.isBool() && (step.legacy.value("Upsize").toBool(true) || value.toBool());
+  }
+  if (value == rule.initial) return true;
+  // These enums all assign their neutral/default member the integral value zero.
+  int n;
+  return rule.initial.isString() && integral(value, &n) && n == 0;
+}
+void mapStep(PresetStep &step, const Mapping &mapping, const EffectRegistry &registry,
+             const QMap<QString, QByteArray> &assets) {
+  step.id = QLatin1String(mapping.id); step.seed = defaultEffectSeed(step.id);
+  if (step.id.isEmpty()) {
+    step.diagnostics.append("preset-effect-unsupported");
+    for (auto it = step.legacy.begin(); it != step.legacy.end(); ++it)
+      if (it.key() != "$type" && it.key() != "Enabled") step.diagnostics.append("preset-property-unsupported:" + it.key());
+    return;
+  }
+  step.parameters = mapping.defaults;
+  bool valid = true; QStringList known{"$type", "Enabled"};
+  for (const auto &rule : mapping.properties) {
+    const QString property = QLatin1String(rule.property); known.append(property);
+    const bool present = step.legacy.contains(property);
+    const auto value = present ? step.legacy.value(property) : rule.initial;
+    if (rule.conversion == Conversion::Unsupported) {
+      const bool neutral = neutralProperty(rule, value, step);
+      if (present || !neutral) step.diagnostics.append("preset-property-unsupported:" + property);
+      if (!neutral) valid = false;
+    } else if (!convertProperty(rule, value, step, assets)) {
+      valid = false;
+      step.diagnostics.append("effect-invalid-parameter:" + (QString::fromLatin1(rule.parameters).isEmpty() ? property : QString::fromLatin1(rule.parameters).section('|', 0, 0)));
+    }
+  }
+  for (auto it = step.legacy.begin(); it != step.legacy.end(); ++it)
+    if (!known.contains(it.key())) step.diagnostics.append("preset-property-unsupported:" + it.key());
+  if (step.id == "resize_image") {
+    const double w = step.parameters.value("width").toDouble(), h = step.parameters.value("height").toDouble();
+    step.parameters.insert("maintain_aspect_ratio", (w == 0) != (h == 0));
+  }
+  validateStep(step, registry, assets);
+  step.supported = step.supported && valid;
+}
+
 }
 EffectPreset readSxiePreset(const QByteArray &bytes, const EffectRegistry &registry) {
   const auto archive = readSxieArchive(bytes); if (!archive.ok()) return fail(archive.error);
@@ -133,31 +282,10 @@ EffectPreset readSxiePreset(const QByteArray &bytes, const EffectRegistry &regis
     if (step.legacy.contains("Enabled") && !step.legacy.value("Enabled").isBool()) return fail("sxie-effect-invalid");
     step.enabled = step.legacy.value("Enabled").toBool(true);
     const auto type = step.legacy.value("$type").toString().section(',', 0, 0).trimmed();
-    if (type == "ShareX.ImageEffectsLib.DrawImage") {
-      mapDrawImage(step, registry, preset.assets); preset.steps.append(step); continue;
-    }
     const Mapping *mapping = nullptr;
     for (const auto &m : mappings) if (type == QLatin1String(m.type)) { mapping = &m; break; }
     if (!mapping) step.diagnostics.append("preset-effect-unsupported");
-    else {
-      step.id = QLatin1String(mapping->id); step.seed = defaultEffectSeed(step.id);
-      const auto v = step.legacy.value(QLatin1String(mapping->property));
-      if (!*mapping->property) {
-        if (*mapping->parameter) step.parameters.insert(QLatin1String(mapping->parameter), mapping->initial);
-        validateStep(step, registry, preset.assets);
-      } else if (!v.isUndefined() && !v.isDouble()) step.diagnostics.append("effect-invalid-parameter:" + QString::fromLatin1(mapping->parameter));
-      else {
-        step.parameters.insert(QLatin1String(mapping->parameter), v.toDouble(mapping->initial) * mapping->scale + mapping->offset);
-        validateStep(step, registry, preset.assets);
-      }
-      for (auto it = step.legacy.begin(); it != step.legacy.end(); ++it)
-        if (it.key() != "$type" && it.key() != "Enabled" && it.key() != QLatin1String(mapping->property)) {
-          step.diagnostics.append("preset-property-unsupported:" + it.key());
-          // Alpha addition cannot be approximated by the native multiplier.
-          if ((step.id == "alpha" && it.key() == "Addition" && it.value() != QJsonValue(0)) ||
-              (step.id == "pixelate" && it.key() == "BorderSize" && it.value() != QJsonValue(0))) step.supported = false;
-        }
-    }
+    else mapStep(step, *mapping, registry, preset.assets);
     preset.steps.append(step);
   }
   return preset;

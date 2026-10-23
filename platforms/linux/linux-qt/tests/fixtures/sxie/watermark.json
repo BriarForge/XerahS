@@ -1,0 +1,1415 @@
+{
+  "reference": "ShareX.ImageEffectsLib non-Presentation classes; ShareX Team GPLv3; converter forms from JsonHelpers, ImageFont and ImageGeometry.",
+  "cases": [
+    {
+      "name": "Contrast",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Contrast, ShareX.ImageEffectsLib",
+        "Value": 2
+      },
+      "id": "color_matrix",
+      "parameters": {
+        "rr": 2,
+        "gg": 2,
+        "bb": 2
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          5,
+          5,
+          "#FF80FFFF",
+          0
+        ]
+      ],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "Grayscale",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Grayscale, ShareX.ImageEffectsLib",
+        "Value": 0.5
+      },
+      "id": "color_matrix",
+      "parameters": {
+        "rr": 0.1063355,
+        "rg": 0.35758,
+        "rb": 0.0360845,
+        "gr": 0.1063355,
+        "gg": 0.35758,
+        "gb": 0.0360845,
+        "br": 0.1063355,
+        "bg": 0.35758,
+        "bb": 0.0360845
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          5,
+          5,
+          "#FF3C3C3C",
+          0
+        ]
+      ],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "Saturation",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Saturation, ShareX.ImageEffectsLib",
+        "Value": 0
+      },
+      "id": "color_matrix",
+      "parameters": {
+        "rr": 0.212671,
+        "rg": 0.71516,
+        "rb": 0.072169,
+        "gr": 0.212671,
+        "gg": 0.71516,
+        "gb": 0.072169,
+        "br": 0.212671,
+        "bg": 0.71516,
+        "bb": 0.072169
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          5,
+          5,
+          "#FF777777",
+          0
+        ]
+      ],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "Sepia",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Sepia, ShareX.ImageEffectsLib",
+        "Value": 0.5
+      },
+      "id": "color_matrix",
+      "parameters": {
+        "rr": 0.1965,
+        "rg": 0.3845,
+        "rb": 0.0945,
+        "gr": 0.1745,
+        "gg": 0.343,
+        "gb": 0.084,
+        "br": 0.136,
+        "bg": 0.267,
+        "bb": 0.0655
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          5,
+          5,
+          "#FF504838",
+          1
+        ]
+      ],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "Colorize",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Colorize, ShareX.ImageEffectsLib",
+        "Color": "Red",
+        "Value": 1
+      },
+      "id": "color_matrix",
+      "parameters": {
+        "rr": 0.212671,
+        "rg": 0.71516,
+        "rb": 0.072169,
+        "gr": 0,
+        "gg": 0,
+        "gb": 0,
+        "br": 0,
+        "bg": 0,
+        "bb": 0
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          5,
+          5,
+          "#FF770000",
+          0
+        ]
+      ],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "MatrixColor",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.MatrixColor, ShareX.ImageEffectsLib",
+        "Rr": 0,
+        "Rg": 1,
+        "Rb": 0,
+        "Ra": 0,
+        "Ro": 0.1,
+        "Gr": 0,
+        "Gg": 0,
+        "Gb": 1,
+        "Ga": 0,
+        "Go": 0,
+        "Br": 1,
+        "Bg": 0,
+        "Bb": 0,
+        "Ba": 0,
+        "Bo": 0,
+        "Ar": 0,
+        "Ag": 0,
+        "Ab": 0,
+        "Aa": 0.5,
+        "Ao": 0
+      },
+      "id": "color_matrix",
+      "parameters": {
+        "rr": 0,
+        "rg": 1,
+        "rb": 0,
+        "ra": 0,
+        "ro": 0.1,
+        "gr": 0,
+        "gg": 0,
+        "gb": 1,
+        "ga": 0,
+        "go": 0,
+        "br": 1,
+        "bg": 0,
+        "bb": 0,
+        "ba": 0,
+        "bo": 0,
+        "ar": 0,
+        "ag": 0,
+        "ab": 0,
+        "aa": 0.5,
+        "ao": 0
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          5,
+          5,
+          "#809AC040",
+          1
+        ]
+      ],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "ReplaceColor",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.ReplaceColor, ShareX.ImageEffectsLib",
+        "SourceColor": "64, 128, 192",
+        "TargetColor": -65536,
+        "Threshold": 0,
+        "AutoSourceColor": false
+      },
+      "id": "replace_color",
+      "parameters": {
+        "target_color": "#FF4080C0",
+        "replace_color": "#FFFF0000",
+        "tolerance": 0
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          5,
+          5,
+          "#FFFF0000",
+          0
+        ]
+      ],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "DrawBackground",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.DrawBackground, ShareX.ImageEffectsLib",
+        "Color": "128, 10, 20, 30",
+        "UseGradient": false,
+        "Gradient": {
+          "Colors": [
+            "keep"
+          ]
+        }
+      },
+      "id": "draw_background",
+      "parameters": {
+        "color": "#800A141E"
+      },
+      "renderer": true,
+      "fill": "#00000000",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          5,
+          5,
+          "#800A141E",
+          0
+        ]
+      ],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "DrawBackgroundImage",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.DrawBackgroundImage, ShareX.ImageEffectsLib",
+        "ImageFilePath": "Assets/stamp.png",
+        "Center": false,
+        "Tile": true
+      },
+      "id": "draw_background_image",
+      "parameters": {
+        "image_file_path": "asset:Assets/stamp.png",
+        "center": false,
+        "tile": true
+      },
+      "renderer": false,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "DrawBorder",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.DrawBorder, ShareX.ImageEffectsLib",
+        "Type": 0,
+        "Size": 2,
+        "DashStyle": "Solid",
+        "Color": "#FF00FF00",
+        "UseGradient": false
+      },
+      "id": "border",
+      "parameters": {
+        "type": "outside",
+        "size": 2,
+        "dash_style": "solid",
+        "color": "#FF00FF00"
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          0,
+          5,
+          "#FF00FF00",
+          0
+        ],
+        [
+          3,
+          3,
+          "#FF4080C0",
+          0
+        ]
+      ],
+      "size": [
+        20,
+        16
+      ]
+    },
+    {
+      "name": "DrawCheckerboard",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.DrawCheckerboard, ShareX.ImageEffectsLib",
+        "Size": 2,
+        "Color": "LightGray",
+        "Color2": "White"
+      },
+      "id": "draw_checkerboard",
+      "parameters": {
+        "size": 2,
+        "color": "#FFD3D3D3",
+        "color2": "#FFFFFFFF"
+      },
+      "renderer": true,
+      "fill": "#00000000",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          0,
+          0,
+          "#FFD3D3D3",
+          0
+        ],
+        [
+          2,
+          0,
+          "#FFFFFFFF",
+          0
+        ],
+        [
+          2,
+          2,
+          "#FFD3D3D3",
+          0
+        ]
+      ],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "DrawImage",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.DrawImage, ShareX.ImageEffectsLib",
+        "ImageLocation": "Assets/stamp.png",
+        "Placement": 1024,
+        "Offset": "1, 2",
+        "SizeMode": "AbsoluteSize",
+        "Size": {
+          "Width": 4,
+          "Height": 2
+        },
+        "RotateFlip": 0,
+        "Tile": false,
+        "AutoHide": false,
+        "InterpolationMode": 4,
+        "CompositingMode": 0,
+        "Opacity": 50
+      },
+      "id": "draw_image",
+      "parameters": {
+        "image_location": "asset:Assets/stamp.png",
+        "placement": "bottom_right",
+        "offset_x": 1,
+        "offset_y": 2,
+        "size_mode": "absolute_size",
+        "size_width": 4,
+        "size_height": 2,
+        "rotate_flip": "none",
+        "tile": false,
+        "auto_hide": false,
+        "interpolation_mode": "nearest_neighbor",
+        "compositing_mode": "source_over",
+        "opacity": 50
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          11,
+          8,
+          "#FFA04060",
+          2
+        ],
+        [
+          0,
+          0,
+          "#FF4080C0",
+          0
+        ]
+      ],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "DrawText",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.DrawText, ShareX.ImageEffectsLib",
+        "Text": "W",
+        "Placement": "TopLeft",
+        "Offset": {
+          "X": 8,
+          "Y": 8
+        },
+        "AutoHide": false,
+        "TextFont": "DejaVu Sans, 15pt, style=Bold, Italic",
+        "TextColor": -65536,
+        "DrawTextShadow": true,
+        "TextShadowColor": "#FF00FF00",
+        "TextShadowOffset": "4, 3",
+        "CornerRadius": 0,
+        "Padding": "2, 3, 4, 5",
+        "DrawBorder": true,
+        "BorderColor": "Blue",
+        "BorderSize": 2,
+        "DrawBackground": true,
+        "BackgroundColor": "White",
+        "UseGradient": false,
+        "TextRenderingMode": "SystemDefault"
+      },
+      "id": "text_watermark",
+      "parameters": {
+        "text": "W",
+        "placement": "top_left",
+        "offset_x": 8,
+        "offset_y": 8,
+        "auto_hide": false,
+        "font_family": "DejaVu Sans",
+        "font_size": 20,
+        "bold": true,
+        "italic": true,
+        "text_color": "#FFFF0000",
+        "draw_text_shadow": true,
+        "text_shadow_color": "#FF00FF00",
+        "text_shadow_offset_x": 4,
+        "text_shadow_offset_y": 3,
+        "corner_radius": 0,
+        "padding_left": 2,
+        "padding_top": 3,
+        "padding_right": 4,
+        "padding_bottom": 5,
+        "draw_border": true,
+        "border_color": "#FF0000FF",
+        "border_size": 2,
+        "draw_background": true,
+        "background_color": "#FFFFFFFF"
+      },
+      "renderer": true,
+      "fill": "#00000000",
+      "source": [
+        128,
+        80
+      ],
+      "pixels": [
+        [
+          0,
+          0,
+          "#00000000",
+          0
+        ]
+      ],
+      "size": [
+        128,
+        80
+      ],
+      "check": "watermark"
+    },
+    {
+      "name": "DrawTextEx",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.DrawTextEx, ShareX.ImageEffectsLib",
+        "Text": "A",
+        "Placement": 1,
+        "Offset": "8, 8",
+        "Angle": 15,
+        "AutoHide": false,
+        "Font": "DejaVu Sans, 24px",
+        "Color": "Red",
+        "Outline": true,
+        "OutlineSize": 2,
+        "OutlineColor": "Blue",
+        "Shadow": true,
+        "ShadowOffset": {
+          "X": 3,
+          "Y": 4
+        },
+        "ShadowColor": "#FF00FF00",
+        "UseGradient": false,
+        "OutlineUseGradient": false,
+        "ShadowUseGradient": false
+      },
+      "id": "draw_text",
+      "parameters": {
+        "text": "A",
+        "placement": "top_left",
+        "offset_x": 8,
+        "offset_y": 8,
+        "angle": 15,
+        "auto_hide": false,
+        "font_size": 24,
+        "color": "#FFFF0000",
+        "outline": true,
+        "outline_size": 2,
+        "outline_color": "#FF0000FF",
+        "shadow": true,
+        "shadow_offset_x": 3,
+        "shadow_offset_y": 4,
+        "shadow_color": "#FF00FF00"
+      },
+      "renderer": true,
+      "fill": "#00000000",
+      "source": [
+        128,
+        80
+      ],
+      "pixels": [
+        [
+          0,
+          0,
+          "#00000000",
+          0
+        ]
+      ],
+      "size": [
+        128,
+        80
+      ],
+      "check": "text"
+    },
+    {
+      "name": "DrawParticles",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.DrawParticles, ShareX.ImageEffectsLib",
+        "ImageFolder": "Assets",
+        "ImageCount": 2,
+        "Background": true,
+        "RandomSize": true,
+        "RandomSizeMin": 4,
+        "RandomSizeMax": 8,
+        "RandomAngle": true,
+        "RandomAngleMin": 10,
+        "RandomAngleMax": 20,
+        "RandomOpacity": true,
+        "RandomOpacityMin": 20,
+        "RandomOpacityMax": 80,
+        "NoOverlap": true,
+        "NoOverlapOffset": 2,
+        "EdgeOverlap": true
+      },
+      "id": "draw_particles",
+      "parameters": {
+        "image_folder": "Assets",
+        "image_count": 2,
+        "background": true,
+        "random_size": true,
+        "random_size_min": 4,
+        "random_size_max": 8,
+        "random_angle": true,
+        "random_angle_min": 10,
+        "random_angle_max": 20,
+        "random_opacity": true,
+        "random_opacity_min": 20,
+        "random_opacity_max": 80,
+        "no_overlap": true,
+        "no_overlap_offset": 2,
+        "edge_overlap": true
+      },
+      "renderer": false,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "Canvas",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Canvas, ShareX.ImageEffectsLib",
+        "Margin": "1, 2, 3, 4",
+        "MarginMode": 0,
+        "Color": "#80010203"
+      },
+      "id": "resize_canvas",
+      "parameters": {
+        "left": 1,
+        "top": 2,
+        "right": 3,
+        "bottom": 4,
+        "background_color": "#80010203"
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          0,
+          0,
+          "#80010203",
+          0
+        ],
+        [
+          1,
+          2,
+          "#FF4080C0",
+          0
+        ]
+      ],
+      "size": [
+        20,
+        18
+      ]
+    },
+    {
+      "name": "Crop",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Crop, ShareX.ImageEffectsLib",
+        "Margin": {
+          "Left": 1,
+          "Top": 2,
+          "Right": 3,
+          "Bottom": 4
+        }
+      },
+      "id": "resize_canvas",
+      "parameters": {
+        "left": -1,
+        "top": -2,
+        "right": -3,
+        "bottom": -4
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          0,
+          0,
+          "#FF4080C0",
+          0
+        ]
+      ],
+      "size": [
+        12,
+        6
+      ]
+    },
+    {
+      "name": "Resize",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Resize, ShareX.ImageEffectsLib",
+        "Width": 8,
+        "Height": 0,
+        "Mode": "ResizeAll"
+      },
+      "id": "resize_image",
+      "parameters": {
+        "width": 8,
+        "height": 0,
+        "maintain_aspect_ratio": true
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          3,
+          3,
+          "#FF4080C0",
+          0
+        ]
+      ],
+      "size": [
+        8,
+        6
+      ]
+    },
+    {
+      "name": "Rotate",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Rotate, ShareX.ImageEffectsLib",
+        "Angle": 90,
+        "Upsize": true,
+        "Clip": false
+      },
+      "id": "rotate_custom_angle",
+      "parameters": {
+        "angle": 90,
+        "auto_resize": true
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          5,
+          5,
+          "#FF4080C0",
+          0
+        ]
+      ],
+      "size": [
+        12,
+        16
+      ]
+    },
+    {
+      "name": "Flip",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Flip, ShareX.ImageEffectsLib",
+        "Horizontally": true,
+        "Vertically": true
+      },
+      "id": "flip",
+      "parameters": {
+        "horizontally": true,
+        "vertically": true
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          0,
+          0,
+          "#FF4080C0",
+          0
+        ]
+      ],
+      "size": [
+        16,
+        12
+      ],
+      "check": "flip"
+    },
+    {
+      "name": "RoundedCorners",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.RoundedCorners, ShareX.ImageEffectsLib",
+        "CornerRadius": 5
+      },
+      "id": "rounded_corners",
+      "parameters": {
+        "corner_radius": 5
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          0,
+          0,
+          "#004080C0",
+          5
+        ],
+        [
+          8,
+          6,
+          "#FF4080C0",
+          0
+        ]
+      ],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "Scale",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Scale, ShareX.ImageEffectsLib",
+        "WidthPercentage": 50,
+        "HeightPercentage": 25
+      },
+      "id": "scale",
+      "parameters": {
+        "width_percentage": 50,
+        "height_percentage": 25
+      },
+      "renderer": false,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "AutoCrop",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.AutoCrop, ShareX.ImageEffectsLib",
+        "Sides": 15,
+        "Padding": 0
+      },
+      "id": "auto_crop_image",
+      "parameters": {
+        "tolerance": 0
+      },
+      "renderer": true,
+      "fill": "#00000000",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          0,
+          0,
+          "#FFFF0000",
+          0
+        ]
+      ],
+      "size": [
+        4,
+        3
+      ],
+      "check": "auto-crop"
+    },
+    {
+      "name": "Blur",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Blur, ShareX.ImageEffectsLib",
+        "Radius": 9
+      },
+      "id": "blur",
+      "parameters": {
+        "radius": 9
+      },
+      "renderer": false,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "GaussianBlur",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.GaussianBlur, ShareX.ImageEffectsLib",
+        "Radius": 7
+      },
+      "id": "gaussian_blur",
+      "parameters": {
+        "radius": 7
+      },
+      "renderer": false,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "ColorDepth",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.ColorDepth, ShareX.ImageEffectsLib",
+        "BitsPerChannel": 2
+      },
+      "id": "color_depth",
+      "parameters": {
+        "bitsPerChannel": 2
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          5,
+          5,
+          "#FF55AAAA",
+          0
+        ]
+      ],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "Glow",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Glow, ShareX.ImageEffectsLib",
+        "Size": 6,
+        "Strength": 0.7,
+        "Color": "#FF123456",
+        "Offset": {
+          "X": 2,
+          "Y": -3
+        },
+        "UseGradient": false
+      },
+      "id": "glow",
+      "parameters": {
+        "size": 6,
+        "strength": 70,
+        "color": "#FF123456",
+        "offset_x": 2,
+        "offset_y": -3
+      },
+      "renderer": false,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "Shadow",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Shadow, ShareX.ImageEffectsLib",
+        "Opacity": 0.45,
+        "Size": 4,
+        "Darkness": 0,
+        "Color": -16776961,
+        "Offset": "2, -3",
+        "AutoResize": true
+      },
+      "id": "shadow",
+      "parameters": {
+        "opacity": 45,
+        "size": 4,
+        "color": "#FF0000FF",
+        "offset_x": 2,
+        "offset_y": -3,
+        "auto_resize": true
+      },
+      "renderer": false,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "Outline",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Outline, ShareX.ImageEffectsLib",
+        "Size": 2,
+        "Padding": 3,
+        "Color": "#80FF0000",
+        "OutlineOnly": true
+      },
+      "id": "outline",
+      "parameters": {
+        "size": 2,
+        "padding": 3,
+        "color": "#80FF0000",
+        "outline_only": true
+      },
+      "renderer": false,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "MatrixConvolution",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.MatrixConvolution, ShareX.ImageEffectsLib",
+        "X0Y0": 1,
+        "X1Y0": 2,
+        "X2Y0": 3,
+        "X0Y1": 4,
+        "X1Y1": 5,
+        "X2Y1": 6,
+        "X0Y2": 7,
+        "X1Y2": 8,
+        "X2Y2": 9,
+        "Factor": 2.5,
+        "Offset": 10
+      },
+      "id": "convolution_matrix",
+      "parameters": {
+        "x0y0": 1,
+        "x1y0": 2,
+        "x2y0": 3,
+        "x0y1": 4,
+        "x1y1": 5,
+        "x2y1": 6,
+        "x0y2": 7,
+        "x1y2": 8,
+        "x2y2": 9,
+        "factor": 2.5,
+        "offset": 10
+      },
+      "renderer": false,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "RGBSplit",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.RGBSplit, ShareX.ImageEffectsLib",
+        "OffsetRed": "-2, 1",
+        "OffsetGreen": {
+          "X": 1,
+          "Y": -1
+        },
+        "OffsetBlue": "3, 2"
+      },
+      "id": "rgb_split",
+      "parameters": {
+        "offset_red_x": -2,
+        "offset_red_y": 1,
+        "offset_green_x": 1,
+        "offset_green_y": -1,
+        "offset_blue_x": 3,
+        "offset_blue_y": 2
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          5,
+          5,
+          "#FF4080C0",
+          0
+        ]
+      ],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "Reflection",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Reflection, ShareX.ImageEffectsLib",
+        "Percentage": 50,
+        "MaxAlpha": 255,
+        "MinAlpha": 0,
+        "Offset": 2,
+        "Skew": false,
+        "SkewSize": 15
+      },
+      "id": "reflection",
+      "parameters": {
+        "percentage": 50,
+        "max_alpha": 255,
+        "min_alpha": 0,
+        "offset": 2,
+        "skew": false,
+        "skew_size": 15
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          0,
+          0,
+          "#FF4080C0",
+          0
+        ],
+        [
+          0,
+          13,
+          "#00000000",
+          0
+        ],
+        [
+          0,
+          14,
+          "#EA4080C0",
+          0
+        ]
+      ],
+      "size": [
+        16,
+        20
+      ]
+    },
+    {
+      "name": "Slice",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Slice, ShareX.ImageEffectsLib",
+        "MinSliceHeight": 2,
+        "MaxSliceHeight": 4,
+        "MinSliceShift": -1,
+        "MaxSliceShift": 3
+      },
+      "id": "slice",
+      "parameters": {
+        "min_height": 2,
+        "max_height": 4,
+        "min_shift": -1,
+        "max_shift": 3
+      },
+      "renderer": false,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "TornEdge",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.TornEdge, ShareX.ImageEffectsLib",
+        "Depth": 3,
+        "Range": 5,
+        "Sides": "Top, Left",
+        "CurvedEdges": false
+      },
+      "id": "torn_edge",
+      "parameters": {
+        "depth": 3,
+        "range": 5,
+        "top": true,
+        "bottom": false,
+        "left": true,
+        "right": false,
+        "curved": false
+      },
+      "renderer": false,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "WaveEdge",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.WaveEdge, ShareX.ImageEffectsLib",
+        "Depth": 3,
+        "Range": 5,
+        "Sides": 10
+      },
+      "id": "wave_edge",
+      "parameters": {
+        "depth": 3,
+        "range": 5,
+        "top": false,
+        "bottom": true,
+        "left": false,
+        "right": true
+      },
+      "renderer": true,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [
+        [
+          5,
+          5,
+          "#FF4080C0",
+          0
+        ]
+      ],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "SelectiveColor",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.SelectiveColor, ShareX.ImageEffectsLib",
+        "Keep": {
+          "data": [
+            1,
+            true,
+            "future"
+          ]
+        }
+      },
+      "id": "",
+      "parameters": {},
+      "renderer": false,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "Skew",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.Skew, ShareX.ImageEffectsLib",
+        "Keep": {
+          "data": [
+            1,
+            true,
+            "future"
+          ]
+        }
+      },
+      "id": "",
+      "parameters": {},
+      "renderer": false,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [],
+      "size": [
+        16,
+        12
+      ]
+    },
+    {
+      "name": "ForceProportions",
+      "legacy": {
+        "$type": "ShareX.ImageEffectsLib.ForceProportions, ShareX.ImageEffectsLib",
+        "Keep": {
+          "data": [
+            1,
+            true,
+            "future"
+          ]
+        }
+      },
+      "id": "",
+      "parameters": {},
+      "renderer": false,
+      "fill": "#FF4080C0",
+      "source": [
+        16,
+        12
+      ],
+      "pixels": [],
+      "size": [
+        16,
+        12
+      ]
+    }
+  ]
+}

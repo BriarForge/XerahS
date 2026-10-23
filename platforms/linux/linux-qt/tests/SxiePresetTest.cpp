@@ -3,6 +3,7 @@
 #include "EditorSource.h"
 #include "image-editor/EditorSession.h"
 #include "image-editor/effects/SxieArchive.h"
+#include "image-editor/effects/CensusCatalog.h"
 #include <QBuffer>
 #include <QFile>
 #include <QJsonDocument>
@@ -15,6 +16,8 @@
 #include <QSignalSpy>
 #include <QFileDialog>
 #include <zlib.h>
+#include <cmath>
+#include <algorithm>
 using namespace xerahs::effects;
 using namespace xerahs::app;
 using namespace xerahs::editor;
@@ -138,6 +141,177 @@ private slots:
     step["parameters"] = QJsonObject{{"amount", 25}, {"unknown", QJsonObject{{"keep", 3}}}}; steps[0] = step; root["steps"] = steps;
     const auto unknown = readXsiePreset(QJsonDocument(root).toJson()); QVERIFY(unknown.ok()); QVERIFY(!unknown.steps[0].supported);
     QCOMPARE(QJsonDocument::fromJson(writeXsiePreset(unknown)).object()["steps"].toArray()[0].toObject()["parameters"], step["parameters"]);
+  }
+  void legacyCensus_data() {
+    QTest::addColumn<QJsonObject>("entry");
+    QFile file(QStringLiteral(SXIE_WATERMARK_FIXTURE)); QVERIFY(file.open(QIODevice::ReadOnly));
+    const auto fixture = QJsonDocument::fromJson(file.readAll()); QVERIFY(fixture.isObject());
+    const auto cases = fixture.object().value("cases").toArray(); QCOMPARE(cases.size(), 38);
+    for (const auto &value : cases) {
+      const auto entry = value.toObject(); QTest::newRow(qPrintable(entry.value("name").toString())) << entry;
+    }
+  }
+  void legacyCensus() {
+    QFETCH(QJsonObject, entry);
+    auto legacy = entry.value("legacy").toObject();
+    legacy["Future"] = QJsonObject{{"nested", QJsonArray{1, true, "keep"}}};
+    QImage stamp(2, 2, QImage::Format_ARGB32); stamp.fill(Qt::red);
+    QByteArray png; QBuffer buffer(&png); QVERIFY(buffer.open(QIODevice::WriteOnly)); QVERIFY(stamp.save(&buffer, "PNG"));
+    const auto root = QJsonObject{{"Name", "Watermarks"}, {"Effects", QJsonArray{legacy}}};
+    const auto p = readSxiePreset(zip({{"Config.json", QJsonDocument(root).toJson()}, {"Assets/stamp.png", png}}));
+    QVERIFY2(p.ok(), qPrintable(p.error)); QCOMPARE(p.steps.size(), 1);
+    const auto &step = p.steps[0]; QCOMPARE(step.id, entry.value("id").toString());
+    if (!step.id.isEmpty()) {
+      const auto &catalog = censusCatalog();
+      const auto spec = std::find_if(catalog.begin(), catalog.end(), [&](const CensusEffect &effect) { return effect.id == step.id; });
+      QVERIFY(spec != catalog.end());
+      for (auto it = step.parameters.begin(); it != step.parameters.end(); ++it)
+        QVERIFY2(std::any_of(spec->parameters.begin(), spec->parameters.end(), [&](const CensusParameter &param) { return param.id == it.key(); }), qPrintable(it.key()));
+    }
+    const auto expected = entry.value("parameters").toObject();
+    for (auto it = expected.begin(); it != expected.end(); ++it) {
+      QVERIFY2(step.parameters.contains(it.key()), qPrintable(it.key()));
+      const auto actual = step.parameters.value(it.key());
+      if (it.value().isString() && it.value().toString().startsWith('#'))
+        QCOMPARE(actual.value<QColor>().rgba(), QColor(it.value().toString()).rgba());
+      else if (it.value().isDouble()) QVERIFY2(std::abs(actual.toDouble() - it.value().toDouble()) < 1e-9, qPrintable(it.key()));
+      else QCOMPARE(QJsonValue::fromVariant(actual), it.value());
+    }
+    QCOMPARE(step.legacy, legacy);
+    if (!step.id.isEmpty()) QVERIFY(step.diagnostics.contains("preset-property-unsupported:Future"));
+    QCOMPARE(step.supported, entry.value("renderer").toBool());
+    const auto bytes = writeXsiePreset(p); const auto again = readXsiePreset(bytes);
+    QVERIFY(again.ok()); QCOMPARE(writeXsiePreset(again), bytes); QCOMPARE(again.steps[0].legacy, legacy);
+    if (!step.supported) {
+      QVERIFY(step.diagnostics.contains("preset-effect-unsupported") || step.diagnostics.contains("preset-asset-effect-unsupported"));
+      return;
+    }
+    const auto sourceSize = entry.value("source").toArray();
+    QImage image(sourceSize[0].toInt(), sourceSize[1].toInt(), QImage::Format_ARGB32); image.fill(QColor(entry.value("fill").toString()));
+    const auto check = entry.value("check").toString();
+    if (check == "auto-crop") for (int y = 3; y < 6; ++y) for (int x = 4; x < 8; ++x) image.setPixelColor(x, y, Qt::red);
+    if (check == "flip") image.setPixelColor(0, 0, Qt::red);
+    const auto loaded = prepareCapturedSource(image); QVERIFY(loaded.document);
+    const auto edit = preparePresetEdit(*loaded.document, image, again, builtinEffects());
+    QVERIFY2(!edit.result.error, qPrintable(edit.result.error.value_or(QString())));
+    const auto size = entry.value("size").toArray(); QCOMPARE(edit.source.size(), QSize(size[0].toInt(), size[1].toInt()));
+    for (const auto &value : entry.value("pixels").toArray()) {
+      const auto point = value.toArray(); const auto actual = edit.source.pixelColor(point[0].toInt(), point[1].toInt());
+      const auto color = QColor(point[2].toString()); const int tolerance = point[3].toInt();
+      for (const int difference : {actual.red() - color.red(), actual.green() - color.green(), actual.blue() - color.blue(), actual.alpha() - color.alpha()})
+        QVERIFY2(std::abs(difference) <= tolerance, qPrintable(actual.name(QColor::HexArgb) + " != " + color.name(QColor::HexArgb)));
+    }
+    if (check == "flip") QCOMPARE(edit.source.pixelColor(image.width() - 1, image.height() - 1), QColor(Qt::red));
+    if (check == "watermark" || check == "text") {
+      int red = 0, green = 0, blue = 0, white = 0;
+      for (int y = 0; y < edit.source.height(); ++y) for (int x = 0; x < edit.source.width(); ++x) {
+        const auto c = edit.source.pixelColor(x, y); if (c.alpha() < 128) continue;
+        QVERIFY(x >= 7 && x < 80 && y >= 7 && y < 70);
+        red += c.red() > 200 && c.green() < 50 && c.blue() < 50;
+        green += c.green() > 200 && c.red() < 50 && c.blue() < 50;
+        blue += c.blue() > 200 && c.red() < 50 && c.green() < 50;
+        white += c.red() > 200 && c.green() > 200 && c.blue() > 200;
+      }
+      QVERIFY(red > 5); QVERIFY(green > 2); QVERIFY(blue > 2);
+      if (check == "watermark") QVERIFY(white > 5);
+    }
+    QCOMPARE(step.parameters, again.steps[0].parameters);
+  }
+  void colorFormatsAndRefusals() {
+    const QList<QPair<QJsonValue, QColor>> colors{
+      {QJsonValue(-2146360781.0), QColor::fromRgba(0x80112233)}, {QJsonValue(2148606515.0), QColor::fromRgba(0x80112233)},
+      {"#80112233", QColor::fromRgba(0x80112233)}, {"128, 17, 34, 51", QColor::fromRgba(0x80112233)},
+      {"17, 34, 51", QColor(17, 34, 51)}, {"Transparent", QColor(255, 255, 255, 0)}, {"Red", QColor(Qt::red)}, {"LightGray", QColor(211, 211, 211)}};
+    for (const auto &item : colors) {
+      const auto p = readSxiePreset(configZip({{"Effects", QJsonArray{QJsonObject{{"$type", "ShareX.ImageEffectsLib.DrawBackground"}, {"Color", item.first}}}}}));
+      QVERIFY(p.ok()); QVERIFY(p.steps[0].supported); QCOMPARE(p.steps[0].parameters.value("color").value<QColor>(), item.second);
+      QCOMPARE(writeXsiePreset(readXsiePreset(writeXsiePreset(p))), writeXsiePreset(p));
+    }
+    for (const auto &value : QJsonArray{4294967296.0, -2147483649.0, 1.5, true, QJsonObject{{"R", 1}}, "#1234", "300, 1, 1", "no-such-color"}) {
+      const auto p = readSxiePreset(configZip({{"Effects", QJsonArray{QJsonObject{{"$type", "ShareX.ImageEffectsLib.DrawBackground"}, {"Color", value}}}}}));
+      QVERIFY(p.ok()); QVERIFY(!p.steps[0].supported); QVERIFY(p.steps[0].diagnostics.contains("effect-invalid-parameter:color"));
+      QCOMPARE(p.steps[0].legacy.value("Color"), value);
+    }
+  }
+  void unsupportedPropertiesAndStrictConversions() {
+    const QList<QJsonObject> cases{
+      {{"$type", "ShareX.ImageEffectsLib.DrawBackground"}, {"UseGradient", true}},
+      {{"$type", "ShareX.ImageEffectsLib.DrawBorder"}, {"DashStyle", "DashDotDot"}},
+      {{"$type", "ShareX.ImageEffectsLib.Canvas"}, {"MarginMode", "PercentageOfCanvas"}},
+      {{"$type", "ShareX.ImageEffectsLib.Canvas"}, {"Margin", "1, 2, 3"}},
+      {{"$type", "ShareX.ImageEffectsLib.Canvas"}, {"Margin", QJsonObject{{"Left", 1.5}, {"Top", 0}, {"Right", 0}, {"Bottom", 0}}}},
+      {{"$type", "ShareX.ImageEffectsLib.DrawText"}, {"TextFont", "Arial, 12pt, style=Underline"}},
+      {{"$type", "ShareX.ImageEffectsLib.DrawText"}, {"TextFont", "Arial, 1000pt"}},
+      {{"$type", "ShareX.ImageEffectsLib.DrawText"}, {"Offset", QJsonObject{{"X", 1.5}, {"Y", 2}}}},
+      {{"$type", "ShareX.ImageEffectsLib.DrawText"}, {"Placement", 0}},
+      {{"$type", "ShareX.ImageEffectsLib.DrawText"}, {"DrawBorder", "true"}},
+      {{"$type", "ShareX.ImageEffectsLib.Resize"}, {"Mode", "ResizeIfBigger"}},
+      {{"$type", "ShareX.ImageEffectsLib.Rotate"}, {"Upsize", false}, {"Clip", false}},
+      {{"$type", "ShareX.ImageEffectsLib.AutoCrop"}, {"Padding", 2}},
+      {{"$type", "ShareX.ImageEffectsLib.AutoCrop"}, {"Sides", "Top"}},
+      {{"$type", "ShareX.ImageEffectsLib.ReplaceColor"}, {"AutoSourceColor", true}},
+      {{"$type", "ShareX.ImageEffectsLib.ReplaceColor"}, {"Threshold", 20}},
+      {{"$type", "ShareX.ImageEffectsLib.Crop"}, {"Margin", "-1, 0, 0, 0"}},
+      {{"$type", "ShareX.ImageEffectsLib.RoundedCorners"}, {"CornerRadius", -1}}};
+    for (const auto &legacy : cases) {
+      const auto p = readSxiePreset(configZip({{"Effects", QJsonArray{legacy}}}));
+      QVERIFY2(p.ok(), qPrintable(p.error)); QVERIFY2(!p.steps[0].supported, qPrintable(QJsonDocument(legacy).toJson()));
+      QVERIFY(!p.steps[0].diagnostics.isEmpty()); QCOMPARE(p.steps[0].legacy, legacy);
+      QCOMPARE(writeXsiePreset(readXsiePreset(writeXsiePreset(p))), writeXsiePreset(p));
+    }
+    auto p = readSxiePreset(configZip({{"Effects", QJsonArray{QJsonObject{{"$type", "ShareX.ImageEffectsLib.DrawText"}}}}}));
+    QVERIFY(p.steps[0].supported); QCOMPARE(p.steps[0].parameters.value("font_size").toDouble(), 15.0);
+    QCOMPARE(p.steps[0].parameters.value("draw_text_shadow").toBool(), true);
+    p = readSxiePreset(configZip({{"Effects", QJsonArray{QJsonObject{{"$type", "ShareX.ImageEffectsLib.Resize"}, {"Width", 8}, {"Height", 6}}}}}));
+    QVERIFY(p.steps[0].supported); QCOMPARE(p.steps[0].parameters.value("maintain_aspect_ratio").toBool(), false);
+    p = readSxiePreset(configZip({{"Effects", QJsonArray{QJsonObject{{"$type", "ShareX.ImageEffectsLib.Canvas"}, {"Margin", "3"}}}}}));
+    QVERIFY(p.steps[0].supported);
+    for (const auto &key : {"left", "top", "right", "bottom"}) QCOMPARE(p.steps[0].parameters.value(key).toInt(), 3);
+  }
+  void legacyEnumValues() {
+    const auto import = [](QJsonObject effect) {
+      return readSxiePreset(configZip({{"Effects", QJsonArray{effect}}}));
+    };
+    const QList<int> flags{1, 2, 4, 16, 32, 64, 256, 512, 1024};
+    const QStringList placements{"TopLeft", "TopCenter", "TopRight", "MiddleLeft", "MiddleCenter", "MiddleRight", "BottomLeft", "BottomCenter", "BottomRight"};
+    const QStringList native{"top_left", "top_center", "top_right", "middle_left", "middle_center", "middle_right", "bottom_left", "bottom_center", "bottom_right"};
+    for (int i = 0; i < flags.size(); ++i) for (const QJsonValue &value : {QJsonValue(flags[i]), QJsonValue(placements[i])}) {
+      const auto p = import({{"$type", "ShareX.ImageEffectsLib.DrawText"}, {"Placement", value}});
+      QVERIFY(p.steps[0].supported); QCOMPARE(p.steps[0].parameters.value("placement").toString(), native[i]);
+    }
+    for (int i = 0; i < 4; ++i) {
+      const QStringList names{"Solid", "Dash", "Dot", "DashDot"}, values{"solid", "dash", "dot", "dash_dot"};
+      for (const QJsonValue &value : {QJsonValue(i), QJsonValue(names[i])}) {
+        const auto p = import({{"$type", "ShareX.ImageEffectsLib.DrawBorder"}, {"DashStyle", value}});
+        QVERIFY(p.steps[0].supported); QCOMPARE(p.steps[0].parameters.value("dash_style").toString(), values[i]);
+      }
+    }
+    // File effect parameters are still converted when a missing embedded asset prevents execution.
+    const QList<QPair<QString, QStringList>> enums{
+      {"SizeMode", {"dont_resize", "absolute_size", "percentage_of_watermark", "percentage_of_canvas"}},
+      {"RotateFlip", {"none", "rotate_90", "rotate_180", "rotate_270", "flip_x", "rotate_90_flip_x", "flip_y", "rotate_90_flip_y"}},
+      {"InterpolationMode", {"high_quality_bicubic", "bicubic", "high_quality_bilinear", "bilinear", "nearest_neighbor"}},
+      {"CompositingMode", {"source_over", "source_copy"}}};
+    const QStringList ids{"size_mode", "rotate_flip", "interpolation_mode", "compositing_mode"};
+    for (int row = 0; row < enums.size(); ++row) {
+      for (int i = 0; i < enums[row].second.size(); ++i) {
+        const auto p = import({{"$type", "ShareX.ImageEffectsLib.DrawImage"}, {enums[row].first, i}});
+        QVERIFY(!p.steps[0].supported); QCOMPARE(p.steps[0].parameters.value(ids[row]).toString(), enums[row].second[i]);
+      }
+      for (const QJsonValue &invalid : {QJsonValue(-1), QJsonValue(1.5), QJsonValue(enums[row].second.size()), QJsonValue("BadValue")}) {
+        const auto p = import({{"$type", "ShareX.ImageEffectsLib.DrawImage"}, {enums[row].first, invalid}});
+        QVERIFY(!p.steps[0].supported); QVERIFY(p.steps[0].diagnostics.contains("effect-invalid-parameter:" + ids[row]));
+      }
+    }
+    for (const auto &pair : QList<QPair<QString, double>>{{"12pt", 16}, {"12px", 12}, {"0.25in", 24}, {"75doc", 24}, {"6.35mm", 24}}) {
+      const auto p = import({{"$type", "ShareX.ImageEffectsLib.DrawText"}, {"TextFont", "Arial, " + pair.first}});
+      QVERIFY(p.steps[0].supported); QVERIFY(std::abs(p.steps[0].parameters.value("font_size").toDouble() - pair.second) < 1e-9);
+    }
+    for (const auto &type : {"ShareX.ImageEffectsLib.Shadow", "ShareX.ImageEffectsLib.Glow"}) {
+      const auto p = import({{"$type", type}, {"Darkness", 4}, {"Unknown", QJsonArray{1, "keep"}}});
+      QVERIFY(!p.steps[0].supported); QCOMPARE(writeXsiePreset(readXsiePreset(writeXsiePreset(p))), writeXsiePreset(p));
+      QCOMPARE(p.steps[0].legacy.value("Unknown"), QJsonValue(QJsonArray{1, "keep"}));
+    }
   }
   void exportDialogWritesPrivateNativeJson() {
     QTemporaryDir temp; QImage image(2, 2, QImage::Format_ARGB32); image.fill(Qt::white);
