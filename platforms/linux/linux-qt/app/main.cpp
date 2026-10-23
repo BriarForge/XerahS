@@ -2,51 +2,44 @@
 // Identity com.xerahs.app / "XerahS" (CORE-002, ROOT-IDENTITY-001).
 
 #include "CaptureController.h"
-#include "ScheduledCapture.h"
-#include "RecordingActions.h"
-#include "CaptureActions.h"
+#include "EditorOpen.h"
 #include "CaptureWorkflows.h"
 #include "WorkflowDiscovery.h"
 #include "NativeWorkflowExecutions.h"
-#include <QScopedValueRollback>
-#include "WorkflowShortcutActions.h"
-#include "SettingsDialog.h"
-#include "UploadDestinationsDialog.h"
-#include "FileUploadController.h"
-#include "WatchFolderService.h"
-#include "WatchFoldersDialog.h"
-#include "ColorPickerDialog.h"
 #include "SecretServiceCredentialStore.h"
 #include "settings/ApplicationSettings.h"
-#include "CaptureRecoveryActions.h"
-#include "EditorWindow.h"
-#include "EditorOpen.h"
-#include "RecentImageMenu.h"
 #include "NativeDesktopAppearance.h"
-#include "AppearanceDialog.h"
+#include "NativeEditorPreferences.h"
 #include "NativeInstance.h"
 #include "ApplicationWindow.h"
-#include "PipelineHistoryDialog.h"
-#include "CaptureHistoryWindow.h"
-#include "shell/ActivationDispatcher.h"
+#include "AppContext.h"
+#include "CommandRegistry.h"
+#include "features/ApplicationFeature.h"
+#include "features/CaptureFeature.h"
+#include "features/CommandWindowAttach.h"
+#include "features/FilesFeature.h"
+#include "features/PreferencesFeature.h"
+#include "features/RecordingFeature.h"
+#include "features/ScheduleFeature.h"
+#include "features/ToolsFeature.h"
+#include "features/UploadFeature.h"
+#include "features/WorkflowFeature.h"
+#include "RecordingController.h"
+#include "image-editor/EditorPreferences.h"
 
-#include <QAction>
 #include <QApplication>
 #include <QCommandLineParser>
-#include <QDesktopServices>
 #include <QDir>
-#include <QFileDialog>
-#include <QFileInfo>
 #include <QMenu>
-#include <QMenuBar>
 #include <QJsonDocument>
-#include <QUuid>
 #include <QMessageBox>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPointer>
+#include <QScopedValueRollback>
 #include <QStandardPaths>
 #include <QSystemTrayIcon>
-#include <QUrl>
+#include <QWidget>
 
 #include <cstdio>
 #include <algorithm>
@@ -55,22 +48,6 @@
 using xerahs::app::CaptureController;
 
 namespace {
-QString activationFailureMessage(const QString &diagnostic) {
-  if (diagnostic == u"usage-invalid") return QStringLiteral("Choose one operation and use --help for supported arguments.");
-  if (diagnostic == u"workflow-id-invalid") return QStringLiteral("Use a full workflow UUID from Capture workflows.");
-  if (diagnostic == u"workflow-unavailable") return QStringLiteral("The saved workflow is missing or unavailable, or private execution storage could not be written. Review Capture workflows and private workflow storage before retrying.");
-  if (diagnostic == u"presentation-required") return QStringLiteral("This operation needs the graphical XerahS application for capture, consent or editing. No operation was started.");
-  if (diagnostic == u"activation-unavailable") return QStringLiteral("The operation is unavailable. Review the saved workflow and private execution storage ownership, permissions and capacity before retrying.");
-  if (diagnostic == u"activation-busy") return QStringLiteral("XerahS is busy. Try again after the current capture or dialog finishes.");
-  if (diagnostic == u"instance-unavailable") return QStringLiteral("The running XerahS instance is not ready. Try again after startup finishes.");
-  if (diagnostic == u"activation-delivery-unknown") return QStringLiteral("XerahS did not acknowledge the request. Check the running instance before retrying.");
-  if (diagnostic == u"instance-storage-denied") return QStringLiteral("XerahS could not secure its runtime files. Check the ownership and permissions of XDG_RUNTIME_DIR.");
-  if (diagnostic == u"instance-endpoint-conflict") return QStringLiteral("The XerahS runtime endpoint is in use or unsafe. Close conflicting instances and check runtime permissions.");
-  if (diagnostic == u"activation-peer-denied") return QStringLiteral("XerahS could not authenticate the running instance. Check your per-user runtime environment.");
-  if (diagnostic == u"activation-invalid" || diagnostic == u"activation-version-unsupported") return QStringLiteral("The activation request is invalid or incompatible. Check the command and installed XerahS version.");
-  return QStringLiteral("XerahS could not accept the activation. Check the running instance and try again.");
-}
-
 void writeCommandJson(const QJsonObject &result) {
   const auto bytes = QJsonDocument(result).toJson(QJsonDocument::Compact);
   std::fwrite(bytes.constData(), 1, size_t(bytes.size()), stdout); std::fputc('\n', stdout); std::fflush(stdout);
@@ -87,7 +64,7 @@ void reportLaunch(const xerahs::shell::ActivationRequest &request, bool json, co
   if (json) {
     writeCommandJson(xerahs::shell::activationLaunchResult(request, delivery, diagnostic));
   }
-  if (!diagnostic.isEmpty()) std::fprintf(stderr, "xerahs: %s: %s\n", qPrintable(diagnostic), qPrintable(activationFailureMessage(
+  if (!diagnostic.isEmpty()) std::fprintf(stderr, "xerahs: %s: %s\n", qPrintable(diagnostic), qPrintable(xerahs::app::activationFailureMessage(
       request.action == xerahs::shell::ActivationAction::RunWorkflow && diagnostic == "activation-unavailable" ? QStringLiteral("workflow-unavailable") : diagnostic)));
 }
 
@@ -233,310 +210,72 @@ int main(int argc, char *argv[]) {
   // The pipeline constructs its own keyring store on its worker thread.
   const auto journal = std::make_shared<xerahs::app::NativePipelineJournal>(xerahs::app::NativePipelineJournal::defaultDirectory());
   CaptureController capture(settings.current().values.value("saveFolder").toString(), nullptr, {}, {}, capturePorts, journal);
-  const auto effectiveWorkflow = [&workflows, &settings](const QUuid &id = QUuid{}) {
-    auto choice = workflows.resolve(id);
-    if (choice.workflow) choice.workflow = xerahs::settings::withApplicationDefaults(*choice.workflow,
-        settings.current().values, workflows.store().hasSavedDefinitions());
-    return choice;
-  };
-  capture.setDefaultWorkflowResolver([&effectiveWorkflow] { return effectiveWorkflow(); });
   const auto refreshCaptureStyle = [&capture] { capture.setAnnotationStyle(xerahs::editor::drawingStyleFromPreferences(xerahs::app::nativeEditorPreferences())); };
   refreshCaptureStyle();
   QObject::connect(&xerahs::app::nativeEditorPreferenceEvents(), &xerahs::app::NativeEditorPreferenceEvents::drawingDefaultsChanged, &capture, refreshCaptureStyle);
 
-  const auto shortcutPlan = [&workflows, &settings] {
-    const auto diagnostic = workflows.store().unchanged();
-    if (!diagnostic.isEmpty()) return xerahs::workflows::WorkflowShortcutPlan{{}, 0, diagnostic};
-    return xerahs::workflows::captureShortcutPlan(*workflows.store().current().catalog, xerahs::app::CaptureActions::selectableActions(), xerahs::settings::hotkeys(settings.current().values));
-  };
-  xerahs::app::WorkflowShortcutActions shortcutActions(shortcutPlan, [&capture] { return !capture.busy() && !QApplication::activeModalWidget(); });
   QSystemTrayIcon tray(appIcon());
   tray.setToolTip(QStringLiteral("XerahS"));
   QMenu menu;
   xerahs::app::RecordingController recording;
-  xerahs::app::RecordingActions recordingActions(recording, menu, tray, [&] { return settings.current().values.value("saveFolder").toString(); });
-  recordingActions.setInputs([&] { return settings.current().values; }, [&](std::function<void(QRectF)> selected) {
-    capture.selectRecordingRegion(std::move(selected));
-  });
-  QAction *region = menu.addAction(QStringLiteral("Capture region"));
-  QAction *fullScreen = menu.addAction(QStringLiteral("Capture full screen"));
-  QAction *monitor = menu.addAction(QStringLiteral("Capture monitor under pointer"));
-  QAction *activeWindow = menu.addAction(QStringLiteral("Capture active window"));
-  xerahs::app::ApplicationWindow *commandWindow = nullptr; ActivationDispatcher *activation = nullptr;
-  auto *schedule = new xerahs::app::ScheduledCapture(xerahs::app::ScheduledCapturePorts{
-    [&] { return capture.busy() || recording.busy() || QApplication::activeModalWidget() || shortcutActions.pending(); },
-    [&](xerahs::capture::CaptureSource source) {
-      const auto action = source == xerahs::capture::CaptureSource::Monitor ? ActivationAction::CaptureMonitor : source == xerahs::capture::CaptureSource::ActiveWindow ? ActivationAction::CaptureActiveWindow : source == xerahs::capture::CaptureSource::Region ? ActivationAction::CaptureRegion : ActivationAction::CaptureFullScreen;
-      if (!activation) return QStringLiteral("activation-unavailable");
-      const auto local = makeActivationRequest(action); const auto admitted = activation->admit(local);
-      if (admitted != ActivationReplyState::Accepted) return admitted == ActivationReplyState::Busy ? QStringLiteral("busy") : QStringLiteral("activation-unavailable");
-      const auto diagnostic = activation->dispatch(local);
-      return !diagnostic.isEmpty() ? diagnostic : capture.busy() ? QString() : QStringLiteral("capture-not-started");
-    },
-    [&](const QString &title, const QString &body, bool ok) {
-      if (commandWindow) { commandWindow->showResult(title, body, ok); if (!ok && title == QLatin1String("Capture after delay")) commandWindow->activate(); }
-      tray.showMessage(title, body, ok ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning, 5000);
-    },
-    [&](const QString &tooltip) { tray.setToolTip(tooltip); }}, &app);
-  menu.addAction(schedule->delayAction()); menu.addAction(schedule->autoAction()); menu.addAction(schedule->stopAction());
-  QAction *chooseCapture = menu.addAction(QStringLiteral("Capture region and choose actions…"));
-  QAction *configureWorkflows = menu.addAction(QStringLiteral("Capture workflows…"));
-  menu.addAction(shortcutActions.enableAction()); menu.addAction(shortcutActions.disableAction());
-  QAction *cancelCapture = menu.addAction(QStringLiteral("Cancel capture"));
-  cancelCapture->setEnabled(false);
-  QObject::connect(cancelCapture, &QAction::triggered, &capture, &CaptureController::cancel);
-  QAction *pickColour = menu.addAction(QStringLiteral("Pick colour…"));
-  QAction *newImage = menu.addAction(QStringLiteral("New image…"));
-  QAction *openImage = menu.addAction(QStringLiteral("Open image…"));
-  xerahs::app::addRecentImagesMenu(&menu, [](const QString &path) {
-    if (auto *window = xerahs::app::EditorWindow::open(path)) window->show();
-  }, [] { xerahs::app::manageRecentImages(); });
-  QAction *folder = menu.addAction(QStringLiteral("Open captures folder"));
-  QAction *history = menu.addAction(QStringLiteral("Capture history…"));
-  QAction *uploadFile = menu.addAction(QStringLiteral("Upload file…"));
-  QAction *uploadDestinations = menu.addAction(QStringLiteral("Upload destinations…"));
-  QAction *watchFolders = menu.addAction(QStringLiteral("Watch folders…"));
-  QAction *settingsAction = menu.addAction(QStringLiteral("Settings…"));
-  QAction *appearance = menu.addAction(QStringLiteral("Editor appearance…"));
-  menu.addSeparator();
-  QAction *quit = menu.addAction(QStringLiteral("Quit XerahS"));
+  xerahs::app::CommandRegistry commands(&app);
+  QPointer<xerahs::app::ApplicationWindow> home;
+  xerahs::app::AppContext ctx{commands, app, tray, capture, recording, settings, uploadCatalogPath, uploadCredentials};
+  ctx.workflows = &workflows;
+  ctx.journal = journal;
+  ctx.defaultCaptureFolder = defaultFolder;
+  ctx.dialogParent = [&home]() -> QWidget * { return home.data(); };
+  ctx.notify = [&ctx](const QString &title, const QString &body, bool ok, bool raiseWindow) {
+    if (auto *window = qobject_cast<xerahs::app::ApplicationWindow *>(ctx.dialogParent ? ctx.dialogParent() : nullptr)) {
+      window->showResult(title, body, ok);
+      if (raiseWindow) window->activate();
+    }
+    ctx.tray.showMessage(title, body, ok ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning, 5000);
+  };
+  auto dispatcher = xerahs::app::createShellDispatcher(ctx);
+  xerahs::app::installCapture(ctx);
+  xerahs::app::installSchedule(ctx);
+  xerahs::app::installRecording(ctx);
+  xerahs::app::installWorkflows(ctx);
+  xerahs::app::installTools(ctx);
+  xerahs::app::installFiles(ctx);
+  xerahs::app::installUpload(ctx);
+  xerahs::app::installPreferences(ctx);
+  xerahs::app::installApplication(ctx);
+  xerahs::app::ApplicationWindow window(commands);
+  home = &window;
+  commands.populate(&menu, xerahs::app::CommandSurface::Tray);
   tray.setContextMenu(&menu);
-  xerahs::app::ApplicationWindow home({{"upload-destinations", uploadDestinations}, {"settings", settingsAction}, {"capture-region", region}, {"capture-full-screen", fullScreen}, {"capture-monitor", monitor}, {"capture-active-window", activeWindow}, {"capture-after-delay", schedule->delayAction()}, {"auto-capture", schedule->autoAction()}, {"stop-auto-capture", schedule->stopAction()}, {"capture-region-choose-actions", chooseCapture}, {"cancel-capture", cancelCapture},
-      {"capture-workflows", configureWorkflows}, {"enable-workflow-shortcuts", shortcutActions.enableAction()}, {"disable-workflow-shortcuts", shortcutActions.disableAction()},
-      {"pick-colour", pickColour}, {"new-image", newImage}, {"open-image", openImage}, {"upload-file", uploadFile}, {"captures-folder", folder}, {"capture-history", history}, {"editor-appearance", appearance}, {"quit", quit}});
-  commandWindow = &home; schedule->setDialogParent(&home);
-  QPointer<xerahs::app::UploadDestinationsDialog> uploadDialog;
-  std::shared_ptr<xerahs::uploads::DestinationCatalog> uploadCatalog;
-  QObject::connect(uploadDestinations, &QAction::triggered, &home, [&] {
-    if (!uploadDialog) {
-      uploadCatalog = std::make_shared<xerahs::uploads::DestinationCatalog>(uploadCatalogPath);
-      auto *dialog = new xerahs::app::UploadDestinationsDialog(*uploadCatalog, *uploadCredentials,
-          xerahs::app::nativeUploadDestinationsPorts(), &home);
-      // Keep the single non-modal window and its referenced stores until shutdown.
-      QObject::connect(dialog, &QObject::destroyed, [catalog = uploadCatalog, credentials = uploadCredentials] {});
-      uploadDialog = dialog;
-    }
-    uploadDialog->show(); uploadDialog->raise(); uploadDialog->activateWindow();
-  });
-  auto *fileUpload = new xerahs::app::FileUploadController(
-      xerahs::app::FileUploadPorts{uploadCatalogPath, uploadCredentials, [uploadDestinations] { uploadDestinations->trigger(); }, {}},
-      &home, &home);
-  QObject::connect(uploadFile, &QAction::triggered, fileUpload, &xerahs::app::FileUploadController::chooseAndUpload);
-  QObject::connect(&home, &xerahs::app::ApplicationWindow::filesDropped, fileUpload, &xerahs::app::FileUploadController::upload);
-  xerahs::watch::WatchFolders watchStore(QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath("watch"));
-  xerahs::app::FileUploadController watchUploads(
-      xerahs::app::FileUploadPorts{uploadCatalogPath, uploadCredentials, [uploadDestinations] { uploadDestinations->trigger(); }, {}}, &home);
-  xerahs::app::WatchFolderService watchService(watchStore, watchUploads,
-      [&] { return settings.current().values.value("saveFolder").toString(); });
-  QObject::connect(&watchService, &xerahs::app::WatchFolderService::notify, &home, [&](const QString &message, bool success) {
-    home.showResult("Watch folders", message, success);
-    tray.showMessage("Watch folders", message, success ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning);
-  });
-  QObject::connect(watchFolders, &QAction::triggered, &home, [&] {
-    xerahs::app::WatchFoldersDialog dialog(watchService, &home); dialog.exec();
-  });
-  QObject::connect(&app, &QCoreApplication::aboutToQuit, &watchService, &xerahs::app::WatchFolderService::stop);
-  watchService.start();
-  for (auto *childMenu : home.menuBar()->findChildren<QMenu *>()) {
-    if (childMenu->title() == "&Capture") for (auto *action : recordingActions.actions()) childMenu->addAction(action);
-  }
-  QObject::connect(&recording, &xerahs::app::RecordingController::notify, &home, &xerahs::app::ApplicationWindow::showResult);
-  QObject::connect(&recording, &xerahs::app::RecordingController::notify, &tray, [&tray](const QString &title, const QString &body, bool success) { tray.showMessage(title, body, success ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning); });
-  QObject::connect(&recording, &xerahs::app::RecordingController::changed, &home, [&] { home.setWindowTitle(recording.busy() ? recording.indicator() : QStringLiteral("XerahS")); });
-  QObject::connect(&app, &QCoreApplication::aboutToQuit, &recording, &xerahs::app::RecordingController::abort);
-  // Leave a focus-capable native window behind the chooser. In particular,
-  // Wayland clipboard dispatch must not follow closure of our last window.
-  capture.setActionSelectionParent(&home);
-  const auto applySettings = [&] {
-    capture.setSaveDirectory(settings.current().values.value("saveFolder").toString());
-    const bool visible = settings.current().values.value("showTrayIcon").toBool();
-    tray.setVisible(visible);
-    app.setQuitOnLastWindowClosed(!visible || !QSystemTrayIcon::isSystemTrayAvailable());
-    if (!visible || !QSystemTrayIcon::isSystemTrayAvailable()) home.activate();
-  };
-  QObject::connect(settingsAction, &QAction::triggered, &home, [&] {
-    auto displayPlan = shortcutPlan();
-    if (displayPlan.entries.isEmpty()) for (const auto &action : xerahs::settings::captureHotkeyActions())
-      displayPlan.entries.append({action.id, action.label, xerahs::settings::hotkeys(settings.current().values).entries.value(action.id)});
-    if (workflows.store().current().catalog) for (const auto &workflow : workflows.store().current().catalog->entries) {
-      const auto id = workflow.id.toString(QUuid::WithoutBraces);
-      const bool listed = std::any_of(displayPlan.entries.cbegin(), displayPlan.entries.cend(), [&](const auto &entry) { return entry.id == id; });
-      if (!listed) displayPlan.entries.append({id, workflow.name + " (unavailable)", {}});
-    }
-    xerahs::app::SettingsDialog dialog(settings, defaultFolder, displayPlan, shortcutActions, applySettings, &home);
-    dialog.exec();
-  });
-  if (!settings.current().diagnostics.isEmpty()) home.showResult("Application settings", settings.current().diagnostics.join('\n'), false);
-  QObject::connect(&shortcutActions, &xerahs::app::WorkflowShortcutActions::notify, &home, [&home](const QString &body, bool success) { home.showResult("Workflow shortcuts", body, success); });
-  QObject::connect(&workflows, &xerahs::app::NativeCaptureWorkflows::changed, &shortcutActions, &xerahs::app::WorkflowShortcutActions::invalidate);
-  const auto refreshWorkflow = [&] {
-    const auto &catalog = workflows.store().current().catalog; QString label;
-    if (catalog) for (const auto &w : catalog->entries) if (w.id == catalog->defaultId) label = w.name;
-    label.replace('&', "&&");
-    region->setText(capture.busy() ? "Capture region (in progress)" : label.isEmpty() ? "Capture region (configure workflows)" : "Capture region — " + label);
-  };
-  QObject::connect(&workflows, &xerahs::app::NativeCaptureWorkflows::changed, &home, refreshWorkflow);
-  QObject::connect(&capture, &CaptureController::busyChanged, &home, refreshWorkflow); refreshWorkflow();
-  QObject::connect(&capture, &CaptureController::choosingActions, &home, &xerahs::app::ApplicationWindow::activate);
-  QPointer<xerahs::app::PipelineHistoryDialog> historyDialog;
-  QPointer<xerahs::app::CaptureHistoryWindow> historyWindow;
-  QObject::connect(history, &QAction::triggered, &home, [&] {
-    if (historyWindow) { historyWindow->show(); historyWindow->raise(); historyWindow->activateWindow(); return; }
-    historyWindow = new xerahs::app::CaptureHistoryWindow(journal, [&capture] { return capture.busy(); }, [](const QString &path, QWidget *parent) {
-      if (auto *window = xerahs::app::EditorWindow::open(path, parent)) window->show();
-    }, &home);
-    historyWindow->setRecordsOpener([&] {
-      if (historyDialog) { historyDialog->show(); historyDialog->raise(); historyDialog->activateWindow(); return; }
-      historyDialog = new xerahs::app::PipelineHistoryDialog(journal, [&capture] { return capture.busy(); }, historyWindow);
-      historyDialog->show();
-    });
-    historyWindow->show();
-  });
-  // New captures appear without a manual refresh.
-  QObject::connect(&capture, &CaptureController::busyChanged, &home, [&](bool busy) { if (!busy && historyWindow) historyWindow->refresh(); });
-  auto *showHome = new QAction(QStringLiteral("Open XerahS"), &menu); menu.insertAction(region, showHome);
-  QObject::connect(showHome, &QAction::triggered, &home, &xerahs::app::ApplicationWindow::activate);
-  auto *recovery = new xerahs::app::CaptureRecoveryActions(capture, &home, [](const QImage &image, QWidget *parent) {
-    if (auto *window = xerahs::app::EditorWindow::fromCapturedImage(image, parent)) { window->show(); return true; }
-    return false;
-  }, &home);
-  menu.insertAction(newImage, recovery->editAction()); menu.insertAction(newImage, recovery->reviewAction()); menu.insertAction(newImage, recovery->discardAction());
-  menu.insertAction(newImage, recovery->retryAction());
-  recovery->setAnnotationOpener([](const xerahs::editor::AnnotationDocument &document, QWidget *parent) {
-    if (auto *window = xerahs::app::EditorWindow::fromCapturedDocument(document, parent)) { window->show(); return true; }
-    return false;
-  });
-  home.addCaptureRecoveryActions(recovery->editAction(), recovery->discardAction(), recovery->reviewAction(), recovery->retryAction());
-  QObject::connect(recovery, &xerahs::app::CaptureRecoveryActions::notify, &home, [&home](const QString &body, bool success) {
-    home.showResult(QStringLiteral("Retained capture"), body, success);
-  });
-
-  // One picker per process keeps its recent colours for the session.
-  auto *colorPicker = new xerahs::app::ColorPickerDialog(&home);
-  QObject::connect(pickColour, &QAction::triggered, colorPicker, [colorPicker] {
-    colorPicker->show(); colorPicker->raise(); colorPicker->activateWindow(); colorPicker->pick();
-  });
-  QObject::connect(newImage, &QAction::triggered, [] {
-    if (auto *window = xerahs::app::EditorWindow::createNew()) window->show();
-  });
-  QObject::connect(folder, &QAction::triggered, &home, [&] {
-    const auto choice = workflows.resolve();
-    if (!choice.workflow) { home.showResult("Capture folder unavailable", xerahs::app::workflowMessage(choice.diagnostic), false); return; }
-    const auto directory = choice.workflow->output.directory.isEmpty() ? capture.saveDirectory() : choice.workflow->output.directory;
-    if (!QDir().mkpath(directory) || !QDesktopServices::openUrl(QUrl::fromLocalFile(directory)))
-      home.showResult("Capture folder unavailable", "The saved default workflow's folder could not be opened. Review its save folder in Capture workflows.", false);
-  });
-  QObject::connect(quit, &QAction::triggered, &app, &QApplication::quit);
-  QObject::connect(appearance, &QAction::triggered, [] { xerahs::app::manageEditorAppearance(); });
-  // CORE-007: availability is shown, not faked.
-  QObject::connect(&capture, &CaptureController::busyChanged, region, [region, fullScreen, monitor, activeWindow, chooseCapture, cancelCapture, &capture](bool) {
-    const bool busy = capture.busy();
-    region->setEnabled(!busy);
-    fullScreen->setEnabled(!busy);
-    monitor->setEnabled(!busy);
-    activeWindow->setEnabled(!busy);
-    chooseCapture->setEnabled(!busy);
-    cancelCapture->setEnabled(busy);
-  });
-  QObject::connect(&capture, &CaptureController::notify, &tray,
-                   [&tray, &settings](const QString &title, const QString &body, bool success) {
-                     if (success && settings.current().values.value("playCaptureSound").toBool()) QApplication::beep();
-                     // Failures are always reported; the setting only quiets successes.
-                     if (success && !settings.current().values.value("showNotification").toBool()) return;
-                     tray.showMessage(title, body, success ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning,
-                                      5000);
-                   });
-  QObject::connect(&capture, &CaptureController::notify, &home, &xerahs::app::ApplicationWindow::showResult);
-  QObject::connect(&capture, &CaptureController::compositionProgressChanged, &home, [&home](int percent) {
-    home.showProgress(QStringLiteral("Region capture"), percent);
-  });
-  QObject::connect(&capture, &CaptureController::pipelineActivityChanged, &home, [&home](const QString &text) {
-    home.showActivity(QStringLiteral("Capture actions"), text);
-  });
-  QObject::connect(&capture, &CaptureController::busyChanged, &home, [&home](bool busy) {
-    if (!busy) home.cancelPendingProgress();
-  });
-  const xerahs::app::NativeWorkflowExecutions executions(xerahs::app::NativeWorkflowExecutions::defaultDirectory());
-  QString invocationOrigin = QStringLiteral("command-line");
-  ActivationDispatcher dispatcher({[&home] { home.activate(); }, [&capture] { capture.captureRegion(); },
-      [](const QString &path) { if (auto *window = xerahs::app::EditorWindow::open(path)) window->show(); },
-      [&capture, &recording] { return capture.busy() || recording.busy(); }, [&shortcutActions] { return QApplication::activeModalWidget() != nullptr || shortcutActions.pending(); },
-      {}, {}, [&effectiveWorkflow, &capture, &home, &executions, &invocationOrigin](const ActivationRequest &incoming) -> std::function<void()> {
-        auto choice = incoming.action == ActivationAction::RunWorkflow ? effectiveWorkflow(QUuid(incoming.workflowId)) : effectiveWorkflow();
-        if (!choice.workflow) return {};
-        choice.workflow->chooseActions |= incoming.action == ActivationAction::CaptureRegionChooseActions;
-        // CORE-014: source commands reuse the default workflow's actions and output.
-        if (incoming.action == ActivationAction::CaptureFullScreen) choice.workflow->capture = QStringLiteral("full-screen");
-        else if (incoming.action == ActivationAction::CaptureMonitor) choice.workflow->capture = QStringLiteral("monitor");
-        else if (incoming.action == ActivationAction::CaptureActiveWindow) choice.workflow->capture = QStringLiteral("active-window");
-        else if (incoming.action != ActivationAction::RunWorkflow) choice.workflow->capture = QStringLiteral("region");
-        auto run = capture.prepareWorkflowCapture(*choice.workflow, incoming.id, invocationOrigin, executions.writer());
-        if (!run) return {};
-        return [&home, run = std::move(run)] { home.activate(); run(); };
-      }, [&] { recordingActions.start(xerahs::recording::Format::Mp4); }, [&] { recording.stop(); },
-      [&] { return recording.unavailable(xerahs::recording::Format::Mp4).isEmpty() || recording.unavailable(xerahs::recording::Format::WebM).isEmpty(); },
-      [&] { recordingActions.start(xerahs::recording::Format::Mp4, true); }});
-  activation = &dispatcher;
-  instance.setAdmission([&dispatcher, &invocationOrigin](const ActivationRequest &incoming) {
-    const QScopedValueRollback<QString> origin(invocationOrigin, QStringLiteral("external-activation")); return dispatcher.admit(incoming);
-  });
-  const auto dispatch = [&dispatcher, &home](const ActivationRequest &incoming) {
-    const auto diagnostic = dispatcher.dispatch(incoming);
-    if (!diagnostic.isEmpty()) { home.showResult(QStringLiteral("Activation"), activationFailureMessage(diagnostic), false); home.activate(); }
-  };
-  QObject::connect(&instance, &xerahs::app::NativeInstance::activationRequested, &home, dispatch);
-  const auto invokeLocal = [&dispatcher, &dispatch, &home, &invocationOrigin](ActivationAction action, const QString &path = QString{}, bool chooseActions = false, const QString &workflowId = QString{}, const QString &source = QStringLiteral("native-shell")) {
-    const QScopedValueRollback<QString> origin(invocationOrigin, invocationOrigin == "global-shortcut" ? invocationOrigin : source);
-    const auto local = makeActivationRequest(chooseActions ? ActivationAction::CaptureRegionChooseActions : action, path, workflowId);
-    const auto admitted = dispatcher.admit(local);
-    if (admitted == ActivationReplyState::Accepted) {
-      dispatch(local);
-    }
-    else {
-      home.showResult(QStringLiteral("Activation"), activationFailureMessage(admitted == ActivationReplyState::Busy ? QStringLiteral("activation-busy") : QStringLiteral("activation-unavailable")), false);
-      home.activate();
+  xerahs::app::attachCommandWindow(ctx, window, menu);
+  if (!settings.current().diagnostics.isEmpty())
+    window.showResult(QStringLiteral("Application settings"), settings.current().diagnostics.join('\n'), false);
+  const auto dispatch = [&ctx](const ActivationRequest &incoming) {
+    const auto diagnostic = ctx.activation->dispatch(incoming);
+    if (diagnostic.isEmpty()) return;
+    if (auto *shell = qobject_cast<xerahs::app::ApplicationWindow *>(ctx.dialogParent ? ctx.dialogParent() : nullptr)) {
+      shell->showResult(QStringLiteral("Activation"), xerahs::app::activationFailureMessage(diagnostic), false);
+      shell->activate();
     }
   };
-  QObject::connect(&shortcutActions, &xerahs::app::WorkflowShortcutActions::workflowRequested, &home, [&](const QString &id) {
-    const QMap<QString, QAction *> builtins{{"capture-region", region}, {"capture-full-screen", fullScreen}, {"capture-monitor", monitor}, {"capture-active-window", activeWindow}, {"capture-region-choose-actions", chooseCapture},
-      {"start-region-recording", recordingActions.actions().value("start-region-recording")},
-      {"start-recording", recordingActions.actions().value("start-recording")}, {"start-gif-recording", recordingActions.actions().value("start-gif-recording")}, {"stop-recording", recordingActions.actions().value("stop-recording")}};
-    const QScopedValueRollback<QString> origin(invocationOrigin, QStringLiteral("global-shortcut"));
-    if (!xerahs::app::routeCaptureShortcut(id, builtins,
-        [&] { return !capture.busy() && (!recording.busy() || id == "stop-recording") && !QApplication::activeModalWidget(); },
-        [&] { home.showResult("Capture shortcut", activationFailureMessage("activation-busy"), false); home.activate(); }))
-      invokeLocal(ActivationAction::RunWorkflow, {}, false, id, "global-shortcut");
+  instance.setAdmission([&ctx](const ActivationRequest &incoming) {
+    const QScopedValueRollback<QString> origin(ctx.invocationOrigin, QStringLiteral("external-activation"));
+    return ctx.activation->admit(incoming);
   });
-  QObject::connect(configureWorkflows, &QAction::triggered, &home, [&] {
-    const auto selected = xerahs::app::manageCaptureWorkflows(workflows, &home, [&capture] { return !capture.busy(); });
-    if (selected) invokeLocal(ActivationAction::RunWorkflow, {}, false, selected->id.toString(QUuid::WithoutBraces));
-  });
-  QObject::connect(region, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureRegion); });
-  QObject::connect(chooseCapture, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureRegion, {}, true); });
-  QObject::connect(fullScreen, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureFullScreen); });
-  QObject::connect(monitor, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureMonitor); });
-  QObject::connect(activeWindow, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureActiveWindow); });
-  QObject::connect(&capture, &CaptureController::busyChanged, schedule, &xerahs::app::ScheduledCapture::captureBusyChanged);
-  QObject::connect(&capture, &CaptureController::notify, schedule, [schedule](const QString &, const QString &, bool ok) { schedule->captureFinished(ok); });
-  QObject::connect(openImage, &QAction::triggered, &home, [&invokeLocal, &capture, &home] {
-    const auto path = QFileDialog::getOpenFileName(&home, QStringLiteral("Open image"), capture.saveDirectory(), xerahs::app::imageFileFilter());
-    if (!path.isEmpty()) invokeLocal(ActivationAction::EditImage, path);
-  });
-  QObject::connect(&tray, &QSystemTrayIcon::activated, region, [region](QSystemTrayIcon::ActivationReason reason) {
-    if (reason == QSystemTrayIcon::Trigger) region->trigger();
-  });
-
-  const bool trayAvailable = QSystemTrayIcon::isSystemTrayAvailable();
-  if (!trayAvailable) {
+  QObject::connect(&instance, &xerahs::app::NativeInstance::activationRequested, &window, dispatch);
+  if (!QSystemTrayIcon::isSystemTrayAvailable()) {
     std::fprintf(stderr, "xerahs: no system tray host; use the XerahS window\n");
-    home.show();
+    window.show();
   }
-  applySettings();
-  const auto admitted = dispatcher.admit(request);
+  xerahs::app::applyShellVisibility(ctx);
+  const auto admitted = ctx.activation->admit(request);
   if (admitted != ActivationReplyState::Accepted) {
     reportLaunch(request, json, {}, admitted == ActivationReplyState::Busy ? "activation-busy" : "activation-unavailable");
-    instance.setAdmission({}); return admitted == ActivationReplyState::Busy ? 2 : 1;
+    instance.setAdmission({});
+    return admitted == ActivationReplyState::Busy ? 2 : 1;
   }
-  reportLaunch(request, json, "started"); dispatch(request);
-  const int result = app.exec(); instance.setAdmission({}); return result;
+  reportLaunch(request, json, "started");
+  dispatch(request);
+  const int result = app.exec();
+  instance.setAdmission({});
+  return result;
 }

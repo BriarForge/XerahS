@@ -16,7 +16,10 @@ namespace xerahs::app {
 struct ScheduledCapturePorts {
   std::function<bool()> blocked;
   std::function<QString(xerahs::capture::CaptureSource)> start;
-  std::function<void(const QString &title, const QString &body, bool ok)> notify;
+  // raiseWindow is set by the schedule itself when a delayed capture could not
+  // start and the command window should be brought forward. Callers do not
+  // infer that from the title.
+  std::function<void(const QString &title, const QString &body, bool ok, bool raiseWindow)> notify;
   std::function<void(const QString &tooltip)> setTooltip;
 };
 
@@ -46,7 +49,7 @@ private:
   void promptDelay();
   void promptAuto();
   void refreshTooltip();
-  void notify(const QString &title, const QString &body, bool ok);
+  void notify(const QString &title, const QString &body, bool ok, bool raiseWindow);
   void onAutoRequested(xerahs::capture::CaptureSource source);
   void onDelayRequested(xerahs::capture::CaptureSource source);
 

@@ -1,4 +1,5 @@
 #include "ApplicationWindow.h"
+#include "CommandRegistry.h"
 #include <QAccessible>
 #include <QAction>
 #include <QApplication>
@@ -28,18 +29,62 @@ void acceptLocalFiles(QDropEvent *event) {
   else event->acceptProposedAction();
 }
 }  // namespace
-ApplicationWindow::ApplicationWindow(const QMap<QString, QAction *> &actions, QWidget *parent) : QMainWindow(parent) {
+
+namespace {
+void adoptLegacy(CommandRegistry &registry, const QMap<QString, QAction *> &actions) {
+  const struct Row { const char *id; CommandGroup group; CommandSurfaces surfaces; } rows[] = {
+    {"capture-region", CommandGroup::Capture, CommandSurface::Window | CommandSurface::CaptureMenu},
+    {"capture-full-screen", CommandGroup::Capture, CommandSurface::Window | CommandSurface::CaptureMenu},
+    {"capture-monitor", CommandGroup::Capture, CommandSurface::Window | CommandSurface::CaptureMenu},
+    {"capture-active-window", CommandGroup::Capture, CommandSurface::Window | CommandSurface::CaptureMenu},
+    {"capture-after-delay", CommandGroup::Schedule, CommandSurface::CaptureMenu},
+    {"auto-capture", CommandGroup::Schedule, CommandSurface::CaptureMenu},
+    {"stop-auto-capture", CommandGroup::Schedule, CommandSurface::CaptureMenu},
+    {"capture-region-choose-actions", CommandGroup::Capture, CommandSurface::Window | CommandSurface::CaptureMenu},
+    {"capture-workflows", CommandGroup::Workflows, CommandSurface::Window | CommandSurface::CaptureMenu},
+    {"enable-workflow-shortcuts", CommandGroup::Workflows, CommandSurface::Window | CommandSurface::CaptureMenu},
+    {"disable-workflow-shortcuts", CommandGroup::Workflows, CommandSurface::Window | CommandSurface::CaptureMenu},
+    {"cancel-capture", CommandGroup::Capture, CommandSurface::Window | CommandSurface::CaptureMenu},
+    {"new-image", CommandGroup::Files, CommandSurface::Window | CommandSurface::FileMenu},
+    {"open-image", CommandGroup::Files, CommandSurface::Window | CommandSurface::FileMenu},
+    {"upload-file", CommandGroup::Upload, CommandSurface::Window | CommandSurface::FileMenu},
+    {"captures-folder", CommandGroup::Files, CommandSurface::Window | CommandSurface::FileMenu},
+    {"capture-history", CommandGroup::Files, CommandSurface::Window | CommandSurface::FileMenu},
+    {"pick-colour", CommandGroup::Tools, CommandSurface::Window | CommandSurface::FileMenu | CommandSurface::ToolsMenu},
+    {"upload-destinations", CommandGroup::Upload, CommandSurface::Window | CommandSurface::PreferencesMenu},
+    {"settings", CommandGroup::Preferences, CommandSurface::PreferencesMenu},
+    {"editor-appearance", CommandGroup::Preferences, CommandSurface::Window | CommandSurface::PreferencesMenu},
+    {"quit", CommandGroup::Application, CommandSurface::FileMenu},
+  };
+  for (const auto &row : rows) {
+    auto *action = actions.value(QString::fromLatin1(row.id));
+    if (!action) continue;
+    registry.adopt(CommandSpec{QString::fromLatin1(row.id), action->text(), row.group, row.surfaces}, action);
+  }
+}
+}  // namespace
+
+ApplicationWindow::ApplicationWindow(CommandRegistry &commands, QWidget *parent) : QMainWindow(parent) { build(commands); }
+
+ApplicationWindow::ApplicationWindow(const QMap<QString, QAction *> &actions, QWidget *parent)
+    : QMainWindow(parent), m_legacyCommands(this) {
+  adoptLegacy(m_legacyCommands, actions);
+  build(m_legacyCommands);
+}
+
+void ApplicationWindow::build(CommandRegistry &commands) {
   setObjectName(QStringLiteral("applicationWindow")); setWindowTitle(QStringLiteral("XerahS"));
   setAccessibleName(QStringLiteral("XerahS")); setAccessibleDescription(QStringLiteral("Screen capture and image editor commands"));
   auto *central = new QWidget(this); auto *layout = new QVBoxLayout(central);
   auto *intro = new QLabel(QStringLiteral("Capture your screen or open an image to edit."), central); intro->setWordWrap(true); layout->addWidget(intro);
-  auto *commands = new QGridLayout; layout->addLayout(commands);
+  auto *grid = new QGridLayout; layout->addLayout(grid);
   int index = 0;
-  for (const auto &id : {QString("capture-region"), QString("capture-full-screen"), QString("capture-monitor"), QString("capture-active-window"), QString("capture-region-choose-actions"), QString("capture-workflows"), QString("enable-workflow-shortcuts"), QString("disable-workflow-shortcuts"), QString("cancel-capture"), QString("new-image"), QString("open-image"), QString("upload-file"), QString("captures-folder"), QString("capture-history"), QString("editor-appearance"), QString("upload-destinations"), QString("pick-colour")}) {
-    auto *action = actions.value(id); if (!action) continue;
+  for (const auto &id : commands.ids(CommandSurface::Window)) {
+    auto *action = commands.action(id);
+    if (!action) continue;
     auto *button = new QToolButton(central); button->setObjectName(id); button->setDefaultAction(action);
     button->setToolButtonStyle(Qt::ToolButtonTextOnly); button->setFocusPolicy(Qt::StrongFocus);
-    button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred); commands->addWidget(button, index / 2, index % 2); ++index;
+    button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred); grid->addWidget(button, index / 2, index % 2); ++index;
   }
   layout->addStretch(); m_status = new QLabel(QStringLiteral("Ready"), central);
   m_status->setObjectName(QStringLiteral("operationStatus")); m_status->setWordWrap(true);
@@ -48,17 +93,13 @@ ApplicationWindow::ApplicationWindow(const QMap<QString, QAction *> &actions, QW
   m_progress->setAccessibleName(QStringLiteral("Operation progress")); m_progress->setRange(0, 100);
   m_progress->hide(); layout->addWidget(m_progress);
   setCentralWidget(central);
-  auto *file = menuBar()->addMenu(QStringLiteral("&File"));
-  for (const auto &id : {QString("new-image"), QString("open-image"), QString("upload-file"), QString("captures-folder"), QString("capture-history"), QString("pick-colour"), QString("quit")}) if (auto *action = actions.value(id)) file->addAction(action);
-  auto *capture = menuBar()->addMenu(QStringLiteral("&Capture"));
-  for (const auto &id : {QString("capture-region"), QString("capture-full-screen"), QString("capture-monitor"), QString("capture-active-window"), QString("capture-after-delay"), QString("auto-capture"), QString("stop-auto-capture"), QString("capture-region-choose-actions"), QString("capture-workflows"), QString("enable-workflow-shortcuts"), QString("disable-workflow-shortcuts"), QString("cancel-capture")}) if (auto *action = actions.value(id)) capture->addAction(action);
-  if (auto *cancel = actions.value(QStringLiteral("cancel-capture"))) {
+  commands.populate(menuBar()->addMenu(QStringLiteral("&File")), CommandSurface::FileMenu);
+  commands.populate(menuBar()->addMenu(QStringLiteral("&Capture")), CommandSurface::CaptureMenu);
+  commands.populate(menuBar()->addMenu(QStringLiteral("&Tools")), CommandSurface::ToolsMenu);
+  commands.populate(menuBar()->addMenu(QStringLiteral("&Preferences")), CommandSurface::PreferencesMenu);
+  if (auto *cancel = commands.action(QStringLiteral("cancel-capture"))) {
     cancel->setShortcut(QKeySequence(Qt::Key_Escape)); cancel->setShortcutContext(Qt::WindowShortcut); addAction(cancel);
   }
-  auto *preferences = menuBar()->addMenu(QStringLiteral("&Preferences"));
-  if (auto *action = actions.value(QStringLiteral("upload-destinations"))) preferences->addAction(action);
-  if (auto *action = actions.value(QStringLiteral("settings"))) preferences->addAction(action);
-  if (auto *action = actions.value(QStringLiteral("editor-appearance"))) preferences->addAction(action);
   resize(640, 360);
   setAcceptDrops(true);
   adoptDropTargets();

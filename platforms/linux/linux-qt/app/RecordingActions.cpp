@@ -13,11 +13,11 @@
 #include <QSystemTrayIcon>
 namespace xerahs::app {
 using namespace recording;
-RecordingActions::RecordingActions(RecordingController &controller, QMenu &menu, QSystemTrayIcon &tray,
+RecordingActions::RecordingActions(RecordingController &controller, QSystemTrayIcon &tray,
                                  std::function<QString()> folder, QObject *parent)
     : QObject(parent), m_controller(controller), m_tray(tray), m_folder(std::move(folder)), m_icon(tray.icon()) {
   for (const auto &entry : QList<QPair<QString, QString>>{{"start-region-recording", "Record region…"}, {"start-recording", "Start screen recording…"}, {"start-gif-recording", "Start GIF recording…"}, {"pause-recording", "Pause recording"}, {"stop-recording", "Stop recording"}, {"abort-recording", "Abort recording"}}) {
-    auto *action = menu.addAction(entry.second); action->setObjectName(entry.first); m_actions.insert(entry.first, action);
+    auto *action = new QAction(entry.second, this); action->setObjectName(entry.first); m_actions.insert(entry.first, action); m_ordered.append(action);
   }
   connect(m_actions["start-region-recording"], &QAction::triggered, this, [this] { start(Format::Mp4, true); });
   connect(m_actions["start-recording"], &QAction::triggered, this, [this] { start(Format::Mp4); });

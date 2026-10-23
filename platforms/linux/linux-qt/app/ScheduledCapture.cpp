@@ -58,7 +58,7 @@ void ScheduledCapture::wire() {
   connect(m_automatic, &AutoCaptureSession::captureRequested, this, &ScheduledCapture::onAutoRequested);
   connect(m_delay, &DelayedCapture::captureRequested, this, &ScheduledCapture::onDelayRequested);
   connect(m_automatic, &AutoCaptureSession::finished, this, [this](const xerahs::capture::AutoSummary &summary) {
-    notify(xerahs::capture::autoCaptureFinishedTitle(summary), xerahs::capture::autoCaptureSummaryText(summary), summary.failed == 0);
+    notify(xerahs::capture::autoCaptureFinishedTitle(summary), xerahs::capture::autoCaptureSummaryText(summary), summary.failed == 0, false);
   });
   const auto notSaved = [this](const QString &title, const QString &code) {
     notify(title, QStringLiteral("Your choice could not be remembered (%1). The capture was still started.").arg(code), false);
@@ -90,7 +90,7 @@ void ScheduledCapture::captureFinished(bool success) {
 
 void ScheduledCapture::promptDelay() {
   if (m_automatic->active()) {
-    notify(QStringLiteral("Capture after delay"), QStringLiteral("Stop automatic capture before starting a delayed capture."), false);
+    notify(QStringLiteral("Capture after delay"), QStringLiteral("Stop automatic capture before starting a delayed capture."), false, true);
     return;
   }
   if (m_delay->delayActive()) { m_delay->raiseCountdown(); return; }
@@ -99,7 +99,7 @@ void ScheduledCapture::promptDelay() {
 
 void ScheduledCapture::promptAuto() {
   if (m_delay->delayActive()) {
-    notify(QStringLiteral("Auto capture"), QStringLiteral("Cancel the delayed capture before starting automatic capture."), false);
+    notify(QStringLiteral("Auto capture"), QStringLiteral("Cancel the delayed capture before starting automatic capture."), false, false);
     return;
   }
   m_automatic->prompt(m_dialogs);
@@ -112,8 +112,8 @@ void ScheduledCapture::refreshTooltip() {
   m_ports.setTooltip(!automatic.isEmpty() ? automatic : !delay.isEmpty() ? delay : QStringLiteral("XerahS"));
 }
 
-void ScheduledCapture::notify(const QString &title, const QString &body, bool ok) {
-  if (m_ports.notify) m_ports.notify(title, body, ok);
+void ScheduledCapture::notify(const QString &title, const QString &body, bool ok, bool raiseWindow) {
+  if (m_ports.notify) m_ports.notify(title, body, ok, raiseWindow);
 }
 
 void ScheduledCapture::onAutoRequested(xerahs::capture::CaptureSource source) {
@@ -132,7 +132,7 @@ void ScheduledCapture::onAutoRequested(xerahs::capture::CaptureSource source) {
 
 void ScheduledCapture::onDelayRequested(xerahs::capture::CaptureSource source) {
   const auto code = m_ports.start ? m_ports.start(source) : QStringLiteral("activation-unavailable");
-  if (!code.isEmpty()) notify(QStringLiteral("Capture after delay"), failureBody(code), false);
+  if (!code.isEmpty()) notify(QStringLiteral("Capture after delay"), failureBody(code), false, true);
 }
 
 }  // namespace xerahs::app

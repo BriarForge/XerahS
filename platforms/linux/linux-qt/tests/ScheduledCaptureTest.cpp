@@ -22,7 +22,7 @@ public:
   int interval = 0;
 };
 
-struct Note { QString title; QString body; bool ok = false; };
+struct Note { QString title; QString body; bool ok = false; bool raise = false; };
 
 struct Fixture {
   ManualClock clock{1'000'000};
@@ -38,7 +38,7 @@ struct Fixture {
     return {
       [this] { return blocked; },
       [this](CaptureSource) { ++starts; return startCode; },
-      [this](const QString &title, const QString &body, bool ok) { notes.append({title, body, ok}); },
+      [this](const QString &title, const QString &body, bool ok, bool raise) { notes.append({title, body, ok, raise}); },
       [this](const QString &tooltip) { tips.append(tooltip); },
     };
   }
@@ -139,6 +139,7 @@ private slots:
     QCOMPARE(fixture.notes.last().title, QStringLiteral("Auto capture"));
     QCOMPARE(fixture.notes.last().body, QStringLiteral("Cancel the delayed capture before starting automatic capture."));
     QVERIFY(!fixture.notes.last().ok);
+    QVERIFY(!fixture.notes.last().raise);
     QVERIFY(!QApplication::activeModalWidget());
 
     auto *window = countdown();
@@ -155,6 +156,7 @@ private slots:
     QCOMPARE(fixture.notes.last().title, QStringLiteral("Capture after delay"));
     QCOMPARE(fixture.notes.last().body, QStringLiteral("Stop automatic capture before starting a delayed capture."));
     QVERIFY(!fixture.notes.last().ok);
+    QVERIFY(fixture.notes.last().raise);
     QVERIFY(!QApplication::activeModalWidget());
   }
 };

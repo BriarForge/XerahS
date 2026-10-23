@@ -199,6 +199,29 @@ add_executable(xerahs
   app/CaptureWorkflows.h
   app/ApplicationWindow.cpp
   app/ApplicationWindow.h
+  app/CommandRegistry.cpp
+  app/CommandRegistry.h
+  app/AppContext.h
+  app/features/ApplicationFeature.cpp
+  app/features/ApplicationFeature.h
+  app/features/CaptureFeature.cpp
+  app/features/CaptureFeature.h
+  app/features/CommandWindowAttach.cpp
+  app/features/CommandWindowAttach.h
+  app/features/FilesFeature.cpp
+  app/features/FilesFeature.h
+  app/features/PreferencesFeature.cpp
+  app/features/PreferencesFeature.h
+  app/features/RecordingFeature.cpp
+  app/features/RecordingFeature.h
+  app/features/ScheduleFeature.cpp
+  app/features/ScheduleFeature.h
+  app/features/ToolsFeature.cpp
+  app/features/ToolsFeature.h
+  app/features/UploadFeature.cpp
+  app/features/UploadFeature.h
+  app/features/WorkflowFeature.cpp
+  app/features/WorkflowFeature.h
   app/PipelineHistoryDialog.cpp
   app/PipelineHistoryDialog.h
   app/CaptureHistoryWindow.cpp
@@ -260,6 +283,7 @@ add_executable(xerahs
   app/main.cpp
 )
 set_target_properties(xerahs PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
 target_link_libraries(xerahs PRIVATE xerahs_window_discovery xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_native_instance xerahs_workflow_shortcuts xerahs_workflow_discovery xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus)
 target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
@@ -385,12 +409,19 @@ add_executable(activation-protocol-test tests/ActivationProtocolTest.cpp)
 set_target_properties(activation-protocol-test PROPERTIES AUTOMOC ON)
 target_link_libraries(activation-protocol-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME activation-protocol COMMAND activation-protocol-test)
-add_executable(application-window-test tests/ApplicationWindowTest.cpp app/ApplicationWindow.cpp app/ApplicationWindow.h)
+add_executable(application-window-test tests/ApplicationWindowTest.cpp app/ApplicationWindow.cpp app/ApplicationWindow.h
+  app/CommandRegistry.cpp app/CommandRegistry.h app/features/ToolsFeature.cpp app/features/ToolsFeature.h)
 set_target_properties(application-window-test PROPERTIES AUTOMOC ON)
 target_include_directories(application-window-test PRIVATE app)
 target_link_libraries(application-window-test PRIVATE Qt6::Widgets Qt6::Test)
 add_test(NAME application-window COMMAND application-window-test)
 set_tests_properties(application-window PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+add_executable(command-registry-test tests/CommandRegistryTest.cpp app/CommandRegistry.cpp app/CommandRegistry.h)
+set_target_properties(command-registry-test PROPERTIES AUTOMOC ON)
+target_include_directories(command-registry-test PRIVATE app)
+target_link_libraries(command-registry-test PRIVATE Qt6::Widgets Qt6::Test)
+add_test(NAME command-registry COMMAND command-registry-test)
+set_tests_properties(command-registry PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 add_executable(native-instance-fixture tests/NativeInstanceFixture.cpp)
 target_link_libraries(native-instance-fixture PRIVATE xerahs_native_instance)
 add_executable(native-instance-test tests/NativeInstanceTest.cpp)
@@ -442,6 +473,7 @@ add_executable(portal-screenshot-test tests/PortalScreenshotTest.cpp app/PortalS
                app/CaptureRecoveryActions.cpp app/CaptureRecoveryActions.h
                app/PipelineResultDialog.cpp app/PipelineResultDialog.h
                app/ApplicationWindow.cpp app/ApplicationWindow.h
+               app/CommandRegistry.cpp app/CommandRegistry.h
                app/SnapshotComposition.cpp app/SnapshotComposition.h
                app/RegionOverlay.cpp app/RegionOverlay.h)
 set_target_properties(portal-screenshot-test PROPERTIES AUTOMOC ON)
@@ -676,7 +708,8 @@ add_executable(workflow-shortcuts-test tests/WorkflowShortcutsTest.cpp
   app/PortalScreenshot.cpp app/PortalScreenshot.h app/CaptureController.cpp app/CaptureController.h
   app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h
   app/CapturePipeline.cpp app/CapturePipeline.h app/SnapshotComposition.cpp app/SnapshotComposition.h
-  app/RegionOverlay.cpp app/RegionOverlay.h app/ApplicationWindow.cpp app/ApplicationWindow.h)
+  app/RegionOverlay.cpp app/RegionOverlay.h app/ApplicationWindow.cpp app/ApplicationWindow.h
+  app/CommandRegistry.cpp app/CommandRegistry.h)
 set_target_properties(workflow-shortcuts-test PROPERTIES AUTOMOC ON)
 target_link_libraries(workflow-shortcuts-test PRIVATE xerahs_window_discovery xerahs_workflow_shortcuts xerahs_file_output xerahs_action_selection xerahs_pipeline_journal Qt6::Test)
 add_test(NAME workflow-shortcuts COMMAND ${XERAHS_DBUS_RUN_SESSION}
@@ -871,7 +904,8 @@ target_link_libraries(xerahs_file_upload PUBLIC xerahs_upload_executor xerahs_se
 target_compile_options(xerahs_file_upload PRIVATE -Wall -Wextra -Wpedantic)
 target_link_libraries(xerahs PRIVATE xerahs_file_upload)
 
-add_executable(file-upload-test tests/FileUploadTest.cpp app/ApplicationWindow.cpp app/ApplicationWindow.h)
+add_executable(file-upload-test tests/FileUploadTest.cpp app/ApplicationWindow.cpp app/ApplicationWindow.h
+  app/CommandRegistry.cpp app/CommandRegistry.h)
 set_target_properties(file-upload-test PROPERTIES AUTOMOC ON)
 target_link_libraries(file-upload-test PRIVATE xerahs_file_upload Qt6::Test)
 add_test(NAME file-upload COMMAND file-upload-test)
@@ -945,6 +979,7 @@ if(XERAHS_RECORDING AND GSTREAMER_FOUND AND GSTREAMER_PBUTILS_FOUND)
   target_compile_definitions(xerahs_video_converter PUBLIC XERAHS_VIDEO_CONVERTER=1)
   target_compile_options(xerahs_video_converter PRIVATE -Wall -Wextra -Wpedantic)
   target_link_libraries(xerahs PRIVATE xerahs_video_converter)
+  target_link_libraries(application-window-test PRIVATE xerahs_video_converter)
 endif()
 
 add_executable(video-conversion-test tests/VideoConversionTest.cpp)
@@ -983,6 +1018,7 @@ target_include_directories(xerahs_icon_converter PUBLIC app)
 target_link_libraries(xerahs_icon_converter PUBLIC xerahs_core Qt6::Widgets)
 target_compile_options(xerahs_icon_converter PRIVATE -Wall -Wextra -Wpedantic)
 target_link_libraries(xerahs PRIVATE xerahs_icon_converter)
+target_link_libraries(application-window-test PRIVATE xerahs_color_picker xerahs_hash_checker xerahs_icon_converter xerahs_video_converter_ui)
 
 add_executable(icon-writer-test tests/IconWriterTest.cpp)
 set_target_properties(icon-writer-test PROPERTIES AUTOMOC ON)

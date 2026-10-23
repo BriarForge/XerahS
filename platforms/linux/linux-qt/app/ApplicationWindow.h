@@ -1,4 +1,5 @@
 #pragma once
+#include "CommandRegistry.h"
 #include <QMainWindow>
 #include <QMap>
 #include <QStringList>
@@ -6,11 +7,15 @@ class QAction;
 class QLabel;
 class QProgressBar;
 namespace xerahs::app {
+class CommandRegistry;
 // Native shell surfaces reuse the same actual actions as the tray. No capture,
 // editor, preference or publication behavior is reimplemented by this view.
+// The map constructor remains so tests outside this slice can still build a
+// window from an id→action map; production passes the registry.
 class ApplicationWindow final : public QMainWindow {
   Q_OBJECT
 public:
+  explicit ApplicationWindow(CommandRegistry &commands, QWidget *parent = nullptr);
   explicit ApplicationWindow(const QMap<QString, QAction *> &actions, QWidget *parent = nullptr);
   void activate();
   void showResult(const QString &title, const QString &body, bool success);
@@ -27,7 +32,9 @@ protected:
   void dropEvent(QDropEvent *event) override;
   bool eventFilter(QObject *watched, QEvent *event) override;
 private:
+  void build(CommandRegistry &commands);
   void adoptDropTargets();
+  CommandRegistry m_legacyCommands;
   QLabel *m_status = nullptr;
   QProgressBar *m_progress = nullptr;
   QString m_progressTitle;
