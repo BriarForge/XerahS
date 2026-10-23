@@ -741,3 +741,17 @@ set_target_properties(color-formats-test PROPERTIES AUTOMOC ON)
 # QColor lives in Qt Gui, which xerahs_core links privately.
 target_link_libraries(color-formats-test PRIVATE xerahs_core Qt6::Gui Qt6::Test)
 add_test(NAME color-formats COMMAND color-formats-test)
+# CORE-020, CORE-021: pure preparation/parsing and native HTTP transport.
+target_sources(xerahs_core PRIVATE
+  src/uploads/UploadRequest.h src/uploads/UploadRequest.cpp
+  src/uploads/UploadResponse.h src/uploads/UploadResponse.cpp)
+add_library(xerahs_upload_executor STATIC src/uploads/UploadExecutor.h src/uploads/UploadExecutor.cpp)
+set_target_properties(xerahs_upload_executor PROPERTIES AUTOMOC ON)
+target_link_libraries(xerahs_upload_executor PUBLIC xerahs_core Qt6::Network)
+foreach(surface Request Response Executor)
+  string(TOLOWER "${surface}" surface_lower)
+  add_executable(upload-${surface_lower}-test tests/Upload${surface}Test.cpp)
+  set_target_properties(upload-${surface_lower}-test PROPERTIES AUTOMOC ON)
+  target_link_libraries(upload-${surface_lower}-test PRIVATE xerahs_upload_executor Qt6::Test)
+  add_test(NAME upload-${surface_lower} COMMAND upload-${surface_lower}-test)
+endforeach()
