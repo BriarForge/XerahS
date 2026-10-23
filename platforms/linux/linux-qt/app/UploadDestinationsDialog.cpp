@@ -1,4 +1,5 @@
 #include "UploadDestinationsDialog.h"
+#include "OwnedWork.h"
 
 #include <QDialogButtonBox>
 #include <QFile>
@@ -9,12 +10,8 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
-#include <QPointer>
 #include <QPushButton>
-#include <QThread>
 #include <QVBoxLayout>
-
-#include <memory>
 
 namespace xerahs::app {
 
@@ -252,16 +249,12 @@ void UploadDestinationsDialog::updateButtons() {
 
 void UploadDestinationsDialog::runCredentialWork(std::function<QVariant()> work, std::function<void(const QVariant &)> done) {
   setBusy(true);
-  auto result = std::make_shared<QVariant>();
-  auto *thread = QThread::create([work = std::move(work), result] { *result = work(); });
-  const QPointer<UploadDestinationsDialog> guard(this);
-  connect(thread, &QThread::finished, thread, &QObject::deleteLater);
-  connect(thread, &QThread::finished, this, [guard, result, done = std::move(done)] {
-    if (!guard) return;
-    guard->setBusy(false);
-    done(*result);
-  });
-  thread->start();
+  OwnedWork::run<QVariant>(this,
+      [work = std::move(work)](const OwnedWork::Context &) { return work(); },
+      [this, done = std::move(done)](QVariant result) {
+        setBusy(false);
+        done(result);
+      });
 }
 
 }  // namespace xerahs::app

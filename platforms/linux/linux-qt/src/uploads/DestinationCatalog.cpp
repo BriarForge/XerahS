@@ -1,18 +1,19 @@
 #include "DestinationCatalog.h"
+#include "storage/PrivateJsonFile.h"
 
 #include <QDir>
-#include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
-#include <QLockFile>
 #include <QRegularExpression>
-#include <QSaveFile>
 
 #include <algorithm>
 
 namespace xerahs::uploads {
 namespace {
 constexpr qsizetype kMaxCatalogBytes = 8 * 1024 * 1024;
+storage::PrivateJsonFile catalogFile(const QString &path) {
+  return {path, {QStringLiteral("com.xerahs.app/linux-qt/upload-destinations"), kCatalogVersion, kMaxCatalogBytes, 0, 30000, true}};
+}
 
 QJsonObject destinationJson(const UploadDestination &destination) {
   return QJsonDocument::fromJson(writeDestination(destination)).object();
@@ -20,15 +21,22 @@ QJsonObject destinationJson(const UploadDestination &destination) {
 }  // namespace
 
 DestinationCatalog::DestinationCatalog(QString path) : m_path(std::move(path)) {
-  QFile file(m_path);
-  if (!file.exists()) return;
-  if (!file.open(QIODevice::ReadOnly) || file.size() > kMaxCatalogBytes) { m_loadCode = QStringLiteral("catalog-read-failed"); return; }
-  m_snapshot = file.readAll();
-  QJsonParseError error;
-  const auto document = QJsonDocument::fromJson(m_snapshot, &error);
-  if (error.error != QJsonParseError::NoError || !document.isObject()) { m_loadCode = QStringLiteral("catalog-invalid"); return; }
-  m_envelope = document.object();
-  if (m_envelope.value(QStringLiteral("version")) != QJsonValue(kCatalogVersion)) { m_loadCode = QStringLiteral("catalog-version-unsupported"); return; }
+  const auto read = catalogFile(m_path).read();
+  if (read.status == storage::StoreStatus::Missing) return;
+  if (read.status == storage::StoreStatus::Invalid) {
+    // Distinguish an invalid envelope from an unsupported legacy version.
+    const auto format = read.document.value("format");
+    const bool unsupportedVersion = (format.isUndefined() || format == QJsonValue(QStringLiteral("com.xerahs.app/linux-qt/upload-destinations"))) &&
+        QJsonDocument::fromJson(read.snapshot).isObject() && read.document.value("version") != QJsonValue(kCatalogVersion);
+    m_loadCode = unsupportedVersion ? QStringLiteral("catalog-version-unsupported") : QStringLiteral("catalog-invalid"); return;
+  }
+  if (read.status == storage::StoreStatus::NewerVersion ||
+      (read.status == storage::StoreStatus::Ok && read.version != kCatalogVersion)) {
+    m_loadCode = QStringLiteral("catalog-version-unsupported"); return;
+  }
+  if (read.status != storage::StoreStatus::Ok) { m_loadCode = QStringLiteral("catalog-read-failed"); return; }
+  m_snapshot = read.snapshot;
+  m_envelope = read.document;
   for (const auto &value : m_envelope.value(QStringLiteral("destinations")).toArray()) {
     const auto read = value.isObject() ? readDestination(QJsonDocument(value.toObject()).toJson(QJsonDocument::Compact)) : DestinationRead{};
     if (read.destination && !read.destination->id.isNull()) m_destinations.append(*read.destination);
@@ -114,15 +122,6 @@ QString DestinationCatalog::setDefault(const QUuid &id) {
 QString DestinationCatalog::save(const QVector<UploadDestination> &destinations, const QUuid &defaultId) {
   if (!writable()) return QStringLiteral("catalog-read-only");
   if (!QDir().mkpath(QFileInfo(m_path).absolutePath())) return QStringLiteral("catalog-directory-failed");
-  QLockFile lock(m_path + QStringLiteral(".lock"));
-  if (!lock.tryLock(0)) return QStringLiteral("catalog-busy");
-  QFile existing(m_path);
-  QByteArray disk;
-  if (existing.exists()) {
-    if (!existing.open(QIODevice::ReadOnly)) return QStringLiteral("catalog-write-failed");
-    disk = existing.readAll();
-  }
-  if (disk != m_snapshot) return QStringLiteral("catalog-changed-reopen");
   QJsonArray array;
   for (const auto &destination : destinations) array.append(destinationJson(destination));
   for (const auto &value : m_unreadable) array.append(value);
@@ -130,14 +129,16 @@ QString DestinationCatalog::save(const QVector<UploadDestination> &destinations,
   envelope.insert(QStringLiteral("version"), kCatalogVersion);
   envelope.insert(QStringLiteral("default"), defaultId.isNull() ? QString() : defaultId.toString(QUuid::WithoutBraces));
   envelope.insert(QStringLiteral("destinations"), array);
-  const auto bytes = QJsonDocument(envelope).toJson();
-  if (bytes.size() > kMaxCatalogBytes) return QStringLiteral("catalog-too-large");
-  QSaveFile file(m_path);
-  file.setDirectWriteFallback(false);
-  if (!file.open(QIODevice::WriteOnly)) return QStringLiteral("catalog-write-failed");
-  file.setPermissions(QFile::ReadOwner | QFile::WriteOwner);
-  if (file.write(bytes) != bytes.size() || !file.commit()) return QStringLiteral("catalog-write-failed");
-  m_snapshot = bytes;
+  const auto status = catalogFile(m_path).write(envelope, kCatalogVersion, m_snapshot, &m_snapshot);
+  switch (status) {
+    case storage::StoreStatus::Ok: break;
+    case storage::StoreStatus::Busy: return QStringLiteral("catalog-busy");
+    case storage::StoreStatus::Invalid:
+    case storage::StoreStatus::NewerVersion:
+    case storage::StoreStatus::Changed: return QStringLiteral("catalog-changed-reopen");
+    case storage::StoreStatus::TooLarge: return QStringLiteral("catalog-too-large");
+    default: return QStringLiteral("catalog-write-failed");
+  }
   m_envelope = envelope;
   m_destinations = destinations;
   m_default = defaultId;

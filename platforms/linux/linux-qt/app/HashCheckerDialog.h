@@ -4,9 +4,9 @@
 #pragma once
 
 #include "tools/FileHash.h"
+#include "OwnedWork.h"
 
 #include <QDialog>
-#include <QTimer>
 
 #include <atomic>
 #include <memory>
@@ -17,7 +17,6 @@ class QLabel;
 class QLineEdit;
 class QProgressBar;
 class QPushButton;
-class QTimer;
 
 namespace xerahs::app {
 
@@ -55,11 +54,8 @@ private:
   void setBusy(bool busy);
   void showResult(const tools::HashResult &result, const QString &path, tools::HashAlgorithm algorithm);
   void updateComparison();
-  // Runs the read on a worker and then applies the result on this dialog's
-  // thread, unless the dialog is gone. Progress is polled because the worker
-  // cannot touch widgets.
+  // OwnedWork delivers results and progress on this dialog's thread.
   void runHashWork(const QString &path, tools::HashAlgorithm algorithm);
-  void pollProgress();
 
   QLineEdit *m_file = nullptr;
   QPushButton *m_choose = nullptr;
@@ -74,11 +70,10 @@ private:
   QLabel *m_status = nullptr;
   QProgressBar *m_progress = nullptr;
   QDialogButtonBox *m_buttons = nullptr;
-  QTimer m_poll;
+  OwnedWork m_work;
 
+  // FileHash takes an atomic cancellation flag; OwnedWork owns result delivery.
   std::shared_ptr<std::atomic_bool> m_cancelled;
-  std::shared_ptr<std::atomic<qint64>> m_hashed;
-  std::shared_ptr<std::atomic<qint64>> m_total;
   // Whether a read is in flight. The cancel flag above answers a request to
   // stop; it is not the same question, and cancel() must not end the read early.
   bool m_running = false;

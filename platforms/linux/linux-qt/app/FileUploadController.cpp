@@ -1,5 +1,6 @@
 // CORE-020, CORE-023.
 #include "FileUploadController.h"
+#include "OwnedWork.h"
 
 #include "FileUploadResultDialog.h"
 #include "SecretServiceCredentialStore.h"
@@ -14,7 +15,6 @@
 #include <QNetworkAccessManager>
 #include <QProgressDialog>
 #include <QPushButton>
-#include <QThread>
 #include <QTimer>
 
 namespace xerahs::app {
@@ -83,10 +83,11 @@ void FileUploadController::startNext() {
   }
 
   showProgress(m_currentName);
-  auto result = std::make_shared<uploads::UploadRequestResult>();
   const auto credentials = m_ports.credentials;
   const auto cap = m_cap;
-  auto *thread = QThread::create([result, destination = *destination, path, credentials, cap] {
+  m_preparing = true;
+  OwnedWork::run<uploads::UploadRequestResult>(this,
+      [destination = *destination, path, credentials, cap](const OwnedWork::Context &) {
     // Keyring lookups block. Request building, including that lookup, stays off the GUI thread.
     const auto store = credentials ? credentials : std::shared_ptr<uploads::CredentialStore>(std::make_shared<SecretServiceCredentialStore>());
     uploads::UploadInput input;
@@ -96,22 +97,18 @@ void FileUploadController::startNext() {
     if (input.mimeType.isEmpty()) input.mimeType = QStringLiteral("application/octet-stream");
     uploads::UploadRequestOptions options;
     options.maxInputBytes = cap;
-    *result = uploads::buildUploadRequest(destination, input, *store, options);
-  });
-  m_preparing = true;
-  connect(thread, &QThread::finished, thread, &QObject::deleteLater);
-  connect(thread, &QThread::finished, this, [this, result] {
+    return uploads::buildUploadRequest(destination, input, *store, options);
+  }, [this](uploads::UploadRequestResult result) {
     m_preparing = false;
     if (m_stop) { showFailure(m_currentName, QStringLiteral("cancelled")); return; }
-    if (!result->request) {
+    if (!result.request) {
       closeProgress();
-      showFailure(m_currentName, result->errorMessage.isEmpty() ? result->code : result->errorMessage);
+      showFailure(m_currentName, result.errorMessage.isEmpty() ? result.code : result.errorMessage);
       return;
     }
     m_transferring = true;
-    m_executor->start(*result->request);
+    m_executor->start(*result.request);
   });
-  thread->start();
 }
 
 void FileUploadController::showProgress(const QString &fileName) {

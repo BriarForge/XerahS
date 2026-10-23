@@ -1,13 +1,17 @@
 #include "ApplicationSettings.h"
+#include "storage/PrivateJsonFile.h"
 #include "workflows/CaptureWorkflows.h"
 #include <QDir>
-#include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonArray>
-#include <QLockFile>
-#include <QSaveFile>
 namespace xerahs::settings {
+namespace {
+storage::PrivateJsonFile settingsFile(const QString &path) {
+  return {path, {QStringLiteral("com.xerahs.app/linux-qt/application-settings"), 1, 1048576, 0, 30000, true}};
+}
+}
+
 QVector<SettingField> settingFields() {
   return {{"saveFolder", Section::General, "profile"}, {"filenamePattern", Section::General, "profile"},
     {"startAtLogin", Section::General, "profile"}, {"showTrayIcon", Section::General, "profile"},
@@ -71,15 +75,18 @@ QStringList resetPreview(const QJsonObject &values, Section section, const QStri
   return changes;
 }
 ApplicationSettingsStore::ApplicationSettingsStore(QString path, QString saveFolder) : m_path(std::move(path)), m_saveFolder(std::move(saveFolder)) {
-  QFile file(m_path);
-  if (file.exists()) {
-    if (!file.open(QIODevice::ReadOnly) || file.size() > 1048576) { m_current = {defaultSettings(m_saveFolder), {"settings-read-failed"}, false}; return; }
-    m_snapshot = file.readAll(); QJsonParseError error; const auto doc = QJsonDocument::fromJson(m_snapshot, &error);
-    if (error.error != QJsonParseError::NoError || !doc.isObject() || !doc.object().value("values").isObject()) {
-      m_current = {defaultSettings(m_saveFolder), {"settings-invalid-restore-previous-or-repair-file"}, false}; return;
-    }
-    m_envelope = doc.object();
-    if (m_envelope.value("version") != QJsonValue(1)) { m_current = {defaultSettings(m_saveFolder), {"settings-version-unsupported"}, false}; return; }
+  const auto read = settingsFile(m_path).read();
+  if (read.status != storage::StoreStatus::Missing) {
+    QString diagnostic;
+    if (read.status == storage::StoreStatus::Ok || read.status == storage::StoreStatus::Invalid || read.status == storage::StoreStatus::NewerVersion) {
+      const auto format = read.document.value("format");
+      if (!read.document.value("values").isObject() || (!format.isUndefined() && format != QJsonValue(QStringLiteral("com.xerahs.app/linux-qt/application-settings"))))
+        diagnostic = "settings-invalid-restore-previous-or-repair-file";
+      else if (read.document.value("version") != QJsonValue(1)) diagnostic = "settings-version-unsupported";
+    } else diagnostic = "settings-read-failed";
+    if (!diagnostic.isEmpty()) { m_current = {defaultSettings(m_saveFolder), {diagnostic}, false}; return; }
+    m_snapshot = read.snapshot;
+    m_envelope = read.document;
   }
   m_current = repairSettings(m_envelope.value("values").toObject(), m_saveFolder);
 }
@@ -88,18 +95,20 @@ QString ApplicationSettingsStore::save(const QJsonObject &values) {
   const auto repaired = repairSettings(values, m_saveFolder);
   if (!repaired.diagnostics.isEmpty()) return repaired.diagnostics.join('\n');
   if (!QDir().mkpath(QFileInfo(m_path).absolutePath())) return "settings-directory-failed";
-  QLockFile lock(m_path + ".lock"); if (!lock.tryLock(0)) return "settings-busy";
-  QFile existing(m_path); QByteArray disk;
-  if (existing.exists()) { if (!existing.open(QIODevice::ReadOnly)) return "settings-read-failed"; disk = existing.readAll(); }
-  if (disk != m_snapshot) return "settings-changed-reopen-settings";
   auto envelope = m_envelope; envelope.insert("version", 1); envelope.insert("values", repaired.values);
   // Keep the previous version inside the same atomic artifact.
   if (m_envelope.contains("values")) envelope.insert("previous", m_envelope.value("values"));
-  const auto bytes = QJsonDocument(envelope).toJson(); if (bytes.size() > 1048576) return "settings-too-large";
-  QSaveFile file(m_path); file.setDirectWriteFallback(false);
-  if (!file.open(QIODevice::WriteOnly)) return "settings-write-failed";
-  file.setPermissions(QFile::ReadOwner | QFile::WriteOwner);
-  if (file.write(bytes) != bytes.size() || !file.commit()) return "settings-write-failed";
-  m_snapshot = bytes; m_envelope = envelope; m_current = repaired; return {};
+  const auto status = settingsFile(m_path).write(envelope, 1, m_snapshot, &m_snapshot);
+  switch (status) {
+    case storage::StoreStatus::Ok: break;
+    case storage::StoreStatus::Busy: return "settings-busy";
+    case storage::StoreStatus::Invalid:
+    case storage::StoreStatus::NewerVersion:
+    case storage::StoreStatus::Changed: return "settings-changed-reopen-settings";
+    case storage::StoreStatus::ReadFailed: return "settings-read-failed";
+    case storage::StoreStatus::TooLarge: return "settings-too-large";
+    default: return "settings-write-failed";
+  }
+  m_envelope = envelope; m_current = repaired; return {};
 }
 }

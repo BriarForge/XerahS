@@ -1,13 +1,12 @@
 // CORE-024, CORE-025.
 #include "WatchFolders.h"
+#include "storage/PrivateJsonFile.h"
 #include <QDateTime>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFileInfo>
-#include <QJsonDocument>
 #include <QJsonObject>
 #include <QRegularExpression>
-#include <QSaveFile>
 #include <unistd.h>
 
 namespace xerahs::watch {
@@ -47,44 +46,49 @@ QString fingerprint(const QString &path) {
   if (!info.isFile() || info.isSymLink()) return {};
   return info.canonicalFilePath() + '\n' + QString::number(info.size()) + '\n' + QString::number(info.lastModified().toMSecsSinceEpoch());
 }
-QString readStore(const QString &path, QJsonArray *items) {
-  const QFileInfo info(path);
-  for (QString ancestor = info.absolutePath(); ; ancestor = QFileInfo(ancestor).absolutePath()) {
-    if (QFileInfo(ancestor).isSymLink()) return "watch-store-unsafe";
-    if (ancestor == "/") break;
+namespace {
+storage::PrivateJsonFile watchFile(const QString &path) {
+  return {path, {QStringLiteral("com.xerahs.app/watch-folders"), 1, 16 * 1024 * 1024}};
+}
+QString readStoreSnapshot(const QString &path, QJsonArray *items, QByteArray *snapshot) {
+  const auto read = watchFile(path).read();
+  *snapshot = read.snapshot;
+  switch (read.status) {
+    case storage::StoreStatus::Missing: return {};
+    case storage::StoreStatus::Unsafe: return "watch-store-unsafe";
+    case storage::StoreStatus::TooLarge:
+    case storage::StoreStatus::ReadFailed: return "watch-store-read-failed";
+    case storage::StoreStatus::Ok: break;
+    default: return "watch-store-invalid-version-or-data";
   }
-  if (!info.exists() && !info.isSymLink()) return {};
-  if (info.isSymLink() || info.ownerId() != uint(geteuid()) || !info.isFile()) return "watch-store-unsafe";
-  QFile file(path);
-  if (!file.open(QIODevice::ReadOnly) || file.size() > 16 * 1024 * 1024) return "watch-store-read-failed";
-  QJsonParseError error;
-  const auto doc = QJsonDocument::fromJson(file.readAll(), &error);
-  const auto root = doc.object();
-  if (error.error != QJsonParseError::NoError || root.value("format") != "com.xerahs.app/watch-folders" || root.value("version") != 1 || !root.value("items").isArray()) return "watch-store-invalid-version-or-data";
-  *items = root.value("items").toArray();
+  if (read.version != 1 || !read.document.value("items").isArray()) return "watch-store-invalid-version-or-data";
+  *items = read.document.value("items").toArray();
   return {};
 }
-QString writeStore(const QString &path, const QJsonArray &items) {
-  const QFileInfo info(path);
-  if (info.isSymLink() || (info.exists() && (info.ownerId() != uint(geteuid()) || !info.isFile()))) return "watch-store-unsafe";
-  const auto parent = info.absolutePath();
-  for (QString ancestor = parent; ; ancestor = QFileInfo(ancestor).absolutePath()) {
-    if (QFileInfo(ancestor).isSymLink()) return "watch-store-unsafe";
-    if (ancestor == "/") break;
-  }
+QString writeStoreSnapshot(const QString &path, const QJsonArray &items, QByteArray *snapshot) {
+  const auto store = watchFile(path);
+  const auto read = store.read();
+  if (read.status == storage::StoreStatus::Unsafe) return "watch-store-unsafe";
+  if (read.status == storage::StoreStatus::ReadFailed || read.status == storage::StoreStatus::TooLarge) return "watch-store-read-failed";
+  if (read.status != storage::StoreStatus::Missing &&
+      (read.status != storage::StoreStatus::Ok || read.version != 1 || !read.document.value("items").isArray())) return "watch-store-invalid-version-or-data";
+  const auto parent = QFileInfo(path).absolutePath();
   const QFileInfo dir(parent);
-  if (dir.isSymLink() || (dir.exists() && dir.ownerId() != uint(geteuid())) || !QDir().mkpath(parent)) return "watch-store-unsafe";
+  if ((dir.exists() && dir.ownerId() != uint(geteuid())) || !QDir().mkpath(parent)) return "watch-store-unsafe";
   if (!QFile::setPermissions(parent, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner)) return "watch-store-permissions";
-  const auto bytes = QJsonDocument(QJsonObject{{"format", "com.xerahs.app/watch-folders"}, {"version", 1}, {"items", items}}).toJson();
-  if (bytes.size() > 16 * 1024 * 1024) return "watch-store-full";
-  QSaveFile file(path); file.setDirectWriteFallback(false);
-  if (!file.open(QIODevice::WriteOnly) || !file.setPermissions(QFile::ReadOwner | QFile::WriteOwner) || file.write(bytes) != bytes.size() || !file.commit()) return "watch-store-write-failed";
-  return {};
+  const auto status = store.write({{"items", items}}, 1, *snapshot, snapshot);
+  switch (status) {
+    case storage::StoreStatus::Ok: return {};
+    case storage::StoreStatus::Unsafe: return "watch-store-unsafe";
+    case storage::StoreStatus::TooLarge: return "watch-store-full";
+    default: return "watch-store-write-failed";
+  }
+}
 }
 WatchFolders::WatchFolders(QString directory) : m_directory(std::move(directory)) {
   QJsonArray rules, processed;
-  m_error = readStore(QDir(m_directory).filePath("watch-folders.json"), &rules);
-  if (m_error.isEmpty()) m_error = readStore(QDir(m_directory).filePath("watch-processed.json"), &processed);
+  m_error = readStoreSnapshot(QDir(m_directory).filePath("watch-folders.json"), &rules, &m_rulesSnapshot);
+  if (m_error.isEmpty()) m_error = readStoreSnapshot(QDir(m_directory).filePath("watch-processed.json"), &processed, &m_processedSnapshot);
   if (!m_error.isEmpty()) return;
   for (const auto &value : rules) {
     const auto o = value.toObject();
@@ -117,7 +121,7 @@ QString WatchFolders::saveRules(const QVector<Rule> &rules, const QString &captu
     items.append(QJsonObject{{"path", rule.path}, {"filters", QJsonArray::fromStringList(rule.filters)}, {"recursive", rule.recursive}, {"enabled", rule.enabled}, {"action", int(rule.action)}});
     normalized.append(rule);
   }
-  const auto error = writeStore(QDir(m_directory).filePath("watch-folders.json"), items);
+  const auto error = writeStoreSnapshot(QDir(m_directory).filePath("watch-folders.json"), items, &m_rulesSnapshot);
   if (error.isEmpty()) m_rules = normalized;
   return error;
 }
@@ -125,7 +129,7 @@ QString WatchFolders::remember(const QString &key) {
   if (!m_error.isEmpty()) return m_error;
   auto next = m_processed; next.insert(key); QJsonArray items;
   for (const auto &item : next) items.append(item);
-  const auto error = writeStore(QDir(m_directory).filePath("watch-processed.json"), items);
+  const auto error = writeStoreSnapshot(QDir(m_directory).filePath("watch-processed.json"), items, &m_processedSnapshot);
   if (error.isEmpty()) m_processed = std::move(next);
   return error;
 }

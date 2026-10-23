@@ -18,8 +18,6 @@ struct Rule {
 QString authorizeRoot(const QString &path, const QString &captures, QString *canonical);
 bool matches(const Rule &rule, const QString &path);
 QString fingerprint(const QString &path);
-QString readStore(const QString &path, QJsonArray *items);
-QString writeStore(const QString &path, const QJsonArray &items);
 class WatchFolders {
 public:
   explicit WatchFolders(QString directory);
@@ -30,6 +28,7 @@ public:
   QString remember(const QString &key);
 private:
   QString m_directory, m_error;
+  QByteArray m_rulesSnapshot, m_processedSnapshot;
   QVector<Rule> m_rules;
   QSet<QString> m_processed;
 };

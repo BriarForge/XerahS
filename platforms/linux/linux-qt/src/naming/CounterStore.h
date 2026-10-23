@@ -2,12 +2,12 @@
 // per-profile zero-based filename counter in one small versioned JSON file.
 #pragma once
 
+#include "storage/PrivateJsonFile.h"
+
 #include <QString>
 
 #include <memory>
 #include <optional>
-
-class QLockFile;
 
 namespace xerahs::naming {
 
@@ -35,7 +35,7 @@ public:
   qint64 value() const { return m_value; }
 private:
   friend class CounterStore;
-  std::unique_ptr<QLockFile> m_lock;
+  std::unique_ptr<storage::StoreLock> m_lock;
   QString m_profile;
   qint64 m_value = 0;
   QByteArray m_snapshot;

@@ -14,11 +14,8 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QMimeData>
-#include <QPointer>
 #include <QProgressBar>
 #include <QPushButton>
-#include <QThread>
-#include <QTimer>
 #include <QUrl>
 #include <QVBoxLayout>
 
@@ -147,7 +144,6 @@ HashCheckerDialog::HashCheckerDialog(QWidget *parent) : QDialog(parent) {
   connect(m_algorithm, &QComboBox::currentIndexChanged, this, [this](int index) {
     m_weak->setVisible(tools::hashAlgorithmIsWeak(static_cast<HashAlgorithm>(index)));
   });
-  connect(&m_poll, &QTimer::timeout, this, &HashCheckerDialog::pollProgress);
   // Escape and a close must answer a running read instead of leaving it orphaned.
   connect(this, &QDialog::finished, this, &HashCheckerDialog::cancel);
 }
@@ -186,6 +182,7 @@ void HashCheckerDialog::compute() {
 
 void HashCheckerDialog::cancel() {
   if (!m_cancelled) return;
+  m_work.cancel();
   m_cancelled->store(true);
   m_progress->setEnabled(false);
   m_status->setText(QStringLiteral("Cancelling…"));
@@ -204,14 +201,11 @@ void HashCheckerDialog::setBusy(bool busy) {
   m_algorithm->setEnabled(!busy);
   m_compute->setEnabled(!busy);
   m_cancel->setEnabled(busy);
-  if (!busy) m_poll.stop();
   emit busyChanged(busy);
 }
 
 void HashCheckerDialog::runHashWork(const QString &path, HashAlgorithm algorithm) {
   m_cancelled = std::make_shared<std::atomic_bool>(false);
-  m_hashed = std::make_shared<std::atomic<qint64>>(0);
-  m_total = std::make_shared<std::atomic<qint64>>(-1);
   m_digest->clear();
   m_copy->setEnabled(false);
   m_verdict->clear();
@@ -222,38 +216,26 @@ void HashCheckerDialog::runHashWork(const QString &path, HashAlgorithm algorithm
   setBusy(true);
 
   const auto cancelled = m_cancelled;
-  const auto hashed = m_hashed;
-  const auto total = m_total;
-  auto result = std::make_shared<tools::HashResult>();
-  auto *thread = QThread::create([result, path, algorithm, cancelled, hashed, total] {
-    *result = tools::hashFile(path, algorithm, cancelled.get(),
-                              [hashed, total](qint64 done, qint64 size) {
-                                hashed->store(done);
-                                total->store(size);
-                              });
-  });
-  const QPointer<HashCheckerDialog> guard(this);
-  connect(thread, &QThread::finished, thread, &QObject::deleteLater);
-  connect(thread, &QThread::finished, this, [guard, result, path, algorithm] {
-    if (!guard) return;
-    guard->setBusy(false);
-    guard->showResult(*result, path, algorithm);
-    emit guard->hashed(result->ok ? result->hex : QString());
-  });
-  m_poll.start(100);
-  thread->start();
-}
-
-void HashCheckerDialog::pollProgress() {
-  if (!m_hashed) return;
-  const qint64 total = m_total->load();
-  if (total <= 0) {
-    // Size unknown: show activity rather than a fraction that would lie.
-    m_progress->setRange(0, 0);
-    return;
-  }
-  m_progress->setRange(0, 100);
-  m_progress->setValue(percentOf(m_hashed->load(), total));
+  m_work = OwnedWork::run<tools::HashResult>(this,
+      [path, algorithm, cancelled](const OwnedWork::Context &context) {
+        return tools::hashFile(path, algorithm, cancelled.get(),
+            [&context, cancelled](qint64 done, qint64 total) {
+              if (context.cancelled()) cancelled->store(true);
+              context.progress(done, total);
+            });
+      }, [this, path, algorithm](tools::HashResult result) {
+        setBusy(false);
+        showResult(result, path, algorithm);
+        emit hashed(result.ok ? result.hex : QString());
+      }, [this](qint64 done, qint64 total) {
+        if (!busy()) return;
+        if (total <= 0) {
+          m_progress->setRange(0, 0);
+          return;
+        }
+        m_progress->setRange(0, 100);
+        m_progress->setValue(percentOf(done, total));
+      });
 }
 
 void HashCheckerDialog::showResult(const tools::HashResult &result, const QString &path,

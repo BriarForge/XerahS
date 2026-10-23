@@ -1,12 +1,7 @@
 #include "CounterStore.h"
 
-#include <QDir>
-#include <QFile>
 #include <QFileInfo>
-#include <QJsonDocument>
 #include <QJsonObject>
-#include <QLockFile>
-#include <QSaveFile>
 
 #include <limits>
 
@@ -14,23 +9,30 @@ namespace xerahs::naming {
 namespace {
 const QString kFormat = QStringLiteral("com.xerahs.app/linux-qt/filename-counters");
 constexpr int kVersion = 1;
-constexpr qint64 kMaxBytes = 1 << 20;
-
-struct Loaded { QByteArray bytes; QJsonObject counters; bool exists = false; CounterError error = CounterError::None; };
-
+storage::PrivateJsonFile counterFile(const QString &path, int lockWaitMs = 0) {
+  return {path, {kFormat, kVersion, 1 << 20, lockWaitMs}};
+}
+CounterError counterError(storage::StoreStatus status) {
+  switch (status) {
+    case storage::StoreStatus::Ok:
+    case storage::StoreStatus::Missing: return CounterError::None;
+    case storage::StoreStatus::Busy: return CounterError::Busy;
+    case storage::StoreStatus::Unsafe: return CounterError::Unsafe;
+    case storage::StoreStatus::NewerVersion: return CounterError::NewerVersion;
+    case storage::StoreStatus::Changed: return CounterError::Changed;
+    case storage::StoreStatus::WriteFailed: return CounterError::WriteFailed;
+    default: return CounterError::Corrupt;
+  }
+}
+struct Loaded { QByteArray bytes; QJsonObject counters; CounterError error = CounterError::None; };
 Loaded load(const QString &path) {
-  Loaded out; QFile file(path);
-  if (!QFileInfo(path).isSymLink() && !file.exists()) return out;
-  if (QFileInfo(path).isSymLink()) { out.error = CounterError::Unsafe; return out; }
-  if (!file.open(QIODevice::ReadOnly) || file.size() > kMaxBytes) { out.error = CounterError::Corrupt; return out; }
-  out.exists = true; out.bytes = file.readAll();
-  QJsonParseError parse; const auto doc = QJsonDocument::fromJson(out.bytes, &parse);
-  if (parse.error != QJsonParseError::NoError || !doc.isObject()) { out.error = CounterError::Corrupt; return out; }
-  const auto root = doc.object();
-  if (root.value("format").toString() != kFormat || !root.value("version").isDouble()) { out.error = CounterError::Corrupt; return out; }
-  if (root.value("version").toInt() > kVersion) { out.error = CounterError::NewerVersion; return out; }
-  if (root.value("version").toInt() != kVersion || !root.value("counters").isObject()) { out.error = CounterError::Corrupt; return out; }
-  out.counters = root.value("counters").toObject(); return out;
+  const auto read = counterFile(path).read();
+  Loaded out{read.snapshot, {}, counterError(read.status)};
+  if (read.status == storage::StoreStatus::Ok) {
+    if (read.version != kVersion || !read.document.value("counters").isObject()) out.error = CounterError::Corrupt;
+    else out.counters = read.document.value("counters").toObject();
+  }
+  return out;
 }
 // Values are decimal strings: JSON doubles cannot hold every int64 (FN-025).
 bool parseValue(const QJsonValue &v, qint64 &result) {
@@ -38,10 +40,6 @@ bool parseValue(const QJsonValue &v, qint64 &result) {
   if (!v.isString()) return false;
   bool ok = false; result = v.toString().toLongLong(&ok);
   return ok && result >= 0 && QString::number(result) == v.toString();
-}
-bool safeDirectory(const QString &path) {
-  const QFileInfo dir(QFileInfo(path).absolutePath());
-  return QFileInfo(path).isAbsolute() && !dir.isSymLink();
 }
 }
 
@@ -77,11 +75,10 @@ CounterPeek CounterStore::peek(const QString &profileId) const {
 // or cancelled save leaves the file untouched and consumes nothing.
 CounterReserveResult CounterStore::reserve(const QString &profileId) const {
   CounterReserveResult result;
-  if (profileId.isEmpty() || !safeDirectory(m_path)) { result.error = CounterError::Unsafe; return result; }
-  if (!QDir().mkpath(QFileInfo(m_path).absolutePath())) { result.error = CounterError::WriteFailed; return result; }
-  auto lock = std::make_unique<QLockFile>(m_path + QStringLiteral(".lock"));
-  lock->setStaleLockTime(30000);
-  if (!lock->tryLock(m_lockTimeoutMs)) { result.error = CounterError::Busy; return result; }
+  if (profileId.isEmpty() || !QFileInfo(m_path).isAbsolute()) { result.error = CounterError::Unsafe; return result; }
+  auto lock = std::make_unique<storage::StoreLock>();
+  const auto locked = counterFile(m_path, m_lockTimeoutMs).lock(*lock);
+  if (locked != storage::StoreStatus::Ok) { result.error = counterError(locked); return result; }
   const auto loaded = load(m_path);
   if (loaded.error != CounterError::None) { result.error = loaded.error; return result; }
   qint64 value = 0;
@@ -102,12 +99,9 @@ CounterError CounterStore::commit(CounterReservation &reservation, qint64 next) 
   if (next < reservation.m_value) { release(); return CounterError::WriteFailed; }
   auto counters = loaded.counters; counters.insert(reservation.m_profile, QString::number(next));
   const QJsonObject root{{"format", kFormat}, {"version", kVersion}, {"counters", counters}};
-  QSaveFile file(m_path); file.setDirectWriteFallback(false);
-  const auto bytes = QJsonDocument(root).toJson(QJsonDocument::Compact);
-  const bool ok = file.open(QIODevice::WriteOnly) && file.setPermissions(QFile::ReadOwner | QFile::WriteOwner) &&
-                  file.write(bytes) == bytes.size() && file.commit();
+  const auto status = counterFile(m_path).write(root, kVersion, reservation.m_snapshot, nullptr, reservation.m_lock.get());
   release();
-  return ok ? CounterError::None : CounterError::WriteFailed;
+  return counterError(status);
 }
 
 }  // namespace xerahs::naming
