@@ -12,13 +12,13 @@ QVector<SettingField> settingFields() {
   return {{"saveFolder", Section::General, "profile"}, {"filenamePattern", Section::General, "profile"},
     {"startAtLogin", Section::General, "profile"}, {"showTrayIcon", Section::General, "profile"},
     {"playCaptureSound", Section::Capture, "profile"}, {"showNotification", Section::Capture, "profile"},
-    {"hotkeys", Section::Hotkeys, "profile"}};
+    {"hotkeys", Section::Hotkeys, "profile"}, {"systemAudioDevice", Section::Recording, "profile"}, {"microphoneDevice", Section::Recording, "profile"}};
 }
 QJsonObject defaultSettings(const QString &saveFolder) {
   QJsonObject bindings; const auto defaults = HotkeyBindings::defaults();
   for (auto it = defaults.entries.cbegin(); it != defaults.entries.cend(); ++it) bindings.insert(it.key(), it.value());
   return {{"saveFolder", saveFolder}, {"filenamePattern", workflows::CaptureOutput{}.pattern}, {"startAtLogin", false},
-    {"showTrayIcon", true}, {"playCaptureSound", false}, {"showNotification", true}, {"hotkeys", bindings}};
+    {"showTrayIcon", true}, {"playCaptureSound", false}, {"showNotification", true}, {"hotkeys", bindings}, {"systemAudioDevice", ""}, {"microphoneDevice", ""}};
 }
 xerahs::workflows::CaptureWorkflow withApplicationDefaults(xerahs::workflows::CaptureWorkflow workflow,
     const QJsonObject &values, bool savedDefinition) {
@@ -40,7 +40,8 @@ SettingsRead repairSettings(const QJsonObject &input, const QString &saveFolder)
     else if (field.key == "filenamePattern") {
       workflows::CaptureOutput output; output.pattern = value.toString();
       valid = value.isString() && !output.pattern.isEmpty() && workflows::previewCaptureOutput(output).diagnostic.isEmpty();
-    } else if (field.key == "hotkeys") valid = value.isObject() && value.toObject().size() <= 68;
+    } else if (field.key == "hotkeys") valid = value.isObject() && value.toObject().size() <= maximumHotkeyBindings;
+    else if (field.section == Section::Recording) valid = value.isString() && value.toString().size() <= 4096 && !value.toString().contains(QChar(0));
     else valid = value.isBool();
     if (!valid) { result.values.insert(field.key, defaults.value(field.key)); result.diagnostics.append(field.key + ": invalid value repaired"); }
   }

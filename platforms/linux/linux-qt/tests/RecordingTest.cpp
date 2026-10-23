@@ -20,6 +20,44 @@ struct FakeEncoderPort {
 class RecordingTest : public QObject {
   Q_OBJECT
 private slots:
+  void cropMapping() {
+    QCOMPARE(mapCrop({110, 220, 101, 51}, {100, 200, 400, 300}, {800, 600}).rectangle, QRect(20, 40, 202, 102));
+    QCOMPARE(mapCrop({-1800, 10, 101, 51}, {-1920, 0, 1920, 1080}, {1920, 1080}).rectangle, QRect(120, 10, 100, 50));
+    QCOMPARE(mapCrop({0, 0, 1920, 1080}, {0, 0, 1920, 1080}, {1280, 720}).rectangle, QRect(0, 0, 1280, 720));
+    QCOMPARE(mapCrop({0, 0, 101, 51}, {0, 0, 1920, 1080}, {1920, 1080}).rectangle, QRect(0, 0, 100, 50));
+    for (const QRectF region : {QRectF(-1, 0, 10, 10), QRectF(0, 0, 401, 10), QRectF(0, 299, 10, 2)})
+      QCOMPARE(mapCrop(region, {0, 0, 400, 300}, {800, 600}).diagnostic, QString("region-outside-stream"));
+    QCOMPARE(mapCrop({0, 0, 1, 1}, {0, 0, 400, 300}, {}).diagnostic, QString("region-mapping-unavailable"));
+    auto r = request(); r.crop = QRect(20, 40, 202, 102); r.streamSize = {800, 600};
+    const auto description = pipeline(r, selectEncoder(r.format, elements()), "videotestsrc");
+    QVERIFY(description.contains("videocrop name=regioncrop left=20 top=40 right=578 bottom=458"));
+    r.crop = QRect(799, 0, 2, 2); QVERIFY(pipeline(r, selectEncoder(r.format, elements()), "videotestsrc").isEmpty());
+  }
+  void explicitAudioSelection() {
+    const auto system = audioDevice({{"device.name", "alsa_output.card.monitor"}}, "Speakers");
+    const auto mic = audioDevice({{"node.name", "alsa_input.card"}}, "Microphone");
+    const auto pulse = audioDevice({{"internal-name", "alsa_output.card.monitor"}, {"device.name", "ambiguous label"}}, "Speakers");
+    QCOMPARE(pulse.id, QString("internal-name:alsa_output.card.monitor")); QVERIFY(pulse.monitor);
+    QVERIFY(system.monitor); QVERIFY(!mic.monitor); QVERIFY(audioDevice({}, "Unnamed").id.isEmpty());
+    QCOMPARE(system.id, QString("device.name:alsa_output.card.monitor"));
+    int calls = 0; QVector<AudioDevice> devices{system, mic};
+    DeviceMonitor monitor = [&] { ++calls; return devices; };
+    auto r = request(); QVERIFY(selectAudio(r, monitor).devices.isEmpty()); QCOMPARE(calls, 0);
+    r.systemAudioDevice = system.id; r.microphoneDevice = mic.id;
+    auto selected = selectAudio(r, monitor); QCOMPARE(selected.devices.size(), 2); QVERIFY(selected.diagnostics.isEmpty());
+    devices.removeLast(); selected = selectAudio(r, monitor); QVERIFY(selected.devices.isEmpty()); QCOMPARE(selected.diagnostics.size(), 1);
+    QVERIFY(!pipeline(r, selectEncoder(r.format, elements()), "videotestsrc", selected.devices.size(), "voaacenc").contains("audiomixer"));
+    QVERIFY(selected.diagnostics.first().contains("microphone")); QVERIFY(selected.diagnostics.first().contains(mic.id));
+    r.microphoneDevice.clear(); QCOMPARE(selectAudio(r, monitor).devices.size(), 1);
+    r.microphoneDevice = r.systemAudioDevice; QCOMPARE(selectAudio(r, monitor).devices.size(), 1);
+    r.format = Format::Gif; calls = 0; QVERIFY(selectAudio(r, monitor).devices.isEmpty()); QCOMPARE(calls, 0);
+    for (auto format : {Format::Mp4, Format::WebM, Format::Gif}) {
+      r.format = format; r.filename = "audio." + extension(format);
+      const auto description = pipeline(r, selectEncoder(format, elements()), "videotestsrc", 2, format == Format::WebM ? "opusenc" : "voaacenc");
+      QCOMPARE(description.contains("audiomixer"), format != Format::Gif);
+      QCOMPARE(description.contains("audioqueue1"), format != Format::Gif);
+    }
+  }
   void transitionMatrix() {
     const QList<QList<Event>> paths{{}, {Event::Request}, {Event::Request, Event::Granted},
       {Event::Request, Event::Granted, Event::Started}, {Event::Request, Event::Granted, Event::Started, Event::Pause},
@@ -104,17 +142,21 @@ private slots:
   }
   void activationAndHotkeys() {
     using namespace xerahs::shell;
-    for (auto action : {ActivationAction::StartRecording, ActivationAction::StopRecording}) {
+    for (auto action : {ActivationAction::StartRecording, ActivationAction::StopRecording, ActivationAction::StartRegionRecording}) {
       auto request = makeActivationRequest(action); const auto parsed = parseActivation(serializeActivation(request)); QVERIFY(parsed.request); QCOMPARE(parsed.request->action, action);
     }
     int starts = 0, stops = 0; bool busy = false;
     ActivationOperations ops; ops.captureBusy = [&] { return busy; }; ops.startRecording = [&] { ++starts; }; ops.stopRecording = [&] { ++stops; };
     ActivationDispatcher dispatcher(ops); auto start = makeActivationRequest(ActivationAction::StartRecording), stop = makeActivationRequest(ActivationAction::StopRecording);
     QCOMPARE(dispatcher.admit(start), ActivationReplyState::Accepted); QVERIFY(dispatcher.dispatch(start).isEmpty()); QCOMPARE(starts, 1);
+    auto region = makeActivationRequest(ActivationAction::StartRegionRecording);
+    ops.startRegionRecording = [&] { ++starts; }; ActivationDispatcher regionDispatcher(ops);
+    QCOMPARE(regionDispatcher.admit(region), ActivationReplyState::Accepted); QVERIFY(regionDispatcher.dispatch(region).isEmpty()); QCOMPARE(starts, 2);
+    busy = true; QCOMPARE(regionDispatcher.admit(region), ActivationReplyState::Busy);
     busy = true; QCOMPARE(dispatcher.admit(start), ActivationReplyState::Busy);
     QCOMPARE(dispatcher.admit(stop), ActivationReplyState::Accepted); QVERIFY(dispatcher.dispatch(stop).isEmpty()); QCOMPARE(stops, 1);
     const auto defaults = xerahs::settings::HotkeyBindings::defaults();
-    for (const auto &id : {"start-recording", "start-gif-recording", "stop-recording"}) { QVERIFY(defaults.entries.contains(id)); QVERIFY(defaults.entries.value(id).isEmpty()); }
+    for (const auto &id : {"start-region-recording", "start-recording", "start-gif-recording", "stop-recording"}) { QVERIFY(defaults.entries.contains(id)); QVERIFY(defaults.entries.value(id).isEmpty()); }
   }
 };
 QTEST_GUILESS_MAIN(RecordingTest)

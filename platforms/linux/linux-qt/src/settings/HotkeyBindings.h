@@ -2,6 +2,8 @@
 #include <QMap>
 #include <QStringList>
 namespace xerahs::settings {
+// One additional built-in recording action preserves the prior saved-workflow capacity.
+constexpr int maximumHotkeyBindings = 69;
 struct HotkeyAction { QString id, label, preferred; };
 QVector<HotkeyAction> captureHotkeyActions();
 QString normalizeTrigger(const QString &trigger);

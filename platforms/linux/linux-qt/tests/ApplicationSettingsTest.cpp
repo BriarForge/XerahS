@@ -20,6 +20,29 @@ using namespace xerahs::settings;
 class ApplicationSettingsTest : public QObject {
   Q_OBJECT
 private slots:
+  void oldMaximumHotkeysSurviveNewRecordingAction() {
+    auto old = defaultSettings("/tmp"); auto bindings = old.value("hotkeys").toObject(); bindings.remove("start-region-recording");
+    while (bindings.size() < maximumHotkeyBindings - 1) bindings.insert(QUuid::createUuid().toString(QUuid::WithoutBraces), "");
+    old.insert("hotkeys", bindings);
+    const auto repaired = repairSettings(old, "/tmp"); QVERIFY(repaired.diagnostics.isEmpty());
+    QCOMPARE(repaired.values.value("hotkeys").toObject().size(), maximumHotkeyBindings);
+    QCOMPARE(repairSettings(repaired.values, "/tmp").values, repaired.values);
+    QVERIFY(hotkeys(repaired.values).validate().ok);
+  }
+  void audioSettingsCompatibleRoundTrip() {
+    QTemporaryDir dir; const auto path = dir.filePath("settings.json");
+    auto old = defaultSettings(dir.path()); old.remove("systemAudioDevice"); old.remove("microphoneDevice");
+    QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(QJsonDocument(QJsonObject{{"version", 1}, {"values", old}}).toJson()); file.close();
+    ApplicationSettingsStore store(path, dir.path()); QVERIFY(store.current().diagnostics.isEmpty());
+    QCOMPARE(store.current().values.value("systemAudioDevice").toString(), QString{});
+    QCOMPARE(store.current().values.value("microphoneDevice").toString(), QString{});
+    auto values = store.current().values; values.insert("systemAudioDevice", "device.name:speakers.monitor"); values.insert("microphoneDevice", "node.name:mic");
+    QVERIFY(store.save(values).isEmpty()); ApplicationSettingsStore reopened(path, dir.path()); QCOMPARE(reopened.current().values, values);
+    const auto reset = resetSection(values, Section::Recording, dir.path());
+    QCOMPARE(reset.value("systemAudioDevice").toString(), QString{}); QCOMPARE(reset.value("microphoneDevice").toString(), QString{});
+    QCOMPARE(reset.value("saveFolder"), values.value("saveFolder"));
+    values.insert("microphoneDevice", false); QVERIFY(!repairSettings(values, dir.path()).diagnostics.isEmpty());
+  }
   void portableBindings() {
     auto bindings = HotkeyBindings::defaults(); QVERIFY(bindings.validate().ok);
     QCOMPARE(bindings.entries.value("capture-region"), "Print");

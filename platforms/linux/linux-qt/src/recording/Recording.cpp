@@ -6,6 +6,8 @@
 #include <QFileInfo>
 #include <QTemporaryFile>
 #include <QUuid>
+#include <cmath>
+#include <algorithm>
 namespace xerahs::recording {
 bool terminal(State s) { return s == State::Completed || s == State::Cancelled || s == State::Failed || s == State::PermissionDenied; }
 QString stateName(State s) {
@@ -27,16 +29,51 @@ bool Session::send(Event e, const QString &diagnostic) {
   if (next == m_state) return false;
   m_state = next; emit changed();
   if (terminal(next)) {
-    static const QSet<QString> codes{"portal-unavailable", "portal-timeout", "portal-invalid-response", "target-lost", "encoder-unavailable", "encoder-start-failed", "encoder-failed", "finalize-timeout", "output-create-failed", "output-publish-failed", "request-invalid"};
+    static const QSet<QString> codes{"portal-unavailable", "portal-timeout", "portal-invalid-response", "target-lost", "encoder-unavailable", "encoder-start-failed", "encoder-failed", "finalize-timeout", "output-create-failed", "output-publish-failed", "request-invalid", "region-outside-stream", "region-mapping-unavailable"};
     emit finished(next, next == State::Failed ? (codes.contains(diagnostic) ? diagnostic : QStringLiteral("encoder-failed")) : QString{});
   }
   return true;
+}
+CropMapping mapCrop(const QRectF &region, const QRectF &desktop, QSize size) {
+  const auto finite = [](const QRectF &r) { return std::isfinite(r.x()) && std::isfinite(r.y()) && std::isfinite(r.width()) && std::isfinite(r.height()); };
+  if (!finite(region) || !finite(desktop) || region.isEmpty() || desktop.isEmpty() || size.isEmpty()) return {{}, "region-mapping-unavailable"};
+  if (!desktop.contains(region)) return {{}, "region-outside-stream"};
+  const int left = int(std::floor((region.x() - desktop.x()) * size.width() / desktop.width()));
+  const int top = int(std::floor((region.y() - desktop.y()) * size.height() / desktop.height()));
+  const int right = qMin(size.width(), int(std::ceil((region.x() + region.width() - desktop.x()) * size.width() / desktop.width())));
+  const int bottom = qMin(size.height(), int(std::ceil((region.y() + region.height() - desktop.y()) * size.height() / desktop.height())));
+  const QRect result(left, top, (right - left) & ~1, (bottom - top) & ~1);
+  return result.isEmpty() ? CropMapping{{}, "region-outside-stream"} : CropMapping{result, {}};
+}
+AudioDevice audioDevice(const QVariantMap &properties, const QString &label) {
+  QString backend, id;
+  for (const auto &key : {"internal-name", "node.name", "device.name"}) {
+    id = properties.value(key).toString();
+    if (!id.isEmpty()) { backend = key; break; }
+  }
+  if (id.isEmpty()) return {};
+  return {backend + ':' + id, label, id.endsWith(".monitor") || properties.value("device.class").toString() == "monitor"};
+}
+AudioSelection selectAudio(const Request &r, const DeviceMonitor &monitor) {
+  AudioSelection result;
+  if (r.format == Format::Gif || (r.systemAudioDevice.isEmpty() && r.microphoneDevice.isEmpty())) return result;
+  const auto devices = monitor ? monitor() : QVector<AudioDevice>{};
+  for (const auto &input : {qMakePair(QString("system audio"), r.systemAudioDevice), qMakePair(QString("microphone"), r.microphoneDevice)}) {
+    if (input.second.isEmpty()) continue;
+    auto found = std::find_if(devices.cbegin(), devices.cend(), [&](const AudioDevice &d) { return d.id == input.second; });
+    if (found == devices.cend()) result.diagnostics << "audio-device-missing: " + input.first + " (" + input.second + ')';
+    else if (std::none_of(result.devices.cbegin(), result.devices.cend(), [&](const AudioDevice &d) { return d.id == found->id; })) result.devices << *found;
+  }
+  // An unavailable selected input must not produce a partial, unexpected mix.
+  if (!result.diagnostics.isEmpty()) result.devices.clear();
+  return result;
 }
 QString extension(Format f) { return f == Format::Mp4 ? "mp4" : f == Format::WebM ? "webm" : "gif"; }
 QString validate(const Request &r) {
   if (r.frameRate < 1 || r.frameRate > 120 || r.quality < 0 || r.quality > 100) return "request-invalid";
   if (r.target != Target::Monitor && r.target != Target::Window) return "request-invalid";
   if (r.format != Format::Mp4 && r.format != Format::WebM && r.format != Format::Gif) return "request-invalid";
+  if (r.region && (r.target != Target::Monitor || r.region->isEmpty() || !std::isfinite(r.region->x()) || !std::isfinite(r.region->y()) || !std::isfinite(r.region->width()) || !std::isfinite(r.region->height()))) return "request-invalid";
   if (r.crop && (r.target != Target::Monitor || r.crop->x() < 0 || r.crop->y() < 0 || r.crop->isEmpty())) return "request-invalid";
   if (!QDir::isAbsolutePath(r.folder) || r.folder.contains(QChar(0)) || r.filename.contains(QChar(0)) || r.filename.contains('/') || r.filename.contains('\\') || r.filename == "." || r.filename == ".." || r.filename.isEmpty() || !r.filename.endsWith('.' + extension(r.format))) return "request-invalid";
   return {};
@@ -59,9 +96,12 @@ Encoder selectEncoder(Format f, const QSet<QString> &available) {
   }
   return {{}, {}, "encoder-unavailable"};
 }
-QString pipeline(const Request &r, const Encoder &e, const QString &source) {
-  if (!validate(r).isEmpty() || e.element.isEmpty() || r.crop) return {}; // crop has no native selection in this slice
+QString pipeline(const Request &r, const Encoder &e, const QString &source, int audioInputs, const QString &audioEncoder) {
+  if (!validate(r).isEmpty() || e.element.isEmpty() || (r.crop && (r.streamSize.isEmpty() || !QRect(QPoint{}, r.streamSize).contains(*r.crop)))) return {};
   QString description = source + QStringLiteral(" ! videoconvert ! videorate ! video/x-raw,framerate=%1/1 ! videoscale").arg(r.frameRate);
+  if (r.crop) description += QStringLiteral(" ! videocrop name=regioncrop left=%1 top=%2 right=%3 bottom=%4")
+      .arg(r.crop->x()).arg(r.crop->y()).arg(r.streamSize.width() - r.crop->x() - r.crop->width()).arg(r.streamSize.height() - r.crop->y() - r.crop->height());
+  else if (r.region) description += " ! videocrop name=regioncrop";
   // Prefer a broadly supported H.264 raw format; negotiation failures are explicit.
   if (r.format == Format::Mp4) description += " ! video/x-raw,format=I420";
   description += " ! " + e.element;
@@ -71,7 +111,15 @@ QString pipeline(const Request &r, const Encoder &e, const QString &source) {
   else if (e.element == "vp9enc") description += QStringLiteral(" deadline=1 end-usage=cq cq-level=%1").arg(63 - r.quality * 63 / 100);
   if (r.format == Format::Mp4) description += " ! h264parse ! mp4mux";
   else if (r.format == Format::WebM) description += " ! webmmux";
-  return description + " ! filesink name=output";
+  description += " ! filesink name=output";
+  if (audioInputs > 0 && r.format != Format::Gif) {
+    if ((r.format == Format::Mp4 && audioEncoder != "voaacenc" && audioEncoder != "avenc_aac") ||
+        (r.format == Format::WebM && audioEncoder != "opusenc") || audioInputs > 2) return {};
+    description.replace(r.format == Format::Mp4 ? "mp4mux" : "webmmux", r.format == Format::Mp4 ? "mp4mux name=mux" : "webmmux name=mux");
+    description += " audiomixer name=audiomix ! audioconvert ! audioresample ! " + audioEncoder + " ! queue ! mux.";
+    for (int i = 0; i < audioInputs; ++i) description += QStringLiteral(" queue name=audioqueue%1 ! audioconvert ! audioresample ! audiomix.").arg(i);
+  }
+  return description;
 }
 Output::~Output() { abort(); }
 QString Output::reserve(const Request &r) {

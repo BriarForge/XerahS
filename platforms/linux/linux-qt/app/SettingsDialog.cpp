@@ -1,4 +1,5 @@
 #include "SettingsDialog.h"
+#include "RecordingDevices.h"
 #include "XdgAutostart.h"
 #include <QApplication>
 #include <QCheckBox>
@@ -83,12 +84,33 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   connect(&shortcuts, &WorkflowShortcutActions::bindingsChanged, this, [=, &shortcuts] {
     for (int row = 0; row < table->rowCount(); ++row) table->item(row, 2)->setText(shortcuts.bindings().value(table->item(row, 0)->data(Qt::UserRole).toString(), "Unbound in this session"));
   });
+  auto *recordingPage = new QWidget(tabs); auto *recordingForm = new QFormLayout(recordingPage); tabs->addTab(recordingPage, "&Recording");
+  RecordingDevices devices;
+  auto *systemAudio = new QComboBox(recordingPage); auto *microphone = new QComboBox(recordingPage);
+  for (auto *combo : {systemAudio, microphone}) {
+    combo->addItem("None", QString{});
+    for (const auto &device : devices.list()) combo->addItem(device.label + (device.monitor ? " (system monitor)" : ""), device.id);
+  }
+  systemAudio->setAccessibleName("System audio device"); microphone->setAccessibleName("Microphone");
+  recordingForm->addRow("System audio device", systemAudio); recordingForm->addRow("Microphone", microphone);
+  auto refreshAudio = [=] {
+    for (const auto &entry : {qMakePair(systemAudio, QString("systemAudioDevice")), qMakePair(microphone, QString("microphoneDevice"))}) {
+      const auto id = draft->value(entry.second).toString();
+      if (entry.first->findData(id) < 0) entry.first->addItem("Missing device: " + id, id);
+      const QSignalBlocker blocker(entry.first); entry.first->setCurrentIndex(entry.first->findData(id));
+    }
+  };
+  refreshAudio();
+  connect(systemAudio, &QComboBox::currentIndexChanged, this, [=] { draft->insert("systemAudioDevice", systemAudio->currentData().toString()); });
+  connect(microphone, &QComboBox::currentIndexChanged, this, [=] { draft->insert("microphoneDevice", microphone->currentData().toString()); });
+  auto *audioNote = new QLabel("Only these explicit inputs are captured. A missing input produces video without audio and a notification. GIF never contains audio.", recordingPage);
+  audioNote->setWordWrap(true); recordingForm->addRow(audioNote);
   auto *reset = new QPushButton("&Reset section…", this); layout->addWidget(reset);
   connect(reset, &QPushButton::clicked, this, [=] {
     collect(); const auto section = static_cast<Section>(tabs->currentIndex()); const auto changes = resetPreview(*draft, section, defaultFolder);
     if (changes.isEmpty()) { status->setText("This section already has default values."); return; }
     if (QMessageBox::question(this, "Reset profile section", "Preview of changes (other sections and user files are kept):\n" + changes.join('\n') + "\n\nReset this draft? Apply saves it; Cancel discards it.", QMessageBox::Reset | QMessageBox::Cancel, QMessageBox::Cancel) != QMessageBox::Reset) return;
-    *draft = resetSection(*draft, section, defaultFolder); refresh();
+    *draft = resetSection(*draft, section, defaultFolder); refresh(); refreshAudio();
   });
   auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Apply | QDialogButtonBox::Cancel, this); layout->addWidget(buttons);
   auto save = [=, &store, &shortcuts]() {

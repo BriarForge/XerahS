@@ -8,7 +8,7 @@ QVector<HotkeyAction> captureHotkeyActions() {
     {"capture-monitor", "Capture monitor under pointer", "Shift+Print"},
     {"capture-active-window", "Capture active window", {}},
     {"capture-region-choose-actions", "Capture region and choose actions", "Alt+Print"},
-    {"start-recording", "Start screen recording", {}}, {"start-gif-recording", "Start GIF recording", {}}, {"stop-recording", "Stop recording", {}}};
+    {"start-region-recording", "Record region", {}}, {"start-recording", "Start screen recording", {}}, {"start-gif-recording", "Start GIF recording", {}}, {"stop-recording", "Stop recording", {}}};
 }
 bool stableActionId(const QString &id) {
   for (const auto &action : captureHotkeyActions()) if (action.id == id) return true;
@@ -33,7 +33,7 @@ HotkeyBindings HotkeyBindings::defaults() {
 }
 BindingResult HotkeyBindings::assign(const QString &id, const QString &trigger) {
   if (!stableActionId(id)) return {false, "hotkey-action-invalid", {}};
-  if (!entries.contains(id) && entries.size() >= 68) return {false, "hotkey-too-many", {}};
+  if (!entries.contains(id) && entries.size() >= maximumHotkeyBindings) return {false, "hotkey-too-many", {}};
   const auto normalized = normalizeTrigger(trigger);
   if (!trigger.isEmpty() && normalized.isEmpty()) return {false, "hotkey-trigger-invalid", {}};
   if ((QStringList{"Ctrl+Alt+Delete", "Alt+F4", "Alt+Tab", "Meta+L"}.contains(normalized) || QRegularExpression("^Ctrl\\+Alt\\+F([1-9]|1[0-2])$").match(normalized).hasMatch())) return {false, "hotkey-reserved-use-desktop-settings", {}};
@@ -43,7 +43,7 @@ BindingResult HotkeyBindings::assign(const QString &id, const QString &trigger) 
   entries.insert(id, normalized); return {true, {}, {}};
 }
 BindingResult HotkeyBindings::validate() const {
-  if (entries.size() > 68) return {false, "hotkey-too-many", {}};
+  if (entries.size() > maximumHotkeyBindings) return {false, "hotkey-too-many", {}};
   HotkeyBindings checked;
   for (auto it = entries.cbegin(); it != entries.cend(); ++it) {
     const auto result = checked.assign(it.key(), it.value()); if (!result.ok) return result;

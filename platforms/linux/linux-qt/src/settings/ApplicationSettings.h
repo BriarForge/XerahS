@@ -3,7 +3,7 @@
 #include "workflows/CaptureWorkflows.h"
 #include <QJsonObject>
 namespace xerahs::settings {
-enum class Section { General, Capture, Hotkeys };
+enum class Section { General, Capture, Hotkeys, Recording };
 struct SettingField { QString key; Section section; QString scope; };
 QVector<SettingField> settingFields();
 QJsonObject defaultSettings(const QString &saveFolder);

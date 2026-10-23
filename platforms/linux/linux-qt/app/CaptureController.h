@@ -38,6 +38,7 @@ public:
   explicit CaptureController(QString saveDirectory, QObject *parent = nullptr, ScreenshotFactory factory = {}, SnapshotComposer composer = {}, CaptureActionPorts actionPorts = {}, PipelineJournalStorage journal = {});
   ~CaptureController() override;
 
+  void selectRecordingRegion(std::function<void(QRectF)> selected);
   static QString instructions();
   QString saveDirectory() const { return m_saveDirectory; }
   bool busy() const { return m_busy; }
@@ -106,6 +107,7 @@ private:
   void repaint();
   void announce();
 
+  std::function<void(QRectF)> m_regionSelected;
   QString m_saveDirectory;
   ScreenshotFactory m_screenshotFactory;
   SnapshotComposer m_composer;

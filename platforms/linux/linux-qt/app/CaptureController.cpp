@@ -122,6 +122,12 @@ void CaptureController::captureWorkflow(const xerahs::workflows::CaptureWorkflow
   beginCapture(xerahs::workflows::workflowActions(workflow));
 }
 void CaptureController::setActionSelectionParent(QWidget *parent) { m_selectionParent = parent; }
+void CaptureController::selectRecordingRegion(std::function<void(QRectF)> selected) {
+  if (m_busy) return;
+  m_regionSelected = std::move(selected);
+  m_source = QStringLiteral("region"); m_workflowSnapshot = {}; m_captureOutput = {};
+  beginCapture({});
+}
 void CaptureController::beginCapture(QStringList selected) {
   if (m_busy) return;
   m_selectedActions = std::move(selected);
@@ -449,6 +455,7 @@ void CaptureController::acquire() {
     m_session->captureFailed();
     return;
   }
+  if (m_regionSelected) { m_session->captureSucceeded(); return; }
   // RC-008/012: frozen source pixels, cancellation and progress are independent
   // of the GUI event loop. The worker owns its inputs, never the controller.
   try {
@@ -502,6 +509,17 @@ void CaptureController::onOutcome(const SessionOutcome &outcome) {
   QTimer::singleShot(0, this, [this, outcome, generation] {
     if (generation != m_generation || !m_busy) return;
     const QPointer<CaptureController> guard(this);
+    if (m_regionSelected && outcome.state == SessionState::Completed && outcome.rectangle) {
+      const auto rect = *outcome.rectangle;
+      const auto display = m_session->topology().front();
+      const QRectF logical(display.logical.left + (rect.left - display.physical.left) / display.scale,
+                           display.logical.top + (rect.top - display.physical.top) / display.scale,
+                           rect.width() / display.scale, rect.height() / display.scale);
+      auto selected = std::move(m_regionSelected);
+      closeOverlays(); finish();
+      if (guard) selected(logical);
+      return;
+    }
     if (outcome.state == SessionState::Completed && outcome.rectangle && m_captured) {
       runPipeline();
       return; // cleanup follows the actual pipeline receipt
@@ -628,6 +646,7 @@ void CaptureController::finish() {
   for (const auto &connection : m_screenConnections) disconnect(connection);
   m_screenConnections.clear();
   m_session.reset();
+  m_regionSelected = {};
   m_hoverPoint.reset();
   m_desktop = QImage();
   m_captured.reset();

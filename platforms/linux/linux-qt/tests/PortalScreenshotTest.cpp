@@ -695,6 +695,19 @@ private slots:
     QTRY_COMPARE(portal.closed.count(portal.predicted), 1); portal.finishHandle();
     QTRY_COMPARE(portal.closed.count(portal.handle), 1); QVERIFY(!QFileInfo::exists(dir.filePath("outputs")));
   }
+  void recordingSelectionReusesOverlayWithoutCaptureActions() {
+    QTemporaryDir dir; FakeScreenshotPortal portal(server);
+    portal.uri = QUrl::fromLocalFile(fixtureImage(dir, QApplication::primaryScreen()->geometry().size() * 2)).toString(); portal.early = true;
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    int selected = 0; QRectF rectangle;
+    controller.selectRecordingRegion([&](QRectF r) { ++selected; rectangle = r; QVERIFY(!controller.busy()); QVERIFY(!overlayExists()); });
+    QTRY_VERIFY(overlayExists()); controller.pointerDown({20, 40}); controller.pointerUp({222, 142});
+    QTRY_VERIFY(!controller.busy()); QCOMPARE(selected, 1); QCOMPARE(rectangle.size(), QSizeF(101, 51));
+    QVERIFY(!QFileInfo::exists(controller.saveDirectory())); QVERIFY(!controller.lastPipelineResult());
+    controller.selectRecordingRegion([&](QRectF) { ++selected; }); QTRY_VERIFY(overlayExists());
+    QTest::keyClick(overlayWidget(), Qt::Key_Escape); QTRY_VERIFY(!controller.busy()); QCOMPARE(selected, 1);
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); controller.cancel(); QTRY_VERIFY(!controller.busy()); QCOMPARE(selected, 1);
+  }
   void actualFrozenOverlayEscapeLeavesFilesAndClipboardUntouched() {
     QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto before = bytes(path);
     FakeScreenshotPortal portal(server); portal.uri = QUrl::fromLocalFile(path).toString(); portal.early = true;

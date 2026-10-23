@@ -320,6 +320,25 @@ private slots:
     QVERIFY(!bytes.contains("private")); const auto errors = application.readAllStandardError(); QVERIFY(!errors.contains("private")); QVERIFY(!errors.contains("could not connect to display"));
     for (const auto *key : {"XDG_CONFIG_HOME", "XDG_RUNTIME_DIR", "XDG_STATE_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME"}) QVERIFY(!QFileInfo::exists(temporary->filePath(key)));
   }
+  void recordingCliForwardsToExistingOwner_data() {
+    QTest::addColumn<QString>("action");
+    QTest::newRow("region") << QString("start-region-recording");
+    QTest::newRow("screen") << QString("start-recording");
+  }
+  void recordingCliForwardsToExistingOwner() {
+    QFETCH(QString, action); directory = temporary->filePath("com.xerahs.app");
+    auto *owner = launch("accept"); awaitLine(*owner); QCOMPARE(line(owner->readLine()).value("event"), QJsonValue("primary"));
+    auto environment = QProcessEnvironment::systemEnvironment(); environment.insert("XDG_RUNTIME_DIR", temporary->path());
+    environment.insert("QT_QPA_PLATFORM", "offscreen"); environment.insert("QT_QPA_PLATFORMTHEME", "");
+    environment.insert("DBUS_SESSION_BUS_ADDRESS", "unix:path=" + temporary->filePath("no-host-bus"));
+    for (const auto *key : {"XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME"}) environment.insert(key, temporary->filePath(key));
+    QProcess application; application.setProcessEnvironment(environment);
+    application.start(QCoreApplication::applicationDirPath() + "/xerahs", {"--" + action, "--json"});
+    QVERIFY(application.waitForFinished(5000)); QCOMPARE(application.exitCode(), 0);
+    QCOMPARE(line(application.readAllStandardOutput()).value("delivery"), QJsonValue("running-instance"));
+    awaitLine(*owner); QCOMPARE(line(owner->readLine()).value("request").toObject().value("action"), QJsonValue(action));
+    QVERIFY(!QFileInfo::exists(temporary->filePath("XDG_CONFIG_HOME")));
+  }
   void actualApplicationForwardsWorkflowIdsAndReportsOnlyDelivery_data() {
     QTest::addColumn<QString>("admission"); QTest::addColumn<int>("exitCode");
     QTest::newRow("accepted") << QString("accept") << 0; QTest::newRow("busy") << QString("busy") << 2;
@@ -349,6 +368,8 @@ private slots:
     QTest::newRow("conflicting-actions") << QStringList{"--run-workflow", id, "--capture-region", "--json"} << QString("usage-invalid") << false;
     QTest::newRow("unknown-private-argument") << QStringList{"--private-secret", "--json"} << QString("usage-invalid") << false;
     QTest::newRow("non-interactive") << QStringList{"--run-workflow", id, "--non-interactive", "--json"} << QString("presentation-required") << true;
+    QTest::newRow("region-recording-headless") << QStringList{"--start-region-recording", "--non-interactive", "--json"} << QString("presentation-required") << true;
+    QTest::newRow("region-recording-conflict") << QStringList{"--start-region-recording", "--start-recording", "--json"} << QString("usage-invalid") << true;
     QTest::newRow("non-interactive-invalid") << QStringList{"--private-secret", "--non-interactive", "--json"} << QString("usage-invalid") << true;
     QTest::newRow("missing-profile") << QStringList{"--run-workflow", id, "--json"} << QString("activation-unavailable") << false;
   }

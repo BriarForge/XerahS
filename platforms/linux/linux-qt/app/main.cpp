@@ -132,11 +132,13 @@ int main(int argc, char *argv[]) {
   const QCommandLineOption workflowResult(QStringLiteral("workflow-result"), QStringLiteral("Read a private execution summary by full launch request UUID without a GUI. Unfinished records have an unconfirmed outcome."), QStringLiteral("request-id"));
   const QCommandLineOption jsonOption(QStringLiteral("json"), QStringLiteral("Print versioned JSON; launch acknowledgements are not capture/output completion."));
   const QCommandLineOption nonInteractive(QStringLiteral("non-interactive"), QStringLiteral("Refuse operations requiring graphical interaction without starting them."));
-  const QCommandLineOption startRecording("start-recording", "Start screen recording (no audio; graphical setup and portal consent required).");
+  const QCommandLineOption startRegionRecording("start-region-recording", "Select and record a region (graphical setup and portal consent required).");
+  const QCommandLineOption startRecording("start-recording", "Start screen recording (explicit audio inputs in Settings; graphical setup and portal consent required).");
   const QCommandLineOption stopRecording("stop-recording", "Stop recording and finalize output in the running instance.");
-  parser.addOptions({startRecording, stopRecording, captureRegion, captureFullScreen, captureMonitor, captureActiveWindow, edit, runWorkflow, listWorkflows, workflowResult, jsonOption, nonInteractive});
+  parser.addOptions({startRegionRecording, startRecording, stopRecording, captureRegion, captureFullScreen, captureMonitor, captureActiveWindow, edit, runWorkflow, listWorkflows, workflowResult, jsonOption, nonInteractive});
   const auto requested = [&]() -> ParsedActivation {
-    if (!parser.positionalArguments().isEmpty() || int(parser.isSet(startRecording)) + int(parser.isSet(stopRecording)) + int(parser.isSet(edit)) + int(parser.isSet(captureRegion)) + int(parser.isSet(captureFullScreen)) + int(parser.isSet(captureMonitor)) + int(parser.isSet(captureActiveWindow)) + int(parser.isSet(runWorkflow)) + int(parser.isSet(listWorkflows)) + int(parser.isSet(workflowResult)) > 1) return {{}, "usage-invalid"};
+    if (!parser.positionalArguments().isEmpty() || int(parser.isSet(startRegionRecording)) + int(parser.isSet(startRecording)) + int(parser.isSet(stopRecording)) + int(parser.isSet(edit)) + int(parser.isSet(captureRegion)) + int(parser.isSet(captureFullScreen)) + int(parser.isSet(captureMonitor)) + int(parser.isSet(captureActiveWindow)) + int(parser.isSet(runWorkflow)) + int(parser.isSet(listWorkflows)) + int(parser.isSet(workflowResult)) > 1) return {{}, "usage-invalid"};
+    if (parser.isSet(startRegionRecording)) return {makeActivationRequest(ActivationAction::StartRegionRecording), {}};
     if (parser.isSet(startRecording)) return {makeActivationRequest(ActivationAction::StartRecording), {}};
     if (parser.isSet(stopRecording)) return {makeActivationRequest(ActivationAction::StopRecording), {}};
     if (parser.isSet(runWorkflow)) {
@@ -249,6 +251,9 @@ int main(int argc, char *argv[]) {
   QMenu menu;
   xerahs::app::RecordingController recording;
   xerahs::app::RecordingActions recordingActions(recording, menu, tray, [&] { return settings.current().values.value("saveFolder").toString(); });
+  recordingActions.setInputs([&] { return settings.current().values; }, [&](std::function<void(QRectF)> selected) {
+    capture.selectRecordingRegion(std::move(selected));
+  });
   QAction *region = menu.addAction(QStringLiteral("Capture region"));
   QAction *fullScreen = menu.addAction(QStringLiteral("Capture full screen"));
   QAction *monitor = menu.addAction(QStringLiteral("Capture monitor under pointer"));
@@ -426,7 +431,8 @@ int main(int argc, char *argv[]) {
         if (!run) return {};
         return [&home, run = std::move(run)] { home.activate(); run(); };
       }, [&] { recordingActions.start(xerahs::recording::Format::Mp4); }, [&] { recording.stop(); },
-      [&] { return recording.unavailable(xerahs::recording::Format::Mp4).isEmpty() || recording.unavailable(xerahs::recording::Format::WebM).isEmpty(); }});
+      [&] { return recording.unavailable(xerahs::recording::Format::Mp4).isEmpty() || recording.unavailable(xerahs::recording::Format::WebM).isEmpty(); },
+      [&] { recordingActions.start(xerahs::recording::Format::Mp4, true); }});
   instance.setAdmission([&dispatcher, &invocationOrigin](const ActivationRequest &incoming) {
     const QScopedValueRollback<QString> origin(invocationOrigin, QStringLiteral("external-activation")); return dispatcher.admit(incoming);
   });
@@ -449,6 +455,7 @@ int main(int argc, char *argv[]) {
   };
   QObject::connect(&shortcutActions, &xerahs::app::WorkflowShortcutActions::workflowRequested, &home, [&](const QString &id) {
     const QMap<QString, QAction *> builtins{{"capture-region", region}, {"capture-full-screen", fullScreen}, {"capture-monitor", monitor}, {"capture-active-window", activeWindow}, {"capture-region-choose-actions", chooseCapture},
+      {"start-region-recording", recordingActions.actions().value("start-region-recording")},
       {"start-recording", recordingActions.actions().value("start-recording")}, {"start-gif-recording", recordingActions.actions().value("start-gif-recording")}, {"stop-recording", recordingActions.actions().value("stop-recording")}};
     const QScopedValueRollback<QString> origin(invocationOrigin, QStringLiteral("global-shortcut"));
     if (!xerahs::app::routeCaptureShortcut(id, builtins,

@@ -1,5 +1,6 @@
 #pragma once
 #include "recording/Recording.h"
+#include "RecordingDevices.h"
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusUnixFileDescriptor>
@@ -33,8 +34,12 @@ private:
   void call(const QString &method, QVariantList arguments, QVariantMap options);
   void encode(uint node);
   void poll();
+  void withoutAudio();
   void fail(const QString &code);
   void teardown();
+  RecordingDevices m_devices;
+  QRectF m_streamDesktop;
+  bool m_audioActive = false;
   recording::Request m_request;
   std::unique_ptr<recording::Session> m_session;
   recording::Output m_output;
@@ -47,6 +52,7 @@ private:
   QElapsedTimer m_clock;
   qint64 m_elapsed = 0;
   int m_generation = 0;
+  uint m_node = 0;
 #ifdef XERAHS_GSTREAMER
   GstElement *m_pipeline = nullptr;
 #endif

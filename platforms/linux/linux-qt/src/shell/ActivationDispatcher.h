@@ -18,6 +18,7 @@ struct ActivationOperations {
   std::function<void()> startRecording = {};
   std::function<void()> stopRecording = {};
   std::function<bool()> canStartRecording = {};
+  std::function<void()> startRegionRecording = {};
 };
 class ActivationDispatcher final {
 public:
