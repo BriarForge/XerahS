@@ -212,6 +212,12 @@ add_executable(xerahs
   app/features/FilesFeature.h
   app/features/PreferencesFeature.cpp
   app/features/PreferencesFeature.h
+  app/features/OnboardingFeature.cpp
+  app/features/OnboardingFeature.h
+  app/OnboardingProgress.cpp
+  app/OnboardingProgress.h
+  app/OnboardingWizard.cpp
+  app/OnboardingWizard.h
   app/features/RecordingFeature.cpp
   app/features/RecordingFeature.h
   app/features/ScheduleFeature.cpp
@@ -1137,3 +1143,15 @@ set_tests_properties(sxie-preset PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscree
 
 # COMPAT-SXIE-001: explicit legacy watermark and remaining effect mapping fixtures.
 target_compile_definitions(sxie-preset-test PRIVATE SXIE_WATERMARK_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/sxie/watermark.json")
+
+# CORE-008: first-run onboarding (progress store, wizard, auto-open rule).
+add_executable(onboarding-test tests/OnboardingTest.cpp app/OnboardingProgress.cpp app/OnboardingProgress.h
+  app/OnboardingWizard.cpp app/OnboardingWizard.h app/CommandRegistry.cpp app/CommandRegistry.h
+  app/CapturePipeline.cpp app/CapturePipeline.h app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h)
+set_target_properties(onboarding-test PROPERTIES AUTOMOC ON)
+target_include_directories(onboarding-test PRIVATE app)
+target_link_libraries(onboarding-test PRIVATE xerahs_core xerahs_file_output xerahs_action_selection xerahs_pipeline_journal
+  xerahs_upload_executor xerahs_secret_service Qt6::Widgets Qt6::Test)
+add_test(NAME onboarding COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:onboarding-test>)
+set_tests_properties(onboarding PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 60)

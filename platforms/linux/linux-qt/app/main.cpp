@@ -18,6 +18,7 @@
 #include "features/CaptureFeature.h"
 #include "features/CommandWindowAttach.h"
 #include "features/FilesFeature.h"
+#include "features/OnboardingFeature.h"
 #include "features/PreferencesFeature.h"
 #include "features/RecordingFeature.h"
 #include "features/ScheduleFeature.h"
@@ -241,6 +242,7 @@ int main(int argc, char *argv[]) {
   xerahs::app::installFiles(ctx);
   xerahs::app::installUpload(ctx);
   xerahs::app::installPreferences(ctx);
+  xerahs::app::installOnboarding(ctx, request.action == ActivationAction::Activate);
   xerahs::app::installApplication(ctx);
   xerahs::app::ApplicationWindow window(commands);
   home = &window;
