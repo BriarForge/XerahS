@@ -109,6 +109,15 @@ void EditorCanvas::setCropTool(bool active) {
   setTool(active ? Tool::Crop : Tool::Rectangle);
 }
 
+namespace {
+QString toolLabel(const QString &type) {
+  if (type == shape::blur) return "Blur";
+  if (type == shape::pixelate) return "Pixelate";
+  if (type == shape::magnify) return "Magnify";
+  return "Spotlight";
+}
+}  // namespace
+
 QString EditorCanvas::shapeType(Tool tool) {
   switch (tool) {
     case Tool::Select: case Tool::Crop: return {};
@@ -122,6 +131,10 @@ QString EditorCanvas::shapeType(Tool tool) {
     case Tool::Highlight: return shape::highlight;
     case Tool::Blur: return shape::blur;
     case Tool::Pixelate: return shape::pixelate;
+    case Tool::SpeechBalloon: return shape::speechBalloon;
+    case Tool::Magnify: return shape::magnify;
+    case Tool::Spotlight: return shape::spotlight;
+    case Tool::SmartEraser: return shape::smartEraser;
   }
   return {};
 }
@@ -138,6 +151,10 @@ QString EditorCanvas::toolInstructions() const {
     case Tool::Highlight: text = "Highlight stays active: drag over the area to highlight."; break;
     case Tool::Blur: text = "Blur stays active: drag over the area to blur."; break;
     case Tool::Pixelate: text = "Pixelate stays active: drag over the area to pixelate."; break;
+    case Tool::SpeechBalloon: text = "Speech balloon stays active: click or drag the balloon, then type the text."; break;
+    case Tool::Magnify: text = "Magnify stays active: drag the area to show enlarged."; break;
+    case Tool::Spotlight: text = "Spotlight stays active: drag the area to keep bright; the rest is dimmed."; break;
+    case Tool::SmartEraser: text = "Smart eraser stays active: drag over the area to fill with its surrounding colour."; break;
     case Tool::Select:
       text = "Select: click an object; Control-click adds or removes it. Drag selected objects to move. Blank canvas clears selection."; break;
     case Tool::Rectangle:
@@ -414,7 +431,7 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
     // Live creation preview uses the same painter as the saved object.
     const QString type = shapeType(m_tool);
     const auto geometry = type.isEmpty() || !m_creation ? std::nullopt : shapeGeometry(type, creationGesture(m_drag->second));
-    if (geometry && type != shape::text) {
+    if (geometry && type != shape::text && type != shape::speechBalloon) {
       RectangleAnnotation draft;
       draft.start = geometry->start; draft.end = geometry->end; draft.style = m_creation->style;
       draft.content.type = type; draft.content.points = geometry->points;
@@ -579,7 +596,8 @@ bool EditorCanvas::createFromGesture(const std::vector<PointF> &gesture) {
   }
   content.points = geometry->points;
   if (type == shape::step) content.stepValue = nextStepValue(m_session->document());
-  if (type == shape::text) {
+  if (type == shape::speechBalloon) content.points = {{0.2, 1.6}};  // default tail below the balloon
+  if (type == shape::text || type == shape::speechBalloon) {
     const QPointer<EditorCanvas> owner(this);
     m_annotationDialogPending = true;
     bool accepted = false;
@@ -597,7 +615,7 @@ bool EditorCanvas::canEditShapeContent() const {
   const auto *selected = m_session->selectedRectangle();
   if (!selected || !m_session->selectionEditable()) return false;
   const QString &type = selected->type();
-  return isTextShape(type) || type == shape::blur || type == shape::pixelate;
+  return isTextShape(type) || hasShapeStrength(type);
 }
 
 bool EditorCanvas::editShapeContent(QWidget *parent) {
@@ -608,16 +626,19 @@ bool EditorCanvas::editShapeContent(QWidget *parent) {
   const QPointer<EditorCanvas> owner(this);
   bool accepted = false;
   m_annotationDialogPending = true;
-  if (selected.type() == shape::text) {
+  if (selected.type() == shape::text || selected.type() == shape::speechBalloon) {
     content.text = QInputDialog::getMultiLineText(parent, "Edit Text", "Text:", content.text, &accepted);
     if (owner && accepted) content.fontSize = QInputDialog::getInt(parent, "Edit Text", "Font size (pixels):",
         int(std::lround(shapeFontSize(selected))), 1, 2000, 1, &accepted);
   } else if (selected.type() == shape::step) {
     content.stepValue = QInputDialog::getInt(parent, "Edit Step", "Step number:", int(content.stepValue), 0, 1000000, 1, &accepted);
   } else {
-    const QString label = selected.type() == shape::blur ? "Blur radius (pixels):" : "Pixel cell size (pixels):";
-    content.strength = QInputDialog::getInt(parent, selected.type() == shape::blur ? "Edit Blur" : "Edit Pixelate", label,
-        int(std::lround(shapeStrength(selected))), 1, 1000, 1, &accepted);
+    const QString &type = selected.type();
+    const QString label = type == shape::blur ? "Blur radius (pixels):" : type == shape::pixelate ? "Pixel cell size (pixels):"
+        : type == shape::magnify ? "Zoom factor:" : "Dim the rest by (percent):";
+    const int maximum = type == shape::magnify ? 16 : type == shape::spotlight ? 100 : 1000;
+    content.strength = QInputDialog::getInt(parent, "Edit " + toolLabel(type), label,
+        int(std::lround(shapeStrength(selected))), type == shape::spotlight ? 0 : 1, maximum, 1, &accepted);
   }
   if (!owner) return false;
   m_annotationDialogPending = false;

@@ -130,7 +130,7 @@ bool EditorSession::editShapeContent(const QUuid &id, const ShapeContent &conten
   if (!selectionEditable()) { m_editDiagnostic = "annotation-selection-protected"; return false; }
   if (content.type != selected->type() || !std::isfinite(content.fontSize) || content.fontSize < 0 || content.fontSize > 2000 ||
       !std::isfinite(content.strength) || content.strength < 0 || content.strength > 1000 || content.stepValue < 0 ||
-      (content.type == shape::text && content.text.isEmpty())) {
+      ((content.type == shape::text || content.type == shape::speechBalloon) && content.text.isEmpty())) {
     m_editDiagnostic = "annotation-style-invalid"; return false;
   }
   // Points stay with the geometry; only the type-specific values change.

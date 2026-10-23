@@ -181,10 +181,14 @@ QJsonObject pointJson(const PointF &p) { return QJsonObject{{QStringLiteral("x")
 
 QStringList shapeTypes() {
   return {shape::rectangle, shape::ellipse, shape::line, shape::arrow, shape::freehand, shape::text,
-          shape::step, shape::highlight, shape::blur, shape::pixelate};
+          shape::step, shape::highlight, shape::blur, shape::pixelate, shape::speechBalloon, shape::magnify,
+          shape::spotlight, shape::smartEraser};
+}
+bool hasShapeStrength(const QString &type) {
+  return type == shape::blur || type == shape::pixelate || type == shape::magnify || type == shape::spotlight;
 }
 bool isPathShape(const QString &type) { return type == shape::line || type == shape::arrow || type == shape::freehand; }
-bool isTextShape(const QString &type) { return type == shape::text || type == shape::step; }
+bool isTextShape(const QString &type) { return type == shape::text || type == shape::step || type == shape::speechBalloon; }
 
 std::optional<Argb> parseColor(const QString &text) {
   static const QRegularExpression pattern(QStringLiteral("^#[0-9A-Fa-f]{8}$"));
@@ -329,15 +333,15 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
     o.insert(QStringLiteral("id"), rectangle.id.toString(QUuid::WithoutBraces));
     o.insert(QStringLiteral("type"), rectangle.type());
     const ShapeContent &content = rectangle.content;
-    if (isPathShape(content.type)) {
+    if (!content.points.empty()) {
       QJsonArray points;
       for (const PointF &p : content.points) points.append(pointJson(p));
       o.insert(QStringLiteral("points"), points);
     }
     if (isTextShape(content.type)) o.insert(QStringLiteral("fontSize"), content.fontSize);
-    if (content.type == shape::text) o.insert(QStringLiteral("text"), content.text);
+    if (content.type == shape::text || content.type == shape::speechBalloon) o.insert(QStringLiteral("text"), content.text);
     if (content.type == shape::step) o.insert(QStringLiteral("stepValue"), double(content.stepValue));
-    if (content.type == shape::blur || content.type == shape::pixelate) o.insert(QStringLiteral("strength"), content.strength);
+    if (hasShapeStrength(content.type)) o.insert(QStringLiteral("strength"), content.strength);
     o.insert(QStringLiteral("start"), pointJson(rectangle.start));
     o.insert(QStringLiteral("end"), pointJson(rectangle.end));
     o.insert(QStringLiteral("strokeColor"), formatColor(rectangle.style.strokeColor));

@@ -51,17 +51,23 @@ inline const QString step = QStringLiteral("step");
 inline const QString highlight = QStringLiteral("highlight");
 inline const QString blur = QStringLiteral("blur");
 inline const QString pixelate = QStringLiteral("pixelate");
+inline const QString speechBalloon = QStringLiteral("speech-balloon");
+inline const QString magnify = QStringLiteral("magnify");
+inline const QString spotlight = QStringLiteral("spotlight");
+inline const QString smartEraser = QStringLiteral("smart-eraser");
 }  // namespace shape
 QStringList shapeTypes();
 // Path types draw through `points`; region types sample source pixels.
 bool isPathShape(const QString &type);
 bool isTextShape(const QString &type);
+// Types whose `strength` is user editable (blur, pixelate, magnify, spotlight).
+bool hasShapeStrength(const QString &type);
 
 // Type-specific content. Path points are fractions of the bounds, so move,
 // resize and rotation of the bounds carry the path with them (EA-006/007).
 struct ShapeContent {
   QString type = shape::rectangle;
-  std::vector<PointF> points;
+  std::vector<PointF> points;  // speech-balloon: points[0] is the tail tip
   QString text;           // text: content; step: unused
   double fontSize = 0;    // text and step; 0 uses the type default
   qint64 stepValue = 0;   // EA-009: the displayed step number

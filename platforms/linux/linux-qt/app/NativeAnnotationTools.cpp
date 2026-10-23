@@ -56,12 +56,15 @@ QMap<QString, QAction *> annotationOrderActions(EditorCanvas &canvas, QObject *o
 QMap<QString, QAction *> annotationToolActions(EditorCanvas &canvas, QObject *owner, bool includeCrop) {
   using Tool = EditorCanvas::Tool;
   QMap<QString, QAction *> actions;
-  for (const auto &entry : std::array<std::pair<QString, Tool>, 12>{{{"Select", Tool::Select}, {"Rectangle", Tool::Rectangle},
+  for (const auto &entry : std::array<std::pair<QString, Tool>, 16>{{{"Select", Tool::Select}, {"Rectangle", Tool::Rectangle},
            {"Ellipse", Tool::Ellipse}, {"Line", Tool::Line}, {"Arrow", Tool::Arrow}, {"Freehand", Tool::Freehand},
            {"Text", Tool::Text}, {"Step", Tool::Step}, {"Highlight", Tool::Highlight}, {"Blur", Tool::Blur},
-           {"Pixelate", Tool::Pixelate}, {"Crop", Tool::Crop}}}) {
+           {"Pixelate", Tool::Pixelate}, {"SpeechBalloon", Tool::SpeechBalloon}, {"Magnify", Tool::Magnify},
+           {"Spotlight", Tool::Spotlight}, {"SmartEraser", Tool::SmartEraser}, {"Crop", Tool::Crop}}}) {
     if (entry.second == Tool::Crop && !includeCrop) continue;
-    auto *action = new QAction(entry.first, owner);
+    const QString label = entry.first == u"SpeechBalloon" ? QStringLiteral("Speech Balloon")
+        : entry.first == u"SmartEraser" ? QStringLiteral("Smart Eraser") : entry.first;
+    auto *action = new QAction(label, owner);
     const QString id = entry.first.toLower() + "-tool";
     action->setObjectName(entry.first.toLower() + "Tool");
     action->setCheckable(true); action->setAutoRepeat(false);

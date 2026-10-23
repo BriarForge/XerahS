@@ -76,6 +76,54 @@ void paintRegion(QPainter &painter, const RectangleAnnotation &shape, const QIma
   painter.restore();
 }
 
+// Mean colour of the one-pixel ring just outside the box: the documented
+// deterministic SmartEraser fill (EA-012). It is not content-aware removal.
+QColor ringColour(const QImage &source, const QRect &box) {
+  const QRect ring = box.adjusted(-1, -1, 1, 1);
+  qint64 sum[4] = {0, 0, 0, 0}, count = 0;
+  const auto add = [&](int x, int y) {
+    if (!source.rect().contains(x, y)) return;
+    const QRgb p = source.pixel(x, y);
+    sum[0] += qAlpha(p); sum[1] += qRed(p); sum[2] += qGreen(p); sum[3] += qBlue(p); ++count;
+  };
+  for (int x = ring.left(); x <= ring.right(); ++x) { add(x, ring.top()); add(x, ring.bottom()); }
+  for (int y = ring.top() + 1; y < ring.bottom(); ++y) { add(ring.left(), y); add(ring.right(), y); }
+  if (count == 0) return Qt::white;
+  return QColor(int(sum[1] / count), int(sum[2] / count), int(sum[3] / count), int(sum[0] / count));
+}
+
+void paintBalloon(QPainter &painter, const RectangleAnnotation &shape) {
+  const RectangleStyle &style = shape.style;
+  const QRectF box = bounds(shape);
+  const double radius = std::min(12.0, std::min(box.width(), box.height()) / 4);
+  QPainterPath body;
+  body.addRoundedRect(box, radius, radius);
+  if (!shape.content.points.empty()) {
+    const QPointF tip = mapped(shape, shape.content.points[0]);
+    const QPointF centre = box.center();
+    const double half = std::max(6.0, std::min(box.width(), box.height()) / 6);
+    const bool vertical = std::abs(tip.y() - centre.y()) / box.height() >= std::abs(tip.x() - centre.x()) / box.width();
+    QPainterPath tail;
+    tail.moveTo(tip);
+    if (vertical) { tail.lineTo(std::clamp(tip.x(), box.left() + radius + half, box.right() - radius - half) - half, centre.y());
+                    tail.lineTo(std::clamp(tip.x(), box.left() + radius + half, box.right() - radius - half) + half, centre.y()); }
+    else { tail.lineTo(centre.x(), std::clamp(tip.y(), box.top() + radius + half, box.bottom() - radius - half) - half);
+           tail.lineTo(centre.x(), std::clamp(tip.y(), box.top() + radius + half, box.bottom() - radius - half) + half); }
+    tail.closeSubpath();
+    body = body.united(tail);
+  }
+  const QColor fill = qAlpha(style.fillColor) > 0 ? color(style.fillColor) : QColor(Qt::white);
+  painter.setBrush(fill);
+  painter.setPen(QPen(color(style.strokeColor), style.strokeWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+  painter.drawPath(body);
+  QFont font = painter.font();
+  font.setPixelSize(std::max(1, int(std::lround(shapeFontSize(shape)))));
+  painter.setFont(font);
+  painter.setPen(fill.lightnessF() > 0.5 ? QColor(Qt::black) : QColor(Qt::white));
+  const double pad = std::min(8.0, std::min(box.width(), box.height()) / 4);
+  painter.drawText(box.adjusted(pad, pad, -pad, -pad), Qt::AlignCenter | Qt::TextWordWrap, shape.content.text);
+}
+
 void paintArrowHead(QPainter &painter, QPointF from, QPointF tip, double width, const QColor &fill) {
   const double dx = tip.x() - from.x(), dy = tip.y() - from.y();
   const double length = std::hypot(dx, dy);
@@ -107,7 +155,10 @@ double shapeFontSize(const RectangleAnnotation &shape) {
 
 double shapeStrength(const RectangleAnnotation &shape) {
   if (shape.content.strength > 0) return shape.content.strength;
-  return shape.type() == shape::blur ? 8.0 : 12.0;
+  if (shape.type() == shape::blur) return 8.0;
+  if (shape.type() == shape::magnify) return 2.0;
+  if (shape.type() == shape::spotlight) return 60.0;
+  return 12.0;
 }
 
 void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImage &source) {
@@ -167,6 +218,30 @@ void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImag
     painter.fillRect(box, tint);
   } else if (type == shape::blur || type == shape::pixelate) {
     paintRegion(painter, shape, source);
+  } else if (type == shape::speechBalloon) {
+    paintBalloon(painter, shape);
+  } else if (type == shape::magnify) {
+    // EA-011: the centre of the bounds enlarged by `strength` from the source.
+    const double zoom = std::max(1.0, shapeStrength(shape));
+    const QSizeF size(box.width() / zoom, box.height() / zoom);
+    const QRectF from(box.center() - QPointF(size.width() / 2, size.height() / 2), size);
+    painter.save();
+    painter.setClipRect(box, Qt::IntersectClip);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
+    painter.drawImage(box, source, from);
+    painter.restore();
+    painter.setBrush(Qt::NoBrush);
+    painter.setPen(QPen(color(style.strokeColor), style.strokeWidth));
+    painter.drawRect(box);
+  } else if (type == shape::spotlight) {
+    // Dims the whole canvas except the ellipse; strength is the dim percent.
+    QPainterPath outside;
+    outside.addRect(QRectF(source.rect()).united(box));
+    QPainterPath hole;
+    hole.addEllipse(box);
+    painter.fillPath(outside.subtracted(hole), QColor(0, 0, 0, std::clamp(int(std::lround(shapeStrength(shape) * 2.55)), 0, 255)));
+  } else if (type == shape::smartEraser) {
+    painter.fillRect(box, ringColour(source, box.toAlignedRect()));
   }
   painter.restore();
 }
@@ -200,6 +275,7 @@ std::optional<ShapeGeometry> shapeGeometry(const QString &type, const std::vecto
   double right = std::max(first.x, last.x), bottom = std::max(first.y, last.y);
   const bool click = right - left < 4 && bottom - top < 4;
   if (click && type == shape::step) return ShapeGeometry{{first.x - 16, first.y - 16}, {first.x + 16, first.y + 16}, {}};
+  if (click && type == shape::speechBalloon) return ShapeGeometry{{first.x, first.y}, {first.x + 240, first.y + 80}, {}};
   if (click && type == shape::text) return ShapeGeometry{{first.x, first.y}, {first.x + 320, first.y + 48}, {}};
   if (!(right > left) || !(bottom > top)) return std::nullopt;
   return ShapeGeometry{{left, top}, {right, bottom}, {}};

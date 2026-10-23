@@ -23,7 +23,8 @@ public:
   void resetZoom();
   void zoomToFit();
   // EA-001: creation tools after Crop map to document shape types.
-  enum class Tool { Select, Rectangle, Crop, Ellipse, Line, Arrow, Freehand, Text, Step, Highlight, Blur, Pixelate };
+  enum class Tool { Select, Rectangle, Crop, Ellipse, Line, Arrow, Freehand, Text, Step, Highlight, Blur, Pixelate,
+                    SpeechBalloon, Magnify, Spotlight, SmartEraser };
   static QString shapeType(Tool tool);
   Tool tool() const { return m_tool; }
   void setTool(Tool);

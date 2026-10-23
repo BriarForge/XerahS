@@ -96,14 +96,14 @@ private slots:
   void exportedShapesChangeOnlyTheirOwnArea_data() {
     QTest::addColumn<QString>("type");
     for (const auto &type : {shape::ellipse, shape::line, shape::arrow, shape::freehand, shape::text, shape::step, shape::highlight,
-                             shape::blur, shape::pixelate})
+                             shape::blur, shape::pixelate, shape::speechBalloon, shape::magnify})
       QTest::newRow(qPrintable(type)) << type;
   }
   void exportedShapesChangeOnlyTheirOwnArea() {
     QFETCH(QString, type);
-    const ArgbImage source = type == shape::blur || type == shape::pixelate ? stripes(120, 80) : solidImage(120, 80, 0xFFFFFFFF);
+    const ArgbImage source = type == shape::blur || type == shape::pixelate || type == shape::magnify ? stripes(120, 80) : solidImage(120, 80, 0xFFFFFFFF);
     auto shape = shapeOf(type, {40, 20}, {80, 60}, isPathShape(type) ? std::vector<PointF>{{0, 0}, {0.5, 1}, {1, 0}} : std::vector<PointF>{});
-    if (type == shape::text) shape.content.text = "XerahS";
+    if (type == shape::text || type == shape::speechBalloon) shape.content.text = "XerahS";
     if (type == shape::step) shape.content.stepValue = 1;
     const auto result = render(source, {shape});
     QVERIFY(result.image);
@@ -121,6 +121,22 @@ private slots:
     QVERIFY(result.image);
     QCOMPARE(result.image->at(30, 20), Argb(0xFFFFFFFF));  // EA-011: immutable source pixels
     QCOMPARE(result.image->at(5, 5), Argb(0xFF0000FF));
+  }
+
+  void spotlightDimsOnlyOutsideItsEllipse() {
+    const ArgbImage source = solidImage(100, 60, 0xFFFFFFFF);
+    const auto result = render(source, {shapeOf(shape::spotlight, {30, 10}, {70, 50})});
+    QVERIFY(result.image);
+    QCOMPARE(result.image->at(50, 30), Argb(0xFFFFFFFF));
+    QVERIFY(qRed(result.image->at(2, 2)) < 120);
+  }
+
+  void smartEraserFillsWithTheSurroundingColour() {
+    ArgbImage source = solidImage(60, 40, 0xFF2040A0);
+    for (qint64 y = 15; y < 25; ++y) for (qint64 x = 20; x < 40; ++x) source.pixels[std::size_t(y * 60 + x)] = 0xFFFF0000;
+    const auto result = render(source, {shapeOf(shape::smartEraser, {20, 15}, {40, 25})});
+    QVERIFY(result.image);
+    QCOMPARE(result.image->at(30, 20), Argb(0xFF2040A0));
   }
 
   void stepNumbersFollowTheHighestExistingStep() {
@@ -157,6 +173,8 @@ private slots:
     QTest::newRow("freehand") << int(EditorCanvas::Tool::Freehand) << shape::freehand;
     QTest::newRow("step") << int(EditorCanvas::Tool::Step) << shape::step;
     QTest::newRow("blur") << int(EditorCanvas::Tool::Blur) << shape::blur;
+    QTest::newRow("spotlight") << int(EditorCanvas::Tool::Spotlight) << shape::spotlight;
+    QTest::newRow("smart-eraser") << int(EditorCanvas::Tool::SmartEraser) << shape::smartEraser;
   }
   void canvasDragCreatesEachToolsShapeAsOneHistoryStep() {
     QFETCH(int, tool); QFETCH(QString, type);
