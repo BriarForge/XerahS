@@ -19,7 +19,9 @@ const QVector<ToolbarAction> &toolbarActions() {
     {"drawing-defaults"}, {"appearance-preferences"}, {"remember-window-state"},
     {"customize-toolbar"}, {"toggle-toolbars"}, {"close-editor"}, {"copy-rendered-image"}, {"print"},
     {"copy-annotation"}, {"cut-annotation"}, {"paste"}, {"duplicate-selection"},
-    {"select-tool"}, {"rectangle-tool"}, {"rectangle-properties"}, {"create-rectangle"}, {"focus-annotations"},
+    {"select-tool", true}, {"rectangle-tool", true}, {"ellipse-tool", true}, {"line-tool", true}, {"arrow-tool", true},
+    {"freehand-tool", true}, {"text-tool", true}, {"step-tool", true}, {"highlight-tool", true}, {"blur-tool", true},
+    {"pixelate-tool", true}, {"rectangle-properties"}, {"create-rectangle"}, {"focus-annotations"},
     {"bring-forward"}, {"send-backward"}, {"bring-to-front"}, {"send-to-back"}
   };
   return actions;

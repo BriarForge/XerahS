@@ -56,7 +56,10 @@ QMap<QString, QAction *> annotationOrderActions(EditorCanvas &canvas, QObject *o
 QMap<QString, QAction *> annotationToolActions(EditorCanvas &canvas, QObject *owner, bool includeCrop) {
   using Tool = EditorCanvas::Tool;
   QMap<QString, QAction *> actions;
-  for (const auto &entry : std::array<std::pair<QString, Tool>, 3>{{{"Select", Tool::Select}, {"Rectangle", Tool::Rectangle}, {"Crop", Tool::Crop}}}) {
+  for (const auto &entry : std::array<std::pair<QString, Tool>, 12>{{{"Select", Tool::Select}, {"Rectangle", Tool::Rectangle},
+           {"Ellipse", Tool::Ellipse}, {"Line", Tool::Line}, {"Arrow", Tool::Arrow}, {"Freehand", Tool::Freehand},
+           {"Text", Tool::Text}, {"Step", Tool::Step}, {"Highlight", Tool::Highlight}, {"Blur", Tool::Blur},
+           {"Pixelate", Tool::Pixelate}, {"Crop", Tool::Crop}}}) {
     if (entry.second == Tool::Crop && !includeCrop) continue;
     auto *action = new QAction(entry.first, owner);
     const QString id = entry.first.toLower() + "-tool";
@@ -67,8 +70,8 @@ QMap<QString, QAction *> annotationToolActions(EditorCanvas &canvas, QObject *ow
       const QSignalBlocker blocker(action);
       action->setChecked(canvas.tool() == tool);
       action->setStatusTip(tool == Tool::Select ? "Select and edit existing objects; blank canvas clears selection."
-          : tool == Tool::Rectangle ? "Draw rectangles on blank canvas. The tool stays active after each completed object."
-          : "Drag the region to keep. The crop tool stays active after completion.");
+          : tool == Tool::Crop ? "Drag the region to keep. The crop tool stays active after completion."
+          : "Draw " + EditorCanvas::shapeType(tool) + " objects on blank canvas. The tool stays active after each completed object.");
       action->setToolTip(action->statusTip());
     };
     QObject::connect(&canvas, &EditorCanvas::toolChanged, action, update); update();
@@ -92,7 +95,8 @@ QLabel *annotationToolInstructions(EditorCanvas &canvas, QWidget *parent) {
     using Tool = EditorCanvas::Tool;
     label->setText(canvas.tool() == Tool::Select ? "Select: click objects; Control-click adds.\nBlank canvas clears selection; Escape cancels."
         : canvas.tool() == Tool::Rectangle ? "Rectangle stays active: drag or use Create Rectangle.\nOutside bounds are clipped; Escape cancels."
-        : "Crop stays active: drag the region to keep.\nEscape cancels.");
+        : canvas.tool() == Tool::Crop ? "Crop stays active: drag the region to keep.\nEscape cancels."
+        : canvas.toolInstructions().section(QLatin1Char('.'), 0, 0) + ".\nEscape cancels.");
     label->setAccessibleDescription(canvas.toolInstructions()); label->setToolTip(canvas.toolInstructions());
   };
   QObject::connect(&canvas, &EditorCanvas::toolChanged, label, update); update();

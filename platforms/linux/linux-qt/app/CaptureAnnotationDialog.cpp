@@ -40,6 +40,10 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   splitter->setStretchFactor(0, 3); splitter->setStretchFactor(1, 1); splitter->setSizes({560, 200});
   const auto tools = annotationToolActions(*m_canvas, this);
   bar->addAction(tools.value("select-tool")); bar->addAction(tools.value("rectangle-tool"));
+  // The remaining creation tools get their own row so commands never overflow.
+  auto *toolBar = new QToolBar("Annotation tools", this); toolBar->setObjectName("captureShapeToolbar"); layout->insertWidget(layout->indexOf(bar) + 1, toolBar);
+  for (const auto *id : {"ellipse-tool", "line-tool", "arrow-tool", "freehand-tool", "text-tool", "step-tool", "highlight-tool",
+                         "blur-tool", "pixelate-tool"}) toolBar->addAction(tools.value(id));
   auto *remove = annotationDeleteAction(*m_canvas, this); bar->addAction(remove);
   bar->widgetForAction(remove)->setFocusPolicy(Qt::StrongFocus);
   const auto refreshDelete = [this, remove] { remove->setEnabled(editingReady() && m_canvas->canDeleteSelection()); };

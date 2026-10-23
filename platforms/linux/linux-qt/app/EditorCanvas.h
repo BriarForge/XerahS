@@ -22,7 +22,9 @@ public:
   void zoomOut();
   void resetZoom();
   void zoomToFit();
-  enum class Tool { Select, Rectangle, Crop };
+  // EA-001: creation tools after Crop map to document shape types.
+  enum class Tool { Select, Rectangle, Crop, Ellipse, Line, Arrow, Freehand, Text, Step, Highlight, Blur, Pixelate };
+  static QString shapeType(Tool tool);
   Tool tool() const { return m_tool; }
   void setTool(Tool);
   QString toolInstructions() const;
@@ -85,6 +87,8 @@ private:
   void cancelGesture();
   bool movePreviewCurrent() const;
   void updateMovePreview(QPointF imagePoint);
+  std::vector<xerahs::editor::PointF> creationGesture(QPointF end) const;
+  bool createFromGesture(const std::vector<xerahs::editor::PointF> &gesture);
 
   xerahs::editor::EditorSession *m_session;
   quint64 m_documentGeneration = 0;
@@ -92,6 +96,7 @@ private:
   QImage m_displaySource;
   xerahs::editor::EditorViewport m_view;
   std::optional<std::pair<QPointF, QPointF>> m_drag;
+  std::vector<xerahs::editor::PointF> m_path;  // freehand samples of the live drag
   struct CreationSnapshot {
     xerahs::editor::RectangleStyle style;
     quint64 state;

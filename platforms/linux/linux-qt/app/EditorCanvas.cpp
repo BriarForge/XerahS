@@ -1,9 +1,11 @@
 #include "EditorCanvas.h"
+#include "image-editor/ShapePainter.h"
 #include "RectanglePropertiesDialog.h"
 #include "SelectionRotationDialog.h"
 #include "AnnotationColorDialog.h"
 
 #include <QColorSpace>
+#include <QInputDialog>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QNativeGestureEvent>
@@ -107,9 +109,35 @@ void EditorCanvas::setCropTool(bool active) {
   setTool(active ? Tool::Crop : Tool::Rectangle);
 }
 
+QString EditorCanvas::shapeType(Tool tool) {
+  switch (tool) {
+    case Tool::Select: case Tool::Crop: return {};
+    case Tool::Rectangle: return shape::rectangle;
+    case Tool::Ellipse: return shape::ellipse;
+    case Tool::Line: return shape::line;
+    case Tool::Arrow: return shape::arrow;
+    case Tool::Freehand: return shape::freehand;
+    case Tool::Text: return shape::text;
+    case Tool::Step: return shape::step;
+    case Tool::Highlight: return shape::highlight;
+    case Tool::Blur: return shape::blur;
+    case Tool::Pixelate: return shape::pixelate;
+  }
+  return {};
+}
+
 QString EditorCanvas::toolInstructions() const {
   QString text;
   switch (m_tool) {
+    case Tool::Ellipse: text = "Ellipse stays active: drag on blank canvas to draw."; break;
+    case Tool::Line: text = "Line stays active: drag from the start point to the end point."; break;
+    case Tool::Arrow: text = "Arrow stays active: drag from the tail to the arrow head."; break;
+    case Tool::Freehand: text = "Freehand stays active: drag to draw a stroke."; break;
+    case Tool::Text: text = "Text stays active: click or drag a text box, then type the text."; break;
+    case Tool::Step: text = "Step stays active: click to place the next numbered step."; break;
+    case Tool::Highlight: text = "Highlight stays active: drag over the area to highlight."; break;
+    case Tool::Blur: text = "Blur stays active: drag over the area to blur."; break;
+    case Tool::Pixelate: text = "Pixelate stays active: drag over the area to pixelate."; break;
     case Tool::Select:
       text = "Select: click an object; Control-click adds or removes it. Drag selected objects to move. Blank canvas clears selection."; break;
     case Tool::Rectangle:
@@ -352,13 +380,7 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
       }
     }
     const QRectF box(QPointF(r->left(), r->top()), QPointF(r->right(), r->bottom()));
-    p.save();
-    p.setWorldTransform(rotation(*r), true);
-    p.setOpacity(r->style.opacity);
-    p.setBrush(QColor::fromRgba(r->style.fillColor));
-    p.setPen(QPen(QColor::fromRgba(r->style.strokeColor), r->style.strokeWidth, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
-    p.drawRect(box);
-    p.restore();
+    paintShape(p, *r, m_displaySource.isNull() ? m_image : m_displaySource);
     if (m_session->selection().contains(r->id)) {
       const double gap = r->style.strokeWidth / 2 + 3 / m_view.zoom();
       const QRectF outline = box.adjusted(-gap, -gap, gap, gap);
@@ -389,9 +411,20 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
     p.restore();
   }
   if (m_drag) {
-    p.setBrush(Qt::NoBrush);
-    p.setPen(outlinePen(palette().highlight().color(), Qt::DashLine));
-    p.drawRect(QRectF(m_drag->first, m_drag->second).normalized());
+    // Live creation preview uses the same painter as the saved object.
+    const QString type = shapeType(m_tool);
+    const auto geometry = type.isEmpty() || !m_creation ? std::nullopt : shapeGeometry(type, creationGesture(m_drag->second));
+    if (geometry && type != shape::text) {
+      RectangleAnnotation draft;
+      draft.start = geometry->start; draft.end = geometry->end; draft.style = m_creation->style;
+      draft.content.type = type; draft.content.points = geometry->points;
+      if (type == shape::step) draft.content.stepValue = nextStepValue(m_session->document());
+      paintShape(p, draft, m_displaySource.isNull() ? m_image : m_displaySource);
+    } else {
+      p.setBrush(Qt::NoBrush);
+      p.setPen(outlinePen(palette().highlight().color(), Qt::DashLine));
+      p.drawRect(QRectF(m_drag->first, m_drag->second).normalized());
+    }
   }
   if (hasFocus()) {
     p.resetTransform();
@@ -449,8 +482,9 @@ void EditorCanvas::mousePressEvent(QMouseEvent *event) {
     }
   } else {
     if (!(event->modifiers() & Qt::ControlModifier)) m_session->select({});
-    if (m_tool == Tool::Rectangle) {
+    if (!shapeType(m_tool).isEmpty()) {
       m_drag = std::make_pair(at, at);
+      m_path = {{at.x(), at.y()}};
       m_creation = CreationSnapshot{m_session->toolStyle(), m_session->stateId(), m_session->selection()};
     }
   }
@@ -469,6 +503,7 @@ void EditorCanvas::mouseMoveEvent(QMouseEvent *event) {
     viewport()->update();
   } else if (m_drag) {
     m_drag->second = m_view.toImage(event->position());
+    if (m_tool == Tool::Freehand) m_path.push_back({m_drag->second.x(), m_drag->second.y()});
     viewport()->update();
   } else if (m_move) {
     updateMovePreview(m_view.toImage(event->position()));
@@ -497,12 +532,14 @@ void EditorCanvas::mouseReleaseEvent(QMouseEvent *event) {
     rejection = m_session->editDiagnostic(); viewport()->setCursor(Qt::ArrowCursor);
   } else if (m_drag) {
     const QPointF start = m_drag->first;
+    const auto gesture = creationGesture(at);
     m_drag.reset();
     if (m_tool == Tool::Crop) { const QPointer<EditorCanvas> owner(this); emit cropRequested(start, at); if (!owner) return; }
     else {
-      const auto creation = m_creation; m_creation.reset();
-      if (creation) m_session->createRectangle({{start.x(), start.y()}, {at.x(), at.y()}, creation->style}, creation->state, creation->selection);
-      rejection = m_session->editDiagnostic();
+      m_path.clear();
+      const QPointer<EditorCanvas> owner(this);
+      if (createFromGesture(gesture)) rejection = m_session->editDiagnostic();
+      if (!owner) return;
     }
   } else if (m_move) {
     const auto gesture = std::move(*m_move); m_move.reset();
@@ -520,8 +557,45 @@ void EditorCanvas::mouseReleaseEvent(QMouseEvent *event) {
   emit changed();
 }
 
+std::vector<PointF> EditorCanvas::creationGesture(QPointF end) const {
+  if (!m_drag) return {};
+  if (m_tool == Tool::Freehand) {
+    auto path = m_path; path.push_back({end.x(), end.y()}); return path;
+  }
+  return {{m_drag->first.x(), m_drag->first.y()}, {end.x(), end.y()}};
+}
+
+// Returns whether a creation was attempted; a cancelled text entry is not.
+bool EditorCanvas::createFromGesture(const std::vector<PointF> &gesture) {
+  const auto creation = m_creation; m_creation.reset();
+  const QString type = shapeType(m_tool);
+  if (!creation || type.isEmpty() || gesture.empty()) return false;
+  const auto geometry = shapeGeometry(type, gesture);
+  ShapeContent content;
+  content.type = type;
+  if (!geometry) {
+    // ES-003: an empty gesture is rejected without a history entry.
+    return m_session->createShape({gesture.front(), gesture.front(), creation->style}, content, creation->state, creation->selection), true;
+  }
+  content.points = geometry->points;
+  if (type == shape::step) content.stepValue = nextStepValue(m_session->document());
+  if (type == shape::text) {
+    const QPointer<EditorCanvas> owner(this);
+    m_annotationDialogPending = true;
+    bool accepted = false;
+    const QString text = QInputDialog::getMultiLineText(this, "Text", "Text:", {}, &accepted);
+    if (!owner) return false;
+    m_annotationDialogPending = false;
+    if (!accepted || text.isEmpty()) return false;
+    content.text = text;
+  }
+  m_session->createShape({geometry->start, geometry->end, creation->style}, content, creation->state, creation->selection);
+  return true;
+}
+
 void EditorCanvas::cancelGesture() {
   m_drag.reset();
+  m_path.clear();
   m_creation.reset();
   m_resize.reset();
   m_move.reset();

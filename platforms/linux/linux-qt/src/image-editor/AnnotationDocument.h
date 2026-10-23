@@ -38,6 +38,36 @@ struct RectangleStyle {
   double opacity = 1;
 };
 
+// EA-001: the document types of the box-bounded annotation tools. Every
+// type shares bounds, style, selection, move, resize, rotation and history.
+namespace shape {
+inline const QString rectangle = QStringLiteral("rectangle");
+inline const QString ellipse = QStringLiteral("ellipse");
+inline const QString line = QStringLiteral("line");
+inline const QString arrow = QStringLiteral("arrow");
+inline const QString freehand = QStringLiteral("freehand");
+inline const QString text = QStringLiteral("text");
+inline const QString step = QStringLiteral("step");
+inline const QString highlight = QStringLiteral("highlight");
+inline const QString blur = QStringLiteral("blur");
+inline const QString pixelate = QStringLiteral("pixelate");
+}  // namespace shape
+QStringList shapeTypes();
+// Path types draw through `points`; region types sample source pixels.
+bool isPathShape(const QString &type);
+bool isTextShape(const QString &type);
+
+// Type-specific content. Path points are fractions of the bounds, so move,
+// resize and rotation of the bounds carry the path with them (EA-006/007).
+struct ShapeContent {
+  QString type = shape::rectangle;
+  std::vector<PointF> points;
+  QString text;           // text: content; step: unused
+  double fontSize = 0;    // text and step; 0 uses the type default
+  qint64 stepValue = 0;   // EA-009: the displayed step number
+  double strength = 0;    // blur radius or pixelate cell; 0 uses the default
+};
+
 struct RectangleAnnotation {
   QUuid id;
   PointF start;  // normalized: start is the top-left corner
@@ -45,6 +75,8 @@ struct RectangleAnnotation {
   RectangleStyle style;
   bool visible = true;
   QJsonObject extra;  // ES-015: unknown properties kept for round-trip
+  ShapeContent content;
+  const QString &type() const { return content.type; }
 
   double left() const { return start.x; }
   double top() const { return start.y; }
@@ -59,6 +91,8 @@ struct UnsupportedAnnotation {
   QJsonObject raw;
 };
 
+// Every known shape type uses the same box-bounded record.
+using ShapeAnnotation = RectangleAnnotation;
 using Annotation = std::variant<RectangleAnnotation, UnsupportedAnnotation>;
 QUuid annotationId(const Annotation &annotation);
 // Hidden or explicitly locked compatible objects cannot be directly edited.

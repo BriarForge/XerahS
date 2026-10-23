@@ -45,6 +45,8 @@ add_library(xerahs_core STATIC
   src/image-editor/AnnotationTransfer.h
   src/image-editor/AnnotationRenderer.cpp
   src/image-editor/AnnotationRenderer.h
+  src/image-editor/ShapePainter.cpp
+  src/image-editor/ShapePainter.h
   src/image-editor/CanvasOperations.cpp
   src/image-editor/CanvasOperations.h
   src/image-editor/CropRegion.cpp
@@ -79,7 +81,8 @@ add_library(xerahs_core STATIC
   src/naming/FilenameGenerator.h
 )
 target_include_directories(xerahs_core PUBLIC src)
-target_link_libraries(xerahs_core PUBLIC Qt6::Core PRIVATE ZLIB::ZLIB)
+# Qt Gui (private) supplies QPainter for shape painting shared with the canvas.
+target_link_libraries(xerahs_core PUBLIC Qt6::Core PRIVATE Qt6::Gui ZLIB::ZLIB)
 target_compile_options(xerahs_core PRIVATE -Wall -Wextra -Wpedantic
   # ES-025: binary64 in the order written, no fused multiply-add.
   -ffp-contract=off)
@@ -472,6 +475,12 @@ set_target_properties(editor-canvas-test PROPERTIES AUTOMOC ON)
 target_include_directories(editor-canvas-test PRIVATE app)
 target_link_libraries(editor-canvas-test PRIVATE xerahs_editor_canvas Qt6::Widgets Qt6::Test)
 add_test(NAME editor-canvas COMMAND editor-canvas-test)
+add_executable(annotation-shapes-test tests/AnnotationShapesTest.cpp)
+set_target_properties(annotation-shapes-test PROPERTIES AUTOMOC ON)
+target_include_directories(annotation-shapes-test PRIVATE app)
+target_link_libraries(annotation-shapes-test PRIVATE xerahs_editor_canvas Qt6::Widgets Qt6::Test)
+add_test(NAME annotation-shapes COMMAND annotation-shapes-test)
+set_tests_properties(annotation-shapes PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
 set_tests_properties(editor-canvas PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
 add_executable(annotation-object-navigator-test tests/AnnotationObjectNavigatorTest.cpp)
 set_target_properties(annotation-object-navigator-test PROPERTIES AUTOMOC ON)

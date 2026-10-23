@@ -35,6 +35,9 @@ public:
   // and reject intervening document/selection changes before one insertion.
   std::optional<QUuid> createRectangle(const RectangleProperties &, quint64 expectedState,
       const QSet<QUuid> &expectedSelection);
+  // EA-004: the same owned creation for every box-bounded shape type.
+  std::optional<QUuid> createShape(const RectangleProperties &, const ShapeContent &, quint64 expectedState,
+      const QSet<QUuid> &expectedSelection);
   // ES-004, ES-026: selection is not a document mutation. Unknown IDs are ignored.
   void select(const QList<QUuid> &ids);
   // Native object lists freeze their displayed history state before dispatch.

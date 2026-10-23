@@ -45,7 +45,15 @@ std::optional<QUuid> EditorSession::createRectangle(PointF start, PointF end) {
 
 std::optional<QUuid> EditorSession::createRectangle(const RectangleProperties &draft, quint64 expectedState,
     const QSet<QUuid> &expectedSelection) {
+  return createShape(draft, ShapeContent{}, expectedState, expectedSelection);
+}
+
+std::optional<QUuid> EditorSession::createShape(const RectangleProperties &draft, const ShapeContent &content,
+    quint64 expectedState, const QSet<QUuid> &expectedSelection) {
   m_editDiagnostic.clear();
+  if (!shapeTypes().contains(content.type) || (isPathShape(content.type) && content.points.size() < 2)) {
+    m_editDiagnostic = "annotation-geometry-invalid"; return std::nullopt;
+  }
   if (stateId() != expectedState || m_selection != expectedSelection) {
     m_editDiagnostic = "annotation-edit-stale"; return std::nullopt;
   }
@@ -60,6 +68,7 @@ std::optional<QUuid> EditorSession::createRectangle(const RectangleProperties &d
   rectangle.start = {std::min(start.x, end.x), std::min(start.y, end.y)};
   rectangle.end = {std::max(start.x, end.x), std::max(start.y, end.y)};
   rectangle.style = draft.style;
+  rectangle.content = content;
   // ES-003: zero area (zero width or zero height) is rejected.
   m_editDiagnostic = rectanglePropertiesDiagnostic({rectangle.start, rectangle.end, rectangle.style});
   if (!m_editDiagnostic.isEmpty()) return std::nullopt;

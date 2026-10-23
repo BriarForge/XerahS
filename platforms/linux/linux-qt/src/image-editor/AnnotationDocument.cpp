@@ -29,9 +29,12 @@ const QStringList kKnownRectangleKeys = {
     QStringLiteral("id"),          QStringLiteral("type"),        QStringLiteral("start"),
     QStringLiteral("end"),         QStringLiteral("strokeColor"), QStringLiteral("fillColor"),
     QStringLiteral("strokeWidth"), QStringLiteral("rotationDegrees"), QStringLiteral("zIndex"),
-    QStringLiteral("visible"),     QStringLiteral("opacity")};
+    QStringLiteral("visible"),     QStringLiteral("opacity"),     QStringLiteral("points"),
+    QStringLiteral("text"),        QStringLiteral("fontSize"),    QStringLiteral("stepValue"),
+    QStringLiteral("strength")};
 
-const QString kRectangle = QStringLiteral("rectangle");
+constexpr int kMaxPathPoints = 100000;
+constexpr int kMaxTextLength = 100000;
 
 bool isInteger(const QJsonValue &value) {
   if (!value.isDouble()) return false;
@@ -114,7 +117,37 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
       return std::nullopt;
     }
   }
-  if (o.value(u"type").toString() != kRectangle) return Annotation(UnsupportedAnnotation{QUuid(id), o});
+  const QString type = o.value(u"type").toString();
+  if (!shapeTypes().contains(type)) return Annotation(UnsupportedAnnotation{QUuid(id), o});
+  ShapeContent content;
+  content.type = type;
+  if (type != shape::rectangle) {
+    const auto optionalNumber = [&](const char16_t *key, double low, double high, double &out) {
+      if (!o.contains(key)) return true;
+      const QJsonValue v = o.value(key);
+      if (!isFiniteNumber(v) || v.toDouble() < low || v.toDouble() > high) return false;
+      out = v.toDouble(); return true;
+    };
+    double stepValue = 0;
+    bool ok = optionalNumber(u"fontSize", 0, 2000, content.fontSize) && optionalNumber(u"strength", 0, 1000, content.strength) &&
+              optionalNumber(u"stepValue", 0, 1e9, stepValue) && (!o.contains(u"stepValue") || isInteger(o.value(u"stepValue")));
+    content.stepValue = qint64(stepValue);
+    if (o.contains(u"text")) { ok = ok && o.value(u"text").isString() && o.value(u"text").toString().size() <= kMaxTextLength; content.text = o.value(u"text").toString(); }
+    if (o.contains(u"points")) {
+      const QJsonArray points = o.value(u"points").toArray();
+      ok = ok && o.value(u"points").isArray() && points.size() <= kMaxPathPoints;
+      for (const auto &point : points) {
+        const auto p = parsePoint(point);
+        if (!p) { ok = false; break; }
+        content.points.push_back(*p);
+      }
+    }
+    if (isPathShape(type) && content.points.size() < 2) ok = false;
+    if (!ok) {
+      findings.invalid = true;
+      return std::nullopt;
+    }
+  }
 
   const auto start = parsePoint(o.value(u"start"));
   const auto end = parsePoint(o.value(u"end"));
@@ -135,6 +168,7 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
   rectangle.style = RectangleStyle{*stroke, *fill, width.toDouble(), rotation.toDouble(),
                                    o.value(u"opacity").toDouble(1.0)};
   rectangle.visible = o.value(u"visible").toBool(true);
+  rectangle.content = std::move(content);
   for (auto it = o.begin(); it != o.end(); ++it) {
     if (!kKnownRectangleKeys.contains(it.key())) rectangle.extra.insert(it.key(), it.value());
   }
@@ -144,6 +178,13 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
 QJsonObject pointJson(const PointF &p) { return QJsonObject{{QStringLiteral("x"), p.x}, {QStringLiteral("y"), p.y}}; }
 
 }  // namespace
+
+QStringList shapeTypes() {
+  return {shape::rectangle, shape::ellipse, shape::line, shape::arrow, shape::freehand, shape::text,
+          shape::step, shape::highlight, shape::blur, shape::pixelate};
+}
+bool isPathShape(const QString &type) { return type == shape::line || type == shape::arrow || type == shape::freehand; }
+bool isTextShape(const QString &type) { return type == shape::text || type == shape::step; }
 
 std::optional<Argb> parseColor(const QString &text) {
   static const QRegularExpression pattern(QStringLiteral("^#[0-9A-Fa-f]{8}$"));
@@ -286,7 +327,17 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
     const auto &rectangle = std::get<RectangleAnnotation>(annotation);
     QJsonObject o = rectangle.extra;
     o.insert(QStringLiteral("id"), rectangle.id.toString(QUuid::WithoutBraces));
-    o.insert(QStringLiteral("type"), kRectangle);
+    o.insert(QStringLiteral("type"), rectangle.type());
+    const ShapeContent &content = rectangle.content;
+    if (isPathShape(content.type)) {
+      QJsonArray points;
+      for (const PointF &p : content.points) points.append(pointJson(p));
+      o.insert(QStringLiteral("points"), points);
+    }
+    if (isTextShape(content.type)) o.insert(QStringLiteral("fontSize"), content.fontSize);
+    if (content.type == shape::text) o.insert(QStringLiteral("text"), content.text);
+    if (content.type == shape::step) o.insert(QStringLiteral("stepValue"), double(content.stepValue));
+    if (content.type == shape::blur || content.type == shape::pixelate) o.insert(QStringLiteral("strength"), content.strength);
     o.insert(QStringLiteral("start"), pointJson(rectangle.start));
     o.insert(QStringLiteral("end"), pointJson(rectangle.end));
     o.insert(QStringLiteral("strokeColor"), formatColor(rectangle.style.strokeColor));

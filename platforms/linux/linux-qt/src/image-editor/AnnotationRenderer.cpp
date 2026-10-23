@@ -1,4 +1,7 @@
 #include "image-editor/AnnotationRenderer.h"
+#include "image-editor/ShapePainter.h"
+
+#include <QPainter>
 
 #include <algorithm>
 #include <array>
@@ -129,6 +132,23 @@ double compose(double layerColour, double a, double cd, double ad, double ao) {
 
 }  // namespace
 
+namespace {
+QImage toQImage(const ArgbImage &image) {
+  QImage result(int(image.width), int(image.height), QImage::Format_ARGB32);
+  for (qint64 y = 0; y < image.height; ++y)
+    std::copy_n(image.pixels.begin() + y * image.width, image.width, reinterpret_cast<QRgb *>(result.scanLine(int(y))));
+  return result;
+}
+
+ArgbImage fromQImage(const QImage &image) {
+  const QImage argb = image.convertToFormat(QImage::Format_ARGB32);
+  ArgbImage result{argb.width(), argb.height(), std::vector<Argb>(std::size_t(argb.width()) * std::size_t(argb.height()))};
+  for (int y = 0; y < argb.height(); ++y)
+    std::copy_n(reinterpret_cast<const QRgb *>(argb.constScanLine(y)), argb.width(), result.pixels.begin() + qint64(y) * argb.width());
+  return result;
+}
+}  // namespace
+
 ArgbImage solidImage(qint64 width, qint64 height, Argb color) {
   return ArgbImage{width, height, std::vector<Argb>(static_cast<std::size_t>(width * height), color)};
 }
@@ -149,6 +169,7 @@ RenderResult render(const ArgbImage &source, const std::vector<Annotation> &anno
   }
   ArgbImage image = source;  // ES-009: the source itself is never modified
   std::vector<QUuid> composited;
+  QImage sourcePixels;  // EA-011: region shapes sample the immutable source
 
   for (std::size_t index = 0; index < annotations.size(); ++index) {
     if (cancelled()) return result;
@@ -157,6 +178,23 @@ RenderResult render(const ArgbImage &source, const std::vector<Annotation> &anno
     const auto *rectangle = std::get_if<RectangleAnnotation>(&annotation);
     if (!rectangle || !rectangle->visible) continue;
     const RectangleStyle &style = rectangle->style;
+    if (rectangle->type() != shape::rectangle) {
+      if (!std::isfinite(rectangle->left()) || !std::isfinite(rectangle->top()) || !std::isfinite(rectangle->right()) ||
+          !std::isfinite(rectangle->bottom()) || !std::isfinite(style.rotationDegrees) || !std::isfinite(style.opacity) ||
+          rectangle->right() <= rectangle->left() || rectangle->bottom() <= rectangle->top()) {
+        result.error = RenderError::InvalidGeometry;
+        return result;
+      }
+      if (sourcePixels.isNull()) sourcePixels = toQImage(source);
+      QImage canvas = toQImage(image).convertToFormat(QImage::Format_ARGB32_Premultiplied);
+      {
+        QPainter painter(&canvas);
+        paintShape(painter, *rectangle, sourcePixels);
+      }
+      image = fromQImage(canvas);
+      composited.push_back(rectangle->id);
+      continue;
+    }
     if (!std::isfinite(rectangle->left()) || !std::isfinite(rectangle->top()) ||
         !std::isfinite(rectangle->right()) || !std::isfinite(rectangle->bottom()) ||
         !std::isfinite(style.rotationDegrees) || !std::isfinite(style.strokeWidth) || style.strokeWidth <= 0 ||
