@@ -5,10 +5,31 @@
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonArray>
+#include <cmath>
 namespace xerahs::settings {
 namespace {
 storage::PrivateJsonFile settingsFile(const QString &path) {
   return {path, {QStringLiteral("com.xerahs.app/linux-qt/application-settings"), 1, 1048576, 0, 30000, true}};
+}
+bool integerInRange(const QJsonValue &value, int minimum, int maximum) {
+  if (!value.isDouble()) return false;
+  const double number = value.toDouble();
+  return number == std::floor(number) && number >= minimum && number <= maximum;
+}
+bool oneOf(const QJsonValue &value, std::initializer_list<const char *> allowed) {
+  if (!value.isString()) return false;
+  for (const char *candidate : allowed) if (value.toString() == QLatin1String(candidate)) return true;
+  return false;
+}
+bool validCaptureValue(const QString &key, const QJsonValue &value) {
+  if (key == "delayedCapture.seconds") return integerInRange(value, 1, 60);
+  if (key == "delayedCapture.source") return oneOf(value, {"full-screen", "monitor", "active-window", "region"});
+  if (key == "autoCapture.source") return oneOf(value, {"full-screen", "monitor", "active-window"});
+  if (key == "autoCapture.intervalMs") return integerInRange(value, 1000, 24 * 60 * 60 * 1000);
+  if (key == "autoCapture.boundKind") return oneOf(value, {"count", "time"});
+  if (key == "autoCapture.count") return integerInRange(value, 1, 10000);
+  if (key == "autoCapture.durationMinutes") return integerInRange(value, 1, 1440);
+  return value.isBool();
 }
 }
 
@@ -16,13 +37,20 @@ QVector<SettingField> settingFields() {
   return {{"saveFolder", Section::General, "profile"}, {"filenamePattern", Section::General, "profile"},
     {"startAtLogin", Section::General, "profile"}, {"showTrayIcon", Section::General, "profile"},
     {"playCaptureSound", Section::Capture, "profile"}, {"showNotification", Section::Capture, "profile"},
+    {"delayedCapture.seconds", Section::Capture, "profile"}, {"delayedCapture.source", Section::Capture, "profile"},
+    {"autoCapture.source", Section::Capture, "profile"}, {"autoCapture.intervalMs", Section::Capture, "profile"},
+    {"autoCapture.boundKind", Section::Capture, "profile"}, {"autoCapture.count", Section::Capture, "profile"},
+    {"autoCapture.durationMinutes", Section::Capture, "profile"},
     {"hotkeys", Section::Hotkeys, "profile"}, {"systemAudioDevice", Section::Recording, "profile"}, {"microphoneDevice", Section::Recording, "profile"}};
 }
 QJsonObject defaultSettings(const QString &saveFolder) {
   QJsonObject bindings; const auto defaults = HotkeyBindings::defaults();
   for (auto it = defaults.entries.cbegin(); it != defaults.entries.cend(); ++it) bindings.insert(it.key(), it.value());
   return {{"saveFolder", saveFolder}, {"filenamePattern", workflows::CaptureOutput{}.pattern}, {"startAtLogin", false},
-    {"showTrayIcon", true}, {"playCaptureSound", false}, {"showNotification", true}, {"hotkeys", bindings}, {"systemAudioDevice", ""}, {"microphoneDevice", ""}};
+    {"showTrayIcon", true}, {"playCaptureSound", false}, {"showNotification", true},
+    {"delayedCapture.seconds", 3}, {"delayedCapture.source", "full-screen"}, {"autoCapture.source", "full-screen"},
+    {"autoCapture.intervalMs", 5000}, {"autoCapture.boundKind", "count"}, {"autoCapture.count", 10}, {"autoCapture.durationMinutes", 60},
+    {"hotkeys", bindings}, {"systemAudioDevice", ""}, {"microphoneDevice", ""}};
 }
 xerahs::workflows::CaptureWorkflow withApplicationDefaults(xerahs::workflows::CaptureWorkflow workflow,
     const QJsonObject &values, bool savedDefinition) {
@@ -46,6 +74,7 @@ SettingsRead repairSettings(const QJsonObject &input, const QString &saveFolder)
       valid = value.isString() && !output.pattern.isEmpty() && workflows::previewCaptureOutput(output).diagnostic.isEmpty();
     } else if (field.key == "hotkeys") valid = value.isObject() && value.toObject().size() <= maximumHotkeyBindings;
     else if (field.section == Section::Recording) valid = value.isString() && value.toString().size() <= 4096 && !value.toString().contains(QChar(0));
+    else if (field.section == Section::Capture) valid = validCaptureValue(field.key, value);
     else valid = value.isBool();
     if (!valid) { result.values.insert(field.key, defaults.value(field.key)); result.diagnostics.append(field.key + ": invalid value repaired"); }
   }

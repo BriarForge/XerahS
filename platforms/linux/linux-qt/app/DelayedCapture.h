@@ -1,11 +1,13 @@
-// CORE-016: capture after a 1–60 s delay. The last delay is kept for this session.
+// CORE-016: capture after a 1–60 s delay. The last delay is kept in the application settings when a store is given.
 #pragma once
 
 #include "capture/CaptureSchedule.h"
+#include "settings/ApplicationSettings.h"
 
 #include <QObject>
 
 #include <memory>
+#include <utility>
 
 class QWidget;
 
@@ -28,12 +30,16 @@ public:
   xerahs::capture::CaptureSource rememberedSource() const { return m_source; }
   void setRemembered(int seconds, xerahs::capture::CaptureSource source);
   QString statusText() const;
+  // Optional; without it the choice is only remembered for this session.
+  void setPreferences(xerahs::settings::CapturePreferencesPort port) { m_preferences = std::move(port); }
 
 signals:
   void captureRequested(xerahs::capture::CaptureSource source);
   void statusTextChanged(const QString &text);
+  void preferencesSaveFailed(const QString &code);
 
 private:
+  QString saveChoice(int seconds, xerahs::capture::CaptureSource source);
   void remember(int seconds, xerahs::capture::CaptureSource source);
   void wire();
   void hideCountdown();
@@ -44,6 +50,8 @@ private:
   xerahs::capture::Timer *m_timer = nullptr;
   std::unique_ptr<xerahs::capture::CaptureSchedule> m_schedule;
   QWidget *m_countdown = nullptr;
+  xerahs::settings::CapturePreferencesPort m_preferences;
+  bool m_unsaved = false;
   int m_seconds = 3;
   int m_fireGeneration = 0;
   xerahs::capture::CaptureSource m_source = xerahs::capture::CaptureSource::FullScreen;

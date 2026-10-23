@@ -41,6 +41,11 @@ ScheduledCapture::ScheduledCapture(ScheduledCapturePorts ports, xerahs::capture:
 
 void ScheduledCapture::setDialogParent(QWidget *parent) { m_dialogs = parent; }
 
+void ScheduledCapture::setPreferences(xerahs::settings::CapturePreferencesPort port) {
+  m_delay->setPreferences(port);
+  m_automatic->setPreferences(std::move(port));
+}
+
 void ScheduledCapture::wire() {
   m_delayAction = new QAction(QStringLiteral("Capture after delay…"), this);
   m_autoAction = new QAction(QStringLiteral("Auto capture…"), this);
@@ -55,6 +60,11 @@ void ScheduledCapture::wire() {
   connect(m_automatic, &AutoCaptureSession::finished, this, [this](const xerahs::capture::AutoSummary &summary) {
     notify(xerahs::capture::autoCaptureFinishedTitle(summary), xerahs::capture::autoCaptureSummaryText(summary), summary.failed == 0);
   });
+  const auto notSaved = [this](const QString &title, const QString &code) {
+    notify(title, QStringLiteral("Your choice could not be remembered (%1). The capture was still started.").arg(code), false);
+  };
+  connect(m_delay, &DelayedCapture::preferencesSaveFailed, this, [notSaved](const QString &code) { notSaved(QStringLiteral("Capture after delay"), code); });
+  connect(m_automatic, &AutoCaptureSession::preferencesSaveFailed, this, [notSaved](const QString &code) { notSaved(QStringLiteral("Auto capture"), code); });
   connect(m_delay, &DelayedCapture::statusTextChanged, this, [this](const QString &) { refreshTooltip(); });
   connect(m_automatic, &AutoCaptureSession::statusTextChanged, this, [this](const QString &) { refreshTooltip(); });
   refreshTooltip();

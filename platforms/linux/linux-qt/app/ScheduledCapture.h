@@ -2,6 +2,7 @@
 #pragma once
 
 #include "capture/CaptureSchedule.h"
+#include "settings/ApplicationSettings.h"
 
 #include <QObject>
 
@@ -29,6 +30,8 @@ public:
   explicit ScheduledCapture(ScheduledCapturePorts ports, QObject *parent = nullptr);
   ScheduledCapture(ScheduledCapturePorts ports, xerahs::capture::Clock &clock, xerahs::capture::Timer &timer, QObject *parent = nullptr);
   void setDialogParent(QWidget *parent);
+  // Remember the delay and automatic capture choices in the application settings.
+  void setPreferences(xerahs::settings::CapturePreferencesPort port);
   QAction *delayAction() const { return m_delayAction; }
   QAction *autoAction() const { return m_autoAction; }
   QAction *stopAction() const { return m_stopAction; }

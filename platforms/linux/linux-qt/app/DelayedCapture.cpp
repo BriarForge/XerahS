@@ -24,7 +24,9 @@ namespace {
 
 class DelayCaptureDialog final : public QDialog {
 public:
-  DelayCaptureDialog(int seconds, xerahs::capture::CaptureSource source, QWidget *parent) : QDialog(parent) {
+  using SaveChoice = std::function<QString(int, xerahs::capture::CaptureSource)>;
+  DelayCaptureDialog(int seconds, xerahs::capture::CaptureSource source, SaveChoice save, QWidget *parent)
+      : QDialog(parent), m_save(std::move(save)) {
     setWindowTitle(QStringLiteral("Capture after delay"));
     setObjectName(QStringLiteral("delayCaptureDialog"));
     auto *form = new QFormLayout;
@@ -48,6 +50,9 @@ public:
     const int index = m_source->findData(xerahs::capture::captureSourceId(source));
     if (index >= 0) m_source->setCurrentIndex(index);
     form->addRow(QStringLiteral("Source"), m_source);
+    m_status = new QLabel(this);
+    m_status->setObjectName(QStringLiteral("delayStatus"));
+    m_status->setWordWrap(true);
     auto *buttons = new QHBoxLayout;
     auto *start = new QPushButton(QStringLiteral("Start"), this);
     auto *cancel = new QPushButton(QStringLiteral("Cancel"), this);
@@ -57,9 +62,18 @@ public:
     buttons->addWidget(cancel);
     auto *layout = new QVBoxLayout(this);
     layout->addLayout(form);
+    layout->addWidget(m_status);
     layout->addLayout(buttons);
     connect(start, &QPushButton::clicked, this, &QDialog::accept);
     connect(cancel, &QPushButton::clicked, this, &QDialog::reject);
+  }
+  // Starting saves the choice. A failed save is shown here and never blocks the capture.
+  void accept() override {
+    if (m_save) {
+      const auto code = m_save(seconds(), source());
+      m_status->setText(code.isEmpty() ? QString() : QStringLiteral("Could not remember this choice (%1). The capture will still start.").arg(code));
+    }
+    QDialog::accept();
   }
   int seconds() const { return m_seconds->value(); }
   xerahs::capture::CaptureSource source() const {
@@ -69,6 +83,8 @@ public:
 private:
   QSpinBox *m_seconds = nullptr;
   QComboBox *m_source = nullptr;
+  QLabel *m_status = nullptr;
+  SaveChoice m_save;
 };
 
 class CaptureCountdownWindow final : public QDialog {
@@ -167,10 +183,27 @@ void DelayedCapture::setRemembered(int seconds, xerahs::capture::CaptureSource s
 
 bool DelayedCapture::prompt(QWidget *parent) {
   if (delayActive()) return false;
-  DelayCaptureDialog dialog(m_seconds, m_source, parent);
+  if (m_preferences && !m_unsaved) {
+    const auto values = m_preferences.values();
+    const auto source = xerahs::capture::captureSourceFromId(values.value(QStringLiteral("delayedCapture.source")).toString());
+    remember(values.value(QStringLiteral("delayedCapture.seconds")).toInt(m_seconds), source ? *source : m_source);
+  }
+  DelayCaptureDialog::SaveChoice save;
+  if (m_preferences) save = [this](int seconds, xerahs::capture::CaptureSource source) { return saveChoice(seconds, source); };
+  DelayCaptureDialog dialog(m_seconds, m_source, save, parent);
   if (dialog.exec() != QDialog::Accepted) return false;
   remember(dialog.seconds(), dialog.source());
   return start({dialog.source(), dialog.seconds()}).isEmpty();
+}
+
+QString DelayedCapture::saveChoice(int seconds, xerahs::capture::CaptureSource source) {
+  auto values = m_preferences.values();
+  values.insert(QStringLiteral("delayedCapture.seconds"), seconds);
+  values.insert(QStringLiteral("delayedCapture.source"), xerahs::capture::captureSourceId(source));
+  const auto code = m_preferences.save(values);
+  m_unsaved = !code.isEmpty();
+  if (m_unsaved) emit preferencesSaveFailed(code);
+  return code;
 }
 
 QString DelayedCapture::start(const xerahs::capture::DelayRequest &request) {

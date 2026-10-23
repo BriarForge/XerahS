@@ -31,7 +31,10 @@ QString diagnosticText(const xerahs::capture::ScheduleDiagnostic &diagnostic) {
 }  // namespace
 
 AutoCaptureDialog::AutoCaptureDialog(std::function<qint64()> nowMs, bool running, QWidget *parent)
-    : QDialog(parent), m_nowMs(std::move(nowMs)), m_running(running) {
+    : AutoCaptureDialog(std::move(nowMs), running, {}, parent) {}
+
+AutoCaptureDialog::AutoCaptureDialog(std::function<qint64()> nowMs, bool running, xerahs::settings::CapturePreferencesPort preferences, QWidget *parent)
+    : QDialog(parent), m_nowMs(std::move(nowMs)), m_running(running), m_preferences(std::move(preferences)) {
   setWindowTitle(QStringLiteral("Auto capture"));
   setObjectName(QStringLiteral("autoCaptureDialog"));
   auto *form = new QFormLayout;
@@ -89,6 +92,16 @@ AutoCaptureDialog::AutoCaptureDialog(std::function<qint64()> nowMs, bool running
   layout->addLayout(form);
   layout->addWidget(m_status);
   layout->addLayout(buttons);
+  if (m_preferences) {
+    const auto values = m_preferences.values();
+    const int source = m_source->findData(values.value(QStringLiteral("autoCapture.source")).toString());
+    if (source >= 0) m_source->setCurrentIndex(source);
+    m_interval->setValue(values.value(QStringLiteral("autoCapture.intervalMs")).toInt(5000) / 1000);
+    m_count->setValue(values.value(QStringLiteral("autoCapture.count")).toInt(10));
+    m_end->setDateTime(QDateTime::fromMSecsSinceEpoch(m_nowMs() + values.value(QStringLiteral("autoCapture.durationMinutes")).toInt(60) * 60 * 1000));
+    if (values.value(QStringLiteral("autoCapture.boundKind")).toString() == QLatin1String("time")) m_timeBound->setChecked(true);
+    else m_countBound->setChecked(true);
+  }
   connect(m_source, &QComboBox::currentIndexChanged, this, [this] { refresh(); });
   connect(m_interval, qOverload<int>(&QSpinBox::valueChanged), this, [this](int) { refresh(); });
   connect(m_count, qOverload<int>(&QSpinBox::valueChanged), this, [this](int) { refresh(); });
@@ -139,7 +152,28 @@ void AutoCaptureDialog::accept() {
   request.intervalMs = m_interval->value() * 1000;
   request.bound = *bound();
   m_request = request;
+  saveChoice();
   QDialog::accept();
+}
+
+// A failed save is shown in the status line and never blocks the capture.
+void AutoCaptureDialog::saveChoice() {
+  if (!m_preferences) return;
+  auto values = m_preferences.values();
+  values.insert(QStringLiteral("autoCapture.source"), xerahs::capture::captureSourceId(source()));
+  values.insert(QStringLiteral("autoCapture.intervalMs"), m_interval->value() * 1000);
+  if (m_countBound->isChecked()) {
+    values.insert(QStringLiteral("autoCapture.boundKind"), QStringLiteral("count"));
+    values.insert(QStringLiteral("autoCapture.count"), m_count->value());
+  } else {
+    // Only the length is kept, never the absolute end time.
+    const qint64 remaining = m_end->dateTime().toMSecsSinceEpoch() - m_nowMs();
+    values.insert(QStringLiteral("autoCapture.boundKind"), QStringLiteral("time"));
+    values.insert(QStringLiteral("autoCapture.durationMinutes"), static_cast<int>((remaining + 59999) / 60000));
+  }
+  const auto code = m_preferences.save(values);
+  m_status->setText(code.isEmpty() ? QString() : QStringLiteral("Could not remember this choice (%1). The capture will still start.").arg(code));
+  if (!code.isEmpty()) m_saveError = code;
 }
 
 std::optional<xerahs::capture::AutoRequest> AutoCaptureDialog::takeRequest() { return std::exchange(m_request, std::nullopt); }
@@ -170,12 +204,13 @@ void AutoCaptureSession::wire() {
 }
 
 bool AutoCaptureSession::prompt(QWidget *parent) {
-  AutoCaptureDialog dialog([this] { return m_clock->nowMs(); }, active(), parent);
+  AutoCaptureDialog dialog([this] { return m_clock->nowMs(); }, active(), m_preferences, parent);
   const int result = dialog.exec();
   if (result == AutoCaptureDialog::StopResult) { stop(); return true; }
   if (result != QDialog::Accepted) return false;
   const auto request = dialog.takeRequest();
   if (!request) return false;
+  if (!dialog.saveError().isEmpty()) emit preferencesSaveFailed(dialog.saveError());
   return start(*request).isEmpty();
 }
 

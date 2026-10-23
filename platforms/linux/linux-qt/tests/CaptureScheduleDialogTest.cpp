@@ -6,6 +6,7 @@
 #include <QComboBox>
 #include <QDateTime>
 #include <QDateTimeEdit>
+#include <QJsonObject>
 #include <QLabel>
 #include <QPushButton>
 #include <QRadioButton>
@@ -29,6 +30,20 @@ QWidget *countdown() {
     if (widget->objectName() == QLatin1String("captureCountdown")) return widget;
   return nullptr;
 }
+
+struct FakeStore {
+  QJsonObject values = xerahs::settings::defaultSettings(QStringLiteral("/tmp"));
+  QString error;
+  int saves = 0;
+  xerahs::settings::CapturePreferencesPort port() {
+    return {[this] { return values; }, [this](const QJsonObject &next) {
+      ++saves;
+      if (!error.isEmpty()) return error;
+      values = next;
+      return QString();
+    }};
+  }
+};
 
 }  // namespace
 
@@ -155,6 +170,144 @@ private slots:
     QVERIFY(!fresh.prompt(nullptr));
     QCOMPARE(fresh.rememberedSeconds(), 3);
     QCOMPARE(fresh.rememberedSource(), CaptureSource::FullScreen);
+  }
+
+  void delayPromptReadsAndSavesTheStoredChoice() {
+    FakeStore store;
+    store.values.insert(QStringLiteral("delayedCapture.seconds"), 12);
+    store.values.insert(QStringLiteral("delayedCapture.source"), QStringLiteral("active-window"));
+    DelayedCapture delay(clock, timer);
+    delay.setPreferences(store.port());
+    QTimer::singleShot(0, [] {
+      auto *active = qobject_cast<QDialog *>(QApplication::activeModalWidget());
+      QVERIFY(active);
+      QCOMPARE(active->findChild<QSpinBox *>(QStringLiteral("delaySeconds"))->value(), 12);
+      QCOMPARE(active->findChild<QComboBox *>(QStringLiteral("delaySource"))->currentData().toString(), QStringLiteral("active-window"));
+      active->findChild<QSpinBox *>(QStringLiteral("delaySeconds"))->setValue(20);
+      active->findChild<QComboBox *>(QStringLiteral("delaySource"))->setCurrentIndex(1);
+      active->reject();
+    });
+    QVERIFY(!delay.prompt(nullptr));
+    QCOMPARE(store.saves, 0);
+    QCOMPARE(store.values.value(QStringLiteral("delayedCapture.seconds")).toInt(), 12);
+
+    QTimer::singleShot(0, [] {
+      auto *active = qobject_cast<QDialog *>(QApplication::activeModalWidget());
+      active->findChild<QSpinBox *>(QStringLiteral("delaySeconds"))->setValue(20);
+      active->findChild<QComboBox *>(QStringLiteral("delaySource"))->setCurrentIndex(1);
+      active->accept();
+    });
+    QVERIFY(delay.prompt(nullptr));
+    QCOMPARE(store.saves, 1);
+    QCOMPARE(store.values.value(QStringLiteral("delayedCapture.seconds")).toInt(), 20);
+    QCOMPARE(store.values.value(QStringLiteral("delayedCapture.source")).toString(), QStringLiteral("monitor"));
+    delay.cancel();
+
+    // A new session starts from the store.
+    DelayedCapture next(clock, timer);
+    next.setPreferences(store.port());
+    QTimer::singleShot(0, [] {
+      auto *active = qobject_cast<QDialog *>(QApplication::activeModalWidget());
+      QCOMPARE(active->findChild<QSpinBox *>(QStringLiteral("delaySeconds"))->value(), 20);
+      active->reject();
+    });
+    QVERIFY(!next.prompt(nullptr));
+  }
+
+  void delaySaveFailureIsShownAndTheCaptureStillStarts() {
+    FakeStore store;
+    store.error = QStringLiteral("settings-write-failed");
+    DelayedCapture delay(clock, timer);
+    delay.setPreferences(store.port());
+    QStringList failures;
+    QObject::connect(&delay, &DelayedCapture::preferencesSaveFailed, &delay, [&](const QString &code) { failures << code; });
+    QString shown;
+    QTimer::singleShot(0, [&] {
+      auto *active = qobject_cast<QDialog *>(QApplication::activeModalWidget());
+      active->findChild<QSpinBox *>(QStringLiteral("delaySeconds"))->setValue(7);
+      active->accept();
+      shown = active->findChild<QLabel *>(QStringLiteral("delayStatus"))->text();
+    });
+    QVERIFY(delay.prompt(nullptr));
+    QVERIFY(delay.delayActive());
+    QVERIFY(shown.contains(QStringLiteral("settings-write-failed")));
+    QCOMPARE(failures, QStringList{QStringLiteral("settings-write-failed")});
+    delay.cancel();
+    // The unsaved choice still wins for the rest of the session.
+    QTimer::singleShot(0, [] {
+      auto *active = qobject_cast<QDialog *>(QApplication::activeModalWidget());
+      QCOMPARE(active->findChild<QSpinBox *>(QStringLiteral("delaySeconds"))->value(), 7);
+      active->reject();
+    });
+    QVERIFY(!delay.prompt(nullptr));
+  }
+
+  void autoDialogReadsAndSavesTheStoredChoice() {
+    const qint64 now = 1'761'217'200'000;
+    FakeStore store;
+    store.values.insert(QStringLiteral("autoCapture.source"), QStringLiteral("monitor"));
+    store.values.insert(QStringLiteral("autoCapture.intervalMs"), 7000);
+    store.values.insert(QStringLiteral("autoCapture.boundKind"), QStringLiteral("time"));
+    store.values.insert(QStringLiteral("autoCapture.durationMinutes"), 30);
+    store.values.insert(QStringLiteral("autoCapture.count"), 25);
+    {
+      AutoCaptureDialog dialog([now] { return now; }, false, store.port());
+      QCOMPARE(dialog.findChild<QComboBox *>(QStringLiteral("autoCaptureSource"))->currentData().toString(), QStringLiteral("monitor"));
+      QCOMPARE(dialog.findChild<QSpinBox *>(QStringLiteral("autoCaptureInterval"))->value(), 7);
+      QCOMPARE(dialog.findChild<QSpinBox *>(QStringLiteral("autoCaptureCount"))->value(), 25);
+      QVERIFY(dialog.findChild<QRadioButton *>(QStringLiteral("autoCaptureTimeBound"))->isChecked());
+      QCOMPARE(dialog.findChild<QDateTimeEdit *>(QStringLiteral("autoCaptureEnd"))->dateTime().toMSecsSinceEpoch(), now + 30 * 60 * 1000);
+      dialog.findChild<QSpinBox *>(QStringLiteral("autoCaptureInterval"))->setValue(9);
+      dialog.reject();
+      QCOMPARE(store.saves, 0);
+    }
+    {
+      AutoCaptureDialog dialog([now] { return now; }, false, store.port());
+      dialog.findChild<QDateTimeEdit *>(QStringLiteral("autoCaptureEnd"))->setDateTime(QDateTime::fromMSecsSinceEpoch(now + 90 * 60 * 1000));
+      dialog.findChild<QSpinBox *>(QStringLiteral("autoCaptureInterval"))->setValue(9);
+      dialog.findChild<QPushButton *>(QStringLiteral("autoCaptureStart"))->click();
+      QVERIFY(dialog.takeRequest());
+      QCOMPARE(store.saves, 1);
+    }
+    QCOMPARE(store.values.value(QStringLiteral("autoCapture.boundKind")).toString(), QStringLiteral("time"));
+    QCOMPARE(store.values.value(QStringLiteral("autoCapture.durationMinutes")).toInt(), 90);
+    QCOMPARE(store.values.value(QStringLiteral("autoCapture.intervalMs")).toInt(), 9000);
+    QCOMPARE(store.values.value(QStringLiteral("autoCapture.count")).toInt(), 25);
+    QVERIFY(!store.values.contains(QStringLiteral("autoCapture.endMs")));
+    {
+      AutoCaptureDialog dialog([now] { return now; }, false, store.port());
+      dialog.findChild<QRadioButton *>(QStringLiteral("autoCaptureCountBound"))->setChecked(true);
+      dialog.findChild<QSpinBox *>(QStringLiteral("autoCaptureCount"))->setValue(3);
+      dialog.findChild<QPushButton *>(QStringLiteral("autoCaptureStart"))->click();
+    }
+    QCOMPARE(store.values.value(QStringLiteral("autoCapture.boundKind")).toString(), QStringLiteral("count"));
+    QCOMPARE(store.values.value(QStringLiteral("autoCapture.count")).toInt(), 3);
+    QCOMPARE(store.values.value(QStringLiteral("autoCapture.durationMinutes")).toInt(), 90);
+  }
+
+  void autoSaveFailureIsShownAndTheCaptureStillStarts() {
+    const qint64 now = 1'761'217'200'000;
+    FakeStore store;
+    store.error = QStringLiteral("settings-busy");
+    AutoCaptureDialog dialog([now] { return now; }, false, store.port());
+    dialog.findChild<QPushButton *>(QStringLiteral("autoCaptureStart"))->click();
+    QCOMPARE(dialog.result(), int(QDialog::Accepted));
+    QVERIFY(dialog.takeRequest());
+    QCOMPARE(dialog.saveError(), QStringLiteral("settings-busy"));
+    QVERIFY(dialog.findChild<QLabel *>(QStringLiteral("autoCaptureStatus"))->text().contains(QStringLiteral("settings-busy")));
+
+    AutoCaptureSession session(clock, timer);
+    session.setPreferences(store.port());
+    QStringList failures;
+    QObject::connect(&session, &AutoCaptureSession::preferencesSaveFailed, &session, [&](const QString &code) { failures << code; });
+    QTimer::singleShot(0, [] {
+      auto *active = qobject_cast<QDialog *>(QApplication::activeModalWidget());
+      active->findChild<QPushButton *>(QStringLiteral("autoCaptureStart"))->click();
+    });
+    QVERIFY(session.prompt(nullptr));
+    QVERIFY(session.active());
+    QCOMPARE(failures, QStringList{QStringLiteral("settings-busy")});
+    session.stop();
   }
 
   void cancelButtonAndLateCancelSkipTheCapture() {

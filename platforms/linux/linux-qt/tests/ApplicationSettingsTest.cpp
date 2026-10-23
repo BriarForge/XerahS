@@ -29,6 +29,48 @@ private slots:
     QCOMPARE(repairSettings(repaired.values, "/tmp").values, repaired.values);
     QVERIFY(hotkeys(repaired.values).validate().ok);
   }
+  void scheduledCaptureChoicesDefaultsRoundTripAndRepair() {
+    QTemporaryDir dir; const auto path = dir.filePath("settings.json");
+    const auto defaults = defaultSettings(dir.path());
+    QCOMPARE(defaults.value("delayedCapture.seconds").toInt(), 3);
+    QCOMPARE(defaults.value("delayedCapture.source").toString(), QString("full-screen"));
+    QCOMPARE(defaults.value("autoCapture.source").toString(), QString("full-screen"));
+    QCOMPARE(defaults.value("autoCapture.intervalMs").toInt(), 5000);
+    QCOMPARE(defaults.value("autoCapture.boundKind").toString(), QString("count"));
+    QCOMPARE(defaults.value("autoCapture.count").toInt(), 10);
+    QCOMPARE(defaults.value("autoCapture.durationMinutes").toInt(), 60);
+    const QStringList keys{"delayedCapture.seconds", "delayedCapture.source", "autoCapture.source", "autoCapture.intervalMs",
+      "autoCapture.boundKind", "autoCapture.count", "autoCapture.durationMinutes"};
+    for (const auto &key : keys) QVERIFY(!defaults.contains(key + "Absolute"));
+    QVERIFY(!defaults.contains("autoCapture.endMs"));
+    // Old files without the keys load with defaults and no diagnostics.
+    auto old = defaults; for (const auto &key : keys) old.remove(key);
+    QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(QJsonDocument(QJsonObject{{"version", 1}, {"values", old}}).toJson()); file.close();
+    ApplicationSettingsStore store(path, dir.path()); QVERIFY(store.current().diagnostics.isEmpty());
+    for (const auto &key : keys) QCOMPARE(store.current().values.value(key), defaults.value(key));
+    auto values = store.current().values;
+    values.insert("delayedCapture.seconds", 60); values.insert("delayedCapture.source", "region"); values.insert("autoCapture.source", "active-window");
+    values.insert("autoCapture.intervalMs", 1000); values.insert("autoCapture.boundKind", "time"); values.insert("autoCapture.count", 10000); values.insert("autoCapture.durationMinutes", 1440);
+    QVERIFY(store.save(values).isEmpty());
+    ApplicationSettingsStore reopened(path, dir.path()); QCOMPARE(reopened.current().values, values); QVERIFY(reopened.current().diagnostics.isEmpty());
+    const QVector<QPair<QString, QJsonValue>> invalid{{"delayedCapture.seconds", 0}, {"delayedCapture.seconds", 61}, {"delayedCapture.seconds", 2.5}, {"delayedCapture.seconds", "3"},
+      {"delayedCapture.source", "window"}, {"delayedCapture.source", 1}, {"autoCapture.source", "region"}, {"autoCapture.intervalMs", 999},
+      {"autoCapture.intervalMs", 86400001}, {"autoCapture.boundKind", "end"}, {"autoCapture.count", 0}, {"autoCapture.count", 10001},
+      {"autoCapture.durationMinutes", 0}, {"autoCapture.durationMinutes", 1441}, {"autoCapture.durationMinutes", true}};
+    for (const auto &entry : invalid) {
+      auto bad = values; bad.insert(entry.first, entry.second);
+      const auto repaired = repairSettings(bad, dir.path());
+      QVERIFY2(repaired.diagnostics.join('\n').contains(entry.first), qPrintable(entry.first));
+      QCOMPARE(repaired.values.value(entry.first), defaults.value(entry.first));
+      QVERIFY(!store.save(bad).isEmpty());
+    }
+    // Resetting the Capture section resets these too; other sections are kept.
+    values.insert("saveFolder", dir.path() + "/kept");
+    const auto reset = resetSection(values, Section::Capture, dir.path());
+    for (const auto &key : keys) QCOMPARE(reset.value(key), defaults.value(key));
+    QCOMPARE(reset.value("saveFolder"), values.value("saveFolder"));
+    QVERIFY(resetPreview(values, Section::Capture, dir.path()).join('\n').contains("autoCapture.count"));
+  }
   void audioSettingsCompatibleRoundTrip() {
     QTemporaryDir dir; const auto path = dir.filePath("settings.json");
     auto old = defaultSettings(dir.path()); old.remove("systemAudioDevice"); old.remove("microphoneDevice");
