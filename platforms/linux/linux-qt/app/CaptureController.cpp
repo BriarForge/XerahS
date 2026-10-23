@@ -6,6 +6,8 @@
 
 #include "actions/PostCapturePipeline.h"
 
+#include <QColorSpace>
+#include <QCursor>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QScreen>
@@ -67,6 +69,7 @@ void CaptureController::captureRegion() {
   if (m_busy) return;
   m_workflowSnapshot = {};
   m_captureOutput = {};
+  m_source = QStringLiteral("region");
   beginCapture(kDefaultActions);
 }
 void CaptureController::captureRegionWithActions() {
@@ -74,6 +77,7 @@ void CaptureController::captureRegionWithActions() {
   if (m_busy) return;
   m_workflowSnapshot = {};
   m_captureOutput = {};
+  m_source = QStringLiteral("region");
   auto selected = kDefaultActions; selected.prepend(QStringLiteral("after-capture-window"));
   beginCapture(std::move(selected));
 }
@@ -81,7 +85,7 @@ void CaptureController::beginConfiguredCapture(bool chooseActions) {
   if (m_busy) return;
   auto choice = m_workflowResolver();
   if (!choice.workflow) { emit notify("Capture workflow unavailable", "Open Capture workflows to review or reload the saved configuration. " + choice.diagnostic, false); return; }
-  choice.workflow->chooseActions |= chooseActions; captureRegionWorkflow(*choice.workflow);
+  choice.workflow->chooseActions |= chooseActions; captureWorkflow(*choice.workflow);
 }
 std::function<void()> CaptureController::prepareWorkflowCapture(const xerahs::workflows::CaptureWorkflow &workflow,
     const QString &requestId, const QString &origin, xerahs::workflows::WorkflowExecution::Writer writer) {
@@ -97,20 +101,21 @@ std::function<void()> CaptureController::prepareWorkflowCapture(const xerahs::wo
     if (!guard || guard->busy()) return; // RAII records not-started on release.
     if (!execution->start()) { emit guard->notify("Capture not started", "Workflow execution storage is unavailable. No capture was started.", false); return; }
     guard->m_execution = execution;
-    guard->captureRegionWorkflow(effective);
+    guard->captureWorkflow(effective);
   };
 }
 void CaptureController::recordCaptureOutcome(const QString &state, const QString &diagnostic) {
   if (m_execution && !m_execution->finish(state, diagnostic))
     emit notify("Execution result not recorded", "Workflow storage could not confirm the outcome. Check capture result history before retrying.", false);
 }
-void CaptureController::captureRegionWorkflow(const xerahs::workflows::CaptureWorkflow &workflow) {
+void CaptureController::captureWorkflow(const xerahs::workflows::CaptureWorkflow &workflow) {
   if (m_busy) return;
   const auto diagnostic = xerahs::workflows::workflowAvailability(workflow, CaptureActions::selectableActions());
   if (!diagnostic.isEmpty()) { emit notify("Capture workflow unavailable", "Open Capture workflows to review the selected actions. " + diagnostic, false); return; }
   auto effective = workflow;
   if (effective.output.directory.isEmpty()) effective.output.directory = m_saveDirectory;
   m_captureOutput = effective.output;
+  m_source = effective.capture;
   m_workflowSnapshot = xerahs::workflows::workflowSnapshot(effective);
   beginCapture(xerahs::workflows::workflowActions(workflow));
 }
@@ -127,7 +132,7 @@ void CaptureController::beginCapture(QStringList selected) {
     emit busyChanged(true);
     if (!guard) return;
     recordCaptureOutcome("failed", diagnostic::captureSourceFailed); if (!guard) return;
-    emit notify(QStringLiteral("Region capture failed"), diagnostic::captureSourceFailed, false); if (guard) finish(); return;
+    emit notify(sourceTitle("capture failed"), diagnostic::captureSourceFailed, false); if (guard) finish(); return;
   }
   auto *portal = m_portal.data();
   connect(portal, &PortalScreenshot::finished, this,
@@ -150,7 +155,7 @@ void CaptureController::onSnapshot(int outcome, const QImage &image, const QStri
   if (result == PortalScreenshot::Outcome::Failed) {
     recordCaptureOutcome("failed", diagnostic::captureSourceFailed);
     if (!guard) return;
-    emit notify(QStringLiteral("Region capture failed"),
+    emit notify(sourceTitle("capture failed"),
                 detail.isEmpty() ? diagnostic::captureSourceFailed : detail, false);
     if (guard) finish();
     return;
@@ -175,6 +180,18 @@ void CaptureController::onSnapshot(int outcome, const QImage &image, const QStri
                                scale});
   }
 
+  if (m_source != QStringLiteral("region")) {
+    if (result == PortalScreenshot::Outcome::Denied) {
+      recordCaptureOutcome("permission-denied", diagnostic::capturePermissionDenied); if (!guard) return;
+      emit notify(sourceTitle("capture denied"), diagnostic::capturePermissionDenied, false);
+      if (guard) finish();
+      return;
+    }
+    m_desktop = image;
+    captureWholeSource(topology);
+    return;
+  }
+
   m_session = std::make_unique<RegionSession>(topology, SessionSettings{}, std::vector<SnapTarget>{},
                                               [this](const SessionOutcome &o) { onOutcome(o); });
   m_session->start();
@@ -189,7 +206,7 @@ void CaptureController::onSnapshot(int outcome, const QImage &image, const QStri
     m_session.reset();
     recordCaptureOutcome("failed", diagnostic::captureSourceFailed);
     if (!guard) return;
-    emit notify(QStringLiteral("Region capture failed"),
+    emit notify(sourceTitle("capture failed"),
                 QStringLiteral("%1: snapshot does not match the display layout").arg(diagnostic::captureSourceFailed),
                 false);
     if (guard) finish();
@@ -227,6 +244,38 @@ void CaptureController::onSnapshot(int outcome, const QImage &image, const QStri
     m_overlays.front()->activateWindow();
     m_overlays.front()->setFocus();
   }
+}
+
+QString CaptureController::sourceTitle(const QString &suffix) const {
+  const auto label = xerahs::workflows::captureSourceLabel(m_source);
+  return (label.isEmpty() ? QStringLiteral("Capture") : label) + QStringLiteral(" ") + suffix;
+}
+
+// CORE-014: full screen takes the whole portal image; monitor takes the
+// display under the pointer, falling back to the primary display when the
+// compositor does not report a pointer position. No overlay is shown.
+void CaptureController::captureWholeSource(const Topology &topology) {
+  const QPointer<CaptureController> guard(this);
+  const auto fail = [&](const QString &detail) {
+    recordCaptureOutcome("failed", diagnostic::captureSourceFailed); if (!guard) return;
+    emit notify(sourceTitle("capture failed"), detail, false);
+    if (guard) finish();
+  };
+  QRect source = m_desktop.rect();
+  if (m_source == QStringLiteral("monitor")) {
+    QScreen *screen = QGuiApplication::screenAt(QCursor::pos());
+    if (!screen) screen = QGuiApplication::primaryScreen();
+    const Display *display = screen ? findDisplay(topology, screen->name()) : nullptr;
+    if (!display) { fail(diagnostic::captureSourceFailed); return; }
+    const PhysicalRect &p = display->physical;
+    source = QRect(int(p.left), int(p.top), int(p.width()), int(p.height())).intersected(m_desktop.rect());
+  }
+  if (m_desktop.isNull() || source.isEmpty()) { fail(diagnostic::captureSourceFailed); return; }
+  QImage pixels = m_desktop.copy(source).convertToFormat(QImage::Format_ARGB32);
+  if (pixels.isNull()) { fail(diagnostic::captureSourceFailed); return; }
+  pixels.setColorSpace(m_desktop.colorSpace());
+  m_captured = std::move(pixels);
+  runPipeline();
 }
 
 void CaptureController::pointerDown(PhysicalPoint point) {
@@ -437,8 +486,7 @@ void CaptureController::onOutcome(const SessionOutcome &outcome) {
         outcome.state == SessionState::Cancelled ? QStringLiteral("cancelled") : QStringLiteral("failed"), outcome.diagnostic.value_or(QString{}));
     if (!guard) return;
     if (outcome.diagnostic) {
-      const QString title = outcome.state == SessionState::Failed ? QStringLiteral("Region capture failed")
-                                                                  : QStringLiteral("Region capture cancelled");
+      const QString title = sourceTitle(outcome.state == SessionState::Failed ? QStringLiteral("capture failed") : QStringLiteral("capture cancelled"));
       emit notify(title, *outcome.diagnostic, false);
     }
     if (!guard) return;
@@ -534,7 +582,7 @@ void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt, b
   if (!executionConfirmed) body += QStringLiteral("; Workflow execution storage could not confirm the outcome. Completed outputs remain in capture result history; check before retrying.");
   const auto title = result.state == xerahs::actions::PipelineState::Cancelled ? QStringLiteral("Capture actions cancelled · %1") :
       result.state == xerahs::actions::PipelineState::Interrupted ? QStringLiteral("Capture actions interrupted · %1") :
-      result.retry ? QStringLiteral("Capture actions retried · %1") : QStringLiteral("Region captured · %1");
+      result.retry ? QStringLiteral("Capture actions retried · %1") : sourceTitle(QStringLiteral("captured · %1"));
   emit notify(title.arg(size), body, executionConfirmed && failed.isEmpty() && receipt->diagnostic.isEmpty());
 }
 

@@ -37,6 +37,9 @@ struct CaptureWorkflows {
 struct WorkflowRead { std::optional<CaptureWorkflows> catalog; QString diagnostic; };
 CaptureWorkflows defaultCaptureWorkflows();
 QStringList implementedCaptureActions();
+// CORE-014: the capture sources a saved workflow can start.
+QStringList implementedCaptureSources();
+QString captureSourceLabel(const QString &source);
 QJsonObject workflowDiscoveryError(const QString &diagnostic);
 QJsonObject workflowJson(const CaptureWorkflow &workflow, bool retainUnknown = true);
 QByteArray workflowsJson(const CaptureWorkflows &catalog);

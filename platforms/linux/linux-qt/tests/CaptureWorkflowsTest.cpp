@@ -36,7 +36,9 @@ private slots:
     QCOMPARE(workflowAvailability(w, {"save", "image-clipboard"}), QString("workflow-action-unavailable"));
     const auto snapshot = workflowSnapshot(w); QVERIFY(!snapshot.contains("futureSecretReference")); QCOMPARE(snapshot.value("name"), QJsonValue(w.name));
     w.actions = QStringList{"save"}; w.chooseActions = true; QCOMPARE(workflowActions(w), QStringList({"after-capture-window", "save"}));
-    QVERIFY(workflowAvailability(w, {"save"}).isEmpty()); w.capture = "recording"; QCOMPARE(workflowAvailability(w, {"save"}), QString("workflow-capture-unavailable"));
+    QVERIFY(workflowAvailability(w, {"save"}).isEmpty());
+    for (const auto *source : {"full-screen", "monitor"}) { w.capture = source; QVERIFY(workflowAvailability(w, {"save"}).isEmpty()); }
+    w.capture = "recording"; QCOMPARE(workflowAvailability(w, {"save"}), QString("workflow-capture-unavailable"));
   }
   void invalidDefinitionsAreRejected_data() {
     QTest::addColumn<QString>("mode");

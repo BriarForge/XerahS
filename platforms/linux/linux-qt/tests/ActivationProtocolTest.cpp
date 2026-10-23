@@ -13,7 +13,7 @@ class ActivationProtocolTest final : public QObject {
   Q_OBJECT
 private slots:
   void validRequestsRetainExactPathsAndIndependentOperationNames() {
-    for (const auto &name : {QString("activate"), QString("capture-region"), QString("edit-image"), QString("run-workflow"), QString("capture-region-choose-actions")}) {
+    for (const auto &name : {QString("activate"), QString("capture-region"), QString("edit-image"), QString("run-workflow"), QString("capture-region-choose-actions"), QString("capture-full-screen"), QString("capture-monitor")}) {
       QJsonObject input{{"version", 1}, {"id", id}, {"action", name}};
       const QString path = QString::fromUtf8("/tmp/ λ file\nwith a newline .png ");
       if (name == u"edit-image") input.insert("path", path);

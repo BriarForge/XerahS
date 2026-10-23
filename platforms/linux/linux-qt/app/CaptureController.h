@@ -1,5 +1,6 @@
-// Region capture flow for the linux-qt app: portal snapshot, overlays driven
-// by RegionSession, pixel acquisition through RegionGeometry::composite, and
+// Capture flow for the linux-qt app: portal snapshot, then either the whole
+// desktop, the monitor under the pointer (CORE-014), or overlays driven by
+// RegionSession, pixel acquisition through RegionGeometry::composite, and
 // the post-capture pipeline. Every decision lives in the src/ libraries; this
 // class wires them to Qt.
 #pragma once
@@ -61,7 +62,9 @@ public:
   void setDefaultWorkflowResolver(std::function<xerahs::workflows::WorkflowChoice()> resolver) { m_workflowResolver = std::move(resolver); }
   std::function<void()> prepareWorkflowCapture(const xerahs::workflows::CaptureWorkflow &workflow, const QString &requestId,
       const QString &origin, xerahs::workflows::WorkflowExecution::Writer writer);
-  void captureRegionWorkflow(const xerahs::workflows::CaptureWorkflow &workflow);
+  // Starts the workflow's capture source: region, full-screen or monitor.
+  void captureWorkflow(const xerahs::workflows::CaptureWorkflow &workflow);
+  QString captureSource() const { return m_source; }
   // Future pipelines copy this GUI-thread preference value; active workers
   // retain the style already captured by their pipeline constructor.
   void setAnnotationStyle(const xerahs::editor::RectangleStyle &style) { m_actionPorts.annotationStyle = style; }
@@ -84,6 +87,8 @@ private:
   void beginConfiguredCapture(bool chooseActions);
   void onSnapshot(int outcome, const QImage &image, const QString &detail);
   void onOutcome(const xerahs::capture::SessionOutcome &outcome);
+  void captureWholeSource(const xerahs::capture::Topology &topology);
+  QString sourceTitle(const QString &suffix) const;
   void afterInput();
   void acquire();
   void pollComposition();
@@ -105,6 +110,7 @@ private:
   quint64 m_generation = 0;
   CaptureActionPorts m_actionPorts;
   QStringList m_selectedActions;
+  QString m_source = QStringLiteral("region");
   std::function<xerahs::workflows::WorkflowChoice()> m_workflowResolver;
   QJsonObject m_workflowSnapshot;
   std::shared_ptr<xerahs::workflows::WorkflowExecution> m_execution;

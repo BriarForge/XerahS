@@ -35,6 +35,8 @@ QString actionName(ActivationAction action) {
     case ActivationAction::EditImage: return QStringLiteral("edit-image");
     case ActivationAction::RunWorkflow: return QStringLiteral("run-workflow");
     case ActivationAction::CaptureRegionChooseActions: return QStringLiteral("capture-region-choose-actions");
+    case ActivationAction::CaptureFullScreen: return QStringLiteral("capture-full-screen");
+    case ActivationAction::CaptureMonitor: return QStringLiteral("capture-monitor");
   }
   return {};
 }
@@ -43,6 +45,10 @@ bool knownDiagnostic(const QString &value) {
                                    "activation-unavailable", "activation-handler-failed", "activation-peer-denied"};
   return values.contains(value);
 }
+}
+bool startsCapture(ActivationAction action) {
+  return action == ActivationAction::CaptureRegion || action == ActivationAction::CaptureRegionChooseActions ||
+      action == ActivationAction::RunWorkflow || action == ActivationAction::CaptureFullScreen || action == ActivationAction::CaptureMonitor;
 }
 ActivationRequest makeActivationRequest(ActivationAction action, const QString &path, const QString &workflowId) {
   return {QUuid::createUuid().toString(QUuid::WithoutBraces), action, path, workflowId};
@@ -69,6 +75,8 @@ ParsedActivation parseActivation(const QByteArray &bytes) {
   else if (name == u"edit-image") action = ActivationAction::EditImage;
   else if (name == u"run-workflow") action = ActivationAction::RunWorkflow;
   else if (name == u"capture-region-choose-actions") action = ActivationAction::CaptureRegionChooseActions;
+  else if (name == u"capture-full-screen") action = ActivationAction::CaptureFullScreen;
+  else if (name == u"capture-monitor") action = ActivationAction::CaptureMonitor;
   else return invalid();
   QSet<QString> keys{"version", "id", "action"};
   if (action == ActivationAction::EditImage) keys.insert("path");

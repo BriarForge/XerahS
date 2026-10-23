@@ -769,7 +769,7 @@ private slots:
     int copies = 0; CaptureActionPorts ports; ports.clipboard = [&](const QImage &, const xerahs::actions::CancellationToken &) { ++copies; return xerahs::actions::ActionOutcome{}; };
     CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, {}, ports);
     controller.setDefaultWorkflowResolver([&] { return xerahs::workflows::WorkflowChoice{workflow, {}}; });
-    if (useDefault) controller.captureRegion(); else controller.captureRegionWorkflow(workflow);
+    if (useDefault) controller.captureRegion(); else controller.captureWorkflow(workflow);
     workflow.name = "Copy only"; workflow.actions = QStringList{"image-clipboard"};
     workflow.output.directory = dir.filePath("changed"); workflow.output.pattern = "changed-%widthx%height";
     QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
@@ -783,10 +783,26 @@ private slots:
     workflow.actions = QStringList{"save"}; controller.captureRegion(); QTRY_VERIFY(overlayExists()); controller.pointerDown({1, 1}); controller.pointerUp({8, 7}); QTRY_VERIFY(!controller.busy());
     const auto newer = controller.lastPipelineResult(); QVERIFY(newer && newer->file); QCOMPARE(newer->file->path, dir.filePath("changed/changed-7x6.png")); QCOMPARE(portal.calls, 3);
   }
+  void wholeSourceWorkflowSavesWithoutAnOverlay_data() {
+    QTest::addColumn<QString>("source"); QTest::newRow("full-screen") << QString("full-screen"); QTest::newRow("monitor") << QString("monitor");
+  }
+  void wholeSourceWorkflowSavesWithoutAnOverlay() {
+    QFETCH(QString, source); QTemporaryDir dir; const auto size = QApplication::primaryScreen()->geometry().size(); const auto path = fixtureImage(dir, size);
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    auto workflow = xerahs::workflows::defaultCaptureWorkflows().entries[0]; workflow.capture = source; workflow.actions = QStringList{"save"};
+    workflow.output.directory = dir.filePath("whole"); workflow.output.pattern = "whole-%widthx%height";
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    QSignalSpy notify(&controller, &CaptureController::notify); controller.captureWorkflow(workflow);
+    QTRY_VERIFY(!controller.busy()); QVERIFY(!overlayExists()); QCOMPARE(portal.calls, 1); QCOMPARE(controller.captureSource(), source);
+    const auto saved = controller.lastPipelineResult(); QVERIFY(saved && saved->file);
+    QCOMPARE(QImage(saved->file->path).size(), size); QCOMPARE(QImage(saved->file->path).pixel(3, 2), QImage(path).pixel(3, 2));
+    QCOMPARE(notify.count(), 1); QVERIFY(notify[0][2].toBool());
+    QVERIFY(notify[0][0].toString().startsWith(xerahs::workflows::captureSourceLabel(source) + " captured"));
+  }
   void unsupportedConfiguredWorkflowIsRejectedBeforePortalAcquisition() {
     QTemporaryDir dir; int acquisitions = 0; CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *) -> PortalScreenshot * { ++acquisitions; return nullptr; });
     auto workflow = xerahs::workflows::defaultCaptureWorkflows().entries[0]; workflow.actions = QStringList{"upload"};
-    QSignalSpy notify(&controller, &CaptureController::notify); controller.captureRegionWorkflow(workflow);
+    QSignalSpy notify(&controller, &CaptureController::notify); controller.captureWorkflow(workflow);
     QCOMPARE(acquisitions, 0); QVERIFY(!controller.busy()); QCOMPARE(notify.count(), 1); QVERIFY(!notify[0][2].toBool()); QVERIFY(!QFileInfo::exists(controller.saveDirectory()));
   }
   void invalidConfiguredOutputIsRejectedBeforePortalAcquisition_data() {
@@ -803,7 +819,7 @@ private slots:
     ActivationOperations operations; operations.captureBusy = [&] { return controller.busy(); };
     operations.prepareWorkflow = [&](const QString &id) -> std::function<void()> {
       const auto choice = store.resolve(QUuid(id), CaptureActions::selectableActions()); if (!choice.workflow) return {};
-      return [&, snapshot = *choice.workflow] { controller.captureRegionWorkflow(snapshot); };
+      return [&, snapshot = *choice.workflow] { controller.captureWorkflow(snapshot); };
     };
     ActivationDispatcher dispatcher(operations); const auto original = makeActivationRequest(ActivationAction::RunWorkflow, {}, workflowId.toString(QUuid::WithoutBraces));
     const auto request = parseActivation(serializeActivation(original)); QVERIFY(request.request);
@@ -822,7 +838,7 @@ private slots:
     QFETCH(QString, mode); QTemporaryDir dir; int acquisitions = 0; CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *) -> PortalScreenshot * { ++acquisitions; return nullptr; });
     auto workflow = xerahs::workflows::defaultCaptureWorkflows().entries[0]; workflow.output.directory = mode == "relative" ? "relative" : dir.filePath("chosen");
     workflow.output.pattern = mode == "counter" ? "%i" : mode == "malformed" ? "%ra{0}" : mode == "file" ? "%rf{/private/input}" : "valid";
-    QSignalSpy notify(&controller, &CaptureController::notify); controller.captureRegionWorkflow(workflow);
+    QSignalSpy notify(&controller, &CaptureController::notify); controller.captureWorkflow(workflow);
     QCOMPARE(acquisitions, 0); QVERIFY(!controller.busy()); QCOMPARE(notify.count(), 1); QVERIFY(!QFile::exists(dir.filePath("chosen")));
   }
   void successfulCompositionRunsOnePipelineAndSavesOnePhysicalImage() {

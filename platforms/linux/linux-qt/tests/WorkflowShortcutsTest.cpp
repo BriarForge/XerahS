@@ -185,7 +185,7 @@ private slots:
     CaptureController capture(dir.filePath("fallback"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
     WorkflowShortcutActions shortcuts([&] { return workflowShortcutPlan(*store.current().catalog, CaptureActions::selectableActions()); }, [&] { return !capture.busy(); }, client, config());
     ActivationOperations operations; operations.captureBusy = [&] { return capture.busy(); }; operations.interactionBlocked = [&] { return shortcuts.pending(); };
-    operations.prepareWorkflow = [&](const QString &requested) -> std::function<void()> { const auto choice = store.resolve(QUuid(requested), CaptureActions::selectableActions()); if (!choice.workflow) return {}; return [&, snapshot = *choice.workflow] { capture.captureRegionWorkflow(snapshot); }; };
+    operations.prepareWorkflow = [&](const QString &requested) -> std::function<void()> { const auto choice = store.resolve(QUuid(requested), CaptureActions::selectableActions()); if (!choice.workflow) return {}; return [&, snapshot = *choice.workflow] { capture.captureWorkflow(snapshot); }; };
     ActivationDispatcher dispatcher(operations); int admissions = 0;
     connect(&shortcuts, &WorkflowShortcutActions::workflowRequested, &capture, [&](const QString &workflow) { const auto request = makeActivationRequest(ActivationAction::RunWorkflow, {}, workflow); if (dispatcher.admit(request) == ActivationReplyState::Accepted) { ++admissions; QVERIFY(dispatcher.dispatch(request).isEmpty()); } });
     shortcuts.enableAction()->trigger(); QTRY_VERIFY(shortcuts.enableAction()->text().startsWith("Configure")); desktop.press(id); QTRY_VERIFY(overlayExists());

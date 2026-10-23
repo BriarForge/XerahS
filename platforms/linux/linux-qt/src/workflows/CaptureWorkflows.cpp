@@ -50,6 +50,13 @@ CaptureOutputPreview previewCaptureOutput(const CaptureOutput &output, xerahs::n
   if (expanded.nextCounter != context.counter) return {expanded.value(), "workflow-counter-unavailable", {}};
   return {expanded.value(), {}, {}};
 }
+QStringList implementedCaptureSources() { return {"region", "full-screen", "monitor"}; }
+QString captureSourceLabel(const QString &source) {
+  if (source == "region") return QStringLiteral("Region");
+  if (source == "full-screen") return QStringLiteral("Full screen");
+  if (source == "monitor") return QStringLiteral("Monitor under pointer");
+  return {};
+}
 QStringList implementedCaptureActions() { return {"annotation", "save", "save-as", "image-clipboard", "file-clipboard", "path-clipboard", "reveal"}; }
 QJsonObject workflowDiscoveryError(const QString &diagnostic) {
   static const QSet<QString> errors{"usage-invalid", "workflow-invalid", "workflow-too-large", "workflow-newer-version",
@@ -120,7 +127,7 @@ WorkflowRead parseCaptureWorkflows(const QByteArray &bytes) {
 QString workflowAvailability(const CaptureWorkflow &w, const QStringList &available) {
   CaptureWorkflows one{{w}, w.id, {}};
   if (!parseCaptureWorkflows(workflowsJson(one)).catalog) return "workflow-invalid";
-  if (w.capture != "region") return "workflow-capture-unavailable";
+  if (!implementedCaptureSources().contains(w.capture)) return "workflow-capture-unavailable";
   const auto preview = previewCaptureOutput(w.output); if (!preview.diagnostic.isEmpty()) return preview.diagnostic;
   for (const auto &action : w.actions) if (!xerahs::actions::catalogueIndex(action) || !available.contains(action)) return "workflow-action-unavailable";
   return {};
@@ -157,7 +164,7 @@ QJsonObject CaptureWorkflowStore::discovery(const QStringList &available) const 
   for (const auto &workflow : m_current.catalog->entries) {
     const auto unavailable = workflowAvailability(workflow, available);
     QJsonObject entry{{"id", workflow.id.toString(QUuid::WithoutBraces)}, {"name", workflow.name},
-        {"capture", workflow.capture == "region" ? QStringLiteral("region") : QStringLiteral("unsupported")},
+        {"capture", implementedCaptureSources().contains(workflow.capture) ? workflow.capture : QStringLiteral("unsupported")},
         {"definitionAvailable", unavailable.isEmpty()}};
     if (!unavailable.isEmpty()) entry.insert("diagnosticCode", unavailable);
     entries.append(entry);

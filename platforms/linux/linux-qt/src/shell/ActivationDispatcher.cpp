@@ -11,19 +11,20 @@ bool ActivationDispatcher::available(const ActivationRequest &request) const {
     case ActivationAction::EditImage: return bool(m_operations.editImage);
     case ActivationAction::RunWorkflow: return bool(m_operations.prepareCapture) || bool(m_operations.prepareWorkflow);
     case ActivationAction::CaptureRegionChooseActions: return bool(m_operations.prepareCapture) || bool(m_operations.captureRegionWithActions);
+    case ActivationAction::CaptureFullScreen:
+    case ActivationAction::CaptureMonitor: return bool(m_operations.prepareCapture);
   }
   return false;
 }
 bool ActivationDispatcher::blocked(const ActivationRequest &request) const {
   if (request.action == ActivationAction::Activate) return false;
   return m_dispatching || (m_operations.interactionBlocked && m_operations.interactionBlocked()) ||
-      ((request.action == ActivationAction::CaptureRegion || request.action == ActivationAction::RunWorkflow ||
-        request.action == ActivationAction::CaptureRegionChooseActions) && m_operations.captureBusy && m_operations.captureBusy());
+      (startsCapture(request.action) && m_operations.captureBusy && m_operations.captureBusy());
 }
 ActivationReplyState ActivationDispatcher::admit(const ActivationRequest &request) {
   if (!parseActivation(serializeActivation(request)).request || !available(request)) return ActivationReplyState::Rejected;
   if (blocked(request) || (request.action != ActivationAction::Activate && m_pending)) return ActivationReplyState::Busy;
-  const bool capture = request.action == ActivationAction::CaptureRegion || request.action == ActivationAction::CaptureRegionChooseActions || request.action == ActivationAction::RunWorkflow;
+  const bool capture = startsCapture(request.action);
   if (capture && (m_operations.prepareCapture || request.action == ActivationAction::RunWorkflow)) {
     try { const QScopedValueRollback<bool> preparing(m_dispatching, true);
       m_preparedWorkflow = m_operations.prepareCapture ? m_operations.prepareCapture(request) : m_operations.prepareWorkflow(request.workflowId); }
@@ -50,6 +51,8 @@ QString ActivationDispatcher::dispatch(const ActivationRequest &request) {
       case ActivationAction::EditImage: m_operations.editImage(request.path); break;
       case ActivationAction::RunWorkflow: if (!prepared) return QStringLiteral("activation-invalid"); prepared(); break;
       case ActivationAction::CaptureRegionChooseActions: if (prepared) prepared(); else m_operations.captureRegionWithActions(); break;
+      case ActivationAction::CaptureFullScreen:
+      case ActivationAction::CaptureMonitor: if (!prepared) return QStringLiteral("activation-invalid"); prepared(); break;
     }
   } catch (...) { return QStringLiteral("activation-handler-failed"); }
   return {};

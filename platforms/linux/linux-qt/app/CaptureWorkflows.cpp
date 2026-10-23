@@ -4,6 +4,7 @@
 #include "NativeEditorAppearance.h"
 #include "NativeEditorPreferences.h"
 #include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QFormLayout>
@@ -54,7 +55,7 @@ public:
     setObjectName("captureWorkflowsDialog"); setWindowTitle("Capture workflows"); setAccessibleName(windowTitle());
     new NativeEditorAppearance(*this);
     auto *layout = new QVBoxLayout(this);
-    auto *description = new QLabel("Save named region-capture workflows and choose a default. Capture region in the window, tray and --capture-region uses that default. Actions run in the standard order; unchecked actions do not run.", this);
+    auto *description = new QLabel("Save named capture workflows and choose a default. Each workflow captures a region, the full screen or the monitor under the pointer. Capture region, full screen and monitor in the window, tray and command line use the default workflow's actions and output. Actions run in the standard order; unchecked actions do not run.", this);
     description->setWordWrap(true); layout->addWidget(description);
     m_list = new QListWidget(this); m_list->setObjectName("captureWorkflowList"); m_list->setAccessibleName("Saved capture workflows"); layout->addWidget(m_list);
     auto *row = new QHBoxLayout; layout->addLayout(row);
@@ -66,7 +67,7 @@ public:
     auto *form = new QFormLayout; layout->addLayout(form);
     m_name = new QLineEdit(this); m_name->setObjectName("captureWorkflowName"); m_name->setAccessibleName("Workflow name"); m_name->setMaxLength(128); form->addRow("Name", m_name);
     m_id = new QLineEdit(this); m_id->setObjectName("captureWorkflowId"); m_id->setAccessibleName("Workflow ID for CLI"); m_id->setReadOnly(true); form->addRow("Workflow ID", m_id);
-    m_capture = new QLabel(this); m_capture->setTextFormat(Qt::PlainText); form->addRow("Capture", m_capture);
+    m_capture = new QComboBox(this); m_capture->setObjectName("captureWorkflowSource"); m_capture->setAccessibleName("Capture source"); form->addRow("Capture", m_capture);
     auto *folderRow = new QHBoxLayout;
     m_directory = new QLineEdit(this); m_directory->setObjectName("captureWorkflowSaveDirectory"); m_directory->setAccessibleName("Save folder"); m_directory->setMaxLength(32768);
     m_directory->setPlaceholderText("Standard capture folder"); folderRow->addWidget(m_directory);
@@ -86,6 +87,7 @@ public:
     connect(m_list, &QListWidget::currentRowChanged, this, [this](int row) { if (!m_loading) showEntry(row); });
     connect(m_name, &QLineEdit::textEdited, this, [this] { updateEntry(); });
     connect(m_choose, &QCheckBox::toggled, this, [this] { updateEntry(); });
+    connect(m_capture, &QComboBox::currentIndexChanged, this, [this] { updateEntry(); });
     connect(m_actions, &QListWidget::itemChanged, this, [this] { updateEntry(); });
     connect(m_directory, &QLineEdit::textChanged, this, [this] { updateEntry(); });
     connect(m_pattern, &QLineEdit::textChanged, this, [this] { updateEntry(); });
@@ -142,10 +144,13 @@ private:
   }
   void showEntry(int index) {
     m_loading = true; m_actions->clear(); const bool exists = m_catalog && index >= 0 && index < m_catalog->entries.size();
-    m_name->setEnabled(exists); m_actions->setEnabled(exists); m_choose->setEnabled(exists);
+    m_name->setEnabled(exists); m_capture->setEnabled(exists); m_actions->setEnabled(exists); m_choose->setEnabled(exists);
     m_directory->setEnabled(exists); m_pattern->setEnabled(exists); m_browse->setEnabled(exists);
     if (exists) {
-      const auto &w = m_catalog->entries[index]; m_name->setText(w.name); m_capture->setText(w.capture == "region" ? "Region" : "Unavailable: " + w.capture); m_choose->setChecked(w.chooseActions);
+      const auto &w = m_catalog->entries[index]; m_name->setText(w.name); m_choose->setChecked(w.chooseActions);
+      m_capture->clear(); for (const auto &source : implementedCaptureSources()) m_capture->addItem(captureSourceLabel(source), source);
+      if (m_capture->findData(w.capture) < 0) m_capture->addItem("Unavailable: " + w.capture, w.capture);
+      m_capture->setCurrentIndex(m_capture->findData(w.capture));
       m_id->setText(w.id.toString(QUuid::WithoutBraces));
       m_directory->setText(w.output.directory); m_pattern->setText(w.output.pattern); showPreview(w.output);
       const auto available = CaptureActions::selectableActions(); auto displayed = available;
@@ -162,6 +167,7 @@ private:
     if (m_loading || !m_catalog) return;
     const int index = m_list->currentRow(); if (index < 0) return;
     auto &w = m_catalog->entries[index]; w.name = m_name->text(); w.chooseActions = m_choose->isChecked(); w.actions.clear();
+    if (m_capture->currentIndex() >= 0) w.capture = m_capture->currentData().toString();
     w.output.directory = m_directory->text(); w.output.pattern = m_pattern->text(); showPreview(w.output);
     for (int row = 0; row < m_actions->count(); ++row) if (m_actions->item(row)->checkState() == Qt::Checked) w.actions.append(m_actions->item(row)->data(Qt::UserRole).toString());
     m_list->item(index)->setText(w.name + (w.id == m_catalog->defaultId ? " (default)" : ""));
@@ -187,7 +193,7 @@ private:
     const auto draft = *m_catalog; const QPointer<WorkflowDialog> owner(this); m_saving = true; m_save->setEnabled(false); if (!owner) return;
     const auto written = m_host.save(draft, m_revision); if (!owner) return; m_saving = false;
     if (!written.saved) { m_status->setText(workflowMessage(written.diagnostic)); availability(); return; }
-    m_revision = m_host.store().revision(); m_catalog = m_host.store().current().catalog; m_dirty = false; refreshList(m_list->currentRow()); m_status->setText("Workflows saved. Run selected starts a region capture.");
+    m_revision = m_host.store().revision(); m_catalog = m_host.store().current().catalog; m_dirty = false; refreshList(m_list->currentRow()); m_status->setText("Workflows saved. Run selected starts the selected capture.");
   }
   void deleteEntry() {
     const int index = m_list->currentRow(); if (!m_catalog || index < 0) return;
@@ -206,7 +212,8 @@ private:
   QListWidget *m_list = nullptr, *m_actions = nullptr;
   QLineEdit *m_name = nullptr, *m_id = nullptr, *m_directory = nullptr, *m_pattern = nullptr, *m_preview = nullptr;
   QCheckBox *m_choose = nullptr;
-  QLabel *m_capture = nullptr, *m_default = nullptr, *m_status = nullptr, *m_patternHelp = nullptr;
+  QComboBox *m_capture = nullptr;
+  QLabel *m_default = nullptr, *m_status = nullptr, *m_patternHelp = nullptr;
   QPushButton *m_save = nullptr, *m_run = nullptr, *m_browse = nullptr;
 };
 }

@@ -9,7 +9,9 @@
 namespace xerahs::shell {
 constexpr qsizetype maximumActivationBytes = 65536;
 constexpr qsizetype maximumActivationReplyBytes = 4096;
-enum class ActivationAction { Activate, CaptureRegion, EditImage, RunWorkflow, CaptureRegionChooseActions };
+enum class ActivationAction { Activate, CaptureRegion, EditImage, RunWorkflow, CaptureRegionChooseActions, CaptureFullScreen, CaptureMonitor };
+// Every action that starts a capture through the default or a named workflow.
+bool startsCapture(ActivationAction action);
 struct ActivationRequest { QString id; ActivationAction action = ActivationAction::Activate; QString path; QString workflowId; };
 enum class ActivationReplyState { Accepted, Busy, Rejected };
 struct ActivationReply { QString id; ActivationReplyState state = ActivationReplyState::Rejected; QString diagnostic; };

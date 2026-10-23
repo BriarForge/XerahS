@@ -30,6 +30,7 @@ public:
   const WorkflowExecutionRecord &record() const { return m_record; }
 private:
   bool persist();
+  QString captureStep() const { return "capture-" + m_record.settings.value("capture").toString(); }
   WorkflowExecutionRecord m_record;
   Writer m_writer;
   std::optional<QByteArray> m_expected;

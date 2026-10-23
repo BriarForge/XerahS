@@ -3,6 +3,9 @@
 #include <algorithm>
 namespace xerahs::workflows {
 namespace {
+QStringList captureStepActions() {
+  QStringList steps; for (const auto &source : implementedCaptureSources()) steps.append("capture-" + source); return steps;
+}
 bool terminal(const QString &state) {
   return QStringList{"succeeded", "partial", "cancelled", "permission-denied", "failed", "not-started", "interrupted"}.contains(state);
 }
@@ -47,7 +50,7 @@ std::optional<WorkflowExecutionRecord> parseWorkflowExecution(const QByteArray &
   for (const auto &step : r.steps) {
     const auto entry = step.toObject();
     if (entry.size() != 2 || !entry.value("action").isString() || !entry.value("state").isString() ||
-        (entry.value("action") != "capture-region" && !xerahs::actions::catalogueIndex(entry.value("action").toString())) ||
+        (!captureStepActions().contains(entry.value("action").toString()) && !xerahs::actions::catalogueIndex(entry.value("action").toString())) ||
         !QStringList{"succeeded", "failed", "cancelled", "skipped", "permission-denied"}.contains(entry.value("state").toString())) return {};
   }
   if (object(r) != o) return {}; // Unknown fields cannot enter a query/report.
@@ -92,11 +95,11 @@ bool WorkflowExecution::start() {
 bool WorkflowExecution::processing(const QString &pipelineId) {
   if (m_record.state != "capturing") return false;
   m_record.pipelineId = pipelineId; m_record.state = "processing";
-  m_record.steps.append(QJsonObject{{"action", "capture-region"}, {"state", "succeeded"}}); return persist();
+  m_record.steps.append(QJsonObject{{"action", captureStep()}, {"state", "succeeded"}}); return persist();
 }
 bool WorkflowExecution::finish(const QString &state, const QString &diagnostic) {
   if (!m_expected || terminal(m_record.state) || !terminal(state)) return false;
-  if (m_record.steps.isEmpty() && state != "not-started") m_record.steps.append(QJsonObject{{"action", "capture-region"},
+  if (m_record.steps.isEmpty() && state != "not-started") m_record.steps.append(QJsonObject{{"action", captureStep()},
       {"state", state == "permission-denied" || state == "cancelled" ? state : QStringLiteral("failed")}});
   m_record.state = state; m_record.diagnostic = safeDiagnostic(diagnostic) ? diagnostic : QStringLiteral("action-failed");
   m_record.finishedAt = std::max(m_record.startedAt, QDateTime::currentDateTimeUtc()); return persist();
