@@ -89,6 +89,14 @@ CaptureHistoryWindow::CaptureHistoryWindow(PipelineJournalStorage storage, std::
   m_copyImage = button(row, "copyHistoryImage", QStringLiteral("Copy &image"));
   m_copyPath = button(row, "copyHistoryPath", QStringLiteral("Copy &path"));
   m_reveal = button(row, "revealHistoryCapture", QStringLiteral("Show in &folder"));
+  auto *copyUrl = button(row, "copyHistoryUrl", QStringLiteral("Copy URL"));
+  connect(copyUrl, &QPushButton::clicked, this, [this] {
+    const auto *item = selectedItem(); if (!item) return;
+    const auto entry = m_entries.value(item->taskId); if (!entry.parsed.record) return;
+    const auto url = entry.parsed.record->report.value("extensions").toObject().value("com.xerahs.app").toObject()
+        .value("upload_result").toObject().value("url").toString();
+    if (!url.isEmpty()) QApplication::clipboard()->setText(url);
+  });
   row->addStretch();
   m_details = button(second, "historyCaptureDetails", QStringLiteral("&Details…"));
   m_trash = button(second, "trashHistoryCapture", QStringLiteral("Move to &trash…"));
@@ -132,6 +140,13 @@ void CaptureHistoryWindow::updateAvailability() {
   const bool busy = m_captureBusy && m_captureBusy();
   const bool present = !path.isEmpty() && !m_missing.contains(path);
   const bool image = present && !m_thumbnails.value(path).isNull();
+  QString url;
+  if (const auto *item = selectedItem()) {
+    const auto entry = m_entries.value(item->taskId);
+    if (entry.parsed.record) url = entry.parsed.record->report.value("extensions").toObject().value("com.xerahs.app").toObject()
+        .value("upload_result").toObject().value("url").toString();
+  }
+  findChild<QPushButton *>("copyHistoryUrl")->setEnabled(!url.isEmpty());
   m_open->setEnabled(present); m_editButton->setEnabled(image && bool(m_edit)); m_copyImage->setEnabled(image);
   m_copyPath->setEnabled(!path.isEmpty()); m_reveal->setEnabled(present);
   m_details->setEnabled(!path.isEmpty()); m_trash->setEnabled(present && idle);
@@ -223,6 +238,12 @@ void CaptureHistoryWindow::rebuild() {
     auto *item = new QListWidgetItem(lines.join('\n'), m_list);
     item->setData(Qt::UserRole, entry.taskId);
     QString tip = file.path;
+    const auto record = m_entries.value(entry.taskId);
+    if (record.parsed.record) {
+      const auto url = record.parsed.record->report.value("extensions").toObject().value("com.xerahs.app").toObject()
+          .value("upload_result").toObject().value("url").toString();
+      if (!url.isEmpty()) { tip += "\nURL: " + url; item->setText(item->text() + "\n" + url); }
+    }
     if (!entry.workflowName.isEmpty()) tip += QStringLiteral("\nWorkflow: ") + entry.workflowName;
     if (entry.state != "completed") tip += QStringLiteral("\nResult: ") + entry.state;
     if (m_missing.contains(file.path)) { item->setIcon(missing); tip += QStringLiteral("\nThe file is no longer at this path."); }

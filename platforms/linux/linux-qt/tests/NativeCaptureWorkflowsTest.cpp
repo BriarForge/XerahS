@@ -104,14 +104,20 @@ private slots:
     CapturePipeline retry(retained, nullptr, ports); QSignalSpy retried(&retry, &CapturePipeline::finished); retry.start(); QTRY_COMPARE(retried.count(), 1); const auto result = receipt(retried);
     QVERIFY(result->file); QCOMPARE(result->file->path, dir.filePath("original/original-12.png")); QVERIFY(!QFile::exists(dir.filePath("changed"))); QCOMPARE(encodes, 2); QCOMPARE(result->pipeline.workflowSnapshot.value("name"), QJsonValue("Original save")); QCOMPARE(result->pipeline.workflowSnapshot.value("actions"), QJsonValue(QJsonArray{"save"}));
   }
+  void savedUploadActionIsAvailable() {
+    QTemporaryDir dir; NativeCaptureWorkflows host(dir.filePath("workflows.json")); auto catalog = *host.store().current().catalog;
+    catalog.entries[0].actions = QStringList{"upload"};
+    QVERIFY(host.save(catalog, host.store().revision()).saved); QVERIFY(host.resolve().workflow);
+    QVERIFY(CaptureActions::selectableActions().contains("upload"));
+  }
   void unsupportedSavedActionsAreVisibleAndCannotRun() {
-    QTemporaryDir dir; NativeCaptureWorkflows host(dir.filePath("workflows.json")); auto catalog = *host.store().current().catalog; catalog.entries[0].actions = QStringList{"upload"};
+    QTemporaryDir dir; NativeCaptureWorkflows host(dir.filePath("workflows.json")); auto catalog = *host.store().current().catalog; catalog.entries[0].actions = QStringList{"ocr"};
     QVERIFY(host.save(catalog, host.store().revision()).saved); QVERIFY(!host.resolve().workflow); QWidget parent; bool visible = false;
     QTimer::singleShot(0, this, [&] {
       auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog);
       const QPointer<QDialog> weak(dialog); const auto close = qScopeGuard([weak] { if (weak) weak->reject(); });
       auto *list = dialog->findChild<QListWidget *>("captureWorkflowActions");
-      for (int row = 0; row < list->count(); ++row) if (list->item(row)->data(Qt::UserRole).toString() == "upload") visible = list->item(row)->text().contains("Unavailable") && list->item(row)->checkState() == Qt::Checked;
+      for (int row = 0; row < list->count(); ++row) if (list->item(row)->data(Qt::UserRole).toString() == "ocr") visible = list->item(row)->text().contains("Unavailable") && list->item(row)->checkState() == Qt::Checked;
       QVERIFY(!dialog->findChild<QPushButton *>("runCaptureWorkflow")->isEnabled());
     });
     QVERIFY(!manageCaptureWorkflows(host, &parent, [] { return true; })); QVERIFY(visible);

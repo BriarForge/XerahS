@@ -93,9 +93,10 @@ private slots:
     QTemporaryDir dir; CapturePipeline pipeline(pixels(), dir.filePath("output"), "capture", configured);
     QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_VERIFY(chooser()); auto *dialog = chooser();
     const auto boxes = dialog->findChildren<QCheckBox *>(); QCOMPARE(boxes.size(), 19);
-    auto *upload = dialog->findChild<QCheckBox *>("capture-action-upload"); QVERIFY(upload); QVERIFY(!upload->isEnabled());
+    auto *implementedUpload = dialog->findChild<QCheckBox *>("capture-action-upload"); QVERIFY(implementedUpload); QVERIFY(implementedUpload->isEnabled());
+    auto *upload = dialog->findChild<QCheckBox *>("capture-action-ocr"); QVERIFY(upload); QVERIFY(!upload->isEnabled());
     QVERIFY(upload->text().contains("unavailable")); auto *interface = QAccessible::queryAccessibleInterface(upload); QVERIFY(interface);
-    QVERIFY(interface->state().disabled); QVERIFY(interface->text(QAccessible::Name).contains("Upload image"));
+    QVERIFY(interface->state().disabled); QVERIFY(interface->text(QAccessible::Name).contains("OCR"));
     auto *save = dialog->findChild<QCheckBox *>("capture-action-save"); save->setFocus(); QTest::keyClick(save, Qt::Key_Space); QVERIFY(!save->isChecked());
     upload->setChecked(true); dialog->accept(); QVERIFY(dialog->isVisible()); QCOMPARE(done.count(), 0);
     QVERIFY(!QFileInfo::exists(dir.filePath("output"))); QTest::keyClick(dialog, Qt::Key_Escape); QTRY_COMPARE(done.count(), 1);

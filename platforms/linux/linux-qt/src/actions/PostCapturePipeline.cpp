@@ -309,6 +309,9 @@ PipelineResult runPipeline(const QString &taskId, const QStringList &selected,
     actionResult.state = outcome.state;
     actionResult.diagnostic = outcome.diagnostic;
     actionResult.artifacts = outcome.artifacts;
+    if (action.id == kUpload && outcome.upload) {
+      actionResult.upload = outcome.upload; result.upload = outcome.upload;
+    }
     if (outcome.state == ActionState::Failed && !actionResult.diagnostic) {
       actionResult.diagnostic = diagnostic::actionFailed;
     }

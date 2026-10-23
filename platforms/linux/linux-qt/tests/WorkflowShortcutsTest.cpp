@@ -101,7 +101,7 @@ private slots:
     for (const auto *name : {"shortcut-server", "shortcut-client", "shortcut-attacker"}) QDBusConnection::disconnectFromBus(name);
   }
   void domainPlanAndHeldKeyAuthority() {
-    auto catalog = defaultCaptureWorkflows(); auto unavailable = catalog.entries[0]; unavailable.id = QUuid::createUuid(); unavailable.actions = {"upload"}; catalog.entries.append(unavailable);
+    auto catalog = defaultCaptureWorkflows(); auto unavailable = catalog.entries[0]; unavailable.id = QUuid::createUuid(); unavailable.actions = {"ocr"}; catalog.entries.append(unavailable);
     const auto offered = workflowShortcutPlan(catalog, CaptureActions::selectableActions()); QCOMPARE(offered.entries.size(), 1); QCOMPARE(offered.unavailable, 1);
     const auto id = offered.entries[0].id; WorkflowShortcutState state(offered);
     QVERIFY(state.press(id).isEmpty()); QVERIFY(state.setBound({id})); QCOMPARE(state.press(id), id); QVERIFY(state.press(id).isEmpty());

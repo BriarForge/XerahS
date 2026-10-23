@@ -17,7 +17,7 @@ ApplicationWindow::ApplicationWindow(const QMap<QString, QAction *> &actions, QW
   auto *intro = new QLabel(QStringLiteral("Capture your screen or open an image to edit."), central); intro->setWordWrap(true); layout->addWidget(intro);
   auto *commands = new QGridLayout; layout->addLayout(commands);
   int index = 0;
-  for (const auto &id : {QString("capture-region"), QString("capture-full-screen"), QString("capture-monitor"), QString("capture-active-window"), QString("capture-region-choose-actions"), QString("capture-workflows"), QString("enable-workflow-shortcuts"), QString("disable-workflow-shortcuts"), QString("cancel-capture"), QString("new-image"), QString("open-image"), QString("captures-folder"), QString("capture-history"), QString("editor-appearance")}) {
+  for (const auto &id : {QString("capture-region"), QString("capture-full-screen"), QString("capture-monitor"), QString("capture-active-window"), QString("capture-region-choose-actions"), QString("capture-workflows"), QString("enable-workflow-shortcuts"), QString("disable-workflow-shortcuts"), QString("cancel-capture"), QString("new-image"), QString("open-image"), QString("captures-folder"), QString("capture-history"), QString("editor-appearance"), QString("upload-destinations")}) {
     auto *action = actions.value(id); if (!action) continue;
     auto *button = new QToolButton(central); button->setObjectName(id); button->setDefaultAction(action);
     button->setToolButtonStyle(Qt::ToolButtonTextOnly); button->setFocusPolicy(Qt::StrongFocus);
@@ -38,6 +38,7 @@ ApplicationWindow::ApplicationWindow(const QMap<QString, QAction *> &actions, QW
     cancel->setShortcut(QKeySequence(Qt::Key_Escape)); cancel->setShortcutContext(Qt::WindowShortcut); addAction(cancel);
   }
   auto *preferences = menuBar()->addMenu(QStringLiteral("&Preferences"));
+  if (auto *action = actions.value(QStringLiteral("upload-destinations"))) preferences->addAction(action);
   if (auto *action = actions.value(QStringLiteral("settings"))) preferences->addAction(action);
   if (auto *action = actions.value(QStringLiteral("editor-appearance"))) preferences->addAction(action);
   resize(640, 360);

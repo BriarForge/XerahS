@@ -36,6 +36,14 @@ QJsonObject pipelineResultJson(const PipelineResult &result,
   }
   QJsonObject native{{"schema_version", 1}, {"task_id", result.taskId},
                      {"action_timings", timings}, {"file_artifacts", artifacts}};
+  if (result.upload) {
+    QJsonObject upload;
+    if (!result.upload->url.isEmpty()) upload.insert("url", result.upload->url);
+    if (!result.upload->thumbnailUrl.isEmpty()) upload.insert("thumbnail_url", result.upload->thumbnailUrl);
+    if (!result.upload->deletionUrl.isEmpty()) upload.insert("deletion_url", result.upload->deletionUrl);
+    if (!result.upload->errorMessage.isEmpty()) upload.insert("error_message", result.upload->errorMessage);
+    if (!upload.isEmpty()) native.insert("upload_result", upload);
+  }
   if (!result.workflowExecutionId.isEmpty()) native.insert("workflow_execution_id", result.workflowExecutionId);
   if (!result.workflowSnapshot.isEmpty()) {
     QJsonObject workflow;

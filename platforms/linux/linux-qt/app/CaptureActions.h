@@ -6,6 +6,8 @@
 #include "actions/PostCapturePipeline.h"
 #include "CaptureSave.h"
 #include "EditorSource.h"
+#include "uploads/CredentialStore.h"
+#include <memory>
 
 #include <QImage>
 #include <QString>
@@ -25,6 +27,11 @@ struct CaptureActionPorts {
   // its GUI thread. Its selection bridge waits on the worker for asynchronous
   // GUI completion. External observers must respect those native boundaries.
   CaptureSaveHooks save;
+  // Empty path uses the application's settings directory. Lookups and request
+  // preparation run on the pipeline worker; tests may supply an in-memory store.
+  QString uploadCatalogPath;
+  std::shared_ptr<xerahs::uploads::CredentialStore> uploadCredentials;
+
   std::function<xerahs::actions::ActionOutcome(const QImage &, const xerahs::actions::CancellationToken &)> clipboard;
   std::function<void(const QString &)> actionStarted;
   // Internal worker-to-GUI selection bridge supplied by CapturePipeline.
@@ -43,8 +50,8 @@ public:
   CaptureActions(QImage media, QString directory, QString pattern, CaptureActionPorts ports = {}, std::optional<CaptureFile> inheritedFile = {}, std::vector<CaptureFile> inheritedFiles = {}, std::optional<xerahs::editor::AnnotationDocument> inheritedDocument = {}, bool sidecarIntent = false);
 
   xerahs::actions::ActionOutcome run(const xerahs::actions::ActionRequest &request) override;
-  bool createTemporaryUploadFile() override { return false; }
-  void removeTemporaryUploadFile() override {}
+  bool createTemporaryUploadFile() override;
+  void removeTemporaryUploadFile() override { m_uploadBytes.clear(); }
 
   const std::optional<QString> &savedPath() const { return m_savedPath; }
   const std::optional<CaptureFile> &savedFile() const { return m_savedFile; }
@@ -69,6 +76,8 @@ private:
   xerahs::actions::ActionOutcome copyImage(const xerahs::actions::CancellationToken &cancellation);
   xerahs::actions::ActionOutcome outputFile(const xerahs::actions::ActionRequest &request);
 
+  xerahs::actions::ActionOutcome upload(const xerahs::actions::ActionRequest &request);
+  QByteArray m_uploadBytes;
   QImage m_media;
   QString m_directory;
   QString m_pattern;

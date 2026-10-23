@@ -204,6 +204,7 @@ bool PipelineJournalRecorder::published(const std::vector<SavedFileArtifact> &fi
 }
 void PipelineJournalRecorder::completed(const ActionResult &result, const std::vector<SavedFileArtifact> &files) {
   m_snapshot.result.orderedResults.push_back(result);
+  if (result.upload) m_snapshot.result.upload = result.upload;
   const auto index = catalogueIndex(result.action);
   if (result.state == ActionState::Succeeded && index && catalogue()[size_t(*index)].kind == ActionKind::Transformation)
     m_snapshot.result.finalWorkingMedia = result.action;

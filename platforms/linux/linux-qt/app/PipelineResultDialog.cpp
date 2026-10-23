@@ -43,6 +43,16 @@ QDialog *makePipelineResultDialog(const QJsonObject &report, QWidget *parent, co
   for (int column = 0; column < 4; ++column) table->resizeColumnToContents(column);
   layout->addWidget(table);
   const auto native = report.value("extensions").toObject().value("com.xerahs.app").toObject();
+  const auto upload = native.value("upload_result").toObject();
+  for (const auto *key : {"url", "thumbnail_url", "deletion_url", "error_message"}) {
+    const auto text = upload.value(QLatin1String(key)).toString(); if (text.isEmpty()) continue;
+    const QString title = QByteArray(key) == "url" ? "URL" : QByteArray(key) == "thumbnail_url" ? "Thumbnail URL" :
+        QByteArray(key) == "deletion_url" ? "Deletion URL" : "Upload error";
+    auto *line = new QLabel(title + ": " + text, dialog);
+    line->setObjectName(QStringLiteral("captureUpload_") + QLatin1String(key));
+    line->setTextFormat(Qt::PlainText); line->setWordWrap(true); line->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+    layout->addWidget(line);
+  }
   auto artifacts = native.value("artifact_outcomes").toArray(); QSet<QString> acknowledged;
   for (const auto &entry : artifacts) acknowledged.insert(entry.toObject().value("artifact").toString());
   for (const auto &entry : native.value("file_artifacts").toArray()) {

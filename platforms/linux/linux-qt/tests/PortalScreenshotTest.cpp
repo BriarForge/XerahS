@@ -842,7 +842,7 @@ private slots:
   }
   void unsupportedConfiguredWorkflowIsRejectedBeforePortalAcquisition() {
     QTemporaryDir dir; int acquisitions = 0; CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *) -> PortalScreenshot * { ++acquisitions; return nullptr; });
-    auto workflow = xerahs::workflows::defaultCaptureWorkflows().entries[0]; workflow.actions = QStringList{"upload"};
+    auto workflow = xerahs::workflows::defaultCaptureWorkflows().entries[0]; workflow.actions = QStringList{"ocr"};
     QSignalSpy notify(&controller, &CaptureController::notify); controller.captureWorkflow(workflow);
     QCOMPARE(acquisitions, 0); QVERIFY(!controller.busy()); QCOMPARE(notify.count(), 1); QVERIFY(!notify[0][2].toBool()); QVERIFY(!QFileInfo::exists(controller.saveDirectory()));
   }
@@ -873,7 +873,7 @@ private slots:
     const auto next = makeActivationRequest(ActivationAction::RunWorkflow, {}, original.workflowId); QCOMPARE(dispatcher.admit(next), ActivationReplyState::Accepted); QVERIFY(dispatcher.dispatch(next).isEmpty());
     QTRY_VERIFY(overlayExists()); controller.pointerDown({1, 1}); controller.pointerUp({8, 7}); QTRY_VERIFY(!controller.busy());
     saved = controller.lastPipelineResult(); QVERIFY(saved && saved->file); QCOMPARE(saved->file->path, dir.filePath("second/second-7.png")); QCOMPARE(portal.calls, 2);
-    profile.actions = QStringList{"upload"}; QVERIFY(store.save(catalog, store.revision()).saved); QCOMPARE(dispatcher.admit(next), ActivationReplyState::Rejected); QCOMPARE(portal.calls, 2);
+    profile.actions = QStringList{"ocr"}; QVERIFY(store.save(catalog, store.revision()).saved); QCOMPARE(dispatcher.admit(next), ActivationReplyState::Rejected); QCOMPARE(portal.calls, 2);
   }
   void invalidConfiguredOutputIsRejectedBeforePortalAcquisition() {
     QFETCH(QString, mode); QTemporaryDir dir; int acquisitions = 0; CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *) -> PortalScreenshot * { ++acquisitions; return nullptr; });

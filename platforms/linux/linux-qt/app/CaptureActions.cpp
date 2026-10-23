@@ -1,6 +1,16 @@
 #include "CaptureActions.h"
 #include "workflows/CaptureWorkflows.h"
 #include "EditorCanvasOperations.h"
+#include "SecretServiceCredentialStore.h"
+#include "uploads/DestinationCatalog.h"
+#include "uploads/UploadExecutor.h"
+#include <QBuffer>
+#include <QDir>
+#include <QEventLoop>
+#include <QFileInfo>
+#include <QNetworkAccessManager>
+#include <QStandardPaths>
+#include <QTimer>
 
 #include <QClipboard>
 #include <QGuiApplication>
@@ -20,11 +30,12 @@ ActionOutcome failed(const QString &diagnostic) {
 }  // namespace
 
 const QString CaptureActions::kActionUnavailable = QStringLiteral("action-unavailable");
-QStringList CaptureActions::selectableActions() { return xerahs::workflows::implementedCaptureActions(); }
+QStringList CaptureActions::selectableActions() { auto actions = xerahs::workflows::implementedCaptureActions(); actions.append("upload"); return actions; }
 QString CaptureActions::actionLabel(const QString &id) {
   static const QMap<QString, QString> names{{"save", "Save image"}, {"save-as", "Save image as new PNG…"}, {"image-clipboard", "Copy image to clipboard"},
       {"file-clipboard", "Copy image file"}, {"path-clipboard", "Copy file path"}, {"reveal", "Show saved file in folder"},
       {"after-capture-window", "Choose capture actions"}};
+  if (id == "upload") return "Upload capture";
   if (id == "annotation") return "Annotate capture";
   return names.value(id, id);
 }
@@ -50,6 +61,7 @@ ActionOutcome CaptureActions::run(const ActionRequest &request) {
   try {
     if (m_ports.actionStarted) m_ports.actionStarted(request.spec.id);
     if (request.spec.id == QStringLiteral("after-capture-window") && m_ports.selection) return m_ports.selection(request.cancellation);
+    if (request.spec.id == "upload") return upload(request);
     if (request.spec.id == "annotation") return annotate(request.cancellation);
     if (request.spec.id == QStringLiteral("save")) return save(request.cancellation);
     if (request.spec.id == QStringLiteral("save-as")) return saveAs(request.cancellation);
@@ -57,6 +69,52 @@ ActionOutcome CaptureActions::run(const ActionRequest &request) {
     if (request.spec.id == "file-clipboard" || request.spec.id == "path-clipboard" || request.spec.id == "reveal") return outputFile(request);
     return failed(kActionUnavailable);
   } catch (...) { return failed(diagnostic::actionFailed); }
+}
+
+bool CaptureActions::createTemporaryUploadFile() {
+  // PCA-019: this native upload input is an in-memory PNG, never a persisted file.
+  m_uploadBytes.clear(); QBuffer buffer(&m_uploadBytes);
+  return buffer.open(QIODevice::WriteOnly) && m_media.save(&buffer, "PNG");
+}
+ActionOutcome CaptureActions::upload(const ActionRequest &request) {
+  using namespace xerahs::uploads;
+  if (request.cancellation.requested()) return {ActionState::Cancelled, {}, {}};
+  // Secret Service uses blocking D-Bus calls, so this action belongs on the worker.
+  if (QCoreApplication::instance() && QThread::currentThread() == QCoreApplication::instance()->thread())
+    return failed("upload-worker-required");
+  const auto path = m_ports.uploadCatalogPath.isEmpty()
+      ? QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath("upload-destinations.json")
+      : m_ports.uploadCatalogPath;
+  DestinationCatalog catalog(path);
+  const auto destination = catalog.defaultDestination();
+  const auto failure = [](const QString &code, const QString &message) {
+    auto out = failed(code); out.upload = UploadResult{{}, {}, {}, message}; return out;
+  };
+  if (!catalog.loadCode().isEmpty()) return failure(catalog.loadCode(), "Could not read Upload destinations.");
+  if (!destination) return failure("upload-destination-missing", "No upload destination. Add one in Upload destinations.");
+  UploadInput input; input.mimeType = "image/png";
+  if (request.inputArtifact == "save.file" || request.inputArtifact == "save-as.file") {
+    const auto &file = request.inputArtifact == "save.file" ? m_savedFile : m_savedAsFile;
+    if (!file) return failed("saved-file-unavailable");
+    const auto validation = validateCaptureFile(*file); if (!validation.isEmpty()) return failed(validation);
+    input.filePath = file->path; input.fileName = QFileInfo(file->path).fileName();
+  } else {
+    if (m_uploadBytes.isEmpty() && !createTemporaryUploadFile()) return failed(diagnostic::temporaryFileUnavailable);
+    input.fileBytes = m_uploadBytes; input.fileName = "capture.png";
+  }
+  const auto credentials = m_ports.uploadCredentials ? m_ports.uploadCredentials : std::make_shared<SecretServiceCredentialStore>();
+  const auto built = buildUploadRequest(*destination, input, *credentials);
+  if (request.cancellation.requested()) return {ActionState::Cancelled, {}, {}};
+  if (!built.request) return failure(built.code, built.errorMessage);
+  QNetworkAccessManager manager; UploadExecutor executor(&manager); QEventLoop loop; QTimer cancellation;
+  cancellation.setInterval(10);
+  UploadOutcome response;
+  QObject::connect(&executor, &UploadExecutor::finished, &loop, [&](const UploadOutcome &out) { response = out; loop.quit(); });
+  QObject::connect(&cancellation, &QTimer::timeout, &executor, [&] { if (request.cancellation.requested()) executor.cancel(); });
+  cancellation.start(); executor.start(*built.request); loop.exec();
+  if (response.code == "cancelled") return {ActionState::Cancelled, {}, {}};
+  if (!response.code.isEmpty()) return failure(response.code, response.errorMessage);
+  ActionOutcome out; out.upload = UploadResult{response.url, response.thumbnailUrl, response.deletionUrl, {}}; return out;
 }
 
 ActionOutcome CaptureActions::annotate(const CancellationToken &cancellation) {

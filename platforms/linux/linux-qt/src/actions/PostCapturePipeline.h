@@ -105,6 +105,11 @@ struct ArtifactOutcome {
 bool validSavedOutputOutcomes(const QString &action, ActionState state, const std::vector<ArtifactOutcome> &outcomes);
 bool hasAcknowledgedPartialRaster(const QString &action, ActionState state, const std::vector<ArtifactOutcome> &outcomes);
 
+// CORE-020, CORE-021: public upload receipts; credentials never cross this boundary.
+struct UploadResult {
+  QString url, thumbnailUrl, deletionUrl, errorMessage;
+};
+
 struct ActionOutcome {
   // Succeeded, Failed, or Cancelled; the engine alone decides Skipped.
   ActionState state = ActionState::Succeeded;
@@ -117,6 +122,7 @@ struct ActionOutcome {
   // failed/cancelled action result would authorize an unsafe repeat.
   bool outcomeUnknown = false;
   std::vector<ArtifactOutcome> artifacts = {};
+  std::optional<UploadResult> upload = {};
 };
 
 class ActionExecutor {
@@ -142,6 +148,7 @@ struct ActionResult {
   std::optional<QString> inputArtifact;
   bool cancellationArrivedDuring = false;
   std::vector<ArtifactOutcome> artifacts = {};
+  std::optional<UploadResult> upload = {};
 };
 
 // Settings snapshot taken before execution (SPEC "Definitions and model").
@@ -176,6 +183,7 @@ struct PipelineResult {
   std::optional<PipelineRetryLink> retry;
   QJsonObject workflowSnapshot;
   QString workflowExecutionId = {}; // optional admitted invocation, not task identity
+  std::optional<UploadResult> upload = {};
 };
 
 struct PipelineHooks {

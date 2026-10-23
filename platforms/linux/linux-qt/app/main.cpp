@@ -10,6 +10,8 @@
 #include <QScopedValueRollback>
 #include "WorkflowShortcutActions.h"
 #include "SettingsDialog.h"
+#include "UploadDestinationsDialog.h"
+#include "SecretServiceCredentialStore.h"
 #include "settings/ApplicationSettings.h"
 #include "CaptureRecoveryActions.h"
 #include "EditorWindow.h"
@@ -218,8 +220,12 @@ int main(int argc, char *argv[]) {
   const QString pictures = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
   const QString defaultFolder = QDir(pictures.isEmpty() ? QDir::homePath() : pictures).filePath(QStringLiteral("XerahS"));
   xerahs::settings::ApplicationSettingsStore settings(QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath("application-settings.json"), defaultFolder);
+  const auto uploadCatalogPath = QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath("upload-destinations.json");
+  auto uploadCredentials = std::make_shared<xerahs::app::SecretServiceCredentialStore>();
+  xerahs::app::CaptureActionPorts capturePorts; capturePorts.uploadCatalogPath = uploadCatalogPath;
+  // The pipeline constructs its own keyring store on its worker thread.
   const auto journal = std::make_shared<xerahs::app::NativePipelineJournal>(xerahs::app::NativePipelineJournal::defaultDirectory());
-  CaptureController capture(settings.current().values.value("saveFolder").toString(), nullptr, {}, {}, {}, journal);
+  CaptureController capture(settings.current().values.value("saveFolder").toString(), nullptr, {}, {}, capturePorts, journal);
   const auto effectiveWorkflow = [&workflows, &settings](const QUuid &id = QUuid{}) {
     auto choice = workflows.resolve(id);
     if (choice.workflow) choice.workflow = xerahs::settings::withApplicationDefaults(*choice.workflow,
@@ -259,14 +265,28 @@ int main(int argc, char *argv[]) {
   }, [] { xerahs::app::manageRecentImages(); });
   QAction *folder = menu.addAction(QStringLiteral("Open captures folder"));
   QAction *history = menu.addAction(QStringLiteral("Capture history…"));
+  QAction *uploadDestinations = menu.addAction(QStringLiteral("Upload destinations…"));
   QAction *settingsAction = menu.addAction(QStringLiteral("Settings…"));
   QAction *appearance = menu.addAction(QStringLiteral("Editor appearance…"));
   menu.addSeparator();
   QAction *quit = menu.addAction(QStringLiteral("Quit XerahS"));
   tray.setContextMenu(&menu);
-  xerahs::app::ApplicationWindow home({{"settings", settingsAction}, {"capture-region", region}, {"capture-full-screen", fullScreen}, {"capture-monitor", monitor}, {"capture-active-window", activeWindow}, {"capture-region-choose-actions", chooseCapture}, {"cancel-capture", cancelCapture},
+  xerahs::app::ApplicationWindow home({{"upload-destinations", uploadDestinations}, {"settings", settingsAction}, {"capture-region", region}, {"capture-full-screen", fullScreen}, {"capture-monitor", monitor}, {"capture-active-window", activeWindow}, {"capture-region-choose-actions", chooseCapture}, {"cancel-capture", cancelCapture},
       {"capture-workflows", configureWorkflows}, {"enable-workflow-shortcuts", shortcutActions.enableAction()}, {"disable-workflow-shortcuts", shortcutActions.disableAction()},
       {"new-image", newImage}, {"open-image", openImage}, {"captures-folder", folder}, {"capture-history", history}, {"editor-appearance", appearance}, {"quit", quit}});
+  QPointer<xerahs::app::UploadDestinationsDialog> uploadDialog;
+  std::shared_ptr<xerahs::uploads::DestinationCatalog> uploadCatalog;
+  QObject::connect(uploadDestinations, &QAction::triggered, &home, [&] {
+    if (!uploadDialog) {
+      uploadCatalog = std::make_shared<xerahs::uploads::DestinationCatalog>(uploadCatalogPath);
+      auto *dialog = new xerahs::app::UploadDestinationsDialog(*uploadCatalog, *uploadCredentials,
+          xerahs::app::nativeUploadDestinationsPorts(), &home);
+      // Keep the single non-modal window and its referenced stores until shutdown.
+      QObject::connect(dialog, &QObject::destroyed, [catalog = uploadCatalog, credentials = uploadCredentials] {});
+      uploadDialog = dialog;
+    }
+    uploadDialog->show(); uploadDialog->raise(); uploadDialog->activateWindow();
+  });
   for (auto *childMenu : home.menuBar()->findChildren<QMenu *>()) {
     if (childMenu->title() == "&Capture") for (auto *action : recordingActions.actions()) childMenu->addAction(action);
   }

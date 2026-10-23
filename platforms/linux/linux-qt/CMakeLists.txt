@@ -755,3 +755,19 @@ foreach(surface Request Response Executor)
   target_link_libraries(upload-${surface_lower}-test PRIVATE xerahs_upload_executor Qt6::Test)
   add_test(NAME upload-${surface_lower} COMMAND upload-${surface_lower}-test)
 endforeach()
+
+# CORE-020, CORE-021: native capture upload integration.
+target_link_libraries(xerahs PRIVATE xerahs_upload_executor xerahs_secret_service xerahs_upload_destinations)
+foreach(upload_capture_target pipeline-journal-fixture pipeline-journal-test capture-pipeline-test
+    action-selection-test capture-file-output-test capture-save-as-test capture-annotation-test
+    capture-history-test capture-paired-save-test portal-screenshot-test native-capture-workflows-test workflow-shortcuts-test)
+  target_link_libraries(${upload_capture_target} PRIVATE xerahs_upload_executor xerahs_secret_service)
+endforeach()
+add_executable(capture-upload-test tests/CaptureUploadTest.cpp app/CapturePipeline.cpp app/CapturePipeline.h
+  app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h)
+set_target_properties(capture-upload-test PROPERTIES AUTOMOC ON)
+target_link_libraries(capture-upload-test PRIVATE xerahs_file_output xerahs_action_selection xerahs_pipeline_journal
+  xerahs_upload_executor xerahs_secret_service Qt6::Test)
+add_test(NAME capture-upload COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-upload-test>)
+set_tests_properties(capture-upload PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)

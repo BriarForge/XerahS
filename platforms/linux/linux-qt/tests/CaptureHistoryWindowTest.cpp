@@ -98,6 +98,19 @@ private slots:
     QCOMPARE(list->count(), 1); QVERIFY(find(list, "gone.png"));
     search->clear(); QCOMPARE(list->count(), 2);
   }
+  void uploadUrlIsVisibleAndCanBeCopiedFromHistory() {
+    QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    const auto path = writePng(dir.filePath("uploaded.png"), Qt::green); const auto id = newId();
+    auto snapshot = record(id, QDateTime::currentDateTimeUtc(), {png(path, id)});
+    snapshot.result.upload = UploadResult{"https://example.test/image", "https://example.test/thumb", "https://example.test/delete", {}};
+    QVERIFY(storage->replace(id, {}, serializePipelineJournal(snapshot)).stored);
+    QWidget owner; auto *window = new CaptureHistoryWindow(storage, [] { return false; }, {}, &owner); window->show();
+    auto *list = window->findChild<QListWidget *>("captureHistoryItems"); QTRY_COMPARE(list->count(), 1);
+    list->setCurrentItem(list->item(0));
+    QVERIFY(list->item(0)->text().contains("https://example.test/image"));
+    auto *copy = window->findChild<QPushButton *>("copyHistoryUrl"); QVERIFY(copy); QVERIFY(copy->isEnabled());
+    QApplication::clipboard()->setText("before"); copy->click(); QCOMPARE(QApplication::clipboard()->text(), QString("https://example.test/image"));
+  }
   void forgetRemovesTheRecordAndKeepsTheFile() {
     QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
     const auto path = writePng(dir.filePath("keep-me.png"), Qt::cyan); const auto id = newId();

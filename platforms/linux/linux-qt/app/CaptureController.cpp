@@ -582,6 +582,8 @@ void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt, b
       if (action.action == "save" || action.action == "save-as") {
         for (const auto &file : receipt->savedFiles()) if (file.artifact == action.action + ".file")
           done.append(QStringLiteral("Saved %1").arg(QFileInfo(file.path).fileName()));
+      } else if (action.action == "upload" && result.upload) {
+        done.append(result.upload->url);
       } else if (action.action == QStringLiteral("image-clipboard")) {
         done.append(QStringLiteral("copied to clipboard"));
       } else if (action.action == "file-clipboard") done.append(QStringLiteral("copied image file"));
@@ -595,6 +597,8 @@ void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt, b
       }
       auto description = label + QStringLiteral(" ") + xerahs::actions::actionStateName(action.state);
       if (action.diagnostic) description += QStringLiteral(" (%1)").arg(*action.diagnostic);
+      if (action.action == "upload" && result.upload && !result.upload->errorMessage.isEmpty())
+        description += ": " + result.upload->errorMessage;
       failed.append(description);
     }
   }
