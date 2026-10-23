@@ -22,15 +22,6 @@ namespace {
 const QString kReferenceDirectory = QStringLiteral("ShareX.ImageEditor/src/ShareX.ImageEditor/Core/ImageEffects/Adjustments/");
 using namespace support;  // shared helpers: kCancelled, kFailed, parameter builders, runRows, FunctionEffect
 
-// ---- numeric helpers (C# Math/MathF semantics) -----------------------------
-float clamp01(float v) { return v <= 0.f ? 0.f : (v >= 1.f ? 1.f : v); }
-float lerp(float a, float b, float t) { return a + (b - a) * t; }
-// MathF.Round: half to even. NaN converts to 0 like a saturating C# byte cast.
-int clampByte(float v) {
-  if (std::isnan(v) || v <= 0.f) return 0;
-  if (v >= 255.f) return 255;
-  return int(std::nearbyintf(v));
-}
 float minNaN(float a, float b) { return (std::isnan(a) || std::isnan(b)) ? std::nanf("") : (a < b ? a : b); }
 float maxNaN(float a, float b) { return (std::isnan(a) || std::isnan(b)) ? std::nanf("") : (a > b ? a : b); }
 QRgb rgba(int r, int g, int b, int a) { return qRgba(r, g, b, a); }
@@ -46,7 +37,7 @@ QRgb applyMatrix(const Matrix20 &m, QRgb pixel) {
   for (int row = 0; row < 4; ++row) {
     float value = m[row * 5 + 4] * 255.f;
     for (int col = 0; col < 4; ++col) value += m[row * 5 + col] * in[col];
-    out[row] = int(std::floor(std::clamp(value, 0.f, 255.f) + 0.5f));
+    out[row] = filteredByte(value);
   }
   return qRgba(out[0], out[1], out[2], out[3]);
 }
@@ -56,19 +47,6 @@ Matrix20 blendWithIdentity(const Matrix20 &target, float s) {
   return result;
 }
 
-template <class Op>
-EffectResult mapPixels(const QImage &source, const EffectContext &context, Op op, int lo = 0, int hi = 100) {
-  if (context.cancelled()) return {{}, kCancelled};
-  QImage result = makeResult(source);
-  if (result.isNull()) return {{}, kFailed};
-  const bool done = runRows(context, source.height(), lo, hi, [&](int y) {
-    const auto *input = reinterpret_cast<const QRgb *>(source.constScanLine(y));
-    auto *output = reinterpret_cast<QRgb *>(result.scanLine(y));
-    for (int x = 0; x < source.width(); ++x) output[x] = op(x, y, input[x]);
-  });
-  if (!done || context.cancelled()) return {{}, kCancelled};
-  return {result, {}};
-}
 EffectResult identity(const QImage &source, const EffectContext &context) {
   return mapPixels(source, context, [](int, int, QRgb p) { return p; });
 }
@@ -164,37 +142,6 @@ EffectResult channelSwap(const QImage &source, const ParamValues &params, const 
 
 // Box-blur pieces for the Gaussian approximation (three successive boxes, the
 // W3C filter-effects recipe Skia also uses for large sigma). Edges are decal:
-// samples outside the image are transparent.
-void boxHorizontal(const std::vector<float> &in, std::vector<float> &out, int width, int y, int left, int right) {
-  const float *src = in.data() + size_t(y) * size_t(width) * 4;
-  float *dst = out.data() + size_t(y) * size_t(width) * 4;
-  const float scale = 1.f / float(left + right + 1);
-  for (int c = 0; c < 4; ++c) {
-    double sum = 0;
-    for (int k = 0; k <= std::min(right, width - 1); ++k) sum += src[k * 4 + c];
-    for (int x = 0; x < width; ++x) {
-      dst[x * 4 + c] = float(sum) * scale;
-      if (x + right + 1 < width) sum += src[(x + right + 1) * 4 + c];
-      if (x - left >= 0) sum -= src[(x - left) * 4 + c];
-    }
-  }
-}
-void boxVertical(const std::vector<float> &in, std::vector<float> &out, int width, int height, int left, int right,
-                 const EffectContext &context, int lo, int hi, bool &cancelled) {
-  std::vector<double> sums(size_t(width) * 4, 0.0);
-  const size_t stride = size_t(width) * 4;
-  for (int k = 0; k <= std::min(right, height - 1); ++k)
-    for (size_t i = 0; i < stride; ++i) sums[i] += in[size_t(k) * stride + i];
-  const float scale = 1.f / float(left + right + 1);
-  cancelled = !runRows(context, height, lo, hi, [&](int y) {
-    float *dst = out.data() + size_t(y) * stride;
-    for (size_t i = 0; i < stride; ++i) dst[i] = float(sums[i]) * scale;
-    if (y + right + 1 < height)
-      for (size_t i = 0; i < stride; ++i) sums[i] += in[size_t(y + right + 1) * stride + i];
-    if (y - left >= 0)
-      for (size_t i = 0; i < stride; ++i) sums[i] -= in[size_t(y - left) * stride + i];
-  });
-}
 
 EffectResult clarity(const QImage &source, const ParamValues &params, const EffectContext &context) {
   if (context.cancelled()) return {{}, kCancelled};
@@ -314,7 +261,7 @@ EffectResult colorize(const QImage &source, const ParamValues &params, const Eff
       outB += qBlue(p) * sa * (1.f - layerAlpha);
     }
     if (outAlpha <= 0.f) return qRgba(0, 0, 0, 0);
-    return rgba(clampByte(outR / outAlpha), clampByte(outG / outAlpha), clampByte(outB / outAlpha), clampByte(outAlpha * 255.f));
+    return rgba(toByte(outR / outAlpha), toByte(outG / outAlpha), toByte(outB / outAlpha), toByte(outAlpha * 255.f));
   });
 }
 
@@ -381,7 +328,7 @@ EffectResult dehaze(const QImage &source, const ParamValues &params, const Effec
       g = g + (atmG - g) * haze;
       b = b + (atmB - b) * haze;
     }
-    return rgba(clampByte(r), clampByte(g), clampByte(b), qAlpha(p));
+    return rgba(toByte(r), toByte(g), toByte(b), qAlpha(p));
   }, 66, 100);
 }
 
@@ -393,9 +340,9 @@ EffectResult duotone(const QImage &source, const ParamValues &params, const Effe
   const float gamma = std::clamp(floatOf(params, "gamma"), 0.3f, 3.f);
   const float blend = std::clamp(floatOf(params, "blend"), 0.f, 100.f) / 100.f;
   const auto lerpColor = [](const QColor &a, const QColor &b, float t, int out[3]) {
-    out[0] = clampByte(lerp(float(a.red()), float(b.red()), t));
-    out[1] = clampByte(lerp(float(a.green()), float(b.green()), t));
-    out[2] = clampByte(lerp(float(a.blue()), float(b.blue()), t));
+    out[0] = toByte(lerp(float(a.red()), float(b.red()), t));
+    out[1] = toByte(lerp(float(a.green()), float(b.green()), t));
+    out[2] = toByte(lerp(float(a.blue()), float(b.blue()), t));
   };
   return mapPixels(source, context, [&](int, int, QRgb p) {
     float lum = (0.2126f * qRed(p) + 0.7152f * qGreen(p) + 0.0722f * qBlue(p)) / 255.f;
@@ -405,9 +352,9 @@ EffectResult duotone(const QImage &source, const ParamValues &params, const Effe
     int mapped[3];
     if (t <= 0.5f) lerpColor(shadows, mids, t * 2.f, mapped);
     else lerpColor(mids, highs, (t - 0.5f) * 2.f, mapped);
-    return rgba(clampByte(lerp(float(qRed(p)), float(mapped[0]), blend)),
-                clampByte(lerp(float(qGreen(p)), float(mapped[1]), blend)),
-                clampByte(lerp(float(qBlue(p)), float(mapped[2]), blend)), qAlpha(p));
+    return rgba(toByte(lerp(float(qRed(p)), float(mapped[0]), blend)),
+                toByte(lerp(float(qGreen(p)), float(mapped[1]), blend)),
+                toByte(lerp(float(qBlue(p)), float(mapped[2]), blend)), qAlpha(p));
   });
 }
 
@@ -416,20 +363,10 @@ EffectResult exposure(const QImage &source, const ParamValues &params, const Eff
   if (std::fabs(amount) < 0.0001f) return identity(source, context);
   const float gain = std::pow(2.f, amount);
   return mapPixels(source, context, [&](int, int, QRgb p) {
-    return rgba(clampByte(qRed(p) * gain), clampByte(qGreen(p) * gain), clampByte(qBlue(p) * gain), qAlpha(p));
+    return rgba(toByte(qRed(p) * gain), toByte(qGreen(p) * gain), toByte(qBlue(p) * gain), qAlpha(p));
   });
 }
 
-float hash01(int x, int y, int seed) {
-  quint32 h = 2166136261u;
-  h = (h ^ quint32(x)) * 16777619u;
-  h = (h ^ quint32(y)) * 16777619u;
-  h = (h ^ quint32(seed)) * 16777619u;
-  h ^= h >> 13;
-  h *= 1274126177u;
-  h ^= h >> 16;
-  return float(h & 0x00FFFFFFu) / 16777215.f;
-}
 void filmPreset(const QString &preset, float r, float g, float b, float &tr, float &tg, float &tb) {
   if (preset == QLatin1String("warm")) {
     tr = r * 1.10f + g * 0.015f;
@@ -492,7 +429,7 @@ EffectResult filmEmulation(const QImage &source, const ParamValues &params, cons
       g += n1 * amplitude;
       b += n2 * amplitude;
     }
-    return rgba(clampByte(clamp01(r) * 255.f), clampByte(clamp01(g) * 255.f), clampByte(clamp01(b) * 255.f), qAlpha(p));
+    return rgba(toByte(clamp01(r) * 255.f), toByte(clamp01(g) * 255.f), toByte(clamp01(b) * 255.f), qAlpha(p));
   });
 }
 
@@ -536,7 +473,7 @@ EffectResult levels(const QImage &source, const ParamValues &params, const Effec
     float normalized = float(value - inBlack) / inRange;
     normalized = std::clamp(normalized, 0.f, 1.f);
     const float corrected = std::pow(normalized, gammaValue);
-    return clampByte(float(outBlack) + corrected * outRange);
+    return toByte(float(outBlack) + corrected * outRange);
   };
   return mapPixels(source, context, [&](int, int, QRgb p) { return rgba(map(qRed(p)), map(qGreen(p)), map(qBlue(p)), qAlpha(p)); });
 }
@@ -562,7 +499,7 @@ EffectResult lomo(const QImage &source, const ParamValues &params, const EffectC
     const float outAlpha = va + ca * (1.f - va);  // black source-over the matrix result
     if (outAlpha <= 0.f) return qRgba(0, 0, 0, 0);
     const float k = ca * (1.f - va) / outAlpha;
-    return rgba(clampByte(qRed(colored) * k), clampByte(qGreen(colored) * k), clampByte(qBlue(colored) * k), clampByte(outAlpha * 255.f));
+    return rgba(toByte(qRed(colored) * k), toByte(qGreen(colored) * k), toByte(qBlue(colored) * k), toByte(outAlpha * 255.f));
   });
 }
 
@@ -577,7 +514,7 @@ EffectResult posterize(const QImage &source, const ParamValues &params, const Ef
   const float scale = float(levelCount - 1);
   const auto quantize = [&](int value) {
     const float bucket = std::nearbyintf(float(value) * scale / 255.f);
-    return clampByte(bucket * 255.f / scale);
+    return toByte(bucket * 255.f / scale);
   };
   return mapPixels(source, context, [&](int, int, QRgb p) {
     return rgba(quantize(qRed(p)), quantize(qGreen(p)), quantize(qBlue(p)), qAlpha(p));
@@ -614,7 +551,7 @@ EffectResult shadowsHighlights(const QImage &source, const ParamValues &params, 
     const float shadowWeight = (1.f - luma) * (1.f - luma);
     const float highlightWeight = luma * luma;
     const float delta = (sStrength * shadowWeight - hStrength * highlightWeight) * 255.f;
-    return rgba(clampByte(qRed(p) + delta), clampByte(qGreen(p) + delta), clampByte(qBlue(p) + delta), qAlpha(p));
+    return rgba(toByte(qRed(p) + delta), toByte(qGreen(p) + delta), toByte(qBlue(p) + delta), qAlpha(p));
   });
 }
 
@@ -624,12 +561,6 @@ EffectResult solarize(const QImage &source, const ParamValues &params, const Eff
   return mapPixels(source, context, [&](int, int, QRgb p) { return rgba(flip(qRed(p)), flip(qGreen(p)), flip(qBlue(p)), qAlpha(p)); });
 }
 
-float smoothStep(float edge0, float edge1, float x) {
-  const float range = edge1 - edge0;
-  if (range <= 0.f) return x >= edge1 ? 1.f : 0.f;
-  const float t = std::clamp((x - edge0) / range, 0.f, 1.f);
-  return t * t * (3.f - 2.f * t);
-}
 float softLight(float base, float blend) { return (1.f - 2.f * blend) * base * base + 2.f * blend * base; }
 
 EffectResult splitToning(const QImage &source, const ParamValues &params, const EffectContext &context) {
@@ -642,15 +573,15 @@ EffectResult splitToning(const QImage &source, const ParamValues &params, const 
   return mapPixels(source, context, [&](int, int, QRgb p) {
     float r = qRed(p) / 255.f, g = qGreen(p) / 255.f, b = qBlue(p) / 255.f;
     const float lum = 0.299f * r + 0.587f * g + 0.114f * b;
-    const float shadowWeight = 1.f - smoothStep(0.f, balance, lum);
-    const float highlightWeight = smoothStep(balance, 1.f, lum);
+    const float shadowWeight = 1.f - smoothStepRange(0.f, balance, lum);
+    const float highlightWeight = smoothStepRange(balance, 1.f, lum);
     const float tintR = sR * shadowWeight + hR * highlightWeight;
     const float tintG = sG * shadowWeight + hG * highlightWeight;
     const float tintB = sB * shadowWeight + hB * highlightWeight;
     r = lerp(r, softLight(r, tintR), strength);
     g = lerp(g, softLight(g, tintG), strength);
     b = lerp(b, softLight(b, tintB), strength);
-    return rgba(clampByte(r * 255.f), clampByte(g * 255.f), clampByte(b * 255.f), qAlpha(p));
+    return rgba(toByte(r * 255.f), toByte(g * 255.f), toByte(b * 255.f), qAlpha(p));
   });
 }
 
@@ -660,8 +591,8 @@ EffectResult temperatureTint(const QImage &source, const ParamValues &params, co
   if (std::fabs(temperature) < 0.0001f && std::fabs(tint) < 0.0001f) return identity(source, context);
   const float tempDelta = temperature / 100.f * 64.f, tintDelta = tint / 100.f * 64.f;
   return mapPixels(source, context, [&](int, int, QRgb p) {
-    return rgba(clampByte(qRed(p) + tempDelta - tintDelta * 0.25f), clampByte(qGreen(p) + tintDelta),
-                clampByte(qBlue(p) - tempDelta - tintDelta * 0.25f), qAlpha(p));
+    return rgba(toByte(qRed(p) + tempDelta - tintDelta * 0.25f), toByte(qGreen(p) + tintDelta),
+                toByte(qBlue(p) - tempDelta - tintDelta * 0.25f), qAlpha(p));
   });
 }
 
@@ -686,7 +617,7 @@ EffectResult vibrance(const QImage &source, const ParamValues &params, const Eff
     r = gray + (r - gray) * factor;
     g = gray + (g - gray) * factor;
     b = gray + (b - gray) * factor;
-    return rgba(clampByte(r), clampByte(g), clampByte(b), qAlpha(p));
+    return rgba(toByte(r), toByte(g), toByte(b), qAlpha(p));
   });
 }
 }  // namespace

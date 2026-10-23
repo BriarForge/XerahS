@@ -1155,3 +1155,11 @@ target_link_libraries(onboarding-test PRIVATE xerahs_core xerahs_file_output xer
 add_test(NAME onboarding COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:onboarding-test>)
 set_tests_properties(onboarding PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 60)
+# EDITOR-EFFECTS-001: pre-refactor pixel regression lock.
+add_executable(EffectGoldenHash-test tests/EffectGoldenHashTest.cpp)
+set_target_properties(EffectGoldenHash-test PROPERTIES AUTOMOC ON)
+target_link_libraries(EffectGoldenHash-test PRIVATE xerahs_effects Qt6::Test)
+target_compile_definitions(EffectGoldenHash-test PRIVATE EFFECT_GOLDEN_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/effects/golden-hashes.json")
+add_test(NAME EffectGoldenHash COMMAND EffectGoldenHash-test)
+set_tests_properties(EffectGoldenHash PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 180)
+target_compile_options(EffectGoldenHash-test PRIVATE -ffp-contract=off)

@@ -69,22 +69,6 @@ void finishCanvas(QImage &canvas, const QImage &source, bool background) {
   painter.drawImage(0, 0, source);
 }
 
-// Straight-alpha source-over of one pixel.
-QRgb srcOver(QRgb top, QRgb bottom) {
-  const int ta = qAlpha(top);
-  if (ta == 255) return top;
-  const int ba = qAlpha(bottom);
-  if (ta == 0) return bottom;
-  const float a1 = ta / 255.f, a2 = ba / 255.f;
-  const float outA = a1 + a2 * (1.f - a1);
-  if (outA <= 0.f) return 0;
-  auto channel = [&](int t, int b) {
-    return int(std::nearbyintf((t * a1 + b * a2 * (1.f - a1)) / outA));
-  };
-  return qRgba(channel(qRed(top), qRed(bottom)), channel(qGreen(top), qGreen(bottom)),
-               channel(qBlue(top), qBlue(bottom)), int(std::nearbyintf(outA * 255.f)));
-}
-
 void blit(QImage &destination, const QImage &source, int x, int y) {
   for (int row = 0; row < source.height(); ++row) {
     const int dy = y + row;
@@ -251,7 +235,7 @@ EffectResult drawBackground(const QImage &source, const ParamValues &params, con
   if (!runRows(context, source.height(), 0, 100, [&](int y) {
         const auto *in = reinterpret_cast<const QRgb *>(source.constScanLine(y));
         auto *out = reinterpret_cast<QRgb *>(result.scanLine(y));
-        for (int x = 0; x < source.width(); ++x) out[x] = srcOver(in[x], color);
+        for (int x = 0; x < source.width(); ++x) out[x] = sourceOverTop(in[x], color);
       }))
     return {{}, kCancelled};
   return {result, {}};
@@ -268,7 +252,7 @@ EffectResult drawCheckerboard(const QImage &source, const ParamValues &params, c
         for (int x = 0; x < source.width(); ++x) {
           // Cell (0,0) and its diagonal use Color; the other two cells use Color 2.
           const QRgb back = (((x / size) + (y / size)) % 2 == 0) ? c1 : c2;
-          out[x] = srcOver(in[x], back);
+          out[x] = sourceOverTop(in[x], back);
         }
       }))
     return {{}, kCancelled};

@@ -34,7 +34,6 @@ QImage copyOf(const QImage &source) {
 }
 
 // Skia clamps a filtered channel to the byte gamut and rounds it to the nearest byte.
-int filteredByte(float value) { return int(std::floor(std::clamp(value, 0.f, 255.f) + 0.5f)); }
 
 // Source-over of a black line with the given 0..255 alpha over a straight-alpha pixel.
 // Skia draws the line in premultiplied space; this is the same blend for straight pixels.

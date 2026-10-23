@@ -41,193 +41,8 @@ const QString kReferenceDirectory =
     QStringLiteral("ShareX.ImageEditor/src/ShareX.ImageEditor/Core/ImageEffects/Filters/");
 constexpr float kPi = 3.14159265358979f;
 
-// ---- numeric helpers (ProceduralEffectHelper / AnalogEffectHelper semantics) --------------------
-float clamp01(float v) { return v <= 0.f ? 0.f : (v >= 1.f ? 1.f : v); }
-float lerp(float a, float b, float t) { return a + (b - a) * t; }
-float smoothStep(float e0, float e1, float v) {
-  if (std::fabs(e1 - e0) < 0.000001f) return v >= e1 ? 1.f : 0.f;
-  const float t = clamp01((v - e0) / (e1 - e0));
-  return t * t * (3.f - 2.f * t);
-}
-int clampInt(int v, int lo, int hi) { return v < lo ? lo : (v > hi ? hi : v); }
-int toByte(float v) {  // ClampToByte: MathF.Round is half to even
-  if (std::isnan(v) || v <= 0.f) return 0;
-  if (v >= 255.f) return 255;
-  return int(std::nearbyintf(v));
-}
-float hash01(int x, int y, int seed = 0) {
-  uint32_t h = 2166136261u;
-  h = (h ^ uint32_t(x)) * 16777619u;
-  h = (h ^ uint32_t(y)) * 16777619u;
-  h = (h ^ uint32_t(seed)) * 16777619u;
-  h ^= h >> 13;
-  h *= 1274126177u;
-  h ^= h >> 16;
-  return float(h & 0x00FFFFFFu) / 16777215.f;
-}
-float fade(float t) { return t * t * t * (t * (t * 6.f - 15.f) + 10.f); }
-float valueNoise(float x, float y, int seed = 0) {
-  const int x0 = int(std::floor(x)), y0 = int(std::floor(y));
-  const float tx = fade(x - float(x0)), ty = fade(y - float(y0));
-  const float v00 = hash01(x0, y0, seed), v10 = hash01(x0 + 1, y0, seed);
-  const float v01 = hash01(x0, y0 + 1, seed), v11 = hash01(x0 + 1, y0 + 1, seed);
-  return lerp(lerp(v00, v10, tx), lerp(v01, v11, tx), ty);
-}
-float fractalNoise(float x, float y, int octaves, float lacunarity, float gain, int seed = 0) {
-  float value = 0.f, amplitude = 1.f, frequency = 1.f, normalization = 0.f;
-  for (int i = 0; i < octaves; ++i) {
-    value += valueNoise(x * frequency, y * frequency, seed + i * 1619) * amplitude;
-    normalization += amplitude;
-    frequency *= lacunarity;
-    amplitude *= gain;
-  }
-  return normalization > 0.f ? value / normalization : 0.f;
-}
-float luminance(QRgb c) { return 0.2126f * float(qRed(c)) + 0.7152f * float(qGreen(c)) + 0.0722f * float(qBlue(c)); }
-float luminance01(QRgb c) { return luminance(c) / 255.f; }
-
-// ---- pixel access ---------------------------------------------------------------------------------
-struct Pixels {
-  int w = 0, h = 0;
-  const QRgb *data = nullptr;
-  explicit Pixels(const QImage &image) : w(image.width()), h(image.height()), data(reinterpret_cast<const QRgb *>(image.constBits())) {}
-  QRgb at(int x, int y) const { return data[size_t(y) * size_t(w) + size_t(x)]; }
-  QRgb clamped(int x, int y) const { return at(clampInt(x, 0, w - 1), clampInt(y, 0, h - 1)); }
-};
-// ProceduralEffectHelper.BilinearSample on straight 8-bit channels.
-QRgb bilinear(const Pixels &p, float x, float y) {
-  const int right = p.w - 1, bottom = p.h - 1;
-  x = std::clamp(x, 0.f, float(right));
-  y = std::clamp(y, 0.f, float(bottom));
-  const int x0 = int(std::floor(x)), y0 = int(std::floor(y));
-  const int x1 = x0 < right ? x0 + 1 : right, y1 = y0 < bottom ? y0 + 1 : bottom;
-  const float tx = x - float(x0), ty = y - float(y0);
-  const QRgb c00 = p.at(x0, y0), c10 = p.at(x1, y0), c01 = p.at(x0, y1), c11 = p.at(x1, y1);
-  auto channel = [&](int (*f)(QRgb)) {
-    return toByte(lerp(lerp(float(f(c00)), float(f(c10)), tx), lerp(float(f(c01)), float(f(c11)), tx), ty));
-  };
-  return qRgba(channel(qRed), channel(qGreen), channel(qBlue), channel(qAlpha));
-}
-
-// ---- Gaussian blur on premultiplied float RGBA (0..255) -------------------------------------------
-struct FloatImage {
-  int w = 0, h = 0;
-  std::vector<float> d;  // premultiplied r,g,b,a
-};
-FloatImage toPremul(const QImage &image) {
-  FloatImage f;
-  f.w = image.width();
-  f.h = image.height();
-  f.d.resize(size_t(f.w) * size_t(f.h) * 4);
-  const Pixels p(image);
-  for (size_t i = 0; i < size_t(f.w) * size_t(f.h); ++i) {
-    const QRgb c = p.data[i];
-    const float a = float(qAlpha(c)) / 255.f;
-    f.d[i * 4] = float(qRed(c)) * a;
-    f.d[i * 4 + 1] = float(qGreen(c)) * a;
-    f.d[i * 4 + 2] = float(qBlue(c)) * a;
-    f.d[i * 4 + 3] = float(qAlpha(c));
-  }
-  return f;
-}
-QRgb fromPremulPixel(const float *v) {
-  const float a = v[3];
-  if (a <= 0.f) return 0;
-  const float inv = 255.f / a;
-  return qRgba(toByte(v[0] * inv), toByte(v[1] * inv), toByte(v[2] * inv), toByte(a));
-}
-QImage fromPremul(const FloatImage &f, const QImage &like) {
-  QImage out = makeResult(like);
-  auto *dst = reinterpret_cast<QRgb *>(out.bits());
-  for (size_t i = 0; i < size_t(f.w) * size_t(f.h); ++i) dst[i] = fromPremulPixel(&f.d[i * 4]);
-  return out;
-}
-// Separable Gaussian, kernel radius ceil(3 sigma). Edges: clamp-to-edge or transparent (decal).
-bool gaussianBlur(FloatImage &f, float sigma, bool clampEdges, const EffectContext &context) {
-  if (sigma <= 0.0001f || f.w <= 0 || f.h <= 0) return true;
-  const int radius = std::max(1, int(std::ceil(sigma * 3.f)));
-  std::vector<float> kernel(size_t(radius) * 2 + 1);
-  float sum = 0.f;
-  for (int i = -radius; i <= radius; ++i) {
-    const float v = std::exp(-float(i * i) / (2.f * sigma * sigma));
-    kernel[size_t(i + radius)] = v;
-    sum += v;
-  }
-  for (float &v : kernel) v /= sum;
-  std::vector<float> tmp(f.d.size());
-  const int w = f.w, h = f.h;
-  for (int y = 0; y < h; ++y) {
-    if (context.cancelled()) return false;
-    for (int x = 0; x < w; ++x) {
-      float acc[4]{};
-      for (int k = -radius; k <= radius; ++k) {
-        int sx = x + k;
-        if (sx < 0 || sx >= w) {
-          if (!clampEdges) continue;
-          sx = clampInt(sx, 0, w - 1);
-        }
-        const float *s = &f.d[(size_t(y) * size_t(w) + size_t(sx)) * 4];
-        const float wt = kernel[size_t(k + radius)];
-        for (int c = 0; c < 4; ++c) acc[c] += s[c] * wt;
-      }
-      std::memcpy(&tmp[(size_t(y) * size_t(w) + size_t(x)) * 4], acc, sizeof(acc));
-    }
-  }
-  for (int y = 0; y < h; ++y) {
-    if (context.cancelled()) return false;
-    for (int x = 0; x < w; ++x) {
-      float acc[4]{};
-      for (int k = -radius; k <= radius; ++k) {
-        int sy = y + k;
-        if (sy < 0 || sy >= h) {
-          if (!clampEdges) continue;
-          sy = clampInt(sy, 0, h - 1);
-        }
-        const float *s = &tmp[(size_t(sy) * size_t(w) + size_t(x)) * 4];
-        const float wt = kernel[size_t(k + radius)];
-        for (int c = 0; c < 4; ++c) acc[c] += s[c] * wt;
-      }
-      std::memcpy(&f.d[(size_t(y) * size_t(w) + size_t(x)) * 4], acc, sizeof(acc));
-    }
-  }
-  return true;
-}
-// AnalogEffectHelper.CreateBlurredClamp: radius -> sigma = radius / 3, edges clamped.
-bool blurredClamp(const QImage &source, float radius, const EffectContext &context, QImage &out) {
-  if (radius <= 0.01f) {
-    out = source;
-    return true;
-  }
-  FloatImage f = toPremul(source);
-  if (!gaussianBlur(f, std::max(0.001f, radius / 3.f), true, context)) return false;
-  out = fromPremul(f, source);
-  return true;
-}
-
 // ---- plumbing -------------------------------------------------------------------------------------
-// Runs op(x, y, pixel) over every pixel, returning the new image.
-template <class Op>
-EffectResult mapPixels(const QImage &source, const EffectContext &context, Op op) {
-  if (context.cancelled()) return {{}, kCancelled};
-  QImage result = makeResult(source);
-  if (result.isNull()) return {{}, kFailed};
-  const bool done = runRows(context, source.height(), 0, 100, [&](int y) {
-    const auto *input = reinterpret_cast<const QRgb *>(source.constScanLine(y));
-    auto *output = reinterpret_cast<QRgb *>(result.scanLine(y));
-    for (int x = 0; x < source.width(); ++x) output[x] = op(x, y, input[x]);
-  });
-  if (!done || context.cancelled()) return {{}, kCancelled};
-  return {result, {}};
-}
-QImage copyOf(const QImage &source) {
-  QImage result = source.copy();
-  result.setColorSpace(source.colorSpace());
-  return result;
-}
-EffectResult identityCopy(const QImage &source, const EffectContext &context) {
-  if (context.cancelled()) return {{}, kCancelled};
-  return {copyOf(source), {}};
-}
+
 // Converts a painted premultiplied surface back to straight ARGB32, polling cancellation per row.
 EffectResult finishSurfaceRows(const QImage &surface, const QImage &like, const EffectContext &context) {
   QImage out(surface.size(), QImage::Format_ARGB32);
@@ -241,7 +56,6 @@ EffectResult finishSurfaceRows(const QImage &surface, const QImage &like, const 
   if (!done || context.cancelled()) return {{}, kCancelled};
   return {out, {}};
 }
-int seedOf(const EffectContext &context) { return int(uint32_t(context.seed ^ (context.seed >> 32))); }
 
 void add(EffectRegistry &registry, const QString &id, const QString &name, const QString &reference,
          QVector<ParamSpec> parameters, ApplyFn fn, bool usesSeed = false, bool changesSize = false) {
@@ -256,7 +70,6 @@ void add(EffectRegistry &registry, const QString &id, const QString &name, const
   spec.referencePath = kReferenceDirectory + reference + QStringLiteral("ImageEffect.cs");
   registry.add(std::make_unique<FunctionEffect>(std::move(spec), std::move(fn)));
 }
-
 
 // Skia stroke defaults: butt caps and mitre joins (limit 4).
 QPen strokePen(const QColor &color, qreal width) {
@@ -280,57 +93,18 @@ bool drawBlurredCircle(QPainter &painter, QPointF centre, double radius, const Q
   }
   const QImage straight = patch.convertToFormat(QImage::Format_ARGB32);
   FloatImage f = toPremul(straight);
-  if (!gaussianBlur(f, sigma, false, context)) return false;
+  if (!gaussianBlur255(f, sigma, false, context)) return false;
   painter.drawImage(ox, oy, fromPremul(f, straight));
   return true;
 }
 
 // Straight copy-in of the source into a bordered canvas (reference: DrawBitmap onto the new bitmap).
-QImage borderedCanvas(const QImage &source, int border) {
-  QImage out(source.width() + border * 2, source.height() + border * 2, QImage::Format_ARGB32);
-  out.setColorSpace(source.colorSpace());
-  out.fill(0);
-  return out;
-}
+
 // Straight-alpha source-over of `src` onto `dst`.
-QRgb srcOver(QRgb dst, QRgb src) {
-  const float sa = float(qAlpha(src)) / 255.f, da = float(qAlpha(dst)) / 255.f;
-  const float oa = sa + da * (1.f - sa);
-  if (oa <= 0.f) return 0;
-  auto ch = [&](int s, int d) { return toByte((float(s) * sa + float(d) * da * (1.f - sa)) / oa); };
-  return qRgba(ch(qRed(src), qRed(dst)), ch(qGreen(src), qGreen(dst)), ch(qBlue(src), qBlue(dst)), toByte(oa * 255.f));
-}
+
 // DrawBitmap(source, border, border): source-over, which is a plain copy wherever the canvas is empty or the pixel opaque.
-void copyInterior(const QImage &source, QImage &out, int border) {
-  for (int y = 0; y < source.height(); ++y) {
-    const auto *in = reinterpret_cast<const QRgb *>(source.constScanLine(y));
-    auto *dst = reinterpret_cast<QRgb *>(out.scanLine(y + border)) + border;
-    for (int x = 0; x < source.width(); ++x) dst[x] = (qAlpha(in[x]) == 255 || qAlpha(dst[x]) == 0) ? in[x] : srcOver(dst[x], in[x]);
-  }
-}
+
 // Runs a per-pixel border painter over the frame band only, lets `post` finish the frame (it only
-// touches frame pixels), then copies the source into the interior.
-template <class Op>
-EffectResult paintBorder(const QImage &source, int border, const EffectContext &context, Op op,
-                         const std::function<void(QImage &)> &post = nullptr) {
-  if (context.cancelled()) return {{}, kCancelled};
-  QImage out = borderedCanvas(source, border);
-  if (out.isNull()) return {{}, kFailed};
-  const int nw = out.width(), nh = out.height();
-  const bool done = runRows(context, nh, 0, 100, [&](int y) {
-    auto *dst = reinterpret_cast<QRgb *>(out.scanLine(y));
-    const bool vertical = y < border || y >= border + source.height();
-    for (int x = 0; x < nw; ++x) {
-      if (!vertical && x >= border && x < border + source.width()) continue;
-      dst[x] = op(x, y);
-    }
-  });
-  if (!done || context.cancelled()) return {{}, kCancelled};
-  if (post) post(out);
-  if (context.cancelled()) return {{}, kCancelled};
-  copyInterior(source, out, border);
-  return {out, {}};
-}
 
 // ---- rope_border ----------------------------------------------------------------------------------
 EffectResult ropeBorder(const QImage &source, const ParamValues &params, const EffectContext &context) {
@@ -401,7 +175,7 @@ EffectResult heatHaze(const QImage &source, const ParamValues &params, const Eff
   const bool useBlur = blurPx > 0.01f && strength01 > 0.01f;
   if (useBlur) {
     FloatImage f = toPremul(source);
-    if (!gaussianBlur(f, blurPx, false, context)) return {{}, kCancelled};
+    if (!gaussianBlur255(f, blurPx, false, context)) return {{}, kCancelled};
     blurred = fromPremul(f, source);
   }
   const Pixels src(source);
@@ -552,7 +326,7 @@ EffectResult tiltShift(const QImage &source, const ParamValues &params, const Ef
   QImage blurred = source;
   if (blur > 0.01f) {
     FloatImage f = toPremul(source);
-    if (!gaussianBlur(f, blur, false, context)) return {{}, kCancelled};
+    if (!gaussianBlur255(f, blur, false, context)) return {{}, kCancelled};
     blurred = fromPremul(f, source);
   }
   const Pixels bl(blurred);
@@ -583,24 +357,7 @@ EffectResult tiltShift(const QImage &source, const ParamValues &params, const Ef
 }
 
 // ---- oil_slick_interference -----------------------------------------------------------------------
-void hsvToRgb(float h, float s, float v, float &r, float &g, float &b) {
-  if (s <= 0.0001f) {
-    r = g = b = v;
-    return;
-  }
-  const float scaled = h * 6.f;
-  const int sector = int(std::floor(scaled));
-  const float frac = scaled - float(sector);
-  const float p = v * (1.f - s), q = v * (1.f - s * frac), t = v * (1.f - s * (1.f - frac));
-  switch (sector) {
-  case 0: r = v; g = t; b = p; break;
-  case 1: r = q; g = v; b = p; break;
-  case 2: r = p; g = v; b = t; break;
-  case 3: r = p; g = q; b = v; break;
-  case 4: r = t; g = p; b = v; break;
-  default: r = v; g = p; b = q; break;
-  }
-}
+
 EffectResult oilSlickInterference(const QImage &source, const ParamValues &params, const EffectContext &context) {
   const float intensity = floatOf(params, "intensity") / 100.f;
   const float scale = 24.f + floatOf(params, "scale") / 100.f * 180.f;
@@ -1102,7 +859,7 @@ EffectResult macosWindow(const QImage &source, const ParamValues &params, const 
     sp.end();
     const QImage shapeStraight = shape.convertToFormat(QImage::Format_ARGB32);
     FloatImage f = toPremul(shapeStraight);
-    if (!gaussianBlur(f, float(shadowSize) / 2.f, false, context)) return {{}, kCancelled};
+    if (!gaussianBlur255(f, float(shadowSize) / 2.f, false, context)) return {{}, kCancelled};
     out.drawImage(0, 0, fromPremul(f, shapeStraight));
   }
   // Window contents are composed on a layer, then masked by the antialiased rounded rect.
@@ -1439,22 +1196,14 @@ EffectResult brickWallBorder(const QImage &source, const ParamValues &params, co
             const float cx = float(x) + 0.5f;
             if (cx < x0 || cx > x1) continue;
             if (x >= border && x < border + sw && y >= border && y < border + sh) continue;
-            dst[x] = srcOver(dst[x], mortar.rgba());
+            dst[x] = sourceOverBorder(dst[x], mortar.rgba());
           }
         }
       });
 }
 
 // ---- voronoi_mosaic -------------------------------------------------------------------------------
-int xorshift(int state) {  // 32-bit xorshift with C# int semantics (arithmetic >> on the signed value)
-  uint32_t u = uint32_t(state);
-  u ^= u << 13;
-  int s = int(u);
-  s ^= s >> 17;
-  u = uint32_t(s);
-  u ^= u << 5;
-  return int(u);
-}
+
 EffectResult voronoiMosaic(const QImage &source, const ParamValues &params, const EffectContext &context) {
   const int w = source.width(), h = source.height();
   const int cellCount = intOf(params, "cell_count");
@@ -1817,7 +1566,7 @@ EffectResult lavaMoltenBorder(const QImage &source, const ParamValues &params, c
         }
         const QImage straight = layer.convertToFormat(QImage::Format_ARGB32);
         FloatImage f = toPremul(straight);
-        if (!gaussianBlur(f, 6.f, false, context)) return;
+        if (!gaussianBlur255(f, 6.f, false, context)) return;
         painter.drawImage(0, 0, fromPremul(f, straight));
         painter.end();
         const QColorSpace space = out.colorSpace();
@@ -1827,11 +1576,7 @@ EffectResult lavaMoltenBorder(const QImage &source, const ParamValues &params, c
 }
 
 // ---- rainy_window ---------------------------------------------------------------------------------
-QRgb blendColors(QRgb a, QRgb b, float t) {
-  t = clamp01(t);
-  return qRgba(toByte(lerp(float(qRed(a)), float(qRed(b)), t)), toByte(lerp(float(qGreen(a)), float(qGreen(b)), t)),
-               toByte(lerp(float(qBlue(a)), float(qBlue(b)), t)), toByte(lerp(float(qAlpha(a)), float(qAlpha(b)), t)));
-}
+
 EffectResult rainyWindow(const QImage &source, const ParamValues &params, const EffectContext &context) {
   const float distortionPx = floatOf(params, "distortion"), streakDensity = floatOf(params, "streak_density") / 100.f;
   const float mist = floatOf(params, "mist_amount") / 100.f, droplets = floatOf(params, "droplet_amount") / 100.f;
@@ -1853,7 +1598,7 @@ EffectResult rainyWindow(const QImage &source, const ParamValues &params, const 
       const QRgb b0 = bilinear(p, sx - 1.25f, sy), b1 = bilinear(p, sx + 1.25f, sy), b2 = bilinear(p, sx, sy - 1.25f), b3 = bilinear(p, sx, sy + 1.25f);
       const QRgb blurColor = qRgba((qRed(b0) + qRed(b1) + qRed(b2) + qRed(b3)) / 4, (qGreen(b0) + qGreen(b1) + qGreen(b2) + qGreen(b3)) / 4,
                                    (qBlue(b0) + qBlue(b1) + qBlue(b2) + qBlue(b3)) / 4, (qAlpha(b0) + qAlpha(b1) + qAlpha(b2) + qAlpha(b3)) / 4);
-      baseColor = blendColors(baseColor, blurColor, mist * 0.45f);
+      baseColor = lerpColor(baseColor, blurColor, mist * 0.45f);
     }
     const float columnNoise = hash01(x / 6, 11, seed);
     float streak = 0.f;
@@ -1874,7 +1619,7 @@ EffectResult rainyWindow(const QImage &source, const ParamValues &params, const 
     }
     const float lum = luminance01(baseColor);
     const QRgb fog = qRgba(186, 196, 206, qAlpha(baseColor));
-    const QRgb mistColor = blendColors(baseColor, fog, mist * (0.2f + (1.f - lum) * 0.8f));
+    const QRgb mistColor = lerpColor(baseColor, fog, mist * (0.2f + (1.f - lum) * 0.8f));
     const float wetShade = 1.f - (0.08f * mist + 0.06f * streak);
     const float highlight = dropletMask * 0.50f + streak * 0.20f;
     return qRgba(toByte(float(qRed(mistColor)) * wetShade + highlight * 88.f), toByte(float(qGreen(mistColor)) * wetShade + highlight * 96.f),

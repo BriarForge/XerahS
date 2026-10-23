@@ -10,6 +10,11 @@
 #include <array>
 #include <cstdint>
 #include <functional>
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+#include <new>
+#include <vector>
 
 namespace xerahs::effects::support {
 
@@ -144,5 +149,109 @@ enum class BlurBorder { Decal, Clamp };
 // cancellation or allocation failure.
 QImage approximateGaussianBlur(const QImage &source, float sigma, BlurBorder border, const EffectContext &context,
                                int progressLo = 0, int progressHi = 100);
+int xorshift(int state);
+QRgb lerpColor(QRgb from, QRgb to, float t);
+QRgb sourceOverTop(QRgb top, QRgb bottom);
+
+// Pixel helpers retain their original arithmetic and distinct edge/rounding policies.
+float clamp01(float v);
+float lerp(float a, float b, float t);
+float smoothStep(float e0, float e1, float v);
+int clampInt(int v, int lo, int hi);
+
+// Saturating nearest-even; NaN maps to zero.
+int toByte(float v);
+// Saturating half-up, kept separate from nearest-even.
+int filteredByte(float value);
+float hash01(int x, int y, int seed = 0);
+float fade(float t);
+float valueNoise(float x, float y, int seed = 0);
+float fractalNoise(float x, float y, int octaves, float lacunarity, float gain, int seed = 0);
+float luminance(QRgb c);
+float luminance01(QRgb c);
+float smoothStepRange(float edge0, float edge1, float x);
+
+struct Pixels {
+  int w = 0, h = 0;
+  const QRgb *data = nullptr;
+  explicit Pixels(const QImage &image) : w(image.width()), h(image.height()), data(reinterpret_cast<const QRgb *>(image.constBits())) {}
+  QRgb at(int x, int y) const { return data[size_t(y) * size_t(w) + size_t(x)]; }
+  QRgb clamped(int x, int y) const { return at(clampInt(x, 0, w - 1), clampInt(y, 0, h - 1)); }
+};
+QRgb bilinear(const Pixels &p, float x, float y);
+QRgb bilinear(const QImage &image, float x, float y);
+
+struct FloatImage {
+  int w = 0, h = 0;
+  std::vector<float> d;  // premultiplied r,g,b,a
+};
+FloatImage toPremul(const QImage &image);
+QRgb fromPremulPixel(const float *v);
+QImage fromPremul(const FloatImage &f, const QImage &like);
+
+// Premultiplied 0..255; ceil(sigma * 3.f), distinct from the normalized blur above.
+bool gaussianBlur255(FloatImage &f, float sigma, bool clampEdges, const EffectContext &context);
+bool blurredClamp(const QImage &source, float radius, const EffectContext &context, QImage &out);
+QImage copyOf(const QImage &source);
+EffectResult identityCopy(const QImage &source, const EffectContext &context);
+int seedOf(const EffectContext &context);
+void hsvToRgb(float h, float s, float v, float &r, float &g, float &b);
+QRgb fromHsv(float h, float s, float v);
+
+// These differ for source values outside 0..1.
+float screenClamped(float b, float s);
+float screenOverlay(float source, float overlay);
+
+// HSL variants retain their different hue arithmetic and rounded/truncated output.
+void rgbToHsl(int r, int g, int b, float &h, float &s, float &l);
+float hueToRgb(float p, float q, float t);
+QRgb hslToRgb(float h, float s, float l, int a);
+void toHsl(QRgb c, float &h, float &s, float &l);
+QRgb fromHsl(float h, float s, float l, int alpha);
+void boxHorizontal(const std::vector<float> &in, std::vector<float> &out, int width, int y, int left, int right);
+void boxVertical(const std::vector<float> &in, std::vector<float> &out, int width, int height, int left, int right,
+                 const EffectContext &context, int lo, int hi, bool &cancelled);
+
+template <class Op>
+EffectResult mapPixels(const QImage &source, const EffectContext &context, Op op, int lo = 0, int hi = 100) {
+  if (context.cancelled()) return {{}, kCancelled};
+  QImage result = makeResult(source);
+  if (result.isNull()) return {{}, kFailed};
+  const bool done = runRows(context, source.height(), lo, hi, [&](int y) {
+    const auto *input = reinterpret_cast<const QRgb *>(source.constScanLine(y));
+    auto *output = reinterpret_cast<QRgb *>(result.scanLine(y));
+    for (int x = 0; x < source.width(); ++x) output[x] = op(x, y, input[x]);
+  });
+  if (!done || context.cancelled()) return {{}, kCancelled};
+  return {result, {}};
+}
+
+void fillRect(QImage &image, float left, float top, float right, float bottom, QRgb color);
+void copyRows(QImage &dest, const QImage &source, int offsetX, int offsetY);
+QImage borderedCanvas(const QImage &source, int border);
+QRgb sourceOverBorder(QRgb dst, QRgb src);
+void copyInterior(const QImage &source, QImage &out, int border);
+
+template <class Op>
+EffectResult paintBorder(const QImage &source, int border, const EffectContext &context, Op op,
+                         const std::function<void(QImage &)> &post = nullptr) {
+  if (context.cancelled()) return {{}, kCancelled};
+  QImage out = borderedCanvas(source, border);
+  if (out.isNull()) return {{}, kFailed};
+  const int nw = out.width(), nh = out.height();
+  const bool done = runRows(context, nh, 0, 100, [&](int y) {
+    auto *dst = reinterpret_cast<QRgb *>(out.scanLine(y));
+    const bool vertical = y < border || y >= border + source.height();
+    for (int x = 0; x < nw; ++x) {
+      if (!vertical && x >= border && x < border + source.width()) continue;
+      dst[x] = op(x, y);
+    }
+  });
+  if (!done || context.cancelled()) return {{}, kCancelled};
+  if (post) post(out);
+  if (context.cancelled()) return {{}, kCancelled};
+  copyInterior(source, out, border);
+  return {out, {}};
+}
 
 }  // namespace xerahs::effects::support

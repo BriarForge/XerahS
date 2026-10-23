@@ -33,11 +33,6 @@ using namespace support;
 const QString kFilters = QStringLiteral("ShareX.ImageEditor/src/ShareX.ImageEditor/Core/ImageEffects/Filters/");
 constexpr float kPi = 3.14159265358979323846f;
 
-int roundByte(float v) {
-  if (std::isnan(v) || v <= 0.f) return 0;
-  if (v >= 255.f) return 255;
-  return int(std::nearbyintf(v));
-}
 int truncByte(float v) {
   if (!(v > 0.f)) return 0;
   if (v >= 255.f) return 255;
@@ -53,17 +48,6 @@ int roundAway(float v) {
   return int(rounded);
 }
 
-QRgb srcOver(QRgb top, QRgb bottom) {
-  const int ta = qAlpha(top);
-  if (ta == 255) return top;
-  if (ta == 0) return bottom;
-  const float a1 = ta / 255.f, a2 = qAlpha(bottom) / 255.f;
-  const float outA = a1 + a2 * (1.f - a1);
-  if (outA <= 0.f) return 0;
-  auto channel = [&](int t, int b) { return int(std::nearbyintf((t * a1 + b * a2 * (1.f - a1)) / outA)); };
-  return qRgba(channel(qRed(top), qRed(bottom)), channel(qGreen(top), qGreen(bottom)),
-               channel(qBlue(top), qBlue(bottom)), int(std::nearbyintf(outA * 255.f)));
-}
 QRgb blendOver(QRgb dst, float sr, float sg, float sb, float as, bool overlay) {
   const float ab = qAlpha(dst) / 255.f;
   const float ar = as + ab * (1.f - as);
@@ -87,49 +71,6 @@ QRgb overlayOver(QRgb dst, int r, int g, int b, int a) {
   return blendOver(dst, r / 255.f, g / 255.f, b / 255.f, a / 255.f, true);
 }
 
-void rgbToHsl(int r, int g, int b, float &h, float &s, float &l) {
-  const float rf = r / 255.f, gf = g / 255.f, bf = b / 255.f;
-  const float maxv = std::max(rf, std::max(gf, bf)), minv = std::min(rf, std::min(gf, bf));
-  l = (maxv + minv) / 2.f;
-  const float d = maxv - minv;
-  if (d == 0.f) {
-    h = 0.f;
-    s = 0.f;
-  } else {
-    s = l > 0.5f ? d / (2.f - maxv - minv) : d / (maxv + minv);
-    if (maxv == rf) h = (gf - bf) / d + (gf < bf ? 6.f : 0.f);
-    else if (maxv == gf) h = (bf - rf) / d + 2.f;
-    else h = (rf - gf) / d + 4.f;
-    h *= 60.f;
-  }
-  s *= 100.f;
-  l *= 100.f;
-}
-float hueToRgb(float p, float q, float t) {
-  if (t < 0.f) t += 1.f;
-  if (t > 1.f) t -= 1.f;
-  if (t < 1.f / 6.f) return p + (q - p) * 6.f * t;
-  if (t < 0.5f) return q;
-  if (t < 2.f / 3.f) return p + (q - p) * (2.f / 3.f - t) * 6.f;
-  return p;
-}
-QRgb hslToRgb(float h, float s, float l, int a) {
-  s = std::clamp(s, 0.f, 100.f) / 100.f;
-  l = std::clamp(l, 0.f, 100.f) / 100.f;
-  float rf, gf, bf;
-  if (s == 0.f) {
-    rf = gf = bf = l;
-  } else {
-    const float q = l < 0.5f ? l * (1.f + s) : l + s - l * s;
-    const float p = 2.f * l - q;
-    const float hk = h / 360.f;
-    rf = hueToRgb(p, q, hk + 1.f / 3.f);
-    gf = hueToRgb(p, q, hk);
-    bf = hueToRgb(p, q, hk - 1.f / 3.f);
-  }
-  return qRgba(roundByte(rf * 255.f), roundByte(gf * 255.f), roundByte(bf * 255.f), a);
-}
-
 const QRgb *rowAt(const QImage &image, int y) { return reinterpret_cast<const QRgb *>(image.constScanLine(y)); }
 QRgb *rowAt(QImage &image, int y) { return reinterpret_cast<QRgb *>(image.scanLine(y)); }
 
@@ -139,20 +80,6 @@ EffectResult copyImage(const QImage &source, const EffectContext &context) {
   if (result.isNull()) return {{}, kFailed};
   if (!runRows(context, source.height(), 0, 100, [&](int y) {
         std::memcpy(result.scanLine(y), source.constScanLine(y), size_t(source.width()) * 4);
-      }))
-    return {{}, kCancelled};
-  return {result, {}};
-}
-
-template <class Op>
-EffectResult mapPixels(const QImage &source, const EffectContext &context, Op op, int lo = 0, int hi = 100) {
-  if (context.cancelled()) return {{}, kCancelled};
-  QImage result = makeResult(source);
-  if (result.isNull()) return {{}, kFailed};
-  if (!runRows(context, source.height(), lo, hi, [&](int y) {
-        const QRgb *in = rowAt(source, y);
-        QRgb *out = rowAt(result, y);
-        for (int x = 0; x < source.width(); ++x) out[x] = op(x, y, in[x]);
       }))
     return {{}, kCancelled};
   return {result, {}};
@@ -333,7 +260,7 @@ EffectResult ghostTrail(const QImage &source, const ParamValues &params, const E
         if (sx < 0 || sy < 0 || sx >= w || sy >= h) continue;
         const QRgb s = rowAt(source, sy)[sx];
         const int sa = mulDiv255(qAlpha(s), paintA);
-        dst[x] = srcOver(qRgba(qRed(s), qGreen(s), qBlue(s), sa), dst[x]);
+        dst[x] = sourceOverTop(qRgba(qRed(s), qGreen(s), qBlue(s), sa), dst[x]);
       }
     });
   };
@@ -476,7 +403,7 @@ EffectResult stripeOverlay(const QImage &source, const ParamValues &params, cons
     if (ly < startY || ly >= startY + diagonal * 2.f) return p;
     for (int i = 0; i < count; ++i) {
       const float left = startX + float(i) * float(period);
-      if (lx >= left && lx < left + float(stripe)) return srcOver(qRgba(color.red(), color.green(), color.blue(), paintA), p);
+      if (lx >= left && lx < left + float(stripe)) return sourceOverTop(qRgba(color.red(), color.green(), color.blue(), paintA), p);
     }
     return p;
   });
@@ -575,7 +502,7 @@ EffectResult retroSunset(const QImage &source, const ParamValues &params, const 
     auto mix = [&](int a, int b) { return int(std::nearbyintf(a + (b - a) * local)); };
     QRgb out = overlayOver(p, mix(stops[index].r, stops[index + 1].r), mix(stops[index].g, stops[index + 1].g),
                            mix(stops[index].b, stops[index + 1].b), gradA);
-    if (lines && spacing > 0 && y % spacing == 0) out = srcOver(qRgba(0, 0, 0, lineA), out);
+    if (lines && spacing > 0 && y % spacing == 0) out = sourceOverTop(qRgba(0, 0, 0, lineA), out);
     (void)w;
     return out;
   });
@@ -644,7 +571,7 @@ EffectResult vignette(const QImage &source, const ParamValues &params, const Eff
     t = std::clamp(t, 0.f, 1.f);
     const float falloff = t * t * (3.f - 2.f * t);
     const float factor = 1.f - strength * falloff;
-    return qRgba(roundByte(qRed(p) * factor), roundByte(qGreen(p) * factor), roundByte(qBlue(p) * factor), qAlpha(p));
+    return qRgba(toByte(qRed(p) * factor), toByte(qGreen(p) * factor), toByte(qBlue(p) * factor), qAlpha(p));
   });
 }
 
@@ -761,7 +688,7 @@ EffectResult unsharpMask(const QImage &source, const ParamValues &params, const 
     auto sharpen = [&](int original, int soft) {
       const int diff = original - soft;
       if (std::abs(diff) < threshold) return original;
-      return roundByte(original + diff * amount);
+      return toByte(original + diff * amount);
     };
     return qRgba(sharpen(qRed(p), qRed(b)), sharpen(qGreen(p), qGreen(b)), sharpen(qBlue(p), qBlue(b)), qAlpha(p));
   }, 70, 100);
@@ -824,7 +751,7 @@ EffectResult popArtGrid(const QImage &source, const ParamValues &params, const E
     const float sx = (x + 0.5f - cell->x) * (float(w) / float(cell->w)) - 0.5f;
     const float sy = (y + 0.5f - cell->y) * (float(h) / float(cell->h)) - 0.5f;
     const QRgb s = rowAt(source, clampCoord(int(std::floor(sy + 0.5f)), h))[clampCoord(int(std::floor(sx + 0.5f)), w)];
-    const int gray = roundByte(0.33f * qRed(s) + 0.33f * qGreen(s) + 0.33f * qBlue(s));
+    const int gray = toByte(0.33f * qRed(s) + 0.33f * qGreen(s) + 0.33f * qBlue(s));
     const QColor tint = tints[cell->tint];
     return qRgba(mulDiv255(tint.red(), gray), mulDiv255(tint.green(), gray), mulDiv255(tint.blue(), gray),
                  mulDiv255(tintA, qAlpha(s)));
@@ -849,7 +776,7 @@ EffectResult sobelEdge(const QImage &source, const ParamValues &params, const Ef
     const int gx = (-p00 + p02) + (-2 * p10 + 2 * p12) + (-p20 + p22);
     const int gy = (-p00 - 2 * p01 - p02) + (p20 + 2 * p21 + p22);
     const float magnitude = std::sqrt(float(gx * gx + gy * gy)) * strength;
-    const int edge = magnitude >= float(threshold) ? roundByte(magnitude) : 0;
+    const int edge = magnitude >= float(threshold) ? toByte(magnitude) : 0;
     return qRgba(edge, edge, edge, qAlpha(p));
   });
 }
@@ -894,7 +821,7 @@ EffectResult glow(const QImage &source, const ParamValues &params, const EffectC
         for (int x = 0; x < newW; ++x) {
           const int sx = x - imageX;
           if (sy < 0 || sx < 0 || sy >= source.height() || sx >= source.width()) continue;
-          dst[x] = srcOver(rowAt(source, sy)[sx], dst[x]);
+          dst[x] = sourceOverTop(rowAt(source, sy)[sx], dst[x]);
         }
       }))
     return {{}, kCancelled};
@@ -956,21 +883,6 @@ EffectResult oilPaint(const QImage &source, const ParamValues &params, const Eff
   });
 }
 
-QRgb bilinear(const QImage &image, float x, float y) {
-  const int w = image.width(), h = image.height();
-  x = std::clamp(x, 0.f, float(w - 1));
-  y = std::clamp(y, 0.f, float(h - 1));
-  const int x0 = int(std::floor(x)), y0 = int(std::floor(y));
-  const int x1 = x0 < w - 1 ? x0 + 1 : x0;
-  const int y1 = y0 < h - 1 ? y0 + 1 : y0;
-  const float tx = x - float(x0), ty = y - float(y0);
-  const QRgb c00 = rowAt(image, y0)[x0], c10 = rowAt(image, y0)[x1], c01 = rowAt(image, y1)[x0], c11 = rowAt(image, y1)[x1];
-  auto lerp = [](float a, float b, float t) { return a + (b - a) * t; };
-  auto ch = [&](int (*part)(QRgb)) {
-    return roundByte(lerp(lerp(float(part(c00)), float(part(c10)), tx), lerp(float(part(c01)), float(part(c11)), tx), ty));
-  };
-  return qRgba(ch(qRed), ch(qGreen), ch(qBlue), ch(qAlpha));
-}
 EffectResult zoomBlur(const QImage &source, const ParamValues &params, const EffectContext &context) {
   const float strength = std::clamp(floatOf(params, "strength"), 0.f, 100.f) / 100.f;
   const int samples = std::clamp(intOf(params, "samples"), 4, 64);
@@ -999,7 +911,7 @@ EffectResult zoomBlur(const QImage &source, const ParamValues &params, const Eff
       sumW += weight;
     }
     const float invW = 1.f / std::max(0.0001f, sumW);
-    return qRgba(roundByte(sum[0] * invW), roundByte(sum[1] * invW), roundByte(sum[2] * invW), roundByte(sum[3] * invW));
+    return qRgba(toByte(sum[0] * invW), toByte(sum[1] * invW), toByte(sum[2] * invW), toByte(sum[3] * invW));
   });
 }
 

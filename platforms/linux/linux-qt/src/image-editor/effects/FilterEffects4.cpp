@@ -39,135 +39,13 @@ using namespace support;
 const QString kReferenceDirectory =
     QStringLiteral("ShareX.ImageEditor/src/ShareX.ImageEditor/Core/ImageEffects/Filters/");
 
-// ---- numeric helpers (ProceduralEffectHelper semantics) -------------------------
-float clamp01(float v) { return v <= 0.f ? 0.f : (v >= 1.f ? 1.f : v); }
-float lerp(float a, float b, float t) { return a + (b - a) * t; }
-float smoothStep(float e0, float e1, float v) {
-  if (std::fabs(e1 - e0) < 0.000001f) return v >= e1 ? 1.f : 0.f;
-  const float t = clamp01((v - e0) / (e1 - e0));
-  return t * t * (3.f - 2.f * t);
-}
-int clampInt(int v, int lo, int hi) { return v < lo ? lo : (v > hi ? hi : v); }
-int toByte(float v) {  // ClampToByte: MathF.Round is half to even
-  if (std::isnan(v) || v <= 0.f) return 0;
-  if (v >= 255.f) return 255;
-  return int(std::nearbyintf(v));
-}
-float hash01(int x, int y, int seed = 0) {
-  uint32_t h = 2166136261u;
-  h = (h ^ uint32_t(x)) * 16777619u;
-  h = (h ^ uint32_t(y)) * 16777619u;
-  h = (h ^ uint32_t(seed)) * 16777619u;
-  h ^= h >> 13;
-  h *= 1274126177u;
-  h ^= h >> 16;
-  return float(h & 0x00FFFFFFu) / 16777215.f;
-}
-float luminance(QRgb c) { return 0.2126f * float(qRed(c)) + 0.7152f * float(qGreen(c)) + 0.0722f * float(qBlue(c)); }
-float luminance01(QRgb c) { return luminance(c) / 255.f; }
-float screen(float source, float overlay) { return 1.f - (1.f - source) * (1.f - clamp01(overlay)); }
-
-// SkiaSharp SKColor.FromHsv: hue in degrees, saturation and value in 0..100, truncated to bytes.
-QRgb fromHsv(float h, float s, float v) {
-  const float hue = h / 360.f, sat = s / 100.f, val = v / 100.f;
-  float r = val, g = val, b = val;
-  if (sat != 0.f) {
-    const float scaled = hue * 6.f;
-    const int sextant = int(scaled);
-    const float fract = scaled - float(sextant);
-    const float p = val * (1.f - sat), q = val * (1.f - sat * fract), t = val * (1.f - sat * (1.f - fract));
-    switch (sextant) {
-    case 0: r = val; g = t; b = p; break;
-    case 1: r = q; g = val; b = p; break;
-    case 2: r = p; g = val; b = t; break;
-    case 3: r = p; g = q; b = val; break;
-    case 4: r = t; g = p; b = val; break;
-    default: r = val; g = p; b = q; break;
-    }
-  }
-  return qRgba(clampInt(int(r * 255.f), 0, 255), clampInt(int(g * 255.f), 0, 255), clampInt(int(b * 255.f), 0, 255), 255);
-}
-
-// HolographicFoilShimmerImageEffect.HsvToRgb: hue in 0..1, saturation and value in 0..1.
-void hsvToRgb(float h, float s, float v, float &r, float &g, float &b) {
-  if (s <= 0.0001f) {
-    r = g = b = v;
-    return;
-  }
-  const float scaled = h * 6.f;
-  const int sector = int(std::floor(scaled));
-  const float frac = scaled - float(sector);
-  const float p = v * (1.f - s);
-  const float q = v * (1.f - (s * frac));
-  const float t = v * (1.f - (s * (1.f - frac)));
-  switch (sector) {
-  case 0: r = v; g = t; b = p; break;
-  case 1: r = q; g = v; b = p; break;
-  case 2: r = p; g = v; b = t; break;
-  case 3: r = p; g = q; b = v; break;
-  case 4: r = t; g = p; b = v; break;
-  default: r = v; g = p; b = q; break;
-  }
-}
-
-// ---- pixel access ---------------------------------------------------------------
-struct Pixels {
-  int w = 0, h = 0;
-  const QRgb *data = nullptr;
-  explicit Pixels(const QImage &image)
-      : w(image.width()), h(image.height()), data(reinterpret_cast<const QRgb *>(image.constBits())) {}
-  QRgb at(int x, int y) const { return data[size_t(y) * size_t(w) + size_t(x)]; }
-};
-// ProceduralEffectHelper.BilinearSample on straight 8-bit channels.
-QRgb bilinear(const Pixels &p, float x, float y) {
-  const int right = p.w - 1, bottom = p.h - 1;
-  x = std::clamp(x, 0.f, float(right));
-  y = std::clamp(y, 0.f, float(bottom));
-  const int x0 = int(std::floor(x)), y0 = int(std::floor(y));
-  const int x1 = x0 < right ? x0 + 1 : right, y1 = y0 < bottom ? y0 + 1 : bottom;
-  const float tx = x - float(x0), ty = y - float(y0);
-  const QRgb c00 = p.at(x0, y0), c10 = p.at(x1, y0), c01 = p.at(x0, y1), c11 = p.at(x1, y1);
-  auto channel = [&](int (*f)(QRgb)) {
-    return toByte(lerp(lerp(float(f(c00)), float(f(c10)), tx), lerp(float(f(c01)), float(f(c11)), tx), ty));
-  };
-  return qRgba(channel(qRed), channel(qGreen), channel(qBlue), channel(qAlpha));
-}
-
-// Skia's non-antialiased fill covers the pixels whose centre lies inside the rectangle.
-void fillRect(QImage &image, float left, float top, float right, float bottom, QRgb color) {
-  const int x0 = std::max(0, int(std::ceil(left - 0.5f)));
-  const int x1 = std::min(image.width(), int(std::ceil(right - 0.5f)));
-  const int y0 = std::max(0, int(std::ceil(top - 0.5f)));
-  const int y1 = std::min(image.height(), int(std::ceil(bottom - 0.5f)));
-  for (int y = y0; y < y1; ++y) {
-    auto *line = reinterpret_cast<QRgb *>(image.scanLine(y));
-    for (int x = x0; x < x1; ++x) line[x] = color;
-  }
-}
-
-// Copies source rows into dest at (offsetX, offsetY) without resampling.
-void copyRows(QImage &dest, const QImage &source, int offsetX, int offsetY) {
-  if (offsetX < 0 || offsetX + source.width() > dest.width()) return;
-  for (int y = 0; y < source.height(); ++y) {
-    const int dy = y + offsetY;
-    if (dy < 0 || dy >= dest.height()) continue;
-    auto *line = reinterpret_cast<QRgb *>(dest.scanLine(dy));
-    std::memcpy(line + offsetX, source.constScanLine(y), size_t(source.width()) * sizeof(QRgb));
-  }
-}
-
 // ---- result images --------------------------------------------------------------
-QImage copyOf(const QImage &source) {
-  QImage result = source.copy();
-  result.setColorSpace(source.colorSpace());
-  return result;
-}
+
 QImage makeSizedResult(const QImage &source, int width, int height) {
   QImage result(width, height, QImage::Format_ARGB32);
   if (!result.isNull()) result.setColorSpace(source.colorSpace());
   return result;
 }
-int seedOf(const EffectContext &context) { return int(uint32_t(context.seed ^ (context.seed >> 32))); }
 
 void add(EffectRegistry &registry, const QString &id, const QString &name, const QString &reference,
          QVector<ParamSpec> parameters, ApplyFn fn, bool usesSeed = false, bool changesSize = false) {
@@ -233,8 +111,8 @@ EffectResult anamorphicLensFlare(const QImage &source, const ParamValues &params
       const float overlayR = flareStrength * warmR + ghost * ghostR;
       const float overlayG = flareStrength * warmG + ghost * ghostG;
       const float overlayB = flareStrength * warmB + ghost * ghostB;
-      line[x] = qRgba(toByte(screen(sr, overlayR) * 255.f), toByte(screen(sg, overlayG) * 255.f),
-                      toByte(screen(sb, overlayB) * 255.f), qAlpha(c));
+      line[x] = qRgba(toByte(screenOverlay(sr, overlayR) * 255.f), toByte(screenOverlay(sg, overlayG) * 255.f),
+                      toByte(screenOverlay(sb, overlayB) * 255.f), qAlpha(c));
     }
   });
   if (!finished) return {{}, kCancelled};
@@ -902,9 +780,9 @@ EffectResult plasmaEnergyArcs(const QImage &source, const ParamValues &params, c
       const float overlayR = (coreMask * 0.20f) + (glowMask * 0.10f);
       const float overlayG = (coreMask * 0.70f) + (glowMask * 0.26f);
       const float overlayB = (coreMask * 1.00f) + (glowMask * 0.34f);
-      float outR = screen(sr, overlayR);
-      float outG = screen(sg, overlayG);
-      float outB = screen(sb, overlayB);
+      float outR = screenOverlay(sr, overlayR);
+      float outG = screenOverlay(sg, overlayG);
+      float outB = screenOverlay(sb, overlayB);
       outR = lerp(outR, 1.f, coreMask * 0.18f);
       outG = lerp(outG, 1.f, coreMask * 0.22f);
       outB = lerp(outB, 1.f, coreMask * 0.28f);

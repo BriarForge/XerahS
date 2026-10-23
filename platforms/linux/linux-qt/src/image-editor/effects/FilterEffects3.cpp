@@ -43,201 +43,12 @@ const QString kReferenceDirectory =
     QStringLiteral("ShareX.ImageEditor/src/ShareX.ImageEditor/Core/ImageEffects/Filters/");
 constexpr float kPi = 3.14159265358979f;
 
-// ---- numeric helpers (ProceduralEffectHelper / AnalogEffectHelper semantics) --------------------
-float clamp01(float v) { return v <= 0.f ? 0.f : (v >= 1.f ? 1.f : v); }
-float lerp(float a, float b, float t) { return a + (b - a) * t; }
-float smoothStep(float e0, float e1, float v) {
-  if (std::fabs(e1 - e0) < 0.000001f) return v >= e1 ? 1.f : 0.f;
-  const float t = clamp01((v - e0) / (e1 - e0));
-  return t * t * (3.f - 2.f * t);
-}
-int clampInt(int v, int lo, int hi) { return v < lo ? lo : (v > hi ? hi : v); }
-int toByte(float v) {  // ClampToByte: MathF.Round is half to even
-  if (std::isnan(v) || v <= 0.f) return 0;
-  if (v >= 255.f) return 255;
-  return int(std::nearbyintf(v));
-}
-float hash01(int x, int y, int seed = 0) {
-  uint32_t h = 2166136261u;
-  h = (h ^ uint32_t(x)) * 16777619u;
-  h = (h ^ uint32_t(y)) * 16777619u;
-  h = (h ^ uint32_t(seed)) * 16777619u;
-  h ^= h >> 13;
-  h *= 1274126177u;
-  h ^= h >> 16;
-  return float(h & 0x00FFFFFFu) / 16777215.f;
-}
-float fade(float t) { return t * t * t * (t * (t * 6.f - 15.f) + 10.f); }
-float valueNoise(float x, float y, int seed = 0) {
-  const int x0 = int(std::floor(x)), y0 = int(std::floor(y));
-  const float tx = fade(x - float(x0)), ty = fade(y - float(y0));
-  const float v00 = hash01(x0, y0, seed), v10 = hash01(x0 + 1, y0, seed);
-  const float v01 = hash01(x0, y0 + 1, seed), v11 = hash01(x0 + 1, y0 + 1, seed);
-  return lerp(lerp(v00, v10, tx), lerp(v01, v11, tx), ty);
-}
-float fractalNoise(float x, float y, int octaves, float lacunarity, float gain, int seed = 0) {
-  float value = 0.f, amplitude = 1.f, frequency = 1.f, normalization = 0.f;
-  for (int i = 0; i < octaves; ++i) {
-    value += valueNoise(x * frequency, y * frequency, seed + i * 1619) * amplitude;
-    normalization += amplitude;
-    frequency *= lacunarity;
-    amplitude *= gain;
-  }
-  return normalization > 0.f ? value / normalization : 0.f;
-}
-float luminance(QRgb c) { return 0.2126f * float(qRed(c)) + 0.7152f * float(qGreen(c)) + 0.0722f * float(qBlue(c)); }
-float luminance01(QRgb c) { return luminance(c) / 255.f; }
 float applyContrast(float v, float contrast) { return clamp01((v - 0.5f) * contrast + 0.5f); }
-float screen(float b, float s) { return 1.f - (1.f - clamp01(b)) * (1.f - clamp01(s)); }
-QRgb lerpColor(QRgb from, QRgb to, float t) {
-  const float a = clamp01(t);
-  return qRgba(toByte(lerp(float(qRed(from)), float(qRed(to)), a)), toByte(lerp(float(qGreen(from)), float(qGreen(to)), a)),
-               toByte(lerp(float(qBlue(from)), float(qBlue(to)), a)), toByte(lerp(float(qAlpha(from)), float(qAlpha(to)), a)));
-}
+
 QRgb rgbaF(float r, float g, float b, int a) { return qRgba(toByte(r * 255.f), toByte(g * 255.f), toByte(b * 255.f), a); }
 
-// ---- pixel access ---------------------------------------------------------------------------------
-struct Pixels {
-  int w = 0, h = 0;
-  const QRgb *data = nullptr;
-  explicit Pixels(const QImage &image) : w(image.width()), h(image.height()), data(reinterpret_cast<const QRgb *>(image.constBits())) {}
-  QRgb at(int x, int y) const { return data[size_t(y) * size_t(w) + size_t(x)]; }
-  QRgb clamped(int x, int y) const { return at(clampInt(x, 0, w - 1), clampInt(y, 0, h - 1)); }
-};
-// ProceduralEffectHelper.BilinearSample on straight 8-bit channels.
-QRgb bilinear(const Pixels &p, float x, float y) {
-  const int right = p.w - 1, bottom = p.h - 1;
-  x = std::clamp(x, 0.f, float(right));
-  y = std::clamp(y, 0.f, float(bottom));
-  const int x0 = int(std::floor(x)), y0 = int(std::floor(y));
-  const int x1 = x0 < right ? x0 + 1 : right, y1 = y0 < bottom ? y0 + 1 : bottom;
-  const float tx = x - float(x0), ty = y - float(y0);
-  const QRgb c00 = p.at(x0, y0), c10 = p.at(x1, y0), c01 = p.at(x0, y1), c11 = p.at(x1, y1);
-  auto channel = [&](int (*f)(QRgb)) {
-    return toByte(lerp(lerp(float(f(c00)), float(f(c10)), tx), lerp(float(f(c01)), float(f(c11)), tx), ty));
-  };
-  return qRgba(channel(qRed), channel(qGreen), channel(qBlue), channel(qAlpha));
-}
-
-// ---- Gaussian blur on premultiplied float RGBA (0..255) -------------------------------------------
-struct FloatImage {
-  int w = 0, h = 0;
-  std::vector<float> d;  // premultiplied r,g,b,a
-};
-FloatImage toPremul(const QImage &image) {
-  FloatImage f;
-  f.w = image.width();
-  f.h = image.height();
-  f.d.resize(size_t(f.w) * size_t(f.h) * 4);
-  const Pixels p(image);
-  for (size_t i = 0; i < size_t(f.w) * size_t(f.h); ++i) {
-    const QRgb c = p.data[i];
-    const float a = float(qAlpha(c)) / 255.f;
-    f.d[i * 4] = float(qRed(c)) * a;
-    f.d[i * 4 + 1] = float(qGreen(c)) * a;
-    f.d[i * 4 + 2] = float(qBlue(c)) * a;
-    f.d[i * 4 + 3] = float(qAlpha(c));
-  }
-  return f;
-}
-QRgb fromPremulPixel(const float *v) {
-  const float a = v[3];
-  if (a <= 0.f) return 0;
-  const float inv = 255.f / a;
-  return qRgba(toByte(v[0] * inv), toByte(v[1] * inv), toByte(v[2] * inv), toByte(a));
-}
-QImage fromPremul(const FloatImage &f, const QImage &like) {
-  QImage out = makeResult(like);
-  auto *dst = reinterpret_cast<QRgb *>(out.bits());
-  for (size_t i = 0; i < size_t(f.w) * size_t(f.h); ++i) dst[i] = fromPremulPixel(&f.d[i * 4]);
-  return out;
-}
-// Separable Gaussian, kernel radius ceil(3 sigma). Edges: clamp-to-edge or transparent (decal).
-bool gaussianBlur(FloatImage &f, float sigma, bool clampEdges, const EffectContext &context) {
-  if (sigma <= 0.0001f || f.w <= 0 || f.h <= 0) return true;
-  const int radius = std::max(1, int(std::ceil(sigma * 3.f)));
-  std::vector<float> kernel(size_t(radius) * 2 + 1);
-  float sum = 0.f;
-  for (int i = -radius; i <= radius; ++i) {
-    const float v = std::exp(-float(i * i) / (2.f * sigma * sigma));
-    kernel[size_t(i + radius)] = v;
-    sum += v;
-  }
-  for (float &v : kernel) v /= sum;
-  std::vector<float> tmp(f.d.size());
-  const int w = f.w, h = f.h;
-  for (int y = 0; y < h; ++y) {
-    if (context.cancelled()) return false;
-    for (int x = 0; x < w; ++x) {
-      float acc[4]{};
-      for (int k = -radius; k <= radius; ++k) {
-        int sx = x + k;
-        if (sx < 0 || sx >= w) {
-          if (!clampEdges) continue;
-          sx = clampInt(sx, 0, w - 1);
-        }
-        const float *s = &f.d[(size_t(y) * size_t(w) + size_t(sx)) * 4];
-        const float wt = kernel[size_t(k + radius)];
-        for (int c = 0; c < 4; ++c) acc[c] += s[c] * wt;
-      }
-      std::memcpy(&tmp[(size_t(y) * size_t(w) + size_t(x)) * 4], acc, sizeof(acc));
-    }
-  }
-  for (int y = 0; y < h; ++y) {
-    if (context.cancelled()) return false;
-    for (int x = 0; x < w; ++x) {
-      float acc[4]{};
-      for (int k = -radius; k <= radius; ++k) {
-        int sy = y + k;
-        if (sy < 0 || sy >= h) {
-          if (!clampEdges) continue;
-          sy = clampInt(sy, 0, h - 1);
-        }
-        const float *s = &tmp[(size_t(sy) * size_t(w) + size_t(x)) * 4];
-        const float wt = kernel[size_t(k + radius)];
-        for (int c = 0; c < 4; ++c) acc[c] += s[c] * wt;
-      }
-      std::memcpy(&f.d[(size_t(y) * size_t(w) + size_t(x)) * 4], acc, sizeof(acc));
-    }
-  }
-  return true;
-}
-// AnalogEffectHelper.CreateBlurredClamp: radius -> sigma = radius / 3, edges clamped.
-bool blurredClamp(const QImage &source, float radius, const EffectContext &context, QImage &out) {
-  if (radius <= 0.01f) {
-    out = source;
-    return true;
-  }
-  FloatImage f = toPremul(source);
-  if (!gaussianBlur(f, std::max(0.001f, radius / 3.f), true, context)) return false;
-  out = fromPremul(f, source);
-  return true;
-}
-
 // ---- plumbing -------------------------------------------------------------------------------------
-// Runs op(x, y, pixel) over every pixel, returning the new image.
-template <class Op>
-EffectResult mapPixels(const QImage &source, const EffectContext &context, Op op) {
-  if (context.cancelled()) return {{}, kCancelled};
-  QImage result = makeResult(source);
-  if (result.isNull()) return {{}, kFailed};
-  const bool done = runRows(context, source.height(), 0, 100, [&](int y) {
-    const auto *input = reinterpret_cast<const QRgb *>(source.constScanLine(y));
-    auto *output = reinterpret_cast<QRgb *>(result.scanLine(y));
-    for (int x = 0; x < source.width(); ++x) output[x] = op(x, y, input[x]);
-  });
-  if (!done || context.cancelled()) return {{}, kCancelled};
-  return {result, {}};
-}
-QImage copyOf(const QImage &source) {
-  QImage result = source.copy();
-  result.setColorSpace(source.colorSpace());
-  return result;
-}
-EffectResult identityCopy(const QImage &source, const EffectContext &context) {
-  if (context.cancelled()) return {{}, kCancelled};
-  return {copyOf(source), {}};
-}
+
 // A premultiplied painting surface the size of `like`, filled with `fill`.
 QImage paintSurface(QSize size, QRgb fill) {
   QImage surface(size, QImage::Format_ARGB32_Premultiplied);
@@ -250,7 +61,6 @@ EffectResult finishSurface(const QImage &surface, const QImage &like) {
   out.setColorSpace(like.colorSpace());
   return {out, {}};
 }
-int seedOf(const EffectContext &context) { return int(uint32_t(context.seed ^ (context.seed >> 32))); }
 
 void add(EffectRegistry &registry, const QString &id, const QString &name, const QString &reference,
          QVector<ParamSpec> parameters, ApplyFn fn, bool usesSeed = false, bool changesSize = false) {
@@ -398,7 +208,7 @@ EffectResult edgeFeather(const QImage &source, const ParamValues &params, const 
   mask.d.assign(size_t(mask.w) * size_t(mask.h) * 4, 0.f);
   for (size_t i = 0; i < size_t(mask.w) * size_t(mask.h); ++i)
     if (qAlpha(p.data[i]) > 16) mask.d[i * 4 + 3] = 255.f;  // only alpha is read back
-  if (!gaussianBlur(mask, std::max(0.001f, radius / 3.f), false, context)) return {{}, kCancelled};
+  if (!gaussianBlur255(mask, std::max(0.001f, radius / 3.f), false, context)) return {{}, kCancelled};
   return mapPixels(source, context, [&](int x, int y, QRgb c) {
     const float feather = std::clamp(mask.d[(size_t(y) * size_t(mask.w) + size_t(x)) * 4 + 3], 0.f, 255.f) / 255.f;
     return qRgba(qRed(c), qGreen(c), qBlue(c), toByte(float(qAlpha(c)) * float(toByte(feather * 255.f)) / 255.f));
@@ -532,9 +342,9 @@ EffectResult doubleExposure(const QImage &source, const ParamValues &params, con
     gg = applyContrast(gg, contrast);
     gb = applyContrast(gb, contrast);
     const float localBlend = blend * (0.55f + ghostLum * 0.45f);
-    const float r = lerp(sr, screen(sr, gr), localBlend);
-    const float g = lerp(sg, screen(sg, gg), localBlend * 0.92f);
-    const float b = lerp(sb, screen(sb, gb), localBlend * 0.88f);
+    const float r = lerp(sr, screenClamped(sr, gr), localBlend);
+    const float g = lerp(sg, screenClamped(sg, gg), localBlend * 0.92f);
+    const float b = lerp(sb, screenClamped(sb, gb), localBlend * 0.88f);
     return rgbaF(r, g, b, qAlpha(src));
   });
 }
@@ -649,9 +459,9 @@ EffectResult starFilter(const QImage &source, const ParamValues &params, const E
       }
     }
     const float star = strength * (streak / (float(sampleCount) * 3.6f));
-    const float r = screen(float(qRed(src)) / 255.f, star * (0.90f + warmth * 0.18f));
-    const float g = screen(float(qGreen(src)) / 255.f, star * (0.74f + warmth * 0.08f));
-    const float b = screen(float(qBlue(src)) / 255.f, star * (0.52f - warmth * 0.16f));
+    const float r = screenClamped(float(qRed(src)) / 255.f, star * (0.90f + warmth * 0.18f));
+    const float g = screenClamped(float(qGreen(src)) / 255.f, star * (0.74f + warmth * 0.08f));
+    const float b = screenClamped(float(qBlue(src)) / 255.f, star * (0.52f - warmth * 0.16f));
     return rgbaF(r, g, b, qAlpha(src));
   });
 }
@@ -705,16 +515,16 @@ EffectResult softDiffusion(const QImage &source, const ParamValues &params, cons
     const float br = float(qRed(blur)) / 255.f, bg = float(qGreen(blur)) / 255.f, bb = float(qBlue(blur)) / 255.f;
     const float blurLum = luminance01(blur);
     const float bloomMask = 0.45f + bloom * std::pow(blurLum, 1.7f) * 0.85f;
-    float r = lerp(sr, screen(sr, br * bloomMask * (1.02f + warmth * 0.08f)), amount);
-    float g = lerp(sg, screen(sg, bg * bloomMask * 0.96f), amount);
-    float b = lerp(sb, screen(sb, bb * bloomMask * (0.92f - warmth * 0.06f)), amount);
+    float r = lerp(sr, screenClamped(sr, br * bloomMask * (1.02f + warmth * 0.08f)), amount);
+    float g = lerp(sg, screenClamped(sg, bg * bloomMask * 0.96f), amount);
+    float b = lerp(sb, screenClamped(sb, bb * bloomMask * (0.92f - warmth * 0.06f)), amount);
     r = applyContrast(r, postContrast);
     g = applyContrast(g, postContrast);
     b = applyContrast(b, postContrast);
     if (warmth > 0.0001f) {
       const float warmMask = warmth * std::pow(blurLum, 1.35f) * 0.22f;
-      r = screen(r, warmMask);
-      g = screen(g, warmMask * 0.55f);
+      r = screenClamped(r, warmMask);
+      g = screenClamped(g, warmMask * 0.55f);
       b = lerp(b, std::max(0.f, b - warmMask * 0.12f), warmMask);
     }
     return rgbaF(r, g, b, qAlpha(src));
@@ -778,7 +588,6 @@ EffectResult nightVision(const QImage &source, const ParamValues &params, const 
     return rgbaF(r, g, b, qAlpha(src));
   });
 }
-
 
 // ---- hologram_scan --------------------------------------------------------------------------------
 EffectResult hologramScan(const QImage &source, const ParamValues &params, const EffectContext &context) {
@@ -939,52 +748,7 @@ EffectResult paperStencilMask(const QImage &source, const ParamValues &params, c
 }
 
 // ---- infrared_false_color -------------------------------------------------------------------------
-// SKColor.ToHsl / SKColor.FromHsl (h 0..360, s and l 0..100); FromHsl truncates to bytes like SkiaSharp.
-void toHsl(QRgb c, float &h, float &s, float &l) {
-  const float r = float(qRed(c)) / 255.f, g = float(qGreen(c)) / 255.f, b = float(qBlue(c)) / 255.f;
-  const float mx = std::max({r, g, b}), mn = std::min({r, g, b});
-  l = (mx + mn) / 2.f;
-  if (mx == mn) {
-    h = s = 0.f;
-  } else {
-    const float d = mx - mn;
-    s = l > 0.5f ? d / (2.f - mx - mn) : d / (mx + mn);
-    if (mx == r) h = (g - b) / d + (g < b ? 6.f : 0.f);
-    else if (mx == g) h = (b - r) / d + 2.f;
-    else h = (r - g) / d + 4.f;
-    h /= 6.f;
-  }
-  h *= 360.f;
-  s *= 100.f;
-  l *= 100.f;
-}
-QRgb fromHsl(float h, float s, float l, int alpha) {
-  while (h < 0.f) h += 360.f;
-  while (h >= 360.f) h -= 360.f;
-  s = std::clamp(s, 0.f, 100.f);
-  l = std::clamp(l, 0.f, 100.f);
-  float hue = h / 360.f;
-  const float sat = s / 100.f, lum = l / 100.f;
-  float r = lum, g = lum, b = lum;
-  const float v = lum <= 0.5f ? lum * (1.f + sat) : lum + sat - lum * sat;
-  if (v > 0.f) {
-    const float m = lum + lum - v;
-    const float sv = (v - m) / v;
-    hue *= 6.f;
-    const int sextant = int(hue);
-    const float fract = hue - float(sextant);
-    const float vsf = v * sv * fract, mid1 = m + vsf, mid2 = v - vsf;
-    switch (sextant) {
-    case 0: r = v; g = mid1; b = m; break;
-    case 1: r = mid2; g = v; b = m; break;
-    case 2: r = m; g = v; b = mid1; break;
-    case 3: r = m; g = mid2; b = v; break;
-    case 4: r = mid1; g = m; b = v; break;
-    default: r = v; g = m; b = mid2; break;
-    }
-  }
-  return qRgba(clampInt(int(r * 255.f), 0, 255), clampInt(int(g * 255.f), 0, 255), clampInt(int(b * 255.f), 0, 255), alpha);
-}
+
 EffectResult infraredFalseColor(const QImage &source, const ParamValues &params, const EffectContext &context) {
   const float intensity = floatOf(params, "intensity") / 100.f, foliageShift = floatOf(params, "foliage_shift") / 100.f;
   const float skyDarkening = floatOf(params, "sky_darkening") / 100.f, glow = floatOf(params, "glow") / 100.f;
@@ -1019,9 +783,9 @@ EffectResult infraredFalseColor(const QImage &source, const ParamValues &params,
     if (glow > 0.0001f) {
       float glowMask = std::max(0.f, (luminance01(glows.at(x, y)) - 0.52f) / 0.48f);
       glowMask = std::pow(glowMask, 1.55f) * glow;
-      r = screen(r, glowMask * 0.80f);
-      g = screen(g, glowMask * 0.18f);
-      b = screen(b, glowMask * 0.42f);
+      r = screenClamped(r, glowMask * 0.80f);
+      g = screenClamped(g, glowMask * 0.18f);
+      b = screenClamped(b, glowMask * 0.42f);
     }
     return rgbaF(r, g, b, qAlpha(src));
   });
@@ -1067,7 +831,6 @@ EffectResult animeSpeedLines(const QImage &source, const ParamValues &params, co
   });
 }
 
-
 // ---- border-effect helpers ------------------------------------------------------------------------
 // Blurs a premultiplied ARGB32 layer in place (transparent edges), the equivalent of a Skia blur mask filter.
 bool blurPremulLayer(QImage &layer, float sigma, const EffectContext &context) {
@@ -1086,7 +849,7 @@ bool blurPremulLayer(QImage &layer, float sigma, const EffectContext &context) {
       v[3] = float(qAlpha(line[x]));
     }
   }
-  if (!gaussianBlur(f, sigma, false, context)) return false;
+  if (!gaussianBlur255(f, sigma, false, context)) return false;
   for (int y = 0; y < f.h; ++y) {
     auto *line = reinterpret_cast<QRgb *>(layer.scanLine(y));
     for (int x = 0; x < f.w; ++x) {
@@ -1394,7 +1157,6 @@ EffectResult wetPlateCollodion(const QImage &source, const ParamValues &params, 
   });
 }
 
-
 // ---- smoke_overlay --------------------------------------------------------------------------------
 EffectResult smokeOverlay(const QImage &source, const ParamValues &params, const EffectContext &context) {
   const float density = floatOf(params, "density") / 100.f, scale = floatOf(params, "scale") / 100.f;
@@ -1671,7 +1433,6 @@ EffectResult waveEdge(const QImage &source, const ParamValues &params, const Eff
   return finishSurface(surface, source);
 }
 
-
 // ---- crystal_prism --------------------------------------------------------------------------------
 EffectResult crystalPrism(const QImage &source, const ParamValues &params, const EffectContext &context) {
   const int facet = intOf(params, "facetSize");
@@ -1772,9 +1533,9 @@ EffectResult disposableCamera(const QImage &source, const ParamValues &params, c
     const float dx = (float(x) - centerX) / float(std::max(1, w - 1)), dy = (float(y) - centerY) / float(std::max(1, h - 1));
     const float dist = std::sqrt(dx * dx + dy * dy);
     const float flashMask = flash * std::exp(-(dist * dist) * sigmaInv);
-    r = screen(r, flashMask * (0.22f + warmth * 0.10f));
-    g = screen(g, flashMask * 0.18f);
-    b = screen(b, flashMask * (0.11f - warmth * 0.02f));
+    r = screenClamped(r, flashMask * (0.22f + warmth * 0.10f));
+    g = screenClamped(g, flashMask * 0.18f);
+    b = screenClamped(b, flashMask * (0.11f - warmth * 0.02f));
     if (warmth > 0.0001f) {
       const float warmMix = warmth * (0.14f + flashMask * 0.30f);
       r = lerp(r, std::min(1.f, r + 0.22f), warmMix);
@@ -1836,7 +1597,6 @@ EffectResult lensBlur(const QImage &source, const ParamValues &params, const Eff
   });
 }
 
-
 // ---- chalk_drawing --------------------------------------------------------------------------------
 EffectResult chalkDrawing(const QImage &source, const ParamValues &params, const EffectContext &context) {
   if (context.cancelled()) return {{}, kCancelled};
@@ -1869,9 +1629,7 @@ EffectResult chalkDrawing(const QImage &source, const ParamValues &params, const
   }
   int32_t rng = 12345;  // C# int xorshift: signed, arithmetic right shift
   for (size_t i = 0; i < count; ++i) {
-    rng ^= int32_t(uint32_t(rng) << 13);
-    rng ^= rng >> 17;
-    rng ^= int32_t(uint32_t(rng) << 5);
+    rng = xorshift(rng);
     noise[i] = float(rng & 0x7FFFFFFF) / 2147483647.f;
   }
   const float edgeWeight = 0.3f + detail * 0.7f, lumWeight = 1.f - edgeWeight * 0.5f;
@@ -1982,25 +1740,7 @@ EffectResult zigzagBorder(const QImage &source, const ParamValues &params, const
 
 // ---- mosaic_tile_border (changes size) ------------------------------------------------------------
 // SKColor.FromHsv (h 0..360, s and v 0..100), truncating to bytes like SkiaSharp.
-QRgb fromHsv(float h, float s, float v) {
-  const float hue = h / 360.f, sat = s / 100.f, val = v / 100.f;
-  float r = val, g = val, b = val;
-  if (sat != 0.f) {
-    const float scaled = hue * 6.f;
-    const int sextant = int(scaled);
-    const float fract = scaled - float(sextant);
-    const float p = val * (1.f - sat), q = val * (1.f - sat * fract), t = val * (1.f - sat * (1.f - fract));
-    switch (sextant) {
-    case 0: r = val; g = t; b = p; break;
-    case 1: r = q; g = val; b = p; break;
-    case 2: r = p; g = val; b = t; break;
-    case 3: r = p; g = q; b = val; break;
-    case 4: r = t; g = p; b = val; break;
-    default: r = val; g = p; b = q; break;
-    }
-  }
-  return qRgb(clampInt(int(r * 255.f), 0, 255), clampInt(int(g * 255.f), 0, 255), clampInt(int(b * 255.f), 0, 255));
-}
+
 EffectResult mosaicTileBorder(const QImage &source, const ParamValues &params, const EffectContext &context) {
   if (context.cancelled()) return {{}, kCancelled};
   const int border = intOf(params, "border_size");
@@ -2055,7 +1795,6 @@ EffectResult mosaicTileBorder(const QImage &source, const ParamValues &params, c
   frame.setColorSpace(source.colorSpace());
   return {frame, {}};
 }
-
 
 }  // namespace
 
