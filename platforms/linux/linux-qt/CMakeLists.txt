@@ -41,6 +41,8 @@ add_library(xerahs_core STATIC
   src/actions/PipelineJournal.h
   src/history/CaptureHistory.cpp
   src/history/CaptureHistory.h
+  src/capture/CaptureSchedule.cpp
+  src/capture/CaptureSchedule.h
   src/capture/RegionGeometry.cpp
   src/capture/RegionGeometry.h
   src/capture/WindowSnapTargets.cpp
@@ -105,6 +107,7 @@ add_library(xerahs_core STATIC
   src/media/VideoConversion.h
 )
 target_include_directories(xerahs_core PUBLIC src)
+set_target_properties(xerahs_core PROPERTIES AUTOMOC ON)
 # Qt Gui (private) supplies QPainter for shape painting shared with the canvas.
 target_link_libraries(xerahs_core PUBLIC Qt6::Core PRIVATE Qt6::Gui ZLIB::ZLIB)
 target_compile_options(xerahs_core PRIVATE -Wall -Wextra -Wpedantic
@@ -207,6 +210,12 @@ add_executable(xerahs
   app/CaptureSave.h
   app/CaptureController.cpp
   app/CaptureController.h
+  app/DelayedCapture.cpp
+  app/DelayedCapture.h
+  app/AutoCaptureDialog.cpp
+  app/AutoCaptureDialog.h
+  app/ScheduledCapture.cpp
+  app/ScheduledCapture.h
   app/CaptureRecoveryActions.cpp
   app/CaptureRecoveryActions.h
   app/CapturePipeline.cpp
@@ -508,6 +517,20 @@ target_link_libraries(post-capture-pipeline-test PRIVATE xerahs_core Qt6::Test)
 target_compile_definitions(post-capture-pipeline-test PRIVATE
   XERAHS_ACTIONS_CATALOGUE="${XERAHS_REPO_ROOT}/product-contract/capabilities/POST-CAPTURE-ACTIONS-001/actions.json")
 add_test(NAME post-capture-pipeline COMMAND post-capture-pipeline-test)
+
+add_executable(capture-schedule-test tests/CaptureScheduleTest.cpp)
+set_target_properties(capture-schedule-test PROPERTIES AUTOMOC ON)
+target_link_libraries(capture-schedule-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME capture-schedule COMMAND capture-schedule-test)
+
+add_executable(capture-schedule-dialog-test tests/CaptureScheduleDialogTest.cpp
+               app/DelayedCapture.cpp app/DelayedCapture.h
+               app/AutoCaptureDialog.cpp app/AutoCaptureDialog.h)
+set_target_properties(capture-schedule-dialog-test PROPERTIES AUTOMOC ON)
+target_include_directories(capture-schedule-dialog-test PRIVATE app)
+target_link_libraries(capture-schedule-dialog-test PRIVATE xerahs_core Qt6::Widgets Qt6::Test)
+add_test(NAME capture-schedule-dialog COMMAND capture-schedule-dialog-test)
+set_tests_properties(capture-schedule-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 
 add_executable(region-capture-test tests/RegionCaptureTest.cpp)
 set_target_properties(region-capture-test PROPERTIES AUTOMOC ON)
@@ -968,3 +991,13 @@ add_executable(private-json-file-test tests/PrivateJsonFileTest.cpp)
 set_target_properties(private-json-file-test PROPERTIES AUTOMOC ON)
 target_link_libraries(private-json-file-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME private-json-file COMMAND private-json-file-test)
+# CORE-016: attempt bookkeeping for delayed and automatic capture.
+add_executable(scheduled-capture-test tests/ScheduledCaptureTest.cpp
+               app/ScheduledCapture.cpp app/ScheduledCapture.h
+               app/DelayedCapture.cpp app/DelayedCapture.h
+               app/AutoCaptureDialog.cpp app/AutoCaptureDialog.h)
+set_target_properties(scheduled-capture-test PROPERTIES AUTOMOC ON)
+target_include_directories(scheduled-capture-test PRIVATE app)
+target_link_libraries(scheduled-capture-test PRIVATE xerahs_core Qt6::Widgets Qt6::Test)
+add_test(NAME scheduled-capture COMMAND scheduled-capture-test)
+set_tests_properties(scheduled-capture PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)

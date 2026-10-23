@@ -2,6 +2,7 @@
 // Identity com.xerahs.app / "XerahS" (CORE-002, ROOT-IDENTITY-001).
 
 #include "CaptureController.h"
+#include "ScheduledCapture.h"
 #include "RecordingActions.h"
 #include "CaptureActions.h"
 #include "CaptureWorkflows.h"
@@ -261,6 +262,23 @@ int main(int argc, char *argv[]) {
   QAction *fullScreen = menu.addAction(QStringLiteral("Capture full screen"));
   QAction *monitor = menu.addAction(QStringLiteral("Capture monitor under pointer"));
   QAction *activeWindow = menu.addAction(QStringLiteral("Capture active window"));
+  xerahs::app::ApplicationWindow *commandWindow = nullptr; ActivationDispatcher *activation = nullptr;
+  auto *schedule = new xerahs::app::ScheduledCapture(xerahs::app::ScheduledCapturePorts{
+    [&] { return capture.busy() || recording.busy() || QApplication::activeModalWidget() || shortcutActions.pending(); },
+    [&](xerahs::capture::CaptureSource source) {
+      const auto action = source == xerahs::capture::CaptureSource::Monitor ? ActivationAction::CaptureMonitor : source == xerahs::capture::CaptureSource::ActiveWindow ? ActivationAction::CaptureActiveWindow : source == xerahs::capture::CaptureSource::Region ? ActivationAction::CaptureRegion : ActivationAction::CaptureFullScreen;
+      if (!activation) return QStringLiteral("activation-unavailable");
+      const auto local = makeActivationRequest(action); const auto admitted = activation->admit(local);
+      if (admitted != ActivationReplyState::Accepted) return admitted == ActivationReplyState::Busy ? QStringLiteral("busy") : QStringLiteral("activation-unavailable");
+      const auto diagnostic = activation->dispatch(local);
+      return !diagnostic.isEmpty() ? diagnostic : capture.busy() ? QString() : QStringLiteral("capture-not-started");
+    },
+    [&](const QString &title, const QString &body, bool ok) {
+      if (commandWindow) { commandWindow->showResult(title, body, ok); if (!ok && title == QLatin1String("Capture after delay")) commandWindow->activate(); }
+      tray.showMessage(title, body, ok ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning, 5000);
+    },
+    [&](const QString &tooltip) { tray.setToolTip(tooltip); }}, &app);
+  menu.addAction(schedule->delayAction()); menu.addAction(schedule->autoAction()); menu.addAction(schedule->stopAction());
   QAction *chooseCapture = menu.addAction(QStringLiteral("Capture region and choose actions…"));
   QAction *configureWorkflows = menu.addAction(QStringLiteral("Capture workflows…"));
   menu.addAction(shortcutActions.enableAction()); menu.addAction(shortcutActions.disableAction());
@@ -283,9 +301,10 @@ int main(int argc, char *argv[]) {
   menu.addSeparator();
   QAction *quit = menu.addAction(QStringLiteral("Quit XerahS"));
   tray.setContextMenu(&menu);
-  xerahs::app::ApplicationWindow home({{"upload-destinations", uploadDestinations}, {"settings", settingsAction}, {"capture-region", region}, {"capture-full-screen", fullScreen}, {"capture-monitor", monitor}, {"capture-active-window", activeWindow}, {"capture-region-choose-actions", chooseCapture}, {"cancel-capture", cancelCapture},
+  xerahs::app::ApplicationWindow home({{"upload-destinations", uploadDestinations}, {"settings", settingsAction}, {"capture-region", region}, {"capture-full-screen", fullScreen}, {"capture-monitor", monitor}, {"capture-active-window", activeWindow}, {"capture-after-delay", schedule->delayAction()}, {"auto-capture", schedule->autoAction()}, {"stop-auto-capture", schedule->stopAction()}, {"capture-region-choose-actions", chooseCapture}, {"cancel-capture", cancelCapture},
       {"capture-workflows", configureWorkflows}, {"enable-workflow-shortcuts", shortcutActions.enableAction()}, {"disable-workflow-shortcuts", shortcutActions.disableAction()},
       {"pick-colour", pickColour}, {"new-image", newImage}, {"open-image", openImage}, {"upload-file", uploadFile}, {"captures-folder", folder}, {"capture-history", history}, {"editor-appearance", appearance}, {"quit", quit}});
+  commandWindow = &home; schedule->setDialogParent(&home);
   QPointer<xerahs::app::UploadDestinationsDialog> uploadDialog;
   std::shared_ptr<xerahs::uploads::DestinationCatalog> uploadCatalog;
   QObject::connect(uploadDestinations, &QAction::triggered, &home, [&] {
@@ -457,6 +476,7 @@ int main(int argc, char *argv[]) {
       }, [&] { recordingActions.start(xerahs::recording::Format::Mp4); }, [&] { recording.stop(); },
       [&] { return recording.unavailable(xerahs::recording::Format::Mp4).isEmpty() || recording.unavailable(xerahs::recording::Format::WebM).isEmpty(); },
       [&] { recordingActions.start(xerahs::recording::Format::Mp4, true); }});
+  activation = &dispatcher;
   instance.setAdmission([&dispatcher, &invocationOrigin](const ActivationRequest &incoming) {
     const QScopedValueRollback<QString> origin(invocationOrigin, QStringLiteral("external-activation")); return dispatcher.admit(incoming);
   });
@@ -496,6 +516,8 @@ int main(int argc, char *argv[]) {
   QObject::connect(fullScreen, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureFullScreen); });
   QObject::connect(monitor, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureMonitor); });
   QObject::connect(activeWindow, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureActiveWindow); });
+  QObject::connect(&capture, &CaptureController::busyChanged, schedule, &xerahs::app::ScheduledCapture::captureBusyChanged);
+  QObject::connect(&capture, &CaptureController::notify, schedule, [schedule](const QString &, const QString &, bool ok) { schedule->captureFinished(ok); });
   QObject::connect(openImage, &QAction::triggered, &home, [&invokeLocal, &capture, &home] {
     const auto path = QFileDialog::getOpenFileName(&home, QStringLiteral("Open image"), capture.saveDirectory(), xerahs::app::imageFileFilter());
     if (!path.isEmpty()) invokeLocal(ActivationAction::EditImage, path);
