@@ -30,6 +30,8 @@ namespace {
 struct ClipboardCall {
   QImage media;
   std::optional<QString> text;  // PCA-024: set for url-clipboard; media is unused then
+  enum class Kind { Image, Text, Pin, Print } kind = Kind::Image;
+  LoadedSource source;  // print only
   bool claimed = false;
   bool done = false;
   ActionOutcome result;
@@ -49,6 +51,8 @@ QString actionActivity(const QString &id) {
   if (id == "after-capture-window") return QStringLiteral("Choose actions for this capture. Escape cancels before saving or copying.");
   if (id == "file-clipboard") return QStringLiteral("Copying the saved file to the clipboard.");
   if (id == "path-clipboard") return QStringLiteral("Copying the saved file path to the clipboard.");
+  if (id == "pin") return QStringLiteral("Pinning the capture on screen.");
+  if (id == "print") return QStringLiteral("Choose a printer for the capture. Cancel skips Print; Cancel Capture stops later actions.");
   if (id == "reveal") return QStringLiteral("Showing the saved file in your file manager.");
   return QStringLiteral("Running capture action.");
 }
@@ -161,6 +165,21 @@ void CapturePipeline::start() {
     if (token.requested()) return cancelled();
     auto call = std::make_shared<ClipboardCall>(); call->text = text;
     std::unique_lock<std::mutex> lock(state->mutex); state->clipboard = call;
+    state->changed.wait(lock, [&] { return call->done || (token.requested() && !call->claimed); });
+    return call->done ? call->result : cancelled();
+  };
+  ports.pin = [state](const QImage &media, const CancellationToken &token) {
+    if (token.requested()) return cancelled();
+    auto call = std::make_shared<ClipboardCall>(); call->media = media; call->kind = ClipboardCall::Kind::Pin;
+    std::unique_lock<std::mutex> lock(state->mutex); state->clipboard = call;
+    state->changed.wait(lock, [&] { return call->done || (token.requested() && !call->claimed); });
+    return call->done ? call->result : cancelled();
+  };
+  ports.print = [state](const LoadedSource &source, const CancellationToken &token) {
+    if (token.requested()) return cancelled();
+    auto call = std::make_shared<ClipboardCall>(); call->source = source; call->kind = ClipboardCall::Kind::Print;
+    std::unique_lock<std::mutex> lock(state->mutex); state->clipboard = call;
+    // The native print dialog is interactive; once claimed, wait for its real outcome.
     state->changed.wait(lock, [&] { return call->done || (token.requested() && !call->claimed); });
     return call->done ? call->result : cancelled();
   };
@@ -374,8 +393,11 @@ void CapturePipeline::poll() {
   if (call) {
     ActionOutcome result;
     const auto clipboard = m_ports.clipboard; const auto textClipboard = m_ports.textClipboard;
+    const auto pin = m_ports.pin; const auto print = m_ports.print;
     try {
       if (state->cancellation.requested()) result = cancelled();
+      else if (call->kind == ClipboardCall::Kind::Pin) result = pin ? pin(call->media, state->cancellation) : CaptureActions::pinToNativeScreen(call->media);
+      else if (call->kind == ClipboardCall::Kind::Print) result = print ? print(call->source, state->cancellation) : CaptureActions::printNativeImage(call->source);
       else if (call->text) result = textClipboard ? textClipboard(*call->text, state->cancellation) : CaptureActions::copyTextToNativeClipboard(*call->text);
       else result = clipboard ? clipboard(call->media, state->cancellation) : CaptureActions::copyImageToNativeClipboard(call->media);
     }

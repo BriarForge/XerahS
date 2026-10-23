@@ -35,6 +35,12 @@ struct CaptureActionPorts {
   std::function<xerahs::actions::ActionOutcome(const QImage &, const xerahs::actions::CancellationToken &)> clipboard;
   // PCA-024: plain-text clipboard; like clipboard it runs on the GUI thread.
   std::function<xerahs::actions::ActionOutcome(const QString &, const xerahs::actions::CancellationToken &)> textClipboard;
+  // POST-CAPTURE-ACTIONS-001 pin/print. Like clipboard, both run on the GUI
+  // thread; an empty port uses the native PinWindow / editor print path.
+  // `print` receives the prepared source and returns the real outcome: Cancelled
+  // when the user cancels the dialog, Failed with a stable code on printer failure.
+  std::function<xerahs::actions::ActionOutcome(const QImage &, const xerahs::actions::CancellationToken &)> pin;
+  std::function<xerahs::actions::ActionOutcome(const LoadedSource &, const xerahs::actions::CancellationToken &)> print;
   std::function<void(const QString &)> actionStarted;
   // Internal worker-to-GUI selection bridge supplied by CapturePipeline.
   std::function<xerahs::actions::ActionOutcome(const xerahs::actions::CancellationToken &)> selection;
@@ -63,6 +69,8 @@ public:
   bool sidecarIntent() const { return m_sidecarIntent; }
   static xerahs::actions::ActionOutcome copyImageToNativeClipboard(const QImage &media);
   static xerahs::actions::ActionOutcome copyTextToNativeClipboard(const QString &text);
+  static xerahs::actions::ActionOutcome pinToNativeScreen(const QImage &media);
+  static xerahs::actions::ActionOutcome printNativeImage(const LoadedSource &source);
   static QStringList selectableActions();
   static QString actionLabel(const QString &id);
 
@@ -77,6 +85,8 @@ private:
   xerahs::actions::ActionOutcome annotate(const xerahs::actions::CancellationToken &cancellation);
   xerahs::actions::ActionOutcome saveAs(const xerahs::actions::CancellationToken &cancellation);
   xerahs::actions::ActionOutcome copyImage(const xerahs::actions::CancellationToken &cancellation);
+  xerahs::actions::ActionOutcome pin(const xerahs::actions::CancellationToken &cancellation);
+  xerahs::actions::ActionOutcome print(const xerahs::actions::CancellationToken &cancellation);
   xerahs::actions::ActionOutcome outputFile(const xerahs::actions::ActionRequest &request);
 
   xerahs::actions::ActionOutcome upload(const xerahs::actions::ActionRequest &request);

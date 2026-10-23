@@ -1,6 +1,8 @@
 #include "CaptureActions.h"
 #include "workflows/CaptureWorkflows.h"
 #include "EditorCanvasOperations.h"
+#include "EditorPrint.h"
+#include "PinWindow.h"
 #include "SecretServiceCredentialStore.h"
 #include "uploads/CatalogPath.h"
 #include "uploads/DestinationCatalog.h"
@@ -11,6 +13,7 @@
 #include <QNetworkAccessManager>
 #include <QTimer>
 
+#include <QApplication>
 #include <QClipboard>
 #include <QGuiApplication>
 #include <QThread>
@@ -29,12 +32,14 @@ ActionOutcome failed(const QString &diagnostic) {
 }  // namespace
 
 const QString CaptureActions::kActionUnavailable = QStringLiteral("action-unavailable");
-QStringList CaptureActions::selectableActions() { auto actions = xerahs::workflows::implementedCaptureActions(); actions.append({"upload", "url-clipboard"}); return actions; }
+QStringList CaptureActions::selectableActions() { auto actions = xerahs::workflows::implementedCaptureActions(); actions.append({"upload", "url-clipboard", "pin", "print"}); return actions; }
 QString CaptureActions::actionLabel(const QString &id) {
   static const QMap<QString, QString> names{{"save", "Save image"}, {"save-as", "Save image as new PNG…"}, {"image-clipboard", "Copy image to clipboard"},
       {"file-clipboard", "Copy image file"}, {"path-clipboard", "Copy file path"}, {"reveal", "Show saved file in folder"},
       {"after-capture-window", "Choose capture actions"}};
   if (id == "upload") return "Upload capture";
+  if (id == "pin") return "Pin image on screen";
+  if (id == "print") return "Print image";
   if (id == "url-clipboard") return "Copy URL to clipboard";
   if (id == "annotation") return "Annotate capture";
   return names.value(id, id);
@@ -67,6 +72,8 @@ ActionOutcome CaptureActions::run(const ActionRequest &request) {
     if (request.spec.id == QStringLiteral("save")) return save(request.cancellation);
     if (request.spec.id == QStringLiteral("save-as")) return saveAs(request.cancellation);
     if (request.spec.id == QStringLiteral("image-clipboard")) return copyImage(request.cancellation);
+    if (request.spec.id == "pin") return pin(request.cancellation);
+    if (request.spec.id == "print") return print(request.cancellation);
     if (request.spec.id == "file-clipboard" || request.spec.id == "path-clipboard" || request.spec.id == "reveal") return outputFile(request);
     return failed(kActionUnavailable);
   } catch (...) { return failed(diagnostic::actionFailed); }
@@ -194,6 +201,21 @@ ActionOutcome CaptureActions::copyImage(const CancellationToken &cancellation) {
   if (m_ports.clipboard) return m_ports.clipboard(m_media, cancellation);
   return copyImageToNativeClipboard(m_media);
 }
+ActionOutcome CaptureActions::pin(const CancellationToken &cancellation) {
+  if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
+  if (m_media.isNull()) return failed("pin-unavailable");
+  if (m_ports.pin) return m_ports.pin(m_media, cancellation);
+  return pinToNativeScreen(m_media);
+}
+ActionOutcome CaptureActions::print(const CancellationToken &cancellation) {
+  const xerahs::editor::RenderControl control{[&] { return cancellation.requested(); }, {}};
+  // The document that print renders is built here, off the GUI thread.
+  const auto source = prepareCapturedSource(m_media, control);
+  if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
+  if (!source.document) return failed("print-render-failed");
+  if (m_ports.print) return m_ports.print(source, cancellation);
+  return printNativeImage(source);
+}
 ActionOutcome CaptureActions::saveAs(const CancellationToken &cancellation) {
   if (m_savedAsFile) return m_sidecarIntent ? finishSave("save-as", *m_savedAsFile, cancellation) : failed("retry-invalid-source");
   if (!m_ports.chooseSaveAs) return failed(kActionUnavailable);
@@ -223,6 +245,22 @@ ActionOutcome CaptureActions::copyImageToNativeClipboard(const QImage &media) {
   // clipboard afterwards.
   if (!clipboard->ownsClipboard()) return failed(QStringLiteral("clipboard-unavailable"));
   return ActionOutcome{ActionState::Succeeded, std::nullopt, std::nullopt};
+}
+
+ActionOutcome CaptureActions::pinToNativeScreen(const QImage &media) {
+  const auto *application = qobject_cast<QApplication *>(QCoreApplication::instance());
+  if (!application || QThread::currentThread() != application->thread()) return failed(QStringLiteral("pin-unavailable"));
+  auto *window = new PinWindow(media);
+  window->show(); window->raise(); window->activateWindow();
+  return ActionOutcome{ActionState::Succeeded, std::nullopt, std::nullopt};
+}
+
+// Reuses the editor's print path (preview, native dialog, worker submission).
+// Its Cancelled/Failed outcomes already carry the action's stable codes.
+ActionOutcome CaptureActions::printNativeImage(const LoadedSource &source) {
+  if (!source.document) return failed(QStringLiteral("print-render-failed"));
+  const auto printed = runEditorPrint(source.image, *source.document, nullptr);
+  return printed.action;
 }
 
 ActionOutcome CaptureActions::copyTextToNativeClipboard(const QString &text) {

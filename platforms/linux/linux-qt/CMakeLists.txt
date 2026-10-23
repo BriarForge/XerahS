@@ -173,7 +173,8 @@ target_link_libraries(xerahs_editor_canvas PUBLIC xerahs_core xerahs_editor_code
 target_compile_options(xerahs_editor_canvas PRIVATE -Wall -Wextra -Wpedantic)
 
 add_library(xerahs_action_selection STATIC app/ActionSelectionDialog.cpp app/ActionSelectionDialog.h
-  app/CaptureSaveAsDialog.cpp app/CaptureSaveAsDialog.h app/CaptureAnnotationDialog.cpp app/CaptureAnnotationDialog.h)
+  app/CaptureSaveAsDialog.cpp app/CaptureSaveAsDialog.h app/CaptureAnnotationDialog.cpp app/CaptureAnnotationDialog.h
+  app/PinWindow.cpp app/PinWindow.h)
 set_target_properties(xerahs_action_selection PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_action_selection PUBLIC app)
 target_link_libraries(xerahs_action_selection PUBLIC xerahs_core xerahs_editor_source xerahs_editor_canvas Qt6::Widgets)
@@ -814,6 +815,15 @@ target_link_libraries(capture-upload-test PRIVATE xerahs_file_output xerahs_acti
 add_test(NAME capture-upload COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-upload-test>)
 set_tests_properties(capture-upload PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+# POST-CAPTURE-ACTIONS-001: pin and print actions.
+add_executable(capture-pin-print-test tests/CapturePinPrintTest.cpp app/CapturePipeline.cpp app/CapturePipeline.h
+  app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h)
+set_target_properties(capture-pin-print-test PROPERTIES AUTOMOC ON)
+target_link_libraries(capture-pin-print-test PRIVATE xerahs_file_output xerahs_action_selection xerahs_pipeline_journal
+  xerahs_upload_executor xerahs_secret_service Qt6::Widgets Qt6::Test)
+add_test(NAME capture-pin-print COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-pin-print-test>)
+set_tests_properties(capture-pin-print PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 # INTERFACE-CATALOG-001: screen colour picker. Append-only; main.cpp wires the tray.
 add_library(xerahs_color_picker STATIC
   app/PortalColorPicker.cpp
