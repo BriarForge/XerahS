@@ -324,7 +324,39 @@ void CaptureController::pointerUp(PhysicalPoint point) {
   afterInput();
 }
 
+bool CaptureController::acquireExternal(std::function<void()> onCancel) {
+  if (m_busy) return false;
+  ++m_generation; m_busy = true; m_external = true; m_externalCancel = std::move(onCancel);
+  emit busyChanged(true);
+  return true;
+}
+void CaptureController::releaseExternal() {
+  if (!m_external) return;
+  m_external = false; m_externalCancel = {};
+  finish();
+}
+bool CaptureController::submitExternalImage(const QImage &image, const QString &source) {
+  if (!m_external || image.isNull()) { releaseExternal(); return false; }
+  m_external = false; m_externalCancel = {};
+  QStringList actions = kDefaultActions;
+  m_captureOutput = {}; m_workflowSnapshot = {}; m_source = source;
+  if (m_workflowResolver) {
+    auto choice = m_workflowResolver();
+    if (choice.workflow) {
+      if (choice.workflow->output.directory.isEmpty()) choice.workflow->output.directory = m_saveDirectory;
+      m_captureOutput = choice.workflow->output;
+      m_workflowSnapshot = xerahs::workflows::workflowSnapshot(*choice.workflow);
+      actions = xerahs::workflows::workflowActions(*choice.workflow);
+    }
+  }
+  m_selectedActions = actions; m_pendingPipelineCancellation = false; m_execution.reset();
+  m_captured = image;
+  runPipeline();
+  return true;
+}
+
 void CaptureController::cancel() {
+  if (m_external) { if (auto hook = m_externalCancel) hook(); return; }
   if (m_pipeline) { m_pipeline->cancel(); return; }
   if (m_session && m_session->state() == SessionState::Completed) m_pendingPipelineCancellation = true;
   if (m_composition) m_composition->cancelled.store(true);

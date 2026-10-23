@@ -9,6 +9,7 @@
 #include "EditorWindow.h"
 #include "NativeWorkflowExecutions.h"
 #include "RecordingController.h"
+#include "ScrollCapture.h"
 #include "WorkflowShortcutActions.h"
 #include "features/RecordingFeature.h"
 #include "settings/ApplicationSettings.h"
@@ -47,6 +48,28 @@ xerahs::workflows::WorkflowChoice effectiveWorkflow(AppContext &ctx, const QUuid
 
 ApplicationWindow *commandWindow(AppContext &ctx) {
   return qobject_cast<ApplicationWindow *>(ctx.dialogParent ? ctx.dialogParent() : nullptr);
+}
+
+// CORE-015: target, strategy, progress and partial handling live in ScrollCapture;
+// this wires it to the controller's admission and the command registry.
+void installScrollingCapture(AppContext &ctx) {
+  auto ports = ScrollCapture::nativePorts(&ctx.app, [&ctx] { return ctx.capture.saveDirectory(); });
+  ports.selectRegion = [&ctx](std::function<void(QRectF)> selected) { ctx.capture.selectRecordingRegion(std::move(selected)); };
+  ports.acquire = [&ctx](std::function<void()> onCancel) { return ctx.capture.acquireExternal(std::move(onCancel)); };
+  ports.release = [&ctx] { ctx.capture.releaseExternal(); };
+  ports.submit = [&ctx](const QImage &image) { return ctx.capture.submitExternalImage(image, QStringLiteral("scrolling")); };
+  ports.notify = [&ctx](const QString &title, const QString &body, bool success) {
+    if (auto *window = commandWindow(ctx)) window->showResult(title, body, success);
+    ctx.tray.showMessage(title, body, success ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning, 5000);
+  };
+  auto *scrolling = new ScrollCapture(std::move(ports), {}, &ctx.app);
+  addCapture(ctx, QStringLiteral("capture-scrolling"), QStringLiteral("Capture scrolling…"), [&ctx, scrolling] {
+    if (ctx.capture.busy() || ctx.recording.busy() || QApplication::activeModalWidget()) {
+      if (auto *window = commandWindow(ctx)) window->showResult(QStringLiteral("Activation"), activationFailureMessage(QStringLiteral("activation-busy")), false);
+      return;
+    }
+    scrolling->start();
+  });
 }
 
 }  // namespace
@@ -139,6 +162,7 @@ void installCapture(AppContext &ctx) {
       [&ctx] { ctx.invoke(ActivationAction::CaptureMonitor, {}, false, {}, QStringLiteral("native-shell")); });
   addCapture(ctx, QStringLiteral("capture-active-window"), QStringLiteral("Capture active window"),
       [&ctx] { ctx.invoke(ActivationAction::CaptureActiveWindow, {}, false, {}, QStringLiteral("native-shell")); });
+  installScrollingCapture(ctx);
   addCapture(ctx, QStringLiteral("capture-region-choose-actions"), QStringLiteral("Capture region and choose actions…"),
       [&ctx] { ctx.invoke(ActivationAction::CaptureRegion, {}, true, {}, QStringLiteral("native-shell")); });
   auto *cancel = addCapture(ctx, QStringLiteral("cancel-capture"), QStringLiteral("Cancel capture"), {});
@@ -162,7 +186,7 @@ void installCapture(AppContext &ctx) {
   refreshRegion();
 
   const QStringList captures = {QStringLiteral("capture-region"), QStringLiteral("capture-full-screen"),
-      QStringLiteral("capture-monitor"), QStringLiteral("capture-active-window"), QStringLiteral("capture-region-choose-actions")};
+      QStringLiteral("capture-monitor"), QStringLiteral("capture-active-window"), QStringLiteral("capture-scrolling"), QStringLiteral("capture-region-choose-actions")};
   QObject::connect(&ctx.capture, &CaptureController::busyChanged, &ctx.app, [&ctx, captures, cancel](bool) {
     const bool busy = ctx.capture.busy();
     for (const auto &id : captures)

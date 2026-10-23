@@ -53,6 +53,7 @@ QString captureSourceLabel(const QString &source) {
   if (source == "region") return QStringLiteral("Region");
   if (source == "full-screen") return QStringLiteral("Full screen");
   if (source == "monitor") return QStringLiteral("Monitor under pointer");
+  if (source == "scrolling") return QStringLiteral("Scrolling capture");
   if (source == "active-window") return QStringLiteral("Active window");
   return {};
 }

@@ -70,6 +70,13 @@ public:
   void captureWorkflow(const xerahs::workflows::CaptureWorkflow &workflow);
   QString captureSource() const { return m_source; }
   void setWindowDiscovery(std::unique_ptr<WindowDiscovery> discovery);
+  // CORE-015: a long-running capture owned elsewhere (scrolling) holds the same
+  // admission as a controller capture. cancel() invokes onCancel while held.
+  bool acquireExternal(std::function<void()> onCancel);
+  void releaseExternal();
+  // Hands a finished image from the held external capture to the default
+  // workflow's post-capture pipeline. Returns false (and releases) if none was held.
+  bool submitExternalImage(const QImage &image, const QString &source);
   // Future pipelines copy this GUI-thread preference value; active workers
   // retain the style already captured by their pipeline constructor.
   void setAnnotationStyle(const xerahs::editor::RectangleStyle &style) { m_actionPorts.annotationStyle = style; }
@@ -130,6 +137,8 @@ private:
   CapturePipelineReceipt m_lastPipelineResult;
   bool m_pendingPipelineCancellation = false;
   bool m_busy = false;
+  std::function<void()> m_externalCancel;
+  bool m_external = false;
   QPointer<PortalScreenshot> m_portal;
   QImage m_desktop;  // frozen snapshot in desktop physical pixels
   std::optional<xerahs::capture::PhysicalPoint> m_hoverPoint;

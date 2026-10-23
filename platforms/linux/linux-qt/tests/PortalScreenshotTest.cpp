@@ -517,6 +517,26 @@ private slots:
     const auto expected = controller->lastPipelineResult(); connect(controller.get(), &CaptureController::busyChanged, [&](bool busy) { if (busy) controller.reset(); });
     controller->retryFailedActions(expected); QVERIFY(!controller); QTest::qWait(30); QCOMPARE(copies, 2); QCOMPARE(portal.calls, 2); QVERIFY(QFileInfo::exists(expected->file->path));
   }
+  void externalScrollingCaptureHoldsAdmissionAndSubmitsThroughThePipeline() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("pipelines"));
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, SnapshotComposer{}, CaptureActionPorts{}, journal);
+    int cancels = 0; QSignalSpy busy(&controller, &CaptureController::busyChanged);
+    QVERIFY(controller.acquireExternal([&] { ++cancels; }));
+    QVERIFY(controller.busy()); QVERIFY(!controller.acquireExternal({}));
+    controller.captureRegion(); QTest::qWait(20); QVERIFY(controller.selection() == std::nullopt);  // refused: admission is held
+    controller.cancel(); QCOMPARE(cancels, 1); QVERIFY(controller.busy());
+    controller.releaseExternal(); QVERIFY(!controller.busy()); QCOMPARE(busy.count(), 2);
+    QVERIFY(!controller.submitExternalImage(QImage(8, 8, QImage::Format_ARGB32), "scrolling"));  // nothing held
+    QVERIFY(controller.acquireExternal({}));
+    QImage image(40, 90, QImage::Format_ARGB32); image.fill(Qt::darkCyan);
+    QSignalSpy notified(&controller, &CaptureController::notify);
+    QVERIFY(controller.submitExternalImage(image, "scrolling"));
+    QTRY_VERIFY(!controller.busy());
+    QVERIFY(controller.lastPipelineResult());
+    QVERIFY(!notified.isEmpty()); QVERIFY(notified.last().at(0).toString().startsWith("Scrolling capture"));
+    QVERIFY(controller.lastPipelineResult()->file); QCOMPARE(QImage(controller.lastPipelineResult()->file->path).size(), QSize(40, 90));
+  }
   void init() {
     server = QDBusConnection::connectToBus(QDBusConnection::SessionBus, "screenshot-test-server");
     client = QDBusConnection::connectToBus(QDBusConnection::SessionBus, "screenshot-test-client");

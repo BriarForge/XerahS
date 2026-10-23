@@ -41,6 +41,8 @@ add_library(xerahs_core STATIC
   src/actions/PipelineJournal.h
   src/history/CaptureHistory.cpp
   src/history/CaptureHistory.h
+  src/capture/ScrollStitch.cpp
+  src/capture/ScrollStitch.h
   src/capture/CaptureSchedule.cpp
   src/capture/CaptureSchedule.h
   src/capture/RegionGeometry.cpp
@@ -281,6 +283,10 @@ add_executable(xerahs
   app/NewImageDialog.h
   app/PortalScreenshot.cpp
   app/PortalScreenshot.h
+  app/PortalRemoteDesktop.cpp
+  app/PortalRemoteDesktop.h
+  app/ScrollCapture.cpp
+  app/ScrollCapture.h
   app/RegionOverlay.cpp
   app/RegionOverlay.h
   app/SettingsDialog.cpp
@@ -1163,3 +1169,19 @@ target_compile_definitions(EffectGoldenHash-test PRIVATE EFFECT_GOLDEN_FIXTURE="
 add_test(NAME EffectGoldenHash COMMAND EffectGoldenHash-test)
 set_tests_properties(EffectGoldenHash PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 180)
 target_compile_options(EffectGoldenHash-test PRIVATE -ffp-contract=off)
+
+add_executable(scroll-stitch-test tests/ScrollStitchTest.cpp)
+set_target_properties(scroll-stitch-test PROPERTIES AUTOMOC ON)
+target_link_libraries(scroll-stitch-test PRIVATE xerahs_core Qt6::Gui Qt6::Test)
+add_test(NAME scroll-stitch COMMAND scroll-stitch-test)
+set_tests_properties(scroll-stitch PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 60)
+
+add_executable(scroll-capture-test tests/ScrollCaptureTest.cpp
+               app/ScrollCapture.cpp app/ScrollCapture.h app/PortalRemoteDesktop.cpp app/PortalRemoteDesktop.h
+               app/PortalScreenshot.cpp app/PortalScreenshot.h)
+set_target_properties(scroll-capture-test PROPERTIES AUTOMOC ON)
+target_include_directories(scroll-capture-test PRIVATE app)
+target_link_libraries(scroll-capture-test PRIVATE xerahs_core xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
+add_test(NAME scroll-capture COMMAND "${XERAHS_DBUS_RUN_SESSION}"
+         "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf" -- $<TARGET_FILE:scroll-capture-test>)
+set_tests_properties(scroll-capture PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 90)

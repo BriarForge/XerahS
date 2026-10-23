@@ -58,7 +58,7 @@ void installWorkflows(AppContext &ctx) {
   QObject::connect(ctx.workflows, &NativeCaptureWorkflows::changed, ctx.shortcuts, &WorkflowShortcutActions::invalidate);
 
   QMap<QString, QAction *> builtins;
-  for (const char *id : {"capture-region", "capture-full-screen", "capture-monitor", "capture-active-window",
+  for (const char *id : {"capture-region", "capture-full-screen", "capture-monitor", "capture-active-window", "capture-scrolling",
        "capture-region-choose-actions", "start-region-recording", "start-recording", "start-gif-recording", "stop-recording"})
     builtins.insert(QString::fromLatin1(id), ctx.commands.action(QString::fromLatin1(id)));
   QObject::connect(ctx.shortcuts, &WorkflowShortcutActions::workflowRequested, &ctx.app, [&ctx, builtins](const QString &id) {
