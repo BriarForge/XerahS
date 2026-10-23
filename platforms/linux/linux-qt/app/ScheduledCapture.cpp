@@ -61,7 +61,7 @@ void ScheduledCapture::wire() {
     notify(xerahs::capture::autoCaptureFinishedTitle(summary), xerahs::capture::autoCaptureSummaryText(summary), summary.failed == 0, false);
   });
   const auto notSaved = [this](const QString &title, const QString &code) {
-    notify(title, QStringLiteral("Your choice could not be remembered (%1). The capture was still started.").arg(code), false);
+    notify(title, QStringLiteral("Your choice could not be remembered (%1). The capture was still started.").arg(code), false, false);
   };
   connect(m_delay, &DelayedCapture::preferencesSaveFailed, this, [notSaved](const QString &code) { notSaved(QStringLiteral("Capture after delay"), code); });
   connect(m_automatic, &AutoCaptureSession::preferencesSaveFailed, this, [notSaved](const QString &code) { notSaved(QStringLiteral("Auto capture"), code); });
