@@ -27,6 +27,7 @@
 #include <QSettings>
 #include <QFocusEvent>
 #include <QTemporaryDir>
+#include <cmath>
 #include <memory>
 
 using namespace xerahs::app;
@@ -48,6 +49,21 @@ void wheel(EditorCanvas &canvas, QPointF at, Qt::KeyboardModifiers modifiers, QP
   QWheelEvent event(at, canvas.viewport()->mapToGlobal(at.toPoint()), {}, delta, Qt::NoButton, modifiers,
                     Qt::NoScrollPhase, false);
   QApplication::sendEvent(canvas.viewport(), &event);
+}
+// The pointer reports the pixel that contains it, so one document pixel is aimed
+// at with the first whole view point inside its own view rectangle; the pair also
+// reports whether that point really lands inside it.
+std::pair<QPoint, bool> viewPointInPixel(const EditorViewport &view, QPoint pixel) {
+  const QPointF corner(pixel);
+  const QRectF bounds(view.toView(corner), view.toView(corner + QPointF(1, 1)));
+  const QPoint at(int(std::ceil(bounds.left())), int(std::ceil(bounds.top())));
+  return {at, bounds.contains(at)};
+}
+// QTest delivers nothing while the global pointer keeps the same place, so a
+// wanted view point is always approached from a second position.
+void hoverViewPoint(QWidget *viewport, QPoint at) {
+  QTest::mouseMove(viewport, at + QPoint(-3, 2));
+  QTest::mouseMove(viewport, at);
 }
 }  // namespace
 
@@ -942,6 +958,61 @@ private slots:
     QVERIFY(QLineF(end, QPointF(250, 230)).length() < 1);
     QCOMPARE(session.undoCount(), 0);
     QVERIFY(session.document().annotations.empty());  // the window commits the crop, not a rectangle annotation
+  }
+
+  void zoomAfterThePointerLeavesReportsNoPixel() {
+    // A large, zoomed image puts document pixels under every view position,
+    // including off-viewport ones, so a stale pointer would report a pixel.
+    AnnotationDocument big; big.canvasWidth = 400; big.canvasHeight = 400;
+    EditorSession session(big);
+    QImage source(400, 400, QImage::Format_ARGB32); source.fill(Qt::white);
+    EditorCanvas canvas(session, source);
+    canvas.resize(120, 120); canvas.show(); QTest::qWait(10);
+    for (int n = 0; n < 4; ++n) canvas.zoomIn();
+    std::optional<QPoint> last = QPoint(-2, -2);
+    connect(&canvas, &EditorCanvas::pointerPixelChanged, [&](std::optional<QPoint> pixel) { last = pixel; });
+    hoverViewPoint(canvas.viewport(), QPoint(40, 40));
+    QVERIFY(last && last->x() >= 0);
+    QEvent leave(QEvent::Leave); QApplication::sendEvent(canvas.viewport(), &leave);
+    QCOMPARE(last, std::optional<QPoint>{});
+    canvas.zoomIn(); canvas.zoomOut(); canvas.zoomIn();
+    QCOMPARE(last, std::optional<QPoint>{});
+  }
+
+  void pointerPixelReportsDocumentPixelOnlyWhenItChanges() {
+    AnnotationDocument small; small.canvasWidth = 4; small.canvasHeight = 4;
+    EditorSession session(small);
+    QImage source(4, 4, QImage::Format_ARGB32);
+    source.fill(Qt::white); source.setPixel(2, 1, qRgb(255, 0, 0));
+    EditorCanvas canvas(session, source);
+    canvas.resize(320, 240); canvas.show(); QTest::qWait(10); canvas.resetZoom();
+    QCOMPARE(canvas.viewState().zoom(), 1.0);
+    QList<QPoint> reported;
+    connect(&canvas, &EditorCanvas::pointerPixelChanged, [&] (std::optional<QPoint> pixel) {
+      reported.push_back(pixel ? *pixel : QPoint(-1, -1));
+    });
+    // The pointer reports the pixel that contains it, so the red pixel at (2,1)
+    // is aimed at through the live viewport at both scales.
+    const auto atZoom1 = viewPointInPixel(canvas.viewState(), QPoint(2, 1));
+    QVERIFY(atZoom1.second);
+    hoverViewPoint(canvas.viewport(), atZoom1.first);
+    QCOMPARE(reported, QList<QPoint>{QPoint(2, 1)});
+    QTest::mouseMove(canvas.viewport(), atZoom1.first);
+    QCOMPARE(reported.size(), 1);
+    // Zoom steps are 1.25, so three in reach the closest scale to 2x.
+    for (int n = 0; n < 3; ++n) canvas.zoomIn();
+    QVERIFY(canvas.viewState().zoom() > 1.9);
+    const auto atZoom2 = viewPointInPixel(canvas.viewState(), QPoint(2, 1));
+    QVERIFY(atZoom2.second);
+    QVERIFY(atZoom2.first != atZoom1.first);
+    QTest::mouseMove(canvas.viewport(), atZoom2.first);
+    QCOMPARE(reported.last(), QPoint(2, 1));
+    QTest::mouseMove(canvas.viewport(), QPoint(120, 100));  // inside the canvas, outside the image
+    QCOMPARE(reported.last(), QPoint(-1, -1));
+    QTest::mouseMove(canvas.viewport(), atZoom2.first);
+    QCOMPARE(reported.last(), QPoint(2, 1));
+    QEvent leave(QEvent::Leave); QApplication::sendEvent(canvas.viewport(), &leave);
+    QCOMPARE(reported.last(), QPoint(-1, -1));
   }
 };
 

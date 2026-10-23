@@ -18,6 +18,7 @@
 #include "SelectionRotationDialog.h"
 #include "AnnotationColorDialog.h"
 #include "AnnotationObjectNavigator.h"
+#include "tools/ColorFormats.h"
 #include <algorithm>
 
 #include <QAction>
@@ -165,6 +166,19 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   auto *instructions = annotationToolInstructions(*m_canvas, this);
   instructions->setMaximumWidth(460);
   statusBar()->addPermanentWidget(instructions, 1);
+  // EDITOR-UTILITIES-001: the pointer readout. One permanent label on the right
+  // of the status bar carries the document pixel, its source pixel colour and
+  // the image size.
+  m_pointerStatus = new QLabel(this);
+  m_pointerStatus->setObjectName(QStringLiteral("editorPointerStatus"));
+  m_pointerStatus->setAccessibleName(QStringLiteral("Pointer pixel"));
+  m_pointerStatus->setAccessibleDescription(QStringLiteral("Document position, source pixel colour and image size."));
+  statusBar()->addPermanentWidget(m_pointerStatus);
+  connect(m_canvas, &EditorCanvas::pointerPixelChanged, this, [this](std::optional<QPoint> pixel) {
+    if (pixel == m_pointerPixel) return;
+    m_pointerPixel = pixel;
+    updatePointerStatus();
+  });
   connect(m_canvas, &EditorCanvas::editRejected, this, [this](const QString &diagnostic) {
     m_annotationMessage = annotationEditMessage(diagnostic); m_annotationMessageState = m_session->stateId();
   });
@@ -643,6 +657,7 @@ void EditorWindow::refresh() {
   setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName(),
                                                     m_session->dirty() ? QStringLiteral(" •") : QString()));
   if (!owner) return;
+  updatePointerStatus();
   QString status = QStringLiteral("%1 × %2 · %3 annotation(s) · %4 selected · %5%")
                                .arg(m_image.width()).arg(m_image.height())
                                .arg(m_session->document().annotations.size()).arg(m_session->selection().size())
@@ -662,6 +677,19 @@ void EditorWindow::refresh() {
   if (notify) emit bar->messageChanged(status);
   if (!owner) return;
   m_canvas->viewport()->update();
+}
+
+void EditorWindow::updatePointerStatus() {
+  if (!m_pointerStatus) return;
+  const QSize size = m_image.size();
+  QString text;
+  // The colour is the source pixel of the image the editor already holds; the
+  // annotated document is never rendered for a pointer move.
+  if (m_pointerPixel && QRect(QPoint(0, 0), size).contains(*m_pointerPixel))
+    text = QStringLiteral("X: %1  Y: %2   %3   ")
+               .arg(m_pointerPixel->x()).arg(m_pointerPixel->y())
+               .arg(xerahs::tools::formatColor(m_image.pixelColor(*m_pointerPixel), xerahs::tools::ColorFormat::Hex));
+  m_pointerStatus->setText(text + QStringLiteral("%1 × %2").arg(size.width()).arg(size.height()));
 }
 
 void EditorWindow::newImage() {

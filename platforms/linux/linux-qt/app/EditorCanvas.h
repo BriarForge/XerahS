@@ -67,6 +67,9 @@ signals:
   void cutOutRequested(QPointF start, QPointF end, bool columns);
   void toolChanged();
   void editRejected(QString diagnostic);
+  // EDITOR-UTILITIES-001: the document pixel under the pointer, or none
+  // outside the image.
+  void pointerPixelChanged(std::optional<QPoint> pixel);
 
 protected:
   void paintEvent(QPaintEvent *) override;
@@ -92,6 +95,10 @@ private:
   std::array<std::pair<xerahs::editor::RectangleHandle, QPointF>, 8> handles(const xerahs::editor::RectangleAnnotation &) const;
   bool canvasTool() const { return m_tool == Tool::Crop || m_tool == Tool::CutOut; }
   void syncViewport();
+  // The pointer readout follows the canvas viewport, so a pan or zoom without a
+  // move reports the pixel now under the same view position.
+  void publishPointerPixel(QPointF viewPosition);
+  void clearPointerPixel();
   void cancelGesture();
   bool movePreviewCurrent() const;
   void updateMovePreview(QPointF imagePoint);
@@ -134,6 +141,8 @@ private:
   bool m_spaceHeld = false;
   bool m_panning = false;
   QPointF m_panLast, m_panOriginalOffset;
+  std::optional<QPointF> m_pointerView;  // set only while the pointer is over the viewport
+  std::optional<QPoint> m_pointerPixel;
 };
 
 }  // namespace xerahs::app

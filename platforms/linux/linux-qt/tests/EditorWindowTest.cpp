@@ -104,6 +104,21 @@ void drawRectangle(EditorCanvas &canvas) {
   QTest::mousePress(canvas.viewport(), Qt::LeftButton, Qt::NoModifier, canvas.viewState().toView({8, 8}).toPoint());
   QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, Qt::NoModifier, canvas.viewState().toView({22, 16}).toPoint());
 }
+// The pointer reports the pixel that contains it, so a wanted document pixel is
+// aimed at with the first whole view point inside its own view rectangle; the
+// pair also reports whether that point really lands inside it.
+std::pair<QPoint, bool> viewPointInPixel(const EditorViewport &view, QPoint pixel) {
+  const QPointF corner(pixel);
+  const QRectF bounds(view.toView(corner), view.toView(corner + QPointF(1, 1)));
+  const QPoint at(int(std::ceil(bounds.left())), int(std::ceil(bounds.top())));
+  return {at, bounds.contains(at)};
+}
+// QTest delivers nothing while the global pointer keeps the same place, so a
+// wanted view point is always approached from a second position.
+void hoverViewPoint(QWidget *viewport, QPoint at) {
+  QTest::mouseMove(viewport, at + QPoint(-3, 2));
+  QTest::mouseMove(viewport, at);
+}
 struct SaveGate {
   std::atomic<bool> entered{false}, released{false}, finished{false}, workerThread{false};
   EditorSaveArtifact stage = EditorSaveArtifact::Raster;
@@ -2771,6 +2786,76 @@ private slots:
     QVERIFY(saveRequested && failureShown); QCOMPARE(window->statusBar()->currentMessage(), before); QCOMPARE(window->windowTitle(), title);
     QVERIFY(QDir(path).exists()); QCOMPARE(QImage(backup), original);
     trigger(*window, QStringLiteral("undo")); QVERIFY(!window->findChild<QAction *>(QStringLiteral("undo"))->isEnabled());
+  }
+
+  void pointerStatusReportsTheDocumentPixelAndItsSourceColour() {
+    QTemporaryDir dir; const auto path = dir.filePath("pointer.png");
+    QImage source(4, 4, QImage::Format_ARGB32); source.fill(Qt::white); source.setPixel(2, 1, qRgb(255, 0, 0));
+    QVERIFY(source.save(path));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);
+    window->resize(420, 320); window->show(); QTest::qWait(10);
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas); canvas->resetZoom();
+    auto *status = window->findChild<QLabel *>(QStringLiteral("editorPointerStatus")); QVERIFY(status);
+    QCOMPARE(status->text(), QStringLiteral("4 × 4"));
+    const auto atZoom1 = viewPointInPixel(canvas->viewState(), QPoint(2, 1)); QVERIFY(atZoom1.second);
+    hoverViewPoint(canvas->viewport(), atZoom1.first);
+    QCOMPARE(status->text(), QStringLiteral("X: 2  Y: 1   #FF0000   4 × 4"));
+    // Zoom steps are 1.25, so three in reach the closest scale to 2x; the same
+    // document pixel sits elsewhere on screen and keeps its colour.
+    for (int n = 0; n < 3; ++n) canvas->zoomIn();
+    QVERIFY(canvas->viewState().zoom() > 1.9);
+    const auto atZoom2 = viewPointInPixel(canvas->viewState(), QPoint(2, 1));
+    QVERIFY(atZoom2.second); QVERIFY(atZoom2.first != atZoom1.first);
+    QTest::mouseMove(canvas->viewport(), atZoom2.first);
+    QCOMPARE(status->text(), QStringLiteral("X: 2  Y: 1   #FF0000   4 × 4"));
+    QEvent leave(QEvent::Leave); QApplication::sendEvent(canvas->viewport(), &leave);
+    QCOMPARE(status->text(), QStringLiteral("4 × 4"));
+    const auto atWhite = viewPointInPixel(canvas->viewState(), QPoint(3, 1)); QVERIFY(atWhite.second);
+    hoverViewPoint(canvas->viewport(), atWhite.first);
+    QCOMPARE(status->text(), QStringLiteral("X: 3  Y: 1   #FFFFFF   4 × 4"));
+  }
+
+  void pointerStatusSizeFollowsTheChangedImage_data() {
+    QTest::addColumn<QString>("action"); QTest::addColumn<int>("width"); QTest::addColumn<int>("height");
+    QTest::newRow("crop") << "cropImage" << 2 << 2;
+    QTest::newRow("resize-image") << "resizeImage" << 8 << 6;
+    QTest::newRow("resize-canvas") << "resizeCanvas" << 8 << 6;
+  }
+
+  void pointerStatusSizeFollowsTheChangedImage() {
+    QFETCH(QString, action); QFETCH(int, width); QFETCH(int, height);
+    QTemporaryDir dir; const auto path = dir.filePath("pointer-size.png");
+    QImage source(4, 4, QImage::Format_ARGB32); source.fill(Qt::white); source.setPixel(2, 1, qRgb(255, 0, 0));
+    QVERIFY(source.save(path));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);
+    window->resize(420, 320); window->show(); QTest::qWait(10);
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas); canvas->resetZoom();
+    auto *status = window->findChild<QLabel *>(QStringLiteral("editorPointerStatus")); QVERIFY(status);
+    const auto atPixel = viewPointInPixel(canvas->viewState(), QPoint(2, 1)); QVERIFY(atPixel.second);
+    hoverViewPoint(canvas->viewport(), atPixel.first);
+    QCOMPARE(status->text(), QStringLiteral("X: 2  Y: 1   #FF0000   4 × 4"));
+    acceptDimensions(width, height, 0, 0); trigger(*window, action);
+    // The dialog owns the exact result, so the size is compared with the image
+    // the canvas now shows rather than with the requested numbers.
+    const QSize changed = canvas->viewState().imageSize().toSize();
+    QVERIFY(changed != QSize(4, 4));
+    QCOMPARE(status->text(), QStringLiteral("%1 × %2").arg(changed.width()).arg(changed.height()));
+  }
+
+  void pointerStatusReportsPixelsOfTheChangedImage() {
+    QTemporaryDir dir; const auto path = dir.filePath("pointer-crop.png");
+    QImage source(4, 4, QImage::Format_ARGB32); source.fill(Qt::white); source.setPixel(2, 1, qRgb(255, 0, 0));
+    QVERIFY(source.save(path));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);
+    window->resize(420, 320); window->show(); QTest::qWait(10);
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas); canvas->resetZoom();
+    auto *status = window->findChild<QLabel *>(QStringLiteral("editorPointerStatus")); QVERIFY(status);
+    acceptDimensions(2, 2, 0, 0); trigger(*window, QStringLiteral("cropImage"));
+    QCOMPARE(canvas->viewState().imageSize().toSize(), QSize(2, 2));
+    // The cropped image keeps its own pixels; the red one is gone with it.
+    const auto atCropped = viewPointInPixel(canvas->viewState(), QPoint(1, 1)); QVERIFY(atCropped.second);
+    hoverViewPoint(canvas->viewport(), atCropped.first);
+    QCOMPARE(status->text(), QStringLiteral("X: 1  Y: 1   #FFFFFF   2 × 2"));
   }
 };
 

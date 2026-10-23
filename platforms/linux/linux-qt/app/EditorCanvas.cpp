@@ -87,6 +87,25 @@ void EditorCanvas::syncViewport() {
   verticalScrollBar()->setValue(int(std::round(-m_view.offset().y())));
   viewport()->update();
   emit viewportChanged(m_view.zoom());
+  if (m_pointerView) publishPointerPixel(*m_pointerView);
+}
+
+void EditorCanvas::publishPointerPixel(QPointF viewPosition) {
+  m_pointerView = viewPosition;
+  const QPointF at = m_view.toImage(viewPosition);
+  const QPoint pixel(int(std::floor(at.x())), int(std::floor(at.y())));
+  std::optional<QPoint> current;
+  if (QRect(QPoint(0, 0), m_image.size()).contains(pixel)) current = pixel;
+  if (current == m_pointerPixel) return;
+  m_pointerPixel = current;
+  emit pointerPixelChanged(current);
+}
+
+void EditorCanvas::clearPointerPixel() {
+  m_pointerView.reset();
+  if (!m_pointerPixel) return;
+  m_pointerPixel.reset();
+  emit pointerPixelChanged(std::nullopt);
 }
 
 void EditorCanvas::zoomIn() {
@@ -532,6 +551,7 @@ void EditorCanvas::mousePressEvent(QMouseEvent *event) {
 }
 
 void EditorCanvas::mouseMoveEvent(QMouseEvent *event) {
+  publishPointerPixel(event->position());
   if (m_panning) {
     m_view.pan(event->position() - m_panLast);
     m_panLast = event->position();
@@ -814,6 +834,7 @@ void EditorCanvas::wheelEvent(QWheelEvent *event) {
 }
 
 bool EditorCanvas::viewportEvent(QEvent *event) {
+  if (event->type() == QEvent::Leave) clearPointerPixel();
   if (event->type() == QEvent::NativeGesture) {
     auto *gesture = static_cast<QNativeGestureEvent *>(event);
     if (gesture->gestureType() == Qt::ZoomNativeGesture || gesture->gestureType() == Qt::PanNativeGesture) {

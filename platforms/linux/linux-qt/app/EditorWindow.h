@@ -23,6 +23,7 @@
 
 class QAction;
 class QDockWidget;
+class QLabel;
 
 namespace xerahs::app {
 
@@ -97,6 +98,7 @@ private:
   void applyCreationDefaults();
   void persistDrawingDefaults(quint64 expectedRevision);
   void refresh();
+  void updatePointerStatus();
   void restoreHistory(bool redo);
   void cropImage();
   void cropImage(xerahs::editor::CropRegion region);
@@ -129,6 +131,8 @@ private:
   QAction *m_clearAnnotations = nullptr;
   QDockWidget *m_annotationsDock = nullptr;
   AnnotationObjectNavigator *m_annotationObjects = nullptr;
+  QLabel *m_pointerStatus = nullptr;
+  std::optional<QPoint> m_pointerPixel;
   bool m_canvasOperationPending = false;
   bool m_closePending = false;
   bool m_outputPending = false;
