@@ -6,7 +6,29 @@ using namespace xerahs::uploads;
 class UploadResponseTest : public QObject {
   Q_OBJECT
 private slots:
-
+  void unresolvedPlaceholdersNeverPublishATruncatedUrl() {
+    // A reply missing a field must not turn https://example.com/{json:data.id}
+    // into a "successful" https://example.com/.
+    UploadDestination d;
+    d.resultUrl = QStringLiteral("https://example.com/{json:data.id}");
+    d.thumbnailUrl = QStringLiteral("https://example.com/t/{json:data.thumb}");
+    d.deletionUrl = QStringLiteral("https://example.com/delete/{json:data.hash}");
+    for (const QByteArray body : {QByteArray("{\"data\":{}}"), QByteArray("{\"data\":{\"id\":null}}")}) {
+      const auto r = parseUploadResponse(d, 200, {}, body);
+      QCOMPARE(r.code, QStringLiteral("parse-failed"));
+      QVERIFY(r.url.isEmpty());
+      QVERIFY(!r.errorMessage.isEmpty());
+    }
+    // Optional links are dropped whole, never published half-expanded.
+    const auto partial = parseUploadResponse(d, 200, {}, "{\"data\":{\"id\":\"abc\"}}");
+    QCOMPARE(partial.code, QString());
+    QCOMPARE(partial.url, QStringLiteral("https://example.com/abc"));
+    QVERIFY(partial.thumbnailUrl.isEmpty());
+    QVERIFY(partial.deletionUrl.isEmpty());
+    const auto full = parseUploadResponse(d, 200, {}, "{\"data\":{\"id\":\"abc\",\"thumb\":\"t1\",\"hash\":\"h1\"}}");
+    QCOMPARE(full.thumbnailUrl, QStringLiteral("https://example.com/t/t1"));
+    QCOMPARE(full.deletionUrl, QStringLiteral("https://example.com/delete/h1"));
+  }
   void json() {
     UploadDestination d; d.resultUrl = QStringLiteral("{json:data.links[0].url}");
     d.thumbnailUrl = QStringLiteral("{json:data.thumb}"); d.deletionUrl = QStringLiteral("https://example.com/delete/{json:data.deletehash}");

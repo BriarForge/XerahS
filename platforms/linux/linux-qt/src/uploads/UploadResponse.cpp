@@ -63,7 +63,9 @@ bool webUrl(const QString &s) {
 UploadOutcome parseUploadResponse(const UploadDestination &d, int status, const UploadHeaders &headers,
                                   const QByteArray &body, const QString &fileName) {
   const auto response = QString::fromUtf8(body);
-  auto expand = [&](const QString &text) {
+  // Sets *unresolved when a data placeholder yields nothing, so a missing field
+  // never becomes a truncated but "successful" URL.
+  auto expand = [&](const QString &text, bool *unresolved = nullptr) {
     // A regex ends at its numeric group suffix, allowing braces in patterns.
     static const QRegularExpression token(QStringLiteral(R"(\{(response|filename|json:[^{}]*|xml:[^{}]*|header:[^{}]*|regex:[\s\S]*?\|\d+)\})"));
     QString out;
@@ -73,6 +75,7 @@ UploadOutcome parseUploadResponse(const UploadDestination &d, int status, const 
       const auto m = matches.next();
       out += text.mid(end, m.capturedStart() - end);
       const auto key = m.captured(1);
+      const auto before = out.size();
       if (key == QLatin1String("response")) out += response;
       else if (key == QLatin1String("filename")) out += fileName;
       else if (key.startsWith(QLatin1String("json:"))) out += jsonPath(body, key.mid(5));
@@ -89,6 +92,7 @@ UploadOutcome parseUploadResponse(const UploadDestination &d, int status, const 
           if (re.isValid()) out += re.match(response).captured(group);
         }
       }
+      if (unresolved && key != QLatin1String("filename") && out.size() == before) *unresolved = true;
       end = m.capturedEnd();
     }
     return out + text.mid(end);
@@ -101,10 +105,18 @@ UploadOutcome parseUploadResponse(const UploadDestination &d, int status, const 
     result.errorMessage = QStringLiteral("HTTP %1: %2").arg(status).arg(result.errorMessage.isEmpty() ? response.left(200) : result.errorMessage);
     return result;
   }
-  result.url = (d.resultUrl.isEmpty() ? response : expand(d.resultUrl)).trimmed();
-  result.thumbnailUrl = expand(d.thumbnailUrl).trimmed();
-  result.deletionUrl = expand(d.deletionUrl).trimmed();
-  if (result.url.isEmpty()) result.code = QStringLiteral("parse-failed");
+  bool urlUnresolved = false, thumbnailUnresolved = false, deletionUnresolved = false;
+  result.url = (d.resultUrl.isEmpty() ? response : expand(d.resultUrl, &urlUnresolved)).trimmed();
+  result.thumbnailUrl = expand(d.thumbnailUrl, &thumbnailUnresolved).trimmed();
+  result.deletionUrl = expand(d.deletionUrl, &deletionUnresolved).trimmed();
+  // Optional links are dropped whole rather than published half-expanded.
+  if (thumbnailUnresolved) result.thumbnailUrl.clear();
+  if (deletionUnresolved) result.deletionUrl.clear();
+  if (result.url.isEmpty() || urlUnresolved) {
+    result.code = QStringLiteral("parse-failed");
+    if (urlUnresolved && !result.url.isEmpty()) result.errorMessage = QStringLiteral("The server reply did not contain every part of the upload URL.");
+    result.url.clear();
+  }
   else if (!webUrl(result.url) || (!result.thumbnailUrl.isEmpty() && !webUrl(result.thumbnailUrl)) ||
            (!result.deletionUrl.isEmpty() && !webUrl(result.deletionUrl))) result.code = QStringLiteral("invalid-result-url");
   return result;
