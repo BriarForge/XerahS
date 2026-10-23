@@ -15,6 +15,8 @@
 #include <QTemporaryDir>
 #include <QTest>
 
+#include <csignal>
+
 #include <atomic>
 #include <chrono>
 #include <thread>
@@ -85,6 +87,9 @@ class HashCheckerDialogTest : public QObject {
   Q_OBJECT
 
 private slots:
+  // HeldOpenPipe's writer may write after a cancelled read closed the FIFO.
+  // That must fail with EPIPE, not kill the test process with SIGPIPE.
+  void initTestCase() { ::signal(SIGPIPE, SIG_IGN); }
   void init() { QApplication::clipboard()->setText(QStringLiteral("clipboard before hashing")); }
 
   // A digest has to arrive through the dialog's own worker, not by assignment.
