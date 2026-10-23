@@ -20,6 +20,7 @@ class QDialogButtonBox;
 namespace xerahs::app {
 struct EffectsLists {
   QStringList recent, favorites;
+  QMap<QString, quint64> seeds;
   QByteArray snapshot;
   QString diagnostic;
 };
@@ -81,6 +82,9 @@ private:
   OwnedWork m_work;
   QImage m_previewImage;
   quint64 m_revision = 0;
+  quint64 m_seed = 0;
+  QMap<QString, quint64> m_draftSeeds;
+  bool m_seedValid = true;
   bool m_loading = true, m_saving = false, m_saveAgain = false;
   bool m_applying = false, m_closing = false, m_closeAfterSave = false;
 };

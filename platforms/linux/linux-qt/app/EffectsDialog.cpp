@@ -1,5 +1,8 @@
 // EDITOR-EFFECTS-001: EE-002..EE-006, EE-010..EE-014.
 #include "EffectsDialog.h"
+#include "PresetDialog.h"
+#include <QRandomGenerator>
+#include <QRegularExpressionValidator>
 #include "EditorSource.h"
 #include "RasterSource.h"
 #include <QBuffer>
@@ -63,13 +66,20 @@ EffectsLists EffectsStore::load(const EffectRegistry &registry) const {
   }
   lists.recent = knownIds(read.document.value("recent").toArray(), registry);
   lists.favorites = knownIds(read.document.value("favorites").toArray(), registry);
+  const auto seeds = read.document.value("seeds").toObject();
+  for (auto it = seeds.begin(); it != seeds.end(); ++it) {
+    bool ok = false; const auto seed = it.value().toString().toULongLong(&ok);
+    if (ok && registry.find(it.key())) lists.seeds.insert(it.key(), seed);
+  }
   return lists;
 }
 EffectsLists EffectsStore::save(EffectsLists lists) const {
   if (!lists.diagnostic.isEmpty()) return lists;
   lists.recent.removeDuplicates(); lists.favorites.removeDuplicates();
   lists.recent.removeAll(QString()); lists.favorites.removeAll(QString());
-  const auto status = m_file.write({{"recent", QJsonArray::fromStringList(lists.recent)},
+  QJsonObject seeds;
+  for (auto it = lists.seeds.begin(); it != lists.seeds.end(); ++it) seeds.insert(it.key(), QString::number(it.value()));
+  const auto status = m_file.write({{"seeds", seeds}, {"recent", QJsonArray::fromStringList(lists.recent)},
       {"favorites", QJsonArray::fromStringList(lists.favorites)}}, 1, lists.snapshot, &lists.snapshot);
   if (status != storage::StoreStatus::Ok) lists.diagnostic = "effects-store-" + storage::storeStatusName(status);
   return lists;
@@ -100,6 +110,10 @@ PreparedCanvasEdit prepareEffectEdit(const AnnotationDocument &document, const Q
     if (!buffer.open(QIODevice::WriteOnly) || !output.image.save(&buffer, "PNG")) return failure("effect-encoding-failed");
     if (context.cancelled()) return failure("effect-cancelled");
     if (bytes.size() > kMaxEncodedImageBytes) return failure("effect-resource-limit");
+    auto operations = document.extra.value("effectOperations").toArray();
+    const auto resolved = resolveParameters(effect.spec(), values);
+    operations.append(QJsonObject{{"id", effect.spec().id}, {"parameters", serializeParameters(effect.spec(), resolved.values)}, {"seed", QString::number(context.seed)}});
+    prepared.result.document->extra.insert("effectOperations", operations);
     prepared.result.document->sourceImagePng = bytes;
     prepared.result.changed = true;
     prepared.source = output.image;
@@ -136,6 +150,28 @@ EffectsDialog::EffectsDialog(AnnotationDocument document, QImage source, Commit 
   m_clearRecent = new QPushButton(tr("Clear Recent"), this); m_clearRecent->setObjectName("effectsClearRecent");
   m_reset = new QPushButton(tr("Reset to defaults"), this); m_reset->setObjectName("effectsReset");
   for (auto *button : {m_favorite, m_clearRecent, m_reset}) { button->setAutoDefault(false); actions->addWidget(button); }
+  auto *importPreset = new QPushButton(tr("Import preset…"), this); importPreset->setObjectName("effectsImportPreset"); importPreset->setAutoDefault(false); actions->addWidget(importPreset);
+  connect(importPreset, &QPushButton::clicked, this, [this] {
+    if (m_applying || m_closeAfterSave || m_closing) return;
+    auto *picker = new QFileDialog(this, tr("Import image effect preset"));
+    picker->setFileMode(QFileDialog::ExistingFile); picker->setNameFilter(tr("Effect presets (*.sxie *.xsie)")); picker->setAttribute(Qt::WA_DeleteOnClose);
+    connect(picker, &QFileDialog::fileSelected, this, [this](const QString &path) {
+      if (m_applying || m_closeAfterSave || m_closing) return;
+      m_debounce.stop(); m_work.cancel(); ++m_revision;
+      auto *dialog = new PresetDialog(m_document, m_source, m_commit, m_registry, this);
+      dialog->setAttribute(Qt::WA_DeleteOnClose); dialog->setWindowModality(Qt::WindowModal);
+      connect(dialog, &QDialog::accepted, this, [this, dialog] {
+        for (const auto &step : dialog->preset().steps) if (step.supported && step.enabled) {
+          m_lists.seeds[step.id] = step.seed;
+          m_lists.recent.removeAll(step.id); m_lists.recent.prepend(step.id);
+        }
+        while (m_lists.recent.size() > 20) m_lists.recent.removeLast();
+        m_parameters->setEnabled(false); m_list->setEnabled(false); m_category->setEnabled(false); m_search->setEnabled(false);
+        m_buttons->button(QDialogButtonBox::Apply)->setEnabled(false); persist(true); updateFavorite();
+      });
+      dialog->open(); dialog->loadFile(path);
+    }); picker->open();
+  });
   layout->addLayout(actions);
   m_status = new QLabel(this); m_status->setObjectName("effectsStatus"); m_status->setTextFormat(Qt::PlainText); m_status->setWordWrap(true); layout->addWidget(m_status);
   m_progress = new QProgressBar(this); m_progress->setAccessibleName(tr("Effect progress")); m_progress->setRange(0, 100); m_progress->hide(); layout->addWidget(m_progress);
@@ -160,7 +196,13 @@ EffectsDialog::EffectsDialog(AnnotationDocument document, QImage source, Commit 
       [this](EffectsLists lists) {
         m_lists = std::move(lists); m_loading = false;
         if (!m_lists.diagnostic.isEmpty()) showError(m_lists.diagnostic);
-        rebuildList(); updateFavorite();
+        rebuildList();
+        const auto *effect = m_registry->find(selectedId());
+        if (effect && effect->spec().usesSeed && !m_draftSeeds.contains(effect->spec().id)) {
+          auto *seed = m_parameters->findChild<QLineEdit *>("effectsSeed");
+          if (seed) seed->setText(QString::number(m_lists.seeds.value(effect->spec().id, defaultEffectSeed(effect->spec().id))));
+        }
+        updateFavorite();
       });
 }
 EffectsDialog::~EffectsDialog() { m_work.cancel(); }
@@ -205,8 +247,22 @@ void EffectsDialog::selectEffect() {
 }
 void EffectsDialog::buildParameters() {
   while (m_form->rowCount()) m_form->removeRow(0);
-  m_values.clear();
+  m_values.clear(); m_seedValid = true;
   const auto *effect = m_registry->find(selectedId()); if (!effect) return;
+  m_seed = m_draftSeeds.value(effect->spec().id, m_lists.seeds.value(effect->spec().id, defaultEffectSeed(effect->spec().id)));
+  if (effect->spec().usesSeed) {
+    auto *row = new QWidget(m_parameters); auto *box = new QHBoxLayout(row); box->setContentsMargins(0, 0, 0, 0);
+    auto *seed = new QLineEdit(QString::number(m_seed), row); seed->setObjectName("effectsSeed"); seed->setAccessibleName(tr("Effect seed"));
+    seed->setValidator(new QRegularExpressionValidator(QRegularExpression("[0-9]{1,20}"), seed));
+    auto *next = new QPushButton(tr("New seed"), row); next->setObjectName("effectsNewSeed"); next->setAutoDefault(false);
+    connect(seed, &QLineEdit::textChanged, this, [this](const QString &text) {
+      const auto value = text.toULongLong(&m_seedValid);
+      if (m_seedValid) { m_seed = value; m_draftSeeds[selectedId()] = value; }
+      changed(); if (!m_seedValid) showError("effect-seed-invalid");
+    });
+    connect(next, &QPushButton::clicked, seed, [seed] { seed->setText(QString::number(QRandomGenerator::global()->generate64())); });
+    box->addWidget(seed); box->addWidget(next); m_form->addRow(tr("Seed"), row);
+  }
   for (const auto &param : effect->spec().parameters) {
     m_values.insert(param.id, param.defaultValue);
     QWidget *control = nullptr;
@@ -266,23 +322,23 @@ void EffectsDialog::buildParameters() {
 }
 void EffectsDialog::changed() {
   m_work.cancel(); ++m_revision; m_debounce.stop(); m_previewImage = {}; m_preview->clear();
-  m_buttons->button(QDialogButtonBox::Apply)->setEnabled(!selectedId().isEmpty() && !m_applying && !m_loading && !m_closeAfterSave);
+  m_buttons->button(QDialogButtonBox::Apply)->setEnabled(m_seedValid && !selectedId().isEmpty() && !m_applying && !m_loading && !m_closeAfterSave);
   m_progress->hide();
   const auto *effect = m_registry->find(selectedId());
-  if (effect && effect->spec().mode == Mode::Previewable) m_debounce.start();
+  if (m_seedValid && effect && effect->spec().mode == Mode::Previewable) m_debounce.start();
 }
 void EffectsDialog::run(bool apply) {
-  const auto id = selectedId(); const auto *effect = m_registry->find(id); if (!effect || m_closing) return;
+  const auto id = selectedId(); const auto *effect = m_registry->find(id); if (!effect || m_closing || !m_seedValid) return;
   m_work.cancel(); const auto revision = ++m_revision;
   m_applying = apply; m_parameters->setEnabled(!apply); m_category->setEnabled(!apply); m_search->setEnabled(!apply); m_list->setEnabled(!apply); m_reset->setEnabled(!apply);
   m_buttons->button(QDialogButtonBox::Apply)->setEnabled(!apply); updateFavorite();
   m_status->setText(apply ? tr("Applying at full resolution…") : tr("Previewing at full resolution…"));
   m_progress->setValue(0); m_progress->show();
   const auto registry = m_registry; const auto document = m_document; const auto source = m_source; const auto values = m_values;
-  const auto previewSize = m_preview->size();
+  const auto previewSize = m_preview->size(); const auto seed = m_seed;
   struct Result { PreparedCanvasEdit edit; QImage preview, thumbnail; };
-  m_work = OwnedWork::run<Result>(this, [registry, id, document, source, values, apply, previewSize](const OwnedWork::Context &work) {
-    const EffectContext context{[work] { return work.cancelled(); }, [work](int p) { work.progress(p, 100); }, 0};
+  m_work = OwnedWork::run<Result>(this, [registry, id, document, source, values, apply, previewSize, seed](const OwnedWork::Context &work) {
+    const EffectContext context{[work] { return work.cancelled(); }, [work](int p) { work.progress(p, 100); }, seed};
     Result result;
     result.edit = prepareEffectEdit(document, source, *registry->find(id), values, context);
     if (!apply && !result.edit.result.error) {
@@ -294,7 +350,7 @@ void EffectsDialog::run(bool apply) {
       }
     }
     return result;
-  }, [this, revision, apply, id](Result result) {
+  }, [this, revision, apply, id, seed](Result result) {
     if (m_closing || revision != m_revision || m_work.cancelled()) return;
     m_progress->hide(); m_applying = false;
     m_parameters->setEnabled(true); m_category->setEnabled(true); m_search->setEnabled(true); m_list->setEnabled(true); m_reset->setEnabled(true);
@@ -308,6 +364,7 @@ void EffectsDialog::run(bool apply) {
       m_parameters->setEnabled(false); m_category->setEnabled(false); m_search->setEnabled(false); m_list->setEnabled(false); m_reset->setEnabled(false);
       m_buttons->button(QDialogButtonBox::Apply)->setEnabled(false);
       m_buttons->button(QDialogButtonBox::Cancel)->setText(tr("Close"));
+      m_lists.seeds[id] = seed;
       m_lists.recent.removeAll(id); m_lists.recent.prepend(id);
       while (m_lists.recent.size() > 20) m_lists.recent.removeLast();
       m_closeAfterSave = true; updateFavorite();

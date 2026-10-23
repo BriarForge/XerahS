@@ -1118,3 +1118,16 @@ set_tests_properties(effects-dialog PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offsc
 
 # EDITOR-EFFECTS-001: geometry effects reuse the core canvas pixel operations.
 target_link_libraries(xerahs_effects PUBLIC xerahs_core)
+
+# COMPAT-SXIE-001, EE-008, EE-015: memory-only legacy import and native presets.
+target_sources(xerahs_effects PRIVATE
+  src/image-editor/effects/SxieArchive.cpp src/image-editor/effects/SxieArchive.h
+  src/image-editor/effects/SxiePreset.cpp src/image-editor/effects/SxiePreset.h)
+target_link_libraries(xerahs_effects PRIVATE ZLIB::ZLIB)
+target_sources(xerahs_editor_source PRIVATE app/PresetDialog.cpp app/PresetDialog.h)
+add_executable(sxie-preset-test tests/SxiePresetTest.cpp ${XERAHS_PREFERENCE_TEST_SOURCES})
+set_target_properties(sxie-preset-test PROPERTIES AUTOMOC ON)
+target_compile_definitions(sxie-preset-test PRIVATE SXIE_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/sxie/mapping.sxie")
+target_link_libraries(sxie-preset-test PRIVATE xerahs_editor_source xerahs_editor_canvas xerahs_editor_codecs ZLIB::ZLIB Qt6::Widgets Qt6::DBus Qt6::Test)
+add_test(NAME sxie-preset COMMAND sxie-preset-test)
+set_tests_properties(sxie-preset PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 60)

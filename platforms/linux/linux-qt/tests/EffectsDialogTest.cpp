@@ -1,5 +1,6 @@
 // EDITOR-EFFECTS-001: EE-002..EE-006, EE-010..EE-014.
 #include "EffectsDialog.h"
+#include "image-editor/effects/SxiePreset.h"
 #include "EditorSource.h"
 #include "EditorWindow.h"
 #include "EditorCanvas.h"
@@ -130,6 +131,35 @@ private slots:
     delete window; QVERIFY(!dialog);
     QTest::qWait(100);
   }
+  void seedsPreviewHistoryAndRecents() {
+    QTemporaryDir temp; const auto loaded = source(); const auto path = temp.filePath("seeds.json");
+    EditorSession session(*loaded.document); const auto before = serializeDocument(session.document()); const auto state = session.stateId();
+    EffectsDialog d(*loaded.document, loaded.image, [&](PreparedCanvasEdit edit) { return session.commitCanvas(*edit.result.document, state); }, nullptr, path);
+    d.show(); d.findChild<QLineEdit *>("effectsSearch")->setText("tv_static");
+    QTRY_VERIFY(!d.previewImage().isNull());
+    auto *seed = d.findChild<QLineEdit *>("effectsSeed"); QVERIFY(seed);
+    QCOMPARE(seed->text(), QString::number(defaultEffectSeed("tv_static")));
+    const auto first = d.previewImage();
+    d.findChild<QPushButton *>("effectsNewSeed")->click(); const auto selectedSeed = seed->text().toULongLong();
+    QTRY_VERIFY(!d.previewImage().isNull()); QVERIFY(d.previewImage() != first); const auto preview = d.previewImage();
+    seed->setText("18446744073709551616"); QVERIFY(!d.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply)->isEnabled());
+    seed->setText(QString::number(selectedSeed)); QTRY_VERIFY(!d.previewImage().isNull()); QCOMPARE(d.previewImage(), preview);
+    d.accept(); QTRY_COMPARE(d.result(), int(QDialog::Accepted)); QCOMPARE(session.undoCount(), 1);
+    const auto applied = serializeDocument(session.document());
+    QCOMPARE(session.document().extra.value("effectOperations").toArray().last().toObject().value("seed").toString(), QString::number(selectedSeed));
+    QCOMPARE(QImage::fromData(session.document().sourceImagePng), preview);
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before);
+    // Use the ordinary context callbacks when replaying the recorded seed.
+    EffectContext context; context.seed = selectedSeed;
+    const auto replay = prepareEffectEdit(session.document(), loaded.image, *builtinEffects().find("tv_static"), {}, context);
+    QVERIFY(!replay.result.error); QCOMPARE(replay.source, preview);
+    QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), applied);
+    EffectsStore store(path); QCOMPARE(store.load(builtinEffects()).seeds.value("tv_static"), selectedSeed);
+    EffectsDialog again(*loaded.document, loaded.image, {}, nullptr, path); again.show();
+    again.findChild<QLineEdit *>("effectsSearch")->setText("tv_static");
+    QTRY_VERIFY(again.findChild<QLineEdit *>("effectsSeed")->text() == QString::number(selectedSeed));
+    QTRY_COMPARE(again.previewImage(), preview);
+  }
   void browser() {
     QTemporaryDir temp; const auto loaded = source();
     EffectsDialog d(*loaded.document, loaded.image, {}, nullptr, temp.filePath("state.json")); d.show();
@@ -213,6 +243,11 @@ private slots:
     CanvasOperation op; op.action = CanvasAction::ResizeCanvas; op.width = 20; op.height = 18;
     const auto expected = prepareCanvasEdit(doc, loaded.image, op); QVERIFY(!expected.result.error);
     auto actual = session.document(); auto geometry = *expected.result.document; actual.sourceImagePng.clear(); geometry.sourceImagePng.clear();
+    const auto operation = actual.extra.value("effectOperations").toArray().last().toObject();
+    QCOMPARE(operation.value("id").toString(), QString("sized"));
+    QCOMPARE(operation.value("seed").toString(), QString::number(defaultEffectSeed("sized")));
+    QCOMPARE(operation.value("parameters").toObject(), serializeParameters(registry("sized", true).find("sized")->spec(), resolveParameters(registry("sized", true).find("sized")->spec(), {}).values));
+    actual.extra.remove("effectOperations");
     actual.modifiedAt = geometry.modifiedAt; QCOMPARE(serializeDocument(actual), serializeDocument(geometry));
     QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before);
   }
