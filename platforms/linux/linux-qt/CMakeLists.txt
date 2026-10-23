@@ -101,6 +101,8 @@ add_library(xerahs_core STATIC
   src/tools/ColorFormats.h
   src/tools/FileHash.cpp
   src/tools/FileHash.h
+  src/media/VideoConversion.cpp
+  src/media/VideoConversion.h
 )
 target_include_directories(xerahs_core PUBLIC src)
 # Qt Gui (private) supplies QPainter for shape painting shared with the canvas.
@@ -890,3 +892,49 @@ set_target_properties(owned-work-test PROPERTIES AUTOMOC ON)
 target_include_directories(owned-work-test PRIVATE app)
 target_link_libraries(owned-work-test PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME owned-work COMMAND owned-work-test)
+
+# EDITOR-UTILITIES-001 / EU-012..EU-017: video converter. Model in xerahs_core; the dialog takes injected
+# ports and always builds; the GStreamer runner links into xerahs only when GStreamer is found.
+add_library(xerahs_video_converter_ui STATIC app/VideoConverterDialog.cpp app/VideoConverterDialog.h app/ConversionRunner.h)
+set_target_properties(xerahs_video_converter_ui PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_video_converter_ui PUBLIC app)
+target_link_libraries(xerahs_video_converter_ui PUBLIC xerahs_core Qt6::Widgets)
+target_compile_options(xerahs_video_converter_ui PRIVATE -Wall -Wextra -Wpedantic)
+target_link_libraries(xerahs PRIVATE xerahs_video_converter_ui)
+if(XERAHS_RECORDING AND GSTREAMER_FOUND)
+  pkg_check_modules(GSTREAMER_PBUTILS QUIET IMPORTED_TARGET gstreamer-pbutils-1.0)
+endif()
+if(XERAHS_RECORDING AND GSTREAMER_FOUND AND GSTREAMER_PBUTILS_FOUND)
+  add_library(xerahs_video_converter STATIC app/VideoConverter.cpp app/VideoConverter.h)
+  set_target_properties(xerahs_video_converter PROPERTIES AUTOMOC ON)
+  target_include_directories(xerahs_video_converter PUBLIC app)
+  target_link_libraries(xerahs_video_converter PUBLIC xerahs_core xerahs_video_converter_ui PkgConfig::GSTREAMER PkgConfig::GSTREAMER_PBUTILS)
+  target_compile_definitions(xerahs_video_converter PUBLIC XERAHS_VIDEO_CONVERTER=1)
+  target_compile_options(xerahs_video_converter PRIVATE -Wall -Wextra -Wpedantic)
+  target_link_libraries(xerahs PRIVATE xerahs_video_converter)
+endif()
+
+add_executable(video-conversion-test tests/VideoConversionTest.cpp)
+set_target_properties(video-conversion-test PROPERTIES AUTOMOC ON)
+target_link_libraries(video-conversion-test PRIVATE xerahs_core Qt6::Test)
+target_compile_definitions(video-conversion-test PRIVATE XERAHS_REPO_ROOT_DIR="${XERAHS_REPO_ROOT}")
+add_test(NAME video-conversion COMMAND video-conversion-test)
+
+add_executable(video-converter-dialog-test tests/VideoConverterDialogTest.cpp)
+set_target_properties(video-converter-dialog-test PROPERTIES AUTOMOC ON)
+target_link_libraries(video-converter-dialog-test PRIVATE xerahs_video_converter_ui Qt6::Test)
+add_test(NAME video-converter-dialog COMMAND video-converter-dialog-test)
+set_tests_properties(video-converter-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
+if(TARGET xerahs_video_converter)
+  add_executable(video-converter-integration-test tests/VideoConverterIntegrationTest.cpp)
+  set_target_properties(video-converter-integration-test PROPERTIES AUTOMOC ON)
+  target_link_libraries(video-converter-integration-test PRIVATE xerahs_video_converter Qt6::Test)
+  add_test(NAME video-converter-integration COMMAND video-converter-integration-test)
+  set_tests_properties(video-converter-integration PROPERTIES TIMEOUT 60)
+  add_executable(gst-conversion-runner-lifetime-test tests/GstConversionRunnerLifetimeTest.cpp)
+  set_target_properties(gst-conversion-runner-lifetime-test PROPERTIES AUTOMOC ON)
+  target_link_libraries(gst-conversion-runner-lifetime-test PRIVATE xerahs_video_converter Qt6::Test)
+  add_test(NAME gst-conversion-runner-lifetime COMMAND gst-conversion-runner-lifetime-test)
+  set_tests_properties(gst-conversion-runner-lifetime PROPERTIES TIMEOUT 30)
+endif()
