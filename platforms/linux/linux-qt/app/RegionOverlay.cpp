@@ -4,6 +4,7 @@
 
 #include <QAccessible>
 #include <QFontDatabase>
+#include <QEnterEvent>
 #include <QGuiApplication>
 #include <QKeyEvent>
 #include <QPainter>
@@ -71,6 +72,10 @@ void RegionOverlay::mousePressEvent(QMouseEvent *event) {
   else if (event->button() == Qt::RightButton) m_controller.cancel();
 }
 
+void RegionOverlay::enterEvent(QEnterEvent *event) {
+  m_controller.pointerMove(toPhysical(event->position()));
+}
+
 void RegionOverlay::mouseMoveEvent(QMouseEvent *event) { m_controller.pointerMove(toPhysical(event->position())); }
 
 void RegionOverlay::mouseReleaseEvent(QMouseEvent *event) {
@@ -86,7 +91,8 @@ void RegionOverlay::paintEvent(QPaintEvent *) {
   // RC-005, RC-014: the frozen snapshot at 1:1 physical pixels.
   painter.drawImage(rect(), m_snapshot, m_source);
 
-  const std::optional<PhysicalRect> selection = m_controller.selection();
+  auto selection = m_controller.selection();
+  if (!selection) selection = m_controller.snapPreview();
   std::optional<PhysicalRect> visible;
   if (selection) visible = intersection(*selection, m_display.physical);
 

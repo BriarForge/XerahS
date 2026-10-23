@@ -50,6 +50,7 @@ public:
 
   // Overlay painting state.
   std::optional<xerahs::capture::PhysicalRect> selection() const;
+  std::optional<xerahs::capture::PhysicalRect> snapPreview() const;
   bool selectionSettled() const;
   std::optional<xerahs::capture::PhysicalPoint> keyboardCursor() const;
   QScreen *hintScreen() const;
@@ -124,6 +125,7 @@ private:
   bool m_busy = false;
   QPointer<PortalScreenshot> m_portal;
   QImage m_desktop;  // frozen snapshot in desktop physical pixels
+  std::optional<xerahs::capture::PhysicalPoint> m_hoverPoint;
   std::unique_ptr<xerahs::capture::RegionSession> m_session;
   std::vector<std::unique_ptr<RegionOverlay>> m_overlays;
   std::optional<xerahs::capture::PhysicalPoint> m_keyboardCursor;

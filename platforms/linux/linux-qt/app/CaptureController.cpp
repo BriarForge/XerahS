@@ -3,6 +3,7 @@
 #include "CaptureActions.h"
 #include "PortalScreenshot.h"
 #include "RegionOverlay.h"
+#include "WindowDiscovery.h"
 
 #include "actions/PostCapturePipeline.h"
 
@@ -192,7 +193,10 @@ void CaptureController::onSnapshot(int outcome, const QImage &image, const QStri
     return;
   }
 
-  m_session = std::make_unique<RegionSession>(topology, SessionSettings{}, std::vector<SnapTarget>{},
+  const SessionSettings settings{};
+  const auto targets = settings.snapping && result != PortalScreenshot::Outcome::Denied
+      ? nativeWindowDiscovery()->targets(topology, QCoreApplication::applicationPid()) : std::vector<SnapTarget>{};
+  m_session = std::make_unique<RegionSession>(topology, settings, targets,
                                               [this](const SessionOutcome &o) { onOutcome(o); });
   m_session->start();
   if (result == PortalScreenshot::Outcome::Denied) {
@@ -287,7 +291,8 @@ void CaptureController::pointerDown(PhysicalPoint point) {
 }
 
 void CaptureController::pointerMove(PhysicalPoint point) {
-  if (!m_session || m_session->state() != SessionState::Selecting || m_keyboardSelecting) return;
+  if (!m_session || m_keyboardSelecting) return;
+  m_hoverPoint = point;
   m_session->pointerMove(point);
   afterInput();
 }
@@ -384,6 +389,10 @@ bool CaptureController::key(int key, Qt::KeyboardModifiers modifiers, const Disp
 
 std::optional<PhysicalRect> CaptureController::selection() const {
   return m_session ? m_session->selection() : std::nullopt;
+}
+
+std::optional<PhysicalRect> CaptureController::snapPreview() const {
+  return m_session && m_hoverPoint ? m_session->snapPreviewAt(*m_hoverPoint) : std::nullopt;
 }
 
 bool CaptureController::selectionSettled() const {
@@ -600,6 +609,7 @@ void CaptureController::finish() {
   for (const auto &connection : m_screenConnections) disconnect(connection);
   m_screenConnections.clear();
   m_session.reset();
+  m_hoverPoint.reset();
   m_desktop = QImage();
   m_captured.reset();
   m_selectedActions.clear();

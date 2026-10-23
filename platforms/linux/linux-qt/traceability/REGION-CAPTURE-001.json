@@ -93,7 +93,18 @@
         "zero-area-not-confirmable",
         "explicit-confirm-with-enter"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "implementation": [
+        "platforms/linux/linux-qt/src/capture/WindowSnapTargets.cpp",
+        "platforms/linux/linux-qt/src/capture/RegionSession.cpp",
+        "platforms/linux/linux-qt/app/WindowDiscovery.cpp",
+        "platforms/linux/linux-qt/app/CaptureController.cpp",
+        "platforms/linux/linux-qt/app/RegionOverlay.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/tests/WindowSnapTargetsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeWindowDiscoveryTest.cpp"
+      ]
     },
     "RC-010": {
       "status": "partial",
@@ -108,8 +119,19 @@
       "vectors": [
         "click-selects-snapped-window"
       ],
-      "note": "Click-to-snap and drag override are implemented (platforms/linux/linux-qt/tests/RegionCaptureTest.cpp). Native window and control discovery arrives with the overlay. The overlay badge shows physical size and origin with tabular digits on Qt 6.7+ and the native fixed font on Qt 6.4; the Ubuntu CI job checks the minimum-version app build.",
-      "disposition": "Required"
+      "note": "Hyprland socket discovery filters visible windows and supplies ordered, per-display mapped and clamped targets. Idle hover shows the same physical bounds and size badge used for selections; dragging overrides snapping. Fixture tests cover filtering, special workspaces, own PID, ordering, mixed-scale mapping/clamping and click confirmation. Other compositors fall back to free region selection; native compositor qualification remains Required.",
+      "disposition": "Required",
+      "implementation": [
+        "platforms/linux/linux-qt/src/capture/WindowSnapTargets.cpp",
+        "platforms/linux/linux-qt/src/capture/RegionSession.cpp",
+        "platforms/linux/linux-qt/app/WindowDiscovery.cpp",
+        "platforms/linux/linux-qt/app/CaptureController.cpp",
+        "platforms/linux/linux-qt/app/RegionOverlay.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/tests/WindowSnapTargetsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeWindowDiscoveryTest.cpp"
+      ]
     },
     "RC-012": {
       "status": "partial",
@@ -233,7 +255,18 @@
         "zero-area-not-confirmable",
         "click-selects-snapped-window"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "implementation": [
+        "platforms/linux/linux-qt/src/capture/WindowSnapTargets.cpp",
+        "platforms/linux/linux-qt/src/capture/RegionSession.cpp",
+        "platforms/linux/linux-qt/app/WindowDiscovery.cpp",
+        "platforms/linux/linux-qt/app/CaptureController.cpp",
+        "platforms/linux/linux-qt/app/RegionOverlay.cpp"
+      ],
+      "evidence": [
+        "platforms/linux/linux-qt/tests/WindowSnapTargetsTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeWindowDiscoveryTest.cpp"
+      ]
     },
     "RC-027": {
       "status": "implemented",

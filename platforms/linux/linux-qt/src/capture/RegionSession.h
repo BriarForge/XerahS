@@ -80,6 +80,8 @@ public:
   const Topology &topology() const { return m_topology; }
   std::optional<QString> diagnostic() const { return m_diagnostic; }
   bool overlayShown() const { return m_overlayShown; }
+  // RC-011: preview uses the same first-hit ordering as click selection.
+  std::optional<PhysicalRect> snapPreviewAt(PhysicalPoint point) const;
   int publishedResults() const { return m_published; }
   bool lastRegionUpdated() const { return m_lastRegionUpdated; }
 

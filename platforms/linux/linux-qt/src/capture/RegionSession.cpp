@@ -175,6 +175,12 @@ void RegionSession::finish(SessionState terminal, std::optional<QString> diagnos
   if (m_publish) m_publish(outcome);
 }
 
+std::optional<PhysicalRect> RegionSession::snapPreviewAt(PhysicalPoint point) const {
+  if (!m_settings.snapping || m_state != SessionState::Idle) return std::nullopt;
+  const auto *target = snapTargetAt(point);
+  return target ? intersection(target->physical, boundingBox(m_topology)) : std::nullopt;
+}
+
 const SnapTarget *RegionSession::snapTargetAt(PhysicalPoint point) const {
   for (const SnapTarget &target : m_snapTargets) {
     if (target.physical.contains(point.x, point.y)) return &target;

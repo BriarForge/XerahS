@@ -37,6 +37,8 @@ add_library(xerahs_core STATIC
   src/actions/PipelineJournal.h
   src/capture/RegionGeometry.cpp
   src/capture/RegionGeometry.h
+  src/capture/WindowSnapTargets.cpp
+  src/capture/WindowSnapTargets.h
   src/capture/RegionSession.cpp
   src/capture/RegionSession.h
   src/image-editor/AnnotationDocument.cpp
@@ -100,6 +102,10 @@ target_compile_options(xerahs_editor_codecs PRIVATE -Wall -Wextra -Wpedantic)
 add_executable(xerahs-conformance-adapter conformance-adapter/main.cpp)
 target_link_libraries(xerahs-conformance-adapter PRIVATE xerahs_core xerahs_editor_codecs)
 target_compile_options(xerahs-conformance-adapter PRIVATE -Wall -Wextra -Wpedantic)
+
+# Optional compositor transport stays outside the Qt Core production library.
+add_library(xerahs_window_discovery STATIC app/WindowDiscovery.cpp app/WindowDiscovery.h)
+target_link_libraries(xerahs_window_discovery PUBLIC xerahs_core Qt6::Network)
 
 add_library(xerahs_native_instance STATIC app/NativeInstance.cpp app/NativeInstance.h)
 set_target_properties(xerahs_native_instance PROPERTIES AUTOMOC ON)
@@ -210,7 +216,7 @@ add_executable(xerahs
   app/main.cpp
 )
 set_target_properties(xerahs PROPERTIES AUTOMOC ON)
-target_link_libraries(xerahs PRIVATE xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_native_instance xerahs_workflow_shortcuts xerahs_workflow_discovery xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus)
+target_link_libraries(xerahs PRIVATE xerahs_window_discovery xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_native_instance xerahs_workflow_shortcuts xerahs_workflow_discovery xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus)
 target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
 find_program(XERAHS_DBUS_RUN_SESSION dbus-run-session REQUIRED)
@@ -388,7 +394,7 @@ add_executable(portal-screenshot-test tests/PortalScreenshotTest.cpp app/PortalS
                app/SnapshotComposition.cpp app/SnapshotComposition.h
                app/RegionOverlay.cpp app/RegionOverlay.h)
 set_target_properties(portal-screenshot-test PROPERTIES AUTOMOC ON)
-target_link_libraries(portal-screenshot-test PRIVATE xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
+target_link_libraries(portal-screenshot-test PRIVATE xerahs_window_discovery xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
 target_include_directories(portal-screenshot-test PRIVATE app)
 add_dependencies(portal-screenshot-test xerahs)
 add_test(NAME portal-screenshot COMMAND "${XERAHS_DBUS_RUN_SESSION}"
@@ -452,6 +458,18 @@ add_executable(region-capture-test tests/RegionCaptureTest.cpp)
 set_target_properties(region-capture-test PROPERTIES AUTOMOC ON)
 target_link_libraries(region-capture-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME region-capture COMMAND region-capture-test)
+
+add_executable(window-snap-targets-test tests/WindowSnapTargetsTest.cpp)
+set_target_properties(window-snap-targets-test PROPERTIES AUTOMOC ON)
+target_link_libraries(window-snap-targets-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME window-snap-targets COMMAND window-snap-targets-test)
+
+add_executable(native-window-discovery-test tests/NativeWindowDiscoveryTest.cpp)
+set_target_properties(native-window-discovery-test PROPERTIES AUTOMOC ON)
+target_include_directories(native-window-discovery-test PRIVATE app)
+target_link_libraries(native-window-discovery-test PRIVATE xerahs_window_discovery Qt6::Test)
+add_test(NAME native-window-discovery COMMAND native-window-discovery-test)
+set_tests_properties(native-window-discovery PROPERTIES TIMEOUT 10)
 
 add_executable(editor-session-test tests/EditorSessionTest.cpp)
 set_target_properties(editor-session-test PROPERTIES AUTOMOC ON)
@@ -581,7 +599,7 @@ add_executable(workflow-shortcuts-test tests/WorkflowShortcutsTest.cpp
   app/CapturePipeline.cpp app/CapturePipeline.h app/SnapshotComposition.cpp app/SnapshotComposition.h
   app/RegionOverlay.cpp app/RegionOverlay.h app/ApplicationWindow.cpp app/ApplicationWindow.h)
 set_target_properties(workflow-shortcuts-test PROPERTIES AUTOMOC ON)
-target_link_libraries(workflow-shortcuts-test PRIVATE xerahs_workflow_shortcuts xerahs_file_output xerahs_action_selection xerahs_pipeline_journal Qt6::Test)
+target_link_libraries(workflow-shortcuts-test PRIVATE xerahs_window_discovery xerahs_workflow_shortcuts xerahs_file_output xerahs_action_selection xerahs_pipeline_journal Qt6::Test)
 add_test(NAME workflow-shortcuts COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:workflow-shortcuts-test>)
 set_tests_properties(workflow-shortcuts PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
