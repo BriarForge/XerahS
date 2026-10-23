@@ -60,6 +60,7 @@ public:
   bool discardRetainedResult(const CapturePipelineReceipt &expected);
   bool retryFailedActions(const CapturePipelineReceipt &expected);
   void setActionSelectionParent(QWidget *parent);
+  void setSaveDirectory(const QString &directory) { m_saveDirectory = directory; }
   void setDefaultWorkflowResolver(std::function<xerahs::workflows::WorkflowChoice()> resolver) { m_workflowResolver = std::move(resolver); }
   std::function<void()> prepareWorkflowCapture(const xerahs::workflows::CaptureWorkflow &workflow, const QString &requestId,
       const QString &origin, xerahs::workflows::WorkflowExecution::Writer writer);

@@ -33,7 +33,7 @@ public:
   QDBusConnection bus;
   QString session, request, imagePath, parentWindow;
   QStringList closed; PortalShortcutList offered, bound;
-  int creates = 0, binds = 0, screenshots = 0;
+  int creates = 0, binds = 0, screenshots = 0, configurations = 0;
   uint createCode = 0, bindCode = 0;
   bool early = true, autoRespond = true, delayCreateHandle = false, invalidSession = false, invalidHandle = false, malformedBindings = false, holdBind = false;
   QDBusMessage pending; QVariantMap pendingResults;
@@ -47,6 +47,9 @@ public:
   void release(const QString &id) { signal(globalInterface, "Deactivated", {QVariant::fromValue(QDBusObjectPath(session)), id, QVariant::fromValue(qulonglong(2)), QVariantMap{}}); }
   void changed(const PortalShortcutList &list) { signal(globalInterface, "ShortcutsChanged", {QVariant::fromValue(QDBusObjectPath(session)), QVariant::fromValue(list)}); }
   bool handleMessage(const QDBusMessage &message, const QDBusConnection &) override {
+    if (message.interface() == globalInterface && message.member() == "ConfigureShortcuts") {
+      ++configurations; bus.send(message.createReply()); return true;
+    }
     if (message.member() == "Close") { closed.append(message.path()); bus.send(message.createReply()); return true; }
     if (message.interface() == globalInterface && (message.member() == "CreateSession" || message.member() == "BindShortcuts")) {
       const bool create = message.member() == "CreateSession";
@@ -106,6 +109,22 @@ private slots:
     QVERIFY(state.setBound({id})); QVERIFY(state.press(id).isEmpty()); QVERIFY(state.setBound({})); QVERIFY(state.press(id).isEmpty());
     QVERIFY(state.setBound({id})); QCOMPARE(state.press(id), id); state.clear(); QVERIFY(state.press(id).isEmpty());
     catalog.entries[1].id = catalog.entries[0].id; QVERIFY(!workflowShortcutPlan(catalog, CaptureActions::selectableActions()).diagnostic.isEmpty());
+  }
+  void combinedCaptureAndWorkflowPortalPlan() {
+    FakePortal desktop(server);
+    const auto offered = captureShortcutPlan(defaultCaptureWorkflows(), CaptureActions::selectableActions(), xerahs::settings::HotkeyBindings::defaults());
+    PortalWorkflowShortcuts shortcuts(offered, client, config()); QSignalSpy invoked(&shortcuts, &PortalWorkflowShortcuts::activated);
+    shortcuts.start(); QTRY_VERIFY(shortcuts.active()); QCOMPARE(desktop.creates, 1); QCOMPARE(desktop.binds, 1);
+    QCOMPARE(desktop.offered.size(), offered.entries.size());
+    QMap<QString, QString> expected{{"capture-region", "Print"}, {"capture-full-screen", "CTRL+Print"}, {"capture-monitor", "SHIFT+Print"}, {"capture-region-choose-actions", "ALT+Print"}};
+    for (const auto &entry : desktop.offered) if (expected.contains(entry.id)) QCOMPARE(entry.properties.value("preferred_trigger").toString(), expected.value(entry.id));
+    desktop.press("capture-region"); QTRY_COMPARE(invoked.size(), 1); QCOMPARE(invoked.first().first().toString(), "capture-region");
+    QCOMPARE(shortcuts.bindings().value("capture-region"), "Ctrl+Print");
+    desktop.release("capture-region"); desktop.press(offered.entries.last().id); QTRY_COMPARE(invoked.size(), 2);
+    QCOMPARE(desktop.binds, 1);
+    QSignalSpy configured(&shortcuts, &PortalWorkflowShortcuts::configurationResult);
+    shortcuts.configureDesktop(); QTRY_COMPARE(desktop.configurations, 1); QTRY_COMPARE(configured.size(), 1);
+    QVERIFY(configured.first().first().toBool()); QCOMPARE(desktop.binds, 1); QCOMPARE(desktop.creates, 1);
   }
   void nativeBindingAndActivationAuthority_data() { QTest::addColumn<bool>("early"); QTest::newRow("early-response") << true; QTest::newRow("after-handle") << false; }
   void nativeBindingAndActivationAuthority() {

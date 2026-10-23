@@ -38,6 +38,7 @@ ApplicationWindow::ApplicationWindow(const QMap<QString, QAction *> &actions, QW
     cancel->setShortcut(QKeySequence(Qt::Key_Escape)); cancel->setShortcutContext(Qt::WindowShortcut); addAction(cancel);
   }
   auto *preferences = menuBar()->addMenu(QStringLiteral("&Preferences"));
+  if (auto *action = actions.value(QStringLiteral("settings"))) preferences->addAction(action);
   if (auto *action = actions.value(QStringLiteral("editor-appearance"))) preferences->addAction(action);
   resize(640, 360);
 }

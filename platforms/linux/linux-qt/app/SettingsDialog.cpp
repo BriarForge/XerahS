@@ -1,0 +1,117 @@
+#include "SettingsDialog.h"
+#include "XdgAutostart.h"
+#include <QApplication>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QDialogButtonBox>
+#include <QFileDialog>
+#include <QFormLayout>
+#include <QHeaderView>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QTabWidget>
+#include <QTableWidget>
+#include <QTimer>
+#include <QSignalBlocker>
+#include <QVBoxLayout>
+namespace xerahs::app {
+using namespace xerahs::settings;
+SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultFolder,
+    const xerahs::workflows::WorkflowShortcutPlan &plan, WorkflowShortcutActions &shortcuts,
+    std::function<void()> applied, QWidget *parent) : QDialog(parent) {
+  setWindowTitle("XerahS Settings"); setAccessibleName("XerahS Settings"); setModal(true); resize(820, 520);
+  auto draft = std::make_shared<QJsonObject>(store.current().values);
+  auto *layout = new QVBoxLayout(this);
+  auto *scope = new QLabel("All preferences apply to this user profile. Saved workflow filename patterns and explicit folders override application defaults. Hotkeys are preferred triggers only; the desktop and user decide the final binding.", this);
+  scope->setWordWrap(true); layout->addWidget(scope);
+  auto *tabs = new QTabWidget(this); tabs->setAccessibleName("Settings sections"); layout->addWidget(tabs);
+  auto *general = new QWidget(tabs); auto *form = new QFormLayout(general); tabs->addTab(general, "&General");
+  auto *folder = new QLineEdit(general); folder->setMaxLength(32768); folder->setAccessibleName("Default save folder"); form->addRow("&Default save folder", folder);
+  auto *browse = new QPushButton("&Browse…", general); form->addRow(browse);
+  connect(browse, &QPushButton::clicked, this, [this, folder] {
+    const auto path = QFileDialog::getExistingDirectory(this, "Default save folder", folder->text()); if (!path.isEmpty()) folder->setText(path);
+  });
+  auto *pattern = new QLineEdit(general); pattern->setMaxLength(4096); pattern->setAccessibleName("Filename pattern"); form->addRow("&Filename pattern", pattern);
+  auto *login = new QCheckBox("Start XerahS at &login", general); login->setAccessibleName("Start XerahS at login"); form->addRow(login);
+  auto *tray = new QCheckBox("Show &tray icon", general); tray->setAccessibleName("Show tray icon"); form->addRow(tray);
+  auto *capture = new QWidget(tabs); auto *captureForm = new QFormLayout(capture); tabs->addTab(capture, "&Capture");
+  auto *sound = new QCheckBox("Play capture &sound", capture); sound->setAccessibleName("Play capture sound"); captureForm->addRow(sound);
+  auto *notification = new QCheckBox("Show &notification after capture", capture); notification->setAccessibleName("Show notification after capture"); captureForm->addRow(notification);
+  auto *hotkeyPage = new QWidget(tabs); auto *hotkeyLayout = new QVBoxLayout(hotkeyPage); tabs->addTab(hotkeyPage, "&Hotkeys");
+  auto *table = new QTableWidget(hotkeyPage); table->setColumnCount(3); table->setHorizontalHeaderLabels({"Action", "Preferred trigger", "Currently bound by desktop"});
+  table->setAccessibleName("Capture and workflow hotkeys"); table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+  table->setSelectionBehavior(QAbstractItemView::SelectRows); table->setSelectionMode(QAbstractItemView::SingleSelection);
+  table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch); hotkeyLayout->addWidget(table);
+  auto *trigger = new QLineEdit(hotkeyPage); trigger->setAccessibleName("Preferred trigger for selected action"); trigger->setPlaceholderText("Ctrl+Print, Shift+F1, or blank to clear; modifiers Ctrl, Alt, Shift, Meta"); hotkeyLayout->addWidget(trigger);
+  auto *assign = new QPushButton("Set &preferred trigger", hotkeyPage); hotkeyLayout->addWidget(assign);
+  auto *desktop = new QPushButton("Change in &desktop settings… (closes unapplied draft)", hotkeyPage); hotkeyLayout->addWidget(desktop);
+  auto *status = new QLabel(this); status->setTextFormat(Qt::PlainText); status->setWordWrap(true); status->setAccessibleName("Settings validation and conflicts");
+  status->setText((store.current().diagnostics + (plan.diagnostic.isEmpty() ? QStringList{} : QStringList{plan.diagnostic + ": reload Capture workflows before enabling shortcuts"})).join('\n')); layout->addWidget(status);
+  auto refresh = [=, &shortcuts] {
+    const QSignalBlocker blocker(table);
+    folder->setText(draft->value("saveFolder").toString()); pattern->setText(draft->value("filenamePattern").toString());
+    login->setChecked(draft->value("startAtLogin").toBool()); tray->setChecked(draft->value("showTrayIcon").toBool());
+    sound->setChecked(draft->value("playCaptureSound").toBool()); notification->setChecked(draft->value("showNotification").toBool());
+    table->setRowCount(plan.entries.size()); int row = 0;
+    for (const auto &entry : plan.entries) {
+      auto *item = new QTableWidgetItem(entry.description); item->setData(Qt::UserRole, entry.id); table->setItem(row, 0, item);
+      table->setItem(row, 1, new QTableWidgetItem(hotkeys(*draft).entries.value(entry.id)));
+      table->setItem(row++, 2, new QTableWidgetItem(shortcuts.bindings().value(entry.id, "Unbound in this session")));
+    }
+    if (table->rowCount()) { table->selectRow(0); trigger->setText(table->item(0, 1)->text()); }
+  };
+  auto collect = [=] {
+    draft->insert("saveFolder", folder->text()); draft->insert("filenamePattern", pattern->text());
+    draft->insert("startAtLogin", login->isChecked()); draft->insert("showTrayIcon", tray->isChecked());
+    draft->insert("playCaptureSound", sound->isChecked()); draft->insert("showNotification", notification->isChecked());
+  };
+  connect(table, &QTableWidget::itemSelectionChanged, this, [=] { const int row = table->currentRow(); if (row >= 0 && table->item(row, 1)) trigger->setText(table->item(row, 1)->text()); });
+  connect(assign, &QPushButton::clicked, this, [=] {
+    const int row = table->currentRow(); if (row < 0) return;
+    auto bindings = hotkeys(*draft); const auto id = table->item(row, 0)->data(Qt::UserRole).toString();
+    const auto result = bindings.assign(id, trigger->text());
+    if (!result.ok) { status->setText(result.diagnostic + (result.conflictingAction.isEmpty() ? "" : ": " + result.conflictingAction) + ". Change or clear the conflicting binding, then retry."); return; }
+    auto object = draft->value("hotkeys").toObject(); object.insert(id, bindings.entries.value(id)); draft->insert("hotkeys", object);
+    table->item(row, 1)->setText(bindings.entries.value(id)); status->setText("Preference updated in draft. Apply to save; change in desktop settings to request binding.");
+  });
+  connect(desktop, &QPushButton::clicked, this, [this, &shortcuts] {
+    // Close the modal first: setup uses the same busy/modal admission as capture.
+    reject(); QTimer::singleShot(0, &shortcuts, [&shortcuts] { shortcuts.changeInDesktopSettings(); });
+  });
+  connect(&shortcuts, &WorkflowShortcutActions::bindingsChanged, this, [=, &shortcuts] {
+    for (int row = 0; row < table->rowCount(); ++row) table->item(row, 2)->setText(shortcuts.bindings().value(table->item(row, 0)->data(Qt::UserRole).toString(), "Unbound in this session"));
+  });
+  auto *reset = new QPushButton("&Reset section…", this); layout->addWidget(reset);
+  connect(reset, &QPushButton::clicked, this, [=] {
+    collect(); const auto section = static_cast<Section>(tabs->currentIndex()); const auto changes = resetPreview(*draft, section, defaultFolder);
+    if (changes.isEmpty()) { status->setText("This section already has default values."); return; }
+    if (QMessageBox::question(this, "Reset profile section", "Preview of changes (other sections and user files are kept):\n" + changes.join('\n') + "\n\nReset this draft? Apply saves it; Cancel discards it.", QMessageBox::Reset | QMessageBox::Cancel, QMessageBox::Cancel) != QMessageBox::Reset) return;
+    *draft = resetSection(*draft, section, defaultFolder); refresh();
+  });
+  auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Apply | QDialogButtonBox::Cancel, this); layout->addWidget(buttons);
+  auto save = [=, &store, &shortcuts]() {
+    collect(); const auto repaired = repairSettings(*draft, defaultFolder);
+    if (!repaired.diagnostics.isEmpty()) { status->setText(repaired.diagnostics.join('\n')); return false; }
+    const bool oldLogin = store.current().values.value("startAtLogin").toBool();
+    const bool newLogin = draft->value("startAtLogin").toBool();
+    QString error;
+    if (oldLogin != newLogin) error = setAutostart(newLogin, QCoreApplication::applicationFilePath());
+    if (!error.isEmpty()) { status->setText(error); return false; }
+    const bool hotkeysChanged = store.current().values.value("hotkeys") != draft->value("hotkeys");
+    error = store.save(*draft);
+    if (!error.isEmpty()) {
+      if (oldLogin != newLogin) { const auto rollback = setAutostart(oldLogin, QCoreApplication::applicationFilePath()); if (!rollback.isEmpty()) error += "\n" + rollback; }
+      status->setText(error); return false;
+    }
+    if (hotkeysChanged) shortcuts.invalidate();
+    if (applied) applied();
+    status->setText("Settings saved. Preferred hotkeys require desktop confirmation; use Change in desktop settings."); return true;
+  };
+  connect(buttons->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, [save] { save(); });
+  connect(buttons, &QDialogButtonBox::accepted, this, [this, save] { if (save()) accept(); });
+  connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+  refresh();
+}
+}

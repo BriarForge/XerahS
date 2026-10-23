@@ -27,14 +27,17 @@ public:
   ~PortalWorkflowShortcuts() override;
   void start(const QString &parentWindow = {});
   void stop();
+  void configureDesktop();
   // Keeps a pending method reply alive long enough to close its returned handle.
   void retire();
   bool pending() const;
   bool active() const;
+  QMap<QString, QString> bindings() const { return m_bindings; }
   QString summary() const { return m_summary; }
   QString diagnostic() const { return m_diagnostic; }
 signals:
   void changed();
+  void configurationResult(bool supported);
   void activated(const QString &workflowId);
 private slots:
   void response(uint code, const QVariantMap &results, const QDBusMessage &message);
@@ -64,6 +67,7 @@ private:
   struct EarlyResponse { QString path; uint code; QVariantMap results; };
   QVector<EarlyResponse> m_early;
   QSet<QString> m_closed;
+  QMap<QString, QString> m_bindings;
 };
 } // namespace xerahs::app
 Q_DECLARE_METATYPE(xerahs::app::PortalShortcut)

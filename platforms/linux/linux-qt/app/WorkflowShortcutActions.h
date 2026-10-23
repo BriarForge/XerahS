@@ -4,6 +4,10 @@
 #include <QPointer>
 #include <functional>
 namespace xerahs::app {
+// Returns false only for a non-built-in ID. A refused press is consumed,
+// reported immediately, and never queued or sent to a disabled QAction.
+bool routeCaptureShortcut(const QString &id, const QMap<QString, QAction *> &actions,
+    const std::function<bool()> &available, const std::function<void()> &refused);
 class WorkflowShortcutActions final : public QObject {
   Q_OBJECT
 public:
@@ -12,9 +16,12 @@ public:
       QDBusConnection bus = QDBusConnection::sessionBus(), WorkflowShortcutPortalConfig config = {}, QObject *parent = nullptr);
   QAction *enableAction() const { return m_enable; }
   QAction *disableAction() const { return m_disable; }
+  QMap<QString, QString> bindings() const { return m_portal && m_portal->active() ? m_portal->bindings() : QMap<QString, QString>{}; }
   bool pending() const { return m_portal && m_portal->pending(); }
   void invalidate();
+  void changeInDesktopSettings();
 signals:
+  void bindingsChanged();
   void workflowRequested(const QString &id);
   void notify(const QString &body, bool success);
 private:

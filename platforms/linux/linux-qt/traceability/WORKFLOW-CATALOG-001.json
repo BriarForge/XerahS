@@ -34,7 +34,14 @@
     "platforms/linux/linux-qt/app/NativeWorkflowExecutions.h",
     "platforms/linux/linux-qt/app/NativeWorkflowExecutions.cpp",
     "platforms/linux/linux-qt/app/NativePrivateRecords.h",
-    "platforms/linux/linux-qt/app/NativePrivateRecords.cpp"
+    "platforms/linux/linux-qt/app/NativePrivateRecords.cpp",
+    "platforms/linux/linux-qt/src/settings/HotkeyBindings.h",
+    "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
+    "platforms/linux/linux-qt/src/settings/ApplicationSettings.h",
+    "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
+    "platforms/linux/linux-qt/app/SettingsDialog.h",
+    "platforms/linux/linux-qt/app/SettingsDialog.cpp",
+    "platforms/linux/linux-qt/app/XdgAutostart.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/app/SAVED-WORKFLOWS.md",
@@ -81,7 +88,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Explicit full-UUID CLI activation now shares the authenticated dispatcher and actual controller with Run selected. Read-only workflow IDs are available in the manager. Global hotkeys, discovery, MCP/watch-folder/automation entry points remain Required. Explicit session global shortcut Enable/Configure/Disable now uses supported saved workflow IDs and the shared dispatcher/controller. Desktop chooses keys; held repeats are suppressed. Saving/reloading workflows disables obsolete session bindings. Persisted opt-in, full catalogue, MCP/watch-folder/automation and all target/human qualification remain Required. Read-only CLI discovery now supplies saved IDs/default/definition support for normal full-UUID execution without GUI initialization or primary activation. Saved disk scope and unqueried runtime state are explicit; the running primary still admits execution independently. Invocation/execution/result correlation, full interface families and shared schemas remain Required. Default/choose-actions, explicit-ID, native-shell and accepted shortcut capture admission now share request-aware Core preparation and controller execution observations. Headless execution lookup is read-only. All other entry points and shared schemas remain Required.",
+      "note": "Explicit full-UUID CLI activation now shares the authenticated dispatcher and actual controller with Run selected. Read-only workflow IDs are available in the manager. Global hotkeys, discovery, MCP/watch-folder/automation entry points remain Required. Explicit session global shortcut Enable/Configure/Disable now uses supported saved workflow IDs and the shared dispatcher/controller. Desktop chooses keys; held repeats are suppressed. Saving/reloading workflows disables obsolete session bindings. Persisted opt-in, full catalogue, MCP/watch-folder/automation and all target/human qualification remain Required. Read-only CLI discovery now supplies saved IDs/default/definition support for normal full-UUID execution without GUI initialization or primary activation. Saved disk scope and unqueried runtime state are explicit; the running primary still admits execution independently. Invocation/execution/result correlation, full interface families and shared schemas remain Required. Default/choose-actions, explicit-ID, native-shell and accepted shortcut capture admission now share request-aware Core preparation and controller execution observations. Headless execution lookup is read-only. All other entry points and shared schemas remain Required. Built-in global shortcuts route through shared shell QActions and capture admission. A single portal plan includes workflow UUIDs and capture IDs; preferred triggers never override desktop authority. Full interface coverage and human qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-CLI.md",
         "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
@@ -93,7 +100,8 @@
         "platforms/linux/linux-qt/app/WORKFLOW-DISCOVERY.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
-        "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
+        "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md",
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
       ]
     },
     "WFCAT-004": {

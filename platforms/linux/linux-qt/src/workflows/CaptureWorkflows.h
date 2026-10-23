@@ -53,6 +53,7 @@ public:
   explicit CaptureWorkflowStore(xerahs::editor::PreferenceStorage &storage) : m_storage(storage) { reload(); }
   void reload();
   const WorkflowRead &current() const { return m_current; }
+  bool hasSavedDefinitions() const { return m_snapshot.kind != xerahs::editor::PreferenceRead::Kind::Missing; }
   quint64 revision() const { return m_revision; }
   xerahs::editor::PreferenceWrite save(const CaptureWorkflows &draft, quint64 expectedRevision);
   QString unchanged() const;

@@ -92,7 +92,24 @@ void PortalWorkflowShortcuts::request(bool create) {
     options.insert("session_handle_token", sessionToken); m_expectedSession = root + "/session/" + senderPart(m_bus) + '/' + sessionToken;
     message << options;
   } else {
-    PortalShortcutList shortcuts; for (const auto &entry : m_plan.entries) shortcuts.append({entry.id, {{"description", entry.description}}});
+    PortalShortcutList shortcuts;
+    for (const auto &entry : m_plan.entries) {
+      QVariantMap properties{{"description", entry.description}};
+      // Portal preferred_trigger uses XDG accelerator syntax, not Qt key codes.
+      if (!entry.preferredTrigger.isEmpty()) {
+        QString trigger = entry.preferredTrigger;
+        trigger.replace("Ctrl+", "CTRL+").replace("Alt+", "ALT+").replace("Shift+", "SHIFT+").replace("Meta+", "LOGO+");
+        auto parts = trigger.split('+');
+        auto key = parts.takeLast();
+        if (key.size() == 1 && key.front().isLetter()) key = key.toLower();
+        if (key == "Space") key = "space";
+        if (key == "PageUp") key = "Page_Up";
+        if (key == "PageDown") key = "Page_Down";
+        parts.append(key);
+        properties.insert("preferred_trigger", parts.join('+'));
+      }
+      shortcuts.append({entry.id, properties});
+    }
     message << QVariant::fromValue(QDBusObjectPath(m_session)) << QVariant::fromValue(shortcuts) << m_parentWindow << options;
   }
   m_timer.start(std::max(1, m_config.callTimeoutMs));
@@ -145,14 +162,15 @@ void PortalWorkflowShortcuts::complete(uint code, const QVariantMap &results) {
 }
 bool PortalWorkflowShortcuts::acceptBindings(const PortalShortcutList &shortcuts) {
   if (shortcuts.size() > m_plan.entries.size()) return false;
-  QStringList ids, lines;
+  QStringList ids, lines; QMap<QString, QString> bindings;
   for (const auto &s : shortcuts) {
     const auto trigger = s.properties.value("trigger_description");
     if (trigger.isValid() && (trigger.metaType().id() != QMetaType::QString || trigger.toString().size() > 512)) return false;
-    ids.append(s.id);
+    ids.append(s.id); bindings.insert(s.id, trigger.toString().isEmpty() ? QStringLiteral("Desktop shortcut (trigger not reported)") : trigger.toString());
     for (const auto &entry : m_plan.entries) if (entry.id == s.id) lines.append(entry.description + " — " + (trigger.toString().isEmpty() ? QStringLiteral("Desktop shortcut") : trigger.toString()));
   }
   if (!m_authority.setBound(ids)) return false;
+  m_bindings = bindings;
   m_summary = lines.isEmpty() ? QStringLiteral("No workflow shortcuts were bound by the desktop.") : lines.join('\n');
   if (m_plan.unavailable) m_summary += QString("\n%1 unavailable saved workflow(s) were not offered.").arg(m_plan.unavailable);
   return true;
@@ -186,6 +204,16 @@ void PortalWorkflowShortcuts::cleanup() {
 void PortalWorkflowShortcuts::fail(const QString &diagnostic) {
   if (m_phase == Phase::Stopped) return;
   m_phase = Phase::Stopped; m_diagnostic = diagnostic; cleanup(); emit changed();
+}
+void PortalWorkflowShortcuts::configureDesktop() {
+  if (!active()) return;
+  auto message = QDBusMessage::createMethodCall(m_owner, root, portal, "ConfigureShortcuts");
+  message << QVariant::fromValue(QDBusObjectPath(m_session)) << m_parentWindow << QVariantMap{};
+  auto *watcher = new QDBusPendingCallWatcher(m_bus.asyncCall(message, m_config.callTimeoutMs), this);
+  connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *call) {
+    const bool supported = call->reply().type() != QDBusMessage::ErrorMessage;
+    call->deleteLater(); if (active()) emit configurationResult(supported);
+  });
 }
 void PortalWorkflowShortcuts::stop() { fail("shortcut-disabled"); }
 void PortalWorkflowShortcuts::retire() { m_retiring = true; stop(); if (!m_waiting) deleteLater(); }

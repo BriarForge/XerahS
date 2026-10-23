@@ -13,6 +13,8 @@ find_package(ZLIB REQUIRED)
 set(XERAHS_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." CACHE PATH "BriarForge/XerahS repository root")
 
 add_library(xerahs_core STATIC
+  src/settings/HotkeyBindings.cpp
+  src/settings/ApplicationSettings.cpp
   src/workflows/WorkflowExecution.cpp
   src/workflows/WorkflowExecution.h
   src/workflows/CaptureWorkflows.cpp
@@ -213,6 +215,9 @@ add_executable(xerahs
   app/PortalScreenshot.h
   app/RegionOverlay.cpp
   app/RegionOverlay.h
+  app/SettingsDialog.cpp
+  app/SettingsDialog.h
+  app/XdgAutostart.cpp
   app/main.cpp
 )
 set_target_properties(xerahs PROPERTIES AUTOMOC ON)
@@ -607,12 +612,12 @@ set_tests_properties(workflow-shortcuts PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=
 # Capabilities with production implementation and requirement traceability.
 # Full requirement coverage remains in traceability, including partial rows.
 # The full suite runs without --capability and still fails for missing seams.
-set(XERAHS_IMPLEMENTED_CAPABILITIES CORE-PLATFORM-001 FILENAME-GENERATION-001 POST-CAPTURE-ACTIONS-001 REGION-CAPTURE-001 EDITOR-SESSION-001 EDITOR-CANVAS-001 EDITOR-SETTINGS-001 WORKFLOW-CATALOG-001)
+set(XERAHS_IMPLEMENTED_CAPABILITIES CORE-PLATFORM-001 FILENAME-GENERATION-001 POST-CAPTURE-ACTIONS-001 REGION-CAPTURE-001 EDITOR-SESSION-001 EDITOR-CANVAS-001 EDITOR-SETTINGS-001 WORKFLOW-CATALOG-001 SETTINGS-CATALOG-001)
 set(XERAHS_CAPABILITY_ARGS)
 foreach(capability IN LISTS XERAHS_IMPLEMENTED_CAPABILITIES)
   if(EXISTS "${XERAHS_REPO_ROOT}/product-contract/capabilities/${capability}/test-vectors.json")
     list(APPEND XERAHS_CAPABILITY_ARGS --capability "${capability}")
-  elseif(capability STREQUAL "CORE-PLATFORM-001" OR capability STREQUAL "WORKFLOW-CATALOG-001")
+  elseif(capability STREQUAL "CORE-PLATFORM-001" OR capability STREQUAL "WORKFLOW-CATALOG-001" OR capability STREQUAL "SETTINGS-CATALOG-001")
     message(STATUS "${capability}: no published test-vectors.json; native tests are partial evidence. Shared conformance and qualification remain Required.")
   else()
     message(FATAL_ERROR "${capability}: required published test-vectors.json is missing.")
@@ -630,3 +635,10 @@ target_link_libraries(workflow-execution-test PRIVATE xerahs_pipeline_journal Qt
 add_dependencies(workflow-execution-test xerahs)
 add_test(NAME workflow-execution COMMAND workflow-execution-test)
 set_tests_properties(workflow-execution PROPERTIES TIMEOUT 30)
+
+add_executable(application-settings-test tests/ApplicationSettingsTest.cpp
+  app/XdgAutostart.cpp app/SettingsDialog.cpp)
+set_target_properties(application-settings-test PROPERTIES AUTOMOC ON)
+target_link_libraries(application-settings-test PRIVATE xerahs_workflow_shortcuts Qt6::Test)
+add_test(NAME application-settings COMMAND application-settings-test)
+set_tests_properties(application-settings PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)

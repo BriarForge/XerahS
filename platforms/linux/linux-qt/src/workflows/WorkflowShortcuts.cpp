@@ -6,16 +6,27 @@ WorkflowShortcutPlan workflowShortcutPlan(const CaptureWorkflows &catalog, const
   WorkflowShortcutPlan plan;
   for (const auto &entry : parsed.catalog->entries) {
     if (!workflowAvailability(entry, available).isEmpty()) { ++plan.unavailable; continue; }
-    plan.entries.append({entry.id.toString(QUuid::WithoutBraces), entry.name});
+    plan.entries.append({entry.id.toString(QUuid::WithoutBraces), entry.name, {}});
   }
   if (plan.entries.isEmpty()) plan.diagnostic = "shortcut-no-workflows";
   return plan;
 }
+WorkflowShortcutPlan captureShortcutPlan(const CaptureWorkflows &catalog, const QStringList &available,
+    const xerahs::settings::HotkeyBindings &bindings) {
+  const auto validation = bindings.validate();
+  if (!validation.ok) return {{}, 0, validation.diagnostic + ": " + validation.conflictingAction};
+  auto plan = workflowShortcutPlan(catalog, available);
+  if (plan.diagnostic == "shortcut-no-workflows") plan.diagnostic.clear();
+  if (!plan.diagnostic.isEmpty()) return plan;
+  for (auto &entry : plan.entries) entry.preferredTrigger = bindings.entries.value(entry.id);
+  for (const auto &action : xerahs::settings::captureHotkeyActions())
+    plan.entries.prepend({action.id, action.label, bindings.entries.value(action.id)});
+  return plan;
+}
 WorkflowShortcutState::WorkflowShortcutState(const WorkflowShortcutPlan &plan) {
-  if (!plan.diagnostic.isEmpty() || plan.entries.size() > 64) return;
+  if (!plan.diagnostic.isEmpty() || plan.entries.size() > 68) return;
   for (const auto &entry : plan.entries) {
-    const QUuid id(entry.id);
-    if (id.isNull() || id.toString(QUuid::WithoutBraces) != entry.id || m_offered.contains(entry.id)) { m_offered.clear(); return; }
+    if (!xerahs::settings::stableActionId(entry.id) || m_offered.contains(entry.id)) { m_offered.clear(); return; }
     m_offered.insert(entry.id);
   }
 }

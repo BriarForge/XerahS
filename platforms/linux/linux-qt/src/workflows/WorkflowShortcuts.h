@@ -1,9 +1,13 @@
 #pragma once
 #include "CaptureWorkflows.h"
+#include "settings/HotkeyBindings.h"
 #include <QSet>
 namespace xerahs::workflows {
-struct WorkflowShortcut { QString id, description; };
+struct WorkflowShortcut { QString id, description; QString preferredTrigger; };
 struct WorkflowShortcutPlan { QVector<WorkflowShortcut> entries; int unavailable = 0; QString diagnostic; };
+// One plan and one portal bind for built-ins and available workflows.
+WorkflowShortcutPlan captureShortcutPlan(const CaptureWorkflows &catalog, const QStringList &available,
+    const xerahs::settings::HotkeyBindings &bindings);
 WorkflowShortcutPlan workflowShortcutPlan(const CaptureWorkflows &catalog, const QStringList &available);
 // Domain authority for a portal session: only offered and accepted IDs can run,
 // once per press/release. Binding changes preserve held keys that remain bound.

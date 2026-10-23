@@ -1,0 +1,88 @@
+{
+  "capability": "SETTINGS-CATALOG-001",
+  "capability_version": "0.1.0",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "implementation": [
+    "platforms/linux/linux-qt/src/settings/HotkeyBindings.h",
+    "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
+    "platforms/linux/linux-qt/src/settings/ApplicationSettings.h",
+    "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
+    "platforms/linux/linux-qt/app/SettingsDialog.h",
+    "platforms/linux/linux-qt/app/SettingsDialog.cpp",
+    "platforms/linux/linux-qt/app/XdgAutostart.cpp",
+    "platforms/linux/linux-qt/app/main.cpp"
+  ],
+  "requirements": {
+    "SETCAT-003": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Valid fields and compatible unknown keys survive individual repairs with field-specific diagnostics. Future versions are read-only. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
+      ]
+    },
+    "SETCAT-004": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "QSaveFile atomic replacement with locking and stale-writer detection. The same versioned envelope retains previous values and compatible unknown fields. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
+      ]
+    },
+    "SETCAT-005": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Bounded typed profile fields repair independently. Filename validation reuses FilenameGenerator through previewCaptureOutput, without counter or random-file authority. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
+      ]
+    },
+    "SETCAT-006": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Stable action IDs, portable modifier/key names, and Linux paths. The native adapter translates XDG accelerator syntax; current desktop descriptions stay transient. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
+      ]
+    },
+    "SETCAT-009": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Application fields declare profile scope. Saved workflow output takes precedence; unsaved seed definitions and blank workflow folders inherit application defaults. Capture output is resolved before execution. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
+      ]
+    },
+    "SETCAT-010": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "General/Capture/Hotkeys resets preview affected profile fields and values before draft mutation. Cancel discards unapplied drafts; Apply/OK persists. Unrelated sections and user files remain intact. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
+      ]
+    },
+    "SETCAT-011": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Built-in action IDs and workflow UUIDs share syntax/reserved-gesture/collision validation. Conflicts return the other action without replacing it. Accessible Hotkeys UI displays preferred versus desktop-bound triggers and requests desktop setup. Desktop/user decides final bindings. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
+      ]
+    }
+  }
+}
