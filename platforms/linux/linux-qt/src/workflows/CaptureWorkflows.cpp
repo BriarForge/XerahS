@@ -50,11 +50,12 @@ CaptureOutputPreview previewCaptureOutput(const CaptureOutput &output, xerahs::n
   if (expanded.nextCounter != context.counter) return {expanded.value(), "workflow-counter-unavailable", {}};
   return {expanded.value(), {}, {}};
 }
-QStringList implementedCaptureSources() { return {"region", "full-screen", "monitor"}; }
+QStringList implementedCaptureSources() { return {"region", "full-screen", "monitor", "active-window"}; }
 QString captureSourceLabel(const QString &source) {
   if (source == "region") return QStringLiteral("Region");
   if (source == "full-screen") return QStringLiteral("Full screen");
   if (source == "monitor") return QStringLiteral("Monitor under pointer");
+  if (source == "active-window") return QStringLiteral("Active window");
   return {};
 }
 QStringList implementedCaptureActions() { return {"annotation", "save", "save-as", "image-clipboard", "file-clipboard", "path-clipboard", "reveal"}; }

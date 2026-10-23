@@ -2,6 +2,7 @@
 // bus. Every image, output directory and clipboard belongs to this fixture.
 #include "PortalScreenshot.h"
 #include "CaptureController.h"
+#include "WindowDiscovery.h"
 #include "NativeWorkflowExecutions.h"
 #include "CaptureActions.h"
 #include "shell/ActivationDispatcher.h"
@@ -61,6 +62,12 @@ QString fixtureImage(const QTemporaryDir &dir, QSize size = {8, 6}) {
   image.fill(QColor(42, 71, 100, 155)); image.setColorSpace(QColorSpace::SRgb);
   if (!image.save(path)) qFatal("Fixture PNG save failed"); return path;
 }
+class FixedActiveWindow final : public WindowDiscovery {
+public:
+  std::optional<xerahs::capture::SnapTarget> window;
+  std::vector<xerahs::capture::SnapTarget> targets(const xerahs::capture::Topology &, qint64) override { return {}; }
+  std::optional<xerahs::capture::SnapTarget> activeWindow(const xerahs::capture::Topology &, qint64) override { return window; }
+};
 bool overlayExists() {
   for (auto *widget : QApplication::topLevelWidgets())
     if (widget->windowTitle() == u"XerahS region capture" && widget->isVisible()) return true;
@@ -798,6 +805,40 @@ private slots:
     QCOMPARE(QImage(saved->file->path).size(), size); QCOMPARE(QImage(saved->file->path).pixel(3, 2), QImage(path).pixel(3, 2));
     QCOMPARE(notify.count(), 1); QVERIFY(notify[0][2].toBool());
     QVERIFY(notify[0][0].toString().startsWith(xerahs::workflows::captureSourceLabel(source) + " captured"));
+  }
+  void activeWindowCropsToTheWindowOrFails_data() {
+    QTest::addColumn<QString>("mode");
+    QTest::newRow("window") << QString("window");
+    QTest::newRow("none") << QString("none");
+    QTest::newRow("outside") << QString("outside");
+  }
+  void activeWindowCropsToTheWindowOrFails() {
+    QFETCH(QString, mode); QTemporaryDir dir; const auto size = QApplication::primaryScreen()->geometry().size();
+    QVERIFY(size.width() >= 40 && size.height() >= 60);
+    QImage image(size, QImage::Format_ARGB32); image.fill(QColor(42, 71, 100)); image.setColorSpace(QColorSpace::SRgb);
+    image.setPixel(12, 22, qRgb(11, 22, 33)); image.setPixel(39, 59, qRgb(44, 55, 66));
+    const auto path = dir.filePath("snapshot.png"); QVERIFY(image.save(path));
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    auto workflow = xerahs::workflows::defaultCaptureWorkflows().entries[0]; workflow.capture = "active-window"; workflow.actions = QStringList{"save"};
+    workflow.output.directory = dir.filePath("whole"); workflow.output.pattern = "window-%widthx%height";
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    auto windows = std::make_unique<FixedActiveWindow>();
+    if (mode == "window") windows->window = xerahs::capture::SnapTarget{{10, 20, 40, 60}};
+    else if (mode == "outside") windows->window = xerahs::capture::SnapTarget{{qint64(size.width()) + 10, 0, qint64(size.width()) + 20, 10}};
+    controller.setWindowDiscovery(std::move(windows));
+    QSignalSpy notify(&controller, &CaptureController::notify); controller.captureWorkflow(workflow);
+    QTRY_VERIFY(!controller.busy()); QVERIFY(!overlayExists()); QCOMPARE(portal.calls, 1); QCOMPARE(controller.captureSource(), QString("active-window"));
+    if (mode == "window") {
+      const auto saved = controller.lastPipelineResult(); QVERIFY(saved && saved->file);
+      const QImage cropped(saved->file->path); QCOMPARE(cropped.size(), QSize(30, 40));
+      QCOMPARE(cropped.pixel(2, 2), qRgb(11, 22, 33)); QCOMPARE(cropped.pixel(29, 39), qRgb(44, 55, 66));
+      QCOMPARE(notify.count(), 1); QVERIFY(notify[0][2].toBool());
+      QVERIFY(notify[0][0].toString().startsWith("Active window captured"));
+      return;
+    }
+    QVERIFY(!controller.lastPipelineResult()); QVERIFY(QDir(dir.filePath("whole")).entryList(QDir::Files).isEmpty());
+    QCOMPARE(notify.count(), 1); QVERIFY(!notify[0][2].toBool());
+    QCOMPARE(notify[0][1].toString(), QString("No active window to capture"));
   }
   void unsupportedConfiguredWorkflowIsRejectedBeforePortalAcquisition() {
     QTemporaryDir dir; int acquisitions = 0; CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *) -> PortalScreenshot * { ++acquisitions; return nullptr; });

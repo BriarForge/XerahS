@@ -122,6 +122,7 @@ int main(int argc, char *argv[]) {
   const QCommandLineOption captureRegion(QStringLiteral("capture-region"), QStringLiteral("Start the saved default region workflow (in the running instance if any)."));
   const QCommandLineOption captureFullScreen(QStringLiteral("capture-full-screen"), QStringLiteral("Capture the full screen with the saved default workflow's actions (in the running instance if any)."));
   const QCommandLineOption captureMonitor(QStringLiteral("capture-monitor"), QStringLiteral("Capture the monitor under the pointer with the saved default workflow's actions (in the running instance if any)."));
+  const QCommandLineOption captureActiveWindow(QStringLiteral("capture-active-window"), QStringLiteral("Capture the active window with the saved default workflow's actions (in the running instance if any)."));
   const QCommandLineOption edit(QStringLiteral("edit"), QStringLiteral("Open an image in the editor."), QStringLiteral("file"));
   const QCommandLineOption runWorkflow(QStringLiteral("run-workflow"), QStringLiteral("Start a saved region workflow by full UUID from --list-workflows or Capture workflows."), QStringLiteral("id"));
   const QCommandLineOption listWorkflows(QStringLiteral("list-workflows"), QStringLiteral("List saved workflow IDs and definition availability as JSON without a GUI or capture."));
@@ -130,9 +131,9 @@ int main(int argc, char *argv[]) {
   const QCommandLineOption nonInteractive(QStringLiteral("non-interactive"), QStringLiteral("Refuse operations requiring graphical interaction without starting them."));
   const QCommandLineOption startRecording("start-recording", "Start screen recording (no audio; graphical setup and portal consent required).");
   const QCommandLineOption stopRecording("stop-recording", "Stop recording and finalize output in the running instance.");
-  parser.addOptions({startRecording, stopRecording, captureRegion, captureFullScreen, captureMonitor, edit, runWorkflow, listWorkflows, workflowResult, jsonOption, nonInteractive});
+  parser.addOptions({startRecording, stopRecording, captureRegion, captureFullScreen, captureMonitor, captureActiveWindow, edit, runWorkflow, listWorkflows, workflowResult, jsonOption, nonInteractive});
   const auto requested = [&]() -> ParsedActivation {
-    if (!parser.positionalArguments().isEmpty() || int(parser.isSet(startRecording)) + int(parser.isSet(stopRecording)) + int(parser.isSet(edit)) + int(parser.isSet(captureRegion)) + int(parser.isSet(captureFullScreen)) + int(parser.isSet(captureMonitor)) + int(parser.isSet(runWorkflow)) + int(parser.isSet(listWorkflows)) + int(parser.isSet(workflowResult)) > 1) return {{}, "usage-invalid"};
+    if (!parser.positionalArguments().isEmpty() || int(parser.isSet(startRecording)) + int(parser.isSet(stopRecording)) + int(parser.isSet(edit)) + int(parser.isSet(captureRegion)) + int(parser.isSet(captureFullScreen)) + int(parser.isSet(captureMonitor)) + int(parser.isSet(captureActiveWindow)) + int(parser.isSet(runWorkflow)) + int(parser.isSet(listWorkflows)) + int(parser.isSet(workflowResult)) > 1) return {{}, "usage-invalid"};
     if (parser.isSet(startRecording)) return {makeActivationRequest(ActivationAction::StartRecording), {}};
     if (parser.isSet(stopRecording)) return {makeActivationRequest(ActivationAction::StopRecording), {}};
     if (parser.isSet(runWorkflow)) {
@@ -141,6 +142,7 @@ int main(int argc, char *argv[]) {
     }
     if (parser.isSet(captureFullScreen)) return {makeActivationRequest(ActivationAction::CaptureFullScreen), {}};
     if (parser.isSet(captureMonitor)) return {makeActivationRequest(ActivationAction::CaptureMonitor), {}};
+    if (parser.isSet(captureActiveWindow)) return {makeActivationRequest(ActivationAction::CaptureActiveWindow), {}};
     return {makeActivationRequest(parser.isSet(edit) ? ActivationAction::EditImage : parser.isSet(captureRegion) ? ActivationAction::CaptureRegion : ActivationAction::Activate,
         parser.isSet(edit) ? xerahs::app::absoluteImagePath(parser.value(edit)) : QString{}), {}};
   };
@@ -243,6 +245,7 @@ int main(int argc, char *argv[]) {
   QAction *region = menu.addAction(QStringLiteral("Capture region"));
   QAction *fullScreen = menu.addAction(QStringLiteral("Capture full screen"));
   QAction *monitor = menu.addAction(QStringLiteral("Capture monitor under pointer"));
+  QAction *activeWindow = menu.addAction(QStringLiteral("Capture active window"));
   QAction *chooseCapture = menu.addAction(QStringLiteral("Capture region and choose actions…"));
   QAction *configureWorkflows = menu.addAction(QStringLiteral("Capture workflows…"));
   menu.addAction(shortcutActions.enableAction()); menu.addAction(shortcutActions.disableAction());
@@ -261,7 +264,7 @@ int main(int argc, char *argv[]) {
   menu.addSeparator();
   QAction *quit = menu.addAction(QStringLiteral("Quit XerahS"));
   tray.setContextMenu(&menu);
-  xerahs::app::ApplicationWindow home({{"settings", settingsAction}, {"capture-region", region}, {"capture-full-screen", fullScreen}, {"capture-monitor", monitor}, {"capture-region-choose-actions", chooseCapture}, {"cancel-capture", cancelCapture},
+  xerahs::app::ApplicationWindow home({{"settings", settingsAction}, {"capture-region", region}, {"capture-full-screen", fullScreen}, {"capture-monitor", monitor}, {"capture-active-window", activeWindow}, {"capture-region-choose-actions", chooseCapture}, {"cancel-capture", cancelCapture},
       {"capture-workflows", configureWorkflows}, {"enable-workflow-shortcuts", shortcutActions.enableAction()}, {"disable-workflow-shortcuts", shortcutActions.disableAction()},
       {"new-image", newImage}, {"open-image", openImage}, {"captures-folder", folder}, {"capture-history", history}, {"editor-appearance", appearance}, {"quit", quit}});
   for (auto *childMenu : home.menuBar()->findChildren<QMenu *>()) {
@@ -351,11 +354,12 @@ int main(int argc, char *argv[]) {
   QObject::connect(quit, &QAction::triggered, &app, &QApplication::quit);
   QObject::connect(appearance, &QAction::triggered, [] { xerahs::app::manageEditorAppearance(); });
   // CORE-007: availability is shown, not faked.
-  QObject::connect(&capture, &CaptureController::busyChanged, region, [region, fullScreen, monitor, chooseCapture, cancelCapture, &capture](bool) {
+  QObject::connect(&capture, &CaptureController::busyChanged, region, [region, fullScreen, monitor, activeWindow, chooseCapture, cancelCapture, &capture](bool) {
     const bool busy = capture.busy();
     region->setEnabled(!busy);
     fullScreen->setEnabled(!busy);
     monitor->setEnabled(!busy);
+    activeWindow->setEnabled(!busy);
     chooseCapture->setEnabled(!busy);
     cancelCapture->setEnabled(busy);
   });
@@ -389,6 +393,7 @@ int main(int argc, char *argv[]) {
         // CORE-014: source commands reuse the default workflow's actions and output.
         if (incoming.action == ActivationAction::CaptureFullScreen) choice.workflow->capture = QStringLiteral("full-screen");
         else if (incoming.action == ActivationAction::CaptureMonitor) choice.workflow->capture = QStringLiteral("monitor");
+        else if (incoming.action == ActivationAction::CaptureActiveWindow) choice.workflow->capture = QStringLiteral("active-window");
         else if (incoming.action != ActivationAction::RunWorkflow) choice.workflow->capture = QStringLiteral("region");
         auto run = capture.prepareWorkflowCapture(*choice.workflow, incoming.id, invocationOrigin, executions.writer());
         if (!run) return {};
@@ -416,7 +421,7 @@ int main(int argc, char *argv[]) {
     }
   };
   QObject::connect(&shortcutActions, &xerahs::app::WorkflowShortcutActions::workflowRequested, &home, [&](const QString &id) {
-    const QMap<QString, QAction *> builtins{{"capture-region", region}, {"capture-full-screen", fullScreen}, {"capture-monitor", monitor}, {"capture-region-choose-actions", chooseCapture},
+    const QMap<QString, QAction *> builtins{{"capture-region", region}, {"capture-full-screen", fullScreen}, {"capture-monitor", monitor}, {"capture-active-window", activeWindow}, {"capture-region-choose-actions", chooseCapture},
       {"start-recording", recordingActions.actions().value("start-recording")}, {"start-gif-recording", recordingActions.actions().value("start-gif-recording")}, {"stop-recording", recordingActions.actions().value("stop-recording")}};
     const QScopedValueRollback<QString> origin(invocationOrigin, QStringLiteral("global-shortcut"));
     if (!xerahs::app::routeCaptureShortcut(id, builtins,
@@ -432,6 +437,7 @@ int main(int argc, char *argv[]) {
   QObject::connect(chooseCapture, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureRegion, {}, true); });
   QObject::connect(fullScreen, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureFullScreen); });
   QObject::connect(monitor, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureMonitor); });
+  QObject::connect(activeWindow, &QAction::triggered, &home, [&invokeLocal] { invokeLocal(ActivationAction::CaptureActiveWindow); });
   QObject::connect(openImage, &QAction::triggered, &home, [&invokeLocal, &capture, &home] {
     const auto path = QFileDialog::getOpenFileName(&home, QStringLiteral("Open image"), capture.saveDirectory(), xerahs::app::imageFileFilter());
     if (!path.isEmpty()) invokeLocal(ActivationAction::EditImage, path);

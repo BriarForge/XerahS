@@ -6,6 +6,7 @@ namespace xerahs::settings {
 QVector<HotkeyAction> captureHotkeyActions() {
   return {{"capture-region", "Capture region", "Print"}, {"capture-full-screen", "Capture full screen", "Ctrl+Print"},
     {"capture-monitor", "Capture monitor under pointer", "Shift+Print"},
+    {"capture-active-window", "Capture active window", {}},
     {"capture-region-choose-actions", "Capture region and choose actions", "Alt+Print"},
     {"start-recording", "Start screen recording", {}}, {"start-gif-recording", "Start GIF recording", {}}, {"stop-recording", "Stop recording", {}}};
 }

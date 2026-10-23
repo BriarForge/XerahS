@@ -8,6 +8,7 @@
 #include "actions/PostCapturePipeline.h"
 
 #include <QColorSpace>
+#include <QCoreApplication>
 #include <QCursor>
 #include <QFileInfo>
 #include <QGuiApplication>
@@ -195,7 +196,7 @@ void CaptureController::onSnapshot(int outcome, const QImage &image, const QStri
 
   const SessionSettings settings{};
   const auto targets = settings.snapping && result != PortalScreenshot::Outcome::Denied
-      ? nativeWindowDiscovery()->targets(topology, QCoreApplication::applicationPid()) : std::vector<SnapTarget>{};
+      ? windowDiscovery()->targets(topology, QCoreApplication::applicationPid()) : std::vector<SnapTarget>{};
   m_session = std::make_unique<RegionSession>(topology, settings, targets,
                                               [this](const SessionOutcome &o) { onOutcome(o); });
   m_session->start();
@@ -255,9 +256,17 @@ QString CaptureController::sourceTitle(const QString &suffix) const {
   return (label.isEmpty() ? QStringLiteral("Capture") : label) + QStringLiteral(" ") + suffix;
 }
 
+void CaptureController::setWindowDiscovery(std::unique_ptr<WindowDiscovery> discovery) { m_windows = std::move(discovery); }
+WindowDiscovery *CaptureController::windowDiscovery() {
+  if (!m_windows) m_windows = nativeWindowDiscovery();
+  return m_windows.get();
+}
+
 // CORE-014: full screen takes the whole portal image; monitor takes the
 // display under the pointer, falling back to the primary display when the
-// compositor does not report a pointer position. No overlay is shown.
+// compositor does not report a pointer position. Active window copies the
+// focused window's rectangle. No overlay is shown, and a missing window is
+// not replaced with the full screen.
 void CaptureController::captureWholeSource(const Topology &topology) {
   const QPointer<CaptureController> guard(this);
   const auto fail = [&](const QString &detail) {
@@ -273,6 +282,12 @@ void CaptureController::captureWholeSource(const Topology &topology) {
     if (!display) { fail(diagnostic::captureSourceFailed); return; }
     const PhysicalRect &p = display->physical;
     source = QRect(int(p.left), int(p.top), int(p.width()), int(p.height())).intersected(m_desktop.rect());
+  } else if (m_source == QStringLiteral("active-window")) {
+    const auto window = windowDiscovery()->activeWindow(topology, QCoreApplication::applicationPid());
+    if (!window) { fail(QStringLiteral("No active window to capture")); return; }
+    const PhysicalRect &p = window->physical;
+    source = QRect(int(p.left), int(p.top), int(p.width()), int(p.height())).intersected(m_desktop.rect());
+    if (source.isEmpty()) { fail(QStringLiteral("No active window to capture")); return; }
   }
   if (m_desktop.isNull() || source.isEmpty()) { fail(diagnostic::captureSourceFailed); return; }
   QImage pixels = m_desktop.copy(source).convertToFormat(QImage::Format_ARGB32);

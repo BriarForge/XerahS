@@ -55,7 +55,7 @@ public:
     setObjectName("captureWorkflowsDialog"); setWindowTitle("Capture workflows"); setAccessibleName(windowTitle());
     new NativeEditorAppearance(*this);
     auto *layout = new QVBoxLayout(this);
-    auto *description = new QLabel("Save named capture workflows and choose a default. Each workflow captures a region, the full screen or the monitor under the pointer. Capture region, full screen and monitor in the window, tray and command line use the default workflow's actions and output. Actions run in the standard order; unchecked actions do not run.", this);
+    auto *description = new QLabel("Save named capture workflows and choose a default. Each workflow captures a region, the full screen, the monitor under the pointer or the active window. Capture region, full screen, monitor and active window in the window, tray and command line use the default workflow's actions and output. Actions run in the standard order; unchecked actions do not run.", this);
     description->setWordWrap(true); layout->addWidget(description);
     m_list = new QListWidget(this); m_list->setObjectName("captureWorkflowList"); m_list->setAccessibleName("Saved capture workflows"); layout->addWidget(m_list);
     auto *row = new QHBoxLayout; layout->addLayout(row);

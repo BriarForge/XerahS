@@ -39,6 +39,7 @@ QString actionName(ActivationAction action) {
     case ActivationAction::CaptureRegionChooseActions: return QStringLiteral("capture-region-choose-actions");
     case ActivationAction::CaptureFullScreen: return QStringLiteral("capture-full-screen");
     case ActivationAction::CaptureMonitor: return QStringLiteral("capture-monitor");
+    case ActivationAction::CaptureActiveWindow: return QStringLiteral("capture-active-window");
   }
   return {};
 }
@@ -50,7 +51,8 @@ bool knownDiagnostic(const QString &value) {
 }
 bool startsCapture(ActivationAction action) {
   return action == ActivationAction::CaptureRegion || action == ActivationAction::CaptureRegionChooseActions ||
-      action == ActivationAction::RunWorkflow || action == ActivationAction::CaptureFullScreen || action == ActivationAction::CaptureMonitor;
+      action == ActivationAction::RunWorkflow || action == ActivationAction::CaptureFullScreen ||
+      action == ActivationAction::CaptureMonitor || action == ActivationAction::CaptureActiveWindow;
 }
 ActivationRequest makeActivationRequest(ActivationAction action, const QString &path, const QString &workflowId) {
   return {QUuid::createUuid().toString(QUuid::WithoutBraces), action, path, workflowId};
@@ -81,6 +83,7 @@ ParsedActivation parseActivation(const QByteArray &bytes) {
   else if (name == u"start-recording") action = ActivationAction::StartRecording;
   else if (name == u"stop-recording") action = ActivationAction::StopRecording;
   else if (name == u"capture-monitor") action = ActivationAction::CaptureMonitor;
+  else if (name == u"capture-active-window") action = ActivationAction::CaptureActiveWindow;
   else return invalid();
   QSet<QString> keys{"version", "id", "action"};
   if (action == ActivationAction::EditImage) keys.insert("path");

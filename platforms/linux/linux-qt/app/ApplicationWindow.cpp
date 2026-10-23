@@ -17,7 +17,7 @@ ApplicationWindow::ApplicationWindow(const QMap<QString, QAction *> &actions, QW
   auto *intro = new QLabel(QStringLiteral("Capture your screen or open an image to edit."), central); intro->setWordWrap(true); layout->addWidget(intro);
   auto *commands = new QGridLayout; layout->addLayout(commands);
   int index = 0;
-  for (const auto &id : {QString("capture-region"), QString("capture-full-screen"), QString("capture-monitor"), QString("capture-region-choose-actions"), QString("capture-workflows"), QString("enable-workflow-shortcuts"), QString("disable-workflow-shortcuts"), QString("cancel-capture"), QString("new-image"), QString("open-image"), QString("captures-folder"), QString("capture-history"), QString("editor-appearance")}) {
+  for (const auto &id : {QString("capture-region"), QString("capture-full-screen"), QString("capture-monitor"), QString("capture-active-window"), QString("capture-region-choose-actions"), QString("capture-workflows"), QString("enable-workflow-shortcuts"), QString("disable-workflow-shortcuts"), QString("cancel-capture"), QString("new-image"), QString("open-image"), QString("captures-folder"), QString("capture-history"), QString("editor-appearance")}) {
     auto *action = actions.value(id); if (!action) continue;
     auto *button = new QToolButton(central); button->setObjectName(id); button->setDefaultAction(action);
     button->setToolButtonStyle(Qt::ToolButtonTextOnly); button->setFocusPolicy(Qt::StrongFocus);
@@ -33,7 +33,7 @@ ApplicationWindow::ApplicationWindow(const QMap<QString, QAction *> &actions, QW
   auto *file = menuBar()->addMenu(QStringLiteral("&File"));
   for (const auto &id : {QString("new-image"), QString("open-image"), QString("captures-folder"), QString("capture-history"), QString("quit")}) if (auto *action = actions.value(id)) file->addAction(action);
   auto *capture = menuBar()->addMenu(QStringLiteral("&Capture"));
-  for (const auto &id : {QString("capture-region"), QString("capture-full-screen"), QString("capture-monitor"), QString("capture-region-choose-actions"), QString("capture-workflows"), QString("enable-workflow-shortcuts"), QString("disable-workflow-shortcuts"), QString("cancel-capture")}) if (auto *action = actions.value(id)) capture->addAction(action);
+  for (const auto &id : {QString("capture-region"), QString("capture-full-screen"), QString("capture-monitor"), QString("capture-active-window"), QString("capture-region-choose-actions"), QString("capture-workflows"), QString("enable-workflow-shortcuts"), QString("disable-workflow-shortcuts"), QString("cancel-capture")}) if (auto *action = actions.value(id)) capture->addAction(action);
   if (auto *cancel = actions.value(QStringLiteral("cancel-capture"))) {
     cancel->setShortcut(QKeySequence(Qt::Key_Escape)); cancel->setShortcutContext(Qt::WindowShortcut); addAction(cancel);
   }

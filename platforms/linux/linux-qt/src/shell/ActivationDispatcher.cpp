@@ -14,7 +14,8 @@ bool ActivationDispatcher::available(const ActivationRequest &request) const {
     case ActivationAction::RunWorkflow: return bool(m_operations.prepareCapture) || bool(m_operations.prepareWorkflow);
     case ActivationAction::CaptureRegionChooseActions: return bool(m_operations.prepareCapture) || bool(m_operations.captureRegionWithActions);
     case ActivationAction::CaptureFullScreen:
-    case ActivationAction::CaptureMonitor: return bool(m_operations.prepareCapture);
+    case ActivationAction::CaptureMonitor:
+    case ActivationAction::CaptureActiveWindow: return bool(m_operations.prepareCapture);
   }
   return false;
 }
@@ -56,7 +57,8 @@ QString ActivationDispatcher::dispatch(const ActivationRequest &request) {
       case ActivationAction::RunWorkflow: if (!prepared) return QStringLiteral("activation-invalid"); prepared(); break;
       case ActivationAction::CaptureRegionChooseActions: if (prepared) prepared(); else m_operations.captureRegionWithActions(); break;
       case ActivationAction::CaptureFullScreen:
-      case ActivationAction::CaptureMonitor: if (!prepared) return QStringLiteral("activation-invalid"); prepared(); break;
+      case ActivationAction::CaptureMonitor:
+      case ActivationAction::CaptureActiveWindow: if (!prepared) return QStringLiteral("activation-invalid"); prepared(); break;
     }
   } catch (...) { return QStringLiteral("activation-handler-failed"); }
   return {};

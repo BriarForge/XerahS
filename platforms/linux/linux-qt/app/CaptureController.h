@@ -1,8 +1,8 @@
 // Capture flow for the linux-qt app: portal snapshot, then either the whole
-// desktop, the monitor under the pointer (CORE-014), or overlays driven by
-// RegionSession, pixel acquisition through RegionGeometry::composite, and
-// the post-capture pipeline. Every decision lives in the src/ libraries; this
-// class wires them to Qt.
+// desktop, the monitor under the pointer, the focused window (CORE-014), or
+// overlays driven by RegionSession, pixel acquisition through
+// RegionGeometry::composite, and the post-capture pipeline. Every decision
+// lives in the src/ libraries; this class wires them to Qt.
 #pragma once
 
 #include "capture/RegionSession.h"
@@ -27,6 +27,7 @@ namespace xerahs::app {
 
 class PortalScreenshot;
 class RegionOverlay;
+class WindowDiscovery;
 struct CaptureComposition;
 
 class CaptureController final : public QObject {
@@ -64,9 +65,10 @@ public:
   void setDefaultWorkflowResolver(std::function<xerahs::workflows::WorkflowChoice()> resolver) { m_workflowResolver = std::move(resolver); }
   std::function<void()> prepareWorkflowCapture(const xerahs::workflows::CaptureWorkflow &workflow, const QString &requestId,
       const QString &origin, xerahs::workflows::WorkflowExecution::Writer writer);
-  // Starts the workflow's capture source: region, full-screen or monitor.
+  // Starts the workflow's capture source: region, full-screen, monitor or active-window.
   void captureWorkflow(const xerahs::workflows::CaptureWorkflow &workflow);
   QString captureSource() const { return m_source; }
+  void setWindowDiscovery(std::unique_ptr<WindowDiscovery> discovery);
   // Future pipelines copy this GUI-thread preference value; active workers
   // retain the style already captured by their pipeline constructor.
   void setAnnotationStyle(const xerahs::editor::RectangleStyle &style) { m_actionPorts.annotationStyle = style; }
@@ -91,6 +93,7 @@ private:
   void onOutcome(const xerahs::capture::SessionOutcome &outcome);
   void captureWholeSource(const xerahs::capture::Topology &topology);
   QString sourceTitle(const QString &suffix) const;
+  WindowDiscovery *windowDiscovery();
   void afterInput();
   void acquire();
   void pollComposition();
@@ -113,6 +116,7 @@ private:
   CaptureActionPorts m_actionPorts;
   QStringList m_selectedActions;
   QString m_source = QStringLiteral("region");
+  std::unique_ptr<WindowDiscovery> m_windows;
   std::function<xerahs::workflows::WorkflowChoice()> m_workflowResolver;
   QJsonObject m_workflowSnapshot;
   std::shared_ptr<xerahs::workflows::WorkflowExecution> m_execution;
