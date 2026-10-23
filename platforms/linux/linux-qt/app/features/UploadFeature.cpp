@@ -73,6 +73,7 @@ void attachUploadWindow(AppContext &ctx, ApplicationWindow &window) {
   state.files = new FileUploadController(FileUploadPorts{ctx.uploadCatalogPath, ctx.uploadCredentials,
       [&ctx] { showDestinations(ctx, ctx.dialogParent ? ctx.dialogParent() : nullptr); }, {}}, &window, &window);
   QObject::connect(state.uploadFile, &QAction::triggered, state.files, &FileUploadController::chooseAndUpload);
+  ctx.uploadFiles = [files = QPointer<FileUploadController>(state.files)](const QStringList &paths) { if (files) files->upload(paths); };
   QObject::connect(&window, &ApplicationWindow::filesDropped, state.files, &FileUploadController::upload);
 
   state.store = std::make_unique<xerahs::watch::WatchFolders>(

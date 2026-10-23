@@ -1095,3 +1095,4 @@ foreach(effect_test IN ITEMS EffectFramework CensusCatalog AdjustmentEffects Adj
   target_link_libraries(${effect_test}-test PRIVATE xerahs_effects Qt6::Test)
   add_test(NAME ${effect_test} COMMAND ${effect_test}-test)
 endforeach()
+target_link_libraries(application-window-test PRIVATE xerahs_qr_code)

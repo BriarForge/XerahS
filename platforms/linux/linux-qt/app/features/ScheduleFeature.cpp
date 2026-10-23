@@ -48,6 +48,8 @@ void installSchedule(AppContext &ctx) {
       },
       [&ctx](const QString &tooltip) { ctx.tray.setToolTip(tooltip); }},
       &ctx.app);
+  // CORE-016: the delay and auto-capture choices persist in the settings store.
+  schedule->setPreferences(settings::capturePreferencesPort(ctx.settings));
   ctx.schedule = schedule;
   adopt(ctx, QStringLiteral("capture-after-delay"), schedule->delayAction());
   adopt(ctx, QStringLiteral("auto-capture"), schedule->autoAction());

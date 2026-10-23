@@ -5,6 +5,7 @@
 #include "ColorPickerDialog.h"
 #include "HashCheckerDialog.h"
 #include "IconConverterDialog.h"
+#include "QrCodeDialog.h"
 #include "VideoConverterDialog.h"
 
 #ifdef XERAHS_VIDEO_CONVERTER
@@ -62,6 +63,16 @@ void installToolDialogs(CommandRegistry &commands, const std::function<QWidget *
 #endif
 }
 
-void installTools(AppContext &ctx) { installToolDialogs(ctx.commands, ctx.dialogParent); }
+void installTools(AppContext &ctx) {
+  installToolDialogs(ctx.commands, ctx.dialogParent);
+  // EU-003: one long-lived window, so an upload's temporary PNG outlives a closed window.
+  addDialog<QrCodeDialog>(ctx.commands,
+      CommandSpec{QStringLiteral("qr-code"), QStringLiteral("QR code…"), CommandGroup::Tools, toolSurfaces(false)},
+      [&ctx] {
+        auto *dialog = new QrCodeDialog(parentWidget(ctx.dialogParent));
+        dialog->setUploadPort([&ctx](const QString &png) { if (ctx.uploadFiles) ctx.uploadFiles({png}); });
+        return dialog;
+      });
+}
 
 }  // namespace xerahs::app
