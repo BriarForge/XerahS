@@ -685,6 +685,7 @@ private slots:
       if (mode == "destroy") { window.reset(); return; }
       dialog->findChild<QLineEdit *>("rectangleLeft")->setText("2.5"); dialog->findChild<QLineEdit *>("rectangleTop")->setText("3.75");
       dialog->findChild<QLineEdit *>("rectangleWidth")->setText("24"); dialog->findChild<QLineEdit *>("rectangleHeight")->setText("12");
+      QTRY_VERIFY(dialog->isActiveWindow());
       QTest::keyClick(dialog, mode == "apply" ? Qt::Key_R : Qt::Key_Escape, mode == "apply" ? Qt::AltModifier : Qt::NoModifier);
       QTRY_VERIFY(!dialog->isVisible());
     });

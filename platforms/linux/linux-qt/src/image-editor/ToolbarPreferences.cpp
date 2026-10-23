@@ -13,7 +13,7 @@ const QVector<ToolbarAction> &toolbarActions() {
     {"increase-stroke", true}, {"decrease-stroke", true},
     {"zoom-in", true, true}, {"zoom-out", true}, {"reset-zoom", true}, {"fit-image", true},
     {"new-image"}, {"open-image"}, {"crop-image"}, {"crop-tool"}, {"cutout-tool"}, {"auto-crop"},
-    {"resize-image"}, {"resize-canvas"}, {"rotate-image"}, {"rotate-clockwise"},
+    {"resize-image"}, {"resize-canvas"}, {"rotate-image"}, {"effects"}, {"rotate-clockwise"},
     {"rotate-counter-clockwise"}, {"rotate-180"}, {"flip-horizontal"}, {"flip-vertical"},
     {"flatten-image"}, {"clear-annotations"}, {"clear-image"}, {"compare-images"},
     {"drawing-defaults"}, {"appearance-preferences"}, {"remember-window-state"},

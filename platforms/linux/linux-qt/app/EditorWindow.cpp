@@ -1,4 +1,5 @@
 #include "EditorWindow.h"
+#include "EffectsDialog.h"
 
 #include "EditorCanvas.h"
 #include "EditorCanvasOperations.h"
@@ -82,6 +83,10 @@ QString describe(const QString &diagnostic) {
 }  // namespace
 
 EditorWindow::~EditorWindow() {
+  for (auto *dialog : findChildren<EffectsDialog *>(QString(), Qt::FindDirectChildrenOnly)) {
+    dialog->disconnect(this);
+    delete dialog;
+  }
   // QWidget teardown can send focus events to the active canvas. Destroy the
   // canvas while its referenced image/session still exist, before members and
   // the QMainWindow base are destroyed; no refresh may run during that teardown.
@@ -309,6 +314,11 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   compare->setObjectName(QStringLiteral("compareImages"));
   connect(compare, &QAction::triggered, this, &EditorWindow::compareImages);
 
+  auto *effects = imageMenu->addAction(QStringLiteral("Effects…"));
+  effects->setObjectName(QStringLiteral("effectsImage"));
+  effects->setAutoRepeat(false);
+  connect(effects, &QAction::triggered, this, &EditorWindow::effectsImage);
+
   auto *bar = addToolBar(QStringLiteral("Edit"));
   bar->setObjectName(QStringLiteral("editorToolbar"));
   bar->setMovable(false);
@@ -436,7 +446,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     {"zoom-in", zoomIn}, {"zoom-out", zoomOut}, {"reset-zoom", resetZoom}, {"fit-image", fit},
     {"new-image", create}, {"open-image", open}, {"crop-image", crop}, {"crop-tool", cropTool},
     {"auto-crop", autoCrop}, {"resize-image", resizePixels}, {"resize-canvas", resizeCanvas},
-    {"rotate-image", customRotation},
+    {"rotate-image", customRotation}, {"effects", effects},
     {"rotate-clockwise", canvasActions.value(CanvasAction::RotateClockwise)},
     {"rotate-counter-clockwise", canvasActions.value(CanvasAction::RotateCounterClockwise)},
     {"rotate-180", canvasActions.value(CanvasAction::Rotate180)},
@@ -979,6 +989,35 @@ void EditorWindow::resizeImage(bool canvasOnly) {
   operation.interpolation = Interpolation(choice->currentIndex()); operation.lockAspect = lock->isChecked();
   disposeCanvasDialog(dialog); return operation;
   });
+}
+
+void EditorWindow::effectsImage() {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive()) return;
+  const auto state = m_session->stateId(), generation = m_canvas->documentGeneration();
+  const auto selection = m_session->selection();
+  const QPointer<EditorWindow> owner(this);
+  auto *dialog = new EffectsDialog(m_session->document(), m_image,
+      [owner, state, generation, selection](PreparedCanvasEdit edit) {
+        return owner && owner->commitCanvas(std::move(edit), state, selection, generation);
+      }, this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  QMap<QAction *, bool> enabled;
+  for (auto *action : m_toolbarActions) enabled.insert(action, action->isEnabled());
+  const bool canvasEnabled = m_canvas->isEnabled();
+  connect(dialog, &QObject::destroyed, this, [owner, enabled, canvasEnabled] {
+    if (!owner) return;
+    owner->m_outputPending = false;
+    owner->m_canvas->setEnabled(canvasEnabled); if (!owner) return;
+    for (auto it = enabled.cbegin(); it != enabled.cend(); ++it) {
+      it.key()->setEnabled(it.value()); if (!owner) return;
+    }
+    owner->refresh();
+  });
+  m_outputPending = true;
+  m_canvas->setEnabled(false); if (!owner) return;
+  for (auto *action : m_toolbarActions) { action->setEnabled(false); if (!owner) return; }
+  refresh(); if (!owner) return;
+  dialog->open();
 }
 
 void EditorWindow::rotateImage() {

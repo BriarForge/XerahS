@@ -104,6 +104,7 @@ private:
   void cropImage(xerahs::editor::CropRegion region);
   void autoCropImage();
   void rotateImage();
+  void effectsImage();
   void clearImage();
   void compareImages();
   void resizeImage(bool canvasOnly);

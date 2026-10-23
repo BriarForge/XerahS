@@ -1100,3 +1100,15 @@ foreach(effect_test IN ITEMS EffectFramework CensusCatalog AdjustmentEffects Adj
   add_test(NAME ${effect_test} COMMAND ${effect_test}-test)
 endforeach()
 target_link_libraries(application-window-test PRIVATE xerahs_qr_code)
+
+# EDITOR-EFFECTS-001: owned browser, preview and guarded editor history apply.
+target_sources(xerahs_editor_source PRIVATE app/EffectsDialog.cpp app/EffectsDialog.h)
+set_target_properties(xerahs_editor_source PROPERTIES AUTOMOC ON)
+target_link_libraries(xerahs_editor_source PUBLIC xerahs_effects)
+
+add_executable(effects-dialog-test tests/EffectsDialogTest.cpp ${XERAHS_PREFERENCE_TEST_SOURCES})
+set_target_properties(effects-dialog-test PROPERTIES AUTOMOC ON)
+target_link_libraries(effects-dialog-test PRIVATE xerahs_editor_source xerahs_editor_canvas xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
+add_test(NAME effects-dialog COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:effects-dialog-test>)
+set_tests_properties(effects-dialog PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)

@@ -62,6 +62,8 @@ private slots:
       QVERIFY(knownToolbarAction(entry.first)); QVERIFY(validateToolbarItems(QJsonArray{item(entry.first, entry.second)}).valid);
     }
     QCOMPARE(toolbarHotkeyDiagnostic(*parseToolbarHotkey("Ctrl+C"), "copy-annotation"), QString("toolbar-protected-hotkey"));
+    QVERIFY(knownToolbarAction("effects"));
+    QVERIFY(validateToolbarItems(QJsonArray{item("effects", "F12")}).valid);
     QVERIFY(knownToolbarAction("print"));
     QVERIFY(validateToolbarItems(QJsonArray{item("print", "Ctrl+Shift+P")}).valid);
     QCOMPARE(toolbarHotkeyDiagnostic(*parseToolbarHotkey("Ctrl+P"), "print"), QString("toolbar-protected-hotkey"));
