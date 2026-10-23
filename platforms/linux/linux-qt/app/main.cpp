@@ -336,7 +336,8 @@ int main(int argc, char *argv[]) {
   QObject::connect(&capture, &CaptureController::notify, &tray,
                    [&tray, &settings](const QString &title, const QString &body, bool success) {
                      if (success && settings.current().values.value("playCaptureSound").toBool()) QApplication::beep();
-                     if (!settings.current().values.value("showNotification").toBool()) return;
+                     // Failures are always reported; the setting only quiets successes.
+                     if (success && !settings.current().values.value("showNotification").toBool()) return;
                      tray.showMessage(title, body, success ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning,
                                       5000);
                    });
