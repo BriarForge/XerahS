@@ -814,3 +814,26 @@ set_target_properties(sxcu-fixtures-test PROPERTIES AUTOMOC ON)
 target_compile_definitions(sxcu-fixtures-test PRIVATE XERAHS_SXCU_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/sxcu")
 target_link_libraries(sxcu-fixtures-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME sxcu-fixtures COMMAND sxcu-fixtures-test)
+
+# CORE-020: the capture upload and Upload file share one catalog path.
+target_sources(xerahs_core PRIVATE
+  src/uploads/CatalogPath.h
+  src/uploads/CatalogPath.cpp)
+
+# CORE-020, CORE-023: upload an existing file from the tray or a window drop.
+add_library(xerahs_file_upload STATIC
+  app/FileUploadController.cpp
+  app/FileUploadController.h
+  app/FileUploadResultDialog.cpp
+  app/FileUploadResultDialog.h)
+set_target_properties(xerahs_file_upload PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_file_upload PUBLIC app)
+target_link_libraries(xerahs_file_upload PUBLIC xerahs_upload_executor xerahs_secret_service Qt6::Widgets)
+target_compile_options(xerahs_file_upload PRIVATE -Wall -Wextra -Wpedantic)
+target_link_libraries(xerahs PRIVATE xerahs_file_upload)
+
+add_executable(file-upload-test tests/FileUploadTest.cpp app/ApplicationWindow.cpp app/ApplicationWindow.h)
+set_target_properties(file-upload-test PROPERTIES AUTOMOC ON)
+target_link_libraries(file-upload-test PRIVATE xerahs_file_upload Qt6::Test)
+add_test(NAME file-upload COMMAND file-upload-test)
+set_tests_properties(file-upload PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)

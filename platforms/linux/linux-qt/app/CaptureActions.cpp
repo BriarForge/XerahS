@@ -2,14 +2,13 @@
 #include "workflows/CaptureWorkflows.h"
 #include "EditorCanvasOperations.h"
 #include "SecretServiceCredentialStore.h"
+#include "uploads/CatalogPath.h"
 #include "uploads/DestinationCatalog.h"
 #include "uploads/UploadExecutor.h"
 #include <QBuffer>
-#include <QDir>
 #include <QEventLoop>
 #include <QFileInfo>
 #include <QNetworkAccessManager>
-#include <QStandardPaths>
 #include <QTimer>
 
 #include <QClipboard>
@@ -84,9 +83,7 @@ ActionOutcome CaptureActions::upload(const ActionRequest &request) {
   // Secret Service uses blocking D-Bus calls, so this action belongs on the worker.
   if (QCoreApplication::instance() && QThread::currentThread() == QCoreApplication::instance()->thread())
     return failed("upload-worker-required");
-  const auto path = m_ports.uploadCatalogPath.isEmpty()
-      ? QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath("upload-destinations.json")
-      : m_ports.uploadCatalogPath;
+  const auto path = defaultCatalogPath(m_ports.uploadCatalogPath);
   DestinationCatalog catalog(path);
   const auto destination = catalog.defaultDestination();
   const auto failure = [](const QString &code, const QString &message) {

@@ -11,6 +11,7 @@
 #include "WorkflowShortcutActions.h"
 #include "SettingsDialog.h"
 #include "UploadDestinationsDialog.h"
+#include "FileUploadController.h"
 #include "ColorPickerDialog.h"
 #include "SecretServiceCredentialStore.h"
 #include "settings/ApplicationSettings.h"
@@ -272,6 +273,7 @@ int main(int argc, char *argv[]) {
   }, [] { xerahs::app::manageRecentImages(); });
   QAction *folder = menu.addAction(QStringLiteral("Open captures folder"));
   QAction *history = menu.addAction(QStringLiteral("Capture history…"));
+  QAction *uploadFile = menu.addAction(QStringLiteral("Upload file…"));
   QAction *uploadDestinations = menu.addAction(QStringLiteral("Upload destinations…"));
   QAction *settingsAction = menu.addAction(QStringLiteral("Settings…"));
   QAction *appearance = menu.addAction(QStringLiteral("Editor appearance…"));
@@ -280,7 +282,7 @@ int main(int argc, char *argv[]) {
   tray.setContextMenu(&menu);
   xerahs::app::ApplicationWindow home({{"upload-destinations", uploadDestinations}, {"settings", settingsAction}, {"capture-region", region}, {"capture-full-screen", fullScreen}, {"capture-monitor", monitor}, {"capture-active-window", activeWindow}, {"capture-region-choose-actions", chooseCapture}, {"cancel-capture", cancelCapture},
       {"capture-workflows", configureWorkflows}, {"enable-workflow-shortcuts", shortcutActions.enableAction()}, {"disable-workflow-shortcuts", shortcutActions.disableAction()},
-      {"pick-colour", pickColour}, {"new-image", newImage}, {"open-image", openImage}, {"captures-folder", folder}, {"capture-history", history}, {"editor-appearance", appearance}, {"quit", quit}});
+      {"pick-colour", pickColour}, {"new-image", newImage}, {"open-image", openImage}, {"upload-file", uploadFile}, {"captures-folder", folder}, {"capture-history", history}, {"editor-appearance", appearance}, {"quit", quit}});
   QPointer<xerahs::app::UploadDestinationsDialog> uploadDialog;
   std::shared_ptr<xerahs::uploads::DestinationCatalog> uploadCatalog;
   QObject::connect(uploadDestinations, &QAction::triggered, &home, [&] {
@@ -294,6 +296,11 @@ int main(int argc, char *argv[]) {
     }
     uploadDialog->show(); uploadDialog->raise(); uploadDialog->activateWindow();
   });
+  auto *fileUpload = new xerahs::app::FileUploadController(
+      xerahs::app::FileUploadPorts{uploadCatalogPath, uploadCredentials, [uploadDestinations] { uploadDestinations->trigger(); }, {}},
+      &home, &home);
+  QObject::connect(uploadFile, &QAction::triggered, fileUpload, &xerahs::app::FileUploadController::chooseAndUpload);
+  QObject::connect(&home, &xerahs::app::ApplicationWindow::filesDropped, fileUpload, &xerahs::app::FileUploadController::upload);
   for (auto *childMenu : home.menuBar()->findChildren<QMenu *>()) {
     if (childMenu->title() == "&Capture") for (auto *action : recordingActions.actions()) childMenu->addAction(action);
   }

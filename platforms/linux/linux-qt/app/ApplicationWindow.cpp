@@ -2,14 +2,32 @@
 #include <QAccessible>
 #include <QAction>
 #include <QApplication>
+#include <QDragEnterEvent>
+#include <QDragMoveEvent>
+#include <QDropEvent>
 #include <QGridLayout>
 #include <QLabel>
 #include <QMenu>
 #include <QMenuBar>
+#include <QMimeData>
 #include <QProgressBar>
 #include <QToolButton>
+#include <QUrl>
 #include <QVBoxLayout>
 namespace xerahs::app {
+namespace {
+QStringList localFilePaths(const QMimeData *data) {
+  QStringList paths;
+  if (!data) return paths;
+  for (const auto &url : data->urls())
+    if (url.isLocalFile()) paths.append(url.toLocalFile());
+  return paths;
+}
+void acceptLocalFiles(QDropEvent *event) {
+  if (localFilePaths(event->mimeData()).isEmpty()) event->ignore();
+  else event->acceptProposedAction();
+}
+}  // namespace
 ApplicationWindow::ApplicationWindow(const QMap<QString, QAction *> &actions, QWidget *parent) : QMainWindow(parent) {
   setObjectName(QStringLiteral("applicationWindow")); setWindowTitle(QStringLiteral("XerahS"));
   setAccessibleName(QStringLiteral("XerahS")); setAccessibleDescription(QStringLiteral("Screen capture and image editor commands"));
@@ -17,7 +35,7 @@ ApplicationWindow::ApplicationWindow(const QMap<QString, QAction *> &actions, QW
   auto *intro = new QLabel(QStringLiteral("Capture your screen or open an image to edit."), central); intro->setWordWrap(true); layout->addWidget(intro);
   auto *commands = new QGridLayout; layout->addLayout(commands);
   int index = 0;
-  for (const auto &id : {QString("capture-region"), QString("capture-full-screen"), QString("capture-monitor"), QString("capture-active-window"), QString("capture-region-choose-actions"), QString("capture-workflows"), QString("enable-workflow-shortcuts"), QString("disable-workflow-shortcuts"), QString("cancel-capture"), QString("new-image"), QString("open-image"), QString("captures-folder"), QString("capture-history"), QString("editor-appearance"), QString("upload-destinations"), QString("pick-colour")}) {
+  for (const auto &id : {QString("capture-region"), QString("capture-full-screen"), QString("capture-monitor"), QString("capture-active-window"), QString("capture-region-choose-actions"), QString("capture-workflows"), QString("enable-workflow-shortcuts"), QString("disable-workflow-shortcuts"), QString("cancel-capture"), QString("new-image"), QString("open-image"), QString("upload-file"), QString("captures-folder"), QString("capture-history"), QString("editor-appearance"), QString("upload-destinations"), QString("pick-colour")}) {
     auto *action = actions.value(id); if (!action) continue;
     auto *button = new QToolButton(central); button->setObjectName(id); button->setDefaultAction(action);
     button->setToolButtonStyle(Qt::ToolButtonTextOnly); button->setFocusPolicy(Qt::StrongFocus);
@@ -31,7 +49,7 @@ ApplicationWindow::ApplicationWindow(const QMap<QString, QAction *> &actions, QW
   m_progress->hide(); layout->addWidget(m_progress);
   setCentralWidget(central);
   auto *file = menuBar()->addMenu(QStringLiteral("&File"));
-  for (const auto &id : {QString("new-image"), QString("open-image"), QString("captures-folder"), QString("capture-history"), QString("pick-colour"), QString("quit")}) if (auto *action = actions.value(id)) file->addAction(action);
+  for (const auto &id : {QString("new-image"), QString("open-image"), QString("upload-file"), QString("captures-folder"), QString("capture-history"), QString("pick-colour"), QString("quit")}) if (auto *action = actions.value(id)) file->addAction(action);
   auto *capture = menuBar()->addMenu(QStringLiteral("&Capture"));
   for (const auto &id : {QString("capture-region"), QString("capture-full-screen"), QString("capture-monitor"), QString("capture-active-window"), QString("capture-region-choose-actions"), QString("capture-workflows"), QString("enable-workflow-shortcuts"), QString("disable-workflow-shortcuts"), QString("cancel-capture")}) if (auto *action = actions.value(id)) capture->addAction(action);
   if (auto *cancel = actions.value(QStringLiteral("cancel-capture"))) {
@@ -42,6 +60,8 @@ ApplicationWindow::ApplicationWindow(const QMap<QString, QAction *> &actions, QW
   if (auto *action = actions.value(QStringLiteral("settings"))) preferences->addAction(action);
   if (auto *action = actions.value(QStringLiteral("editor-appearance"))) preferences->addAction(action);
   resize(640, 360);
+  setAcceptDrops(true);
+  adoptDropTargets();
 }
 void ApplicationWindow::activate() {
   // Restore a hidden/minimized shell without unmaximizing the user's window.
@@ -94,5 +114,29 @@ void ApplicationWindow::addCaptureRecoveryActions(QAction *edit, QAction *discar
   if (review) menu->addAction(review);
   if (retry) menu->addAction(retry);
   if (discard) menu->addAction(discard);
+  adoptDropTargets();
+}
+void ApplicationWindow::adoptDropTargets() {
+  // The central widget covers the window, so a drop lands on a child unless
+  // that child accepts it and this filter forwards the local paths.
+  for (auto *widget : findChildren<QWidget *>()) {
+    widget->setAcceptDrops(true);
+    widget->installEventFilter(this);
+  }
+}
+void ApplicationWindow::dragEnterEvent(QDragEnterEvent *event) { acceptLocalFiles(event); }
+void ApplicationWindow::dragMoveEvent(QDragMoveEvent *event) { acceptLocalFiles(event); }
+void ApplicationWindow::dropEvent(QDropEvent *event) {
+  const auto paths = localFilePaths(event->mimeData());
+  if (paths.isEmpty()) { event->ignore(); return; }
+  event->acceptProposedAction();
+  emit filesDropped(paths);
+}
+bool ApplicationWindow::eventFilter(QObject *watched, QEvent *event) {
+  Q_UNUSED(watched);
+  if (event->type() != QEvent::DragEnter && event->type() != QEvent::DragMove && event->type() != QEvent::Drop) return false;
+  if (event->type() == QEvent::Drop) dropEvent(static_cast<QDropEvent *>(event));
+  else acceptLocalFiles(static_cast<QDropEvent *>(event));
+  return true;
 }
 } // namespace xerahs::app
