@@ -1091,13 +1091,14 @@ add_library(xerahs_effects STATIC
   src/image-editor/effects/ManipulationEffects2.cpp
   src/image-editor/effects/ManipulationEffects.cpp
   src/image-editor/effects/FilterEffects3.cpp
-  src/image-editor/effects/FilterEffects2.cpp)
+  src/image-editor/effects/FilterEffects2.cpp
+  src/image-editor/effects/FilterEffects4.cpp)
 target_include_directories(xerahs_effects PUBLIC src)
 target_link_libraries(xerahs_effects PUBLIC Qt6::Core Qt6::Gui)
 target_compile_options(xerahs_effects PRIVATE -Wall -Wextra -Wpedantic -ffp-contract=off)
 target_link_libraries(xerahs PRIVATE xerahs_effects)
 
-foreach(effect_test IN ITEMS EffectFramework CensusCatalog AdjustmentEffects AdjustmentEffects2 DrawingEffects FilterEffects1 ManipulationEffects ManipulationEffects2 FilterEffects3 FilterEffects2)
+foreach(effect_test IN ITEMS EffectFramework CensusCatalog AdjustmentEffects AdjustmentEffects2 DrawingEffects FilterEffects1 ManipulationEffects ManipulationEffects2 FilterEffects3 FilterEffects2 FilterEffects4)
   add_executable(${effect_test}-test tests/${effect_test}Test.cpp)
   set_target_properties(${effect_test}-test PROPERTIES AUTOMOC ON)
   target_link_libraries(${effect_test}-test PRIVATE xerahs_effects Qt6::Test)
