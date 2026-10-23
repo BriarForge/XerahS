@@ -1,0 +1,254 @@
+{
+  "capability": "EDITOR-EFFECTS-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial",
+  "implementation": [
+    "platforms/linux/linux-qt/src/image-editor/effects/Effect.h",
+    "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
+    "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.h",
+    "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.cpp",
+    "platforms/linux/linux-qt/src/image-editor/effects/CensusCatalog.h",
+    "platforms/linux/linux-qt/src/image-editor/effects/CensusCatalog.cpp",
+    "platforms/linux/linux-qt/src/image-editor/effects/AdjustmentEffects.cpp",
+    "platforms/linux/linux-qt/src/image-editor/effects/AdjustmentEffects2.cpp",
+    "platforms/linux/linux-qt/src/image-editor/effects/DrawingEffects.cpp",
+    "platforms/linux/linux-qt/src/image-editor/effects/FilterEffects1.cpp",
+    "platforms/linux/linux-qt/src/image-editor/effects/FilterEffects2.cpp",
+    "platforms/linux/linux-qt/src/image-editor/effects/FilterEffects3.cpp",
+    "platforms/linux/linux-qt/src/image-editor/effects/FilterEffects4.cpp",
+    "platforms/linux/linux-qt/src/image-editor/effects/ManipulationEffects.cpp",
+    "platforms/linux/linux-qt/src/image-editor/effects/ManipulationEffects2.cpp",
+    "platforms/linux/linux-qt/src/image-editor/effects/SxieArchive.h",
+    "platforms/linux/linux-qt/src/image-editor/effects/SxieArchive.cpp",
+    "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.h",
+    "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+    "platforms/linux/linux-qt/app/EffectsDialog.h",
+    "platforms/linux/linux-qt/app/EffectsDialog.cpp",
+    "platforms/linux/linux-qt/app/PresetDialog.h",
+    "platforms/linux/linux-qt/app/PresetDialog.cpp"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/tests/CensusCatalogTest.cpp",
+    "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp",
+    "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
+    "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+    "platforms/linux/linux-qt/tests/AdjustmentEffectsTest.cpp",
+    "platforms/linux/linux-qt/tests/AdjustmentEffects2Test.cpp",
+    "platforms/linux/linux-qt/tests/DrawingEffectsTest.cpp",
+    "platforms/linux/linux-qt/tests/FilterEffects1Test.cpp",
+    "platforms/linux/linux-qt/tests/FilterEffects2Test.cpp",
+    "platforms/linux/linux-qt/tests/FilterEffects3Test.cpp",
+    "platforms/linux/linux-qt/tests/FilterEffects4Test.cpp",
+    "platforms/linux/linux-qt/tests/ManipulationEffectsTest.cpp",
+    "platforms/linux/linux-qt/tests/ManipulationEffects2Test.cpp"
+  ],
+  "requirements": {
+    "EE-001": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "The pinned census enumerates all 232 approved IDs with 32 adjustments, 16 drawings, 149 filters and 35 manipulations, 219 previewable and 13 immediate modes and 963 declared parameter controls; CensusCatalogTest verifies those totals and the uniqueness of every effect ID, parameter ID and parameter label. The native registry implements 172 of 232 registered: Adjustments 32/32, Drawings 16/16, Filters 91/149, Manipulations 33/35. The 60 approved IDs without a native implementation are 58 filters plus remove_background and scale. remove_background is not implemented because it awaits a product decision on an approved local model; the 58 filters and scale have no native implementation and no approved platform disposition. effect-catalog-selection.json still records status draft-selection-pending-product-owner-approval, so the explicit owner review of the ID set is not evidenced on this platform. Full catalog coverage and the owner-approved selection record remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/image-editor/effects/CensusCatalog.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
+        "platforms/linux/linux-qt/tests/CensusCatalogTest.cpp"
+      ]
+    },
+    "EE-002": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "Effect IDs are registry keys and are independent of display name, localisation, icon and menu changes; EffectRegistry rejects an empty or duplicate ID and keeps a deterministic order. The browser supports category, search, recent and favorite discovery over the registered set without duplicating an ID, and the private effects store removes duplicate entries and drops unknown retired IDs instead of failing. The 60 approved census IDs without a native implementation cannot be discovered in the browser at all, so the browser does not yet cover the approved set. Complete browser coverage of all 232 IDs remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/EffectsDialog.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
+        "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "EE-003": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "Every registered parameter carries a stable ID, kind, default, allowed range or choices and label. resolveParameters normalises numeric types and rejects out-of-range, wrong-type, NaN, infinite and unknown values with effect-invalid-parameter or effect-unknown-parameter instead of silently clamping, and serializeParameters and deserializeParameters round-trip the values with the same typed failures. The browser builds a native control per kind and gives each one an accessible name, an accessible range description for numeric controls and a reset-to-default action. Only 650 of the 963 census-declared parameter controls belong to registered effects; the 313 controls of the 60 unimplemented IDs have no native parameter model. The parameter model has no unit field, so a unit can only appear inside a label. Full parameter coverage of the approved set remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.h",
+        "platforms/linux/linux-qt/app/EffectsDialog.cpp",
+        "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "EE-004": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "A previewable effect runs through prepareEffectEdit on an OwnedWork worker with a cancellable non-authoritative preview. The document, pixels, annotations, history and dirty state are unchanged until Apply, and Apply commits exactly one history operation. Cancel and window close restore the exact prior document and leave Undo disabled. EffectsDialogTest proves the serialised document is equal to the pre-preview value while a preview is shown, that Cancel leaves the document equal to that pre-preview value, and that Apply produces one undo entry whose committed pixels equal the previewed pixels.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/EffectsDialog.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "EE-005": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "An immediate effect is applied through the same single guarded commit path and is reversible through one history entry; no effect performs an irreversible external action, so no confirmation gate is required. A failing effect reports the stable effect-failed code in the dialog status label and commits nothing. EffectsDialogTest verifies for a failing effect and for a cancelled apply that pixels, annotations, history, dirty state and the serialised document are exactly as they were before invocation.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/EffectsDialog.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "EE-006": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "prepareEffectEdit detects a size-changing result and prepares it through prepareCanvasEdit with CanvasAction::ResizeCanvas, so the centred canvas geometry, annotation protection and history rules of EDITOR-CANVAS-001 apply and the browser entry cannot bypass them. EffectsDialogTest compares the committed document with the geometry prepareCanvasEdit produces for the same operation and checks that the effect operation and its parameters and seed are recorded on it.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/EffectsDialog.cpp",
+        "platforms/linux/linux-qt/app/EditorCanvasOperations.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "EE-007": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "File-path parameters are validated before decode: validateImageFile checks that the path is an existing readable file that QImageReader can read and that its size is within the 16384-pixel side limit, and loadImageFile re-checks the decoded size and converts to ARGB32. A missing, unreadable or invalid asset produces the typed effect-invalid-input failure in the dialog status label and commits nothing. An imported preset asset is decoded and validated on import, a malformed or oversized asset is refused with sxie-asset-invalid, and an imported path can only address an embedded asset: absolute, relative, URL and Windows drive paths are refused as unsupported instead of opened. Required assets are embedded in the document as base64 effectPresetAssets and referenced as asset: keys, so the result is reproducible and the document carries no host path. Asset-bearing effects without a native implementation, including remove_background and the 58 unimplemented filters, are not covered.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/SxieArchive.cpp",
+        "platforms/linux/linux-qt/app/PresetDialog.cpp",
+        "platforms/linux/linux-qt/tests/SxiePresetTest.cpp"
+      ]
+    },
+    "EE-008": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "Every registered effect exposes a seed derived from defaultEffectSeed(id). The browser shows the seed, offers a new seed and stores the accepted seed per effect in the private effects store, and the committed effect operation records the seed that produced the pixels. Procedural randomness uses a SplitMix64 generator seeded only from the effect context, never from time or a global generator. EffectFrameworkTest passes the seed through unchanged and proves that one seed repeats identical pixels while another seed does not, and EffectsDialogTest proves the persisted seed reloads and reproduces the previewed pixels. Identical decoded pixels on all supported platforms for the same seed, renderer version and colour profile are not proven on this platform.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.h",
+        "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+        "platforms/linux/linux-qt/app/EffectsDialog.cpp",
+        "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "EE-009": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "runEffect normalises the source to Format_ARGB32, requires the result to stay ARGB32 with the source colour space and rejects a size change unless the effect declares it, so a null, wrongly formatted, wrongly sized or wrongly profiled result is the typed effect-failed failure rather than a silent conversion. Alpha is preserved as straight ARGB32 and the committed PNG keeps the source profile; the convolution family works on straight-alpha pixels with a centred kernel, Clamp edge sampling, gain and bias, a byte-gamut clamp and round-to-nearest, and the blur family works on premultiplied pixels and unpremultiplies back, sampling outside the image as transparent or as the edge pixel. Orientation is fixed once at source preparation rather than by the effect path. These definitions cover the convolution and blur families only; there is no shared whole-catalog definition or test for edge sampling, premultiplication and clipping, and cross-platform pixel identity is unproven.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.h",
+        "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.cpp",
+        "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp"
+      ]
+    },
+    "EE-010": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "Preview and apply run on an OwnedWork worker that reports progress and honours cancellation; changed cancels the previous job and increments a revision so only the latest result is published, and the row driver in EffectSupport polls cancellation before every row. prepareEffectEdit rejects a source or result above the dimension, pixel-count or encoded-byte limits with effect-resource-limit, and a cancelled or abandoned preview never publishes a partial result. EffectFrameworkTest proves a cancelled run discards an otherwise successful image, and EffectsDialogTest proves Escape cancels the in-flight preview without committing and that only the newest preview is shown.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/EffectsDialog.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.h",
+        "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
+        "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "EE-011": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "Committing an effect goes through EditorSession::commitWithSelection, which truncates the history to the current position and so clears the redo branch; EffectsDialogTest commits a new effect after an Undo and observes redoCount 0. A preview never enters history, never dirties the document and never reorders the recent list: the document stays byte-equal while a preview is shown and the recent list is updated only on the successful commit path.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/EffectsDialog.cpp",
+        "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "EE-012": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "Recent and favourite entries are stable effect IDs. The private effects store removes duplicates, keeps a deterministic newest-first recent order capped at 20, drops unknown retired IDs instead of failing, and detects a concurrent change through its snapshot and reports effects-store-changed. The favourite control adds and removes an ID and the Recent and Favorites categories list only those IDs. The user-editable lists never change the effect catalog. Unknown retired IDs are discarded on load rather than retained.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/EffectsDialog.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "EE-013": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "The search field, category selector and effect list are keyboard operable and carry accessible names. EffectsDialogTest checks the accessible interface of the effect list, the non-empty accessible name of the category selector and that the End key reaches the last row. Each parameter control is built from its kind, carries an accessible name and, for numeric parameters, an accessible description giving the allowed range; the value comes from the native spin box or slider and the reset control restores the declared defaults, which EffectsDialogTest verifies. Per-parameter error text and explicit unit strings are not attached to the individual controls: a typed failure is reported in the dialog status label and a bad seed reports effect-seed-invalid there. Complete per-control error and unit exposure remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/EffectsDialog.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "EE-014": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "The preview is rendered at full resolution by the same prepareEffectEdit path used by Apply; only the displayed pixmap is scaled down to the widget, so the preview pixels and the committed pixels are identical. EffectsDialogTest compares the previewed pixel with the committed pixel, and the status line states that the preview is not committed. No registered effect previews at reduced fidelity, so there is no bounded preview difference to disclose.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/EffectsDialog.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "EE-015": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "An imported preset keeps unknown root, step and parameter JSON for round-trip and marks the step unsupported with a typed diagnostic; an invalid parameter value is kept verbatim and marked unsupported with effect-invalid-parameter. No reflection, script, network access or arbitrary constructor is involved: a preset is read as JSON and zip entries only. The archive reader refuses encrypted, multi-disk, overlapping, duplicate, malformed and over-limit archives with typed codes, and an imported path can only address an embedded asset.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/SxieArchive.cpp",
+        "platforms/linux/linux-qt/tests/SxiePresetTest.cpp"
+      ]
+    },
+    "EE-016": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "Effect execution is local. The registry, the census and the effect implementations read only the document, the local parameter values and local asset files, and nothing in the effect path opens a network connection. Preset assets are embedded in the document rather than fetched, and the committed document contains no host path.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+        "platforms/linux/linux-qt/app/PresetDialog.cpp"
+      ]
+    },
+    "EE-017": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "The census enumerates all 232 selected IDs with unique IDs, non-empty unique parameter IDs and labels, the 32/16/149/35 category totals, 219 previewable and 13 immediate modes and 963 declared parameter controls, and CensusCatalogTest verifies those totals. Every registered effect matches its census entry for category, mode and parameter IDs, kinds and labels, and its parameters validate. Only 172 of 232 are constructible, so the census cannot yet prove the whole selected set, and there are no representative golden images covering the algorithm families or the boundary-value parameter classes. Full enumeration, constructibility proof and golden-image coverage remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/image-editor/effects/CensusCatalog.cpp",
+        "platforms/linux/linux-qt/tests/CensusCatalogTest.cpp"
+      ]
+    },
+    "EE-018": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "Every registered effect is a deterministic CPU and native Qt implementation, so the registered set declares no hardware codec, font or accelerator dependency. Where the environment does lack a capability, the effect reports a typed diagnostic instead of degrading silently: a text effect without a QGuiApplication for font resolution returns effect-unavailable, and an unreadable or oversized asset returns effect-invalid-input. The browser, however, silently omits the 60 approved census IDs without a native implementation: there is no user-visible diagnostic for the gap and no approved platform disposition for the 58 filters or for scale. The prohibition on silent omission and a user-visible diagnostic for the gap remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.h",
+        "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
+        "platforms/linux/linux-qt/app/EffectsDialog.cpp"
+      ]
+    }
+  }
+}

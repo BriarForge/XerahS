@@ -1,0 +1,296 @@
+{
+  "capability": "EDITOR-UTILITIES-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "status": "partial",
+  "implementation": [
+    "platforms/linux/linux-qt/app/features/ToolsFeature.h",
+    "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
+    "platforms/linux/linux-qt/app/ColorPickerDialog.h",
+    "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
+    "platforms/linux/linux-qt/app/PortalColorPicker.h",
+    "platforms/linux/linux-qt/app/PortalColorPicker.cpp",
+    "platforms/linux/linux-qt/src/tools/ColorFormats.h",
+    "platforms/linux/linux-qt/src/tools/ColorFormats.cpp",
+    "platforms/linux/linux-qt/src/tools/QrEncoder.h",
+    "platforms/linux/linux-qt/src/tools/QrEncoder.cpp",
+    "platforms/linux/linux-qt/app/QrRender.h",
+    "platforms/linux/linux-qt/app/QrRender.cpp",
+    "platforms/linux/linux-qt/app/QrCodeDialog.h",
+    "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
+    "platforms/linux/linux-qt/src/tools/FileHash.h",
+    "platforms/linux/linux-qt/src/tools/FileHash.cpp",
+    "platforms/linux/linux-qt/app/HashCheckerDialog.h",
+    "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
+    "platforms/linux/linux-qt/app/IconWriter.h",
+    "platforms/linux/linux-qt/app/IconWriter.cpp",
+    "platforms/linux/linux-qt/app/IconConverterDialog.h",
+    "platforms/linux/linux-qt/app/IconConverterDialog.cpp",
+    "platforms/linux/linux-qt/src/image-editor/ImageComparison.h",
+    "platforms/linux/linux-qt/src/image-editor/ImageComparison.cpp",
+    "platforms/linux/linux-qt/app/ComparisonImages.h",
+    "platforms/linux/linux-qt/app/ComparisonImages.cpp",
+    "platforms/linux/linux-qt/app/ImageComparisonDialog.h",
+    "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
+    "platforms/linux/linux-qt/src/media/VideoConversion.h",
+    "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
+    "platforms/linux/linux-qt/app/ConversionRunner.h",
+    "platforms/linux/linux-qt/app/VideoConverter.h",
+    "platforms/linux/linux-qt/app/VideoConverter.cpp",
+    "platforms/linux/linux-qt/app/VideoConverterDialog.h",
+    "platforms/linux/linux-qt/app/VideoConverterDialog.cpp"
+  ],
+  "evidence": [
+    "platforms/linux/linux-qt/tests/ColorFormatsTest.cpp",
+    "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
+    "platforms/linux/linux-qt/tests/PortalColorPickerTest.cpp",
+    "platforms/linux/linux-qt/tests/QrEncoderTest.cpp",
+    "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp",
+    "platforms/linux/linux-qt/tests/FileHashTest.cpp",
+    "platforms/linux/linux-qt/tests/HashCheckerDialogTest.cpp",
+    "platforms/linux/linux-qt/tests/IconWriterTest.cpp",
+    "platforms/linux/linux-qt/tests/IconConverterDialogTest.cpp",
+    "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp",
+    "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp",
+    "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
+    "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp",
+    "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp",
+    "platforms/linux/linux-qt/tests/GstConversionRunnerLifetimeTest.cpp"
+  ],
+  "requirements": {
+    "EU-001": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "Six of the eight utility-catalog entries are reachable. The Tools command group registers pick-colour, hash-checker, icon-converter, video-converter and qr-code, each opening one non-modal owned dialog, and image-comparer is reachable from the editor through the compare-images command. The video converter is present only where XERAHS_RECORDING and GStreamer with pbutils are found; on a build without GStreamer the command and its dialog are absent rather than explained at the start surface. background-remover is not implemented and has no approved platform disposition. konami-shader stays inventoried in the contract catalog with disposition product-owner-decision-required and has no native implementation, which is what EU-019 requires until the owner decides. A missing host service is explained rather than fatal: a missing desktop portal and a denied permission are distinct outcomes and the colour picker shows a visible message instead of crashing. Unconditional reachability of every catalog entry and the video converter availability policy remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/PortalColorPicker.cpp",
+        "platforms/linux/linux-qt/tests/PortalColorPickerTest.cpp",
+        "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp"
+      ]
+    },
+    "EU-002": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "Capture permission is owned by the native desktop portal: the picker issues one xdg-desktop-portal ColorPicker request at a time and distinguishes Picked, Cancelled, Denied and Failed, with a missing portal distinct from a permission denial. The picked colour is presented in eight canonical formats (Hex, HexAlpha, Rgb, Rgba, Hsb, Hsl, Cmyk and Decimal) and a hex field is parsed and re-formatted. Copy happens only on an explicit user action: a per-line Copy, a Copy All that stays disabled until a colour is shown, and no automatic clipboard write; an invalid hex keeps the last valid colour. Keyboard cancellation uses the native QDialog reject path and a portal cancellation leaves the shown colour and message unchanged. The sampled area is not magnified and the sampled coordinates are not exposed, because the portal returns a colour alone. Magnification and coordinates remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
+        "platforms/linux/linux-qt/app/PortalColorPicker.cpp",
+        "platforms/linux/linux-qt/src/tools/ColorFormats.cpp",
+        "platforms/linux/linux-qt/tests/ColorFormatsTest.cpp",
+        "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalColorPickerTest.cpp"
+      ]
+    },
+    "EU-003": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "The encoder validates its input and produces typed failures: empty content and over-long content are refused, an invalid output size is refused, and the Reed-Solomon divisor, remainder, format information bits, version bits and capacity table are checked against hand-computed and published vectors. The render is deterministic, and the scannability oracle decodes the rendered PNG with zbarimg across every error-correction level and several versions, including UTF-8 content and capacity boundaries. The window supports explicit Copy to the clipboard, Save to a PNG written atomically through a temporary sibling, and Upload through a host-supplied port that receives an existing PNG path; the uploaded PNG lives in the dialog's own temporary directory and is removed with the dialog. A missing upload port leaves the action unavailable rather than failing.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/tools/QrEncoder.cpp",
+        "platforms/linux/linux-qt/app/QrRender.cpp",
+        "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
+        "platforms/linux/linux-qt/tests/QrEncoderTest.cpp",
+        "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp"
+      ]
+    },
+    "EU-004": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": [],
+      "note": "QR scanning is not implemented. There is no QR decoder in the native tree: the qr-scan entry in the Core post-capture action catalog is a declared action specification only and is not a scanner. The Screen, Region and Image File modes, capture and file consent, input validation and limits, and the distinct zero, one and multiple decoded results do not exist, and no sampled pixels are uploaded because no pixels are sampled. QR scanning remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp"
+      ]
+    },
+    "EU-005": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "The hash checker offers CRC32, MD5, SHA-1, SHA-256, SHA-384 and SHA-512 and selects SHA-256 by default. Files are read in 1 MiB chunks, so a digest does not grow the reader's memory, and the known digests of an empty and a non-empty file are checked against published values and a large file matches a one-shot hash. Progress reports the bytes hashed and the file size, with an indeterminate bar when the size is unknown, and cancellation is polled at every chunk boundary so a cancelled read reports cancelled instead of a partial digest. digestMatches compares every digit and does not stop at the first difference, so the result does not depend on where two values parted; the length check is safe because the length follows from the algorithm.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/tools/FileHash.cpp",
+        "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
+        "platforms/linux/linux-qt/tests/FileHashTest.cpp",
+        "platforms/linux/linux-qt/tests/HashCheckerDialogTest.cpp"
+      ]
+    },
+    "EU-006": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "A result names its algorithm and the file it came from, and the digest is presented as lowercase hexadecimal. hashAlgorithmIsWeak marks CRC32, MD5 and SHA-1 as unsuitable for security verification, and the hash checker labels a weak choice as unsuitable for security; nothing recommends MD5 or SHA-1 for an authenticity decision.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/tools/FileHash.cpp",
+        "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
+        "platforms/linux/linux-qt/tests/FileHashTest.cpp",
+        "platforms/linux/linux-qt/tests/HashCheckerDialogTest.cpp"
+      ]
+    },
+    "EU-007": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "The converter validates the source image and refuses an invalid or oversized one with a visible error. It offers the six contract sizes 16, 32, 48, 64, 128 and 256 and both an 8-bit palette and a 32-bit true-color mode, and Save stays disabled until at least one size is checked. The container writer produces a structurally valid .ico: the header and every directory entry are well formed, a true-color entry keeps its alpha and a palette entry carries the expected header and mask, and the written file is read back and accepted by Qt's own 32-bit container reader. A cancelled save writes nothing, and a missing size list, an invalid size, an invalid image and a write failure each have their own stable code.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/IconWriter.cpp",
+        "platforms/linux/linux-qt/app/IconConverterDialog.cpp",
+        "platforms/linux/linux-qt/tests/IconWriterTest.cpp",
+        "platforms/linux/linux-qt/tests/IconConverterDialogTest.cpp"
+      ]
+    },
+    "EU-008": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "Two independent validated images are loaded; a top-left comparison uses independently expected pixels and a centred alignment uses native sizes with odd padding, and invalid inputs and an over-large union fail before any allocation. Size and format incompatibility is reported rather than silently accepted. The before/after divider is exposed through native accessibility and is operable by keyboard and by drag, the divider endpoints preserve alpha and show exactly one source, and unsupported visible objects and a cancelled rendering leave both inputs untouched. Neither image is modified, saved or uploaded, and the comparison owns its rendered snapshot.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/image-editor/ImageComparison.cpp",
+        "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
+        "platforms/linux/linux-qt/app/ComparisonImages.cpp",
+        "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp",
+        "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp"
+      ]
+    },
+    "EU-009": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": [],
+      "note": "Background removal is not implemented. There is no native background-removal window, no local model selection, no Auto, CPU or GPU device policy, no model provenance or tensor-shape validation, and no model, device, setup or inference status. The utility-catalog entry is still inventoried, but no approved platform disposition or local model has been chosen, so the requirement awaits a product decision on an approved local model. Background removal remains Required.",
+      "evidence": [
+        "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json"
+      ]
+    },
+    "EU-010": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": [],
+      "note": "Background removal is not implemented, so there is no model directory access, optional download, license, integrity, size or network behaviour to disclose, and no silent download or execution of a model from an untrusted location occurs because no model is loaded at all. The disclosure and trust requirement remains Required.",
+      "evidence": [
+        "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json"
+      ]
+    },
+    "EU-011": {
+      "disposition": "Required",
+      "status": "not-started",
+      "vectors": [],
+      "note": "Background removal is not implemented, so there is no background-removal preview or save, no source-dimension or colour preservation to verify, no defined alpha output, no cancellation, and no distinction between model, device, memory, inference and output failures. Background removal remains Required.",
+      "evidence": [
+        "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json"
+      ]
+    },
+    "EU-012": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "The converter exposes the 15 codec choices of the utility catalog in catalog order, each with its compatible containers, encoder candidates, hardware flag and bitrate property, and VideoConversionTest checks the catalogue against the contract. The window offers the input file, the output folder and name, the bitrate where it is meaningful, progress, Cancel and an optional open-folder action, and the list, validation and success flows are tested. The whole utility is conditional on the build: the converter library is compiled only when XERAHS_RECORDING and GStreamer with pbutils are found, so on a target without GStreamer the command and its dialog are absent rather than offered and explained. Unconditional availability across the supported desktop targets remains Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
+        "platforms/linux/linux-qt/app/VideoConverterDialog.cpp",
+        "platforms/linux/linux-qt/app/VideoConverter.cpp",
+        "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
+        "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp"
+      ]
+    },
+    "EU-013": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "codecAvailability never substitutes another codec: an unusable codec carries an actionable reason and the dialog lists it as disabled, so a hardware codec is shown only when it is usable. Command arguments are structured rather than built as a string: the pipeline description is path-free and names only src, dec, mux and sink, and the runner sets the filesrc and filesink location as a structured property, so a path cannot be injected into a command line. Output is written atomically to a hidden partial sibling next to the target and renamed only on success. The encoded argument is the structured properties of the plan, which is checked for the audio encoder and its dropped-audio diagnostic.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
+        "platforms/linux/linux-qt/app/VideoConverter.cpp",
+        "platforms/linux/linux-qt/app/VideoConverterDialog.cpp",
+        "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
+        "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp"
+      ]
+    },
+    "EU-014": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "planConversion validates the container, codec and input combination and every invalid pair is rejected before a pipeline is built. The output rules never allow the input to be its own output and refuse an existing file unless overwrite is explicitly opted in, and suggestOutputPath reserves a non-conflicting name beside the input. The input file is preserved. A cancelled conversion removes the incomplete output, and the host result distinguishes Success, Cancelled and Failed through a dedicated outcome plus a stable error code. An existing output is refused rather than overwritten by default.",
+      "evidence": [
+        "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
+        "platforms/linux/linux-qt/app/VideoConverter.cpp",
+        "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
+        "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp"
+      ]
+    },
+    "EU-015": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "Utility inputs stay on the device. The hash checker reads the file and keeps only its digest; the colour picker keeps a recent-colour list inside the dialog; the image comparison owns a rendered snapshot and does not modify, save or upload either input. The one outward path is the QR Upload action, which is an explicit user action handing a PNG path to the host's own file-upload port, and the uploaded PNG lives in the dialog's temporary directory and is removed with the dialog. Diagnostics are stable codes without paths or content.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
+        "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
+        "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
+        "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
+        "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp"
+      ]
+    },
+    "EU-016": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "The utility windows use native Qt controls with accessible names, visible focus and keyboard traversal: the image comparison exposes an accessible divider operable by keyboard and drag, the QR controls are named for accessibility, and the video converter's failure state carries a stable code with accessible names. Busy and error states are descriptive rather than silent, Cancel and close have defined semantics, file selection uses the native file dialog and capture uses the native desktop portal. High-contrast rendering is not exercised by a test on this platform, and the all-platforms clause is not evidenced here, so high-contrast and cross-platform accessibility qualification remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
+        "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
+        "platforms/linux/linux-qt/app/VideoConverterDialog.cpp",
+        "platforms/linux/linux-qt/app/PortalColorPicker.cpp",
+        "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp"
+      ]
+    },
+    "EU-017": {
+      "disposition": "Required",
+      "status": "implemented",
+      "vectors": [],
+      "note": "Blocking work runs through OwnedWork so a window owns its job: the hash read stops when the dialog is closed or destroyed and never leaves a digest, the image comparison retires its worker on cancellation or close without publishing an input and tears a blocked worker down immediately, the QR upload temporary files are removed with the dialog, and the GStreamer runner emits nothing when it is destroyed while probing. Closing a busy window cancels the work rather than continuing it in the background, and the file picker recovers from cancellation and destruction.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
+        "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
+        "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
+        "platforms/linux/linux-qt/app/VideoConverter.cpp",
+        "platforms/linux/linux-qt/app/OwnedWork.h",
+        "platforms/linux/linux-qt/tests/HashCheckerDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/GstConversionRunnerLifetimeTest.cpp"
+      ]
+    },
+    "EU-018": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "The implemented utilities have native coverage of their commands, algorithms, codecs, input modes, success, cancellation, corrupt input, permission denial, a missing host, unusable hardware, resource limits and output failures: the portal denial and missing-portal cases, the hash cancellation and unreadable file, the icon validation and write failure, the comparison invalid input and cancelled rendering, the video codec availability and partial-output removal. The catalog items background-remover and the QR scan modes have no implementation and therefore no conformance coverage, no published test-vectors.json exists for this capability, and there is no cross-platform conformance corpus for the utility suite. Full catalog coverage and shared conformance remain Required.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/PortalColorPickerTest.cpp",
+        "platforms/linux/linux-qt/tests/FileHashTest.cpp",
+        "platforms/linux/linux-qt/tests/IconWriterTest.cpp",
+        "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp",
+        "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
+        "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp"
+      ]
+    },
+    "EU-019": {
+      "disposition": "Required",
+      "status": "partial",
+      "vectors": [],
+      "note": "The Konami-code shader animation remains inventoried in the contract utility catalog with disposition product-owner-decision-required, and no native Konami shader, overlay or easter egg exists in the linux-qt tree, so it has not become required product behaviour before the owner decision. The preserve, correct or omit decision itself has not been recorded after accessibility, performance, security, discoverability and maintenance review. The owner decision remains Required.",
+      "evidence": [
+        "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json"
+      ]
+    }
+  }
+}
