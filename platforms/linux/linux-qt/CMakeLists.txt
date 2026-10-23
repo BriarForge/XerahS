@@ -1001,3 +1001,28 @@ target_include_directories(scheduled-capture-test PRIVATE app)
 target_link_libraries(scheduled-capture-test PRIVATE xerahs_core Qt6::Widgets Qt6::Test)
 add_test(NAME scheduled-capture COMMAND scheduled-capture-test)
 set_tests_properties(scheduled-capture PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
+# EDITOR-UTILITIES-001 / EU-003: QR code generator. Append-only; main.cpp wires the tray.
+target_sources(xerahs_core PRIVATE src/tools/QrEncoder.cpp src/tools/QrEncoder.h)
+add_library(xerahs_qr_code STATIC
+  app/QrRender.cpp
+  app/QrRender.h
+  app/QrCodeDialog.cpp
+  app/QrCodeDialog.h)
+set_target_properties(xerahs_qr_code PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_qr_code PUBLIC app)
+target_link_libraries(xerahs_qr_code PUBLIC xerahs_core Qt6::Widgets)
+target_compile_options(xerahs_qr_code PRIVATE -Wall -Wextra -Wpedantic)
+target_link_libraries(xerahs PRIVATE xerahs_qr_code)
+
+add_executable(qr-encoder-test tests/QrEncoderTest.cpp)
+set_target_properties(qr-encoder-test PROPERTIES AUTOMOC ON)
+target_link_libraries(qr-encoder-test PRIVATE xerahs_qr_code Qt6::Gui Qt6::Test)
+add_test(NAME qr-encoder COMMAND qr-encoder-test)
+set_tests_properties(qr-encoder PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 120)
+
+add_executable(qr-code-dialog-test tests/QrCodeDialogTest.cpp)
+set_target_properties(qr-code-dialog-test PROPERTIES AUTOMOC ON)
+target_link_libraries(qr-code-dialog-test PRIVATE xerahs_qr_code Qt6::Test)
+add_test(NAME qr-code-dialog COMMAND qr-code-dialog-test)
+set_tests_properties(qr-code-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
