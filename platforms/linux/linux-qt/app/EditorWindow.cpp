@@ -237,7 +237,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   auto *toolMenu = imageMenu->addMenu(QStringLiteral("Annotation Tools"));
   for (const auto &id : {"select-tool", "rectangle-tool", "ellipse-tool", "line-tool", "arrow-tool", "freehand-tool", "text-tool",
                          "step-tool", "highlight-tool", "blur-tool", "pixelate-tool", "speechballoon-tool", "magnify-tool", "spotlight-tool",
-                         "smarteraser-tool", "image-tool", "emoji-tool", "cursor-tool", "crop-tool"}) toolMenu->addAction(tools.value(id));
+                         "smarteraser-tool", "image-tool", "emoji-tool", "cursor-tool", "cutout-tool", "crop-tool"}) toolMenu->addAction(tools.value(id));
   QAction *crop = imageMenu->addAction(QStringLiteral("Crop Image…"));
   crop->setObjectName(QStringLiteral("cropImage"));
   QAction *cropTool = tools.value("crop-tool");
@@ -249,6 +249,11 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(m_canvas, &EditorCanvas::cropRequested, this, [this](QPointF start, QPointF end) {
     const auto region = normalizedCropRegion(m_image.width(), m_image.height(), {start.x(), start.y()}, {end.x(), end.y()});
     if (region) cropImage(*region);
+  });
+  connect(m_canvas, &EditorCanvas::cutOutRequested, this, [this](QPointF start, QPointF end, bool columns) {
+    CanvasOperation operation; operation.action = CanvasAction::CutOut;
+    operation.start = {start.x(), start.y()}; operation.end = {end.x(), end.y()}; operation.cutColumns = columns;
+    applyCanvas(operation);
   });
   QAction *resizePixels = imageMenu->addAction(QStringLiteral("Resize Image…"));
   resizePixels->setObjectName(QStringLiteral("resizeImage"));

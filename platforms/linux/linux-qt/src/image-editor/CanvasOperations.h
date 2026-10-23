@@ -16,7 +16,8 @@ struct CanvasTransform {
 };
 
 enum class CanvasAction { Crop, ResizeCanvas, ResizeImage, RotateClockwise, RotateCounterClockwise, Rotate180,
-                          FlipHorizontal, FlipVertical, AutoCrop, RotateCustom, Flatten, ClearAnnotations, ClearImageAndAnnotations };
+                          FlipHorizontal, FlipVertical, AutoCrop, RotateCustom, Flatten, ClearAnnotations, ClearImageAndAnnotations,
+                          CutOut };
 enum class CanvasAnchor { TopLeft, Top, TopRight, Left, Center, Right, BottomLeft, Bottom, BottomRight };
 enum class Interpolation { Nearest, Bilinear };
 enum class CropBorder { Transparent, TopLeftColor, Color };
@@ -40,6 +41,9 @@ struct CanvasOperation {
   AutoCropPolicy autoCrop;
   double rotationDegrees = 0;  // positive is clockwise, about canvas centre
   bool expandCanvas = true;
+  // CutOut (EA-013): remove columns start.x..end.x when true, otherwise rows
+  // start.y..end.y, rounded to whole pixels and clipped to the canvas.
+  bool cutColumns = true;
 };
 
 struct CanvasControl {

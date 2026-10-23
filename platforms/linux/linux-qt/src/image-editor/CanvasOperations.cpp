@@ -195,6 +195,45 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
     if (!result.error) progress(control, 100);
     return result;
   }
+  if (op.action == CanvasAction::CutOut) {
+    // EA-013 coordinate rule: pixels after the strip move back by its size.
+    // An annotation moves with them when its bounds centre is at or after the
+    // strip's end; otherwise it keeps its position.
+    if (!finite(op.start) || !finite(op.end)) return failure(diagnostic::documentInvalid);
+    const bool columns = op.cutColumns;
+    const qint64 extent = columns ? source.width : source.height;
+    const double a = columns ? std::min(op.start.x, op.end.x) : std::min(op.start.y, op.end.y);
+    const double b = columns ? std::max(op.start.x, op.end.x) : std::max(op.start.y, op.end.y);
+    const qint64 from = std::clamp<qint64>(qint64(std::llround(std::clamp(a, 0.0, double(extent)))), 0, extent);
+    const qint64 to = std::clamp<qint64>(qint64(std::llround(std::clamp(b, 0.0, double(extent)))), 0, extent);
+    const qint64 removed = to - from;
+    if (removed < 1 || removed >= extent) return failure(diagnostic::documentInvalid);
+    const qint64 width = columns ? source.width - removed : source.width;
+    const qint64 height = columns ? source.height : source.height - removed;
+    AnnotationDocument next = document;
+    next.canvasWidth = width; next.canvasHeight = height;
+    for (Annotation &annotation : next.annotations) {
+      auto *r = std::get_if<RectangleAnnotation>(&annotation);
+      if (!r) return failure(QStringLiteral("canvas-annotation-transform-unsupported"));
+      const double centre = columns ? r->left() / 2 + r->right() / 2 : r->top() / 2 + r->bottom() / 2;
+      if (centre < to) continue;
+      (columns ? r->start.x : r->start.y) -= removed;
+      (columns ? r->end.x : r->end.y) -= removed;
+    }
+    ArgbImage image = solidImage(width, height, 0);
+    for (qint64 y = 0; y < height; ++y) {
+      if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));
+      for (qint64 x = 0; x < width; ++x) {
+        const qint64 sx = columns && x >= from ? x + removed : x;
+        const qint64 sy = !columns && y >= from ? y + removed : y;
+        image.pixels[std::size_t(y * width + x)] = source.at(sx, sy);
+      }
+      progress(control, int((y + 1) * 100 / height));
+    }
+    CanvasResult result;
+    result.document = std::move(next); result.image = std::move(image); result.changed = true;
+    return result;
+  }
   if ((op.action == CanvasAction::ResizeCanvas || op.action == CanvasAction::ResizeImage) && !validSize(op.width, op.height))
     return failure(op.width < 1 || op.height < 1 ? diagnostic::documentInvalid : diagnostic::documentTooLarge);
 
@@ -309,6 +348,13 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
     moved.end = {mapped.x + halfWidth, mapped.y + halfHeight};
     const double oldAngle = normalizedAngle(r->style.rotationDegrees);
     moved.style.rotationDegrees = normalizedAngle((reflection ? -oldAngle : oldAngle) + angleDelta);
+    if (reflection && r->type() != shape::rectangle) {
+      // Mirror paths and tails inside their bounds instead of turning the
+      // object upside down, so text stays readable after a flip.
+      const bool horizontal = op.action == CanvasAction::FlipHorizontal;
+      moved.style.rotationDegrees = normalizedAngle(-oldAngle);
+      for (PointF &p : moved.content.points) (horizontal ? p.x : p.y) = 1 - (horizontal ? p.x : p.y);
+    }
     if (!validRectangle(moved)) return failure(diagnostic::documentInvalid);
     if (clipAnnotations) {
       const auto intersects = intersectsCanvas(moved, width, height);

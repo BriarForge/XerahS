@@ -24,7 +24,7 @@ public:
   void zoomToFit();
   // EA-001: creation tools after Crop map to document shape types.
   enum class Tool { Select, Rectangle, Crop, Ellipse, Line, Arrow, Freehand, Text, Step, Highlight, Blur, Pixelate,
-                    SpeechBalloon, Magnify, Spotlight, SmartEraser, Image, Emoji, Cursor };
+                    SpeechBalloon, Magnify, Spotlight, SmartEraser, Image, Emoji, Cursor, CutOut };
   static QString shapeType(Tool tool);
   Tool tool() const { return m_tool; }
   void setTool(Tool);
@@ -63,6 +63,8 @@ signals:
   void changed();
   void viewportChanged(double zoom);
   void cropRequested(QPointF start, QPointF end);
+  // EA-013: remove the dragged columns (or rows) and close the gap.
+  void cutOutRequested(QPointF start, QPointF end, bool columns);
   void toolChanged();
   void editRejected(QString diagnostic);
 
@@ -88,6 +90,7 @@ private:
   std::optional<QUuid> topmostAt(QPointF imagePoint) const;
   std::optional<xerahs::editor::RectangleHandle> handleAt(QPointF viewPoint) const;
   std::array<std::pair<xerahs::editor::RectangleHandle, QPointF>, 8> handles(const xerahs::editor::RectangleAnnotation &) const;
+  bool canvasTool() const { return m_tool == Tool::Crop || m_tool == Tool::CutOut; }
   void syncViewport();
   void cancelGesture();
   bool movePreviewCurrent() const;

@@ -56,15 +56,15 @@ QMap<QString, QAction *> annotationOrderActions(EditorCanvas &canvas, QObject *o
 QMap<QString, QAction *> annotationToolActions(EditorCanvas &canvas, QObject *owner, bool includeCrop) {
   using Tool = EditorCanvas::Tool;
   QMap<QString, QAction *> actions;
-  for (const auto &entry : std::array<std::pair<QString, Tool>, 19>{{{"Select", Tool::Select}, {"Rectangle", Tool::Rectangle},
+  for (const auto &entry : std::array<std::pair<QString, Tool>, 20>{{{"Select", Tool::Select}, {"Rectangle", Tool::Rectangle},
            {"Ellipse", Tool::Ellipse}, {"Line", Tool::Line}, {"Arrow", Tool::Arrow}, {"Freehand", Tool::Freehand},
            {"Text", Tool::Text}, {"Step", Tool::Step}, {"Highlight", Tool::Highlight}, {"Blur", Tool::Blur},
            {"Pixelate", Tool::Pixelate}, {"SpeechBalloon", Tool::SpeechBalloon}, {"Magnify", Tool::Magnify},
            {"Spotlight", Tool::Spotlight}, {"SmartEraser", Tool::SmartEraser}, {"Image", Tool::Image}, {"Emoji", Tool::Emoji},
-           {"Cursor", Tool::Cursor}, {"Crop", Tool::Crop}}}) {
-    if (entry.second == Tool::Crop && !includeCrop) continue;
+           {"Cursor", Tool::Cursor}, {"CutOut", Tool::CutOut}, {"Crop", Tool::Crop}}}) {
+    if ((entry.second == Tool::Crop || entry.second == Tool::CutOut) && !includeCrop) continue;
     const QString label = entry.first == u"SpeechBalloon" ? QStringLiteral("Speech Balloon")
-        : entry.first == u"SmartEraser" ? QStringLiteral("Smart Eraser") : entry.first;
+        : entry.first == u"SmartEraser" ? QStringLiteral("Smart Eraser") : entry.first == u"CutOut" ? QStringLiteral("Cut Out") : entry.first;
     auto *action = new QAction(label, owner);
     const QString id = entry.first.toLower() + "-tool";
     action->setObjectName(entry.first.toLower() + "Tool");
@@ -75,6 +75,7 @@ QMap<QString, QAction *> annotationToolActions(EditorCanvas &canvas, QObject *ow
       action->setChecked(canvas.tool() == tool);
       action->setStatusTip(tool == Tool::Select ? "Select and edit existing objects; blank canvas clears selection."
           : tool == Tool::Crop ? "Drag the region to keep. The crop tool stays active after completion."
+          : tool == Tool::CutOut ? "Drag across a strip to remove it and close the gap. The tool stays active after completion."
           : "Draw " + EditorCanvas::shapeType(tool) + " objects on blank canvas. The tool stays active after each completed object.");
       action->setToolTip(action->statusTip());
     };

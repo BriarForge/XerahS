@@ -2,11 +2,13 @@
 // export rendering and native canvas creation for every box-bounded type.
 #include "EditorCanvas.h"
 #include "image-editor/AnnotationRenderer.h"
+#include "image-editor/CanvasOperations.h"
 #include "image-editor/EditorSession.h"
 #include "image-editor/ShapePainter.h"
 
 #include <QApplication>
 #include <QBuffer>
+#include <QSignalSpy>
 #include <QTest>
 
 using namespace xerahs::app;
@@ -156,6 +158,49 @@ private slots:
     auto missing = image; missing.content.imageKey = "absent";
     const auto placeholder = render(solidImage(100, 100, 0xFFFFFFFF), {missing});
     QVERIFY(placeholder.image); QVERIFY(!same(*placeholder.image, solidImage(100, 100, 0xFFFFFFFF), 0, 0, 40, 40));
+  }
+
+  void cutOutRemovesTheStripAndClosesTheGap() {
+    ArgbImage source = solidImage(10, 4, 0xFF000000);
+    for (qint64 y = 0; y < 4; ++y) for (qint64 x = 0; x < 10; ++x) source.pixels[std::size_t(y * 10 + x)] = 0xFF000000 | Argb(x);
+    auto d = document(10, 4);
+    const auto left = shapeOf(shape::ellipse, {0, 0}, {2, 2});
+    const auto right = shapeOf(shape::ellipse, {7, 0}, {9, 2});
+    d.annotations = {left, right};
+    CanvasOperation op; op.action = CanvasAction::CutOut; op.start = {3, 1}; op.end = {6, 2}; op.cutColumns = true;
+    const auto result = applyCanvasOperation(d, source, op);
+    QVERIFY(result.image && result.document);
+    QCOMPARE(result.image->width, qint64(7)); QCOMPARE(result.document->canvasWidth, qint64(7));
+    QCOMPARE(result.image->at(2, 0), Argb(0xFF000002)); QCOMPARE(result.image->at(3, 0), Argb(0xFF000006));
+    QCOMPARE(std::get<RectangleAnnotation>(result.document->annotations[0]).start.x, 0.0);
+    QCOMPARE(std::get<RectangleAnnotation>(result.document->annotations[1]).start.x, 4.0);
+    op.start = {0, 0}; op.end = {10, 0};  // removing everything is rejected
+    QVERIFY(applyCanvasOperation(d, source, op).error);
+  }
+
+  void cutOutToolRequestsTheDraggedStrip() {
+    QImage source(400, 300, QImage::Format_ARGB32); source.fill(Qt::white);
+    EditorSession session(document(400, 300));
+    EditorCanvas canvas(session, source); canvas.resize(600, 450); canvas.show(); QTest::qWait(10); canvas.resetZoom();
+    canvas.setTool(EditorCanvas::Tool::CutOut);
+    QSignalSpy requested(&canvas, &EditorCanvas::cutOutRequested);
+    const QPoint press = canvas.viewState().toView({100, 80}).toPoint();
+    QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, press);
+    QTest::mouseMove(canvas.viewport(), press + QPoint(60, 10));
+    QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, press + QPoint(60, 10));
+    QCOMPARE(requested.count(), 1); QVERIFY(requested[0][2].toBool());
+    QVERIFY(session.document().annotations.empty());
+  }
+
+  void flippingMirrorsPathsInsteadOfTurningThemOver() {
+    auto d = document(100, 100);
+    d.annotations = {shapeOf(shape::arrow, {10, 10}, {50, 30}, {{0, 0}, {1, 1}})};
+    CanvasOperation op; op.action = CanvasAction::FlipHorizontal;
+    const auto result = applyCanvasOperation(d, solidImage(100, 100, 0xFFFFFFFF), op);
+    QVERIFY(result.document);
+    const auto &arrow = std::get<RectangleAnnotation>(result.document->annotations[0]);
+    QCOMPARE(arrow.start.x, 50.0); QCOMPARE(arrow.style.rotationDegrees, 0.0);
+    QCOMPARE(arrow.content.points[0].x, 1.0); QCOMPARE(arrow.content.points[1].x, 0.0); QCOMPARE(arrow.content.points[1].y, 1.0);
   }
 
   void stepNumbersFollowTheHighestExistingStep() {

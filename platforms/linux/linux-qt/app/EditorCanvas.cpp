@@ -125,7 +125,7 @@ QString toolLabel(const QString &type) {
 
 QString EditorCanvas::shapeType(Tool tool) {
   switch (tool) {
-    case Tool::Select: case Tool::Crop: return {};
+    case Tool::Select: case Tool::Crop: case Tool::CutOut: return {};
     case Tool::Rectangle: return shape::rectangle;
     case Tool::Ellipse: return shape::ellipse;
     case Tool::Line: return shape::line;
@@ -170,6 +170,8 @@ QString EditorCanvas::toolInstructions() const {
       text = "Select: click an object; Control-click adds or removes it. Drag selected objects to move. Blank canvas clears selection."; break;
     case Tool::Rectangle:
       text = "Rectangle stays active: drag on blank canvas to draw. Click an existing object to select or move it. Out-of-canvas bounds are allowed; export clips to the image."; break;
+    case Tool::CutOut:
+      text = "Cut out stays active: drag across the strip to remove. A wider than tall drag removes columns; otherwise rows. The rest closes the gap."; break;
     case Tool::Crop:
       text = "Crop stays active: drag to choose the retained image region."; break;
   }
@@ -182,7 +184,7 @@ void EditorCanvas::setTool(Tool tool) {
   cancelGesture();
   m_tool = tool;
   setAccessibleDescription(toolInstructions());
-  viewport()->setCursor(m_tool == Tool::Crop ? Qt::CrossCursor : Qt::ArrowCursor);
+  viewport()->setCursor(canvasTool() ? Qt::CrossCursor : Qt::ArrowCursor);
   emit toolChanged();
 }
 
@@ -331,7 +333,7 @@ std::array<std::pair<RectangleHandle, QPointF>, 8> EditorCanvas::handles(const R
       {RectangleHandle::BottomLeft, point(left, bottom)}, {RectangleHandle::Left, point(left, cy)}}};
 }
 std::optional<RectangleHandle> EditorCanvas::handleAt(QPointF viewPoint) const {
-  if (m_tool == Tool::Crop || !canEditRectangle()) return {};
+  if (canvasTool() || !canEditRectangle()) return {};
   const auto *r = m_session->selectedRectangle();
   if (!rectanglePropertiesDiagnostic({r->start, r->end, r->style}).isEmpty()) return {};
   std::optional<RectangleHandle> nearest; double distance = 73;
@@ -420,7 +422,7 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
       p.setPen(outlinePen(palette().highlight().color(), Qt::DashLine));
       p.drawRect(outline);
       p.restore();
-      if (m_tool != Tool::Crop && canEditRectangle() && rectanglePropertiesDiagnostic({r->start, r->end, r->style}).isEmpty()) {
+      if (!canvasTool() && canEditRectangle() && rectanglePropertiesDiagnostic({r->start, r->end, r->style}).isEmpty()) {
         p.save(); p.resetTransform(); p.setOpacity(1); p.setPen(QPen(Qt::black, 1)); p.setBrush(Qt::white);
         for (const auto &[handle, at] : handles(*r)) {
           Q_UNUSED(handle);
@@ -448,6 +450,15 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
       draft.content.type = type; draft.content.points = geometry->points;
       if (type == shape::step) draft.content.stepValue = nextStepValue(m_session->document());
       paintShape(p, draft, m_displaySource.isNull() ? m_image : m_displaySource);
+    } else if (m_tool == Tool::CutOut) {
+      // Preview the whole strip that will be removed.
+      const QPointF a = m_drag->first, b = m_drag->second;
+      const bool columns = std::abs(b.x() - a.x()) >= std::abs(b.y() - a.y());
+      const QRectF strip = columns ? QRectF(QPointF(std::min(a.x(), b.x()), 0), QPointF(std::max(a.x(), b.x()), m_image.height()))
+                                   : QRectF(QPointF(0, std::min(a.y(), b.y())), QPointF(m_image.width(), std::max(a.y(), b.y())));
+      p.fillRect(strip, QColor(255, 0, 0, 70));
+      p.setPen(outlinePen(palette().highlight().color(), Qt::DashLine));
+      p.drawRect(strip);
     } else {
       p.setBrush(Qt::NoBrush);
       p.setPen(outlinePen(palette().highlight().color(), Qt::DashLine));
@@ -475,7 +486,7 @@ void EditorCanvas::mousePressEvent(QMouseEvent *event) {
   }
   if (event->button() != Qt::LeftButton) return;
   const QPointF at = m_view.toImage(event->position());
-  if (m_tool == Tool::Crop) {
+  if (canvasTool()) {
     m_drag = std::make_pair(at, at);
     viewport()->update();
     return;
@@ -539,7 +550,7 @@ void EditorCanvas::mouseMoveEvent(QMouseEvent *event) {
   } else if (!m_spaceHeld) {
     const auto handle = handleAt(event->position());
     viewport()->setCursor(handle ? resizeCursor(*handle, m_session->selectedRectangle()->style.rotationDegrees)
-        : (m_tool == Tool::Crop ? Qt::CrossCursor : Qt::ArrowCursor));
+        : (canvasTool() ? Qt::CrossCursor : Qt::ArrowCursor));
   }
 }
 
@@ -547,7 +558,7 @@ void EditorCanvas::mouseReleaseEvent(QMouseEvent *event) {
   if (m_panning && (event->button() == Qt::MiddleButton || event->button() == Qt::LeftButton)) {
     m_view.pan(event->position() - m_panLast);
     m_panning = false;
-    viewport()->setCursor(m_spaceHeld ? Qt::OpenHandCursor : (m_tool == Tool::Crop ? Qt::CrossCursor : Qt::ArrowCursor));
+    viewport()->setCursor(m_spaceHeld ? Qt::OpenHandCursor : (canvasTool() ? Qt::CrossCursor : Qt::ArrowCursor));
     syncViewport();
     return;
   }
@@ -563,6 +574,11 @@ void EditorCanvas::mouseReleaseEvent(QMouseEvent *event) {
     const auto gesture = creationGesture(at);
     m_drag.reset();
     if (m_tool == Tool::Crop) { const QPointer<EditorCanvas> owner(this); emit cropRequested(start, at); if (!owner) return; }
+    else if (m_tool == Tool::CutOut) {
+      const QPointer<EditorCanvas> owner(this);
+      emit cutOutRequested(start, at, std::abs(at.x() - start.x()) >= std::abs(at.y() - start.y()));
+      if (!owner) return;
+    }
     else {
       m_path.clear();
       const QPointer<EditorCanvas> owner(this);
@@ -664,7 +680,7 @@ bool EditorCanvas::editShapeContent(QWidget *parent) {
 }
 
 void EditorCanvas::mouseDoubleClickEvent(QMouseEvent *event) {
-  if (event->button() != Qt::LeftButton || m_tool == Tool::Crop) return;
+  if (event->button() != Qt::LeftButton || canvasTool()) return;
   const auto hit = topmostAt(m_view.toImage(event->position()));
   if (!hit) return;
   cancelGesture();
@@ -758,7 +774,7 @@ void EditorCanvas::cancelGesture() {
   m_move.reset();
   if (m_panning) m_view.setOffset(m_panOriginalOffset);
   m_panning = false;
-  viewport()->setCursor(m_spaceHeld ? Qt::OpenHandCursor : (m_tool == Tool::Crop ? Qt::CrossCursor : Qt::ArrowCursor));
+  viewport()->setCursor(m_spaceHeld ? Qt::OpenHandCursor : (canvasTool() ? Qt::CrossCursor : Qt::ArrowCursor));
   viewport()->update();
 }
 
@@ -880,7 +896,7 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
 void EditorCanvas::keyReleaseEvent(QKeyEvent *event) {
   if (event->key() == Qt::Key_Space && !event->isAutoRepeat()) {
     m_spaceHeld = false;
-    viewport()->setCursor(m_panning ? Qt::ClosedHandCursor : (m_tool == Tool::Crop ? Qt::CrossCursor : Qt::ArrowCursor));
+    viewport()->setCursor(m_panning ? Qt::ClosedHandCursor : (canvasTool() ? Qt::CrossCursor : Qt::ArrowCursor));
     return;
   }
   QAbstractScrollArea::keyReleaseEvent(event);
