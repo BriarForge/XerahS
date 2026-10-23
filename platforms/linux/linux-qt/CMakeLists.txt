@@ -37,6 +37,8 @@ add_library(xerahs_core STATIC
   src/actions/PipelineRetry.h
   src/actions/PipelineJournal.cpp
   src/actions/PipelineJournal.h
+  src/history/CaptureHistory.cpp
+  src/history/CaptureHistory.h
   src/capture/RegionGeometry.cpp
   src/capture/RegionGeometry.h
   src/capture/WindowSnapTargets.cpp
@@ -170,6 +172,8 @@ add_executable(xerahs
   app/ApplicationWindow.h
   app/PipelineHistoryDialog.cpp
   app/PipelineHistoryDialog.h
+  app/CaptureHistoryWindow.cpp
+  app/CaptureHistoryWindow.h
   app/PipelineResultDialog.cpp
   app/PipelineResultDialog.h
   app/CaptureActions.cpp
@@ -266,6 +270,13 @@ add_dependencies(pipeline-journal-test pipeline-journal-fixture)
 add_test(NAME pipeline-journal COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:pipeline-journal-test>)
 set_tests_properties(pipeline-journal PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+add_executable(capture-history-window-test tests/CaptureHistoryWindowTest.cpp app/CaptureHistoryWindow.cpp app/CaptureHistoryWindow.h
+  app/PipelineResultDialog.cpp app/PipelineResultDialog.h)
+set_target_properties(capture-history-window-test PROPERTIES AUTOMOC ON)
+target_link_libraries(capture-history-window-test PRIVATE xerahs_pipeline_journal Qt6::Widgets Qt6::DBus Qt6::Test)
+add_test(NAME capture-history-window COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-history-window-test>)
+set_tests_properties(capture-history-window PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 add_executable(pipeline-history-dialog-test tests/PipelineHistoryDialogTest.cpp app/PipelineHistoryDialog.cpp app/PipelineHistoryDialog.h
   app/PipelineResultDialog.cpp app/PipelineResultDialog.h)
 set_target_properties(pipeline-history-dialog-test PROPERTIES AUTOMOC ON)

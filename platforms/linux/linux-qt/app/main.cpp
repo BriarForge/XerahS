@@ -19,6 +19,7 @@
 #include "NativeInstance.h"
 #include "ApplicationWindow.h"
 #include "PipelineHistoryDialog.h"
+#include "CaptureHistoryWindow.h"
 #include "shell/ActivationDispatcher.h"
 
 #include <QAction>
@@ -246,7 +247,7 @@ int main(int argc, char *argv[]) {
     if (auto *window = xerahs::app::EditorWindow::open(path)) window->show();
   }, [] { xerahs::app::manageRecentImages(); });
   QAction *folder = menu.addAction(QStringLiteral("Open captures folder"));
-  QAction *history = menu.addAction(QStringLiteral("Capture result history…"));
+  QAction *history = menu.addAction(QStringLiteral("Capture history…"));
   QAction *settingsAction = menu.addAction(QStringLiteral("Settings…"));
   QAction *appearance = menu.addAction(QStringLiteral("Editor appearance…"));
   menu.addSeparator();
@@ -290,11 +291,21 @@ int main(int argc, char *argv[]) {
   QObject::connect(&capture, &CaptureController::busyChanged, &home, refreshWorkflow); refreshWorkflow();
   QObject::connect(&capture, &CaptureController::choosingActions, &home, &xerahs::app::ApplicationWindow::activate);
   QPointer<xerahs::app::PipelineHistoryDialog> historyDialog;
+  QPointer<xerahs::app::CaptureHistoryWindow> historyWindow;
   QObject::connect(history, &QAction::triggered, &home, [&] {
-    if (historyDialog) { historyDialog->show(); historyDialog->raise(); historyDialog->activateWindow(); return; }
-    historyDialog = new xerahs::app::PipelineHistoryDialog(journal, [&capture] { return capture.busy(); }, &home);
-    historyDialog->show();
+    if (historyWindow) { historyWindow->show(); historyWindow->raise(); historyWindow->activateWindow(); return; }
+    historyWindow = new xerahs::app::CaptureHistoryWindow(journal, [&capture] { return capture.busy(); }, [](const QString &path, QWidget *parent) {
+      if (auto *window = xerahs::app::EditorWindow::open(path, parent)) window->show();
+    }, &home);
+    historyWindow->setRecordsOpener([&] {
+      if (historyDialog) { historyDialog->show(); historyDialog->raise(); historyDialog->activateWindow(); return; }
+      historyDialog = new xerahs::app::PipelineHistoryDialog(journal, [&capture] { return capture.busy(); }, historyWindow);
+      historyDialog->show();
+    });
+    historyWindow->show();
   });
+  // New captures appear without a manual refresh.
+  QObject::connect(&capture, &CaptureController::busyChanged, &home, [&](bool busy) { if (!busy && historyWindow) historyWindow->refresh(); });
   auto *showHome = new QAction(QStringLiteral("Open XerahS"), &menu); menu.insertAction(region, showHome);
   QObject::connect(showHome, &QAction::triggered, &home, &xerahs::app::ApplicationWindow::activate);
   auto *recovery = new xerahs::app::CaptureRecoveryActions(capture, &home, [](const QImage &image, QWidget *parent) {
