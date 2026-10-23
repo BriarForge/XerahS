@@ -97,6 +97,8 @@ add_library(xerahs_core STATIC
   src/uploads/SxcuImport.h
   src/tools/ColorFormats.cpp
   src/tools/ColorFormats.h
+  src/tools/FileHash.cpp
+  src/tools/FileHash.h
 )
 target_include_directories(xerahs_core PUBLIC src)
 # Qt Gui (private) supplies QPainter for shape painting shared with the canvas.
@@ -837,3 +839,24 @@ set_target_properties(file-upload-test PROPERTIES AUTOMOC ON)
 target_link_libraries(file-upload-test PRIVATE xerahs_file_upload Qt6::Test)
 add_test(NAME file-upload COMMAND file-upload-test)
 set_tests_properties(file-upload PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
+# EDITOR-UTILITIES-001 / EU-005: hash checker. Append-only; main.cpp wires the tray.
+add_library(xerahs_hash_checker STATIC
+  app/HashCheckerDialog.cpp
+  app/HashCheckerDialog.h)
+set_target_properties(xerahs_hash_checker PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_hash_checker PUBLIC app)
+target_link_libraries(xerahs_hash_checker PUBLIC xerahs_core Qt6::Widgets)
+target_compile_options(xerahs_hash_checker PRIVATE -Wall -Wextra -Wpedantic)
+target_link_libraries(xerahs PRIVATE xerahs_hash_checker)
+
+add_executable(file-hash-test tests/FileHashTest.cpp)
+set_target_properties(file-hash-test PROPERTIES AUTOMOC ON)
+target_link_libraries(file-hash-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME file-hash COMMAND file-hash-test)
+
+add_executable(hash-checker-dialog-test tests/HashCheckerDialogTest.cpp)
+set_target_properties(hash-checker-dialog-test PROPERTIES AUTOMOC ON)
+target_link_libraries(hash-checker-dialog-test PRIVATE xerahs_hash_checker Qt6::Test)
+add_test(NAME hash-checker-dialog COMMAND hash-checker-dialog-test)
+set_tests_properties(hash-checker-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
