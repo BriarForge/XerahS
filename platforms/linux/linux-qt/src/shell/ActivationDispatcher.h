@@ -15,6 +15,9 @@ struct ActivationOperations {
   std::function<void()> captureRegionWithActions;
   // Request-aware capture preparation runs before ACK; owns durable identity.
   std::function<std::function<void()>(const ActivationRequest &)> prepareCapture = {};
+  std::function<void()> startRecording = {};
+  std::function<void()> stopRecording = {};
+  std::function<bool()> canStartRecording = {};
 };
 class ActivationDispatcher final {
 public:

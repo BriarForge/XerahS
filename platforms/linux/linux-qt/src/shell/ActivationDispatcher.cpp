@@ -6,6 +6,8 @@ namespace xerahs::shell {
 ActivationDispatcher::ActivationDispatcher(ActivationOperations operations) : m_operations(std::move(operations)) {}
 bool ActivationDispatcher::available(const ActivationRequest &request) const {
   switch (request.action) {
+    case ActivationAction::StartRecording: return bool(m_operations.startRecording) && (!m_operations.canStartRecording || m_operations.canStartRecording());
+    case ActivationAction::StopRecording: return bool(m_operations.stopRecording);
     case ActivationAction::Activate: return bool(m_operations.activate);
     case ActivationAction::CaptureRegion: return bool(m_operations.prepareCapture) || bool(m_operations.captureRegion);
     case ActivationAction::EditImage: return bool(m_operations.editImage);
@@ -17,9 +19,9 @@ bool ActivationDispatcher::available(const ActivationRequest &request) const {
   return false;
 }
 bool ActivationDispatcher::blocked(const ActivationRequest &request) const {
-  if (request.action == ActivationAction::Activate) return false;
+  if (request.action == ActivationAction::Activate || request.action == ActivationAction::StopRecording) return false;
   return m_dispatching || (m_operations.interactionBlocked && m_operations.interactionBlocked()) ||
-      (startsCapture(request.action) && m_operations.captureBusy && m_operations.captureBusy());
+      ((startsCapture(request.action) || request.action == ActivationAction::StartRecording) && m_operations.captureBusy && m_operations.captureBusy());
 }
 ActivationReplyState ActivationDispatcher::admit(const ActivationRequest &request) {
   if (!parseActivation(serializeActivation(request)).request || !available(request)) return ActivationReplyState::Rejected;
@@ -46,6 +48,8 @@ QString ActivationDispatcher::dispatch(const ActivationRequest &request) {
     if (blocked(request)) return QStringLiteral("activation-busy");
     const QScopedValueRollback<bool> dispatching(m_dispatching, true);
     switch (request.action) {
+      case ActivationAction::StartRecording: m_operations.startRecording(); break;
+      case ActivationAction::StopRecording: m_operations.stopRecording(); break;
       case ActivationAction::Activate: m_operations.activate(); break;
       case ActivationAction::CaptureRegion: if (prepared) prepared(); else m_operations.captureRegion(); break;
       case ActivationAction::EditImage: m_operations.editImage(request.path); break;

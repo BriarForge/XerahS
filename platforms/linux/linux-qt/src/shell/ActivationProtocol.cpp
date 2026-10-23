@@ -30,6 +30,8 @@ bool uniqueObjectKeys(const QByteArray &bytes, const QJsonObject &object) {
 }
 QString actionName(ActivationAction action) {
   switch (action) {
+    case ActivationAction::StartRecording: return QStringLiteral("start-recording");
+    case ActivationAction::StopRecording: return QStringLiteral("stop-recording");
     case ActivationAction::Activate: return QStringLiteral("activate");
     case ActivationAction::CaptureRegion: return QStringLiteral("capture-region");
     case ActivationAction::EditImage: return QStringLiteral("edit-image");
@@ -76,6 +78,8 @@ ParsedActivation parseActivation(const QByteArray &bytes) {
   else if (name == u"run-workflow") action = ActivationAction::RunWorkflow;
   else if (name == u"capture-region-choose-actions") action = ActivationAction::CaptureRegionChooseActions;
   else if (name == u"capture-full-screen") action = ActivationAction::CaptureFullScreen;
+  else if (name == u"start-recording") action = ActivationAction::StartRecording;
+  else if (name == u"stop-recording") action = ActivationAction::StopRecording;
   else if (name == u"capture-monitor") action = ActivationAction::CaptureMonitor;
   else return invalid();
   QSet<QString> keys{"version", "id", "action"};

@@ -300,10 +300,19 @@
       "note": "Explicit bounded automatic capture schedules, target scope, visible stop/concurrency/lock/storage/privacy policy remain Required."
     },
     "CORE-017": {
-      "status": "not-started",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Video/GIF recording target, timing/codec/container/options and observable pause/stop/abort/recoverable failure states remain Required."
+      "note": "ScreenCast portal monitor/window source, GStreamer MP4 (H.264), WebM (VP9) and GIF, cursor option, pause/resume, stop with finalise, abort with partial-file removal, validated observable states. Region crop and audio (CORE-018) remain Required.",
+      "implementation": [
+        "src/recording/Recording.cpp",
+        "app/RecordingController.cpp",
+        "app/RecordingActions.cpp"
+      ],
+      "tests": [
+        "tests/RecordingTest.cpp",
+        "tests/RecordingIntegrationTest.cpp"
+      ]
     },
     "CORE-018": {
       "status": "not-started",

@@ -105,7 +105,7 @@ private slots:
   void combinedPlanAndAuthority() {
     using namespace xerahs::workflows;
     const auto catalog = defaultCaptureWorkflows(); const auto plan = captureShortcutPlan(catalog, implementedCaptureActions(), HotkeyBindings::defaults());
-    QVERIFY(plan.diagnostic.isEmpty()); QCOMPARE(plan.entries.size(), catalog.entries.size() + 4);
+    QVERIFY(plan.diagnostic.isEmpty()); QCOMPARE(plan.entries.size(), catalog.entries.size() + xerahs::settings::captureHotkeyActions().size());
     WorkflowShortcutState state(plan); QStringList ids;
     for (const auto &entry : plan.entries) ids.append(entry.id);
     QVERIFY(state.setBound(ids)); QCOMPARE(state.press("capture-region"), "capture-region"); QVERIFY(state.press("capture-region").isEmpty());
