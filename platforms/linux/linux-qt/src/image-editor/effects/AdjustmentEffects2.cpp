@@ -8,6 +8,7 @@
 // (offsets in 0..1 units, result clamped and rounded to the byte gamut), the
 // same maths is applied directly, matching the pilot adjustments.
 #include "Effect.h"
+#include "EffectSupport.h"
 
 #include <QColorSpace>
 #include <algorithm>
@@ -19,26 +20,7 @@
 namespace xerahs::effects {
 namespace {
 const QString kReferenceDirectory = QStringLiteral("ShareX.ImageEditor/src/ShareX.ImageEditor/Core/ImageEffects/Adjustments/");
-const QString kCancelled = QStringLiteral("effect-cancelled");
-const QString kFailed = QStringLiteral("effect-failed");
-
-// ---- parameter helpers -----------------------------------------------------
-ParamSpec floatParam(const QString &id, const QString &label, double initial, double minimum, double maximum) {
-  return {id, label, ParamKind::Float, initial, minimum, maximum, {}};
-}
-ParamSpec intParam(const QString &id, const QString &label, int initial, int minimum, int maximum) {
-  return {id, label, ParamKind::Int, initial, double(minimum), double(maximum), {}};
-}
-ParamSpec colorParam(const QString &id, const QString &label, const QColor &initial) {
-  return {id, label, ParamKind::Color, initial, 0, 0, {}};
-}
-ParamSpec enumParam(const QString &id, const QString &label, const QString &initial, const QStringList &choices) {
-  return {id, label, ParamKind::Enum, initial, 0, 0, choices};
-}
-float floatOf(const ParamValues &params, const char *id) { return float(params.value(QLatin1String(id)).toDouble()); }
-int intOf(const ParamValues &params, const char *id) { return params.value(QLatin1String(id)).toInt(); }
-QColor colorOf(const ParamValues &params, const char *id) { return params.value(QLatin1String(id)).value<QColor>().toRgb(); }
-QString choiceOf(const ParamValues &params, const char *id) { return params.value(QLatin1String(id)).toString(); }
+using namespace support;  // shared helpers: kCancelled, kFailed, parameter builders, runRows, FunctionEffect
 
 // ---- numeric helpers (C# Math/MathF semantics) -----------------------------
 float clamp01(float v) { return v <= 0.f ? 0.f : (v >= 1.f ? 1.f : v); }
@@ -74,30 +56,6 @@ Matrix20 blendWithIdentity(const Matrix20 &target, float s) {
   return result;
 }
 
-// ---- row driver ------------------------------------------------------------
-// Polls cancellation before every row and reports monotonic progress lo..hi.
-template <class RowFn>
-bool runRows(const EffectContext &context, int height, int lo, int hi, RowFn rowFn) {
-  context.progress(lo);
-  int last = lo;
-  for (int y = 0; y < height; ++y) {
-    if (context.cancelled()) return false;
-    rowFn(y);
-    const int p = lo + int(qint64(y + 1) * (hi - lo) / height);
-    if (p != last) {
-      context.progress(p);
-      last = p;
-    }
-  }
-  return true;
-}
-
-QImage makeResult(const QImage &source) {
-  QImage result(source.size(), QImage::Format_ARGB32);
-  if (!result.isNull()) result.setColorSpace(source.colorSpace());
-  return result;
-}
-
 template <class Op>
 EffectResult mapPixels(const QImage &source, const EffectContext &context, Op op, int lo = 0, int hi = 100) {
   if (context.cancelled()) return {{}, kCancelled};
@@ -114,24 +72,6 @@ EffectResult mapPixels(const QImage &source, const EffectContext &context, Op op
 EffectResult identity(const QImage &source, const EffectContext &context) {
   return mapPixels(source, context, [](int, int, QRgb p) { return p; });
 }
-
-// ---- effect plumbing -------------------------------------------------------
-using ApplyFn = std::function<EffectResult(const QImage &, const ParamValues &, const EffectContext &)>;
-class FunctionEffect final : public Effect {
-public:
-  FunctionEffect(EffectSpec spec, ApplyFn fn) : m_spec(std::move(spec)), m_fn(std::move(fn)) {}
-  const EffectSpec &spec() const override { return m_spec; }
-  EffectResult apply(const QImage &source, const ParamValues &params, const EffectContext &context) const override {
-    try {
-      return m_fn(source, params, context);
-    } catch (...) {
-      return {{}, kFailed};
-    }
-  }
-private:
-  EffectSpec m_spec;
-  ApplyFn m_fn;
-};
 
 void add(EffectRegistry &registry, const QString &id, const QString &name, const QString &reference, Mode mode,
          QVector<ParamSpec> parameters, ApplyFn fn, bool usesSeed = false) {

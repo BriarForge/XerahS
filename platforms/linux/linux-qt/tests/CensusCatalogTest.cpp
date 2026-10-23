@@ -55,9 +55,13 @@ private slots:
         QCOMPARE(spec->parameters[i].kind, entry->parameters[i].kind);
         QCOMPARE(spec->parameters[i].label, entry->parameters[i].label);
       }
-      QVERIFY(!spec->changesSize);
-      QCOMPARE(spec->usesSeed, spec->id == "film_emulation");  // grain is the only seeded Adjustment
-      QVERIFY(spec->referencePath.startsWith("ShareX.ImageEditor/src/ShareX.ImageEditor/Core/ImageEffects/Adjustments/"));
+      if (spec->category == Category::Adjustments) {
+        QVERIFY(!spec->changesSize);
+        QCOMPARE(spec->usesSeed, spec->id == "film_emulation");  // grain is the only seeded Adjustment
+        QVERIFY(spec->referencePath.startsWith("ShareX.ImageEditor/src/ShareX.ImageEditor/Core/ImageEffects/Adjustments/"));
+      } else {
+        QVERIFY(spec->referencePath.startsWith("ShareX.ImageEditor/src/ShareX.ImageEditor/Core/ImageEffects/"));
+      }
       QVERIFY(resolveParameters(*spec, {}).ok());
     }
     for (const QString &id : {"alpha", "brightness", "contrast", "grayscale", "invert", "saturation"})
