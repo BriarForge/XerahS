@@ -11,6 +11,7 @@
 #include "WorkflowShortcutActions.h"
 #include "SettingsDialog.h"
 #include "UploadDestinationsDialog.h"
+#include "ColorPickerDialog.h"
 #include "SecretServiceCredentialStore.h"
 #include "settings/ApplicationSettings.h"
 #include "CaptureRecoveryActions.h"
@@ -258,6 +259,7 @@ int main(int argc, char *argv[]) {
   QAction *cancelCapture = menu.addAction(QStringLiteral("Cancel capture"));
   cancelCapture->setEnabled(false);
   QObject::connect(cancelCapture, &QAction::triggered, &capture, &CaptureController::cancel);
+  QAction *pickColour = menu.addAction(QStringLiteral("Pick colour…"));
   QAction *newImage = menu.addAction(QStringLiteral("New image…"));
   QAction *openImage = menu.addAction(QStringLiteral("Open image…"));
   xerahs::app::addRecentImagesMenu(&menu, [](const QString &path) {
@@ -273,7 +275,7 @@ int main(int argc, char *argv[]) {
   tray.setContextMenu(&menu);
   xerahs::app::ApplicationWindow home({{"upload-destinations", uploadDestinations}, {"settings", settingsAction}, {"capture-region", region}, {"capture-full-screen", fullScreen}, {"capture-monitor", monitor}, {"capture-active-window", activeWindow}, {"capture-region-choose-actions", chooseCapture}, {"cancel-capture", cancelCapture},
       {"capture-workflows", configureWorkflows}, {"enable-workflow-shortcuts", shortcutActions.enableAction()}, {"disable-workflow-shortcuts", shortcutActions.disableAction()},
-      {"new-image", newImage}, {"open-image", openImage}, {"captures-folder", folder}, {"capture-history", history}, {"editor-appearance", appearance}, {"quit", quit}});
+      {"pick-colour", pickColour}, {"new-image", newImage}, {"open-image", openImage}, {"captures-folder", folder}, {"capture-history", history}, {"editor-appearance", appearance}, {"quit", quit}});
   QPointer<xerahs::app::UploadDestinationsDialog> uploadDialog;
   std::shared_ptr<xerahs::uploads::DestinationCatalog> uploadCatalog;
   QObject::connect(uploadDestinations, &QAction::triggered, &home, [&] {
@@ -361,6 +363,11 @@ int main(int argc, char *argv[]) {
     home.showResult(QStringLiteral("Retained capture"), body, success);
   });
 
+  // One picker per process keeps its recent colours for the session.
+  auto *colorPicker = new xerahs::app::ColorPickerDialog(&home);
+  QObject::connect(pickColour, &QAction::triggered, colorPicker, [colorPicker] {
+    colorPicker->show(); colorPicker->raise(); colorPicker->activateWindow(); colorPicker->pick();
+  });
   QObject::connect(newImage, &QAction::triggered, [] {
     if (auto *window = xerahs::app::EditorWindow::createNew()) window->show();
   });

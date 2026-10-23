@@ -771,3 +771,27 @@ target_link_libraries(capture-upload-test PRIVATE xerahs_file_output xerahs_acti
 add_test(NAME capture-upload COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-upload-test>)
 set_tests_properties(capture-upload PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+# INTERFACE-CATALOG-001: screen colour picker. Append-only; main.cpp wires the tray.
+add_library(xerahs_color_picker STATIC
+  app/PortalColorPicker.cpp
+  app/PortalColorPicker.h
+  app/ColorPickerDialog.cpp
+  app/ColorPickerDialog.h)
+set_target_properties(xerahs_color_picker PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_color_picker PUBLIC app)
+target_link_libraries(xerahs_color_picker PUBLIC xerahs_core Qt6::Widgets Qt6::DBus)
+target_compile_options(xerahs_color_picker PRIVATE -Wall -Wextra -Wpedantic)
+target_link_libraries(xerahs PRIVATE xerahs_color_picker)
+
+add_executable(portal-color-picker-test tests/PortalColorPickerTest.cpp)
+set_target_properties(portal-color-picker-test PROPERTIES AUTOMOC ON)
+target_link_libraries(portal-color-picker-test PRIVATE xerahs_color_picker Qt6::Test)
+add_test(NAME portal-color-picker COMMAND "${XERAHS_DBUS_RUN_SESSION}"
+  "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf" -- $<TARGET_FILE:portal-color-picker-test>)
+set_tests_properties(portal-color-picker PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
+add_executable(color-picker-dialog-test tests/ColorPickerDialogTest.cpp)
+set_target_properties(color-picker-dialog-test PROPERTIES AUTOMOC ON)
+target_link_libraries(color-picker-dialog-test PRIVATE xerahs_color_picker Qt6::Test)
+add_test(NAME color-picker-dialog COMMAND color-picker-dialog-test)
+set_tests_properties(color-picker-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
