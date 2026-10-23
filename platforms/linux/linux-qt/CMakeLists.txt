@@ -1039,3 +1039,22 @@ set_tests_properties(qr-code-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offs
 
 # CORE-020, CORE-023: existing-file receipts share the native pipeline journal.
 target_link_libraries(xerahs_file_upload PUBLIC xerahs_pipeline_journal)
+
+# EDITOR-EFFECTS-001: EE-001..EE-003, EE-008..EE-010, EE-016, EE-018.
+add_library(xerahs_effects STATIC
+  src/image-editor/effects/Effect.h
+  src/image-editor/effects/Effect.cpp
+  src/image-editor/effects/CensusCatalog.h
+  src/image-editor/effects/CensusCatalog.cpp
+  src/image-editor/effects/AdjustmentEffects.cpp)
+target_include_directories(xerahs_effects PUBLIC src)
+target_link_libraries(xerahs_effects PUBLIC Qt6::Core Qt6::Gui)
+target_compile_options(xerahs_effects PRIVATE -Wall -Wextra -Wpedantic -ffp-contract=off)
+target_link_libraries(xerahs PRIVATE xerahs_effects)
+
+foreach(effect_test IN ITEMS EffectFramework CensusCatalog AdjustmentEffects)
+  add_executable(${effect_test}-test tests/${effect_test}Test.cpp)
+  set_target_properties(${effect_test}-test PROPERTIES AUTOMOC ON)
+  target_link_libraries(${effect_test}-test PRIVATE xerahs_effects Qt6::Test)
+  add_test(NAME ${effect_test} COMMAND ${effect_test}-test)
+endforeach()
