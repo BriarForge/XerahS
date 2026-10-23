@@ -85,6 +85,12 @@ add_library(xerahs_core STATIC
   src/image-editor/EditorWindowPlacement.h
   src/naming/FilenameGenerator.cpp
   src/naming/FilenameGenerator.h
+  src/uploads/UploadDestination.cpp
+  src/uploads/UploadDestination.h
+  src/uploads/CredentialStore.cpp
+  src/uploads/CredentialStore.h
+  src/uploads/SxcuImport.cpp
+  src/uploads/SxcuImport.h
 )
 target_include_directories(xerahs_core PUBLIC src)
 # Qt Gui (private) supplies QPainter for shape painting shared with the canvas.
@@ -462,6 +468,16 @@ add_executable(filename-generator-test tests/FilenameGeneratorTest.cpp)
 set_target_properties(filename-generator-test PROPERTIES AUTOMOC ON)
 target_link_libraries(filename-generator-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME filename-generator COMMAND filename-generator-test)
+
+add_executable(upload-destination-test tests/UploadDestinationTest.cpp)
+set_target_properties(upload-destination-test PROPERTIES AUTOMOC ON)
+target_link_libraries(upload-destination-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME upload-destination COMMAND upload-destination-test)
+
+add_executable(sxcu-import-test tests/SxcuImportTest.cpp)
+set_target_properties(sxcu-import-test PROPERTIES AUTOMOC ON)
+target_link_libraries(sxcu-import-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME sxcu-import COMMAND sxcu-import-test)
 
 add_executable(post-capture-pipeline-test tests/PostCapturePipelineTest.cpp)
 set_target_properties(post-capture-pipeline-test PROPERTIES AUTOMOC ON)
