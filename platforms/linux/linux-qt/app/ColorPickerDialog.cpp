@@ -84,6 +84,17 @@ ColorPickerDialog::ColorPickerDialog(QWidget *parent) : QDialog(parent) {
     connect(m_copies[index], &QPushButton::clicked, this, [this, index] { copyLine(index); });
   }
 
+  m_copyAll = new QPushButton(QStringLiteral("Copy all"), this);
+  m_copyAll->setObjectName(QStringLiteral("copyAllColorFormats"));
+  m_copyAll->setAccessibleName(QStringLiteral("Copy all formats"));
+  m_copyAll->setAutoDefault(false);
+  layout->addWidget(m_copyAll);
+  connect(m_copyAll, &QPushButton::clicked, this, &ColorPickerDialog::copyAll);
+  setTabOrder(previous, m_copyAll);
+  previous = m_copyAll;
+  // The blank lines hold no colour yet, so there is nothing to copy.
+  setCopyEnabled(false);
+
   m_status = new QLabel(this);
   m_status->setObjectName(QStringLiteral("colourPickerStatus"));
   m_status->setAccessibleName(QStringLiteral("Colour picker status"));
@@ -131,7 +142,7 @@ ColorPickerDialog::ColorPickerDialog(QWidget *parent) : QDialog(parent) {
 
 void ColorPickerDialog::showColor(const QColor &color) {
   if (!color.isValid()) return;
-  showPortalMessage(QString());
+  showStatus(QString());
   applyColor(color);
   remember(color);
 }
@@ -159,9 +170,9 @@ void ColorPickerDialog::notePortalResult(PortalColorPicker::Outcome outcome, con
     showColor(color);
     return;
   }
-  showPortalMessage(outcome == PortalColorPicker::Outcome::Denied
-                        ? QStringLiteral("The desktop refused colour picking.")
-                        : QStringLiteral("The screen colour picker is unavailable."));
+  showStatus(outcome == PortalColorPicker::Outcome::Denied
+                 ? QStringLiteral("The desktop refused colour picking.")
+                 : QStringLiteral("The screen colour picker is unavailable."));
 }
 
 void ColorPickerDialog::applyColor(const QColor &color) {
@@ -178,6 +189,9 @@ void ColorPickerDialog::applyColor(const QColor &color) {
     m_lines[index]->setText(lines.value(index));
     m_lines[index]->setAccessibleName(lines.value(index));
   }
+  setCopyEnabled(true);
+  // A shown colour replaces any earlier message, including a copy confirmation.
+  showStatus(QString());
   QPixmap swatch(48, 48);
   swatch.fill(color);
   m_swatch->setPixmap(swatch);
@@ -220,7 +234,21 @@ void ColorPickerDialog::copyLine(int index) {
   QApplication::clipboard()->setText(m_lines[index]->text());
 }
 
-void ColorPickerDialog::showPortalMessage(const QString &message) {
+void ColorPickerDialog::copyAll() {
+  if (!m_color.isValid()) return;
+  // The same eight lines the dialog shows, one per line, in format order.
+  QApplication::clipboard()->setText(xerahs::tools::formatAll(m_color).join(QLatin1Char('\n')));
+  showStatus(QStringLiteral("All formats copied."));
+}
+
+void ColorPickerDialog::setCopyEnabled(bool enabled) {
+  for (int index = 0; index < 8; ++index) {
+    if (m_copies[index]) m_copies[index]->setEnabled(enabled);
+  }
+  if (m_copyAll) m_copyAll->setEnabled(enabled);
+}
+
+void ColorPickerDialog::showStatus(const QString &message) {
   m_status->setText(message);
   m_status->setVisible(!message.isEmpty());
 }

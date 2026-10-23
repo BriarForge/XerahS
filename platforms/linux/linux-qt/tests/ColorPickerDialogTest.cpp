@@ -83,6 +83,66 @@ private slots:
     }
   }
 
+  void copyAllPutsEveryFormatOnTheClipboard() {
+    ColorPickerDialog dialog;
+    dialog.show();
+    const QColor orange(255, 128, 0);
+    dialog.showColor(orange);
+    const QStringList expected = formatAll(orange);
+    QCOMPARE(expected.size(), 8);
+    auto *button = dialog.findChild<QPushButton *>(QStringLiteral("copyAllColorFormats"));
+    QVERIFY(button);
+    QCOMPARE(button->text(), QStringLiteral("Copy all"));
+    QCOMPARE(button->accessibleName(), QStringLiteral("Copy all formats"));
+    QVERIFY(button->isEnabled());
+    QApplication::clipboard()->setText(QStringLiteral("sentinel"));
+    button->click();
+    QCOMPARE(QApplication::clipboard()->text(), expected.join(QStringLiteral("\n")));
+    auto *status = dialog.findChild<QLabel *>(QStringLiteral("colourPickerStatus"));
+    QVERIFY(status);
+    QCOMPARE(status->text(), QStringLiteral("All formats copied."));
+    QVERIFY(status->isVisible());
+  }
+
+  void copyAllIsDisabledUntilAColourIsShown() {
+    ColorPickerDialog dialog;
+    dialog.show();
+    auto *button = dialog.findChild<QPushButton *>(QStringLiteral("copyAllColorFormats"));
+    QVERIFY(button);
+    QVERIFY(!button->isEnabled());
+    for (int index = 0; index < 8; ++index) {
+      auto *copy = dialog.findChild<QPushButton *>(QStringLiteral("copyFormat%1").arg(index));
+      QVERIFY(copy);
+      QVERIFY(!copy->isEnabled());
+    }
+    dialog.showColor(QColor(255, 128, 0));
+    QVERIFY(button->isEnabled());
+    for (int index = 0; index < 8; ++index) {
+      auto *copy = dialog.findChild<QPushButton *>(QStringLiteral("copyFormat%1").arg(index));
+      QVERIFY(copy);
+      QVERIFY(copy->isEnabled());
+    }
+  }
+
+  void copyAllAfterAnInvalidHexKeepsTheLastValidColour() {
+    ColorPickerDialog dialog;
+    dialog.show();
+    const QColor orange(255, 128, 0);
+    dialog.showColor(orange);
+    auto *hex = dialog.findChild<QLineEdit *>(QStringLiteral("hexColour"));
+    QVERIFY(hex);
+    hex->setFocus();
+    hex->setText(QStringLiteral("nope"));
+    QTest::keyClick(hex, Qt::Key_Return);
+    QCOMPARE(dialog.color(), orange);
+    auto *button = dialog.findChild<QPushButton *>(QStringLiteral("copyAllColorFormats"));
+    QVERIFY(button);
+    QVERIFY(button->isEnabled());
+    QApplication::clipboard()->setText(QStringLiteral("sentinel"));
+    button->click();
+    QCOMPARE(QApplication::clipboard()->text(), formatAll(orange).join(QStringLiteral("\n")));
+  }
+
   void invalidHexKeepsThePreviousColor() {
     ColorPickerDialog dialog;
     dialog.show();

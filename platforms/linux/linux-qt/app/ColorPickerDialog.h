@@ -36,7 +36,9 @@ private:
   void refreshRecent();
   void commitHex();
   void copyLine(int index);
-  void showPortalMessage(const QString &message);
+  void copyAll();
+  void setCopyEnabled(bool enabled);
+  void showStatus(const QString &message);
 
   QColor m_color;
   QList<QColor> m_recentColors;
@@ -48,6 +50,7 @@ private:
   QLabel *m_status = nullptr;
   QLabel *m_lines[8] = {};
   QPushButton *m_copies[8] = {};
+  QPushButton *m_copyAll = nullptr;
   QPushButton *m_pickAgain = nullptr;
   QListWidget *m_recent = nullptr;
 };
