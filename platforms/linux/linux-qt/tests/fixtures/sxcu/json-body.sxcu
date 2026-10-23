@@ -1,0 +1,19 @@
+{
+  "Version": "16.1.0",
+  "Name": "JSON Body API",
+  "DestinationType": "ImageUploader, FileUploader",
+  "RequestMethod": "POST",
+  "RequestURL": "https://example.com/api/upload",
+  "Parameters": {},
+  "Headers": {
+    "X-API-Key": "secret-key-123"
+  },
+  "Body": "JSON",
+  "Arguments": {},
+  "FileFormName": "",
+  "Data": "{\"name\":\"{filename}\"}",
+  "URL": "{json:files[0].url}",
+  "ThumbnailURL": "",
+  "DeletionURL": "",
+  "ErrorMessage": ""
+}

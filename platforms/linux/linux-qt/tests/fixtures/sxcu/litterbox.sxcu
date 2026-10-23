@@ -1,0 +1,20 @@
+{
+  "Version": "16.1.0",
+  "Name": "Litterbox",
+  "DestinationType": "ImageUploader, FileUploader",
+  "RequestMethod": "POST",
+  "RequestURL": "https://litterbox.catbox.moe/resources/internals/api.php",
+  "Parameters": {},
+  "Headers": {},
+  "Body": "MultipartFormData",
+  "Arguments": {
+    "reqtype": "fileupload",
+    "time": "1h"
+  },
+  "FileFormName": "fileToUpload",
+  "Data": "",
+  "URL": "{response}",
+  "ThumbnailURL": "",
+  "DeletionURL": "",
+  "ErrorMessage": ""
+}

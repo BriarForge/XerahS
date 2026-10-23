@@ -1,0 +1,20 @@
+{
+  "Version": "16.1.0",
+  "Name": "Catbox",
+  "DestinationType": "ImageUploader, FileUploader",
+  "RequestMethod": "POST",
+  "RequestURL": "https://catbox.moe/user/api.php",
+  "Parameters": {},
+  "Headers": {},
+  "Body": "MultipartFormData",
+  "Arguments": {
+    "reqtype": "fileupload",
+    "userhash": ""
+  },
+  "FileFormName": "fileToUpload",
+  "Data": "",
+  "URL": "{response}",
+  "ThumbnailURL": "",
+  "DeletionURL": "",
+  "ErrorMessage": ""
+}

@@ -1,0 +1,17 @@
+{
+  "Version": "16.1.0",
+  "Name": "0x0.st",
+  "DestinationType": "ImageUploader, FileUploader",
+  "RequestMethod": "POST",
+  "RequestURL": "https://0x0.st",
+  "Parameters": {},
+  "Headers": {},
+  "Body": "MultipartFormData",
+  "Arguments": {},
+  "FileFormName": "file",
+  "Data": "",
+  "URL": "{response}",
+  "ThumbnailURL": "",
+  "DeletionURL": "",
+  "ErrorMessage": ""
+}
