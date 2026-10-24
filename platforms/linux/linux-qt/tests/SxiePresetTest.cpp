@@ -315,9 +315,16 @@ private slots:
       const auto p = import({{"$type", "ShareX.ImageEffectsLib.DrawText"}, {"TextFont", "Arial, " + pair.first}});
       QVERIFY(p.steps[0].supported); QVERIFY(std::abs(p.steps[0].parameters.value("font_size").toDouble() - pair.second) < 1e-9);
     }
-    for (const auto &type : {"ShareX.ImageEffectsLib.Shadow", "ShareX.ImageEffectsLib.Glow"}) {
-      const auto p = import({{"$type", type}, {"Darkness", 4}, {"Unknown", QJsonArray{1, "keep"}}});
-      QCOMPARE(p.steps[0].supported, xerahs::effects::builtinEffects().find(p.steps[0].id) != nullptr);
+    // The legacy Shadow has a Darkness property with no native equivalent, so a non-neutral value
+    // refuses the step. The legacy Glow has no Darkness property: the unknown property is only
+    // reported and the step follows the registry.
+    const auto shadow = import({{"$type", "ShareX.ImageEffectsLib.Shadow"}, {"Darkness", 4}, {"Unknown", QJsonArray{1, "keep"}}});
+    const auto glow = import({{"$type", "ShareX.ImageEffectsLib.Glow"}, {"Darkness", 4}, {"Unknown", QJsonArray{1, "keep"}}});
+    QVERIFY(!shadow.steps[0].supported);
+    QCOMPARE(glow.steps[0].supported, xerahs::effects::builtinEffects().find(glow.steps[0].id) != nullptr);
+    for (const auto &p : {shadow, glow}) {
+      QVERIFY(p.steps[0].diagnostics.contains("preset-property-unsupported:Darkness"));
+      QVERIFY(p.steps[0].diagnostics.contains("preset-property-unsupported:Unknown"));
       QCOMPARE(writeXsiePreset(readXsiePreset(writeXsiePreset(p))), writeXsiePreset(p));
       QCOMPARE(p.steps[0].legacy.value("Unknown"), QJsonValue(QJsonArray{1, "keep"}));
     }
