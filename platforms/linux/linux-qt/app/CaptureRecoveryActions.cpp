@@ -36,7 +36,8 @@ void CaptureRecoveryActions::updateAvailability() {
   m_review->setEnabled(available); if (!guard) return;
   const auto plan = m_capture && m_capture->lastPipelineResult() ? m_capture->lastPipelineResult()->retryPlan() : xerahs::actions::PipelineRetryPlan{};
   m_retry->setEnabled(available && plan.available()); if (!guard) return;
-  m_retry->setToolTip(plan.available() ? m_retry->statusTip() :
+  m_retry->setToolTip(plan.diagnostic == "retry-counter-persistence-failed" ?
+      QStringLiteral("The PNG was saved, but its filename counter was not persisted. Automatic retry is disabled to avoid another PNG. Review counter storage; retained pixels can still be edited or explicitly saved.") : plan.available() ? m_retry->statusTip() :
       QStringLiteral("Retry unavailable (%1). Retained pixels can still be opened in the editor.").arg(plan.diagnostic.isEmpty() ? QStringLiteral("retry-no-failed-actions") : plan.diagnostic));
   if (!guard) return;
   m_edit->setToolTip(editable ? m_edit->statusTip() : QStringLiteral("The image or annotation editor is unavailable."));

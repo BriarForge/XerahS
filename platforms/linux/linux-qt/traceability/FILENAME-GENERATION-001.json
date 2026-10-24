@@ -187,14 +187,15 @@
       "vectors": [
         "invalid-repeat-does-not-consume-counter"
       ],
-      "note": "CounterStore now persists per-profile locked reservations with restart/overflow/stale/corrupt/newer tests; native Save publishes counter filenames. However CaptureSave ignores CounterStore::commit failure after publication, and native publication/commit-failure coverage is missing. This must be fixed before full persistence success can be claimed.",
+      "note": "CounterStore persists per-profile locked reservations with restart/overflow/stale/corrupt/newer tests. Native Save now reports post-publication counter commit failure, retains the actual PNG and media, and records collision-adjusted counter context. Native tests cover reopen, collision, failed encoding and changed/newer/corrupt counter storage. Failed persistence is not atomic completion: automatic retry is refused to avoid another PNG; full crash/power-loss reservation qualification remains Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
-        "platforms/linux/linux-qt/tests/CounterStoreTest.cpp"
+        "platforms/linux/linux-qt/tests/CounterStoreTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp"
       ],
       "disposition": "Required"
     },

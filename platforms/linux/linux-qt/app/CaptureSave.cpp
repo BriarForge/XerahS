@@ -74,6 +74,7 @@ CaptureSaveResult saveCapture(const QImage &media, const QString &directory, con
       if (attempt) { if (reservation) context.counter = name.nextCounter; name = expand({pattern, ParseMode::Filename, QStringLiteral("png"), std::nullopt}, context); }
       if (!name.ok()) return failure(QStringLiteral("filename-") + errorCodeName(name.error().code));
       const auto path = destination.filePath(name.value());
+      filenameContext.insert("counter", context.counter);
       filenameContext.insert("next_counter", name.nextCounter);
       CaptureFile artifact{path, QStringLiteral("image/png"), length, filenameContext};
       if (hooks.publicationIntent) hooks.publicationIntent(path, false);
@@ -87,7 +88,11 @@ CaptureSaveResult saveCapture(const QImage &media, const QString &directory, con
         artifact.identity = captureFileIdentity(encoded.handle());
         // The name is published; a failed commit cannot unpublish it and the
         // exclusive rename already guards against reuse (FN-016).
-        if (reservation) counters.commit(reservation, name.nextCounter);
+        if (reservation) {
+          CounterError committed = CounterError::WriteFailed;
+          try { committed = counters.commit(reservation, name.nextCounter); } catch (...) {}
+          if (committed != CounterError::None) return {std::move(artifact), counterErrorName(committed)};
+        }
         return {std::move(artifact), {}};
       }
       if (errno != EEXIST) return failure(QStringLiteral("save-write-failed"));

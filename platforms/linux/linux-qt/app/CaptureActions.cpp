@@ -194,6 +194,9 @@ ActionOutcome CaptureActions::save(const CancellationToken &cancellation) {
   const auto result = saveCapture(m_media, m_directory, m_pattern, m_ports.save);
   if (!result.file) return failedSave("save", result.diagnostic);
   m_savedFile = result.file; m_savedPath = result.file->path;
+  // FN-016/PCA-007: retain the acknowledged PNG, but stop the save here if
+  // its counter could not be persisted. Never invent a sidecar acknowledgement.
+  if (!result.diagnostic.isEmpty()) return failed(result.diagnostic);
   return finishSave("save", *m_savedFile, cancellation);
 }
 

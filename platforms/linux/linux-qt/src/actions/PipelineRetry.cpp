@@ -57,6 +57,8 @@ PipelineRetryPlan planRetainedCaptureRetry(const PipelineResult &source, bool me
     if (result.action == "reveal" && result.diagnostic == QStringLiteral("reveal-outcome-unknown")) return unavailable("retry-outcome-unknown");
     // Only typed partial-save acknowledgement can pair a failed save with a
     // known PNG. The native executor repairs its companion without a new PNG.
+    if (result.action == "save" && savedFileAvailable && result.state == ActionState::Failed && result.diagnostic && result.diagnostic->startsWith("counter-"))
+      return unavailable("retry-counter-persistence-failed");
     if (result.action == "save" && savedFileAvailable && !partial) return unavailable("retry-invalid-source");
     if (result.action == "save-as" && savedAsFileAvailable && !partial) return unavailable("retry-invalid-source");
     if (successes.contains(result.action)) return unavailable("retry-invalid-source");

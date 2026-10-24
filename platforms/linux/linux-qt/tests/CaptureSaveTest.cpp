@@ -1,4 +1,5 @@
 #include "CaptureSave.h"
+#include "naming/CounterStore.h"
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -16,6 +17,41 @@ QStringList entries(const QTemporaryDir &dir) { return QDir(dir.path()).entryLis
 class CaptureSaveTest final : public QObject {
   Q_OBJECT
 private slots:
+  void nativeCounterPublicationSurvivesReopenAndCollisionContextMatchesTheName() {
+    QTemporaryDir dir; const auto directory = dir.filePath("output"), counterPath = dir.filePath("state/counters.json");
+    QVERIFY(QDir().mkpath(directory)); QVERIFY(write(directory + "/counter-001.png", "KEEP"));
+    CaptureSaveHooks hooks; hooks.counterPath = counterPath; hooks.counterProfile = "profile";
+    const auto result = saveCapture(pixels(), directory, "counter-%i{3}", hooks); QVERIFY(result.file); QVERIFY(result.diagnostic.isEmpty());
+    QCOMPARE(result.file->path, directory + "/counter-002.png"); QCOMPARE(result.file->filenameContext.value("counter"), QJsonValue(1)); QCOMPARE(result.file->filenameContext.value("next_counter"), QJsonValue(2));
+    QCOMPARE(bytes(directory + "/counter-001.png"), QByteArray("KEEP")); QCOMPARE(QImage(result.file->path), pixels());
+    xerahs::naming::CounterStore reopened(counterPath); QCOMPARE(reopened.peek("profile").value, qint64(2));
+    const auto next = saveCapture(pixels(), directory, "counter-%i{3}", hooks); QVERIFY(next.file); QCOMPARE(next.file->path, directory + "/counter-003.png"); QCOMPARE(reopened.peek("profile").value, qint64(3));
+  }
+  void failedNativeEncodingDoesNotConsumeTheReservedCounter() {
+    QTemporaryDir dir; CaptureSaveHooks hooks; hooks.counterPath = dir.filePath("state/counters.json"); hooks.counterProfile = "profile";
+    hooks.encode = [](const QImage &, QIODevice *) { return false; };
+    const auto failed = saveCapture(pixels(), dir.filePath("output"), "counter-%i{3}", hooks); QVERIFY(!failed.file); QVERIFY(!QFile::exists(hooks.counterPath));
+    xerahs::naming::CounterStore store(hooks.counterPath); QCOMPARE(store.peek("profile").value, qint64(0));
+  }
+  void counterCommitFailurePreservesPublishedPngAndReportsTheActualFault_data() {
+    QTest::addColumn<QByteArray>("replacement"); QTest::addColumn<QString>("diagnostic");
+    QTest::newRow("changed") << QByteArray(R"({"format":"com.xerahs.app/linux-qt/filename-counters","version":1,"counters":{"profile":"41"}})") << QString("counter-changed");
+    QTest::newRow("newer") << QByteArray(R"({"format":"com.xerahs.app/linux-qt/filename-counters","version":2,"counters":{"profile":"41"}})") << QString("counter-newer-version");
+    QTest::newRow("corrupt") << QByteArray("{private-counter-fixture") << QString("counter-corrupt");
+  }
+  void counterCommitFailurePreservesPublishedPngAndReportsTheActualFault() {
+    QFETCH(QByteArray, replacement); QFETCH(QString, diagnostic); QTemporaryDir dir;
+    const auto counterPath = dir.filePath("state/counters.json"); CaptureSaveHooks hooks; hooks.counterPath = counterPath; hooks.counterProfile = "profile";
+    int encodes = 0; hooks.encode = [&](const QImage &image, QIODevice *output) { ++encodes; return image.save(output, "PNG"); };
+    hooks.beforePublish = [&](const QString &) {
+      if (!write(counterPath, replacement) || !QFile::setPermissions(counterPath, QFile::ReadOwner | QFile::WriteOwner)) throw std::runtime_error("fixture write failed");
+    };
+    const auto result = saveCapture(pixels(), dir.filePath("output"), "counter-%i{3}", hooks);
+    QVERIFY(result.file); QCOMPARE(result.diagnostic, diagnostic); QCOMPARE(encodes, 1); QCOMPARE(result.file->path, dir.filePath("output/counter-001.png"));
+    QCOMPARE(QImage(result.file->path), pixels()); QCOMPARE(bytes(counterPath), replacement); QVERIFY(result.file->identity);
+    QCOMPARE(QDir(dir.filePath("output")).entryList(QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot), QStringList{"counter-001.png"});
+    QVERIFY(!result.diagnostic.contains("private"));
+  }
   void publishesCompletePrivatePngAndRecordsActualArtifactAndContext() {
     QTemporaryDir dir; const auto source = pixels(); const auto before = source.copy();
     const auto result = saveCapture(source, dir.path(), "capture-%i"); QVERIFY(result.file); QVERIFY(result.diagnostic.isEmpty());

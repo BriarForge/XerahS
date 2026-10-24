@@ -156,6 +156,30 @@ class PortalScreenshotTest final : public QObject {
   static Outcome outcome(const QSignalSpy &spy) { return spy.at(0).at(0).value<Outcome>(); }
   static QImage resultImage(const QSignalSpy &spy) { return spy.at(0).at(1).value<QImage>(); }
 private slots:
+  void counterPersistenceFailureKeepsPngAndReportsPartialExecutionWithoutRetry() {
+    using namespace xerahs::workflows; using namespace xerahs::actions;
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    NativeWorkflowExecutions executions(dir.filePath("executions")); auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("journal"));
+    CaptureActionPorts ports; ports.save.counterPath = dir.filePath("state/counters.json"); ports.save.counterProfile = "profile";
+    const auto counterPath = ports.save.counterPath;
+    ports.save.beforePublish = [counterPath](const QString &) {
+      const QByteArray changed(R"({"format":"com.xerahs.app/linux-qt/filename-counters","version":1,"counters":{"profile":"41"}})");
+      QFile file(counterPath); if (!file.open(QIODevice::WriteOnly) || file.write(changed) != changed.size()) throw std::runtime_error("fixture write failed");
+    };
+    CaptureController controller(dir.filePath("output"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, {}, ports, journal);
+    QWidget owner; CaptureRecoveryActions recovery(controller, &owner, {}, &owner); QSignalSpy notices(&controller, &CaptureController::notify);
+    auto workflow = defaultCaptureWorkflows().entries[0]; workflow.actions = QStringList{"save"}; workflow.output.pattern = "counter-%i{3}";
+    const auto id = QUuid::createUuid().toString(QUuid::WithoutBraces); auto run = controller.prepareWorkflowCapture(workflow, id, "native-shell", executions.writer()); QVERIFY(run); run(); run = {};
+    QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
+    const auto result = controller.lastPipelineResult(); QVERIFY(result && result->file); const auto kept = bytes(result->file->path); QVERIFY(!kept.isEmpty());
+    QCOMPARE(result->pipeline.orderedResults[0].state, ActionState::Failed); QCOMPARE(result->pipeline.orderedResults[0].diagnostic, std::optional<QString>("counter-changed"));
+    QCOMPARE(executions.result(id).value("state"), QJsonValue("partial")); QVERIFY(!notices.isEmpty()); QVERIFY(!notices.last()[2].toBool());
+    QVERIFY(notices.last()[1].toString().contains("PNG saved as counter-001.png")); QVERIFY(notices.last()[1].toString().contains("filename counter update failed"));
+    QVERIFY(!recovery.retryAction()->isEnabled()); QVERIFY(recovery.retryAction()->toolTip().contains("PNG was saved"));
+    QVERIFY(recovery.reviewAction()->isEnabled()); QVERIFY(!controller.retryFailedActions(result)); QCOMPARE(bytes(result->file->path), kept); QCOMPARE(portal.calls, 1);
+    QCOMPARE(QDir(dir.filePath("output")).entryList({"*.png"}, QDir::Files), QStringList{"counter-001.png"});
+  }
   void actualApplicationLaunchAcknowledgementFindsItsDeniedExecutionHeadlessly() {
     using namespace xerahs::workflows;
     QTemporaryDir dir; FakeScreenshotPortal portal(server); portal.error = "org.freedesktop.portal.Error.NotAllowed";

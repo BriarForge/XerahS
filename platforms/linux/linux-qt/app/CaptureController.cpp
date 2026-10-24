@@ -645,6 +645,10 @@ void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt, b
         for (const auto &file : receipt->savedFiles()) if (file.artifact == action.action + ".file")
           done.append(QStringLiteral("PNG saved as %1; editable companion failed and document is retained").arg(QFileInfo(file.path).fileName()));
       }
+      if (action.action == "save" && action.diagnostic && action.diagnostic->startsWith("counter-")) {
+        for (const auto &file : receipt->savedFiles()) if (file.artifact == "save.file")
+          done.append(QStringLiteral("PNG saved as %1; filename counter update failed. The saved file is kept; review counter storage before capturing again").arg(QFileInfo(file.path).fileName()));
+      }
       auto description = label + QStringLiteral(" ") + xerahs::actions::actionStateName(action.state);
       if (action.diagnostic) description += QStringLiteral(" (%1)").arg(*action.diagnostic);
       if (action.action == "upload" && result.upload && !result.upload->errorMessage.isEmpty())

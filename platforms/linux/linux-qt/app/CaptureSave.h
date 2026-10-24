@@ -27,6 +27,8 @@ QString validateCaptureFile(const CaptureFile &file);
 QString captureFileHash(const CaptureFile &file, const xerahs::actions::CancellationToken &cancellation);
 // Default location of the persisted filename counters (app config folder).
 QString defaultCounterPath();
+// A published file remains a fact even if later counter persistence fails.
+// Callers must check diagnostic as well as file before claiming full success.
 struct CaptureSaveResult {
   std::optional<CaptureFile> file;
   QString diagnostic;

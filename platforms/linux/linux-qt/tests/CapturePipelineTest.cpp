@@ -31,6 +31,32 @@ void waitAtSave(const std::shared_ptr<SaveGate> &gate) {
 class CapturePipelineTest final : public QObject {
   Q_OBJECT
 private slots:
+  void failedCounterCommitRetainsActualFileAndStopsUnsafeRetry_data() {
+    QTest::addColumn<bool>("sidecar"); QTest::newRow("plain-png") << false; QTest::newRow("companion-not-started") << true;
+  }
+  void failedCounterCommitRetainsActualFileAndStopsUnsafeRetry() {
+    QFETCH(bool, sidecar); QTemporaryDir dir; auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("journal"));
+    const auto counterPath = dir.filePath("state/counters.json"); int copies = 0, encodes = 0, consumers = 0;
+    const QByteArray changed(R"({"format":"com.xerahs.app/linux-qt/filename-counters","version":1,"counters":{"profile":"41"}})");
+    CaptureActionPorts ports; ports.save.counterPath = counterPath; ports.save.counterProfile = "profile";
+    ports.save.encode = [&](const QImage &image, QIODevice *output) { ++encodes; return image.save(output, "PNG"); };
+    ports.save.beforePublish = [&](const QString &) {
+      QFile file(counterPath); if (!file.open(QIODevice::WriteOnly) || file.write(changed) != changed.size() || !file.setPermissions(QFile::ReadOwner | QFile::WriteOwner)) throw std::runtime_error("fixture write failed");
+    };
+    ports.clipboard = [&](const QImage &image, const CancellationToken &) { ++copies; return image == pixels() ? ActionOutcome{} : ActionOutcome{ActionState::Failed, "fixture-image-mismatch", {}}; };
+    ports.fileOutput = [&](const QString &, const CaptureFile &, const CancellationToken &) { ++consumers; return ActionOutcome{}; };
+    if (sidecar) ports.annotation = [](const LoadedSource &source, const CancellationToken &) { return CaptureAnnotationChoice{source.document, {}, true}; };
+    CapturePipeline pipeline(pixels(), dir.filePath("output"), "counter-%i{3}", sidecar ? QStringList{"annotation", "save", "image-clipboard", "file-clipboard"} : QStringList{"save", "image-clipboard", "file-clipboard"}, nullptr, ports, journal);
+    QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_COMPARE(done.count(), 1); const auto result = receipt(done); QVERIFY(result && result->file);
+    const auto &saved = result->pipeline.orderedResults[sidecar ? 1 : 0]; QCOMPARE(saved.action, QString("save")); QCOMPARE(saved.state, ActionState::Failed); QCOMPARE(saved.diagnostic, std::optional<QString>("counter-changed"));
+    QCOMPARE(result->pipeline.state, PipelineState::Completed); QCOMPARE(copies, 1); QCOMPARE(encodes, 1); QCOMPARE(consumers, 0); QCOMPARE(QImage(result->file->path), pixels()); QCOMPARE(result->workingMedia, pixels());
+    QVERIFY(!QFile::exists(result->file->path + ".xann")); QVERIFY(!result->retryPlan().available()); QCOMPARE(result->retryPlan().diagnostic, QString("retry-counter-persistence-failed"));
+    const auto canonical = result->canonicalResult(); const auto metadata = canonical.value("extensions").toObject().value("com.xerahs.app").toObject(); QCOMPARE(metadata.value("file_artifacts").toArray().size(), 1);
+    QCOMPARE(metadata.value("file_artifacts").toArray()[0].toObject().value("path"), QJsonValue(result->file->path));
+    const auto records = journal->list(); QCOMPARE(records.entries.size(), size_t(1)); QVERIFY(records.entries[0].parsed.record); QVERIFY(records.entries[0].parsed.record->terminal);
+    const auto persisted = records.entries[0].parsed.record->report; QCOMPARE(persisted.value("ordered_results").toArray()[sidecar ? 1 : 0].toObject().value("diagnostic"), QJsonValue("counter-changed"));
+    QFile counter(counterPath); QVERIFY(counter.open(QIODevice::ReadOnly)); QCOMPARE(counter.readAll(), changed);
+  }
   void retriesFailedSaveWithOriginalSettingsAndDoesNotRepeatSuccessfulClipboard() {
     QTemporaryDir dir; auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("state")); int encoded = 0, copied = 0;
     CaptureActionPorts ports;
