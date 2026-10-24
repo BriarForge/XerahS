@@ -38,3 +38,10 @@ node_modules/
 
 *.log
 .cache/
+
+# Graphify graphs and reports are shared; caches and host-specific state stay local.
+**/graphify-out/.*
+**/graphify-out/cache/
+**/graphify-out/cost.json
+**/graphify-out/manifest.json
+**/graphify-out/backups/
