@@ -1,0 +1,17 @@
+{
+  "graphify_version": "0.9.95",
+  "source_scope": ".",
+  "total_files": 697,
+  "semantic_documents": 143,
+  "validated_parent_run_cache_documents": 136,
+  "fresh_semantic_documents": [
+    "AGENTS.md",
+    "platforms/AGENTS.md",
+    "platforms/linux/AGENTS.md",
+    "platforms/macos/AGENTS.md",
+    "platforms/windows/AGENTS.md",
+    "product-contract/AGENTS.md",
+    "tools/graphify/README.md"
+  ],
+  "token_usage_status": "unavailable_host_agent"
+}
