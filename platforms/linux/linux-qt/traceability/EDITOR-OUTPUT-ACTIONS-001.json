@@ -1,0 +1,251 @@
+{
+  "capability": "EDITOR-OUTPUT-ACTIONS-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "implementation": [
+    "platforms/linux/linux-qt/app/EditorSave.cpp",
+    "platforms/linux/linux-qt/app/EditorCopy.cpp",
+    "platforms/linux/linux-qt/app/EditorPrint.cpp",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp",
+    "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
+    "platforms/linux/linux-qt/app/PinWindow.cpp",
+    "platforms/linux/linux-qt/app/CaptureActions.cpp"
+  ],
+  "requirements": {
+    "EO-001": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Save/copy/print/capture outputs freeze owned snapshots with lifetime/reentry tests. Complete background and host-output integration remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+      ]
+    },
+    "EO-002": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native Copy Image publishes image plus PNG, preserves alpha/document state and reports uncertain delivery. Real clipboard consumers and all target qualification remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+      ]
+    },
+    "EO-003": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native PNG Save/Save As validate paths and adopt only complete successful results. Full user-facing formats and filesystem/platform qualification remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+      ]
+    },
+    "EO-004": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Editor raster Save As currently exposes PNG. JPEG/WebP alpha/quality/extension/overwrite behavior is missing; format-disposition.json still requires product-owner approval.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+      ],
+      "waiting_on": [
+        "Mike: approve format-disposition.json alpha/quality/overwrite semantics before activation."
+      ]
+    },
+    "EO-005": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Same-directory temporary publication and prior-file protection are tested. Full permission/ACL/disk-full/shutdown/durability and target matrix remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+      ]
+    },
+    "EO-006": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Raster/sidecar split results, dirty state and companion-only repair have native tests. Complete legacy empty companion disposition and compatibility qualification remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+      ]
+    },
+    "EO-007": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Capture and file upload exist, but complete editor immutable-snapshot Upload host integration and failure/session behavior remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+      ]
+    },
+    "EO-008": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native print preview/submission has cancellation and immutable-session tests. Physical printer/driver and supported-desktop qualification remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+      ]
+    },
+    "EO-009": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Owned capture pins exist and are tested. Full editor Pin host integration and desktop-service qualification remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+      ]
+    },
+    "EO-010": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "No native Set as Wallpaper output with display/layout selection, confirmation and generated-file disclosure is implemented."
+    },
+    "EO-011": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Capture annotation Apply returns owned pixels and a result through guarded worker lifetime tests. Complete editor task-mode and auto-copy/auto-close preference behavior remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+      ]
+    },
+    "EO-012": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Capture annotation cancellation keeps the source and stops its handoff. Complete task-mode dirty confirmation/host integration remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+      ]
+    },
+    "EO-013": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native dirty Save/Discard/Cancel and failed-save replacement tests exist. Complete standalone exit/shutdown and all callback outcomes remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+      ]
+    },
+    "EO-014": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Existing save/copy/print/capture ports have ownership and lifetime tests. Missing output hosts and full cross-action reentrancy/availability contracts remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+      ]
+    },
+    "EO-015": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native busy/cancel/retry/keyboard/accessibility fixtures exist for implemented outputs. Full output coverage and live assistive-technology qualification remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+      ]
+    },
+    "EO-016": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native failure and split persistence tests exist. No published EO vectors; the complete fault matrix and supported platforms remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+      ]
+    }
+  },
+  "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
+  "audit": {
+    "date": "2026-10-24",
+    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
+    "existing_automated_suites": [
+      "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
+      "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+      "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
+      "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
+      "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
+      "platforms/linux/linux-qt/tests/EditorSaveTest.cpp"
+    ],
+    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+  }
+}

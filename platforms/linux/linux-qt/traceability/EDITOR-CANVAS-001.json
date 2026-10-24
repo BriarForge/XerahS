@@ -110,8 +110,12 @@
     },
     "EC-004": {
       "disposition": "Required",
-      "status": "not-started",
-      "vectors": []
+      "status": "partial",
+      "vectors": [],
+      "note": "Image/Emoji/Cursor tool modes now validate and embed assets with AnnotationShapesTest source-removal/undo evidence. Complete clipboard/optional-screen insert and bypass-preference flows remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp"
+      ]
     },
     "EC-005": {
       "disposition": "Required",
@@ -184,10 +188,12 @@
       "vectors": [
         "rotate-90-clockwise"
       ],
-      "note": "Native quarter turns, custom rotation and flips transform source pixels, dimensions, rectangle centres/orientations and pixel-centre coordinates atomically. Custom rotation has explicit expansion/cropping, background and sampling policies; exact expanded quarter turns are lossless. Tests cover independent pixel permutations, analytical 45-degree output, alpha-aware border interpolation, limits, editable persistence and undo. Directional/inserted assets await their tool implementations. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required.",
+      "note": "Source flips now mirror path points and existing shape/asset geometry, with tests. Complete arbitrary affine transformation of every annotation, background and directional asset remains.",
       "evidence": [
         "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
-        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json",
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/CanvasOperationsTest.cpp"
       ]
     },
     "EC-012": {
@@ -275,5 +281,19 @@
       ],
       "note": "Native opt-in and list edits persist through isolated bounded private storage with atomic current/previous replacement. Forgotten paths are removed from recovery data too. Native Apply/Cancel, locked writes, restart, capped stale revisions and actual successful/incomplete image saves have independent evidence. Missing entries remain removable, and preference errors survive editor refresh without undoing successful image work. Approved retention/recovery policy, full ledger and human privacy/security/compatibility reviews remain Required; this checkpoint does not activate EDITOR-SETTINGS-001."
     }
+  },
+  "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
+  "audit": {
+    "date": "2026-10-24",
+    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
+    "existing_automated_suites": [
+      "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+      "platforms/linux/linux-qt/tests/CanvasOperationsTest.cpp",
+      "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+      "platforms/linux/linux-qt/tests/EditorOpenTest.cpp",
+      "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp",
+      "platforms/linux/linux-qt/tests/NewImageTest.cpp"
+    ],
+    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
   }
 }

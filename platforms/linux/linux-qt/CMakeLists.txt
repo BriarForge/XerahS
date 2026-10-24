@@ -731,12 +731,15 @@ set_tests_properties(workflow-shortcuts PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=
 # Capabilities with production implementation and requirement traceability.
 # Full requirement coverage remains in traceability, including partial rows.
 # The full suite runs without --capability and still fails for missing seams.
-set(XERAHS_IMPLEMENTED_CAPABILITIES CORE-PLATFORM-001 FILENAME-GENERATION-001 POST-CAPTURE-ACTIONS-001 REGION-CAPTURE-001 EDITOR-SESSION-001 EDITOR-CANVAS-001 EDITOR-SETTINGS-001 WORKFLOW-CATALOG-001 SETTINGS-CATALOG-001)
+set(XERAHS_IMPLEMENTED_CAPABILITIES COMPATIBILITY-CATALOG-001 CORE-PLATFORM-001 EDITOR-ANNOTATIONS-001 EDITOR-CANVAS-001 EDITOR-EFFECTS-001 EDITOR-OUTPUT-ACTIONS-001 EDITOR-SESSION-001 EDITOR-SETTINGS-001 EDITOR-UTILITIES-001 FILENAME-GENERATION-001 INTERFACE-CATALOG-001 POST-CAPTURE-ACTIONS-001 REGION-CAPTURE-001 SETTINGS-CATALOG-001 WORKFLOW-CATALOG-001)
 set(XERAHS_CAPABILITY_ARGS)
 foreach(capability IN LISTS XERAHS_IMPLEMENTED_CAPABILITIES)
   if(EXISTS "${XERAHS_REPO_ROOT}/product-contract/capabilities/${capability}/test-vectors.json")
     list(APPEND XERAHS_CAPABILITY_ARGS --capability "${capability}")
-  elseif(capability STREQUAL "CORE-PLATFORM-001" OR capability STREQUAL "WORKFLOW-CATALOG-001" OR capability STREQUAL "SETTINGS-CATALOG-001")
+  elseif(capability STREQUAL "CORE-PLATFORM-001" OR capability STREQUAL "WORKFLOW-CATALOG-001" OR capability STREQUAL "SETTINGS-CATALOG-001"
+      OR capability STREQUAL "EDITOR-ANNOTATIONS-001" OR capability STREQUAL "EDITOR-EFFECTS-001"
+      OR capability STREQUAL "EDITOR-OUTPUT-ACTIONS-001" OR capability STREQUAL "EDITOR-UTILITIES-001"
+      OR capability STREQUAL "INTERFACE-CATALOG-001" OR capability STREQUAL "COMPATIBILITY-CATALOG-001")
     message(STATUS "${capability}: no published test-vectors.json; native tests are partial evidence. Shared conformance and qualification remain Required.")
   else()
     message(FATAL_ERROR "${capability}: required published test-vectors.json is missing.")

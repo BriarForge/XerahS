@@ -1,0 +1,269 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-24",
+  "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
+  "contract_version": "0.3.1",
+  "scope": "All desktop specification requirements; CORE-029 records mobile applicability. Counts are unweighted labels, not a completion percentage.",
+  "requirement_count": 325,
+  "capability_count": 15,
+  "counts": {
+    "partial": 192,
+    "not-started": 33,
+    "not-applicable": 1,
+    "implemented": 99
+  },
+  "capabilities": [
+    {
+      "capability": "COMPATIBILITY-CATALOG-001",
+      "requirements": 18,
+      "counts": {
+        "partial": 12,
+        "not-started": 6
+      },
+      "trace": "traceability/COMPATIBILITY-CATALOG-001.json"
+    },
+    {
+      "capability": "CORE-PLATFORM-001",
+      "requirements": 37,
+      "counts": {
+        "not-started": 6,
+        "partial": 30,
+        "not-applicable": 1
+      },
+      "trace": "traceability/CORE-PLATFORM-001.json"
+    },
+    {
+      "capability": "EDITOR-ANNOTATIONS-001",
+      "requirements": 20,
+      "counts": {
+        "partial": 20
+      },
+      "trace": "traceability/EDITOR-ANNOTATIONS-001.json"
+    },
+    {
+      "capability": "EDITOR-CANVAS-001",
+      "requirements": 17,
+      "counts": {
+        "implemented": 9,
+        "partial": 6,
+        "not-started": 2
+      },
+      "trace": "traceability/EDITOR-CANVAS-001.json"
+    },
+    {
+      "capability": "EDITOR-EFFECTS-001",
+      "requirements": 18,
+      "counts": {
+        "partial": 9,
+        "implemented": 9
+      },
+      "trace": "traceability/EDITOR-EFFECTS-001.json"
+    },
+    {
+      "capability": "EDITOR-OUTPUT-ACTIONS-001",
+      "requirements": 16,
+      "counts": {
+        "partial": 15,
+        "not-started": 1
+      },
+      "trace": "traceability/EDITOR-OUTPUT-ACTIONS-001.json"
+    },
+    {
+      "capability": "EDITOR-SESSION-001",
+      "requirements": 30,
+      "counts": {
+        "implemented": 19,
+        "partial": 8,
+        "not-started": 3
+      },
+      "trace": "traceability/EDITOR-SESSION-001.json"
+    },
+    {
+      "capability": "EDITOR-SETTINGS-001",
+      "requirements": 16,
+      "counts": {
+        "partial": 14,
+        "not-started": 2
+      },
+      "trace": "traceability/EDITOR-SETTINGS-001.json"
+    },
+    {
+      "capability": "EDITOR-UTILITIES-001",
+      "requirements": 19,
+      "counts": {
+        "partial": 6,
+        "implemented": 9,
+        "not-started": 4
+      },
+      "trace": "traceability/EDITOR-UTILITIES-001.json"
+    },
+    {
+      "capability": "FILENAME-GENERATION-001",
+      "requirements": 27,
+      "counts": {
+        "implemented": 25,
+        "partial": 2
+      },
+      "trace": "traceability/FILENAME-GENERATION-001.json"
+    },
+    {
+      "capability": "INTERFACE-CATALOG-001",
+      "requirements": 18,
+      "counts": {
+        "partial": 15,
+        "not-started": 3
+      },
+      "trace": "traceability/INTERFACE-CATALOG-001.json"
+    },
+    {
+      "capability": "POST-CAPTURE-ACTIONS-001",
+      "requirements": 24,
+      "counts": {
+        "implemented": 18,
+        "partial": 6
+      },
+      "trace": "traceability/POST-CAPTURE-ACTIONS-001.json"
+    },
+    {
+      "capability": "REGION-CAPTURE-001",
+      "requirements": 27,
+      "counts": {
+        "partial": 14,
+        "implemented": 10,
+        "not-started": 3
+      },
+      "trace": "traceability/REGION-CAPTURE-001.json"
+    },
+    {
+      "capability": "SETTINGS-CATALOG-001",
+      "requirements": 20,
+      "counts": {
+        "partial": 17,
+        "not-started": 3
+      },
+      "trace": "traceability/SETTINGS-CATALOG-001.json"
+    },
+    {
+      "capability": "WORKFLOW-CATALOG-001",
+      "requirements": 18,
+      "counts": {
+        "partial": 18
+      },
+      "trace": "traceability/WORKFLOW-CATALOG-001.json"
+    }
+  ],
+  "waiting_on_mike": [
+    {
+      "capability": "COMPATIBILITY-CATALOG-001",
+      "requirement": "COMPCAT-008",
+      "decisions": [
+        "Mike: review credential security and explicit sensitive migration policy."
+      ]
+    },
+    {
+      "capability": "COMPATIBILITY-CATALOG-001",
+      "requirement": "COMPCAT-012",
+      "decisions": [
+        "Mike: approved isolated plugin-host/security model is required."
+      ]
+    },
+    {
+      "capability": "COMPATIBILITY-CATALOG-001",
+      "requirement": "COMPCAT-013",
+      "decisions": [
+        "Mike: human security review of SXIE import; legacy compatibility observations."
+      ]
+    },
+    {
+      "capability": "CORE-PLATFORM-001",
+      "requirement": "CORE-011",
+      "decisions": [
+        "Mike/release owner: provide trusted signed release provenance/channel before live update qualification."
+      ]
+    },
+    {
+      "capability": "CORE-PLATFORM-001",
+      "requirement": "CORE-013",
+      "decisions": [
+        "Mike: human security review of Secret Service credential handling."
+      ]
+    },
+    {
+      "capability": "CORE-PLATFORM-001",
+      "requirement": "CORE-015",
+      "decisions": [
+        "Mike: approve scrolling alignment threshold; no new threshold is inferred."
+      ]
+    },
+    {
+      "capability": "CORE-PLATFORM-001",
+      "requirement": "CORE-022",
+      "decisions": [
+        "Mike: approve isolated plugin-host/security/provenance model before activation."
+      ]
+    },
+    {
+      "capability": "CORE-PLATFORM-001",
+      "requirement": "CORE-028",
+      "decisions": [
+        "Mike/release owner: package signing/provenance and release approval; no signing keys in repository."
+      ]
+    },
+    {
+      "capability": "EDITOR-EFFECTS-001",
+      "requirement": "EE-015",
+      "decisions": [
+        "Mike: human security review of SXIE import."
+      ]
+    },
+    {
+      "capability": "EDITOR-OUTPUT-ACTIONS-001",
+      "requirement": "EO-004",
+      "decisions": [
+        "Mike: approve format-disposition.json alpha/quality/overwrite semantics before activation."
+      ]
+    },
+    {
+      "capability": "EDITOR-UTILITIES-001",
+      "requirement": "EU-004",
+      "decisions": [
+        "Mike: approve zxing-cpp dependency for QR scanning; do not implement this pending dependency."
+      ]
+    },
+    {
+      "capability": "EDITOR-UTILITIES-001",
+      "requirement": "EU-009",
+      "decisions": [
+        "Mike: approve local background-removal model, license/provenance and device policy."
+      ]
+    },
+    {
+      "capability": "EDITOR-UTILITIES-001",
+      "requirement": "EU-010",
+      "decisions": [
+        "Mike: approve local background-removal model and any download/license policy."
+      ]
+    },
+    {
+      "capability": "EDITOR-UTILITIES-001",
+      "requirement": "EU-011",
+      "decisions": [
+        "Mike: approve local background-removal model before implementing preview/output."
+      ]
+    },
+    {
+      "capability": "EDITOR-UTILITIES-001",
+      "requirement": "EU-019",
+      "decisions": [
+        "Mike: resolve product-owner-decision-required shader/easter-egg disposition."
+      ]
+    },
+    {
+      "capability": "WORKFLOW-CATALOG-001",
+      "requirement": "WFCAT-011",
+      "decisions": [
+        "Mike: approve Tesseract for OCR and zxing-cpp for scanning; do not add dependencies."
+      ]
+    }
+  ]
+}

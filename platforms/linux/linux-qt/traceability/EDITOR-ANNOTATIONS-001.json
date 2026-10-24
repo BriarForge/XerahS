@@ -1,0 +1,291 @@
+{
+  "capability": "EDITOR-ANNOTATIONS-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "implementation": [
+    "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+    "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
+    "platforms/linux/linux-qt/src/image-editor/ShapePainter.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+    "platforms/linux/linux-qt/src/image-editor/AnnotationTransfer.cpp",
+    "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+    "platforms/linux/linux-qt/app/NativeAnnotationTools.cpp"
+  ],
+  "requirements": {
+    "EA-001": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "All 20 tool modes are exposed through NativeAnnotationTools and EditorCanvas. Core/native shape and drag tests exist. Full per-tool option, accessibility and accepted-platform evidence remains incomplete.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-002": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Active tool and pointer/keyboard instructions exist. Complete option-state and keep-tool/return-to-Select preferences and tool-by-tool native qualification remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-003": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Box-bounded represented shapes share hit testing, selection, hidden/locked protection, movement, resizing and rotation. Complete directional/curved shape and asset interaction coverage remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-004": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Core creation validates bounds and finite values; native drag tests verify one undoable creation. Complete tool-specific clipping, path sampling and malformed-gesture matrix remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-005": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Bounds, stroke/fill, width, opacity, rotation, visibility and order exist for Rectangle/Ellipse. Border styles, corner/shadow fields and approved complete Ellipse document compatibility are not implemented/accepted.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-006": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Ordered path points and direction survive movement/flip and round-trip tests. Curved control geometry, border/arrow style and shadow semantics are incomplete.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-007": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Freehand stores ordered fractional path points and renders a stroke. Complete documented simplification/tolerance and zoom/export qualification remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-008": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Text and balloon support multiline text, font size and a default balloon tail. Font family, weight, italic, alignment and editable tail options are missing.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-009": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Step stores a numeric value and allocates from the highest existing number; editing/undo is tested. Alphabetic/Roman styles, start/reset and tail controls are missing.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-010": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Image/Emoji/Cursor embed validated PNG assets with alpha and survive source removal in native shape tests. Complete metadata/aspect/resource/compatibility matrix remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-011": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Highlight/Blur/Pixelate/Magnify/Spotlight render immutable-source regions with strength edits. Full ellipse/blur choices, overlap/clipping and independent native visual qualification remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-012": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Smart Eraser uses a documented deterministic simple fill, with source-preserving history tests. Full native controls and artifact/edge qualification remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-013": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Crop and Cut Out have actual atomic source/annotation transforms and tests. Full multi-type/asset intersection and accessibility qualification remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-014": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Creation copies style/content; explicit shape content edits participate in undo. Complete persisted tool defaults and all style fields remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-015": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Core and native ordering share stable IDs and deterministic group order tests. Full new-tool and accessible command qualification remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-016": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Typed clipboard transfer and UUID replacement are tested for represented objects. Complete embedded-asset transfer and untrusted payload coverage for every newly added tool remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-017": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Creation/content/geometry/ordering/clear/cut-out use EditorSession history. Complete field/tool coverage remains alongside missing style and content capabilities.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-018": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native keyboard selection, gestures, tool actions and accessibility interfaces have fixtures. Screen-reader, high contrast, focus, text scaling and every option/handle need live qualification.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-019": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Known shapes, paths/content and embedded assets round-trip; unknown fields/types stay inert. Missing font/style/step fields and complete legacy field compatibility remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    },
+    "EA-020": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Finite/resource/history/rendering fixtures exist. This package has no published vectors; full malformed-input, native visual and supported-platform conformance remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+      ]
+    }
+  },
+  "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
+  "audit": {
+    "date": "2026-10-24",
+    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
+    "existing_automated_suites": [
+      "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+      "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
+      "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+      "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+      "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+    ],
+    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+  }
+}

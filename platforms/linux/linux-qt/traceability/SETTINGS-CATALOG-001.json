@@ -83,6 +83,187 @@
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
       ]
+    },
+    "SETCAT-001": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Explicit metadata exists for the current application/editor fields; full semantic/default/migration/privacy/downstream dispositions for all 922 ledger rows remain unapproved.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp"
+      ]
+    },
+    "SETCAT-002": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Current selected defaults have domain/native fixtures. Source initializers are not acceptance; complete per-row normative defaults and platform evidence remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp"
+      ]
+    },
+    "SETCAT-007": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Uploader secrets are referenced through CredentialStore/Secret Service, with fake-service and redaction tests. Full settings/provider secret coverage and human security review remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp"
+      ]
+    },
+    "SETCAT-008": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Explicit audited legacy plaintext-secret migration, verification and recoverable source handling are absent; do not import live secrets automatically."
+    },
+    "SETCAT-012": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Current capture, upload, onboarding and settings flows preserve permission/consent boundaries with fixtures. All remaining catalogue families and human review remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+        "platforms/linux/linux-qt/tests/OnboardingTest.cpp"
+      ]
+    },
+    "SETCAT-013": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Editor window placement restores/clamps across injected display changes and memory opt-out tests. Complete application/window classes and native multi-display qualification remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorWindowStateTest.cpp"
+      ]
+    },
+    "SETCAT-014": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native workflow/destination/watch/preset/recent stores use stable identifiers and bounded collections with tests. Complete catalogue/per-item isolation/missing-resource behavior remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/DestinationCatalogTest.cpp"
+      ]
+    },
+    "SETCAT-015": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Opt-in recent files are removable and private history exists. Execution retention management, complete settings-derived private data retention and diagnostic export policy remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+        "platforms/linux/linux-qt/tests/RecentImagesTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp"
+      ]
+    },
+    "SETCAT-016": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "DestinationCatalog separates keyring references and validates endpoints locally; explicit upload and import tests exist. Complete provider field/auth/test schemas and human review remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationTest.cpp",
+        "platforms/linux/linux-qt/tests/DestinationCatalogTest.cpp"
+      ]
+    },
+    "SETCAT-017": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Signed updates, approved isolated plugins and complete executable-path/import policy are absent."
+    },
+    "SETCAT-018": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Editor system appearance/contrast/reduced-motion and application notification settings have tests. Complete native user-choice/accessibility and accepted platform dispositions remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeDesktopAppearanceTest.cpp"
+      ]
+    },
+    "SETCAT-019": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Full explicit versioned application settings import/export and retained/transformed/rejected/secret preview are absent."
+    },
+    "SETCAT-020": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Existing field/storage/boundary/redaction tests cover subsets. Generated acceptance for all linked settings rows, all value families and supported-platform conformance remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp"
+      ]
     }
+  },
+  "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
+  "audit": {
+    "date": "2026-10-24",
+    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
+    "existing_automated_suites": [
+      "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+      "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
+      "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+      "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+      "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
+      "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp"
+    ],
+    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
   }
 }

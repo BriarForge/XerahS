@@ -156,22 +156,33 @@
       ]
     },
     "WFCAT-010": {
-      "status": "not-started",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Uploads/destinations/credential and URL authority remain Required. Unavailable actions are preserved visibly and cannot execute."
+      "note": "Native capture/file/watch uploads and URL clipboard use destination/keyring/executor paths with real fixture tests. Complete remote authority, credentials, progress/retry/idempotency and all workflow families remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp"
+      ]
     },
     "WFCAT-011": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Profiles can invoke the existing region-image annotation/output path. OCR/QR/hash/combine/split/effects/tools and complete family input/metadata schemas remain Required."
+      "note": "Profiles can invoke the existing region-image annotation/output path. OCR/QR/hash/combine/split/effects/tools and complete family input/metadata schemas remain Required.",
+      "waiting_on": [
+        "Mike: approve Tesseract for OCR and zxing-cpp for scanning; do not add dependencies."
+      ]
     },
     "WFCAT-012": {
-      "status": "not-started",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Recording control/session state machines remain Required; recording definitions are retained but unavailable."
+      "note": "RecordingController validates start/pause/resume/stop/abort and region/audio paths with tests. Full saved recording workflow definitions, invocation indexing, concurrent control/recovery and target qualification remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/RecordingTest.cpp",
+        "platforms/linux/linux-qt/tests/RecordingIntegrationTest.cpp"
+      ]
     },
     "WFCAT-013": {
       "status": "partial",
@@ -282,5 +293,19 @@
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
       ]
     }
+  },
+  "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
+  "audit": {
+    "date": "2026-10-24",
+    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
+    "existing_automated_suites": [
+      "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp",
+      "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+      "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+      "platforms/linux/linux-qt/tests/RecordingTest.cpp",
+      "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+      "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
+    ],
+    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
   }
 }

@@ -4,17 +4,16 @@ Implement the approved English Product Contract in the `linux-qt` reference
 edition. Keep shared expected results independent of Linux, and record partial
 requirements honestly until native behavior and evidence cover their full scope.
 
-Current next deliverable: execution metadata retention controls and atomic
-filename-counter reservation. [Admitted execution tracking](app/WORKFLOW-EXECUTIONS.md)
-now persists identity/start/origin/effective settings before acquisition, records
-early denial/cancellation/failure and links the real pipeline through read-only
-headless lookup. Full families, retry invocation indexing and human gates remain Required. [Headless workflow discovery](app/WORKFLOW-DISCOVERY.md)
-now lists saved IDs/default/support without a GUI or activation. Session global
-shortcuts now share the workflow dispatcher; see [shortcut evidence](app/WORKFLOW-SHORTCUTS.md).
-Explicit-ID CLI activation now shares authenticated admission, immutable saved
-snapshots and the real controller; see [CLI evidence](app/WORKFLOW-CLI.md).
-Named profiles and per-profile output folders, patterns and preview are implemented;
-see the latest audit checkpoints. Prioritize missing usable behavior, with hardening limited to demonstrated delivery blockers.
+Current work follows the [24 October measured backlog](PRODUCTION-BACKLOG.md).
+First reproduce and fix ignored filename-counter persistence failure after native
+PNG publication, then finish execution metadata retention using CommandRegistry,
+feature installers, OwnedWork and existing private storage. Next prioritize
+explicit reversible migration/recovery, packaging and remaining editor/catalogue
+semantics. Preserve the already implemented recording/audio, upload/keyring,
+scroll/delayed/automatic capture, tools, effects, onboarding and watch folders.
+Dependencies/models and other decisions waiting on Mike remain blocked explicitly.
+The user-authorized solo workflow is worktrees/codex, git-declan, and the supplied
+full-build/test push gate. Full contract/platform/human completion is unproven.
 
 The editor dependency record below includes completed checkpoints and remaining
 work; it does not supersede that current priority:

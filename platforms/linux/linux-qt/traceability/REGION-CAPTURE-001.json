@@ -285,5 +285,18 @@
     "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
     "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md",
     "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp"
-  ]
+  ],
+  "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
+  "audit": {
+    "date": "2026-10-24",
+    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
+    "existing_automated_suites": [
+      "platforms/linux/linux-qt/tests/NativeWindowDiscoveryTest.cpp",
+      "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+      "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+      "platforms/linux/linux-qt/tests/SnapshotCompositionTest.cpp",
+      "platforms/linux/linux-qt/tests/WindowSnapTargetsTest.cpp"
+    ],
+    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+  }
 }

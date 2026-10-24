@@ -1,0 +1,277 @@
+{
+  "capability": "INTERFACE-CATALOG-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "implementation": [
+    "platforms/linux/linux-qt/app/CommandRegistry.cpp",
+    "platforms/linux/linux-qt/app/ApplicationWindow.cpp",
+    "platforms/linux/linux-qt/app/main.cpp",
+    "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
+    "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
+    "platforms/linux/linux-qt/app/NativeInstance.cpp",
+    "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
+    "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp"
+  ],
+  "requirements": {
+    "IFCAT-001": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "The registry declares stable IDs/surfaces and shares QAction ownership. Full linked interface-ledger outcomes, schemas and human dispositions remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "IFCAT-002": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "GUI/tray/hotkeys/CLI share registry/domain operations for supported captures. MCP/provider semantic equivalence and complete operation families remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "IFCAT-003": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Current native dialogs expose tested load/empty/error/busy/result states. Full GUI surface-state matrix and unavailable-dependency presentation remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "IFCAT-004": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Qt keyboard/accessibility tests cover current windows. Complete screen-reader, text scaling, contrast and reduced-motion qualification remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "IFCAT-005": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Current native confirmation defaults and modal precedence have tests. Full focus restoration, destructive consequences and permission-flow review remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "IFCAT-006": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "OwnedWork and domain cancellation/progress have native lifetime tests. Full operation families and durable terminal-result convergence remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "IFCAT-007": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Editor display recovery and minimum viewport behavior are tested. Full application RTL/localization/font/scaling/topology matrix remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "IFCAT-008": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "CLI launch/discovery/execution lookup have versioned JSON, help/exit and malformed-input tests. Complete commands, signal handling, progress/wait/cancel and precedence remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "IFCAT-009": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Non-interactive graphical refusal is tested before QApplication/services. All additional sensitive CLI operations need equivalent authority behavior.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "IFCAT-010": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Explicit CLI metadata excludes paths/settings/payloads and uses fixed diagnostics in actual-process tests. Complete CLI modes and new operation families remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "IFCAT-011": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "No native MCP server or versioned tool schemas/progress/cancellation/publication annotations are implemented."
+    },
+    "IFCAT-012": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "No native MCP authority/consent workflow is implemented; authenticated CLI IPC is not MCP approval."
+    },
+    "IFCAT-013": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Metadata-only CLI discovery exists; MCP capture/history/settings/annotation/upload result minimization and grants are absent."
+    },
+    "IFCAT-014": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Destination models, native configuration and secret references exist with validation tests. Complete provider field/conditional/authentication schema coverage remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "IFCAT-015": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Ordinary catalog load is local; uploads require explicit action. Separate cancellable connection-test/authentication flows and full provider coverage remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "IFCAT-016": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native/domain stable codes and request/execution IDs have tests. Full user-facing mapping/redaction/safe-retry convergence across all new surfaces remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "IFCAT-017": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Current registry shares availability. Optional video tooling is omitted when unavailable; approved explanations and complete native capability dispositions remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    },
+    "IFCAT-018": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Current entry-point, malformed input and native GUI fixtures exist. MCP, complete providers, screen readers/localization and all-platform qualification remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+      ]
+    }
+  },
+  "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
+  "audit": {
+    "date": "2026-10-24",
+    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
+    "existing_automated_suites": [
+      "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+      "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
+      "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
+      "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
+      "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+      "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+      "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp"
+    ],
+    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+  }
+}

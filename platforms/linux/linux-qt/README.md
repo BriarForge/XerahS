@@ -4,6 +4,15 @@ Reference Linux edition under D-LIN-001: Qt 6, C++17, Wayland first.
 
 ## Status
 
+The current [measured production backlog](PRODUCTION-BACKLOG.md) covers all 325
+numbered desktop requirements and all 15 capability maps. Recording/audio,
+uploads/keyring, scrolling/scheduled capture, effects/tools, onboarding and watch
+folders have landed since the older status table below. Full contract, native
+target matrix and required human reviews remain unfinished; no production
+completion percentage is asserted. See the measured backlog for current work
+and decisions waiting on Mike.
+
+
 | Capability | State | Evidence |
 |---|---|---|
 | `CORE-PLATFORM-001` | Native lifetime instance ownership, authenticated bounded activation and a keyboard-accessible command window; complete application foundation and release gates pending | Real-process/actual-application forwarding, failure/recovery, core dispatch and native action tests; no CORE vectors published yet; [traceability](traceability/CORE-PLATFORM-001.json) |

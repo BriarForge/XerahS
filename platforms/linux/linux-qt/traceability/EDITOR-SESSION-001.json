@@ -95,7 +95,8 @@
         "platforms/linux/linux-qt/app/NEW-OPEN-WORKERS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/EditorOpenTest.cpp",
         "platforms/linux/linux-qt/tests/NewImageDialogTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-002": {
       "status": "partial",
@@ -123,7 +124,8 @@
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY.md",
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/CaptureHistoryTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-003": {
       "status": "implemented",
@@ -144,7 +146,8 @@
         "platforms/linux/linux-qt/app/RECTANGLE-CREATION.md",
         "platforms/linux/linux-qt/app/EDITOR-CROP.md",
         "platforms/linux/linux-qt/app/EDITOR-CROP-EVIDENCE.json"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-004": {
       "status": "implemented",
@@ -179,7 +182,8 @@
         "platforms/linux/linux-qt/app/ANNOTATION-KEYBOARD-EVIDENCE.json",
         "platforms/linux/linux-qt/app/CAPTURE-CROP.md",
         "platforms/linux/linux-qt/app/CAPTURE-CROP-EVIDENCE.json"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-005": {
       "status": "implemented",
@@ -234,7 +238,8 @@
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY.md",
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/CaptureHistoryTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-006": {
       "status": "implemented",
@@ -293,7 +298,8 @@
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY.md",
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/CaptureHistoryTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-007": {
       "status": "implemented",
@@ -332,7 +338,8 @@
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY.md",
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/CaptureHistoryTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-008": {
       "status": "implemented",
@@ -385,7 +392,8 @@
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS.md",
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/PreferenceDialogTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-009": {
       "status": "partial",
@@ -405,14 +413,16 @@
         "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
         "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
         "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-010": {
       "status": "implemented",
       "vectors": [
         "render-stroke-coverage",
         "render-opacity-applied-once"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-011": {
       "status": "partial",
@@ -436,7 +446,8 @@
         "platforms/linux/linux-qt/app/ANNOTATION-DELETE.md",
         "platforms/linux/linux-qt/app/ANNOTATION-DELETE-EVIDENCE.json",
         "platforms/linux/linux-qt/app/EMPTY-SIDECAR-CLARIFICATION.md"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-012": {
       "status": "implemented",
@@ -460,7 +471,8 @@
         "platforms/linux/linux-qt/app/ANNOTATION-DELETE.md",
         "platforms/linux/linux-qt/app/ANNOTATION-DELETE-EVIDENCE.json",
         "platforms/linux/linux-qt/app/EMPTY-SIDECAR-CLARIFICATION.md"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-013": {
       "status": "partial",
@@ -478,7 +490,8 @@
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-014": {
       "status": "partial",
@@ -504,7 +517,8 @@
         "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
         "platforms/linux/linux-qt/app/ANNOTATION-DELETE-EVIDENCE.json",
         "platforms/linux/linux-qt/app/EMPTY-SIDECAR-CLARIFICATION.md"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-015": {
       "status": "implemented",
@@ -525,7 +539,8 @@
         "platforms/linux/linux-qt/app/ANNOTATION-OBJECTS.md",
         "platforms/linux/linux-qt/tests/AnnotationObjectNavigatorTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-016": {
       "status": "implemented",
@@ -536,7 +551,8 @@
         "platforms/linux/linux-qt/app/NEW-OPEN-WORKERS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/EditorOpenTest.cpp",
         "platforms/linux/linux-qt/tests/NewImageDialogTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-017": {
       "status": "implemented",
@@ -551,12 +567,14 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
         "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-018": {
       "status": "not-started",
       "vectors": [],
-      "note": "Recovery documents."
+      "note": "Recovery documents.",
+      "disposition": "Required"
     },
     "ES-019": {
       "status": "partial",
@@ -614,7 +632,8 @@
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS.md",
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/PreferenceDialogTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-020": {
       "status": "not-started",
@@ -626,23 +645,27 @@
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-021": {
       "status": "not-started",
       "vectors": [],
-      "note": "Editor performance."
+      "note": "Editor performance.",
+      "disposition": "Required"
     },
     "ES-022": {
       "status": "partial",
       "vectors": [],
-      "note": "Structural and history vectors pass. Shared golden-image vectors await approved fixtures."
+      "note": "Structural and history vectors pass. Shared golden-image vectors await approved fixtures.",
+      "disposition": "Required"
     },
     "ES-023": {
       "status": "implemented",
       "vectors": [
         "reverse-drag-rectangle"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-024": {
       "status": "implemented",
@@ -661,7 +684,8 @@
         "platforms/linux/linux-qt/app/RECTANGLE-CREATION.md",
         "platforms/linux/linux-qt/app/ANNOTATION-ROTATION.md",
         "platforms/linux/linux-qt/app/ANNOTATION-ROTATION-EVIDENCE.json"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-025": {
       "status": "implemented",
@@ -670,7 +694,8 @@
         "render-opacity-applied-once",
         "render-fill-with-opacity"
       ],
-      "note": "Quarter turns retain the binary64 box-coverage path; all other finite angles use exact polygon/pixel intersections with fill-before-stroke and one opacity application. Analytical diamond coverage, inner-stroke subtraction, and compositing are checked in tests/EditorSessionTest.cpp; tests/EditorSourceTest.cpp verifies a 17-degree PNG/sidecar save and reopen. Shared golden fixtures remain an ES-022 activation gate."
+      "note": "Quarter turns retain the binary64 box-coverage path; all other finite angles use exact polygon/pixel intersections with fill-before-stroke and one opacity application. Analytical diamond coverage, inner-stroke subtraction, and compositing are checked in tests/EditorSessionTest.cpp; tests/EditorSourceTest.cpp verifies a 17-degree PNG/sidecar save and reopen. Shared golden fixtures remain an ES-022 activation gate.",
+      "disposition": "Required"
     },
     "ES-026": {
       "status": "implemented",
@@ -708,7 +733,8 @@
         "platforms/linux/linux-qt/app/ANNOTATION-DELETE-EVIDENCE.json",
         "platforms/linux/linux-qt/app/ANNOTATION-KEYBOARD.md",
         "platforms/linux/linux-qt/app/ANNOTATION-KEYBOARD-EVIDENCE.json"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-027": {
       "status": "implemented",
@@ -752,7 +778,8 @@
         "platforms/linux/linux-qt/app/ANNOTATION-DELETE-EVIDENCE.json",
         "platforms/linux/linux-qt/app/ANNOTATION-KEYBOARD.md",
         "platforms/linux/linux-qt/app/ANNOTATION-KEYBOARD-EVIDENCE.json"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-028": {
       "status": "implemented",
@@ -766,7 +793,8 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
         "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-029": {
       "status": "partial",
@@ -781,7 +809,8 @@
         "platforms/linux/linux-qt/app/NEW-OPEN-WORKERS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/EditorOpenTest.cpp",
         "platforms/linux/linux-qt/tests/NewImageDialogTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "ES-030": {
       "status": "implemented",
@@ -804,7 +833,21 @@
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     }
+  },
+  "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
+  "audit": {
+    "date": "2026-10-24",
+    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
+    "existing_automated_suites": [
+      "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+      "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+      "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+      "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+      "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+    ],
+    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
   }
 }

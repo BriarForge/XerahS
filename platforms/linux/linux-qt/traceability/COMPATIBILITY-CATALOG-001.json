@@ -1,0 +1,258 @@
+{
+  "capability": "COMPATIBILITY-CATALOG-001",
+  "capability_version": "0.1.0",
+  "contract_version": "0.3.1",
+  "platform": "linux",
+  "edition": "linux-qt",
+  "implementation": [
+    "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+    "platforms/linux/linux-qt/src/image-editor/EditorPreferenceStore.cpp",
+    "platforms/linux/linux-qt/src/workflows/CaptureWorkflows.cpp",
+    "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+    "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+    "platforms/linux/linux-qt/src/storage/PrivateJsonFile.cpp",
+    "platforms/linux/linux-qt/app/SecretServiceCredentialStore.cpp"
+  ],
+  "requirements": {
+    "COMPCAT-001": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native document/current JSON, SXCU and SXIE slices exist. Full compatibility-ledger formats/versions and approved policies remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
+        "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+      ]
+    },
+    "COMPCAT-002": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Representative uploader/preset and document fixtures exist. Accepted runtime observations and every supported legacy version remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
+        "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+      ]
+    },
+    "COMPCAT-003": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Current parsers validate isolated candidates; invalid uploader/preset/document tests exist. Complete application/workflow/history/credential migration is absent.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
+        "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+      ]
+    },
+    "COMPCAT-004": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Uploader/preset import reports unsupported/transformed fields. Complete retained/defaulted/quarantined record reports for other legacy formats remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
+        "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+      ]
+    },
+    "COMPCAT-005": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Unknown compatible document/settings/preset fields round-trip and unsupported behavior stays inert. Full secret/authority-bearing classification and legacy format coverage remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
+        "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+      ]
+    },
+    "COMPCAT-006": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native documents/presets have explicit versions and atomic writes. Complete portable export targets and explicit secret/nonportable omission reports remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
+        "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+      ]
+    },
+    "COMPCAT-007": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Current native UUID/action-based JSON and typed uploader import exist. Complete Avalonia application/workflow migration and enum/path/collection compatibility remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
+        "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+      ]
+    },
+    "COMPCAT-008": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "No explicit verified legacy plaintext-secret migration is implemented. Secret Service storage exists; human security review is pending.",
+      "waiting_on": [
+        "Mike: review credential security and explicit sensitive migration policy."
+      ]
+    },
+    "COMPCAT-009": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Native capture history exists; legacy JSON/XML/SQLite history migration with neighboring-record quarantine is absent."
+    },
+    "COMPCAT-010": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "No untrusted legacy SQLite snapshot/schema/integrity import is implemented."
+    },
+    "COMPCAT-011": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "SXCU imports are parsed as data, validated, secrets separated, and popular-provider/adversarial fixtures exist. Full executable/network authority and human security qualification remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
+        "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+      ]
+    },
+    "COMPCAT-012": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "No approved isolated plugin package inspection/installation/host is implemented.",
+      "waiting_on": [
+        "Mike: approved isolated plugin-host/security model is required."
+      ]
+    },
+    "COMPCAT-013": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "XANN shapes/assets and SXIE/preset import have native fixtures and unknown preservation. Complete field compatibility, resources, all selected legacy effects and accepted observations remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
+        "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+      ],
+      "waiting_on": [
+        "Mike: human security review of SXIE import; legacy compatibility observations."
+      ]
+    },
+    "COMPCAT-014": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "No MCP automation JSON import/schema/consent boundary is implemented."
+    },
+    "COMPCAT-015": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Existing readers enforce resource limits and reject malformed inputs with tests. Full legacy XML/SQLite/archive/regex adversarial coverage and human review remain.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
+        "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+      ]
+    },
+    "COMPCAT-016": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Core filename/document/settings fixtures exercise canonical encodings and values. Full supported-platform/time/locale/path/Unicode compatibility remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
+        "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+      ]
+    },
+    "COMPCAT-017": {
+      "status": "not-started",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "No complete user-confirmed application/history/credential migration with durable completion detection, rollback and duplicate prevention exists."
+    },
+    "COMPCAT-018": {
+      "status": "partial",
+      "disposition": "Required",
+      "vectors": [],
+      "note": "Local representative fixtures exist for implemented subsets. Complete approved legacy golden/runtime/cross-platform migration evidence remains.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
+        "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+        "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+      ]
+    }
+  },
+  "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
+  "audit": {
+    "date": "2026-10-24",
+    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
+    "existing_automated_suites": [
+      "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+      "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+      "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+      "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
+      "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
+      "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+      "platforms/linux/linux-qt/tests/SxiePresetTest.cpp"
+    ],
+    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+  }
+}

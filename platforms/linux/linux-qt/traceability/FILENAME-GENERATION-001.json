@@ -27,7 +27,8 @@
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-002": {
       "status": "implemented",
@@ -36,7 +37,8 @@
         "twelve-hour-midnight-and-milliseconds",
         "calendar-names-and-week",
         "unix-seconds"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-003": {
       "status": "implemented",
@@ -44,14 +46,16 @@
         "twelve-hour",
         "twelve-hour-midnight-and-milliseconds",
         "twelve-hour-noon"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-004": {
       "status": "implemented",
       "vectors": [
         "date-counter",
         "empty-result"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-005": {
       "status": "implemented",
@@ -59,13 +63,15 @@
         "window-metadata",
         "window-title-trim-space-and-sanitize",
         "url-mode-percent-encoding"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-006": {
       "status": "implemented",
       "vectors": [
         "text-mode-environment-unchanged"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-007": {
       "status": "implemented",
@@ -76,7 +82,8 @@
         "counter-hex-padding",
         "counter-width-never-truncates",
         "blank-pattern-does-not-advance-counter"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-008": {
       "status": "implemented",
@@ -92,7 +99,8 @@
       ],
       "tests": [
         "filename-generator-test"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-009": {
       "status": "partial",
@@ -108,14 +116,16 @@
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-010": {
       "status": "implemented",
       "vectors": [
         "case-sensitive-unknown-token",
         "unknown-and-literal-percent"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-011": {
       "status": "implemented",
@@ -125,7 +135,8 @@
         "trailing-spaces-and-periods",
         "reserved-device-name",
         "reserved-device-name-with-extension"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-012": {
       "status": "implemented",
@@ -134,7 +145,8 @@
         "path-mode-rejects-traversal",
         "path-mode-rejects-absolute",
         "path-mode-rejects-drive"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-013": {
       "status": "implemented",
@@ -144,14 +156,16 @@
         "empty-result",
         "blank-pattern-does-not-advance-counter",
         "blank-pattern-text-mode"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-014": {
       "status": "implemented",
       "vectors": [
         "max-length-preserves-extension",
         "max-length-counts-scalar-values"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-015": {
       "status": "implemented",
@@ -165,27 +179,31 @@
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-016": {
       "status": "partial",
       "vectors": [
         "invalid-repeat-does-not-consume-counter"
       ],
-      "note": "expand() never commits; it returns next_counter for the caller to commit after reserving the name. Atomic persistence arrives with the saving capability. Native saved profiles refuse counter patterns before acquisition rather than use the helper seam's non-persistent zero counter. Atomic reservation/counter persistence remains Required.",
+      "note": "CounterStore now persists per-profile locked reservations with restart/overflow/stale/corrupt/newer tests; native Save publishes counter filenames. However CaptureSave ignores CounterStore::commit failure after publication, and native publication/commit-failure coverage is missing. This must be fixed before full persistence success can be claimed.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
-      ]
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/CounterStoreTest.cpp"
+      ],
+      "disposition": "Required"
     },
     "FN-017": {
       "status": "implemented",
       "vectors": [
         "all"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-018": {
       "status": "implemented",
@@ -194,7 +212,8 @@
         "longest-token-match",
         "case-sensitive-unknown-token",
         "random-non-ambiguous"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-019": {
       "status": "implemented",
@@ -204,7 +223,8 @@
         "invalid-repeat-does-not-consume-counter",
         "non-numeric-repeat",
         "unterminated-argument"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-020": {
       "status": "implemented",
@@ -214,7 +234,8 @@
         "twelve-hour-noon",
         "calendar-names-and-week",
         "unix-seconds"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-021": {
       "status": "implemented",
@@ -233,7 +254,8 @@
       "note": "Files with more than 256 non-empty lines: only the first 256 are selectable, pending a contract clarification.",
       "tests": [
         "filename-generator-test"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-022": {
       "status": "implemented",
@@ -243,7 +265,8 @@
         "url-mode-percent-encoding",
         "text-mode-environment-unchanged",
         "path-mode-components"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-023": {
       "status": "implemented",
@@ -255,7 +278,8 @@
         "extension-is-not-a-token",
         "max-length-preserves-extension",
         "extension-exceeds-max-length"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-024": {
       "status": "implemented",
@@ -264,14 +288,16 @@
         "path-mode-rejects-traversal",
         "path-mode-rejects-absolute",
         "path-mode-rejects-drive"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-025": {
       "status": "implemented",
       "vectors": [
         "counter-base36",
         "counter-overflow"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-026": {
       "status": "implemented",
@@ -296,7 +322,8 @@
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     },
     "FN-027": {
       "status": "implemented",
@@ -313,7 +340,20 @@
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
-      ]
+      ],
+      "disposition": "Required"
     }
+  },
+  "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
+  "audit": {
+    "date": "2026-10-24",
+    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
+    "existing_automated_suites": [
+      "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
+      "platforms/linux/linux-qt/tests/CounterStoreTest.cpp",
+      "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+      "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp"
+    ],
+    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
   }
 }

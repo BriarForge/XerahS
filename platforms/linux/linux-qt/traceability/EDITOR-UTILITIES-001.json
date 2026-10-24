@@ -107,6 +107,9 @@
       "note": "QR scanning is not implemented. There is no QR decoder in the native tree: the qr-scan entry in the Core post-capture action catalog is a declared action specification only and is not a scanner. The Screen, Region and Image File modes, capture and file consent, input validation and limits, and the distinct zero, one and multiple decoded results do not exist, and no sampled pixels are uploaded because no pixels are sampled. QR scanning remains Required.",
       "evidence": [
         "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp"
+      ],
+      "waiting_on": [
+        "Mike: approve zxing-cpp dependency for QR scanning; do not implement this pending dependency."
       ]
     },
     "EU-005": {
@@ -165,6 +168,9 @@
       "note": "Background removal is not implemented. There is no native background-removal window, no local model selection, no Auto, CPU or GPU device policy, no model provenance or tensor-shape validation, and no model, device, setup or inference status. The utility-catalog entry is still inventoried, but no approved platform disposition or local model has been chosen, so the requirement awaits a product decision on an approved local model. Background removal remains Required.",
       "evidence": [
         "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json"
+      ],
+      "waiting_on": [
+        "Mike: approve local background-removal model, license/provenance and device policy."
       ]
     },
     "EU-010": {
@@ -174,6 +180,9 @@
       "note": "Background removal is not implemented, so there is no model directory access, optional download, license, integrity, size or network behaviour to disclose, and no silent download or execution of a model from an untrusted location occurs because no model is loaded at all. The disclosure and trust requirement remains Required.",
       "evidence": [
         "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json"
+      ],
+      "waiting_on": [
+        "Mike: approve local background-removal model and any download/license policy."
       ]
     },
     "EU-011": {
@@ -183,6 +192,9 @@
       "note": "Background removal is not implemented, so there is no background-removal preview or save, no source-dimension or colour preservation to verify, no defined alpha output, no cancellation, and no distinction between model, device, memory, inference and output failures. Background removal remains Required.",
       "evidence": [
         "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json"
+      ],
+      "waiting_on": [
+        "Mike: approve local background-removal model before implementing preview/output."
       ]
     },
     "EU-012": {
@@ -290,7 +302,25 @@
       "note": "The Konami-code shader animation remains inventoried in the contract utility catalog with disposition product-owner-decision-required, and no native Konami shader, overlay or easter egg exists in the linux-qt tree, so it has not become required product behaviour before the owner decision. The preserve, correct or omit decision itself has not been recorded after accessibility, performance, security, discoverability and maintenance review. The owner decision remains Required.",
       "evidence": [
         "product-contract/capabilities/EDITOR-UTILITIES-001/utility-catalog.json"
+      ],
+      "waiting_on": [
+        "Mike: resolve product-owner-decision-required shader/easter-egg disposition."
       ]
     }
+  },
+  "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
+  "audit": {
+    "date": "2026-10-24",
+    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
+    "existing_automated_suites": [
+      "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
+      "platforms/linux/linux-qt/tests/HashCheckerDialogTest.cpp",
+      "platforms/linux/linux-qt/tests/IconWriterTest.cpp",
+      "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp",
+      "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp",
+      "platforms/linux/linux-qt/tests/QrEncoderTest.cpp",
+      "platforms/linux/linux-qt/tests/VideoConversionTest.cpp"
+    ],
+    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
   }
 }
