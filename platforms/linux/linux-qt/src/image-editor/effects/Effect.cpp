@@ -137,6 +137,7 @@ void registerFilterEffects3(EffectRegistry &registry);
 void registerFilterEffects2(EffectRegistry &registry);
 void registerFilterEffects4(EffectRegistry &registry);
 void registerFilterEffects5(EffectRegistry &registry);
+void registerFilterEffects6(EffectRegistry &registry);
 const EffectRegistry &builtinEffects() {
   static const EffectRegistry registry = [] {
     EffectRegistry result;
@@ -150,6 +151,7 @@ const EffectRegistry &builtinEffects() {
     registerFilterEffects2(result);
     registerFilterEffects4(result);
     registerFilterEffects5(result);
+    registerFilterEffects6(result);
     return result;
   }();
   return registry;
