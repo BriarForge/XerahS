@@ -247,7 +247,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Current entry-point, malformed input and native GUI fixtures exist. MCP, complete providers, screen readers/localization and all-platform qualification remain.",
+      "note": "Current entry-point, malformed input and native GUI fixtures exist. MCP, complete providers, screen readers/localization and all-platform qualification remain. FileUploadTest also preserves local-file and remote-URL drop cases on the Qt 6.4 constructor API and rejects text-only drops without emitting upload requests. The earlier baseline compile failure is recorded in CI 40099542917; full native qualification is still partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
@@ -255,7 +255,8 @@
         "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/FileUploadTest.cpp"
       ]
     }
   },

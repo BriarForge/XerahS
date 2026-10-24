@@ -276,6 +276,16 @@
         "EE-018"
       ],
       "note": "Local 114/114 gate passed; Ubuntu/Qt 6.4.2 compile failed on the newer QImage::flipped API. Corrective compatibility implementation and four independent pixel cases are prepared; exact corrective-revision baseline CI remains required."
+    },
+    {
+      "code": "qt-baseline-upload-fixture-build-failed",
+      "source_revision": "1a8df9c1481885d15fe1f8eb5920ae707e4050c9",
+      "ci": "https://github.com/BriarForge/XerahS/actions/runs/40099542917",
+      "requirements": [
+        "CORE-036",
+        "IFCAT-018"
+      ],
+      "note": "Drawing API correction compiles on Qt 6.4.2; FileUploadTest used the newer floating-point drag-enter constructor. Fixtures now use the compatible integer point signature and retain all existing cases. Exact corrected-revision baseline verification remains required."
     }
   ]
 }

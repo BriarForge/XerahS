@@ -503,11 +503,12 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Deterministic native/domain tests and six capabilities' published vectors run in baseline CI. CORE has no published test-vectors.json. All linked-row/platform acceptance and human security/privacy/accessibility/licensing/compatibility/parity reviews remain Required.",
+      "note": "Deterministic native/domain tests and six capabilities' published vectors run in baseline CI. CORE has no published test-vectors.json. All linked-row/platform acceptance and human security/privacy/accessibility/licensing/compatibility/parity reviews remain Required. Exact Ubuntu/Qt 6.4.2 CI 40099542917 now compiles the drawing compatibility helper but exposed three upload test QDragEnterEvent constructions using QPointF. They now use the minimum-Qt QPoint signature with unchanged coordinates, cases and deadlines; a text-only drag rejection case adds input-boundary coverage. Full corrected-revision baseline verification remains required.",
       "evidence": [
         "platforms/linux/linux-qt/CMakeLists.txt",
         "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
-        "platforms/linux/linux-qt/CONTRACT-AUDIT.md"
+        "platforms/linux/linux-qt/CONTRACT-AUDIT.md",
+        "platforms/linux/linux-qt/tests/FileUploadTest.cpp"
       ]
     },
     "CORE-031": {
@@ -555,10 +556,11 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Current published vectors run for linux-qt on Ubuntu baseline CI and the local toolchain. Every declared target distribution/native environment, accepted row disposition and complete shared conformance/parity remain Required.",
+      "note": "Current published vectors run for linux-qt on Ubuntu baseline CI and the local toolchain. Every declared target distribution/native environment, accepted row disposition and complete shared conformance/parity remain Required. Exact Ubuntu/Qt 6.4.2 CI 40099542917 now compiles the drawing compatibility helper but exposed three upload test QDragEnterEvent constructions using QPointF. They now use the minimum-Qt QPoint signature with unchanged coordinates, cases and deadlines; a text-only drag rejection case adds input-boundary coverage. Full corrected-revision baseline verification remains required.",
       "evidence": [
         "platforms/linux/linux-qt/CMakeLists.txt",
-        "platforms/linux/linux-qt/CONTRACT-AUDIT.md"
+        "platforms/linux/linux-qt/CONTRACT-AUDIT.md",
+        "platforms/linux/linux-qt/tests/FileUploadTest.cpp"
       ]
     },
     "CORE-037": {

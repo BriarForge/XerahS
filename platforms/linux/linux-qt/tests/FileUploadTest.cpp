@@ -387,7 +387,7 @@ private slots:
     QMimeData data;
     data.setUrls({QUrl::fromLocalFile(first), QUrl(QStringLiteral("https://example.test/skip")), QUrl::fromLocalFile(second)});
     // Qt delivers a drop only to the widget that accepted the matching drag enter.
-    QDragEnterEvent enter(QPointF(8, 8), Qt::CopyAction, &data, Qt::LeftButton, Qt::NoModifier);
+    QDragEnterEvent enter(QPoint(8, 8), Qt::CopyAction, &data, Qt::LeftButton, Qt::NoModifier);
     QApplication::sendEvent(window.centralWidget(), &enter);
     QVERIFY(enter.isAccepted());
     QDropEvent drop(QPointF(8, 8), Qt::CopyAction, &data, Qt::LeftButton, Qt::NoModifier);
@@ -411,6 +411,16 @@ private slots:
       QCOMPARE(dialog->findChild<QLineEdit *>(QStringLiteral("uploadUrl"))->text(), QStringLiteral("https://example.test/image"));
   }
 
+  void windowDropRejectsTextOnlyPayload() {
+    ApplicationWindow window({}); window.show();
+    QSignalSpy dropped(&window, &ApplicationWindow::filesDropped);
+    QMimeData text; text.setText(QStringLiteral("private-drag-fixture"));
+    QDragEnterEvent enter(QPoint(4, 4), Qt::CopyAction, &text, Qt::LeftButton, Qt::NoModifier);
+    QApplication::sendEvent(window.centralWidget(), &enter); QVERIFY(!enter.isAccepted());
+    QDropEvent drop(QPointF(4, 4), Qt::CopyAction, &text, Qt::LeftButton, Qt::NoModifier);
+    QApplication::sendEvent(&window, &drop); QVERIFY(!drop.isAccepted()); QCOMPARE(dropped.count(), 0);
+  }
+
   void windowDropIgnoresNonLocalUrls() {
     ApplicationWindow window({});
     window.show();
@@ -419,7 +429,7 @@ private slots:
     const auto second = QUrl::fromLocalFile(QStringLiteral("/tmp/upload-b.txt")).toLocalFile();
     QMimeData data;
     data.setUrls({QUrl::fromLocalFile(first), QUrl(QStringLiteral("https://example.test/ignored")), QUrl::fromLocalFile(second)});
-    QDragEnterEvent enter(QPointF(4, 4), Qt::CopyAction, &data, Qt::LeftButton, Qt::NoModifier);
+    QDragEnterEvent enter(QPoint(4, 4), Qt::CopyAction, &data, Qt::LeftButton, Qt::NoModifier);
     QApplication::sendEvent(window.centralWidget(), &enter);
     QVERIFY(enter.isAccepted());
     QDropEvent drop(QPointF(4, 4), Qt::CopyAction, &data, Qt::LeftButton, Qt::NoModifier);
@@ -429,7 +439,7 @@ private slots:
 
     QMimeData remote;
     remote.setUrls({QUrl(QStringLiteral("https://example.test/only"))});
-    QDragEnterEvent remoteEnter(QPointF(4, 4), Qt::CopyAction, &remote, Qt::LeftButton, Qt::NoModifier);
+    QDragEnterEvent remoteEnter(QPoint(4, 4), Qt::CopyAction, &remote, Qt::LeftButton, Qt::NoModifier);
     QApplication::sendEvent(window.centralWidget(), &remoteEnter);
     QVERIFY(!remoteEnter.isAccepted());
     QDropEvent remoteDrop(QPointF(4, 4), Qt::CopyAction, &remote, Qt::LeftButton, Qt::NoModifier);

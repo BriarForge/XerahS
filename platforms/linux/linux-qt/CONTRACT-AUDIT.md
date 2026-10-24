@@ -1134,3 +1134,22 @@ DrawingEffectsTest passes 51 cases locally. All expected vectors/goldens and
 supported targets remain unchanged. The mandated full gate and exact pushed
 baseline CI provide final verification; their result is recorded in progress.
 The pending counter fault correction remains safely preserved for the next slice.
+
+
+## 2026-10-24 — Keep upload drop fixtures on the supported Qt API
+
+Qt compatibility checkpoint `1a8df9c1481885d15fe1f8eb5920ae707e4050c9` passed the
+full local gate (114/114, 27.22 s). [Ubuntu CI 40099542917](https://github.com/BriarForge/XerahS/actions/runs/40099542917)
+now builds the drawing helper and continues to FileUploadTest, where three
+QDragEnterEvent constructors used QPointF. Qt 6.4.2 requires QPoint there.
+The fixtures now pass the same integer coordinates through that compatible
+signature. QDropEvent retains its correct floating-point coordinates. No case,
+assertion, input operation or deadline was removed or weakened.
+
+A new text-only drag/drop case verifies that no file-upload request is emitted.
+Existing two-file/private HTTP and remote-URL rejection cases remain. The full
+file-upload target and mandated gate verify this correction; exact pushed
+baseline CI is required before declaring the baseline restored. This adds no
+dependency and changes no product upload/capture behavior, contract or golden.
+The counter handling implementation is checkpointed at `8d3950a`; its focused
+save/pipeline/retry/controller suites pass 4/4 in 13.06 s with regression proof.
