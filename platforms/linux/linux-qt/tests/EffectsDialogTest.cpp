@@ -1,5 +1,8 @@
 // EDITOR-EFFECTS-001: EE-002..EE-006, EE-010..EE-014.
 #include "EffectsDialog.h"
+#include "PresetDialog.h"
+#include "image-editor/effects/CensusCatalog.h"
+#include "image-editor/effects/ParameterUnits.h"
 #include "image-editor/effects/SxiePreset.h"
 #include "EditorSource.h"
 #include "EditorWindow.h"
@@ -55,6 +58,7 @@ public:
       for (int i = 0; i < (amount == 1 ? 80 : 3); ++i) { QThread::msleep(5); context.progress(i); }
     }
     if (probe) ++probe->finished;
+    if (s.id == "unavailable") return {{}, "effect-unavailable"};
     if (s.id == "fail") return {{}, "effect-failed"};
     QImage result = s.changesSize ? QImage(source.width() + 4, source.height() + 6, QImage::Format_ARGB32) : source.copy();
     result.setColorSpace(source.colorSpace()); result.fill(qRgba(amount, 20, 30, 40)); return {result, {}};
@@ -165,16 +169,105 @@ private slots:
     EffectsDialog d(*loaded.document, loaded.image, {}, nullptr, temp.filePath("state.json")); d.show();
     auto *list = d.findChild<QListWidget *>("effectsList"); auto *categories = d.findChild<QComboBox *>("effectsCategory");
     auto *search = d.findChild<QLineEdit *>("effectsSearch");
-    QCOMPARE(list->count(), builtinEffects().size());
+    QCOMPARE(list->count(), 232);
     for (int i = 0; i < 4; ++i) {
       categories->setCurrentIndex(i + 1); int count = 0;
-      const auto catalog = builtinEffects();
-      for (const auto *s : catalog.specs()) if (int(s->category) == i) ++count;
+      for (const auto &s : censusCatalog()) if (int(s.category) == i) ++count;
       QCOMPARE(list->count(), count);
     }
     categories->setCurrentIndex(0); search->setText("INVERT"); QCOMPARE(list->count(), 1); QCOMPARE(d.selectedId(), QString("invert"));
     QVERIFY(QAccessible::queryAccessibleInterface(list)); QVERIFY(!categories->accessibleName().isEmpty());
     search->clear(); list->setFocus(); QTest::keyClick(list, Qt::Key_End); QCOMPARE(list->currentRow(), list->count() - 1);
+  }
+  void unavailableCensusAndSearch() {
+    QTemporaryDir temp; const auto loaded = source();
+    EffectsDialog d(*loaded.document, loaded.image, {}, nullptr, temp.filePath("state"));
+    auto *list = d.findChild<QListWidget *>("effectsList");
+    QSet<QString> ids;
+    for (int i = 0; i < list->count(); ++i) {
+      const auto *item = list->item(i); const auto id = item->data(Qt::UserRole).toString();
+      QVERIFY(!ids.contains(id)); ids.insert(id);
+      if (!builtinEffects().find(id)) {
+        QVERIFY(!(item->flags() & Qt::ItemIsEnabled));
+        QCOMPARE(item->data(Qt::UserRole + 1).toString(), QString("effect-unavailable"));
+        QCOMPARE(item->data(Qt::UserRole + 2).toString(), id == "remove_background"
+            ? QString("needs an approved local model") : QString("not implemented on this platform"));
+        QVERIFY(item->data(Qt::AccessibleTextRole).toString().contains("effect-unavailable"));
+      }
+    }
+    QCOMPARE(ids.size(), 232);
+    for (const auto &effect : censusCatalog()) QVERIFY(ids.contains(effect.id));
+    auto *search = d.findChild<QLineEdit *>("effectsSearch"); search->setText("remove_background");
+    QCOMPARE(list->count(), 1);
+    QVERIFY(list->item(0)->text().contains("needs an approved local model"));
+    QVERIFY(!d.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply)->isEnabled());
+    search->setText("remove background"); QCOMPARE(list->count(), 1);
+    PresetStep step; step.id = "remove_background"; EffectPreset preset; preset.steps.append(step);
+    PresetDialog imported(*loaded.document, loaded.image, {}, std::make_shared<EffectRegistry>(builtinEffects()));
+    imported.setPreset(preset);
+    QVERIFY(imported.findChild<QListWidget *>("presetSteps")->item(0)->text().contains("effect-unavailable: needs an approved local model"));
+  }
+  void invalidTypedValueAndRecovery() {
+    QTemporaryDir temp; const auto loaded = source(); int commits = 0;
+    EffectsDialog d(*loaded.document, loaded.image, [&](PreparedCanvasEdit) { ++commits; return true; }, nullptr, temp.filePath("state"), registry());
+    d.show(); auto *apply = d.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply);
+    QTRY_VERIFY(apply->isEnabled());
+    auto *edit = d.findChild<QLineEdit *>("param:amount"); auto *error = d.findChild<QLabel *>("error:amount");
+    edit->setFocus(); edit->selectAll(); QTest::keyClicks(edit, "11");
+    QCOMPARE(edit->text(), QString("11")); QVERIFY(!apply->isEnabled());
+    QVERIFY(error->text().contains("effect-invalid-parameter")); QVERIFY(error->text().contains("Amount"));
+    QVERIFY(edit->accessibleDescription().contains("Range 0 to 10"));
+    QVERIFY(edit->accessibleDescription().contains("effect-invalid-parameter"));
+    apply->setFocus(); QCOMPARE(edit->text(), QString("11"));
+    d.accept(); QTest::qWait(150); QCOMPARE(commits, 0); QVERIFY(d.previewImage().isNull());
+    edit->setText("bad"); QVERIFY(!apply->isEnabled());
+    edit->setText("1.5"); QVERIFY(!apply->isEnabled());
+    edit->setText("3"); QVERIFY(error->text().isEmpty()); QVERIFY(apply->isEnabled());
+    auto *slider = d.findChild<QSlider *>("slider:amount"); slider->setFocus(); QTest::keyClick(slider, Qt::Key_Right);
+    QCOMPARE(edit->text(), QString("4"));
+    QTRY_VERIFY(!d.previewImage().isNull());
+  }
+  void unitsAndRuntimeUnavailable() {
+    QCOMPARE(parameterUnit("celtic_knot_border", "strand_width"), QString("%"));
+    QCOMPARE(parameterUnit("film_strip_frame", "hole_size"), QString("%"));
+    QCOMPARE(parameterUnit("reflection", "skew_size"), QString("%"));
+    QVERIFY(parameterUnit("fake", "size").isEmpty());
+    QTemporaryDir temp; const auto loaded = source();
+    EffectsDialog d(*loaded.document, loaded.image, {}, nullptr, temp.filePath("units"));
+    auto *search = d.findChild<QLineEdit *>("effectsSearch");
+    const QVector<QStringList> samples = {{"border", "size", "px"}, {"inner_shadow", "opacity", "%"}, {"rotate_custom_angle", "angle", "°"}, {"fake_cursor", "scale", "×"}};
+    for (const auto &sample : samples) {
+      search->setText(sample[0]);
+      auto *list = d.findChild<QListWidget *>("effectsList");
+      for (int i = 0; i < list->count(); ++i) if (list->item(i)->data(Qt::UserRole).toString() == sample[0]) list->setCurrentRow(i);
+      auto *unit = d.findChild<QLabel *>("unit:" + sample[1]); QVERIFY2(unit, qPrintable(sample[0] + ": " + d.selectedId())); QCOMPARE(unit->text(), sample[2]);
+      auto *control = d.findChild<QWidget *>("param:" + sample[1]); QVERIFY(control->accessibleName().contains(sample[2]));
+      QVERIFY(control->accessibleDescription().contains("Range"));
+    }
+    search->setText("border");
+    auto *list = d.findChild<QListWidget *>("effectsList");
+    for (int i = 0; i < list->count(); ++i) if (list->item(i)->data(Qt::UserRole).toString() == "border") list->setCurrentRow(i);
+    auto *size = d.findChild<QLineEdit *>("param:size"); QVERIFY(size); size->setText("-1");
+    QVERIFY(size->accessibleName().contains("px"));
+    QVERIFY(size->accessibleDescription().contains("effect-invalid-parameter: size"));
+    QVERIFY(size->accessibleDescription().contains("px"));
+    QVERIFY(d.findChild<QLabel *>("error:size")->text().contains("px"));
+    search->setText("draw_image");
+    auto *mode = d.findChild<QComboBox *>("param:size_mode"); QVERIFY(mode);
+    QCOMPARE(d.findChild<QLabel *>("unit:size_width")->text(), QString("px"));
+    mode->setCurrentText("percentage_of_canvas");
+    QCOMPARE(d.findChild<QLabel *>("unit:size_width")->text(), QString("%"));
+    QVERIFY(d.findChild<QLineEdit *>("param:size_width")->accessibleName().contains("%"));
+    EffectsDialog unavailable(*loaded.document, loaded.image, {}, nullptr, temp.filePath("runtime"), registry("unavailable"));
+    unavailable.show(); auto *status = unavailable.findChild<QLabel *>("effectsStatus");
+    QTRY_VERIFY(status->text().startsWith("effect-unavailable: "));
+    QVERIFY(status->text().contains("native rendering resource is unavailable"));
+    QVERIFY(unavailable.previewImage().isNull());
+    QCOMPARE(status->accessibleDescription(), status->text());
+    QTRY_VERIFY(unavailable.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply)->isEnabled());
+    unavailable.accept();
+    QTRY_VERIFY(status->text().startsWith("effect-unavailable: "));
+    QVERIFY(unavailable.previewImage().isNull());
   }
   void storeRoundTripUnknownAndConflict() {
     QTemporaryDir temp; const auto path = temp.filePath("state.json");
@@ -189,13 +282,13 @@ private slots:
   }
   void controlsResetAndAccessibility() {
     QTemporaryDir temp; const auto loaded = source(); EffectsDialog d(*loaded.document, loaded.image, {}, nullptr, temp.filePath("state"), registry());
-    QVERIFY(d.findChild<QSpinBox *>("param:amount")); auto *spin = d.findChild<QDoubleSpinBox *>("param:strength"); QVERIFY(spin);
-    QCOMPARE(spin->minimum(), 0.0); QCOMPARE(spin->maximum(), 1.0);
+    QVERIFY(d.findChild<QLineEdit *>("param:amount")); auto *spin = d.findChild<QLineEdit *>("param:strength"); QVERIFY(spin);
+    QCOMPARE(spin->accessibleDescription(), QString("Range 0 to 1"));
     QVERIFY(d.findChild<QCheckBox *>("param:enabled")); QVERIFY(d.findChild<QPushButton *>("param:color"));
     QCOMPARE(d.findChild<QComboBox *>("param:choice")->count(), 2);
     QVERIFY(d.findChild<QLineEdit *>("param:text")); QVERIFY(d.findChild<QLineEdit *>("param:path"));
     for (auto *widget : d.findChildren<QWidget *>()) if (widget->objectName().startsWith("param:")) QVERIFY(!widget->accessibleName().isEmpty());
-    spin->setValue(0.75); QCOMPARE(d.parameters().value("strength").toDouble(), 0.75);
+    spin->setText("0.75"); QCOMPARE(d.parameters().value("strength").toDouble(), 0.75);
     d.findChild<QPushButton *>("effectsReset")->click(); QCOMPARE(d.parameters().value("strength").toDouble(), 0.5);
     QCOMPARE(d.parameters().value("amount").toInt(), 1);
   }
@@ -206,7 +299,7 @@ private slots:
     EffectsDialog d(*loaded.document, loaded.image, [&](PreparedCanvasEdit edit) { ++commits; return session.commitCanvas(*edit.result.document, state); }, nullptr, temp.filePath("state"), registry());
     QSignalSpy preview(&d, &EffectsDialog::previewChanged); QSignalSpy applied(&d, &EffectsDialog::effectCommitted); d.show();
     QTRY_VERIFY(preview.count() > 0); QCOMPARE(commits, 0); QCOMPARE(serializeDocument(session.document()), before); QVERIFY(!session.dirty()); QCOMPARE(session.undoCount(), 0);
-    d.findChild<QSpinBox *>("param:amount")->setValue(7); QTRY_VERIFY(!d.previewImage().isNull()); QTRY_COMPARE(qRed(d.previewImage().pixel(0, 0)), 7);
+    d.findChild<QLineEdit *>("param:amount")->setText("7"); QTRY_VERIFY(!d.previewImage().isNull()); QTRY_COMPARE(qRed(d.previewImage().pixel(0, 0)), 7);
     QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), 0);
     d.accept(); QTRY_COMPARE(applied.count(), 1); QCOMPARE(commits, 1); QCOMPARE(session.undoCount(), 1); QVERIFY(session.dirty());
     QCOMPARE(QImage::fromData(session.document().sourceImagePng).pixel(0, 0), qRgba(7, 20, 30, 40));
@@ -220,10 +313,10 @@ private slots:
     QTemporaryDir temp; const auto loaded = source(); auto probe = std::make_shared<Probe>(); int commits = 0;
     EffectsDialog d(*loaded.document, loaded.image, [&](PreparedCanvasEdit) { ++commits; return true; }, nullptr, temp.filePath("state"), registry("slow", false, Mode::Previewable, probe));
     d.show(); QSignalSpy preview(&d, &EffectsDialog::previewChanged);
-    QTRY_COMPARE(probe->started.load(), 1); d.findChild<QSpinBox *>("param:amount")->setValue(2);
+    QTRY_COMPARE(probe->started.load(), 1); d.findChild<QLineEdit *>("param:amount")->setText("2");
     QTRY_VERIFY(!d.previewImage().isNull()); QTRY_COMPARE(qRed(d.previewImage().pixel(0, 0)), 2); QTRY_COMPARE(probe->finished.load(), 2);
     QCOMPARE(preview.count(), 1); QCOMPARE(qRed(d.previewImage().pixel(0, 0)), 2); QCOMPARE(commits, 0);
-    d.findChild<QSpinBox *>("param:amount")->setValue(1); QTRY_COMPARE(probe->started.load(), 3);
+    d.findChild<QLineEdit *>("param:amount")->setText("1"); QTRY_COMPARE(probe->started.load(), 3);
     QTest::keyClick(&d, Qt::Key_Escape); QTRY_COMPARE(probe->finished.load(), 3); QCOMPARE(preview.count(), 1); QCOMPARE(commits, 0); QCOMPARE(d.result(), int(QDialog::Rejected));
   }
   void failureAndApplyCancellation() {

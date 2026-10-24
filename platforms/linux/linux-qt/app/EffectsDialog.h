@@ -1,4 +1,4 @@
-// EDITOR-EFFECTS-001: EE-002..EE-006, EE-010..EE-014.
+// EDITOR-EFFECTS-001: EE-001..EE-006, EE-010..EE-014, EE-018.
 #pragma once
 
 #include "EditorCanvasOperations.h"
@@ -18,6 +18,8 @@ class QPushButton;
 class QDialogButtonBox;
 
 namespace xerahs::app {
+QString effectUnavailableReason(const QString &id);
+
 struct EffectsLists {
   QStringList recent, favorites;
   QMap<QString, quint64> seeds;
@@ -58,6 +60,7 @@ private:
   void selectEffect();
   void buildParameters();
   void changed();
+  bool validateParameters();
   void run(bool apply);
   void persist(bool closeAfter = false);
   void showError(const QString &code);
@@ -84,6 +87,9 @@ private:
   quint64 m_revision = 0;
   quint64 m_seed = 0;
   QMap<QString, quint64> m_draftSeeds;
+  QMap<QString, QWidget *> m_controls;
+  QMap<QString, QLabel *> m_errors;
+  bool m_parametersValid = true;
   bool m_seedValid = true;
   bool m_loading = true, m_saving = false, m_saveAgain = false;
   bool m_applying = false, m_closing = false, m_closeAfterSave = false;

@@ -62,6 +62,20 @@ class SxiePresetTest : public QObject {
   Q_OBJECT
 private slots:
   void initTestCase() { QApplication::setAttribute(Qt::AA_DontUseNativeDialogs); }
+  void unavailableMappedStepVisible() {
+    const EffectRegistry unavailable;
+    const auto preset = readSxiePreset(configZip({{"Effects", QJsonArray{QJsonObject{{"$type", "ShareX.ImageEffectsLib.Scale, ShareX.ImageEffectsLib"}}}}}), unavailable);
+    QVERIFY(preset.ok()); QCOMPARE(preset.steps.size(), 1);
+    QCOMPARE(preset.steps[0].id, QString("scale")); QVERIFY(!preset.steps[0].supported);
+    const auto loaded = prepareCapturedSource(QImage(8, 8, QImage::Format_ARGB32)); QVERIFY(loaded.document);
+    PresetDialog dialog(*loaded.document, loaded.image, {}, std::make_shared<EffectRegistry>(unavailable));
+    dialog.setPreset(preset);
+    const auto *item = dialog.findChild<QListWidget *>("presetSteps")->item(0);
+    QVERIFY(item->text().contains("effect-unavailable: not implemented on this platform"));
+    QVERIFY(!(item->flags() & Qt::ItemIsEnabled));
+    QVERIFY(item->data(Qt::AccessibleTextRole).toString().contains("effect-unavailable"));
+    QCOMPARE(writeXsiePreset(dialog.preset(), unavailable), writeXsiePreset(preset, unavailable));
+  }
   void archiveValid() {
     for (bool compressed : {false, true}) {
       const auto a = readSxieArchive(zip({{"Config.json", "{}"}, {"assets/x", "abc"}, {"empty", ""}}, compressed));

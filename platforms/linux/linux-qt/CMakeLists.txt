@@ -1187,3 +1187,5 @@ target_link_libraries(scroll-capture-test PRIVATE xerahs_core xerahs_editor_code
 add_test(NAME scroll-capture COMMAND "${XERAHS_DBUS_RUN_SESSION}"
          "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf" -- $<TARGET_FILE:scroll-capture-test>)
 set_tests_properties(scroll-capture PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 90)
+# EE-003, EE-013: explicit parameter units shared by the generated controls.
+target_sources(xerahs_editor_source PRIVATE src/image-editor/effects/ParameterUnits.h)

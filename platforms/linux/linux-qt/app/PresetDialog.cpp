@@ -1,5 +1,7 @@
 // COMPAT-SXIE-001, EE-004..EE-008, EE-015..EE-016, ROOT-SECURITY-001.
 #include "PresetDialog.h"
+#include "image-editor/effects/CensusCatalog.h"
+#include <algorithm>
 #include <QDialogButtonBox>
 #include <QFile>
 #include <QFileDialog>
@@ -90,9 +92,14 @@ void PresetDialog::setPreset(EffectPreset preset) {
   m_preset = std::move(preset); m_list->clear(); bool any = false;
   for (const auto &step : m_preset.steps) {
     const auto name = step.id.isEmpty() ? step.legacy.value("$type").toString() : step.id;
+    const bool unavailable = !m_registry->find(step.id) && std::any_of(censusCatalog().cbegin(), censusCatalog().cend(), [&](const CensusEffect &e) { return e.id == step.id; });
+    const auto diagnostic = unavailable ? " — effect-unavailable: " + effectUnavailableReason(step.id) : QString();
     m_list->addItem((step.supported ? tr("Supported: ") : tr("Unsupported: ")) + name +
-        (!step.enabled ? tr(" (disabled)") : QString()) + (step.diagnostics.isEmpty() ? QString() : " — " + step.diagnostics.join(", ")));
-    any |= step.supported && step.enabled;
+        (!step.enabled ? tr(" (disabled)") : QString()) + (step.diagnostics.isEmpty() ? QString() : " — " + step.diagnostics.join(", ")) + diagnostic);
+    auto *item = m_list->item(m_list->count() - 1);
+    item->setData(Qt::AccessibleTextRole, item->text());
+    if (unavailable) item->setFlags(item->flags() & ~Qt::ItemIsEnabled);
+    any |= step.supported && step.enabled && !unavailable;
   }
   m_canApply = m_preset.ok() && any; m_apply->setEnabled(m_canApply); m_export->setEnabled(m_preset.ok());
   status(m_preset.error, m_preset.ok() ? tr("Apply runs supported, enabled steps in order as one undo step. Unsupported data is retained for export.") : tr("The preset could not be read. The document is unchanged."));
@@ -107,7 +114,7 @@ void PresetDialog::accept() {
   }, [this, revision](PreparedCanvasEdit edit) {
     if (revision != m_revision || m_work.cancelled()) return;
     m_busy = false; m_apply->setEnabled(m_canApply); m_export->setEnabled(true);
-    if (edit.result.error) { status(*edit.result.error, tr("The preset failed. The document is unchanged.")); return; }
+    if (edit.result.error) { status(*edit.result.error, edit.result.error->startsWith("effect-unavailable") ? tr("A required font or native rendering resource is unavailable. The document is unchanged.") : tr("The preset failed. The document is unchanged.")); return; }
     const QPointer<PresetDialog> owner(this);
     const bool committed = m_commit && m_commit(std::move(edit));
     if (!owner) return;

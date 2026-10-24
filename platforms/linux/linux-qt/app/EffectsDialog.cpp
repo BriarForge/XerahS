@@ -1,6 +1,8 @@
-// EDITOR-EFFECTS-001: EE-002..EE-006, EE-010..EE-014.
+// EDITOR-EFFECTS-001: EE-001..EE-006, EE-010..EE-014, EE-018.
 #include "EffectsDialog.h"
 #include "PresetDialog.h"
+#include "image-editor/effects/CensusCatalog.h"
+#include "image-editor/effects/ParameterUnits.h"
 #include <QRandomGenerator>
 #include <QRegularExpressionValidator>
 #include "EditorSource.h"
@@ -11,7 +13,6 @@
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QDir>
-#include <QDoubleSpinBox>
 #include <QFileDialog>
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -23,13 +24,13 @@
 #include <QPushButton>
 #include <QScrollArea>
 #include <QSlider>
-#include <QSpinBox>
 #include <QStandardPaths>
 #include <QVBoxLayout>
 #include <QSignalBlocker>
 #include <QColorSpace>
 #include <QPointer>
 #include <cmath>
+#include <algorithm>
 
 namespace xerahs::app {
 using namespace xerahs::effects;
@@ -39,7 +40,7 @@ QStringList knownIds(const QJsonArray &array, const EffectRegistry &registry) {
   QStringList ids;
   for (const auto &entry : array) {
     const auto id = entry.toString();
-    if (registry.find(id) && !ids.contains(id)) ids.append(id);
+    if ((registry.find(id) || std::any_of(censusCatalog().cbegin(), censusCatalog().cend(), [&](const CensusEffect &e) { return e.id == id; })) && !ids.contains(id)) ids.append(id);
   }
   return ids;
 }
@@ -207,7 +208,18 @@ EffectsDialog::EffectsDialog(AnnotationDocument document, QImage source, Commit 
 }
 EffectsDialog::~EffectsDialog() { m_work.cancel(); }
 QString EffectsDialog::selectedId() const { return m_list->currentItem() ? m_list->currentItem()->data(Qt::UserRole).toString() : QString(); }
+QString effectUnavailableReason(const QString &id) {
+  return id == "remove_background" ? QStringLiteral("needs an approved local model")
+      : QStringLiteral("not implemented on this platform");
+}
 void EffectsDialog::showError(const QString &code) {
+  if (code.startsWith("effect-unavailable")) {
+    const auto reason = code.contains(':') ? code.mid(code.indexOf(':') + 1).trimmed()
+        : tr("A required font or native rendering resource is unavailable.");
+    m_status->setText("effect-unavailable: " + reason);
+    m_status->setAccessibleDescription(m_status->text());
+    return;
+  }
   m_status->setText(code + (code.startsWith("effects-store-")
       ? tr(": Recent and favorite effects could not be saved or loaded.")
       : tr(": The effect could not be completed. The document has been kept unchanged.")));
@@ -217,28 +229,52 @@ void EffectsDialog::updateFavorite() {
   const bool writable = !m_loading && m_lists.diagnostic.isEmpty() && !m_applying && !m_closeAfterSave;
   m_favorite->setEnabled(writable && !selectedId().isEmpty()); m_clearRecent->setEnabled(writable);
   m_favorite->setChecked(m_lists.favorites.contains(selectedId()));
-  m_buttons->button(QDialogButtonBox::Apply)->setEnabled(!m_loading && !m_applying && !m_closeAfterSave && !selectedId().isEmpty());
+  m_buttons->button(QDialogButtonBox::Apply)->setEnabled(!m_loading && !m_applying && !m_closeAfterSave && m_seedValid && m_parametersValid && m_registry->find(selectedId()));
 }
 void EffectsDialog::rebuildList() {
   const auto previous = selectedId();
   {
     QSignalBlocker block(m_list); m_list->clear();
     const auto category = m_category->currentIndex(); const auto query = m_search->text();
-    auto specs = m_registry->specs();
-    if (category == 5 || category == 6) {
-      specs.clear();
-      for (const auto &id : category == 5 ? m_lists.recent : m_lists.favorites)
-        if (const auto *effect = m_registry->find(id)) specs.append(&effect->spec());
+    struct Entry { QString id, name; Category category; };
+    QVector<Entry> entries;
+    for (const auto &effect : censusCatalog()) {
+      const auto *native = m_registry->find(effect.id);
+      auto name = effect.id; name.replace('_', ' ');
+      entries.append({effect.id, native ? native->spec().displayName : name, effect.category});
     }
-    for (const auto *spec : specs) {
-      if (category >= 1 && category <= 4 && int(spec->category) != category - 1) continue;
-      if (!spec->displayName.contains(query, Qt::CaseInsensitive) && !spec->id.contains(query, Qt::CaseInsensitive)) continue;
-      auto *item = new QListWidgetItem(spec->displayName + " (" + spec->id + ")", m_list);
-      item->setData(Qt::UserRole, spec->id); item->setData(Qt::AccessibleTextRole, item->text());
-      if (spec->id == previous) m_list->setCurrentItem(item);
+    for (const auto *spec : m_registry->specs())
+      if (std::none_of(entries.cbegin(), entries.cend(), [&](const Entry &entry) { return entry.id == spec->id; }))
+        entries.append({spec->id, spec->displayName, spec->category});
+    std::stable_sort(entries.begin(), entries.end(), [&](const Entry &a, const Entry &b) {
+      if (category == 5) return m_lists.recent.indexOf(a.id) < m_lists.recent.indexOf(b.id);
+      if (category == 6) return m_lists.favorites.indexOf(a.id) < m_lists.favorites.indexOf(b.id);
+      return a.category != b.category ? a.category < b.category : a.name.compare(b.name, Qt::CaseInsensitive) < 0;
+    });
+    for (const auto &entry : entries) {
+      if (category == 5 && !m_lists.recent.contains(entry.id)) continue;
+      if (category == 6 && !m_lists.favorites.contains(entry.id)) continue;
+      if (category >= 1 && category <= 4 && int(entry.category) != category - 1) continue;
+      if (!entry.name.contains(query, Qt::CaseInsensitive) && !entry.id.contains(query, Qt::CaseInsensitive)) continue;
+      auto *item = new QListWidgetItem(entry.name + " (" + entry.id + ")", m_list);
+      item->setData(Qt::UserRole, entry.id);
+      if (!m_registry->find(entry.id)) {
+        const auto reason = effectUnavailableReason(entry.id);
+        item->setText(item->text() + " — effect-unavailable: " + reason);
+        item->setFlags(item->flags() & ~Qt::ItemIsEnabled);
+        item->setData(Qt::UserRole + 1, "effect-unavailable");
+        item->setData(Qt::UserRole + 2, reason);
+        item->setToolTip("effect-unavailable: " + reason);
+      }
+      item->setData(Qt::AccessibleTextRole, item->text());
+      if (entry.id == previous) m_list->setCurrentItem(item);
     }
   }
-  if (!m_list->currentItem() && m_list->count()) m_list->setCurrentRow(0);
+  if (!m_list->currentItem() && m_list->count()) {
+    int first = 0;
+    for (int i = 0; i < m_list->count(); ++i) if (m_list->item(i)->flags() & Qt::ItemIsEnabled) { first = i; break; }
+    m_list->setCurrentRow(first);
+  }
   else if (selectedId() != previous) selectEffect();
   updateFavorite();
 }
@@ -247,7 +283,7 @@ void EffectsDialog::selectEffect() {
 }
 void EffectsDialog::buildParameters() {
   while (m_form->rowCount()) m_form->removeRow(0);
-  m_values.clear(); m_seedValid = true;
+  m_values.clear(); m_controls.clear(); m_errors.clear(); m_seedValid = true; m_parametersValid = true;
   const auto *effect = m_registry->find(selectedId()); if (!effect) return;
   m_seed = m_draftSeeds.value(effect->spec().id, m_lists.seeds.value(effect->spec().id, defaultEffectSeed(effect->spec().id)));
   if (effect->spec().usesSeed) {
@@ -269,25 +305,37 @@ void EffectsDialog::buildParameters() {
     const auto set = [this, id = param.id](QVariant value) { m_values[id] = std::move(value); changed(); };
     if (param.kind == ParamKind::Float || param.kind == ParamKind::Int) {
       auto *row = new QWidget(m_parameters); auto *box = new QHBoxLayout(row); box->setContentsMargins(0, 0, 0, 0);
-      auto *slider = new QSlider(Qt::Horizontal, row); slider->setObjectName("slider:" + param.id); slider->setAccessibleName(param.label);
-      if (param.kind == ParamKind::Int) {
-        auto *spin = new QSpinBox(row); spin->setRange(int(param.minimum), int(param.maximum)); spin->setValue(param.defaultValue.toInt());
-        slider->setRange(spin->minimum(), spin->maximum()); slider->setValue(spin->value());
-        connect(spin, &QSpinBox::valueChanged, this, [set, slider](int value) { QSignalBlocker block(slider); slider->setValue(value); set(value); });
-        connect(slider, &QSlider::valueChanged, spin, &QSpinBox::setValue);
-        control = spin; box->addWidget(slider); box->addWidget(spin);
-      } else {
-        auto *spin = new QDoubleSpinBox(row); spin->setDecimals(6); spin->setRange(param.minimum, param.maximum); spin->setValue(param.defaultValue.toDouble());
-        slider->setRange(0, 10000);
-        const auto position = [param](double value) { return param.maximum == param.minimum ? 0 : int(std::round((value - param.minimum) * 10000 / (param.maximum - param.minimum))); };
-        slider->setValue(position(spin->value()));
-        connect(spin, &QDoubleSpinBox::valueChanged, this, [set, slider, position](double value) { QSignalBlocker block(slider); slider->setValue(position(value)); set(value); });
-        connect(slider, &QSlider::valueChanged, spin, [spin, param](int value) { spin->setValue(param.minimum + (param.maximum - param.minimum) * value / 10000); });
-        control = spin; box->addWidget(slider); box->addWidget(spin);
-      }
-      control->setObjectName("param:" + param.id); control->setAccessibleName(param.label);
-      control->setAccessibleDescription(tr("Range %1 to %2").arg(param.minimum).arg(param.maximum));
-      row->setFocusProxy(control); m_form->addRow(param.label, row); continue;
+      auto *slider = new QSlider(Qt::Horizontal, row); slider->setObjectName("slider:" + param.id);
+      auto *edit = new QLineEdit(param.defaultValue.toString(), row);
+      if (param.kind == ParamKind::Int) slider->setRange(int(param.minimum), int(param.maximum));
+      else slider->setRange(0, 10000);
+      const auto position = [param](double value) {
+        if (param.kind == ParamKind::Int) return int(value);
+        return param.maximum == param.minimum ? 0 : int(std::round((value - param.minimum) * 10000 / (param.maximum - param.minimum)));
+      };
+      slider->setValue(position(param.defaultValue.toDouble()));
+      connect(edit, &QLineEdit::textChanged, this, [this, param, slider, position](const QString &text) {
+        bool ok = false; const double value = text.toDouble(&ok);
+        m_values[param.id] = ok ? QVariant(value) : QVariant(text);
+        if (ok && value >= param.minimum && value <= param.maximum && (param.kind != ParamKind::Int || std::trunc(value) == value)) {
+          QSignalBlocker block(slider); slider->setValue(position(value));
+        }
+        changed();
+      });
+      connect(slider, &QSlider::valueChanged, edit, [edit, param](int value) {
+        const double number = param.kind == ParamKind::Int ? value : param.minimum + (param.maximum - param.minimum) * value / 10000;
+        edit->setText(QString::number(number, 'g', 15));
+      });
+      const auto unit = parameterUnit(effect->spec().id, param.id, m_values);
+      const auto name = param.label + (unit.isEmpty() ? QString() : " (" + unit + ")");
+      const auto range = tr("Range %1 to %2").arg(param.minimum).arg(param.maximum);
+      edit->setObjectName("param:" + param.id); edit->setAccessibleName(name); edit->setAccessibleDescription(range);
+      slider->setAccessibleName(name); slider->setAccessibleDescription(range);
+      box->addWidget(slider); box->addWidget(edit);
+      auto *unitLabel = new QLabel(unit, row); unitLabel->setObjectName("unit:" + param.id); box->addWidget(unitLabel);
+      auto *error = new QLabel(row); error->setObjectName("error:" + param.id); error->setTextFormat(Qt::PlainText); error->setWordWrap(true); box->addWidget(error);
+      m_controls[param.id] = edit; m_errors[param.id] = error;
+      row->setFocusProxy(edit); m_form->addRow(param.label, row); continue;
     } else if (param.kind == ParamKind::Bool) {
       auto *check = new QCheckBox(m_parameters); check->setChecked(param.defaultValue.toBool());
       connect(check, &QCheckBox::toggled, this, set); control = check;
@@ -314,21 +362,56 @@ void EffectsDialog::buildParameters() {
           connect(picker, &QFileDialog::fileSelected, edit, &QLineEdit::setText); picker->open();
         });
         box->addWidget(edit); box->addWidget(browse);
-        edit->setObjectName("param:" + param.id); edit->setAccessibleName(param.label); row->setFocusProxy(edit); m_form->addRow(param.label, row); continue;
+        edit->setObjectName("param:" + param.id); edit->setAccessibleName(param.label);
+        auto *error = new QLabel(row); error->setObjectName("error:" + param.id); error->setTextFormat(Qt::PlainText); error->setWordWrap(true); box->addWidget(error);
+        m_controls[param.id] = edit; m_errors[param.id] = error;
+        row->setFocusProxy(edit); m_form->addRow(param.label, row); continue;
       }
     }
-    control->setObjectName("param:" + param.id); control->setAccessibleName(param.label); m_form->addRow(param.label, control);
+    control->setObjectName("param:" + param.id); control->setAccessibleName(param.label);
+    auto *row = new QWidget(m_parameters); auto *box = new QHBoxLayout(row); box->setContentsMargins(0, 0, 0, 0); box->addWidget(control);
+    auto *error = new QLabel(row); error->setObjectName("error:" + param.id); error->setTextFormat(Qt::PlainText); error->setWordWrap(true); box->addWidget(error);
+    m_controls[param.id] = control; m_errors[param.id] = error;
+    row->setFocusProxy(control); m_form->addRow(param.label, row);
   }
+}
+bool EffectsDialog::validateParameters() {
+  const auto *effect = m_registry->find(selectedId());
+  m_parametersValid = effect != nullptr;
+  if (!effect) return false;
+  for (const auto &param : effect->spec().parameters) {
+    const auto resolved = resolveParameters(effect->spec(), {{param.id, m_values.value(param.id)}});
+    const auto unit = parameterUnit(effect->spec().id, param.id, m_values);
+    const auto name = param.label + (unit.isEmpty() ? QString() : " (" + unit + ")");
+    QString range;
+    if (param.kind == ParamKind::Int || param.kind == ParamKind::Float)
+      range = tr("Range %1 to %2").arg(param.minimum).arg(param.maximum);
+    else if (param.kind == ParamKind::Enum) range = tr("Choices: %1").arg(param.choices.join(", "));
+    const auto message = resolved.ok() ? QString() : resolved.error + ": " + resolved.parameter + " — " + name + " — " + tr("Enter a valid value. ") + range;
+    m_parametersValid &= resolved.ok();
+    if (auto *control = m_controls.value(param.id)) {
+      control->setAccessibleName(name); control->setAccessibleDescription(range + (message.isEmpty() ? QString() : ". " + message));
+    }
+    if (auto *error = m_errors.value(param.id)) { error->setText(message); error->setAccessibleName(message); }
+    if (auto *label = m_parameters->findChild<QLabel *>("unit:" + param.id)) label->setText(unit);
+    if (auto *slider = m_parameters->findChild<QSlider *>("slider:" + param.id)) {
+      slider->setAccessibleName(name); slider->setAccessibleDescription(range + (message.isEmpty() ? QString() : ". " + message));
+    }
+  }
+  return m_parametersValid;
 }
 void EffectsDialog::changed() {
   m_work.cancel(); ++m_revision; m_debounce.stop(); m_previewImage = {}; m_preview->clear();
-  m_buttons->button(QDialogButtonBox::Apply)->setEnabled(m_seedValid && !selectedId().isEmpty() && !m_applying && !m_loading && !m_closeAfterSave);
-  m_progress->hide();
+  validateParameters(); updateFavorite(); m_progress->hide();
   const auto *effect = m_registry->find(selectedId());
-  if (m_seedValid && effect && effect->spec().mode == Mode::Previewable) m_debounce.start();
+  if (!effect && !selectedId().isEmpty()) {
+    m_status->setText("effect-unavailable: " + effectUnavailableReason(selectedId()));
+    m_status->setAccessibleDescription(m_status->text());
+  } else if (!m_parametersValid) showError("effect-invalid-parameter");
+  else if (m_seedValid && effect && effect->spec().mode == Mode::Previewable) m_debounce.start();
 }
 void EffectsDialog::run(bool apply) {
-  const auto id = selectedId(); const auto *effect = m_registry->find(id); if (!effect || m_closing || !m_seedValid) return;
+  const auto id = selectedId(); const auto *effect = m_registry->find(id); if (!effect || m_closing || !m_seedValid || !validateParameters()) return;
   m_work.cancel(); const auto revision = ++m_revision;
   m_applying = apply; m_parameters->setEnabled(!apply); m_category->setEnabled(!apply); m_search->setEnabled(!apply); m_list->setEnabled(!apply); m_reset->setEnabled(!apply);
   m_buttons->button(QDialogButtonBox::Apply)->setEnabled(!apply); updateFavorite();
