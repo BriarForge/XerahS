@@ -156,6 +156,47 @@ class PortalScreenshotTest final : public QObject {
   static Outcome outcome(const QSignalSpy &spy) { return spy.at(0).at(0).value<Outcome>(); }
   static QImage resultImage(const QSignalSpy &spy) { return spy.at(0).at(1).value<QImage>(); }
 private slots:
+  void unknownWorkflowOutputCannotAdmitCaptureOrWriteAnExecution() {
+    using namespace xerahs::workflows; QTemporaryDir dir; FakeScreenshotPortal portal(server);
+    NativeWorkflowExecutions executions(dir.filePath("executions"));
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    auto workflow = defaultCaptureWorkflows().entries[0]; workflow.actions = QStringList{"future-native-action"};
+    const auto id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    QVERIFY(!controller.prepareWorkflowCapture(workflow, id, "native-shell", executions.writer()));
+    QCOMPARE(portal.calls, 0); QVERIFY(!controller.busy()); QVERIFY(!controller.lastPipelineResult());
+    QVERIFY(!QFile::exists(dir.filePath("outputs"))); QVERIFY(!QFile::exists(dir.filePath("executions")));
+  }
+  void supportedOutputWorkflowAdmissionKeepsPermissionDenialBeforeActions_data() {
+    QTest::addColumn<QString>("action"); for (const auto *id : {"upload", "url-clipboard", "pin", "print"}) QTest::newRow(id) << QString::fromLatin1(id);
+  }
+  void supportedOutputWorkflowAdmissionKeepsPermissionDenialBeforeActions() {
+    using namespace xerahs::workflows; QFETCH(QString, action); QTemporaryDir dir;
+    FakeScreenshotPortal portal(server); portal.error = "org.freedesktop.portal.Error.NotAllowed";
+    NativeWorkflowExecutions executions(dir.filePath("executions"));
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    auto w = defaultCaptureWorkflows().entries[0]; w.actions = QStringList{action}; const auto id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    auto run = controller.prepareWorkflowCapture(w, id, "native-shell", executions.writer()); QVERIFY(run); run(); run = {};
+    QTRY_VERIFY(!controller.busy()); QCOMPARE(portal.calls, 1); QVERIFY(!controller.lastPipelineResult()); QVERIFY(!QFile::exists(dir.filePath("outputs")));
+    const auto result = executions.result(id); QCOMPARE(result.value("state"), QJsonValue("permission-denied")); QVERIFY(!result.contains("pipelineTaskId"));
+  }
+  void admittedPinAndPrintWorkflowsReachTheirActualNativePorts_data() {
+    QTest::addColumn<QString>("action"); QTest::newRow("pin") << QString("pin"); QTest::newRow("print") << QString("print");
+  }
+  void admittedPinAndPrintWorkflowsReachTheirActualNativePorts() {
+    using namespace xerahs::workflows; using namespace xerahs::actions; QFETCH(QString, action); QTemporaryDir dir;
+    const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto original = bytes(path);
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    NativeWorkflowExecutions executions(dir.filePath("executions")); int calls = 0; bool onGui = false; CaptureActionPorts ports;
+    ports.pin = [&](const QImage &image, const CancellationToken &) { ++calls; onGui = QThread::currentThread() == qGuiApp->thread() && image.size() == QSize(30, 25); return ActionOutcome{}; };
+    ports.print = [&](const LoadedSource &source, const CancellationToken &) { ++calls; onGui = QThread::currentThread() == qGuiApp->thread() && source.image.size() == QSize(30, 25); return ActionOutcome{}; };
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, {}, ports);
+    auto w = defaultCaptureWorkflows().entries[0]; w.actions = QStringList{action}; const auto id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    auto run = controller.prepareWorkflowCapture(w, id, "native-shell", executions.writer()); QVERIFY(run); run(); run = {};
+    QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
+    const auto receipt = controller.lastPipelineResult(); QVERIFY(receipt); QCOMPARE(receipt->pipeline.orderedResults.size(), size_t(1)); QCOMPARE(receipt->pipeline.orderedResults[0].action, action); QCOMPARE(receipt->pipeline.orderedResults[0].state, ActionState::Succeeded);
+    QCOMPARE(calls, 1); QVERIFY(onGui); QCOMPARE(executions.result(id).value("state"), QJsonValue("succeeded")); QCOMPARE(bytes(path), original); QVERIFY(!QFile::exists(dir.filePath("outputs")));
+  }
+
   void counterPersistenceFailureKeepsPngAndReportsPartialExecutionWithoutRetry() {
     using namespace xerahs::workflows; using namespace xerahs::actions;
     QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());

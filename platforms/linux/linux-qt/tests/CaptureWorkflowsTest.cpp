@@ -12,6 +12,18 @@ using namespace xerahs::actions;
 class CaptureWorkflowsTest final : public QObject {
   Q_OBJECT
 private slots:
+  void currentNativeOutputDefinitionsAreDiscoverable_data() {
+    QTest::addColumn<QString>("action");
+    for (const auto *id : {"upload", "url-clipboard", "pin", "print"}) QTest::newRow(id) << QString::fromLatin1(id);
+  }
+  void currentNativeOutputDefinitionsAreDiscoverable() {
+    QFETCH(QString, action); QTemporaryDir dir; FilePreferenceStorage storage(dir.filePath("workflows.json")); CaptureWorkflowStore store(storage);
+    auto catalog = *store.current().catalog; catalog.entries[0].actions = QStringList{action}; QVERIFY(store.save(catalog, store.revision()).saved);
+    const auto listing = store.discovery(implementedCaptureActions()); QVERIFY(listing.value("ok").toBool());
+    const auto entry = listing.value("workflows").toArray()[0].toObject(); QVERIFY(entry.value("definitionAvailable").toBool()); QVERIFY(!entry.contains("diagnosticCode"));
+    const auto choice = store.resolve(catalog.defaultId, implementedCaptureActions()); QVERIFY(choice.workflow); QCOMPARE(choice.workflow->actions, QStringList{action});
+  }
+
   void discoveryUsesSavedDefinitionsAndExcludesPrivateSettings() {
     QTemporaryDir dir; FilePreferenceStorage storage(dir.filePath("absent/workflows.json")); CaptureWorkflowStore store(storage);
     auto response = store.discovery(implementedCaptureActions()); QVERIFY(response.value("ok").toBool()); QCOMPARE(response.value("source"), QJsonValue("initial-defaults")); QVERIFY(!QFile::exists(dir.filePath("absent")));

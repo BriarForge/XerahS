@@ -18,8 +18,10 @@ bool validSnapshot(const QJsonObject &snapshot) {
   QJsonObject root{{"format", "com.xerahs.app/linux-qt/capture-workflows"}, {"version", 2},
       {"defaultId", snapshot.value("id")}, {"workflows", QJsonArray{definition}}};
   const auto parsed = parseCaptureWorkflows(QJsonDocument(root).toJson(QJsonDocument::Compact));
-  return parsed.catalog && parsed.catalog->entries.size() == 1 && workflowSnapshot(parsed.catalog->entries[0]) == snapshot &&
-      workflowAvailability(parsed.catalog->entries[0], implementedCaptureActions()).isEmpty();
+  // Records describe past settings, not permission to execute them now. Keep
+  // structural validation independent of the current native action catalogue;
+  // capture admission still checks workflowAvailability before creating work.
+  return parsed.catalog && parsed.catalog->entries.size() == 1 && workflowSnapshot(parsed.catalog->entries[0]) == snapshot;
 }
 QString date(const QDateTime &value) { return value.toUTC().toString(Qt::ISODateWithMs); }
 QJsonObject object(const WorkflowExecutionRecord &r) {

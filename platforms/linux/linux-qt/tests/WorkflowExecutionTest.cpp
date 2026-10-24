@@ -24,6 +24,22 @@ void write(const QString &path, const QByteArray &data) { QFile f(path); if (!f.
 class WorkflowExecutionTest final : public QObject {
   Q_OBJECT
 private slots:
+  void outputSettingsSnapshotsRemainReadableIndependentOfCurrentAvailability_data() {
+    QTest::addColumn<QString>("action");
+    for (const auto *id : {"upload", "url-clipboard", "pin", "print", "future-native-action"}) QTest::newRow(id) << QString::fromLatin1(id);
+  }
+  void outputSettingsSnapshotsRemainReadableIndependentOfCurrentAvailability() {
+    QFETCH(QString, action); QTemporaryDir dir; NativeWorkflowExecutions store(dir.filePath("records")); auto w = workflow(dir.filePath("output")); w.actions = QStringList{action};
+    const auto id = uuid(); WorkflowExecution execution(id, "native-shell", w, store.writer()); QVERIFY(execution.admit()); QVERIFY(execution.start()); QVERIFY(execution.finish("cancelled"));
+    const auto result = store.result(id); QVERIFY(result.value("ok").toBool()); QCOMPARE(result.value("state"), QJsonValue("cancelled"));
+    // A readable observation is not execution authority for an unknown action.
+    if (action == "future-native-action") QCOMPARE(workflowAvailability(w, implementedCaptureActions()), QString("workflow-action-unavailable"));
+    QVERIFY(!result.contains("settings"));
+    const auto path = dir.filePath("records/" + id + ".json"); const auto before = read(path);
+    NativeWorkflowExecutions reopened(dir.filePath("records")); QCOMPARE(reopened.result(id), result); QCOMPARE(read(path), before);
+    QVERIFY(parseWorkflowExecution(before, id));
+  }
+
   void durableAdmissionAbandonmentAndUnconfirmedInFlightDestruction() {
     QTemporaryDir dir; const auto folder = dir.filePath("records"); NativeWorkflowExecutions store(folder); auto w = workflow(dir.filePath("private-output")); const auto id = uuid();
     QCOMPARE(store.result(id).value("error").toObject().value("code"), QJsonValue("workflow-execution-not-found")); QVERIFY(!QFile::exists(folder));

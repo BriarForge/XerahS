@@ -32,7 +32,7 @@ ActionOutcome failed(const QString &diagnostic) {
 }  // namespace
 
 const QString CaptureActions::kActionUnavailable = QStringLiteral("action-unavailable");
-QStringList CaptureActions::selectableActions() { auto actions = xerahs::workflows::implementedCaptureActions(); actions.append({"upload", "url-clipboard", "pin", "print"}); return actions; }
+QStringList CaptureActions::selectableActions() { return xerahs::workflows::implementedCaptureActions(); }
 QString CaptureActions::actionLabel(const QString &id) {
   static const QMap<QString, QString> names{{"save", "Save image"}, {"save-as", "Save image as new PNG…"}, {"image-clipboard", "Copy image to clipboard"},
       {"file-clipboard", "Copy image file"}, {"path-clipboard", "Copy file path"}, {"reveal", "Show saved file in folder"},
