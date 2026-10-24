@@ -128,9 +128,26 @@ void ScrollCapture::armTimer(int ms, std::function<void()> action) {
   m_timer->start(std::max(0, ms));
 }
 
+ScrollCaptureSettings scrollCaptureSettings(const QJsonObject &values, ScrollCaptureSettings base) {
+  auto number = [&values](const char *key, int fallback) {
+    const auto value = values.value(QLatin1String(key));
+    return value.isDouble() ? value.toInt(fallback) : fallback;
+  };
+  base.settleMs = number("scrollingCapture.settleMs", base.settleMs);
+  base.wheelSteps = number("scrollingCapture.wheelSteps", base.wheelSteps);
+  base.stitch.headerBand = number("scrollingCapture.headerBand", base.stitch.headerBand);
+  base.stitch.footerBand = number("scrollingCapture.footerBand", base.stitch.footerBand);
+  base.stitch.maxHeight = number("scrollingCapture.maxHeight", base.stitch.maxHeight);
+  base.stitch.maxFrames = number("scrollingCapture.maxFrames", base.stitch.maxFrames);
+  const auto pointer = values.value(QLatin1String("scrollingCapture.positionPointer"));
+  if (pointer.isBool()) base.positionPointer = pointer.toBool();
+  return base;
+}
+
 void ScrollCapture::start() {
   if (m_state != State::Idle && m_state != State::SelectingTarget) return;
   // The overlay reports no cancellation here, so a stale selection may be restarted.
+  if (m_preferences) m_settings = scrollCaptureSettings(m_preferences.values(), m_settings);
   const auto generation = ++m_generation;
   setState(State::SelectingTarget);
   m_ports.selectRegion([this, generation](QRectF region) {

@@ -29,6 +29,11 @@ bool validCaptureValue(const QString &key, const QJsonValue &value) {
   if (key == "autoCapture.boundKind") return oneOf(value, {"count", "time"});
   if (key == "autoCapture.count") return integerInRange(value, 1, 10000);
   if (key == "autoCapture.durationMinutes") return integerInRange(value, 1, 1440);
+  if (key == "scrollingCapture.settleMs") return integerInRange(value, 0, 5000);
+  if (key == "scrollingCapture.wheelSteps") return integerInRange(value, 1, 50);
+  if (key == "scrollingCapture.headerBand" || key == "scrollingCapture.footerBand") return integerInRange(value, 0, 2000);
+  if (key == "scrollingCapture.maxHeight") return integerInRange(value, 1000, 100000);
+  if (key == "scrollingCapture.maxFrames") return integerInRange(value, 2, 500);
   return value.isBool();
 }
 }
@@ -41,6 +46,10 @@ QVector<SettingField> settingFields() {
     {"autoCapture.source", Section::Capture, "profile"}, {"autoCapture.intervalMs", Section::Capture, "profile"},
     {"autoCapture.boundKind", Section::Capture, "profile"}, {"autoCapture.count", Section::Capture, "profile"},
     {"autoCapture.durationMinutes", Section::Capture, "profile"},
+    {"scrollingCapture.settleMs", Section::Capture, "profile"}, {"scrollingCapture.wheelSteps", Section::Capture, "profile"},
+    {"scrollingCapture.headerBand", Section::Capture, "profile"}, {"scrollingCapture.footerBand", Section::Capture, "profile"},
+    {"scrollingCapture.maxHeight", Section::Capture, "profile"}, {"scrollingCapture.maxFrames", Section::Capture, "profile"},
+    {"scrollingCapture.positionPointer", Section::Capture, "profile"},
     {"hotkeys", Section::Hotkeys, "profile"}, {"systemAudioDevice", Section::Recording, "profile"}, {"microphoneDevice", Section::Recording, "profile"}};
 }
 QJsonObject defaultSettings(const QString &saveFolder) {
@@ -50,6 +59,9 @@ QJsonObject defaultSettings(const QString &saveFolder) {
     {"showTrayIcon", true}, {"playCaptureSound", false}, {"showNotification", true},
     {"delayedCapture.seconds", 3}, {"delayedCapture.source", "full-screen"}, {"autoCapture.source", "full-screen"},
     {"autoCapture.intervalMs", 5000}, {"autoCapture.boundKind", "count"}, {"autoCapture.count", 10}, {"autoCapture.durationMinutes", 60},
+    {"scrollingCapture.settleMs", 300}, {"scrollingCapture.wheelSteps", 5}, {"scrollingCapture.headerBand", 0},
+    {"scrollingCapture.footerBand", 0}, {"scrollingCapture.maxHeight", 30000}, {"scrollingCapture.maxFrames", 40},
+    {"scrollingCapture.positionPointer", true},
     {"hotkeys", bindings}, {"systemAudioDevice", ""}, {"microphoneDevice", ""}};
 }
 xerahs::workflows::CaptureWorkflow withApplicationDefaults(xerahs::workflows::CaptureWorkflow workflow,

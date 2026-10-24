@@ -4,6 +4,10 @@
 #include "SettingsDialog.h"
 #include <QApplication>
 #include <QCheckBox>
+#include <QComboBox>
+#include <QGroupBox>
+#include <QSpinBox>
+#include <QTabWidget>
 #include <QDialogButtonBox>
 #include <QFile>
 #include <QJsonDocument>
@@ -70,6 +74,110 @@ private slots:
     for (const auto &key : keys) QCOMPARE(reset.value(key), defaults.value(key));
     QCOMPARE(reset.value("saveFolder"), values.value("saveFolder"));
     QVERIFY(resetPreview(values, Section::Capture, dir.path()).join('\n').contains("autoCapture.count"));
+  }
+  void scrollingCaptureSettingsDefaultsRoundTripAndRepair() {
+    QTemporaryDir dir; const auto path = dir.filePath("settings.json");
+    const auto defaults = defaultSettings(dir.path());
+    QCOMPARE(defaults.value("scrollingCapture.settleMs").toInt(), 300);
+    QCOMPARE(defaults.value("scrollingCapture.wheelSteps").toInt(), 5);
+    QCOMPARE(defaults.value("scrollingCapture.maxHeight").toInt(), 30000);
+    QCOMPARE(defaults.value("scrollingCapture.maxFrames").toInt(), 40);
+    QCOMPARE(defaults.value("scrollingCapture.positionPointer").toBool(), true);
+    QVERIFY(!defaults.contains("scrollingCapture.alignmentThreshold"));
+    const QStringList keys{"scrollingCapture.settleMs", "scrollingCapture.wheelSteps", "scrollingCapture.headerBand", "scrollingCapture.footerBand",
+      "scrollingCapture.maxHeight", "scrollingCapture.maxFrames", "scrollingCapture.positionPointer"};
+    auto old = defaults; for (const auto &key : keys) old.remove(key);
+    QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(QJsonDocument(QJsonObject{{"version", 1}, {"values", old}}).toJson()); file.close();
+    ApplicationSettingsStore store(path, dir.path()); QVERIFY(store.current().diagnostics.isEmpty());
+    for (const auto &key : keys) QCOMPARE(store.current().values.value(key), defaults.value(key));
+    auto values = store.current().values;
+    values.insert("scrollingCapture.settleMs", 0); values.insert("scrollingCapture.wheelSteps", 50); values.insert("scrollingCapture.headerBand", 2000);
+    values.insert("scrollingCapture.footerBand", 12); values.insert("scrollingCapture.maxHeight", 100000); values.insert("scrollingCapture.maxFrames", 2);
+    values.insert("scrollingCapture.positionPointer", false);
+    QVERIFY(store.save(values).isEmpty());
+    ApplicationSettingsStore reopened(path, dir.path()); QCOMPARE(reopened.current().values, values); QVERIFY(reopened.current().diagnostics.isEmpty());
+    const QVector<QPair<QString, QJsonValue>> invalid{{"scrollingCapture.settleMs", -1}, {"scrollingCapture.settleMs", 5001}, {"scrollingCapture.wheelSteps", 0},
+      {"scrollingCapture.wheelSteps", 51}, {"scrollingCapture.headerBand", -1}, {"scrollingCapture.headerBand", 2001}, {"scrollingCapture.footerBand", 2001},
+      {"scrollingCapture.maxHeight", 999}, {"scrollingCapture.maxHeight", 100001}, {"scrollingCapture.maxFrames", 1}, {"scrollingCapture.maxFrames", 501},
+      {"scrollingCapture.maxFrames", 2.5}, {"scrollingCapture.settleMs", "300"}, {"scrollingCapture.positionPointer", 1}};
+    for (const auto &entry : invalid) {
+      auto bad = values; bad.insert(entry.first, entry.second);
+      const auto repaired = repairSettings(bad, dir.path());
+      QVERIFY2(repaired.diagnostics.join('\n').contains(entry.first), qPrintable(entry.first));
+      QCOMPARE(repaired.values.value(entry.first), defaults.value(entry.first));
+      QVERIFY(!store.save(bad).isEmpty());
+    }
+    const auto reset = resetSection(values, Section::Capture, dir.path());
+    for (const auto &key : keys) QCOMPARE(reset.value(key), defaults.value(key));
+    QVERIFY(resetPreview(values, Section::Capture, dir.path()).join('\n').contains("scrollingCapture.maxFrames"));
+  }
+  void captureTabShowsAppliesCancelsAndResetsScheduleAndScrollingChoices() {
+    QTemporaryDir dir; ApplicationSettingsStore store(dir.filePath("settings.json"), dir.path());
+    auto stored = store.current().values;
+    stored.insert("delayedCapture.seconds", 12); stored.insert("delayedCapture.source", "region"); stored.insert("autoCapture.source", "monitor");
+    stored.insert("autoCapture.intervalMs", 7000); stored.insert("autoCapture.boundKind", "time"); stored.insert("autoCapture.count", 20);
+    stored.insert("autoCapture.durationMinutes", 15); stored.insert("scrollingCapture.settleMs", 450); stored.insert("scrollingCapture.wheelSteps", 8);
+    stored.insert("scrollingCapture.headerBand", 64); stored.insert("scrollingCapture.footerBand", 32); stored.insert("scrollingCapture.maxHeight", 20000);
+    stored.insert("scrollingCapture.maxFrames", 25); stored.insert("scrollingCapture.positionPointer", false);
+    QVERIFY(store.save(stored).isEmpty());
+    xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; });
+    const auto plan = xerahs::workflows::captureShortcutPlan(xerahs::workflows::defaultCaptureWorkflows(), xerahs::workflows::implementedCaptureActions(), HotkeyBindings::defaults());
+    auto spinNamed = [](QWidget &w, const QString &name) { for (auto *b : w.findChildren<QSpinBox *>()) if (b->accessibleName() == name) return b; return static_cast<QSpinBox *>(nullptr); };
+    auto comboNamed = [](QWidget &w, const QString &name) { for (auto *b : w.findChildren<QComboBox *>()) if (b->accessibleName() == name) return b; return static_cast<QComboBox *>(nullptr); };
+    int applied = 0;
+    {
+      xerahs::app::SettingsDialog dialog(store, dir.path(), plan, shortcuts, [&] { ++applied; });
+      QStringList groups; for (auto *g : dialog.findChildren<QGroupBox *>()) groups << g->title();
+      QCOMPARE(groups, (QStringList{"Delayed capture", "Automatic capture", "Scrolling capture"}));
+      QCOMPARE(spinNamed(dialog, "Delayed capture seconds")->value(), 12);
+      QCOMPARE(comboNamed(dialog, "Delayed capture source")->currentData().toString(), QString("region"));
+      QCOMPARE(comboNamed(dialog, "Automatic capture source")->currentData().toString(), QString("monitor"));
+      QCOMPARE(spinNamed(dialog, "Automatic capture interval seconds")->value(), 7);
+      QCOMPARE(comboNamed(dialog, "Automatic capture bound")->currentData().toString(), QString("time"));
+      QCOMPARE(spinNamed(dialog, "Automatic capture duration minutes")->value(), 15);
+      QCOMPARE(spinNamed(dialog, "Scrolling capture settle delay milliseconds")->value(), 450);
+      QCOMPARE(spinNamed(dialog, "Scrolling capture wheel steps per frame")->value(), 8);
+      QCOMPARE(spinNamed(dialog, "Scrolling capture header band pixels")->value(), 64);
+      QCOMPARE(spinNamed(dialog, "Scrolling capture footer band pixels")->value(), 32);
+      QCOMPARE(spinNamed(dialog, "Scrolling capture maximum height pixels")->value(), 20000);
+      QCOMPARE(spinNamed(dialog, "Scrolling capture maximum frames")->value(), 25);
+      for (auto *c : dialog.findChildren<QCheckBox *>()) if (c->accessibleName() == "Keep pointer over the scrolling region") QVERIFY(!c->isChecked());
+      for (auto *w : dialog.findChildren<QAbstractSpinBox *>()) QVERIFY(!w->accessibleName().isEmpty());
+      // Cancel discards edits.
+      spinNamed(dialog, "Scrolling capture maximum frames")->setValue(99);
+      dialog.reject();
+    }
+    QCOMPARE(store.current().values.value("scrollingCapture.maxFrames").toInt(), 25);
+    {
+      xerahs::app::SettingsDialog dialog(store, dir.path(), plan, shortcuts, [&] { ++applied; });
+      QCOMPARE(spinNamed(dialog, "Scrolling capture maximum frames")->value(), 25);
+      spinNamed(dialog, "Scrolling capture maximum frames")->setValue(60);
+      spinNamed(dialog, "Delayed capture seconds")->setValue(9);
+      comboNamed(dialog, "Automatic capture bound")->setCurrentIndex(0);
+      spinNamed(dialog, "Automatic capture count")->setValue(33);
+      for (auto *b : dialog.findChildren<QPushButton *>()) if (b->text().remove(QChar(0x26)) == "Apply") b->click();
+      QCOMPARE(applied, 1);
+      QCOMPARE(store.current().values.value("scrollingCapture.maxFrames").toInt(), 60);
+      QCOMPARE(store.current().values.value("delayedCapture.seconds").toInt(), 9);
+      QCOMPARE(store.current().values.value("autoCapture.boundKind").toString(), QString("count"));
+      QCOMPARE(store.current().values.value("autoCapture.count").toInt(), 33);
+      QCOMPARE(store.current().values.value("autoCapture.intervalMs").toInt(), 7000);
+      // Reset Capture previews, then resets the controls without saving.
+      auto *tabs = dialog.findChild<QTabWidget *>(); tabs->setCurrentIndex(1);
+      QString preview;
+      QTimer::singleShot(0, [&preview] { if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) { preview = box->text(); box->button(QMessageBox::Reset)->click(); } });
+      for (auto *b : dialog.findChildren<QPushButton *>()) if (b->text() == "&Reset section…") b->click();
+      QVERIFY(preview.contains("scrollingCapture.maxFrames")); QVERIFY(preview.contains("delayedCapture.seconds"));
+      QCOMPARE(spinNamed(dialog, "Scrolling capture maximum frames")->value(), 40);
+      QCOMPARE(spinNamed(dialog, "Scrolling capture settle delay milliseconds")->value(), 300);
+      QCOMPARE(spinNamed(dialog, "Delayed capture seconds")->value(), 3);
+      QCOMPARE(comboNamed(dialog, "Automatic capture bound")->currentData().toString(), QString("count"));
+      QCOMPARE(spinNamed(dialog, "Automatic capture interval seconds")->value(), 5);
+      QCOMPARE(store.current().values.value("scrollingCapture.maxFrames").toInt(), 60);  // not saved until Apply
+      for (auto *b : dialog.findChildren<QPushButton *>()) if (b->text().remove(QChar(0x26)) == "Apply") b->click();
+      QCOMPARE(store.current().values.value("scrollingCapture.maxFrames").toInt(), 40);
+      QCOMPARE(store.current().values.value("autoCapture.intervalMs").toInt(), 5000);
+    }
   }
   void audioSettingsCompatibleRoundTrip() {
     QTemporaryDir dir; const auto path = dir.filePath("settings.json");

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "OwnedWork.h"
+#include "settings/ApplicationSettings.h"
 #include "capture/ScrollStitch.h"
 
 #include <QImage>
@@ -76,6 +77,10 @@ struct ScrollCaptureSettings {
   bool positionPointer = true;
 };
 
+// The stored scrolling choices applied over `base`; unset keys keep base. The
+// alignment threshold is a product constant, not a setting.
+ScrollCaptureSettings scrollCaptureSettings(const QJsonObject &values, ScrollCaptureSettings base = {});
+
 class ScrollCapture final : public QObject {
   Q_OBJECT
 public:
@@ -92,6 +97,8 @@ public:
   bool manual() const { return m_manual; }
   int frames() const;
   void setSettings(const ScrollCaptureSettings &settings) { if (!active()) m_settings = settings; }
+  // start() reads the stored choices through this port each time.
+  void setPreferences(xerahs::settings::CapturePreferencesPort preferences) { m_preferences = std::move(preferences); }
   const ScrollCaptureSettings &settings() const { return m_settings; }
 
   // Real collaborators for the running application.
@@ -121,6 +128,7 @@ private:
 
   ScrollCapturePorts m_ports;
   ScrollCaptureSettings m_settings;
+  xerahs::settings::CapturePreferencesPort m_preferences;
   State m_state = State::Idle;
   quint64 m_generation = 0;
   bool m_manual = false, m_pointerPlaced = false, m_stopping = false;

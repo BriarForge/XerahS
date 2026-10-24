@@ -233,6 +233,23 @@ private slots:
     QCOMPARE(unavailable.first().at(1).toString(), QString("scroll-input-unavailable"));
   }
 
+  void storedSettingsAreReadAtStartAndAlignmentThresholdStaysConstant() {
+    QJsonObject stored{{"scrollingCapture.settleMs", 20}, {"scrollingCapture.wheelSteps", 3}, {"scrollingCapture.headerBand", 10},
+      {"scrollingCapture.footerBand", 6}, {"scrollingCapture.maxHeight", 5000}, {"scrollingCapture.maxFrames", 7}, {"scrollingCapture.positionPointer", false}};
+    Harness h; h.page = tallPage(900);
+    ScrollCapture capture(h.ports(), quick());
+    capture.setPreferences({[&stored] { return stored; }, [](const QJsonObject &) { return QString(); }});
+    capture.start();
+    const auto &s = capture.settings();
+    QCOMPARE(s.settleMs, 20); QCOMPARE(s.wheelSteps, 3); QCOMPARE(s.stitch.headerBand, 10); QCOMPARE(s.stitch.footerBand, 6);
+    QCOMPARE(s.stitch.maxHeight, 5000); QCOMPARE(s.stitch.maxFrames, 7); QVERIFY(!s.positionPointer);
+    QCOMPARE(s.hideMs, quick().hideMs);
+    QCOMPARE(s.stitch.confidenceThreshold, xerahs::capture::kScrollAlignmentThreshold);
+    capture.cancel();
+    // Missing keys keep the caller's values.
+    QCOMPARE(scrollCaptureSettings({}, quick()).settleMs, quick().settleMs);
+  }
+
   void wheelStrategyPlacesPointerAtRegionCentreThenScrollsToEndOfPage() {
     Harness h; h.page = tallPage(900);
     h.makeRemote = [this](QObject *parent) { return newRemote(parent); };

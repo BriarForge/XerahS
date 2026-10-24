@@ -63,6 +63,7 @@ void installScrollingCapture(AppContext &ctx) {
     ctx.tray.showMessage(title, body, success ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning, 5000);
   };
   auto *scrolling = new ScrollCapture(std::move(ports), {}, &ctx.app);
+  scrolling->setPreferences(settings::capturePreferencesPort(ctx.settings));  // CORE-015 settings
   addCapture(ctx, QStringLiteral("capture-scrolling"), QStringLiteral("Capture scrolling…"), [&ctx, scrolling] {
     if (ctx.capture.busy() || ctx.recording.busy() || QApplication::activeModalWidget()) {
       if (auto *window = commandWindow(ctx)) window->showResult(QStringLiteral("Activation"), activationFailureMessage(QStringLiteral("activation-busy")), false);
