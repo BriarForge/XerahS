@@ -75,3 +75,30 @@ Architecture decisions: [BXIP001](docs/proposals/BXIP001-contract-first-agent-na
 | Native platforms | [platforms/AGENTS.md](platforms/AGENTS.md) |
 | Conformance | [conformance/AGENTS.md](conformance/AGENTS.md) |
 | Tooling | [tools/AGENTS.md](tools/AGENTS.md) |
+
+## graphify
+
+Use these independent knowledge graphs for implementation and contract navigation:
+
+| Scope | Graph location | Report |
+|---|---|---|
+| Linux | `platforms/linux/graphify-out` | [Linux graph report](platforms/linux/graphify-out/GRAPH_REPORT.md) |
+| macOS | `platforms/macos/graphify-out` | [macOS graph report](platforms/macos/graphify-out/GRAPH_REPORT.md) |
+| Windows | `platforms/windows/graphify-out` | [Windows graph report](platforms/windows/graphify-out/GRAPH_REPORT.md) |
+| Product Contract | `product-contract/graphify-out` | [Product Contract graph report](product-contract/graphify-out/GRAPH_REPORT.md) |
+
+The root `graphify-out/` is a supplementary repository overview. The Product Contract remains the source of product truth; a graph is a navigation aid and never establishes parity or overrides a contract.
+
+When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
+
+Rules:
+- When answering a platform question, change into that platform's folder and prefer its graph. For product requirements, use the `product-contract` graph. For consistency or parity questions, cross-reference the Product Contract graph and every relevant platform graph, including the other platforms; absence of an edge is not evidence of compliance or noncompliance. macOS and Windows graphs currently describe documentation stubs, not completed implementations.
+- Run `graphify query "<question>"` before your first grep, search or source-file read for a codebase question, and put this rule in every subagent prompt that explores code. Prefer `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. Run these commands inside the selected scope so they read that scope's `graphify-out/graph.json`. Use file-qualified symbols when labels are ambiguous. Read source files when the graph identifies relevant locations or its coverage is insufficient.
+- Cite source files and locations and identify whether each cited relationship is **EXTRACTED** (explicit source evidence) or **INFERRED** (a model or heuristic inference). Verify INFERRED relationships before using them for correctness or parity claims; report AMBIGUOUS edges as uncertain.
+- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After any code changes, run `graphify update .` **inside every affected folder** (`platforms/linux`, `platforms/macos`, `platforms/windows`, or `product-contract`) before answering further codebase questions. For a change spanning scopes, update each affected graph and cross-reference them again. Changes to a shared contract require checking the affected platform graphs against the refreshed contract graph.
+- Git hooks installed by `graphify hook install` are repository-wide. [The scoped hook dispatcher](tools/graphify/README.md) additionally refreshes affected scoped code graphs after commits, merges, checkouts, and rewrites; it preserves existing hooks. Do not rely on a background hook having finished: run the required foreground update before answering after edits.
+- `graphify update .` and Git hooks refresh AST/code relationships only. After documentation or contract prose changes, use the Graphify skill's `$graphify . --update` workflow in each affected folder to refresh semantic extraction. The scoped dispatcher writes `graphify-out/.needs_update` when semantic files change; refresh those files with the skill before using that graph for an answer. Never claim prose relationships were automatically re-extracted by the code-only hook.
+- A committed graphify-out/graph.json is rewritten whole on every build, so a large diff to it in a pull request is expected. Do not flag it as churn or suggest skipping the graph rebuild or its hooks.

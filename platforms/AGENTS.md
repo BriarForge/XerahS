@@ -33,6 +33,8 @@ Platform unit/integration tests plus shared conformance adapters under `conforma
 Infeasible native requirements: clarification, deviation, time-bound waiver (max 90 days), or scope change.
 
 # Child Scopes
-Platform-specific `AGENTS.md` files are added when Windows, macOS, or Linux implementations exist.
+Platform-specific `AGENTS.md` files govern native implementation work and each platform's graph tooling, including documentation-only platform stubs.
 
 - [linux/](linux/AGENTS.md)
+- [macos/](macos/AGENTS.md)
+- [windows/](windows/AGENTS.md)

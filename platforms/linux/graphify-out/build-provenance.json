@@ -1,0 +1,11 @@
+{
+  "graphify_version": "0.9.95",
+  "source_scope": "platforms/linux",
+  "semantic_documents": 53,
+  "validated_parent_cache_documents": 52,
+  "fresh_semantic_documents": [
+    "AGENTS.md"
+  ],
+  "code_data_files": 497,
+  "token_usage_status": "unavailable_host_agent"
+}
