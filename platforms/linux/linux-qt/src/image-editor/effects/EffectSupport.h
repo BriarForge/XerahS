@@ -23,6 +23,9 @@ inline const QString kFailed = QStringLiteral("effect-failed");
 inline const QString kInvalidInput = QStringLiteral("effect-invalid-input");
 inline const QString kUnavailable = QStringLiteral("effect-unavailable");
 
+// Exact reflection on the Qt 6.4 baseline and newer API generations.
+QImage flipAxisImage(const QImage &source, Qt::Orientation axis);
+
 // ---- parameter builders and accessors ---------------------------------------
 inline ParamSpec floatParam(const QString &id, const QString &label, double initial, double minimum, double maximum) {
   return {id, label, ParamKind::Float, initial, minimum, maximum, {}};

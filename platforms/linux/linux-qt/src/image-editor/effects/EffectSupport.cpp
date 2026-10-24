@@ -17,6 +17,14 @@ bool sizeAcceptable(const QSize &size) {
 
 }
 
+QImage flipAxisImage(const QImage &source, Qt::Orientation axis) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+  return source.flipped(axis);
+#else
+  return source.mirrored(axis == Qt::Horizontal, axis == Qt::Vertical);
+#endif
+}
+
 // Skia clamps a filtered channel to the byte gamut and rounds it to the nearest byte.
 int filteredByte(float value) { return int(std::floor(std::clamp(value, 0.f, 255.f) + 0.5f)); }
 

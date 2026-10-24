@@ -1116,3 +1116,21 @@ is unproven. The background-removal handoff typo is recorded against the actual
 EU-009..011 requirements; QR/OCR dependencies, scrolling threshold and sensitive
 human reviews remain waiting on Mike. No live capture/upload/settings, new
 third-party dependency, release key or human approval was used or invented.
+
+
+## 2026-10-24 — Restore the supported Qt drawing API
+
+Audit checkpoint `9a7fc9604bfd464b2b0dec21907330ee06e79ab7` passed the required
+local gate (114/114 targets, 20.59 s) and was pushed. Its [Ubuntu CI 40098357984](https://github.com/BriarForge/XerahS/actions/runs/40098357984)
+passed lint (120885237211) and failed native build (120885236974) because the
+existing drawing effect used QImage::flipped, which the Qt 6.4.2 headers lack.
+This is a reproduced supported-baseline regression, not a reason to raise Qt.
+
+Drawing reflections now call one EffectSupport helper, selecting the Qt 6.4
+mirrored API below Qt 6.9 and flipped for newer Qt. Four independent asymmetric
+pixel matrices cover both reflections and rotation-plus-reflection; source
+asset pixels, untouched canvas and colour profile are preserved. The complete
+DrawingEffectsTest passes 51 cases locally. All expected vectors/goldens and
+supported targets remain unchanged. The mandated full gate and exact pushed
+baseline CI provide final verification; their result is recorded in progress.
+The pending counter fault correction remains safely preserved for the next slice.

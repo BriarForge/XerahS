@@ -309,6 +309,24 @@ private slots:
     QCOMPARE(tiled.image.pixel(4, 0), kRed);
     QCOMPARE(tiled.image.pixel(6, 0), qRgba(128, 128, 128, 255));
   }
+  void drawImageFlipsKeepExactPixelsOnTheMinimumQtApi_data() {
+    QTest::addColumn<QString>("mode"); QTest::addColumn<QString>("expected"); QTest::addColumn<int>("width"); QTest::addColumn<int>("height");
+    QTest::newRow("horizontal") << QString("flip_x") << QString("214365") << 2 << 3;
+    QTest::newRow("vertical") << QString("flip_y") << QString("563412") << 2 << 3;
+    QTest::newRow("clockwise-then-horizontal") << QString("rotate_90_flip_x") << QString("135246") << 3 << 2;
+    QTest::newRow("clockwise-then-vertical") << QString("rotate_90_flip_y") << QString("642531") << 3 << 2;
+  }
+  void drawImageFlipsKeepExactPixelsOnTheMinimumQtApi() {
+    QFETCH(QString, mode); QFETCH(QString, expected); QFETCH(int, width); QFETCH(int, height);
+    QImage asset(2, 3, QImage::Format_ARGB32); asset.setColorSpace(QColorSpace::DisplayP3);
+    const auto colour = [](int value) { return qRgba(20 * value, 30 * value, 40 * value, 255); };
+    for (int y = 0; y < 3; ++y) for (int x = 0; x < 2; ++x) asset.setPixel(x, y, colour(y * 2 + x + 1));
+    const auto path = file("asymmetric-flips.png"); QVERIFY(asset.save(path, "PNG"));
+    const auto source = gray(4, 4); const auto result = run("draw_image", source, {{"image_location", path}, {"rotate_flip", mode}, {"interpolation_mode", "nearest_neighbor"}});
+    QVERIFY2(result.error.isEmpty(), qPrintable(result.error)); QCOMPARE(result.image.size(), source.size()); QCOMPARE(result.image.colorSpace(), source.colorSpace());
+    for (int y = 0; y < height; ++y) for (int x = 0; x < width; ++x) QCOMPARE(result.image.pixel(x, y), colour(expected[y * width + x].digitValue()));
+    QCOMPARE(result.image.pixel(3, 3), source.pixel(3, 3)); QCOMPARE(QImage(path), asset);
+  }
   void drawImageRotateFlipAndCompositing() {
     const QImage source = gray();
     const auto flipped = run("draw_image", source, {{"image_location", file("rb.png")}, {"rotate_flip", "flip_x"}});

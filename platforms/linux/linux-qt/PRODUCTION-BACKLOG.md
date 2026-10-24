@@ -43,6 +43,14 @@ files and approval records are unchanged.
 
 ## Work order
 
+0. **Restore verified minimum-Qt compatibility (CORE-036, EE-018).** The local
+   audit gate passed 114/114 targets, but [Ubuntu CI 40098357984](https://github.com/BriarForge/XerahS/actions/runs/40098357984)
+   failed while compiling drawing effects: QImage::flipped is a Qt 6.9 API.
+   Use the shared compatibility helper and independently specified reflection
+   matrices; require green exact-revision Qt 6.4.2 CI before claiming compatibility.
+   [Qt's API reference](https://doc.qt.io/qt-6/qimage.html#flipped) documents the
+   version boundary. No minimum, vector, golden or test is weakened.
+
 1. **Fix counter publication reporting (FN-016, PCA-007, PCA-013).** A published
    PNG can currently be reported as complete success even when persisting the
    next counter fails. Add a real native fault fixture, demonstrate the failure

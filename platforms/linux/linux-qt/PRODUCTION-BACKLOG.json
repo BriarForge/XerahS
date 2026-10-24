@@ -265,5 +265,17 @@
         "Mike: approve Tesseract for OCR and zxing-cpp for scanning; do not add dependencies."
       ]
     }
+  ],
+  "verification_blockers": [
+    {
+      "code": "qt-baseline-build-failed",
+      "source_revision": "9a7fc9604bfd464b2b0dec21907330ee06e79ab7",
+      "ci": "https://github.com/BriarForge/XerahS/actions/runs/40098357984",
+      "requirements": [
+        "CORE-036",
+        "EE-018"
+      ],
+      "note": "Local 114/114 gate passed; Ubuntu/Qt 6.4.2 compile failed on the newer QImage::flipped API. Corrective compatibility implementation and four independent pixel cases are prepared; exact corrective-revision baseline CI remains required."
+    }
   ]
 }

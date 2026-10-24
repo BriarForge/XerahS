@@ -301,10 +301,10 @@ QImage rotateFlip(const QImage &image, const QString &mode) {
   if (mode == "rotate_90") return rotate90(image);
   if (mode == "rotate_180") return rotate90(rotate90(image));
   if (mode == "rotate_270") return rotate90(rotate90(rotate90(image)));
-  if (mode == "flip_x") return image.flipped(Qt::Horizontal);
-  if (mode == "flip_y") return image.flipped(Qt::Vertical);
-  if (mode == "rotate_90_flip_x") return rotate90(image).flipped(Qt::Horizontal);
-  if (mode == "rotate_90_flip_y") return rotate90(image).flipped(Qt::Vertical);
+  if (mode == "flip_x") return flipAxisImage(image, Qt::Horizontal);
+  if (mode == "flip_y") return flipAxisImage(image, Qt::Vertical);
+  if (mode == "rotate_90_flip_x") return flipAxisImage(rotate90(image), Qt::Horizontal);
+  if (mode == "rotate_90_flip_y") return flipAxisImage(rotate90(image), Qt::Vertical);
   return image;
 }
 QSize applyAspectRatio(int width, int height, const QImage &bitmap) {

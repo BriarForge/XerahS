@@ -245,12 +245,13 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Every registered effect is a deterministic CPU and native Qt implementation, so the registered set declares no hardware codec, font or accelerator dependency. Where the environment does lack a capability, the effect reports a typed diagnostic instead of degrading silently: a text effect without a QGuiApplication for font resolution returns effect-unavailable, and an unreadable or oversized asset returns effect-invalid-input. The browser, however, silently omits the 60 approved census IDs without a native implementation: there is no user-visible diagnostic for the gap and no approved platform disposition for the 58 filters or for scale. The prohibition on silent omission and a user-visible diagnostic for the gap remain Required.",
+      "note": "Every registered effect is a deterministic CPU and native Qt implementation, so the registered set declares no hardware codec, font or accelerator dependency. Where the environment does lack a capability, the effect reports a typed diagnostic instead of degrading silently: a text effect without a QGuiApplication for font resolution returns effect-unavailable, and an unreadable or oversized asset returns effect-invalid-input. The browser, however, silently omits the 60 approved census IDs without a native implementation: there is no user-visible diagnostic for the gap and no approved platform disposition for the 58 filters or for scale. The prohibition on silent omission and a user-visible diagnostic for the gap remain Required. Ubuntu/Qt 6.4.2 CI 40098357984 exposed use of QImage::flipped, introduced in Qt 6.9. Drawing reflections now call one EffectSupport helper selecting the minimum-supported API; asymmetric exact-pixel tests cover both axes and rotated reflections without altering any golden expectation. The corrective pushed revision must pass baseline CI before baseline compatibility is claimed.",
       "evidence": [
         "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.h",
         "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.cpp",
         "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
-        "platforms/linux/linux-qt/app/EffectsDialog.cpp"
+        "platforms/linux/linux-qt/app/EffectsDialog.cpp",
+        "platforms/linux/linux-qt/tests/DrawingEffectsTest.cpp"
       ]
     }
   },
