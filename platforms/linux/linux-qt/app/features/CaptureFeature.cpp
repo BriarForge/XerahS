@@ -13,6 +13,9 @@
 #include "WorkflowShortcutActions.h"
 #include "features/RecordingFeature.h"
 #include "settings/ApplicationSettings.h"
+#include "capture/LastRegionStore.h"
+#include <QStandardPaths>
+#include <QDir>
 
 #include <QApplication>
 #include <QStringList>
@@ -170,6 +173,14 @@ void installCapture(AppContext &ctx) {
   cancel->setEnabled(false);
   QObject::connect(cancel, &QAction::triggered, &ctx.capture, &CaptureController::cancel);
 
+  const auto settingsDirectory = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
+  const auto lastRegionPath = settingsDirectory.isEmpty() ? QString{} : QDir(settingsDirectory)
+      .filePath(QStringLiteral("com.xerahs.app/linux-qt/last-region.json"));
+  ctx.capture.setLastRegionWriter([lastRegionPath](const capture::LastRegion &region) {
+    const capture::LastRegionStore store(lastRegionPath);
+    const auto previous = store.read();
+    return capture::lastRegionStorageDiagnostic(store.save(region, previous));
+  });
   ctx.capture.setRegionSettingsResolver([&ctx] { return settings::regionSessionSettings(ctx.settings.current().values); });
   ctx.capture.setDefaultWorkflowResolver([&ctx] { return effectiveWorkflow(ctx); });
   const auto refreshRegion = [&ctx, region] {

@@ -1,4 +1,5 @@
 #include "CaptureController.h"
+#include "OwnedWork.h"
 
 #include "CaptureActions.h"
 #include "PortalScreenshot.h"
@@ -131,6 +132,7 @@ void CaptureController::selectRecordingRegion(std::function<void(QRectF)> select
 void CaptureController::beginCapture(QStringList selected) {
   if (m_busy) return;
   m_regionSettings = m_regionSettingsResolver ? m_regionSettingsResolver() : SessionSettings{};
+  m_captureLastRegionWriter = m_lastRegionWriter; m_lastRegionDiagnostic.clear();
   m_selectedActions = std::move(selected);
   ++m_generation;
   m_pendingPipelineCancellation = false;
@@ -571,7 +573,8 @@ void CaptureController::onOutcome(const SessionOutcome &outcome) {
       return;
     }
     if (outcome.state == SessionState::Completed && outcome.rectangle && m_captured) {
-      runPipeline();
+      if (outcome.lastRegion && m_captureLastRegionWriter) rememberRegion(*outcome.lastRegion);
+      else runPipeline();
       return; // cleanup follows the actual pipeline receipt
     }
     recordCaptureOutcome(outcome.diagnostic == diagnostic::capturePermissionDenied ? QStringLiteral("permission-denied") :
@@ -588,6 +591,21 @@ void CaptureController::onOutcome(const SessionOutcome &outcome) {
   });
 }
 
+void CaptureController::rememberRegion(const LastRegion &region) {
+  const auto generation = m_generation;
+  const auto writer = m_captureLastRegionWriter;
+  // Successful pixels already exist. Worker owns geometry and the writer, never
+  // the controller or an image. Metadata failure cannot discard those pixels.
+  OwnedWork::run<QString>(this, [writer, region](const OwnedWork::Context &) {
+    try { return writer(region); }
+    catch (...) { return QStringLiteral("last-region-storage-failed: Capture pixels were acquired, but last-region metadata could not be saved."); }
+  }, [this, generation](QString diagnostic) {
+    if (!m_busy || generation != m_generation) return;
+    m_lastRegionDiagnostic = std::move(diagnostic);
+    runPipeline();
+  });
+}
+
 void CaptureController::runPipeline() {
   // The default path keeps overlay focus until clipboard dispatch. A chooser
   // releases overlays before taking focus; both retain the same frozen media.
@@ -596,7 +614,9 @@ void CaptureController::runPipeline() {
   if (m_execution && !m_execution->processing(pipeline->taskId())) {
     delete pipeline;
     const QPointer<CaptureController> guard(this);
-    emit notify("Capture actions not started", "Workflow execution storage is unavailable. No post-capture action was started.", false);
+    QString message = QStringLiteral("Workflow execution storage is unavailable. No post-capture action was started.");
+    if (!m_lastRegionDiagnostic.isEmpty()) message += QStringLiteral(" ") + m_lastRegionDiagnostic;
+    emit notify("Capture actions not started", message, false);
     if (guard) { closeOverlays(); finish(); } return;
   }
   connectPipeline(pipeline);
@@ -644,6 +664,7 @@ void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt, b
 
   QStringList done;
   QStringList failed;
+  if (!m_lastRegionDiagnostic.isEmpty()) failed.append(m_lastRegionDiagnostic);
   for (const auto &action : result.orderedResults) {
     const auto label = CaptureActions::actionLabel(action.action);
     if (action.state == xerahs::actions::ActionState::Succeeded) {
@@ -709,6 +730,7 @@ void CaptureController::finish() {
   m_keyboardSelecting = false;
   m_resizeCorner.reset();
   m_execution.reset();
+  m_captureLastRegionWriter = {}; m_lastRegionDiagnostic.clear();
   m_busy = false;
   emit busyChanged(false);
 }

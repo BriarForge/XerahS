@@ -22,7 +22,9 @@
     "platforms/linux/linux-qt/app/CapturePipeline.cpp",
     "platforms/linux/linux-qt/app/SettingsDialog.cpp",
     "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-    "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp"
+    "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
+    "platforms/linux/linux-qt/src/capture/LastRegionStore.h",
+    "platforms/linux/linux-qt/src/capture/LastRegionStore.cpp"
   ],
   "requirements": {
     "RC-001": {
@@ -313,7 +315,7 @@
         "capture-failure-keeps-last-region",
         "last-region-invalid-after-topology-change"
       ],
-      "note": "The last region is produced only on capture success and validated against topology (platforms/linux/linux-qt/tests/RegionCaptureTest.cpp). Atomic persistence arrives with settings storage.",
+      "note": "Successful native region screenshot acquisition now sends only geometry to an OwnedWork worker before post-capture actions. LastRegionStore uses PrivateJsonFile atomic owner-only version-1 writes with snapshot fencing. Valid prior records and compatible unknown fields round-trip; corrupt/newer/stale/unsafe records are preserved. Cancellation/denial/failed composition and recording-region picking never invoke this writer. Metadata failure retains normal successful output and appears in the final notification, including workflow-processing admission failure. Native single-display payload ordering, worker liveness/teardown and storage tests are candidate evidence; physical display identity/mapping, crash/power-loss and full target qualification remain Required.",
       "disposition": "Required",
       "audit": {
         "classification": "partial",
@@ -324,7 +326,11 @@
           "last-region-invalid-after-topology-change"
         ],
         "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
-      }
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/LastRegionStoreTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+      ]
     },
     "RC-018": {
       "status": "partial",
@@ -509,7 +515,7 @@
         "last-region-invalid-after-topology-change"
       ],
       "disposition": "Required",
-      "note": "RegionGeometry validates serialized last-region data in Core tests/vectors. CaptureController has no last-region persistence or acquisition route, so native round-trip capture is incomplete.",
+      "note": "Durable version-1 geometry records contain the normalized physical rectangle and every intersecting display ID/bounds. LastRegionStore reloads them; tests validate matching topology and refuse moved/missing displays through the existing Core validator. Invalid, duplicate, inexact or newer representations are read-only. Native recapture is deliberately absent: the existing portal path derives physical scale after image acquisition, while this requirement demands invalidation before capturing. Pre-acquisition physical topology authority/disposition is blocked on Mike; no mapping policy or contract was changed.",
       "audit": {
         "classification": "partial",
         "spec_line": 126,
@@ -517,7 +523,11 @@
           "last-region-invalid-after-topology-change"
         ],
         "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
-      }
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/LastRegionStoreTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+      ]
     }
   },
   "evidence": [
@@ -560,6 +570,11 @@
         "cornerResizeAllowsDesktopGapAndCancelPublishesNoRegion"
       ],
       "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp": [
+        "lastRegionFailureStillReportsWhenWorkflowCannotEnterProcessing",
+        "cancellationDuringMetadataWriteDoesNotStartPostCaptureActions",
+        "lastRegionWriterRunsOnlyAfterSuccessfulPixelsAndBeforeActions",
+        "lastRegionMetadataFailureKeepsCaptureAndIsPresentInFinalReport",
+        "failedCompositionAndDestroyedMetadataOwnerNeverStartActionsOrCallBackLate",
         "nativeCornerHandlesResizeWithoutPrematureCaptureAndKeepGrabOffset",
         "regionOptionsFreezeBeforeAcquisitionAndAllowKeyboardAdjustment",
         "Close",
@@ -639,8 +654,14 @@
       "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp": [
         "regionPreferencesDefaultsRepairRoundTripAndReset",
         "regionPreferencesDialogApplyCancelAndReset"
+      ],
+      "platforms/linux/linux-qt/tests/LastRegionStoreTest.cpp": [
+        "versionOneRoundTripKeepsUnknownFieldsAndExactNegativeCoordinates",
+        "missingAndStaleSnapshotsNeverLoseAnotherWrite",
+        "malformedAndNewerRecordsAreReadOnly",
+        "invalidNewGeometryAndUnsafePathsDoNotPublish"
       ]
     },
-    "remaining_scope": "Core geometry/state vectors and actual portal cancellation tests exist. Native topology uses a single inferred scale, cursor/HDR policy is absent, last-region persistence is not wired, and physical qualification remains."
+    "remaining_scope": "Core geometry/state vectors and native portal cancellation tests exist. Successful region screenshots now write geometry through an owned worker and atomic private storage. Native topology still uses a single inferred scale, cursor/HDR policy is absent, and last-region recapture needs approved physical topology validation before acquisition. Physical display identity/mapping, full target and human qualification remain."
   }
 }

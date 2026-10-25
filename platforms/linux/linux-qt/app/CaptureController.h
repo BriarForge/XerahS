@@ -34,6 +34,10 @@ class CaptureController final : public QObject {
   Q_OBJECT
 
 public:
+  // Invoked on an OwnedWork worker only, after successful pixel acquisition.
+  // The writer must own its storage arguments and never touch the controller.
+  using LastRegionWriter = std::function<QString(const xerahs::capture::LastRegion &)>;
+  void setLastRegionWriter(LastRegionWriter writer) { m_lastRegionWriter = std::move(writer); }
   using ScreenshotFactory = std::function<PortalScreenshot *(QObject *)>;
   explicit CaptureController(QString saveDirectory, QObject *parent = nullptr, ScreenshotFactory factory = {}, SnapshotComposer composer = {}, CaptureActionPorts actionPorts = {}, PipelineJournalStorage journal = {});
   ~CaptureController() override;
@@ -109,6 +113,7 @@ private:
   void acquire();
   void pollComposition();
   void runPipeline();
+  void rememberRegion(const xerahs::capture::LastRegion &region);
   void connectPipeline(CapturePipeline *pipeline);
   void publishPipeline(const CapturePipelineReceipt &result, bool executionConfirmed = true);
   void closeOverlays();
@@ -119,6 +124,8 @@ private:
 
   std::function<void(QRectF)> m_regionSelected;
   QString m_saveDirectory;
+  LastRegionWriter m_lastRegionWriter, m_captureLastRegionWriter;
+  QString m_lastRegionDiagnostic;
   ScreenshotFactory m_screenshotFactory;
   SnapshotComposer m_composer;
   std::shared_ptr<CaptureComposition> m_composition;

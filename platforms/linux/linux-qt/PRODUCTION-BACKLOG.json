@@ -452,6 +452,17 @@
         "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "RC-017",
+        "RC-027"
+      ],
+      "outcome": "Native successful region screenshots persist version-1 geometry only through OwnedWork and PrivateJsonFile before actions. Existing malformed/newer/stale/unsafe records remain intact; compatible unknown fields round-trip. Metadata failures retain normal image outputs and stay visible even when workflow processing admission also fails. Storage and actual controller ordering/teardown/cancellation tests pass. Native recapture remains blocked on pre-acquisition physical topology authority; physical mapping/identity, crash and target qualification remain partial.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/LastRegionStoreTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+      ]
     }
   ]
 }

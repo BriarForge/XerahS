@@ -14,6 +14,7 @@
 #include "CaptureAnnotationDialog.h"
 #include "EditorCanvas.h"
 #include "capture/RegionGeometry.h"
+#include "capture/LastRegionStore.h"
 #include "image-editor/AnnotationDocument.h"
 #include <QApplication>
 #include <QAction>
@@ -162,6 +163,97 @@ class PortalScreenshotTest final : public QObject {
   static Outcome outcome(const QSignalSpy &spy) { return spy.at(0).at(0).value<Outcome>(); }
   static QImage resultImage(const QSignalSpy &spy) { return spy.at(0).at(1).value<QImage>(); }
 private slots:
+  void lastRegionFailureStillReportsWhenWorkflowCannotEnterProcessing() {
+    using namespace xerahs::workflows;
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    NativeWorkflowExecutions executions(dir.filePath("executions")); const auto writer = executions.writer(); int writes = 0;
+    auto executionWriter = [&](const QString &id, const std::optional<QByteArray> &expected, const QByteArray &bytes) { return ++writes == 3 ? xerahs::actions::JournalWrite{false, "private fixture failure"} : writer(id, expected, bytes); };
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    controller.setLastRegionWriter([](const xerahs::capture::LastRegion &) { return QString("last-region-storage-busy: Last-region metadata is locked."); });
+    QSignalSpy notices(&controller, &CaptureController::notify); auto workflow = defaultCaptureWorkflows().entries[0]; workflow.actions = QStringList{"save"};
+    auto run = controller.prepareWorkflowCapture(workflow, QUuid::createUuid().toString(QUuid::WithoutBraces), "native-shell", executionWriter); QVERIFY(run); run();
+    QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
+    QVERIFY(!notices.isEmpty()); QVERIFY(notices.last()[1].toString().contains("last-region-storage-busy"));
+    QVERIFY(notices.last()[1].toString().contains("No post-capture action")); QVERIFY(!notices.last()[2].toBool()); QVERIFY(!QFile::exists(dir.filePath("outputs")));
+  }
+  void cancellationDuringMetadataWriteDoesNotStartPostCaptureActions() {
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    auto gate = std::make_shared<CompositionGate>(); ReleaseGate release{gate};
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    controller.setLastRegionWriter([gate](const xerahs::capture::LastRegion &) {
+      gate->entered.store(true); QElapsedTimer deadline; deadline.start(); while (!gate->released.load() && deadline.elapsed() < 10000) QThread::msleep(1);
+      gate->done.store(true); return QString{};
+    });
+    QApplication::clipboard()->setText("metadata cancellation fixture"); controller.captureRegion(); QTRY_VERIFY(overlayExists());
+    controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(gate->entered.load()); controller.cancel();
+    gate->released.store(true); QTRY_VERIFY(!controller.busy()); QVERIFY(gate->done.load());
+    QVERIFY(!QFileInfo::exists(dir.filePath("outputs"))); QCOMPARE(QApplication::clipboard()->text(), QString("metadata cancellation fixture"));
+  }
+  void lastRegionWriterRunsOnlyAfterSuccessfulPixelsAndBeforeActions() {
+    using namespace xerahs::capture;
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    auto gate = std::make_shared<CompositionGate>(); ReleaseGate release{gate}; LastRegion recorded; std::atomic<bool> onWorker{false};
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    controller.setLastRegionWriter([&, gate](const LastRegion &region) {
+      recorded = region; onWorker.store(QThread::currentThread() != QApplication::instance()->thread()); ++gate->calls; gate->entered.store(true);
+      QElapsedTimer deadline; deadline.start(); while (!gate->released.load() && deadline.elapsed() < 10000) QThread::msleep(1);
+      gate->done.store(true); return QString{};
+    });
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); QCOMPARE(gate->calls.load(), 0);
+    controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(gate->entered.load());
+    QVERIFY(onWorker.load()); QCOMPARE(recorded.version, 1); QCOMPARE(recorded.rectangle, (PhysicalRect{10, 10, 40, 35}));
+    QCOMPARE(recorded.displays.size(), size_t(1)); QCOMPARE(recorded.displays[0].id, QApplication::primaryScreen()->name());
+    QCOMPARE(recorded.displays[0].physical, (PhysicalRect{0, 0, QApplication::primaryScreen()->geometry().width(), QApplication::primaryScreen()->geometry().height()}));
+    QVERIFY(controller.busy()); QVERIFY(!controller.lastPipelineResult()); QVERIFY(!QFileInfo::exists(dir.filePath("outputs")));
+    bool heartbeat = false; QTimer::singleShot(0, &controller, [&] { heartbeat = true; }); QTRY_VERIFY(heartbeat);
+    gate->released.store(true); QTRY_VERIFY(!controller.busy()); QCOMPARE(gate->calls.load(), 1);
+    QVERIFY(controller.lastPipelineResult() && controller.lastPipelineResult()->file); QCOMPARE(QImage(controller.lastPipelineResult()->file->path).size(), QSize(30, 25));
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); controller.cancel(); QTRY_VERIFY(!controller.busy()); QCOMPARE(gate->calls.load(), 1);
+    portal.code = 2; controller.captureRegion(); QTRY_VERIFY(!controller.busy()); QCOMPARE(gate->calls.load(), 1);
+  }
+  void lastRegionMetadataFailureKeepsCaptureAndIsPresentInFinalReport_data() {
+    QTest::addColumn<bool>("throws"); QTest::newRow("newer-store") << false; QTest::newRow("writer-exception") << true;
+  }
+  void lastRegionMetadataFailureKeepsCaptureAndIsPresentInFinalReport() {
+    using namespace xerahs::capture; QFETCH(bool, throws);
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    const auto metadataPath = dir.filePath("last-region.json"); QFile metadata(metadataPath); QVERIFY(metadata.open(QIODevice::WriteOnly));
+    const QByteArray newer = "{\"version\":2,\"future\":true}"; QCOMPARE(metadata.write(newer), newer.size()); metadata.close();
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    controller.setLastRegionWriter([=](const LastRegion &region) -> QString {
+      if (throws) throw std::runtime_error("Private metadata fixture details must not escape");
+      const LastRegionStore store(metadataPath); return lastRegionStorageDiagnostic(store.save(region, store.read()));
+    });
+    QSignalSpy notified(&controller, &CaptureController::notify);
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
+    const auto receipt = controller.lastPipelineResult(); QVERIFY(receipt && receipt->file); QCOMPARE(QImage(receipt->file->path).size(), QSize(30, 25));
+    QCOMPARE(bytes(metadataPath), newer); QVERIFY(!notified.isEmpty()); QVERIFY(!notified.last()[2].toBool());
+    const auto message = notified.last()[1].toString(); QVERIFY(message.contains(throws ? "last-region-storage-failed" : "last-region-storage-newer-version"));
+    QVERIFY(message.contains("Saved")); QVERIFY(!message.contains("Private metadata fixture"));
+  }
+  void failedCompositionAndDestroyedMetadataOwnerNeverStartActionsOrCallBackLate() {
+    using namespace xerahs::capture;
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString(); std::atomic<int> writes{0};
+    SnapshotComposer failure = [](const QImage &, const PhysicalRect &, const Topology &, const CompositeControl &) { return ComposedSnapshot{{}, "capture-source-failed", false}; };
+    CaptureController failed(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, failure);
+    failed.setLastRegionWriter([&](const LastRegion &) { ++writes; return QString{}; });
+    failed.captureRegion(); QTRY_VERIFY(overlayExists()); failed.pointerDown({10, 10}); failed.pointerUp({40, 35}); QTRY_VERIFY(!failed.busy()); QCOMPARE(writes.load(), 0);
+    auto gate = std::make_shared<CompositionGate>(); ReleaseGate release{gate};
+    auto controller = std::make_unique<CaptureController>(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    controller->setLastRegionWriter([gate](const LastRegion &) {
+      gate->entered.store(true); QElapsedTimer deadline; deadline.start(); while (!gate->released.load() && deadline.elapsed() < 10000) QThread::msleep(1);
+      gate->done.store(true); return QString{};
+    });
+    controller->captureRegion(); QTRY_VERIFY(overlayExists()); controller->pointerDown({10, 10}); controller->pointerUp({40, 35}); QTRY_VERIFY(gate->entered.load());
+    QElapsedTimer elapsed; elapsed.start(); controller.reset(); QVERIFY(elapsed.elapsed() < 1000); QVERIFY(!overlayExists());
+    gate->released.store(true); QTRY_VERIFY(gate->done.load()); QTest::qWait(30); QVERIFY(!QFileInfo::exists(dir.filePath("outputs")));
+  }
+
   void nativeCornerHandlesResizeWithoutPrematureCaptureAndKeepGrabOffset_data() {
     QTest::addColumn<int>("corner"); QTest::addColumn<int>("scale");
     for (int scale : {1, 2}) for (int corner = 0; corner < 4; ++corner)

@@ -46,6 +46,7 @@ add_library(xerahs_core STATIC
   src/capture/ScrollStitch.h
   src/capture/CaptureSchedule.cpp
   src/capture/CaptureSchedule.h
+  src/capture/LastRegionStore.cpp src/capture/LastRegionStore.h
   src/capture/RegionGeometry.cpp
   src/capture/RegionGeometry.h
   src/capture/WindowSnapTargets.cpp
@@ -1212,3 +1213,10 @@ set_target_properties(editor-save-dialog-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-save-dialog-test PRIVATE xerahs_editor_source Qt6::Test)
 add_test(NAME editor-save-dialog COMMAND editor-save-dialog-test)
 set_tests_properties(editor-save-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
+# RC-017/027 durable metadata, without pixels or a recapture authority.
+add_executable(last-region-store-test tests/LastRegionStoreTest.cpp)
+set_target_properties(last-region-store-test PROPERTIES AUTOMOC ON)
+target_link_libraries(last-region-store-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME last-region-store COMMAND last-region-store-test)
+set_tests_properties(last-region-store PROPERTIES TIMEOUT 30)
