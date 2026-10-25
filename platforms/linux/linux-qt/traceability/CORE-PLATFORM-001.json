@@ -73,7 +73,12 @@
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "Full linked ledger outcomes, authority, accessibility, privacy, persistence and all supported-platform acceptance remain Required."
+      "note": "Full linked ledger outcomes, authority, accessibility, privacy, persistence and all supported-platform acceptance remain Required.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 9,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "CORE-002": {
       "status": "partial",
@@ -83,7 +88,12 @@
       "evidence": [
         "platforms/linux/linux-qt/app/main.cpp",
         "platforms/linux/linux-qt/packaging/com.xerahs.app.desktop"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 14,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-003": {
       "status": "partial",
@@ -93,7 +103,12 @@
       "evidence": [
         "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
         "platforms/linux/linux-qt/app/NativeInstance.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 19,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-004": {
       "status": "partial",
@@ -132,7 +147,12 @@
         "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
         "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
         "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 22,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-005": {
       "status": "partial",
@@ -151,7 +171,12 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 25,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-006": {
       "status": "partial",
@@ -170,7 +195,12 @@
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 31,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-007": {
       "status": "partial",
@@ -214,7 +244,12 @@
         "platforms/linux/linux-qt/app/WORKFLOW-SHORTCUTS.md",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 35,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-008": {
       "status": "partial",
@@ -223,7 +258,12 @@
       "note": "Resumable first-run wizard, optional page skipping, finish-later, private progress, corrupt/newer preservation, explicit hotkeys/uploads and test-capture denial are implemented and covered by OnboardingTest. Full native permission/consent/accessibility/target review remains.",
       "evidence": [
         "platforms/linux/linux-qt/tests/OnboardingTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 38,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-009": {
       "status": "partial",
@@ -233,7 +273,12 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/NativeEditorAppearanceTest.cpp",
         "platforms/linux/linux-qt/tests/NativeDesktopAppearanceTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 42,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-010": {
       "status": "partial",
@@ -256,7 +301,12 @@
         "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 45,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-011": {
       "status": "not-started",
@@ -265,7 +315,13 @@
       "note": "Explicit/policy-scheduled signed update checks, channel/version display and install recovery remain Required.",
       "waiting_on": [
         "Mike/release owner: provide trusted signed release provenance/channel before live update qualification."
-      ]
+      ],
+      "audit": {
+        "classification": "blocked: Provide an approved release trust/signature/channel policy before update implementation.",
+        "spec_line": 48,
+        "blocker": "Provide an approved release trust/signature/channel policy before update implementation.",
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "CORE-012": {
       "status": "partial",
@@ -275,7 +331,12 @@
       "evidence": [
         "platforms/linux/linux-qt/src/image-editor/EditorPreferenceStore.cpp",
         "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 54,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-013": {
       "status": "partial",
@@ -287,7 +348,13 @@
       ],
       "waiting_on": [
         "Mike: human security review of Secret Service credential handling."
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 57,
+        "remaining_human_decision": "Secret Service credential-store human security review remains pending.",
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-014": {
       "status": "partial",
@@ -298,7 +365,12 @@
         "platforms/linux/linux-qt/app/CaptureController.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/NativeWindowDiscoveryTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 64,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-015": {
       "status": "partial",
@@ -311,7 +383,13 @@
       ],
       "waiting_on": [
         "Mike: approve scrolling alignment threshold; no new threshold is inferred."
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 68,
+        "remaining_human_decision": "What approved scroll-alignment threshold replaces kScrollAlignmentThreshold?",
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-016": {
       "status": "partial",
@@ -322,7 +400,12 @@
         "platforms/linux/linux-qt/tests/CaptureScheduleTest.cpp",
         "platforms/linux/linux-qt/tests/ScheduledCaptureTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 72,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-017": {
       "status": "partial",
@@ -337,7 +420,12 @@
       "tests": [
         "tests/RecordingTest.cpp",
         "tests/RecordingIntegrationTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 76,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-018": {
       "status": "partial",
@@ -347,7 +435,12 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/RecordingTest.cpp",
         "platforms/linux/linux-qt/tests/RecordingIntegrationTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 79,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-019": {
       "status": "partial",
@@ -357,7 +450,12 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
         "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 86,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-020": {
       "status": "partial",
@@ -369,7 +467,12 @@
         "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp",
         "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
         "platforms/linux/linux-qt/tests/UploadResponseTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 90,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-021": {
       "status": "partial",
@@ -380,7 +483,12 @@
         "platforms/linux/linux-qt/tests/UploadDestinationTest.cpp",
         "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 94,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-022": {
       "status": "not-started",
@@ -389,7 +497,13 @@
       "note": "Human-approved isolated plugin hosting, provenance/permissions/IPC/secrets/crash/revocation/audit remain Required.",
       "waiting_on": [
         "Mike: approve isolated plugin-host/security/provenance model before activation."
-      ]
+      ],
+      "audit": {
+        "classification": "blocked: Approve the isolated plugin-host authority/provenance design before implementation.",
+        "spec_line": 98,
+        "blocker": "Approve the isolated plugin-host authority/provenance design before implementation.",
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "CORE-023": {
       "status": "partial",
@@ -406,7 +520,12 @@
         "platforms/linux/linux-qt/tests/PipelineRetryTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 105,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-024": {
       "status": "partial",
@@ -426,7 +545,12 @@
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-DISCOVERY.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 109,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-025": {
       "status": "partial",
@@ -436,13 +560,23 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
         "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 113,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-026": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "Assistant provider/data flow minimization, explicit capture/history authority and sensitive/destructive review remain Required."
+      "note": "Assistant provider/data flow minimization, explicit capture/history authority and sensitive/destructive review remain Required.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 116,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "CORE-027": {
       "status": "partial",
@@ -478,7 +612,12 @@
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-DISCOVERY.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 123,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-028": {
       "status": "partial",
@@ -491,13 +630,24 @@
       ],
       "waiting_on": [
         "Mike/release owner: package signing/provenance and release approval; no signing keys in repository."
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 127,
+        "remaining_human_decision": "Release signing, provenance and packaging approval require Mike.",
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-029": {
       "status": "not-applicable",
       "disposition": "Not applicable",
       "vectors": [],
-      "note": "MOBILE-PLATFORM-001 declares Android/iOS scope; native mobile implementation is outside this Linux desktop target. Mobile and cross-platform acceptance gates remain open; no desktop requirement is waived."
+      "note": "MOBILE-PLATFORM-001 declares Android/iOS scope; native mobile implementation is outside this Linux desktop target. Mobile and cross-platform acceptance gates remain open; no desktop requirement is waived.",
+      "audit": {
+        "classification": "not-applicable",
+        "spec_line": 132,
+        "coverage": "Mobile-only obligation, outside Linux desktop implementation scope; not waived on Android or iOS."
+      }
     },
     "CORE-030": {
       "status": "partial",
@@ -509,19 +659,35 @@
         "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
         "platforms/linux/linux-qt/CONTRACT-AUDIT.md",
         "platforms/linux/linux-qt/tests/FileUploadTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 137,
+        "remaining_human_decision": "Human security/privacy/accessibility/licensing/compatibility and supported-target acceptance remain pending.",
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-031": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "This CMake Linux edition introduces no NuGet dependency. Repository-wide authoritative NuGet maintenance before release qualification and the other contract triggers remain Required; no release qualification is claimed."
+      "note": "This CMake Linux edition introduces no NuGet dependency. Repository-wide authoritative NuGet maintenance before release qualification and the other contract triggers remain Required; no release qualification is claimed.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 141,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "CORE-032": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "No NuGet adoption is part of this checkpoint. Complete repository-wide source/version/time/verification records and any bounded retention approvals remain Required before release qualification."
+      "note": "No NuGet adoption is part of this checkpoint. Complete repository-wide source/version/time/verification records and any bounded retention approvals remain Required before release qualification.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 148,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "CORE-033": {
       "status": "partial",
@@ -530,7 +696,12 @@
       "note": "linux-qt is implemented as the supported reference candidate application. Every applicable requirement on every declared target remains Required; no scope reduction or edition promotion is claimed.",
       "evidence": [
         "platforms/linux/linux-qt/CONTRACT-AUDIT.md"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 158,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-034": {
       "status": "partial",
@@ -539,7 +710,12 @@
       "note": "The approved linux-editions.json declares supported linux-qt and candidate editions. Actual qualification of all declared mechanisms and targets remains Required.",
       "evidence": [
         "product-contract/capabilities/CORE-PLATFORM-001/linux-editions.json"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 164,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-035": {
       "status": "partial",
@@ -550,7 +726,12 @@
         "platforms/linux/linux-qt/app/NativeInstance.cpp",
         "platforms/linux/linux-qt/app/NativeEditorPreferences.cpp",
         "platforms/linux/linux-qt/src/image-editor/PREFERENCES-POLICY.md"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 168,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-036": {
       "status": "partial",
@@ -561,7 +742,12 @@
         "platforms/linux/linux-qt/CMakeLists.txt",
         "platforms/linux/linux-qt/CONTRACT-AUDIT.md",
         "platforms/linux/linux-qt/tests/FileUploadTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 173,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "CORE-037": {
       "status": "partial",
@@ -572,7 +758,12 @@
         "platforms/linux/linux-qt/app/ApplicationWindow.cpp",
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
         "platforms/linux/linux-qt/tests/NativeDesktopAppearanceTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 179,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     }
   },
   "qualification": {
@@ -591,25 +782,134 @@
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "date": "2026-10-24",
-    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
-    "existing_automated_suites": [
-      "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
-      "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
-      "platforms/linux/linux-qt/tests/CaptureScheduleTest.cpp",
-      "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
-      "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
-      "platforms/linux/linux-qt/tests/OnboardingTest.cpp",
-      "platforms/linux/linux-qt/tests/RecordingIntegrationTest.cpp",
-      "platforms/linux/linux-qt/tests/RecordingTest.cpp",
-      "platforms/linux/linux-qt/tests/ScrollCaptureTest.cpp",
-      "platforms/linux/linux-qt/tests/ScrollStitchTest.cpp",
-      "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
-      "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp",
-      "platforms/linux/linux-qt/tests/UploadResponseTest.cpp",
-      "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-      "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp"
+    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
+    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "specification": "product-contract/capabilities/CORE-PLATFORM-001/SPEC.md",
+    "specification_sha256": "cf9c8a8355542c11a58695f51acc3ad6aade53aff41d1a6b195d854d1f4a1959",
+    "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
+    "production_surfaces": [
+      "platforms/linux/linux-qt/app/main.cpp",
+      "platforms/linux/linux-qt/app/OwnedWork.h",
+      "platforms/linux/linux-qt/src/recording/Recording.cpp",
+      "platforms/linux/linux-qt/src/capture/ScrollStitch.cpp",
+      "platforms/linux/linux-qt/src/history/CaptureHistory.cpp",
+      "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
+      "platforms/linux/linux-qt/app/NativePrivateRecords.cpp"
     ],
-    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+    "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp": [
+        "awaitLine",
+        "init",
+        "cleanup",
+        "forwardsToOneRealProcessWithoutReplacingItsSocket",
+        "busyRejectionAndNotReadyNeverBecomeAnotherPrimary",
+        "simultaneousProcessesElectOnlyOneOwner",
+        "missingOrUntrustedAcknowledgementsNeverElectOrResend",
+        "intakeDeadlineFreesCapacityWithoutAcceptingIncompleteWork",
+        "aCrashedOwnerReleasesItsLifetimeLockAndStaleSocket",
+        "partialMalformedOversizedAndMultipleFramesNeverDispatch",
+        "maximumRequestBoundaryAndDuplicateReceiptsUseProductionValidation",
+        "busyRetryDoesNotCacheAnOperationThatNeverStarted",
+        "unsafeDirectoriesAndEndpointFilesArePreserved",
+        "aLiveEndpointWithoutTheLeaseIsNotUnlinked",
+        "peerAuthenticationPrecedesSendingPrivatePayload",
+        "actualApplicationForwardsBeforeOpeningPreferencesOrDesktopServices",
+        "deniedIncomingCredentialsCannotReachAdmission",
+        "workflowDiscoveryIsHeadlessReadOnlyAndDoesNotActivatePrimary",
+        "workflowHelpDoesNotRequireADisplayOrReadPreferences",
+        "workflowDiscoveryRejectsConflictsAndInvalidArgumentsBeforePresentation",
+        "recordingCliForwardsToExistingOwner",
+        "actualApplicationForwardsWorkflowIdsAndReportsOnlyDelivery",
+        "duplicateWorkflowFramesReplayReceiptWithoutDispatchingAgain",
+        "workflowCliRefusesMalformedHeadlessAndMissingProfilesWithoutSideEffects",
+        "runtimeFilesHaveOwnerOnlyAccessAndProfilesAreIsolated"
+      ],
+      "platforms/linux/linux-qt/tests/OwnedWorkTest.cpp": [
+        "deliversResultOnTheOwnerThread",
+        "destroyedOwnerNeverSeesTheResult",
+        "cancellationIsCooperativeAndStillDelivers",
+        "progressIsCoalescedAndDeliveredOnTheOwnerThread",
+        "throwingWorkSkipsDone"
+      ],
+      "platforms/linux/linux-qt/tests/OnboardingTest.cpp": [
+        "walkingThroughRecordsEveryPageAndFinishIsFinal",
+        "onlyOptionalPagesCanBeSkipped",
+        "finishLaterKeepsPlaceAndDoesNotComplete",
+        "progressRoundTripsAndResumes",
+        "corruptStoreStartsFreshAndIsNeverOverwritten",
+        "newerStoreStartsFreshReportsAndIsPreserved",
+        "changedFileOnDiskIsNotSilentlyOverwritten",
+        "completionStopsAutoOpenAndHeadlessNeverOpens",
+        "reopenAfterCompletionStartsAtWelcomeAndStaysFinished",
+        "setupGuideIsRegisteredOnceInPreferences",
+        "saveLocationReusesSettingsValidationAndStore",
+        "testCaptureReportsDenialHonestlyAndRestoresTheWindow",
+        "hotkeysPageListsActionsAndOpensExistingFlows",
+        "uploadsPageOpensDestinationsAndTelemetryStatesNoTelemetry",
+        "summaryStatesWhatWasDoneAndTheDefaultConsequence",
+        "describeDefaultWorkflowFollowsTheActions",
+        "decliningEverythingLeavesDefaultCaptureWorking",
+        "everyControlHasAnAccessibleName"
+      ],
+      "platforms/linux/linux-qt/tests/RecordingTest.cpp": [
+        "cropMapping",
+        "explicitAudioSelection",
+        "transitionMatrix",
+        "resumeAndSingleTerminalResult",
+        "validationAndNaming",
+        "deterministicEncodersAndDescriptions",
+        "outputFinalizationAbortAndCollision",
+        "activationAndHotkeys"
+      ],
+      "platforms/linux/linux-qt/tests/ScrollCaptureTest.cpp": [
+        "Close",
+        "respond",
+        "NotifyPointerMotion",
+        "NotifyPointerAxisDiscrete",
+        "startPortal",
+        "init",
+        "cleanup",
+        "portalSessionSelectsPointerAndIssuesAxisCalls",
+        "declinedConsentIsReportedAndNothingIsScrolled",
+        "pointerlessGrantIsTreatedAsDenied",
+        "missingPortalIsUnavailable",
+        "storedSettingsAreReadAtStartAndAlignmentThresholdStaysConstant",
+        "wheelStrategyPlacesPointerAtRegionCentreThenScrollsToEndOfPage",
+        "deniedWheelInputFallsBackToManualAndNeverStaysSilent",
+        "unavailableInputUsesManualWithoutAPortal",
+        "failedAxisCallSwitchesToManual",
+        "lowConfidenceNeverAutoPublishesAndOffersChoices",
+        "decisionIsWaitedForNotAssumed",
+        "busyControllerRefusesToStart",
+        "cancelAbandonsEverythingAndReleasesAdmission",
+        "cancelWhileGrabIsInFlightIgnoresTheLateFrame",
+        "failedGrabWithNoFramesReportsAndReleases",
+        "maxHeightBoundPublishesBoundedSeamlessResult",
+        "restartingAfterAnOverlayCancelIsAllowed",
+        "tinyRegionIsRefused"
+      ],
+      "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp": [
+        "stableNewFileCopiesOrMoves",
+        "uploadsOnceThroughDefaultDestinationAcrossRestart",
+        "recursiveScanExcludesCapturesHiddenTemporaryAndSymlinkLoops",
+        "dialogAddsRemovesAndPersistsEnabledConsent"
+      ],
+      "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp": [
+        "uploadOnlyRowsRetainUrlsAndProtectSourceFiles",
+        "failedUploadMessageIsVisible",
+        "itemsKeepOnlyFilesTheirRunCreatedNewestFirst",
+        "searchAndPagingAreBounded",
+        "windowShowsThumbnailsMissingFilesAndFileActions",
+        "uploadUrlIsVisibleAndCanBeCopiedFromHistory",
+        "uploadUrlActionsOpenTheUrlAndCopyTheDeletionUrl",
+        "uploadUrlActionsAreDisabledWithoutAnUpload",
+        "openUrlRefusesANonWebUploadUrl",
+        "forgetRemovesTheRecordAndKeepsTheFile",
+        "activeWindowSourceShowsItsLabel",
+        "unknownSourceStillShowsItsRawId",
+        "runningCaptureDefersTheRead"
+      ]
+    },
+    "remaining_scope": "Native shell, capture, recording, upload and storage have candidate tests. Complete linked-ledger semantics, migration, signed distribution, runtime target matrix and human acceptance are not established."
   }
 }

@@ -26,7 +26,12 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 9,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EO-002": {
       "status": "partial",
@@ -40,7 +45,12 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 12,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EO-003": {
       "status": "partial",
@@ -54,7 +64,12 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 15,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EO-004": {
       "status": "partial",
@@ -71,7 +86,12 @@
       ],
       "waiting_on": [
         "Mike: approve format-disposition.json alpha/quality/overwrite semantics before activation."
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 18,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EO-005": {
       "status": "partial",
@@ -85,7 +105,12 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 22,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EO-006": {
       "status": "partial",
@@ -99,7 +124,12 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 26,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EO-007": {
       "status": "partial",
@@ -113,7 +143,12 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 28,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EO-008": {
       "status": "partial",
@@ -127,7 +162,12 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 31,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EO-009": {
       "status": "partial",
@@ -141,13 +181,23 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 33,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EO-010": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "No native Set as Wallpaper output with display/layout selection, confirmation and generated-file disclosure is implemented."
+      "note": "No native Set as Wallpaper output with display/layout selection, confirmation and generated-file disclosure is implemented.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 36,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "EO-011": {
       "status": "partial",
@@ -161,7 +211,12 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 39,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EO-012": {
       "status": "partial",
@@ -175,7 +230,12 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 42,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EO-013": {
       "status": "partial",
@@ -189,7 +249,12 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 45,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EO-014": {
       "status": "partial",
@@ -203,7 +268,12 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 48,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EO-015": {
       "status": "partial",
@@ -217,7 +287,12 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 52,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EO-016": {
       "status": "partial",
@@ -231,21 +306,179 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 55,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "date": "2026-10-24",
-    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
-    "existing_automated_suites": [
-      "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
-      "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
-      "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
-      "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
-      "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
-      "platforms/linux/linux-qt/tests/EditorSaveTest.cpp"
+    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
+    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "specification": "product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001/SPEC.md",
+    "specification_sha256": "5c966c9f044cd1135c70e7d69e345b1cfb4ffffabd26f58e6ec9e7eb582c824f",
+    "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
+    "production_surfaces": [
+      "platforms/linux/linux-qt/app/EditorSave.cpp",
+      "platforms/linux/linux-qt/app/EditorCopy.cpp",
+      "platforms/linux/linux-qt/app/EditorPrint.cpp",
+      "platforms/linux/linux-qt/app/EditorWindow.cpp"
     ],
-    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+    "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/EditorSaveTest.cpp": [
+        "workerSnapshotSurvivesConcurrentCallerChanges",
+        "realPairReopensWithoutCompoundingAndUsesTheEncodedRasterHash",
+        "encodeExceptionAndRacingReplacementPreserveThePreviousDestination",
+        "oversizedEncodedTemporaryIsRejectedWithoutReplacingOrBufferingIt",
+        "completionObserverExceptionPreservesAcknowledgedArtifacts",
+        "incompletePairRepairsOnlyItsBoundCompanionAndRejectsChangedPng",
+        "explicitEmptySaveRemovesOnlyTheKnownCompatibleDefaultSidecar",
+        "cancelledBeforePublicationPreservesFilesAndAfterRasterRetainsPartialFacts",
+        "symlinksAndChangedCompanionsArePreservedAndParentSegmentsKeepKernelMeaning",
+        "modalWorkerOwnsItsSnapshotAndReleasesWithoutJoiningOnParentDestruction"
+      ],
+      "platforms/linux/linux-qt/tests/EditorCopyTest.cpp": [
+        "init",
+        "workerUsesOneSnapshotAndPublishesOnlyOnTheGuiWithOwnedAlphaAndPng",
+        "nativeOfferHasBothInteroperableRepresentationsAndReportsOwnership",
+        "synchronousReplacementCannotBecomeAcknowledgedCopyOrBeCleared",
+        "cancelBeforePublicationAndDestructionCannotPublishLater",
+        "encodingFailureAndMissingProviderDoNotChangeTheClipboard",
+        "unsupportedVisibleObjectsFailWithoutSilentlyDroppingThem",
+        "knownFailureRetryKeepsOnePayloadWithoutRenderingOrEncodingAgain",
+        "callbackExceptionAndLateCancellationKeepActualDeliveryFacts",
+        "colourConversionIsDisclosedAndDoesNotMutateTheSource",
+        "malformedPublicationFactsStayUnknownAfterAnEffect"
+      ],
+      "platforms/linux/linux-qt/tests/EditorPrintTest.cpp": [
+        "initTestCase",
+        "init",
+        "independentLayoutFitsCentresAndRejectsInvalidGeometry",
+        "frozenPreparationAndNativePdfOutputHaveIndependentPixelsAndGeometry",
+        "cancellationAndOwnerDestructionBeforeConfigurationCannotSubmit",
+        "renderFailuresAndMissingCallbacksCannotReachSubmission",
+        "nativePreviewExposesScaleOrientationColourPageAndCancelWithoutFiles",
+        "configurationCancellationExceptionAndOwnerDeletionCannotSubmit",
+        "cancelDuringSubmissionAndOwnerDeletionPreserveHonestDelivery",
+        "ownerDestructionDuringProgressTeardownPreservesCompletedAcknowledgement",
+        "sourceColourConversionIsDisclosedAndOriginalAlphaProfileAndPixelsSurvive",
+        "knownFailureReusesSnapshotWhileUnknownMalformedOrNativeFailureDoesNotClaimSuccess"
+      ],
+      "platforms/linux/linux-qt/tests/EditorWindowTest.cpp": [
+        "initTestCase",
+        "init",
+        "cleanup",
+        "emptySaveWithBaselineCompanionReportsFailureWithoutDeletingEitherCompanion",
+        "keyboardTransformsPersistNativeGroupAndExactHistory",
+        "keyboardTransformsKeepNativeTextListModalAndBusyPrecedence",
+        "nativeDeletePersistsRemainingObjectsAndEmptySidecarPolicy",
+        "nativeDeleteRefusesStaleProtectedAndOwnerChanges",
+        "nativeOrderingCommandsPersistArrayOrderAndRenderedPixels",
+        "orderingRefusalAndOwnerTeardownPreserveTheCurrentDocument",
+        "annotationObjectsSupportKeyboardSelectionAndActualPersistence",
+        "nativeGroupMoveSavesBothObjectsAndPreservesSourceAndUnknownFields",
+        "thicknessCommandsGuardPreferencePublicationHistoryAndOwners",
+        "colorChoicesHaveGuardedDefaultsPublicationAndActualPersistence",
+        "nativeGroupRotationHasOwnedPreviewAndActualPersistence",
+        "numericRectangleReplacementRefusalKeepsFilesAndAllowsFreshEdit",
+        "rectangleNestedPickerSurvivesEditorDestruction",
+        "keyboardRectangleCreationSavesFrozenStyleAndPreservesSource",
+        "rectanglePropertiesHaveAtomicHistoryDefaultsAndActualSaveRecovery",
+        "destroyingTheEditorDuringPropertiesDoesNotWriteFiles",
+        "explicitToolsShareMenusHotkeysBusyGuardAndEditableSave",
+        "annotationCopyPasteCutAndDuplicateUseNativeMenusShortcutsAndOneHistoryPerMutation",
+        "pastedObjectsHaveVisibleViewportOffsetEvenWhenZoomedOut",
+        "nativeDuplicationPreservesEmbeddedAssetsAndAssetClipboardRefusalKeepsEverything",
+        "lockedNativeSelectionsKeepGeometryAndDisableDirectDeleteAndRotation",
+        "annotationCompletionObserverExceptionKeepsOneCommittedMutation",
+        "annotationPublicationFailuresNeverCutAndCallbackDiagnosticsAreRedacted",
+        "malformedAndForeignClipboardReadsCannotMutateSessionAndTextEntryKeepsLocalEditing",
+        "nativeAnnotationOfferAndReplacementReportActualOwnershipWithoutDeletingObjects",
+        "annotationPublicationReadAndCompletionCanDestroyTheirOwner",
+        "printMenuAndShortcutSubmitWithoutSavingOrChangingHistoryFilesPreferencesOrClipboard",
+        "knownPrintFailureRetryUsesFrozenSnapshotAndFreshConfirmationWithDefaultCancel",
+        "unknownPrintDeliveryCannotAuthorizeRetryAndMissingServiceIsVisible",
+        "printCancellationKeepsTheEditorResponsiveAndRefusesReentrantActions",
+        "printCompletionObserverExceptionKeepsAcknowledgementAndNeverRepeatsTheJob",
+        "printConfigurationAndCompletionCanDestroyTheirOwner",
+        "copyMenuAndShortcutPublishOneSnapshotWithoutSavingOrClearingHistory",
+        "copyCancellationIsResponsiveAndBlocksOtherOutputAndDocumentActions",
+        "knownCopyFailureOffersDefaultCancelRetryWithoutRenderingOrChangingRedo",
+        "unknownCopyDeliveryCannotAuthorizeRetryAndMissingServiceIsVisible",
+        "copyPublicationAndCompletionCanDestroyTheirOwner",
+        "saveRunsOnWorkerWithResponsiveCancellationAndNoReentrantActions",
+        "incompleteSaveOffersDefaultCancelCompanionOnlyRepairAndKeepsRedo",
+        "partialSaveAsKeepsTheCurrentPathUntilItsCompanionRepairCompletes",
+        "destructionDuringSaveCancelsTheOwnedWorkerWithoutWaitingOrPublishing",
+        "completionCanDestroyItsOwnerWithoutInvalidatingWorkerResults",
+        "saveRefusesAnUnavailableFormatWithoutEncodingOrChangingFiles",
+        "retainedAnnotatedDocumentOpensUnsavedAndPersistsAnEditablePair",
+        "toolbarApplyKeepsImageCheckpointAndRedoWhileHiddenCommandsRemainReachable",
+        "cancelledOrFailedToolbarDraftPreservesActualEditorHistory",
+        "appearanceApplyUpdatesActualEditorsWithoutEditingPixelsCheckpointOrRedo",
+        "cancelledAppearanceAndFailedApplyKeepActualEditorPaletteAndHistory",
+        "recoveringTheActualEditorFramePreservesPixelsCheckpointAndRedo",
+        "cancelledCloseDoesNotSaveWindowStateAndAcceptedCloseRestoresIt",
+        "windowMemoryMenuRollsBackFailedWritesAndUpdatesAllEditorActions",
+        "failedWindowPersistenceIsVisibleAndAllowsClosingWithoutChangingTheFile",
+        "savedDefaultsAffectOnlyNewAnnotationsAcrossOpenEditorsAndRestart",
+        "toolbarPreferenceFailurePreservesExplicitSelectionEditAndHistory",
+        "toolbarColorChoicePersistsAlphaWhileCancelLeavesEverythingUnchanged",
+        "actualOpenAndCompleteSavePersistRecentImagesAcrossRestart",
+        "recentPreferenceWriteFailureDoesNotUndoSuccessfulImageOpenOrSave",
+        "incompleteImageSaveDoesNotRecordAPersistedRecentPath",
+        "nativeRecentPreferencesAreOptInAtomicAndLeaveTheDocumentAlone",
+        "recentMenuUsesDirtyConfirmationAndKeepsMissingEntriesRemovable",
+        "recentEntryPreservesTheOpenedSymlinkParentSource",
+        "incomingOpenPreventsStaleRecentPreferencesFromOverwritingTheList",
+        "nativeRecentRemovalAndLimitChangesApplyOrCancel",
+        "nativeOpenPickerConfirmsAndPreservesOrReplacesTheDirtySession",
+        "cancelledPickerAndCorruptOpenPreserveTheCurrentSession",
+        "saveBeforeOpeningTheSameFileAdoptsTheJustSavedSourceAndSidecar",
+        "cancellingAndClosingOpenRetireTheLiveWorker",
+        "savingAnUntitledImageOverTheOpenCandidateReloadsTheSavedImage",
+        "retainedCaptureOpensAnOwnedUntitledDocumentAndSavesOnlyToExplicitDestination",
+        "cancelledOrFailedNewImagePreservesTheDirtySession",
+        "newImageReplacementResetsSessionBindingsAndSavesChosenProfile",
+        "standaloneNewImageCanBeCancelledOrCreatedWithoutAnExistingFile",
+        "cancelledSaveBeforeReplacingAnUntitledImageKeepsItsSession",
+        "ownedReplacementPreparationReleasesBlockedWork",
+        "ownedReplacementDialogsRecoverFromDestruction",
+        "standaloneCreationAndOpenReleaseDestroyedEditorParents",
+        "ownedComparisonReleasesBlockedWorkers",
+        "comparisonPreservesDirtyHistorySelectionViewportAndFiles",
+        "nativeSourceMismatchChoice",
+        "canvasWorkerKeepsUntaggedWorkingSourceAndPreparesPrivateSRgbDisplay",
+        "ownedCanvasCommandsPreservePixelsProfileHistoryAndSave",
+        "ownedCanvasPreparationRejectsStaleAndReleasesOwners",
+        "canvasConfigurationDialogsReleaseDestroyedOwners",
+        "ownedHistoryRestoresSourceSelectionAndSavedCheckpoint",
+        "ownedHistoryCancellationStaleAndOwnerChanges",
+        "ownedHistoryPreparationRejectsInvalidSnapshots",
+        "ownedCropUsesNativeBoundsHistoryAndPersistence",
+        "ownedCropRefusesStaleEditsAndReleasesBlockedWorkers",
+        "cropIsUndoableAndReopensTheCroppedSource",
+        "canvasResizeDoesNotResampleAndUndoRestoresTheSource",
+        "imageRotationPersistsPixelsAndUndoSource",
+        "cancelledDialogPreservesCleanHistoryAndSource",
+        "nativeAutoCropPersistsAlphaAndCreatesExactlyOneUndoStep",
+        "cancelledSeventeenDegreePreviewPreservesDirtyAnnotationsAndHistory",
+        "acceptedPreviewPersistsTransformedSourceAndEditableAnnotationsOnce",
+        "nativePreviewCancellationReleasesTheLiveWorkerWithoutCommitting",
+        "flattenPersistsOnlyRenderedObjectsAndShowsUnsupportedPlaceholders",
+        "clearAnnotationsKeepsSourcePixelsAndRestoresUnsupportedObjectsWithUndo",
+        "clearImageConfirmationAndRecovery",
+        "clearedImageSavesTransparentPixelsAndUndoRestoresTheImmutableSource",
+        "cancellingNativeFlattenLeavesFilesDocumentAndHistoryUntouched",
+        "failedSaveBeforeClearKeepsTheDirtySessionAndHistory",
+        "pointerStatusReportsTheDocumentPixelAndItsSourceColour",
+        "pointerStatusSizeFollowsTheChangedImage",
+        "pointerStatusReportsPixelsOfTheChangedImage"
+      ]
+    },
+    "remaining_scope": "Native immutable PNG/copy/print and split-sidecar tests exist. JPEG/WebP UI, editor upload/pin/task hosts, wallpaper and complete output fault/permission matrix remain."
   }
 }

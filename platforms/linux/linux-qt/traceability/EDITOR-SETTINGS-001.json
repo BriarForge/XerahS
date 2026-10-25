@@ -102,7 +102,12 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "PREFERENCES-POLICY documents native metadata, bounded validation, scope, privacy, missing-marker migration and ledger links for the current model. The full ledger and approved shared semantics remain Required; this foundation does not activate the package. Toolbar candidate metadata covers Id/IsVisible/nullable BeginGroup/Hotkey, limits, unknown preservation and protected gestures; shared approval remains Required."
+      "note": "PREFERENCES-POLICY documents native metadata, bounded validation, scope, privacy, missing-marker migration and ledger links for the current model. The full ledger and approved shared semantics remain Required; this foundation does not activate the package. Toolbar candidate metadata covers Id/IsVisible/nullable BeginGroup/Hotkey, limits, unknown preservation and protected gestures; shared approval remains Required.",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 9,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ESET-002": {
       "disposition": "Required",
@@ -110,7 +115,12 @@
       "vectors": [
         "invalid-field-isolation"
       ],
-      "note": "Production loading distinguishes missing, valid, invalid, unknown and newer-version fields, repairs known invalid values independently and records value-free diagnostics. The winning native instance loads before opening editors and presents field recovery/read-only fallback through native warnings. Native host tests preserve unrelated/unknown values after recovery and a recent-list save. Remaining fields and complete recovery qualification remain Required. Window dimensions and memory/maximized flags now recover independently with field-specific native diagnostic labels."
+      "note": "Production loading distinguishes missing, valid, invalid, unknown and newer-version fields, repairs known invalid values independently and records value-free diagnostics. The winning native instance loads before opening editors and presents field recovery/read-only fallback through native warnings. Native host tests preserve unrelated/unknown values after recovery and a recent-list save. Remaining fields and complete recovery qualification remain Required. Window dimensions and memory/maximized flags now recover independently with field-specific native diagnostic labels.",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 13,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ESET-003": {
       "disposition": "Required",
@@ -123,7 +133,12 @@
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS.md",
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/PreferenceDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 16,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ESET-004": {
       "disposition": "Required",
@@ -134,13 +149,23 @@
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS.md",
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/PreferenceDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 19,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ESET-005": {
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Production Qt Core fields and placement constrain normal client/frame bounds to usable logical work areas, greatest overlap or preferred fallback. Native controller observes Qt screen/work-area/DPI/window-state changes, preserves normal size and maximized state while minimized, and recovers normal placement without writing. Actual accepted close saves only after Save/Discard/Cancel succeeds; cancelled/reentrant closes and failed image saves do not capture state. Shared memory toggle saves before publishing, rolls back failed toggles and removes bounds/maximized state plus memory authority from current/previous versions when disabled. Core analytical, native injected-display, actual editor-frame/history/file, maximize/minimize, restart, cancellation and locked-write tests cover the implementation. Physical compositor/display/scaling, accessibility and shared default/metadata/compatibility qualification remain Required."
+      "note": "Production Qt Core fields and placement constrain normal client/frame bounds to usable logical work areas, greatest overlap or preferred fallback. Native controller observes Qt screen/work-area/DPI/window-state changes, preserves normal size and maximized state while minimized, and recovers normal placement without writing. Actual accepted close saves only after Save/Discard/Cancel succeeds; cancelled/reentrant closes and failed image saves do not capture state. Shared memory toggle saves before publishing, rolls back failed toggles and removes bounds/maximized state plus memory authority from current/previous versions when disabled. Core analytical, native injected-display, actual editor-frame/history/file, maximize/minimize, restart, cancellation and locked-write tests cover the implementation. Physical compositor/display/scaling, accessibility and shared default/metadata/compatibility qualification remain Required.",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 22,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ESET-006": {
       "disposition": "Required",
@@ -167,7 +192,12 @@
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS.md",
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/PreferenceDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 25,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ESET-007": {
       "disposition": "Required",
@@ -186,13 +216,23 @@
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS.md",
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/PreferenceDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 29,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ESET-008": {
       "disposition": "Required",
       "status": "not-started",
       "vectors": [],
-      "note": "Native font validation, fallback without implicit rewrite and text/step preferences remain Required."
+      "note": "Native font validation, fallback without implicit rewrite and text/step preferences remain Required.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 32,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "ESET-009": {
       "disposition": "Required",
@@ -208,7 +248,12 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/app/ANNOTATION-THICKNESS-EVIDENCE.json"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 36,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ESET-010": {
       "disposition": "Required",
@@ -236,7 +281,12 @@
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS.md",
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/PreferenceDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 39,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ESET-011": {
       "disposition": "Required",
@@ -257,7 +307,12 @@
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS.md",
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/PreferenceDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 43,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ESET-012": {
       "disposition": "Required",
@@ -265,7 +320,12 @@
       "vectors": [
         "recent-deduplication"
       ],
-      "note": "Native editor/tray opt-in and bounded newest-first path management now persist in isolated private versioned storage. Apply writes before publishing; Cancel, failed writes and stale modal drafts preserve active/stored values. Remove, Clear, trim and opt-out prune forgotten paths from current and retained previous versions together. Actual Open/complete Save record paths, incomplete saves do not, and preference-save failures visibly survive focus/document refresh without undoing successful image work. Native restart/removal/locking/unknown-field/privacy tests pass; approved retention policy and human privacy/security/compatibility qualification remain Required."
+      "note": "Native editor/tray opt-in and bounded newest-first path management now persist in isolated private versioned storage. Apply writes before publishing; Cancel, failed writes and stale modal drafts preserve active/stored values. Remove, Clear, trim and opt-out prune forgotten paths from current and retained previous versions together. Actual Open/complete Save record paths, incomplete saves do not, and preference-save failures visibly survive focus/document refresh without undoing successful image work. Native restart/removal/locking/unknown-field/privacy tests pass; approved retention policy and human privacy/security/compatibility qualification remain Required.",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 47,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ESET-013": {
       "disposition": "Required",
@@ -275,13 +335,23 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 50,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ESET-014": {
       "disposition": "Required",
       "status": "not-started",
       "vectors": [],
-      "note": "Persistent automation/convenience preferences with consent and error invariants remain Required."
+      "note": "Persistent automation/convenience preferences with consent and error invariants remain Required.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 53,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "ESET-015": {
       "disposition": "Required",
@@ -301,7 +371,12 @@
         "platforms/linux/linux-qt/app/ANNOTATION-COLOR-EVIDENCE.json",
         "platforms/linux/linux-qt/app/ANNOTATION-THICKNESS.md",
         "platforms/linux/linux-qt/app/ANNOTATION-THICKNESS-EVIDENCE.json"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 56,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ESET-016": {
       "disposition": "Required",
@@ -336,20 +411,93 @@
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS.md",
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/PreferenceDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 60,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "date": "2026-10-24",
-    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
-    "existing_automated_suites": [
-      "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
-      "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
-      "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
-      "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
-      "platforms/linux/linux-qt/tests/NativeEditorWindowStateTest.cpp"
+    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
+    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "specification": "product-contract/capabilities/EDITOR-SETTINGS-001/SPEC.md",
+    "specification_sha256": "b17ead0b988d71b300c9d46415f9b2e0bc7be0bab7c07942e61ef2133ae9dbba",
+    "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
+    "production_surfaces": [
+      "platforms/linux/linux-qt/src/image-editor/EditorPreferences.cpp",
+      "platforms/linux/linux-qt/src/image-editor/EditorPreferenceStore.cpp",
+      "platforms/linux/linux-qt/src/image-editor/ToolbarPreferences.cpp",
+      "platforms/linux/linux-qt/src/image-editor/EditorWindowPlacement.cpp"
     ],
-    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+    "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp": [
+        "windowFieldsRecoverIndependentlyAndRespectInclusiveBounds",
+        "disablingWindowMemoryPrunesBothVersionsAndRecoveryCannotReenableIt",
+        "colorsPreserveAlphaNormalizeAndExcludeComputedAliases",
+        "invalidColorsRecoverIndependentlyAndRejectWholeChange",
+        "defaultAndInvalidFieldsRemainIsolated",
+        "documentedNumericBoundaries",
+        "unknownRoundTripAndAtomicChanges",
+        "newerAndMalformedVersionsNeverDowngrade",
+        "recentLoadKeepsOptInOrderingAndPlatformRules",
+        "malformedRecentCollectionsAreIsolated",
+        "missingReadDoesNotCreateOrWriteAnything",
+        "failedAtomicReplacePreservesBothVersionsAndPublishedState",
+        "removedPrivatePathsNeverReappearThroughRecovery",
+        "compatibleEnvelopeExtensionsSurviveSaving",
+        "unreadableNewerAndOversizedArtifactsArePreserved",
+        "oversizedWriteNeverReachesStorage",
+        "nativeFileStorageHasPrivateAtomicRestartAndExternalChangeGuards",
+        "nativeFileStorageRejectsUnsafeAndOversizedInputBeforeBuffering"
+      ],
+      "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp": [
+        "windowChangesKeepRecentsAndUnrelatedFieldsWhileRejectingInvalidOrStaleWrites",
+        "windowOptOutStopsAutomaticUpdatesAndSurvivesPreviousRecordRecovery",
+        "drawingDraftApplyCancelAndReset",
+        "invalidDrawingDraftRemainsOpenWithoutPublishingAnyField",
+        "failedOrStaleDrawingDraftPreservesStoredAndActiveDefaults",
+        "styleApplyCannotResetRecentDraftRevisionOrOverwriteAnIncomingImage",
+        "init",
+        "cleanup",
+        "missingNativeStoreDoesNotWriteOrBackfill",
+        "successfulRememberSurvivesRestartWithNewestFirstOrder",
+        "nativeRecoveryKeepsUnrelatedAndUnknownPreferencesWhenTheListIsSaved",
+        "nativeApplyAndCancelPersistRemovalAndPrivacy",
+        "failedApplyAndRememberPreserveActiveAndStoredPreferences",
+        "cappedIncomingRememberStillInvalidatesAnOlderModalDraft",
+        "damagedOrNewerNativeStorageIsVisibleReadOnlyAndUntouched"
+      ],
+      "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp": [
+        "defaultsAndExplicitEmptyRemainDistinct",
+        "canonicalGesturesRejectAmbiguousOrMalformedText",
+        "protectedCatalogueAndNativeReservedKeysCannotBeReassigned",
+        "collectionTypesBoundsDuplicatesAndRecoveryAreIndependent",
+        "futureEntriesAndExtensionFieldsSurviveSaveResetAndRestartWithoutActivation"
+      ],
+      "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp": [
+        "focusCanvas",
+        "init",
+        "cleanup",
+        "applyCancelAndResetAreAtomicAcrossWindows",
+        "invalidLockedStaleAndReadOnlyApplyPreserveThePublishedLayout",
+        "hiddenCommandsAndGroupBoundariesKeepMenusAndHotkeys",
+        "applyCommitsTheActiveNativeCellEditor",
+        "textModalAndBusyInputTakePrecedenceOverAdditionalAndProtectedCommands",
+        "deleteCommandsYieldToTextModalAndBusyInput",
+        "customizedOrderingNavigationKeepsNativeListAndTextPrecedence",
+        "extensionFutureDataAndRecentDraftAuthoritySurviveNativeApply"
+      ],
+      "platforms/linux/linux-qt/tests/NativeEditorWindowStateTest.cpp": [
+        "init",
+        "cleanup",
+        "nativeGeometryRecoversAfterDisplayAndScaleChangesWithoutWriting",
+        "maximizeAndMinimizeRetainNormalSizeAndPersistMaximizedState",
+        "disabledMemoryStopsWritesAndUsesFallbackWhileFailurePreservesState"
+      ]
+    },
+    "remaining_scope": "Private field repair, atomic preferences, toolbar, recents and placement tests exist. Full ledger/font/style/background/convenience semantics and native accessibility qualification remain."
   }
 }

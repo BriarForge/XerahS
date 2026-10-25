@@ -55,7 +55,12 @@
         "platforms/linux/linux-qt/src/image-editor/effects/CensusCatalog.cpp",
         "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
         "platforms/linux/linux-qt/tests/CensusCatalogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 15,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EE-002": {
       "disposition": "Required",
@@ -67,7 +72,12 @@
         "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
         "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 19,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EE-003": {
       "disposition": "Required",
@@ -80,7 +90,12 @@
         "platforms/linux/linux-qt/app/EffectsDialog.cpp",
         "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 22,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EE-004": {
       "disposition": "Required",
@@ -90,7 +105,12 @@
       "evidence": [
         "platforms/linux/linux-qt/app/EffectsDialog.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 26,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EE-005": {
       "disposition": "Required",
@@ -100,7 +120,12 @@
       "evidence": [
         "platforms/linux/linux-qt/app/EffectsDialog.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 29,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EE-006": {
       "disposition": "Required",
@@ -111,7 +136,12 @@
         "platforms/linux/linux-qt/app/EffectsDialog.cpp",
         "platforms/linux/linux-qt/app/EditorCanvasOperations.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 33,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EE-007": {
       "disposition": "Required",
@@ -124,7 +154,13 @@
         "platforms/linux/linux-qt/src/image-editor/effects/SxieArchive.cpp",
         "platforms/linux/linux-qt/app/PresetDialog.cpp",
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 36,
+        "remaining_human_decision": "Background removal needs an approved local model; parameter/asset coverage also remains.",
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EE-008": {
       "disposition": "Required",
@@ -137,7 +173,12 @@
         "platforms/linux/linux-qt/app/EffectsDialog.cpp",
         "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 39,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EE-009": {
       "disposition": "Required",
@@ -149,7 +190,12 @@
         "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.h",
         "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.cpp",
         "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 42,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EE-010": {
       "disposition": "Required",
@@ -162,7 +208,12 @@
         "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
         "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 45,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EE-011": {
       "disposition": "Required",
@@ -173,7 +224,12 @@
         "platforms/linux/linux-qt/app/EffectsDialog.cpp",
         "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 48,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EE-012": {
       "disposition": "Required",
@@ -183,7 +239,12 @@
       "evidence": [
         "platforms/linux/linux-qt/app/EffectsDialog.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 51,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EE-013": {
       "disposition": "Required",
@@ -193,7 +254,12 @@
       "evidence": [
         "platforms/linux/linux-qt/app/EffectsDialog.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 54,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EE-014": {
       "disposition": "Required",
@@ -203,7 +269,12 @@
       "evidence": [
         "platforms/linux/linux-qt/app/EffectsDialog.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 57,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EE-015": {
       "disposition": "Required",
@@ -217,7 +288,13 @@
       ],
       "waiting_on": [
         "Mike: human security review of SXIE import."
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 60,
+        "remaining_human_decision": "SXIE import still requires human security review.",
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EE-016": {
       "disposition": "Required",
@@ -229,7 +306,12 @@
         "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.cpp",
         "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
         "platforms/linux/linux-qt/app/PresetDialog.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 63,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EE-017": {
       "disposition": "Required",
@@ -239,7 +321,12 @@
       "evidence": [
         "platforms/linux/linux-qt/src/image-editor/effects/CensusCatalog.cpp",
         "platforms/linux/linux-qt/tests/CensusCatalogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 66,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EE-018": {
       "disposition": "Required",
@@ -252,20 +339,86 @@
         "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
         "platforms/linux/linux-qt/app/EffectsDialog.cpp",
         "platforms/linux/linux-qt/tests/DrawingEffectsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 70,
+        "remaining_human_decision": "Background-removal model/device and accepted native fallback dispositions remain pending.",
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "date": "2026-10-24",
-    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
-    "existing_automated_suites": [
-      "platforms/linux/linux-qt/tests/CensusCatalogTest.cpp",
-      "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp",
-      "platforms/linux/linux-qt/tests/EffectGoldenHashTest.cpp",
-      "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
-      "platforms/linux/linux-qt/tests/SxiePresetTest.cpp"
+    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
+    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "specification": "product-contract/capabilities/EDITOR-EFFECTS-001/SPEC.md",
+    "specification_sha256": "87748b328140f0033d88e2bebd5d443b902deaa46d84de56ad1b472e83e26f3f",
+    "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
+    "production_surfaces": [
+      "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
+      "platforms/linux/linux-qt/src/image-editor/effects/CensusCatalog.cpp",
+      "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.cpp",
+      "platforms/linux/linux-qt/app/EffectsDialog.cpp"
     ],
-    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+    "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/CensusCatalogTest.cpp": [
+        "censusMatchesSelectedCounts",
+        "registeredEffectsMatchCensus"
+      ],
+      "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp": [
+        "defaultsAndNumericNormalization",
+        "invalidValues",
+        "unknownAndInvalidDefault",
+        "jsonRoundTripAndInvalidJson",
+        "registryRejectsDuplicatesAndOrders",
+        "runnerNormalizesAndResolves",
+        "runnerRejectsViolationsAndExceptions",
+        "cancellationDiscardsEvenSuccessfulResult",
+        "seedIsPassedUnchangedAndRepeatable"
+      ],
+      "platforms/linux/linux-qt/tests/EffectGoldenHashTest.cpp": [
+        "blurScratchMatchesOriginal",
+        "allocationFailureStaysTyped",
+        "everyRegisteredEffect"
+      ],
+      "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp": [
+        "initTestCase",
+        "editorEntryAndHistory",
+        "editorOwnerTeardown",
+        "seedsPreviewHistoryAndRecents",
+        "browser",
+        "unavailableCensusAndSearch",
+        "invalidTypedValueAndRecovery",
+        "unitsAndRuntimeUnavailable",
+        "storeRoundTripUnknownAndConflict",
+        "controlsResetAndAccessibility",
+        "previewCancelAndApplyHistory",
+        "latestWinsAndCancel",
+        "failureAndApplyCancellation",
+        "immediateAndSizeCanvasGeometry",
+        "favoritesAndRecentEditing"
+      ],
+      "platforms/linux/linux-qt/tests/SxiePresetTest.cpp": [
+        "initTestCase",
+        "unavailableMappedStepVisible",
+        "archiveValid",
+        "paths",
+        "archiveRefusals",
+        "descriptorsAndStructuralRefusals",
+        "mappingAndRoundTrip",
+        "additionalExplicitMappingsAndNativeUnknowns",
+        "legacyCensus",
+        "colorFormatsAndRefusals",
+        "unsupportedPropertiesAndStrictConversions",
+        "legacyEnumValues",
+        "exportDialogWritesPrivateNativeJson",
+        "invalidValuesAndAssets",
+        "embeddedDrawImageAndPathRefusal",
+        "presetDialogLoadApplyCancelAndTeardown",
+        "transactionalHistory"
+      ]
+    },
+    "remaining_scope": "Census and local runner/browser/history/preset tests exist. Every algorithm/parameter/asset family needs accepted reference evidence; model removal, SXIE review and hardware/native qualification remain."
   }
 }

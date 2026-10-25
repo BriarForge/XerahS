@@ -27,7 +27,12 @@
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 9,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "COMPCAT-002": {
       "status": "partial",
@@ -42,7 +47,12 @@
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 13,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "COMPCAT-003": {
       "status": "partial",
@@ -57,7 +67,12 @@
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 16,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "COMPCAT-004": {
       "status": "partial",
@@ -72,7 +87,12 @@
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 20,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "COMPCAT-005": {
       "status": "partial",
@@ -87,7 +107,12 @@
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 23,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "COMPCAT-006": {
       "status": "partial",
@@ -102,7 +127,12 @@
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 26,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "COMPCAT-007": {
       "status": "partial",
@@ -117,7 +147,12 @@
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 29,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "COMPCAT-008": {
       "status": "not-started",
@@ -126,19 +161,34 @@
       "note": "No explicit verified legacy plaintext-secret migration is implemented. Secret Service storage exists; human security review is pending.",
       "waiting_on": [
         "Mike: review credential security and explicit sensitive migration policy."
-      ]
+      ],
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 33,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "COMPCAT-009": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native capture history exists; legacy JSON/XML/SQLite history migration with neighboring-record quarantine is absent."
+      "note": "Native capture history exists; legacy JSON/XML/SQLite history migration with neighboring-record quarantine is absent.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 37,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "COMPCAT-010": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "No untrusted legacy SQLite snapshot/schema/integrity import is implemented."
+      "note": "No untrusted legacy SQLite snapshot/schema/integrity import is implemented.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 41,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "COMPCAT-011": {
       "status": "partial",
@@ -153,7 +203,12 @@
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 44,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "COMPCAT-012": {
       "status": "not-started",
@@ -162,7 +217,12 @@
       "note": "No approved isolated plugin package inspection/installation/host is implemented.",
       "waiting_on": [
         "Mike: approved isolated plugin-host/security model is required."
-      ]
+      ],
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 48,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "COMPCAT-013": {
       "status": "partial",
@@ -180,13 +240,24 @@
       ],
       "waiting_on": [
         "Mike: human security review of SXIE import; legacy compatibility observations."
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 52,
+        "remaining_human_decision": "SXIE import security review and accepted legacy/cross-platform format fixtures remain pending.",
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "COMPCAT-014": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "No MCP automation JSON import/schema/consent boundary is implemented."
+      "note": "No MCP automation JSON import/schema/consent boundary is implemented.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 57,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "COMPCAT-015": {
       "status": "partial",
@@ -201,7 +272,12 @@
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 61,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "COMPCAT-016": {
       "status": "partial",
@@ -216,13 +292,23 @@
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 65,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "COMPCAT-017": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "No complete user-confirmed application/history/credential migration with durable completion detection, rollback and duplicate prevention exists."
+      "note": "No complete user-confirmed application/history/credential migration with durable completion detection, rollback and duplicate prevention exists.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 69,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "COMPCAT-018": {
       "status": "partial",
@@ -237,22 +323,139 @@
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 73,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "date": "2026-10-24",
-    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
-    "existing_automated_suites": [
-      "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
-      "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
-      "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
-      "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
-      "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
-      "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
-      "platforms/linux/linux-qt/tests/SxiePresetTest.cpp"
+    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
+    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "specification": "product-contract/capabilities/COMPATIBILITY-CATALOG-001/SPEC.md",
+    "specification_sha256": "69b281b1066aebb4fefe3c6f51da1e1d848e2185332a6a71c67ab00da48571fc",
+    "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
+    "production_surfaces": [
+      "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+      "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+      "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+      "platforms/linux/linux-qt/src/storage/PrivateJsonFile.cpp"
     ],
-    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+    "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/SxcuImportTest.cpp": [
+        "importsCurrentUploaderAndExtractsSecrets",
+        "importsLegacyFieldNames",
+        "flagsUnsupportedSyntaxAndKeepsSecretsOut",
+        "leavesExistingSecretReferencesInPlace",
+        "rejectsUnusableInput"
+      ],
+      "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp": [
+        "verifyMultipart",
+        "catboxUploader",
+        "litterboxUploader",
+        "zerox0Uploader",
+        "imgurUploader",
+        "jsonBodyUploader",
+        "catboxResponse",
+        "litterboxResponse",
+        "zerox0Response",
+        "imgurResponse",
+        "jsonBodyResponse"
+      ],
+      "platforms/linux/linux-qt/tests/SxiePresetTest.cpp": [
+        "initTestCase",
+        "unavailableMappedStepVisible",
+        "archiveValid",
+        "paths",
+        "archiveRefusals",
+        "descriptorsAndStructuralRefusals",
+        "mappingAndRoundTrip",
+        "additionalExplicitMappingsAndNativeUnknowns",
+        "legacyCensus",
+        "colorFormatsAndRefusals",
+        "unsupportedPropertiesAndStrictConversions",
+        "legacyEnumValues",
+        "exportDialogWritesPrivateNativeJson",
+        "invalidValuesAndAssets",
+        "embeddedDrawImageAndPathRefusal",
+        "presetDialogLoadApplyCancelAndTeardown",
+        "transactionalHistory"
+      ],
+      "platforms/linux/linux-qt/tests/EditorSessionTest.cpp": [
+        "guardedCanvasCommitPreservesSelectionHistoryAndRefusesStaleAdmission",
+        "guardedHistoryAdmitsOnlyTheFrozenStateSelectionAndTarget",
+        "emptySidecarSaveRefusesToExposeBaselineCompanion",
+        "guardedDeleteKeepsRemainingPayloadAssetsAndExactHistory",
+        "guardedDeleteRefusalPreservesCheckpointRedoAndSelection",
+        "guardedOrderingPreservesGroupPayloadAndHistory",
+        "orderingNoopAndRefusalKeepCheckpointAndRedo",
+        "guardedThicknessCommitsOneGroupAndSnapshotsDefaults",
+        "guardedThicknessRefusalPreservesDocumentDefaultsCheckpointAndRedo",
+        "thicknessNoopsAndDefaultsOnlyPreserveHistoryAndRedo",
+        "guardedColorEditsCommitOneGroupAndUpdateFutureDefaults",
+        "guardedColorFailuresPreserveDefaultsDocumentSelectionAndRedo",
+        "colorNoopsAndDefaultsOnlyPreserveCheckpointAndRedo",
+        "guardedColorNeverUpdatesDefaultsForProtectedOrUnsupportedSelections",
+        "guardedGroupResizePreservesFieldsAssetsDefaultsAndHistory",
+        "guardedResizeRefusalsKeepCompleteStateAndRedo",
+        "guardedGroupRotationPreservesFieldsDefaultsAndExactHistory",
+        "rotationRefusesStaleAndInvalidGroupsWithoutTruncatingRedo",
+        "rotationRefusesProtectedCompleteGroups",
+        "guardedGroupMovePreservesCompleteFieldsAndExactHistory",
+        "guardedMoveFailuresAndNoopsPreserveRedoAndCheckpoint",
+        "guardedMoveNeverPartiallyMutatesProtectedGroups",
+        "largeSelectionFiltersUnknownAndDuplicateIdsWithoutDocumentMutation",
+        "guardedSelectionDoesNotMutateHistoryOrReplaceInterveningState",
+        "frozenCreationNormalizesBoundsAndPreservesDefaultsAndHistory",
+        "failedFrozenCreationPreservesRedoCheckpointAndInterveningState",
+        "pointerResizeHasFixedOppositeBounds",
+        "rotatedResizeAndAbsolutePropertiesPreserveFieldsAndCreationDefaults",
+        "invalidStaleProtectedAndNoopRectangleEditsPreserveRedo",
+        "rejectedCreationPreservesRedoCheckpointAndSelection",
+        "batchGeometryFailureAndRoundedNoopsNeverTruncateRedo",
+        "everyEditRestoresTheActualPreCommandSelection",
+        "snapshotSaveAcknowledgesItsHistoryStateAndSplitSaveInvalidatesCleanState",
+        "creationDefaultsLeaveSelectedObjectsCheckpointAndRedoIntact",
+        "invalidCreationDefaultsPreserveThePreviousStyle",
+        "unsavedInitialPixelsHaveNoCleanCheckpointUntilSuccessfulSave",
+        "mismatchedSourceRequiresAnExplicitBindingChoice",
+        "sourceBindingRejectsVersionsCorruptHeadersAndInvalidChoices",
+        "xannRoundTrips",
+        "decompressionLimitIsEnforced",
+        "embeddedImagesAreCheckedBeforeDecode",
+        "tooLargeOutranksInvalid",
+        "lowercaseColoursAreAccepted",
+        "sidecarFailureKeepsSessionDirty",
+        "sidecarIsWrittenAndFailureReported",
+        "quarterTurnSwapsExtents",
+        "diamondHasExactPolygonCoverage",
+        "rotatedFillAndStrokeApplyOpacityOnce",
+        "rotatedStrokeSubtractsInnerPolygon",
+        "exportRejectsInvalidGeometryAndClipsFarAwayObjects",
+        "transparentDestinationIsNormalized",
+        "redoRestoresSelection",
+        "resizeRotateAndReorder"
+      ],
+      "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp": [
+        "missingAndAtomicPrivateRoundTrip",
+        "refusesInvalidAndNewerWithoutRepair",
+        "legacyRequiresOptInAndGainsFormatOnWrite",
+        "unsafePaths",
+        "symlinkedUserOwnedDirectoriesAreAllowed",
+        "directoryOwnedByAnotherUserIsUnsafe",
+        "otherOwnerIsUnsafe",
+        "unreadableFileAndReadOnlyDirectory",
+        "heldLockWriteFailurePreservesSnapshot",
+        "heldLockWriteAndRelease",
+        "changedSnapshotAndOversizedWriteLeaveOriginal",
+        "migratedStoresKeepLegacyAndConflictDiagnostics",
+        "legacyInvalidVersionDiagnosticsStayStable",
+        "stableStatusNames"
+      ]
+    },
+    "remaining_scope": "Isolated XANN/SXCU/SXIE/private-JSON candidate parsers are tested. Explicit legacy settings/history/secret migration, SQLite/XML imports, rollback/idempotency and accepted cross-platform fixtures remain."
   }
 }

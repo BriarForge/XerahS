@@ -28,7 +28,15 @@
         "permission-denied-shows-no-overlay"
       ],
       "note": "Native Screenshot transport resolves and subscribes the unique owner before requesting pixels, uses native consent without an automatic retry, verifies the returned request handle and produces no overlay on denial/cancellation/failure. Private-bus tests exercise actual production transport and controller, missing/disconnected services, cold-start/legacy response ordering, owner/sender/path fencing and invalid input. Complete native backend/permission/compositor qualification and human security review remain Required.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 29,
+        "published_vectors": [
+          "permission-denied-shows-no-overlay"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "RC-002": {
       "status": "partial",
@@ -36,7 +44,15 @@
         "permission-denied-shows-no-overlay"
       ],
       "note": "The portal owns native consent; explicit NotAllowed/AccessDenied errors return capture-permission-denied once. Response code 1 is user cancellation, not an inferred denial. Private-bus production tests prove no overlay, clipboard or save on denial and value-free diagnostics. Historical single-display Hyprland smoke evidence is not full qualification. Permission-settings navigation where available, physical consent and human capture-permission/security review remain Required.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 33,
+        "published_vectors": [
+          "permission-denied-shows-no-overlay"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "RC-003": {
       "status": "partial",
@@ -44,7 +60,15 @@
         "topology-change-cancels"
       ],
       "note": "Selection and confirming composition cancel on native screen add/remove, geometry, orientation and DPI signals. Core topology vectors pass. Native uniform-scale inference still lacks authoritative stable identity, per-display physical mapping, rotation and colour descriptions; see app/SOURCE-TOPOLOGY-REVIEW.md. Complete native topology qualification remains Required.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 36,
+        "published_vectors": [
+          "topology-change-cancels"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "RC-004": {
       "status": "partial",
@@ -55,13 +79,29 @@
         "negative-origin-scaled"
       ],
       "note": "Qt Core mapping passes every published per-monitor vector. The current native frozen-source controller still assumes uniform desktop scale; a qualified per-monitor physical source backend remains Required. Core vector success does not prove mixed-scale native capture.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 40,
+        "published_vectors": [
+          "negative-origin-monitor",
+          "mixed-scale-cross-monitor",
+          "fractional-scale-floors",
+          "negative-origin-scaled"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "RC-005": {
       "status": "partial",
       "vectors": [],
       "note": "One frameless fullscreen overlay per screen shows the frozen snapshot. Verified on a single Hyprland display; multi-display layouts are unverified.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 43,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "RC-006": {
       "status": "implemented",
@@ -69,15 +109,34 @@
         "reverse-drag",
         "zero-area-not-confirmable"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 46,
+        "published_vectors": [
+          "reverse-drag",
+          "zero-area-not-confirmable"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "RC-007": {
-      "status": "implemented",
+      "status": "partial",
       "vectors": [
         "quick-confirm-completes",
         "explicit-confirm-with-enter"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "note": "RegionSession supports quickConfirm false in Core, but CaptureController constructs default SessionSettings; the native workflow does not expose the contracted configurable confirmation mode.",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 49,
+        "published_vectors": [
+          "quick-confirm-completes",
+          "explicit-confirm-with-enter"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "RC-008": {
       "status": "partial",
@@ -85,7 +144,15 @@
         "cancel-selected"
       ],
       "note": "Core and native non-terminal capture cancellation discard all partial pixels and start no actions. Pending portal, actual overlay and confirming worker cancellation have private-bus production evidence. After pixel completion, selection is terminal; the visible action-phase hint gives Escape/Cancel Capture separate PCA-010 pipeline authority. An already running save may finish and retain its artifact while later clipboard work is cancelled; this does not revoke or repeat the completed capture. Full catalogue/native matrix/permission qualification remain Required.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 52,
+        "published_vectors": [
+          "cancel-selected"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "RC-009": {
       "status": "implemented",
@@ -104,7 +171,16 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/WindowSnapTargetsTest.cpp",
         "platforms/linux/linux-qt/tests/NativeWindowDiscoveryTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 55,
+        "published_vectors": [
+          "zero-area-not-confirmable",
+          "explicit-confirm-with-enter"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "RC-010": {
       "status": "partial",
@@ -112,7 +188,15 @@
         "keyboard-move-stops-at-edge"
       ],
       "note": "Arrow, Shift+Arrow, and Alt+Arrow steps are clamped and the precision modifier is shown in the overlay hint bar. Resize handles and size presets are not yet interactive.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 58,
+        "published_vectors": [
+          "keyboard-move-stops-at-edge"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "RC-011": {
       "status": "partial",
@@ -131,7 +215,15 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/WindowSnapTargetsTest.cpp",
         "platforms/linux/linux-qt/tests/NativeWindowDiscoveryTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 61,
+        "published_vectors": [
+          "click-selects-snapped-window"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "RC-012": {
       "status": "partial",
@@ -140,25 +232,49 @@
         "uncovered-area-is-transparent"
       ],
       "note": "The same Qt Core compositor serves conformance and native worker composition: exact source pixels, transparent gaps, bounded output, no resampling, cooperative cancellation and discarded partial output. SnapshotCompositionTest independently checks native pixel placement, image ownership and retained colour metadata. The frozen-source controller still assumes uniform desktop scale; authoritative per-monitor acquisition and complete mixed-scale/native qualification remain Required.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 64,
+        "published_vectors": [
+          "mixed-scale-cross-monitor",
+          "uncovered-area-is-transparent"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "RC-013": {
       "status": "not-started",
       "vectors": [],
       "note": "Cursor inclusion.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 67,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "RC-014": {
       "status": "partial",
       "vectors": [],
       "note": "Frozen mode from one portal snapshot is implemented. Live mode is not offered.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 71,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "RC-015": {
       "status": "not-started",
       "vectors": [],
       "note": "HDR and wide-gamut conversion.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 74,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "RC-016": {
       "status": "implemented",
@@ -166,7 +282,15 @@
         "terminal-events-ignored"
       ],
       "note": "Core terminal-event vectors pass. Native Screenshot and confirming composition produce one capture outcome; repeated selection inputs cannot produce another image. The separate post-capture engine produces one immutable receipt and respects true completed/cancelled action states. Private-bus/offscreen tests cover duplicate input, late cancelled workers, controller replacement/destruction, one successful pipeline and overlay Escape during native saving. Full native catalogue and physical terminal qualification remain Required.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 77,
+        "published_vectors": [
+          "terminal-events-ignored"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "RC-017": {
       "status": "partial",
@@ -176,7 +300,17 @@
         "last-region-invalid-after-topology-change"
       ],
       "note": "The last region is produced only on capture success and validated against topology (platforms/linux/linux-qt/tests/RegionCaptureTest.cpp). Atomic persistence arrives with settings storage.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 80,
+        "published_vectors": [
+          "quick-confirm-completes",
+          "capture-failure-keeps-last-region",
+          "last-region-invalid-after-topology-change"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "RC-018": {
       "status": "partial",
@@ -184,26 +318,49 @@
         "capture-failure-keeps-last-region"
       ],
       "note": "Native failures expose stable capture-source-failed or capture-permission-denied without raw portal errors/URIs. Shared decode and composition resource bounds reject excess output before unsafe arithmetic. Worker cancellation discards pixels and source-result metadata; source/progress exceptions return value-free diagnostics. Borrowed files remain unmodified and no owned screenshot cache precedes confirmation. Core/native/private-bus tests cover corrupt/oversized input, exact pixels, cancellation and unchanged files. Complete capture retention/diagnostic policy, portal-owned revocation and human security/privacy review remain Required.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 84,
+        "published_vectors": [
+          "capture-failure-keeps-last-region"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "RC-019": {
       "status": "partial",
       "vectors": [],
       "note": "Native keyboard selection, accessible bounds/instructions and actual progress in overlay descriptions and a command-window QProgressBar have fixture evidence. Cancelled progress returns to a terminal command-window status without an alert; successful/error results remain visible. Full physical keyboard/compositor and Orca qualification remain Required.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 87,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "RC-020": {
       "status": "not-started",
       "vectors": [],
       "note": "A worker removes source copying/format preparation/composition from the GUI; private-bus tests prove event-loop responsiveness and non-blocking cancellation/destruction. Required physical overlay frame-rate, acquisition/composition latency and resource measurements on the supported native matrix have not been established.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 90,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "RC-021": {
       "status": "implemented",
       "vectors": [
         "all"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 94,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "RC-022": {
       "status": "partial",
@@ -216,7 +373,20 @@
         "negative-origin-scaled"
       ],
       "note": "Qt Core mapping follows the specified binary64/floor arithmetic and reporting-display rules, with all published vectors passing. Actual native per-monitor source/topology integration remains Required because the current controller assumes uniform scale.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 96,
+        "published_vectors": [
+          "reverse-drag",
+          "negative-origin-monitor",
+          "mixed-scale-cross-monitor",
+          "fractional-scale-floors",
+          "fractional-logical-edge-reaches-physical-edge",
+          "negative-origin-scaled"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "RC-023": {
       "status": "implemented",
@@ -225,7 +395,17 @@
         "point-beyond-display-is-clamped",
         "uncovered-area-is-transparent"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 104,
+        "published_vectors": [
+          "fractional-logical-edge-reaches-physical-edge",
+          "point-beyond-display-is-clamped",
+          "uncovered-area-is-transparent"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "RC-024": {
       "status": "implemented",
@@ -235,7 +415,17 @@
         "keyboard-resize-keeps-one-pixel"
       ],
       "note": "Keyboard steps are announced to assistive technology through the overlay's accessible description.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 109,
+        "published_vectors": [
+          "keyboard-move-stops-at-edge",
+          "keyboard-move-single-step",
+          "keyboard-resize-keeps-one-pixel"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "RC-025": {
       "status": "implemented",
@@ -247,7 +437,20 @@
         "topology-change-cancels",
         "capture-failure-keeps-last-region"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 114,
+        "published_vectors": [
+          "quick-confirm-completes",
+          "explicit-confirm-with-enter",
+          "terminal-events-ignored",
+          "permission-denied-shows-no-overlay",
+          "topology-change-cancels",
+          "capture-failure-keeps-last-region"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "RC-026": {
       "status": "implemented",
@@ -266,14 +469,32 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/WindowSnapTargetsTest.cpp",
         "platforms/linux/linux-qt/tests/NativeWindowDiscoveryTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 122,
+        "published_vectors": [
+          "zero-area-not-confirmable",
+          "click-selects-snapped-window"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "RC-027": {
-      "status": "implemented",
+      "status": "partial",
       "vectors": [
         "last-region-invalid-after-topology-change"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "note": "RegionGeometry validates serialized last-region data in Core tests/vectors. CaptureController has no last-region persistence or acquisition route, so native round-trip capture is incomplete.",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 126,
+        "published_vectors": [
+          "last-region-invalid-after-topology-change"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     }
   },
   "evidence": [
@@ -288,15 +509,107 @@
   ],
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "date": "2026-10-24",
-    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
-    "existing_automated_suites": [
-      "platforms/linux/linux-qt/tests/NativeWindowDiscoveryTest.cpp",
-      "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-      "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
-      "platforms/linux/linux-qt/tests/SnapshotCompositionTest.cpp",
-      "platforms/linux/linux-qt/tests/WindowSnapTargetsTest.cpp"
+    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
+    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "specification": "product-contract/capabilities/REGION-CAPTURE-001/SPEC.md",
+    "specification_sha256": "44c0bedd89ebf555ef6035794a05fcfef921eaccc1fca00d48e941d921629867",
+    "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
+    "production_surfaces": [
+      "platforms/linux/linux-qt/src/capture/RegionSession.cpp",
+      "platforms/linux/linux-qt/src/capture/RegionGeometry.cpp",
+      "platforms/linux/linux-qt/app/CaptureController.cpp",
+      "platforms/linux/linux-qt/app/RegionOverlay.cpp"
     ],
-    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+    "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp": [
+        "compositePlacesPixelsByPhysicalPosition",
+        "compositeRejectsResampledSource",
+        "compositionCancellationDiscardsAllPartialPixels",
+        "progressCompletesWithoutChangingPhysicalPixels",
+        "excessiveAndOverflowingRectanglesFailBeforeSourceAccess",
+        "sourceAndProgressExceptionsBecomeValueFreeFailure",
+        "lastRegionRoundTrips",
+        "restrictedPermissionFails",
+        "completionPublishesOnceWithLastRegion",
+        "keyboardAdjustsSelectedOnly",
+        "dragOverridesSnapping"
+      ],
+      "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp": [
+        "Close",
+        "respond",
+        "finishHandle",
+        "unknownWorkflowOutputCannotAdmitCaptureOrWriteAnExecution",
+        "supportedOutputWorkflowAdmissionKeepsPermissionDenialBeforeActions",
+        "admittedPinAndPrintWorkflowsReachTheirActualNativePorts",
+        "counterPersistenceFailureKeepsPngAndReportsPartialExecutionWithoutRetry",
+        "actualApplicationLaunchAcknowledgementFindsItsDeniedExecutionHeadlessly",
+        "admittedExecutionLinksRealPipelineBeforeOutputAndSurvivesRestart",
+        "explicitRetryKeepsExecutionReferenceWithoutRewritingOriginalOutcome",
+        "executionPreservesPrePipelineOutcomes",
+        "executionStorageFailureStopsNewActionsAndPreservesCompletedOutput",
+        "partialCompanionSaveHasHonestNotificationAndGuardedSharedRetry",
+        "selectedAnnotationReturnsToCaptureAndRecoveryKeepsTheEditableDocument",
+        "nativeSaveAsAndSharedRetryUseRetainedPixelsWithoutAnotherPortalCapture",
+        "selectedFileOutputsAndSharedRetryKeepTheSameSavedArtifactWithoutNewCapture",
+        "perRunSelectionCancelsBeforeEffectsAndDoesNotChangeTheNextDefaultCapture",
+        "acceptedSelectionKeepsCaptureIdentityBusyAdmissionAndActualArtifactFacts",
+        "nativeRetryUsesSharedKeyboardApprovalKeepsSuccessfulSaveAndStartsNoNewPortal",
+        "staleRetryConfirmationCannotRepeatActionsForANewerReceipt",
+        "cancellationAtRetryAvailabilityKeepsPixelsAndSuccessfulFileAndOwnerDestructionCannotStartWork",
+        "externalScrollingCaptureHoldsAdmissionAndSubmitsThroughThePipeline",
+        "init",
+        "cleanup",
+        "authenticResponseAndEarlyLegacyHandle",
+        "userCancelIsDifferentFromPermissionDenial",
+        "methodErrorsAreStableAndValueFree",
+        "invalidResultsFailWithoutMutatingFiles",
+        "cancellingBeforeStartPreventsAllRequests",
+        "cancelClosesThePendingAndLateLegacyHandleOnce",
+        "methodTimeoutFailsOnceAndLatePixelsCannotPublish",
+        "userInteractionDoesNotInheritTheMethodDeadline",
+        "ownerLossCannotBeReplacedByAnotherPortal",
+        "ownerLossBeforeTheHandleStillClosesTheOldOwnersLegacyRequest",
+        "wrongSenderAndWrongPathCannotGrantPixels",
+        "missingAndDisconnectedTransportFailWithoutPromptLoops",
+        "destructionClosesAnOutstandingInteraction",
+        "actualControllerCancellationReleasesBusyAndClosesLateLegacyRequest",
+        "actualControllerDenialShowsNoOverlayAndNoPostCaptureActions",
+        "cancellingAtTheFirstAvailabilitySignalPreventsPortalAcquisition",
+        "controllerDestructionDoesNotAbandonALateLegacyHandle",
+        "recordingSelectionReusesOverlayWithoutCaptureActions",
+        "actualFrozenOverlayEscapeLeavesFilesAndClipboardUntouched",
+        "cancellationDuringActualCompositionNeverPublishesPixelsOrRunsActions",
+        "aLateCancelledWorkerCannotFinishANewerPendingCapture",
+        "destructionReleasesTheUiWithoutWaitingForACompositionWorker",
+        "progressReceiverCanDestroyTheControllerBeforeWorkerStart",
+        "configuredWorkflowSnapshotsActionsBeforeAcquisition",
+        "wholeSourceWorkflowSavesWithoutAnOverlay",
+        "activeWindowCropsToTheWindowOrFails",
+        "unsupportedConfiguredWorkflowIsRejectedBeforePortalAcquisition",
+        "admittedWorkflowUsesSavedSnapshotAndRealControllerOutput",
+        "invalidConfiguredOutputIsRejectedBeforePortalAcquisition",
+        "successfulCompositionRunsOnePipelineAndSavesOnePhysicalImage",
+        "actualOverlayEscapeDuringSavingKeepsTheCompletedFileAndCancelsClipboard",
+        "sharedReviewCommandShowsAnImmutableReadOnlyReportAndHasNoOutputSideEffects",
+        "recoveryActionsUseActualSharedKeyboardCommandsAndKeepFailedMediaUntilExplicitDiscard",
+        "discardApprovalCannotClearANewerResultAndNeverRemovesSavedFiles",
+        "recoveryCallbackCancellationExceptionsAndReentrancyDoNotConsumeTheReceipt",
+        "recoveryOwnerDestructionCancelsPendingApprovalAndKeepsTheReceipt"
+      ],
+      "platforms/linux/linux-qt/tests/SnapshotCompositionTest.cpp": [
+        "nativePixelsPreservePlacementGapsColourMetadataAndOwnership",
+        "missingOutOfBoundsAndCancelledSourcesReturnNoPixels"
+      ],
+      "platforms/linux/linux-qt/tests/WindowSnapTargetsTest.cpp": [
+        "visibilityFiltering",
+        "specialWorkspace",
+        "ownPidExclusion",
+        "orderingAndClick",
+        "mixedScaleMappingAndClamping",
+        "malformedJson",
+        "disabledSnappingAndDragOverride"
+      ]
+    },
+    "remaining_scope": "Core geometry/state vectors and actual portal cancellation tests exist. Native topology uses a single inferred scale, cursor/HDR policy is absent, last-region persistence is not wired, and physical qualification remains."
   }
 }

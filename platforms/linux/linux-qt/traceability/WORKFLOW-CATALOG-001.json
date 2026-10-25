@@ -62,7 +62,12 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Reuses only approved PCA action IDs for seven existing native actions; all 436 ledger mappings/action authorities and approval remain Required."
+      "note": "Reuses only approved PCA action IDs for seven existing native actions; all 436 ledger mappings/action authorities and approval remain Required.",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 9,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-002": {
       "status": "partial",
@@ -82,7 +87,12 @@
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 13,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-003": {
       "status": "partial",
@@ -102,7 +112,12 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md",
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 16,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-004": {
       "status": "partial",
@@ -112,13 +127,23 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 19,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-005": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Saved selections use the existing normative PCA engine order and independent/dependent failure policy. Remaining post-upload/action families remain Required."
+      "note": "Saved selections use the existing normative PCA engine order and independent/dependent failure policy. Remaining post-upload/action families remain Required.",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 23,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-006": {
       "status": "partial",
@@ -128,7 +153,12 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 26,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-007": {
       "status": "partial",
@@ -139,13 +169,23 @@
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 29,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-008": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Profiles select existing image/file/path clipboard outputs; actual native GUI dispatch and saved-file prerequisites remain shared. Other clipboard input/format workflows and full privacy/target qualification remain Required."
+      "note": "Profiles select existing image/file/path clipboard outputs; actual native GUI dispatch and saved-file prerequisites remain shared. Other clipboard input/format workflows and full privacy/target qualification remain Required.",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 32,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-009": {
       "status": "partial",
@@ -158,7 +198,12 @@
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 35,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-010": {
       "status": "partial",
@@ -168,7 +213,12 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp",
         "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 39,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-011": {
       "status": "partial",
@@ -177,7 +227,12 @@
       "note": "Profiles can invoke the existing region-image annotation/output path. OCR/QR/hash/combine/split/effects/tools and complete family input/metadata schemas remain Required.",
       "waiting_on": [
         "Mike: approve Tesseract for OCR and zxing-cpp for scanning; do not add dependencies."
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 42,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-012": {
       "status": "partial",
@@ -187,7 +242,12 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/RecordingTest.cpp",
         "platforms/linux/linux-qt/tests/RecordingIntegrationTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 45,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-013": {
       "status": "partial",
@@ -202,7 +262,12 @@
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-SHORTCUTS.md",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 49,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-014": {
       "status": "partial",
@@ -219,7 +284,12 @@
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 53,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-015": {
       "status": "partial",
@@ -237,7 +307,12 @@
         "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 57,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-016": {
       "status": "partial",
@@ -257,7 +332,12 @@
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-DISCOVERY.md",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 60,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-017": {
       "status": "partial",
@@ -278,7 +358,12 @@
         "platforms/linux/linux-qt/app/WORKFLOW-DISCOVERY.md",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 63,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "WFCAT-018": {
       "status": "partial",
@@ -297,21 +382,131 @@
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 66,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "date": "2026-10-24",
-    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
-    "existing_automated_suites": [
-      "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp",
-      "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
-      "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
-      "platforms/linux/linux-qt/tests/RecordingTest.cpp",
-      "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
-      "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
+    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
+    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "specification": "product-contract/capabilities/WORKFLOW-CATALOG-001/SPEC.md",
+    "specification_sha256": "fb344e427f34b808ab66a81b1c95779c2ae6175057d2746389e1e2488e6f8331",
+    "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
+    "production_surfaces": [
+      "platforms/linux/linux-qt/src/workflows/CaptureWorkflows.cpp",
+      "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
+      "platforms/linux/linux-qt/app/CaptureController.cpp",
+      "platforms/linux/linux-qt/app/NativePrivateRecords.cpp"
     ],
-    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+    "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp": [
+        "currentNativeOutputDefinitionsAreDiscoverable",
+        "discoveryUsesSavedDefinitionsAndExcludesPrivateSettings",
+        "defaultsAndUnknownFieldsRoundTripWithoutActivatingUnknownActions",
+        "invalidDefinitionsAreRejected",
+        "privateAtomicSaveRestartStaleAndLockedChanges",
+        "corruptFileCannotBeOverwritten",
+        "workflowSelectionSurvivesReportAndJournalRecoveryWithoutUnknownFields",
+        "legacyDefinitionsKeepTheirDefaultsAndOnlyUpgradeOnExplicitSave",
+        "outputPreviewUsesProductionRulesWithoutCommittingOrReadingFiles",
+        "outputValidationPreservesUnknownFieldsAndRefusesInvalidSave"
+      ],
+      "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp": [
+        "outputSettingsSnapshotsRemainReadableIndependentOfCurrentAvailability",
+        "durableAdmissionAbandonmentAndUnconfirmedInFlightDestruction",
+        "actualPipelineStatesAndRedactedOrderedSteps",
+        "admissionFailureAndLateBusyNeverRunCapture",
+        "staleAndUnsafeStorageCannotOverwriteOrAuthorizeAnAction",
+        "malformedRecordsCannotInjectPrivateQueryFieldsOrInventTerminalSuccess",
+        "actualHeadlessLookup"
+      ],
+      "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp": [
+        "signal",
+        "respond",
+        "finishHandle",
+        "press",
+        "release",
+        "changed",
+        "init",
+        "cleanup",
+        "domainPlanAndHeldKeyAuthority",
+        "combinedCaptureAndWorkflowPortalPlan",
+        "nativeBindingAndActivationAuthority",
+        "refusalsAndTimeoutHaveNoActiveBindings",
+        "cancellationDuringEarlyCreateClosesLateHandlesAndSession",
+        "cancelPendingBindAndInvalidChangedBindingsCloseSessions",
+        "ownerReplacementAndClosedSessionFailClosed",
+        "sharedNativeActionsEnableDisableInvalidateAndRespectBusy",
+        "acceptedHotkeyUsesSavedWorkflowAndRealControllerOutput"
+      ],
+      "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp": [
+        "Close",
+        "respond",
+        "finishHandle",
+        "unknownWorkflowOutputCannotAdmitCaptureOrWriteAnExecution",
+        "supportedOutputWorkflowAdmissionKeepsPermissionDenialBeforeActions",
+        "admittedPinAndPrintWorkflowsReachTheirActualNativePorts",
+        "counterPersistenceFailureKeepsPngAndReportsPartialExecutionWithoutRetry",
+        "actualApplicationLaunchAcknowledgementFindsItsDeniedExecutionHeadlessly",
+        "admittedExecutionLinksRealPipelineBeforeOutputAndSurvivesRestart",
+        "explicitRetryKeepsExecutionReferenceWithoutRewritingOriginalOutcome",
+        "executionPreservesPrePipelineOutcomes",
+        "executionStorageFailureStopsNewActionsAndPreservesCompletedOutput",
+        "partialCompanionSaveHasHonestNotificationAndGuardedSharedRetry",
+        "selectedAnnotationReturnsToCaptureAndRecoveryKeepsTheEditableDocument",
+        "nativeSaveAsAndSharedRetryUseRetainedPixelsWithoutAnotherPortalCapture",
+        "selectedFileOutputsAndSharedRetryKeepTheSameSavedArtifactWithoutNewCapture",
+        "perRunSelectionCancelsBeforeEffectsAndDoesNotChangeTheNextDefaultCapture",
+        "acceptedSelectionKeepsCaptureIdentityBusyAdmissionAndActualArtifactFacts",
+        "nativeRetryUsesSharedKeyboardApprovalKeepsSuccessfulSaveAndStartsNoNewPortal",
+        "staleRetryConfirmationCannotRepeatActionsForANewerReceipt",
+        "cancellationAtRetryAvailabilityKeepsPixelsAndSuccessfulFileAndOwnerDestructionCannotStartWork",
+        "externalScrollingCaptureHoldsAdmissionAndSubmitsThroughThePipeline",
+        "init",
+        "cleanup",
+        "authenticResponseAndEarlyLegacyHandle",
+        "userCancelIsDifferentFromPermissionDenial",
+        "methodErrorsAreStableAndValueFree",
+        "invalidResultsFailWithoutMutatingFiles",
+        "cancellingBeforeStartPreventsAllRequests",
+        "cancelClosesThePendingAndLateLegacyHandleOnce",
+        "methodTimeoutFailsOnceAndLatePixelsCannotPublish",
+        "userInteractionDoesNotInheritTheMethodDeadline",
+        "ownerLossCannotBeReplacedByAnotherPortal",
+        "ownerLossBeforeTheHandleStillClosesTheOldOwnersLegacyRequest",
+        "wrongSenderAndWrongPathCannotGrantPixels",
+        "missingAndDisconnectedTransportFailWithoutPromptLoops",
+        "destructionClosesAnOutstandingInteraction",
+        "actualControllerCancellationReleasesBusyAndClosesLateLegacyRequest",
+        "actualControllerDenialShowsNoOverlayAndNoPostCaptureActions",
+        "cancellingAtTheFirstAvailabilitySignalPreventsPortalAcquisition",
+        "controllerDestructionDoesNotAbandonALateLegacyHandle",
+        "recordingSelectionReusesOverlayWithoutCaptureActions",
+        "actualFrozenOverlayEscapeLeavesFilesAndClipboardUntouched",
+        "cancellationDuringActualCompositionNeverPublishesPixelsOrRunsActions",
+        "aLateCancelledWorkerCannotFinishANewerPendingCapture",
+        "destructionReleasesTheUiWithoutWaitingForACompositionWorker",
+        "progressReceiverCanDestroyTheControllerBeforeWorkerStart",
+        "configuredWorkflowSnapshotsActionsBeforeAcquisition",
+        "wholeSourceWorkflowSavesWithoutAnOverlay",
+        "activeWindowCropsToTheWindowOrFails",
+        "unsupportedConfiguredWorkflowIsRejectedBeforePortalAcquisition",
+        "admittedWorkflowUsesSavedSnapshotAndRealControllerOutput",
+        "invalidConfiguredOutputIsRejectedBeforePortalAcquisition",
+        "successfulCompositionRunsOnePipelineAndSavesOnePhysicalImage",
+        "actualOverlayEscapeDuringSavingKeepsTheCompletedFileAndCancelsClipboard",
+        "sharedReviewCommandShowsAnImmutableReadOnlyReportAndHasNoOutputSideEffects",
+        "recoveryActionsUseActualSharedKeyboardCommandsAndKeepFailedMediaUntilExplicitDiscard",
+        "discardApprovalCannotClearANewerResultAndNeverRemovesSavedFiles",
+        "recoveryCallbackCancellationExceptionsAndReentrancyDoNotConsumeTheReceipt",
+        "recoveryOwnerDestructionCancelsPendingApprovalAndKeepsTheReceipt"
+      ]
+    },
+    "remaining_scope": "Saved capture definitions, durable execution records, shortcuts and controller tests exist. Complete linked action families, retention, result taxonomy, resource arbitration and entry-point equivalence remain."
   }
 }

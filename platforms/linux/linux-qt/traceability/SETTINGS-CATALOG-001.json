@@ -22,7 +22,12 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 17,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "SETCAT-004": {
       "status": "partial",
@@ -32,7 +37,12 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 21,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "SETCAT-005": {
       "status": "partial",
@@ -42,7 +52,12 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 25,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "SETCAT-006": {
       "status": "partial",
@@ -52,7 +67,12 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 30,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "SETCAT-009": {
       "status": "partial",
@@ -62,7 +82,12 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 44,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "SETCAT-010": {
       "status": "partial",
@@ -72,7 +97,12 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 48,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "SETCAT-011": {
       "status": "partial",
@@ -82,7 +112,12 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 52,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "SETCAT-001": {
       "status": "partial",
@@ -96,7 +131,12 @@
         "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
         "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 9,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "SETCAT-002": {
       "status": "partial",
@@ -110,7 +150,12 @@
         "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
         "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 14,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "SETCAT-007": {
       "status": "partial",
@@ -124,13 +169,24 @@
         "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
         "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 34,
+        "remaining_human_decision": "Secret Service human security review remains pending.",
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "SETCAT-008": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "Explicit audited legacy plaintext-secret migration, verification and recoverable source handling are absent; do not import live secrets automatically."
+      "note": "Explicit audited legacy plaintext-secret migration, verification and recoverable source handling are absent; do not import live secrets automatically.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 40,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "SETCAT-012": {
       "status": "partial",
@@ -145,7 +201,12 @@
         "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
         "platforms/linux/linux-qt/tests/OnboardingTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 56,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "SETCAT-013": {
       "status": "partial",
@@ -160,7 +221,12 @@
         "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
         "platforms/linux/linux-qt/tests/NativeEditorWindowStateTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 59,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "SETCAT-014": {
       "status": "partial",
@@ -176,7 +242,12 @@
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/DestinationCatalogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 63,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "SETCAT-015": {
       "status": "partial",
@@ -192,7 +263,12 @@
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
         "platforms/linux/linux-qt/tests/RecentImagesTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 67,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "SETCAT-016": {
       "status": "partial",
@@ -208,13 +284,23 @@
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationTest.cpp",
         "platforms/linux/linux-qt/tests/DestinationCatalogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 71,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "SETCAT-017": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "Signed updates, approved isolated plugins and complete executable-path/import policy are absent."
+      "note": "Signed updates, approved isolated plugins and complete executable-path/import policy are absent.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 75,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "SETCAT-018": {
       "status": "partial",
@@ -229,13 +315,23 @@
         "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
         "platforms/linux/linux-qt/tests/NativeDesktopAppearanceTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 79,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "SETCAT-019": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "Full explicit versioned application settings import/export and retained/transformed/rejected/secret preview are absent."
+      "note": "Full explicit versioned application settings import/export and retained/transformed/rejected/secret preview are absent.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 83,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "SETCAT-020": {
       "status": "partial",
@@ -249,21 +345,71 @@
         "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
         "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 86,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "date": "2026-10-24",
-    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
-    "existing_automated_suites": [
-      "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-      "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
-      "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
-      "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
-      "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
-      "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp"
+    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
+    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "specification": "product-contract/capabilities/SETTINGS-CATALOG-001/SPEC.md",
+    "specification_sha256": "28d5ff722894fc1cae76fd852dad303a52e3790c349141471b3c5c56f2a22e79",
+    "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
+    "production_surfaces": [
+      "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
+      "platforms/linux/linux-qt/src/settings/HotkeyBindings.cpp",
+      "platforms/linux/linux-qt/src/storage/PrivateJsonFile.cpp",
+      "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp"
     ],
-    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
-  }
+    "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp": [
+        "oldMaximumHotkeysSurviveNewRecordingAction",
+        "scheduledCaptureChoicesDefaultsRoundTripAndRepair",
+        "scrollingCaptureSettingsDefaultsRoundTripAndRepair",
+        "captureTabShowsAppliesCancelsAndResetsScheduleAndScrollingChoices",
+        "audioSettingsCompatibleRoundTrip",
+        "portableBindings",
+        "collisionsAcrossWorkflowAndBuiltin",
+        "repairsAreFieldSpecific",
+        "outputDefaultsAndWorkflowPrecedence",
+        "resetPreviewDoesNotPersist",
+        "atomicStoreUnknownAndFailures",
+        "autostart",
+        "combinedPlanAndAuthority",
+        "sharedActionRoutingRefusesBusyModalAndDisabled",
+        "dialogCancelAndConflict"
+      ],
+      "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp": [
+        "missingAndAtomicPrivateRoundTrip",
+        "refusesInvalidAndNewerWithoutRepair",
+        "legacyRequiresOptInAndGainsFormatOnWrite",
+        "unsafePaths",
+        "symlinkedUserOwnedDirectoriesAreAllowed",
+        "directoryOwnedByAnotherUserIsUnsafe",
+        "otherOwnerIsUnsafe",
+        "unreadableFileAndReadOnlyDirectory",
+        "heldLockWriteFailurePreservesSnapshot",
+        "heldLockWriteAndRelease",
+        "changedSnapshotAndOversizedWriteLeaveOriginal",
+        "migratedStoresKeepLegacyAndConflictDiagnostics",
+        "legacyInvalidVersionDiagnosticsStayStable",
+        "stableStatusNames"
+      ],
+      "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp": [
+        "init",
+        "importsShowsSecretStatusAndKeepsValuesOutOfTheWindow",
+        "setSecretReplacesAndReportsKeyringFailure",
+        "failedKeyringImportAddsNothing",
+        "removeAsksFirstAndDeletesSecrets",
+        "closingWhileBusyDoesNotTouchTheDialog"
+      ]
+    },
+    "remaining_scope": "Typed private settings/storage/hotkey/destination tests cover a subset. Complete ledger semantics, shared import/export/migration, retention and scope precedence are not established."
+  },
+  "contract_version": "0.3.1"
 }

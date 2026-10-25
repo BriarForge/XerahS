@@ -1,7 +1,7 @@
 {
   "capability": "FILENAME-GENERATION-001",
   "capability_version": "0.2.0",
-  "contract_version": "0.3.0",
+  "contract_version": "0.3.1",
   "platform": "linux",
   "edition": "linux-qt",
   "implementation": [
@@ -28,7 +28,12 @@
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 34,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-002": {
       "status": "implemented",
@@ -38,7 +43,18 @@
         "calendar-names-and-week",
         "unix-seconds"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 37,
+        "published_vectors": [
+          "date-counter",
+          "twelve-hour-midnight-and-milliseconds",
+          "calendar-names-and-week",
+          "unix-seconds"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-003": {
       "status": "implemented",
@@ -47,7 +63,17 @@
         "twelve-hour-midnight-and-milliseconds",
         "twelve-hour-noon"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 41,
+        "published_vectors": [
+          "twelve-hour",
+          "twelve-hour-midnight-and-milliseconds",
+          "twelve-hour-noon"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-004": {
       "status": "implemented",
@@ -55,7 +81,16 @@
         "date-counter",
         "empty-result"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 43,
+        "published_vectors": [
+          "date-counter",
+          "empty-result"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-005": {
       "status": "implemented",
@@ -64,14 +99,32 @@
         "window-title-trim-space-and-sanitize",
         "url-mode-percent-encoding"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 45,
+        "published_vectors": [
+          "window-metadata",
+          "window-title-trim-space-and-sanitize",
+          "url-mode-percent-encoding"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-006": {
       "status": "implemented",
       "vectors": [
         "text-mode-environment-unchanged"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 48,
+        "published_vectors": [
+          "text-mode-environment-unchanged"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-007": {
       "status": "implemented",
@@ -83,7 +136,20 @@
         "counter-width-never-truncates",
         "blank-pattern-does-not-advance-counter"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 51,
+        "published_vectors": [
+          "date-counter",
+          "counter-once",
+          "counter-base36",
+          "counter-hex-padding",
+          "counter-width-never-truncates",
+          "blank-pattern-does-not-advance-counter"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-008": {
       "status": "implemented",
@@ -100,7 +166,22 @@
       "tests": [
         "filename-generator-test"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 56,
+        "published_vectors": [
+          "random-alphanumeric-with-rejection",
+          "random-digits-with-rejection",
+          "random-hex-both-cases",
+          "random-non-ambiguous",
+          "random-words",
+          "random-emoji",
+          "guid-lower-and-upper",
+          "invalid-repeat-does-not-consume-counter"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-009": {
       "status": "partial",
@@ -117,7 +198,17 @@
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 60,
+        "published_vectors": [
+          "random-file-line",
+          "random-file-permission-denied",
+          "random-file-empty"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "FN-010": {
       "status": "implemented",
@@ -125,7 +216,16 @@
         "case-sensitive-unknown-token",
         "unknown-and-literal-percent"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 63,
+        "published_vectors": [
+          "case-sensitive-unknown-token",
+          "unknown-and-literal-percent"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-011": {
       "status": "implemented",
@@ -136,7 +236,19 @@
         "reserved-device-name",
         "reserved-device-name-with-extension"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 66,
+        "published_vectors": [
+          "window-title-trim-space-and-sanitize",
+          "portable-invalid-characters",
+          "trailing-spaces-and-periods",
+          "reserved-device-name",
+          "reserved-device-name-with-extension"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-012": {
       "status": "implemented",
@@ -146,7 +258,18 @@
         "path-mode-rejects-absolute",
         "path-mode-rejects-drive"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 71,
+        "published_vectors": [
+          "path-mode-components",
+          "path-mode-rejects-traversal",
+          "path-mode-rejects-absolute",
+          "path-mode-rejects-drive"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-013": {
       "status": "implemented",
@@ -157,7 +280,19 @@
         "blank-pattern-does-not-advance-counter",
         "blank-pattern-text-mode"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 75,
+        "published_vectors": [
+          "reserved-device-name-with-extension",
+          "extension-is-not-a-token",
+          "empty-result",
+          "blank-pattern-does-not-advance-counter",
+          "blank-pattern-text-mode"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-014": {
       "status": "implemented",
@@ -165,7 +300,16 @@
         "max-length-preserves-extension",
         "max-length-counts-scalar-values"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 78,
+        "published_vectors": [
+          "max-length-preserves-extension",
+          "max-length-counts-scalar-values"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-015": {
       "status": "implemented",
@@ -180,7 +324,15 @@
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 80,
+        "published_vectors": [
+          "preview-does-not-commit"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-016": {
       "status": "partial",
@@ -197,14 +349,27 @@
         "platforms/linux/linux-qt/tests/CounterStoreTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 83,
+        "published_vectors": [
+          "invalid-repeat-does-not-consume-counter"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "FN-017": {
       "status": "implemented",
       "vectors": [
         "all"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 87,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-018": {
       "status": "implemented",
@@ -214,7 +379,18 @@
         "case-sensitive-unknown-token",
         "random-non-ambiguous"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 89,
+        "published_vectors": [
+          "date-counter",
+          "longest-token-match",
+          "case-sensitive-unknown-token",
+          "random-non-ambiguous"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-019": {
       "status": "implemented",
@@ -225,7 +401,19 @@
         "non-numeric-repeat",
         "unterminated-argument"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 95,
+        "published_vectors": [
+          "brace-after-plain-token-is-literal",
+          "random-single-without-argument",
+          "invalid-repeat-does-not-consume-counter",
+          "non-numeric-repeat",
+          "unterminated-argument"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-020": {
       "status": "implemented",
@@ -236,7 +424,19 @@
         "calendar-names-and-week",
         "unix-seconds"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 103,
+        "published_vectors": [
+          "twelve-hour",
+          "twelve-hour-midnight-and-milliseconds",
+          "twelve-hour-noon",
+          "calendar-names-and-week",
+          "unix-seconds"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-021": {
       "status": "implemented",
@@ -256,7 +456,24 @@
       "tests": [
         "filename-generator-test"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 111,
+        "published_vectors": [
+          "random-alphanumeric-with-rejection",
+          "random-digits-with-rejection",
+          "random-hex-both-cases",
+          "random-non-ambiguous",
+          "random-single-without-argument",
+          "random-words",
+          "random-emoji",
+          "guid-lower-and-upper",
+          "random-source-exhausted",
+          "random-file-line"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-022": {
       "status": "implemented",
@@ -267,7 +484,19 @@
         "text-mode-environment-unchanged",
         "path-mode-components"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 121,
+        "published_vectors": [
+          "window-metadata",
+          "window-title-trim-space-and-sanitize",
+          "url-mode-percent-encoding",
+          "text-mode-environment-unchanged",
+          "path-mode-components"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-023": {
       "status": "implemented",
@@ -280,7 +509,21 @@
         "max-length-preserves-extension",
         "extension-exceeds-max-length"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 129,
+        "published_vectors": [
+          "trailing-spaces-and-periods",
+          "reserved-device-name",
+          "reserved-device-name-with-extension",
+          "not-reserved-com10",
+          "extension-is-not-a-token",
+          "max-length-preserves-extension",
+          "extension-exceeds-max-length"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-024": {
       "status": "implemented",
@@ -290,7 +533,18 @@
         "path-mode-rejects-absolute",
         "path-mode-rejects-drive"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 141,
+        "published_vectors": [
+          "path-mode-components",
+          "path-mode-rejects-traversal",
+          "path-mode-rejects-absolute",
+          "path-mode-rejects-drive"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-025": {
       "status": "implemented",
@@ -298,7 +552,16 @@
         "counter-base36",
         "counter-overflow"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 148,
+        "published_vectors": [
+          "counter-base36",
+          "counter-overflow"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-026": {
       "status": "implemented",
@@ -324,7 +587,26 @@
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 152,
+        "published_vectors": [
+          "counter-overflow",
+          "extension-exceeds-max-length",
+          "path-mode-rejects-traversal",
+          "path-mode-rejects-absolute",
+          "path-mode-rejects-drive",
+          "random-source-exhausted",
+          "invalid-repeat-does-not-consume-counter",
+          "non-numeric-repeat",
+          "unterminated-argument",
+          "random-file-line",
+          "random-file-permission-denied",
+          "random-file-empty"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "FN-027": {
       "status": "implemented",
@@ -342,19 +624,56 @@
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 161,
+        "published_vectors": [
+          "preview-does-not-commit"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "date": "2026-10-24",
-    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
-    "existing_automated_suites": [
-      "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
-      "platforms/linux/linux-qt/tests/CounterStoreTest.cpp",
-      "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
-      "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp"
+    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
+    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "specification": "product-contract/capabilities/FILENAME-GENERATION-001/SPEC.md",
+    "specification_sha256": "fa57017ec8237ab136799f4e3d2234e5a290b210af9215315c4cf0c208c0e6ff",
+    "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
+    "production_surfaces": [
+      "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+      "platforms/linux/linux-qt/src/naming/CounterStore.cpp",
+      "platforms/linux/linux-qt/app/CaptureSave.cpp"
     ],
-    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+    "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp": [
+        "defaultCapturePatternUsesSystemRandom",
+        "activeWindowDefaultPattern",
+        "previewNeverNeedsInjectedRandomness"
+      ],
+      "platforms/linux/linux-qt/tests/CounterStoreTest.cpp": [
+        "sequenceSurvivesReopenAndFileIsPrivate",
+        "uncommittedReservationDoesNotConsume",
+        "profilesAreIndependent",
+        "concurrentReservationsNeverShareAValue",
+        "overflowIsTypedAndFileUntouched",
+        "corruptAndNewerFilesErrorWithoutOverwrite",
+        "changedFileBetweenReserveAndCommitIsRefused"
+      ],
+      "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp": [
+        "nativeCounterPublicationSurvivesReopenAndCollisionContextMatchesTheName",
+        "failedNativeEncodingDoesNotConsumeTheReservedCounter",
+        "counterCommitFailurePreservesPublishedPngAndReportsTheActualFault",
+        "publishesCompletePrivatePngAndRecordsActualArtifactAndContext",
+        "collisionsIncludingDanglingSymlinksNeverReplaceExistingData",
+        "destinationCreatedImmediatelyBeforePublicationIsPreservedAndRandomNameRetries",
+        "concurrentSavesWithTheSameNameHaveOneWinnerAndNoPartialFinalFile",
+        "encoderFailureAndExceptionsRemoveOnlyOwnedTemporaryFiles",
+        "invalidPatternDoesNotCreateDirectoryOrEncode"
+      ]
+    },
+    "remaining_scope": "Published deterministic expansion vectors plus production random-source and counter tests exist. Native file grants and post-publication crash/power-loss counter atomicity remain incomplete."
   }
 }

@@ -96,7 +96,12 @@
         "platforms/linux/linux-qt/tests/EditorOpenTest.cpp",
         "platforms/linux/linux-qt/tests/NewImageDialogTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 32,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-002": {
       "status": "partial",
@@ -125,7 +130,12 @@
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/CaptureHistoryTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 35,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ES-003": {
       "status": "implemented",
@@ -147,7 +157,17 @@
         "platforms/linux/linux-qt/app/EDITOR-CROP.md",
         "platforms/linux/linux-qt/app/EDITOR-CROP-EVIDENCE.json"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 38,
+        "published_vectors": [
+          "reverse-drag-rectangle",
+          "zero-area-rectangle-rejected",
+          "style-without-selection-changes-tool-only"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-004": {
       "status": "implemented",
@@ -183,7 +203,12 @@
         "platforms/linux/linux-qt/app/CAPTURE-CROP.md",
         "platforms/linux/linux-qt/app/CAPTURE-CROP-EVIDENCE.json"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 41,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-005": {
       "status": "implemented",
@@ -239,7 +264,17 @@
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/CaptureHistoryTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 45,
+        "published_vectors": [
+          "reverse-drag-rectangle",
+          "zero-area-rectangle-rejected",
+          "undo-redo-move"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-006": {
       "status": "implemented",
@@ -299,7 +334,18 @@
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/CaptureHistoryTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 48,
+        "published_vectors": [
+          "undo-redo-move",
+          "branch-clears-redo",
+          "truncated-checkpoint-stays-dirty",
+          "delete-and-undo-restores-selection"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-007": {
       "status": "implemented",
@@ -339,7 +385,15 @@
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/CaptureHistoryTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 51,
+        "published_vectors": [
+          "delete-and-undo-restores-selection"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-008": {
       "status": "implemented",
@@ -393,7 +447,12 @@
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/PreferenceDialogTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 54,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-009": {
       "status": "partial",
@@ -414,7 +473,15 @@
         "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
         "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 57,
+        "published_vectors": [
+          "render-stroke-coverage"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ES-010": {
       "status": "implemented",
@@ -422,7 +489,16 @@
         "render-stroke-coverage",
         "render-opacity-applied-once"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 62,
+        "published_vectors": [
+          "render-stroke-coverage",
+          "render-opacity-applied-once"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-011": {
       "status": "partial",
@@ -447,7 +523,12 @@
         "platforms/linux/linux-qt/app/ANNOTATION-DELETE-EVIDENCE.json",
         "platforms/linux/linux-qt/app/EMPTY-SIDECAR-CLARIFICATION.md"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 65,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ES-012": {
       "status": "implemented",
@@ -472,7 +553,12 @@
         "platforms/linux/linux-qt/app/ANNOTATION-DELETE-EVIDENCE.json",
         "platforms/linux/linux-qt/app/EMPTY-SIDECAR-CLARIFICATION.md"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 68,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-013": {
       "status": "partial",
@@ -491,7 +577,12 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 71,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ES-014": {
       "status": "partial",
@@ -518,7 +609,16 @@
         "platforms/linux/linux-qt/app/ANNOTATION-DELETE-EVIDENCE.json",
         "platforms/linux/linux-qt/app/EMPTY-SIDECAR-CLARIFICATION.md"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 75,
+        "published_vectors": [
+          "empty-document-removes-sidecar"
+        ],
+        "remaining_human_decision": "How should empty-document save reconcile a legacy fallback companion without resurrecting old annotations (ES-014/ES-030)? Existing refusal preserves both files.",
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ES-015": {
       "status": "implemented",
@@ -540,7 +640,16 @@
         "platforms/linux/linux-qt/tests/AnnotationObjectNavigatorTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 78,
+        "published_vectors": [
+          "newer-version-read-only-failure",
+          "unknown-fields-and-types-round-trip"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-016": {
       "status": "implemented",
@@ -552,7 +661,12 @@
         "platforms/linux/linux-qt/tests/EditorOpenTest.cpp",
         "platforms/linux/linux-qt/tests/NewImageDialogTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 82,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-017": {
       "status": "implemented",
@@ -568,13 +682,27 @@
         "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
         "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 86,
+        "published_vectors": [
+          "duplicate-annotation-ids-rejected",
+          "oversized-canvas-rejected-before-allocation"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-018": {
       "status": "not-started",
       "vectors": [],
       "note": "Recovery documents.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 89,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "ES-019": {
       "status": "partial",
@@ -633,7 +761,12 @@
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/PreferenceDialogTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 92,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ES-020": {
       "status": "not-started",
@@ -646,26 +779,49 @@
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 95,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "ES-021": {
       "status": "not-started",
       "vectors": [],
       "note": "Editor performance.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 98,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "ES-022": {
       "status": "partial",
       "vectors": [],
       "note": "Structural and history vectors pass. Shared golden-image vectors await approved fixtures.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 101,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ES-023": {
       "status": "implemented",
       "vectors": [
         "reverse-drag-rectangle"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 104,
+        "published_vectors": [
+          "reverse-drag-rectangle"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-024": {
       "status": "implemented",
@@ -685,7 +841,15 @@
         "platforms/linux/linux-qt/app/ANNOTATION-ROTATION.md",
         "platforms/linux/linux-qt/app/ANNOTATION-ROTATION-EVIDENCE.json"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 108,
+        "published_vectors": [
+          "reverse-drag-rectangle"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-025": {
       "status": "implemented",
@@ -695,7 +859,17 @@
         "render-fill-with-opacity"
       ],
       "note": "Quarter turns retain the binary64 box-coverage path; all other finite angles use exact polygon/pixel intersections with fill-before-stroke and one opacity application. Analytical diamond coverage, inner-stroke subtraction, and compositing are checked in tests/EditorSessionTest.cpp; tests/EditorSourceTest.cpp verifies a 17-degree PNG/sidecar save and reopen. Shared golden fixtures remain an ES-022 activation gate.",
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 112,
+        "published_vectors": [
+          "render-stroke-coverage",
+          "render-opacity-applied-once",
+          "render-fill-with-opacity"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-026": {
       "status": "implemented",
@@ -734,7 +908,17 @@
         "platforms/linux/linux-qt/app/ANNOTATION-KEYBOARD.md",
         "platforms/linux/linux-qt/app/ANNOTATION-KEYBOARD-EVIDENCE.json"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 129,
+        "published_vectors": [
+          "branch-clears-redo",
+          "selection-is-not-history",
+          "style-without-selection-changes-tool-only"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-027": {
       "status": "implemented",
@@ -779,7 +963,16 @@
         "platforms/linux/linux-qt/app/ANNOTATION-KEYBOARD.md",
         "platforms/linux/linux-qt/app/ANNOTATION-KEYBOARD-EVIDENCE.json"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 134,
+        "published_vectors": [
+          "undo-to-checkpoint-is-clean",
+          "truncated-checkpoint-stays-dirty"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-028": {
       "status": "implemented",
@@ -794,7 +987,15 @@
         "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp",
         "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 139,
+        "published_vectors": [
+          "oversized-canvas-rejected-before-allocation"
+        ],
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "ES-029": {
       "status": "partial",
@@ -810,15 +1011,25 @@
         "platforms/linux/linux-qt/tests/EditorOpenTest.cpp",
         "platforms/linux/linux-qt/tests/NewImageDialogTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 143,
+        "published_vectors": [
+          "newer-version-read-only-failure",
+          "duplicate-annotation-ids-rejected",
+          "oversized-canvas-rejected-before-allocation"
+        ],
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "ES-030": {
-      "status": "implemented",
+      "status": "partial",
       "vectors": [
         "sidecar-default-path",
         "sidecar-baseline-fallback"
       ],
-      "note": "The baseline fallback convention still needs runtime observation before activation, as ES-030 requires. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Empty-document persistence now refuses misleading completion when ES-030 baseline fallback would expose older annotations. ES-014-030-LINUX-2026-10-15 records a concrete native counterexample and pending archive/reconciliation decision. Core explicit-intent admission, receipt-bound sibling queries and post-observer recheck preserve companions; native editor/capture retain raster, edited doc, dirty/retry state with sidecar-save-failed. Full compatibility/native/privacy/security/human qualification remains Required.",
+      "note": "Full-name and fallback companion lookup exist with tests, but the contract explicitly requires baseline runtime observation before activation; no accepted observation is supplied by these automated fixtures.",
       "evidence": [
         "platforms/linux/linux-qt/app/PAIRED-SAVE.md",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
@@ -834,20 +1045,230 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp"
       ],
-      "disposition": "Required"
+      "disposition": "Required",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 149,
+        "published_vectors": [
+          "sidecar-default-path",
+          "sidecar-baseline-fallback"
+        ],
+        "remaining_human_decision": "Supply the required baseline runtime observation for sidecar fallback naming before activation.",
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "date": "2026-10-24",
-    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
-    "existing_automated_suites": [
-      "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
-      "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-      "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
-      "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
-      "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
+    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "specification": "product-contract/capabilities/EDITOR-SESSION-001/SPEC.md",
+    "specification_sha256": "26806f47cc7d36e9983776ca1903cfefb82b4247b055fa280489879bb03ab451",
+    "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
+    "production_surfaces": [
+      "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+      "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+      "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
+      "platforms/linux/linux-qt/app/EditorSource.cpp",
+      "platforms/linux/linux-qt/app/EditorSave.cpp"
     ],
-    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+    "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/EditorSessionTest.cpp": [
+        "guardedCanvasCommitPreservesSelectionHistoryAndRefusesStaleAdmission",
+        "guardedHistoryAdmitsOnlyTheFrozenStateSelectionAndTarget",
+        "emptySidecarSaveRefusesToExposeBaselineCompanion",
+        "guardedDeleteKeepsRemainingPayloadAssetsAndExactHistory",
+        "guardedDeleteRefusalPreservesCheckpointRedoAndSelection",
+        "guardedOrderingPreservesGroupPayloadAndHistory",
+        "orderingNoopAndRefusalKeepCheckpointAndRedo",
+        "guardedThicknessCommitsOneGroupAndSnapshotsDefaults",
+        "guardedThicknessRefusalPreservesDocumentDefaultsCheckpointAndRedo",
+        "thicknessNoopsAndDefaultsOnlyPreserveHistoryAndRedo",
+        "guardedColorEditsCommitOneGroupAndUpdateFutureDefaults",
+        "guardedColorFailuresPreserveDefaultsDocumentSelectionAndRedo",
+        "colorNoopsAndDefaultsOnlyPreserveCheckpointAndRedo",
+        "guardedColorNeverUpdatesDefaultsForProtectedOrUnsupportedSelections",
+        "guardedGroupResizePreservesFieldsAssetsDefaultsAndHistory",
+        "guardedResizeRefusalsKeepCompleteStateAndRedo",
+        "guardedGroupRotationPreservesFieldsDefaultsAndExactHistory",
+        "rotationRefusesStaleAndInvalidGroupsWithoutTruncatingRedo",
+        "rotationRefusesProtectedCompleteGroups",
+        "guardedGroupMovePreservesCompleteFieldsAndExactHistory",
+        "guardedMoveFailuresAndNoopsPreserveRedoAndCheckpoint",
+        "guardedMoveNeverPartiallyMutatesProtectedGroups",
+        "largeSelectionFiltersUnknownAndDuplicateIdsWithoutDocumentMutation",
+        "guardedSelectionDoesNotMutateHistoryOrReplaceInterveningState",
+        "frozenCreationNormalizesBoundsAndPreservesDefaultsAndHistory",
+        "failedFrozenCreationPreservesRedoCheckpointAndInterveningState",
+        "pointerResizeHasFixedOppositeBounds",
+        "rotatedResizeAndAbsolutePropertiesPreserveFieldsAndCreationDefaults",
+        "invalidStaleProtectedAndNoopRectangleEditsPreserveRedo",
+        "rejectedCreationPreservesRedoCheckpointAndSelection",
+        "batchGeometryFailureAndRoundedNoopsNeverTruncateRedo",
+        "everyEditRestoresTheActualPreCommandSelection",
+        "snapshotSaveAcknowledgesItsHistoryStateAndSplitSaveInvalidatesCleanState",
+        "creationDefaultsLeaveSelectedObjectsCheckpointAndRedoIntact",
+        "invalidCreationDefaultsPreserveThePreviousStyle",
+        "unsavedInitialPixelsHaveNoCleanCheckpointUntilSuccessfulSave",
+        "mismatchedSourceRequiresAnExplicitBindingChoice",
+        "sourceBindingRejectsVersionsCorruptHeadersAndInvalidChoices",
+        "xannRoundTrips",
+        "decompressionLimitIsEnforced",
+        "embeddedImagesAreCheckedBeforeDecode",
+        "tooLargeOutranksInvalid",
+        "lowercaseColoursAreAccepted",
+        "sidecarFailureKeepsSessionDirty",
+        "sidecarIsWrittenAndFailureReported",
+        "quarterTurnSwapsExtents",
+        "diamondHasExactPolygonCoverage",
+        "rotatedFillAndStrokeApplyOpacityOnce",
+        "rotatedStrokeSubtractsInnerPolygon",
+        "exportRejectsInvalidGeometryAndClipsFarAwayObjects",
+        "transparentDestinationIsNormalized",
+        "redoRestoresSelection",
+        "resizeRotateAndReorder"
+      ],
+      "platforms/linux/linux-qt/tests/EditorSourceTest.cpp": [
+        "retainedDocumentReopensSourceAndAnnotationsWithoutRasterReads",
+        "capturedSourceOwnsPixelsPreservesAlphaAndProfileAndInfersNoFile",
+        "capturedSourceCancellationDiscardsAllPreparedOutput",
+        "capturedSourceRejectsEmptyOversizedInputAndRedactsCallbackExceptions",
+        "sourceLoadingPreparesPrivateDisplayPixelsAndCancelsWithoutPublishing",
+        "encodedFilesAreBoundedBeforeBufferAllocation",
+        "rasterDecodePreservesAlphaProfileAndOriginalBytes",
+        "orientationIsAppliedExactlyOnceToPixelsAndEmbeddedSource",
+        "rasterHeadersAreLimitedBeforePixelDecode",
+        "comparisonLoadsTheRasterWithoutReadingOrChangingItsSidecar",
+        "rejectsNonImages",
+        "saveThenReopenKeepsAnnotationsEditable",
+        "changedRasterRequiresChoiceAndKeepsValidatedSnapshots",
+        "invalidOrNewerSidecarsNeverCreateABareRasterSession",
+        "freeAngleRotationSavesAndReopensWithHistory"
+      ],
+      "platforms/linux/linux-qt/tests/EditorSaveTest.cpp": [
+        "workerSnapshotSurvivesConcurrentCallerChanges",
+        "realPairReopensWithoutCompoundingAndUsesTheEncodedRasterHash",
+        "encodeExceptionAndRacingReplacementPreserveThePreviousDestination",
+        "oversizedEncodedTemporaryIsRejectedWithoutReplacingOrBufferingIt",
+        "completionObserverExceptionPreservesAcknowledgedArtifacts",
+        "incompletePairRepairsOnlyItsBoundCompanionAndRejectsChangedPng",
+        "explicitEmptySaveRemovesOnlyTheKnownCompatibleDefaultSidecar",
+        "cancelledBeforePublicationPreservesFilesAndAfterRasterRetainsPartialFacts",
+        "symlinksAndChangedCompanionsArePreservedAndParentSegmentsKeepKernelMeaning",
+        "modalWorkerOwnsItsSnapshotAndReleasesWithoutJoiningOnParentDestruction"
+      ],
+      "platforms/linux/linux-qt/tests/EditorWindowTest.cpp": [
+        "initTestCase",
+        "init",
+        "cleanup",
+        "emptySaveWithBaselineCompanionReportsFailureWithoutDeletingEitherCompanion",
+        "keyboardTransformsPersistNativeGroupAndExactHistory",
+        "keyboardTransformsKeepNativeTextListModalAndBusyPrecedence",
+        "nativeDeletePersistsRemainingObjectsAndEmptySidecarPolicy",
+        "nativeDeleteRefusesStaleProtectedAndOwnerChanges",
+        "nativeOrderingCommandsPersistArrayOrderAndRenderedPixels",
+        "orderingRefusalAndOwnerTeardownPreserveTheCurrentDocument",
+        "annotationObjectsSupportKeyboardSelectionAndActualPersistence",
+        "nativeGroupMoveSavesBothObjectsAndPreservesSourceAndUnknownFields",
+        "thicknessCommandsGuardPreferencePublicationHistoryAndOwners",
+        "colorChoicesHaveGuardedDefaultsPublicationAndActualPersistence",
+        "nativeGroupRotationHasOwnedPreviewAndActualPersistence",
+        "numericRectangleReplacementRefusalKeepsFilesAndAllowsFreshEdit",
+        "rectangleNestedPickerSurvivesEditorDestruction",
+        "keyboardRectangleCreationSavesFrozenStyleAndPreservesSource",
+        "rectanglePropertiesHaveAtomicHistoryDefaultsAndActualSaveRecovery",
+        "destroyingTheEditorDuringPropertiesDoesNotWriteFiles",
+        "explicitToolsShareMenusHotkeysBusyGuardAndEditableSave",
+        "annotationCopyPasteCutAndDuplicateUseNativeMenusShortcutsAndOneHistoryPerMutation",
+        "pastedObjectsHaveVisibleViewportOffsetEvenWhenZoomedOut",
+        "nativeDuplicationPreservesEmbeddedAssetsAndAssetClipboardRefusalKeepsEverything",
+        "lockedNativeSelectionsKeepGeometryAndDisableDirectDeleteAndRotation",
+        "annotationCompletionObserverExceptionKeepsOneCommittedMutation",
+        "annotationPublicationFailuresNeverCutAndCallbackDiagnosticsAreRedacted",
+        "malformedAndForeignClipboardReadsCannotMutateSessionAndTextEntryKeepsLocalEditing",
+        "nativeAnnotationOfferAndReplacementReportActualOwnershipWithoutDeletingObjects",
+        "annotationPublicationReadAndCompletionCanDestroyTheirOwner",
+        "printMenuAndShortcutSubmitWithoutSavingOrChangingHistoryFilesPreferencesOrClipboard",
+        "knownPrintFailureRetryUsesFrozenSnapshotAndFreshConfirmationWithDefaultCancel",
+        "unknownPrintDeliveryCannotAuthorizeRetryAndMissingServiceIsVisible",
+        "printCancellationKeepsTheEditorResponsiveAndRefusesReentrantActions",
+        "printCompletionObserverExceptionKeepsAcknowledgementAndNeverRepeatsTheJob",
+        "printConfigurationAndCompletionCanDestroyTheirOwner",
+        "copyMenuAndShortcutPublishOneSnapshotWithoutSavingOrClearingHistory",
+        "copyCancellationIsResponsiveAndBlocksOtherOutputAndDocumentActions",
+        "knownCopyFailureOffersDefaultCancelRetryWithoutRenderingOrChangingRedo",
+        "unknownCopyDeliveryCannotAuthorizeRetryAndMissingServiceIsVisible",
+        "copyPublicationAndCompletionCanDestroyTheirOwner",
+        "saveRunsOnWorkerWithResponsiveCancellationAndNoReentrantActions",
+        "incompleteSaveOffersDefaultCancelCompanionOnlyRepairAndKeepsRedo",
+        "partialSaveAsKeepsTheCurrentPathUntilItsCompanionRepairCompletes",
+        "destructionDuringSaveCancelsTheOwnedWorkerWithoutWaitingOrPublishing",
+        "completionCanDestroyItsOwnerWithoutInvalidatingWorkerResults",
+        "saveRefusesAnUnavailableFormatWithoutEncodingOrChangingFiles",
+        "retainedAnnotatedDocumentOpensUnsavedAndPersistsAnEditablePair",
+        "toolbarApplyKeepsImageCheckpointAndRedoWhileHiddenCommandsRemainReachable",
+        "cancelledOrFailedToolbarDraftPreservesActualEditorHistory",
+        "appearanceApplyUpdatesActualEditorsWithoutEditingPixelsCheckpointOrRedo",
+        "cancelledAppearanceAndFailedApplyKeepActualEditorPaletteAndHistory",
+        "recoveringTheActualEditorFramePreservesPixelsCheckpointAndRedo",
+        "cancelledCloseDoesNotSaveWindowStateAndAcceptedCloseRestoresIt",
+        "windowMemoryMenuRollsBackFailedWritesAndUpdatesAllEditorActions",
+        "failedWindowPersistenceIsVisibleAndAllowsClosingWithoutChangingTheFile",
+        "savedDefaultsAffectOnlyNewAnnotationsAcrossOpenEditorsAndRestart",
+        "toolbarPreferenceFailurePreservesExplicitSelectionEditAndHistory",
+        "toolbarColorChoicePersistsAlphaWhileCancelLeavesEverythingUnchanged",
+        "actualOpenAndCompleteSavePersistRecentImagesAcrossRestart",
+        "recentPreferenceWriteFailureDoesNotUndoSuccessfulImageOpenOrSave",
+        "incompleteImageSaveDoesNotRecordAPersistedRecentPath",
+        "nativeRecentPreferencesAreOptInAtomicAndLeaveTheDocumentAlone",
+        "recentMenuUsesDirtyConfirmationAndKeepsMissingEntriesRemovable",
+        "recentEntryPreservesTheOpenedSymlinkParentSource",
+        "incomingOpenPreventsStaleRecentPreferencesFromOverwritingTheList",
+        "nativeRecentRemovalAndLimitChangesApplyOrCancel",
+        "nativeOpenPickerConfirmsAndPreservesOrReplacesTheDirtySession",
+        "cancelledPickerAndCorruptOpenPreserveTheCurrentSession",
+        "saveBeforeOpeningTheSameFileAdoptsTheJustSavedSourceAndSidecar",
+        "cancellingAndClosingOpenRetireTheLiveWorker",
+        "savingAnUntitledImageOverTheOpenCandidateReloadsTheSavedImage",
+        "retainedCaptureOpensAnOwnedUntitledDocumentAndSavesOnlyToExplicitDestination",
+        "cancelledOrFailedNewImagePreservesTheDirtySession",
+        "newImageReplacementResetsSessionBindingsAndSavesChosenProfile",
+        "standaloneNewImageCanBeCancelledOrCreatedWithoutAnExistingFile",
+        "cancelledSaveBeforeReplacingAnUntitledImageKeepsItsSession",
+        "ownedReplacementPreparationReleasesBlockedWork",
+        "ownedReplacementDialogsRecoverFromDestruction",
+        "standaloneCreationAndOpenReleaseDestroyedEditorParents",
+        "ownedComparisonReleasesBlockedWorkers",
+        "comparisonPreservesDirtyHistorySelectionViewportAndFiles",
+        "nativeSourceMismatchChoice",
+        "canvasWorkerKeepsUntaggedWorkingSourceAndPreparesPrivateSRgbDisplay",
+        "ownedCanvasCommandsPreservePixelsProfileHistoryAndSave",
+        "ownedCanvasPreparationRejectsStaleAndReleasesOwners",
+        "canvasConfigurationDialogsReleaseDestroyedOwners",
+        "ownedHistoryRestoresSourceSelectionAndSavedCheckpoint",
+        "ownedHistoryCancellationStaleAndOwnerChanges",
+        "ownedHistoryPreparationRejectsInvalidSnapshots",
+        "ownedCropUsesNativeBoundsHistoryAndPersistence",
+        "ownedCropRefusesStaleEditsAndReleasesBlockedWorkers",
+        "cropIsUndoableAndReopensTheCroppedSource",
+        "canvasResizeDoesNotResampleAndUndoRestoresTheSource",
+        "imageRotationPersistsPixelsAndUndoSource",
+        "cancelledDialogPreservesCleanHistoryAndSource",
+        "nativeAutoCropPersistsAlphaAndCreatesExactlyOneUndoStep",
+        "cancelledSeventeenDegreePreviewPreservesDirtyAnnotationsAndHistory",
+        "acceptedPreviewPersistsTransformedSourceAndEditableAnnotationsOnce",
+        "nativePreviewCancellationReleasesTheLiveWorkerWithoutCommitting",
+        "flattenPersistsOnlyRenderedObjectsAndShowsUnsupportedPlaceholders",
+        "clearAnnotationsKeepsSourcePixelsAndRestoresUnsupportedObjectsWithUndo",
+        "clearImageConfirmationAndRecovery",
+        "clearedImageSavesTransparentPixelsAndUndoRestoresTheImmutableSource",
+        "cancellingNativeFlattenLeavesFilesDocumentAndHistoryUntouched",
+        "failedSaveBeforeClearKeepsTheDirtySessionAndHistory",
+        "pointerStatusReportsTheDocumentPixelAndItsSourceColour",
+        "pointerStatusSizeFollowsTheChangedImage",
+        "pointerStatusReportsPixelsOfTheChangedImage"
+      ]
+    },
+    "remaining_scope": "Core history/rectangle/XANN and native load/save tests exist. Complete formats, profile/render parity, recovery/retention, approved goldens and baseline-sidecar observation are not established."
   }
 }

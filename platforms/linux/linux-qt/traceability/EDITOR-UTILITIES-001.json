@@ -71,7 +71,12 @@
         "platforms/linux/linux-qt/app/PortalColorPicker.cpp",
         "platforms/linux/linux-qt/tests/PortalColorPickerTest.cpp",
         "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 9,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EU-002": {
       "disposition": "Required",
@@ -85,7 +90,12 @@
         "platforms/linux/linux-qt/tests/ColorFormatsTest.cpp",
         "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
         "platforms/linux/linux-qt/tests/PortalColorPickerTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 12,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EU-003": {
       "disposition": "Required",
@@ -98,7 +108,12 @@
         "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
         "platforms/linux/linux-qt/tests/QrEncoderTest.cpp",
         "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 15,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EU-004": {
       "disposition": "Required",
@@ -110,7 +125,13 @@
       ],
       "waiting_on": [
         "Mike: approve zxing-cpp dependency for QR scanning; do not implement this pending dependency."
-      ]
+      ],
+      "audit": {
+        "classification": "blocked: Approve zxing-cpp (QR scanning dependency) before implementation.",
+        "spec_line": 18,
+        "blocker": "Approve zxing-cpp (QR scanning dependency) before implementation.",
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "EU-005": {
       "disposition": "Required",
@@ -122,7 +143,12 @@
         "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
         "platforms/linux/linux-qt/tests/FileHashTest.cpp",
         "platforms/linux/linux-qt/tests/HashCheckerDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 21,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EU-006": {
       "disposition": "Required",
@@ -134,7 +160,12 @@
         "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
         "platforms/linux/linux-qt/tests/FileHashTest.cpp",
         "platforms/linux/linux-qt/tests/HashCheckerDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 25,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EU-007": {
       "disposition": "Required",
@@ -146,7 +177,12 @@
         "platforms/linux/linux-qt/app/IconConverterDialog.cpp",
         "platforms/linux/linux-qt/tests/IconWriterTest.cpp",
         "platforms/linux/linux-qt/tests/IconConverterDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 28,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EU-008": {
       "disposition": "Required",
@@ -159,7 +195,12 @@
         "platforms/linux/linux-qt/app/ComparisonImages.cpp",
         "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp",
         "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 32,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EU-009": {
       "disposition": "Required",
@@ -171,7 +212,13 @@
       ],
       "waiting_on": [
         "Mike: approve local background-removal model, license/provenance and device policy."
-      ]
+      ],
+      "audit": {
+        "classification": "blocked: Approve the local background-removal model, provenance and device policy.",
+        "spec_line": 35,
+        "blocker": "Approve the local background-removal model, provenance and device policy.",
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "EU-010": {
       "disposition": "Required",
@@ -183,7 +230,13 @@
       ],
       "waiting_on": [
         "Mike: approve local background-removal model and any download/license policy."
-      ]
+      ],
+      "audit": {
+        "classification": "blocked: Approve the model licence/integrity/download policy before setup is implemented.",
+        "spec_line": 38,
+        "blocker": "Approve the model licence/integrity/download policy before setup is implemented.",
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "EU-011": {
       "disposition": "Required",
@@ -195,7 +248,13 @@
       ],
       "waiting_on": [
         "Mike: approve local background-removal model before implementing preview/output."
-      ]
+      ],
+      "audit": {
+        "classification": "blocked: Approve the local background-removal model before inference/output work.",
+        "spec_line": 41,
+        "blocker": "Approve the local background-removal model before inference/output work.",
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "EU-012": {
       "disposition": "Required",
@@ -208,7 +267,12 @@
         "platforms/linux/linux-qt/app/VideoConverter.cpp",
         "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
         "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 44,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EU-013": {
       "disposition": "Required",
@@ -222,7 +286,12 @@
         "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
         "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp",
         "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 47,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EU-014": {
       "disposition": "Required",
@@ -234,7 +303,12 @@
         "platforms/linux/linux-qt/app/VideoConverter.cpp",
         "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
         "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 50,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EU-015": {
       "disposition": "Required",
@@ -247,7 +321,12 @@
         "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
         "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
         "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 54,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EU-016": {
       "disposition": "Required",
@@ -262,13 +341,18 @@
         "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp",
         "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp",
         "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 58,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EU-017": {
       "disposition": "Required",
-      "status": "implemented",
+      "status": "partial",
       "vectors": [],
-      "note": "Blocking work runs through OwnedWork so a window owns its job: the hash read stops when the dialog is closed or destroyed and never leaves a digest, the image comparison retires its worker on cancellation or close without publishing an input and tears a blocked worker down immediately, the QR upload temporary files are removed with the dialog, and the GStreamer runner emits nothing when it is destroyed while probing. Closing a busy window cancels the work rather than continuing it in the background, and the file picker recovers from cancellation and destruction.",
+      "note": "Existing dialogs own cancellation and converter temporary cleanup, but absent QR scan/model sessions and complete utility lifecycle qualification prevent catalogue-wide completion.",
       "evidence": [
         "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
         "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
@@ -279,7 +363,12 @@
         "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp",
         "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp",
         "platforms/linux/linux-qt/tests/GstConversionRunnerLifetimeTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 61,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EU-018": {
       "disposition": "Required",
@@ -293,7 +382,12 @@
         "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp",
         "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
         "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 64,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EU-019": {
       "disposition": "Required",
@@ -305,22 +399,109 @@
       ],
       "waiting_on": [
         "Mike: resolve product-owner-decision-required shader/easter-egg disposition."
-      ]
+      ],
+      "audit": {
+        "classification": "blocked: Decide preserve, correct or omit for the inventoried Konami shader after the mandated review.",
+        "spec_line": 67,
+        "blocker": "Decide preserve, correct or omit for the inventoried Konami shader after the mandated review.",
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "date": "2026-10-24",
-    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
-    "existing_automated_suites": [
-      "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-      "platforms/linux/linux-qt/tests/HashCheckerDialogTest.cpp",
-      "platforms/linux/linux-qt/tests/IconWriterTest.cpp",
-      "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp",
-      "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp",
-      "platforms/linux/linux-qt/tests/QrEncoderTest.cpp",
-      "platforms/linux/linux-qt/tests/VideoConversionTest.cpp"
+    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
+    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "specification": "product-contract/capabilities/EDITOR-UTILITIES-001/SPEC.md",
+    "specification_sha256": "ff0422d32898e8d68ad72be95509eafa334084d1570446bd276b72cd712bcaab",
+    "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
+    "production_surfaces": [
+      "platforms/linux/linux-qt/src/tools/FileHash.cpp",
+      "platforms/linux/linux-qt/src/tools/QrEncoder.cpp",
+      "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
+      "platforms/linux/linux-qt/app/VideoConverter.cpp",
+      "platforms/linux/linux-qt/app/features/ToolsFeature.cpp"
     ],
-    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+    "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/FileHashTest.cpp": [
+        "knownDigestsOfAbc",
+        "emptyFileHashes",
+        "largeFileMatchesOneShotHash",
+        "missingFileIsUnreadable",
+        "unreadableFileIsUnreadable",
+        "directoryIsUnreadable",
+        "cancelledBeforeReadingReportsCancelled",
+        "cancelledWhileReadingStopsAndReportsCancelled",
+        "digestIsLowercaseHex",
+        "algorithmNamesAreOrderedAndDistinct",
+        "digestMatchesIgnoresCaseAndSurroundingSpace",
+        "digestMatchesAnEmptyDigest"
+      ],
+      "platforms/linux/linux-qt/tests/HashCheckerDialogTest.cpp": [
+        "release",
+        "initTestCase",
+        "init",
+        "computeShowsTheDigest",
+        "weakAlgorithmsAreLabelledUnsuitableForSecurity",
+        "algorithmChoiceSelectsTheAlgorithm",
+        "compareAcceptsCaseAndSurroundingSpaces",
+        "copyPutsTheDigestOnTheClipboard",
+        "unreadableFileReportsFailureWithoutADigest",
+        "computingWithoutAFileDoesNothing",
+        "cancelAnswersAnInFlightReadWithoutADigest",
+        "closingWhileHashingStopsTheRead",
+        "destroyingWhileHashingIsSafe"
+      ],
+      "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp": [
+        "emptyTextIsTypedAndDisablesActions",
+        "defaultsToLevelM",
+        "previewIsDeterministic",
+        "tooLongIsTyped",
+        "invalidSizeIsTyped",
+        "saveWritesPngAtomically",
+        "copyPutsImageOnClipboard",
+        "uploadPortReceivesExistingPng",
+        "uploadFilesAreRemovedWithDialog",
+        "controlsAreNamedForAccessibility"
+      ],
+      "platforms/linux/linux-qt/tests/IconWriterTest.cpp": [
+        "headerAndEntriesAreWellFormed",
+        "trueColorEntriesKeepAlpha",
+        "paletteEntryHasTheExpectedHeaderAndMask",
+        "reportsNoSizes",
+        "reportsAnInvalidSize",
+        "reportsAnInvalidImage",
+        "reportsAWriteFailure",
+        "writeIconWritesTheEncodedBytes",
+        "qtReadsThe32BitContainer"
+      ],
+      "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp": [
+        "topLeftComparisonHasIndependentExpectedPixels",
+        "centeredAlignmentUsesNativeSizesAndOddPadding",
+        "dividerEndpointsPreserveAlphaAndShowExactlyOneSource",
+        "invalidInputsAndUnionLimitsFailBeforeAllocation",
+        "cancellationReturnsNoPartialLayoutOrPixels",
+        "displayCopiesConvertToSrgbWithoutChangingSourceOrAnnotations",
+        "unsupportedVisibleObjectsAndCancelledRenderingPreserveInputs"
+      ],
+      "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp": [
+        "initTestCase",
+        "convertsAndPublishesAtomically",
+        "cancelRemovesPartial",
+        "refusesExistingOutput"
+      ],
+      "platforms/linux/linux-qt/tests/PortalColorPickerTest.cpp": [
+        "Close",
+        "respond",
+        "init",
+        "cleanup",
+        "pickColorReturnsThePortalColor",
+        "userCancelLeavesNoColor",
+        "otherFailureIsNotAColor",
+        "missingPortalFails",
+        "permissionDenialIsDistinctFromAMissingPortal"
+      ]
+    },
+    "remaining_scope": "Hash, QR generation, ICO, compare and conversion tests exist. Recognition/model approvals, picker details, complete codec/native resource and accessibility qualification remain."
   }
 }

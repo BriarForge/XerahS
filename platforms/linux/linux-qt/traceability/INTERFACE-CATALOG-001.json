@@ -28,7 +28,12 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 9,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "IFCAT-002": {
       "status": "partial",
@@ -43,7 +48,12 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 13,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "IFCAT-003": {
       "status": "partial",
@@ -58,7 +68,12 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 16,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "IFCAT-004": {
       "status": "partial",
@@ -73,7 +88,12 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 19,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "IFCAT-005": {
       "status": "partial",
@@ -88,7 +108,12 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 23,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "IFCAT-006": {
       "status": "partial",
@@ -103,7 +128,12 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 27,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "IFCAT-007": {
       "status": "partial",
@@ -118,7 +148,12 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 30,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "IFCAT-008": {
       "status": "partial",
@@ -133,7 +168,12 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 34,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "IFCAT-009": {
       "status": "partial",
@@ -148,7 +188,12 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 37,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "IFCAT-010": {
       "status": "partial",
@@ -163,25 +208,45 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 40,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "IFCAT-011": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "No native MCP server or versioned tool schemas/progress/cancellation/publication annotations are implemented."
+      "note": "No native MCP server or versioned tool schemas/progress/cancellation/publication annotations are implemented.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 43,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "IFCAT-012": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "No native MCP authority/consent workflow is implemented; authenticated CLI IPC is not MCP approval."
+      "note": "No native MCP authority/consent workflow is implemented; authenticated CLI IPC is not MCP approval.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 47,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "IFCAT-013": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "Metadata-only CLI discovery exists; MCP capture/history/settings/annotation/upload result minimization and grants are absent."
+      "note": "Metadata-only CLI discovery exists; MCP capture/history/settings/annotation/upload result minimization and grants are absent.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 52,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "IFCAT-014": {
       "status": "partial",
@@ -196,7 +261,12 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 56,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "IFCAT-015": {
       "status": "partial",
@@ -211,7 +281,12 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 60,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "IFCAT-016": {
       "status": "partial",
@@ -226,7 +301,12 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 63,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "IFCAT-017": {
       "status": "partial",
@@ -241,7 +321,12 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 66,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "IFCAT-018": {
       "status": "partial",
@@ -257,22 +342,88 @@
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/FileUploadTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 70,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "date": "2026-10-24",
-    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
-    "existing_automated_suites": [
-      "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
-      "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
-      "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
-      "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
-      "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
-      "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
-      "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp"
+    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
+    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "specification": "product-contract/capabilities/INTERFACE-CATALOG-001/SPEC.md",
+    "specification_sha256": "f9a2c5eecfa17e78f79abf8b0565e6e68a7008c0fefb64b47194660d2d4538fb",
+    "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
+    "production_surfaces": [
+      "platforms/linux/linux-qt/app/CommandRegistry.cpp",
+      "platforms/linux/linux-qt/src/shell/ActivationDispatcher.cpp",
+      "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
+      "platforms/linux/linux-qt/app/WorkflowDiscovery.cpp",
+      "platforms/linux/linux-qt/app/main.cpp"
     ],
-    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+    "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp": [
+        "invalidAndDuplicateIdsAreRefused",
+        "orderIsGroupThenRegistration",
+        "adoptKeepsOwnership",
+        "oneActionIsSharedByEverySurface",
+        "populateSeparatesOnlyNonEmptyGroups"
+      ],
+      "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp": [
+        "chooseActionsUsesTheSharedMainAndMenuActionAndAvailability",
+        "preparingProgressIsAccessibleAndCancellationDoesNotReplacePublishedResults",
+        "nativeKeyboardAndMenuUseTheActualSharedOperationAndAvailability",
+        "operationResultsStayPlainAccessibleAndAvailableAfterReactivation",
+        "activationKeepsAnExistingConsentDialogModal",
+        "escapeCancelsTheWindowOperationAndConsentDialogsKeepTheirOwnEscape",
+        "durableHistoryUsesTheSharedActionFromTheWindowAndMenu",
+        "windowAndMenusFollowTheRegistrySurfaces",
+        "toolCommandsOpenOneDialogAndRaiseItAgain"
+      ],
+      "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp": [
+        "validRequestsRetainExactPathsAndIndependentOperationNames",
+        "malformedDataCannotManufactureAuthority",
+        "futureVersionsAreDistinctAndTheByteBoundaryIsInclusive",
+        "repliesRequireCorrelationAndOnlyPublishStableErrors",
+        "authenticationRequiresAnActualMatchingKernelUser",
+        "admissionReservesBeforeDeferredDispatchAndRejectsNestedOpen",
+        "changedAvailabilityAndExceptionsReleaseReservationWithoutFalseSuccess",
+        "workflowRequestsCannotCarryDefinitionsOrAmbiguousIds",
+        "deliveryJsonDoesNotExposePathsDefinitionsOrUnknownErrors",
+        "workflowAdmissionFreezesSettingsAndReservesBeforePreparation",
+        "rejectedOrThrowingWorkflowPreparationDoesNotLeaveAReservation"
+      ],
+      "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp": [
+        "awaitLine",
+        "init",
+        "cleanup",
+        "forwardsToOneRealProcessWithoutReplacingItsSocket",
+        "busyRejectionAndNotReadyNeverBecomeAnotherPrimary",
+        "simultaneousProcessesElectOnlyOneOwner",
+        "missingOrUntrustedAcknowledgementsNeverElectOrResend",
+        "intakeDeadlineFreesCapacityWithoutAcceptingIncompleteWork",
+        "aCrashedOwnerReleasesItsLifetimeLockAndStaleSocket",
+        "partialMalformedOversizedAndMultipleFramesNeverDispatch",
+        "maximumRequestBoundaryAndDuplicateReceiptsUseProductionValidation",
+        "busyRetryDoesNotCacheAnOperationThatNeverStarted",
+        "unsafeDirectoriesAndEndpointFilesArePreserved",
+        "aLiveEndpointWithoutTheLeaseIsNotUnlinked",
+        "peerAuthenticationPrecedesSendingPrivatePayload",
+        "actualApplicationForwardsBeforeOpeningPreferencesOrDesktopServices",
+        "deniedIncomingCredentialsCannotReachAdmission",
+        "workflowDiscoveryIsHeadlessReadOnlyAndDoesNotActivatePrimary",
+        "workflowHelpDoesNotRequireADisplayOrReadPreferences",
+        "workflowDiscoveryRejectsConflictsAndInvalidArgumentsBeforePresentation",
+        "recordingCliForwardsToExistingOwner",
+        "actualApplicationForwardsWorkflowIdsAndReportsOnlyDelivery",
+        "duplicateWorkflowFramesReplayReceiptWithoutDispatchingAgain",
+        "workflowCliRefusesMalformedHeadlessAndMissingProfilesWithoutSideEffects",
+        "runtimeFilesHaveOwnerOnlyAccessAndProfilesAreIsolated"
+      ]
+    },
+    "remaining_scope": "Registry, native actions, authenticated activation and actual CLI processes are tested. Complete CLI/progress/signals, MCP, provider and accessibility/localization/RTL/target qualification remain."
   }
 }

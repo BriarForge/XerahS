@@ -94,19 +94,37 @@
       "disposition": "Required",
       "status": "implemented",
       "vectors": [],
-      "note": "Native New Image is available from the tray and editor File menu/Ctrl+N, with validated dimensions, transparent or ARGB background, four colour profiles and explicit file/clipboard initial pixels. Qt Core composes native-size top-left pixels with declared crop/padding; codecs prepare an immutable profiled PNG/document and private sRGB display copy. Cancellable workers complete before dirty Save/Discard/Cancel replacement, defaulting to Cancel. New sessions have no persistence checkpoint until successful saving, including after Undo to their initial source. Independent pixel/profile/alpha/PNG/xann tests and actual native controls verify invalid inputs, cancelled pickers/work, failed raster/sidecar saves, cancelled untitled Save, immutable prior history/selection/viewport/files, new session action bindings and persistence. Published New Image vectors and full capability qualification remain pending. Captured-source recovery uses a cancellable native worker to prepare owned pixel-normalized source/PNG/document and a private sRGB view, preserving alpha/profile and inferring no original save path. Native source/editor tests cover borrowed-buffer lifetime, pixel-ratio normalization, bounds, staged cancellation, redacted exceptions, unsaved history/close semantics and explicit Save As without touching the original capture. Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged."
+      "note": "Native New Image is available from the tray and editor File menu/Ctrl+N, with validated dimensions, transparent or ARGB background, four colour profiles and explicit file/clipboard initial pixels. Qt Core composes native-size top-left pixels with declared crop/padding; codecs prepare an immutable profiled PNG/document and private sRGB display copy. Cancellable workers complete before dirty Save/Discard/Cancel replacement, defaulting to Cancel. New sessions have no persistence checkpoint until successful saving, including after Undo to their initial source. Independent pixel/profile/alpha/PNG/xann tests and actual native controls verify invalid inputs, cancelled pickers/work, failed raster/sidecar saves, cancelled untitled Save, immutable prior history/selection/viewport/files, new session action bindings and persistence. Published New Image vectors and full capability qualification remain pending. Captured-source recovery uses a cancellable native worker to prepare owned pixel-normalized source/PNG/document and a private sRGB view, preserving alpha/profile and inferring no original save path. Native source/editor tests cover borrowed-buffer lifetime, pixel-ratio normalization, bounds, staged cancellation, redacted exceptions, unsaved history/close semantics and explicit Save As without touching the original capture. Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged.",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 9,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/NewImageTest.cpp"
+      ]
     },
     "EC-002": {
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Native editor File/Open Image (Ctrl+O), tray and CLI use EditorOpen workers over EditorSource and the shared RasterSource decoder. Raster/sidecar validation and private sRGB display preparation precede dirty-session Save/Discard/Cancel confirmation. Encoded 1 GiB and decoded header limits precede allocation; orientation is applied once and original alpha/profile metadata survive normalized PNG embedding. Native tests verify picker/loading cancellation, typed decode/sidecar failures, all replacement choices, unchanged prior history/selection/viewport/files, fresh clean adoption, and reload after explicit Save overwrites the candidate, including untitled Save. Native editor/tray recent selection now uses the same validated Open flow. The Qt Core model defaults off, validates a 1..100 maximum (default 10), deduplicates using injected POSIX/Windows rules, orders newest first, removes/clears missing entries, and clears on opt-out. Native Manage controls apply a draft atomically or cancel it, guard against an incoming Open overwriting a stale list, and leave document/history/viewport/files untouched. Recent preferences now survive restart through isolated private atomic storage, with unknown-field retention and privacy-pruned previous settings. Native Apply/Cancel, stale revisions, failed writes and complete/incomplete image-save tests verify publication and document independence. Full settings metadata, retention/recovery policy and human privacy/security/compatibility qualification remain Required. Complete working/export-profile composition remains pending. POSIX parent-directory segments and chosen symlink paths remain intact through CLI/editor absolute-path preparation and menu action data; real symlink/source tests prove a recent entry reopens the same pixels. Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged."
+      "note": "Native editor File/Open Image (Ctrl+O), tray and CLI use EditorOpen workers over EditorSource and the shared RasterSource decoder. Raster/sidecar validation and private sRGB display preparation precede dirty-session Save/Discard/Cancel confirmation. Encoded 1 GiB and decoded header limits precede allocation; orientation is applied once and original alpha/profile metadata survive normalized PNG embedding. Native tests verify picker/loading cancellation, typed decode/sidecar failures, all replacement choices, unchanged prior history/selection/viewport/files, fresh clean adoption, and reload after explicit Save overwrites the candidate, including untitled Save. Native editor/tray recent selection now uses the same validated Open flow. The Qt Core model defaults off, validates a 1..100 maximum (default 10), deduplicates using injected POSIX/Windows rules, orders newest first, removes/clears missing entries, and clears on opt-out. Native Manage controls apply a draft atomically or cancel it, guard against an incoming Open overwriting a stale list, and leave document/history/viewport/files untouched. Recent preferences now survive restart through isolated private atomic storage, with unknown-field retention and privacy-pruned previous settings. Native Apply/Cancel, stale revisions, failed writes and complete/incomplete image-save tests verify publication and document independence. Full settings metadata, retention/recovery policy and human privacy/security/compatibility qualification remain Required. Complete working/export-profile composition remains pending. POSIX parent-directory segments and chosen symlink paths remain intact through CLI/editor absolute-path preparation and menu action data; real symlink/source tests prove a recent entry reopens the same pixels. Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged.",
+      "audit": {
+        "classification": "partial",
+        "spec_line": 12,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EC-003": {
       "disposition": "Not applicable",
       "status": "not-started",
       "vectors": [],
-      "note": "The optional URL-opening feature is not offered."
+      "note": "The optional URL-opening feature is not offered.",
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 15,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "EC-004": {
       "disposition": "Required",
@@ -115,7 +133,12 @@
       "note": "Image/Emoji/Cursor tool modes now validate and embed assets with AnnotationShapesTest source-removal/undo evidence. Complete clipboard/optional-screen insert and bypass-preference flows remain.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 18,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EC-005": {
       "disposition": "Required",
@@ -123,7 +146,12 @@
       "vectors": [
         "viewport-only"
       ],
-      "note": "EditorViewport holds zoom and pan outside document history. Native actions, Control+wheel, pinch, scrollbars, middle drag, Space+drag, and keyboard pan share that state. EditorViewportTest and EditorCanvasTest verify immutable pixels and geometry, clean checkpoints, and unchanged history."
+      "note": "EditorViewport holds zoom and pan outside document history. Native actions, Control+wheel, pinch, scrollbars, middle drag, Space+drag, and keyboard pan share that state. EditorViewportTest and EditorCanvasTest verify immutable pixels and geometry, clean checkpoints, and unchanged history.",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 22,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EC-006": {
       "disposition": "Required",
@@ -131,7 +159,12 @@
       "vectors": [
         "viewport-only"
       ],
-      "note": "Finite zoom is bounded to 1/64..64. Zoom keeps the logical point under the pointer unless image visibility bounds require clamping; native scrollbars and pan keep at least a 32px strip accessible. The status bar exposes zoom. Native tests cover wheel/pinch anchoring, finite bounds, zoom-independent hit targets and rotated previews."
+      "note": "Finite zoom is bounded to 1/64..64. Zoom keeps the logical point under the pointer unless image visibility bounds require clamping; native scrollbars and pan keep at least a 32px strip accessible. The status bar exposes zoom. Native tests cover wheel/pinch anchoring, finite bounds, zoom-independent hit targets and rotated previews.",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 25,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EC-007": {
       "disposition": "Required",
@@ -148,7 +181,12 @@
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY.md",
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/CaptureHistoryTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 28,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EC-008": {
       "disposition": "Required",
@@ -157,8 +195,14 @@
       "note": "Native Auto Crop exposes border reference, alpha threshold, inclusive RGBA channel tolerance and whether visible annotations contribute to bounds. The Qt Core engine renders without flattening, scans deterministically, and reuses the crop intersection policy. Empty/full bounds are no-ops with no history. Core and native-window tests cover exact bounds/pixels, alpha and colour thresholds, editable annotations, row-level cancellation, save/reopen and one-step undo. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
-        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
-      ]
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json",
+        "platforms/linux/linux-qt/tests/CanvasOperationsTest.cpp"
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 31,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EC-009": {
       "disposition": "Required",
@@ -168,7 +212,12 @@
       "evidence": [
         "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
         "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 34,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EC-010": {
       "disposition": "Required",
@@ -180,7 +229,12 @@
       "evidence": [
         "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
         "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
-      ]
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 37,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EC-011": {
       "disposition": "Required",
@@ -194,7 +248,12 @@
         "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/CanvasOperationsTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 39,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EC-012": {
       "disposition": "Required",
@@ -203,13 +262,24 @@
       "note": "Native Rotate Image exposes angle, nearest/bilinear interpolation, expand/crop and uncovered-pixel ARGB controls. A cancellable worker prepares the complete source/document and authoritative rendered preview without entering session history. Changes invalidate obsolete previews; accepting commits exactly the prepared result with a state guard, once. Native tests exercise the cancelled 17-degree annotated/dirty scenario, rejection of an obsolete preview, controls, live-worker cancellation, save/reopen and one-step history; core tests verify independent sampling and atomic failures. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
-        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
-      ]
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json",
+        "platforms/linux/linux-qt/tests/CanvasOperationsTest.cpp"
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 42,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EC-013": {
       "disposition": "Required",
       "status": "not-started",
-      "vectors": []
+      "vectors": [],
+      "audit": {
+        "classification": "not-started",
+        "spec_line": 45,
+        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+      }
     },
     "EC-014": {
       "disposition": "Required",
@@ -219,7 +289,12 @@
       "evidence": [
         "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
         "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 49,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     },
     "EC-015": {
       "disposition": "Required",
@@ -228,14 +303,28 @@
       "note": "Distinct native Clear Annotations and Clear Image and Annotations commands share atomic history. Annotation clear retains source PNG bytes exactly. Pixel clear uses an accessible native confirmation defaulting to Cancel, offers Save before Clear/Clear without Saving for dirty sessions, retains dimensions/profile and complete Undo recovery, and changes files only after explicit save. Core and native window tests cover cancellation, save/discard/clear choices, checkpoint and selection restoration, unsupported-object recovery and transparent PNG output. New Image replacement now prepares the complete new source before native Save/Discard/Cancel confirmation, defaulting to Cancel; cancellation and incomplete saves keep the current dirty session and history. Save and Discard intentionally adopt a fresh unsaved session only after success/confirmation. Native window tests cover all choices, untitled destination cancellation, failed raster and sidecar persistence, and preserved old files except explicit Save. Open-in-place now validates the candidate before the same confirmation; native tests verify Save/Discard/Cancel, unchanged state on invalid/cancelled input, clean adoption and reload of an explicitly saved overlapping candidate. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
-        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
-      ]
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json",
+        "platforms/linux/linux-qt/tests/CanvasOperationsTest.cpp"
+      ],
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 53,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      }
     },
     "EC-016": {
       "disposition": "Required",
       "status": "implemented",
       "vectors": [],
-      "note": "Native Compare Images accepts two validated raster files or a rendered current-image snapshot plus a file. The Qt Core model validates both inputs and their native-size union, supports declared top-left/center alignment and transparent padding, and defines half-open divider columns. Private display copies use sRGB without modifying source pixels/profiles. Native slider accessibility, keyboard/mouse control, file-picker cancellation, failed replacement, live-worker cancellation/close and complete session/history/selection/viewport/file invariance have native tests. Visible unsupported annotations report a current-snapshot error; raster comparison remains available. The adapter exposes the production comparison seam; published comparison vectors and full capability qualification are still pending. Owned comparison loading/rendering now freezes source/annotations/path/job identity on workers without GUI captures. Cancel, Escape, dialog/picker/owner destruction and ordinary dialog completion release the UI without joining blocked work; cancelled late success/exception cannot replace a newer pair. Complete input/geometry/status publication precedes enabled controls, with reentrant load refusal and weak owner guards. Owned native pickers recover safely, including cleanup-time parent deletion. Main comparison uses an owned dialog under the output/mutation busy guard; exact history/selection/viewport/source/files are retained. Native blocked-worker, snapshot/profile, resource-union, accessible progress, picker and editor integration cases are indexed in COMPARISON-WORKERS.md. Shared geometry/pixel policy/vectors and all native/resource/privacy/security/a11y/compatibility/parity/human/release gates remain unchanged/Required."
+      "note": "Native Compare Images accepts two validated raster files or a rendered current-image snapshot plus a file. The Qt Core model validates both inputs and their native-size union, supports declared top-left/center alignment and transparent padding, and defines half-open divider columns. Private display copies use sRGB without modifying source pixels/profiles. Native slider accessibility, keyboard/mouse control, file-picker cancellation, failed replacement, live-worker cancellation/close and complete session/history/selection/viewport/file invariance have native tests. Visible unsupported annotations report a current-snapshot error; raster comparison remains available. The adapter exposes the production comparison seam; published comparison vectors and full capability qualification are still pending. Owned comparison loading/rendering now freezes source/annotations/path/job identity on workers without GUI captures. Cancel, Escape, dialog/picker/owner destruction and ordinary dialog completion release the UI without joining blocked work; cancelled late success/exception cannot replace a newer pair. Complete input/geometry/status publication precedes enabled controls, with reentrant load refusal and weak owner guards. Owned native pickers recover safely, including cleanup-time parent deletion. Main comparison uses an owned dialog under the output/mutation busy guard; exact history/selection/viewport/source/files are retained. Native blocked-worker, snapshot/profile, resource-union, accessible progress, picker and editor integration cases are indexed in COMPARISON-WORKERS.md. Shared geometry/pixel policy/vectors and all native/resource/privacy/security/a11y/compatibility/parity/human/release gates remain unchanged/Required.",
+      "audit": {
+        "classification": "implemented",
+        "spec_line": 56,
+        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp"
+      ]
     },
     "EC-017": {
       "disposition": "Required",
@@ -258,7 +347,12 @@
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY.md",
         "platforms/linux/linux-qt/app/CAPTURE-HISTORY-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/CaptureHistoryTest.cpp"
-      ]
+      ],
+      "audit": {
+        "classification": "partial",
+        "spec_line": 59,
+        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+      }
     }
   },
   "capability_version": "0.1.0",
@@ -284,16 +378,184 @@
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "date": "2026-10-24",
-    "source_revision": "26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115",
-    "existing_automated_suites": [
-      "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
-      "platforms/linux/linux-qt/tests/CanvasOperationsTest.cpp",
-      "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
-      "platforms/linux/linux-qt/tests/EditorOpenTest.cpp",
-      "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp",
-      "platforms/linux/linux-qt/tests/NewImageTest.cpp"
+    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
+    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "specification": "product-contract/capabilities/EDITOR-CANVAS-001/SPEC.md",
+    "specification_sha256": "cca62433c31f6fb34eca4f12fd469944a79840e6f36dba9ddab9a334ce9d2157",
+    "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
+    "production_surfaces": [
+      "platforms/linux/linux-qt/src/image-editor/CanvasOperations.cpp",
+      "platforms/linux/linux-qt/src/image-editor/EditorViewport.cpp",
+      "platforms/linux/linux-qt/src/image-editor/NewImage.cpp",
+      "platforms/linux/linux-qt/app/EditorWindow.cpp"
     ],
-    "verification": "Fixture/source inventory reviewed; the required gated build/test result is recorded with the pushed audit checkpoint. Suite presence alone is not acceptance of a row."
+    "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/CanvasOperationsTest.cpp": [
+        "cropRegionsNormalizeAndRejectUnsafeBounds",
+        "croppedSourceLineageFollowsExactHistoryAndRejectsStaleAdmission",
+        "rotationsAndFlipsPermutePixels",
+        "transformedAnnotationsKeepAuthoritativePixels",
+        "canvasExpansionPreservesPixelsAndMovesAnnotations",
+        "allNineAnchorsHaveDeterministicOffsets",
+        "smallerCanvasRetainsPixelsWithoutResampling",
+        "cropNormalizesDragAndUsesRotatedIntersection",
+        "resizeHasExplicitNearestAndAlphaAwareBilinear",
+        "autoCropUsesAlphaThresholdAndCopiesOriginalPixels",
+        "autoCropColorDistanceIncludesAlphaAndInclusiveTolerance",
+        "autoCropKeepsVisibleAnnotationContentEditable",
+        "autoCropNoForegroundAndFullBoundsPreserveHistory",
+        "autoCropValidationAndCancellationReturnNoPartialResult",
+        "invalidAndCancelledEditsHaveNoPartialOutputs",
+        "encodedEditsAreOneHistoryStepAndRestoreSourceAndSelection",
+        "unchangedDimensionsCreateNoHistoryAndNoPixelAllocation",
+        "cancelledEncodingAndInvalidCommitLeaveTheSessionUntouched",
+        "rotationOfUniformSourceStillCommitsItsCoordinateTransform",
+        "customRotationHasAnalyticalNearestPixelsAndCanvasGeometry",
+        "customBilinearSamplesExplicitBorderAndPremultipliedAlpha",
+        "customQuarterTurnsAreExactAndFullTurnsAreNoOps",
+        "customRotationRejectsInvalidOrExcessiveDimensionsAndCancels",
+        "preparedPreviewCompositesAnnotationsAndCommitsOnlyOnRequest",
+        "flattenCompositesOnlyRepresentedObjectsAndRetainsOthers",
+        "nativeFlattenRestoresSourceAssetsSelectionAndCheckpointWithUndo",
+        "clearCommandsAreDistinctAtomicAndRepeatAsNoOps",
+        "flattenAndClearCancellationNeverReturnPartialEdits"
+      ],
+      "platforms/linux/linux-qt/tests/EditorViewportTest.cpp": [
+        "zoomKeepsImagePointUnderPointer",
+        "fitAndResetDoNotResampleOrAlterHistory",
+        "zoomLimitsStillAllowPanAndFiniteTransforms",
+        "invalidInputLeavesViewUnchanged"
+      ],
+      "platforms/linux/linux-qt/tests/NewImageTest.cpp": [
+        "blankImageUsesExactChosenBackgroundAndDimensions",
+        "initialPixelsKeepNativeSizeAndAreCroppedOrPaddedAtTopLeft",
+        "sourceOverHasIndependentAlphaAndChannelResults",
+        "invalidDimensionsProfilesAndInitialBuffersFailBeforePublication",
+        "cancellationProducesNoPartialPixelsOrDocument",
+        "profileMetadataSurvivesPngAndXann",
+        "initialColourConversionChangesOnlyThePrivateNewSource"
+      ],
+      "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp": [
+        "topLeftComparisonHasIndependentExpectedPixels",
+        "centeredAlignmentUsesNativeSizesAndOddPadding",
+        "dividerEndpointsPreserveAlphaAndShowExactlyOneSource",
+        "invalidInputsAndUnionLimitsFailBeforeAllocation",
+        "cancellationReturnsNoPartialLayoutOrPixels",
+        "displayCopiesConvertToSrgbWithoutChangingSourceOrAnnotations",
+        "unsupportedVisibleObjectsAndCancelledRenderingPreserveInputs"
+      ],
+      "platforms/linux/linux-qt/tests/EditorWindowTest.cpp": [
+        "initTestCase",
+        "init",
+        "cleanup",
+        "emptySaveWithBaselineCompanionReportsFailureWithoutDeletingEitherCompanion",
+        "keyboardTransformsPersistNativeGroupAndExactHistory",
+        "keyboardTransformsKeepNativeTextListModalAndBusyPrecedence",
+        "nativeDeletePersistsRemainingObjectsAndEmptySidecarPolicy",
+        "nativeDeleteRefusesStaleProtectedAndOwnerChanges",
+        "nativeOrderingCommandsPersistArrayOrderAndRenderedPixels",
+        "orderingRefusalAndOwnerTeardownPreserveTheCurrentDocument",
+        "annotationObjectsSupportKeyboardSelectionAndActualPersistence",
+        "nativeGroupMoveSavesBothObjectsAndPreservesSourceAndUnknownFields",
+        "thicknessCommandsGuardPreferencePublicationHistoryAndOwners",
+        "colorChoicesHaveGuardedDefaultsPublicationAndActualPersistence",
+        "nativeGroupRotationHasOwnedPreviewAndActualPersistence",
+        "numericRectangleReplacementRefusalKeepsFilesAndAllowsFreshEdit",
+        "rectangleNestedPickerSurvivesEditorDestruction",
+        "keyboardRectangleCreationSavesFrozenStyleAndPreservesSource",
+        "rectanglePropertiesHaveAtomicHistoryDefaultsAndActualSaveRecovery",
+        "destroyingTheEditorDuringPropertiesDoesNotWriteFiles",
+        "explicitToolsShareMenusHotkeysBusyGuardAndEditableSave",
+        "annotationCopyPasteCutAndDuplicateUseNativeMenusShortcutsAndOneHistoryPerMutation",
+        "pastedObjectsHaveVisibleViewportOffsetEvenWhenZoomedOut",
+        "nativeDuplicationPreservesEmbeddedAssetsAndAssetClipboardRefusalKeepsEverything",
+        "lockedNativeSelectionsKeepGeometryAndDisableDirectDeleteAndRotation",
+        "annotationCompletionObserverExceptionKeepsOneCommittedMutation",
+        "annotationPublicationFailuresNeverCutAndCallbackDiagnosticsAreRedacted",
+        "malformedAndForeignClipboardReadsCannotMutateSessionAndTextEntryKeepsLocalEditing",
+        "nativeAnnotationOfferAndReplacementReportActualOwnershipWithoutDeletingObjects",
+        "annotationPublicationReadAndCompletionCanDestroyTheirOwner",
+        "printMenuAndShortcutSubmitWithoutSavingOrChangingHistoryFilesPreferencesOrClipboard",
+        "knownPrintFailureRetryUsesFrozenSnapshotAndFreshConfirmationWithDefaultCancel",
+        "unknownPrintDeliveryCannotAuthorizeRetryAndMissingServiceIsVisible",
+        "printCancellationKeepsTheEditorResponsiveAndRefusesReentrantActions",
+        "printCompletionObserverExceptionKeepsAcknowledgementAndNeverRepeatsTheJob",
+        "printConfigurationAndCompletionCanDestroyTheirOwner",
+        "copyMenuAndShortcutPublishOneSnapshotWithoutSavingOrClearingHistory",
+        "copyCancellationIsResponsiveAndBlocksOtherOutputAndDocumentActions",
+        "knownCopyFailureOffersDefaultCancelRetryWithoutRenderingOrChangingRedo",
+        "unknownCopyDeliveryCannotAuthorizeRetryAndMissingServiceIsVisible",
+        "copyPublicationAndCompletionCanDestroyTheirOwner",
+        "saveRunsOnWorkerWithResponsiveCancellationAndNoReentrantActions",
+        "incompleteSaveOffersDefaultCancelCompanionOnlyRepairAndKeepsRedo",
+        "partialSaveAsKeepsTheCurrentPathUntilItsCompanionRepairCompletes",
+        "destructionDuringSaveCancelsTheOwnedWorkerWithoutWaitingOrPublishing",
+        "completionCanDestroyItsOwnerWithoutInvalidatingWorkerResults",
+        "saveRefusesAnUnavailableFormatWithoutEncodingOrChangingFiles",
+        "retainedAnnotatedDocumentOpensUnsavedAndPersistsAnEditablePair",
+        "toolbarApplyKeepsImageCheckpointAndRedoWhileHiddenCommandsRemainReachable",
+        "cancelledOrFailedToolbarDraftPreservesActualEditorHistory",
+        "appearanceApplyUpdatesActualEditorsWithoutEditingPixelsCheckpointOrRedo",
+        "cancelledAppearanceAndFailedApplyKeepActualEditorPaletteAndHistory",
+        "recoveringTheActualEditorFramePreservesPixelsCheckpointAndRedo",
+        "cancelledCloseDoesNotSaveWindowStateAndAcceptedCloseRestoresIt",
+        "windowMemoryMenuRollsBackFailedWritesAndUpdatesAllEditorActions",
+        "failedWindowPersistenceIsVisibleAndAllowsClosingWithoutChangingTheFile",
+        "savedDefaultsAffectOnlyNewAnnotationsAcrossOpenEditorsAndRestart",
+        "toolbarPreferenceFailurePreservesExplicitSelectionEditAndHistory",
+        "toolbarColorChoicePersistsAlphaWhileCancelLeavesEverythingUnchanged",
+        "actualOpenAndCompleteSavePersistRecentImagesAcrossRestart",
+        "recentPreferenceWriteFailureDoesNotUndoSuccessfulImageOpenOrSave",
+        "incompleteImageSaveDoesNotRecordAPersistedRecentPath",
+        "nativeRecentPreferencesAreOptInAtomicAndLeaveTheDocumentAlone",
+        "recentMenuUsesDirtyConfirmationAndKeepsMissingEntriesRemovable",
+        "recentEntryPreservesTheOpenedSymlinkParentSource",
+        "incomingOpenPreventsStaleRecentPreferencesFromOverwritingTheList",
+        "nativeRecentRemovalAndLimitChangesApplyOrCancel",
+        "nativeOpenPickerConfirmsAndPreservesOrReplacesTheDirtySession",
+        "cancelledPickerAndCorruptOpenPreserveTheCurrentSession",
+        "saveBeforeOpeningTheSameFileAdoptsTheJustSavedSourceAndSidecar",
+        "cancellingAndClosingOpenRetireTheLiveWorker",
+        "savingAnUntitledImageOverTheOpenCandidateReloadsTheSavedImage",
+        "retainedCaptureOpensAnOwnedUntitledDocumentAndSavesOnlyToExplicitDestination",
+        "cancelledOrFailedNewImagePreservesTheDirtySession",
+        "newImageReplacementResetsSessionBindingsAndSavesChosenProfile",
+        "standaloneNewImageCanBeCancelledOrCreatedWithoutAnExistingFile",
+        "cancelledSaveBeforeReplacingAnUntitledImageKeepsItsSession",
+        "ownedReplacementPreparationReleasesBlockedWork",
+        "ownedReplacementDialogsRecoverFromDestruction",
+        "standaloneCreationAndOpenReleaseDestroyedEditorParents",
+        "ownedComparisonReleasesBlockedWorkers",
+        "comparisonPreservesDirtyHistorySelectionViewportAndFiles",
+        "nativeSourceMismatchChoice",
+        "canvasWorkerKeepsUntaggedWorkingSourceAndPreparesPrivateSRgbDisplay",
+        "ownedCanvasCommandsPreservePixelsProfileHistoryAndSave",
+        "ownedCanvasPreparationRejectsStaleAndReleasesOwners",
+        "canvasConfigurationDialogsReleaseDestroyedOwners",
+        "ownedHistoryRestoresSourceSelectionAndSavedCheckpoint",
+        "ownedHistoryCancellationStaleAndOwnerChanges",
+        "ownedHistoryPreparationRejectsInvalidSnapshots",
+        "ownedCropUsesNativeBoundsHistoryAndPersistence",
+        "ownedCropRefusesStaleEditsAndReleasesBlockedWorkers",
+        "cropIsUndoableAndReopensTheCroppedSource",
+        "canvasResizeDoesNotResampleAndUndoRestoresTheSource",
+        "imageRotationPersistsPixelsAndUndoSource",
+        "cancelledDialogPreservesCleanHistoryAndSource",
+        "nativeAutoCropPersistsAlphaAndCreatesExactlyOneUndoStep",
+        "cancelledSeventeenDegreePreviewPreservesDirtyAnnotationsAndHistory",
+        "acceptedPreviewPersistsTransformedSourceAndEditableAnnotationsOnce",
+        "nativePreviewCancellationReleasesTheLiveWorkerWithoutCommitting",
+        "flattenPersistsOnlyRenderedObjectsAndShowsUnsupportedPlaceholders",
+        "clearAnnotationsKeepsSourcePixelsAndRestoresUnsupportedObjectsWithUndo",
+        "clearImageConfirmationAndRecovery",
+        "clearedImageSavesTransparentPixelsAndUndoRestoresTheImmutableSource",
+        "cancellingNativeFlattenLeavesFilesDocumentAndHistoryUntouched",
+        "failedSaveBeforeClearKeepsTheDirtySessionAndHistory",
+        "pointerStatusReportsTheDocumentPixelAndItsSourceColour",
+        "pointerStatusSizeFollowsTheChangedImage",
+        "pointerStatusReportsPixelsOfTheChangedImage"
+      ]
+    },
+    "remaining_scope": "Core pixel geometry, preview/history, new-image and comparison tests exist. URL/background flows, complete insert inputs and all shape transforms/resource/profile qualification remain."
   }
 }
