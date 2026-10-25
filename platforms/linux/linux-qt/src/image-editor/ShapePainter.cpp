@@ -96,6 +96,13 @@ QColor ringColour(const QImage &source, const QRect &box) {
   return QColor(int(sum[1] / count), int(sum[2] / count), int(sum[3] / count), int(sum[0] / count));
 }
 
+int horizontalAlignment(const ShapeContent &content, int fallback) {
+  if (content.textAlignment == u"left") return Qt::AlignLeft;
+  if (content.textAlignment == u"center") return Qt::AlignHCenter;
+  if (content.textAlignment == u"right") return Qt::AlignRight;
+  return fallback;
+}
+
 void paintBalloon(QPainter &painter, const RectangleAnnotation &shape) {
   const RectangleStyle &style = shape.style;
   const QRectF box = bounds(shape);
@@ -128,7 +135,7 @@ void paintBalloon(QPainter &painter, const RectangleAnnotation &shape) {
   painter.setFont(font);
   painter.setPen(fill.lightnessF() > 0.5 ? QColor(Qt::black) : QColor(Qt::white));
   const double pad = std::min(8.0, std::min(box.width(), box.height()) / 4);
-  painter.drawText(box.adjusted(pad, pad, -pad, -pad), Qt::AlignCenter | Qt::TextWordWrap, shape.content.text);
+  painter.drawText(box.adjusted(pad, pad, -pad, -pad), horizontalAlignment(shape.content, Qt::AlignHCenter) | Qt::AlignVCenter | Qt::TextWordWrap, shape.content.text);
 }
 
 void paintArrowHead(QPainter &painter, QPointF from, QPointF tip, double width, const QColor &fill) {
@@ -225,7 +232,7 @@ void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImag
     painter.setFont(font);
     painter.setPen(color(style.strokeColor));
     const double pad = std::min(4.0, std::min(box.width(), box.height()) / 4);
-    painter.drawText(box.adjusted(pad, pad, -pad, -pad), Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap, shape.content.text);
+    painter.drawText(box.adjusted(pad, pad, -pad, -pad), horizontalAlignment(shape.content, Qt::AlignLeft) | Qt::AlignTop | Qt::TextWordWrap, shape.content.text);
   } else if (type == shape::step) {
     const QColor fill = qAlpha(style.fillColor) > 0 ? color(style.fillColor) : color(style.strokeColor);
     painter.setPen(Qt::NoPen);

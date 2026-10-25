@@ -1,8 +1,9 @@
 // Native input tests exercise the actual canvas and shared session model.
 #include "EditorCanvas.h"
-#include "BalloonContentDialog.h"
+#include "TextContentDialog.h"
 #include "image-editor/AnnotationRenderer.h"
 #include <QCheckBox>
+#include <QComboBox>
 #include <QSpinBox>
 #include "NativeAnnotationTools.h"
 #include "RectanglePropertiesDialog.h"
@@ -11,6 +12,7 @@
 
 #include <QAction>
 #include <QBuffer>
+#include <QJsonArray>
 #include <QAccessible>
 #include <QLabel>
 #include <QKeyEvent>
@@ -77,6 +79,69 @@ class EditorCanvasTest : public QObject {
   Q_OBJECT
   QTemporaryDir dialogPreferences;
 private slots:
+  void textAlignmentDialogCommitsOnceAndKeepsOldDocuments_data() {
+    QTest::addColumn<QString>("type"); QTest::newRow("text") << shape::text; QTest::newRow("balloon") << shape::speechBalloon;
+  }
+  void textAlignmentDialogCommitsOnceAndKeepsOldDocuments() {
+    QFETCH(QString, type); auto initial = document(); initial.createdAt = initial.modifiedAt = "2026-10-25T00:00:00Z";
+    QBuffer encoded(&initial.sourceImagePng); QVERIFY(encoded.open(QIODevice::WriteOnly)); QVERIFY(image().save(&encoded, "PNG")); encoded.close();
+    EditorSession session(initial); ShapeContent content; content.type = type; content.text = "XY";
+    QVERIFY(session.createShape({{100, 100}, {300, 200}, {}}, content, session.stateId(), session.selection()));
+    const auto before = serializeDocument(session.document()); const auto undo = session.undoCount();
+    QVERIFY(!before.value("annotations").toArray()[0].toObject().contains("textAlignment"));
+    const auto source = image(); EditorCanvas canvas(session, source);
+    QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    auto *alignment = dialog->findChild<QComboBox *>("annotationTextAlignment"); QVERIFY(alignment); QCOMPARE(alignment->currentData().toString(), QString{});
+    alignment->setCurrentIndex(alignment->findData("right")); dialog->reject(); QTRY_VERIFY(!canvas.interactionActive());
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    alignment = dialog->findChild<QComboBox *>("annotationTextAlignment"); alignment->setCurrentIndex(alignment->findData("center")); dialog->accept();
+    QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(session.selectedRectangle()->content.textAlignment, QString("center")); QCOMPARE(session.undoCount(), undo + 1);
+    const auto loaded = parseDocument(serializeDocument(session.document())); QVERIFY(loaded.document);
+    QCOMPARE(std::get<RectangleAnnotation>(loaded.document->annotations[0]).content.textAlignment, QString("center"));
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before); QVERIFY(session.redo());
+    QCOMPARE(session.selectedRectangle()->content.textAlignment, QString("center"));
+    const auto state = session.stateId(); auto invalid = session.selectedRectangle()->content; invalid.textAlignment = "justify";
+    QVERIFY(!session.editShapeContent(session.selectedRectangle()->id, invalid, state)); QCOMPARE(session.stateId(), state); QCOMPARE(session.editDiagnostic(), QString("annotation-style-invalid"));
+    auto payload = serializeDocument(session.document()); auto annotations = payload.value("annotations").toArray(); auto object = annotations[0].toObject();
+    object.insert("textAlignment", true); annotations[0] = object; payload.insert("annotations", annotations); QVERIFY(!parseDocument(payload).document);
+    object.insert("textAlignment", "future-direction"); annotations[0] = object; payload.insert("annotations", annotations); QVERIFY(!parseDocument(payload).document);
+    // Other shape families must continue to preserve this as an opaque field.
+    object.insert("type", "ellipse"); annotations[0] = object; payload.insert("annotations", annotations); const auto other = parseDocument(payload); QVERIFY(other.document);
+    QCOMPARE(serializeDocument(*other.document).value("annotations").toArray()[0].toObject().value("textAlignment"), QJsonValue("future-direction"));
+  }
+  void invalidAlignmentCannotEnterThroughCreation() {
+    for (const auto &type : {shape::text, shape::speechBalloon}) {
+      EditorSession session(document()); const auto before = serializeDocument(session.document());
+      ShapeContent content; content.type = type; content.text = "Valid"; content.textAlignment = "future-direction";
+      QVERIFY(!session.createShape({{100, 100}, {300, 200}, {}}, content, session.stateId(), session.selection()));
+      QCOMPARE(session.editDiagnostic(), QString("annotation-style-invalid")); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), 0);
+    }
+  }
+  void renderedTextAlignmentMovesGlyphsWithoutChangingVerticalPlacement_data() {
+    QTest::addColumn<QString>("type"); QTest::newRow("text") << shape::text; QTest::newRow("balloon") << shape::speechBalloon;
+  }
+  void renderedTextAlignmentMovesGlyphsWithoutChangingVerticalPlacement() {
+    QFETCH(QString, type); AnnotationDocument doc = document(); RectangleAnnotation annotation;
+    annotation.id = QUuid::createUuid(); annotation.start = {100, 100}; annotation.end = {300, 200}; annotation.content.type = type;
+    annotation.content.text = "X"; annotation.content.fontSize = 24; annotation.style.fillColor = 0xFFFFFFFF;
+    annotation.style.strokeColor = type == shape::text ? 0xFF000000 : 0xFFFFFFFF;
+    doc.annotations.push_back(annotation); QList<QRect> ink; std::vector<Argb> legacy;
+    for (const QString &alignment : {QString{}, QString("left"), QString("center"), QString("right")}) {
+      std::get<RectangleAnnotation>(doc.annotations[0]).content.textAlignment = alignment;
+      const auto rendered = renderDocument(solidImage(800, 600, 0xFFFFFFFF), doc); QVERIFY(rendered.image);
+      if (alignment.isEmpty()) { legacy = rendered.image->pixels; continue; }
+      QRect bounds;
+      for (int y = 0; y < 600; ++y) for (int x = 0; x < 800; ++x)
+        if (rendered.image->at(x, y) != 0xFFFFFFFF) bounds = bounds.united(QRect(x, y, 1, 1));
+      QVERIFY(!bounds.isEmpty()); ink.append(bounds);
+      if ((type == shape::text && alignment == "left") || (type == shape::speechBalloon && alignment == "center")) QCOMPARE(rendered.image->pixels, legacy);
+    }
+    QCOMPARE(ink.size(), 3); QVERIFY(ink[0].left() < ink[1].left()); QVERIFY(ink[1].left() < ink[2].left());
+    QCOMPARE(ink[0].top(), ink[1].top()); QCOMPARE(ink[1].top(), ink[2].top()); QCOMPARE(ink[0].size(), ink[2].size());
+    QVERIFY(ink[0].left() >= 100); QVERIFY(ink[2].right() < 300);
+  }
   void balloonTailCommitCancelHistoryAndPersistence() {
     auto initial = document(); initial.createdAt = initial.modifiedAt = "2026-10-25T00:00:00Z";
     QBuffer encoded(&initial.sourceImagePng); QVERIFY(encoded.open(QIODevice::WriteOnly)); QVERIFY(image().save(&encoded, "PNG")); encoded.close();
@@ -84,11 +149,11 @@ private slots:
     QVERIFY(session.createShape({{100, 100}, {300, 200}, {}}, content, session.stateId(), session.selection()));
     const auto original = serializeDocument(session.document()); const auto state = session.stateId(); const auto undo = session.undoCount();
     const auto source = image(); EditorCanvas canvas(session, source); canvas.resize(640, 480); canvas.show(); QCoreApplication::processEvents();
-    QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChild<BalloonContentDialog *>(); QVERIFY(dialog); QVERIFY(canvas.interactionActive());
+    QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog); QVERIFY(canvas.interactionActive());
     auto *text = dialog->findChild<QPlainTextEdit *>("balloonText"); QVERIFY(text); text->setPlainText("Cancelled"); dialog->reject();
     QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(session.stateId(), state); QCOMPARE(serializeDocument(session.document()), original);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
-    QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<BalloonContentDialog *>(); QVERIFY(dialog);
+    QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
     text = dialog->findChild<QPlainTextEdit *>("balloonText"); text->setPlainText("Changed\nmultiline");
     dialog->findChild<QLineEdit *>("balloonTailX")->setText("0.75"); dialog->findChild<QLineEdit *>("balloonTailY")->setText("-0.5");
     dialog->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(session.undoCount(), undo + 1);
@@ -98,7 +163,7 @@ private slots:
     const auto &loaded = std::get<RectangleAnnotation>(parsed.document->annotations.front()); QCOMPARE(loaded.content.points[0].x, 0.75); QCOMPARE(loaded.content.points[0].y, -0.5);
     QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), original); QVERIFY(session.redo());
     QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
-    QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<BalloonContentDialog *>(); QVERIFY(dialog);
+    QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
     dialog->findChild<QCheckBox *>("balloonTailEnabled")->setChecked(false); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive());
     QVERIFY(session.selectedRectangle()->content.points.empty());
     const auto withoutTail = parseDocument(serializeDocument(session.document())); QVERIFY(withoutTail.document); QVERIFY(std::get<RectangleAnnotation>(withoutTail.document->annotations.front()).content.points.empty());
@@ -110,7 +175,7 @@ private slots:
     EditorSession session(document()); ShapeContent content; content.type = shape::speechBalloon; content.text = "Text";
     QVERIFY(session.createShape({{100, 100}, {300, 200}, {}}, content, session.stateId(), session.selection()));
     const auto source = image(); EditorCanvas canvas(session, source); const auto state = session.stateId(); QSignalSpy rejected(&canvas, &EditorCanvas::editRejected);
-    QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChild<BalloonContentDialog *>(); QVERIFY(dialog);
+    QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
     dialog->findChild<QCheckBox *>("balloonTailEnabled")->setChecked(true);
     for (const auto &input : {QString(""), QString("nan"), QString("inf"), QString("1e309"), QString("1e308")}) {
       dialog->findChild<QLineEdit *>("balloonTailX")->setText(input); dialog->findChild<QLineEdit *>("balloonTailY")->setText("1.5"); dialog->accept();
@@ -120,7 +185,7 @@ private slots:
     EditorSession replacement(document()); canvas.resetDocument(replacement, image()); dialog->accept();
     QVERIFY(!rejected.isEmpty()); QCOMPARE(rejected.last()[0].toString(), QString("annotation-edit-stale")); QVERIFY(replacement.document().annotations.empty());
     QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
-    canvas.resetDocument(session, image()); QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<BalloonContentDialog *>(); QVERIFY(dialog);
+    canvas.resetDocument(session, image()); QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
     session.select({}); dialog->accept(); QVERIFY(!rejected.isEmpty()); QCOMPARE(session.stateId(), state);
   }
   void balloonDialogOwnerAndDeferredDeletionKeepNewOperationSafe() {
@@ -128,8 +193,8 @@ private slots:
     QVERIFY(session.createShape({{100, 100}, {300, 200}, {}}, content, session.stateId(), session.selection()));
     const auto source = image(); QWidget parent;
     auto canvas = std::make_unique<EditorCanvas>(session, source);
-    QVERIFY(canvas->editShapeContent(&parent)); auto *first = parent.findChild<BalloonContentDialog *>(); QVERIFY(first); first->reject();
-    QVERIFY(canvas->editShapeContent(&parent)); auto dialogs = parent.findChildren<BalloonContentDialog *>(); auto *second = dialogs.last(); QVERIFY(second != first);
+    QVERIFY(canvas->editShapeContent(&parent)); auto *first = parent.findChild<TextContentDialog *>(); QVERIFY(first); first->reject();
+    QVERIFY(canvas->editShapeContent(&parent)); auto dialogs = parent.findChildren<TextContentDialog *>(); auto *second = dialogs.last(); QVERIFY(second != first);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QCoreApplication::processEvents(); QVERIFY(canvas->interactionActive());
     const auto before = serializeDocument(session.document()); canvas.reset();
     second->findChild<QPlainTextEdit *>("balloonText")->setPlainText("Late result"); second->accept();

@@ -49,7 +49,7 @@ public:
   bool createRectangle(QWidget *parent);
   // Text, Step, Blur and Pixelate: edit the selected object's own values.
   bool canEditShapeContent() const;
-  // Balloon edits open asynchronously; true means the dialog was opened.
+  // Text and balloon edits open asynchronously; true means the dialog was opened.
   bool editShapeContent(QWidget *parent);
   // Borrowed only until mutation; native list models copy their displayed rows.
   const xerahs::editor::AnnotationDocument &annotationDocument() const { return m_session->document(); }
@@ -137,7 +137,7 @@ private:
   };
   std::optional<MoveGesture> m_move;
   bool m_annotationDialogPending = false;
-  quint64 m_balloonDialogSerial = 0;
+  quint64 m_contentDialogSerial = 0;
   bool m_initialFit = true;
   Tool m_tool = Tool::Rectangle;
   bool m_spaceHeld = false;

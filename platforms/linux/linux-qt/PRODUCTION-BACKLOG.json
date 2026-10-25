@@ -472,6 +472,15 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "EA-008"
+      ],
+      "outcome": "Text and speech balloons expose horizontal alignment in a shared asynchronous native text dialog. An optional per-object enum persists with legacy rendering retained when absent. Core rejects invalid creation/edit/import values, while unrelated annotation types preserve the same property opaquely. UI/history/reload and actual renderer glyph-placement tests cover both types. Font family, bold/italic, text colors, creation/default breadth and human target qualification remain partial.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+      ]
     }
   ]
 }

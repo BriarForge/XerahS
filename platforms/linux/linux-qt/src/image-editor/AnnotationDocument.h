@@ -80,6 +80,7 @@ struct ShapeContent {
   qint64 stepValue = 0;   // EA-009: the displayed step number
   double strength = 0;    // blur radius or pixelate cell; 0 uses the default
   QString imageKey;       // asset types: key into AnnotationDocument::embeddedImages
+  QString textAlignment;  // empty preserves legacy rendering; left, center, right
 };
 
 struct RectangleAnnotation {
@@ -98,7 +99,8 @@ struct RectangleAnnotation {
   double bottom() const { return end.y; }
 };
 
-// EA-008: finite tail geometry that maps to finite image coordinates.
+// EA-008: shared alignment and finite mapped-tail validation.
+bool validTextAlignment(const QString &alignment);
 bool validBalloonTail(const RectangleAnnotation &shape, const std::vector<PointF> &points);
 
 // ES-015: an annotation type this build does not know, kept verbatim and shown

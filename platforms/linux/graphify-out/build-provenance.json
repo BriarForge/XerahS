@@ -22,9 +22,9 @@
     "ast_preserved": true
   },
   "ast_refresh": {
-    "source_revision": "14fb995b0df2c1d65c9b84449392668bf85d9a39",
+    "source_revision": "d296d65bb782d1b948d9fe9afea490768cdd6492",
     "semantic_documents_preserved": true,
     "external_model_labeling_used": false,
-    "balloon_tail_nodes": 8
+    "text_alignment_nodes": 9
   }
 }

@@ -126,6 +126,11 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
       if (!isFiniteNumber(v) || v.toDouble() < low || v.toDouble() > high) return false;
       out = v.toDouble(); return true;
     };
+    if ((type == shape::text || type == shape::speechBalloon) && o.contains(u"textAlignment")) {
+      const auto alignment = o.value(u"textAlignment");
+      if (!alignment.isString() || !validTextAlignment(alignment.toString())) { findings.invalid = true; return std::nullopt; }
+      content.textAlignment = alignment.toString();
+    }
     double stepValue = 0;
     bool ok = optionalNumber(u"fontSize", 0, 2000, content.fontSize) && optionalNumber(u"strength", 0, 1000, content.strength) &&
               optionalNumber(u"stepValue", 0, 1e9, stepValue) && (!o.contains(u"stepValue") || isInteger(o.value(u"stepValue")));
@@ -174,6 +179,7 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
   for (auto it = o.begin(); it != o.end(); ++it) {
     if (!kKnownRectangleKeys.contains(it.key())) rectangle.extra.insert(it.key(), it.value());
   }
+  if (type == shape::text || type == shape::speechBalloon) rectangle.extra.remove(QStringLiteral("textAlignment"));
   return Annotation(rectangle);
 }
 
@@ -342,7 +348,11 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
       o.insert(QStringLiteral("points"), points);
     }
     if (isTextShape(content.type)) o.insert(QStringLiteral("fontSize"), content.fontSize);
-    if (content.type == shape::text || content.type == shape::speechBalloon) o.insert(QStringLiteral("text"), content.text);
+    if (content.type == shape::text || content.type == shape::speechBalloon) {
+      o.insert(QStringLiteral("text"), content.text);
+      if (!content.textAlignment.isEmpty()) o.insert(QStringLiteral("textAlignment"), content.textAlignment);
+      else o.remove(QStringLiteral("textAlignment"));
+    }
     if (content.type == shape::step) o.insert(QStringLiteral("stepValue"), double(content.stepValue));
     if (isAssetShape(content.type)) o.insert(QStringLiteral("imageKey"), content.imageKey);
     if (hasShapeStrength(content.type)) o.insert(QStringLiteral("strength"), content.strength);
@@ -467,6 +477,9 @@ SidecarSaveResult saveSidecar(SidecarStore &store, const QString &rasterPath, co
   return result;
 }
 
+bool validTextAlignment(const QString &alignment) {
+  return alignment.isEmpty() || alignment == u"left" || alignment == u"center" || alignment == u"right";
+}
 bool validBalloonTail(const RectangleAnnotation &shape, const std::vector<PointF> &points) {
   if (points.size() > kMaxPathPoints) return false;
   for (const auto &point : points) if (!std::isfinite(point.x) || !std::isfinite(point.y)) return false;
