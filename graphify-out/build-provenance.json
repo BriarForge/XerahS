@@ -13,5 +13,24 @@
     "platforms/windows/PROGRESS.md",
     "platforms/windows/README.md"
   ],
-  "token_usage_status": "unavailable_host_agent"
+  "token_usage_status": "unavailable_host_agent",
+  "progress_refresh": {
+    "source_revision": "48fe7713084adfac433f8ff94b3510cc778e8369",
+    "fresh_semantic_documents": [
+      "platforms/PROGRESS.md",
+      "platforms/linux/PROGRESS.md",
+      "platforms/macos/PROGRESS.md",
+      "platforms/windows/PROGRESS.md"
+    ],
+    "coverage": {
+      "platforms/PROGRESS.md": 65,
+      "platforms/linux/PROGRESS.md": 67,
+      "platforms/macos/PROGRESS.md": 65,
+      "platforms/windows/PROGRESS.md": 65
+    },
+    "implementation_coverage_linux": "27.5%",
+    "implementation_coverage_overall_desktop": "9.2%",
+    "token_usage_status": "unavailable_host_agent",
+    "ast_preserved": true
+  }
 }

@@ -1,31 +1,36 @@
 # Graph Report - windows  (2026-10-25)
 
 ## Corpus Check
-- Corpus is ~1,055 words - fits in a single context window. You may not need a graph.
+- Incremental progress-prose refresh only. Existing code and other semantic evidence preserved; this graph does not establish implementation, parity or release acceptance.
 
 ## Summary
-- 61 nodes · 65 edges · 5 communities (4 shown, 1 thin omitted)
-- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 1 edges (avg confidence: 0.85)
-- Token cost: unavailable for host-agent semantic extraction (zero stored counters are placeholders).
+- 95 nodes · 98 edges · 5 communities (4 shown, 1 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 1 edges (avg confidence: 0.85)
+- Token cost: unavailable (host-agent usage is not exposed; zero placeholders are not measured usage).
+
+## Graph Freshness
+- Built from commit: `48fe7713`
+- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
+- Desktop implementation progress
 - Windows Progress And Coverage
-- Windows Graph Navigation
 - Windows Native Pilot
-- Windows Native Guidance
+- Windows Graph Navigation
 - Windows Progress And Coverage
 
 ## God Nodes (most connected - your core abstractions)
-1. `Windows Implementation Progress` - 32 edges
-2. `Windows Pilot Default` - 11 edges
-3. `Windows Knowledge Graph` - 10 edges
-4. `Windows Scoped Agent Guidance` - 8 edges
-5. `Native Windows Application` - 3 edges
-6. `Regenerate All Progress Files` - 3 edges
-7. `Query Graph Before Source` - 2 edges
-8. `Dirty Graph Remains Usable` - 2 edges
-9. `Graph Wiki Navigation` - 2 edges
-10. `Report For Broad Architecture` - 2 edges
+1. `Windows progress` - 33 edges
+2. `Windows Implementation Progress` - 32 edges
+3. `Windows Pilot Default` - 11 edges
+4. `Windows Knowledge Graph` - 10 edges
+5. `Windows Scoped Agent Guidance` - 8 edges
+6. `Native Windows Application` - 3 edges
+7. `Regenerate All Progress Files` - 3 edges
+8. `Refresh Graph After Code` - 2 edges
+9. `Dirty Graph Remains Usable` - 2 edges
+10. `Query Graph Before Source` - 2 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Native Windows Application` --conceptually_related_to--> `Windows ImageEditor Module`  [INFERRED]
@@ -35,44 +40,37 @@
 
 ## Communities (5 total, 1 thin omitted)
 
-### Community 0 - "Windows Progress And Coverage"
+### Community 0 - "Desktop implementation progress"
+Cohesion: 0.06
+Nodes (25): python tools/platform-progress/update.py --check verifies generated desktop progress reports, COMPATIBILITY-CATALOG-001 | 0.0% | 0 | 0 | 0 | 18 | No platform trace map, CORE-PLATFORM-001 | 0.0% | 0 | 0 | 0 | 36 | No platform trace map, Windows: 0 implemented, 0 partial, 0 not started, 324 without a recorded implementation status. Native platform evidence., Windows progress, EDITOR-ANNOTATIONS-001 | 0.0% | 0 | 0 | 0 | 20 | No platform trace map, EDITOR-CANVAS-001 | 0.0% | 0 | 0 | 0 | 17 | No platform trace map, EDITOR-EFFECTS-001 | 0.0% | 0 | 0 | 0 | 18 | No platform trace map (+17 more)
+
+### Community 1 - "Windows Progress And Coverage"
 Cohesion: 0.06
 Nodes (21): COMPATIBILITY-CATALOG-001, Product Contract 0.3.1, CORE-PLATFORM-001, EDITOR-ANNOTATIONS-001, EDITOR-CANVAS-001, EDITOR-EFFECTS-001, EDITOR-OUTPUT-ACTIONS-001, EDITOR-SESSION-001 (+13 more)
 
-### Community 1 - "Windows Graph Navigation"
+### Community 2 - "Windows Native Pilot"
+Cohesion: 0.13
+Nodes (13): Windows ImageEditor Module, Native Windows Application, C# Language, DXGI Capture, Native Hotkeys, Implementation Progress Report, Windows 11 23H2 Minimum, D-WIN-001 (+5 more)
+
+### Community 3 - "Windows Graph Navigation"
 Cohesion: 0.26
 Nodes (5): Graphify Explain, Graphify Path, Graphify Query, Windows Knowledge Graph, Windows Scoped Agent Guidance
 
-### Community 2 - "Windows Native Pilot"
-Cohesion: 0.18
-Nodes (10): C# Language, DXGI Capture, Native Hotkeys, Windows 11 23H2 Minimum, D-WIN-001, Native Tray, Unpackaged Desktop First, Win32 WinRT Native Surfaces (+2 more)
-
-### Community 3 - "Windows Native Guidance"
-Cohesion: 0.50
-Nodes (3): Windows ImageEditor Module, Native Windows Application, Implementation Progress Report
-
 ## Knowledge Gaps
-- **35 isolated node(s):** `Graphify Query`, `Graphify Path`, `Graphify Explain`, `C# Language`, `DXGI Capture` (+30 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 47 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **59 isolated node(s):** `Graphify Explain`, `Graphify Path`, `Graphify Query`, `C# Language`, `DXGI Capture` (+54 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 80 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Windows Implementation Progress` connect `Windows Progress And Coverage` to `Windows Native Guidance`, `Windows Progress And Coverage`?**
-  _High betweenness centrality (0.576) - this node is a cross-community bridge._
-- **What connects `Graphify Query`, `Graphify Path`, `Graphify Explain` to the rest of the system?**
-  _35 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `Windows Implementation Progress` connect `Windows Progress And Coverage` to `Windows Native Pilot`, `Windows Progress And Coverage`?**
+  _High betweenness centrality (0.233) - this node is a cross-community bridge._
+- **What connects `Graphify Explain`, `Graphify Path`, `Graphify Query` to the rest of the system?**
+  _59 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Desktop implementation progress` be split into smaller, more focused modules?**
+  _Cohesion score 0.058823529411764705 - nodes in this community are weakly interconnected._
 - **Should `Windows Progress And Coverage` be split into smaller, more focused modules?**
   _Cohesion score 0.06451612903225806 - nodes in this community are weakly interconnected._
-- **Why does `Native Windows Application` connect `Windows Native Guidance` to `Windows Native Pilot`?**
-  _High betweenness centrality (0.269) - this node is a cross-community bridge._
-- **Why does `Implementation Progress Report` connect `Windows Native Guidance` to `Windows Progress And Coverage`?**
-  _High betweenness centrality (0.269) - this node is a cross-community bridge._
-
-## Scoped Semantic Refresh
-
-- Fully reread README.md and PROGRESS.md; reused unchanged AGENTS.md and ImageEditor README only after source/prompt hash validation.
-- Percentages are unweighted recorded implementation coverage, not release approval: this platform 0.0%, Linux 30.6%, overall desktop 10.2%. Missing maps leave 324 requirements unassessed.
-- EXTRACTED edges reflect explicit source relationships. INFERRED edges require source verification before correctness or parity claims.
-- Actual host-agent token usage is unavailable. No native application build or qualification is claimed.
+- **Should `Windows Native Pilot` be split into smaller, more focused modules?**
+  _Cohesion score 0.13333333333333333 - nodes in this community are weakly interconnected._

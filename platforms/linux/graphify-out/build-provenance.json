@@ -9,17 +9,15 @@
   "code_data_files": 497,
   "token_usage_status": "unavailable_host_agent",
   "progress_refresh": {
+    "source_revision": "48fe7713084adfac433f8ff94b3510cc778e8369",
     "fresh_semantic_documents": [
-      "README.md",
       "PROGRESS.md"
     ],
-    "validated_unchanged_semantic_documents": 52,
     "coverage": {
-      "README.md": 14,
       "PROGRESS.md": 67
     },
-    "implementation_coverage_linux": "30.6%",
-    "implementation_coverage_overall_desktop": "10.2%",
+    "implementation_coverage_linux": "27.5%",
+    "implementation_coverage_overall_desktop": "9.2%",
     "token_usage_status": "unavailable_host_agent",
     "ast_preserved": true
   }
