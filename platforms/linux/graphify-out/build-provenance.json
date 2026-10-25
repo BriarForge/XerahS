@@ -20,5 +20,11 @@
     "implementation_coverage_overall_desktop": "9.2%",
     "token_usage_status": "unavailable_host_agent",
     "ast_preserved": true
+  },
+  "ast_refresh": {
+    "source_revision": "424aa90102c219b28ea3f6c9eb7545d6f9abafac",
+    "semantic_documents_preserved": true,
+    "external_model_labeling_used": false,
+    "workflow_execution_history_nodes": 9
   }
 }

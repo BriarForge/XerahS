@@ -1,5 +1,6 @@
 // CORE-007: workflow commands. Shortcut actions stay owned by WorkflowShortcutActions.
 #include "features/WorkflowFeature.h"
+#include "features/WorkflowExecutionHistoryFeature.h"
 
 #include "AppContext.h"
 #include "ApplicationWindow.h"
@@ -40,6 +41,8 @@ xerahs::workflows::WorkflowShortcutPlan shortcutPlan(AppContext &ctx) {
 }
 
 void installWorkflows(AppContext &ctx) {
+  installWorkflowExecutionHistory(ctx.commands, workflowHistoryPorts(NativeWorkflowExecutions(NativeWorkflowExecutions::defaultDirectory())),
+      [&ctx] { return ctx.capture.busy(); }, [&ctx] { return commandWindow(ctx); }, &ctx.app);
   ctx.shortcuts = new WorkflowShortcutActions([&ctx] { return shortcutPlan(ctx); },
       [&ctx] { return !ctx.capture.busy() && !QApplication::activeModalWidget(); },
       QDBusConnection::sessionBus(), {}, &ctx.app);

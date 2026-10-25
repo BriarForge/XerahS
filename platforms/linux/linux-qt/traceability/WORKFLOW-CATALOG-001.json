@@ -41,7 +41,9 @@
     "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
     "platforms/linux/linux-qt/app/SettingsDialog.h",
     "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-    "platforms/linux/linux-qt/app/XdgAutostart.cpp"
+    "platforms/linux/linux-qt/app/XdgAutostart.cpp",
+    "platforms/linux/linux-qt/app/WorkflowExecutionHistoryDialog.cpp",
+    "platforms/linux/linux-qt/app/features/WorkflowExecutionHistoryFeature.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/app/SAVED-WORKFLOWS.md",
@@ -73,7 +75,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Configured captures freeze workflow ID/name/type/actions/chooser intent, use existing pipeline task IDs/timings/results, and retain safe snapshot metadata in private journals. Full invocation origin/settings/acquisition-failure coverage remains Required. Effective output folder/pattern now freeze before acquisition and remain in known-field result/journal/retry snapshots. Explicit-ID invocation freezes the saved profile/output at primary admission before acknowledgement. Private portal/controller evidence proves original output after a profile edit, then changed output on the next invocation. Activation request ID is not the pipeline task ID; origin/result linkage remains Required. Desktop shortcut activation now reaches the same workflow-ID admission snapshot and actual controller as Run selected/CLI. Synthetic private-portal output evidence verifies saved settings and actual PNG pixels; full execution-origin/task/result linkage remains Required. Admitted region captures now durably record request/execution UUID, admission start, trusted boundary origin and frozen effective settings before ACK/acquisition; early denial/cancellation/source failure and actual pipeline terminal/order are linked to a separate task ID. Canonical/private PCA metadata links back to the execution. Headless read-only lookup reports nonterminal observations as unconfirmed without querying runtime. Full families/settings, retry invocation indexing, retention and target/human gates remain Required. Native workflow discovery and GUI execution now share the implemented action list including upload, URL clipboard, pin and print. Execution snapshot parsing validates the bounded versioned definition without requiring its actions to remain executable in the current build. Native admission still rejects unknown actions before capture or persistence. Regression tests cover all four output definitions, permission denial before side effects, pin/print port dispatch, unknown-action admission refusal and byte-preserving execution-record reopen. Upload/credential approval and full catalogue, entry-point, platform and human qualification remain Required.",
+      "note": "Configured captures freeze workflow ID/name/type/actions/chooser intent, use existing pipeline task IDs/timings/results, and retain safe snapshot metadata in private journals. Full invocation origin/settings/acquisition-failure coverage remains Required. Effective output folder/pattern now freeze before acquisition and remain in known-field result/journal/retry snapshots. Explicit-ID invocation freezes the saved profile/output at primary admission before acknowledgement. Private portal/controller evidence proves original output after a profile edit, then changed output on the next invocation. Activation request ID is not the pipeline task ID; origin/result linkage remains Required. Desktop shortcut activation now reaches the same workflow-ID admission snapshot and actual controller as Run selected/CLI. Synthetic private-portal output evidence verifies saved settings and actual PNG pixels; full execution-origin/task/result linkage remains Required. Admitted region captures now durably record request/execution UUID, admission start, trusted boundary origin and frozen effective settings before ACK/acquisition; early denial/cancellation/source failure and actual pipeline terminal/order are linked to a separate task ID. Canonical/private PCA metadata links back to the execution. Headless read-only lookup reports nonterminal observations as unconfirmed without querying runtime. Full families/settings, retry invocation indexing, retention and target/human gates remain Required. Native workflow discovery and GUI execution now share the implemented action list including upload, URL clipboard, pin and print. Execution snapshot parsing validates the bounded versioned definition without requiring its actions to remain executable in the current build. Native admission still rejects unknown actions before capture or persistence. Regression tests cover all four output definitions, permission denial before side effects, pin/print port dispatch, unknown-action admission refusal and byte-preserving execution-record reopen. Upload/credential approval and full catalogue, entry-point, platform and human qualification remain Required. Native Workflow execution history now lists bounded, redacted observations through one registry command shared by window/tray/capture menu. Explicit default-Cancel confirmation removes only the selected unchanged metadata record using the existing private descriptor store; files, pipeline results, credentials and clipboard are untouched. Storage runs through OwnedWork, capture defers refresh and prevents pending removal, and owner teardown abandons late reads. Corrupt/newer/stale records are preserved. Automated native tests cover actual removal/cancellation/conflict, unconfirmed status, worker ownership, failed/throwing ports and freeing the 1024-record admission limit. Full retention policy, history/resource scope, configured limits, supported-target and human qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
@@ -86,12 +88,14 @@
         "platforms/linux/linux-qt/app/WORKFLOW-SHORTCUTS.md",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
-        "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
+        "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 13,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial; native confirmed single-record execution-metadata removal is now tested. Full retention, other action families and human/native target qualification remain.",
+        "incremental_evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp"
       }
     },
     "WFCAT-003": {
@@ -343,7 +347,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Results and private restart journals retain a known-field-only workflow snapshot and existing truthful outcomes. Unknown extensions are excluded from reports. Full notifications/log/privacy/terminal-state convergence remains Required. Nested output extensions are excluded from reports while known private folder/pattern fields stay available to explicit review. Versioned CLI JSON contains admission/delivery, stable errors and valid opaque IDs only; it does not publish private names/actions/folders/patterns or claim terminal output success. Complete result convergence and execution/result lookup remain Required. The native command window reports actual desktop binding descriptions/empty results and fixed setup failures as plain accessible text; registration does not claim capture success. Full terminal-state convergence, origin/result linkage and human privacy/accessibility qualification remain Required. Explicit discovery reveals saved workflow IDs/names and fixed definition diagnostics while excluding private output fields, action choices and unknown extensions/capture labels. It creates no execution ID or terminal-success claim and queries no runtime permissions. Complete execution/result linkage, privacy and shared convergence remain Required. Explicit headless lookup reports only IDs, trusted origin, times, ordered action/state pairs, fixed diagnostics and pipeline link. Known private settings stay in owner-only execution storage; canonical history/report includes execution reference. Unfinished/failed-persistence observations remain unconfirmed, completed outputs are kept. Full convergence, retention and human privacy/security review remain Required. Native workflow discovery and GUI execution now share the implemented action list including upload, URL clipboard, pin and print. Execution snapshot parsing validates the bounded versioned definition without requiring its actions to remain executable in the current build. Native admission still rejects unknown actions before capture or persistence. Regression tests cover all four output definitions, permission denial before side effects, pin/print port dispatch, unknown-action admission refusal and byte-preserving execution-record reopen. Upload/credential approval and full catalogue, entry-point, platform and human qualification remain Required.",
+      "note": "Results and private restart journals retain a known-field-only workflow snapshot and existing truthful outcomes. Unknown extensions are excluded from reports. Full notifications/log/privacy/terminal-state convergence remains Required. Nested output extensions are excluded from reports while known private folder/pattern fields stay available to explicit review. Versioned CLI JSON contains admission/delivery, stable errors and valid opaque IDs only; it does not publish private names/actions/folders/patterns or claim terminal output success. Complete result convergence and execution/result lookup remain Required. The native command window reports actual desktop binding descriptions/empty results and fixed setup failures as plain accessible text; registration does not claim capture success. Full terminal-state convergence, origin/result linkage and human privacy/accessibility qualification remain Required. Explicit discovery reveals saved workflow IDs/names and fixed definition diagnostics while excluding private output fields, action choices and unknown extensions/capture labels. It creates no execution ID or terminal-success claim and queries no runtime permissions. Complete execution/result linkage, privacy and shared convergence remain Required. Explicit headless lookup reports only IDs, trusted origin, times, ordered action/state pairs, fixed diagnostics and pipeline link. Known private settings stay in owner-only execution storage; canonical history/report includes execution reference. Unfinished/failed-persistence observations remain unconfirmed, completed outputs are kept. Full convergence, retention and human privacy/security review remain Required. Native workflow discovery and GUI execution now share the implemented action list including upload, URL clipboard, pin and print. Execution snapshot parsing validates the bounded versioned definition without requiring its actions to remain executable in the current build. Native admission still rejects unknown actions before capture or persistence. Regression tests cover all four output definitions, permission denial before side effects, pin/print port dispatch, unknown-action admission refusal and byte-preserving execution-record reopen. Upload/credential approval and full catalogue, entry-point, platform and human qualification remain Required. Native Workflow execution history now lists bounded, redacted observations through one registry command shared by window/tray/capture menu. Explicit default-Cancel confirmation removes only the selected unchanged metadata record using the existing private descriptor store; files, pipeline results, credentials and clipboard are untouched. Storage runs through OwnedWork, capture defers refresh and prevents pending removal, and owner teardown abandons late reads. Corrupt/newer/stale records are preserved. Automated native tests cover actual removal/cancellation/conflict, unconfirmed status, worker ownership, failed/throwing ports and freeing the 1024-record admission limit. Full retention policy, history/resource scope, configured limits, supported-target and human qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
@@ -357,12 +361,14 @@
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-DISCOVERY.md",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
-        "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md"
+        "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 63,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial; native confirmed single-record execution-metadata removal is now tested. Full retention, other action families and human/native target qualification remain.",
+        "incremental_evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp"
       }
     },
     "WFCAT-018": {
@@ -401,7 +407,10 @@
       "platforms/linux/linux-qt/src/workflows/CaptureWorkflows.cpp",
       "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
       "platforms/linux/linux-qt/app/CaptureController.cpp",
-      "platforms/linux/linux-qt/app/NativePrivateRecords.cpp"
+      "platforms/linux/linux-qt/app/NativePrivateRecords.cpp",
+      "platforms/linux/linux-qt/app/NativeWorkflowExecutions.cpp",
+      "platforms/linux/linux-qt/app/WorkflowExecutionHistoryDialog.cpp",
+      "platforms/linux/linux-qt/app/features/WorkflowExecutionHistoryFeature.cpp"
     ],
     "automated_test_surfaces": {
       "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp": [
@@ -505,6 +514,14 @@
         "discardApprovalCannotClearANewerResultAndNeverRemovesSavedFiles",
         "recoveryCallbackCancellationExceptionsAndReentrancyDoNotConsumeTheReceipt",
         "recoveryOwnerDestructionCancelsPendingApprovalAndKeepsTheReceipt"
+      ],
+      "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp": [
+        "sharedRegistryCommandReviewsAndForgetsOnlyConfirmedMetadata",
+        "changedCorruptAndFutureRecordsArePreserved",
+        "captureDefersReadsAndRevokesPendingRemoval",
+        "storeErrorsAndExceptionsDoNotExposePayloadOrLoseMetadata",
+        "destroyingAnOwnerNeverJoinsOrPublishesALateRead",
+        "explicitRemovalFreesCapacityWithoutTouchingOtherRecords"
       ]
     },
     "remaining_scope": "Saved capture definitions, durable execution records, shortcuts and controller tests exist. Complete linked action families, retention, result taxonomy, resource arbitration and entry-point equivalence remain."

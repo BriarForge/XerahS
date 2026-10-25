@@ -228,6 +228,10 @@ add_executable(xerahs
   app/features/ToolsFeature.h
   app/features/UploadFeature.cpp
   app/features/UploadFeature.h
+  app/WorkflowExecutionHistoryDialog.cpp
+  app/WorkflowExecutionHistoryDialog.h
+  app/features/WorkflowExecutionHistoryFeature.cpp
+  app/features/WorkflowExecutionHistoryFeature.h
   app/features/WorkflowFeature.cpp
   app/features/WorkflowFeature.h
   app/PipelineHistoryDialog.cpp
@@ -1192,3 +1196,12 @@ add_test(NAME scroll-capture COMMAND "${XERAHS_DBUS_RUN_SESSION}"
 set_tests_properties(scroll-capture PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 90)
 # EE-003, EE-013: explicit parameter units shared by the generated controls.
 target_sources(xerahs_editor_source PRIVATE src/image-editor/effects/ParameterUnits.h)
+
+add_executable(workflow-execution-history-test tests/WorkflowExecutionHistoryTest.cpp
+  app/WorkflowExecutionHistoryDialog.cpp app/WorkflowExecutionHistoryDialog.h
+  app/features/WorkflowExecutionHistoryFeature.cpp app/features/WorkflowExecutionHistoryFeature.h
+  app/CommandRegistry.cpp app/CommandRegistry.h)
+set_target_properties(workflow-execution-history-test PROPERTIES AUTOMOC ON)
+target_link_libraries(workflow-execution-history-test PRIVATE xerahs_pipeline_journal Qt6::Widgets Qt6::Test)
+add_test(NAME workflow-execution-history COMMAND workflow-execution-history-test)
+set_tests_properties(workflow-execution-history PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)

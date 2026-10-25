@@ -66,7 +66,9 @@
     "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
     "platforms/linux/linux-qt/app/SettingsDialog.h",
     "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-    "platforms/linux/linux-qt/app/XdgAutostart.cpp"
+    "platforms/linux/linux-qt/app/XdgAutostart.cpp",
+    "platforms/linux/linux-qt/app/WorkflowExecutionHistoryDialog.cpp",
+    "platforms/linux/linux-qt/app/features/WorkflowExecutionHistoryFeature.cpp"
   ],
   "requirements": {
     "CORE-001": {
@@ -509,7 +511,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native capture result history now loads multiple private versioned journal records on a worker, exposes actual completed/cancelled/interrupted outcomes and unknown pending actions, reviews immutable canonical snapshots and forgets only explicitly confirmed unchanged metadata. Real-process restart and native keyboard/stale-confirmation/file-preservation fixtures cover save/image-clipboard recovery. Full task/media history, pixel reconstruction, shared persisted compatibility, search/pagination/retention/privacy policy, missing-file/corruption recovery, all actions, target matrix and human approvals remain Required. Linked native retry journals preserve original/previous identities, attempt number and actual file creator facts. Real-process restart fixtures preserve terminal original records and unknown interrupted retry outcomes; the native reviewer distinguishes preserved successes from actions executed in the current attempt. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required.",
+      "note": "Native capture result history now loads multiple private versioned journal records on a worker, exposes actual completed/cancelled/interrupted outcomes and unknown pending actions, reviews immutable canonical snapshots and forgets only explicitly confirmed unchanged metadata. Real-process restart and native keyboard/stale-confirmation/file-preservation fixtures cover save/image-clipboard recovery. Full task/media history, pixel reconstruction, shared persisted compatibility, search/pagination/retention/privacy policy, missing-file/corruption recovery, all actions, target matrix and human approvals remain Required. Linked native retry journals preserve original/previous identities, attempt number and actual file creator facts. Real-process restart fixtures preserve terminal original records and unknown interrupted retry outcomes; the native reviewer distinguishes preserved successes from actions executed in the current attempt. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Native Workflow execution history now lists bounded, redacted observations through one registry command shared by window/tray/capture menu. Explicit default-Cancel confirmation removes only the selected unchanged metadata record using the existing private descriptor store; files, pipeline results, credentials and clipboard are untouched. Storage runs through OwnedWork, capture defers refresh and prevents pending removal, and owner teardown abandons late reads. Corrupt/newer/stale records are preserved. Automated native tests cover actual removal/cancellation/conflict, unconfirmed status, worker ownership, failed/throwing ports and freeing the 1024-record admission limit. Full retention policy, history/resource scope, configured limits, supported-target and human qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/JOURNAL-RECOVERY.md",
         "platforms/linux/linux-qt/app/PipelineHistoryDialog.cpp",
@@ -519,12 +521,14 @@
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
         "platforms/linux/linux-qt/tests/PipelineRetryTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp"
+        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
+        "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 105,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial; native confirmed single-record execution-metadata removal is now tested. Full retention, other action families and human/native target qualification remain.",
+        "incremental_evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp"
       }
     },
     "CORE-024": {
@@ -794,7 +798,10 @@
       "platforms/linux/linux-qt/src/capture/ScrollStitch.cpp",
       "platforms/linux/linux-qt/src/history/CaptureHistory.cpp",
       "platforms/linux/linux-qt/src/watch/WatchFolders.cpp",
-      "platforms/linux/linux-qt/app/NativePrivateRecords.cpp"
+      "platforms/linux/linux-qt/app/NativePrivateRecords.cpp",
+      "platforms/linux/linux-qt/app/NativeWorkflowExecutions.cpp",
+      "platforms/linux/linux-qt/app/WorkflowExecutionHistoryDialog.cpp",
+      "platforms/linux/linux-qt/app/features/WorkflowExecutionHistoryFeature.cpp"
     ],
     "automated_test_surfaces": {
       "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp": [
@@ -908,6 +915,14 @@
         "activeWindowSourceShowsItsLabel",
         "unknownSourceStillShowsItsRawId",
         "runningCaptureDefersTheRead"
+      ],
+      "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp": [
+        "sharedRegistryCommandReviewsAndForgetsOnlyConfirmedMetadata",
+        "changedCorruptAndFutureRecordsArePreserved",
+        "captureDefersReadsAndRevokesPendingRemoval",
+        "storeErrorsAndExceptionsDoNotExposePayloadOrLoseMetadata",
+        "destroyingAnOwnerNeverJoinsOrPublishesALateRead",
+        "explicitRemovalFreesCapacityWithoutTouchingOtherRecords"
       ]
     },
     "remaining_scope": "Native shell, capture, recording, upload and storage have candidate tests. Complete linked-ledger semantics, migration, signed distribution, runtime target matrix and human acceptance are not established."

@@ -395,5 +395,17 @@
       ],
       "note": "Drawing API correction compiles on Qt 6.4.2; FileUploadTest used the newer floating-point drag-enter constructor. Fixtures now use the compatible integer point signature and retain all existing cases. Exact corrected-revision baseline verification remains required."
     }
+  ],
+  "incremental_updates": [
+    {
+      "requirements": [
+        "CORE-023",
+        "WFCAT-002",
+        "WFCAT-017",
+        "SETCAT-015"
+      ],
+      "outcome": "Native workflow execution metadata review and confirmed unchanged-record removal are implemented and tested. Full retention and remaining capability behavior remain partial.",
+      "evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp"
+    }
   ]
 }
