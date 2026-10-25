@@ -29,7 +29,9 @@ graphify update .
 Graphify's update CLI and hooks refresh code/AST relationships. They cannot ask a
 host agent to semantically read new prose. A documentation change leaves
 `graphify-out/.needs_update`; run the Graphify skill's `$graphify . --update` from
-that scope before using it for an answer. Rewrites inspect all scopes; semantic
+that scope once at the end of the task, not after each checkpoint. Generated
+`PROGRESS.md` files are listed in `.graphifyignore` and never need that refresh.
+Rewrites inspect all scopes; semantic
 hashes prevent a freshly built graph committed with its docs from being marked
 stale again. The dispatcher never claims cross-platform parity.
 
@@ -44,5 +46,7 @@ python -m unittest discover tools/graphify/tests -v
 Graphs, reports, and HTML are versioned. Caches, interpreter paths, manifests,
 cost counters and other hidden Graphify state stay local. Run the four scoped
 `graphify install --project --platform codex` and `graphify hook install` commands
-again in a new clone, then install this dispatcher. Do not commit caches or
+again in a new clone, then install this dispatcher. The project install appends a
+`## graphify` section to each scope's `AGENTS.md`; delete it, because the root
+`AGENTS.md` already governs every scope. Do not commit caches or
 machine-specific hook scripts from `.git`.

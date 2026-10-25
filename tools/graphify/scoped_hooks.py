@@ -77,7 +77,7 @@ def refresh(root: Path, changes: dict[str, list[str] | None]) -> None:
             subprocess.run([sys.executable, '-m', 'graphify', 'update', '.'], cwd=folder, check=True)
         finally:
             if semantic or was_stale:
-                marker.write_text('Semantic files may have changed. Run $graphify . --update in this folder before answering.\n', encoding='utf-8')
+                marker.write_text('Semantic files may have changed. Run $graphify . --update in this folder once at the end of the task.\n', encoding='utf-8')
                 print(f'[scoped graphify] {scope}: semantic refresh required', flush=True)
 
 

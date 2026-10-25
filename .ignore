@@ -1,0 +1,2 @@
+# Keep Graphify output out of ripgrep and other search tools. Use graphify query/path/explain instead.
+graphify-out/
