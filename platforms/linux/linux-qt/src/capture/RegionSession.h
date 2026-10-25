@@ -26,6 +26,8 @@ QString sessionStateName(SessionState state);
 std::optional<SessionState> sessionStateFromName(const QString &name);
 bool isTerminal(SessionState state);
 
+enum class Corner { TopLeft, TopRight, BottomLeft, BottomRight };
+
 enum class Permission { Authorized, Denied, Restricted };
 
 struct SessionSettings {
@@ -65,6 +67,9 @@ public:
   // rectangle, clamped to the bounding box of all displays. Returns whether
   // the selection changed, so the overlay can announce the new bounds.
   bool keyboardAdjust(const KeyboardStep &step);
+  // RC-010/023: pointer handle adjustment preserves the opposite corner and
+  // the same positive, desktop-clamped limits used by keyboard resizing.
+  bool resizeCorner(Corner corner, PhysicalPoint point);
   void confirm();
   void keyEscape();
   void cancel();

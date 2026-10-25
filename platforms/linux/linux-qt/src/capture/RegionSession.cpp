@@ -133,6 +133,24 @@ bool RegionSession::keyboardAdjust(const KeyboardStep &step) {
   return true;
 }
 
+bool RegionSession::resizeCorner(Corner corner, PhysicalPoint point) {
+  if (m_state != SessionState::Selected || !m_selection) return false;
+  const auto original = *m_selection;
+  const auto bounds = boundingBox(m_topology);
+  const auto target = clampPhysical(m_topology, point);
+  const bool left = corner == Corner::TopLeft || corner == Corner::BottomLeft;
+  const bool top = corner == Corner::TopLeft || corner == Corner::TopRight;
+  KeyboardStep x; x.action = KeyboardStep::Action::Resize; x.edge = left ? Edge::Left : Edge::Right;
+  x.delta = target.x - (left ? original.left : original.right);
+  auto adjusted = applyKeyboardStep(original, x, bounds);
+  KeyboardStep y; y.action = KeyboardStep::Action::Resize; y.edge = top ? Edge::Top : Edge::Bottom;
+  y.delta = target.y - (top ? original.top : original.bottom);
+  adjusted = applyKeyboardStep(adjusted, y, bounds);
+  if (adjusted == original) return false;
+  m_selection = adjusted;
+  return true;
+}
+
 void RegionSession::keyEscape() {
   // RC-008: no image, no last-region update, no post-capture actions.
   if (isTerminal(m_state)) return;

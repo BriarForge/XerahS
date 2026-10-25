@@ -44,6 +44,7 @@ public:
   bool busy() const { return m_busy; }
 
   // Overlay input, in desktop physical pixels.
+  bool beginCornerResize(xerahs::capture::Corner corner, xerahs::capture::PhysicalPoint point);
   void pointerDown(xerahs::capture::PhysicalPoint point);
   void pointerMove(xerahs::capture::PhysicalPoint point);
   void pointerUp(xerahs::capture::PhysicalPoint point);
@@ -150,6 +151,8 @@ private:
   std::vector<std::unique_ptr<RegionOverlay>> m_overlays;
   std::optional<xerahs::capture::PhysicalPoint> m_keyboardCursor;
   bool m_keyboardSelecting = false;
+  std::optional<xerahs::capture::Corner> m_resizeCorner;
+  xerahs::capture::PhysicalPoint m_resizeOffset;
   std::optional<QImage> m_captured;
   std::vector<QMetaObject::Connection> m_screenConnections;
 };

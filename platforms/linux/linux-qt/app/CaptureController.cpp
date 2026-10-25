@@ -63,7 +63,7 @@ QString CaptureController::instructions() {
   return QStringLiteral(
       "Region capture. Drag with the pointer, or press Space to start and finish a selection at the keyboard "
       "cursor. Arrow keys move by 1 pixel, Shift+Arrow by 10. With a selection, Alt+Arrow resizes. Enter "
-      "captures. Escape cancels.");
+      "captures. Drag a selected corner handle to resize. Escape cancels.");
 }
 
 void CaptureController::captureRegion() {
@@ -304,8 +304,20 @@ void CaptureController::captureWholeSource(const Topology &topology) {
   runPipeline();
 }
 
+bool CaptureController::beginCornerResize(Corner corner, PhysicalPoint point) {
+  if (!m_session || m_session->state() != SessionState::Selected || !m_session->selection()) return false;
+  const auto rect = *m_session->selection();
+  const bool left = corner == Corner::TopLeft || corner == Corner::BottomLeft;
+  const bool top = corner == Corner::TopLeft || corner == Corner::TopRight;
+  m_resizeCorner = corner;
+  m_resizeOffset = {point.x - (left ? rect.left : rect.right), point.y - (top ? rect.top : rect.bottom)};
+  m_keyboardCursor.reset(); m_keyboardSelecting = false;
+  return true;
+}
+
 void CaptureController::pointerDown(PhysicalPoint point) {
   if (!m_session) return;
+  m_resizeCorner.reset();
   m_keyboardCursor.reset();
   m_keyboardSelecting = false;
   m_session->pointerDown(point);
@@ -315,13 +327,18 @@ void CaptureController::pointerDown(PhysicalPoint point) {
 void CaptureController::pointerMove(PhysicalPoint point) {
   if (!m_session || m_keyboardSelecting) return;
   m_hoverPoint = point;
-  m_session->pointerMove(point);
+  if (m_resizeCorner) {
+    if (m_session->resizeCorner(*m_resizeCorner, {point.x - m_resizeOffset.x, point.y - m_resizeOffset.y})) announce();
+  } else m_session->pointerMove(point);
   afterInput();
 }
 
 void CaptureController::pointerUp(PhysicalPoint point) {
   if (!m_session || m_keyboardSelecting) return;
-  m_session->pointerUp(point);
+  if (m_resizeCorner) {
+    const auto corner = *m_resizeCorner; m_resizeCorner.reset();
+    if (m_session->resizeCorner(corner, {point.x - m_resizeOffset.x, point.y - m_resizeOffset.y})) announce();
+  } else m_session->pointerUp(point);
   afterInput();
 }
 
@@ -690,6 +707,7 @@ void CaptureController::finish() {
   m_selectedActions.clear();
   m_keyboardCursor.reset();
   m_keyboardSelecting = false;
+  m_resizeCorner.reset();
   m_execution.reset();
   m_busy = false;
   emit busyChanged(false);

@@ -10,6 +10,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QScreen>
+#include <cmath>
 
 namespace xerahs::app {
 
@@ -67,8 +68,32 @@ void RegionOverlay::announce(const QString &text) {
   QAccessible::updateAccessibility(&event);
 }
 
+std::optional<Corner> RegionOverlay::cornerAt(const QPointF &point) const {
+  const auto selection = m_controller.selection();
+  if (!selection || !m_controller.selectionSettled()) return std::nullopt;
+  const auto rect = toWidget(*selection);
+  const std::pair<Corner, QPointF> corners[]{{Corner::TopLeft, rect.topLeft()}, {Corner::TopRight, rect.topRight()},
+      {Corner::BottomLeft, rect.bottomLeft()}, {Corner::BottomRight, rect.bottomRight()}};
+  std::optional<Corner> result; double nearest = 0;
+  for (const auto &entry : corners) {
+    const auto delta = point - entry.second;
+    const double distance = delta.x() * delta.x() + delta.y() * delta.y();
+    if (std::abs(delta.x()) <= 4 && std::abs(delta.y()) <= 4 && (!result || distance < nearest)) { result = entry.first; nearest = distance; }
+  }
+  return result;
+}
+
 void RegionOverlay::mousePressEvent(QMouseEvent *event) {
-  if (event->button() == Qt::LeftButton) m_controller.pointerDown(toPhysical(event->position()));
+  if (event->button() == Qt::LeftButton) {
+    const auto corner = cornerAt(event->position());
+    if (corner && m_controller.beginCornerResize(*corner, toPhysical(event->position()))) {
+      m_draggingCorner = corner;
+      setCursor(*corner == Corner::TopLeft || *corner == Corner::BottomRight ? Qt::SizeFDiagCursor : Qt::SizeBDiagCursor);
+      return;
+    }
+    m_draggingCorner.reset();
+    m_controller.pointerDown(toPhysical(event->position()));
+  }
   else if (event->button() == Qt::RightButton) m_controller.cancel();
 }
 
@@ -76,10 +101,18 @@ void RegionOverlay::enterEvent(QEnterEvent *event) {
   m_controller.pointerMove(toPhysical(event->position()));
 }
 
-void RegionOverlay::mouseMoveEvent(QMouseEvent *event) { m_controller.pointerMove(toPhysical(event->position())); }
+void RegionOverlay::mouseMoveEvent(QMouseEvent *event) {
+  if (const auto corner = m_draggingCorner ? m_draggingCorner : cornerAt(event->position()))
+    setCursor(*corner == Corner::TopLeft || *corner == Corner::BottomRight ? Qt::SizeFDiagCursor : Qt::SizeBDiagCursor);
+  else setCursor(Qt::CrossCursor);
+  m_controller.pointerMove(toPhysical(event->position()));
+}
 
 void RegionOverlay::mouseReleaseEvent(QMouseEvent *event) {
-  if (event->button() == Qt::LeftButton) m_controller.pointerUp(toPhysical(event->position()));
+  if (event->button() == Qt::LeftButton) {
+    m_draggingCorner.reset();
+    m_controller.pointerUp(toPhysical(event->position()));
+  }
 }
 
 void RegionOverlay::keyPressEvent(QKeyEvent *event) {

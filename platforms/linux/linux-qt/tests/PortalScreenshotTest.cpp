@@ -162,6 +162,47 @@ class PortalScreenshotTest final : public QObject {
   static Outcome outcome(const QSignalSpy &spy) { return spy.at(0).at(0).value<Outcome>(); }
   static QImage resultImage(const QSignalSpy &spy) { return spy.at(0).at(1).value<QImage>(); }
 private slots:
+  void nativeCornerHandlesResizeWithoutPrematureCaptureAndKeepGrabOffset_data() {
+    QTest::addColumn<int>("corner"); QTest::addColumn<int>("scale");
+    for (int scale : {1, 2}) for (int corner = 0; corner < 4; ++corner)
+      QTest::newRow(qPrintable(QString("corner-%1-scale-%2").arg(corner).arg(scale))) << corner << scale;
+  }
+  void nativeCornerHandlesResizeWithoutPrematureCaptureAndKeepGrabOffset() {
+    QFETCH(int, corner); QFETCH(int, scale);
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size() * scale);
+    const QPoint grips[]{QPoint(12, 12), QPoint(82, 12), QPoint(12, 62), QPoint(82, 62)};
+    const QPoint ends[]{QPoint(2, 2), QPoint(102, 2), QPoint(2, 82), QPoint(102, 82)};
+    const xerahs::capture::PhysicalRect expected[]{ {0, 0, 80, 60}, {10, 0, 100, 60}, {0, 10, 80, 80}, {10, 10, 100, 80} };
+    const auto logical = expected[corner];
+    const xerahs::capture::PhysicalRect physical{logical.left * scale, logical.top * scale, logical.right * scale, logical.bottom * scale};
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    controller.setRegionSettingsResolver([] { return xerahs::capture::SessionSettings{false, false}; });
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); auto *overlay = overlayWidget(); QVERIFY(overlay);
+    QTest::mousePress(overlay, Qt::LeftButton, {}, QPoint(10, 10)); QTest::mouseRelease(overlay, Qt::LeftButton, {}, QPoint(80, 60));
+    QVERIFY(controller.selectionSettled()); QVERIFY(controller.busy());
+    QTest::mouseMove(overlay, grips[corner]); QCOMPARE(overlay->cursor().shape(), (corner == 0 || corner == 3 ? Qt::SizeFDiagCursor : Qt::SizeBDiagCursor));
+    QTest::mousePress(overlay, Qt::LeftButton, {}, grips[corner]);
+    QCOMPARE(controller.selection(), std::optional<xerahs::capture::PhysicalRect>({10 * scale, 10 * scale, 80 * scale, 60 * scale}));
+    QTest::mouseMove(overlay, ends[corner]);
+    QCOMPARE(overlay->cursor().shape(), (corner == 0 || corner == 3 ? Qt::SizeFDiagCursor : Qt::SizeBDiagCursor));
+    QTest::mouseRelease(overlay, Qt::LeftButton, {}, ends[corner]);
+    QCOMPARE(controller.selection(), std::optional<xerahs::capture::PhysicalRect>(physical));
+    QVERIFY(controller.selectionSettled()); QVERIFY(!controller.lastPipelineResult()); QVERIFY(!QFileInfo::exists(dir.filePath("outputs")));
+    QVERIFY(overlay->accessibleDescription().contains(QString("%1 by %2").arg(physical.width()).arg(physical.height())));
+    QTest::keyClick(overlay, Qt::Key_Return); QTRY_VERIFY(!controller.busy());
+    const auto receipt = controller.lastPipelineResult(); QVERIFY(receipt && receipt->file); QCOMPARE(QImage(receipt->file->path).size(), QSize(int(physical.width()), int(physical.height())));
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); overlay = overlayWidget();
+    QTest::mousePress(overlay, Qt::LeftButton, {}, QPoint(20, 20)); QTest::mouseRelease(overlay, Qt::LeftButton, {}, QPoint(80, 60));
+    QTest::mousePress(overlay, Qt::LeftButton, {}, QPoint(20, 20)); QTest::mouseMove(overlay, QPoint(5, 5));
+    QTest::keyClick(overlay, Qt::Key_Escape); QTRY_VERIFY(!controller.busy());
+    QCOMPARE(QDir(dir.filePath("outputs")).entryList({"*.png"}, QDir::Files).size(), 1);
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); overlay = overlayWidget();
+    QTest::mousePress(overlay, Qt::LeftButton, {}, QPoint(20, 20)); QTest::mouseRelease(overlay, Qt::LeftButton, {}, QPoint(80, 60));
+    QTest::mousePress(overlay, Qt::LeftButton, {}, QPoint(40, 35)); QTest::mouseRelease(overlay, Qt::LeftButton, {}, QPoint(50, 45));
+    QCOMPARE(controller.selection(), std::optional<xerahs::capture::PhysicalRect>({40 * scale, 35 * scale, 50 * scale, 45 * scale}));
+    controller.cancel(); QTRY_VERIFY(!controller.busy());
+  }
   void regionOptionsFreezeBeforeAcquisitionAndAllowKeyboardAdjustment() {
     QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
     FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();

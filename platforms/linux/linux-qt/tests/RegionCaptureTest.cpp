@@ -159,6 +159,39 @@ private slots:
     QVERIFY(!session.keyboardAdjust(right));  // already at the edge
   }
 
+  void cornerResizeClampsAllFourHandlesAndPreservesOppositeCorner() {
+    const Topology topology{{"desktop", {0, 0, 100, 80}, {0, 0, 100, 80}, 1}};
+    struct Case { Corner corner; PhysicalPoint point; PhysicalRect expected; };
+    const Case cases[]{
+      {Corner::TopLeft, {-10, -10}, {0, 0, 60, 50}},
+      {Corner::TopRight, {120, -10}, {20, 0, 100, 50}},
+      {Corner::BottomLeft, {-10, 100}, {0, 20, 60, 80}},
+      {Corner::BottomRight, {120, 100}, {20, 20, 100, 80}},
+      {Corner::TopLeft, {99, 79}, {59, 49, 60, 50}},
+      {Corner::TopRight, {0, 79}, {20, 49, 21, 50}},
+      {Corner::BottomLeft, {99, 0}, {59, 20, 60, 21}},
+      {Corner::BottomRight, {0, 0}, {20, 20, 21, 21}}};
+    for (const auto &entry : cases) {
+      int published = 0; RegionSession session(topology, {false, false}, {}, [&](const SessionOutcome &) { ++published; });
+      session.resumeAt(SessionState::Idle); QVERIFY(!session.resizeCorner(entry.corner, entry.point));
+      session.pointerDown({20, 20}); session.pointerUp({60, 50});
+      QVERIFY(session.resizeCorner(entry.corner, entry.point)); QCOMPARE(session.selection(), std::optional<PhysicalRect>(entry.expected));
+      QCOMPARE(session.state(), SessionState::Selected); QCOMPARE(published, 0);
+      QVERIFY(!session.resizeCorner(entry.corner, entry.point));
+      session.keyEnter(); QVERIFY(!session.resizeCorner(entry.corner, {40, 40}));
+      session.captureSucceeded(); QCOMPARE(published, 1);
+      QVERIFY(!session.resizeCorner(entry.corner, {40, 40})); QCOMPARE(session.selection(), std::optional<PhysicalRect>(entry.expected));
+    }
+  }
+  void cornerResizeAllowsDesktopGapAndCancelPublishesNoRegion() {
+    const Topology topology{{"left", {-100, -50, 0, 50}, {-100, -50, 0, 50}, 1}, {"right", {50, -50, 150, 50}, {50, -50, 150, 50}, 1}};
+    std::optional<SessionOutcome> outcome; RegionSession session(topology, {false, false}, {}, [&](const SessionOutcome &o) { outcome = o; });
+    session.resumeAt(SessionState::Idle); session.pointerDown({-20, -20}); session.pointerUp({80, 20});
+    QVERIFY(session.resizeCorner(Corner::BottomRight, {20, 0}));
+    QCOMPARE(session.selection(), std::optional<PhysicalRect>(PhysicalRect{-20, -20, 20, 0}));
+    session.cancel(); QVERIFY(outcome); QVERIFY(!outcome->rectangle); QVERIFY(!outcome->lastRegion); QVERIFY(!session.resizeCorner(Corner::TopLeft, {-40, -40}));
+  }
+
   // RC-011: dragging overrides snapping.
   void dragOverridesSnapping() {
     RegionSession session(twoDisplays(), SessionSettings{false, true}, {SnapTarget{{0, 0, 8, 4}}}, {});

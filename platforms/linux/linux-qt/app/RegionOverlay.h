@@ -3,7 +3,7 @@
 // session state owned by CaptureController. It holds no selection logic.
 #pragma once
 
-#include "capture/RegionGeometry.h"
+#include "capture/RegionSession.h"
 
 #include <QImage>
 #include <QWidget>
@@ -34,6 +34,7 @@ private:
   xerahs::capture::PhysicalPoint toPhysical(const QPointF &widgetPoint) const;
   QRectF toWidget(const xerahs::capture::PhysicalRect &rect) const;
   QPointF toWidget(xerahs::capture::PhysicalPoint point) const;
+  std::optional<xerahs::capture::Corner> cornerAt(const QPointF &point) const;
   void paintHint(QPainter &painter);
   void paintBadge(QPainter &painter, const QRectF &selection, const xerahs::capture::PhysicalRect &physical);
 
@@ -42,6 +43,7 @@ private:
   QImage m_snapshot;  // immutable shared frozen source, never modified
   QRect m_source;
   QPointF m_screenOrigin;
+  std::optional<xerahs::capture::Corner> m_draggingCorner;
 };
 
 }  // namespace xerahs::app

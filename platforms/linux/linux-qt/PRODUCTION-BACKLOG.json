@@ -440,6 +440,18 @@
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "RC-010",
+        "RC-023",
+        "RC-019"
+      ],
+      "outcome": "Selected region corner handles are interactive with logical-coordinate hit-testing, persistent drag cursors, grab offset, Core positive-size/desktop clamps, resize announcements and explicit Enter confirmation. All corners at 1x/2x native scale and cancellation/actual output are tested. Optional presets and native target/accessibility qualification remain partial. RC-027 recapture requires an approved physical mapping source before pixel acquisition; no speculative recapture was added.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+      ]
     }
   ]
 }

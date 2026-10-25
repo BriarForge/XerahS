@@ -194,7 +194,7 @@
       "vectors": [
         "keyboard-move-stops-at-edge"
       ],
-      "note": "Arrow, Shift+Arrow and Alt+Arrow movement/resize remain clamped; both Settings and overlay document physical 1/10-pixel steps. Disabling quick confirmation now makes post-release adjustment reachable natively; a private-bus test checks adjusted geometry and actual output dimensions. Interactive resize handles and optional presets remain unfinished; target qualification remains Required.",
+      "note": "Native selected-region corner handles are interactive. Four corners hit-test in logical overlay coordinates and route through Core positive-size/desktop-bound resizing; the opposite corner and grab offset stay fixed. Drag release remains selected until Enter. Tests cover all corners at 1x/2x scale, actual output dimensions, no premature actions, cancel, free replacement selection, negative origins, desktop gaps and terminal idempotence. Arrow/Shift/Alt controls remain available. Optional size presets and physical cross-monitor/compositor/accessibility qualification remain unfinished.",
       "disposition": "Required",
       "audit": {
         "classification": "partial",
@@ -206,7 +206,8 @@
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp"
       ]
     },
     "RC-011": {
@@ -344,13 +345,17 @@
     "RC-019": {
       "status": "partial",
       "vectors": [],
-      "note": "Native keyboard selection, accessible bounds/instructions and actual progress in overlay descriptions and a command-window QProgressBar have fixture evidence. Cancelled progress returns to a terminal command-window status without an alert; successful/error results remain visible. Full physical keyboard/compositor and Orca qualification remain Required.",
+      "note": "Native keyboard selection, accessible bounds/instructions and actual progress in overlay descriptions and a command-window QProgressBar have fixture evidence. Cancelled progress returns to a terminal command-window status without an alert; successful/error results remain visible. Full physical keyboard/compositor and Orca qualification remain Required. The overlay announces resized physical bounds and documents corner dragging; existing keyboard-only selection and resize remain available. Mouse-path tests check non-color resize cursor feedback including during the entire drag. Physical accessibility review remains required.",
       "disposition": "Required",
       "audit": {
         "classification": "partial",
         "spec_line": 87,
         "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
-      }
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+      ]
     },
     "RC-020": {
       "status": "not-started",
@@ -418,7 +423,12 @@
           "uncovered-area-is-transparent"
         ],
         "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
-      }
+      },
+      "note": "Pointer corner resizing reuses Core keyboard bounds and one-pixel minimum; tests cover all corners beyond desktop bounds, negative coordinates and a gap between displays. Native mapping qualification remains subject to the recorded mapping blocker.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+      ]
     },
     "RC-024": {
       "status": "implemented",
@@ -545,9 +555,12 @@
         "restrictedPermissionFails",
         "completionPublishesOnceWithLastRegion",
         "keyboardAdjustsSelectedOnly",
-        "dragOverridesSnapping"
+        "dragOverridesSnapping",
+        "cornerResizeClampsAllFourHandlesAndPreservesOppositeCorner",
+        "cornerResizeAllowsDesktopGapAndCancelPublishesNoRegion"
       ],
       "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp": [
+        "nativeCornerHandlesResizeWithoutPrematureCaptureAndKeepGrabOffset",
         "regionOptionsFreezeBeforeAcquisitionAndAllowKeyboardAdjustment",
         "Close",
         "respond",
