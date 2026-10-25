@@ -66,6 +66,19 @@ private slots:
     for (const auto &invalid : {corrupt, future}) { choose(dialog, invalid); QVERIFY(!forget(dialog)->isEnabled()); }
     QVERIFY(!store.erase(corrupt, read(corruptPath)).stored); QVERIFY(!store.erase(future, newer).stored); QCOMPARE(read(corruptPath), QByteArray("{damaged-fixture")); QCOMPARE(read(futurePath), newer); QCOMPARE(read(path), before + " ");
   }
+  void forgettingAnUnconfirmedObservationCannotResurrectItsWriter() {
+    QTemporaryDir dir; const auto folder = dir.filePath("records"); NativeWorkflowExecutions store(folder);
+    auto workflow = defaultCaptureWorkflows().entries.front(); workflow.output.directory = dir.path();
+    const auto id = uuid(); WorkflowExecution running(id, "external-activation", workflow, store.writer());
+    QVERIFY(running.admit()); QVERIFY(running.start());
+    const auto listing = store.list(); QCOMPARE(listing.entries.size(), size_t(1));
+    const auto entry = listing.entries.front(); QCOMPARE(entry.id, id);
+    QCOMPARE(entry.result.value("state"), QJsonValue("outcome-unconfirmed"));
+    QVERIFY(store.erase(id, entry.snapshot).stored);
+    QVERIFY(!running.processing(uuid()));
+    QVERIFY(!QFile::exists(folder + "/" + id + ".json"));
+    QCOMPARE(store.result(id).value("error").toObject().value("code"), QJsonValue("workflow-execution-not-found"));
+  }
   void captureDefersReadsAndRevokesPendingRemoval() {
     QTemporaryDir dir; NativeWorkflowExecutions store(dir.filePath("records")); const auto id = record(store, dir.path()); const auto before = store.list().entries[0].snapshot;
     bool busy = true; std::atomic<int> reads{0}, erases{0}; std::atomic<bool> worker{false}; auto ports = workflowHistoryPorts(store); const auto list = ports.list; const auto erase = ports.erase;
