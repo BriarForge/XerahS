@@ -1,17 +1,17 @@
 {
   "graphify_version": "0.9.95",
   "source_scope": ".",
-  "total_files": 697,
-  "semantic_documents": 143,
-  "validated_parent_run_cache_documents": 136,
+  "semantic_documents": 147,
+  "validated_cache_documents": 139,
   "fresh_semantic_documents": [
-    "AGENTS.md",
     "platforms/AGENTS.md",
-    "platforms/linux/AGENTS.md",
-    "platforms/macos/AGENTS.md",
-    "platforms/windows/AGENTS.md",
-    "product-contract/AGENTS.md",
-    "tools/graphify/README.md"
+    "platforms/PROGRESS.md",
+    "platforms/linux/PROGRESS.md",
+    "platforms/linux/README.md",
+    "platforms/macos/PROGRESS.md",
+    "platforms/macos/README.md",
+    "platforms/windows/PROGRESS.md",
+    "platforms/windows/README.md"
   ],
   "token_usage_status": "unavailable_host_agent"
 }

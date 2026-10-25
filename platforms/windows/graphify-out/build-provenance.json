@@ -1,0 +1,11 @@
+{
+  "graphify_version": "0.9.95",
+  "source_scope": "platforms/windows",
+  "semantic_documents": 4,
+  "fresh_documents": [
+    "README.md",
+    "PROGRESS.md"
+  ],
+  "validated_cached_documents": 2,
+  "token_usage_status": "unavailable_host_agent"
+}
