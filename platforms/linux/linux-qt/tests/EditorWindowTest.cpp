@@ -1,9 +1,11 @@
 // Actual native actions, modal dialogs, worker preparation, undo and persisted
 // PNG/sidecar reopening. All images and files are temporary fixtures.
 #include "EditorWindow.h"
+#include "EditorSaveDialog.h"
 #include "EditorCanvas.h"
 #include "CanvasCropDialog.h"
 #include <QAccessible>
+#include <QImageReader>
 #include <QMetaMethod>
 #include "EditorSource.h"
 #include "CanvasRotationDialog.h"
@@ -1144,15 +1146,53 @@ private slots:
     connect(undo, &QAction::changed, this, [&] { if (onRestore && acknowledged && undo->isEnabled()) window.reset(); });
     trigger(*window, "saveImage"); QVERIFY(acknowledged); QVERIFY(!window); const auto loaded = loadSource(path); QVERIFY(loaded.document); QCOMPARE(loaded.document->annotations.size(), size_t(1));
   }
-  void saveRefusesAnUnavailableFormatWithoutEncodingOrChangingFiles() {
+  void saveOfLoadedJpegRequiresExplicitOptionsAndCancelKeepsFiles() {
     QTemporaryDir dir; const auto path = dir.filePath("image.jpg"); QVERIFY(fixture().save(path, "JPEG")); const auto original = storedBytes(path);
     QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);
     window->show(); drawRectangle(*window->findChild<EditorCanvas *>()); int encodes = 0; EditorSaveHooks hooks;
     hooks.encode = [&](const QImage &image, QIODevice *device) { ++encodes; return image.save(device, "PNG"); }; window->setSaveHooks(hooks);
     QTimer timer; bool reported = false;
-    connect(&timer, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (box && box->windowTitle() == "Format unavailable") { reported = true; box->accept(); } });
+    connect(&timer, &QTimer::timeout, [&] { auto *picker = qobject_cast<QFileDialog *>(QApplication::activeModalWidget()); if (picker && picker->objectName() == "editorSaveAsDialog") { reported = true; QVERIFY(picker->selectedNameFilter().startsWith("JPEG")); QVERIFY(picker->findChild<QLineEdit *>("editorSaveQuality")->text().isEmpty()); picker->reject(); } });
     timer.start(5); trigger(*window, "saveImage"); timer.stop(); QVERIFY(reported); QCOMPARE(encodes, 0); QCOMPARE(storedBytes(path), original);
     QVERIFY(!QFile::exists(path + ".xann")); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+  }
+  void splitJpegSaveAsRepairsCompanionWithoutAdoptingPathEarly() {
+    QTemporaryDir dir; const auto original = dir.filePath("original.png"), target = dir.filePath("chosen.jpg"); QVERIFY(fixture().save(original)); const auto originalBytes = storedBytes(original);
+    QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(original)); QVERIFY(window); window->show(); drawRectangle(*window->findChild<EditorCanvas *>());
+    QVERIFY(QDir().mkdir(target + ".xann")); QTimer timer; QElapsedTimer deadline; deadline.start(); bool selected = false, partial = false, repaired = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      if (auto *picker = qobject_cast<QFileDialog *>(QApplication::activeModalWidget())) {
+        if (deadline.elapsed() > 5000) { picker->reject(); return; } if (selected) return; selected = true;
+        picker->selectNameFilter("JPEG image (*.jpg *.jpeg)"); picker->findChild<QLineEdit *>("editorSaveQuality")->setText("90"); picker->findChild<QLineEdit *>("editorSaveJpegMatte")->setText("#FFFFFF"); if (auto *buttons = picker->findChild<QDialogButtonBox *>()) if (auto *save = buttons->button(QDialogButtonBox::Save)) save->setFocus(); picker->selectFile(target); QCOMPARE(picker->selectedFiles().value(0), target); QMetaObject::invokeMethod(picker, "accept");
+      } else if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) {
+        if (box->windowTitle() == "Save incomplete") { partial = true; QVERIFY(box->text().contains("JPEG saved")); QVERIFY(box->informativeText().contains("Format: JPEG")); box->accept(); }
+        else if (box->objectName() == "retryEditorSidecarDialog") { repaired = true; QVERIFY(box->text().contains("saved JPEG")); box->button(QMessageBox::Retry)->click(); }
+      }
+    });
+    timer.start(5); trigger(*window, "saveAsImage"); timer.stop(); QVERIFY(selected); QVERIFY(partial); QCOMPARE(storedBytes(original), originalBytes); QVERIFY(window->windowTitle().contains("original.png")); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+    QCOMPARE(QImageReader::imageFormat(target), QByteArray("jpeg")); const auto jpeg = storedBytes(target); auto *retry = window->findChild<QAction *>("retryEditorSidecar"); QVERIFY(retry && retry->isEnabled()); QVERIFY(!retry->statusTip().contains("PNG"));
+    QVERIFY(QDir().rmdir(target + ".xann")); timer.start(5); retry->trigger(); timer.stop(); QVERIFY(repaired); QCOMPARE(storedBytes(target), jpeg); QCOMPARE(storedBytes(original), originalBytes); QVERIFY(window->windowTitle().contains("chosen.jpg")); QVERIFY(!window->windowTitle().contains(QChar(0x2022))); QVERIFY(loadSource(target).document);
+    trigger(*window, "saveImage"); QCOMPARE(QImageReader::imageFormat(target), QByteArray("jpeg")); QCOMPARE(storedBytes(original), originalBytes);
+  }
+  void saveAsOffersNativeFormatsAndReusesExplicitOptions_data() {
+    QTest::addColumn<QString>("format"); QTest::newRow("jpeg") << QString("jpeg"); QTest::newRow("webp") << QString("webp");
+  }
+  void saveAsOffersNativeFormatsAndReusesExplicitOptions() {
+    QFETCH(QString, format); QTemporaryDir dir; QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty());
+    std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedImage(fixture())); QVERIFY(window); window->show(); drawRectangle(*window->findChild<EditorCanvas *>());
+    const auto target = dir.filePath(format == "jpeg" ? "chosen.jpg" : "chosen.webp"); QTimer timer; QElapsedTimer deadline; deadline.start(); bool configured = false, timeout = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *picker = qobject_cast<QFileDialog *>(QApplication::activeModalWidget()); if (!picker) return;
+      if (deadline.elapsed() > 5000) { timeout = true; picker->reject(); return; }
+      if (configured) return; configured = true;
+      QCOMPARE(picker->nameFilters().size(), 3); picker->selectNameFilter(format == "jpeg" ? "JPEG image (*.jpg *.jpeg)" : "WebP image (*.webp)");
+      picker->findChild<QLineEdit *>("editorSaveQuality")->setText("90"); if (format == "jpeg") picker->findChild<QLineEdit *>("editorSaveJpegMatte")->setText("#112233");
+      picker->selectFile(target); QMetaObject::invokeMethod(picker, "accept");
+    });
+    QSignalSpy saved(window.get(), &EditorWindow::saveFinished); timer.start(5); trigger(*window, "saveImage"); timer.stop();
+    QVERIFY(configured && !timeout); QCOMPARE(saved.count(), 1); QVERIFY(saved[0][0].toBool() && saved[0][1].toBool()); QCOMPARE(QImageReader::imageFormat(target), format.toLatin1()); QVERIFY(loadSource(target).document);
+    QVERIFY(!window->windowTitle().contains(QChar(0x2022))); trigger(*window, "saveImage"); QCOMPARE(saved.count(), 2); QVERIFY(saved[1][0].toBool() && saved[1][1].toBool());
+    QCOMPARE(QImageReader::imageFormat(target), format.toLatin1());
   }
   void retainedAnnotatedDocumentOpensUnsavedAndPersistsAnEditablePair() {
     QTemporaryDir dir; QVERIFY(initializeNativeEditorPreferences(dir.filePath("settings/editor.json")).isEmpty());

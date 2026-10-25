@@ -11,7 +11,10 @@
     "platforms/linux/linux-qt/app/EditorWindow.cpp",
     "platforms/linux/linux-qt/app/CaptureAnnotationDialog.cpp",
     "platforms/linux/linux-qt/app/PinWindow.cpp",
-    "platforms/linux/linux-qt/app/CaptureActions.cpp"
+    "platforms/linux/linux-qt/app/CaptureActions.cpp",
+    "platforms/linux/linux-qt/src/image-editor/RasterSaveOptions.cpp",
+    "platforms/linux/linux-qt/app/EditorSaveDialog.cpp",
+    "platforms/linux/linux-qt/app/EditorSaveProgress.cpp"
   ],
   "requirements": {
     "EO-001": {
@@ -56,33 +59,42 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native PNG Save/Save As validate paths and adopt only complete successful results. Full user-facing formats and filesystem/platform qualification remain.",
+      "note": "Native PNG Save/Save As validate paths and adopt only complete successful results. Full user-facing formats and filesystem/platform qualification remain. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
         "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
-        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 15,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial; user-facing PNG/JPEG/WebP choices, explicit quality/JPEG matte and atomic paired persistence now have native tests. Full profile/codec/target/fault matrix and human qualification remain.",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+        ]
       }
     },
     "EO-004": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Editor raster Save As currently exposes PNG. JPEG/WebP alpha/quality/extension/overwrite behavior is missing; format-disposition.json still requires product-owner approval.",
+      "note": "Editor raster Save As currently exposes PNG. JPEG/WebP alpha/quality/extension/overwrite behavior is missing; format-disposition.json still requires product-owner approval. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
         "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
-        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ],
       "waiting_on": [
         "Mike: approve format-disposition.json alpha/quality/overwrite semantics before activation."
@@ -90,45 +102,64 @@
       "audit": {
         "classification": "partial",
         "spec_line": 18,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial; user-facing PNG/JPEG/WebP choices, explicit quality/JPEG matte and atomic paired persistence now have native tests. Full profile/codec/target/fault matrix and human qualification remain.",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+        ]
       }
     },
     "EO-005": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Same-directory temporary publication and prior-file protection are tested. Full permission/ACL/disk-full/shutdown/durability and target matrix remain.",
+      "note": "Same-directory temporary publication and prior-file protection are tested. Full permission/ACL/disk-full/shutdown/durability and target matrix remain. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
         "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
-        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 22,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial; user-facing PNG/JPEG/WebP choices, explicit quality/JPEG matte and atomic paired persistence now have native tests. Full profile/codec/target/fault matrix and human qualification remain.",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+        ]
       }
     },
     "EO-006": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Raster/sidecar split results, dirty state and companion-only repair have native tests. Complete legacy empty companion disposition and compatibility qualification remain.",
+      "note": "Raster/sidecar split results, dirty state and companion-only repair have native tests. Complete legacy empty companion disposition and compatibility qualification remain. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
         "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
-        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 26,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial; user-facing PNG/JPEG/WebP choices, explicit quality/JPEG matte and atomic paired persistence now have native tests. Full profile/codec/target/fault matrix and human qualification remain.",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+        ]
       }
     },
     "EO-007": {
@@ -260,57 +291,78 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Existing save/copy/print/capture ports have ownership and lifetime tests. Missing output hosts and full cross-action reentrancy/availability contracts remain.",
+      "note": "Existing save/copy/print/capture ports have ownership and lifetime tests. Missing output hosts and full cross-action reentrancy/availability contracts remain. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
         "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
-        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 48,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial; user-facing PNG/JPEG/WebP choices, explicit quality/JPEG matte and atomic paired persistence now have native tests. Full profile/codec/target/fault matrix and human qualification remain.",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+        ]
       }
     },
     "EO-015": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native busy/cancel/retry/keyboard/accessibility fixtures exist for implemented outputs. Full output coverage and live assistive-technology qualification remain.",
+      "note": "Native busy/cancel/retry/keyboard/accessibility fixtures exist for implemented outputs. Full output coverage and live assistive-technology qualification remain. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
         "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
-        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 52,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial; user-facing PNG/JPEG/WebP choices, explicit quality/JPEG matte and atomic paired persistence now have native tests. Full profile/codec/target/fault matrix and human qualification remain.",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+        ]
       }
     },
     "EO-016": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native failure and split persistence tests exist. No published EO vectors; the complete fault matrix and supported platforms remain.",
+      "note": "Native failure and split persistence tests exist. No published EO vectors; the complete fault matrix and supported platforms remain. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
         "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
-        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 55,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial; user-facing PNG/JPEG/WebP choices, explicit quality/JPEG matte and atomic paired persistence now have native tests. Full profile/codec/target/fault matrix and human qualification remain.",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+        ]
       }
     }
   },
@@ -325,10 +377,16 @@
       "platforms/linux/linux-qt/app/EditorSave.cpp",
       "platforms/linux/linux-qt/app/EditorCopy.cpp",
       "platforms/linux/linux-qt/app/EditorPrint.cpp",
-      "platforms/linux/linux-qt/app/EditorWindow.cpp"
+      "platforms/linux/linux-qt/app/EditorWindow.cpp",
+      "platforms/linux/linux-qt/src/image-editor/RasterSaveOptions.cpp",
+      "platforms/linux/linux-qt/app/EditorSaveDialog.cpp",
+      "platforms/linux/linux-qt/app/EditorSaveProgress.cpp"
     ],
     "automated_test_surfaces": {
       "platforms/linux/linux-qt/tests/EditorSaveTest.cpp": [
+        "cancellationAtEncodingBoundaryDoesNotStartAnEncoder",
+        "encodedFormatsKeepEditableSourceHashAndChosenAlphaPolicy",
+        "qualityChangesActualEncodingAndFailuresKeepPreviousPairs",
         "workerSnapshotSurvivesConcurrentCallerChanges",
         "realPairReopensWithoutCompoundingAndUsesTheEncodedRasterHash",
         "encodeExceptionAndRacingReplacementPreserveThePreviousDestination",
@@ -414,7 +472,9 @@
         "partialSaveAsKeepsTheCurrentPathUntilItsCompanionRepairCompletes",
         "destructionDuringSaveCancelsTheOwnedWorkerWithoutWaitingOrPublishing",
         "completionCanDestroyItsOwnerWithoutInvalidatingWorkerResults",
-        "saveRefusesAnUnavailableFormatWithoutEncodingOrChangingFiles",
+        "saveOfLoadedJpegRequiresExplicitOptionsAndCancelKeepsFiles",
+        "splitJpegSaveAsRepairsCompanionWithoutAdoptingPathEarly",
+        "saveAsOffersNativeFormatsAndReusesExplicitOptions",
         "retainedAnnotatedDocumentOpensUnsavedAndPersistsAnEditablePair",
         "toolbarApplyKeepsImageCheckpointAndRedoWhileHiddenCommandsRemainReachable",
         "cancelledOrFailedToolbarDraftPreservesActualEditorHistory",
@@ -477,8 +537,14 @@
         "pointerStatusReportsTheDocumentPixelAndItsSourceColour",
         "pointerStatusSizeFollowsTheChangedImage",
         "pointerStatusReportsPixelsOfTheChangedImage"
+      ],
+      "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp": [
+        "jpegAlphaWarningExplainsThatEmptyDocumentsHaveNoCompanion",
+        "formatsRequireExplicitQualityAndOpaqueMatteWithMatchingExtension",
+        "validatesOptionsWithoutClampingOrGuessingDefaults",
+        "webpKeepsAlphaAndHasNoImplicitQualityChoice"
       ]
     },
-    "remaining_scope": "Native immutable PNG/copy/print and split-sidecar tests exist. JPEG/WebP UI, editor upload/pin/task hosts, wallpaper and complete output fault/permission matrix remain."
+    "remaining_scope": "Native immutable PNG/copy/print and split-sidecar tests exist. Full JPEG/WebP codec/profile/target qualification, editor upload/pin/task hosts, wallpaper and complete output fault/permission matrix remain."
   }
 }

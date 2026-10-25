@@ -1,9 +1,9 @@
 #include "EditorSave.h"
+#include "OwnedWork.h"
 #include <QDialog>
 #include <QEventLoop>
 #include <QPointer>
 #include <QProgressDialog>
-#include <QThread>
 #include <QTimer>
 #include <QWidget>
 #include <atomic>
@@ -15,11 +15,11 @@ struct SaveWork {
   std::atomic<EditorSavePhase> phase{EditorSavePhase::Rendering};
   SaveOutcome outcome;
 };
-QString phaseText(EditorSavePhase phase) {
+QString phaseText(EditorSavePhase phase, const QString &format) {
   switch (phase) {
     case EditorSavePhase::Rendering: return "Rendering the saved document snapshot…";
-    case EditorSavePhase::Encoding: return "Encoding PNG…";
-    case EditorSavePhase::PublishingRaster: return "Saving PNG…";
+    case EditorSavePhase::Encoding: return "Encoding " + format + "…";
+    case EditorSavePhase::PublishingRaster: return "Saving " + format + "…";
     case EditorSavePhase::SavingAnnotations: return "Saving editable annotations…";
     case EditorSavePhase::Complete: return "Save finished.";
   }
@@ -27,7 +27,7 @@ QString phaseText(EditorSavePhase phase) {
 }
 }
 SaveOutcome runEditorSave(const QString &path, const QImage &source, const xerahs::editor::AnnotationDocument &document,
-                         QWidget *parent, const EditorSaveHooks &hooks, const EditorSaveReceiptPtr &repair) {
+                         QWidget *parent, const EditorSaveHooks &hooks, const EditorSaveReceiptPtr &repair, const xerahs::editor::RasterSaveOptions &encoding) {
   auto state = std::make_shared<SaveWork>();
   QPointer<QWidget> owner(parent);
   QPointer<QProgressDialog> dialog(new QProgressDialog("Preparing save…", "Cancel", 0, 100, parent));
@@ -38,15 +38,15 @@ SaveOutcome runEditorSave(const QString &path, const QImage &source, const xerah
   QObject::connect(dialog, &QProgressDialog::canceled, &completion, cancel);
   QObject::connect(dialog, &QDialog::rejected, &completion, cancel);
   if (parent) QObject::connect(parent, &QObject::destroyed, &completion, [&] { cancel(); abandoned = true; completion.quit(); });
-  QThread *worker = nullptr;
+  OwnedWork worker;
+  const auto format = xerahs::editor::rasterFormatName(repair ? repair->encoding.format : encoding.format);
   try {
-    worker = QThread::create([state, path, source, document, hooks, repair] {
-      const EditorSaveControl control{[state] { return state->cancelled.load(); }, [state](EditorSavePhase phase, int percent) { state->phase.store(phase); state->percent.store(percent); }};
-      state->outcome = repair ? retryEditorSidecar(repair, control, hooks) : saveEdit(path, source, document, control, hooks);
-      state->ready.store(true);
-    });
+    worker = OwnedWork::run<bool>(dialog.data(), [state, path, source, document, hooks, repair, encoding](const OwnedWork::Context &context) {
+      const EditorSaveControl control{[state, &context] { return state->cancelled.load() || context.cancelled(); }, [state](EditorSavePhase phase, int percent) { state->phase.store(phase); state->percent.store(percent); }};
+      state->outcome = repair ? retryEditorSidecar(repair, control, hooks) : saveEdit(path, source, document, control, hooks, encoding);
+      state->ready.store(true); return true;
+    }, [](bool) {});
   } catch (...) { delete dialog.data(); SaveOutcome result; result.rasterError = xerahs::editor::diagnostic::rasterSaveFailed; return result; }
-  QObject::connect(worker, &QThread::finished, worker, &QObject::deleteLater);
   QTimer timer;
   QObject::connect(&timer, &QTimer::timeout, &completion, [&] {
     if (state->ready.load()) { completion.quit(); return; }
@@ -54,10 +54,10 @@ SaveOutcome runEditorSave(const QString &path, const QImage &source, const xerah
       dialog->setValue(state->percent.load());
       // Modal setValue can process events that destroy the owner/dialog.
       if (!dialog) return;
-      dialog->setLabelText(state->cancelled.load() ? "Cancelling save at the next safe boundary…" : phaseText(state->phase.load()));
+      dialog->setLabelText(state->cancelled.load() ? "Cancelling save at the next safe boundary…" : phaseText(state->phase.load(), format));
     }
   });
-  worker->start(); timer.start(15); if (dialog) dialog->open();
+  timer.start(15); if (dialog) dialog->open();
   if (!abandoned) completion.exec();
   timer.stop();
   delete dialog.data();

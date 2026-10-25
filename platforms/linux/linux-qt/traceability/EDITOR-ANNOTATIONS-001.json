@@ -518,7 +518,7 @@
         "partialSaveAsKeepsTheCurrentPathUntilItsCompanionRepairCompletes",
         "destructionDuringSaveCancelsTheOwnedWorkerWithoutWaitingOrPublishing",
         "completionCanDestroyItsOwnerWithoutInvalidatingWorkerResults",
-        "saveRefusesAnUnavailableFormatWithoutEncodingOrChangingFiles",
+        "saveOfLoadedJpegRequiresExplicitOptionsAndCancelKeepsFiles",
         "retainedAnnotatedDocumentOpensUnsavedAndPersistsAnEditablePair",
         "toolbarApplyKeepsImageCheckpointAndRedoWhileHiddenCommandsRemainReachable",
         "cancelledOrFailedToolbarDraftPreservesActualEditorHistory",

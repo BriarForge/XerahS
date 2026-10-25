@@ -80,7 +80,7 @@ private:
                     QImage source, const QImage &display);
   bool save(bool chooseFile);
   bool retrySave();
-  bool performSave(const QString &target, const EditorSaveReceiptPtr &repair = {});
+  bool performSave(const QString &target, const EditorSaveReceiptPtr &repair = {}, const xerahs::editor::RasterSaveOptions &encoding = {});
   bool withOutputBusy(const std::function<bool()> &operation);
   bool configurePreferences(const std::function<bool()> &operation);
   bool copyImage(const EditorCopyPayloadPtr &retry = {});
@@ -145,6 +145,7 @@ private:
   EditorHistoryHooks m_historyHooks;
   CanvasCropHooks m_cropHooks;
   EditorSaveHooks m_saveHooks;
+  xerahs::editor::RasterSaveOptions m_saveEncoding;
   EditorSaveReceiptPtr m_partialSave;
   std::optional<quint64> m_partialSaveState;
   QString m_saveMessage;

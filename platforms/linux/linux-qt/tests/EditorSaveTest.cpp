@@ -1,6 +1,8 @@
 #include "EditorSave.h"
 #include "EditorSource.h"
 #include <QApplication>
+#include <QImageReader>
+#include <QImageWriter>
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
@@ -22,6 +24,56 @@ void write(const QString &path, const QByteArray &value) { QFile file(path); if 
 class EditorSaveTest final : public QObject {
   Q_OBJECT
 private slots:
+  void cancellationAtEncodingBoundaryDoesNotStartAnEncoder() {
+    QTemporaryDir dir; const auto path = dir.filePath("kept.jpg"); const auto source = edited(); QVERIFY(pixels().save(path, "JPEG")); const auto before = bytes(path);
+    bool cancel = false; int encodes = 0; EditorSaveControl control{[&] { return cancel; }, [&](EditorSavePhase phase, int) { if (phase == EditorSavePhase::Encoding) cancel = true; }};
+    EditorSaveHooks hooks; hooks.encode = [&](const QImage &image, QIODevice *device) { ++encodes; return image.save(device, "JPEG"); };
+    const auto result = saveEdit(path, source.image, *source.document, control, hooks, {RasterFormat::Jpeg, 90, 0xFFFFFFFF});
+    QVERIFY(result.cancelled && !result.rasterSaved); QCOMPARE(encodes, 0); QCOMPARE(bytes(path), before); QVERIFY(!QFile::exists(path + ".xann"));
+  }
+  void encodedFormatsKeepEditableSourceHashAndChosenAlphaPolicy_data() {
+    QTest::addColumn<QString>("format"); QTest::newRow("jpeg") << QString("jpeg"); QTest::newRow("webp") << QString("webp");
+  }
+  void encodedFormatsKeepEditableSourceHashAndChosenAlphaPolicy() {
+    QFETCH(QString, format); QTemporaryDir dir; QImage image(40, 30, QImage::Format_ARGB32); image.fill(qRgba(255, 0, 0, 128));
+    auto source = prepareCapturedSource(image); EditorSession session(*source.document); session.createRectangle({8, 8}, {16, 16});
+    const auto original = serializeDocument(session.document()); RasterSaveOptions options;
+    options.format = format == "jpeg" ? RasterFormat::Jpeg : RasterFormat::WebP; options.quality = 95;
+    if (format == "jpeg") options.jpegMatte = 0xFF0000FF;
+    const auto path = dir.filePath(format == "jpeg" ? "image.jpg" : "image.webp"); bool inspected = false;
+    EditorSaveHooks hooks; hooks.encode = [&](const QImage &pixels, QIODevice *device) {
+      inspected = true;
+      if (format == "jpeg") { if (pixels.hasAlphaChannel() || pixels.pixel(0, 0) != qRgb(128, 0, 127)) return false; }
+      else if (pixels.pixel(0, 0) != qRgba(255, 0, 0, 128)) return false;
+      QImageWriter writer(device, format.toLatin1()); writer.setQuality(95); return writer.write(pixels);
+    };
+    const auto result = saveEdit(path, source.image, session.document(), {}, hooks, options);
+    QVERIFY(inspected && result.rasterSaved && result.sidecarSaved); QCOMPARE(QImageReader::imageFormat(path), format.toLatin1());
+    if (format == "webp") QCOMPARE(qAlpha(QImage(path).pixel(0, 0)), 128); else QCOMPARE(qAlpha(QImage(path).pixel(0, 0)), 255);
+    QCOMPARE(result.receipt->rasterHash, QString("sha256:") + QString::fromLatin1(QCryptographicHash::hash(bytes(path), QCryptographicHash::Sha256).toHex()));
+    const auto reopened = loadSource(path); QVERIFY(reopened.document); QVERIFY(reopened.warnings.isEmpty()); QCOMPARE(reopened.image, source.image); QCOMPARE(reopened.document->annotations.size(), size_t(1));
+    QCOMPARE(serializeDocument(session.document()), original); QCOMPARE(source.image, image);
+    // A split persistence outcome repairs only the companion, for both formats.
+    QVERIFY(QFile::remove(path + ".xann")); QVERIFY(QDir().mkdir(path + ".xann"));
+    const auto partial = saveEdit(path, source.image, session.document(), {}, {}, options); QVERIFY(partial.rasterSaved && !partial.sidecarSaved); const auto saved = bytes(path);
+    QVERIFY(QDir().rmdir(path + ".xann")); int encodes = 0; hooks.encode = [&](const QImage &, QIODevice *) { ++encodes; return false; };
+    const auto repaired = retryEditorSidecar(partial.receipt, {}, hooks); QVERIFY(repaired.rasterSaved && repaired.sidecarSaved && repaired.rasterReused); QCOMPARE(encodes, 0); QCOMPARE(bytes(path), saved); QVERIFY(loadSource(path).document);
+  }
+  void qualityChangesActualEncodingAndFailuresKeepPreviousPairs_data() {
+    QTest::addColumn<QString>("format"); QTest::newRow("jpeg") << QString("jpeg"); QTest::newRow("webp") << QString("webp");
+  }
+  void qualityChangesActualEncodingAndFailuresKeepPreviousPairs() {
+    QFETCH(QString, format); QTemporaryDir dir; auto source = edited(); RasterSaveOptions options;
+    options.format = format == "jpeg" ? RasterFormat::Jpeg : RasterFormat::WebP; if (format == "jpeg") options.jpegMatte = 0xFFFFFFFF;
+    const auto path = dir.filePath(format == "jpeg" ? "image.jpg" : "image.webp"); options.quality = 10;
+    QVERIFY(saveEdit(path, source.image, *source.document, {}, {}, options).sidecarSaved); const auto low = bytes(path); options.quality = 95;
+    QVERIFY(saveEdit(path, source.image, *source.document, {}, {}, options).sidecarSaved); const auto high = bytes(path); QVERIFY(high != low); QCOMPARE(QImageReader::imageFormat(path), format.toLatin1()); const auto companion = bytes(path + ".xann");
+    EditorSaveHooks fail; fail.encode = [](const QImage &, QIODevice *device) { device->write("incomplete"); return false; };
+    const auto failure = saveEdit(path, source.image, *source.document, {}, fail, options); QVERIFY(!failure.rasterSaved); QCOMPARE(bytes(path), high); QCOMPARE(bytes(path + ".xann"), companion);
+    options.quality = -1; int encoded = 0; fail.encode = [&](const QImage &, QIODevice *) { ++encoded; return true; };
+    const auto invalid = saveEdit(path, source.image, *source.document, {}, fail, options); QVERIFY(!invalid.rasterSaved); QCOMPARE(encoded, 0); QCOMPARE(bytes(path), high);
+    QCOMPARE(bytes(path + ".xann"), companion); QVERIFY(QDir(dir.path()).entryList({".xerahs-editor-*"}, QDir::Files | QDir::Hidden).isEmpty());
+  }
   void workerSnapshotSurvivesConcurrentCallerChanges() {
     QTemporaryDir dir; auto source = edited(); const auto path = dir.filePath("image.png");
     std::atomic<bool> entered{false}, released{false}; EditorSaveHooks hooks;

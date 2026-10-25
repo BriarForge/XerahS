@@ -1,6 +1,7 @@
 #pragma once
 #include "image-editor/AnnotationDocument.h"
 #include "image-editor/AnnotationRenderer.h"
+#include "image-editor/RasterSaveOptions.h"
 #include <QImage>
 #include <functional>
 #include <memory>
@@ -27,6 +28,7 @@ struct EditorSaveReceipt {
   QString rasterHash;
   EditorDestination previousSidecar;
   xerahs::editor::AnnotationDocument document;
+  xerahs::editor::RasterSaveOptions encoding;
 };
 using EditorSaveReceiptPtr = std::shared_ptr<const EditorSaveReceipt>;
 enum class EditorSaveArtifact { Raster, Sidecar };
@@ -54,12 +56,14 @@ struct SaveOutcome {
   EditorSaveReceiptPtr receipt;
 };
 SaveOutcome saveEdit(const QString &path, const QImage &source, const xerahs::editor::AnnotationDocument &document,
-                    const EditorSaveControl &control = {}, const EditorSaveHooks &hooks = {});
+                    const EditorSaveControl &control = {}, const EditorSaveHooks &hooks = {},
+                    const xerahs::editor::RasterSaveOptions &encoding = {});
 SaveOutcome retryEditorSidecar(const EditorSaveReceiptPtr &receipt, const EditorSaveControl &control = {}, const EditorSaveHooks &hooks = {});
 // GUI modal progress bridge over an owned worker. `source` must own its pixels;
 // Qt copy-on-write retains that image and a value-owned document for this job.
 // Cancel waits for a safe terminal boundary; parent destruction cancels and releases the bridge without
 // joining or giving the worker references to any GUI/stack/session object.
 SaveOutcome runEditorSave(const QString &path, const QImage &source, const xerahs::editor::AnnotationDocument &document,
-                         QWidget *parent, const EditorSaveHooks &hooks = {}, const EditorSaveReceiptPtr &repair = {});
+                         QWidget *parent, const EditorSaveHooks &hooks = {}, const EditorSaveReceiptPtr &repair = {},
+                         const xerahs::editor::RasterSaveOptions &encoding = {});
 } // namespace xerahs::app

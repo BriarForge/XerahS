@@ -5,6 +5,9 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QImageWriter>
+#include <QColorSpace>
+#include <QPainter>
 #include <QUuid>
 #include <array>
 #include <cerrno>
@@ -181,10 +184,11 @@ void saveAnnotations(SaveOutcome &outcome, Directory &directory, const EditorSav
 }
 }
 SaveOutcome saveEdit(const QString &requested, const QImage &source, const AnnotationDocument &document,
-                    const EditorSaveControl &control, const EditorSaveHooks &hooks) {
+                    const EditorSaveControl &control, const EditorSaveHooks &hooks, const RasterSaveOptions &encoding) {
   SaveOutcome outcome;
   try {
     if (cancelled(control)) { outcome.cancelled = true; return outcome; }
+    if (!validRasterSaveOptions(encoding)) { outcome.rasterError = diagnostic::rasterSaveFailed; return outcome; }
     if (requested.isEmpty() || requested.size() > 32768 || requested.contains(QChar::Null)) { outcome.rasterError = diagnostic::rasterSaveFailed; return outcome; }
     const auto path = QDir::isAbsolutePath(requested) ? requested : QDir::currentPath() + '/' + requested;
     const QFileInfo info(path); Directory directory(info.path()); const auto name = QFile::encodeName(info.fileName());
@@ -194,15 +198,24 @@ SaveOutcome saveEdit(const QString &requested, const QImage &source, const Annot
     // Allocate all acknowledgement/document state before the first publication.
     auto receipt = std::make_shared<EditorSaveReceipt>(); receipt->path = path;
     receipt->directoryDevice = directory.device; receipt->directoryInode = directory.inode;
-    receipt->previousSidecar = destination(directory.fd.value, name + ".xann"); receipt->document = document;
+    receipt->previousSidecar = destination(directory.fd.value, name + ".xann"); receipt->document = document; receipt->encoding = encoding;
     const auto parsed = parseDocument(serializeDocument(document));
     if (!parsed.document) { outcome.rasterError = diagnostic::rasterSaveFailed; return outcome; }
     progress(control, EditorSavePhase::Rendering, 0);
     const auto rendered = renderEditorImage(source, document, {control.cancelled, [&](int p) { progress(control, EditorSavePhase::Rendering, p / 2); }});
     if (rendered.image.isNull() || cancelled(control)) { outcome.cancelled = cancelled(control); if (!outcome.cancelled) outcome.rasterError = diagnostic::rasterSaveFailed; return outcome; }
-    progress(control, EditorSavePhase::Encoding, 55); Temporary temporary(directory); QFile output;
+    progress(control, EditorSavePhase::Encoding, 55);
+    if (cancelled(control)) { outcome.cancelled = true; return outcome; }
+    Temporary temporary(directory); QFile output;
     if (temporary.fd.value < 0 || !output.open(temporary.fd.value, QIODevice::WriteOnly, QFileDevice::DontCloseHandle)) { outcome.rasterError = diagnostic::rasterSaveFailed; return outcome; }
-    const bool encoded = hooks.encode ? hooks.encode(rendered.image, &output) : rendered.image.save(&output, "PNG");
+    QImage raster = rendered.image;
+    if (encoding.format == RasterFormat::Jpeg) {
+      raster = QImage(rendered.image.size(), QImage::Format_RGB32); raster.setColorSpace(rendered.image.colorSpace());
+      raster.fill(*encoding.jpegMatte); QPainter painter(&raster); painter.drawImage(0, 0, rendered.image); painter.end();
+    }
+    QImageWriter writer(&output, rasterFormatId(encoding.format).toLatin1());
+    if (encoding.quality >= 0) writer.setQuality(encoding.quality);
+    const bool encoded = hooks.encode ? hooks.encode(raster, &output) : writer.write(raster);
     if (!encoded || !output.flush() || ::fsync(temporary.fd.value) != 0) { outcome.rasterError = diagnostic::rasterSaveFailed; return outcome; }
     receipt->rasterHash = hashDescriptor(temporary.fd.value, control);
     if (receipt->rasterHash.isEmpty() || cancelled(control)) { outcome.cancelled = cancelled(control); if (!outcome.cancelled) outcome.rasterError = diagnostic::rasterSaveFailed; return outcome; }

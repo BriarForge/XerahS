@@ -13,6 +13,7 @@ find_package(ZLIB REQUIRED)
 set(XERAHS_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." CACHE PATH "BriarForge/XerahS repository root")
 
 add_library(xerahs_core STATIC
+  src/image-editor/RasterSaveOptions.cpp src/image-editor/RasterSaveOptions.h
   src/watch/WatchFolders.cpp
   src/watch/WatchFolders.h
   src/settings/HotkeyBindings.cpp
@@ -158,7 +159,7 @@ target_include_directories(xerahs_file_output PUBLIC app)
 target_link_libraries(xerahs_file_output PUBLIC xerahs_core Qt6::Gui Qt6::DBus)
 target_compile_options(xerahs_file_output PRIVATE -Wall -Wextra -Wpedantic)
 
-add_library(xerahs_editor_source STATIC app/EditorSource.cpp app/EditorSource.h app/EditorHistory.cpp app/EditorHistory.h app/EditorPreparation.cpp app/EditorPreparation.h app/EditorCanvasWorker.cpp app/EditorCanvasWorker.h app/EditorSave.cpp app/EditorSave.h app/EditorSaveProgress.cpp app/EditorCopy.cpp app/EditorCopy.h app/EditorPrint.cpp app/EditorPrint.h app/EditorPrintDialog.cpp app/AnnotationClipboard.cpp app/AnnotationClipboard.h)
+add_library(xerahs_editor_source STATIC app/EditorSource.cpp app/EditorSource.h app/EditorHistory.cpp app/EditorHistory.h app/EditorPreparation.cpp app/EditorPreparation.h app/EditorCanvasWorker.cpp app/EditorCanvasWorker.h app/EditorSave.cpp app/EditorSave.h app/EditorSaveDialog.cpp app/EditorSaveDialog.h app/EditorSaveProgress.cpp app/EditorCopy.cpp app/EditorCopy.h app/EditorPrint.cpp app/EditorPrint.h app/EditorPrintDialog.cpp app/AnnotationClipboard.cpp app/AnnotationClipboard.h)
 target_include_directories(xerahs_editor_source PUBLIC app)
 target_link_libraries(xerahs_editor_source PUBLIC xerahs_editor_codecs Qt6::Widgets Qt6::PrintSupport)
 target_compile_options(xerahs_editor_source PRIVATE -Wall -Wextra -Wpedantic)
@@ -1205,3 +1206,9 @@ set_target_properties(workflow-execution-history-test PROPERTIES AUTOMOC ON)
 target_link_libraries(workflow-execution-history-test PRIVATE xerahs_pipeline_journal Qt6::Widgets Qt6::Test)
 add_test(NAME workflow-execution-history COMMAND workflow-execution-history-test)
 set_tests_properties(workflow-execution-history PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
+add_executable(editor-save-dialog-test tests/EditorSaveDialogTest.cpp)
+set_target_properties(editor-save-dialog-test PROPERTIES AUTOMOC ON)
+target_link_libraries(editor-save-dialog-test PRIVATE xerahs_editor_source Qt6::Test)
+add_test(NAME editor-save-dialog COMMAND editor-save-dialog-test)
+set_tests_properties(editor-save-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
