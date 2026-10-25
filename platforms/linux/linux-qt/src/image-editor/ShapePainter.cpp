@@ -105,8 +105,11 @@ void paintBalloon(QPainter &painter, const RectangleAnnotation &shape) {
   if (!shape.content.points.empty()) {
     const QPointF tip = mapped(shape, shape.content.points[0]);
     const QPointF centre = box.center();
-    const double half = std::max(6.0, std::min(box.width(), box.height()) / 6);
     const bool vertical = std::abs(tip.y() - centre.y()) / box.height() >= std::abs(tip.x() - centre.x()) / box.width();
+    // The attachment must fit between the rounded corners, including tiny
+    // valid boxes. Otherwise std::clamp receives reversed bounds.
+    const double available = (vertical ? box.width() : box.height()) / 2 - radius;
+    const double half = std::min(std::max(6.0, std::min(box.width(), box.height()) / 6), available);
     QPainterPath tail;
     tail.moveTo(tip);
     if (vertical) { tail.lineTo(std::clamp(tip.x(), box.left() + radius + half, box.right() - radius - half) - half, centre.y());

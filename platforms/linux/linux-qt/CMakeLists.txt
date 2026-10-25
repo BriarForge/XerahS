@@ -169,6 +169,7 @@ add_library(xerahs_editor_canvas STATIC app/EditorCanvas.cpp app/EditorCanvas.h
   app/AnnotationObjectNavigator.cpp app/AnnotationObjectNavigator.h
   app/RectanglePropertiesDialog.cpp app/RectanglePropertiesDialog.h
   app/SelectionRotationDialog.cpp app/SelectionRotationDialog.h
+  app/BalloonContentDialog.cpp app/BalloonContentDialog.h
   app/AnnotationColorDialog.cpp app/AnnotationColorDialog.h
   app/CanvasCropDialog.cpp app/CanvasCropDialog.h)
 set_target_properties(xerahs_editor_canvas PROPERTIES AUTOMOC ON)

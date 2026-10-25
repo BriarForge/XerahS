@@ -33,8 +33,6 @@ const QStringList kKnownRectangleKeys = {
     QStringLiteral("text"),        QStringLiteral("fontSize"),    QStringLiteral("stepValue"),
     QStringLiteral("strength"),    QStringLiteral("imageKey")};
 
-constexpr int kMaxPathPoints = 100000;
-constexpr int kMaxTextLength = 100000;
 
 bool isInteger(const QJsonValue &value) {
   if (!value.isDouble()) return false;
@@ -467,6 +465,14 @@ SidecarSaveResult saveSidecar(SidecarStore &store, const QString &rasterPath, co
   }
   result.sidecarPath = path;
   return result;
+}
+
+bool validBalloonTail(const RectangleAnnotation &shape, const std::vector<PointF> &points) {
+  if (points.size() > kMaxPathPoints) return false;
+  for (const auto &point : points) if (!std::isfinite(point.x) || !std::isfinite(point.y)) return false;
+  if (points.empty()) return true;
+  return std::isfinite(shape.start.x + (shape.end.x - shape.start.x) * points[0].x) &&
+      std::isfinite(shape.start.y + (shape.end.y - shape.start.y) * points[0].y);
 }
 
 }  // namespace xerahs::editor

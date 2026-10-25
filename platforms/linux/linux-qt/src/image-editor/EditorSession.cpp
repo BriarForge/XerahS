@@ -14,7 +14,7 @@ bool sameEditableFields(const RectangleAnnotation &a, const RectangleAnnotation 
   return a.start == b.start && a.end == b.end && a.style.strokeWidth == b.style.strokeWidth &&
       a.style.strokeColor == b.style.strokeColor && a.style.fillColor == b.style.fillColor &&
       a.style.rotationDegrees == b.style.rotationDegrees && a.style.opacity == b.style.opacity &&
-      a.content.text == b.content.text && a.content.fontSize == b.content.fontSize &&
+      a.content.text == b.content.text && a.content.fontSize == b.content.fontSize && a.content.points == b.content.points &&
       a.content.stepValue == b.content.stepValue && a.content.strength == b.content.strength;
 }
 bool sameStyle(const RectangleStyle &a, const RectangleStyle &b) {
@@ -134,9 +134,14 @@ bool EditorSession::editShapeContent(const QUuid &id, const ShapeContent &conten
       ((content.type == shape::text || content.type == shape::speechBalloon) && content.text.isEmpty())) {
     m_editDiagnostic = "annotation-style-invalid"; return false;
   }
-  // Points stay with the geometry; only the type-specific values change.
+  if (content.type == shape::speechBalloon && !validBalloonTail(*selected, content.points)) {
+    m_editDiagnostic = "annotation-style-invalid"; return false;
+  }
+  if ((content.type == shape::text || content.type == shape::speechBalloon) && content.text.size() > kMaxTextLength) { m_editDiagnostic = "annotation-style-invalid"; return false; }
+  // Path geometry stays unchanged. A speech balloon's points encode its tail.
   return changeSelected([&](RectangleAnnotation &r) {
     r.content.text = content.text; r.content.fontSize = content.fontSize;
+    if (r.type() == shape::speechBalloon) r.content.points = content.points;
     r.content.stepValue = content.stepValue; r.content.strength = content.strength;
   });
 }

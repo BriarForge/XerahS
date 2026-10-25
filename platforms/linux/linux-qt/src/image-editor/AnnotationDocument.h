@@ -70,6 +70,8 @@ bool hasShapeStrength(const QString &type);
 
 // Type-specific content. Path points are fractions of the bounds, so move,
 // resize and rotation of the bounds carry the path with them (EA-006/007).
+inline constexpr int kMaxPathPoints = 100000;
+inline constexpr int kMaxTextLength = 100000;
 struct ShapeContent {
   QString type = shape::rectangle;
   std::vector<PointF> points;  // speech-balloon: points[0] is the tail tip
@@ -95,6 +97,9 @@ struct RectangleAnnotation {
   double right() const { return end.x; }
   double bottom() const { return end.y; }
 };
+
+// EA-008: finite tail geometry that maps to finite image coordinates.
+bool validBalloonTail(const RectangleAnnotation &shape, const std::vector<PointF> &points);
 
 // ES-015: an annotation type this build does not know, kept verbatim and shown
 // as an unsupported placeholder.

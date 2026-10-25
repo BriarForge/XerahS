@@ -1,4 +1,5 @@
 #include "EditorCanvas.h"
+#include "BalloonContentDialog.h"
 #include "image-editor/ShapePainter.h"
 #include "RectanglePropertiesDialog.h"
 #include "SelectionRotationDialog.h"
@@ -20,6 +21,7 @@
 #include <QScrollBar>
 #include <QSignalBlocker>
 #include <QWheelEvent>
+#include <QTimer>
 
 #include <algorithm>
 #include <cmath>
@@ -672,9 +674,30 @@ bool EditorCanvas::editShapeContent(QWidget *parent) {
   const quint64 state = m_session->stateId();
   ShapeContent content = selected.content;
   const QPointer<EditorCanvas> owner(this);
+  if (selected.type() == shape::speechBalloon) {
+    auto *dialog = new BalloonContentDialog(selected, parent ? parent : this);
+    const auto generation = m_documentGeneration, serial = ++m_balloonDialogSerial;
+    const auto selection = m_session->selection(); m_annotationDialogPending = true;
+    connect(dialog, &QDialog::finished, this, [this, dialog, selected, state, generation, selection, serial](int result) {
+      if (serial != m_balloonDialogSerial) return;
+      const auto choice = dialog->choice(); m_annotationDialogPending = false;
+      const QPointer<EditorCanvas> owner(this); QString diagnostic;
+      if (result == QDialog::Accepted && choice) {
+        if (generation != m_documentGeneration || selection != m_session->selection()) diagnostic = "annotation-edit-stale";
+        else { m_session->editShapeContent(selected.id, *choice, state); diagnostic = m_session->editDiagnostic(); }
+      }
+      viewport()->update();
+      if (!diagnostic.isEmpty()) { emit editRejected(diagnostic); if (!owner) return; }
+      emit changed();
+    });
+    connect(dialog, &QObject::destroyed, this, [this, serial] {
+      QTimer::singleShot(0, this, [this, serial] { if (serial == m_balloonDialogSerial && m_annotationDialogPending) { m_annotationDialogPending = false; emit changed(); } });
+    });
+    dialog->open(); emit changed(); return true;
+  }
   bool accepted = false;
   m_annotationDialogPending = true;
-  if (selected.type() == shape::text || selected.type() == shape::speechBalloon) {
+  if (selected.type() == shape::text) {
     content.text = QInputDialog::getMultiLineText(parent, "Edit Text", "Text:", content.text, &accepted);
     if (owner && accepted) content.fontSize = QInputDialog::getInt(parent, "Edit Text", "Font size (pixels):",
         int(std::lround(shapeFontSize(selected))), 1, 2000, 1, &accepted);

@@ -1,11 +1,16 @@
 // Native input tests exercise the actual canvas and shared session model.
 #include "EditorCanvas.h"
+#include "BalloonContentDialog.h"
+#include "image-editor/AnnotationRenderer.h"
+#include <QCheckBox>
+#include <QSpinBox>
 #include "NativeAnnotationTools.h"
 #include "RectanglePropertiesDialog.h"
 #include "SelectionRotationDialog.h"
 #include <QPlainTextEdit>
 
 #include <QAction>
+#include <QBuffer>
 #include <QAccessible>
 #include <QLabel>
 #include <QKeyEvent>
@@ -28,6 +33,7 @@
 #include <QFocusEvent>
 #include <QTemporaryDir>
 #include <cmath>
+#include <limits>
 #include <memory>
 
 using namespace xerahs::app;
@@ -71,6 +77,94 @@ class EditorCanvasTest : public QObject {
   Q_OBJECT
   QTemporaryDir dialogPreferences;
 private slots:
+  void balloonTailCommitCancelHistoryAndPersistence() {
+    auto initial = document(); initial.createdAt = initial.modifiedAt = "2026-10-25T00:00:00Z";
+    QBuffer encoded(&initial.sourceImagePng); QVERIFY(encoded.open(QIODevice::WriteOnly)); QVERIFY(image().save(&encoded, "PNG")); encoded.close();
+    EditorSession session(initial); ShapeContent content; content.type = shape::speechBalloon; content.text = "Original\ntext"; content.points = {{0.2, 1.6}};
+    QVERIFY(session.createShape({{100, 100}, {300, 200}, {}}, content, session.stateId(), session.selection()));
+    const auto original = serializeDocument(session.document()); const auto state = session.stateId(); const auto undo = session.undoCount();
+    const auto source = image(); EditorCanvas canvas(session, source); canvas.resize(640, 480); canvas.show(); QCoreApplication::processEvents();
+    QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChild<BalloonContentDialog *>(); QVERIFY(dialog); QVERIFY(canvas.interactionActive());
+    auto *text = dialog->findChild<QPlainTextEdit *>("balloonText"); QVERIFY(text); text->setPlainText("Cancelled"); dialog->reject();
+    QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(session.stateId(), state); QCOMPARE(serializeDocument(session.document()), original);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<BalloonContentDialog *>(); QVERIFY(dialog);
+    text = dialog->findChild<QPlainTextEdit *>("balloonText"); text->setPlainText("Changed\nmultiline");
+    dialog->findChild<QLineEdit *>("balloonTailX")->setText("0.75"); dialog->findChild<QLineEdit *>("balloonTailY")->setText("-0.5");
+    dialog->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(session.undoCount(), undo + 1);
+    const auto edited = session.selectedRectangle()->content; QCOMPARE(edited.text, QString("Changed\nmultiline")); QCOMPARE(edited.fontSize, 0.0);
+    QCOMPARE(edited.points.size(), size_t(1)); QCOMPARE(edited.points[0].x, 0.75); QCOMPARE(edited.points[0].y, -0.5);
+    const auto parsed = parseDocument(serializeDocument(session.document())); QVERIFY(parsed.document);
+    const auto &loaded = std::get<RectangleAnnotation>(parsed.document->annotations.front()); QCOMPARE(loaded.content.points[0].x, 0.75); QCOMPARE(loaded.content.points[0].y, -0.5);
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), original); QVERIFY(session.redo());
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<BalloonContentDialog *>(); QVERIFY(dialog);
+    dialog->findChild<QCheckBox *>("balloonTailEnabled")->setChecked(false); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive());
+    QVERIFY(session.selectedRectangle()->content.points.empty());
+    const auto withoutTail = parseDocument(serializeDocument(session.document())); QVERIFY(withoutTail.document); QVERIFY(std::get<RectangleAnnotation>(withoutTail.document->annotations.front()).content.points.empty());
+    const auto noTail = renderDocument(solidImage(800, 600, 0xFFFFFFFF), session.document()); QVERIFY(noTail.image);
+    QVERIFY(session.undo()); const auto withTail = renderDocument(solidImage(800, 600, 0xFFFFFFFF), session.document()); QVERIFY(withTail.image);
+    QVERIFY(withTail.image->pixels != noTail.image->pixels);
+  }
+  void balloonDialogRejectsInvalidTailAndStaleDocuments() {
+    EditorSession session(document()); ShapeContent content; content.type = shape::speechBalloon; content.text = "Text";
+    QVERIFY(session.createShape({{100, 100}, {300, 200}, {}}, content, session.stateId(), session.selection()));
+    const auto source = image(); EditorCanvas canvas(session, source); const auto state = session.stateId(); QSignalSpy rejected(&canvas, &EditorCanvas::editRejected);
+    QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChild<BalloonContentDialog *>(); QVERIFY(dialog);
+    dialog->findChild<QCheckBox *>("balloonTailEnabled")->setChecked(true);
+    for (const auto &input : {QString(""), QString("nan"), QString("inf"), QString("1e309"), QString("1e308")}) {
+      dialog->findChild<QLineEdit *>("balloonTailX")->setText(input); dialog->findChild<QLineEdit *>("balloonTailY")->setText("1.5"); dialog->accept();
+      QVERIFY(canvas.interactionActive()); QCOMPARE(session.stateId(), state); QVERIFY(dialog->findChild<QLabel *>("balloonContentError")->text().startsWith("balloon-tail-invalid"));
+    }
+    dialog->findChild<QLineEdit *>("balloonTailX")->setText("0.4"); dialog->findChild<QLineEdit *>("balloonTailY")->setText("1.5");
+    EditorSession replacement(document()); canvas.resetDocument(replacement, image()); dialog->accept();
+    QVERIFY(!rejected.isEmpty()); QCOMPARE(rejected.last()[0].toString(), QString("annotation-edit-stale")); QVERIFY(replacement.document().annotations.empty());
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    canvas.resetDocument(session, image()); QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<BalloonContentDialog *>(); QVERIFY(dialog);
+    session.select({}); dialog->accept(); QVERIFY(!rejected.isEmpty()); QCOMPARE(session.stateId(), state);
+  }
+  void balloonDialogOwnerAndDeferredDeletionKeepNewOperationSafe() {
+    EditorSession session(document()); ShapeContent content; content.type = shape::speechBalloon; content.text = "Safe"; content.points = {{0.2, 1.6}};
+    QVERIFY(session.createShape({{100, 100}, {300, 200}, {}}, content, session.stateId(), session.selection()));
+    const auto source = image(); QWidget parent;
+    auto canvas = std::make_unique<EditorCanvas>(session, source);
+    QVERIFY(canvas->editShapeContent(&parent)); auto *first = parent.findChild<BalloonContentDialog *>(); QVERIFY(first); first->reject();
+    QVERIFY(canvas->editShapeContent(&parent)); auto dialogs = parent.findChildren<BalloonContentDialog *>(); auto *second = dialogs.last(); QVERIFY(second != first);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QCoreApplication::processEvents(); QVERIFY(canvas->interactionActive());
+    const auto before = serializeDocument(session.document()); canvas.reset();
+    second->findChild<QPlainTextEdit *>("balloonText")->setPlainText("Late result"); second->accept();
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QCoreApplication::processEvents(); QCOMPARE(serializeDocument(session.document()), before);
+    EditorCanvas live(session, source); auto external = std::make_unique<QWidget>();
+    QVERIFY(live.editShapeContent(external.get())); external.reset(); QTRY_VERIFY(!live.interactionActive());
+  }
+  void balloonTailOnlyEditIsOneHistoryOperation() {
+    EditorSession session(document()); ShapeContent content; content.type = shape::speechBalloon; content.text = "Unchanged"; content.points = {{0.2, 1.6}};
+    const auto id = session.createShape({{100, 100}, {300, 200}, {}}, content, session.stateId(), session.selection()); QVERIFY(id);
+    const auto undo = session.undoCount(); content.points = {{0.75, -0.5}};
+    QVERIFY(session.editShapeContent(*id, content, session.stateId())); QCOMPARE(session.undoCount(), undo + 1);
+    QCOMPARE(session.selectedRectangle()->content.points[0].x, 0.75);
+    QVERIFY(session.undo()); QCOMPARE(session.selectedRectangle()->content.points[0].x, 0.2);
+    QVERIFY(session.redo()); QCOMPARE(session.selectedRectangle()->content.points[0].x, 0.75);
+  }
+  void invalidBalloonContentNeverChangesHistory() {
+    EditorSession session(document()); ShapeContent content; content.type = shape::speechBalloon; content.text = "Valid"; content.points = {{0.2, 1.6}};
+    const auto id = session.createShape({{100, 100}, {300, 200}, {}}, content, session.stateId(), session.selection()); QVERIFY(id);
+    const auto before = serializeDocument(session.document()); const auto state = session.stateId(); const auto undo = session.undoCount();
+    for (const auto badPoint : {PointF{std::nan(""), 1}, PointF{0, std::numeric_limits<double>::infinity()}, PointF{1e308, 1}}) {
+      auto invalid = content; invalid.points = {badPoint}; QVERIFY(!session.editShapeContent(*id, invalid, state));
+      QCOMPARE(session.editDiagnostic(), QString("annotation-style-invalid")); QCOMPARE(session.stateId(), state);
+    }
+    auto invalid = content; invalid.points.resize(100001); QVERIFY(!session.editShapeContent(*id, invalid, state));
+    invalid = content; invalid.text = QString(100001, 'x'); QVERIFY(!session.editShapeContent(*id, invalid, state));
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo);
+  }
+  void tinyBalloonTailsRenderInEveryDirection() {
+    for (const auto tip : {PointF{0.5, -1}, PointF{2, 0.5}, PointF{0.5, 2}, PointF{-1, 0.5}}) {
+      EditorSession session(document()); ShapeContent content; content.type = shape::speechBalloon; content.text = "x"; content.points = {tip};
+      QVERIFY(session.createShape({{10, 10}, {18, 18}, {}}, content, session.stateId(), session.selection()));
+      QVERIFY(renderDocument(solidImage(800, 600, 0xFFFFFFFF), session.document()).image);
+    }
+  }
   void initTestCase() {
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());

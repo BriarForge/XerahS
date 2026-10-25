@@ -463,6 +463,15 @@
         "platforms/linux/linux-qt/tests/LastRegionStoreTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "EA-008"
+      ],
+      "outcome": "Native speech-balloon edit dialog provides asynchronous explicit commit/cancel for multiline text, font size and tail enable/tip coordinates. Existing points persist without a schema change. Tail-only edits commit once and undo/redo correctly; shared Core validation rejects invalid or overflowing mapped geometry. Regression evidence covers ignored tail changes, missing history admission for tip-only edits, and a real tiny-balloon renderer clamp assertion. State/selection/document and owner teardown tests pass. Font family/weight/italic/alignment/text color, creation/default breadth and physical qualification remain partial.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+      ]
     }
   ]
 }
