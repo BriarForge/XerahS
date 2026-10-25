@@ -21,7 +21,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Valid fields and compatible unknown keys survive individual repairs with field-specific diagnostics. Future versions are read-only. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required.",
+      "note": "Valid fields and compatible unknown keys survive individual repairs with field-specific diagnostics. Future versions are read-only. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required. Region quick-confirm/snapping fields are profile-scoped, boolean-validated, default enabled per RC SPEC, independently repaired and frozen before acquisition. Native Apply/Cancel/reset and round-trip tests preserve unrelated fields; no workflow schema or permission authority changes.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
@@ -51,7 +51,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Bounded typed profile fields repair independently. Filename validation reuses FilenameGenerator through previewCaptureOutput, without counter or random-file authority. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required.",
+      "note": "Bounded typed profile fields repair independently. Filename validation reuses FilenameGenerator through previewCaptureOutput, without counter or random-file authority. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required. Region quick-confirm/snapping fields are profile-scoped, boolean-validated, default enabled per RC SPEC, independently repaired and frozen before acquisition. Native Apply/Cancel/reset and round-trip tests preserve unrelated fields; no workflow schema or permission authority changes.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
@@ -81,7 +81,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Application fields declare profile scope. Saved workflow output takes precedence; unsaved seed definitions and blank workflow folders inherit application defaults. Capture output is resolved before execution. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required.",
+      "note": "Application fields declare profile scope. Saved workflow output takes precedence; unsaved seed definitions and blank workflow folders inherit application defaults. Capture output is resolved before execution. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required. Region quick-confirm/snapping fields are profile-scoped, boolean-validated, default enabled per RC SPEC, independently repaired and frozen before acquisition. Native Apply/Cancel/reset and round-trip tests preserve unrelated fields; no workflow schema or permission authority changes.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
@@ -96,7 +96,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "General/Capture/Hotkeys resets preview affected profile fields and values before draft mutation. Cancel discards unapplied drafts; Apply/OK persists. Unrelated sections and user files remain intact. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required.",
+      "note": "General/Capture/Hotkeys resets preview affected profile fields and values before draft mutation. Cancel discards unapplied drafts; Apply/OK persists. Unrelated sections and user files remain intact. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required. Region quick-confirm/snapping fields are profile-scoped, boolean-validated, default enabled per RC SPEC, independently repaired and frozen before acquisition. Native Apply/Cancel/reset and round-trip tests preserve unrelated fields; no workflow schema or permission authority changes.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
@@ -195,7 +195,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Current capture, upload, onboarding and settings flows preserve permission/consent boundaries with fixtures. All remaining catalogue families and human review remain.",
+      "note": "Current capture, upload, onboarding and settings flows preserve permission/consent boundaries with fixtures. All remaining catalogue families and human review remain. Region quick-confirm/snapping fields are profile-scoped, boolean-validated, default enabled per RC SPEC, independently repaired and frozen before acquisition. Native Apply/Cancel/reset and round-trip tests preserve unrelated fields; no workflow schema or permission authority changes.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
@@ -376,6 +376,8 @@
     ],
     "automated_test_surfaces": {
       "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp": [
+        "regionPreferencesDefaultsRepairRoundTripAndReset",
+        "regionPreferencesDialogApplyCancelAndReset",
         "oldMaximumHotkeysSurviveNewRecordingAction",
         "scheduledCaptureChoicesDefaultsRoundTripAndRepair",
         "scrollingCaptureSettingsDefaultsRoundTripAndRepair",

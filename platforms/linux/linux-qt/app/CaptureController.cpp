@@ -130,6 +130,7 @@ void CaptureController::selectRecordingRegion(std::function<void(QRectF)> select
 }
 void CaptureController::beginCapture(QStringList selected) {
   if (m_busy) return;
+  m_regionSettings = m_regionSettingsResolver ? m_regionSettingsResolver() : SessionSettings{};
   m_selectedActions = std::move(selected);
   ++m_generation;
   m_pendingPipelineCancellation = false;
@@ -200,7 +201,7 @@ void CaptureController::onSnapshot(int outcome, const QImage &image, const QStri
     return;
   }
 
-  const SessionSettings settings{};
+  const auto settings = m_regionSettings;
   const auto targets = settings.snapping && result != PortalScreenshot::Outcome::Denied
       ? windowDiscovery()->targets(topology, QCoreApplication::applicationPid()) : std::vector<SnapTarget>{};
   m_session = std::make_unique<RegionSession>(topology, settings, targets,

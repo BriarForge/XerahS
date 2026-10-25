@@ -170,6 +170,7 @@ void installCapture(AppContext &ctx) {
   cancel->setEnabled(false);
   QObject::connect(cancel, &QAction::triggered, &ctx.capture, &CaptureController::cancel);
 
+  ctx.capture.setRegionSettingsResolver([&ctx] { return settings::regionSessionSettings(ctx.settings.current().values); });
   ctx.capture.setDefaultWorkflowResolver([&ctx] { return effectiveWorkflow(ctx); });
   const auto refreshRegion = [&ctx, region] {
     const auto &catalog = ctx.workflows->store().current().catalog;

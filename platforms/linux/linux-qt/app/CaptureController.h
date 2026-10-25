@@ -69,6 +69,8 @@ public:
   // Starts the workflow's capture source: region, full-screen, monitor or active-window.
   void captureWorkflow(const xerahs::workflows::CaptureWorkflow &workflow);
   QString captureSource() const { return m_source; }
+  // Read once before portal acquisition; settings changes affect future sessions.
+  void setRegionSettingsResolver(std::function<xerahs::capture::SessionSettings()> resolver) { m_regionSettingsResolver = std::move(resolver); }
   void setWindowDiscovery(std::unique_ptr<WindowDiscovery> discovery);
   // CORE-015: a long-running capture owned elsewhere (scrolling) holds the same
   // admission as a controller capture. cancel() invokes onCancel while held.
@@ -127,6 +129,8 @@ private:
   QString m_source = QStringLiteral("region");
   std::unique_ptr<WindowDiscovery> m_windows;
   std::function<xerahs::workflows::WorkflowChoice()> m_workflowResolver;
+  std::function<xerahs::capture::SessionSettings()> m_regionSettingsResolver;
+  xerahs::capture::SessionSettings m_regionSettings;
   QJsonObject m_workflowSnapshot;
   std::shared_ptr<xerahs::workflows::WorkflowExecution> m_execution;
   xerahs::workflows::CaptureOutput m_captureOutput;

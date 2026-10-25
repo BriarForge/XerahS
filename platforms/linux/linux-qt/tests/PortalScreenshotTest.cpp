@@ -62,6 +62,12 @@ QString fixtureImage(const QTemporaryDir &dir, QSize size = {8, 6}) {
   image.fill(QColor(42, 71, 100, 155)); image.setColorSpace(QColorSpace::SRgb);
   if (!image.save(path)) qFatal("Fixture PNG save failed"); return path;
 }
+class FixedRegionTargets final : public WindowDiscovery {
+public:
+  int calls = 0;
+  std::vector<xerahs::capture::SnapTarget> targets(const xerahs::capture::Topology &, qint64) override { ++calls; return {{{10, 10, 40, 35}}}; }
+  std::optional<xerahs::capture::SnapTarget> activeWindow(const xerahs::capture::Topology &, qint64) override { return std::nullopt; }
+};
 class FixedActiveWindow final : public WindowDiscovery {
 public:
   std::optional<xerahs::capture::SnapTarget> window;
@@ -156,6 +162,37 @@ class PortalScreenshotTest final : public QObject {
   static Outcome outcome(const QSignalSpy &spy) { return spy.at(0).at(0).value<Outcome>(); }
   static QImage resultImage(const QSignalSpy &spy) { return spy.at(0).at(1).value<QImage>(); }
 private slots:
+  void regionOptionsFreezeBeforeAcquisitionAndAllowKeyboardAdjustment() {
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    xerahs::capture::SessionSettings preferences{false, false}; int reads = 0;
+    controller.setRegionSettingsResolver([&] { ++reads; return preferences; });
+    auto discovery = std::make_unique<FixedRegionTargets>(); auto *targets = discovery.get(); controller.setWindowDiscovery(std::move(discovery));
+    controller.captureRegion(); QCOMPARE(reads, 1); preferences = {true, true};
+    QTRY_VERIFY(overlayExists()); QCOMPARE(targets->calls, 0);
+    controller.pointerDown({20, 20}); controller.pointerUp({20, 20}); QVERIFY(!controller.selection()); QVERIFY(controller.busy());
+    controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QVERIFY(controller.selectionSettled()); QVERIFY(controller.busy());
+    QVERIFY(!controller.lastPipelineResult()); QVERIFY(!QFileInfo::exists(dir.filePath("outputs")));
+    const xerahs::capture::Display display{"test", {0, 0, 800, 600}, {0, 0, 800, 600}, 1};
+    QVERIFY(controller.key(Qt::Key_Right, Qt::NoModifier, display));
+    QVERIFY(controller.key(Qt::Key_Down, Qt::ShiftModifier, display));
+    QVERIFY(controller.key(Qt::Key_Left, Qt::AltModifier, display));
+    const auto selection = controller.selection(); QVERIFY(selection);
+    QCOMPARE(selection->left, qint64(11)); QCOMPARE(selection->top, qint64(20)); QCOMPARE(selection->width(), qint64(29)); QCOMPARE(selection->height(), qint64(25));
+    QVERIFY(controller.key(Qt::Key_Return, Qt::NoModifier, display)); QTRY_VERIFY(!controller.busy());
+    const auto first = controller.lastPipelineResult(); QVERIFY(first && first->file); QCOMPARE(QImage(first->file->path).size(), QSize(29, 25));
+    controller.key(Qt::Key_Return, Qt::NoModifier, display); QCOMPARE(controller.lastPipelineResult(), first);
+    controller.captureRegion(); QCOMPARE(reads, 2); preferences = {false, false};
+    QTRY_VERIFY(overlayExists()); QCOMPARE(targets->calls, 1);
+    controller.pointerMove({20, 20}); QVERIFY(controller.snapPreview());
+    controller.pointerDown({20, 20}); controller.pointerUp({20, 20}); QTRY_VERIFY(!controller.busy());
+    const auto second = controller.lastPipelineResult(); QVERIFY(second && second != first && second->file); QCOMPARE(QImage(second->file->path).size(), QSize(30, 25));
+    controller.captureRegion(); QTRY_VERIFY(overlayExists()); QCOMPARE(targets->calls, 1);
+    controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QVERIFY(controller.selectionSettled());
+    controller.cancel(); QTRY_VERIFY(!controller.busy()); QCOMPARE(QDir(dir.filePath("outputs")).entryList({"*.png"}, QDir::Files).size(), 2);
+  }
+
   void unknownWorkflowOutputCannotAdmitCaptureOrWriteAnExecution() {
     using namespace xerahs::workflows; QTemporaryDir dir; FakeScreenshotPortal portal(server);
     NativeWorkflowExecutions executions(dir.filePath("executions"));

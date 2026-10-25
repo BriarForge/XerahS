@@ -22,9 +22,9 @@
     "ast_preserved": true
   },
   "ast_refresh": {
-    "source_revision": "f3ebcd581ee326c526b006e12d87610679972e4a",
+    "source_revision": "69f365f66f11512d5ef722222e6e51d61f8c657c",
     "semantic_documents_preserved": true,
     "external_model_labeling_used": false,
-    "editor_raster_save_nodes": 11
+    "region_preferences_nodes": 3
   }
 }

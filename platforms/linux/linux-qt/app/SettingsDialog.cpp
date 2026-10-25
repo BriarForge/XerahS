@@ -14,6 +14,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QScrollArea>
 #include <QTabWidget>
 #include <QTableWidget>
 #include <QTimer>
@@ -51,9 +52,17 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   auto *pattern = new QLineEdit(general); pattern->setMaxLength(4096); pattern->setAccessibleName("Filename pattern"); form->addRow("&Filename pattern", pattern);
   auto *login = new QCheckBox("Start XerahS at &login", general); login->setAccessibleName("Start XerahS at login"); form->addRow(login);
   auto *tray = new QCheckBox("Show &tray icon", general); tray->setAccessibleName("Show tray icon"); form->addRow(tray);
-  auto *capture = new QWidget(tabs); auto *captureForm = new QFormLayout(capture); tabs->addTab(capture, "&Capture");
+  auto *capture = new QWidget(tabs); auto *captureForm = new QFormLayout(capture);
+  auto *captureScroll = new QScrollArea(tabs); captureScroll->setWidgetResizable(true); captureScroll->setFrameShape(QFrame::NoFrame);
+  captureScroll->setWidget(capture); tabs->addTab(captureScroll, "&Capture");
   auto *sound = new QCheckBox("Play capture &sound", capture); sound->setAccessibleName("Play capture sound"); captureForm->addRow(sound);
   auto *notification = new QCheckBox("Show &notification after capture", capture); notification->setAccessibleName("Show notification after capture"); captureForm->addRow(notification);
+  auto *quickConfirm = new QCheckBox("Confirm region on pointer &release", capture);
+  quickConfirm->setAccessibleName("Confirm region on pointer release"); captureForm->addRow(quickConfirm);
+  auto *snapping = new QCheckBox("Snap clicks to detected &windows or controls", capture);
+  snapping->setAccessibleName("Snap clicks to detected windows or controls"); captureForm->addRow(snapping);
+  auto *regionHelp = new QLabel("Region options apply to the next session. Disable quick confirmation to adjust after release, then press Enter to capture. Arrow keys move by 1 physical pixel; Shift+Arrow by 10; Alt+Arrow resizes. Space starts and finishes a keyboard selection. Escape cancels. Drag freely to override snapping; discovery depends on desktop support.", capture);
+  regionHelp->setWordWrap(true); captureForm->addRow(regionHelp);
   const QVector<QPair<QString, QString>> sources{{"Full screen", "full-screen"}, {"Current monitor", "monitor"}, {"Active window", "active-window"}};
   auto *delayedBox = new QGroupBox("Delayed capture", capture); auto *delayedForm = new QFormLayout(delayedBox); captureForm->addRow(delayedBox);
   auto *delaySeconds = spin(delayedBox, "Delayed capture seconds", 1, 60, " s");
@@ -95,6 +104,8 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
     const QSignalBlocker blocker(table);
     folder->setText(draft->value("saveFolder").toString()); pattern->setText(draft->value("filenamePattern").toString());
     login->setChecked(draft->value("startAtLogin").toBool()); tray->setChecked(draft->value("showTrayIcon").toBool());
+    quickConfirm->setChecked(draft->value("regionCapture.quickConfirm").toBool());
+    snapping->setChecked(draft->value("regionCapture.snapping").toBool());
     sound->setChecked(draft->value("playCaptureSound").toBool()); notification->setChecked(draft->value("showNotification").toBool());
     delaySeconds->setValue(draft->value("delayedCapture.seconds").toInt()); select(delaySource, draft->value("delayedCapture.source"));
     select(autoSource, draft->value("autoCapture.source")); autoInterval->setValue(draft->value("autoCapture.intervalMs").toInt() / 1000);
@@ -115,6 +126,8 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   auto collect = [=] {
     draft->insert("saveFolder", folder->text()); draft->insert("filenamePattern", pattern->text());
     draft->insert("startAtLogin", login->isChecked()); draft->insert("showTrayIcon", tray->isChecked());
+    draft->insert("regionCapture.quickConfirm", quickConfirm->isChecked());
+    draft->insert("regionCapture.snapping", snapping->isChecked());
     draft->insert("playCaptureSound", sound->isChecked()); draft->insert("showNotification", notification->isChecked());
     draft->insert("delayedCapture.seconds", delaySeconds->value()); draft->insert("delayedCapture.source", delaySource->currentData().toString());
     draft->insert("autoCapture.source", autoSource->currentData().toString());

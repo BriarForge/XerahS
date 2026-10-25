@@ -19,7 +19,10 @@
     "platforms/linux/linux-qt/app/SnapshotComposition.h",
     "platforms/linux/linux-qt/app/SnapshotComposition.cpp",
     "platforms/linux/linux-qt/app/CapturePipeline.h",
-    "platforms/linux/linux-qt/app/CapturePipeline.cpp"
+    "platforms/linux/linux-qt/app/CapturePipeline.cpp",
+    "platforms/linux/linux-qt/app/SettingsDialog.cpp",
+    "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
+    "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp"
   ],
   "requirements": {
     "RC-001": {
@@ -127,7 +130,7 @@
         "explicit-confirm-with-enter"
       ],
       "disposition": "Required",
-      "note": "RegionSession supports quickConfirm false in Core, but CaptureController constructs default SessionSettings; the native workflow does not expose the contracted configurable confirmation mode.",
+      "note": "Native Capture settings exposes profile-scoped quick confirmation (normative default enabled). CaptureController copies validated options before portal acquisition, so changes affect future sessions. Private-bus production tests prove disabled release stays selected without outputs, Enter captures the adjusted rectangle exactly once, the next session uses changed options, and cancellation creates no extra file. Core shared vectors pass. Full native target and physical accessibility qualification remains Required.",
       "audit": {
         "classification": "partial",
         "spec_line": 49,
@@ -136,7 +139,11 @@
           "explicit-confirm-with-enter"
         ],
         "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
-      }
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
+      ]
     },
     "RC-008": {
       "status": "partial",
@@ -187,7 +194,7 @@
       "vectors": [
         "keyboard-move-stops-at-edge"
       ],
-      "note": "Arrow, Shift+Arrow, and Alt+Arrow steps are clamped and the precision modifier is shown in the overlay hint bar. Resize handles and size presets are not yet interactive.",
+      "note": "Arrow, Shift+Arrow and Alt+Arrow movement/resize remain clamped; both Settings and overlay document physical 1/10-pixel steps. Disabling quick confirmation now makes post-release adjustment reachable natively; a private-bus test checks adjusted geometry and actual output dimensions. Interactive resize handles and optional presets remain unfinished; target qualification remains Required.",
       "disposition": "Required",
       "audit": {
         "classification": "partial",
@@ -196,14 +203,18 @@
           "keyboard-move-stops-at-edge"
         ],
         "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
-      }
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
+      ]
     },
     "RC-011": {
       "status": "partial",
       "vectors": [
         "click-selects-snapped-window"
       ],
-      "note": "Hyprland socket discovery filters visible windows and supplies ordered, per-display mapped and clamped targets. Idle hover shows the same physical bounds and size badge used for selections; dragging overrides snapping. Fixture tests cover filtering, special workspaces, own PID, ordering, mixed-scale mapping/clamping and click confirmation. Other compositors fall back to free region selection; native compositor qualification remains Required.",
+      "note": "Native Capture settings exposes snapping with the normative enabled default; disabled sessions skip discovery and refuse zero-area clicks. Private-bus tests prove options are frozen before acquisition and later enabled clicks use visible snap preview bounds. Existing native discovery filters and Core drag override remain tested. Compositor discovery breadth and physical qualification remain Required.",
       "disposition": "Required",
       "implementation": [
         "platforms/linux/linux-qt/src/capture/WindowSnapTargets.cpp",
@@ -214,7 +225,9 @@
       ],
       "evidence": [
         "platforms/linux/linux-qt/tests/WindowSnapTargetsTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeWindowDiscoveryTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeWindowDiscoveryTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
       ],
       "audit": {
         "classification": "partial",
@@ -535,6 +548,7 @@
         "dragOverridesSnapping"
       ],
       "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp": [
+        "regionOptionsFreezeBeforeAcquisitionAndAllowKeyboardAdjustment",
         "Close",
         "respond",
         "finishHandle",
@@ -608,6 +622,10 @@
         "mixedScaleMappingAndClamping",
         "malformedJson",
         "disabledSnappingAndDragOverride"
+      ],
+      "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp": [
+        "regionPreferencesDefaultsRepairRoundTripAndReset",
+        "regionPreferencesDialogApplyCancelAndReset"
       ]
     },
     "remaining_scope": "Core geometry/state vectors and actual portal cancellation tests exist. Native topology uses a single inferred scale, cursor/HDR policy is absent, last-region persistence is not wired, and physical qualification remains."

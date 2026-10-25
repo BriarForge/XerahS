@@ -423,6 +423,23 @@
         "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "RC-007",
+        "RC-010",
+        "RC-011",
+        "SETCAT-003",
+        "SETCAT-005",
+        "SETCAT-009",
+        "SETCAT-010",
+        "SETCAT-012"
+      ],
+      "outcome": "Native profile preferences expose quick confirmation and snapping with normative enabled defaults, field validation and Apply/Cancel/reset. Options freeze before portal acquisition; explicit confirmation enables existing keyboard adjustments. Interactive handles/presets, remaining fields and native target/human qualification remain partial.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
+      ]
     }
   ]
 }

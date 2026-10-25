@@ -41,6 +41,7 @@ bool validCaptureValue(const QString &key, const QJsonValue &value) {
 QVector<SettingField> settingFields() {
   return {{"saveFolder", Section::General, "profile"}, {"filenamePattern", Section::General, "profile"},
     {"startAtLogin", Section::General, "profile"}, {"showTrayIcon", Section::General, "profile"},
+    {"regionCapture.quickConfirm", Section::Capture, "profile"}, {"regionCapture.snapping", Section::Capture, "profile"},
     {"playCaptureSound", Section::Capture, "profile"}, {"showNotification", Section::Capture, "profile"},
     {"delayedCapture.seconds", Section::Capture, "profile"}, {"delayedCapture.source", Section::Capture, "profile"},
     {"autoCapture.source", Section::Capture, "profile"}, {"autoCapture.intervalMs", Section::Capture, "profile"},
@@ -56,6 +57,7 @@ QJsonObject defaultSettings(const QString &saveFolder) {
   QJsonObject bindings; const auto defaults = HotkeyBindings::defaults();
   for (auto it = defaults.entries.cbegin(); it != defaults.entries.cend(); ++it) bindings.insert(it.key(), it.value());
   return {{"saveFolder", saveFolder}, {"filenamePattern", workflows::CaptureOutput{}.pattern}, {"startAtLogin", false},
+    {"regionCapture.quickConfirm", true}, {"regionCapture.snapping", true},
     {"showTrayIcon", true}, {"playCaptureSound", false}, {"showNotification", true},
     {"delayedCapture.seconds", 3}, {"delayedCapture.source", "full-screen"}, {"autoCapture.source", "full-screen"},
     {"autoCapture.intervalMs", 5000}, {"autoCapture.boundKind", "count"}, {"autoCapture.count", 10}, {"autoCapture.durationMinutes", 60},
@@ -69,6 +71,14 @@ xerahs::workflows::CaptureWorkflow withApplicationDefaults(xerahs::workflows::Ca
   if (workflow.output.directory.isEmpty()) workflow.output.directory = values.value("saveFolder").toString();
   if (!savedDefinition) workflow.output.pattern = values.value("filenamePattern").toString();
   return workflow;
+}
+xerahs::capture::SessionSettings regionSessionSettings(const QJsonObject &values) {
+  // RC defaults are normative. Malformed/missing optional fields must not turn
+  // either option off through JSON's implicit conversion.
+  const auto enabled = [&](const QString &key) {
+    const auto value = values.value(key); return value.isBool() ? value.toBool() : true;
+  };
+  return {enabled("regionCapture.quickConfirm"), enabled("regionCapture.snapping")};
 }
 HotkeyBindings hotkeys(const QJsonObject &values) {
   HotkeyBindings result; const auto object = values.value("hotkeys").toObject();

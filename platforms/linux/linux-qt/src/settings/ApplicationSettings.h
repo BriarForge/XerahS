@@ -1,5 +1,6 @@
 #pragma once
 #include "HotkeyBindings.h"
+#include "capture/RegionSession.h"
 #include "workflows/CaptureWorkflows.h"
 #include <QJsonObject>
 #include <functional>
@@ -14,6 +15,7 @@ SettingsRead repairSettings(const QJsonObject &input, const QString &saveFolder)
 // a blank workflow folder always inherits the profile folder.
 xerahs::workflows::CaptureWorkflow withApplicationDefaults(xerahs::workflows::CaptureWorkflow workflow,
     const QJsonObject &values, bool savedDefinition);
+xerahs::capture::SessionSettings regionSessionSettings(const QJsonObject &values);
 HotkeyBindings hotkeys(const QJsonObject &values);
 QJsonObject resetSection(const QJsonObject &values, Section section, const QString &saveFolder);
 QStringList resetPreview(const QJsonObject &values, Section section, const QString &saveFolder);

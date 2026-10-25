@@ -11,6 +11,7 @@
 #include <QDialogButtonBox>
 #include <QFile>
 #include <QJsonDocument>
+#include <QJsonArray>
 #include <QLockFile>
 #include <QLineEdit>
 #include <QLabel>
@@ -24,6 +25,58 @@ using namespace xerahs::settings;
 class ApplicationSettingsTest : public QObject {
   Q_OBJECT
 private slots:
+  void regionPreferencesDefaultsRepairRoundTripAndReset() {
+    QTemporaryDir dir; const auto path = dir.filePath("settings.json");
+    const QStringList keys{"regionCapture.quickConfirm", "regionCapture.snapping"};
+    auto old = defaultSettings(dir.path()); for (const auto &key : keys) { QCOMPARE(old.value(key), QJsonValue(true)); old.remove(key); }
+    old.insert("future.region", "kept");
+    QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(QJsonDocument(QJsonObject{{"version", 1}, {"values", old}}).toJson()); file.close();
+    ApplicationSettingsStore store(path, dir.path()); QVERIFY(store.current().diagnostics.isEmpty());
+    auto values = store.current().values;
+    for (const auto &key : keys) {
+      QCOMPARE(values.value(key), QJsonValue(true)); values.insert(key, false);
+      for (const auto bad : {QJsonValue("false"), QJsonValue(0), QJsonValue(QJsonValue::Null), QJsonValue(QJsonArray{})}) {
+        auto input = values; input.insert(key, bad); const auto repaired = repairSettings(input, dir.path());
+        QVERIFY(repaired.diagnostics.join('\n').contains(key)); QCOMPARE(repaired.values.value(key), QJsonValue(true));
+        QVERIFY(!store.save(input).isEmpty());
+      }
+    }
+    QVERIFY(!regionSessionSettings(values).quickConfirm); QVERIFY(!regionSessionSettings(values).snapping);
+    auto mixed = values; mixed.insert("regionCapture.snapping", true);
+    QVERIFY(!regionSessionSettings(mixed).quickConfirm); QVERIFY(regionSessionSettings(mixed).snapping);
+    mixed.insert("regionCapture.quickConfirm", true); mixed.insert("regionCapture.snapping", false);
+    QVERIFY(regionSessionSettings(mixed).quickConfirm); QVERIFY(!regionSessionSettings(mixed).snapping);
+    QVERIFY(regionSessionSettings({}).quickConfirm); QVERIFY(regionSessionSettings({{"regionCapture.snapping", "false"}}).snapping);
+    QVERIFY(store.save(values).isEmpty()); ApplicationSettingsStore reopened(path, dir.path()); QCOMPARE(reopened.current().values, values);
+    const auto reset = resetSection(values, Section::Capture, dir.path()); for (const auto &key : keys) QCOMPARE(reset.value(key), QJsonValue(true));
+    QCOMPARE(reset.value("future.region"), QJsonValue("kept")); QCOMPARE(reset.value("saveFolder"), values.value("saveFolder"));
+    QVERIFY(resetPreview(values, Section::Capture, dir.path()).join('\n').contains("regionCapture.quickConfirm"));
+  }
+  void regionPreferencesDialogApplyCancelAndReset() {
+    QTemporaryDir dir; ApplicationSettingsStore store(dir.filePath("settings.json"), dir.path());
+    xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; }); int applied = 0;
+    auto boxes = [](QDialog &dialog) { QList<QCheckBox *> result;
+      for (auto *box : dialog.findChildren<QCheckBox *>()) if (box->accessibleName() == "Confirm region on pointer release" || box->accessibleName() == "Snap clicks to detected windows or controls") result.append(box); return result; };
+    {
+      xerahs::app::SettingsDialog dialog(store, dir.path(), {}, shortcuts, [&] { ++applied; });
+      const auto controls = boxes(dialog); QCOMPARE(controls.size(), 2); for (auto *box : controls) { QVERIFY(box->isChecked()); box->setChecked(false); }
+      dialog.reject(); QCOMPARE(applied, 0); QVERIFY(!QFile::exists(dir.filePath("settings.json")));
+    }
+    {
+      xerahs::app::SettingsDialog dialog(store, dir.path(), {}, shortcuts, [&] { ++applied; });
+      const auto controls = boxes(dialog); for (auto *box : controls) box->setChecked(false);
+      dialog.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply)->click(); QCOMPARE(applied, 1);
+      QVERIFY(!regionSessionSettings(store.current().values).quickConfirm); QVERIFY(!regionSessionSettings(store.current().values).snapping);
+      dialog.findChild<QTabWidget *>()->setCurrentIndex(1);
+      QTimer::singleShot(0, [] { if (auto *preview = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) preview->button(QMessageBox::Reset)->click(); });
+      for (auto *button : dialog.findChildren<QPushButton *>()) if (button->text() == "&Reset section…") button->click();
+      for (auto *box : controls) QVERIFY(box->isChecked());
+      QVERIFY(!regionSessionSettings(store.current().values).quickConfirm);
+      dialog.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Ok)->click(); QCOMPARE(applied, 2);
+      QVERIFY(regionSessionSettings(store.current().values).quickConfirm); QVERIFY(regionSessionSettings(store.current().values).snapping);
+    }
+  }
+
   void oldMaximumHotkeysSurviveNewRecordingAction() {
     auto old = defaultSettings("/tmp"); auto bindings = old.value("hotkeys").toObject(); bindings.remove("start-region-recording");
     while (bindings.size() < maximumHotkeyBindings - 1) bindings.insert(QUuid::createUuid().toString(QUuid::WithoutBraces), "");
