@@ -143,6 +143,11 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
       const auto value = o.value(u"textColor");
       if (!value.isString() || !(content.textColor = parseColor(value.toString()))) { findings.invalid = true; return std::nullopt; }
     }
+    if ((type == shape::text || type == shape::speechBalloon) && o.contains(u"fontFamily")) {
+      const auto family = o.value(u"fontFamily");
+      if (!family.isString() || !validFontFamily(family.toString())) { findings.invalid = true; return std::nullopt; }
+      content.fontFamily = family.toString();
+    }
     double stepValue = 0;
     bool ok = optionalNumber(u"fontSize", 0, 2000, content.fontSize) && optionalNumber(u"strength", 0, 1000, content.strength) &&
               optionalNumber(u"stepValue", 0, 1e9, stepValue) && (!o.contains(u"stepValue") || isInteger(o.value(u"stepValue")));
@@ -192,7 +197,7 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
     if (!kKnownRectangleKeys.contains(it.key())) rectangle.extra.insert(it.key(), it.value());
   }
   if (type == shape::text || type == shape::speechBalloon) {
-    for (const auto &key : {QStringLiteral("textAlignment"), QStringLiteral("textBold"), QStringLiteral("textItalic"), QStringLiteral("textColor")}) rectangle.extra.remove(key);
+    for (const auto &key : {QStringLiteral("textAlignment"), QStringLiteral("textBold"), QStringLiteral("textItalic"), QStringLiteral("textColor"), QStringLiteral("fontFamily")}) rectangle.extra.remove(key);
   }
   return Annotation(rectangle);
 }
@@ -364,6 +369,7 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
     if (isTextShape(content.type)) o.insert(QStringLiteral("fontSize"), content.fontSize);
     if (content.type == shape::text || content.type == shape::speechBalloon) {
       o.insert(QStringLiteral("text"), content.text);
+      if (!content.fontFamily.isEmpty()) o.insert(QStringLiteral("fontFamily"), content.fontFamily); else o.remove(QStringLiteral("fontFamily"));
       if (content.textColor.has_value()) o.insert(QStringLiteral("textColor"), formatColor(*content.textColor)); else o.remove(QStringLiteral("textColor"));
       for (const auto &field : {std::pair{QStringLiteral("textBold"), content.textBold}, std::pair{QStringLiteral("textItalic"), content.textItalic}}) {
         if (field.second.has_value()) o.insert(field.first, *field.second); else o.remove(field.first);
@@ -493,6 +499,12 @@ SidecarSaveResult saveSidecar(SidecarStore &store, const QString &rasterPath, co
   }
   result.sidecarPath = path;
   return result;
+}
+
+bool validFontFamily(const QString &family) {
+  if (family.size() > kMaxTextLength) return false;
+  for (const QChar c : family) if (c.unicode() < 0x20 || c.unicode() == 0x7F) return false;
+  return true;
 }
 
 bool validTextAlignment(const QString &alignment) {

@@ -4,6 +4,8 @@
 #include "image-editor/AnnotationRenderer.h"
 #include <QCheckBox>
 #include <QComboBox>
+#include <QFontDatabase>
+#include <QPainter>
 #include <QSpinBox>
 #include "NativeAnnotationTools.h"
 #include "RectanglePropertiesDialog.h"
@@ -79,6 +81,68 @@ class EditorCanvasTest : public QObject {
   Q_OBJECT
   QTemporaryDir dialogPreferences;
 private slots:
+  void fontFamiliesCommitAndPreserveMissingNames_data() {
+    QTest::addColumn<QString>("type"); QTest::newRow("text") << shape::text; QTest::newRow("balloon") << shape::speechBalloon;
+  }
+  void fontFamiliesCommitAndPreserveMissingNames() {
+    QFETCH(QString, type); const auto installed = QFontDatabase::families(); QVERIFY(!installed.isEmpty()); const QString available = installed.first();
+    const QString missing = "XerahS Missing Test Font 8b2649"; QVERIFY(!QFontDatabase::hasFamily(missing));
+    auto initial = document(); initial.createdAt = initial.modifiedAt = "2026-10-27T00:00:00Z";
+    QBuffer encoded(&initial.sourceImagePng); QVERIFY(encoded.open(QIODevice::WriteOnly)); QVERIFY(image().save(&encoded, "PNG")); encoded.close();
+    EditorSession session(initial); ShapeContent content; content.type = type; content.text = "Family"; content.fontFamily = missing;
+    QVERIFY(session.createShape({{100, 100}, {400, 250}, {}}, content, session.stateId(), session.selection()));
+    const auto before = serializeDocument(session.document()); const auto undo = session.undoCount(); const auto source = image(); EditorCanvas canvas(session, source);
+    QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog); auto *family = dialog->findChild<QComboBox *>("annotationFontFamily"); QVERIFY(family);
+    QCOMPARE(family->currentText(), missing); QVERIFY(dialog->findChild<QLabel *>("annotationFontFamilyStatus")->text().startsWith("font-family-unavailable:"));
+    dialog->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo);
+    const auto loaded = parseDocument(before); QVERIFY(loaded.document); QCOMPARE(std::get<RectangleAnnotation>(loaded.document->annotations[0]).content.fontFamily, missing);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    family = dialog->findChild<QComboBox *>("annotationFontFamily"); family->setEditText(available); dialog->reject(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), before);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    family = dialog->findChild<QComboBox *>("annotationFontFamily"); family->setEditText(missing + " replacement"); dialog->accept(); QVERIFY(canvas.interactionActive());
+    QVERIFY(dialog->findChild<QLabel *>("balloonContentError")->text().startsWith("font-family-unavailable:")); QCOMPARE(session.undoCount(), undo); QCOMPARE(serializeDocument(session.document()), before);
+    family->setEditText(available); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(session.undoCount(), undo + 1); QCOMPARE(session.selectedRectangle()->content.fontFamily, available);
+    const auto replacement = parseDocument(serializeDocument(session.document())); QVERIFY(replacement.document); QCOMPARE(std::get<RectangleAnnotation>(replacement.document->annotations[0]).content.fontFamily, available);
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before); QVERIFY(session.redo());
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    dialog->findChild<QComboBox *>("annotationFontFamily")->setEditText(QString{}); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(session.undoCount(), undo + 2);
+    QVERIFY(session.selectedRectangle()->content.fontFamily.isEmpty()); QVERIFY(!serializeDocument(session.document()).value("annotations").toArray()[0].toObject().contains("fontFamily"));
+    for (const auto &bad : {QJsonValue(true), QJsonValue(1), QJsonValue(QJsonValue::Null), QJsonValue(QString("line\nbreak")), QJsonValue(QString(kMaxTextLength + 1, 'x'))}) {
+      auto payload = before; auto annotations = payload.value("annotations").toArray(); auto object = annotations[0].toObject(); object.insert("fontFamily", bad); annotations[0] = object; payload.insert("annotations", annotations); QVERIFY(!parseDocument(payload).document);
+      object.insert("type", "ellipse"); annotations[0] = object; payload.insert("annotations", annotations); const auto opaque = parseDocument(payload); QVERIFY(opaque.document);
+      QCOMPARE(serializeDocument(*opaque.document).value("annotations").toArray()[0].toObject().value("fontFamily"), bad);
+    }
+    for (const auto &bad : {QString(QChar(0)), QString("bad\nfont"), QString(kMaxTextLength + 1, 'x')}) {
+      content.fontFamily = bad; EditorSession invalid(initial); QVERIFY(!invalid.createShape({{100, 100}, {400, 250}, {}}, content, invalid.stateId(), invalid.selection())); QCOMPARE(invalid.editDiagnostic(), QString("annotation-style-invalid")); QCOMPARE(invalid.undoCount(), 0);
+      auto edit = session.selectedRectangle()->content; edit.fontFamily = bad; const auto state = session.stateId(); QVERIFY(!session.editShapeContent(session.selectedRectangle()->id, edit, state)); QCOMPARE(session.stateId(), state);
+    }
+  }
+  void longSavedFontFamilyIsNotTruncatedByNativeEntry() {
+    EditorSession session(document()); ShapeContent content; content.type = shape::text; content.text = "Saved"; content.fontFamily = QString(kMaxTextLength, 'x');
+    QVERIFY(session.createShape({{100, 100}, {400, 250}, {}}, content, session.stateId(), session.selection()));
+    const auto before = serializeDocument(session.document()); const auto undo = session.undoCount(); const auto source = image(); EditorCanvas canvas(session, source);
+    QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    const auto displayed = dialog->findChild<QComboBox *>("annotationFontFamily")->currentText(); QCOMPARE(displayed.size(), content.fontFamily.size()); QCOMPARE(displayed, content.fontFamily);
+    dialog->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo);
+  }
+  void nativeFontRenderingAndMissingFallback_data() { fontFamiliesCommitAndPreserveMissingNames_data(); }
+  void nativeFontRenderingAndMissingFallback() {
+    QFETCH(QString, type); const auto installed = QFontDatabase::families(); QVERIFY(!installed.isEmpty()); auto doc = document(); RectangleAnnotation annotation;
+    annotation.id = QUuid::createUuid(); annotation.start = {100, 100}; annotation.end = {500, 300}; annotation.content.type = type;
+    annotation.content.text = "Family WiWi"; annotation.content.fontSize = 40; annotation.style.fillColor = 0xFFFFFFFF; annotation.style.strokeColor = type == shape::text ? 0xFF000000 : 0xFFFFFFFF;
+    doc.annotations.push_back(annotation); const auto source = solidImage(800, 600, 0xFFFFFFFF); const auto legacy = renderDocument(source, doc); QVERIFY(legacy.image);
+    auto &content = std::get<RectangleAnnotation>(doc.annotations[0]).content; content.fontFamily = "XerahS Missing Test Font 8b2649"; QVERIFY(!QFontDatabase::hasFamily(content.fontFamily));
+    const auto saved = serializeDocument(doc); const auto fallback = renderDocument(source, doc); QVERIFY(fallback.image); QCOMPARE(fallback.image->pixels, legacy.image->pixels); QCOMPARE(serializeDocument(doc), saved);
+    // Native Qt text drawing is an independent font oracle; no expected glyph pixels come from the production renderer.
+    for (const auto &family : {installed.first(), installed.last()}) {
+      content.fontFamily = family; const auto actual = renderDocument(source, doc); QVERIFY(actual.image);
+      QImage expected(800, 600, QImage::Format_ARGB32_Premultiplied); expected.fill(Qt::white); QPainter painter(&expected); painter.setRenderHint(QPainter::Antialiasing); painter.setRenderHint(QPainter::TextAntialiasing);
+      QFont font = painter.font(); font.setFamily(family); font.setPixelSize(40); painter.setFont(font); painter.setPen(Qt::black);
+      const bool balloon = type == shape::speechBalloon; const int pad = balloon ? 8 : 4; const int flags = balloon ? int(Qt::AlignCenter) : int(Qt::AlignLeft | Qt::AlignTop);
+      painter.drawText(QRectF(100 + pad, 100 + pad, 400 - 2 * pad, 200 - 2 * pad), flags | Qt::TextWordWrap, "Family WiWi"); painter.end();
+      for (int y = 0; y < 600; ++y) for (int x = 0; x < 800; ++x) QCOMPARE(actual.image->at(x, y), expected.pixel(x, y));
+    }
+  }
   void textColorsCommitCancelValidateAndReload_data() {
     QTest::addColumn<QString>("type"); QTest::newRow("text") << shape::text; QTest::newRow("balloon") << shape::speechBalloon;
   }

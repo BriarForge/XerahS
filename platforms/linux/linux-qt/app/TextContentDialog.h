@@ -22,6 +22,7 @@ private:
   QSpinBox *m_size;
   QCheckBox *m_tail = nullptr;
   QComboBox *m_alignment;
+  QComboBox *m_family;
   QCheckBox *m_bold, *m_italic;
   QLineEdit *m_color;
   QLineEdit *m_x = nullptr, *m_y = nullptr;

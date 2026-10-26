@@ -83,6 +83,7 @@ struct ShapeContent {
   QString textAlignment;  // empty preserves legacy rendering; left, center, right
   std::optional<bool> textBold, textItalic; // absent retains the native font style of legacy files
   std::optional<Argb> textColor; // absent retains legacy stroke/automatic contrast
+  QString fontFamily; // empty uses the native font; missing names remain preserved
 };
 
 struct RectangleAnnotation {
@@ -103,6 +104,7 @@ struct RectangleAnnotation {
 
 // EA-008: shared alignment and finite mapped-tail validation.
 bool validTextAlignment(const QString &alignment);
+bool validFontFamily(const QString &family);
 bool validBalloonTail(const RectangleAnnotation &shape, const std::vector<PointF> &points);
 
 // ES-015: an annotation type this build does not know, kept verbatim and shown

@@ -146,7 +146,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Text and speech balloons share an asynchronous native Apply/Cancel dialog for multiline text, font size, bold/italic, horizontal alignment and explicit alpha-preserving text color. Balloons retain tail enable/tip controls. Optional textColor uses canonical #AARRGGBB; absence retains legacy stroke-based text and automatic-contrast balloon text. Text color is independent of border/fill. Core rejects malformed text color fields and preserves same-named opaque fields on unrelated families. Native tests cover no-op Apply, Cancel, invalid entry without mutation, color-only history, undo/redo, reload, explicit transparent creation and renderer alpha composition. Existing alignment/style/tail tests continue to cover history, validation and owner lifetimes. Font family, creation-option breadth, saved preferences and native visual/accessibility/target qualification remain incomplete; this row remains partial.",
+      "note": "Text and speech balloons share an asynchronous native Apply/Cancel dialog for multiline text, font family/size, bold/italic, horizontal alignment and independent alpha-preserving text color; balloons retain tail controls. Optional fontFamily preserves old native rendering when absent. Installed families render through native Qt fonts; unavailable saved names use the legacy native font without rewriting the document. The editable installed-font list preserves missing names on no-op Apply, refuses new unavailable replacements, and permits explicit replacement or clearing. Core validates family strings under the existing text resource limit during create/edit/parse; unrelated shape families retain opaque fields. Tests cover native Cancel/Apply, family-only history, undo/redo/reload, missing-font fallback, native glyph rendering and malformed inputs. A reproduced native-entry truncation regression now proves full-length compatible names remain unchanged. Creation-option breadth, saved preferences and native visual/accessibility/target qualification remain incomplete; this row stays partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -598,7 +598,10 @@
         "textFontStylesAffectRenderedGlyphs",
         "explicitFontStylesSurviveCreation",
         "textColorsCommitCancelValidateAndReload",
-        "textColorsRenderAlphaIndependently"
+        "textColorsRenderAlphaIndependently",
+        "fontFamiliesCommitAndPreserveMissingNames",
+        "nativeFontRenderingAndMissingFallback",
+        "longSavedFontFamilyIsNotTruncatedByNativeEntry"
       ]
     },
     "remaining_scope": "Shape modes and representative rendering/history tests exist. Full border/shadow/arrow/font/balloon/step fields and all-tool asset transfer, accessibility and compatibility coverage remain."

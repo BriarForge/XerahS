@@ -4,6 +4,7 @@
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFormLayout>
+#include <QFontDatabase>
 #include <QLabel>
 #include <QLineEdit>
 #include <QLocale>
@@ -20,6 +21,17 @@ TextContentDialog::TextContentDialog(const xerahs::editor::RectangleAnnotation &
   setAttribute(Qt::WA_DeleteOnClose); setWindowModality(Qt::WindowModal);
   auto *layout = new QVBoxLayout(this); auto *form = new QFormLayout; layout->addLayout(form);
   m_text = new QPlainTextEdit(shape.content.text, this); m_text->setObjectName("balloonText"); m_text->setAccessibleName(balloon ? "Balloon text" : "Annotation text"); form->addRow("&Text", m_text);
+  m_family = new QComboBox(this); m_family->setObjectName("annotationFontFamily"); m_family->setAccessibleName("Font family; empty uses the native default");
+  m_family->setEditable(true); m_family->setInsertPolicy(QComboBox::NoInsert); m_family->addItem(QString{}); m_family->addItems(QFontDatabase::families());
+  m_family->lineEdit()->setMaxLength(xerahs::editor::kMaxTextLength);
+  m_family->lineEdit()->setPlaceholderText("Native default (leave empty)"); m_family->setEditText(shape.content.fontFamily); form->addRow("Font &family", m_family);
+  auto *familyStatus = new QLabel(this); familyStatus->setObjectName("annotationFontFamilyStatus"); familyStatus->setTextFormat(Qt::PlainText); familyStatus->setWordWrap(true); form->addRow(familyStatus);
+  const auto describeFamily = [this, familyStatus] {
+    const auto family = m_family->currentText();
+    familyStatus->setText(family.isEmpty() ? "Native default font." : QFontDatabase::hasFamily(family) ? "Installed native font." :
+      "font-family-unavailable: This font is unavailable. Text uses the native default. Its saved family stays unchanged until you apply a replacement.");
+  };
+  connect(m_family, &QComboBox::currentTextChanged, this, describeFamily); describeFamily();
   m_size = new QSpinBox(this); m_size->setObjectName("balloonFontSize"); m_size->setAccessibleName("Font size in pixels"); m_size->setRange(1, 2000);
   m_size->setValue(int(std::lround(xerahs::editor::shapeFontSize(shape)))); form->addRow("Font &size (pixels)", m_size);
   m_alignment = new QComboBox(this); m_alignment->setObjectName("annotationTextAlignment"); m_alignment->setAccessibleName("Horizontal text alignment");
@@ -65,6 +77,11 @@ void TextContentDialog::accept() {
   // Keep the zero/default representation (and fractional sizes from compatible
   // files) unless the user actually changes the displayed size.
   if (m_size->value() != int(std::lround(xerahs::editor::shapeFontSize(m_shape)))) content.fontSize = m_size->value();
+  const auto family = m_family->currentText();
+  if (!xerahs::editor::validFontFamily(family) || (!family.isEmpty() && family != m_shape.content.fontFamily && !QFontDatabase::hasFamily(family))) {
+    m_error->setText("font-family-unavailable: Choose an installed font family or clear the field to use the native default."); m_family->setFocus(); return;
+  }
+  content.fontFamily = family;
   content.textAlignment = m_alignment->currentData().toString();
   const auto chosenStyle = [](QCheckBox *control) -> std::optional<bool> {
     return control->checkState() == Qt::PartiallyChecked ? std::nullopt : std::optional<bool>(control->isChecked());

@@ -499,6 +499,15 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "EA-008"
+      ],
+      "outcome": "Native Text and SpeechBalloon font-family selection preserves unavailable saved names, renders them with the unchanged native fallback, and permits explicit installed replacements or default restoration as one history edit. Optional family strings persist without touching older documents. Core validates shape string/resource boundaries and retains opaque fields on other families. Native UI/history/reload, independent Qt glyph comparison and missing-font fallback tests cover both types. Reproduced/fixed QComboBox entry truncation from 100000 to 32767 characters. Creation/default breadth and target/human qualification remain partial.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+      ]
     }
   ]
 }
