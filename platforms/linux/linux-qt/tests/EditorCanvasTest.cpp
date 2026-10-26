@@ -79,6 +79,72 @@ class EditorCanvasTest : public QObject {
   Q_OBJECT
   QTemporaryDir dialogPreferences;
 private slots:
+  void textFontStylesCommitCancelAndReload_data() {
+    QTest::addColumn<QString>("type"); QTest::newRow("text") << shape::text; QTest::newRow("balloon") << shape::speechBalloon;
+  }
+  void textFontStylesCommitCancelAndReload() {
+    QFETCH(QString, type); auto initial = document(); initial.createdAt = initial.modifiedAt = "2026-10-26T00:00:00Z";
+    QBuffer encoded(&initial.sourceImagePng); QVERIFY(encoded.open(QIODevice::WriteOnly)); QVERIFY(image().save(&encoded, "PNG")); encoded.close();
+    EditorSession session(initial); ShapeContent content; content.type = type; content.text = "Style";
+    QVERIFY(session.createShape({{100, 100}, {300, 200}, {}}, content, session.stateId(), session.selection()));
+    const auto before = serializeDocument(session.document()); const auto undo = session.undoCount(); const auto source = image(); EditorCanvas canvas(session, source);
+    const auto legacy = before.value("annotations").toArray()[0].toObject(); QVERIFY(!legacy.contains("textBold")); QVERIFY(!legacy.contains("textItalic"));
+    QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    auto *bold = dialog->findChild<QCheckBox *>("annotationTextBold"); auto *italic = dialog->findChild<QCheckBox *>("annotationTextItalic"); QVERIFY(bold); QVERIFY(italic);
+    QCOMPARE(bold->checkState(), Qt::PartiallyChecked); QCOMPARE(italic->checkState(), Qt::PartiallyChecked);
+    dialog->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    bold = dialog->findChild<QCheckBox *>("annotationTextBold"); italic = dialog->findChild<QCheckBox *>("annotationTextItalic");
+    bold->setCheckState(Qt::Checked); italic->setCheckState(Qt::Checked); dialog->reject(); QTRY_VERIFY(!canvas.interactionActive());
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo); QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    dialog->findChild<QCheckBox *>("annotationTextBold")->setCheckState(Qt::Checked);
+    dialog->findChild<QCheckBox *>("annotationTextItalic")->setCheckState(Qt::Unchecked); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive());
+    QCOMPARE(session.selectedRectangle()->content.textBold, std::optional<bool>(true)); QCOMPARE(session.selectedRectangle()->content.textItalic, std::optional<bool>(false)); QCOMPARE(session.undoCount(), undo + 1);
+    const auto loaded = parseDocument(serializeDocument(session.document())); QVERIFY(loaded.document);
+    const auto restored = std::get<RectangleAnnotation>(loaded.document->annotations[0]).content;
+    QCOMPARE(restored.textBold, std::optional<bool>(true)); QCOMPARE(restored.textItalic, std::optional<bool>(false));
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before); QVERIFY(session.redo());
+    auto plain = session.selectedRectangle()->content; plain.textBold = false; plain.textItalic = true;
+    QVERIFY(session.editShapeContent(session.selectedRectangle()->id, plain, session.stateId())); QCOMPARE(session.undoCount(), undo + 2);
+    plain.textBold.reset(); plain.textItalic.reset(); QVERIFY(session.editShapeContent(session.selectedRectangle()->id, plain, session.stateId()));
+    QCOMPARE(serializeDocument(session.document()), before);
+    for (const auto &key : {QString("textBold"), QString("textItalic")}) {
+      auto payload = before; auto annotations = payload.value("annotations").toArray(); auto object = annotations[0].toObject();
+      for (const auto &bad : {QJsonValue("true"), QJsonValue(1), QJsonValue(QJsonValue::Null), QJsonValue(QJsonObject{})}) {
+        object.insert(key, bad); annotations[0] = object; payload.insert("annotations", annotations); QVERIFY(!parseDocument(payload).document);
+      }
+      object.insert("type", "ellipse"); annotations[0] = object; payload.insert("annotations", annotations);
+      const auto opaque = parseDocument(payload); QVERIFY(opaque.document);
+      QCOMPARE(serializeDocument(*opaque.document).value("annotations").toArray()[0].toObject().value(key), QJsonValue(QJsonObject{}));
+    }
+  }
+  void explicitFontStylesSurviveCreation() {
+    for (const auto &type : {shape::text, shape::speechBalloon}) {
+      for (bool bold : {false, true}) for (bool italic : {false, true}) {
+        EditorSession session(document()); ShapeContent content; content.type = type; content.text = "Created"; content.textBold = bold; content.textItalic = italic;
+        QVERIFY(session.createShape({{100, 100}, {300, 200}, {}}, content, session.stateId(), session.selection()));
+        QCOMPARE(session.selectedRectangle()->content.textBold, std::optional<bool>(bold)); QCOMPARE(session.selectedRectangle()->content.textItalic, std::optional<bool>(italic));
+        const auto object = serializeDocument(session.document()).value("annotations").toArray()[0].toObject();
+        QCOMPARE(object.value("textBold"), QJsonValue(bold)); QCOMPARE(object.value("textItalic"), QJsonValue(italic));
+      }
+    }
+  }
+  void textFontStylesAffectRenderedGlyphs_data() { textFontStylesCommitCancelAndReload_data(); }
+  void textFontStylesAffectRenderedGlyphs() {
+    QFETCH(QString, type); auto doc = document(); RectangleAnnotation annotation;
+    annotation.id = QUuid::createUuid(); annotation.start = {100, 100}; annotation.end = {500, 300}; annotation.content.type = type;
+    annotation.content.text = "Hamburgefon"; annotation.content.fontSize = 40; annotation.style.fillColor = 0xFFFFFFFF;
+    annotation.style.strokeColor = type == shape::text ? 0xFF000000 : 0xFFFFFFFF; doc.annotations.push_back(annotation);
+    const auto source = solidImage(800, 600, 0xFFFFFFFF); const auto legacy = renderDocument(source, doc); QVERIFY(legacy.image);
+    auto &content = std::get<RectangleAnnotation>(doc.annotations[0]).content;
+    content.textBold = false; content.textItalic = false; const auto plain = renderDocument(source, doc); QVERIFY(plain.image); QCOMPARE(plain.image->pixels, legacy.image->pixels);
+    content.textBold = true; const auto bold = renderDocument(source, doc); QVERIFY(bold.image); QVERIFY(bold.image->pixels != plain.image->pixels);
+    const auto ink = [](const auto &pixels) { return std::count_if(pixels.begin(), pixels.end(), [](Argb p) { return p != 0xFFFFFFFF; }); };
+    QVERIFY(ink(bold.image->pixels) > ink(plain.image->pixels));
+    content.textBold = false; content.textItalic = true; const auto italic = renderDocument(source, doc); QVERIFY(italic.image); QVERIFY(italic.image->pixels != plain.image->pixels);
+    content.textBold = true; const auto both = renderDocument(source, doc); QVERIFY(both.image); QVERIFY(both.image->pixels != bold.image->pixels); QVERIFY(both.image->pixels != italic.image->pixels);
+  }
   void textAlignmentDialogCommitsOnceAndKeepsOldDocuments_data() {
     QTest::addColumn<QString>("type"); QTest::newRow("text") << shape::text; QTest::newRow("balloon") << shape::speechBalloon;
   }

@@ -103,6 +103,13 @@ int horizontalAlignment(const ShapeContent &content, int fallback) {
   return fallback;
 }
 
+QFont textFont(QFont font, const RectangleAnnotation &shape) {
+  font.setPixelSize(std::max(1, int(std::lround(shapeFontSize(shape)))));
+  if (shape.content.textBold.has_value()) font.setBold(*shape.content.textBold);
+  if (shape.content.textItalic.has_value()) font.setItalic(*shape.content.textItalic);
+  return font;
+}
+
 void paintBalloon(QPainter &painter, const RectangleAnnotation &shape) {
   const RectangleStyle &style = shape.style;
   const QRectF box = bounds(shape);
@@ -130,9 +137,7 @@ void paintBalloon(QPainter &painter, const RectangleAnnotation &shape) {
   painter.setBrush(fill);
   painter.setPen(QPen(color(style.strokeColor), style.strokeWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
   painter.drawPath(body);
-  QFont font = painter.font();
-  font.setPixelSize(std::max(1, int(std::lround(shapeFontSize(shape)))));
-  painter.setFont(font);
+  painter.setFont(textFont(painter.font(), shape));
   painter.setPen(fill.lightnessF() > 0.5 ? QColor(Qt::black) : QColor(Qt::white));
   const double pad = std::min(8.0, std::min(box.width(), box.height()) / 4);
   painter.drawText(box.adjusted(pad, pad, -pad, -pad), horizontalAlignment(shape.content, Qt::AlignHCenter) | Qt::AlignVCenter | Qt::TextWordWrap, shape.content.text);
@@ -227,9 +232,7 @@ void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImag
                      color(style.strokeColor));
   } else if (type == shape::text) {
     if (qAlpha(style.fillColor) > 0) painter.fillRect(box, color(style.fillColor));
-    QFont font = painter.font();
-    font.setPixelSize(std::max(1, int(std::lround(shapeFontSize(shape)))));
-    painter.setFont(font);
+    painter.setFont(textFont(painter.font(), shape));
     painter.setPen(color(style.strokeColor));
     const double pad = std::min(4.0, std::min(box.width(), box.height()) / 4);
     painter.drawText(box.adjusted(pad, pad, -pad, -pad), horizontalAlignment(shape.content, Qt::AlignLeft) | Qt::AlignTop | Qt::TextWordWrap, shape.content.text);

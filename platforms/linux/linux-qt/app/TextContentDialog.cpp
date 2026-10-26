@@ -26,6 +26,13 @@ TextContentDialog::TextContentDialog(const xerahs::editor::RectangleAnnotation &
   m_alignment->addItem(balloon ? "Default (center)" : "Default (left)", "");
   m_alignment->addItem("Left", "left"); m_alignment->addItem("Center", "center"); m_alignment->addItem("Right", "right");
   m_alignment->setCurrentIndex(m_alignment->findData(shape.content.textAlignment)); form->addRow("Horizontal &alignment", m_alignment);
+  const auto styleControl = [this, form](const QString &label, const QString &name, std::optional<bool> value) {
+    auto *control = new QCheckBox(label, this); control->setObjectName(name); control->setAccessibleName(QString(label).remove(QLatin1Char('&')));
+    control->setTristate(true); control->setCheckState(value.has_value() ? (*value ? Qt::Checked : Qt::Unchecked) : Qt::PartiallyChecked);
+    control->setToolTip("Partially checked uses the native font style."); form->addRow(control); return control;
+  };
+  m_bold = styleControl("&Bold", "annotationTextBold", shape.content.textBold);
+  m_italic = styleControl("&Italic", "annotationTextItalic", shape.content.textItalic);
   if (balloon) {
     m_tail = new QCheckBox("Show balloon &tail", this); m_tail->setObjectName("balloonTailEnabled"); m_tail->setAccessibleName("Show balloon tail"); m_tail->setChecked(!shape.content.points.empty()); form->addRow(m_tail);
     m_x = new QLineEdit(this); m_y = new QLineEdit(this); m_x->setObjectName("balloonTailX"); m_y->setObjectName("balloonTailY");
@@ -53,6 +60,10 @@ void TextContentDialog::accept() {
   // files) unless the user actually changes the displayed size.
   if (m_size->value() != int(std::lround(xerahs::editor::shapeFontSize(m_shape)))) content.fontSize = m_size->value();
   content.textAlignment = m_alignment->currentData().toString();
+  const auto chosenStyle = [](QCheckBox *control) -> std::optional<bool> {
+    return control->checkState() == Qt::PartiallyChecked ? std::nullopt : std::optional<bool>(control->isChecked());
+  };
+  content.textBold = chosenStyle(m_bold); content.textItalic = chosenStyle(m_italic);
   if (m_tail && m_tail->isChecked()) {
     bool xOk = false, yOk = false; const double x = QLocale::c().toDouble(m_x->text().trimmed(), &xOk), y = QLocale::c().toDouble(m_y->text().trimmed(), &yOk);
     if (!xOk || !yOk) {

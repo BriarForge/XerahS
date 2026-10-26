@@ -22,6 +22,7 @@ private:
   QSpinBox *m_size;
   QCheckBox *m_tail = nullptr;
   QComboBox *m_alignment;
+  QCheckBox *m_bold, *m_italic;
   QLineEdit *m_x = nullptr, *m_y = nullptr;
   QLabel *m_error;
   std::optional<xerahs::editor::ShapeContent> m_choice;

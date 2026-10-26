@@ -14,7 +14,7 @@ bool sameEditableFields(const RectangleAnnotation &a, const RectangleAnnotation 
   return a.start == b.start && a.end == b.end && a.style.strokeWidth == b.style.strokeWidth &&
       a.style.strokeColor == b.style.strokeColor && a.style.fillColor == b.style.fillColor &&
       a.style.rotationDegrees == b.style.rotationDegrees && a.style.opacity == b.style.opacity &&
-      a.content.text == b.content.text && a.content.fontSize == b.content.fontSize && a.content.points == b.content.points && a.content.textAlignment == b.content.textAlignment &&
+      a.content.text == b.content.text && a.content.fontSize == b.content.fontSize && a.content.points == b.content.points && a.content.textAlignment == b.content.textAlignment && a.content.textBold == b.content.textBold && a.content.textItalic == b.content.textItalic &&
       a.content.stepValue == b.content.stepValue && a.content.strength == b.content.strength;
 }
 bool sameStyle(const RectangleStyle &a, const RectangleStyle &b) {
@@ -147,7 +147,9 @@ bool EditorSession::editShapeContent(const QUuid &id, const ShapeContent &conten
   // Path geometry stays unchanged. A speech balloon's points encode its tail.
   return changeSelected([&](RectangleAnnotation &r) {
     r.content.text = content.text; r.content.fontSize = content.fontSize;
-    if (r.type() == shape::text || r.type() == shape::speechBalloon) r.content.textAlignment = content.textAlignment;
+    if (r.type() == shape::text || r.type() == shape::speechBalloon) {
+      r.content.textAlignment = content.textAlignment; r.content.textBold = content.textBold; r.content.textItalic = content.textItalic;
+    }
     if (r.type() == shape::speechBalloon) r.content.points = content.points;
     r.content.stepValue = content.stepValue; r.content.strength = content.strength;
   });

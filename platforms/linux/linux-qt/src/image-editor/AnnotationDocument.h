@@ -81,6 +81,7 @@ struct ShapeContent {
   double strength = 0;    // blur radius or pixelate cell; 0 uses the default
   QString imageKey;       // asset types: key into AnnotationDocument::embeddedImages
   QString textAlignment;  // empty preserves legacy rendering; left, center, right
+  std::optional<bool> textBold, textItalic; // absent retains the native font style of legacy files
 };
 
 struct RectangleAnnotation {

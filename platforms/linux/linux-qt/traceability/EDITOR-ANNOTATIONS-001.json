@@ -146,7 +146,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Text and speech balloons now share an asynchronous native Apply/Cancel dialog for multiline text, font size and horizontal alignment; balloons retain tail enable/tip controls. Optional textAlignment records left/center/right per object, with absence preserving old left-aligned text and centered balloons. Core validates the enum at creation/edit/parse, includes alignment-only edits in history, and preserves the same-named opaque property on other shape families. Native dialog Cancel/Apply, undo/redo, reload and glyph-placement tests cover both types. Font family, bold/italic, explicit text colors, creation-option breadth, saved preferences and native visual/accessibility/target qualification remain incomplete.",
+      "note": "Text and speech balloons now share an asynchronous native Apply/Cancel dialog for multiline text, font size and horizontal alignment; balloons retain tail enable/tip controls. Optional textAlignment records left/center/right per object, with absence preserving old left-aligned text and centered balloons. Core validates the enum at creation/edit/parse, includes alignment-only edits in history, and preserves the same-named opaque property on other shape families. Native dialog Cancel/Apply, undo/redo, reload and glyph-placement tests cover both types. Font family, explicit text colors, creation-option breadth, saved preferences and native visual/accessibility/target qualification remain incomplete. Native Bold and Italic controls edit optional per-object booleans. Absence preserves legacy native font styling; explicit false and true survive history and reload. Invalid JSON field types are refused for text/balloons and preserved opaquely on other families. Tests cover both families, Cancel/Apply, style-only history, absence restoration and rendered glyph differences. Font family, explicit text color and creation/default breadth remain outstanding; this row remains partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -593,7 +593,10 @@
         "tinyBalloonTailsRenderInEveryDirection",
         "textAlignmentDialogCommitsOnceAndKeepsOldDocuments",
         "renderedTextAlignmentMovesGlyphsWithoutChangingVerticalPlacement",
-        "invalidAlignmentCannotEnterThroughCreation"
+        "invalidAlignmentCannotEnterThroughCreation",
+        "textFontStylesCommitCancelAndReload",
+        "textFontStylesAffectRenderedGlyphs",
+        "explicitFontStylesSurviveCreation"
       ]
     },
     "remaining_scope": "Shape modes and representative rendering/history tests exist. Full border/shadow/arrow/font/balloon/step fields and all-tool asset transfer, accessibility and compatibility coverage remain."

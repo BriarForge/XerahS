@@ -9,6 +9,7 @@
 #include <zlib.h>
 
 #include <cmath>
+#include <utility>
 
 namespace xerahs::editor {
 
@@ -131,6 +132,13 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
       if (!alignment.isString() || !validTextAlignment(alignment.toString())) { findings.invalid = true; return std::nullopt; }
       content.textAlignment = alignment.toString();
     }
+    if (type == shape::text || type == shape::speechBalloon) {
+      for (const auto &field : {std::pair{QStringLiteral("textBold"), &content.textBold}, std::pair{QStringLiteral("textItalic"), &content.textItalic}}) {
+        if (!o.contains(field.first)) continue;
+        if (!o.value(field.first).isBool()) { findings.invalid = true; return std::nullopt; }
+        *field.second = o.value(field.first).toBool();
+      }
+    }
     double stepValue = 0;
     bool ok = optionalNumber(u"fontSize", 0, 2000, content.fontSize) && optionalNumber(u"strength", 0, 1000, content.strength) &&
               optionalNumber(u"stepValue", 0, 1e9, stepValue) && (!o.contains(u"stepValue") || isInteger(o.value(u"stepValue")));
@@ -179,7 +187,9 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
   for (auto it = o.begin(); it != o.end(); ++it) {
     if (!kKnownRectangleKeys.contains(it.key())) rectangle.extra.insert(it.key(), it.value());
   }
-  if (type == shape::text || type == shape::speechBalloon) rectangle.extra.remove(QStringLiteral("textAlignment"));
+  if (type == shape::text || type == shape::speechBalloon) {
+    for (const auto &key : {QStringLiteral("textAlignment"), QStringLiteral("textBold"), QStringLiteral("textItalic")}) rectangle.extra.remove(key);
+  }
   return Annotation(rectangle);
 }
 
@@ -350,6 +360,9 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
     if (isTextShape(content.type)) o.insert(QStringLiteral("fontSize"), content.fontSize);
     if (content.type == shape::text || content.type == shape::speechBalloon) {
       o.insert(QStringLiteral("text"), content.text);
+      for (const auto &field : {std::pair{QStringLiteral("textBold"), content.textBold}, std::pair{QStringLiteral("textItalic"), content.textItalic}}) {
+        if (field.second.has_value()) o.insert(field.first, *field.second); else o.remove(field.first);
+      }
       if (!content.textAlignment.isEmpty()) o.insert(QStringLiteral("textAlignment"), content.textAlignment);
       else o.remove(QStringLiteral("textAlignment"));
     }
