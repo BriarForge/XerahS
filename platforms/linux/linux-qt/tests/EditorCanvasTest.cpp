@@ -79,6 +79,65 @@ class EditorCanvasTest : public QObject {
   Q_OBJECT
   QTemporaryDir dialogPreferences;
 private slots:
+  void textColorsCommitCancelValidateAndReload_data() {
+    QTest::addColumn<QString>("type"); QTest::newRow("text") << shape::text; QTest::newRow("balloon") << shape::speechBalloon;
+  }
+  void textColorsCommitCancelValidateAndReload() {
+    QFETCH(QString, type); auto initial = document(); initial.createdAt = initial.modifiedAt = "2026-10-26T00:00:00Z";
+    QBuffer encoded(&initial.sourceImagePng); QVERIFY(encoded.open(QIODevice::WriteOnly)); QVERIFY(image().save(&encoded, "PNG")); encoded.close();
+    EditorSession session(initial); ShapeContent content; content.type = type; content.text = "Color";
+    QVERIFY(session.createShape({{100, 100}, {300, 200}, {}}, content, session.stateId(), session.selection()));
+    const auto before = serializeDocument(session.document()); const auto undo = session.undoCount(); const auto style = session.selectedRectangle()->style;
+    QVERIFY(!before.value("annotations").toArray()[0].toObject().contains("textColor")); const auto source = image(); EditorCanvas canvas(session, source);
+    QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    auto *color = dialog->findChild<QLineEdit *>("annotationTextColor"); QVERIFY(color); QVERIFY(color->text().isEmpty());
+    dialog->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    color = dialog->findChild<QLineEdit *>("annotationTextColor"); color->setText("#80ff1234"); dialog->reject(); QTRY_VERIFY(!canvas.interactionActive());
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    color = dialog->findChild<QLineEdit *>("annotationTextColor");
+    for (const auto &bad : {QString("red"), QString("#FF1234"), QString("#XX123456"), QString("#FF1234567")}) {
+      color->setText(bad); dialog->accept(); QVERIFY(canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo);
+      QVERIFY(dialog->findChild<QLabel *>("balloonContentError")->text().startsWith("annotation-text-color-invalid:"));
+    }
+    color->setText("#80ff1234"); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive());
+    QCOMPARE(session.undoCount(), undo + 1); QCOMPARE(session.selectedRectangle()->content.textColor, std::optional<Argb>(0x80FF1234));
+    QCOMPARE(session.selectedRectangle()->style.strokeColor, style.strokeColor); QCOMPARE(session.selectedRectangle()->style.fillColor, style.fillColor);
+    const auto payload = serializeDocument(session.document()); QCOMPARE(payload.value("annotations").toArray()[0].toObject().value("textColor"), QJsonValue("#80FF1234"));
+    const auto loaded = parseDocument(payload); QVERIFY(loaded.document); QCOMPARE(std::get<RectangleAnnotation>(loaded.document->annotations[0]).content.textColor, std::optional<Argb>(0x80FF1234));
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before); QVERIFY(session.redo());
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    color = dialog->findChild<QLineEdit *>("annotationTextColor"); QCOMPARE(color->text(), QString("#80FF1234")); color->clear(); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive());
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo + 2);
+    for (const auto &bad : {QJsonValue(true), QJsonValue(1), QJsonValue(QJsonValue::Null), QJsonValue("red"), QJsonValue("#FF1234")}) {
+      auto invalid = payload; auto annotations = invalid.value("annotations").toArray(); auto object = annotations[0].toObject(); object.insert("textColor", bad); annotations[0] = object; invalid.insert("annotations", annotations);
+      QVERIFY(!parseDocument(invalid).document); object.insert("type", "ellipse"); annotations[0] = object; invalid.insert("annotations", annotations);
+      const auto opaque = parseDocument(invalid); QVERIFY(opaque.document); QCOMPARE(serializeDocument(*opaque.document).value("annotations").toArray()[0].toObject().value("textColor"), bad);
+    }
+    // Core creation accepts an explicit fully transparent color, without confusing it with absence.
+    EditorSession created(initial); content.textColor = 0; QVERIFY(created.createShape({{100, 100}, {300, 200}, {}}, content, created.stateId(), created.selection()));
+    QCOMPARE(serializeDocument(created.document()).value("annotations").toArray()[0].toObject().value("textColor"), QJsonValue("#00000000"));
+  }
+  void textColorsRenderAlphaIndependently_data() { textColorsCommitCancelValidateAndReload_data(); }
+  void textColorsRenderAlphaIndependently() {
+    QFETCH(QString, type); auto doc = document(); RectangleAnnotation annotation;
+    annotation.id = QUuid::createUuid(); annotation.start = {100, 100}; annotation.end = {500, 300}; annotation.content.type = type;
+    annotation.content.text = "Color"; annotation.content.fontSize = 40; annotation.style.fillColor = 0xFFFFFFFF;
+    annotation.style.strokeColor = type == shape::text ? 0xFF000000 : 0xFFFFFFFF; doc.annotations.push_back(annotation);
+    const auto source = solidImage(800, 600, 0xFFFFFFFF); const auto legacy = renderDocument(source, doc); QVERIFY(legacy.image); QVERIFY(legacy.image->pixels != source.pixels);
+    auto &content = std::get<RectangleAnnotation>(doc.annotations[0]).content; content.textColor = 0xFF000000;
+    const auto black = renderDocument(source, doc); QVERIFY(black.image); QCOMPARE(black.image->pixels, legacy.image->pixels);
+    for (Argb value : {Argb(0xFFFF0000), Argb(0x80FF0000), Argb(0x00FF0000)}) {
+      content.textColor = value; const auto rendered = renderDocument(source, doc); QVERIFY(rendered.image); bool colored = false; int minGreen = 255;
+      for (Argb pixel : rendered.image->pixels) {
+        QCOMPARE(qAlpha(pixel), 255); QCOMPARE(qRed(pixel), 255); QCOMPARE(qGreen(pixel), qBlue(pixel));
+        if (qGreen(pixel) < 255) colored = true; minGreen = std::min(minGreen, qGreen(pixel));
+      }
+      if (value == 0x00FF0000) { QVERIFY(!colored); QCOMPARE(rendered.image->pixels, source.pixels); }
+      else { QVERIFY(colored); if (value == 0x80FF0000) QVERIFY(minGreen >= 127 && minGreen <= 128); else QCOMPARE(minGreen, 0); }
+    }
+  }
   void textFontStylesCommitCancelAndReload_data() {
     QTest::addColumn<QString>("type"); QTest::newRow("text") << shape::text; QTest::newRow("balloon") << shape::speechBalloon;
   }

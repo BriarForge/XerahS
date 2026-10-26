@@ -139,6 +139,10 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
         *field.second = o.value(field.first).toBool();
       }
     }
+    if ((type == shape::text || type == shape::speechBalloon) && o.contains(u"textColor")) {
+      const auto value = o.value(u"textColor");
+      if (!value.isString() || !(content.textColor = parseColor(value.toString()))) { findings.invalid = true; return std::nullopt; }
+    }
     double stepValue = 0;
     bool ok = optionalNumber(u"fontSize", 0, 2000, content.fontSize) && optionalNumber(u"strength", 0, 1000, content.strength) &&
               optionalNumber(u"stepValue", 0, 1e9, stepValue) && (!o.contains(u"stepValue") || isInteger(o.value(u"stepValue")));
@@ -188,7 +192,7 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
     if (!kKnownRectangleKeys.contains(it.key())) rectangle.extra.insert(it.key(), it.value());
   }
   if (type == shape::text || type == shape::speechBalloon) {
-    for (const auto &key : {QStringLiteral("textAlignment"), QStringLiteral("textBold"), QStringLiteral("textItalic")}) rectangle.extra.remove(key);
+    for (const auto &key : {QStringLiteral("textAlignment"), QStringLiteral("textBold"), QStringLiteral("textItalic"), QStringLiteral("textColor")}) rectangle.extra.remove(key);
   }
   return Annotation(rectangle);
 }
@@ -360,6 +364,7 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
     if (isTextShape(content.type)) o.insert(QStringLiteral("fontSize"), content.fontSize);
     if (content.type == shape::text || content.type == shape::speechBalloon) {
       o.insert(QStringLiteral("text"), content.text);
+      if (content.textColor.has_value()) o.insert(QStringLiteral("textColor"), formatColor(*content.textColor)); else o.remove(QStringLiteral("textColor"));
       for (const auto &field : {std::pair{QStringLiteral("textBold"), content.textBold}, std::pair{QStringLiteral("textItalic"), content.textItalic}}) {
         if (field.second.has_value()) o.insert(field.first, *field.second); else o.remove(field.first);
       }

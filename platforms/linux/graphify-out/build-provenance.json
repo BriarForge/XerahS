@@ -22,9 +22,9 @@
     "ast_preserved": true
   },
   "ast_refresh": {
-    "source_revision": "d8b0d1b940c54ab713d86d6116db5633742626c4",
+    "source_revision": "1801bd6a1566107b7ec3012dd32158c389e90f7d",
     "semantic_documents_preserved": true,
     "external_model_labeling_used": false,
-    "text_font_style_nodes": 11
+    "text_color_nodes": 12
   }
 }

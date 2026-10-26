@@ -82,6 +82,7 @@ struct ShapeContent {
   QString imageKey;       // asset types: key into AnnotationDocument::embeddedImages
   QString textAlignment;  // empty preserves legacy rendering; left, center, right
   std::optional<bool> textBold, textItalic; // absent retains the native font style of legacy files
+  std::optional<Argb> textColor; // absent retains legacy stroke/automatic contrast
 };
 
 struct RectangleAnnotation {

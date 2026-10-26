@@ -33,6 +33,12 @@ TextContentDialog::TextContentDialog(const xerahs::editor::RectangleAnnotation &
   };
   m_bold = styleControl("&Bold", "annotationTextBold", shape.content.textBold);
   m_italic = styleControl("&Italic", "annotationTextItalic", shape.content.textItalic);
+  m_color = new QLineEdit(this); m_color->setObjectName("annotationTextColor");
+  m_color->setAccessibleName("Text color in #AARRGGBB format");
+  m_color->setPlaceholderText(balloon ? "Automatic contrast (leave empty)" : "Stroke color (leave empty)");
+  m_color->setToolTip("Enter #AARRGGBB, including alpha. Leave empty to use the original text-color rule. This changes text only.");
+  if (shape.content.textColor.has_value()) m_color->setText(xerahs::editor::formatColor(*shape.content.textColor));
+  form->addRow("Text &color (#AARRGGBB)", m_color);
   if (balloon) {
     m_tail = new QCheckBox("Show balloon &tail", this); m_tail->setObjectName("balloonTailEnabled"); m_tail->setAccessibleName("Show balloon tail"); m_tail->setChecked(!shape.content.points.empty()); form->addRow(m_tail);
     m_x = new QLineEdit(this); m_y = new QLineEdit(this); m_x->setObjectName("balloonTailX"); m_y->setObjectName("balloonTailY");
@@ -64,6 +70,13 @@ void TextContentDialog::accept() {
     return control->checkState() == Qt::PartiallyChecked ? std::nullopt : std::optional<bool>(control->isChecked());
   };
   content.textBold = chosenStyle(m_bold); content.textItalic = chosenStyle(m_italic);
+  const auto colorText = m_color->text().trimmed(); content.textColor.reset();
+  if (!colorText.isEmpty()) {
+    content.textColor = xerahs::editor::parseColor(colorText);
+    if (!content.textColor.has_value()) {
+      m_error->setText("annotation-text-color-invalid: Enter #AARRGGBB including alpha, or leave the field empty for the default text color."); m_color->setFocus(); return;
+    }
+  }
   if (m_tail && m_tail->isChecked()) {
     bool xOk = false, yOk = false; const double x = QLocale::c().toDouble(m_x->text().trimmed(), &xOk), y = QLocale::c().toDouble(m_y->text().trimmed(), &yOk);
     if (!xOk || !yOk) {

@@ -490,6 +490,15 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "EA-008"
+      ],
+      "outcome": "Native Text and SpeechBalloon text-color entry supports explicit #AARRGGBB and empty/default restoration independently of border/fill. Optional Core color persists canonically with alpha, including transparent zero; absence retains exact legacy rendering. Invalid entry/import cannot partially mutate the document. Tests cover native Apply/Cancel, no-op history, color-only undo/redo/reload, opaque fields on other types and actual alpha composition. Font family, creation/default breadth and target/human qualification remain partial.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+      ]
     }
   ]
 }
