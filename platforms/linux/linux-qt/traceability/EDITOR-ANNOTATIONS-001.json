@@ -164,7 +164,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Step stores a numeric value and allocates from the highest existing number; editing/undo is tested. Alphabetic/Roman styles, start/reset and tail controls are missing.",
+      "note": "Step preserves numeric values and existing highest-number allocation. Native selected-number editing is now an owned asynchronous Apply/Cancel dialog over the existing version-1 0..1000000000 range, without clamping stored values to the old UI maximum of 1000000. Shared parsing/create/edit bounds reject invalid numeric values before mutation. Step and Text share document/state/selection/serial/lifetime completion guards. Tests cover zero, one, values above the old UI ceiling and the version-1 maximum; no-op/Cancel, one-step history, undo/redo/reload, stale/disabled/dead owners and deferred-dialog cleanup. Regressions reproduced native clamping and invalid create/edit admission. Alphabetic/Roman mappings and explicit sequence reset need product decisions; start/reset/tail controls, saved preferences and full qualification remain partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -606,7 +606,13 @@
         "textCreationRefusesStaleOrCancelledOwners",
         "oldCreationDialogDeletionCannotCancelANewCreation",
         "creationSurvivesFocusTransferToItsDialog",
-        "completedTextDialogCannotClearLaterModalPendingState"
+        "completedTextDialogCannotClearLaterModalPendingState",
+        "stepEditorPreservesLargeStoredNumbersWithoutClamping",
+        "invalidStepNumbersCannotEnterCreation",
+        "invalidStepNumbersCannotEnterEdits",
+        "stepNumericDialogCommitsOnceAndReloads",
+        "stepNumericDialogRejectsStaleAndDeadOwners",
+        "oldStepDialogDestructionCannotCancelNewContentDialog"
       ]
     },
     "remaining_scope": "Shape modes and representative rendering/history tests exist. Full border/shadow/arrow/font/balloon/step fields and all-tool asset transfer, accessibility and compatibility coverage remain."

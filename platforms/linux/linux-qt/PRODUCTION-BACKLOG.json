@@ -519,6 +519,16 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "EA-009",
+        "EA-017"
+      ],
+      "outcome": "Selected Step numbers now edit asynchronously across the existing v1 0..1000000000 range, preserving previously clamped large values. Shared persisted/create/edit numeric bounds refuse invalid mutations. Text and Step reuse one guarded dialog completion path, retaining creation focus/cancellation behavior. Native tests cover boundaries, Apply/Cancel/no-op, history/reload, stale and dead owners, duplicate completion and deferred cleanup. Reproduced native 1000000 clamping and invalid create/edit admission before fixes. Alphabetic/Roman mappings and reset semantics are blocked pending product decisions; tail, defaults and full qualification remain partial.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+      ]
     }
   ]
 }

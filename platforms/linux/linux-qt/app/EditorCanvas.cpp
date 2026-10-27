@@ -10,6 +10,8 @@
 #include <QFileDialog>
 #include <QImageReader>
 #include <QInputDialog>
+#include <QDialogButtonBox>
+#include <QPushButton>
 #include <QMessageBox>
 #include <QPainterPath>
 #include <QKeyEvent>
@@ -670,22 +672,27 @@ bool EditorCanvas::textContentDialog(const RectangleAnnotation &snapshot, QWidge
                                     std::optional<CreationSnapshot> creation) {
   if (!isEnabled() || m_annotationDialogPending) return false;
   auto *dialog = new TextContentDialog(snapshot, parent ? parent : this);
+  return contentDialog(dialog, [dialog] { return dialog->choice(); }, snapshot, creation);
+}
+
+bool EditorCanvas::contentDialog(QDialog *dialog, std::function<std::optional<ShapeContent>()> choice,
+                                const RectangleAnnotation &snapshot, std::optional<CreationSnapshot> creation) {
   const auto generation = m_documentGeneration, serial = ++m_contentDialogSerial;
   const auto state = creation ? creation->state : m_session->stateId();
   const auto selection = creation ? creation->selection : m_session->selection();
   m_annotationDialogPending = true;
   if (creation) m_creationDialog = dialog;
-  connect(dialog, &QDialog::finished, this, [this, dialog, snapshot, creation, state, generation, selection, serial](int result) {
+  connect(dialog, &QDialog::finished, this, [this, choice = std::move(choice), snapshot, creation, state, generation, selection, serial](int result) {
     if (serial != m_contentDialogSerial || !m_annotationDialogPending) return;
     ++m_contentDialogSerial;
-    const auto choice = dialog->choice(); m_annotationDialogPending = false;
+    const auto chosen = result == QDialog::Accepted ? choice() : std::nullopt; m_annotationDialogPending = false;
     if (creation) m_creationDialog.clear();
     const QPointer<EditorCanvas> owner(this); QString diagnostic;
-    if (result == QDialog::Accepted && choice) {
+    if (result == QDialog::Accepted && chosen) {
       if (!isEnabled() || generation != m_documentGeneration || state != m_session->stateId() || selection != m_session->selection()) diagnostic = "annotation-edit-stale";
       else {
-        if (creation) m_session->createShape({snapshot.start, snapshot.end, creation->style}, *choice, state, selection);
-        else m_session->editShapeContent(snapshot.id, *choice, state);
+        if (creation) m_session->createShape({snapshot.start, snapshot.end, creation->style}, *chosen, state, selection);
+        else m_session->editShapeContent(snapshot.id, *chosen, state);
         diagnostic = m_session->editDiagnostic();
       }
     }
@@ -705,7 +712,7 @@ bool EditorCanvas::textContentDialog(const RectangleAnnotation &snapshot, QWidge
 }
 
 bool EditorCanvas::editShapeContent(QWidget *parent) {
-  if (!canEditShapeContent() || interactionActive()) return false;
+  if (!isEnabled() || !canEditShapeContent() || interactionActive()) return false;
   const RectangleAnnotation selected = *m_session->selectedRectangle();
   const quint64 state = m_session->stateId();
   ShapeContent content = selected.content;
@@ -713,11 +720,23 @@ bool EditorCanvas::editShapeContent(QWidget *parent) {
   if (selected.type() == shape::text || selected.type() == shape::speechBalloon) {
     return textContentDialog(selected, parent);
   }
+  if (selected.type() == shape::step) {
+    auto *dialog = new QInputDialog(parent ? parent : this);
+    dialog->setObjectName("stepContentDialog"); dialog->setWindowTitle("Edit Step"); dialog->setAccessibleName("Step number");
+    dialog->setWindowModality(Qt::WindowModal); dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->setInputMode(QInputDialog::IntInput); dialog->setLabelText("Step number:");
+    dialog->setIntRange(0, int(kMaxStepValue)); dialog->setIntValue(int(content.stepValue));
+    dialog->setOkButtonText("Apply"); dialog->setCancelButtonText("Cancel");
+    if (auto *buttons = dialog->findChild<QDialogButtonBox *>()) {
+      buttons->button(QDialogButtonBox::Ok)->setAutoDefault(false); buttons->button(QDialogButtonBox::Cancel)->setDefault(true);
+    }
+    return contentDialog(dialog, [dialog, content]() mutable -> std::optional<ShapeContent> {
+      content.stepValue = dialog->intValue(); return content;
+    }, selected);
+  }
   bool accepted = false;
   m_annotationDialogPending = true;
-  if (selected.type() == shape::step) {
-    content.stepValue = QInputDialog::getInt(parent, "Edit Step", "Step number:", int(content.stepValue), 0, 1000000, 1, &accepted);
-  } else {
+  {
     const QString &type = selected.type();
     const QString label = type == shape::blur ? "Blur radius (pixels):" : type == shape::pixelate ? "Pixel cell size (pixels):"
         : type == shape::magnify ? "Zoom factor:" : "Dim the rest by (percent):";

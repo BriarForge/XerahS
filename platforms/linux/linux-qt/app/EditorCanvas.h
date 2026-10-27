@@ -9,10 +9,12 @@
 #include <QHash>
 #include <QPointer>
 #include <array>
+#include <functional>
+
+class QDialog;
 
 namespace xerahs::app {
 
-class TextContentDialog;
 
 class EditorCanvas final : public QAbstractScrollArea {
   Q_OBJECT
@@ -52,7 +54,7 @@ public:
   bool createRectangle(QWidget *parent);
   // Text, Step, Blur and Pixelate: edit the selected object's own values.
   bool canEditShapeContent() const;
-  // Text and balloon edits open asynchronously; true means the dialog was opened.
+  // Text, balloon and Step edits open asynchronously; true means the dialog was opened.
   bool editShapeContent(QWidget *parent);
   // Borrowed only until mutation; native list models copy their displayed rows.
   const xerahs::editor::AnnotationDocument &annotationDocument() const { return m_session->document(); }
@@ -124,7 +126,9 @@ private:
   std::optional<CreationSnapshot> m_creation;
   bool textContentDialog(const xerahs::editor::RectangleAnnotation &snapshot, QWidget *parent,
                          std::optional<CreationSnapshot> creation = std::nullopt);
-  QPointer<TextContentDialog> m_creationDialog;
+  bool contentDialog(QDialog *dialog, std::function<std::optional<xerahs::editor::ShapeContent>()> choice,
+                     const xerahs::editor::RectangleAnnotation &snapshot, std::optional<CreationSnapshot> creation = std::nullopt);
+  QPointer<QDialog> m_creationDialog;
   bool createAsset(const QString &type, const std::vector<xerahs::editor::PointF> &gesture, const CreationSnapshot &creation);
   struct ResizeGesture {
     xerahs::editor::RectangleAnnotation original;

@@ -72,6 +72,7 @@ bool hasShapeStrength(const QString &type);
 // resize and rotation of the bounds carry the path with them (EA-006/007).
 inline constexpr int kMaxPathPoints = 100000;
 inline constexpr int kMaxTextLength = 100000;
+inline constexpr qint64 kMaxStepValue = 1000000000;
 struct ShapeContent {
   QString type = shape::rectangle;
   std::vector<PointF> points;  // speech-balloon: points[0] is the tail tip
@@ -105,6 +106,7 @@ struct RectangleAnnotation {
 // EA-008: shared alignment and finite mapped-tail validation.
 bool validTextAlignment(const QString &alignment);
 bool validFontFamily(const QString &family);
+bool validStepValue(qint64 value);
 bool validBalloonTail(const RectangleAnnotation &shape, const std::vector<PointF> &points);
 
 // ES-015: an annotation type this build does not know, kept verbatim and shown

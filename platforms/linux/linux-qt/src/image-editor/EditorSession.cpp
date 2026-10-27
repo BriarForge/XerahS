@@ -62,6 +62,9 @@ std::optional<QUuid> EditorSession::createShape(const RectangleProperties &draft
   if ((content.type == shape::text || content.type == shape::speechBalloon) && (!validTextAlignment(content.textAlignment) || !validFontFamily(content.fontFamily))) {
     m_editDiagnostic = "annotation-style-invalid"; return std::nullopt;
   }
+  if (content.type == shape::step && !validStepValue(content.stepValue)) {
+    m_editDiagnostic = "annotation-style-invalid"; return std::nullopt;
+  }
   const auto start = draft.start, end = draft.end;
   // Check both supplied points before min/max: a NaN in the second operand
   // can otherwise disappear during normalization.
@@ -134,6 +137,7 @@ bool EditorSession::editShapeContent(const QUuid &id, const ShapeContent &conten
   if (!selectionEditable()) { m_editDiagnostic = "annotation-selection-protected"; return false; }
   if (content.type != selected->type() || !std::isfinite(content.fontSize) || content.fontSize < 0 || content.fontSize > 2000 ||
       !std::isfinite(content.strength) || content.strength < 0 || content.strength > 1000 || content.stepValue < 0 ||
+      (content.type == shape::step && !validStepValue(content.stepValue)) ||
       ((content.type == shape::text || content.type == shape::speechBalloon) && content.text.isEmpty())) {
     m_editDiagnostic = "annotation-style-invalid"; return false;
   }

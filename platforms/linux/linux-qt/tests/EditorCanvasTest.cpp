@@ -11,6 +11,7 @@
 #include "RectanglePropertiesDialog.h"
 #include "SelectionRotationDialog.h"
 #include <QPlainTextEdit>
+#include <QInputDialog>
 
 #include <QAction>
 #include <QBuffer>
@@ -81,6 +82,70 @@ class EditorCanvasTest : public QObject {
   Q_OBJECT
   QTemporaryDir dialogPreferences;
 private slots:
+  void stepEditorPreservesLargeStoredNumbersWithoutClamping() {
+    EditorSession session(document()); ShapeContent content; content.type = shape::step; content.stepValue = 123456789;
+    QVERIFY(session.createShape({{100, 100}, {180, 180}, {}}, content, session.stateId(), session.selection()));
+    const auto before = serializeDocument(session.document()); const auto source = image(); EditorCanvas canvas(session, source); int observed = -1; bool acted = false;
+    QTimer timer; connect(&timer, &QTimer::timeout, &canvas, [&] {
+      auto *input = canvas.findChild<QInputDialog *>(); if (!input || acted) return; acted = true; observed = input->intValue(); input->reject();
+    });
+    timer.start(5); canvas.editShapeContent(&canvas); QTRY_VERIFY(acted); timer.stop(); QCOMPARE(observed, 123456789); QCOMPARE(serializeDocument(session.document()), before);
+  }
+  void invalidStepNumbersCannotEnterCreation() {
+    for (qint64 value : {qint64(-1), qint64(1000000001), std::numeric_limits<qint64>::max()}) {
+      EditorSession session(document()); const auto before = serializeDocument(session.document()); ShapeContent content; content.type = shape::step; content.stepValue = value;
+      QVERIFY(!session.createShape({{100, 100}, {180, 180}, {}}, content, session.stateId(), session.selection())); QCOMPARE(session.editDiagnostic(), QString("annotation-style-invalid")); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), 0);
+    }
+  }
+  void invalidStepNumbersCannotEnterEdits() {
+    EditorSession session(document()); ShapeContent content; content.type = shape::step; content.stepValue = 1;
+    const auto id = session.createShape({{100, 100}, {180, 180}, {}}, content, session.stateId(), session.selection()); QVERIFY(id);
+    const auto before = serializeDocument(session.document()); const auto state = session.stateId();
+    for (qint64 value : {qint64(-1), qint64(1000000001), std::numeric_limits<qint64>::max()}) {
+      content.stepValue = value; QVERIFY(!session.editShapeContent(*id, content, state)); QCOMPARE(session.editDiagnostic(), QString("annotation-style-invalid")); QCOMPARE(session.stateId(), state); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), 1);
+    }
+  }
+  void stepNumericDialogCommitsOnceAndReloads_data() {
+    QTest::addColumn<int>("value"); QTest::newRow("zero") << 0; QTest::newRow("one") << 1; QTest::newRow("past-old-ui-limit") << 1000001; QTest::newRow("version-one-maximum") << 1000000000;
+  }
+  void stepNumericDialogCommitsOnceAndReloads() {
+    QFETCH(int, value); auto initial = document(); initial.createdAt = initial.modifiedAt = "2026-10-27T00:00:00Z";
+    QBuffer encoded(&initial.sourceImagePng); QVERIFY(encoded.open(QIODevice::WriteOnly)); QVERIFY(image().save(&encoded, "PNG")); encoded.close();
+    EditorSession session(initial); ShapeContent content; content.type = shape::step; content.stepValue = 123456789; content.fontSize = 28;
+    QVERIFY(session.createShape({{100, 100}, {180, 180}, {}}, content, session.stateId(), session.selection()));
+    const auto before = serializeDocument(session.document()); const auto source = image(); EditorCanvas canvas(session, source); QSignalSpy rejected(&canvas, &EditorCanvas::editRejected);
+    QVERIFY(canvas.editShapeContent(&canvas)); auto *input = canvas.findChild<QInputDialog *>(); QVERIFY(input); QVERIFY(canvas.interactionActive()); QCOMPARE(input->intValue(), 123456789); QCOMPARE(input->intMinimum(), 0); QCOMPARE(input->intMaximum(), 1000000000);
+    input->setIntValue(value); input->reject(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), 1);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QVERIFY(canvas.editShapeContent(&canvas)); input = canvas.findChild<QInputDialog *>(); QVERIFY(input); input->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), 1);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QVERIFY(canvas.editShapeContent(&canvas)); input = canvas.findChild<QInputDialog *>(); QVERIFY(input); input->setIntValue(value); input->accept(); input->accept(); QTRY_VERIFY(!canvas.interactionActive());
+    QCOMPARE(session.undoCount(), 2); QCOMPARE(session.selectedRectangle()->content.stepValue, qint64(value)); QCOMPARE(session.selectedRectangle()->content.fontSize, 28.0); QCOMPARE(session.document().annotations.size(), std::size_t(1)); QCOMPARE(rejected.count(), 0);
+    const auto completed = serializeDocument(session.document()); const auto loaded = parseDocument(completed); QVERIFY(loaded.document); QCOMPARE(serializeDocument(*loaded.document), completed);
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before); QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), completed); QCOMPARE(source, image());
+  }
+  void stepNumericDialogRejectsStaleAndDeadOwners_data() {
+    QTest::addColumn<QString>("mode"); for (const auto &mode : {"state", "selection", "document", "disabled", "owner", "parent"}) QTest::newRow(mode) << QString(mode);
+  }
+  void stepNumericDialogRejectsStaleAndDeadOwners() {
+    QFETCH(QString, mode); EditorSession session(document()); ShapeContent content; content.type = shape::step; content.stepValue = 123456789;
+    QVERIFY(session.createShape({{100, 100}, {180, 180}, {}}, content, session.stateId(), session.selection()));
+    const auto source = image(); std::unique_ptr<EditorSession> replacement; auto parent = std::make_unique<QWidget>(); auto canvas = std::make_unique<EditorCanvas>(session, source);
+    QVERIFY(canvas->editShapeContent(parent.get())); QPointer<QInputDialog> input = parent->findChild<QInputDialog *>(); QVERIFY(input); input->setIntValue(1000000000);
+    if (mode == "state") QVERIFY(session.createRectangle({400, 400}, {450, 450}));
+    if (mode == "selection") session.select({});
+    if (mode == "document") { replacement = std::make_unique<EditorSession>(document()); QVERIFY(replacement->createShape({{100, 100}, {180, 180}, {}}, content, replacement->stateId(), replacement->selection())); canvas->resetDocument(*replacement, source); }
+    if (mode == "disabled") canvas->setEnabled(false);
+    const auto before = serializeDocument(session.document()); const auto undo = session.undoCount(); const auto otherBefore = replacement ? serializeDocument(replacement->document()) : QJsonObject{};
+    if (mode == "owner") { QSignalSpy changes(canvas.get(), &EditorCanvas::changed); const auto count = changes.count(); canvas.reset(); input->accept(); QCoreApplication::processEvents(); QCOMPARE(changes.count(), count); }
+    else if (mode == "parent") { parent.reset(); QTRY_VERIFY(!canvas->interactionActive()); }
+    else { input->accept(); QTRY_VERIFY(!canvas->interactionActive()); }
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo); if (replacement) QCOMPARE(serializeDocument(replacement->document()), otherBefore);
+  }
+  void oldStepDialogDestructionCannotCancelNewContentDialog() {
+    EditorSession session(document()); ShapeContent content; content.type = shape::step; content.stepValue = 1; QVERIFY(session.createShape({{100, 100}, {180, 180}, {}}, content, session.stateId(), session.selection()));
+    const auto source = image(); EditorCanvas canvas(session, source); QVERIFY(canvas.editShapeContent(&canvas)); auto *old = canvas.findChild<QInputDialog *>(); QVERIFY(old); old->reject();
+    QVERIFY(canvas.editShapeContent(&canvas)); const auto inputs = canvas.findChildren<QInputDialog *>(); auto *current = inputs.last(); QVERIFY(current != old); QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QCoreApplication::processEvents(); QVERIFY(canvas.interactionActive());
+    current->setIntValue(1000000000); current->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(session.selectedRectangle()->content.stepValue, qint64(1000000000)); QCOMPARE(session.undoCount(), 2);
+  }
   void textCreationCommitsFormattedSnapshotOnce_data() {
     QTest::addColumn<QString>("type"); QTest::newRow("text") << shape::text; QTest::newRow("balloon") << shape::speechBalloon;
   }

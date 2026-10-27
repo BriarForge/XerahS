@@ -150,7 +150,7 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
     }
     double stepValue = 0;
     bool ok = optionalNumber(u"fontSize", 0, 2000, content.fontSize) && optionalNumber(u"strength", 0, 1000, content.strength) &&
-              optionalNumber(u"stepValue", 0, 1e9, stepValue) && (!o.contains(u"stepValue") || isInteger(o.value(u"stepValue")));
+              optionalNumber(u"stepValue", 0, double(kMaxStepValue), stepValue) && (!o.contains(u"stepValue") || isInteger(o.value(u"stepValue")));
     content.stepValue = qint64(stepValue);
     if (o.contains(u"text")) { ok = ok && o.value(u"text").isString() && o.value(u"text").toString().size() <= kMaxTextLength; content.text = o.value(u"text").toString(); }
     if (o.contains(u"points")) {
@@ -500,6 +500,8 @@ SidecarSaveResult saveSidecar(SidecarStore &store, const QString &rasterPath, co
   result.sidecarPath = path;
   return result;
 }
+
+bool validStepValue(qint64 value) { return value >= 0 && value <= kMaxStepValue; }
 
 bool validFontFamily(const QString &family) {
   if (family.size() > kMaxTextLength) return false;
