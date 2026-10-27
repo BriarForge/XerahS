@@ -22,9 +22,9 @@
     "ast_preserved": true
   },
   "ast_refresh": {
-    "source_revision": "18e8cf07bb99d3fd8b7ebb48c51d8ae25806f32d",
+    "source_revision": "c46a539ce7fe4c329737535a056a08742376a822",
     "semantic_documents_preserved": true,
     "external_model_labeling_used": false,
-    "annotation_strength_nodes": 5
+    "annotation_creation_bounds_nodes": 3
   }
 }

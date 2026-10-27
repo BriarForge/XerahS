@@ -146,7 +146,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Text and SpeechBalloon now share the native asynchronous Apply/Cancel dialog for creation and selected-object editing. Multiline text, family/size, bold/italic, horizontal alignment, independent alpha-preserving text color and balloon-tail controls commit once through EditorSession. Creation freezes pointer-down geometry/style/state/selection and the document generation; empty text or Cancel creates nothing. Tests cover full formatted creation, reload/history, frozen defaults, stale state/selection/replacement, disabled/dead owners, Escape/tool/source cancellation, duplicate Apply and deferred dialog teardown. Regressions reproduce and fix modal focus cancelling the draft and completed text-dialog destruction clearing a later modal operation. Existing optional fields retain legacy rendering and missing font names. Full text-border/fill breadth, saved preferences and physical visual/accessibility/target qualification remain partial.",
+      "note": "Text and SpeechBalloon now share the native asynchronous Apply/Cancel dialog for creation and selected-object editing. Multiline text, family/size, bold/italic, horizontal alignment, independent alpha-preserving text color and balloon-tail controls commit once through EditorSession. Creation freezes pointer-down geometry/style/state/selection and the document generation; empty text or Cancel creates nothing. Tests cover full formatted creation, reload/history, frozen defaults, stale state/selection/replacement, disabled/dead owners, Escape/tool/source cancellation, duplicate Apply and deferred dialog teardown. Regressions reproduce and fix modal focus cancelling the draft and completed text-dialog destruction clearing a later modal operation. Existing optional fields retain legacy rendering and missing font names. Full text-border/fill breadth, saved preferences and physical visual/accessibility/target qualification remain partial. Creation rejects non-finite, negative or oversized font size/strength before session mutation using the existing reader/edit bounds. AnnotationShapesTest covers 35 invalid admissions, unchanged state/selection/source/history and retained redo, plus zero/fractional/maximum creation, reload and undo/redo for all seven affected types. Remaining options, resource cases and target/human qualification stay partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -200,7 +200,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Highlight/Blur/Pixelate/Magnify/Spotlight render immutable-source regions with strength edits. Full ellipse/blur choices, overlap/clipping and independent native visual qualification remains. Native Blur/Pixelate/Magnify/Spotlight strength editing is now asynchronous with fractional double input and the existing per-type editing ranges. Unchanged Apply retains the exact saved strength, including zero/default and compatible values outside the native editing range; actual edits change only strength in one history operation. Eight old-UI failures reproduced fractional rounding and default materialization. Native tests cover fractional edits, Cancel/no-op, history/reload, stale/dead owners and deferred cleanup. Renderer behavior and saved-default policies are unchanged; ellipse/blur options, full target/visual/resource qualification remain partial.",
+      "note": "Highlight/Blur/Pixelate/Magnify/Spotlight render immutable-source regions with strength edits. Full ellipse/blur choices, overlap/clipping and independent native visual qualification remains. Native Blur/Pixelate/Magnify/Spotlight strength editing is now asynchronous with fractional double input and the existing per-type editing ranges. Unchanged Apply retains the exact saved strength, including zero/default and compatible values outside the native editing range; actual edits change only strength in one history operation. Eight old-UI failures reproduced fractional rounding and default materialization. Native tests cover fractional edits, Cancel/no-op, history/reload, stale/dead owners and deferred cleanup. Renderer behavior and saved-default policies are unchanged; ellipse/blur options, full target/visual/resource qualification remain partial. Creation rejects non-finite, negative or oversized font size/strength before session mutation using the existing reader/edit bounds. AnnotationShapesTest covers 35 invalid admissions, unchanged state/selection/source/history and retained redo, plus zero/fractional/maximum creation, reload and undo/redo for all seven affected types. Remaining options, resource cases and target/human qualification stay partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -308,7 +308,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Creation/content/geometry/ordering/clear/cut-out use EditorSession history. Complete field/tool coverage remains alongside missing style and content capabilities. Formatted text/balloon creation now adds exactly one history operation on Apply, supports undo/redo and reload, and adds none for empty input, Cancel, stale or dead owners. Creation and selected editing share fenced dialog completion.",
+      "note": "Creation/content/geometry/ordering/clear/cut-out use EditorSession history. Complete field/tool coverage remains alongside missing style and content capabilities. Formatted text/balloon creation now adds exactly one history operation on Apply, supports undo/redo and reload, and adds none for empty input, Cancel, stale or dead owners. Creation and selected editing share fenced dialog completion. Creation rejects non-finite, negative or oversized font size/strength before session mutation using the existing reader/edit bounds. AnnotationShapesTest covers 35 invalid admissions, unchanged state/selection/source/history and retained redo, plus zero/fractional/maximum creation, reload and undo/redo for all seven affected types. Remaining options, resource cases and target/human qualification stay partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -344,7 +344,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Known shapes, paths/content and embedded assets round-trip; unknown fields/types stay inert. Missing font/style/step fields and complete legacy field compatibility remain.",
+      "note": "Known shapes, paths/content and embedded assets round-trip; unknown fields/types stay inert. Missing font/style/step fields and complete legacy field compatibility remain. Creation rejects non-finite, negative or oversized font size/strength before session mutation using the existing reader/edit bounds. AnnotationShapesTest covers 35 invalid admissions, unchanged state/selection/source/history and retained redo, plus zero/fractional/maximum creation, reload and undo/redo for all seven affected types. Remaining options, resource cases and target/human qualification stay partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -362,7 +362,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Finite/resource/history/rendering fixtures exist. This package has no published vectors; full malformed-input, native visual and supported-platform conformance remain.",
+      "note": "Finite/resource/history/rendering fixtures exist. This package has no published vectors; full malformed-input, native visual and supported-platform conformance remain. Creation rejects non-finite, negative or oversized font size/strength before session mutation using the existing reader/edit bounds. AnnotationShapesTest covers 35 invalid admissions, unchanged state/selection/source/history and retained redo, plus zero/fractional/maximum creation, reload and undo/redo for all seven affected types. Remaining options, resource cases and target/human qualification stay partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",

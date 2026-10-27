@@ -59,6 +59,10 @@ std::optional<QUuid> EditorSession::createShape(const RectangleProperties &draft
   if (stateId() != expectedState || m_selection != expectedSelection) {
     m_editDiagnostic = "annotation-edit-stale"; return std::nullopt;
   }
+  if (!std::isfinite(content.fontSize) || content.fontSize < 0 || content.fontSize > 2000 ||
+      !std::isfinite(content.strength) || content.strength < 0 || content.strength > 1000) {
+    m_editDiagnostic = "annotation-style-invalid"; return std::nullopt;
+  }
   if ((content.type == shape::text || content.type == shape::speechBalloon) && (!validTextAlignment(content.textAlignment) || !validFontFamily(content.fontFamily))) {
     m_editDiagnostic = "annotation-style-invalid"; return std::nullopt;
   }

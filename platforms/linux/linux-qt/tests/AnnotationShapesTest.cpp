@@ -10,6 +10,7 @@
 #include <QBuffer>
 #include <QSignalSpy>
 #include <QTest>
+#include <limits>
 
 using namespace xerahs::app;
 using namespace xerahs::editor;
@@ -49,6 +50,63 @@ bool same(const ArgbImage &a, const ArgbImage &b, qint64 left, qint64 top, qint6
 class AnnotationShapesTest : public QObject {
   Q_OBJECT
 private slots:
+  void invalidCreationContentPreservesSession_data() {
+    QTest::addColumn<QString>("type");
+    QTest::addColumn<bool>("font");
+    QTest::addColumn<double>("value");
+    for (const auto &type : {shape::text, shape::speechBalloon, shape::step, shape::blur, shape::pixelate, shape::magnify, shape::spotlight}) {
+      const bool font = isTextShape(type);
+      const double maximum = font ? 2000 : 1000;
+      const QList<double> values{-1, maximum + 0.5, std::numeric_limits<double>::infinity(),
+                                -std::numeric_limits<double>::infinity(), std::numeric_limits<double>::quiet_NaN()};
+      for (int i = 0; i < values.size(); ++i)
+        QTest::newRow(qPrintable(type + QString::number(i))) << type << font << values[i];
+    }
+  }
+  void invalidCreationContentPreservesSession() {
+    QFETCH(QString, type); QFETCH(bool, font); QFETCH(double, value);
+    EditorSession session(document());
+    const auto existing = session.createShape({{5, 5}, {20, 20}, {}}, ShapeContent{}, session.stateId(), {});
+    QVERIFY(existing); QVERIFY(session.undo());
+    const auto state = session.stateId();
+    const auto selection = session.selection();
+    const auto before = serializeDocument(session.document());
+    ShapeContent content; content.type = type;
+    if (font) content.fontSize = value; else content.strength = value;
+    QVERIFY(!session.createShape({{10, 10}, {60, 50}, {}}, content, state, selection));
+    QCOMPARE(session.editDiagnostic(), QString("annotation-style-invalid"));
+    QCOMPARE(session.stateId(), state); QCOMPARE(session.selection(), selection);
+    QCOMPARE(serializeDocument(session.document()), before);
+    QCOMPARE(session.undoCount(), 0); QVERIFY(session.redo());
+  }
+
+  void validCreationContentRoundTrips() {
+    for (const auto &type : {shape::text, shape::speechBalloon, shape::step, shape::blur, shape::pixelate, shape::magnify, shape::spotlight}) {
+      const bool font = isTextShape(type);
+      for (const auto value : {0.0, 0.125, font ? 2000.0 : 1000.0}) {
+        EditorSession session(document());
+        ShapeContent content; content.type = type;
+        if (font) content.fontSize = value; else content.strength = value;
+        const auto id = session.createShape({{10, 10}, {60, 50}, {}}, content, session.stateId(), {});
+        QVERIFY(id); QCOMPARE(session.undoCount(), 1);
+        const auto saved = serializeDocument(session.document());
+        const auto loaded = parseDocument(saved); QVERIFY(loaded.document);
+        QCOMPARE(serializeDocument(*loaded.document), saved);
+        const auto &stored = std::get<RectangleAnnotation>(loaded.document->annotations.back()).content;
+        QCOMPARE(font ? stored.fontSize : stored.strength, value);
+        QVERIFY(session.undo()); QVERIFY(session.document().annotations.empty());
+        QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), saved);
+        const auto state = session.stateId();
+        auto invalid = content;
+        if (font) invalid.fontSize = std::numeric_limits<double>::quiet_NaN();
+        else invalid.strength = std::numeric_limits<double>::infinity();
+        QVERIFY(!session.editShapeContent(*id, invalid, state));
+        QCOMPARE(session.stateId(), state); QCOMPARE(session.undoCount(), 1);
+        QCOMPARE(serializeDocument(session.document()), saved);
+      }
+    }
+  }
+
   void lineGeometryKeepsDirectionAndPadsStraightLines() {
     const auto line = shapeGeometry(shape::arrow, {{90, 40}, {10, 40}});
     QVERIFY(line);
