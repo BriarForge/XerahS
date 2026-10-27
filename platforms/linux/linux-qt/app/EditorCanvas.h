@@ -52,9 +52,9 @@ public:
   // Capture uses the same owned native dialog and Core edit as the main editor.
   bool editRectangleProperties(QWidget *parent);
   bool createRectangle(QWidget *parent);
-  // Text, Step, Blur and Pixelate: edit the selected object's own values.
+  // Edit the selected text, Step or strength annotation's own values.
   bool canEditShapeContent() const;
-  // Text, balloon and Step edits open asynchronously; true means the dialog was opened.
+  // Content edits open asynchronously; true means the dialog was opened.
   bool editShapeContent(QWidget *parent);
   // Borrowed only until mutation; native list models copy their displayed rows.
   const xerahs::editor::AnnotationDocument &annotationDocument() const { return m_session->document(); }

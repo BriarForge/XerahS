@@ -714,9 +714,7 @@ bool EditorCanvas::contentDialog(QDialog *dialog, std::function<std::optional<Sh
 bool EditorCanvas::editShapeContent(QWidget *parent) {
   if (!isEnabled() || !canEditShapeContent() || interactionActive()) return false;
   const RectangleAnnotation selected = *m_session->selectedRectangle();
-  const quint64 state = m_session->stateId();
   ShapeContent content = selected.content;
-  const QPointer<EditorCanvas> owner(this);
   if (selected.type() == shape::text || selected.type() == shape::speechBalloon) {
     return textContentDialog(selected, parent);
   }
@@ -734,25 +732,28 @@ bool EditorCanvas::editShapeContent(QWidget *parent) {
       content.stepValue = dialog->intValue(); return content;
     }, selected);
   }
-  bool accepted = false;
-  m_annotationDialogPending = true;
-  {
-    const QString &type = selected.type();
-    const QString label = type == shape::blur ? "Blur radius (pixels):" : type == shape::pixelate ? "Pixel cell size (pixels):"
-        : type == shape::magnify ? "Zoom factor:" : "Dim the rest by (percent):";
-    const int maximum = type == shape::magnify ? 16 : type == shape::spotlight ? 100 : 1000;
-    content.strength = QInputDialog::getInt(parent, "Edit " + toolLabel(type), label,
-        int(std::lround(shapeStrength(selected))), type == shape::spotlight ? 0 : 1, maximum, 1, &accepted);
+  const QString &type = selected.type();
+  QString label = type == shape::blur ? "Blur radius (pixels):" : type == shape::pixelate ? "Pixel cell size (pixels):"
+      : type == shape::magnify ? "Zoom factor:" : "Dim the rest by (percent):";
+  const double maximum = type == shape::magnify ? 16 : type == shape::spotlight ? 100 : 1000;
+  auto *dialog = new QInputDialog(parent ? parent : this);
+  dialog->setObjectName("strengthContentDialog"); dialog->setWindowTitle("Edit " + toolLabel(type)); dialog->setAccessibleName(label);
+  dialog->setWindowModality(Qt::WindowModal); dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setInputMode(QInputDialog::DoubleInput); dialog->setDoubleDecimals(17);
+  dialog->setDoubleRange(type == shape::spotlight ? 0 : 1, maximum); dialog->setDoubleValue(shapeStrength(selected));
+  const double initial = dialog->doubleValue();
+  label += "\nApply without changing the value keeps the current setting.";
+  if (content.strength > 0 && content.strength != initial)
+    label += "\nThe saved value is " + QString::number(content.strength, 'g', 17) + ". It is outside this control's editing range; unchanged Apply keeps it.";
+  dialog->setLabelText(label); dialog->setOkButtonText("Apply"); dialog->setCancelButtonText("Cancel");
+  if (auto *buttons = dialog->findChild<QDialogButtonBox *>()) {
+    buttons->button(QDialogButtonBox::Ok)->setAutoDefault(false); buttons->button(QDialogButtonBox::Cancel)->setDefault(true);
   }
-  if (!owner) return false;
-  m_annotationDialogPending = false;
-  if (!accepted) return false;
-  const bool edited = m_session->editShapeContent(selected.id, content, state);
-  const QString rejection = m_session->editDiagnostic();
-  viewport()->update();
-  if (!rejection.isEmpty()) { emit editRejected(rejection); if (!owner) return false; }
-  if (edited) emit changed();
-  return edited;
+  return contentDialog(dialog, [dialog, content, initial]() mutable -> std::optional<ShapeContent> {
+    const double chosen = dialog->doubleValue();
+    if (chosen != initial) content.strength = chosen;
+    return content;
+  }, selected);
 }
 
 void EditorCanvas::mouseDoubleClickEvent(QMouseEvent *event) {

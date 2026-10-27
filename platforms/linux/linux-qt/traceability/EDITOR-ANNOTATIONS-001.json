@@ -200,7 +200,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Highlight/Blur/Pixelate/Magnify/Spotlight render immutable-source regions with strength edits. Full ellipse/blur choices, overlap/clipping and independent native visual qualification remains.",
+      "note": "Highlight/Blur/Pixelate/Magnify/Spotlight render immutable-source regions with strength edits. Full ellipse/blur choices, overlap/clipping and independent native visual qualification remains. Native Blur/Pixelate/Magnify/Spotlight strength editing is now asynchronous with fractional double input and the existing per-type editing ranges. Unchanged Apply retains the exact saved strength, including zero/default and compatible values outside the native editing range; actual edits change only strength in one history operation. Eight old-UI failures reproduced fractional rounding and default materialization. Native tests cover fractional edits, Cancel/no-op, history/reload, stale/dead owners and deferred cleanup. Renderer behavior and saved-default policies are unchanged; ellipse/blur options, full target/visual/resource qualification remain partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -612,7 +612,12 @@
         "invalidStepNumbersCannotEnterEdits",
         "stepNumericDialogCommitsOnceAndReloads",
         "stepNumericDialogRejectsStaleAndDeadOwners",
-        "oldStepDialogDestructionCannotCancelNewContentDialog"
+        "oldStepDialogDestructionCannotCancelNewContentDialog",
+        "unchangedStrengthDialogPreservesFractionAndDefault",
+        "strengthDialogCommitsFractionalValuesOnce",
+        "unchangedStrengthPreservesCompatibleValuesOutsideNativeEditingRange",
+        "strengthDialogRejectsStaleAndDeadOwners",
+        "oldStrengthDialogCannotCancelNewStepEditing"
       ]
     },
     "remaining_scope": "Shape modes and representative rendering/history tests exist. Full border/shadow/arrow/font/balloon/step fields and all-tool asset transfer, accessibility and compatibility coverage remain."

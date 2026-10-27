@@ -529,6 +529,16 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "EA-011",
+        "EA-017"
+      ],
+      "outcome": "Blur/Pixelate/Magnify/Spotlight native strength editing now uses owned asynchronous fractional input through shared guarded completion. Eight regressions reproduced integer rounding and zero/default materialization on unchanged Apply. The dialog preserves exact saved values when unchanged, including compatible values outside current native editing ranges; explicit edits retain those existing ranges and commit once. Native tests cover precision, Cancel/history/reload, stale/dead owners and deferred cleanup. Renderer behavior, persistence schema and default policy remain unchanged; full option and target qualification remains partial.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+      ]
     }
   ]
 }
