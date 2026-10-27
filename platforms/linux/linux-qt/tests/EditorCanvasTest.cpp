@@ -81,6 +81,87 @@ class EditorCanvasTest : public QObject {
   Q_OBJECT
   QTemporaryDir dialogPreferences;
 private slots:
+  void textCreationCommitsFormattedSnapshotOnce_data() {
+    QTest::addColumn<QString>("type"); QTest::newRow("text") << shape::text; QTest::newRow("balloon") << shape::speechBalloon;
+  }
+  void textCreationCommitsFormattedSnapshotOnce() {
+    QFETCH(QString, type); const auto tool = type == shape::text ? EditorCanvas::Tool::Text : EditorCanvas::Tool::SpeechBalloon; auto initial = document(); initial.createdAt = initial.modifiedAt = "2026-10-27T00:00:00Z";
+    QBuffer encoded(&initial.sourceImagePng); QVERIFY(encoded.open(QIODevice::WriteOnly)); QVERIFY(image().save(&encoded, "PNG")); encoded.close();
+    EditorSession session(initial); RectangleStyle original; original.strokeColor = 0xFF123456; original.fillColor = 0xFFEEEEEE; original.strokeWidth = 5;
+    QVERIFY(session.setCreationStyle(original)); const auto before = serializeDocument(session.document()); const auto source = image(); EditorCanvas canvas(session, source);
+    canvas.resize(900, 700); canvas.show(); QCoreApplication::processEvents(); canvas.resetZoom(); canvas.setTool(tool);
+    const auto start = canvas.viewState().toView({100, 100}).toPoint(), end = canvas.viewState().toView({350, 250}).toPoint();
+    QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, start);
+    auto changedDefault = original; changedDefault.strokeColor = 0xFFABCDEF; changedDefault.strokeWidth = 9; QVERIFY(session.setCreationStyle(changedDefault));
+    QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, end);
+    auto *dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog); QVERIFY(canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), 0);
+    dialog->findChild<QPlainTextEdit *>("balloonText")->setPlainText("Discard"); dialog->reject(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), before);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QVERIFY(session.setCreationStyle(original));
+    QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, start); QVERIFY(session.setCreationStyle(changedDefault)); QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, end);
+    dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog); dialog->accept(); QVERIFY(canvas.interactionActive()); QCOMPARE(session.undoCount(), 0);
+    dialog->findChild<QPlainTextEdit *>("balloonText")->setPlainText("Created\nmultiline"); dialog->findChild<QSpinBox *>("balloonFontSize")->setValue(36);
+    const auto families = QFontDatabase::families(); QVERIFY(!families.isEmpty()); dialog->findChild<QComboBox *>("annotationFontFamily")->setEditText(families.last());
+    dialog->findChild<QCheckBox *>("annotationTextBold")->setCheckState(Qt::Checked); dialog->findChild<QCheckBox *>("annotationTextItalic")->setCheckState(Qt::Checked);
+    auto *alignment = dialog->findChild<QComboBox *>("annotationTextAlignment"); alignment->setCurrentIndex(alignment->findData("right")); dialog->findChild<QLineEdit *>("annotationTextColor")->setText("#80123456");
+    if (tool == EditorCanvas::Tool::SpeechBalloon) { dialog->findChild<QCheckBox *>("balloonTailEnabled")->setChecked(true); dialog->findChild<QLineEdit *>("balloonTailX")->setText("0.8"); dialog->findChild<QLineEdit *>("balloonTailY")->setText("1.3"); }
+    QTest::mouseClick(canvas.viewport(), Qt::LeftButton, {}, start); QCOMPARE(session.undoCount(), 0); QVERIFY(canvas.interactionActive());
+    dialog->accept(); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(session.undoCount(), 1); QCOMPARE(session.document().annotations.size(), std::size_t(1));
+    const auto *created = session.selectedRectangle(); QVERIFY(created); QCOMPARE(created->type(), type); QCOMPARE(created->left(), 100.0); QCOMPARE(created->top(), 100.0); QCOMPARE(created->right(), 350.0); QCOMPARE(created->bottom(), 250.0);
+    QCOMPARE(created->style.strokeColor, original.strokeColor); QCOMPARE(created->style.fillColor, original.fillColor); QCOMPARE(created->style.strokeWidth, original.strokeWidth);
+    QCOMPARE(created->content.text, QString("Created\nmultiline")); QCOMPARE(created->content.fontSize, 36.0); QCOMPARE(created->content.fontFamily, families.last());
+    QCOMPARE(created->content.textBold, std::optional<bool>(true)); QCOMPARE(created->content.textItalic, std::optional<bool>(true)); QCOMPARE(created->content.textAlignment, QString("right")); QCOMPARE(created->content.textColor, std::optional<Argb>(0x80123456));
+    if (tool == EditorCanvas::Tool::SpeechBalloon) { QCOMPARE(created->content.points.size(), std::size_t(1)); QCOMPARE(created->content.points[0].x, 0.8); QCOMPARE(created->content.points[0].y, 1.3); }
+    const auto completed = serializeDocument(session.document()); const auto loaded = parseDocument(completed); QVERIFY(loaded.document); QCOMPARE(serializeDocument(*loaded.document), completed);
+    QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before); QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), completed); QCOMPARE(source, image()); QCOMPARE(canvas.tool(), tool);
+  }
+  void textCreationRefusesStaleOrCancelledOwners_data() {
+    QTest::addColumn<QString>("mode");
+    for (const auto &mode : {"state", "selection", "document", "disabled", "tool", "source", "owner", "escape"}) QTest::newRow(mode) << QString(mode);
+  }
+  void textCreationRefusesStaleOrCancelledOwners() {
+    QFETCH(QString, mode); EditorSession session(document()); const auto existing = session.createRectangle({{10, 10}, {40, 40}, {}}, session.stateId(), session.selection()); QVERIFY(existing);
+    const auto source = image(); std::unique_ptr<EditorSession> replacement; auto canvas = std::make_unique<EditorCanvas>(session, source); canvas->resize(900, 700); canvas->show(); QCoreApplication::processEvents(); canvas->resetZoom(); canvas->setTool(EditorCanvas::Tool::Text);
+    const auto start = canvas->viewState().toView({100, 100}).toPoint(), end = canvas->viewState().toView({350, 250}).toPoint();
+    QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, start); QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, end); QPointer<TextContentDialog> dialog = canvas->findChild<TextContentDialog *>(); QVERIFY(dialog);
+    dialog->findChild<QPlainTextEdit *>("balloonText")->setPlainText("Late creation");
+    if (mode == "state") QVERIFY(session.createRectangle({{400, 400}, {450, 450}, {}}, session.stateId(), session.selection()));
+    if (mode == "selection") session.select({*existing});
+    if (mode == "document") { replacement = std::make_unique<EditorSession>(document()); QVERIFY(replacement->createRectangle({{10, 10}, {40, 40}, {}}, replacement->stateId(), replacement->selection())); canvas->resetDocument(*replacement, source); }
+    if (mode == "disabled") canvas->setEnabled(false);
+    if (mode == "tool") canvas->setTool(EditorCanvas::Tool::Ellipse);
+    if (mode == "source") canvas->sourceChanged(source);
+    if (mode == "escape") QTest::keyClick(dialog, Qt::Key_Escape);
+    const auto before = serializeDocument(session.document()); const auto undo = session.undoCount(); const auto otherBefore = replacement ? serializeDocument(replacement->document()) : QJsonObject{};
+    if (mode == "owner") { QSignalSpy changes(canvas.get(), &EditorCanvas::changed); const auto count = changes.count(); canvas.reset(); QCoreApplication::processEvents(); QCOMPARE(changes.count(), count); QVERIFY(!dialog); }
+    else { if (dialog) dialog->accept(); QTRY_VERIFY(!canvas->interactionActive()); }
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo); if (replacement) QCOMPARE(serializeDocument(replacement->document()), otherBefore);
+  }
+  void creationSurvivesFocusTransferToItsDialog() {
+    EditorSession session(document()); const auto source = image(); EditorCanvas canvas(session, source); canvas.resize(900, 700); canvas.show(); QCoreApplication::processEvents(); canvas.resetZoom(); canvas.setTool(EditorCanvas::Tool::Text);
+    QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, canvas.viewState().toView({100, 100}).toPoint()); QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, canvas.viewState().toView({350, 250}).toPoint());
+    QPointer<TextContentDialog> dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    QFocusEvent loss(QEvent::FocusOut, Qt::ActiveWindowFocusReason); QApplication::sendEvent(&canvas, &loss); QCoreApplication::processEvents();
+    QVERIFY(canvas.interactionActive()); QVERIFY(dialog); dialog->findChild<QPlainTextEdit *>("balloonText")->setPlainText("Focused dialog"); dialog->accept(); QCOMPARE(session.undoCount(), 1);
+  }
+  void completedTextDialogCannotClearLaterModalPendingState() {
+    EditorSession session(document()); ShapeContent content; content.type = shape::text; content.text = "Existing";
+    QVERIFY(session.createShape({{100, 100}, {350, 250}, {}}, content, session.stateId(), session.selection()));
+    const auto source = image(); EditorCanvas canvas(session, source); QVERIFY(canvas.editShapeContent(&canvas)); auto *old = canvas.findChild<TextContentDialog *>(); QVERIFY(old); old->reject();
+    QVERIFY(session.createRectangle({10, 10}, {40, 40})); bool checked = false; bool stillPending = false;
+    QTimer timer; connect(&timer, &QTimer::timeout, &canvas, [&] {
+      auto *rotation = canvas.findChild<SelectionRotationDialog *>(); if (!rotation) return; timer.stop();
+      QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QCoreApplication::processEvents(); stillPending = canvas.interactionActive(); checked = true; rotation->reject();
+    });
+    timer.start(5); QVERIFY(!canvas.rotateSelection(&canvas)); timer.stop(); QVERIFY(checked); QVERIFY(stillPending); QCOMPARE(session.undoCount(), 2);
+  }
+  void oldCreationDialogDeletionCannotCancelANewCreation() {
+    EditorSession session(document()); const auto source = image(); EditorCanvas canvas(session, source); canvas.resize(900, 700); canvas.show(); QCoreApplication::processEvents(); canvas.resetZoom(); canvas.setTool(EditorCanvas::Tool::Text);
+    const auto start = canvas.viewState().toView({100, 100}).toPoint(), end = canvas.viewState().toView({350, 250}).toPoint();
+    QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, start); QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, end); auto *old = canvas.findChild<TextContentDialog *>(); QVERIFY(old); old->reject();
+    QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, start); QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, end); const auto dialogs = canvas.findChildren<TextContentDialog *>(); auto *current = dialogs.last(); QVERIFY(current != old);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QCoreApplication::processEvents(); QVERIFY(canvas.interactionActive());
+    current->findChild<QPlainTextEdit *>("balloonText")->setPlainText("Second dialog"); current->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(session.undoCount(), 1); QCOMPARE(session.document().annotations.size(), std::size_t(1));
+  }
   void fontFamiliesCommitAndPreserveMissingNames_data() {
     QTest::addColumn<QString>("type"); QTest::newRow("text") << shape::text; QTest::newRow("balloon") << shape::speechBalloon;
   }

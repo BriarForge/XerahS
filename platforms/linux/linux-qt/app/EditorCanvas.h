@@ -7,9 +7,12 @@
 #include <QAbstractScrollArea>
 #include <QImage>
 #include <QHash>
+#include <QPointer>
 #include <array>
 
 namespace xerahs::app {
+
+class TextContentDialog;
 
 class EditorCanvas final : public QAbstractScrollArea {
   Q_OBJECT
@@ -119,6 +122,9 @@ private:
     QSet<QUuid> selection;
   };
   std::optional<CreationSnapshot> m_creation;
+  bool textContentDialog(const xerahs::editor::RectangleAnnotation &snapshot, QWidget *parent,
+                         std::optional<CreationSnapshot> creation = std::nullopt);
+  QPointer<TextContentDialog> m_creationDialog;
   bool createAsset(const QString &type, const std::vector<xerahs::editor::PointF> &gesture, const CreationSnapshot &creation);
   struct ResizeGesture {
     xerahs::editor::RectangleAnnotation original;

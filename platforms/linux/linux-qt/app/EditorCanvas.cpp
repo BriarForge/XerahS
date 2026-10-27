@@ -201,7 +201,7 @@ QString EditorCanvas::toolInstructions() const {
 }
 
 void EditorCanvas::setTool(Tool tool) {
-  if (!isEnabled() || m_annotationDialogPending) { emit toolChanged(); return; }
+  if (!isEnabled() || (m_annotationDialogPending && !m_creationDialog)) { emit toolChanged(); return; }
   cancelGesture();
   m_tool = tool;
   setAccessibleDescription(toolInstructions());
@@ -496,6 +496,7 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
 }
 
 void EditorCanvas::mousePressEvent(QMouseEvent *event) {
+  if (m_annotationDialogPending) { event->accept(); return; }
   setFocus();
   if (event->button() == Qt::MiddleButton || (event->button() == Qt::LeftButton && m_spaceHeld)) {
     cancelGesture();
@@ -631,7 +632,8 @@ std::vector<PointF> EditorCanvas::creationGesture(QPointF end) const {
   return {{m_drag->first.x(), m_drag->first.y()}, {end.x(), end.y()}};
 }
 
-// Returns whether a creation was attempted; a cancelled text entry is not.
+// Synchronous attempts report their diagnostic to the release handler.
+// Asynchronous text dialogs own their completion and report it separately.
 bool EditorCanvas::createFromGesture(const std::vector<PointF> &gesture) {
   const auto creation = m_creation; m_creation.reset();
   const QString type = shapeType(m_tool);
@@ -648,14 +650,10 @@ bool EditorCanvas::createFromGesture(const std::vector<PointF> &gesture) {
   if (type == shape::step) content.stepValue = nextStepValue(m_session->document());
   if (type == shape::speechBalloon) content.points = {{0.2, 1.6}};  // default tail below the balloon
   if (type == shape::text || type == shape::speechBalloon) {
-    const QPointer<EditorCanvas> owner(this);
-    m_annotationDialogPending = true;
-    bool accepted = false;
-    const QString text = QInputDialog::getMultiLineText(this, "Text", "Text:", {}, &accepted);
-    if (!owner) return false;
-    m_annotationDialogPending = false;
-    if (!accepted || text.isEmpty()) return false;
-    content.text = text;
+    RectangleAnnotation draft;
+    draft.start = geometry->start; draft.end = geometry->end; draft.style = creation->style; draft.content = content;
+    textContentDialog(draft, this, creation);
+    return false;
   }
   m_session->createShape({geometry->start, geometry->end, creation->style}, content, creation->state, creation->selection);
   return true;
@@ -668,6 +666,44 @@ bool EditorCanvas::canEditShapeContent() const {
   return isTextShape(type) || hasShapeStrength(type);
 }
 
+bool EditorCanvas::textContentDialog(const RectangleAnnotation &snapshot, QWidget *parent,
+                                    std::optional<CreationSnapshot> creation) {
+  if (!isEnabled() || m_annotationDialogPending) return false;
+  auto *dialog = new TextContentDialog(snapshot, parent ? parent : this);
+  const auto generation = m_documentGeneration, serial = ++m_contentDialogSerial;
+  const auto state = creation ? creation->state : m_session->stateId();
+  const auto selection = creation ? creation->selection : m_session->selection();
+  m_annotationDialogPending = true;
+  if (creation) m_creationDialog = dialog;
+  connect(dialog, &QDialog::finished, this, [this, dialog, snapshot, creation, state, generation, selection, serial](int result) {
+    if (serial != m_contentDialogSerial || !m_annotationDialogPending) return;
+    ++m_contentDialogSerial;
+    const auto choice = dialog->choice(); m_annotationDialogPending = false;
+    if (creation) m_creationDialog.clear();
+    const QPointer<EditorCanvas> owner(this); QString diagnostic;
+    if (result == QDialog::Accepted && choice) {
+      if (!isEnabled() || generation != m_documentGeneration || state != m_session->stateId() || selection != m_session->selection()) diagnostic = "annotation-edit-stale";
+      else {
+        if (creation) m_session->createShape({snapshot.start, snapshot.end, creation->style}, *choice, state, selection);
+        else m_session->editShapeContent(snapshot.id, *choice, state);
+        diagnostic = m_session->editDiagnostic();
+      }
+    }
+    viewport()->update();
+    if (!diagnostic.isEmpty()) { emit editRejected(diagnostic); if (!owner) return; }
+    emit changed();
+  });
+  connect(dialog, &QObject::destroyed, this, [this, serial] {
+    QTimer::singleShot(0, this, [this, serial] {
+      if (serial == m_contentDialogSerial && m_annotationDialogPending) {
+        m_annotationDialogPending = false; m_creationDialog.clear(); emit changed();
+      }
+    });
+  });
+  const QPointer<EditorCanvas> owner(this);
+  dialog->open(); if (owner) emit changed(); return true;
+}
+
 bool EditorCanvas::editShapeContent(QWidget *parent) {
   if (!canEditShapeContent() || interactionActive()) return false;
   const RectangleAnnotation selected = *m_session->selectedRectangle();
@@ -675,25 +711,7 @@ bool EditorCanvas::editShapeContent(QWidget *parent) {
   ShapeContent content = selected.content;
   const QPointer<EditorCanvas> owner(this);
   if (selected.type() == shape::text || selected.type() == shape::speechBalloon) {
-    auto *dialog = new TextContentDialog(selected, parent ? parent : this);
-    const auto generation = m_documentGeneration, serial = ++m_contentDialogSerial;
-    const auto selection = m_session->selection(); m_annotationDialogPending = true;
-    connect(dialog, &QDialog::finished, this, [this, dialog, selected, state, generation, selection, serial](int result) {
-      if (serial != m_contentDialogSerial) return;
-      const auto choice = dialog->choice(); m_annotationDialogPending = false;
-      const QPointer<EditorCanvas> owner(this); QString diagnostic;
-      if (result == QDialog::Accepted && choice) {
-        if (generation != m_documentGeneration || selection != m_session->selection()) diagnostic = "annotation-edit-stale";
-        else { m_session->editShapeContent(selected.id, *choice, state); diagnostic = m_session->editDiagnostic(); }
-      }
-      viewport()->update();
-      if (!diagnostic.isEmpty()) { emit editRejected(diagnostic); if (!owner) return; }
-      emit changed();
-    });
-    connect(dialog, &QObject::destroyed, this, [this, serial] {
-      QTimer::singleShot(0, this, [this, serial] { if (serial == m_contentDialogSerial && m_annotationDialogPending) { m_annotationDialogPending = false; emit changed(); } });
-    });
-    dialog->open(); emit changed(); return true;
+    return textContentDialog(selected, parent);
   }
   bool accepted = false;
   m_annotationDialogPending = true;
@@ -806,6 +824,16 @@ bool EditorCanvas::createAsset(const QString &type, const std::vector<PointF> &g
 }
 
 void EditorCanvas::cancelGesture() {
+  if (m_creationDialog) {
+    const auto dialog = m_creationDialog; m_creationDialog.clear();
+    const auto cancellation = ++m_contentDialogSerial; m_annotationDialogPending = false;
+    QTimer::singleShot(0, this, [this, cancellation] {
+      if (cancellation == m_contentDialogSerial && !m_annotationDialogPending) emit changed();
+    });
+    // Reject outside the cancellation stack so dialog callbacks cannot delete
+    // the canvas while its navigation/reset caller is still changing state.
+    QTimer::singleShot(0, dialog.data(), [dialog] { if (dialog) dialog->reject(); });
+  }
   m_drag.reset();
   m_path.clear();
   m_creation.reset();
@@ -876,7 +904,7 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
     viewport()->setCursor(m_panning ? Qt::ClosedHandCursor : Qt::OpenHandCursor);
     return;
   }
-  if (event->key() == Qt::Key_Escape && (m_drag || m_move || m_panning || m_resize)) {
+  if (event->key() == Qt::Key_Escape && (m_drag || m_move || m_panning || m_resize || m_creationDialog)) {
     cancelGesture();
     syncViewport();
     return;
@@ -945,7 +973,7 @@ void EditorCanvas::keyReleaseEvent(QKeyEvent *event) {
 void EditorCanvas::focusInEvent(QFocusEvent *event) { QAbstractScrollArea::focusInEvent(event); viewport()->update(); }
 void EditorCanvas::focusOutEvent(QFocusEvent *event) {
   m_spaceHeld = false;
-  cancelGesture();
+  if (!m_creationDialog) cancelGesture();
   syncViewport();
   QAbstractScrollArea::focusOutEvent(event);
 }

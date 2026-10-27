@@ -146,7 +146,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Text and speech balloons share an asynchronous native Apply/Cancel dialog for multiline text, font family/size, bold/italic, horizontal alignment and independent alpha-preserving text color; balloons retain tail controls. Optional fontFamily preserves old native rendering when absent. Installed families render through native Qt fonts; unavailable saved names use the legacy native font without rewriting the document. The editable installed-font list preserves missing names on no-op Apply, refuses new unavailable replacements, and permits explicit replacement or clearing. Core validates family strings under the existing text resource limit during create/edit/parse; unrelated shape families retain opaque fields. Tests cover native Cancel/Apply, family-only history, undo/redo/reload, missing-font fallback, native glyph rendering and malformed inputs. A reproduced native-entry truncation regression now proves full-length compatible names remain unchanged. Creation-option breadth, saved preferences and native visual/accessibility/target qualification remain incomplete; this row stays partial.",
+      "note": "Text and SpeechBalloon now share the native asynchronous Apply/Cancel dialog for creation and selected-object editing. Multiline text, family/size, bold/italic, horizontal alignment, independent alpha-preserving text color and balloon-tail controls commit once through EditorSession. Creation freezes pointer-down geometry/style/state/selection and the document generation; empty text or Cancel creates nothing. Tests cover full formatted creation, reload/history, frozen defaults, stale state/selection/replacement, disabled/dead owners, Escape/tool/source cancellation, duplicate Apply and deferred dialog teardown. Regressions reproduce and fix modal focus cancelling the draft and completed text-dialog destruction clearing a later modal operation. Existing optional fields retain legacy rendering and missing font names. Full text-border/fill breadth, saved preferences and physical visual/accessibility/target qualification remain partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -254,7 +254,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Creation copies style/content; explicit shape content edits participate in undo. Complete persisted tool defaults and all style fields remain.",
+      "note": "Creation copies style/content; explicit shape content edits participate in undo. Complete persisted tool defaults and all style fields remain. Text/balloon creation now freezes pointer-down style through the asynchronous content dialog, even when creation defaults change before release/Apply; it commits the draft once with explicit formatting. Saved defaults and other tool/style breadth remain partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -308,7 +308,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Creation/content/geometry/ordering/clear/cut-out use EditorSession history. Complete field/tool coverage remains alongside missing style and content capabilities.",
+      "note": "Creation/content/geometry/ordering/clear/cut-out use EditorSession history. Complete field/tool coverage remains alongside missing style and content capabilities. Formatted text/balloon creation now adds exactly one history operation on Apply, supports undo/redo and reload, and adds none for empty input, Cancel, stale or dead owners. Creation and selected editing share fenced dialog completion.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -601,7 +601,12 @@
         "textColorsRenderAlphaIndependently",
         "fontFamiliesCommitAndPreserveMissingNames",
         "nativeFontRenderingAndMissingFallback",
-        "longSavedFontFamilyIsNotTruncatedByNativeEntry"
+        "longSavedFontFamilyIsNotTruncatedByNativeEntry",
+        "textCreationCommitsFormattedSnapshotOnce",
+        "textCreationRefusesStaleOrCancelledOwners",
+        "oldCreationDialogDeletionCannotCancelANewCreation",
+        "creationSurvivesFocusTransferToItsDialog",
+        "completedTextDialogCannotClearLaterModalPendingState"
       ]
     },
     "remaining_scope": "Shape modes and representative rendering/history tests exist. Full border/shadow/arrow/font/balloon/step fields and all-tool asset transfer, accessibility and compatibility coverage remain."
