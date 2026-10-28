@@ -10,9 +10,8 @@
 #include <QLocale>
 #include <QPlainTextEdit>
 #include <QPushButton>
-#include <QSpinBox>
+#include <QDoubleSpinBox>
 #include <QVBoxLayout>
-#include <cmath>
 namespace xerahs::app {
 TextContentDialog::TextContentDialog(const xerahs::editor::RectangleAnnotation &shape, QWidget *parent)
     : QDialog(parent), m_shape(shape) {
@@ -32,8 +31,13 @@ TextContentDialog::TextContentDialog(const xerahs::editor::RectangleAnnotation &
       "font-family-unavailable: This font is unavailable. Text uses the native default. Its saved family stays unchanged until you apply a replacement.");
   };
   connect(m_family, &QComboBox::currentTextChanged, this, describeFamily); describeFamily();
-  m_size = new QSpinBox(this); m_size->setObjectName("balloonFontSize"); m_size->setAccessibleName("Font size in pixels"); m_size->setRange(1, 2000);
-  m_size->setValue(int(std::lround(xerahs::editor::shapeFontSize(shape)))); form->addRow("Font &size (pixels)", m_size);
+  m_size = new QDoubleSpinBox(this); m_size->setObjectName("balloonFontSize"); m_size->setAccessibleName("Font size in pixels"); m_size->setDecimals(17); m_size->setRange(1, 2000);
+  m_size->setValue(xerahs::editor::shapeFontSize(shape)); m_initialSize = m_size->value(); form->addRow("Font &size (pixels)", m_size);
+  m_size->setToolTip("Enter a fractional size from 1 to 2000 pixels. Unchanged Apply keeps the saved size or native default.");
+  if (shape.content.fontSize > 0 && shape.content.fontSize != m_initialSize) {
+    auto *sizeStatus = new QLabel(QString("Saved font size: %1 pixels. The control edits 1 to 2000 pixels; unchanged Apply keeps the saved value.").arg(QString::number(shape.content.fontSize, 'g', 17)), this);
+    sizeStatus->setObjectName("annotationFontSizeStatus"); sizeStatus->setTextFormat(Qt::PlainText); sizeStatus->setWordWrap(true); form->addRow(sizeStatus);
+  }
   m_alignment = new QComboBox(this); m_alignment->setObjectName("annotationTextAlignment"); m_alignment->setAccessibleName("Horizontal text alignment");
   m_alignment->addItem(balloon ? "Default (center)" : "Default (left)", "");
   m_alignment->addItem("Left", "left"); m_alignment->addItem("Center", "center"); m_alignment->addItem("Right", "right");
@@ -76,7 +80,7 @@ void TextContentDialog::accept() {
   }
   // Keep the zero/default representation (and fractional sizes from compatible
   // files) unless the user actually changes the displayed size.
-  if (m_size->value() != int(std::lround(xerahs::editor::shapeFontSize(m_shape)))) content.fontSize = m_size->value();
+  if (m_size->value() != m_initialSize) content.fontSize = m_size->value();
   const auto family = m_family->currentText();
   if (!xerahs::editor::validFontFamily(family) || (!family.isEmpty() && family != m_shape.content.fontFamily && !QFontDatabase::hasFamily(family))) {
     m_error->setText("font-family-unavailable: Choose an installed font family or clear the field to use the native default."); m_family->setFocus(); return;

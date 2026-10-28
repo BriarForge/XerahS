@@ -5,7 +5,7 @@ class QCheckBox;
 class QComboBox;
 class QLineEdit;
 class QPlainTextEdit;
-class QSpinBox;
+class QDoubleSpinBox;
 class QLabel;
 namespace xerahs::app {
 // Edits existing content only. Caller guards document/selection identity and
@@ -19,7 +19,8 @@ public:
 private:
   xerahs::editor::RectangleAnnotation m_shape;
   QPlainTextEdit *m_text;
-  QSpinBox *m_size;
+  QDoubleSpinBox *m_size;
+  double m_initialSize = 0;
   QCheckBox *m_tail = nullptr;
   QComboBox *m_alignment;
   QComboBox *m_family;

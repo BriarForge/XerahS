@@ -552,6 +552,17 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "EA-008",
+        "EA-017",
+        "EA-019"
+      ],
+      "outcome": "Native text/balloon font-size input supports doubles with 17 decimal places in the existing 1..2000 editing range. Comparing against the initialized displayed value preserves exact saved fractions and zero/default on no-op Apply, including compatible values below the native minimum. Reproduced two native .125-to-1 regressions; tests cover fractional/high-precision edits, Cancel/no-op, one history step, undo/redo/reload and source preservation. No renderer, schema, saved-default or reader-range changes. Remaining text border/fill and target qualification remain partial.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+      ]
     }
   ]
 }

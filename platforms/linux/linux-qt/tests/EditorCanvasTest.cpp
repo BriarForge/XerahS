@@ -7,6 +7,7 @@
 #include <QFontDatabase>
 #include <QPainter>
 #include <QSpinBox>
+#include <QDoubleSpinBox>
 #include "NativeAnnotationTools.h"
 #include "RectanglePropertiesDialog.h"
 #include "SelectionRotationDialog.h"
@@ -227,7 +228,7 @@ private slots:
     QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); QVERIFY(session.setCreationStyle(original));
     QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, start); QVERIFY(session.setCreationStyle(changedDefault)); QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, end);
     dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog); dialog->accept(); QVERIFY(canvas.interactionActive()); QCOMPARE(session.undoCount(), 0);
-    dialog->findChild<QPlainTextEdit *>("balloonText")->setPlainText("Created\nmultiline"); dialog->findChild<QSpinBox *>("balloonFontSize")->setValue(36);
+    dialog->findChild<QPlainTextEdit *>("balloonText")->setPlainText("Created\nmultiline"); dialog->findChild<QDoubleSpinBox *>("balloonFontSize")->setValue(36);
     const auto families = QFontDatabase::families(); QVERIFY(!families.isEmpty()); dialog->findChild<QComboBox *>("annotationFontFamily")->setEditText(families.last());
     dialog->findChild<QCheckBox *>("annotationTextBold")->setCheckState(Qt::Checked); dialog->findChild<QCheckBox *>("annotationTextItalic")->setCheckState(Qt::Checked);
     auto *alignment = dialog->findChild<QComboBox *>("annotationTextAlignment"); alignment->setCurrentIndex(alignment->findData("right")); dialog->findChild<QLineEdit *>("annotationTextColor")->setText("#80123456");
@@ -326,6 +327,54 @@ private slots:
       auto edit = session.selectedRectangle()->content; edit.fontFamily = bad; const auto state = session.stateId(); QVERIFY(!session.editShapeContent(session.selectedRectangle()->id, edit, state)); QCOMPARE(session.stateId(), state);
     }
   }
+  void unchangedFontSizeKeepsCompatibleValue_data() {
+    QTest::addColumn<QString>("type"); QTest::addColumn<double>("size");
+    for (const auto &type : {shape::text, shape::speechBalloon})
+      for (const auto size : {0.0, 0.125, 1.25, 2000.0})
+        QTest::newRow(qPrintable(type + QString::number(size))) << type << size;
+  }
+  void unchangedFontSizeKeepsCompatibleValue() {
+    QFETCH(QString, type); QFETCH(double, size);
+    EditorSession session(document()); ShapeContent content; content.type = type; content.text = "Saved"; content.fontSize = size;
+    QVERIFY(session.createShape({{100, 100}, {400, 250}, {}}, content, session.stateId(), session.selection()));
+    const auto before = serializeDocument(session.document()); const auto undo = session.undoCount(); const auto source = image(); EditorCanvas canvas(session, source);
+    QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    dialog->accept(); QTRY_VERIFY(!canvas.interactionActive());
+    QCOMPARE(session.selectedRectangle()->content.fontSize, size);
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo);
+  }
+
+  void fractionalFontSizeCommitsOnceAndReloads_data() { fontFamiliesCommitAndPreserveMissingNames_data(); }
+  void fractionalFontSizeCommitsOnceAndReloads() {
+    QFETCH(QString, type);
+    const auto source = image(); auto initial = document();
+    initial.createdAt = initial.modifiedAt = "2026-10-28T00:00:00Z";
+    QBuffer buffer(&initial.sourceImagePng); QVERIFY(buffer.open(QIODevice::WriteOnly)); QVERIFY(source.save(&buffer, "PNG"));
+    EditorSession session(initial); ShapeContent content; content.type = type; content.text = "Precision"; content.fontSize = 12.5;
+    content.textAlignment = "right"; content.textBold = true; content.textColor = 0x7F123456;
+    QVERIFY(session.createShape({{100, 100}, {400, 250}, {}}, content, session.stateId(), session.selection()));
+    EditorCanvas canvas(session, source); const auto before = serializeDocument(session.document()); const auto undo = session.undoCount();
+    QVERIFY(canvas.editShapeContent(&canvas)); auto *cancelled = canvas.findChildren<TextContentDialog *>().last();
+    auto *cancelSize = cancelled->findChild<QDoubleSpinBox *>("balloonFontSize"); QVERIFY(cancelSize);
+    QCOMPARE(cancelSize->value(), 12.5); cancelSize->setValue(45.125); cancelled->reject();
+    QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo);
+    for (const double chosen : {1.25, 1.2345678901234567, 2000.0}) {
+      const auto previous = serializeDocument(session.document()); const auto count = session.undoCount();
+      QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChildren<TextContentDialog *>().last();
+      auto *size = dialog->findChild<QDoubleSpinBox *>("balloonFontSize"); QVERIFY(size);
+      QCOMPARE(size->minimum(), 1.0); QCOMPARE(size->maximum(), 2000.0);
+      size->setValue(chosen); QCOMPARE(size->value(), chosen); dialog->accept(); dialog->accept();
+      QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(session.undoCount(), count + 1);
+      const auto &actual = session.selectedRectangle()->content;
+      QCOMPARE(actual.fontSize, chosen); QCOMPARE(actual.text, content.text); QCOMPARE(actual.textColor, content.textColor);
+      QCOMPARE(actual.textAlignment, content.textAlignment); QCOMPARE(actual.textBold, content.textBold);
+      const auto saved = serializeDocument(session.document()); const auto parsed = parseDocument(saved); QVERIFY(parsed.document);
+      QCOMPARE(serializeDocument(*parsed.document), saved); QCOMPARE(session.document().sourceImagePng, initial.sourceImagePng);
+      QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), previous);
+      QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), saved);
+    }
+  }
+
   void longSavedFontFamilyIsNotTruncatedByNativeEntry() {
     EditorSession session(document()); ShapeContent content; content.type = shape::text; content.text = "Saved"; content.fontFamily = QString(kMaxTextLength, 'x');
     QVERIFY(session.createShape({{100, 100}, {400, 250}, {}}, content, session.stateId(), session.selection()));
