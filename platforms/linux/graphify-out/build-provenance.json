@@ -22,9 +22,10 @@
     "ast_preserved": true
   },
   "ast_refresh": {
-    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
-    "unaffected_nodes_preserved": 12172,
-    "external_model_labeling_used": false
+    "source_revision": "6ac0c3927b4e9208041eb46f0a39f3edca1c5d4e",
+    "semantic_documents_preserved": true,
+    "external_model_labeling_used": false,
+    "text_fill_color_nodes": 5
   },
   "semantic_refresh": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",

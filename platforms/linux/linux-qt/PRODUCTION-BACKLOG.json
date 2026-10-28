@@ -508,6 +508,17 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "EA-008",
+        "EA-017",
+        "EA-019"
+      ],
+      "outcome": "Native Text/SpeechBalloon have optional per-object alpha-preserving fill input during creation and selected editing. Absent values retain exact legacy fill/fallback rendering; explicit transparent zero stays distinct and clearing restores legacy. Strict parsing/canonical writing applies only to these families, keeping same-named opaque fields on other and unknown types. Native UI, creation/history/reload and independent opaque/half/zero-alpha rendering tests cover the real path. Two missing-control failures and six ignored-fill pixel failures were reproduced before implementation. Border and full target qualification remain partial.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+      ]
     }
   ],
   "audit_method": "Read all 16 manifest capability specifications (345 IDs); classify 325 desktop rows against current native production/test seams, retain 20 mobile-only IDs outside scope. Refresh source/test provenance and remaining scope without treating old traceability notes or graph edges as compliance evidence.",

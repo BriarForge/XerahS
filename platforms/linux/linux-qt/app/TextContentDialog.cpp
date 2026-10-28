@@ -55,6 +55,12 @@ TextContentDialog::TextContentDialog(const xerahs::editor::RectangleAnnotation &
   m_color->setToolTip("Enter #AARRGGBB, including alpha. Leave empty to use the original text-color rule. This changes text only.");
   if (shape.content.textColor.has_value()) m_color->setText(xerahs::editor::formatColor(*shape.content.textColor));
   form->addRow("Text &color (#AARRGGBB)", m_color);
+  m_fillColor = new QLineEdit(this); m_fillColor->setObjectName("annotationTextFillColor");
+  m_fillColor->setAccessibleName("Text background fill color in #AARRGGBB format");
+  m_fillColor->setPlaceholderText("Original fill (leave empty)");
+  m_fillColor->setToolTip("Enter #AARRGGBB, including alpha. Zero alpha is transparent. Leave empty to use the original fill rule. This changes the fill only.");
+  if (shape.content.textFillColor.has_value()) m_fillColor->setText(xerahs::editor::formatColor(*shape.content.textFillColor));
+  form->addRow("Background &fill (#AARRGGBB)", m_fillColor);
   if (balloon) {
     m_tail = new QCheckBox("Show balloon &tail", this); m_tail->setObjectName("balloonTailEnabled"); m_tail->setAccessibleName("Show balloon tail"); m_tail->setChecked(!shape.content.points.empty()); form->addRow(m_tail);
     m_x = new QLineEdit(this); m_y = new QLineEdit(this); m_x->setObjectName("balloonTailX"); m_y->setObjectName("balloonTailY");
@@ -96,6 +102,13 @@ void TextContentDialog::accept() {
     content.textColor = xerahs::editor::parseColor(colorText);
     if (!content.textColor.has_value()) {
       m_error->setText("annotation-text-color-invalid: Enter #AARRGGBB including alpha, or leave the field empty for the default text color."); m_color->setFocus(); return;
+    }
+  }
+  const auto fillText = m_fillColor->text().trimmed(); content.textFillColor.reset();
+  if (!fillText.isEmpty()) {
+    content.textFillColor = xerahs::editor::parseColor(fillText);
+    if (!content.textFillColor.has_value()) {
+      m_error->setText("annotation-text-fill-color-invalid: Enter #AARRGGBB including alpha, or leave the field empty for the original fill."); m_fillColor->setFocus(); return;
     }
   }
   if (m_tail && m_tail->isChecked()) {

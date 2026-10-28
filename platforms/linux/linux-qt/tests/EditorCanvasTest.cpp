@@ -231,14 +231,14 @@ private slots:
     dialog->findChild<QPlainTextEdit *>("balloonText")->setPlainText("Created\nmultiline"); dialog->findChild<QDoubleSpinBox *>("balloonFontSize")->setValue(36);
     const auto families = QFontDatabase::families(); QVERIFY(!families.isEmpty()); dialog->findChild<QComboBox *>("annotationFontFamily")->setEditText(families.last());
     dialog->findChild<QCheckBox *>("annotationTextBold")->setCheckState(Qt::Checked); dialog->findChild<QCheckBox *>("annotationTextItalic")->setCheckState(Qt::Checked);
-    auto *alignment = dialog->findChild<QComboBox *>("annotationTextAlignment"); alignment->setCurrentIndex(alignment->findData("right")); dialog->findChild<QLineEdit *>("annotationTextColor")->setText("#80123456");
+    auto *alignment = dialog->findChild<QComboBox *>("annotationTextAlignment"); alignment->setCurrentIndex(alignment->findData("right")); dialog->findChild<QLineEdit *>("annotationTextColor")->setText("#80123456"); dialog->findChild<QLineEdit *>("annotationTextFillColor")->setText("#40112233");
     if (tool == EditorCanvas::Tool::SpeechBalloon) { dialog->findChild<QCheckBox *>("balloonTailEnabled")->setChecked(true); dialog->findChild<QLineEdit *>("balloonTailX")->setText("0.8"); dialog->findChild<QLineEdit *>("balloonTailY")->setText("1.3"); }
     QTest::mouseClick(canvas.viewport(), Qt::LeftButton, {}, start); QCOMPARE(session.undoCount(), 0); QVERIFY(canvas.interactionActive());
     dialog->accept(); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(session.undoCount(), 1); QCOMPARE(session.document().annotations.size(), std::size_t(1));
     const auto *created = session.selectedRectangle(); QVERIFY(created); QCOMPARE(created->type(), type); QCOMPARE(created->left(), 100.0); QCOMPARE(created->top(), 100.0); QCOMPARE(created->right(), 350.0); QCOMPARE(created->bottom(), 250.0);
     QCOMPARE(created->style.strokeColor, original.strokeColor); QCOMPARE(created->style.fillColor, original.fillColor); QCOMPARE(created->style.strokeWidth, original.strokeWidth);
     QCOMPARE(created->content.text, QString("Created\nmultiline")); QCOMPARE(created->content.fontSize, 36.0); QCOMPARE(created->content.fontFamily, families.last());
-    QCOMPARE(created->content.textBold, std::optional<bool>(true)); QCOMPARE(created->content.textItalic, std::optional<bool>(true)); QCOMPARE(created->content.textAlignment, QString("right")); QCOMPARE(created->content.textColor, std::optional<Argb>(0x80123456));
+    QCOMPARE(created->content.textBold, std::optional<bool>(true)); QCOMPARE(created->content.textItalic, std::optional<bool>(true)); QCOMPARE(created->content.textAlignment, QString("right")); QCOMPARE(created->content.textColor, std::optional<Argb>(0x80123456)); QCOMPARE(created->content.textFillColor, std::optional<Argb>(0x40112233));
     if (tool == EditorCanvas::Tool::SpeechBalloon) { QCOMPARE(created->content.points.size(), std::size_t(1)); QCOMPARE(created->content.points[0].x, 0.8); QCOMPARE(created->content.points[0].y, 1.3); }
     const auto completed = serializeDocument(session.document()); const auto loaded = parseDocument(completed); QVERIFY(loaded.document); QCOMPARE(serializeDocument(*loaded.document), completed);
     QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before); QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), completed); QCOMPARE(source, image()); QCOMPARE(canvas.tool(), tool);
@@ -372,6 +372,85 @@ private slots:
       QCOMPARE(serializeDocument(*parsed.document), saved); QCOMPARE(session.document().sourceImagePng, initial.sourceImagePng);
       QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), previous);
       QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), saved);
+    }
+  }
+
+  void textFillColorControlsKeepAlphaAndHistory_data() { fontFamiliesCommitAndPreserveMissingNames_data(); }
+  void textFillColorControlsKeepAlphaAndHistory() {
+    QFETCH(QString, type); const auto source = image(); auto initial = document();
+    initial.createdAt = initial.modifiedAt = "2026-10-29T00:00:00Z";
+    QBuffer buffer(&initial.sourceImagePng); QVERIFY(buffer.open(QIODevice::WriteOnly)); QVERIFY(source.save(&buffer, "PNG"));
+    EditorSession session(initial); ShapeContent content; content.type = type; content.text = "Fill"; content.fontSize = 12.5;
+    content.textColor = 0x7F112233; content.textAlignment = "right";
+    QVERIFY(session.createShape({{100, 100}, {400, 250}, {}}, content, session.stateId(), session.selection()));
+    const auto before = serializeDocument(session.document()); const auto initialUndo = session.undoCount(); EditorCanvas canvas(session, source);
+    QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChildren<TextContentDialog *>().last();
+    auto *fill = dialog->findChild<QLineEdit *>("annotationTextFillColor"); QVERIFY(fill); QVERIFY(fill->text().isEmpty());
+    dialog->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), initialUndo);
+    QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChildren<TextContentDialog *>().last();
+    fill = dialog->findChild<QLineEdit *>("annotationTextFillColor"); QVERIFY(fill); fill->setText("#80ABCDEF"); dialog->reject();
+    QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), before);
+    for (const auto &choice : {QString("#80aBcDeF"), QString("#00000000"), QString("#FF123456"), QString{}}) {
+      const auto previous = serializeDocument(session.document()); const auto count = session.undoCount();
+      QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChildren<TextContentDialog *>().last();
+      fill = dialog->findChild<QLineEdit *>("annotationTextFillColor"); QVERIFY(fill); fill->setText("bad-color"); dialog->accept();
+      QVERIFY(canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), previous);
+      QVERIFY(dialog->findChild<QLabel *>("balloonContentError")->text().startsWith("annotation-text-fill-color-invalid:"));
+      fill->setText(choice); dialog->accept(); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(session.undoCount(), count + 1);
+      const auto saved = serializeDocument(session.document()); const auto annotation = saved.value("annotations").toArray()[0].toObject();
+      if (choice.isEmpty()) QVERIFY(!annotation.contains("textFillColor")); else QCOMPARE(annotation.value("textFillColor"), QJsonValue(choice.toUpper()));
+      QCOMPARE(session.selectedRectangle()->content.fontSize, content.fontSize); QCOMPARE(session.selectedRectangle()->content.textColor, content.textColor);
+      QCOMPARE(session.selectedRectangle()->content.textAlignment, content.textAlignment);
+      const auto parsed = parseDocument(saved); QVERIFY(parsed.document); QCOMPARE(serializeDocument(*parsed.document), saved);
+      QCOMPARE(session.document().sourceImagePng, initial.sourceImagePng);
+      QVERIFY(canvas.editShapeContent(&canvas)); auto *unchanged = canvas.findChildren<TextContentDialog *>().last();
+      QCOMPARE(unchanged->findChild<QLineEdit *>("annotationTextFillColor")->text(), choice.toUpper());
+      unchanged->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(session.undoCount(), count + 1); QCOMPARE(serializeDocument(session.document()), saved);
+      QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), previous); QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), saved);
+    }
+  }
+
+  void textFillColorsRenderIndependentAlpha_data() {
+    QTest::addColumn<QString>("type"); QTest::addColumn<QString>("fill"); QTest::addColumn<quint32>("expected");
+    for (const auto &type : {shape::text, shape::speechBalloon}) {
+      QTest::newRow(qPrintable(type + "-opaque")) << type << QString("#FF0000FF") << quint32(0xFF0000FF);
+      // Half-blue source-over opaque #204060 rounds to #1020B0.
+      QTest::newRow(qPrintable(type + "-half")) << type << QString("#800000FF") << quint32(0xFF1020B0);
+      QTest::newRow(qPrintable(type + "-transparent")) << type << QString("#000000FF") << quint32(0xFF204060);
+    }
+  }
+  void textFillColorsRenderIndependentAlpha() {
+    QFETCH(QString, type); QFETCH(QString, fill); QFETCH(quint32, expected);
+    auto doc = document(); doc.createdAt = doc.modifiedAt = "2026-10-29T00:00:00Z";
+    auto sourceImage = image(); sourceImage.fill(0xFF204060); QBuffer buffer(&doc.sourceImagePng); QVERIFY(buffer.open(QIODevice::WriteOnly)); QVERIFY(sourceImage.save(&buffer, "PNG"));
+    RectangleAnnotation annotation; annotation.id = QUuid::createUuid(); annotation.start = {100, 100}; annotation.end = {400, 250};
+    annotation.style.strokeColor = 0; annotation.style.fillColor = 0xFF00FF00;
+    annotation.content.type = type; annotation.content.text = "Hidden glyph"; annotation.content.textColor = 0;
+    doc.annotations.push_back(annotation); const auto source = solidImage(800, 600, 0xFF204060); const auto originalPixels = source.pixels;
+    const auto legacy = renderDocument(source, doc); QVERIFY(legacy.image); QCOMPARE(legacy.image->at(250, 175), Argb(0xFF00FF00));
+    std::get<RectangleAnnotation>(doc.annotations[0]).style.fillColor = 0;
+    const auto fallback = renderDocument(source, doc); QVERIFY(fallback.image);
+    QCOMPARE(fallback.image->at(250, 175), type == shape::speechBalloon ? Argb(0xFFFFFFFF) : Argb(0xFF204060));
+    std::get<RectangleAnnotation>(doc.annotations[0]).style.fillColor = 0xFF00FF00;
+    auto payload = serializeDocument(doc); auto objects = payload.value("annotations").toArray(); auto object = objects[0].toObject();
+    object.insert("textFillColor", fill); objects[0] = object; payload.insert("annotations", objects);
+    const auto parsed = parseDocument(payload); QVERIFY(parsed.document); const auto beforeRender = serializeDocument(*parsed.document);
+    const auto actual = renderDocument(source, *parsed.document); QVERIFY(actual.image); QCOMPARE(actual.image->at(250, 175), Argb(expected));
+    QCOMPARE(actual.image->at(20, 20), Argb(0xFF204060)); QCOMPARE(source.pixels, originalPixels);
+    QCOMPARE(serializeDocument(*parsed.document), beforeRender);
+  }
+  void textFillImportRejectsMalformedAndKeepsOtherFamiliesOpaque() {
+    auto doc = document(); doc.createdAt = doc.modifiedAt = "2026-10-29T00:00:00Z";
+    const auto source = image(); QBuffer buffer(&doc.sourceImagePng); QVERIFY(buffer.open(QIODevice::WriteOnly)); QVERIFY(source.save(&buffer, "PNG"));
+    RectangleAnnotation annotation; annotation.id = QUuid::createUuid(); annotation.start = {100, 100}; annotation.end = {400, 250}; annotation.content.text = "Text";
+    annotation.content.type = shape::text; doc.annotations.push_back(annotation);
+    for (const auto &type : {shape::text, shape::speechBalloon}) for (const auto &bad : {QJsonValue("#GG000000"), QJsonValue("#ABCDEF"), QJsonValue(42), QJsonValue(true), QJsonValue(QJsonValue::Null)}) {
+      auto payload = serializeDocument(doc); auto objects = payload.value("annotations").toArray(); auto object = objects[0].toObject();
+      object.insert("type", type); object.insert("textFillColor", bad); objects[0] = object; payload.insert("annotations", objects); QVERIFY(!parseDocument(payload).document);
+      for (const auto &otherType : {shape::ellipse, shape::step, shape::rectangle, QString("future-type")}) {
+        object.insert("type", otherType); objects[0] = object; payload.insert("annotations", objects); const auto opaque = parseDocument(payload); QVERIFY(opaque.document);
+        QCOMPARE(serializeDocument(*opaque.document).value("annotations").toArray()[0].toObject().value("textFillColor"), bad);
+      }
     }
   }
 

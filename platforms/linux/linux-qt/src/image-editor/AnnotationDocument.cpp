@@ -143,6 +143,10 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
       const auto value = o.value(u"textColor");
       if (!value.isString() || !(content.textColor = parseColor(value.toString()))) { findings.invalid = true; return std::nullopt; }
     }
+    if ((type == shape::text || type == shape::speechBalloon) && o.contains(u"textFillColor")) {
+      const auto value = o.value(u"textFillColor");
+      if (!value.isString() || !(content.textFillColor = parseColor(value.toString()))) { findings.invalid = true; return std::nullopt; }
+    }
     if ((type == shape::text || type == shape::speechBalloon) && o.contains(u"fontFamily")) {
       const auto family = o.value(u"fontFamily");
       if (!family.isString() || !validFontFamily(family.toString())) { findings.invalid = true; return std::nullopt; }
@@ -197,7 +201,7 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
     if (!kKnownRectangleKeys.contains(it.key())) rectangle.extra.insert(it.key(), it.value());
   }
   if (type == shape::text || type == shape::speechBalloon) {
-    for (const auto &key : {QStringLiteral("textAlignment"), QStringLiteral("textBold"), QStringLiteral("textItalic"), QStringLiteral("textColor"), QStringLiteral("fontFamily")}) rectangle.extra.remove(key);
+    for (const auto &key : {QStringLiteral("textAlignment"), QStringLiteral("textBold"), QStringLiteral("textItalic"), QStringLiteral("textColor"), QStringLiteral("fontFamily"), QStringLiteral("textFillColor")}) rectangle.extra.remove(key);
   }
   return Annotation(rectangle);
 }
@@ -371,6 +375,7 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
       o.insert(QStringLiteral("text"), content.text);
       if (!content.fontFamily.isEmpty()) o.insert(QStringLiteral("fontFamily"), content.fontFamily); else o.remove(QStringLiteral("fontFamily"));
       if (content.textColor.has_value()) o.insert(QStringLiteral("textColor"), formatColor(*content.textColor)); else o.remove(QStringLiteral("textColor"));
+      if (content.textFillColor.has_value()) o.insert(QStringLiteral("textFillColor"), formatColor(*content.textFillColor)); else o.remove(QStringLiteral("textFillColor"));
       for (const auto &field : {std::pair{QStringLiteral("textBold"), content.textBold}, std::pair{QStringLiteral("textItalic"), content.textItalic}}) {
         if (field.second.has_value()) o.insert(field.first, *field.second); else o.remove(field.first);
       }

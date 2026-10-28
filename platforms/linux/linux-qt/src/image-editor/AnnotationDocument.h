@@ -85,6 +85,7 @@ struct ShapeContent {
   std::optional<bool> textBold, textItalic; // absent retains the native font style of legacy files
   std::optional<Argb> textColor; // absent retains legacy stroke/automatic contrast
   QString fontFamily; // empty uses the native font; missing names remain preserved
+  std::optional<Argb> textFillColor; // absent retains legacy fill; explicit zero remains transparent
 };
 
 struct RectangleAnnotation {

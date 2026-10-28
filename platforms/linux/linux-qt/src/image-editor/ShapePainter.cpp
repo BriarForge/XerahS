@@ -137,7 +137,8 @@ void paintBalloon(QPainter &painter, const RectangleAnnotation &shape) {
     tail.closeSubpath();
     body = body.united(tail);
   }
-  const QColor fill = qAlpha(style.fillColor) > 0 ? color(style.fillColor) : QColor(Qt::white);
+  const QColor fill = shape.content.textFillColor.has_value() ? color(*shape.content.textFillColor) :
+      (qAlpha(style.fillColor) > 0 ? color(style.fillColor) : QColor(Qt::white));
   painter.setBrush(fill);
   painter.setPen(QPen(color(style.strokeColor), style.strokeWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
   painter.drawPath(body);
@@ -235,7 +236,8 @@ void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImag
       paintArrowHead(painter, mapped(shape, points[points.size() - 2]), mapped(shape, points.back()), style.strokeWidth,
                      color(style.strokeColor));
   } else if (type == shape::text) {
-    if (qAlpha(style.fillColor) > 0) painter.fillRect(box, color(style.fillColor));
+    const Argb fill = shape.content.textFillColor.value_or(style.fillColor);
+    if (qAlpha(fill) > 0) painter.fillRect(box, color(fill));
     painter.setFont(textFont(painter.font(), shape));
     painter.setPen(color(shape.content.textColor.value_or(style.strokeColor)));
     const double pad = std::min(4.0, std::min(box.width(), box.height()) / 4);
