@@ -79,7 +79,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 9,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-002": {
@@ -94,7 +95,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 14,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-003": {
@@ -109,7 +111,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 19,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-004": {
@@ -153,7 +156,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 22,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-005": {
@@ -177,7 +181,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 25,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-006": {
@@ -201,7 +206,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 31,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-007": {
@@ -250,7 +256,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 35,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-008": {
@@ -264,7 +271,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 38,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-009": {
@@ -279,7 +287,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 42,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-010": {
@@ -307,7 +316,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 45,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-011": {
@@ -322,7 +332,8 @@
         "classification": "blocked: Provide an approved release trust/signature/channel policy before update implementation.",
         "spec_line": 48,
         "blocker": "Provide an approved release trust/signature/channel policy before update implementation.",
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "blocked: Provide an approved release trust/signature/channel policy before update implementation.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-012": {
@@ -337,7 +348,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 54,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-013": {
@@ -355,7 +367,8 @@
         "classification": "partial",
         "spec_line": 57,
         "remaining_human_decision": "Secret Service credential-store human security review remains pending.",
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-014": {
@@ -371,7 +384,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 64,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-015": {
@@ -390,7 +404,8 @@
         "classification": "partial",
         "spec_line": 68,
         "remaining_human_decision": "What approved scroll-alignment threshold replaces kScrollAlignmentThreshold?",
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-016": {
@@ -406,7 +421,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 72,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-017": {
@@ -426,7 +442,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 76,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-018": {
@@ -441,7 +458,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 79,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-019": {
@@ -456,7 +474,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 86,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-020": {
@@ -473,7 +492,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 90,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-021": {
@@ -489,7 +509,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 94,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-022": {
@@ -504,7 +525,8 @@
         "classification": "blocked: Approve the isolated plugin-host authority/provenance design before implementation.",
         "spec_line": 98,
         "blocker": "Approve the isolated plugin-host authority/provenance design before implementation.",
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "blocked: Approve the isolated plugin-host authority/provenance design before implementation.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-023": {
@@ -527,8 +549,9 @@
       "audit": {
         "classification": "partial",
         "spec_line": 105,
-        "coverage": "Partial; native confirmed single-record execution-metadata removal is now tested. Full retention, other action families and human/native target qualification remain.",
-        "incremental_evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp"
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "incremental_evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-024": {
@@ -553,7 +576,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 109,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-025": {
@@ -568,7 +592,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 113,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-026": {
@@ -579,7 +604,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 116,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-027": {
@@ -620,7 +646,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 123,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-028": {
@@ -639,7 +666,8 @@
         "classification": "partial",
         "spec_line": 127,
         "remaining_human_decision": "Release signing, provenance and packaging approval require Mike.",
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-029": {
@@ -650,7 +678,8 @@
       "audit": {
         "classification": "not-applicable",
         "spec_line": 132,
-        "coverage": "Mobile-only obligation, outside Linux desktop implementation scope; not waived on Android or iOS."
+        "coverage": "CORE-029 explicitly belongs to the separate mobile scope, outside Linux desktop measurement.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-030": {
@@ -668,7 +697,8 @@
         "classification": "partial",
         "spec_line": 137,
         "remaining_human_decision": "Human security/privacy/accessibility/licensing/compatibility and supported-target acceptance remain pending.",
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-031": {
@@ -679,7 +709,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 141,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-032": {
@@ -690,7 +721,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 148,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-033": {
@@ -704,7 +736,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 158,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-034": {
@@ -718,7 +751,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 164,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-035": {
@@ -734,7 +768,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 168,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-036": {
@@ -750,7 +785,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 173,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "CORE-037": {
@@ -766,7 +802,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 179,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     }
   },
@@ -786,8 +823,8 @@
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
-    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+    "checked_at": "2026-10-28T16:55:54.347787+00:00",
     "specification": "product-contract/capabilities/CORE-PLATFORM-001/SPEC.md",
     "specification_sha256": "cf9c8a8355542c11a58695f51acc3ad6aade53aff41d1a6b195d854d1f4a1959",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -801,13 +838,27 @@
       "platforms/linux/linux-qt/app/NativePrivateRecords.cpp",
       "platforms/linux/linux-qt/app/NativeWorkflowExecutions.cpp",
       "platforms/linux/linux-qt/app/WorkflowExecutionHistoryDialog.cpp",
-      "platforms/linux/linux-qt/app/features/WorkflowExecutionHistoryFeature.cpp"
+      "platforms/linux/linux-qt/app/features/WorkflowExecutionHistoryFeature.cpp",
+      "platforms/linux/linux-qt/app/NativeInstance.cpp"
     ],
     "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp": [
+        "uploadOnlyRowsRetainUrlsAndProtectSourceFiles",
+        "failedUploadMessageIsVisible",
+        "itemsKeepOnlyFilesTheirRunCreatedNewestFirst",
+        "searchAndPagingAreBounded",
+        "windowShowsThumbnailsMissingFilesAndFileActions",
+        "uploadUrlIsVisibleAndCanBeCopiedFromHistory",
+        "uploadUrlActionsOpenTheUrlAndCopyTheDeletionUrl",
+        "uploadUrlActionsAreDisabledWithoutAnUpload",
+        "openUrlRefusesANonWebUploadUrl",
+        "forgetRemovesTheRecordAndKeepsTheFile",
+        "activeWindowSourceShowsItsLabel",
+        "unknownSourceStillShowsItsRawId",
+        "runningCaptureDefersTheRead"
+      ],
       "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp": [
         "awaitLine",
-        "init",
-        "cleanup",
         "forwardsToOneRealProcessWithoutReplacingItsSocket",
         "busyRejectionAndNotReadyNeverBecomeAnotherPrimary",
         "simultaneousProcessesElectOnlyOneOwner",
@@ -831,13 +882,6 @@
         "workflowCliRefusesMalformedHeadlessAndMissingProfilesWithoutSideEffects",
         "runtimeFilesHaveOwnerOnlyAccessAndProfilesAreIsolated"
       ],
-      "platforms/linux/linux-qt/tests/OwnedWorkTest.cpp": [
-        "deliversResultOnTheOwnerThread",
-        "destroyedOwnerNeverSeesTheResult",
-        "cancellationIsCooperativeAndStillDelivers",
-        "progressIsCoalescedAndDeliveredOnTheOwnerThread",
-        "throwingWorkSkipsDone"
-      ],
       "platforms/linux/linux-qt/tests/OnboardingTest.cpp": [
         "walkingThroughRecordsEveryPageAndFinishIsFinal",
         "onlyOptionalPagesCanBeSkipped",
@@ -858,6 +902,13 @@
         "decliningEverythingLeavesDefaultCaptureWorking",
         "everyControlHasAnAccessibleName"
       ],
+      "platforms/linux/linux-qt/tests/OwnedWorkTest.cpp": [
+        "deliversResultOnTheOwnerThread",
+        "destroyedOwnerNeverSeesTheResult",
+        "cancellationIsCooperativeAndStillDelivers",
+        "progressIsCoalescedAndDeliveredOnTheOwnerThread",
+        "throwingWorkSkipsDone"
+      ],
       "platforms/linux/linux-qt/tests/RecordingTest.cpp": [
         "cropMapping",
         "explicitAudioSelection",
@@ -873,9 +924,13 @@
         "respond",
         "NotifyPointerMotion",
         "NotifyPointerAxisDiscrete",
+        "open",
+        "setProgress",
+        "setManual",
+        "hideForGrab",
+        "decide",
+        "close",
         "startPortal",
-        "init",
-        "cleanup",
         "portalSessionSelectsPointerAndIssuesAxisCalls",
         "declinedConsentIsReportedAndNothingIsScrolled",
         "pointerlessGrantIsTreatedAsDenied",
@@ -901,30 +956,33 @@
         "recursiveScanExcludesCapturesHiddenTemporaryAndSymlinkLoops",
         "dialogAddsRemovesAndPersistsEnabledConsent"
       ],
-      "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp": [
-        "uploadOnlyRowsRetainUrlsAndProtectSourceFiles",
-        "failedUploadMessageIsVisible",
-        "itemsKeepOnlyFilesTheirRunCreatedNewestFirst",
-        "searchAndPagingAreBounded",
-        "windowShowsThumbnailsMissingFilesAndFileActions",
-        "uploadUrlIsVisibleAndCanBeCopiedFromHistory",
-        "uploadUrlActionsOpenTheUrlAndCopyTheDeletionUrl",
-        "uploadUrlActionsAreDisabledWithoutAnUpload",
-        "openUrlRefusesANonWebUploadUrl",
-        "forgetRemovesTheRecordAndKeepsTheFile",
-        "activeWindowSourceShowsItsLabel",
-        "unknownSourceStillShowsItsRawId",
-        "runningCaptureDefersTheRead"
-      ],
       "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp": [
+        "write",
+        "choose",
         "sharedRegistryCommandReviewsAndForgetsOnlyConfirmedMetadata",
         "changedCorruptAndFutureRecordsArePreserved",
+        "forgettingAnUnconfirmedObservationCannotResurrectItsWriter",
         "captureDefersReadsAndRevokesPendingRemoval",
         "storeErrorsAndExceptionsDoNotExposePayloadOrLoseMetadata",
         "destroyingAnOwnerNeverJoinsOrPublishesALateRead",
         "explicitRemovalFreesCapacityWithoutTouchingOtherRecords"
       ]
     },
-    "remaining_scope": "Native shell, capture, recording, upload and storage have candidate tests. Complete linked-ledger semantics, migration, signed distribution, runtime target matrix and human acceptance are not established."
+    "remaining_scope": "Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+    "reviewed_requirement_count": 37,
+    "finding": "Native identity, single-instance protocol, shell commands, permission/capture, scheduling, recording, upload, watch-folder and execution-history components have candidate tests. No catalogue or target-wide acceptance is inferred.",
+    "review_anchor": {
+      "production": {
+        "path": "platforms/linux/linux-qt/app/NativeInstance.cpp",
+        "sha256": "b4b64c270b034955e5342f49b6d718e0f129e85d75d29214dae40ad2a43fd8d0"
+      },
+      "test": {
+        "path": "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp",
+        "method": "simultaneousProcessesElectOnlyOneOwner",
+        "line": 83,
+        "sha256": "79404df8aecba2f74077402abc947c3a6ef36d7d1bfc92d0418e7d94a15254ab"
+      },
+      "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
+    }
   }
 }

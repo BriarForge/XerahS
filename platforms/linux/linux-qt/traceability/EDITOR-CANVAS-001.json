@@ -98,7 +98,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 9,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/NewImageTest.cpp"
@@ -112,7 +113,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 12,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Clipboard/screen insertion, all-tool resize/directional transforms, background composition, color/resource breadth and target qualification remain incomplete; smart padding is blocked on policy.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EC-003": {
@@ -123,7 +125,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 15,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EC-004": {
@@ -137,7 +140,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 18,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Clipboard/screen insertion, all-tool resize/directional transforms, background composition, color/resource breadth and target qualification remain incomplete; smart padding is blocked on policy.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EC-005": {
@@ -150,7 +154,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 22,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EC-006": {
@@ -163,7 +168,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 25,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EC-007": {
@@ -185,7 +191,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 28,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EC-008": {
@@ -201,7 +208,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 31,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EC-009": {
@@ -216,7 +224,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 34,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Clipboard/screen insertion, all-tool resize/directional transforms, background composition, color/resource breadth and target qualification remain incomplete; smart padding is blocked on policy.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EC-010": {
@@ -233,7 +242,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 37,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EC-011": {
@@ -252,7 +262,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 39,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Clipboard/screen insertion, all-tool resize/directional transforms, background composition, color/resource breadth and target qualification remain incomplete; smart padding is blocked on policy.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EC-012": {
@@ -268,7 +279,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 42,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EC-013": {
@@ -278,7 +290,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 45,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EC-014": {
@@ -293,7 +306,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 49,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Clipboard/screen insertion, all-tool resize/directional transforms, background composition, color/resource breadth and target qualification remain incomplete; smart padding is blocked on policy.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EC-015": {
@@ -309,7 +323,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 53,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EC-016": {
@@ -320,7 +335,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 56,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp"
@@ -351,7 +367,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 59,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Clipboard/screen insertion, all-tool resize/directional transforms, background composition, color/resource breadth and target qualification remain incomplete; smart padding is blocked on policy.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     }
   },
@@ -378,8 +395,8 @@
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
-    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+    "checked_at": "2026-10-28T16:55:54.347787+00:00",
     "specification": "product-contract/capabilities/EDITOR-CANVAS-001/SPEC.md",
     "specification_sha256": "cca62433c31f6fb34eca4f12fd469944a79840e6f36dba9ddab9a334ce9d2157",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -426,28 +443,16 @@
         "zoomLimitsStillAllowPanAndFiniteTransforms",
         "invalidInputLeavesViewUnchanged"
       ],
-      "platforms/linux/linux-qt/tests/NewImageTest.cpp": [
-        "blankImageUsesExactChosenBackgroundAndDimensions",
-        "initialPixelsKeepNativeSizeAndAreCroppedOrPaddedAtTopLeft",
-        "sourceOverHasIndependentAlphaAndChannelResults",
-        "invalidDimensionsProfilesAndInitialBuffersFailBeforePublication",
-        "cancellationProducesNoPartialPixelsOrDocument",
-        "profileMetadataSurvivesPngAndXann",
-        "initialColourConversionChangesOnlyThePrivateNewSource"
-      ],
-      "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp": [
-        "topLeftComparisonHasIndependentExpectedPixels",
-        "centeredAlignmentUsesNativeSizesAndOddPadding",
-        "dividerEndpointsPreserveAlphaAndShowExactlyOneSource",
-        "invalidInputsAndUnionLimitsFailBeforeAllocation",
-        "cancellationReturnsNoPartialLayoutOrPixels",
-        "displayCopiesConvertToSrgbWithoutChangingSourceOrAnnotations",
-        "unsupportedVisibleObjectsAndCancelledRenderingPreserveInputs"
-      ],
       "platforms/linux/linux-qt/tests/EditorWindowTest.cpp": [
-        "initTestCase",
-        "init",
-        "cleanup",
+        "acceptDimensions",
+        "trigger",
+        "drawRectangle",
+        "hoverViewPoint",
+        "changeDrawingDefaults",
+        "configureNewImage",
+        "replaceWithNewImage",
+        "saveUntitled",
+        "runRotationPreview",
         "emptySaveWithBaselineCompanionReportsFailureWithoutDeletingEitherCompanion",
         "keyboardTransformsPersistNativeGroupAndExactHistory",
         "keyboardTransformsKeepNativeTextListModalAndBusyPrecedence",
@@ -492,6 +497,8 @@
         "destructionDuringSaveCancelsTheOwnedWorkerWithoutWaitingOrPublishing",
         "completionCanDestroyItsOwnerWithoutInvalidatingWorkerResults",
         "saveOfLoadedJpegRequiresExplicitOptionsAndCancelKeepsFiles",
+        "splitJpegSaveAsRepairsCompanionWithoutAdoptingPathEarly",
+        "saveAsOffersNativeFormatsAndReusesExplicitOptions",
         "retainedAnnotatedDocumentOpensUnsavedAndPersistsAnEditablePair",
         "toolbarApplyKeepsImageCheckpointAndRedoWhileHiddenCommandsRemainReachable",
         "cancelledOrFailedToolbarDraftPreservesActualEditorHistory",
@@ -554,8 +561,41 @@
         "pointerStatusReportsTheDocumentPixelAndItsSourceColour",
         "pointerStatusSizeFollowsTheChangedImage",
         "pointerStatusReportsPixelsOfTheChangedImage"
+      ],
+      "platforms/linux/linux-qt/tests/ImageComparisonTest.cpp": [
+        "topLeftComparisonHasIndependentExpectedPixels",
+        "centeredAlignmentUsesNativeSizesAndOddPadding",
+        "dividerEndpointsPreserveAlphaAndShowExactlyOneSource",
+        "invalidInputsAndUnionLimitsFailBeforeAllocation",
+        "cancellationReturnsNoPartialLayoutOrPixels",
+        "displayCopiesConvertToSrgbWithoutChangingSourceOrAnnotations",
+        "unsupportedVisibleObjectsAndCancelledRenderingPreserveInputs"
+      ],
+      "platforms/linux/linux-qt/tests/NewImageTest.cpp": [
+        "blankImageUsesExactChosenBackgroundAndDimensions",
+        "initialPixelsKeepNativeSizeAndAreCroppedOrPaddedAtTopLeft",
+        "sourceOverHasIndependentAlphaAndChannelResults",
+        "invalidDimensionsProfilesAndInitialBuffersFailBeforePublication",
+        "cancellationProducesNoPartialPixelsOrDocument",
+        "profileMetadataSurvivesPngAndXann",
+        "initialColourConversionChangesOnlyThePrivateNewSource"
       ]
     },
-    "remaining_scope": "Core pixel geometry, preview/history, new-image and comparison tests exist. URL/background flows, complete insert inputs and all shape transforms/resource/profile qualification remain."
+    "remaining_scope": "Clipboard/screen insertion, all-tool resize/directional transforms, background composition, color/resource breadth and target qualification remain incomplete; smart padding is blocked on policy.",
+    "reviewed_requirement_count": 17,
+    "finding": "New/Open, viewport-only zoom/pan, crop, auto-crop, canvas anchors, quarter/custom rotation, clear and comparison use tested production operations and owned preparation. Unknown/unsupported transforms are refused or retained explicitly.",
+    "review_anchor": {
+      "production": {
+        "path": "platforms/linux/linux-qt/src/image-editor/CanvasOperations.cpp",
+        "sha256": "94fb7619590f0d2666ea3c332ab62121c2049d54e89105351adba9b36cd938ef"
+      },
+      "test": {
+        "path": "platforms/linux/linux-qt/tests/CanvasOperationsTest.cpp",
+        "method": "autoCropColorDistanceIncludesAlphaAndInclusiveTolerance",
+        "line": 189,
+        "sha256": "cf86532b8d676a61cf7bbbbc63ee9f1e85ad4119ba8631c812fb7e2410ac5539"
+      },
+      "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
+    }
   }
 }

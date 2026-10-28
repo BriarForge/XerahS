@@ -4,14 +4,14 @@ Implement the approved English Product Contract in the `linux-qt` reference
 edition. Keep shared expected results independent of Linux, and record partial
 requirements honestly until native behavior and evidence cover their full scope.
 
-Current work follows the [24 October measured backlog](PRODUCTION-BACKLOG.md).
-First reproduce and fix ignored filename-counter persistence failure after native
-PNG publication, then finish execution metadata retention using CommandRegistry,
-feature installers, OwnedWork and existing private storage. Next prioritize
-explicit reversible migration/recovery, packaging and remaining editor/catalogue
-semantics. Preserve the already implemented recording/audio, upload/keyring,
-scroll/delayed/automatic capture, tools, effects, onboarding and watch folders.
-Dependencies/models and other decisions waiting on Mike remain blocked explicitly.
+Current work follows the [current measured backlog](PRODUCTION-BACKLOG.md).
+The counter-publication failure report and confirmed execution-metadata removal
+are implemented candidates with native tests. Preserve that work. Next prioritize
+remaining native annotation fields, managed temporary uploads and post-capture
+flows, then capture/canvas/output and catalogue breadth under approved semantics.
+Explicit migration, recovery/retention, release trust and other unresolved policy
+questions remain blocked on Mike as recorded in that backlog. Existing recording,
+upload, scheduling, tools/effects, onboarding and watch-folder paths remain intact.
 The user-authorized solo workflow is worktrees/codex, git-declan, and the supplied
 full-build/test push gate. Full contract/platform/human completion is unproven.
 

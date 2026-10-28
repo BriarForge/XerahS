@@ -106,7 +106,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 9,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ESET-002": {
@@ -119,7 +120,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 13,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ESET-003": {
@@ -137,7 +139,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 16,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ESET-004": {
@@ -153,7 +156,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 19,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ESET-005": {
@@ -164,7 +168,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 22,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ESET-006": {
@@ -196,7 +201,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 25,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ESET-007": {
@@ -220,18 +226,20 @@
       "audit": {
         "classification": "partial",
         "spec_line": 29,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ESET-008": {
       "disposition": "Required",
       "status": "not-started",
       "vectors": [],
-      "note": "Native font validation, fallback without implicit rewrite and text/step preferences remain Required.",
+      "note": "Persisted font/weight/italic/alignment/Step-style preference coverage has not started. Native per-object Text/SpeechBalloon font family/fractional size/style controls and missing-family fallback now exist, but they are not saved preference semantics or approved defaults.",
       "audit": {
         "classification": "not-started",
         "spec_line": 32,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ESET-009": {
@@ -252,7 +260,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 36,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ESET-010": {
@@ -285,7 +294,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 39,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ESET-011": {
@@ -311,7 +321,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 43,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ESET-012": {
@@ -324,7 +335,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 47,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ESET-013": {
@@ -339,7 +351,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 50,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ESET-014": {
@@ -350,7 +363,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 53,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ESET-015": {
@@ -375,7 +389,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 56,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ESET-016": {
@@ -415,14 +430,15 @@
       "audit": {
         "classification": "partial",
         "spec_line": 60,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
-    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+    "checked_at": "2026-10-28T16:55:54.347787+00:00",
     "specification": "product-contract/capabilities/EDITOR-SETTINGS-001/SPEC.md",
     "specification_sha256": "b17ead0b988d71b300c9d46415f9b2e0bc7be0bab7c07942e61ef2133ae9dbba",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -454,14 +470,13 @@
         "nativeFileStorageRejectsUnsafeAndOversizedInputBeforeBuffering"
       ],
       "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp": [
+        "changeDialog",
         "windowChangesKeepRecentsAndUnrelatedFieldsWhileRejectingInvalidOrStaleWrites",
         "windowOptOutStopsAutomaticUpdatesAndSurvivesPreviousRecordRecovery",
         "drawingDraftApplyCancelAndReset",
         "invalidDrawingDraftRemainsOpenWithoutPublishingAnyField",
         "failedOrStaleDrawingDraftPreservesStoredAndActiveDefaults",
         "styleApplyCannotResetRecentDraftRevisionOrOverwriteAnIncomingImage",
-        "init",
-        "cleanup",
         "missingNativeStoreDoesNotWriteOrBackfill",
         "successfulRememberSurvivesRestartWithNewestFirstOrder",
         "nativeRecoveryKeepsUnrelatedAndUnknownPreferencesWhenTheListIsSaved",
@@ -470,17 +485,8 @@
         "cappedIncomingRememberStillInvalidatesAnOlderModalDraft",
         "damagedOrNewerNativeStorageIsVisibleReadOnlyAndUntouched"
       ],
-      "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp": [
-        "defaultsAndExplicitEmptyRemainDistinct",
-        "canonicalGesturesRejectAmbiguousOrMalformedText",
-        "protectedCatalogueAndNativeReservedKeysCannotBeReassigned",
-        "collectionTypesBoundsDuplicatesAndRecoveryAreIndependent",
-        "futureEntriesAndExtensionFieldsSurviveSaveResetAndRestartWithoutActivation"
-      ],
       "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp": [
         "focusCanvas",
-        "init",
-        "cleanup",
         "applyCancelAndResetAreAtomicAcrossWindows",
         "invalidLockedStaleAndReadOnlyApplyPreserveThePublishedLayout",
         "hiddenCommandsAndGroupBoundariesKeepMenusAndHotkeys",
@@ -491,13 +497,43 @@
         "extensionFutureDataAndRecentDraftAuthoritySurviveNativeApply"
       ],
       "platforms/linux/linux-qt/tests/NativeEditorWindowStateTest.cpp": [
-        "init",
-        "cleanup",
         "nativeGeometryRecoversAfterDisplayAndScaleChangesWithoutWriting",
         "maximizeAndMinimizeRetainNormalSizeAndPersistMaximizedState",
         "disabledMemoryStopsWritesAndUsesFallbackWhileFailurePreservesState"
+      ],
+      "platforms/linux/linux-qt/tests/PreferenceDialogTest.cpp": [
+        "draft",
+        "apply",
+        "ownedDialogCompletionAndCleanup",
+        "ownedColourPickerAndParentLifetimes",
+        "applyPublicationIsSerialAndOwnerSafe",
+        "editorConfigurationBusyAndTeardown",
+        "reentrantToolbarPublicationEventuallyShowsNewestPreferences",
+        "unchangedDrawingApplyRecoversFailedLocalDefaultsWithoutHistory"
+      ],
+      "platforms/linux/linux-qt/tests/ToolbarPreferencesTest.cpp": [
+        "defaultsAndExplicitEmptyRemainDistinct",
+        "canonicalGesturesRejectAmbiguousOrMalformedText",
+        "protectedCatalogueAndNativeReservedKeysCannotBeReassigned",
+        "collectionTypesBoundsDuplicatesAndRecoveryAreIndependent",
+        "futureEntriesAndExtensionFieldsSurviveSaveResetAndRestartWithoutActivation"
       ]
     },
-    "remaining_scope": "Private field repair, atomic preferences, toolbar, recents and placement tests exist. Full ledger/font/style/background/convenience semantics and native accessibility qualification remain."
+    "remaining_scope": "Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
+    "reviewed_requirement_count": 16,
+    "finding": "Private preference, recent-image, drawing, toolbar, appearance and window-placement stores/dialogs have atomic/unknown/conflict and native tests. Text font controls are per-object content, not persisted font preference coverage.",
+    "review_anchor": {
+      "production": {
+        "path": "platforms/linux/linux-qt/src/image-editor/EditorPreferenceStore.cpp",
+        "sha256": "fc87eccd37cacafa817253e1879c2463f75724e4866a272d16bd08e5508b4437"
+      },
+      "test": {
+        "path": "platforms/linux/linux-qt/tests/PreferenceDialogTest.cpp",
+        "method": "applyPublicationIsSerialAndOwnerSafe",
+        "line": 123,
+        "sha256": "3ad072256ff232414af4a57f889a963799f58f425f90bc70e1fea3ec16193f8a"
+      },
+      "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
+    }
   }
 }

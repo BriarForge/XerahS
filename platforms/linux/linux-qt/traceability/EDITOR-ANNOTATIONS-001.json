@@ -31,7 +31,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 15,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-002": {
@@ -49,7 +50,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 19,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-003": {
@@ -67,7 +69,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 22,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-004": {
@@ -85,7 +88,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 25,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-005": {
@@ -103,7 +107,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 28,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-006": {
@@ -121,7 +126,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 31,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-007": {
@@ -139,7 +145,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 34,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-008": {
@@ -157,7 +164,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 37,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-009": {
@@ -175,7 +183,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 40,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-010": {
@@ -193,7 +202,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 43,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-011": {
@@ -211,7 +221,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 46,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-012": {
@@ -229,7 +240,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 50,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-013": {
@@ -247,7 +259,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 53,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-014": {
@@ -265,7 +278,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 56,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-015": {
@@ -283,7 +297,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 59,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-016": {
@@ -301,7 +316,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 62,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-017": {
@@ -319,7 +335,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 65,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-018": {
@@ -337,14 +354,15 @@
       "audit": {
         "classification": "partial",
         "spec_line": 68,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-019": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Known shapes, paths/content and embedded assets round-trip; unknown fields/types stay inert. Missing font/style/step fields and complete legacy field compatibility remain. Creation rejects non-finite, negative or oversized font size/strength before session mutation using the existing reader/edit bounds. AnnotationShapesTest covers 35 invalid admissions, unchanged state/selection/source/history and retained redo, plus zero/fractional/maximum creation, reload and undo/redo for all seven affected types. Remaining options, resource cases and target/human qualification stay partial. Native Text/SpeechBalloon font-size controls now accept fractional values within the existing 1..2000 editing range. Unchanged Apply preserves the exact saved fraction or zero/default, including compatible values below the native minimum. Two native failures reproduced 0.125 becoming 1 before the fix. Tests cover both families, precision, Cancel/no-op, duplicate Apply, one history operation, undo/redo, reload and immutable source. Rendering and persistence ranges are unchanged.",
+      "note": "Known represented annotations retain stable IDs/order, optional text family/style/alignment/color/tail/fractional sizes and strengths, assets and opaque compatible fields through candidate XANN tests. Unknown types remain inert. Complete all-tool/legacy field and cross-platform runtime compatibility remains partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -355,7 +373,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 71,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EA-020": {
@@ -373,14 +392,15 @@
       "audit": {
         "classification": "partial",
         "spec_line": 74,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
-    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+    "checked_at": "2026-10-28T16:55:54.347787+00:00",
     "specification": "product-contract/capabilities/EDITOR-ANNOTATIONS-001/SPEC.md",
     "specification_sha256": "72234dc75845d4833361883626acd220516a84e05c98bf8c37078e2d48de5e0b",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -388,10 +408,13 @@
       "platforms/linux/linux-qt/src/image-editor/ShapePainter.cpp",
       "platforms/linux/linux-qt/src/image-editor/AnnotationTransfer.cpp",
       "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
-      "platforms/linux/linux-qt/app/EditorCanvas.cpp"
+      "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+      "platforms/linux/linux-qt/app/TextContentDialog.cpp"
     ],
     "automated_test_surfaces": {
       "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp": [
+        "invalidCreationContentPreservesSession",
+        "validCreationContentRoundTrips",
         "lineGeometryKeepsDirectionAndPadsStraightLines",
         "everyShapeTypeRoundTripsThroughXann",
         "malformedShapeContentIsRejected",
@@ -417,6 +440,82 @@
         "invalidClipboardPayloadsAndLimitsFailBeforeAnyInsertion",
         "everyAdmittedEnvelopeAtTheEncodingBudgetBoundaryCanBePasted",
         "failedInsertionIdentityOverflowAndStaleCutPreserveSelectionCheckpointAndRedo"
+      ],
+      "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp": [
+        "wheel",
+        "hoverViewPoint",
+        "unchangedStrengthDialogPreservesFractionAndDefault",
+        "strengthDialogCommitsFractionalValuesOnce",
+        "unchangedStrengthPreservesCompatibleValuesOutsideNativeEditingRange",
+        "strengthDialogRejectsStaleAndDeadOwners",
+        "oldStrengthDialogCannotCancelNewStepEditing",
+        "stepEditorPreservesLargeStoredNumbersWithoutClamping",
+        "invalidStepNumbersCannotEnterCreation",
+        "invalidStepNumbersCannotEnterEdits",
+        "stepNumericDialogCommitsOnceAndReloads",
+        "stepNumericDialogRejectsStaleAndDeadOwners",
+        "oldStepDialogDestructionCannotCancelNewContentDialog",
+        "textCreationCommitsFormattedSnapshotOnce",
+        "textCreationRefusesStaleOrCancelledOwners",
+        "creationSurvivesFocusTransferToItsDialog",
+        "completedTextDialogCannotClearLaterModalPendingState",
+        "oldCreationDialogDeletionCannotCancelANewCreation",
+        "fontFamiliesCommitAndPreserveMissingNames",
+        "unchangedFontSizeKeepsCompatibleValue",
+        "fractionalFontSizeCommitsOnceAndReloads",
+        "longSavedFontFamilyIsNotTruncatedByNativeEntry",
+        "nativeFontRenderingAndMissingFallback",
+        "textColorsCommitCancelValidateAndReload",
+        "textColorsRenderAlphaIndependently",
+        "textFontStylesCommitCancelAndReload",
+        "explicitFontStylesSurviveCreation",
+        "textFontStylesAffectRenderedGlyphs",
+        "textAlignmentDialogCommitsOnceAndKeepsOldDocuments",
+        "invalidAlignmentCannotEnterThroughCreation",
+        "renderedTextAlignmentMovesGlyphsWithoutChangingVerticalPlacement",
+        "balloonTailCommitCancelHistoryAndPersistence",
+        "balloonDialogRejectsInvalidTailAndStaleDocuments",
+        "balloonDialogOwnerAndDeferredDeletionKeepNewOperationSafe",
+        "balloonTailOnlyEditIsOneHistoryOperation",
+        "invalidBalloonContentNeverChangesHistory",
+        "tinyBalloonTailsRenderInEveryDirection",
+        "keyboardTransformsUseImagePixelsAndKeepRepeatHistory",
+        "keyboardTransformsGuardPendingStateSelectionGenerationAndOwner",
+        "nativeDeleteKeysRemoveOneGroupAndPreserveHistory",
+        "nativeDeleteGuardsStateSelectionGenerationAndOwner",
+        "catalogueAndBracketOrderingKeysCommitOneGroup",
+        "nativeOrderingGuardsPendingStateSelectionReplacementAndOwner",
+        "thicknessCommandsFreezeStateDefaultsGenerationAndLifetime",
+        "colorPickerGuardsDocumentSelectionDefaultsAndOwner",
+        "colorPendingObserverCanDestroyCanvasBeforeOpeningPicker",
+        "nativeRotationDraftHasExplicitCommitAndStaleLifetimeGuards",
+        "rotationPendingObserverCanDestroyCanvasBeforeOpeningTheDialog",
+        "groupMovePreviewAndCommitUseFrozenSourcePixels",
+        "groupMoveCancellationAndStaleReleasePreserveCommittedState",
+        "staleMoveRejectionCanDestroyCanvasWithoutAnotherNotification",
+        "pointerCreationFreezesStyleAndRejectsInterveningDocumentChanges",
+        "pendingCreationObserverCanDestroyTheCanvasBeforeTheDialog",
+        "numericRectangleDraftsRejectMatchingStateReplacement",
+        "nestedRectangleColorsOwnDraftAndLifetime",
+        "keyboardCreationHasOwnedDraftCancellationAndGuardedCommit",
+        "initialLayoutFitsTheActualViewportWithoutMutatingTheSession",
+        "rectangleDialogValidationPrecisionCancellationAndLifetime",
+        "resizeHandlesPreviewAndCommitOnceAtEveryRotationAndZoom",
+        "cancelledCollapsedStaleAndProtectedResizeKeepCommittedState",
+        "explicitToolsAreCheckedAccessibleAndSelectNeverCreates",
+        "switchingToolsCancelsGesturesAndLiveKeyboardEditsAreBlocked",
+        "failedGeometryEditReportsANativeFailureWithoutMutation",
+        "failureObserverCanDestroyTheCanvasWithoutASecondNotification",
+        "drawAndMoveUseImagePixelsAfterZoom",
+        "zoomPanAndScrollDoNotDirtySavedDocument",
+        "nativePinchKeepsPointerAnchor",
+        "cancelledPanAndDrawRestoreCommittedState",
+        "rotatedHitTestingUsesDisplayedShape",
+        "hitTargetsStaySixScreenPixelsAtLowZoom",
+        "rotatedPreviewUsesViewportTransform",
+        "cropToolUsesImageCoordinatesAndCancellationIsLossless",
+        "zoomAfterThePointerLeavesReportsNoPixel",
+        "pointerPixelReportsDocumentPixelOnlyWhenItChanges"
       ],
       "platforms/linux/linux-qt/tests/EditorSessionTest.cpp": [
         "guardedCanvasCommitPreservesSelectionHistoryAndRefusesStaleAdmission",
@@ -474,9 +573,15 @@
         "resizeRotateAndReorder"
       ],
       "platforms/linux/linux-qt/tests/EditorWindowTest.cpp": [
-        "initTestCase",
-        "init",
-        "cleanup",
+        "acceptDimensions",
+        "trigger",
+        "drawRectangle",
+        "hoverViewPoint",
+        "changeDrawingDefaults",
+        "configureNewImage",
+        "replaceWithNewImage",
+        "saveUntitled",
+        "runRotationPreview",
         "emptySaveWithBaselineCompanionReportsFailureWithoutDeletingEitherCompanion",
         "keyboardTransformsPersistNativeGroupAndExactHistory",
         "keyboardTransformsKeepNativeTextListModalAndBusyPrecedence",
@@ -521,6 +626,8 @@
         "destructionDuringSaveCancelsTheOwnedWorkerWithoutWaitingOrPublishing",
         "completionCanDestroyItsOwnerWithoutInvalidatingWorkerResults",
         "saveOfLoadedJpegRequiresExplicitOptionsAndCancelKeepsFiles",
+        "splitJpegSaveAsRepairsCompanionWithoutAdoptingPathEarly",
+        "saveAsOffersNativeFormatsAndReusesExplicitOptions",
         "retainedAnnotatedDocumentOpensUnsavedAndPersistsAnEditablePair",
         "toolbarApplyKeepsImageCheckpointAndRedoWhileHiddenCommandsRemainReachable",
         "cancelledOrFailedToolbarDraftPreservesActualEditorHistory",
@@ -583,43 +690,23 @@
         "pointerStatusReportsTheDocumentPixelAndItsSourceColour",
         "pointerStatusSizeFollowsTheChangedImage",
         "pointerStatusReportsPixelsOfTheChangedImage"
-      ],
-      "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp": [
-        "balloonTailCommitCancelHistoryAndPersistence",
-        "balloonDialogRejectsInvalidTailAndStaleDocuments",
-        "balloonDialogOwnerAndDeferredDeletionKeepNewOperationSafe",
-        "balloonTailOnlyEditIsOneHistoryOperation",
-        "invalidBalloonContentNeverChangesHistory",
-        "tinyBalloonTailsRenderInEveryDirection",
-        "textAlignmentDialogCommitsOnceAndKeepsOldDocuments",
-        "renderedTextAlignmentMovesGlyphsWithoutChangingVerticalPlacement",
-        "invalidAlignmentCannotEnterThroughCreation",
-        "textFontStylesCommitCancelAndReload",
-        "textFontStylesAffectRenderedGlyphs",
-        "explicitFontStylesSurviveCreation",
-        "textColorsCommitCancelValidateAndReload",
-        "textColorsRenderAlphaIndependently",
-        "fontFamiliesCommitAndPreserveMissingNames",
-        "nativeFontRenderingAndMissingFallback",
-        "longSavedFontFamilyIsNotTruncatedByNativeEntry",
-        "textCreationCommitsFormattedSnapshotOnce",
-        "textCreationRefusesStaleOrCancelledOwners",
-        "oldCreationDialogDeletionCannotCancelANewCreation",
-        "creationSurvivesFocusTransferToItsDialog",
-        "completedTextDialogCannotClearLaterModalPendingState",
-        "stepEditorPreservesLargeStoredNumbersWithoutClamping",
-        "invalidStepNumbersCannotEnterCreation",
-        "invalidStepNumbersCannotEnterEdits",
-        "stepNumericDialogCommitsOnceAndReloads",
-        "stepNumericDialogRejectsStaleAndDeadOwners",
-        "oldStepDialogDestructionCannotCancelNewContentDialog",
-        "unchangedStrengthDialogPreservesFractionAndDefault",
-        "strengthDialogCommitsFractionalValuesOnce",
-        "unchangedStrengthPreservesCompatibleValuesOutsideNativeEditingRange",
-        "strengthDialogRejectsStaleAndDeadOwners",
-        "oldStrengthDialogCannotCancelNewStepEditing"
       ]
     },
-    "remaining_scope": "Shape modes and representative rendering/history tests exist. Full border/shadow/arrow/font/balloon/step fields and all-tool asset transfer, accessibility and compatibility coverage remain."
+    "remaining_scope": "Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+    "reviewed_requirement_count": 20,
+    "finding": "Native tools reach all modes; text/balloon creation and editing use guarded asynchronous dialogs with family/style/alignment/text color/tail/fractional size. Numeric Step and fractional strength edits, create admission bounds, history/reload and ownership regressions are tested.",
+    "review_anchor": {
+      "production": {
+        "path": "platforms/linux/linux-qt/app/TextContentDialog.cpp",
+        "sha256": "e8113b16d656006e129e247ad3c8bdd3b43cddad8c1235f406afb526e136da2c"
+      },
+      "test": {
+        "path": "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "method": "fractionalFontSizeCommitsOnceAndReloads",
+        "line": 347,
+        "sha256": "91177c2f43e3888cbc8ea80ca20c239c0dcbe5f3b1523fcc53fd37135aa68bde"
+      },
+      "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
+    }
   }
 }

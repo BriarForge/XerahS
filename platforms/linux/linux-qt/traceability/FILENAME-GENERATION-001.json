@@ -32,7 +32,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 34,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-002": {
@@ -53,7 +54,8 @@
           "calendar-names-and-week",
           "unix-seconds"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-003": {
@@ -72,7 +74,8 @@
           "twelve-hour-midnight-and-milliseconds",
           "twelve-hour-noon"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-004": {
@@ -89,7 +92,8 @@
           "date-counter",
           "empty-result"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-005": {
@@ -108,7 +112,8 @@
           "window-title-trim-space-and-sanitize",
           "url-mode-percent-encoding"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-006": {
@@ -123,7 +128,8 @@
         "published_vectors": [
           "text-mode-environment-unchanged"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-007": {
@@ -148,7 +154,8 @@
           "counter-width-never-truncates",
           "blank-pattern-does-not-advance-counter"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-008": {
@@ -180,7 +187,8 @@
           "guid-lower-and-upper",
           "invalid-repeat-does-not-consume-counter"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-009": {
@@ -207,7 +215,8 @@
           "random-file-permission-denied",
           "random-file-empty"
         ],
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit native random-file permission flow and crash/power-loss atomicity between publication and counter persistence remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-010": {
@@ -224,7 +233,8 @@
           "case-sensitive-unknown-token",
           "unknown-and-literal-percent"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-011": {
@@ -247,7 +257,8 @@
           "reserved-device-name",
           "reserved-device-name-with-extension"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-012": {
@@ -268,7 +279,8 @@
           "path-mode-rejects-absolute",
           "path-mode-rejects-drive"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-013": {
@@ -291,7 +303,8 @@
           "blank-pattern-does-not-advance-counter",
           "blank-pattern-text-mode"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-014": {
@@ -308,7 +321,8 @@
           "max-length-preserves-extension",
           "max-length-counts-scalar-values"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-015": {
@@ -331,7 +345,8 @@
         "published_vectors": [
           "preview-does-not-commit"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-016": {
@@ -356,7 +371,8 @@
         "published_vectors": [
           "invalid-repeat-does-not-consume-counter"
         ],
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit native random-file permission flow and crash/power-loss atomicity between publication and counter persistence remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-017": {
@@ -368,7 +384,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 87,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-018": {
@@ -389,7 +406,8 @@
           "case-sensitive-unknown-token",
           "random-non-ambiguous"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-019": {
@@ -412,7 +430,8 @@
           "non-numeric-repeat",
           "unterminated-argument"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-020": {
@@ -435,7 +454,8 @@
           "calendar-names-and-week",
           "unix-seconds"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-021": {
@@ -472,7 +492,8 @@
           "random-source-exhausted",
           "random-file-line"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-022": {
@@ -495,7 +516,8 @@
           "text-mode-environment-unchanged",
           "path-mode-components"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-023": {
@@ -522,7 +544,8 @@
           "max-length-preserves-extension",
           "extension-exceeds-max-length"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-024": {
@@ -543,7 +566,8 @@
           "path-mode-rejects-absolute",
           "path-mode-rejects-drive"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-025": {
@@ -560,7 +584,8 @@
           "counter-base36",
           "counter-overflow"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-026": {
@@ -605,7 +630,8 @@
           "random-file-permission-denied",
           "random-file-empty"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "FN-027": {
@@ -631,14 +657,15 @@
         "published_vectors": [
           "preview-does-not-commit"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
-    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+    "checked_at": "2026-10-28T16:55:54.347787+00:00",
     "specification": "product-contract/capabilities/FILENAME-GENERATION-001/SPEC.md",
     "specification_sha256": "fa57017ec8237ab136799f4e3d2234e5a290b210af9215315c4cf0c208c0e6ff",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -648,20 +675,6 @@
       "platforms/linux/linux-qt/app/CaptureSave.cpp"
     ],
     "automated_test_surfaces": {
-      "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp": [
-        "defaultCapturePatternUsesSystemRandom",
-        "activeWindowDefaultPattern",
-        "previewNeverNeedsInjectedRandomness"
-      ],
-      "platforms/linux/linux-qt/tests/CounterStoreTest.cpp": [
-        "sequenceSurvivesReopenAndFileIsPrivate",
-        "uncommittedReservationDoesNotConsume",
-        "profilesAreIndependent",
-        "concurrentReservationsNeverShareAValue",
-        "overflowIsTypedAndFileUntouched",
-        "corruptAndNewerFilesErrorWithoutOverwrite",
-        "changedFileBetweenReserveAndCommitIsRefused"
-      ],
       "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp": [
         "nativeCounterPublicationSurvivesReopenAndCollisionContextMatchesTheName",
         "failedNativeEncodingDoesNotConsumeTheReservedCounter",
@@ -672,8 +685,38 @@
         "concurrentSavesWithTheSameNameHaveOneWinnerAndNoPartialFinalFile",
         "encoderFailureAndExceptionsRemoveOnlyOwnedTemporaryFiles",
         "invalidPatternDoesNotCreateDirectoryOrEncode"
+      ],
+      "platforms/linux/linux-qt/tests/CounterStoreTest.cpp": [
+        "write",
+        "sequenceSurvivesReopenAndFileIsPrivate",
+        "uncommittedReservationDoesNotConsume",
+        "profilesAreIndependent",
+        "concurrentReservationsNeverShareAValue",
+        "overflowIsTypedAndFileUntouched",
+        "corruptAndNewerFilesErrorWithoutOverwrite",
+        "changedFileBetweenReserveAndCommitIsRefused"
+      ],
+      "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp": [
+        "defaultCapturePatternUsesSystemRandom",
+        "activeWindowDefaultPattern",
+        "previewNeverNeedsInjectedRandomness"
       ]
     },
-    "remaining_scope": "Published deterministic expansion vectors plus production random-source and counter tests exist. Native file grants and post-publication crash/power-loss counter atomicity remain incomplete."
+    "remaining_scope": "Explicit native random-file permission flow and crash/power-loss atomicity between publication and counter persistence remain incomplete.",
+    "reviewed_requirement_count": 27,
+    "finding": "Immutable expansion context, Unicode-scalar sanitization, token/random vectors, preview and persisted reservation tests are present. Native failed-counter publication now retains the published PNG and reports failure.",
+    "review_anchor": {
+      "production": {
+        "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+        "sha256": "7c69270a68b4898be80a59e86fb21ab29d84684399e5afb3ef3145d99955ae9a"
+      },
+      "test": {
+        "path": "platforms/linux/linux-qt/tests/CounterStoreTest.cpp",
+        "method": "sequenceSurvivesReopenAndFileIsPrivate",
+        "line": 21,
+        "sha256": "8e23c3f5b9b64f506a29f97a0e1ea3a54a57295a9bf44ef4b8e9598f1d4787f6"
+      },
+      "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
+    }
   }
 }

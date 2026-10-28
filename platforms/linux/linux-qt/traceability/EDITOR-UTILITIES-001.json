@@ -75,7 +75,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 9,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. QR scanning/OCR dependencies and background-removal model remain unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-002": {
@@ -94,7 +95,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 12,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. QR scanning/OCR dependencies and background-removal model remain unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-003": {
@@ -112,7 +114,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 15,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-004": {
@@ -130,7 +133,8 @@
         "classification": "blocked: Approve zxing-cpp (QR scanning dependency) before implementation.",
         "spec_line": 18,
         "blocker": "Approve zxing-cpp (QR scanning dependency) before implementation.",
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "blocked: Approve zxing-cpp (QR scanning dependency) before implementation.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-005": {
@@ -147,7 +151,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 21,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-006": {
@@ -164,7 +169,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 25,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-007": {
@@ -181,7 +187,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 28,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-008": {
@@ -199,7 +206,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 32,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-009": {
@@ -217,7 +225,8 @@
         "classification": "blocked: Approve the local background-removal model, provenance and device policy.",
         "spec_line": 35,
         "blocker": "Approve the local background-removal model, provenance and device policy.",
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "blocked: Approve the local background-removal model, provenance and device policy.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-010": {
@@ -235,7 +244,8 @@
         "classification": "blocked: Approve the model licence/integrity/download policy before setup is implemented.",
         "spec_line": 38,
         "blocker": "Approve the model licence/integrity/download policy before setup is implemented.",
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "blocked: Approve the model licence/integrity/download policy before setup is implemented.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-011": {
@@ -253,7 +263,8 @@
         "classification": "blocked: Approve the local background-removal model before inference/output work.",
         "spec_line": 41,
         "blocker": "Approve the local background-removal model before inference/output work.",
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "blocked: Approve the local background-removal model before inference/output work.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-012": {
@@ -271,7 +282,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 44,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. QR scanning/OCR dependencies and background-removal model remain unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-013": {
@@ -290,7 +302,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 47,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-014": {
@@ -307,7 +320,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 50,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-015": {
@@ -325,7 +339,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 54,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-016": {
@@ -345,7 +360,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 58,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. QR scanning/OCR dependencies and background-removal model remain unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-017": {
@@ -367,7 +383,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 61,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. QR scanning/OCR dependencies and background-removal model remain unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-018": {
@@ -386,7 +403,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 64,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. QR scanning/OCR dependencies and background-removal model remain unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EU-019": {
@@ -404,14 +422,15 @@
         "classification": "blocked: Decide preserve, correct or omit for the inventoried Konami shader after the mandated review.",
         "spec_line": 67,
         "blocker": "Decide preserve, correct or omit for the inventoried Konami shader after the mandated review.",
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "blocked: Decide preserve, correct or omit for the inventoried Konami shader after the mandated review.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
-    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+    "checked_at": "2026-10-28T16:55:54.347787+00:00",
     "specification": "product-contract/capabilities/EDITOR-UTILITIES-001/SPEC.md",
     "specification_sha256": "ff0422d32898e8d68ad72be95509eafa334084d1570446bd276b72cd712bcaab",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -439,8 +458,6 @@
       ],
       "platforms/linux/linux-qt/tests/HashCheckerDialogTest.cpp": [
         "release",
-        "initTestCase",
-        "init",
         "computeShowsTheDigest",
         "weakAlgorithmsAreLabelledUnsuitableForSecurity",
         "algorithmChoiceSelectsTheAlgorithm",
@@ -451,18 +468,6 @@
         "cancelAnswersAnInFlightReadWithoutADigest",
         "closingWhileHashingStopsTheRead",
         "destroyingWhileHashingIsSafe"
-      ],
-      "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp": [
-        "emptyTextIsTypedAndDisablesActions",
-        "defaultsToLevelM",
-        "previewIsDeterministic",
-        "tooLongIsTyped",
-        "invalidSizeIsTyped",
-        "saveWritesPngAtomically",
-        "copyPutsImageOnClipboard",
-        "uploadPortReceivesExistingPng",
-        "uploadFilesAreRemovedWithDialog",
-        "controlsAreNamedForAccessibility"
       ],
       "platforms/linux/linux-qt/tests/IconWriterTest.cpp": [
         "headerAndEntriesAreWellFormed",
@@ -484,24 +489,48 @@
         "displayCopiesConvertToSrgbWithoutChangingSourceOrAnnotations",
         "unsupportedVisibleObjectsAndCancelledRenderingPreserveInputs"
       ],
-      "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp": [
-        "initTestCase",
-        "convertsAndPublishesAtomically",
-        "cancelRemovesPartial",
-        "refusesExistingOutput"
-      ],
       "platforms/linux/linux-qt/tests/PortalColorPickerTest.cpp": [
         "Close",
         "respond",
-        "init",
-        "cleanup",
         "pickColorReturnsThePortalColor",
         "userCancelLeavesNoColor",
         "otherFailureIsNotAColor",
         "missingPortalFails",
         "permissionDenialIsDistinctFromAMissingPortal"
+      ],
+      "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp": [
+        "emptyTextIsTypedAndDisablesActions",
+        "defaultsToLevelM",
+        "previewIsDeterministic",
+        "tooLongIsTyped",
+        "invalidSizeIsTyped",
+        "saveWritesPngAtomically",
+        "copyPutsImageOnClipboard",
+        "uploadPortReceivesExistingPng",
+        "uploadFilesAreRemovedWithDialog",
+        "controlsAreNamedForAccessibility"
+      ],
+      "platforms/linux/linux-qt/tests/VideoConverterIntegrationTest.cpp": [
+        "convertsAndPublishesAtomically",
+        "cancelRemovesPartial",
+        "refusesExistingOutput"
       ]
     },
-    "remaining_scope": "Hash, QR generation, ICO, compare and conversion tests exist. Recognition/model approvals, picker details, complete codec/native resource and accessibility qualification remain."
+    "remaining_scope": "QR scanning/OCR dependencies and background-removal model remain unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked.",
+    "reviewed_requirement_count": 19,
+    "finding": "Production streamed hashes, QR generation, ICO writing, image comparison and structured atomic video conversion have tests. ToolsFeature exposes native windows and missing dependencies honestly.",
+    "review_anchor": {
+      "production": {
+        "path": "platforms/linux/linux-qt/src/tools/FileHash.cpp",
+        "sha256": "7822496bf376fa5101d8abe900ec381c0460285595db09a626437f419732ac0a"
+      },
+      "test": {
+        "path": "platforms/linux/linux-qt/tests/HashCheckerDialogTest.cpp",
+        "method": "weakAlgorithmsAreLabelledUnsuitableForSecurity",
+        "line": 133,
+        "sha256": "cc01f2a1160fe00dcbf2448435272a19124951bd9fcfc224f7faef9f034e4ba5"
+      },
+      "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
+    }
   }
 }

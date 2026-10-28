@@ -68,7 +68,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 9,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-002": {
@@ -94,8 +95,9 @@
       "audit": {
         "classification": "partial",
         "spec_line": 13,
-        "coverage": "Partial; native confirmed single-record execution-metadata removal is now tested. Full retention, other action families and human/native target qualification remain.",
-        "incremental_evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp"
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "incremental_evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-003": {
@@ -120,7 +122,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 16,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-004": {
@@ -135,7 +138,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 19,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-005": {
@@ -146,7 +150,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 23,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-006": {
@@ -161,7 +166,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 26,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-007": {
@@ -177,7 +183,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 29,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-008": {
@@ -188,7 +195,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 32,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-009": {
@@ -206,7 +214,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 35,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-010": {
@@ -221,7 +230,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 39,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-011": {
@@ -235,7 +245,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 42,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-012": {
@@ -250,7 +261,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 45,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-013": {
@@ -270,7 +282,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 49,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-014": {
@@ -292,7 +305,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 53,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-015": {
@@ -315,7 +329,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 57,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-016": {
@@ -340,7 +355,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 60,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-017": {
@@ -367,8 +383,9 @@
       "audit": {
         "classification": "partial",
         "spec_line": 63,
-        "coverage": "Partial; native confirmed single-record execution-metadata removal is now tested. Full retention, other action families and human/native target qualification remain.",
-        "incremental_evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp"
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "incremental_evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "WFCAT-018": {
@@ -392,14 +409,15 @@
       "audit": {
         "classification": "partial",
         "spec_line": 66,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
-    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+    "checked_at": "2026-10-28T16:55:54.347787+00:00",
     "specification": "product-contract/capabilities/WORKFLOW-CATALOG-001/SPEC.md",
     "specification_sha256": "fb344e427f34b808ab66a81b1c95779c2ae6175057d2746389e1e2488e6f8331",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -425,38 +443,17 @@
         "outputPreviewUsesProductionRulesWithoutCommittingOrReadingFiles",
         "outputValidationPreservesUnknownFieldsAndRefusesInvalidSave"
       ],
-      "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp": [
-        "outputSettingsSnapshotsRemainReadableIndependentOfCurrentAvailability",
-        "durableAdmissionAbandonmentAndUnconfirmedInFlightDestruction",
-        "actualPipelineStatesAndRedactedOrderedSteps",
-        "admissionFailureAndLateBusyNeverRunCapture",
-        "staleAndUnsafeStorageCannotOverwriteOrAuthorizeAnAction",
-        "malformedRecordsCannotInjectPrivateQueryFieldsOrInventTerminalSuccess",
-        "actualHeadlessLookup"
-      ],
-      "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp": [
-        "signal",
-        "respond",
-        "finishHandle",
-        "press",
-        "release",
-        "changed",
-        "init",
-        "cleanup",
-        "domainPlanAndHeldKeyAuthority",
-        "combinedCaptureAndWorkflowPortalPlan",
-        "nativeBindingAndActivationAuthority",
-        "refusalsAndTimeoutHaveNoActiveBindings",
-        "cancellationDuringEarlyCreateClosesLateHandlesAndSession",
-        "cancelPendingBindAndInvalidChangedBindingsCloseSessions",
-        "ownerReplacementAndClosedSessionFailClosed",
-        "sharedNativeActionsEnableDisableInvalidateAndRespectBusy",
-        "acceptedHotkeyUsesSavedWorkflowAndRealControllerOutput"
-      ],
       "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp": [
         "Close",
         "respond",
         "finishHandle",
+        "lastRegionFailureStillReportsWhenWorkflowCannotEnterProcessing",
+        "cancellationDuringMetadataWriteDoesNotStartPostCaptureActions",
+        "lastRegionWriterRunsOnlyAfterSuccessfulPixelsAndBeforeActions",
+        "lastRegionMetadataFailureKeepsCaptureAndIsPresentInFinalReport",
+        "failedCompositionAndDestroyedMetadataOwnerNeverStartActionsOrCallBackLate",
+        "nativeCornerHandlesResizeWithoutPrematureCaptureAndKeepGrabOffset",
+        "regionOptionsFreezeBeforeAcquisitionAndAllowKeyboardAdjustment",
         "unknownWorkflowOutputCannotAdmitCaptureOrWriteAnExecution",
         "supportedOutputWorkflowAdmissionKeepsPermissionDenialBeforeActions",
         "admittedPinAndPrintWorkflowsReachTheirActualNativePorts",
@@ -476,8 +473,6 @@
         "staleRetryConfirmationCannotRepeatActionsForANewerReceipt",
         "cancellationAtRetryAvailabilityKeepsPixelsAndSuccessfulFileAndOwnerDestructionCannotStartWork",
         "externalScrollingCaptureHoldsAdmissionAndSubmitsThroughThePipeline",
-        "init",
-        "cleanup",
         "authenticResponseAndEarlyLegacyHandle",
         "userCancelIsDifferentFromPermissionDenial",
         "methodErrorsAreStableAndValueFree",
@@ -516,14 +511,59 @@
         "recoveryOwnerDestructionCancelsPendingApprovalAndKeepsTheReceipt"
       ],
       "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp": [
+        "write",
+        "choose",
         "sharedRegistryCommandReviewsAndForgetsOnlyConfirmedMetadata",
         "changedCorruptAndFutureRecordsArePreserved",
+        "forgettingAnUnconfirmedObservationCannotResurrectItsWriter",
         "captureDefersReadsAndRevokesPendingRemoval",
         "storeErrorsAndExceptionsDoNotExposePayloadOrLoseMetadata",
         "destroyingAnOwnerNeverJoinsOrPublishesALateRead",
         "explicitRemovalFreesCapacityWithoutTouchingOtherRecords"
+      ],
+      "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp": [
+        "write",
+        "outputSettingsSnapshotsRemainReadableIndependentOfCurrentAvailability",
+        "durableAdmissionAbandonmentAndUnconfirmedInFlightDestruction",
+        "actualPipelineStatesAndRedactedOrderedSteps",
+        "admissionFailureAndLateBusyNeverRunCapture",
+        "staleAndUnsafeStorageCannotOverwriteOrAuthorizeAnAction",
+        "malformedRecordsCannotInjectPrivateQueryFieldsOrInventTerminalSuccess",
+        "actualHeadlessLookup"
+      ],
+      "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp": [
+        "signal",
+        "respond",
+        "finishHandle",
+        "press",
+        "release",
+        "changed",
+        "domainPlanAndHeldKeyAuthority",
+        "combinedCaptureAndWorkflowPortalPlan",
+        "nativeBindingAndActivationAuthority",
+        "refusalsAndTimeoutHaveNoActiveBindings",
+        "cancellationDuringEarlyCreateClosesLateHandlesAndSession",
+        "cancelPendingBindAndInvalidChangedBindingsCloseSessions",
+        "ownerReplacementAndClosedSessionFailClosed",
+        "sharedNativeActionsEnableDisableInvalidateAndRespectBusy",
+        "acceptedHotkeyUsesSavedWorkflowAndRealControllerOutput"
       ]
     },
-    "remaining_scope": "Saved capture definitions, durable execution records, shortcuts and controller tests exist. Complete linked action families, retention, result taxonomy, resource arbitration and entry-point equivalence remain."
+    "remaining_scope": "All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
+    "reviewed_requirement_count": 18,
+    "finding": "Saved capture definitions, authenticated activation IDs, shared shortcuts and durable execution snapshots connect to native capture pipelines. Confirmed metadata removal preserves outputs and refuses stale/newer/corrupt records.",
+    "review_anchor": {
+      "production": {
+        "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
+        "sha256": "4bca9e509a40e242cbee62658f25e07ddc455b1f8446207b8bad1c79a9dcdbe7"
+      },
+      "test": {
+        "path": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp",
+        "method": "explicitRemovalFreesCapacityWithoutTouchingOtherRecords",
+        "line": 108,
+        "sha256": "70153a5658b8a54888d10e4cb69f459889d94827e3722cfbe4f772dca8d5ea9a"
+      },
+      "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
+    }
   }
 }

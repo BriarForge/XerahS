@@ -1,42 +1,25 @@
 # Linux contract scope audit
 
-Audit date: 12 October 2026; evidence updated 24 October 2026. Starting implementation: `82ef55e` on `main`.
-Source of truth: Product Contract 0.3.1, its capability specifications,
-scenarios, published vectors, parity ledgers and [readiness gates](../../../product-contract/READINESS.md).
-This is an implementation audit and work ordering record, not an acceptance,
-waiver, release approval or reduced completion condition.
+Evidence refreshed 2026-10-28 at `e7528f29a44236ddbb153e1ab28039697573e376`. Product Contract 0.3.1 remains the
+source of truth. The current source/test audit is [PRODUCTION-BACKLOG.md](PRODUCTION-BACKLOG.md),
+with per-row evidence and classifications in [traceability/](traceability/) and counts
+in [PRODUCTION-BACKLOG.json](PRODUCTION-BACKLOG.json).
 
-The full native Linux application is **unfinished**. The latest measured audit is
-[PRODUCTION-BACKLOG.md](PRODUCTION-BACKLOG.md), with machine-readable counts in
-[PRODUCTION-BACKLOG.json](PRODUCTION-BACKLOG.json) and complete requirement-ID
-coverage in all 15 desktop trace files. The 24 October audit reviewed source at
-`26ddb93ea5587b3e2e1c7ce2c8cb610b447f2115` after integrating the 68 native-feature
-commits that followed the last continuation checkpoint.
+All 16 manifest capabilities were reviewed. Of 325 desktop requirements, 90 are
+tested candidate implementations, 200 partial, 27 not started, 7 blocked, and one
+belongs to mobile scope. The separate 20 MOB requirements are not Linux obligations.
+Only RC-007 was promoted in this refresh, based on existing native confirmation and
+frozen-preference tests. Recent feature work does not establish complete field,
+algorithm, catalogue, privacy, target or cross-platform qualification.
 
-There are now **325 numbered desktop requirements**: **99 implemented**, **192
-partial**, **33 not-started**, and **one not applicable to Linux desktop**
-(CORE-029). PCA-024 accounts for the increase from the earlier 324-row inventory.
-These are unweighted candidate labels, not a readiness percentage or release
-acceptance. The 922 settings, 436 workflows, 232 effects and other linked ledger
-items still require their own accepted outcomes; a tool name does not prove
-all of its field, persistence, failure, accessibility and target semantics.
+The native Linux application remains unfinished. This audit is not acceptance,
+waiver, release approval or a weaker completion condition. Approved shared vectors,
+physical accessibility, security/privacy/licensing and target/parity review remain
+required. Follow the current ranked backlog and exact human questions there; retain
+all existing tested native features. The earlier checkpoints below are historical
+verification records, not the current backlog or implementation counts.
 
-Recording/audio, upload destinations/keyring, scrolling/delayed/automatic
-capture, the tool/effect families, onboarding, watch folders and filename
-counters now have substantial native source/test evidence. They are preserved,
-not restarted. Updated capability-by-capability findings, ranked work, blocked
-Mike decisions and supported-target gates are in the measured backlog. Six
-packages have shared vector files; the other nine remain explicitly partial
-native evidence and are not silently waived. Human approvals remain human.
-
-## Next production work
-
-Current priority follows the [measured work order](PRODUCTION-BACKLOG.md): native
-counter-commit failure reporting, execution metadata retention, explicit reversible
-migration/recovery and distribution, then the highest-value remaining editor and
-catalogue semantics. Previously successful source and test work stays intact.
-The dated checkpoints below preserve earlier verification and limitations; their
-older inventories are historical, not the current implementation count.
+## Historical checkpoints
 
 The 14 October annotation-transfer checkpoint extends editor Save, paired capture persistence,
 annotation handoff, Save As/multiple-file results, journal/recovery, linked retry

@@ -22,9 +22,35 @@
     "ast_preserved": true
   },
   "ast_refresh": {
-    "source_revision": "6c57d744a4f0486ef150af7dadbc6cd793af034a",
-    "semantic_documents_preserved": true,
-    "external_model_labeling_used": false,
-    "font_size_precision_nodes": 8
+    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+    "unaffected_nodes_preserved": 12172,
+    "external_model_labeling_used": false
+  },
+  "semantic_refresh": {
+    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+    "documents": [
+      {
+        "path": "linux-qt/PRODUCTION-BACKLOG.md",
+        "lines_read": 93,
+        "sha256": "5a9a3374fb232601d604770f7cd45bedb1d1207471722b4f7b557db6ca223e6f"
+      },
+      {
+        "path": "linux-qt/CONTRACT-AUDIT.md",
+        "lines_read": 1138,
+        "sha256": "6b57c542933d992baff1edba4330592a7731e650c06070f9573c355baa88371b"
+      },
+      {
+        "path": "linux-qt/IMPLEMENTATION.md",
+        "lines_read": 290,
+        "sha256": "d447892dc78131dd2e7162c48e37f9994d30842497955261bb79a3191929852e"
+      }
+    ],
+    "new_nodes": 31,
+    "new_edges": 20,
+    "replaced_source_nodes": 34,
+    "removed_superseded_nodes": 34,
+    "unaffected_node_ids_preserved": true,
+    "token_usage": "unknown: delegation tool exposes no usage field",
+    "method": "Complete changed-document extraction; no external model clustering; deliberate source-scoped replacement after coverage and preservation assertions."
   }
 }

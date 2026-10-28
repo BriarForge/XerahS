@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "date": "2026-10-25",
-  "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
+  "date": "2026-10-28",
+  "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
   "contract_version": "0.3.1",
   "scope": "All 16 manifest capabilities reviewed for Linux applicability; 325 desktop requirements classified and 20 mobile-only requirements explicitly outside Linux scope. Counts measure candidate behavior, not completion percentage or release acceptance.",
   "classification_rules": {
@@ -16,10 +16,10 @@
   "desktop_capability_count": 15,
   "counts": {
     "blocked": 7,
-    "implemented": 89,
+    "implemented": 90,
     "not-applicable": 1,
     "not-started": 27,
-    "partial": 201
+    "partial": 200
   },
   "capabilities": [
     {
@@ -44,9 +44,9 @@
       "capability": "REGION-CAPTURE-001",
       "requirements": 27,
       "counts": {
-        "implemented": 8,
+        "implemented": 9,
         "not-started": 3,
-        "partial": 16
+        "partial": 15
       },
       "trace": "traceability/REGION-CAPTURE-001.json"
     },
@@ -193,72 +193,17 @@
   ],
   "classification_changes": [
     {
-      "requirement": "PCA-006",
-      "from": "implemented",
-      "to": "partial",
-      "reason": "Native temporary upload uses m_uploadBytes and UploadInput.fileBytes, not a managed temporary file. Core artifact resolution vectors alone do not establish native file lifecycle compliance."
-    },
-    {
-      "requirement": "PCA-014",
-      "from": "implemented",
-      "to": "partial",
-      "reason": "Native after-capture selection shares the engine, but quick-task-menu and the full quick-action inventory have no native executor/entry surface."
-    },
-    {
-      "requirement": "PCA-015",
-      "from": "implemented",
-      "to": "partial",
-      "reason": "Concurrent retained-media/counter tests exist, but complete temporary-file lifecycle and every native action family are not covered."
-    },
-    {
-      "requirement": "PCA-019",
-      "from": "implemented",
-      "to": "partial",
-      "reason": "createTemporaryUploadFile encodes to QBuffer; native managed-file acknowledgement/cleanup/retention is not implemented as specified."
-    },
-    {
-      "requirement": "PCA-020",
-      "from": "implemented",
-      "to": "partial",
-      "reason": "Declined confirmation semantics have injected Core vectors; the native executor has no before-upload-window branch or presentation flow."
-    },
-    {
-      "requirement": "PCA-021",
-      "from": "implemented",
-      "to": "partial",
-      "reason": "Core delete guards have vectors, but CaptureActions has no native delete executor branch; domain guard tests do not prove a user-reachable deletion flow."
-    },
-    {
       "requirement": "RC-007",
-      "from": "implemented",
-      "to": "partial",
-      "reason": "RegionSession supports quickConfirm false in Core, but CaptureController constructs default SessionSettings; the native workflow does not expose the contracted configurable confirmation mode."
-    },
-    {
-      "requirement": "RC-027",
-      "from": "implemented",
-      "to": "partial",
-      "reason": "RegionGeometry validates serialized last-region data in Core tests/vectors. CaptureController has no last-region persistence or acquisition route, so native round-trip capture is incomplete."
-    },
-    {
-      "requirement": "ES-030",
-      "from": "implemented",
-      "to": "partial",
-      "reason": "Full-name and fallback companion lookup exist with tests, but the contract explicitly requires baseline runtime observation before activation; no accepted observation is supplied by these automated fixtures."
-    },
-    {
-      "requirement": "EU-017",
-      "from": "implemented",
-      "to": "partial",
-      "reason": "Existing dialogs own cancellation and converter temporary cleanup, but absent QR scan/model sessions and complete utility lifecycle qualification prevent catalogue-wide completion."
+      "previous": "partial",
+      "current": "implemented",
+      "reason": "Both quick-confirm and explicit Enter flows now have native frozen-preference/controller pixel-output tests; authoritative mixed-monitor and target/human qualification remain separate open requirements."
     }
   ],
   "review_limitations": [
-    "Native tests do not substitute for the nine missing published shared vector packages.",
-    "No baseline application was built or run. Runtime observation and external review claims were not manufactured.",
-    "PRODUCTION-BACKLOG.md remains a dated historical audit of 26ddb93; this JSON and refreshed traceability are the current audit.",
-    "Current test execution is supplied by the mandatory full-suite push gate, not inferred from source inventory.",
-    "Graphs served as navigation only; no inferred graph relation was used to establish correctness."
+    "Tested candidate labels are not accepted Linux target dispositions, human security/privacy/accessibility/licensing review, cross-platform parity or release acceptance.",
+    "Every manifest capability and numbered requirement was checked; linked settings/workflow/effect ledgers still need field/action/algorithm-specific accepted outcomes.",
+    "Current source and named automated tests were inspected; method inventories and artifact hashes provide navigation and provenance, not automatic proof of complete requirement coverage.",
+    "Nine desktop packages still lack published shared vector files. Existing local expected images are not approved shared visual goldens."
   ],
   "waiting_on_mike": [
     {
@@ -564,5 +509,79 @@
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
       ]
     }
-  ]
+  ],
+  "audit_method": "Read all 16 manifest capability specifications (345 IDs); classify 325 desktop rows against current native production/test seams, retain 20 mobile-only IDs outside scope. Refresh source/test provenance and remaining scope without treating old traceability notes or graph edges as compliance evidence.",
+  "reviewed_at": "2026-10-28T16:55:54.347787+00:00",
+  "previous_audit": {
+    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
+    "counts": {
+      "blocked": 7,
+      "implemented": 89,
+      "not-applicable": 1,
+      "not-started": 27,
+      "partial": 201
+    },
+    "classification_changes": [
+      {
+        "requirement": "PCA-006",
+        "from": "implemented",
+        "to": "partial",
+        "reason": "Native temporary upload uses m_uploadBytes and UploadInput.fileBytes, not a managed temporary file. Core artifact resolution vectors alone do not establish native file lifecycle compliance."
+      },
+      {
+        "requirement": "PCA-014",
+        "from": "implemented",
+        "to": "partial",
+        "reason": "Native after-capture selection shares the engine, but quick-task-menu and the full quick-action inventory have no native executor/entry surface."
+      },
+      {
+        "requirement": "PCA-015",
+        "from": "implemented",
+        "to": "partial",
+        "reason": "Concurrent retained-media/counter tests exist, but complete temporary-file lifecycle and every native action family are not covered."
+      },
+      {
+        "requirement": "PCA-019",
+        "from": "implemented",
+        "to": "partial",
+        "reason": "createTemporaryUploadFile encodes to QBuffer; native managed-file acknowledgement/cleanup/retention is not implemented as specified."
+      },
+      {
+        "requirement": "PCA-020",
+        "from": "implemented",
+        "to": "partial",
+        "reason": "Declined confirmation semantics have injected Core vectors; the native executor has no before-upload-window branch or presentation flow."
+      },
+      {
+        "requirement": "PCA-021",
+        "from": "implemented",
+        "to": "partial",
+        "reason": "Core delete guards have vectors, but CaptureActions has no native delete executor branch; domain guard tests do not prove a user-reachable deletion flow."
+      },
+      {
+        "requirement": "RC-007",
+        "from": "implemented",
+        "to": "partial",
+        "reason": "RegionSession supports quickConfirm false in Core, but CaptureController constructs default SessionSettings; the native workflow does not expose the contracted configurable confirmation mode."
+      },
+      {
+        "requirement": "RC-027",
+        "from": "implemented",
+        "to": "partial",
+        "reason": "RegionGeometry validates serialized last-region data in Core tests/vectors. CaptureController has no last-region persistence or acquisition route, so native round-trip capture is incomplete."
+      },
+      {
+        "requirement": "ES-030",
+        "from": "implemented",
+        "to": "partial",
+        "reason": "Full-name and fallback companion lookup exist with tests, but the contract explicitly requires baseline runtime observation before activation; no accepted observation is supplied by these automated fixtures."
+      },
+      {
+        "requirement": "EU-017",
+        "from": "implemented",
+        "to": "partial",
+        "reason": "Existing dialogs own cancellation and converter temporary cleanup, but absent QR scan/model sessions and complete utility lifecycle qualification prevent catalogue-wide completion."
+      }
+    ]
+  }
 }

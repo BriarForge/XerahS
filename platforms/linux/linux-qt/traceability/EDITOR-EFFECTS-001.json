@@ -59,7 +59,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 15,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Approved local remove_background model, every parameter/asset/algorithm boundary and accepted cross-platform golden, hardware/native qualification and human SXIE review remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-002": {
@@ -76,7 +77,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 19,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Approved local remove_background model, every parameter/asset/algorithm boundary and accepted cross-platform golden, hardware/native qualification and human SXIE review remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-003": {
@@ -94,7 +96,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 22,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Approved local remove_background model, every parameter/asset/algorithm boundary and accepted cross-platform golden, hardware/native qualification and human SXIE review remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-004": {
@@ -109,7 +112,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 26,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-005": {
@@ -124,7 +128,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 29,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-006": {
@@ -140,7 +145,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 33,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-007": {
@@ -159,7 +165,8 @@
         "classification": "partial",
         "spec_line": 36,
         "remaining_human_decision": "Background removal needs an approved local model; parameter/asset coverage also remains.",
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Approved local remove_background model, every parameter/asset/algorithm boundary and accepted cross-platform golden, hardware/native qualification and human SXIE review remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-008": {
@@ -177,7 +184,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 39,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Approved local remove_background model, every parameter/asset/algorithm boundary and accepted cross-platform golden, hardware/native qualification and human SXIE review remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-009": {
@@ -194,7 +202,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 42,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Approved local remove_background model, every parameter/asset/algorithm boundary and accepted cross-platform golden, hardware/native qualification and human SXIE review remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-010": {
@@ -212,7 +221,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 45,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-011": {
@@ -228,7 +238,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 48,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-012": {
@@ -243,7 +254,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 51,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-013": {
@@ -258,7 +270,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 54,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Approved local remove_background model, every parameter/asset/algorithm boundary and accepted cross-platform golden, hardware/native qualification and human SXIE review remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-014": {
@@ -273,7 +286,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 57,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-015": {
@@ -293,7 +307,8 @@
         "classification": "implemented",
         "spec_line": 60,
         "remaining_human_decision": "SXIE import still requires human security review.",
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-016": {
@@ -310,7 +325,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 63,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-017": {
@@ -325,7 +341,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 66,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Approved local remove_background model, every parameter/asset/algorithm boundary and accepted cross-platform golden, hardware/native qualification and human SXIE review remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EE-018": {
@@ -344,14 +361,15 @@
         "classification": "partial",
         "spec_line": 70,
         "remaining_human_decision": "Background-removal model/device and accepted native fallback dispositions remain pending.",
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Approved local remove_background model, every parameter/asset/algorithm boundary and accepted cross-platform golden, hardware/native qualification and human SXIE review remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
-    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+    "checked_at": "2026-10-28T16:55:54.347787+00:00",
     "specification": "product-contract/capabilities/EDITOR-EFFECTS-001/SPEC.md",
     "specification_sha256": "87748b328140f0033d88e2bebd5d443b902deaa46d84de56ad1b472e83e26f3f",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -383,7 +401,6 @@
         "everyRegisteredEffect"
       ],
       "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp": [
-        "initTestCase",
         "editorEntryAndHistory",
         "editorOwnerTeardown",
         "seedsPreviewHistoryAndRecents",
@@ -400,7 +417,10 @@
         "favoritesAndRecentEditing"
       ],
       "platforms/linux/linux-qt/tests/SxiePresetTest.cpp": [
-        "initTestCase",
+        "put16",
+        "put32",
+        "set16",
+        "set32",
         "unavailableMappedStepVisible",
         "archiveValid",
         "paths",
@@ -419,6 +439,21 @@
         "transactionalHistory"
       ]
     },
-    "remaining_scope": "Census and local runner/browser/history/preset tests exist. Every algorithm/parameter/asset family needs accepted reference evidence; model removal, SXIE review and hardware/native qualification remain."
+    "remaining_scope": "Approved local remove_background model, every parameter/asset/algorithm boundary and accepted cross-platform golden, hardware/native qualification and human SXIE review remain incomplete.",
+    "reviewed_requirement_count": 18,
+    "finding": "Census tests enumerate 232 stable IDs and parameter inventories. Local runner, owned preview/Apply/Cancel, history, seeds, recents/favorites and inert unknown preset data have tests; catalogue presence alone does not establish each algorithm.",
+    "review_anchor": {
+      "production": {
+        "path": "platforms/linux/linux-qt/app/EffectsDialog.cpp",
+        "sha256": "4fcc1236aec7a6f73e61522dbd3c8174141b91371e69120ccff2cf7bb5de5bb9"
+      },
+      "test": {
+        "path": "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
+        "method": "previewCancelAndApplyHistory",
+        "line": 295,
+        "sha256": "26a28d240d679126befdb025394987446bce87114a7d92656641ff9944bd6411"
+      },
+      "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
+    }
   }
 }

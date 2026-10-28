@@ -29,7 +29,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 17,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-004": {
@@ -44,7 +45,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 21,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-005": {
@@ -59,7 +61,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 25,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-006": {
@@ -74,7 +77,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 30,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-009": {
@@ -89,7 +93,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 44,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-010": {
@@ -104,7 +109,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 48,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-011": {
@@ -119,7 +125,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 52,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-001": {
@@ -138,7 +145,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 9,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-002": {
@@ -157,7 +165,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 14,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-007": {
@@ -177,7 +186,8 @@
         "classification": "partial",
         "spec_line": 34,
         "remaining_human_decision": "Secret Service human security review remains pending.",
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-008": {
@@ -188,7 +198,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 40,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-012": {
@@ -208,7 +219,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 56,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-013": {
@@ -228,7 +240,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 59,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-014": {
@@ -249,7 +262,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 63,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-015": {
@@ -271,8 +285,9 @@
       "audit": {
         "classification": "partial",
         "spec_line": 67,
-        "coverage": "Partial; native confirmed single-record execution-metadata removal is now tested. Full retention, other action families and human/native target qualification remain.",
-        "incremental_evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp"
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "incremental_evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-016": {
@@ -293,7 +308,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 71,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-017": {
@@ -304,7 +320,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 75,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-018": {
@@ -324,7 +341,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 79,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-019": {
@@ -335,7 +353,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 83,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "SETCAT-020": {
@@ -354,14 +373,15 @@
       "audit": {
         "classification": "partial",
         "spec_line": 86,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
-    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+    "checked_at": "2026-10-28T16:55:54.347787+00:00",
     "specification": "product-contract/capabilities/SETTINGS-CATALOG-001/SPEC.md",
     "specification_sha256": "28d5ff722894fc1cae76fd852dad303a52e3790c349141471b3c5c56f2a22e79",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -411,7 +431,7 @@
         "stableStatusNames"
       ],
       "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp": [
-        "init",
+        "settle",
         "importsShowsSecretStatusAndKeepsValuesOutOfTheWindow",
         "setSecretReplacesAndReportsKeyringFailure",
         "failedKeyringImportAddsNothing",
@@ -419,15 +439,33 @@
         "closingWhileBusyDoesNotTouchTheDialog"
       ],
       "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp": [
+        "write",
+        "choose",
         "sharedRegistryCommandReviewsAndForgetsOnlyConfirmedMetadata",
         "changedCorruptAndFutureRecordsArePreserved",
+        "forgettingAnUnconfirmedObservationCannotResurrectItsWriter",
         "captureDefersReadsAndRevokesPendingRemoval",
         "storeErrorsAndExceptionsDoNotExposePayloadOrLoseMetadata",
         "destroyingAnOwnerNeverJoinsOrPublishesALateRead",
         "explicitRemovalFreesCapacityWithoutTouchingOtherRecords"
       ]
     },
-    "remaining_scope": "Typed private settings/storage/hotkey/destination tests cover a subset. Complete ledger semantics, shared import/export/migration, retention and scope precedence are not established."
+    "remaining_scope": "Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
+    "reviewed_requirement_count": 20,
+    "finding": "ApplicationSettings uses PrivateJsonFile, field-level repair and portable hotkey plans. Native settings expose region quick-confirm/snapping and scheduling/audio options. Execution-history metadata can be removed explicitly without removing outputs.",
+    "review_anchor": {
+      "production": {
+        "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
+        "sha256": "8969fc17c069e464c41163df906d17d58f7239140871dd5e4dc730dfb4708250"
+      },
+      "test": {
+        "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "method": "regionPreferencesDefaultsRepairRoundTripAndReset",
+        "line": 28,
+        "sha256": "072cf9cd655714746ccfcb2fc28308175779064e3fd1a27469575d64b696f1fa"
+      },
+      "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
+    }
   },
   "contract_version": "0.3.1"
 }

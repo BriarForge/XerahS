@@ -66,7 +66,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 30,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp"
@@ -84,7 +85,8 @@
         "published_vectors": [
           "catalogue-order-not-selection-order"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-003": {
@@ -110,7 +112,8 @@
         "published_vectors": [
           "failed-transformation-keeps-last-valid-media"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-004": {
@@ -143,7 +146,8 @@
           "url-clipboard-after-upload",
           "url-clipboard-depends-on-upload"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-005": {
@@ -169,7 +173,8 @@
         "published_vectors": [
           "clipboard-failure-continues"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-006": {
@@ -187,7 +192,8 @@
           "clipboard-failure-continues",
           "upload-without-save-uses-temporary-file"
         ],
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-007": {
@@ -218,7 +224,8 @@
         "published_vectors": [
           "save-failure-fallbacks"
         ],
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-008": {
@@ -252,7 +259,8 @@
         "published_vectors": [
           "catalogue-order-not-selection-order"
         ],
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-009": {
@@ -280,7 +288,8 @@
           "selection-cancel",
           "selection-window-replaces-action-set"
         ],
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-010": {
@@ -323,7 +332,8 @@
           "cancel-between-actions",
           "cancel-during-uninterruptible-action"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-011": {
@@ -360,7 +370,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 65,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-012": {
@@ -398,7 +409,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 68,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-013": {
@@ -414,7 +426,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 72,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-014": {
@@ -441,7 +454,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 75,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-015": {
@@ -468,7 +482,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 77,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-016": {
@@ -504,7 +519,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 79,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-017": {
@@ -522,7 +538,8 @@
           "catalogue-order-not-selection-order",
           "before-upload-declined"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-018": {
@@ -560,7 +577,8 @@
           "ocr-clipboard-depends-on-ocr",
           "url-clipboard-depends-on-upload"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-019": {
@@ -580,7 +598,8 @@
           "upload-temporary-not-permitted",
           "save-failure-fallbacks"
         ],
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-020": {
@@ -596,7 +615,8 @@
         "published_vectors": [
           "before-upload-declined"
         ],
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-021": {
@@ -627,7 +647,8 @@
           "delete-guard-after-failed-upload",
           "delete-after-successful-upload"
         ],
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-022": {
@@ -650,7 +671,8 @@
           "cancel-between-actions",
           "cancel-during-uninterruptible-action"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-023": {
@@ -674,7 +696,8 @@
           "selection-window-replaces-action-set",
           "legacy-flags-map-to-actions"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "PCA-024": {
@@ -697,14 +720,15 @@
           "url-clipboard-after-upload",
           "url-clipboard-depends-on-upload"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
-    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+    "checked_at": "2026-10-28T16:55:54.347787+00:00",
     "specification": "product-contract/capabilities/POST-CAPTURE-ACTIONS-001/SPEC.md",
     "specification_sha256": "a2cbe819f3fcac6817fef6df2922eebe73cf73846833be12e2529c8871c4fdf8",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -716,27 +740,16 @@
       "platforms/linux/linux-qt/app/CapturePipeline.cpp"
     ],
     "automated_test_surfaces": {
-      "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp": [
-        "partialRasterAcknowledgementSatisfiesConsumersButNeverGrantsDeletion",
-        "retainedTransformationIdentityDoesNotInventAnotherExecution",
-        "inheritedSaveAsSuppliesFallbackWithoutAuthorizingDeletion",
-        "unknownExternalOutcomeInterruptsWithoutInventingFailedResultsOrStartingLaterActions",
-        "inheritedSaveSatisfiesConsumerPrerequisitesWithoutAuthorizingDelete",
-        "selectionValidationPreservesAvailabilityAndPerRunCatalogueSemantics",
-        "replacementObserverSeesEffectivePlanBeforeRecordingAndStartingLaterActions",
-        "canonicalResultUsesContractFieldsAndNamespacedActualMetadata",
-        "cancelledAndSkippedActionsHaveNoInventedExecutionTimes",
-        "interruptedReportDoesNotInventFailureOrCompletion",
-        "catalogueMatchesContract",
-        "temporaryUploadFileIsCleanedUp",
-        "temporaryUploadFileFailureFailsUploadOnly",
-        "executorSkipBecomesFailure",
-        "loneSelectionCancelCancelsPipeline",
-        "unknownSelectionIsReportedAndNeverRuns",
-        "unknownLegacyFlagIsReported",
-        "pipelinesAreIsolated"
+      "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp": [
+        "failedRasterNeverWritesCompanionOrAcknowledgesAFilePrerequisite",
+        "actualCanvasExplicitIntentSavesBothCompatiblePairs",
+        "partialFailureRetriesOnlyTheCompanionWithoutRepeatingConsumers",
+        "changedRasterAndCollidingSymlinkNeverAuthorizeCompanionPublication",
+        "cancellationAfterRasterAndJournalFailureKeepKnownPngAndEditableDocument",
+        "emptyDocumentFulfilsAbsenceAndPreservesAnUnownedCollision"
       ],
       "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp": [
+        "waitAtSave",
         "failedCounterCommitRetainsActualFileAndStopsUnsafeRetry",
         "retriesFailedSaveWithOriginalSettingsAndDoesNotRepeatSuccessfulClipboard",
         "retriesOnlyFailedClipboardAndKeepsTheExistingFileAndAppendOnlyLineage",
@@ -759,15 +772,8 @@
         "urlClipboard",
         "oldRecordsLoadWithoutUploadFields"
       ],
-      "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp": [
-        "failedRasterNeverWritesCompanionOrAcknowledgesAFilePrerequisite",
-        "actualCanvasExplicitIntentSavesBothCompatiblePairs",
-        "partialFailureRetriesOnlyTheCompanionWithoutRepeatingConsumers",
-        "changedRasterAndCollidingSymlinkNeverAuthorizeCompanionPublication",
-        "cancellationAfterRasterAndJournalFailureKeepKnownPngAndEditableDocument",
-        "emptyDocumentFulfilsAbsenceAndPreservesAnUnownedCollision"
-      ],
       "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp": [
+        "write",
         "killedCompanionSavePreservesKnownPngButDoesNotInventWholeSaveSuccess",
         "killedAnnotatedSaveRetainsAcknowledgedTransformationAndUnknownPublication",
         "killedSaveAsHasItsOwnUnknownCandidateAndPreservesEarlierArtifacts",
@@ -786,8 +792,47 @@
         "journalFailureBeforePublicationPreventsSaveButStillAllowsIndependentClipboard",
         "lostJournalWriteAfterSavePreservesTrueReceiptAndUnknownRecoveryWithoutCopying",
         "killedNativeWorkerRecoversUnknownPublicationOrClipboard"
+      ],
+      "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp": [
+        "removeTemporaryUploadFile",
+        "partialRasterAcknowledgementSatisfiesConsumersButNeverGrantsDeletion",
+        "removeTemporaryUploadFile",
+        "retainedTransformationIdentityDoesNotInventAnotherExecution",
+        "inheritedSaveAsSuppliesFallbackWithoutAuthorizingDeletion",
+        "unknownExternalOutcomeInterruptsWithoutInventingFailedResultsOrStartingLaterActions",
+        "removeTemporaryUploadFile",
+        "inheritedSaveSatisfiesConsumerPrerequisitesWithoutAuthorizingDelete",
+        "selectionValidationPreservesAvailabilityAndPerRunCatalogueSemantics",
+        "replacementObserverSeesEffectivePlanBeforeRecordingAndStartingLaterActions",
+        "removeTemporaryUploadFile",
+        "canonicalResultUsesContractFieldsAndNamespacedActualMetadata",
+        "cancelledAndSkippedActionsHaveNoInventedExecutionTimes",
+        "interruptedReportDoesNotInventFailureOrCompletion",
+        "catalogueMatchesContract",
+        "temporaryUploadFileIsCleanedUp",
+        "temporaryUploadFileFailureFailsUploadOnly",
+        "executorSkipBecomesFailure",
+        "loneSelectionCancelCancelsPipeline",
+        "unknownSelectionIsReportedAndNeverRuns",
+        "unknownLegacyFlagIsReported",
+        "pipelinesAreIsolated"
       ]
     },
-    "remaining_scope": "Core ordering/artifact/state semantics are tested; native executor implements a subset. Missing native action families, temporary-file semantics, restart media and full retry/privacy policy remain."
+    "remaining_scope": "Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
+    "reviewed_requirement_count": 24,
+    "finding": "Shared catalogue ordering, artifact dependencies, cancellation, canonical results and retries have engine/native tests. CaptureActions uploads saved paths, but its no-save path still encodes QBuffer bytes rather than a managed physical temporary file.",
+    "review_anchor": {
+      "production": {
+        "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
+        "sha256": "50afa11c6ffad2852428ef386cde740ab85df72fe3ae0613c6a1a57bc5e6e7c6"
+      },
+      "test": {
+        "path": "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
+        "method": "temporaryUploadFileIsCleanedUp",
+        "line": 245,
+        "sha256": "6a345fd0ff7f7320319796d4cbd7749c622ecc1ba94c12703a66326415eb7276"
+      },
+      "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
+    }
   }
 }

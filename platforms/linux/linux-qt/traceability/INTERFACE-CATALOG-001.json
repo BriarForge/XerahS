@@ -32,7 +32,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 9,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-002": {
@@ -52,7 +53,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 13,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-003": {
@@ -72,7 +74,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 16,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-004": {
@@ -92,7 +95,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 19,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-005": {
@@ -112,7 +116,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 23,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-006": {
@@ -132,7 +137,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 27,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-007": {
@@ -152,7 +158,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 30,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-008": {
@@ -172,7 +179,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 34,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-009": {
@@ -192,7 +200,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 37,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-010": {
@@ -212,7 +221,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 40,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-011": {
@@ -223,7 +233,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 43,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-012": {
@@ -234,7 +245,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 47,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-013": {
@@ -245,7 +257,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 52,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-014": {
@@ -265,7 +278,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 56,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-015": {
@@ -285,7 +299,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 60,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-016": {
@@ -305,7 +320,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 63,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-017": {
@@ -325,7 +341,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 66,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "IFCAT-018": {
@@ -346,14 +363,15 @@
       "audit": {
         "classification": "partial",
         "spec_line": 70,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
-    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+    "checked_at": "2026-10-28T16:55:54.347787+00:00",
     "specification": "product-contract/capabilities/INTERFACE-CATALOG-001/SPEC.md",
     "specification_sha256": "f9a2c5eecfa17e78f79abf8b0565e6e68a7008c0fefb64b47194660d2d4538fb",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -365,24 +383,6 @@
       "platforms/linux/linux-qt/app/main.cpp"
     ],
     "automated_test_surfaces": {
-      "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp": [
-        "invalidAndDuplicateIdsAreRefused",
-        "orderIsGroupThenRegistration",
-        "adoptKeepsOwnership",
-        "oneActionIsSharedByEverySurface",
-        "populateSeparatesOnlyNonEmptyGroups"
-      ],
-      "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp": [
-        "chooseActionsUsesTheSharedMainAndMenuActionAndAvailability",
-        "preparingProgressIsAccessibleAndCancellationDoesNotReplacePublishedResults",
-        "nativeKeyboardAndMenuUseTheActualSharedOperationAndAvailability",
-        "operationResultsStayPlainAccessibleAndAvailableAfterReactivation",
-        "activationKeepsAnExistingConsentDialogModal",
-        "escapeCancelsTheWindowOperationAndConsentDialogsKeepTheirOwnEscape",
-        "durableHistoryUsesTheSharedActionFromTheWindowAndMenu",
-        "windowAndMenusFollowTheRegistrySurfaces",
-        "toolCommandsOpenOneDialogAndRaiseItAgain"
-      ],
       "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp": [
         "validRequestsRetainExactPathsAndIndependentOperationNames",
         "malformedDataCannotManufactureAuthority",
@@ -396,10 +396,26 @@
         "workflowAdmissionFreezesSettingsAndReservesBeforePreparation",
         "rejectedOrThrowingWorkflowPreparationDoesNotLeaveAReservation"
       ],
+      "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp": [
+        "chooseActionsUsesTheSharedMainAndMenuActionAndAvailability",
+        "preparingProgressIsAccessibleAndCancellationDoesNotReplacePublishedResults",
+        "nativeKeyboardAndMenuUseTheActualSharedOperationAndAvailability",
+        "operationResultsStayPlainAccessibleAndAvailableAfterReactivation",
+        "activationKeepsAnExistingConsentDialogModal",
+        "escapeCancelsTheWindowOperationAndConsentDialogsKeepTheirOwnEscape",
+        "durableHistoryUsesTheSharedActionFromTheWindowAndMenu",
+        "windowAndMenusFollowTheRegistrySurfaces",
+        "toolCommandsOpenOneDialogAndRaiseItAgain"
+      ],
+      "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp": [
+        "invalidAndDuplicateIdsAreRefused",
+        "orderIsGroupThenRegistration",
+        "adoptKeepsOwnership",
+        "oneActionIsSharedByEverySurface",
+        "populateSeparatesOnlyNonEmptyGroups"
+      ],
       "platforms/linux/linux-qt/tests/NativeInstanceTest.cpp": [
         "awaitLine",
-        "init",
-        "cleanup",
         "forwardsToOneRealProcessWithoutReplacingItsSocket",
         "busyRejectionAndNotReadyNeverBecomeAnotherPrimary",
         "simultaneousProcessesElectOnlyOneOwner",
@@ -424,6 +440,21 @@
         "runtimeFilesHaveOwnerOnlyAccessAndProfilesAreIsolated"
       ]
     },
-    "remaining_scope": "Registry, native actions, authenticated activation and actual CLI processes are tested. Complete CLI/progress/signals, MCP, provider and accessibility/localization/RTL/target qualification remain."
+    "remaining_scope": "Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
+    "reviewed_requirement_count": 18,
+    "finding": "CommandRegistry feature installers and authenticated activation route shared semantic requests. Native/process tests cover busy admission, redacted execution discovery/results, modal lifetime and stable errors.",
+    "review_anchor": {
+      "production": {
+        "path": "platforms/linux/linux-qt/src/shell/ActivationDispatcher.cpp",
+        "sha256": "62d21614f36e3d24a67c4a10e16b3576b23a8a20583d2917b02f6bae1dce86db"
+      },
+      "test": {
+        "path": "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
+        "method": "malformedDataCannotManufactureAuthority",
+        "line": 29,
+        "sha256": "b393559e123040b986fe9a85d880f423a9cd0ba8fc1b33621adb33c7726c9cfa"
+      },
+      "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
+    }
   }
 }

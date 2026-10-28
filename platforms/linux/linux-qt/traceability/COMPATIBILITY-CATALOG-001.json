@@ -31,7 +31,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 9,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-002": {
@@ -51,7 +52,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 13,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-003": {
@@ -71,7 +73,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 16,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-004": {
@@ -91,7 +94,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 20,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-005": {
@@ -111,7 +115,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 23,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-006": {
@@ -131,7 +136,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 26,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-007": {
@@ -151,7 +157,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 29,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-008": {
@@ -165,7 +172,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 33,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-009": {
@@ -176,7 +184,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 37,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-010": {
@@ -187,7 +196,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 41,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-011": {
@@ -207,7 +217,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 44,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-012": {
@@ -221,7 +232,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 48,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-013": {
@@ -245,7 +257,8 @@
         "classification": "partial",
         "spec_line": 52,
         "remaining_human_decision": "SXIE import security review and accepted legacy/cross-platform format fixtures remain pending.",
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-014": {
@@ -256,7 +269,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 57,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-015": {
@@ -276,7 +290,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 61,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-016": {
@@ -296,7 +311,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 65,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-017": {
@@ -307,7 +323,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 69,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "COMPCAT-018": {
@@ -327,14 +344,15 @@
       "audit": {
         "classification": "partial",
         "spec_line": 73,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
-    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+    "checked_at": "2026-10-28T16:55:54.347787+00:00",
     "specification": "product-contract/capabilities/COMPATIBILITY-CATALOG-001/SPEC.md",
     "specification_sha256": "69b281b1066aebb4fefe3c6f51da1e1d848e2185332a6a71c67ab00da48571fc",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -345,45 +363,6 @@
       "platforms/linux/linux-qt/src/storage/PrivateJsonFile.cpp"
     ],
     "automated_test_surfaces": {
-      "platforms/linux/linux-qt/tests/SxcuImportTest.cpp": [
-        "importsCurrentUploaderAndExtractsSecrets",
-        "importsLegacyFieldNames",
-        "flagsUnsupportedSyntaxAndKeepsSecretsOut",
-        "leavesExistingSecretReferencesInPlace",
-        "rejectsUnusableInput"
-      ],
-      "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp": [
-        "verifyMultipart",
-        "catboxUploader",
-        "litterboxUploader",
-        "zerox0Uploader",
-        "imgurUploader",
-        "jsonBodyUploader",
-        "catboxResponse",
-        "litterboxResponse",
-        "zerox0Response",
-        "imgurResponse",
-        "jsonBodyResponse"
-      ],
-      "platforms/linux/linux-qt/tests/SxiePresetTest.cpp": [
-        "initTestCase",
-        "unavailableMappedStepVisible",
-        "archiveValid",
-        "paths",
-        "archiveRefusals",
-        "descriptorsAndStructuralRefusals",
-        "mappingAndRoundTrip",
-        "additionalExplicitMappingsAndNativeUnknowns",
-        "legacyCensus",
-        "colorFormatsAndRefusals",
-        "unsupportedPropertiesAndStrictConversions",
-        "legacyEnumValues",
-        "exportDialogWritesPrivateNativeJson",
-        "invalidValuesAndAssets",
-        "embeddedDrawImageAndPathRefusal",
-        "presetDialogLoadApplyCancelAndTeardown",
-        "transactionalHistory"
-      ],
       "platforms/linux/linux-qt/tests/EditorSessionTest.cpp": [
         "guardedCanvasCommitPreservesSelectionHistoryAndRefusesStaleAdmission",
         "guardedHistoryAdmitsOnlyTheFrozenStateSelectionAndTarget",
@@ -454,8 +433,65 @@
         "migratedStoresKeepLegacyAndConflictDiagnostics",
         "legacyInvalidVersionDiagnosticsStayStable",
         "stableStatusNames"
+      ],
+      "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp": [
+        "verifyMultipart",
+        "catboxUploader",
+        "litterboxUploader",
+        "zerox0Uploader",
+        "imgurUploader",
+        "jsonBodyUploader",
+        "catboxResponse",
+        "litterboxResponse",
+        "zerox0Response",
+        "imgurResponse",
+        "jsonBodyResponse"
+      ],
+      "platforms/linux/linux-qt/tests/SxcuImportTest.cpp": [
+        "importsCurrentUploaderAndExtractsSecrets",
+        "importsLegacyFieldNames",
+        "flagsUnsupportedSyntaxAndKeepsSecretsOut",
+        "leavesExistingSecretReferencesInPlace",
+        "rejectsUnusableInput"
+      ],
+      "platforms/linux/linux-qt/tests/SxiePresetTest.cpp": [
+        "put16",
+        "put32",
+        "set16",
+        "set32",
+        "unavailableMappedStepVisible",
+        "archiveValid",
+        "paths",
+        "archiveRefusals",
+        "descriptorsAndStructuralRefusals",
+        "mappingAndRoundTrip",
+        "additionalExplicitMappingsAndNativeUnknowns",
+        "legacyCensus",
+        "colorFormatsAndRefusals",
+        "unsupportedPropertiesAndStrictConversions",
+        "legacyEnumValues",
+        "exportDialogWritesPrivateNativeJson",
+        "invalidValuesAndAssets",
+        "embeddedDrawImageAndPathRefusal",
+        "presetDialogLoadApplyCancelAndTeardown",
+        "transactionalHistory"
       ]
     },
-    "remaining_scope": "Isolated XANN/SXCU/SXIE/private-JSON candidate parsers are tested. Explicit legacy settings/history/secret migration, SQLite/XML imports, rollback/idempotency and accepted cross-platform fixtures remain."
+    "remaining_scope": "Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
+    "reviewed_requirement_count": 18,
+    "finding": "XANN, private native JSON, isolated SXCU secret-reference import and SXIE data parsing have bounded/malformed/unknown-field fixtures. Tests do not constitute legacy migration acceptance.",
+    "review_anchor": {
+      "production": {
+        "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+        "sha256": "eb459f03a8d4849314267c057ec765f5b6021512fca1ed79338b292bde4d5815"
+      },
+      "test": {
+        "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+        "method": "importsCurrentUploaderAndExtractsSecrets",
+        "line": 28,
+        "sha256": "d19129e3c1e384b3219d8c1eebd47c8ed45e49672c4316f1b5ba830d54dce67f"
+      },
+      "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
+    }
   }
 }

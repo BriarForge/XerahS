@@ -100,7 +100,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 32,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-002": {
@@ -134,7 +135,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 35,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete color/profile and all-tool compatibility, separate autosave/recovery and retention, performance, approved shared visual fixtures and physical/native qualification remain incomplete. Legacy fallback sidecar policy remains blocked.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-003": {
@@ -166,7 +168,8 @@
           "zero-area-rectangle-rejected",
           "style-without-selection-changes-tool-only"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-004": {
@@ -207,7 +210,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 41,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-005": {
@@ -273,7 +277,8 @@
           "zero-area-rectangle-rejected",
           "undo-redo-move"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-006": {
@@ -344,7 +349,8 @@
           "truncated-checkpoint-stays-dirty",
           "delete-and-undo-restores-selection"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-007": {
@@ -392,7 +398,8 @@
         "published_vectors": [
           "delete-and-undo-restores-selection"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-008": {
@@ -451,7 +458,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 54,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-009": {
@@ -480,7 +488,8 @@
         "published_vectors": [
           "render-stroke-coverage"
         ],
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete color/profile and all-tool compatibility, separate autosave/recovery and retention, performance, approved shared visual fixtures and physical/native qualification remain incomplete. Legacy fallback sidecar policy remains blocked.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-010": {
@@ -497,7 +506,8 @@
           "render-stroke-coverage",
           "render-opacity-applied-once"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-011": {
@@ -527,7 +537,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 65,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete color/profile and all-tool compatibility, separate autosave/recovery and retention, performance, approved shared visual fixtures and physical/native qualification remain incomplete. Legacy fallback sidecar policy remains blocked.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-012": {
@@ -557,7 +568,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 68,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-013": {
@@ -581,7 +593,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 71,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete color/profile and all-tool compatibility, separate autosave/recovery and retention, performance, approved shared visual fixtures and physical/native qualification remain incomplete. Legacy fallback sidecar policy remains blocked.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-014": {
@@ -617,7 +630,8 @@
           "empty-document-removes-sidecar"
         ],
         "remaining_human_decision": "How should empty-document save reconcile a legacy fallback companion without resurrecting old annotations (ES-014/ES-030)? Existing refusal preserves both files.",
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete color/profile and all-tool compatibility, separate autosave/recovery and retention, performance, approved shared visual fixtures and physical/native qualification remain incomplete. Legacy fallback sidecar policy remains blocked.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-015": {
@@ -648,7 +662,8 @@
           "newer-version-read-only-failure",
           "unknown-fields-and-types-round-trip"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-016": {
@@ -665,7 +680,8 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 82,
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-017": {
@@ -690,7 +706,8 @@
           "duplicate-annotation-ids-rejected",
           "oversized-canvas-rejected-before-allocation"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-018": {
@@ -701,7 +718,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 89,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-019": {
@@ -765,7 +783,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 92,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete color/profile and all-tool compatibility, separate autosave/recovery and retention, performance, approved shared visual fixtures and physical/native qualification remain incomplete. Legacy fallback sidecar policy remains blocked.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-020": {
@@ -783,7 +802,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 95,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-021": {
@@ -794,7 +814,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 98,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-022": {
@@ -805,7 +826,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 101,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete color/profile and all-tool compatibility, separate autosave/recovery and retention, performance, approved shared visual fixtures and physical/native qualification remain incomplete. Legacy fallback sidecar policy remains blocked.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-023": {
@@ -820,7 +842,8 @@
         "published_vectors": [
           "reverse-drag-rectangle"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-024": {
@@ -848,7 +871,8 @@
         "published_vectors": [
           "reverse-drag-rectangle"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-025": {
@@ -868,7 +892,8 @@
           "render-opacity-applied-once",
           "render-fill-with-opacity"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-026": {
@@ -917,7 +942,8 @@
           "selection-is-not-history",
           "style-without-selection-changes-tool-only"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-027": {
@@ -971,7 +997,8 @@
           "undo-to-checkpoint-is-clean",
           "truncated-checkpoint-stays-dirty"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-028": {
@@ -994,7 +1021,8 @@
         "published_vectors": [
           "oversized-canvas-rejected-before-allocation"
         ],
-        "coverage": "Tested candidate behavior in the cited production/test surfaces and published vectors where supplied. Supported-target/human activation remains a separate gate."
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-029": {
@@ -1020,7 +1048,8 @@
           "duplicate-annotation-ids-rejected",
           "oversized-canvas-rejected-before-allocation"
         ],
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete color/profile and all-tool compatibility, separate autosave/recovery and retention, performance, approved shared visual fixtures and physical/native qualification remain incomplete. Legacy fallback sidecar policy remains blocked.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "ES-030": {
@@ -1054,14 +1083,15 @@
           "sidecar-baseline-fallback"
         ],
         "remaining_human_decision": "Supply the required baseline runtime observation for sidecar fallback naming before activation.",
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete color/profile and all-tool compatibility, separate autosave/recovery and retention, performance, approved shared visual fixtures and physical/native qualification remain incomplete. Legacy fallback sidecar policy remains blocked.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
-    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+    "checked_at": "2026-10-28T16:55:54.347787+00:00",
     "specification": "product-contract/capabilities/EDITOR-SESSION-001/SPEC.md",
     "specification_sha256": "26806f47cc7d36e9983776ca1903cfefb82b4247b055fa280489879bb03ab451",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -1073,6 +1103,22 @@
       "platforms/linux/linux-qt/app/EditorSave.cpp"
     ],
     "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/EditorSaveTest.cpp": [
+        "write",
+        "cancellationAtEncodingBoundaryDoesNotStartAnEncoder",
+        "encodedFormatsKeepEditableSourceHashAndChosenAlphaPolicy",
+        "qualityChangesActualEncodingAndFailuresKeepPreviousPairs",
+        "workerSnapshotSurvivesConcurrentCallerChanges",
+        "realPairReopensWithoutCompoundingAndUsesTheEncodedRasterHash",
+        "encodeExceptionAndRacingReplacementPreserveThePreviousDestination",
+        "oversizedEncodedTemporaryIsRejectedWithoutReplacingOrBufferingIt",
+        "completionObserverExceptionPreservesAcknowledgedArtifacts",
+        "incompletePairRepairsOnlyItsBoundCompanionAndRejectsChangedPng",
+        "explicitEmptySaveRemovesOnlyTheKnownCompatibleDefaultSidecar",
+        "cancelledBeforePublicationPreservesFilesAndAfterRasterRetainsPartialFacts",
+        "symlinksAndChangedCompanionsArePreservedAndParentSegmentsKeepKernelMeaning",
+        "modalWorkerOwnsItsSnapshotAndReleasesWithoutJoiningOnParentDestruction"
+      ],
       "platforms/linux/linux-qt/tests/EditorSessionTest.cpp": [
         "guardedCanvasCommitPreservesSelectionHistoryAndRefusesStaleAdmission",
         "guardedHistoryAdmitsOnlyTheFrozenStateSelectionAndTarget",
@@ -1145,22 +1191,16 @@
         "invalidOrNewerSidecarsNeverCreateABareRasterSession",
         "freeAngleRotationSavesAndReopensWithHistory"
       ],
-      "platforms/linux/linux-qt/tests/EditorSaveTest.cpp": [
-        "workerSnapshotSurvivesConcurrentCallerChanges",
-        "realPairReopensWithoutCompoundingAndUsesTheEncodedRasterHash",
-        "encodeExceptionAndRacingReplacementPreserveThePreviousDestination",
-        "oversizedEncodedTemporaryIsRejectedWithoutReplacingOrBufferingIt",
-        "completionObserverExceptionPreservesAcknowledgedArtifacts",
-        "incompletePairRepairsOnlyItsBoundCompanionAndRejectsChangedPng",
-        "explicitEmptySaveRemovesOnlyTheKnownCompatibleDefaultSidecar",
-        "cancelledBeforePublicationPreservesFilesAndAfterRasterRetainsPartialFacts",
-        "symlinksAndChangedCompanionsArePreservedAndParentSegmentsKeepKernelMeaning",
-        "modalWorkerOwnsItsSnapshotAndReleasesWithoutJoiningOnParentDestruction"
-      ],
       "platforms/linux/linux-qt/tests/EditorWindowTest.cpp": [
-        "initTestCase",
-        "init",
-        "cleanup",
+        "acceptDimensions",
+        "trigger",
+        "drawRectangle",
+        "hoverViewPoint",
+        "changeDrawingDefaults",
+        "configureNewImage",
+        "replaceWithNewImage",
+        "saveUntitled",
+        "runRotationPreview",
         "emptySaveWithBaselineCompanionReportsFailureWithoutDeletingEitherCompanion",
         "keyboardTransformsPersistNativeGroupAndExactHistory",
         "keyboardTransformsKeepNativeTextListModalAndBusyPrecedence",
@@ -1205,6 +1245,8 @@
         "destructionDuringSaveCancelsTheOwnedWorkerWithoutWaitingOrPublishing",
         "completionCanDestroyItsOwnerWithoutInvalidatingWorkerResults",
         "saveOfLoadedJpegRequiresExplicitOptionsAndCancelKeepsFiles",
+        "splitJpegSaveAsRepairsCompanionWithoutAdoptingPathEarly",
+        "saveAsOffersNativeFormatsAndReusesExplicitOptions",
         "retainedAnnotatedDocumentOpensUnsavedAndPersistsAnEditablePair",
         "toolbarApplyKeepsImageCheckpointAndRedoWhileHiddenCommandsRemainReachable",
         "cancelledOrFailedToolbarDraftPreservesActualEditorHistory",
@@ -1269,6 +1311,21 @@
         "pointerStatusReportsPixelsOfTheChangedImage"
       ]
     },
-    "remaining_scope": "Core history/rectangle/XANN and native load/save tests exist. Complete formats, profile/render parity, recovery/retention, approved goldens and baseline-sidecar observation are not established."
+    "remaining_scope": "Complete color/profile and all-tool compatibility, separate autosave/recovery and retention, performance, approved shared visual fixtures and physical/native qualification remain incomplete. Legacy fallback sidecar policy remains blocked.",
+    "reviewed_requirement_count": 30,
+    "finding": "Production session/history, bounded XANN parsing, exact rectangle compositor, source binding and owned native save/copy/print/history paths have automated fixtures. Partial raster/companion acknowledgement remains honest.",
+    "review_anchor": {
+      "production": {
+        "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
+        "sha256": "e2c2cb87376c3d5807333f5c7f21b43d66139dcbf240562ab2fab2f7709b7773"
+      },
+      "test": {
+        "path": "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "method": "snapshotSaveAcknowledgesItsHistoryStateAndSplitSaveInvalidatesCleanState",
+        "line": 565,
+        "sha256": "14656d042b2e627a1366ab3af6d36d278598221f1eb31c7ee3098aed987061d6"
+      },
+      "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
+    }
   }
 }

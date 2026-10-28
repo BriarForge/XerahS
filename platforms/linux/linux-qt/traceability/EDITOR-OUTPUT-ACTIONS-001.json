@@ -33,7 +33,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 9,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EO-002": {
@@ -52,7 +53,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 12,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EO-003": {
@@ -73,12 +75,13 @@
       "audit": {
         "classification": "partial",
         "spec_line": 15,
-        "coverage": "Partial; user-facing PNG/JPEG/WebP choices, explicit quality/JPEG matte and atomic paired persistence now have native tests. Full profile/codec/target/fault matrix and human qualification remain.",
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
-        ]
+        ],
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EO-004": {
@@ -102,12 +105,13 @@
       "audit": {
         "classification": "partial",
         "spec_line": 18,
-        "coverage": "Partial; user-facing PNG/JPEG/WebP choices, explicit quality/JPEG matte and atomic paired persistence now have native tests. Full profile/codec/target/fault matrix and human qualification remain.",
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
-        ]
+        ],
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EO-005": {
@@ -128,12 +132,13 @@
       "audit": {
         "classification": "partial",
         "spec_line": 22,
-        "coverage": "Partial; user-facing PNG/JPEG/WebP choices, explicit quality/JPEG matte and atomic paired persistence now have native tests. Full profile/codec/target/fault matrix and human qualification remain.",
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
-        ]
+        ],
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EO-006": {
@@ -154,12 +159,13 @@
       "audit": {
         "classification": "partial",
         "spec_line": 26,
-        "coverage": "Partial; user-facing PNG/JPEG/WebP choices, explicit quality/JPEG matte and atomic paired persistence now have native tests. Full profile/codec/target/fault matrix and human qualification remain.",
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
-        ]
+        ],
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EO-007": {
@@ -178,7 +184,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 28,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EO-008": {
@@ -197,7 +204,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 31,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EO-009": {
@@ -216,7 +224,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 33,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EO-010": {
@@ -227,7 +236,8 @@
       "audit": {
         "classification": "not-started",
         "spec_line": 36,
-        "coverage": "No production user flow found for this requirement in the reviewed native feature installers, source inventory and tests. Related capability seams do not establish this flow."
+        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EO-011": {
@@ -246,7 +256,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 39,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EO-012": {
@@ -265,7 +276,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 42,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EO-013": {
@@ -284,7 +296,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 45,
-        "coverage": "Candidate production/test seams exist; the full normative behavior is not established. See the capability audit remaining_scope and row note; no completion is inferred from test presence."
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EO-014": {
@@ -305,12 +318,13 @@
       "audit": {
         "classification": "partial",
         "spec_line": 48,
-        "coverage": "Partial; user-facing PNG/JPEG/WebP choices, explicit quality/JPEG matte and atomic paired persistence now have native tests. Full profile/codec/target/fault matrix and human qualification remain.",
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
-        ]
+        ],
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EO-015": {
@@ -331,12 +345,13 @@
       "audit": {
         "classification": "partial",
         "spec_line": 52,
-        "coverage": "Partial; user-facing PNG/JPEG/WebP choices, explicit quality/JPEG matte and atomic paired persistence now have native tests. Full profile/codec/target/fault matrix and human qualification remain.",
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
-        ]
+        ],
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
     "EO-016": {
@@ -357,19 +372,20 @@
       "audit": {
         "classification": "partial",
         "spec_line": 55,
-        "coverage": "Partial; user-facing PNG/JPEG/WebP choices, explicit quality/JPEG matte and atomic paired persistence now have native tests. Full profile/codec/target/fault matrix and human qualification remain.",
+        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
-        ]
+        ],
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     }
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "4c372a7d180918811f25b91a4c5d41525270fd3b",
-    "checked_at": "2026-10-25T01:07:12.211775+00:00",
+    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+    "checked_at": "2026-10-28T16:55:54.347787+00:00",
     "specification": "product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001/SPEC.md",
     "specification_sha256": "5c966c9f044cd1135c70e7d69e345b1cfb4ffffabd26f58e6ec9e7eb582c824f",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -383,7 +399,39 @@
       "platforms/linux/linux-qt/app/EditorSaveProgress.cpp"
     ],
     "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/EditorCopyTest.cpp": [
+        "workerUsesOneSnapshotAndPublishesOnlyOnTheGuiWithOwnedAlphaAndPng",
+        "nativeOfferHasBothInteroperableRepresentationsAndReportsOwnership",
+        "synchronousReplacementCannotBecomeAcknowledgedCopyOrBeCleared",
+        "cancelBeforePublicationAndDestructionCannotPublishLater",
+        "encodingFailureAndMissingProviderDoNotChangeTheClipboard",
+        "unsupportedVisibleObjectsFailWithoutSilentlyDroppingThem",
+        "knownFailureRetryKeepsOnePayloadWithoutRenderingOrEncodingAgain",
+        "callbackExceptionAndLateCancellationKeepActualDeliveryFacts",
+        "colourConversionIsDisclosedAndDoesNotMutateTheSource",
+        "malformedPublicationFactsStayUnknownAfterAnEffect"
+      ],
+      "platforms/linux/linux-qt/tests/EditorPrintTest.cpp": [
+        "waitGate",
+        "independentLayoutFitsCentresAndRejectsInvalidGeometry",
+        "frozenPreparationAndNativePdfOutputHaveIndependentPixelsAndGeometry",
+        "cancellationAndOwnerDestructionBeforeConfigurationCannotSubmit",
+        "renderFailuresAndMissingCallbacksCannotReachSubmission",
+        "nativePreviewExposesScaleOrientationColourPageAndCancelWithoutFiles",
+        "configurationCancellationExceptionAndOwnerDeletionCannotSubmit",
+        "cancelDuringSubmissionAndOwnerDeletionPreserveHonestDelivery",
+        "ownerDestructionDuringProgressTeardownPreservesCompletedAcknowledgement",
+        "sourceColourConversionIsDisclosedAndOriginalAlphaProfileAndPixelsSurvive",
+        "knownFailureReusesSnapshotWhileUnknownMalformedOrNativeFailureDoesNotClaimSuccess"
+      ],
+      "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp": [
+        "jpegAlphaWarningExplainsThatEmptyDocumentsHaveNoCompanion",
+        "formatsRequireExplicitQualityAndOpaqueMatteWithMatchingExtension",
+        "validatesOptionsWithoutClampingOrGuessingDefaults",
+        "webpKeepsAlphaAndHasNoImplicitQualityChoice"
+      ],
       "platforms/linux/linux-qt/tests/EditorSaveTest.cpp": [
+        "write",
         "cancellationAtEncodingBoundaryDoesNotStartAnEncoder",
         "encodedFormatsKeepEditableSourceHashAndChosenAlphaPolicy",
         "qualityChangesActualEncodingAndFailuresKeepPreviousPairs",
@@ -398,37 +446,16 @@
         "symlinksAndChangedCompanionsArePreservedAndParentSegmentsKeepKernelMeaning",
         "modalWorkerOwnsItsSnapshotAndReleasesWithoutJoiningOnParentDestruction"
       ],
-      "platforms/linux/linux-qt/tests/EditorCopyTest.cpp": [
-        "init",
-        "workerUsesOneSnapshotAndPublishesOnlyOnTheGuiWithOwnedAlphaAndPng",
-        "nativeOfferHasBothInteroperableRepresentationsAndReportsOwnership",
-        "synchronousReplacementCannotBecomeAcknowledgedCopyOrBeCleared",
-        "cancelBeforePublicationAndDestructionCannotPublishLater",
-        "encodingFailureAndMissingProviderDoNotChangeTheClipboard",
-        "unsupportedVisibleObjectsFailWithoutSilentlyDroppingThem",
-        "knownFailureRetryKeepsOnePayloadWithoutRenderingOrEncodingAgain",
-        "callbackExceptionAndLateCancellationKeepActualDeliveryFacts",
-        "colourConversionIsDisclosedAndDoesNotMutateTheSource",
-        "malformedPublicationFactsStayUnknownAfterAnEffect"
-      ],
-      "platforms/linux/linux-qt/tests/EditorPrintTest.cpp": [
-        "initTestCase",
-        "init",
-        "independentLayoutFitsCentresAndRejectsInvalidGeometry",
-        "frozenPreparationAndNativePdfOutputHaveIndependentPixelsAndGeometry",
-        "cancellationAndOwnerDestructionBeforeConfigurationCannotSubmit",
-        "renderFailuresAndMissingCallbacksCannotReachSubmission",
-        "nativePreviewExposesScaleOrientationColourPageAndCancelWithoutFiles",
-        "configurationCancellationExceptionAndOwnerDeletionCannotSubmit",
-        "cancelDuringSubmissionAndOwnerDeletionPreserveHonestDelivery",
-        "ownerDestructionDuringProgressTeardownPreservesCompletedAcknowledgement",
-        "sourceColourConversionIsDisclosedAndOriginalAlphaProfileAndPixelsSurvive",
-        "knownFailureReusesSnapshotWhileUnknownMalformedOrNativeFailureDoesNotClaimSuccess"
-      ],
       "platforms/linux/linux-qt/tests/EditorWindowTest.cpp": [
-        "initTestCase",
-        "init",
-        "cleanup",
+        "acceptDimensions",
+        "trigger",
+        "drawRectangle",
+        "hoverViewPoint",
+        "changeDrawingDefaults",
+        "configureNewImage",
+        "replaceWithNewImage",
+        "saveUntitled",
+        "runRotationPreview",
         "emptySaveWithBaselineCompanionReportsFailureWithoutDeletingEitherCompanion",
         "keyboardTransformsPersistNativeGroupAndExactHistory",
         "keyboardTransformsKeepNativeTextListModalAndBusyPrecedence",
@@ -537,14 +564,23 @@
         "pointerStatusReportsTheDocumentPixelAndItsSourceColour",
         "pointerStatusSizeFollowsTheChangedImage",
         "pointerStatusReportsPixelsOfTheChangedImage"
-      ],
-      "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp": [
-        "jpegAlphaWarningExplainsThatEmptyDocumentsHaveNoCompanion",
-        "formatsRequireExplicitQualityAndOpaqueMatteWithMatchingExtension",
-        "validatesOptionsWithoutClampingOrGuessingDefaults",
-        "webpKeepsAlphaAndHasNoImplicitQualityChoice"
       ]
     },
-    "remaining_scope": "Native immutable PNG/copy/print and split-sidecar tests exist. Full JPEG/WebP codec/profile/target qualification, editor upload/pin/task hosts, wallpaper and complete output fault/permission matrix remain."
+    "remaining_scope": "Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
+    "reviewed_requirement_count": 16,
+    "finding": "Owned immutable save/copy/print paths and native PNG/JPEG/WebP Save As are present with explicit quality/matte and encoded-raster companion hashes. Tests cover atomic failures and companion-only repair without changing the durable path early.",
+    "review_anchor": {
+      "production": {
+        "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
+        "sha256": "541d7d2d9254c13e6f527b63af5bf8e5b4486d521edcd8a6ecf9aea7deb5245c"
+      },
+      "test": {
+        "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+        "method": "encodedFormatsKeepEditableSourceHashAndChosenAlphaPolicy",
+        "line": 34,
+        "sha256": "1254980dc20b87e3934fc3fe5a960867ac332840fd90caf481ba3ad72085ad03"
+      },
+      "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
+    }
   }
 }
