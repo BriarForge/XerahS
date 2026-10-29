@@ -12,8 +12,10 @@ struct AnnotationTransferResult {
   bool ok() const { return diagnostic.isEmpty() && !annotations.empty(); }
 };
 // Local candidate object transport. Only explicitly supported objects, no source
-// pixels, paths or document metadata. Asset-bearing copies fail rather than
-// dropping assets or disclosing unrelated embedded images without a policy.
+// pixels, paths or document metadata. Clipboard offers and reads refuse selected
+// asset-bearing objects because version 1 carries no pixels. Unselected assets
+// stay private and do not block asset-free selections; local duplication keeps
+// the document's assets without using this clipboard restriction.
 AnnotationTransferResult selectedAnnotationTransfer(const AnnotationDocument &, const QSet<QUuid> &, bool forClipboard);
 AnnotationTransferResult parseAnnotationClipboard(const QByteArray &);
 QString annotationTransferDiagnostic(const std::vector<Annotation> &);

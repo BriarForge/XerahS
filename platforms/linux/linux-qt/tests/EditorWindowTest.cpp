@@ -794,6 +794,48 @@ private slots:
       window->resize(1000, 700); QCoreApplication::processEvents(); QVERIFY(window->grab().save(qEnvironmentVariable("XERAHS_TOOL_QA_IMAGE")));
     }
   }
+  void assetFreeNativeCopyAndCutKeepUnselectedImagesPrivateAndDurable() {
+    QString unexpectedDialog; QTimer watchdog;
+    connect(&watchdog, &QTimer::timeout, [&] {
+      if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) {
+        unexpectedDialog = box->windowTitle() + ": " + box->text() + " " + box->informativeText();
+        box->reject();
+      }
+    }); watchdog.start(10);
+    QTemporaryDir dir; const auto path = dir.filePath("source.png"); QVERIFY(fixture().save(path));
+    QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty());
+    auto doc = *loadSource(path).document; RectangleAnnotation image; image.id = QUuid::createUuid(); image.start = {35, 20}; image.end = {45, 30};
+    image.content.type = shape::image; image.content.imageKey = "UNSELECTED_IMAGE_KEY";
+    doc.annotations.push_back(image); doc.embeddedImages = {{image.content.imageKey, doc.sourceImagePng}};
+    QVERIFY(saveEdit(path, fixture(), doc).sidecarSaved); const auto raster = storedBytes(path); const auto sidecar = storedBytes(path + ".xann");
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY2(window, qPrintable(unexpectedDialog)); window->show();
+    QVERIFY2(unexpectedDialog.isEmpty(), qPrintable(unexpectedDialog));
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas); canvas->resetZoom(); drawRectangle(*canvas);
+    AnnotationClipboardPorts ports;
+    // Offscreen Qt cannot prove native clipboard ownership. Publish actual MIME
+    // data through an explicitly acknowledged fixture port, as the other native
+    // command tests do; production ownership handling stays unchanged.
+    ports.publish = [](const QByteArray &bytes) {
+      auto *mime = new QMimeData; mime->setData(annotationClipboardMime, bytes); QApplication::clipboard()->setMimeData(mime);
+      return xerahs::actions::ActionOutcome{};
+    }; window->setAnnotationClipboardPorts(ports);
+    QApplication::clipboard()->setText("KEEP");
+    trigger(*window, "copyAnnotations");
+    QVERIFY2(unexpectedDialog.isEmpty(), qPrintable(unexpectedDialog));
+    const auto copied = readAnnotationClipboard(); QVERIFY(copied.diagnostic.isEmpty()); const auto parsed = parseAnnotationClipboard(copied.bytes); QVERIFY(parsed.ok());
+    QCOMPARE(parsed.annotations.size(), size_t(1)); QCOMPARE(std::get<RectangleAnnotation>(parsed.annotations[0]).type(), shape::rectangle);
+    QVERIFY(!copied.bytes.contains("UNSELECTED_IMAGE_KEY")); QVERIFY(!copied.bytes.contains("sourceImagePng")); QVERIFY(!copied.bytes.contains(path.toUtf8()));
+    trigger(*window, "cutAnnotations"); QVERIFY(window->statusBar()->currentMessage().contains("1 annotation(s)"));
+    trigger(*window, "undo"); QVERIFY(window->statusBar()->currentMessage().contains("2 annotation(s)"));
+    QCOMPARE(storedBytes(path), raster); QCOMPARE(storedBytes(path + ".xann"), sidecar);
+    auto *save = window->findChild<QAction *>("saveImage"); QVERIFY(save); save->trigger();
+    QTRY_VERIFY(storedBytes(path + ".xann") != sidecar);
+    QVERIFY2(unexpectedDialog.isEmpty(), qPrintable(unexpectedDialog));
+    const auto reopened = loadSource(path); QVERIFY(reopened.document); QCOMPARE(reopened.document->annotations.size(), size_t(2));
+    QCOMPARE(reopened.document->embeddedImages, doc.embeddedImages); QCOMPARE(reopened.document->sourceImagePng, doc.sourceImagePng);
+    QVERIFY(!storedBytes(path).isEmpty()); QVERIFY(!raster.isEmpty());
+  }
+
   void annotationCopyPasteCutAndDuplicateUseNativeMenusShortcutsAndOneHistoryPerMutation() {
     QTemporaryDir dir; const auto path = dir.filePath("source.png"); QVERIFY(fixture().save(path)); const auto original = storedBytes(path);
     QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
@@ -830,7 +872,7 @@ private slots:
   }
   void nativeDuplicationPreservesEmbeddedAssetsAndAssetClipboardRefusalKeepsEverything() {
     QTemporaryDir dir; const auto prepared = prepareCapturedSource(fixture()); QVERIFY(prepared.document); auto document = *prepared.document;
-    RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {4, 4}; r.end = {20, 15}; r.extra = {{"assetReference", "retained"}}; document.annotations = {r}; document.embeddedImages = {{"retained", document.sourceImagePng}};
+    RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {4, 4}; r.end = {20, 15}; r.extra = {{"assetReference", "retained"}}; r.content.type = shape::image; r.content.imageKey = "retained"; document.annotations = {r}; document.embeddedImages = {{"retained", document.sourceImagePng}};
     std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedDocument(document)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>();
     QTest::mouseClick(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({7, 7}).toPoint()); trigger(*window, "duplicateAnnotations");
     QVERIFY(window->statusBar()->currentMessage().contains("2 annotation(s)")); AnnotationClipboardPorts ports; int publications = 0;

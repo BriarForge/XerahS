@@ -18,6 +18,45 @@ QByteArray payload(const QJsonArray &objects) { return QJsonDocument(QJsonObject
 class AnnotationTransferTest : public QObject {
   Q_OBJECT
 private slots:
+  void assetFreeSelectionsDoNotPublishUnselectedEmbeddedImages() {
+    auto d = fixture(); d.embeddedImages = {{"private-unselected", "PRIVATE embedded image bytes"}};
+    auto &unselected = std::get<RectangleAnnotation>(d.annotations[2]); unselected.content.type = shape::image; unselected.content.imageKey = "private-unselected";
+    auto &text = std::get<RectangleAnnotation>(d.annotations[1]); text.content.type = shape::text; text.content.text = "Selected text";
+    text.content.textFillColor = 0x80112233;
+    const auto before = serializeDocument(d); const auto projected = selectedAnnotationTransfer(d, {annotationId(d.annotations[0]), text.id}, true);
+    QVERIFY(projected.ok()); QCOMPARE(projected.annotations.size(), size_t(2));
+    QVERIFY(!projected.bytes.contains("PRIVATE") && !projected.bytes.contains("private-unselected"));
+    const auto parsed = parseAnnotationClipboard(projected.bytes); QVERIFY(parsed.ok()); QCOMPARE(serializeAnnotationList(parsed.annotations), serializeAnnotationList(projected.annotations));
+    QCOMPARE(serializeDocument(d), before);
+  }
+  void assetBearingClipboardPayloadsCannotImportUnresolvedReferences_data() {
+    QTest::addColumn<QString>("type"); for (const auto &type : {shape::image, shape::emoji, shape::cursor}) QTest::newRow(qPrintable(type)) << type;
+  }
+  void assetBearingClipboardPayloadsCannotImportUnresolvedReferences() {
+    QFETCH(QString, type); auto d = fixture(); auto &asset = std::get<RectangleAnnotation>(d.annotations[0]); asset.content.type = type; asset.content.imageKey = "absent";
+    const auto inbound = parseAnnotationClipboard(payload(serializeAnnotationList({asset})));
+    QVERIFY(!inbound.ok()); QVERIFY(inbound.annotations.empty()); QCOMPARE(inbound.diagnostic, QString("annotation-clipboard-assets-unavailable"));
+  }
+
+  void assetBearingOffersCannotOmitMissingPixels_data() { assetBearingClipboardPayloadsCannotImportUnresolvedReferences_data(); }
+  void assetBearingOffersCannotOmitMissingPixels() {
+    QFETCH(QString, type); auto d = fixture(); auto &asset = std::get<RectangleAnnotation>(d.annotations[0]); asset.content.type = type; asset.content.imageKey = "absent";
+    const auto projected = selectedAnnotationTransfer(d, {asset.id}, true); QVERIFY(!projected.ok()); QVERIFY(projected.bytes.isEmpty());
+    QCOMPARE(projected.diagnostic, QString("annotation-clipboard-assets-unavailable"));
+  }
+
+  void inDocumentAssetDuplicationRetainsPixelsAndHistory_data() { assetBearingClipboardPayloadsCannotImportUnresolvedReferences_data(); }
+  void inDocumentAssetDuplicationRetainsPixelsAndHistory() {
+    QFETCH(QString, type); auto d = fixture(); auto &asset = std::get<RectangleAnnotation>(d.annotations[0]); asset.content.type = type; asset.content.imageKey = "retained";
+    d.embeddedImages = {{"retained", "EXACT retained pixels"}, {"other", "UNRELATED pixels"}};
+    EditorSession session(d); session.select({asset.id}); const auto before = serializeDocument(session.document());
+    const auto duplicated = session.duplicateSelection(); QVERIFY(duplicated.changed); QCOMPARE(duplicated.insertedIds.size(), 1);
+    QCOMPARE(session.document().embeddedImages, d.embeddedImages); QCOMPARE(session.undoCount(), 1);
+    const auto &copy = std::get<RectangleAnnotation>(session.document().annotations.back()); QCOMPARE(copy.type(), type); QCOMPARE(copy.content.imageKey, asset.content.imageKey); QVERIFY(copy.id != asset.id);
+    const auto after = serializeDocument(session.document()); QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), before);
+    QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), after);
+  }
+
   void projectionPreservesSelectedOrderFieldsAndExcludesDocumentAndSourceData() {
     const auto d = fixture(); const auto first = annotationId(d.annotations[0]), last = annotationId(d.annotations[2]);
     const auto projected = selectedAnnotationTransfer(d, {last, first}, true); QVERIFY(projected.ok()); QVERIFY(!projected.bytes.contains("PRIVATE") && !projected.bytes.contains("EXCLUDE"));
@@ -52,7 +91,7 @@ private slots:
   void protectedUnknownAssetAndEmptySelectionsNeverProducePartialProjection() {
     QFETCH(int, kind); auto d = fixture(); auto &r = std::get<RectangleAnnotation>(d.annotations[1]);
     if (kind == 0) r.visible = false; if (kind == 1) r.extra.insert("locked", true); if (kind == 2) d.annotations[1] = UnsupportedAnnotation{r.id, {{"type", "future"}}};
-    if (kind == 3) d.embeddedImages = {{"private-unselected", "KEEP"}}; if (kind == 4) r.start.x = std::numeric_limits<double>::infinity();
+    if (kind == 3) { r.content.type = shape::image; r.content.imageKey = "selected-asset"; d.embeddedImages = {{"selected-asset", "KEEP"}}; } if (kind == 4) r.start.x = std::numeric_limits<double>::infinity();
     const auto before = serializeDocument(d); const auto selection = kind == 5 ? QSet<QUuid>{} : QSet<QUuid>{annotationId(d.annotations[0]), annotationId(d.annotations[1])};
     const auto result = selectedAnnotationTransfer(d, selection, true); QVERIFY(!result.ok()); QVERIFY(result.bytes.isEmpty() && result.annotations.empty()); QCOMPARE(serializeDocument(d), before);
     EditorSession session(d); session.select(selection.values());

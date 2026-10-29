@@ -4,6 +4,13 @@
 #include <cmath>
 namespace xerahs::editor {
 namespace {
+QString clipboardAssetDiagnostic(const std::vector<Annotation> &annotations) {
+  for (const auto &annotation : annotations) {
+    const auto *shape = std::get_if<RectangleAnnotation>(&annotation);
+    if (shape && isAssetShape(shape->type())) return "annotation-clipboard-assets-unavailable";
+  }
+  return {};
+}
 bool boundedJson(const QJsonValue &value, qint64 &remaining, int depth, int &nodes) {
   if (depth > 32 || --nodes < 0 || (remaining -= 64) < 0) return false;
   if (value.isString()) { remaining -= qint64(value.toString().size()) * 6; return remaining >= 0; }
@@ -42,7 +49,8 @@ AnnotationTransferResult selectedAnnotationTransfer(const AnnotationDocument &do
     result.diagnostic = annotationTransferDiagnostic(result.annotations);
     if (!result.diagnostic.isEmpty()) { result.annotations.clear(); return result; }
     if (clipboard) {
-      if (!document.embeddedImages.empty()) { result.annotations.clear(); result.diagnostic = "annotation-clipboard-assets-unavailable"; return result; }
+      result.diagnostic = clipboardAssetDiagnostic(result.annotations);
+      if (!result.diagnostic.isEmpty()) { result.annotations.clear(); return result; }
       const QJsonObject root{{"version", 1}, {"annotations", serializeAnnotationList(result.annotations)}};
       qint64 remaining = kMaxAnnotationClipboardBytes; int nodes = 100000;
       // Count the envelope's depth/keys/nodes as well as its annotation array,
@@ -69,6 +77,7 @@ AnnotationTransferResult parseAnnotationClipboard(const QByteArray &bytes) {
     const auto list = root.value("annotations").toArray(); if (list.size() > qint64(kMaxAnnotationTransferObjects)) { result.diagnostic = "annotation-transfer-too-large"; return result; }
     auto parsed = parseAnnotationList(list); if (!parsed.annotations) { result.diagnostic = "annotation-transfer-invalid"; return result; }
     result.annotations = std::move(*parsed.annotations); result.diagnostic = annotationTransferDiagnostic(result.annotations);
+    if (result.diagnostic.isEmpty()) result.diagnostic = clipboardAssetDiagnostic(result.annotations);
     if (!result.diagnostic.isEmpty()) result.annotations.clear();
   } catch (...) { result = {}; result.diagnostic = "annotation-transfer-failed"; }
   return result;
