@@ -530,6 +530,17 @@
         "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "EA-008",
+        "EA-017",
+        "EA-019"
+      ],
+      "outcome": "Native SpeechBalloon creation/editing now supports an independent optional #AARRGGBB border override, including transparent zero; absence/clearing preserves the original stroke-color rule. Body and tail share the existing outline geometry. Five baseline failures reproduced the missing native control, ignored opaque/half/zero-alpha outline pixels and invalid import admission. EditorCanvasTest covers Apply/Cancel/no-op/invalid input, one history step, undo/redo/reload, immutable source, retained text/fill/tail fields, canonical clipboard round-trip, actual creation and independent source-over export pixels. The field is typed only for SpeechBalloon; Text/other/unknown families retain same-named opaque data. Regular Text border geometry, other tool options and physical/human qualification remain partial.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+      ]
     }
   ],
   "audit_method": "Read all 16 manifest capability specifications (345 IDs); classify 325 desktop rows against current native production/test seams, retain 20 mobile-only IDs outside scope. Refresh source/test provenance and remaining scope without treating old traceability notes or graph edges as compliance evidence.",

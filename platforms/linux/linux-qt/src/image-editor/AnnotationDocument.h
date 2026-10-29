@@ -86,6 +86,7 @@ struct ShapeContent {
   std::optional<Argb> textColor; // absent retains legacy stroke/automatic contrast
   QString fontFamily; // empty uses the native font; missing names remain preserved
   std::optional<Argb> textFillColor; // absent retains legacy fill; explicit zero remains transparent
+  std::optional<Argb> balloonBorderColor; // speech balloon only; absent retains legacy stroke color
 };
 
 struct RectangleAnnotation {

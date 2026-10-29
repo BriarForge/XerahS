@@ -22,11 +22,11 @@
     "ast_preserved": true
   },
   "ast_refresh": {
-    "source_revision": "8cdf5292855498c86d766e2479818aae08ba5bcb",
+    "source_revision": "1a2577063974a88c3aa1c875101563cefb867f49",
     "semantic_documents_preserved": true,
     "hyperedges_preserved": 2,
     "external_model_labeling_used": false,
-    "clipboard_selection_nodes": 3
+    "slice": "Native speech-balloon border color"
   },
   "semantic_refresh": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",

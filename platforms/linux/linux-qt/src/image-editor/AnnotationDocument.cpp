@@ -147,6 +147,10 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
       const auto value = o.value(u"textFillColor");
       if (!value.isString() || !(content.textFillColor = parseColor(value.toString()))) { findings.invalid = true; return std::nullopt; }
     }
+    if (type == shape::speechBalloon && o.contains(u"balloonBorderColor")) {
+      const auto value = o.value(u"balloonBorderColor");
+      if (!value.isString() || !(content.balloonBorderColor = parseColor(value.toString()))) { findings.invalid = true; return std::nullopt; }
+    }
     if ((type == shape::text || type == shape::speechBalloon) && o.contains(u"fontFamily")) {
       const auto family = o.value(u"fontFamily");
       if (!family.isString() || !validFontFamily(family.toString())) { findings.invalid = true; return std::nullopt; }
@@ -203,6 +207,7 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
   if (type == shape::text || type == shape::speechBalloon) {
     for (const auto &key : {QStringLiteral("textAlignment"), QStringLiteral("textBold"), QStringLiteral("textItalic"), QStringLiteral("textColor"), QStringLiteral("fontFamily"), QStringLiteral("textFillColor")}) rectangle.extra.remove(key);
   }
+  if (type == shape::speechBalloon) rectangle.extra.remove(QStringLiteral("balloonBorderColor"));
   return Annotation(rectangle);
 }
 
@@ -369,6 +374,10 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
       QJsonArray points;
       for (const PointF &p : content.points) points.append(pointJson(p));
       o.insert(QStringLiteral("points"), points);
+    }
+    if (content.type == shape::speechBalloon) {
+      if (content.balloonBorderColor.has_value()) o.insert(QStringLiteral("balloonBorderColor"), formatColor(*content.balloonBorderColor));
+      else o.remove(QStringLiteral("balloonBorderColor"));
     }
     if (isTextShape(content.type)) o.insert(QStringLiteral("fontSize"), content.fontSize);
     if (content.type == shape::text || content.type == shape::speechBalloon) {

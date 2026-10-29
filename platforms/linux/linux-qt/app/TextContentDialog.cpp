@@ -62,6 +62,12 @@ TextContentDialog::TextContentDialog(const xerahs::editor::RectangleAnnotation &
   if (shape.content.textFillColor.has_value()) m_fillColor->setText(xerahs::editor::formatColor(*shape.content.textFillColor));
   form->addRow("Background &fill (#AARRGGBB)", m_fillColor);
   if (balloon) {
+    m_borderColor = new QLineEdit(this); m_borderColor->setObjectName("annotationBalloonBorderColor");
+    m_borderColor->setAccessibleName("Speech balloon border color in #AARRGGBB format");
+    m_borderColor->setPlaceholderText("Original stroke color (leave empty)");
+    m_borderColor->setToolTip("Enter #AARRGGBB, including alpha. Zero alpha is transparent. Leave empty to use the original stroke color. This changes the balloon border only.");
+    if (shape.content.balloonBorderColor.has_value()) m_borderColor->setText(xerahs::editor::formatColor(*shape.content.balloonBorderColor));
+    form->addRow("Balloon &border (#AARRGGBB)", m_borderColor);
     m_tail = new QCheckBox("Show balloon &tail", this); m_tail->setObjectName("balloonTailEnabled"); m_tail->setAccessibleName("Show balloon tail"); m_tail->setChecked(!shape.content.points.empty()); form->addRow(m_tail);
     m_x = new QLineEdit(this); m_y = new QLineEdit(this); m_x->setObjectName("balloonTailX"); m_y->setObjectName("balloonTailY");
     m_x->setAccessibleName("Tail tip X as a fraction of balloon width"); m_y->setAccessibleName("Tail tip Y as a fraction of balloon height");
@@ -109,6 +115,15 @@ void TextContentDialog::accept() {
     content.textFillColor = xerahs::editor::parseColor(fillText);
     if (!content.textFillColor.has_value()) {
       m_error->setText("annotation-text-fill-color-invalid: Enter #AARRGGBB including alpha, or leave the field empty for the original fill."); m_fillColor->setFocus(); return;
+    }
+  }
+  if (m_borderColor) {
+    const auto borderText = m_borderColor->text().trimmed(); content.balloonBorderColor.reset();
+    if (!borderText.isEmpty()) {
+      content.balloonBorderColor = xerahs::editor::parseColor(borderText);
+      if (!content.balloonBorderColor.has_value()) {
+        m_error->setText("annotation-balloon-border-color-invalid: Enter #AARRGGBB including alpha, or leave the field empty for the original stroke color."); m_borderColor->setFocus(); return;
+      }
     }
   }
   if (m_tail && m_tail->isChecked()) {

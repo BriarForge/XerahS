@@ -27,6 +27,7 @@ private:
   QCheckBox *m_bold, *m_italic;
   QLineEdit *m_color;
   QLineEdit *m_fillColor;
+  QLineEdit *m_borderColor = nullptr;
   QLineEdit *m_x = nullptr, *m_y = nullptr;
   QLabel *m_error;
   std::optional<xerahs::editor::ShapeContent> m_choice;

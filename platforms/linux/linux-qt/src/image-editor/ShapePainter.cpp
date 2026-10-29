@@ -140,7 +140,7 @@ void paintBalloon(QPainter &painter, const RectangleAnnotation &shape) {
   const QColor fill = shape.content.textFillColor.has_value() ? color(*shape.content.textFillColor) :
       (qAlpha(style.fillColor) > 0 ? color(style.fillColor) : QColor(Qt::white));
   painter.setBrush(fill);
-  painter.setPen(QPen(color(style.strokeColor), style.strokeWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+  painter.setPen(QPen(color(shape.content.balloonBorderColor.value_or(style.strokeColor)), style.strokeWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
   painter.drawPath(body);
   painter.setFont(textFont(painter.font(), shape));
   painter.setPen(shape.content.textColor.has_value() ? color(*shape.content.textColor) : (fill.lightnessF() > 0.5 ? QColor(Qt::black) : QColor(Qt::white)));
