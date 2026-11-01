@@ -222,6 +222,20 @@ read-only fallback. The reference Avalonia configuration is never read or
 written. The [preference policy](src/image-editor/PREFERENCES-POLICY.md)
 records metadata, recovery limitations, remaining field work and review gates.
 
+**Editor Pin to Screen:** File → Pin to Screen or Ctrl+P renders the source and
+visible supported annotations as one owned sRGB snapshot with alpha, then opens
+the existing native pin window. Moving, zooming or closing the pin leaves the
+editor unchanged; the pin survives closing the editor. Preparation has progress
+and Cancel. A missing service disables the action; failure keeps the document
+open and explains a new attempt. Desktop-service and accessibility qualification
+remain Required. `EditorPinTest` exercises the actual editor action and pin.
+
+**Capture upload without Save:** the pipeline now creates a private managed PNG
+for its `temporary.file` input. It uploads that file as `capture.png`, removes it
+after success, failure or cancellation, and retains the captured pixels. A saved
+capture still supplies the upload when available. `CaptureUploadTest` verifies
+the real file, permissions, pixels, local HTTP transfer and cleanup.
+
 ## Build and test
 
 See [`../AGENTS.md`](../AGENTS.md) for the toolchain. On Ubuntu 24.04:

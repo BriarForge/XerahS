@@ -7,6 +7,7 @@
 #include "EditorSave.h"
 #include "EditorCopy.h"
 #include "EditorPrint.h"
+#include "EditorPin.h"
 #include "AnnotationClipboard.h"
 #include "CanvasCropDialog.h"
 #include "EditorHistory.h"
@@ -53,6 +54,7 @@ public:
   void setSaveHooks(EditorSaveHooks hooks) { m_saveHooks = std::move(hooks); }
   void setCopyPorts(EditorCopyPorts ports);
   void setPrintPorts(EditorPrintPorts ports);
+  void setPinPorts(EditorPinPorts ports);
   void setAnnotationClipboardPorts(AnnotationClipboardPorts ports);
 signals:
   // GUI-thread acknowledgement after checkpoint/partial receipt recording;
@@ -64,6 +66,7 @@ signals:
   // from physical delivery. Owner deletion/reentrant calls are guarded.
   // Throwing completion observers are contained without repeating the job.
   void printFinished(const QString &state, const QString &diagnostic, bool cancellationArrivedDuring);
+  void pinFinished(const QString &state, const QString &diagnostic);
   void annotationTransferFinished(const QString &command, const QString &state, const QString &diagnostic, bool changed);
 
 protected:
@@ -87,6 +90,7 @@ private:
   bool retryCopy();
   bool printImage(const EditorPrintSnapshotPtr &retry = {});
   bool retryPrint();
+  bool pinImage();
   bool transferAnnotations(const QString &command);
   bool rectangleDialog(bool creation);
   bool rotateSelected();
@@ -164,6 +168,9 @@ private:
   std::optional<quint64> m_failedPrintState;
   QString m_printMessage;
   std::optional<quint64> m_printMessageState;
+  QAction *m_pinAction = nullptr;
+  EditorPinPorts m_pinPorts;
+  QString m_pinMessage;
   QMap<QString, QAction *> m_annotationActions;
   AnnotationClipboardPorts m_annotationClipboard;
   QString m_annotationMessage;

@@ -6,14 +6,17 @@ requirements honestly until native behavior and evidence cover their full scope.
 
 Current work follows the [current measured backlog](PRODUCTION-BACKLOG.md).
 The counter-publication failure report and confirmed execution-metadata removal
-are implemented candidates with native tests. Preserve that work. Next prioritize
-remaining native annotation fields, managed temporary uploads and post-capture
-flows, then capture/canvas/output and catalogue breadth under approved semantics.
-Explicit migration, recovery/retention, release trust and other unresolved policy
-questions remain blocked on Mike as recorded in that backlog. Existing recording,
-upload, scheduling, tools/effects, onboarding and watch-folder paths remain intact.
-The user-authorized solo workflow is worktrees/codex, git-declan, and the supplied
-full-build/test push gate. Full contract/platform/human completion is unproven.
+are implemented candidates with native tests. Follow ROOT-BUILD-001: finish the
+lowest incomplete user journey before adding editor styling or niche settings.
+Capture upload now uses a managed temporary PNG, and the editor has a native
+Pin to Screen action; verify those paths alongside the existing save/copy flows.
+Next finish editor upload/task-host integration and remaining capture/post-capture
+journeys under approved semantics. Explicit migration, recovery/retention,
+release trust and unresolved policy questions remain blocked on Mike as recorded
+in the backlog. Preserve existing recording, scheduling, tools/effects,
+onboarding and watch-folder paths. Work directly on main using git-declan and
+the required full Linux build/test gate. Full contract/platform/human completion
+remains unproven.
 
 The editor dependency record below includes completed checkpoints and remaining
 work; it does not supersede that current priority:

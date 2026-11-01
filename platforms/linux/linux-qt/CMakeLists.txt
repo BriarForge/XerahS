@@ -160,9 +160,15 @@ target_include_directories(xerahs_file_output PUBLIC app)
 target_link_libraries(xerahs_file_output PUBLIC xerahs_core Qt6::Gui Qt6::DBus)
 target_compile_options(xerahs_file_output PRIVATE -Wall -Wextra -Wpedantic)
 
-add_library(xerahs_editor_source STATIC app/EditorSource.cpp app/EditorSource.h app/EditorHistory.cpp app/EditorHistory.h app/EditorPreparation.cpp app/EditorPreparation.h app/EditorCanvasWorker.cpp app/EditorCanvasWorker.h app/EditorSave.cpp app/EditorSave.h app/EditorSaveDialog.cpp app/EditorSaveDialog.h app/EditorSaveProgress.cpp app/EditorCopy.cpp app/EditorCopy.h app/EditorPrint.cpp app/EditorPrint.h app/EditorPrintDialog.cpp app/AnnotationClipboard.cpp app/AnnotationClipboard.h)
+add_library(xerahs_pin_window STATIC app/PinWindow.cpp app/PinWindow.h)
+set_target_properties(xerahs_pin_window PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_pin_window PUBLIC app)
+target_link_libraries(xerahs_pin_window PUBLIC Qt6::Widgets)
+target_compile_options(xerahs_pin_window PRIVATE -Wall -Wextra -Wpedantic)
+
+add_library(xerahs_editor_source STATIC app/EditorSource.cpp app/EditorSource.h app/EditorHistory.cpp app/EditorHistory.h app/EditorPreparation.cpp app/EditorPreparation.h app/EditorCanvasWorker.cpp app/EditorCanvasWorker.h app/EditorSave.cpp app/EditorSave.h app/EditorSaveDialog.cpp app/EditorSaveDialog.h app/EditorSaveProgress.cpp app/EditorCopy.cpp app/EditorCopy.h app/EditorPrint.cpp app/EditorPrint.h app/EditorPrintDialog.cpp app/EditorPin.cpp app/EditorPin.h app/AnnotationClipboard.cpp app/AnnotationClipboard.h)
 target_include_directories(xerahs_editor_source PUBLIC app)
-target_link_libraries(xerahs_editor_source PUBLIC xerahs_editor_codecs Qt6::Widgets Qt6::PrintSupport)
+target_link_libraries(xerahs_editor_source PUBLIC xerahs_editor_codecs xerahs_pin_window Qt6::Widgets Qt6::PrintSupport)
 target_compile_options(xerahs_editor_source PRIVATE -Wall -Wextra -Wpedantic)
 add_library(xerahs_editor_canvas STATIC app/EditorCanvas.cpp app/EditorCanvas.h
   app/NativeAnnotationTools.cpp app/NativeAnnotationTools.h
@@ -178,8 +184,7 @@ target_link_libraries(xerahs_editor_canvas PUBLIC xerahs_core xerahs_editor_code
 target_compile_options(xerahs_editor_canvas PRIVATE -Wall -Wextra -Wpedantic)
 
 add_library(xerahs_action_selection STATIC app/ActionSelectionDialog.cpp app/ActionSelectionDialog.h
-  app/CaptureSaveAsDialog.cpp app/CaptureSaveAsDialog.h app/CaptureAnnotationDialog.cpp app/CaptureAnnotationDialog.h
-  app/PinWindow.cpp app/PinWindow.h)
+  app/CaptureSaveAsDialog.cpp app/CaptureSaveAsDialog.h app/CaptureAnnotationDialog.cpp app/CaptureAnnotationDialog.h)
 set_target_properties(xerahs_action_selection PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_action_selection PUBLIC app)
 target_link_libraries(xerahs_action_selection PUBLIC xerahs_core xerahs_editor_source xerahs_editor_canvas Qt6::Widgets)
@@ -693,6 +698,13 @@ endforeach()
 # editor suite's deadline. Reuse its production sources, not its test fixture.
 get_target_property(XERAHS_PREFERENCE_TEST_SOURCES editor-window-test SOURCES)
 list(REMOVE_ITEM XERAHS_PREFERENCE_TEST_SOURCES tests/EditorWindowTest.cpp)
+add_executable(editor-pin-test tests/EditorPinTest.cpp ${XERAHS_PREFERENCE_TEST_SOURCES})
+set_target_properties(editor-pin-test PROPERTIES AUTOMOC ON)
+target_link_libraries(editor-pin-test PRIVATE xerahs_editor_source xerahs_editor_canvas xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
+add_test(NAME editor-pin COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:editor-pin-test>)
+set_tests_properties(editor-pin PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+
 add_executable(native-preference-dialogs-test tests/PreferenceDialogTest.cpp ${XERAHS_PREFERENCE_TEST_SOURCES})
 set_target_properties(native-preference-dialogs-test PROPERTIES AUTOMOC ON)
 target_link_libraries(native-preference-dialogs-test PRIVATE xerahs_editor_source xerahs_editor_canvas xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)

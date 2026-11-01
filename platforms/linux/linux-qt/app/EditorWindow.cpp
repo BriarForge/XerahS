@@ -373,6 +373,10 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   m_retryPrint = fileMenu->addAction("Retry image &print…"); m_retryPrint->setObjectName("retryImagePrint");
   m_retryPrint->setStatusTip("Retry a known failed print with the unchanged prepared snapshot and fresh native printer confirmation.");
   addAction(m_retryPrint); connect(m_retryPrint, &QAction::triggered, this, [this] { retryPrint(); });
+  m_pinAction = fileMenu->addAction("&Pin to Screen"); m_pinAction->setObjectName("pinImage");
+  m_pinAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_P)); m_pinAction->setAutoRepeat(false);
+  m_pinAction->setStatusTip("Pin one snapshot of the source and visible supported annotations as sRGB with alpha. Moving, scaling or closing the pin leaves the document unchanged.");
+  connect(m_pinAction, &QAction::triggered, this, [this] { pinImage(); });
   auto *closeEditor = fileMenu->addAction(QStringLiteral("Close Editor"));
   closeEditor->setObjectName(QStringLiteral("closeEditor")); closeEditor->setShortcut(QKeySequence::Close);
   connect(closeEditor, &QAction::triggered, this, [this] { close(); });
@@ -665,6 +669,9 @@ void EditorWindow::refresh() {
   m_retryPrint->setToolTip(m_failedPrint && m_failedPrintState != m_session->stateId()
       ? "The document changed. Undo to the failed snapshot before retrying it, or use Print Image for a new snapshot." : m_retryPrint->statusTip());
   if (!owner) return;
+  m_pinAction->setEnabled(ready && !m_canvasOperationPending && !m_closePending && bool(m_pinPorts.publish)); if (!owner) return;
+  m_pinAction->setToolTip(m_pinPorts.publish ? m_pinAction->statusTip() : "Pin to Screen is unavailable: no pin service was provided.");
+  if (!owner) return;
   setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName(),
                                                     m_session->dirty() ? QStringLiteral(" •") : QString()));
   if (!owner) return;
@@ -680,6 +687,7 @@ void EditorWindow::refresh() {
   if (!m_saveMessage.isEmpty()) status += " · " + m_saveMessage;
   if (!m_copyMessage.isEmpty()) status += " · " + m_copyMessage;
   if (!m_printMessage.isEmpty()) status += " · " + m_printMessage;
+  if (!m_pinMessage.isEmpty()) status += " · " + m_pinMessage;
   if (!m_annotationMessage.isEmpty()) status += " · " + m_annotationMessage;
   auto *bar = statusBar(); const bool notify = bar->currentMessage() != status;
   // QStatusBar emits during its internal hide/show traversal. Complete that
@@ -1169,6 +1177,7 @@ bool EditorWindow::withOutputBusy(const std::function<bool()> &operation) {
   m_retrySave->setEnabled(false); if (!guard) return false;
   m_retryCopy->setEnabled(false); if (!guard) return false;
   m_retryPrint->setEnabled(false); if (!guard) return false;
+  m_pinAction->setEnabled(false); if (!guard) return false;
   m_canvas->setEnabled(false); if (!guard) return false;
   menuBar()->setEnabled(false); if (!guard) return false;
   return operation();
@@ -1256,6 +1265,27 @@ bool EditorWindow::retryCopy() {
 }
 
 void EditorWindow::setPrintPorts(EditorPrintPorts ports) { m_printPorts = std::move(ports); refresh(); }
+void EditorWindow::setPinPorts(EditorPinPorts ports) { m_pinPorts = std::move(ports); refresh(); }
+bool EditorWindow::pinImage() {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || !m_pinPorts.publish || m_canvas->interactionActive()) return false;
+  const QPointer<EditorWindow> owner(this);
+  const auto source = m_image; const auto document = m_session->document(); const auto ports = m_pinPorts;
+  return withOutputBusy([this, owner, source, document, ports] {
+    const auto pinned = runEditorPin(source, document, this, ports); if (!owner) return false;
+    const auto &action = pinned.action;
+    const bool success = action.state == xerahs::actions::ActionState::Succeeded && !action.outcomeUnknown;
+    const auto diagnostic = action.diagnostic.value_or(QString{});
+    m_pinMessage = success ? "Image pinned; the editable document is unchanged"
+        : action.outcomeUnknown ? "Pin delivery is unknown. Check the screen before another Pin to Screen action"
+        : action.state == xerahs::actions::ActionState::Cancelled ? "Pin cancelled; the editable document is unchanged"
+        : diagnostic == "pin-annotation-unsupported" ? "A visible unsupported annotation cannot be pinned without losing it. The document is kept"
+        : "Pin failed; the editable document is kept. Use Pin to Screen to try again";
+    if (!diagnostic.isEmpty()) m_pinMessage += " (" + diagnostic + ")";
+    try { emit pinFinished(action.outcomeUnknown ? "unknown" : xerahs::actions::actionStateName(action.state), diagnostic); }
+    catch (...) { if (owner) m_pinMessage += " (completion observer failed)"; }
+    return success && bool(owner);
+  });
+}
 bool EditorWindow::printImage(const EditorPrintSnapshotPtr &retry) {
   if (m_outputPending || m_canvasOperationPending || m_closePending || !m_printPorts.configure || !m_printPorts.submit || m_canvas->interactionActive()) return false;
   const QPointer<EditorWindow> guard(this);
