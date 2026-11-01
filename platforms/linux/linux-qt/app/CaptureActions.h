@@ -11,6 +11,7 @@
 
 #include <QImage>
 #include <QString>
+#include <QTemporaryFile>
 
 #include <optional>
 
@@ -51,6 +52,9 @@ struct CaptureActionPorts {
   std::function<CaptureAnnotationChoice(const LoadedSource &, const xerahs::actions::CancellationToken &)> annotation;
   xerahs::editor::RectangleStyle annotationStyle;
   std::function<void(const std::vector<CaptureFile> &)> rasterPublished;
+  // Empty selects the system temporary directory. The managed PNG is private
+  // and belongs to this executor, never to saved capture history.
+  QString uploadTemporaryDirectory;
 };
 
 class CaptureActions final : public xerahs::actions::ActionExecutor {
@@ -59,7 +63,7 @@ public:
 
   xerahs::actions::ActionOutcome run(const xerahs::actions::ActionRequest &request) override;
   bool createTemporaryUploadFile() override;
-  void removeTemporaryUploadFile() override { m_uploadBytes.clear(); }
+  void removeTemporaryUploadFile() override { m_uploadFile.reset(); }
 
   const std::optional<QString> &savedPath() const { return m_savedPath; }
   const std::optional<CaptureFile> &savedFile() const { return m_savedFile; }
@@ -92,7 +96,7 @@ private:
   xerahs::actions::ActionOutcome upload(const xerahs::actions::ActionRequest &request);
   xerahs::actions::ActionOutcome copyUrl(const xerahs::actions::CancellationToken &cancellation);
   QString m_uploadUrl;
-  QByteArray m_uploadBytes;
+  std::unique_ptr<QTemporaryFile> m_uploadFile;
   QImage m_media;
   QString m_directory;
   QString m_pattern;

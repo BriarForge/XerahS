@@ -178,23 +178,30 @@
       }
     },
     "PCA-006": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "clipboard-failure-continues",
         "upload-without-save-uses-temporary-file"
       ],
-      "note": "Native temporary upload uses m_uploadBytes and UploadInput.fileBytes, not a managed temporary file. Core artifact resolution vectors alone do not establish native file lifecycle compliance.",
+      "note": "Native upload consumes the validated saved PNG when available. Otherwise CaptureActions now creates and flushes an owner-private managed PNG, materializes its path before exposing temporary.file, and passes that path to the existing bounded upload request builder. Native HTTP fixtures check source pixels, file permissions, saved-file precedence and typed artifact results. The native default cleanup policy is covered; broader pipeline retention and target qualification remain separate.",
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 48,
         "published_vectors": [
           "clipboard-failure-continues",
           "upload-without-save-uses-temporary-file"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Candidate native saved-file/temporary.file resolution and managed PNG lifecycle are covered by real HTTP, pixel/permission, cleanup/failure/cancellation/isolation tests and the published engine vectors. Full capability and target/human qualification remain separate.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp"
+        ],
+        "incremental_base_revision": "ecba8899d75104af1c1dcd45babf7f0d0ccc02d2"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp"
+      ]
     },
     "PCA-007": {
       "status": "partial",
@@ -582,25 +589,32 @@
       }
     },
     "PCA-019": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "upload-without-save-uses-temporary-file",
         "upload-temporary-not-permitted",
         "save-failure-fallbacks"
       ],
       "disposition": "Required",
-      "note": "createTemporaryUploadFile encodes to QBuffer; native managed-file acknowledgement/cleanup/retention is not implemented as specified.",
+      "note": "CaptureActions now owns a real QTemporaryFile rather than an in-memory buffer. Default engine cleanup removes it after success, destination/credential/HTTP failure or cancellation; executor destruction also releases abandoned files. CaptureUploadTest checks private pixels/permissions, isolated concurrent ownership, failed creation/encoding and independent action continuation. No persisted retention policy is added; full target qualification remains separate.",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 98,
         "published_vectors": [
           "upload-without-save-uses-temporary-file",
           "upload-temporary-not-permitted",
           "save-failure-fallbacks"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Candidate native saved-file/temporary.file resolution and managed PNG lifecycle are covered by real HTTP, pixel/permission, cleanup/failure/cancellation/isolation tests and the published engine vectors. Full capability and target/human qualification remain separate.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp"
+        ],
+        "incremental_base_revision": "ecba8899d75104af1c1dcd45babf7f0d0ccc02d2"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp"
+      ]
     },
     "PCA-020": {
       "status": "partial",

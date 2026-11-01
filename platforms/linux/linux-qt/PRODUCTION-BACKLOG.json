@@ -16,10 +16,10 @@
   "desktop_capability_count": 15,
   "counts": {
     "blocked": 7,
-    "implemented": 90,
+    "implemented": 92,
     "not-applicable": 1,
     "not-started": 27,
-    "partial": 200
+    "partial": 198
   },
   "capabilities": [
     {
@@ -35,8 +35,8 @@
       "capability": "POST-CAPTURE-ACTIONS-001",
       "requirements": 24,
       "counts": {
-        "implemented": 12,
-        "partial": 12
+        "implemented": 14,
+        "partial": 10
       },
       "trace": "traceability/POST-CAPTURE-ACTIONS-001.json"
     },
@@ -197,6 +197,18 @@
       "previous": "partial",
       "current": "implemented",
       "reason": "Both quick-confirm and explicit Enter flows now have native frozen-preference/controller pixel-output tests; authoritative mixed-monitor and target/human qualification remain separate open requirements."
+    },
+    {
+      "requirement": "PCA-006",
+      "previous": "partial",
+      "current": "implemented",
+      "reason": "Managed native PNG upload artifact now has real file/pixel/permission/HTTP/cleanup evidence alongside published engine vectors; target and human qualification remain separate."
+    },
+    {
+      "requirement": "PCA-019",
+      "previous": "partial",
+      "current": "implemented",
+      "reason": "Managed native PNG upload artifact now has real file/pixel/permission/HTTP/cleanup evidence alongside published engine vectors; target and human qualification remain separate."
     }
   ],
   "review_limitations": [
@@ -540,6 +552,17 @@
       "outcome": "Native SpeechBalloon creation/editing now supports an independent optional #AARRGGBB border override, including transparent zero; absence/clearing preserves the original stroke-color rule. Body and tail share the existing outline geometry. Five baseline failures reproduced the missing native control, ignored opaque/half/zero-alpha outline pixels and invalid import admission. EditorCanvasTest covers Apply/Cancel/no-op/invalid input, one history step, undo/redo/reload, immutable source, retained text/fill/tail fields, canonical clipboard round-trip, actual creation and independent source-over export pixels. The field is typed only for SpeechBalloon; Text/other/unknown families retain same-named opaque data. Regular Text border geometry, other tool options and physical/human qualification remain partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
+      ]
+    },
+    {
+      "requirements": [
+        "PCA-006",
+        "PCA-019"
+      ],
+      "outcome": "CaptureActions replaces its buffer-only temporary.file with a real owner-private PNG consumed by path and removed by default engine cleanup or executor teardown. Saved-file precedence, success/failure/cancel cleanup and independent action continuation have native tests.",
+      "evidence": [
+        "tests/CaptureUploadTest.cpp",
+        "app/CaptureActions.cpp"
       ]
     }
   ],

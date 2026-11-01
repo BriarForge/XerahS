@@ -4,7 +4,9 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QGuiApplication>
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QRegularExpression>
@@ -60,18 +62,32 @@ class CaptureUploadTest : public QObject {
 private slots:
   void transfer_data() {
     QTest::addColumn<QString>("mode");
-    for (const auto *mode : {"memory", "saved", "missing-default", "missing-secret", "http-error", "cancel"}) QTest::newRow(mode) << QString(mode);
+    for (const auto *mode : {"temporary", "saved", "missing-default", "missing-secret", "http-error", "cancel"}) QTest::newRow(mode) << QString(mode);
   }
   void transfer() {
     QFETCH(QString, mode);
-    QTemporaryDir dir; HttpFixture http; QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    QTemporaryDir dir, uploadDir; QVERIFY(uploadDir.isValid()); HttpFixture http; QVERIFY(http.server.listen(QHostAddress::LocalHost));
     http.status = mode == "http-error" ? 500 : 200; http.hold = mode == "cancel";
     const auto destination = http.destination(); DestinationCatalog catalog(dir.filePath("destinations.json"));
     if (mode != "missing-default") QVERIFY(catalog.add(destination).isEmpty());
     auto credentials = std::make_shared<MemoryCredentialStore>();
     if (mode != "missing-secret") QVERIFY(credentials->store(destination.id, "token", "fixture-secret").ok());
     CaptureActionPorts ports; ports.uploadCatalogPath = dir.filePath("destinations.json"); ports.uploadCredentials = credentials;
-    bool worker = false; ports.actionStarted = [&](const QString &id) { if (id == "upload") worker = QThread::currentThread() != qApp->thread(); };
+    ports.uploadTemporaryDirectory = uploadDir.path();
+    bool worker = false, temporaryPixelsMatch = false, temporaryPrivate = false;
+    QStringList temporaryPaths;
+    ports.actionStarted = [&](const QString &id) {
+      if (id != "upload") return;
+      worker = QThread::currentThread() != qApp->thread();
+      temporaryPaths = QDir(uploadDir.path()).entryList(QDir::Files);
+      if (temporaryPaths.size() != 1) return;
+      const auto path = uploadDir.filePath(temporaryPaths.first());
+      temporaryPixelsMatch = QImage(path) == pixels();
+      const auto permissions = QFileInfo(path).permissions();
+      temporaryPrivate = permissions.testFlag(QFileDevice::ReadOwner) && permissions.testFlag(QFileDevice::WriteOwner) &&
+          !(permissions & (QFileDevice::ReadGroup | QFileDevice::WriteGroup | QFileDevice::ExeGroup |
+                           QFileDevice::ReadOther | QFileDevice::WriteOther | QFileDevice::ExeOther));
+    };
     auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
     QStringList selected{"upload"}; if (mode == "saved") selected.prepend("save");
     CapturePipeline pipeline(pixels(), dir.filePath("captures"), "fixture", selected, nullptr, ports, journal);
@@ -79,8 +95,15 @@ private slots:
     if (mode == "cancel") { QTRY_VERIFY(http.received); pipeline.cancel(); }
     QTRY_COMPARE_WITH_TIMEOUT(done.count(), 1, 7000);
     const auto receipt = qvariant_cast<CapturePipelineReceipt>(done.first().first()); QVERIFY(receipt); QVERIFY(worker);
+    QVERIFY(QDir(uploadDir.path()).entryList(QDir::Files).isEmpty());
     const auto &result = receipt->pipeline.orderedResults.back();
-    if (mode == "memory" || mode == "saved") {
+    if (mode == "saved") {
+      QVERIFY(temporaryPaths.isEmpty()); QCOMPARE(result.inputArtifact, std::optional<QString>("save.file"));
+    } else {
+      QCOMPARE(temporaryPaths.size(), 1); QVERIFY(temporaryPixelsMatch); QVERIFY(temporaryPrivate);
+      QCOMPARE(result.inputArtifact, std::optional<QString>("temporary.file"));
+    }
+    if (mode == "temporary" || mode == "saved") {
       QCOMPARE(result.state, ActionState::Succeeded); QVERIFY(receipt->pipeline.upload);
       const auto upload = uploadJson(receipt->canonicalResult()); QCOMPARE(upload.value("url").toString(), QString("https://example.test/image"));
       QCOMPARE(upload.value("thumbnail_url").toString(), QString("https://example.test/thumb"));
@@ -89,7 +112,10 @@ private slots:
       if (mode == "saved") {
         QVERIFY(receipt->file); QFile file(receipt->file->path); QVERIFY(file.open(QIODevice::ReadOnly));
         QVERIFY(http.wire.contains(file.readAll())); QVERIFY(http.wire.contains("filename=\"fixture.png\""));
-      } else QVERIFY(!QFile::exists(dir.filePath("captures")));
+      } else {
+        QVERIFY(!QFile::exists(dir.filePath("captures")));
+        QVERIFY(http.wire.contains("filename=\"capture.png\""));
+      }
     } else if (mode == "cancel") {
       QCOMPARE(result.state, ActionState::Cancelled); QVERIFY(!receipt->pipeline.upload);
     } else {
@@ -100,8 +126,42 @@ private slots:
       QVERIFY(!receipt->canonicalResult().isEmpty());
     }
     const auto report = QJsonDocument(receipt->canonicalResult()).toJson(); QVERIFY(!report.contains("fixture-secret"));
+    QVERIFY(!report.contains(uploadDir.path().toUtf8()));
     const auto listing = journal->list(); QCOMPARE(listing.entries.size(), size_t(1)); QVERIFY(listing.entries.front().parsed.record);
     QCOMPARE(uploadJson(listing.entries.front().parsed.record->report), uploadJson(receipt->canonicalResult()));
+  }
+  void temporaryFileCleanupAndIsolation() {
+    QTemporaryDir directory; QVERIFY(directory.isValid());
+    CaptureActionPorts ports; ports.uploadTemporaryDirectory = directory.path();
+    {
+      CaptureActions first(pixels(), {}, {}, ports), second(pixels(), {}, {}, ports);
+      QVERIFY(first.createTemporaryUploadFile()); QVERIFY(second.createTemporaryUploadFile());
+      QCOMPARE(QDir(directory.path()).entryList(QDir::Files).size(), 2);
+      first.removeTemporaryUploadFile();
+      QCOMPARE(QDir(directory.path()).entryList(QDir::Files).size(), 1);
+      first.removeTemporaryUploadFile();
+    }
+    QVERIFY(QDir(directory.path()).entryList(QDir::Files).isEmpty());
+    CaptureActions invalid(QImage{}, {}, {}, ports);
+    QVERIFY(!invalid.createTemporaryUploadFile());
+    QVERIFY(QDir(directory.path()).entryList(QDir::Files).isEmpty());
+  }
+  void temporaryFileCreationFailureKeepsIndependentActions() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    CaptureActionPorts ports; ports.uploadTemporaryDirectory = dir.filePath("absent");
+    int pins = 0;
+    ports.pin = [&](const QImage &image, const CancellationToken &) -> ActionOutcome { ++pins; return image == pixels() ? ActionOutcome{} : ActionOutcome{ActionState::Failed, QString("wrong-pixels"), {}}; };
+    CapturePipeline pipeline(pixels(), dir.filePath("captures"), "fixture", {"upload", "pin"}, nullptr, ports);
+    QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start();
+    QTRY_COMPARE_WITH_TIMEOUT(done.count(), 1, 7000);
+    const auto receipt = qvariant_cast<CapturePipelineReceipt>(done.first().first()); QVERIFY(receipt);
+    const auto &results = receipt->pipeline.orderedResults; QCOMPARE(results.size(), size_t(2));
+    QCOMPARE(results[0].action, QString("upload")); QCOMPARE(results[0].state, ActionState::Failed);
+    QCOMPARE(results[0].diagnostic, std::optional<QString>("temporary-file-unavailable"));
+    QCOMPARE(results[0].inputArtifact, std::optional<QString>("temporary.file"));
+    QCOMPARE(results[1].action, QString("pin")); QCOMPARE(results[1].state, ActionState::Succeeded);
+    QCOMPARE(pins, 1); QCOMPARE(receipt->workingMedia, pixels());
+    QVERIFY(!QFile::exists(ports.uploadTemporaryDirectory));
   }
   // PCA-024: url-clipboard copies only the upload URL; skipped when upload fails; clipboard failure leaves upload intact.
   void urlClipboard_data() {

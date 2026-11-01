@@ -7,7 +7,7 @@
 #include "uploads/CatalogPath.h"
 #include "uploads/DestinationCatalog.h"
 #include "uploads/UploadExecutor.h"
-#include <QBuffer>
+#include <QDir>
 #include <QEventLoop>
 #include <QFileInfo>
 #include <QNetworkAccessManager>
@@ -80,9 +80,13 @@ ActionOutcome CaptureActions::run(const ActionRequest &request) {
 }
 
 bool CaptureActions::createTemporaryUploadFile() {
-  // PCA-019: this native upload input is an in-memory PNG, never a persisted file.
-  m_uploadBytes.clear(); QBuffer buffer(&m_uploadBytes);
-  return buffer.open(QIODevice::WriteOnly) && m_media.save(&buffer, "PNG");
+  removeTemporaryUploadFile();
+  const QDir directory(m_ports.uploadTemporaryDirectory.isEmpty() ? QDir::tempPath() : m_ports.uploadTemporaryDirectory);
+  auto file = std::make_unique<QTemporaryFile>(directory.filePath(QStringLiteral("xerahs-upload-XXXXXX.png")));
+  if (!file->open() || !file->setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner) ||
+      !m_media.save(file.get(), "PNG") || !file->flush() || file->fileName().isEmpty()) return false;
+  m_uploadFile = std::move(file);
+  return true;
 }
 ActionOutcome CaptureActions::upload(const ActionRequest &request) {
   using namespace xerahs::uploads;
@@ -105,8 +109,8 @@ ActionOutcome CaptureActions::upload(const ActionRequest &request) {
     const auto validation = validateCaptureFile(*file); if (!validation.isEmpty()) return failed(validation);
     input.filePath = file->path; input.fileName = QFileInfo(file->path).fileName();
   } else {
-    if (m_uploadBytes.isEmpty() && !createTemporaryUploadFile()) return failed(diagnostic::temporaryFileUnavailable);
-    input.fileBytes = m_uploadBytes; input.fileName = "capture.png";
+    if (!m_uploadFile && !createTemporaryUploadFile()) return failed(diagnostic::temporaryFileUnavailable);
+    input.filePath = m_uploadFile->fileName(); input.fileName = "capture.png";
   }
   const auto credentials = m_ports.uploadCredentials ? m_ports.uploadCredentials : std::make_shared<SecretServiceCredentialStore>();
   const auto built = buildUploadRequest(*destination, input, *credentials);
