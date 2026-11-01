@@ -11,7 +11,9 @@ lowest incomplete user journey before adding editor styling or niche settings.
 Capture upload now uses a managed temporary PNG, and the editor has a native
 Pin to Screen action; verify those paths alongside the existing save/copy flows.
 Editor upload now confirms a frozen destination and exposes a usable URL result.
-Next finish task-host integration and remaining capture/post-capture journeys
+Local QR scanning and English OCR now share native consented file/screen/region
+inputs. Their dependencies are approved in DEPENDENCIES.md. Next connect these
+services to saved workflows and finish remaining capture/post-capture journeys
 under approved semantics. Explicit migration, recovery/retention,
 release trust and unresolved policy questions remain blocked on Mike as recorded
 in the backlog. Preserve existing recording, scheduling, tools/effects,

@@ -238,16 +238,14 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Profiles can invoke the existing region-image annotation/output path. OCR/QR/hash/combine/split/effects/tools and complete family input/metadata schemas remain Required.",
-      "waiting_on": [
-        "Mike: approve Tesseract for OCR and zxing-cpp for scanning; do not add dependencies."
-      ],
+      "note": "Profiles can invoke the existing region-image annotation/output path. OCR/QR/hash/combine/split/effects/tools and complete family input/metadata schemas remain Required. Mike approved Tesseract 5.5.3 and zxing-cpp 3.1.1; standalone local OCR/QR input tools now work. Saved-workflow/after-capture OCR/QR dispatch and remaining family schemas still require integration.",
       "audit": {
         "classification": "partial",
         "spec_line": 42,
         "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+      },
+      "dependency_approval": "platforms/linux/linux-qt/DEPENDENCIES.md"
     },
     "WFCAT-012": {
       "status": "partial",

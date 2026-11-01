@@ -40,7 +40,12 @@
     "platforms/linux/linux-qt/app/VideoConverter.h",
     "platforms/linux/linux-qt/app/VideoConverter.cpp",
     "platforms/linux/linux-qt/app/VideoConverterDialog.h",
-    "platforms/linux/linux-qt/app/VideoConverterDialog.cpp"
+    "platforms/linux/linux-qt/app/VideoConverterDialog.cpp",
+    "platforms/linux/linux-qt/app/ImageRecognition.h",
+    "platforms/linux/linux-qt/app/QrRecognition.cpp",
+    "platforms/linux/linux-qt/app/OcrRecognition.cpp",
+    "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
+    "platforms/linux/linux-qt/app/ImageRecognitionDialog.h"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/ColorFormatsTest.cpp",
@@ -64,19 +69,27 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Six of the eight utility-catalog entries are reachable. The Tools command group registers pick-colour, hash-checker, icon-converter, video-converter and qr-code, each opening one non-modal owned dialog, and image-comparer is reachable from the editor through the compare-images command. The video converter is present only where XERAHS_RECORDING and GStreamer with pbutils are found; on a build without GStreamer the command and its dialog are absent rather than explained at the start surface. background-remover is not implemented and has no approved platform disposition. konami-shader stays inventoried in the contract catalog with disposition product-owner-decision-required and has no native implementation, which is what EU-019 requires until the owner decides. A missing host service is explained rather than fatal: a missing desktop portal and a denied permission are distinct outcomes and the colour picker shows a visible message instead of crashing. Unconditional reachability of every catalog entry and the video converter availability policy remain Required.",
+      "note": "Seven of eight utility catalog entries are reachable; background removal remains missing. New Scan QR codes and Recognize text (OCR) commands use the shared native recognition dialog. QR scanning has Image File, Screen and Region inputs; OCR uses installed local English data. Missing recognition libraries/models are explained. This does not qualify the full utility catalog or supported-desktop matrix.",
       "evidence": [
         "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
         "platforms/linux/linux-qt/app/EditorWindow.cpp",
         "platforms/linux/linux-qt/app/PortalColorPicker.cpp",
         "platforms/linux/linux-qt/tests/PortalColorPickerTest.cpp",
-        "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
+        "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
+        "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 9,
         "coverage": "Partial production behavior is present; complete requirement remains unproven. QR scanning/OCR dependencies and background-removal model remain unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
+          "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
+          "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp"
+        ]
       }
     },
     "EU-002": {
@@ -120,22 +133,29 @@
     },
     "EU-004": {
       "disposition": "Required",
-      "status": "not-started",
+      "status": "implemented",
       "vectors": [],
-      "note": "QR scanning is not implemented. There is no QR decoder in the native tree: the qr-scan entry in the Core post-capture action catalog is a declared action specification only and is not a scanner. The Screen, Region and Image File modes, capture and file consent, input validation and limits, and the distinct zero, one and multiple decoded results do not exist, and no sampled pixels are uploaded because no pixels are sampled. QR scanning remains Required.",
+      "note": "Native Scan QR codes supports Image File, Screen and Region. File input uses the native picker and bounded raster loader; screen capture reuses the desktop permission transport; region selection uses the actual native retained-image crop dialog. Local ZXing returns zero, one or multiple decoded values, including Unicode and repeated values, without changing source pixels or uploading. Native decoder and actual dialog/crop tests cover file integrity, explicit Copy, permission failure, cancellation, source bounds and late-result/close behavior. zxing-cpp 3.1.1 approval is recorded in DEPENDENCIES.md; supported-target and required human qualification remain separate.",
       "evidence": [
-        "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp"
-      ],
-      "waiting_on": [
-        "Mike: approve zxing-cpp dependency for QR scanning; do not implement this pending dependency."
+        "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
+        "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
+        "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
+        "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp"
       ],
       "audit": {
-        "classification": "blocked: Approve zxing-cpp (QR scanning dependency) before implementation.",
+        "classification": "implemented",
         "spec_line": 18,
         "blocker": "Approve zxing-cpp (QR scanning dependency) before implementation.",
-        "coverage": "blocked: Approve zxing-cpp (QR scanning dependency) before implementation.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Candidate native QR scanning now covers all three inputs, consent, bounded validation, zero/one/multiple decoding and local-only output with actual backend/dialog/crop tests. Platform/human acceptance remains separate.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
+          "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
+          "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp"
+        ],
+        "incremental_base_revision": "ccde2b1"
+      },
+      "dependency_approval": "platforms/linux/linux-qt/DEPENDENCIES.md"
     },
     "EU-005": {
       "disposition": "Required",
@@ -328,26 +348,34 @@
       "disposition": "Required",
       "status": "implemented",
       "vectors": [],
-      "note": "Utility inputs stay on the device. The hash checker reads the file and keeps only its digest; the colour picker keeps a recent-colour list inside the dialog; the image comparison owns a rendered snapshot and does not modify, save or upload either input. The one outward path is the QR Upload action, which is an explicit user action handing a PNG path to the host's own file-upload port, and the uploaded PNG lives in the dialog's temporary directory and is removed with the dialog. Diagnostics are stable codes without paths or content.",
+      "note": "Utility inputs stay on the device. The hash checker reads the file and keeps only its digest; the colour picker keeps a recent-colour list inside the dialog; the image comparison owns a rendered snapshot and does not modify, save or upload either input. The one outward path is the QR Upload action, which is an explicit user action handing a PNG path to the host's own file-upload port, and the uploaded PNG lives in the dialog's temporary directory and is removed with the dialog. Diagnostics are stable codes without paths or content. QR scanning and OCR perform local decoding only, keep recognized data in an owned utility session and change the clipboard only through explicit Copy. They never enter capture save/upload/history workflows. Closing disposes the session; late workers and capture callbacks cannot republish values.",
       "evidence": [
         "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
         "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
         "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
         "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
-        "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
+        "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
+        "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp"
       ],
       "audit": {
         "classification": "implemented",
         "spec_line": 54,
         "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
+          "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
+          "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp"
+        ]
       }
     },
     "EU-016": {
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "The utility windows use native Qt controls with accessible names, visible focus and keyboard traversal: the image comparison exposes an accessible divider operable by keyboard and drag, the QR controls are named for accessibility, and the video converter's failure state carries a stable code with accessible names. Busy and error states are descriptive rather than silent, Cancel and close have defined semantics, file selection uses the native file dialog and capture uses the native desktop portal. High-contrast rendering is not exercised by a test on this platform, and the all-platforms clause is not evidenced here, so high-contrast and cross-platform accessibility qualification remain Required.",
+      "note": "The utility windows use native Qt controls with accessible names, visible focus and keyboard traversal: the image comparison exposes an accessible divider operable by keyboard and drag, the QR controls are named for accessibility, and the video converter's failure state carries a stable code with accessible names. Busy and error states are descriptive rather than silent, Cancel and close have defined semantics, file selection uses the native file dialog and capture uses the native desktop portal. High-contrast rendering is not exercised by a test on this platform, and the all-platforms clause is not evidenced here, so high-contrast and cross-platform accessibility qualification remain Required. Recognition adds named native File/Screen/Region/Copy/Cancel/Close controls, selectable plain-text results and distinct no-result/failure/busy states. Native input tests exercise the actual crop controls and session close; physical assistive-technology and full utility qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
         "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
@@ -355,20 +383,28 @@
         "platforms/linux/linux-qt/app/PortalColorPicker.cpp",
         "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp",
         "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
+        "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
+        "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 58,
         "coverage": "Partial production behavior is present; complete requirement remains unproven. QR scanning/OCR dependencies and background-removal model remain unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
+          "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
+          "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp"
+        ]
       }
     },
     "EU-017": {
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Existing dialogs own cancellation and converter temporary cleanup, but absent QR scan/model sessions and complete utility lifecycle qualification prevent catalogue-wide completion.",
+      "note": "QR/OCR windows cancel owned load/recognition work and portal requests on Cancel/Close, delete private sessions on close, ignore stale completions and retain prior results on cancelled replacement. ZXing owns its decode call; Tesseract uses an owned engine/text buffer and cancellation/progress monitor, including missing-model cleanup. Native close/late-result tests pass. Background-model sessions and full utility/hardware qualification remain incomplete.",
       "evidence": [
         "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
         "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
@@ -378,13 +414,21 @@
         "platforms/linux/linux-qt/tests/HashCheckerDialogTest.cpp",
         "platforms/linux/linux-qt/tests/ImageComparisonDialogTest.cpp",
         "platforms/linux/linux-qt/tests/QrCodeDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/GstConversionRunnerLifetimeTest.cpp"
+        "platforms/linux/linux-qt/tests/GstConversionRunnerLifetimeTest.cpp",
+        "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
+        "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
+        "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 61,
         "coverage": "Partial production behavior is present; complete requirement remains unproven. QR scanning/OCR dependencies and background-removal model remain unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
+          "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
+          "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp"
+        ]
       }
     },
     "EU-018": {

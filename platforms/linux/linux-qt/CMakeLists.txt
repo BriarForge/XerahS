@@ -293,8 +293,6 @@ add_executable(xerahs
   app/ImageComparisonDialog.h
   app/NewImageDialog.cpp
   app/NewImageDialog.h
-  app/PortalScreenshot.cpp
-  app/PortalScreenshot.h
   app/PortalRemoteDesktop.cpp
   app/PortalRemoteDesktop.h
   app/ScrollCapture.cpp
@@ -1240,3 +1238,48 @@ set_target_properties(last-region-store-test PROPERTIES AUTOMOC ON)
 target_link_libraries(last-region-store-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME last-region-store COMMAND last-region-store-test)
 set_tests_properties(last-region-store PROPERTIES TIMEOUT 30)
+
+# Local recognition dependencies approved by the product owner, 2026-11-02.
+find_package(ZXing 3.1.1 QUIET)
+find_package(PkgConfig QUIET)
+if(PkgConfig_FOUND)
+  pkg_check_modules(XERAHS_TESSERACT QUIET IMPORTED_TARGET tesseract>=5.5.3)
+endif()
+add_library(xerahs_portal_screenshot STATIC app/PortalScreenshot.cpp app/PortalScreenshot.h)
+set_target_properties(xerahs_portal_screenshot PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_portal_screenshot PUBLIC app)
+target_link_libraries(xerahs_portal_screenshot PUBLIC xerahs_editor_codecs Qt6::DBus)
+add_library(xerahs_image_recognition STATIC app/ImageRecognition.h app/QrRecognition.cpp app/OcrRecognition.cpp
+  app/ImageRecognitionDialog.cpp app/ImageRecognitionDialog.h)
+set_target_properties(xerahs_image_recognition PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_image_recognition PUBLIC app)
+target_link_libraries(xerahs_image_recognition PUBLIC xerahs_editor_source xerahs_editor_canvas xerahs_portal_screenshot Qt6::Widgets)
+target_compile_options(xerahs_image_recognition PRIVATE -Wall -Wextra -Wpedantic)
+if(TARGET ZXing::ZXing)
+  target_compile_definitions(xerahs_image_recognition PUBLIC XERAHS_ZXING)
+  target_link_libraries(xerahs_image_recognition PRIVATE ZXing::ZXing)
+else()
+  message(STATUS "QR scanning unavailable: optional zxing-cpp >=3.1.1 is not installed")
+endif()
+if(TARGET PkgConfig::XERAHS_TESSERACT)
+  target_compile_definitions(xerahs_image_recognition PUBLIC XERAHS_TESSERACT)
+  target_link_libraries(xerahs_image_recognition PRIVATE PkgConfig::XERAHS_TESSERACT)
+else()
+  message(STATUS "OCR unavailable: optional Tesseract >=5.5.3 is not installed")
+endif()
+target_link_libraries(xerahs PRIVATE xerahs_image_recognition xerahs_portal_screenshot)
+target_link_libraries(application-window-test PRIVATE xerahs_image_recognition)
+foreach(recognition_test qr-recognition ocr-recognition image-recognition-dialog)
+  if(recognition_test STREQUAL "qr-recognition")
+    set(recognition_source tests/QrRecognitionTest.cpp)
+  elseif(recognition_test STREQUAL "ocr-recognition")
+    set(recognition_source tests/OcrRecognitionTest.cpp)
+  else()
+    set(recognition_source tests/ImageRecognitionDialogTest.cpp)
+  endif()
+  add_executable(${recognition_test}-test ${recognition_source})
+  set_target_properties(${recognition_test}-test PROPERTIES AUTOMOC ON)
+  target_link_libraries(${recognition_test}-test PRIVATE xerahs_image_recognition xerahs_qr_code Qt6::Test)
+  add_test(NAME ${recognition_test} COMMAND ${recognition_test}-test)
+  set_tests_properties(${recognition_test} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+endforeach()

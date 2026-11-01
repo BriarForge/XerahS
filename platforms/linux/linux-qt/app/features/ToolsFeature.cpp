@@ -4,6 +4,7 @@
 #include "AppContext.h"
 #include "ColorPickerDialog.h"
 #include "HashCheckerDialog.h"
+#include "ImageRecognitionDialog.h"
 #include "IconConverterDialog.h"
 #include "QrCodeDialog.h"
 #include "VideoConverterDialog.h"
@@ -50,6 +51,12 @@ void installToolDialogs(CommandRegistry &commands, const std::function<QWidget *
   addDialog<HashCheckerDialog>(commands,
       CommandSpec{QStringLiteral("hash-checker"), QStringLiteral("Hash checker…"), CommandGroup::Tools, toolSurfaces(false)},
       [parent] { return new HashCheckerDialog(parentWidget(parent)); });
+  addDialog<ImageRecognitionDialog>(commands,
+      CommandSpec{QStringLiteral("scan-qr"), QStringLiteral("Scan QR codes…"), CommandGroup::Tools, toolSurfaces(false)},
+      [parent] { return new ImageRecognitionDialog(ImageRecognitionKind::QrCode, parentWidget(parent)); });
+  addDialog<ImageRecognitionDialog>(commands,
+      CommandSpec{QStringLiteral("recognize-text"), QStringLiteral("Recognize text (OCR)…"), CommandGroup::Tools, toolSurfaces(false)},
+      [parent] { return new ImageRecognitionDialog(ImageRecognitionKind::Text, parentWidget(parent)); });
   addDialog<IconConverterDialog>(commands,
       CommandSpec{QStringLiteral("icon-converter"), QStringLiteral("Icon converter…"), CommandGroup::Tools, toolSurfaces(false)},
       [parent] { return new IconConverterDialog(parentWidget(parent)); });

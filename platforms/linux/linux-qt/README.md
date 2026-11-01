@@ -246,6 +246,15 @@ after success, failure or cancellation, and retains the captured pixels. A saved
 capture still supplies the upload when available. `CaptureUploadTest` verifies
 the real file, permissions, pixels, local HTTP transfer and cleanup.
 
+**Local QR scanning and OCR:** Tools → Scan QR codes… and Recognize text (OCR)…
+accept an Image File, a consented Screen capture, or a Region selected from the
+captured snapshot. QR results distinguish none, one and multiple detections;
+OCR uses installed English data and a white reading background for transparency.
+Copy results is explicit. Cancel/Close stops the owned operation and private
+sessions are disposed on close. Missing libraries or English data are explained.
+[Dependency approval and versions](DEPENDENCIES.md) records the optional native
+ZXing/Tesseract integration. Recognition never invokes capture save/upload tasks.
+
 ## Build and test
 
 See [`../AGENTS.md`](../AGENTS.md) for the toolchain. On Ubuntu 24.04:

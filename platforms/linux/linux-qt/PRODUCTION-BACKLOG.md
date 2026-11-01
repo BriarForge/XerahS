@@ -4,8 +4,8 @@ Audit date: 2026-10-28. Reviewed source: `e7528f29a44236ddbb153e1ab28039697573e3
 
 This is a source/test audit of every capability in `product-contract/manifest.yaml`,
 not release approval or an accepted platform disposition. The 325 desktop rows
-classify **93 tested candidate implementations**, **197 partial**, **27 not started**,
-**7 blocked**, and **one mobile-scope-only row** (CORE-029). All 20 MOB requirements
+classify **94 tested candidate implementations**, **197 partial**, **27 not started**,
+**6 blocked**, and **one mobile-scope-only row** (CORE-029). All 20 MOB requirements
 are outside Linux desktop scope. Linked field, action and algorithm ledgers remain
 obligations; these unweighted labels do not measure product readiness.
 
@@ -29,7 +29,7 @@ Graph relationships were navigation aids and were not used as conformance eviden
 | [EDITOR-CANVAS-001](traceability/EDITOR-CANVAS-001.json) | 9 implemented, 2 not-started, 6 partial | New/Open, viewport-only zoom/pan, crop, auto-crop, canvas anchors, quarter/custom rotation, clear and comparison use tested production operations and owned preparation. Unknown/unsupported transforms are refused or retained explicitly. | Clipboard/screen insertion, all-tool resize/directional transforms, background composition, color/resource breadth and target qualification remain incomplete; smart padding is blocked on policy. |
 | [EDITOR-OUTPUT-ACTIONS-001](traceability/EDITOR-OUTPUT-ACTIONS-001.json) | 1 implemented, 1 not-started, 14 partial | Owned immutable save/copy/print paths and native PNG/JPEG/WebP Save As are present with explicit quality/matte and encoded-raster companion hashes. Tests cover atomic failures and companion-only repair without changing the durable path early. | Approved pin service/desktop qualification, task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved. |
 | [EDITOR-SETTINGS-001](traceability/EDITOR-SETTINGS-001.json) | 2 not-started, 14 partial | Private preference, recent-image, drawing, toolbar, appearance and window-placement stores/dialogs have atomic/unknown/conflict and native tests. Text font controls are per-object content, not persisted font preference coverage. | Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete. |
-| [EDITOR-UTILITIES-001](traceability/EDITOR-UTILITIES-001.json) | 5 blocked, 8 implemented, 6 partial | Production streamed hashes, QR generation, ICO writing, image comparison and structured atomic video conversion have tests. ToolsFeature exposes native windows and missing dependencies honestly. | QR scanning/OCR dependencies and background-removal model remain unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked. |
+| [EDITOR-UTILITIES-001](traceability/EDITOR-UTILITIES-001.json) | 4 blocked, 9 implemented, 6 partial | Production streamed hashes, QR generation, ICO writing, image comparison and structured atomic video conversion have tests. ToolsFeature exposes native windows and missing dependencies honestly. | Local QR scanning and English OCR now have approved dependencies and tested native input windows. The background-removal model remains unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked. |
 | [SETTINGS-CATALOG-001](traceability/SETTINGS-CATALOG-001.json) | 3 not-started, 17 partial | ApplicationSettings uses PrivateJsonFile, field-level repair and portable hotkey plans. Native settings expose region quick-confirm/snapping and scheduling/audio options. Execution-history metadata can be removed explicitly without removing outputs. | Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete. |
 | [WORKFLOW-CATALOG-001](traceability/WORKFLOW-CATALOG-001.json) | 18 partial | Saved capture definitions, authenticated activation IDs, shared shortcuts and durable execution snapshots connect to native capture pipelines. Confirmed metadata removal preserves outputs and refuses stale/newer/corrupt records. | All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete. |
 | [INTERFACE-CATALOG-001](traceability/INTERFACE-CATALOG-001.json) | 3 not-started, 15 partial | CommandRegistry feature installers and authenticated activation route shared semantic requests. Native/process tests cover busy admission, redacted execution discovery/results, modal lifetime and stable errors. | Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete. |
@@ -37,6 +37,11 @@ Graph relationships were navigation aids and were not used as conformance eviden
 | [COMPATIBILITY-CATALOG-001](traceability/COMPATIBILITY-CATALOG-001.json) | 6 not-started, 12 partial | XANN, private native JSON, isolated SXCU secret-reference import and SXIE data parsing have bounded/malformed/unknown-field fixtures. Tests do not constitute legacy migration acceptance. | Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete. |
 
 ## Changes since the previous full audit
+
+EU-004 moves from dependency-blocked to implemented candidate after explicit
+ZXing/Tesseract approval and native File/Screen/Region scanner tests. Local
+English OCR also has real recognition/cancellation and missing-model tests.
+These tools retain data locally and copy only after explicit user action.
 
 EO-007 now has native editor-to-HTTP upload evidence and moves to implemented
 candidate. The File action and Ctrl+U confirm destination/publication, freeze the
@@ -81,7 +86,7 @@ bounds. These features are preserved, not scheduled for reimplementation.
 - EA-009 alphabetic/Roman styles and reset: approve whether alphabetic 1 maps to A, what 0 means, casing and rollover after Z; approve Roman handling of 0 and values above 3999; define whether reset affects only future allocation or existing objects and how the explicit next starting value interacts with existing larger values. Current prose requires these features but supplies no mapping/reset vectors. Numeric editing within the existing version-1 document range can proceed independently; do not invent these policies.
 - RC-027 native recapture: which authoritative physical topology source may validate the stored display bounds before requesting any screenshot? The current portal path derives physical scale from the acquired image, while RC-027 requires last-region-invalid without capturing. Approve a pre-acquisition mapping source or a contract disposition; do not infer geometry or request pixels to validate stale state. Candidate durable RC-017 storage is now implemented; native recapture remains blocked on this pre-acquisition decision.
 - EO-004: format-disposition.json still says draft-selection-pending-product-owner-approval although the approved SPEC requires PNG/JPEG/WebP. Please reconcile that selection metadata and approve any future persisted quality/matte defaults before activation; this slice requires explicit values and introduces no saved defaults.
-- EU-004 and OCR workflows: approve zxing-cpp and Tesseract dependencies before recognition work.
+- QR/OCR dependencies were approved by Mike on 2026-11-02; see DEPENDENCIES.md. Remaining recognition workflow integration is implementation work, not a dependency-approval blocker.
 - EU-009/010/011 and remove_background: approve the local model, licence/provenance/integrity, tensor/device policy and any explicit download/setup behavior.
 - CORE-015: what exact approved alignment threshold replaces kScrollAlignmentThreshold? Do not change the placeholder or claim scroll qualification.
 - CORE-013, SETCAT-007: human security review of Secret Service storage remains pending. EE-015/COMPCAT-013: human security review of .sxie import remains pending.
@@ -96,7 +101,7 @@ bounds. These features are preserved, not scheduled for reimplementation.
 ## Verification and limits
 
 The audit gate configures a Debug Ninja build, builds with eight jobs and runs all
-117 registered CTest targets with six-way concurrency. Contract lint, backlog and
+122 registered CTest targets with six-way concurrency. Contract lint, backlog and
 generated desktop progress freshness are separate required checks. A green local
 suite proves candidate behavior exercised by those tests; it does not qualify
 unavailable desktops, hardware, physical accessibility, security review or releases.

@@ -15,8 +15,8 @@
   "capability_count": 16,
   "desktop_capability_count": 15,
   "counts": {
-    "blocked": 7,
-    "implemented": 93,
+    "blocked": 6,
+    "implemented": 94,
     "not-applicable": 1,
     "not-started": 27,
     "partial": 197
@@ -110,8 +110,8 @@
       "capability": "EDITOR-UTILITIES-001",
       "requirements": 19,
       "counts": {
-        "blocked": 5,
-        "implemented": 8,
+        "blocked": 4,
+        "implemented": 9,
         "partial": 6
       },
       "trace": "traceability/EDITOR-UTILITIES-001.json"
@@ -216,6 +216,12 @@
       "previous": "partial",
       "current": "implemented",
       "reason": "Native editor uploads an owned PNG through a frozen confirmed destination, supports cancellation/typed outcomes and keeps the session, with actual HTTP/editor evidence. Human review and target qualification are separate."
+    },
+    {
+      "requirement": "EU-004",
+      "previous": "blocked",
+      "current": "implemented",
+      "reason": "Mike approved the local recognition dependencies. Real native QR decoding and three consent-based input modes now have backend, file, capture dispatch and actual crop-dialog evidence; target qualification remains separate."
     }
   ],
   "review_limitations": [
@@ -297,13 +303,6 @@
     },
     {
       "capability": "EDITOR-UTILITIES-001",
-      "requirement": "EU-004",
-      "decisions": [
-        "Mike: approve zxing-cpp dependency for QR scanning; do not implement this pending dependency."
-      ]
-    },
-    {
-      "capability": "EDITOR-UTILITIES-001",
       "requirement": "EU-009",
       "decisions": [
         "Mike: approve local background-removal model, license/provenance and device policy."
@@ -328,13 +327,6 @@
       "requirement": "EU-019",
       "decisions": [
         "Mike: resolve product-owner-decision-required shader/easter-egg disposition."
-      ]
-    },
-    {
-      "capability": "WORKFLOW-CATALOG-001",
-      "requirement": "WFCAT-011",
-      "decisions": [
-        "Mike: approve Tesseract for OCR and zxing-cpp for scanning; do not add dependencies."
       ]
     }
   ],
@@ -585,6 +577,23 @@
       "evidence": [
         "tests/EditorPinTest.cpp",
         "tests/EditorUploadTest.cpp"
+      ]
+    },
+    {
+      "requirements": [
+        "EU-001",
+        "EU-004",
+        "EU-015",
+        "EU-016",
+        "EU-017",
+        "WFCAT-011"
+      ],
+      "outcome": "User-approved local ZXing QR scanning and Tesseract English OCR are reachable through native Image File/Screen/Region tool windows, with explicit Copy and owned cancellation/session cleanup. Dependency-absent and missing-model failures are explicit.",
+      "evidence": [
+        "DEPENDENCIES.md",
+        "tests/QrRecognitionTest.cpp",
+        "tests/OcrRecognitionTest.cpp",
+        "tests/ImageRecognitionDialogTest.cpp"
       ]
     }
   ],
