@@ -16,14 +16,17 @@
     "platforms/linux/linux-qt/app/EditorSaveDialog.cpp",
     "platforms/linux/linux-qt/app/EditorSaveProgress.cpp",
     "platforms/linux/linux-qt/app/EditorPin.cpp",
-    "platforms/linux/linux-qt/app/EditorPin.h"
+    "platforms/linux/linux-qt/app/EditorPin.h",
+    "platforms/linux/linux-qt/app/EditorUpload.cpp",
+    "platforms/linux/linux-qt/app/EditorUpload.h",
+    "platforms/linux/linux-qt/app/FileUploadResultDialog.cpp"
   ],
   "requirements": {
     "EO-001": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Save/copy/print/capture outputs freeze owned snapshots with lifetime/reentry tests. Native editor Pin to Screen now renders one owned source plus visible-annotation snapshot in sRGB with alpha through the existing preparation worker. Complete background and remaining host-output integration remain.",
+      "note": "Save/copy/print/capture outputs freeze owned snapshots with lifetime/reentry tests. Native editor Pin to Screen now renders one owned source plus visible-annotation snapshot in sRGB with alpha through the existing preparation worker. Complete background and remaining host-output integration remain. Editor upload now freezes source/document data before preparation and uploads the resulting PNG to one confirmed destination; native HTTP fixtures compare independent pixel/alpha expectations.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
@@ -31,7 +34,8 @@
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorPinTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorPinTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorUploadTest.cpp"
       ],
       "audit": {
         "classification": "partial",
@@ -39,7 +43,8 @@
         "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
         "incremental_evidence": [
-          "platforms/linux/linux-qt/tests/EditorPinTest.cpp"
+          "platforms/linux/linux-qt/tests/EditorPinTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorUploadTest.cpp"
         ]
       }
     },
@@ -175,23 +180,28 @@
       }
     },
     "EO-007": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Capture and file upload exist, but complete editor immutable-snapshot Upload host integration and failure/session behavior remain.",
+      "note": "Native File > Upload Image and Ctrl+U render one owned source/visible-annotation PNG snapshot, confirm the configured destination and publication implications with default Cancel, and transfer through the existing bounded upload engine on a worker. The confirmed destination is frozen even if the catalog changes. Success shows the selectable/copyable URL in the existing result dialog; known failure keeps the document and offers a fresh explicit attempt, while uncertain delivery asks the user to inspect the destination. Native local HTTP tests cover rendered pixels/alpha, confirmation cancellation, HTTP failure, transfer cancellation, missing configuration/service, unsupported annotations and owner destruction. This is candidate implementation evidence; credential/security review and supported-target/human qualification remain separate.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
         "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
-        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorUploadTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 28,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Candidate native editor upload now has immutable PNG preparation, frozen explicit destination consent, existing worker upload service, cancellation/unknown outcomes and usable URL results with real HTTP/editor tests. Target and required human security/release review are not inferred.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/EditorUploadTest.cpp"
+        ],
+        "incremental_base_revision": "5544507"
       }
     },
     "EO-008": {
@@ -314,7 +324,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Existing save/copy/print/capture ports have ownership and lifetime tests. Missing output hosts and full cross-action reentrancy/availability contracts remain. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required. EditorPinPorts now declares worker preparation, GUI publication, borrowed/owned data, cancellation, failure/unknown outcome and reentrancy semantics; an empty service visibly disables pin. Native tests cover owner destruction and throwing/reentrant publication.",
+      "note": "Existing save/copy/print/capture ports have ownership and lifetime tests. Missing output hosts and full cross-action reentrancy/availability contracts remain. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required. EditorPinPorts now declares worker preparation, GUI publication, borrowed/owned data, cancellation, failure/unknown outcome and reentrancy semantics; an empty service visibly disables pin. Native tests cover owner destruction and throwing/reentrant publication. EditorUploadPorts separates GUI consent from owned worker submission, declares cancellation/unknown-delivery/lifetime/reentrancy behavior, and visibly disables a missing service. The native service reuses existing destination validation, credential lookup and transport.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
@@ -324,7 +334,8 @@
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorPinTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorPinTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorUploadTest.cpp"
       ],
       "audit": {
         "classification": "partial",
@@ -334,7 +345,8 @@
           "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
-          "platforms/linux/linux-qt/tests/EditorPinTest.cpp"
+          "platforms/linux/linux-qt/tests/EditorPinTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorUploadTest.cpp"
         ],
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
@@ -343,7 +355,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native busy/cancel/retry/keyboard/accessibility fixtures exist for implemented outputs. Full output coverage and live assistive-technology qualification remain. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required. Editor Pin to Screen exposes a fixed accessible File action and Ctrl+P, shared busy/disabled state, cancellable progress and typed completion/failure. Known failure offers an explicit new attempt; unknown delivery asks the user to inspect the screen.",
+      "note": "Native busy/cancel/retry/keyboard/accessibility fixtures exist for implemented outputs. Full output coverage and live assistive-technology qualification remain. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required. Editor Pin to Screen exposes a fixed accessible File action and Ctrl+P, shared busy/disabled state, cancellable progress and typed completion/failure. Known failure offers an explicit new attempt; unknown delivery asks the user to inspect the screen. Upload Image now has the same File action and Ctrl+U consent path, responsive preparation/transfer progress and Cancel, busy/disabled state, stable status diagnostics, and a selectable/copyable URL on success.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
@@ -353,7 +365,8 @@
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorPinTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorPinTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorUploadTest.cpp"
       ],
       "audit": {
         "classification": "partial",
@@ -363,7 +376,8 @@
           "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
-          "platforms/linux/linux-qt/tests/EditorPinTest.cpp"
+          "platforms/linux/linux-qt/tests/EditorPinTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorUploadTest.cpp"
         ],
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
@@ -372,7 +386,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native failure and split persistence tests exist. No published EO vectors; the complete fault matrix and supported platforms remain. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required.",
+      "note": "Native failure and split persistence tests exist. No published EO vectors; the complete fault matrix and supported platforms remain. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required. EditorUploadTest adds actual local HTTP success/failure/cancellation, immutable rendered pixels, missing/unsupported service and owner-teardown evidence; the complete output/platform matrix remains unqualified.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
@@ -381,7 +395,8 @@
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorUploadTest.cpp"
       ],
       "audit": {
         "classification": "partial",
@@ -390,7 +405,8 @@
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
-          "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
+          "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+          "platforms/linux/linux-qt/tests/EditorUploadTest.cpp"
         ],
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }

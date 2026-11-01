@@ -8,6 +8,7 @@
 #include "EditorCopy.h"
 #include "EditorPrint.h"
 #include "EditorPin.h"
+#include "EditorUpload.h"
 #include "AnnotationClipboard.h"
 #include "CanvasCropDialog.h"
 #include "EditorHistory.h"
@@ -55,6 +56,7 @@ public:
   void setCopyPorts(EditorCopyPorts ports);
   void setPrintPorts(EditorPrintPorts ports);
   void setPinPorts(EditorPinPorts ports);
+  void setUploadPorts(EditorUploadPorts ports);
   void setAnnotationClipboardPorts(AnnotationClipboardPorts ports);
 signals:
   // GUI-thread acknowledgement after checkpoint/partial receipt recording;
@@ -67,6 +69,7 @@ signals:
   // Throwing completion observers are contained without repeating the job.
   void printFinished(const QString &state, const QString &diagnostic, bool cancellationArrivedDuring);
   void pinFinished(const QString &state, const QString &diagnostic);
+  void uploadFinished(const QString &state, const QString &diagnostic, const QString &url);
   void annotationTransferFinished(const QString &command, const QString &state, const QString &diagnostic, bool changed);
 
 protected:
@@ -91,6 +94,7 @@ private:
   bool printImage(const EditorPrintSnapshotPtr &retry = {});
   bool retryPrint();
   bool pinImage();
+  bool uploadImage();
   bool transferAnnotations(const QString &command);
   bool rectangleDialog(bool creation);
   bool rotateSelected();
@@ -171,6 +175,9 @@ private:
   QAction *m_pinAction = nullptr;
   EditorPinPorts m_pinPorts;
   QString m_pinMessage;
+  QAction *m_uploadAction = nullptr;
+  EditorUploadPorts m_uploadPorts;
+  QString m_uploadMessage;
   QMap<QString, QAction *> m_annotationActions;
   AnnotationClipboardPorts m_annotationClipboard;
   QString m_annotationMessage;

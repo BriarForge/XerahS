@@ -16,10 +16,10 @@
   "desktop_capability_count": 15,
   "counts": {
     "blocked": 7,
-    "implemented": 92,
+    "implemented": 93,
     "not-applicable": 1,
     "not-started": 27,
-    "partial": 198
+    "partial": 197
   },
   "capabilities": [
     {
@@ -92,7 +92,8 @@
       "requirements": 16,
       "counts": {
         "not-started": 1,
-        "partial": 15
+        "partial": 14,
+        "implemented": 1
       },
       "trace": "traceability/EDITOR-OUTPUT-ACTIONS-001.json"
     },
@@ -209,6 +210,12 @@
       "previous": "partial",
       "current": "implemented",
       "reason": "Managed native PNG upload artifact now has real file/pixel/permission/HTTP/cleanup evidence alongside published engine vectors; target and human qualification remain separate."
+    },
+    {
+      "requirement": "EO-007",
+      "previous": "partial",
+      "current": "implemented",
+      "reason": "Native editor uploads an owned PNG through a frozen confirmed destination, supports cancellation/typed outcomes and keeps the session, with actual HTTP/editor evidence. Human review and target qualification are separate."
     }
   ],
   "review_limitations": [
@@ -563,6 +570,21 @@
       "evidence": [
         "tests/CaptureUploadTest.cpp",
         "app/CaptureActions.cpp"
+      ]
+    },
+    {
+      "requirements": [
+        "EO-001",
+        "EO-007",
+        "EO-009",
+        "EO-014",
+        "EO-015",
+        "EO-016"
+      ],
+      "outcome": "The editor now has native Pin to Screen and Upload Image actions. Upload confirms a frozen configured destination, exposes progress/cancellation, keeps the document on failures and displays a selectable/copyable result URL. Pin remains partial pending approved service/desktop qualification.",
+      "evidence": [
+        "tests/EditorPinTest.cpp",
+        "tests/EditorUploadTest.cpp"
       ]
     }
   ],

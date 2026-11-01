@@ -1,6 +1,7 @@
 #include "EditorWindow.h"
 #include "EditorSaveDialog.h"
 #include "EffectsDialog.h"
+#include "FileUploadResultDialog.h"
 
 #include "EditorCanvas.h"
 #include "EditorCanvasOperations.h"
@@ -377,6 +378,10 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   m_pinAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_P)); m_pinAction->setAutoRepeat(false);
   m_pinAction->setStatusTip("Pin one snapshot of the source and visible supported annotations as sRGB with alpha. Moving, scaling or closing the pin leaves the document unchanged.");
   connect(m_pinAction, &QAction::triggered, this, [this] { pinImage(); });
+  m_uploadAction = fileMenu->addAction("&Upload Image…"); m_uploadAction->setObjectName("uploadImage");
+  m_uploadAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_U)); m_uploadAction->setAutoRepeat(false);
+  m_uploadAction->setStatusTip("Upload one source and visible-annotation snapshot as sRGB PNG with alpha. Confirm the destination and publication before transmission.");
+  connect(m_uploadAction, &QAction::triggered, this, [this] { uploadImage(); });
   auto *closeEditor = fileMenu->addAction(QStringLiteral("Close Editor"));
   closeEditor->setObjectName(QStringLiteral("closeEditor")); closeEditor->setShortcut(QKeySequence::Close);
   connect(closeEditor, &QAction::triggered, this, [this] { close(); });
@@ -672,6 +677,10 @@ void EditorWindow::refresh() {
   m_pinAction->setEnabled(ready && !m_canvasOperationPending && !m_closePending && bool(m_pinPorts.publish)); if (!owner) return;
   m_pinAction->setToolTip(m_pinPorts.publish ? m_pinAction->statusTip() : "Pin to Screen is unavailable: no pin service was provided.");
   if (!owner) return;
+  const bool uploadAvailable = m_uploadPorts.confirm && m_uploadPorts.submit;
+  m_uploadAction->setEnabled(ready && !m_canvasOperationPending && !m_closePending && uploadAvailable); if (!owner) return;
+  m_uploadAction->setToolTip(uploadAvailable ? m_uploadAction->statusTip() : "Upload Image is unavailable: no upload service was provided.");
+  if (!owner) return;
   setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName(),
                                                     m_session->dirty() ? QStringLiteral(" •") : QString()));
   if (!owner) return;
@@ -688,6 +697,7 @@ void EditorWindow::refresh() {
   if (!m_copyMessage.isEmpty()) status += " · " + m_copyMessage;
   if (!m_printMessage.isEmpty()) status += " · " + m_printMessage;
   if (!m_pinMessage.isEmpty()) status += " · " + m_pinMessage;
+  if (!m_uploadMessage.isEmpty()) status += " · " + m_uploadMessage;
   if (!m_annotationMessage.isEmpty()) status += " · " + m_annotationMessage;
   auto *bar = statusBar(); const bool notify = bar->currentMessage() != status;
   // QStatusBar emits during its internal hide/show traversal. Complete that
@@ -1178,6 +1188,7 @@ bool EditorWindow::withOutputBusy(const std::function<bool()> &operation) {
   m_retryCopy->setEnabled(false); if (!guard) return false;
   m_retryPrint->setEnabled(false); if (!guard) return false;
   m_pinAction->setEnabled(false); if (!guard) return false;
+  m_uploadAction->setEnabled(false); if (!guard) return false;
   m_canvas->setEnabled(false); if (!guard) return false;
   menuBar()->setEnabled(false); if (!guard) return false;
   return operation();
@@ -1265,6 +1276,38 @@ bool EditorWindow::retryCopy() {
 }
 
 void EditorWindow::setPrintPorts(EditorPrintPorts ports) { m_printPorts = std::move(ports); refresh(); }
+void EditorWindow::setUploadPorts(EditorUploadPorts ports) { m_uploadPorts = std::move(ports); refresh(); }
+bool EditorWindow::uploadImage() {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || !m_uploadPorts.confirm || !m_uploadPorts.submit || m_canvas->interactionActive()) return false;
+  const QPointer<EditorWindow> owner(this);
+  const auto source = m_image; const auto document = m_session->document(); const auto ports = m_uploadPorts;
+  return withOutputBusy([this, owner, source, document, ports] {
+    const auto uploaded = runEditorUpload(source, document, this, ports); if (!owner) return false;
+    const auto &action = uploaded.action;
+    const bool success = action.state == xerahs::actions::ActionState::Succeeded && !action.outcomeUnknown;
+    const auto code = action.diagnostic.value_or(QString{});
+    m_uploadMessage = success ? "Image uploaded; the editable document is unchanged"
+        : action.outcomeUnknown ? "Upload delivery is unknown. Check the destination before another upload"
+        : action.state == xerahs::actions::ActionState::Cancelled ? "Upload cancelled before transmission; the editable document is unchanged"
+        : code == "upload-destination-missing" ? "No upload destination is configured. Add one in Upload destinations; the document is kept"
+        : code == "upload-annotation-unsupported" ? "A visible unsupported annotation cannot be uploaded without losing it. The document is kept"
+        : "Upload failed; the document is kept. Use Upload Image to try again with fresh confirmation";
+    if (!code.isEmpty()) m_uploadMessage += " (" + code + ")";
+    const auto url = success && action.upload ? action.upload->url : QString{};
+    try { emit uploadFinished(action.outcomeUnknown ? "unknown" : xerahs::actions::actionStateName(action.state), code, url); }
+    catch (...) { if (owner) m_uploadMessage += " (completion observer failed)"; }
+    if (!owner) return false;
+    if (success) {
+      xerahs::uploads::UploadOutcome result;
+      result.url = action.upload->url;
+      result.thumbnailUrl = action.upload->thumbnailUrl;
+      result.deletionUrl = action.upload->deletionUrl;
+      auto *dialog = new FileUploadResultDialog(QStringLiteral("Edited image"), result, this);
+      dialog->show();
+    }
+    return success && bool(owner);
+  });
+}
 void EditorWindow::setPinPorts(EditorPinPorts ports) { m_pinPorts = std::move(ports); refresh(); }
 bool EditorWindow::pinImage() {
   if (m_outputPending || m_canvasOperationPending || m_closePending || !m_pinPorts.publish || m_canvas->interactionActive()) return false;

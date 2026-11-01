@@ -230,6 +230,16 @@ and Cancel. A missing service disables the action; failure keeps the document
 open and explains a new attempt. Desktop-service and accessibility qualification
 remain Required. `EditorPinTest` exercises the actual editor action and pin.
 
+**Editor Upload Image:** File → Upload Image or Ctrl+U renders one owned PNG
+snapshot, shows the configured destination and publication implications, then
+asks for confirmation with Cancel selected. The confirmed destination stays
+fixed for that attempt. Preparation and upload have progress and cancellation;
+uncertain delivery asks the user to inspect the destination. Success opens the
+existing result dialog with a selectable URL and explicit Copy URL. Failure
+keeps the editable document open. `EditorUploadTest` checks actual local HTTP
+payload pixels, alpha, consent, cancellation and document preservation. Required
+credential/security and supported-desktop reviews remain separate.
+
 **Capture upload without Save:** the pipeline now creates a private managed PNG
 for its `temporary.file` input. It uploads that file as `capture.png`, removes it
 after success, failure or cancellation, and retains the captured pixels. A saved
