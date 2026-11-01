@@ -67,6 +67,26 @@ These rules apply everywhere and cannot be weakened by a child file.
 
 Architecture decisions: [BXIP001](docs/proposals/BXIP001-contract-first-agent-native-platform-architecture/README.md).
 
+## Build order: build it like a house (mandatory)
+
+Work toward a usable product in dependency order: foundation, then frame, then services, then furniture. Guardrails exist to protect the product. They are not the product.
+
+| Layer | What it means here | Examples |
+|---|---|---|
+| 1. Foundation | Builds, starts, persists, and runs end to end | app shell, settings storage and migration, task pipeline, history store, conformance adapter wiring |
+| 2. Frame | Core user journeys work on the real app | capture region/window/screen, save, copy, upload to a destination, open in editor |
+| 3. Services | Journeys connect and automate | workflows and hotkeys, after-capture and after-upload actions, recording, CLI and MCP surfaces |
+| 4. Furniture | Breadth and polish within a working journey | individual annotation styles, effect parameters, colour options, extra formats, niche settings |
+| 5. Finish | Release qualification | packaging, distro qualification, accessibility audit, parity review, release gates |
+
+- **ROOT-BUILD-001** Choose the next slice from the lowest incomplete layer that blocks a user journey. Do not add furniture to a room that has no floor: a Layer 4 item waits until the Layer 1–3 path it lives on works end to end in the running application.
+- **ROOT-BUILD-002** Every checkpoint SHALL move a user-observable capability forward: a journey that newly works, or a requirement that moves to implemented with evidence. A checkpoint whose only output is new checks, validators, schemas, ledgers, lint rules, review records, or process documents does not count as progress unless it unblocks the slice in hand.
+- **ROOT-BUILD-003** Add a guardrail (test, validator, gate, ledger field, rule) only when it protects behavior that exists now or is being built in the same slice, or when a constitution invariant (ROOT-SECURITY-001, ROOT-LICENSE-001, ROOT-IDENTITY-001) requires it. Prefer one end-to-end test of the real path over layers of meta-checks. Do not build guardrails for guardrails.
+- **ROOT-BUILD-004** Stop and change course when two consecutive checkpoints add process or verification without advancing a capability, or when a slice keeps expanding sideways. Record the open edge as a short follow-up and return to the lowest incomplete layer.
+- **ROOT-BUILD-005** Prefer finishing one journey across its layers to spreading partial work across many. Partial work stays partial (PLATFORM-PROGRESS-001); it is not a reason to open more partials.
+
+This ordering governs sequence only. It does not waive ROOT-CONTRACT-001, ROOT-EVIDENCE-001, ROOT-SECURITY-001, or the review gates in ROOT-REVIEW-001; it stops agents from spending effort on scaffolding that no working feature needs yet.
+
 ## Child scopes
 
 | Path | File |
