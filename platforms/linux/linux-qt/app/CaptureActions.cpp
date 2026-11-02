@@ -39,7 +39,7 @@ QStringList CaptureActions::selectableActions() { return xerahs::workflows::impl
 QString CaptureActions::actionLabel(const QString &id) {
   static const QMap<QString, QString> names{{"save", "Save image"}, {"save-as", "Save image as new PNG…"}, {"image-clipboard", "Copy image to clipboard"},
       {"file-clipboard", "Copy image file"}, {"path-clipboard", "Copy file path"}, {"reveal", "Show saved file in folder"},
-      {"after-capture-window", "Choose capture actions"}};
+      {"after-capture-window", "Choose capture actions"}, {"quick-task-menu", "Show quick task menu"}};
   if (id == "upload") return "Upload capture";
   if (id == "before-upload-window") return "Confirm before uploading";
   if (id == "pin") return "Pin image on screen";
@@ -72,7 +72,8 @@ std::vector<CaptureFile> CaptureActions::savedFiles() const {
 ActionOutcome CaptureActions::run(const ActionRequest &request) {
   try {
     if (m_ports.actionStarted) m_ports.actionStarted(request.spec.id);
-    if (request.spec.id == QStringLiteral("after-capture-window") && m_ports.selection) return m_ports.selection(request.cancellation);
+    if ((request.spec.id == "after-capture-window" || request.spec.id == "quick-task-menu") && m_ports.selection)
+      return m_ports.selection(request.spec.id, request.cancellation);
     if (request.spec.id == "before-upload-window") return beforeUpload(request.cancellation);
     if (request.spec.id == "upload") return upload(request);
     if (request.spec.id == "url-clipboard") return copyUrl(request.cancellation);

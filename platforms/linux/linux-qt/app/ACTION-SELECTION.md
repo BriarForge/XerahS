@@ -87,8 +87,7 @@ and changes neither the original result nor the captured settings.
 
 Fixtures use temporary files/stores, private buses and offscreen Qt. They do
 not change live Avalonia configuration or invoke real capture/upload commands.
-Complete quick-task and configured selection, explicit persistent workflow
-editing, the remaining catalogue and editor handoffs, prerequisite/artifact
+The remaining catalogue and editor handoffs, prerequisite/artifact
 retry and recovery, supported distro/compositor/physical focus and assistive
 technology qualification, and all human gates remain Required. Native
 [Save As](SAVE-AS.md) now uses the same chooser, engine, multiple-file result,
@@ -105,3 +104,49 @@ from persisted metadata. The linked evidence records verification and remaining
 catalogue/shared/native/human scope. Save and Save As now retain separate
 artifacts with Save-first consumer precedence; the linked Save As evidence
 records exact native verification and remaining save variants.
+
+
+## Native quick-task selection
+
+Saved capture workflows offer Show quick task menu. It opens the same owned,
+asynchronous action chooser before transformations or output. Choices apply only
+to the current capture. Cancel, Escape, close and owner destruction cancel the
+pipeline before output and retain the captured pixels. No workflow is saved by
+this chooser.
+
+The worker carries the actual selector ID into the native dialog. Catalogue
+position validation excludes the current and earlier selectors, preventing
+loops. Quick-task selection can include the later after-capture chooser; that
+chooser starts with the effective choices accepted in the quick-task window.
+Both selectors use the shared engine, canonical action results, journal plan
+replacement and linked retry. A successful selector is preserved during output
+retry without prompting again.
+
+ActionSelectionTest exercises Save, Copy, both and no output for each selector,
+keyboard cancellation, close, cancellation at admission, parent/dialog/controller
+destruction, unavailable actions, retry and the two-selector chain. The chain
+verifies that a deselected clipboard action stays deselected in the second
+window and is absent from the durable plan. NativeCaptureWorkflowsTest creates,
+saves, reloads and runs a quick-task workflow through the real workflow editor,
+then verifies PNG pixels, journal results and unchanged persisted defaults.
+CaptureWorkflowsTest verifies discovery and definition availability.
+
+This is native candidate evidence for PCA-009/014/023. The complete quick-action
+inventory, shared catalogue coverage, supported desktops, physical accessibility
+and human acceptance remain Required.
+
+Verification on 2026-11-02 from parent revision `73e1c57` plus this checkpoint:
+
+```sh
+cmake -S platforms/linux/linux-qt -B platforms/linux/linux-qt/build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+cmake --build platforms/linux/linux-qt/build --parallel 8
+ctest --test-dir platforms/linux/linux-qt/build --output-on-failure --parallel 6
+```
+
+Result: `100% tests passed out of 124`. The focused action-selection,
+capture-workflows and native-capture-workflows targets also passed separately.
+Contract lint passed on a temporary snapshot of all tracked working-tree files;
+the live checkout's nested local worktrees otherwise produce duplicate-rule
+findings. Backlog and generated progress checks passed. Tests used the local
+host toolchain and native offscreen/private-bus fixtures; these results do not
+qualify other desktop targets or replace human acceptance.

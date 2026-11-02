@@ -39,7 +39,7 @@ struct ClipboardCall {
   bool done = false;
   ActionOutcome result;
 };
-struct SelectionCall { bool done = false; ActionOutcome result; };
+struct SelectionCall { QString action; bool done = false; ActionOutcome result; };
 struct FileOutputCall { QString action; std::optional<CaptureFile> file; bool claimed = false, done = false; ActionOutcome result; };
 struct SaveAsCall { QString directory; bool done = false; CaptureSaveAsChoice choice; };
 struct AnnotationCall { LoadedSource source; bool done = false; CaptureAnnotationChoice choice; };
@@ -55,7 +55,7 @@ QString actionActivity(const QString &id) {
   if (id == "ocr") return QStringLiteral("Recognizing capture text locally. Cancel Capture stops recognition.");
   if (id == "ocr-clipboard") return QStringLiteral("Copying recognized text to the clipboard.");
   if (id == "qr-scan") return QStringLiteral("Scanning capture QR codes locally. Cancel Capture stops recognition.");
-  if (id == "after-capture-window") return QStringLiteral("Choose actions for this capture. Escape cancels before saving or copying.");
+  if (id == "after-capture-window" || id == "quick-task-menu") return QStringLiteral("Choose actions for this capture. Escape cancels before saving or copying.");
   if (id == "file-clipboard") return QStringLiteral("Copying the saved file to the clipboard.");
   if (id == "path-clipboard") return QStringLiteral("Copying the saved file path to the clipboard.");
   if (id == "pin") return QStringLiteral("Pinning the capture on screen.");
@@ -205,9 +205,9 @@ void CapturePipeline::start() {
     state->changed.wait(lock, [&] { return call->done || (token.requested() && !call->claimed); });
     return call->done ? call->result : cancelled();
   };
-  ports.selection = [state](const CancellationToken &token) {
+  ports.selection = [state](const QString &action, const CancellationToken &token) {
     if (token.requested()) return cancelled();
-    auto call = std::make_shared<SelectionCall>();
+    auto call = std::make_shared<SelectionCall>(); call->action = action;
     std::unique_lock<std::mutex> lock(state->mutex); state->selection = call;
     state->changed.wait(lock, [&] { return call->done || token.requested(); });
     return token.requested() ? cancelled() : call->result;
@@ -392,11 +392,12 @@ void CapturePipeline::poll() {
       emit choosingActions(); if (!guard) return;
       if (state->cancellation.requested()) completeSelection(state, selection, cancelled());
       else {
-        auto *dialog = new ActionSelectionDialog(m_selected, m_media.size(), m_selectionParent); m_selectionDialog = dialog;
+        auto *dialog = new ActionSelectionDialog(m_selected, m_media.size(), m_selectionParent, selection->action); m_selectionDialog = dialog;
         const QPointer<QWidget> selectionParent(m_selectionParent);
-        connect(dialog, &QDialog::finished, this, [state, selection, dialog, selectionParent](int result) {
+        connect(dialog, &QDialog::finished, this, [this, state, selection, dialog, selectionParent](int result) {
           auto outcome = result == QDialog::Accepted
               ? ActionOutcome{ActionState::Succeeded, {}, dialog->selectedActions()} : cancelled();
+          if (outcome.replacementSelection) m_selected = *outcome.replacementSelection;
           const auto ownedState = state; const auto ownedCall = selection;
           // Restore the transient owner before acknowledging selection to the
           // worker. Clipboard dispatch still belongs to the GUI thread.

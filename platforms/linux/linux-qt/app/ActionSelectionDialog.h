@@ -8,13 +8,15 @@ namespace xerahs::app {
 class ActionSelectionDialog final : public QDialog {
   Q_OBJECT
 public:
-  ActionSelectionDialog(const QStringList &configured, const QSize &dimensions, QWidget *parent = nullptr);
+  ActionSelectionDialog(const QStringList &configured, const QSize &dimensions, QWidget *parent = nullptr,
+                        QString selector = QStringLiteral("after-capture-window"));
   QStringList selectedActions() const { return m_selected; }
 public slots:
   void accept() override;
 private:
   std::vector<std::pair<QString, QCheckBox *>> m_choices;
   QStringList m_selected;
+  QString m_selector;
   QLabel *m_error = nullptr;
 };
 } // namespace xerahs::app

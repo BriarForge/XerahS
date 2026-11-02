@@ -43,11 +43,11 @@ private slots:
     QApplication::setAttribute(Qt::AA_DontUseNativeDialogs); QVERIFY(privateSettings.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, privateSettings.path()); QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, privateSettings.path());
   }
   void createSaveRestartRunSelectedAndPublishActualOutputs_data() {
-    QTest::addColumn<QString>("mode"); for (const auto *mode : {"save", "clipboard", "ask", "empty"}) QTest::newRow(mode) << QString(mode);
+    QTest::addColumn<QString>("mode"); for (const auto *mode : {"save", "clipboard", "ask", "quick", "empty"}) QTest::newRow(mode) << QString(mode);
   }
   void createSaveRestartRunSelectedAndPublishActualOutputs() {
     QFETCH(QString, mode); QTemporaryDir dir; const auto path = dir.filePath("workflows.json"); NativeCaptureWorkflows host(path); QWidget parent; parent.show();
-    const QStringList actions = mode == "clipboard" ? QStringList{"image-clipboard"} : mode == "empty" ? QStringList{} : QStringList{"save"};
+    const QStringList actions = mode == "clipboard" ? QStringList{"image-clipboard"} : mode == "empty" ? QStringList{} : mode == "quick" ? QStringList{"quick-task-menu", "save"} : QStringList{"save"};
     const auto label = "Quick " + mode; bool edited = false;
     QTimer::singleShot(0, this, [&] {
       auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog); const QPointer<QDialog> weak(dialog); const auto close = qScopeGuard([weak] { if (weak) weak->reject(); });
@@ -71,9 +71,14 @@ private slots:
     QTimer chooser; connect(&chooser, &QTimer::timeout, this, [&] { if (auto *dialog = qobject_cast<ActionSelectionDialog *>(QApplication::activeModalWidget())) dialog->accept(); }); chooser.start(5);
     pipeline.start(); QTRY_COMPARE(done.count(), 1); chooser.stop(); const auto result = receipt(done); QCOMPARE(result->pipeline.state, PipelineState::Completed); QCOMPARE(copied, mode == "clipboard" ? 1 : 0);
     QVERIFY(correctClipboard);
-    const bool saved = mode == "save" || mode == "ask"; QCOMPARE(bool(result->file), saved);
+    const bool saved = mode == "save" || mode == "ask" || mode == "quick"; QCOMPARE(bool(result->file), saved);
     if (saved) { QCOMPARE(result->file->path, dir.filePath("profile/nested/profile-12x8.png")); const QImage actual(result->file->path); QCOMPARE(actual.size(), image.size()); QCOMPARE(actual.pixelColor(2, 2), image.pixelColor(2, 2)); }
     else QVERIFY(result->files.empty());
+    if (mode == "quick") {
+      QCOMPARE(result->pipeline.orderedResults.size(), size_t(2));
+      QCOMPARE(result->pipeline.orderedResults[0].action, QString("quick-task-menu"));
+      QCOMPARE(result->pipeline.orderedResults[1].action, QString("save"));
+    }
     QCOMPARE(result->pipeline.workflowSnapshot.value("name"), QJsonValue(label)); QCOMPARE(bytes(path), stored);
     const auto records = journal->list().entries; QCOMPARE(records.size(), size_t(1)); QVERIFY(records[0].parsed.record && records[0].parsed.record->terminal);
     const auto recovered = records[0].parsed.record->report.value("extensions").toObject().value("com.xerahs.app").toObject().value("capture_workflow").toObject(); QCOMPARE(recovered.value("id"), QJsonValue(selected->id.toString(QUuid::WithoutBraces)));

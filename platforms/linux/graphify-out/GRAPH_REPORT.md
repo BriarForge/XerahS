@@ -1,12 +1,19 @@
 # Graph Report - linux  (2026-11-02)
 
 ## Corpus Check
-- Large corpus: 582 files · ~606,878 words. Semantic extraction will be expensive (many Claude tokens). Consider running on a subfolder.
+- 581 files · ~607,556 words
+- Verdict: corpus is large enough that graph structure adds value.
+- Unclassified: 9 file(s) not represented in the graph (top: .sxcu 5, (none) 1, .desktop 1)
 
 ## Summary
-- 13079 nodes · 33027 edges · 463 communities (403 shown, 60 thin omitted)
-- Extraction: 86% EXTRACTED · 14% INFERRED · 0% AMBIGUOUS · INFERRED: 4591 edges (avg confidence: 0.85)
+- 13087 nodes · 33045 edges · 461 communities (398 shown, 63 thin omitted)
+- Extraction: 86% EXTRACTED · 14% INFERRED · 0% AMBIGUOUS · INFERRED: 4592 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
+
+## Graph Freshness
+- Built from commit: `73e1c571`
+- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - Native Linux CMake build
@@ -15,30 +22,30 @@
 - xerahs
 - serializeDocument()
 - qtest
-- xerahs_core
+- xerahs_editor_source
 - CaptureController
 - The `xerahs` app
 - FilterEffects6.cpp
 - Effect.h
 - EditorWindow
-- HashCheckerDialog
+- HashCheckerDialogTest.cpp
 - PortalScreenshotTest
 - EffectsDialog
-- nativeEditorPreferenceRevision()
+- Harness
 - EditorSession
 - workflows/CaptureWorkflows.cpp
 - .start()
 - RegionSession
 - ActionOutcome
 - WorkflowExecution.cpp
-- EffectContext
+- saveCapture
 - Native paired capture persistence
 - DelayedCapture
-- ParamValues
+- EffectContext
 - CaptureSchedule
 - NativeEditorPreferences.cpp
-- EditorCanvas.cpp
-- PresetDialog
+- .paintEvent
+- readSxiePreset
 - RecordingController
 - WorkflowDialog
 - LoadedSource
@@ -47,8 +54,8 @@
 - EditorWindow.cpp
 - conformance-adapter/main.cpp
 - EditorCanvas
-- ScrollStitcher
-- prepareCapturedSource()
+- ScrollStitch.cpp
+- prepareComparisonImage
 - EditorSessionTest
 - Linux ImageEditor
 - AutoCaptureDialog
@@ -96,7 +103,7 @@
 - SecretServiceCredentialStore.cpp
 - VideoConversion.cpp
 - PipelineJournal.cpp
-- RegionGeometry.cpp
+- PhysicalRect
 - ApplicationWindow.cpp
 - CaptureHistoryWindow
 - NewImageDialog
@@ -109,8 +116,8 @@
 - encodeQr()
 - IconConverterDialog
 - OnboardingWizard
-- makeActivationRequest()
-- PhysicalRect
+- ActivationProtocol.cpp
+- PreferenceDialogTest
 - ImageComparisonDialog
 - GstConversionRunner
 - D-LIN-001: Qt 6, dynamically linked.
@@ -135,7 +142,7 @@
 - CaptureActionPorts
 - planRetainedCaptureRetry()
 - NativeCaptureWorkflowsTest
-- EffectsDialogTest
+- HashCheckerDialog
 - readSxieArchive()
 - SxcuFixturesTest.cpp
 - FakePortal
@@ -165,7 +172,7 @@
 - Status
 - UploadDestination.cpp
 - CaptureHistoryTest
-- CaptureHistoryWindow.cpp
+- CaptureWorkflow
 - MoveGesture
 - ImageComparisonDialogTest
 - TextContentDialog
@@ -196,7 +203,7 @@
 - UploadExecutor
 - Native capture Crop and verified source handoff
 - ComparisonView
-- PortalColorPicker.cpp
+- .onResponse
 - HotkeyBindings.cpp
 - WorkflowExecutionHistoryDialog
 - runEffect()
@@ -206,7 +213,7 @@
 - CapturePreferencesPort
 - HttpFixture
 - ScriptedExecutor
-- runEditorPrint()
+- runEditorPrint
 - AppearancePalette
 - createShellDispatcher()
 - windowTitle
@@ -215,7 +222,7 @@
 - CommandSpec
 - RecordingActions
 - QrMatrix
-- SessionState
+- PresetDialog
 - stitchScrollFrames()
 - ComparisonLayout
 - ToolbarPreferences.cpp
@@ -225,8 +232,8 @@
 - ManipulationEffects2Test
 - FileUploadHistoryRecord
 - AnnotationObjectNavigator
-- ImageRecognitionDialog.cpp
-- defaultCaptureWorkflows()
+- .acquired
+- defaultCaptureWorkflows
 - XerahS for Linux (`linux-qt`)
 - LastRegion
 - CaptureHistoryItem
@@ -236,12 +243,12 @@
 - FixtureReply
 - VideoConverterIntegrationTest
 - Builder
-- FilterEffects7.cpp
+- PhysicalPoint
 - ColorPickerDialog
 - Tool
 - IconWriter.cpp
 - State
-- PostCapturePipelineTest
+- HashCheckerDialog.cpp
 - Codec
 - ManipulationEffectsTest
 - recognizeTextImage()
@@ -251,10 +258,9 @@
 - OnboardingProgress.cpp
 - PinWindow
 - RandomSource
-- manageEditorAppearance()
+- FileHashTest
 - .showColor()
-- FileUploadController.cpp
-- NativeDesktopAppearanceTest
+- FakePortal
 - PreferenceDialog
 - QrCodeDialogTest
 - catalogueIndex()
@@ -266,33 +272,33 @@
 - HttpFixture
 - ActionSelectionTest
 - Native screenshot transport and capture qualification
-- runEditorPreparation()
+- EffectPreset
 - runEditorSave()
 - .setImage()
-- FakePortal
+- hyprlandSnapTargets
 - XerahS for Linux (`linux-qt`)
 - Request
 - Native capture annotation handoff
 - CanvasCropHooks
 - CropRegion
-- HistoryState
+- RasterSaveOptions
 - CounterError
 - State
 - StoreStatus
 - ColorFormats.cpp
-- OwnedWork
-- ColorPickerDialog.cpp
+- makeActivationRequest
+- composeComparison
 - installWorkflows()
 - ActivationReply
 - textRecognitionAvailable()
 - RectanglePropertiesDialog
 - ScrollCaptureSettings
 - .loadError()
-- CapturePairedSaveTest
+- CapturePipelineResult
 - ToolbarHotkey
 - Work
 - .restoreHistory()
-- CaptureHistoryJob
+- ScrollStitchResult
 - EditorFileIdentity
 - attachCommandWindow()
 - UploadLifetime
@@ -309,26 +315,26 @@
 - NativeAnnotationTools.cpp
 - ToolsFeature.cpp
 - IconConverterDialog.cpp
-- WorkflowExecutionEntry
+- AudioDevice
 - CanvasAction
 - planConversion()
-- Entry
+- PortalColorPickerTest
 - EditorSaveControl
 - EditorDestination
-- Directory
+- EditorSave.cpp
 - Outcome
-- WorkflowShortcutPortalConfig
+- ScrollStitcher
 - WatchFolders
 - put()
-- KeyboardStep
+- NativeCaptureWorkflows
 - ExpansionResult
 - spec()
 - PipelineHistoryDialogTest
 - WatchFoldersTest
 - Linux scope governance
 - .private()
-- EditorPrint.cpp
-- EditorPrintChoice
+- Outcome
+- QByteArray
 - ComparisonHooks
 - FileUploadPorts
 - Work
@@ -336,12 +342,12 @@
 - OnboardingState
 - ScrollCapturePorts
 - DesktopAppearance
-- EditorPreferenceStore
+- PointF
 - Conversion
 - Harness
 - ActionSelectionDialog
 - CommandGroup
-- Work
+- ScrollStatus
 - .setInitialImage()
 - Local recognition dependencies
 - Event
@@ -355,9 +361,9 @@
 - MapStore
 - CompositionGate
 - SaveGate
-- EditorSaveReceipt
-- SaveOutcome
-- .portalSettingChanged()
+- HttpFixture
+- ConversionRunner
+- ScrollCaptureSettings
 - Work
 - StoreOptions
 - .onResponse()
@@ -371,10 +377,10 @@
 - Native launch and activation
 - AnnotationClipboardPorts
 - Work
-- Temporary
-- NativeEditorAppearance
+- Choices
+- chooseAnnotationColor
 - ManualClock
-- RectangleHandle
+- EditorCopyPayload
 - ColorFormat
 - SaveGate
 - PngBuffer
@@ -382,25 +388,24 @@
 - PreparedNewImage
 - OnboardingPage
 - Pixels
-- Request
 - UploadOutcome
-- ApplicationWindowTest.cpp
+- PortalScreenshot.cpp
 - EffectGoldenHashTest
 - NativeWindowDiscoveryTest
 - PreparedCropEdit
-- EditorPrintOutcome
+- QString
 - NewImageHooks
 - FileUploadResultDialog
 - IconOptions
 - NativeEditorPreferenceEvents
 - NativeInstanceOptions
 - PortalColorPickerConfig
-- PortalRemoteDesktopConfig
+- AnnotationObjectNavigator::AnnotationObjectNavigator
 - Step
 - PortalScreenshotConfig
 - Phase
 - SecretValue
-- mapCrop()
+- .outputFinalizationAbortAndCollision
 - StoreRead
 - RequestMethod
 - ComparisonGate
@@ -409,24 +414,24 @@
 - ActionSelectionDialog::ActionSelectionDialog()
 - Work
 - installFiles()
-- IconConverterDialog::IconConverterDialog()
+- NativeAnnotationTools.h
 - ImageRecognitionResult
-- printImageRect()
+- QrImageResult
 - FakeStore
 - EnabledObserver
 - NewEnableObserver
 - EnvironmentValue
 - adopt()
-- FilePreparation
-- .publish()
+- ParseMode
+- FakeSession
 - Kind
 - Response
 - RecordingActions::RecordingActions()
-- Order
+- permissionDenied
 - NewImageResult
-- ToolbarValidation
+- installPreferences
 - CensusCatalogTest
-- Gate
+- bytes
 - QueuedFile
 - Response
 - WatchFoldersDialog
@@ -434,12 +439,10 @@
 - Capture upload without Save:
 - Workflow CLI:
 - Mode
-- Permission
 - Kind
 - GstConversionRunnerLifetimeTest
 - PortalRgb
 - RestorePermissions
-- RecordingIntegrationTest
 - copyButton()
 - bytes()
 - bytes()
@@ -478,16 +481,16 @@
 10. `floatOf()` - 158 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `apply()` --calls--> `background`  [INFERRED]
-  linux-qt/src/image-editor/CanvasOperations.cpp → linux-qt/src/image-editor/NewImage.h
-- `composeSnapshot()` --calls--> `composite`  [INFERRED]
-  linux-qt/app/SnapshotComposition.cpp → linux-qt/app/EditorCanvasOperations.h
 - `CaptureAnnotationDialog::CaptureAnnotationDialog()` --calls--> `history`  [INFERRED]
   linux-qt/app/CaptureAnnotationDialog.cpp → linux-qt/app/FileUploadController.h
-- `FileUploadResultDialog::FileUploadResultDialog()` --calls--> `openDestinations`  [INFERRED]
-  linux-qt/app/FileUploadResultDialog.cpp → linux-qt/app/FileUploadController.h
+- `apply()` --calls--> `background`  [INFERRED]
+  linux-qt/src/image-editor/CanvasOperations.cpp → linux-qt/src/image-editor/NewImage.h
 - `drawText()` --calls--> `fill`  [INFERRED]
   linux-qt/src/image-editor/effects/DrawingEffects.cpp → linux-qt/src/image-editor/CanvasOperations.h
+- `splitToning()` --calls--> `smoothStepRange()`  [INFERRED]
+  linux-qt/src/image-editor/effects/AdjustmentEffects2.cpp → linux-qt/src/image-editor/effects/EffectSupport.cpp
+- `chalkDrawing()` --calls--> `L`  [INFERRED]
+  linux-qt/src/image-editor/effects/FilterEffects3.cpp → linux-qt/src/tools/QrEncoder.h
 
 ## Import Cycles
 - None detected.
@@ -495,23 +498,23 @@
 ## Hyperedges (group relationships)
 - **Historical candidate checkpoint series** — platforms_linux_linux_qt_contract_audit_historical_annotation_and_output_checkpoints, platforms_linux_linux_qt_contract_audit_historical_owned_worker_checkpoints, platforms_linux_linux_qt_contract_audit_historical_saved_workflows, platforms_linux_linux_qt_contract_audit_historical_cli_shortcuts_and_discovery, platforms_linux_linux_qt_contract_audit_historical_execution_identity, platforms_linux_linux_qt_contract_audit_historical_measured_audit_and_qt_baseline [EXTRACTED 1.00]
 
-## Communities (463 total, 60 thin omitted)
+## Communities (461 total, 63 thin omitted)
 
 ### Community 0 - "Native Linux CMake build"
 Cohesion: 0.02
-Nodes (221): QWidget, QObject, QIODevice, QWidget, QDialog, QWidget, QMenu, QWidget (+213 more)
+Nodes (229): QObject, QIODevice, CommandRegistry::CommandRegistry(), QDialog, QWidget, Native Linux CMake build, PkgConfig QUIET, Python3 3.12 REQUIRED COMPONENTS Interpreter (+221 more)
 
 ### Community 1 - "EditorWindowTest.cpp"
 Cohesion: 0.05
-Nodes (10): clipboard(), publishAnnotationClipboard(), QFileDialog, PinWindow::PinWindow(), nativeUploadDestinationsPorts(), WatchFoldersDialog::WatchFoldersDialog(), WatchFolderService, capture-schedule-dialog-test (+2 more)
+Nodes (16): QWidget, QWidget, QWidget, QFileDialog, NativeEditorToolbar::NativeEditorToolbar(), QMainWindow, QToolBar, QWidget (+8 more)
 
 ### Community 2 - "QApplication"
 Cohesion: 0.04
-Nodes (18): readAnnotationClipboard(), QApplication, loadSource(), initializeNativeEditorPreferences(), changeDrawingDefaults(), configureNewImage(), drawRectangle(), EditorWindowTest (+10 more)
+Nodes (20): readAnnotationClipboard(), QApplication, saveEdit(), loadSource(), applyToolbarPreferences(), initializeNativeEditorPreferences(), acceptDimensions(), changeDrawingDefaults() (+12 more)
 
 ### Community 3 - "xerahs"
-Cohesion: 0.04
-Nodes (45): QAction, QScreen, CommandRegistry::CommandRegistry(), QMenu, QWidget, AppContext, installApplication(), AppContext (+37 more)
+Cohesion: 0.03
+Nodes (52): QAction, QScreen, QMenu, QIODevice, QWidget, QWidget, QPainter, QWidget (+44 more)
 
 ### Community 4 - "serializeDocument()"
 Cohesion: 0.04
@@ -519,15 +522,15 @@ Nodes (8): parseDocument(), serializeDocument(), renderDocument(), document(), E
 
 ### Community 5 - "qtest"
 Cohesion: 0.05
-Nodes (6): GstConversionRunner::GstConversionRunner(), uploadJson(), bytes(), bytes(), print(), id()
+Nodes (5): uploadJson(), bytes(), bytes(), print(), id()
 
-### Community 6 - "xerahs_core"
-Cohesion: 0.03
-Nodes (32): QWidget, QIODevice, QWidget, QWidget, QWidget, QWidget, QPainter, QWidget (+24 more)
+### Community 6 - "xerahs_editor_source"
+Cohesion: 0.06
+Nodes (12): clipboard(), publishAnnotationClipboard(), QWidget, QWidget, QWidget, paintEditorPrintPage(), QPrinter, chooseEditorPrinter() (+4 more)
 
 ### Community 7 - "CaptureController"
 Cohesion: 0.02
-Nodes (51): CaptureController, m_actionPorts, m_busy, m_captured, m_captureLastRegionWriter, m_captureOutput, m_composer, m_composition (+43 more)
+Nodes (61): CaptureComposition, cancelled, mutex, progress, ready, result, CaptureController, CaptureController::CaptureController() (+53 more)
 
 ### Community 8 - "The `xerahs` app"
 Cohesion: 0.02
@@ -535,59 +538,59 @@ Nodes (125): selection evidence, activation policy, Candidate evidence, handoff 
 
 ### Community 9 - "FilterEffects6.cpp"
 Cohesion: 0.07
-Nodes (94): accumulatePuff(), artDeco(), bevel(), bilinear(), bloodDrip(), bloodSplash(), blurStraight(), cartoonSticker() (+86 more)
+Nodes (95): accumulatePuff(), add(), artDeco(), bevel(), bilinear(), bloodDrip(), bloodSplash(), blurStraight() (+87 more)
 
 ### Community 10 - "Effect.h"
 Cohesion: 0.04
-Nodes (53): knownIds(), PresetDialog::PresetDialog(), xerahs_effects, add(), registerMoreAdjustmentEffects(), registerDrawingEffects(), EffectRegistry, m_effects (+45 more)
+Nodes (56): knownIds(), PresetDialog::PresetDialog(), add(), registerMoreAdjustmentEffects(), registerAdjustmentEffects(), registerDrawingEffects(), EffectRegistry, m_effects (+48 more)
 
 ### Community 11 - "EditorWindow"
 Cohesion: 0.02
-Nodes (79): EditorCanvasHooks, beforePrepare, EditorPrintPorts, beforeRender, configure, submit, AnnotationObjectNavigator, EditorCanvas (+71 more)
+Nodes (73): AnnotationObjectNavigator, EditorCanvas, EditorWindow, m_annotationActions, m_annotationClipboard, m_annotationMessage, m_annotationMessageState, m_annotationObjects (+65 more)
 
-### Community 12 - "HashCheckerDialog"
-Cohesion: 0.05
-Nodes (50): acceptLocalFiles(), HashCheckerDialog, HashCheckerDialog::HashCheckerDialog(), m_algorithm, m_buttons, m_cancel, m_cancelled, m_choose (+42 more)
+### Community 12 - "HashCheckerDialogTest.cpp"
+Cohesion: 0.13
+Nodes (17): algorithmChoiceSelectsTheAlgorithm(), button(), cancelAnswersAnInFlightReadWithoutADigest(), closingWhileHashingStopsTheRead(), compareAcceptsCaseAndSurroundingSpaces(), computeShowsTheDigest(), computingWithoutAFileDoesNothing(), copyPutsTheDigestOnTheClipboard() (+9 more)
 
 ### Community 13 - "PortalScreenshotTest"
 Cohesion: 0.05
-Nodes (9): QAction, path, fixtureImage(), gatedComposition(), overlayExists(), overlayWidget(), PortalScreenshotTest, client (+1 more)
+Nodes (8): QAction, fixtureImage(), gatedComposition(), overlayExists(), overlayWidget(), PortalScreenshotTest, client, QDBusConnection
 
 ### Community 14 - "EffectsDialog"
 Cohesion: 0.03
-Nodes (58): defaultPath(), EffectsDialog, EffectsDialog::EffectsDialog(), m_applying, m_buttons, m_category, m_clearRecent, m_closeAfterSave (+50 more)
+Nodes (65): defaultPath(), EffectsDialog, EffectsDialog::EffectsDialog(), m_applying, m_buttons, m_category, m_clearRecent, m_closeAfterSave (+57 more)
 
-### Community 15 - "nativeEditorPreferenceRevision()"
-Cohesion: 0.04
-Nodes (33): applyToolbarPreferences(), nativeEditorPreferenceRevision(), ToolbarActionRegistry, manageEditorToolbar(), dialog(), bytes(), DialogResult, accepted (+25 more)
+### Community 15 - "Harness"
+Cohesion: 0.08
+Nodes (17): bytes(), DialogResult, accepted, acted, timedOut, Harness, actions, bar (+9 more)
 
 ### Community 16 - "EditorSession"
-Cohesion: 0.08
-Nodes (18): RectangleStyle, fillColor, opacity, rotationDegrees, strokeColor, strokeWidth, EditorSession, EditorSession::changeSelected() (+10 more)
+Cohesion: 0.05
+Nodes (38): RectangleStyle, fillColor, opacity, rotationDegrees, strokeColor, strokeWidth, validStepValue(), EditorSession (+30 more)
 
 ### Community 17 - "workflows/CaptureWorkflows.cpp"
-Cohesion: 0.05
-Nodes (45): captureDirectoryDiagnostic(), CaptureOutput, directory, extra, pattern, CaptureOutputPreview, diagnostic, error (+37 more)
+Cohesion: 0.08
+Nodes (20): captureDirectoryDiagnostic(), captureSourceLabel(), CaptureWorkflowStore, m_current, m_revision, m_snapshot, implementedCaptureActions(), implementedCaptureSources() (+12 more)
 
 ### Community 18 - ".start()"
-Cohesion: 0.07
-Nodes (15): applyDrawingDefaults(), applyCrop(), CaptureAnnotationTest, QTemporaryDir, cropPixels(), dialog(), pixels(), receipt() (+7 more)
+Cohesion: 0.05
+Nodes (20): applyCrop(), CaptureAnnotationTest, QTemporaryDir, cropPixels(), dialog(), pixels(), receipt(), rectangle() (+12 more)
 
 ### Community 19 - "RegionSession"
-Cohesion: 0.06
-Nodes (26): runRegionCapture(), boundingBox(), clampPhysical(), normalized(), PhysicalPoint, x, y, reaches() (+18 more)
+Cohesion: 0.05
+Nodes (41): normalized(), isTerminal(), Permission, Authorized, Denied, Restricted, RegionSession, m_anchor (+33 more)
 
 ### Community 20 - "ActionOutcome"
-Cohesion: 0.05
+Cohesion: 0.06
 Nodes (36): CaptureActions, CaptureActions::CaptureActions(), kActionUnavailable, m_annotationDocument, m_confirmedUploadDestination, m_directory, m_media, m_pattern (+28 more)
 
 ### Community 21 - "WorkflowExecution.cpp"
-Cohesion: 0.06
-Nodes (33): captureStepActions(), date(), object(), parseWorkflowExecution(), safeDiagnostic(), serializeWorkflowExecution(), terminal(), validSnapshot() (+25 more)
+Cohesion: 0.08
+Nodes (25): captureStepActions(), date(), object(), parseWorkflowExecution(), safeDiagnostic(), serializeWorkflowExecution(), terminal(), validSnapshot() (+17 more)
 
-### Community 22 - "EffectContext"
-Cohesion: 0.07
-Nodes (55): EffectContext, cancelled, progress, seed, blurredClamp(), FloatImage, d, h (+47 more)
+### Community 22 - "saveCapture"
+Cohesion: 0.10
+Nodes (15): CaptureSaveResult, cancelled, diagnostic, file, defaultCounterPath(), encodePrivatePng(), failure(), NoFileAccess (+7 more)
 
 ### Community 23 - "Native paired capture persistence"
 Cohesion: 0.03
@@ -597,9 +600,9 @@ Nodes (72): CaptureFileOutputTest, Copy file path, Copy image file, Native saved
 Cohesion: 0.04
 Nodes (30): CaptureCountdownWindow, m_seconds, onCancel, DelayCaptureDialog, m_save, m_seconds, m_source, m_status (+22 more)
 
-### Community 25 - "ParamValues"
-Cohesion: 0.12
-Nodes (62): ParamValues, boolOf(), colorOf(), floatOf(), screenClamped(), anaglyph3d(), animeSpeedLines(), applyContrast() (+54 more)
+### Community 25 - "EffectContext"
+Cohesion: 0.05
+Nodes (113): EffectContext, cancelled, progress, seed, ParamValues, blurredClamp(), boolOf(), floatOf() (+105 more)
 
 ### Community 26 - "CaptureSchedule"
 Cohesion: 0.05
@@ -607,59 +610,59 @@ Nodes (29): AttemptDisposition, Captured, Failed, Skipped, CaptureSchedule, m_at
 
 ### Community 27 - "NativeEditorPreferences.cpp"
 Cohesion: 0.05
-Nodes (30): manageDrawingDefaults(), appearanceChanged(), applyRecentImagePreferences(), applyWindowPreferences(), drawingChanged(), editorPreferenceDiagnosticMessage(), nativeEditorPreferencePath(), nativeEditorPreferencePersistence() (+22 more)
+Nodes (38): manageEditorAppearance(), manageDrawingDefaults(), appearanceChanged(), applyAppearancePreferences(), applyDrawingDefaults(), applyRecentImagePreferences(), applyWindowPreferences(), drawingChanged() (+30 more)
 
-### Community 28 - "EditorCanvas.cpp"
-Cohesion: 0.07
-Nodes (9): cursorImage(), displayCopy(), EditorCanvas::EditorCanvas(), emojiImage(), outlinePen(), resizeCursor(), rotation(), toolLabel() (+1 more)
+### Community 28 - ".paintEvent"
+Cohesion: 0.12
+Nodes (3): outlinePen(), rotation(), palette
 
-### Community 29 - "PresetDialog"
-Cohesion: 0.06
-Nodes (31): preparePresetEdit(), PresetDialog, m_apply, m_busy, m_canApply, m_commit, m_document, m_export (+23 more)
+### Community 29 - "readSxiePreset"
+Cohesion: 0.19
+Nodes (8): preparePresetEdit(), readSxiePreset(), readXsiePreset(), validateAsset(), writeXsiePreset(), configZip(), fixture(), SxiePresetTest
 
 ### Community 30 - "RecordingController"
 Cohesion: 0.04
 Nodes (24): pipeline, RecordingController, m_audioActive, m_bus, m_clock, m_deadline, m_devices, m_elapsed (+16 more)
 
 ### Community 31 - "WorkflowDialog"
-Cohesion: 0.05
-Nodes (31): defaultCounterPath(), NativeCaptureWorkflows, public, WorkflowDialog, m_actions, m_browse, m_canRun, m_capture (+23 more)
+Cohesion: 0.07
+Nodes (25): WorkflowDialog, m_actions, m_browse, m_canRun, m_capture, m_catalog, m_choose, m_default (+17 more)
 
 ### Community 32 - "LoadedSource"
-Cohesion: 0.04
-Nodes (39): dispose(), EditorOpenHooks, beforePrepare, failure(), imageFileFilter(), openCapturedDocument(), openCapturedSource(), openSource() (+31 more)
+Cohesion: 0.03
+Nodes (62): runEditorHistory(), dispose(), EditorOpenHooks, beforePrepare, failure(), openCapturedDocument(), openCapturedSource(), openSource() (+54 more)
 
 ### Community 33 - "runPipeline()"
-Cohesion: 0.05
-Nodes (50): ActionKind, Analysis, Confirmation, Destructive, External, Network, Output, Presentation (+42 more)
+Cohesion: 0.07
+Nodes (39): ActionSpec, id, interruptible, kind, legacyFlags, produces, requirements, ActionState (+31 more)
 
 ### Community 34 - "FilterEffects3Test"
 Cohesion: 0.12
 Nodes (10): FilterEffects3Test, fixture(), img(), meanLum(), near(), px(), row(), run() (+2 more)
 
 ### Community 35 - "EditorWindow.cpp"
-Cohesion: 0.09
+Cohesion: 0.10
 Nodes (7): QMessageBox, absoluteImagePath(), describe(), disposeCanvasDialog(), editorWarning(), EditorWindow::~EditorWindow(), annotationEditMessage()
 
 ### Community 36 - "conformance-adapter/main.cpp"
-Cohesion: 0.07
-Nodes (39): NoFileAccess, adapterError(), blankDocument(), historyOutput(), InjectedExecutor, m_cancelDuring, m_outcomes, InjectedFileAccess (+31 more)
+Cohesion: 0.08
+Nodes (40): adapterError(), blankDocument(), defaultTopology(), historyOutput(), InjectedExecutor, m_cancelDuring, m_outcomes, InjectedFileAccess (+32 more)
 
 ### Community 37 - "EditorCanvas"
-Cohesion: 0.05
-Nodes (27): EditorCanvas, m_annotationDialogPending, m_contentDialogSerial, m_creation, m_creationDialog, m_displaySource, m_documentGeneration, m_drag (+19 more)
+Cohesion: 0.04
+Nodes (32): cursorImage(), displayCopy(), EditorCanvas, EditorCanvas::EditorCanvas(), m_annotationDialogPending, m_contentDialogSerial, m_creation, m_creationDialog (+24 more)
 
-### Community 38 - "ScrollStitcher"
-Cohesion: 0.05
-Nodes (42): makeSignature(), rowsAgree(), Score, informative, value, scoreOffset(), ScrollJoin, accepted (+34 more)
+### Community 38 - "ScrollStitch.cpp"
+Cohesion: 0.21
+Nodes (10): makeSignature(), rowsAgree(), Score, informative, value, scoreOffset(), Signature, data (+2 more)
 
-### Community 39 - "prepareCapturedSource()"
-Cohesion: 0.06
-Nodes (31): cancelled(), fail(), loadComparisonImage(), prepareComparisonImage(), PreparedComparisonImage, diagnostic, image, progress() (+23 more)
+### Community 39 - "prepareComparisonImage"
+Cohesion: 0.24
+Nodes (8): cancelled(), fail(), loadComparisonImage(), prepareComparisonImage(), PreparedComparisonImage, diagnostic, image, progress()
 
 ### Community 40 - "EditorSessionTest"
-Cohesion: 0.07
-Nodes (3): document(), EditorSessionTest, rectangle()
+Cohesion: 0.05
+Nodes (15): readXann(), writeXann(), RectangleHandle, Bottom, BottomLeft, BottomRight, Left, Right (+7 more)
 
 ### Community 41 - "Linux ImageEditor"
 Cohesion: 0.04
@@ -670,48 +673,48 @@ Cohesion: 0.05
 Nodes (33): AutoCaptureDialog, AutoCaptureDialog::AutoCaptureDialog(), m_count, m_countBound, m_end, m_interval, m_nowMs, m_preferences (+25 more)
 
 ### Community 43 - "runEditorCopy()"
-Cohesion: 0.05
-Nodes (33): CopyWork, cancelled, diagnostic, payload, percent, ready, EditorCopyOutcome, abandoned (+25 more)
+Cohesion: 0.06
+Nodes (29): CopyWork, cancelled, diagnostic, payload, percent, ready, EditorCopyOutcome, abandoned (+21 more)
 
 ### Community 44 - "ScrollCapture"
-Cohesion: 0.07
+Cohesion: 0.08
 Nodes (19): describe(), QTimer, ScrollCapture, m_cancelGrab, m_generation, m_manual, m_pointerPlaced, m_ports (+11 more)
 
 ### Community 45 - "CapturePipelineState"
 Cohesion: 0.04
-Nodes (50): CaptureUploadReview, destinationName, origin, originalDimensions, preview, actionActivity(), CapturePipeline::CapturePipeline(), CapturePipelineState (+42 more)
+Nodes (54): CaptureUploadReview, destinationName, origin, originalDimensions, preview, actionActivity(), CapturePipeline::CapturePipeline(), CapturePipelineState (+46 more)
 
 ### Community 46 - "solidImage()"
-Cohesion: 0.09
+Cohesion: 0.10
 Nodes (11): solidImage(), applyCanvasOperation(), AnnotationShapesTest, document(), same(), shapeOf(), stripes(), CanvasOperationsTest (+3 more)
 
 ### Community 47 - "CaptureFile"
-Cohesion: 0.05
-Nodes (36): captureFileHash(), captureFileIdentity(), CaptureFileIdentity::operator==(), matches(), openBoundPath(), CaptureFile, identity, CaptureFileIdentity (+28 more)
+Cohesion: 0.06
+Nodes (30): captureFileHash(), captureFileIdentity(), CaptureFileIdentity::operator==(), matches(), openBoundPath(), validateCaptureFile(), CaptureFile, identity (+22 more)
 
 ### Community 48 - "annotationId()"
 Cohesion: 0.07
-Nodes (18): Annotation, annotationEditable(), annotationId(), parseAnnotationList(), serializeAnnotationList(), annotationTransferDiagnostic(), AnnotationTransferResult, annotations (+10 more)
+Nodes (16): Annotation, annotationEditable(), annotationId(), annotationTransferDiagnostic(), AnnotationTransferResult, annotations, bytes, diagnostic (+8 more)
 
 ### Community 49 - "AnnotationDocument"
-Cohesion: 0.04
-Nodes (47): AnnotationDocument, annotations, canvasHeight, canvasWidth, createdAt, embeddedImages, extra, imageHash (+39 more)
+Cohesion: 0.05
+Nodes (32): AnnotationDocument, annotations, canvasHeight, canvasWidth, createdAt, embeddedImages, extra, imageHash (+24 more)
 
 ### Community 50 - "render()"
-Cohesion: 0.05
-Nodes (36): ArgbImage, height, pixels, width, Box, bottom, left, right (+28 more)
+Cohesion: 0.06
+Nodes (34): ArgbImage, height, pixels, width, Box, bottom, left, right (+26 more)
 
 ### Community 51 - "saveCapture()"
-Cohesion: 0.07
-Nodes (20): validateCaptureFile(), copyCaptureFile(), failed(), FileOutputCompletion, ReplyCompletion, callback, completed, revealCaptureFile() (+12 more)
+Cohesion: 0.09
+Nodes (13): copyCaptureFile(), failed(), FileOutputCompletion, ReplyCompletion, callback, completed, revealCaptureFile(), unknown() (+5 more)
 
 ### Community 52 - "DrawingEffects.cpp"
-Cohesion: 0.11
-Nodes (37): add(), applyAspectRatio(), blit(), border(), candyCaneBorder(), confetti(), contains(), copyOf() (+29 more)
+Cohesion: 0.12
+Nodes (40): add(), applyAspectRatio(), blit(), border(), candyCaneBorder(), confetti(), contains(), copyOf() (+32 more)
 
 ### Community 53 - "FileHashTest"
-Cohesion: 0.06
-Nodes (27): cancelledResult(), digestMatches(), errorCancelled(), errorFileUnreadable(), HashAlgorithm, Crc32, Md5, Sha1 (+19 more)
+Cohesion: 0.09
+Nodes (22): cancelledResult(), digestMatches(), errorCancelled(), errorFileUnreadable(), HashAlgorithm, Crc32, Md5, Sha1 (+14 more)
 
 ### Community 54 - "VideoConverterDialog"
 Cohesion: 0.05
@@ -722,16 +725,16 @@ Cohesion: 0.05
 Nodes (21): frameMargins(), NativeEditorWindowState, m_displays, m_handle, m_initialBounds, m_maximizedBeforeMinimize, m_queued, m_screens (+13 more)
 
 ### Community 56 - "SxiePreset.cpp"
-Cohesion: 0.06
-Nodes (43): choice(), Choices, Border, Compositing, Dash, Interpolation, None, Placement (+35 more)
+Cohesion: 0.12
+Nodes (25): choice(), components(), convertProperty(), defaultEffectSeed(), fail(), font(), integral(), legacyColor() (+17 more)
 
 ### Community 57 - "SecretServiceCredentialStoreTest"
 Cohesion: 0.05
 Nodes (29): Attributes, FakeItem, attributes, label, locked, value, FakeSecretService, collectionLocked (+21 more)
 
 ### Community 58 - "CapturePipeline"
-Cohesion: 0.04
-Nodes (36): ActionSelectionDialog, CaptureAnnotationDialog, CapturePipeline, m_activity, m_annotationDialog, m_directory, m_finished, m_journal (+28 more)
+Cohesion: 0.05
+Nodes (27): ActionSelectionDialog, CaptureAnnotationDialog, CapturePipeline, m_activity, m_annotationDialog, m_directory, m_finished, m_journal (+19 more)
 
 ### Community 59 - "Linux contract scope audit"
 Cohesion: 0.05
@@ -742,7 +745,7 @@ Cohesion: 0.14
 Nodes (10): FilterEffects5Test, fixture(), img(), meanLum(), near(), px(), row(), run() (+2 more)
 
 ### Community 61 - "EffectResult"
-Cohesion: 0.12
+Cohesion: 0.14
 Nodes (40): applyMatrix(), autoContrast(), blackAndWhite(), blendWithIdentity(), channelSwap(), clarity(), colorBalance(), colorize() (+32 more)
 
 ### Community 62 - "intOf()"
@@ -755,67 +758,67 @@ Nodes (10): changedBounds(), DrawingEffectsTest, QTemporaryDir, gray(), run(), s
 
 ### Community 64 - "CanvasOperation"
 Cohesion: 0.06
-Nodes (38): cancelled(), fail(), prepare(), prepareCanvasEdit(), prepareCanvasPreview(), progress(), prepareCanvasDisplay(), runEditorCanvas() (+30 more)
+Nodes (31): EditorCanvasHooks, beforePrepare, prepareCanvasDisplay(), runEditorCanvas(), CanvasAnchor, Bottom, BottomLeft, BottomRight (+23 more)
 
 ### Community 65 - "RegionOverlay"
-Cohesion: 0.07
-Nodes (15): CaptureController, RegionOverlay, m_display, m_draggingCorner, m_screenOrigin, m_snapshot, m_source, public (+7 more)
+Cohesion: 0.08
+Nodes (10): CaptureController, RegionOverlay, m_display, m_draggingCorner, m_screenOrigin, m_snapshot, m_source, public (+2 more)
 
 ### Community 66 - "Argb"
-Cohesion: 0.09
-Nodes (30): Argb, baselineSidecarPath(), checkDimensions(), decodePng(), Findings, invalid, tooLarge, formatColor() (+22 more)
+Cohesion: 0.07
+Nodes (37): AnnotationColorChoice, color, diagnostic, Argb, baselineSidecarPath(), checkDimensions(), decodePng(), Findings (+29 more)
 
 ### Community 67 - "runRows()"
-Cohesion: 0.10
-Nodes (38): quantize(), drawBackground(), drawCheckerboard(), convolve3x3(), copyRows(), filteredByte(), makeResult(), mapPixels() (+30 more)
+Cohesion: 0.07
+Nodes (52): xerahs_effects, quantize(), convolve3x3(), filteredByte(), makeResult(), mapPixels(), runRows(), blackOver() (+44 more)
 
 ### Community 68 - "UploadDestinationsDialog"
-Cohesion: 0.06
-Nodes (22): codeText(), QLabel, QListWidget, QPushButton, statusText(), UploadDestinationsDialog, m_busy, m_default (+14 more)
+Cohesion: 0.05
+Nodes (23): codeText(), QLabel, QListWidget, QPushButton, statusText(), UploadDestinationsDialog, m_busy, m_default (+15 more)
 
 ### Community 69 - "EditorViewport"
 Cohesion: 0.11
 Nodes (14): EditorViewport, EditorViewport::EditorViewport(), m_imageSize, m_offset, m_viewSize, m_zoom, maximumZoom, minimumZoom (+6 more)
 
 ### Community 70 - "CanvasRotationDialog"
-Cohesion: 0.06
-Nodes (29): CanvasRotationDialog, CanvasRotationDialog::CanvasRotationDialog(), m_angle, m_buttons, m_closing, m_debounce, m_document, m_expand (+21 more)
+Cohesion: 0.05
+Nodes (26): CanvasRotationDialog, m_angle, m_buttons, m_closing, m_debounce, m_document, m_expand, m_fill (+18 more)
 
 ### Community 71 - "PortalScreenshot"
 Cohesion: 0.05
-Nodes (28): permissionDenied(), PortalScreenshot, m_activationTried, m_bus, m_callIssued, m_callTimer, m_closedPaths, m_closeOnReply (+20 more)
+Nodes (27): PortalScreenshot, m_activationTried, m_bus, m_callIssued, m_callTimer, m_closedPaths, m_closeOnReply, m_config (+19 more)
 
 ### Community 72 - "EditorSaveDialog"
-Cohesion: 0.08
-Nodes (24): EditorSaveDialog, EditorSaveDialog::EditorSaveDialog(), m_error, m_matte, m_matteLabel, m_policy, m_quality, m_qualityLabel (+16 more)
+Cohesion: 0.13
+Nodes (11): EditorSaveDialog, EditorSaveDialog::EditorSaveDialog(), m_error, m_matte, m_matteLabel, m_policy, m_quality, m_qualityLabel (+3 more)
 
 ### Community 73 - "runEditorUpload()"
-Cohesion: 0.06
-Nodes (27): cancelled(), chooseEditorUpload(), EditorUploadChoice, action, destination, EditorUploadOutcome, action, EditorUploadPorts (+19 more)
+Cohesion: 0.05
+Nodes (32): destroyProgress(), EditorPreparationResult, Cancelled, Failed, Ready, EditorPreparationUi, accessibleName, label (+24 more)
 
 ### Community 74 - "WorkflowShortcutActions"
-Cohesion: 0.06
-Nodes (15): NativeWindowDisplays, available, preferred, messageFor(), routeCaptureShortcut(), WorkflowShortcutActions, m_bus, m_canConfigure (+7 more)
+Cohesion: 0.05
+Nodes (19): NativeWindowDisplays, available, preferred, WorkflowShortcutPortalConfig, callTimeoutMs, responseTimeoutMs, service, messageFor() (+11 more)
 
 ### Community 75 - "PipelineHistoryDialog"
 Cohesion: 0.06
-Nodes (26): PipelineJournalStorage, HistoryJob, erased, erasing, listing, mutex, ready, PipelineHistoryDialog (+18 more)
+Nodes (24): HistoryJob, erased, erasing, listing, mutex, ready, PipelineHistoryDialog, m_captureBusy (+16 more)
 
 ### Community 76 - "resolveParameters()"
-Cohesion: 0.06
-Nodes (21): deserializeParameters(), EffectSpec, category, changesSize, displayName, id, mode, parameters (+13 more)
+Cohesion: 0.05
+Nodes (27): deserializeParameters(), Effect, EffectSpec, category, changesSize, displayName, id, mode (+19 more)
 
 ### Community 77 - "FakeColorPortal"
-Cohesion: 0.07
-Nodes (18): FakeColorPortal, blue, bus, calls, closed, code, error, green (+10 more)
+Cohesion: 0.09
+Nodes (15): FakeColorPortal, blue, bus, calls, closed, code, error, green (+7 more)
 
 ### Community 78 - "NativeInstance"
 Cohesion: 0.08
 Nodes (20): failure(), InstanceStart, diagnostic, kind, kernelPeer(), NativeInstance, m_admission, m_clients (+12 more)
 
 ### Community 79 - "Topology"
-Cohesion: 0.07
-Nodes (21): HyprlandWindowDiscovery, nativeWindowDiscovery(), ownProcess(), query(), socketPaths(), defaultTopology(), findDisplay(), makeLastRegion() (+13 more)
+Cohesion: 0.08
+Nodes (20): HyprlandWindowDiscovery, nativeWindowDiscovery(), ownProcess(), query(), socketPaths(), findDisplay(), makeLastRegion(), Topology (+12 more)
 
 ### Community 80 - "EffectSupport.cpp"
 Cohesion: 0.09
@@ -826,44 +829,44 @@ Cohesion: 0.07
 Nodes (43): Atomic editor preference persistence, Capture-local creation defaults, EditorSession guarded colour operation, Frozen document selection defaults generation, Guarded annotation colour choices, Native colour verification, One-operation undo history, Owned alpha colour picker (+35 more)
 
 ### Community 82 - "NativeInstanceTest"
-Cohesion: 0.08
+Cohesion: 0.09
 Nodes (7): fileBytes(), helper(), line(), NativeInstanceTest, directory, processes, std
 
 ### Community 83 - "QrCodeDialog"
-Cohesion: 0.07
-Nodes (23): plainEnglish(), QComboBox, QLabel, QPlainTextEdit, QPushButton, QrCodeDialog, m_copy, m_ecc (+15 more)
+Cohesion: 0.06
+Nodes (22): plainEnglish(), QComboBox, QLabel, QPlainTextEdit, QPushButton, QrCodeDialog, m_copy, m_ecc (+14 more)
 
 ### Community 84 - "SecretServiceCredentialStore.cpp"
 Cohesion: 0.11
 Nodes (21): Attributes, attributesFor(), PromptWaiter, dismissed, loop, public, result, registerTypes() (+13 more)
 
 ### Community 85 - "VideoConversion.cpp"
-Cohesion: 0.10
-Nodes (30): VideoConverterDialog::VideoConverterDialog(), audioEncoderFor(), C, canonical(), checkOutputPath(), CodecAvailability, codecId, encoder (+22 more)
+Cohesion: 0.12
+Nodes (27): VideoConverterDialog::VideoConverterDialog(), audioEncoderFor(), C, canonical(), checkOutputPath(), codecs(), Container, Apng (+19 more)
 
 ### Community 86 - "PipelineJournal.cpp"
 Cohesion: 0.08
-Nodes (18): codeValue(), parsePipelineJournal(), pathValue(), PipelineJournalRecorder, m_diagnostic, m_expected, m_snapshot, m_storage (+10 more)
+Nodes (19): codeValue(), parsePipelineJournal(), pathValue(), PipelineJournalRecorder, m_diagnostic, m_expected, m_snapshot, m_storage (+11 more)
 
-### Community 87 - "RegionGeometry.cpp"
-Cohesion: 0.05
-Nodes (30): clampTo(), CompositeResult, cancelled, diagnostic, image, sourceDisplays, Display, id (+22 more)
+### Community 87 - "PhysicalRect"
+Cohesion: 0.04
+Nodes (49): grab, Action, Move, Resize, applyKeyboardStep(), composite(), CompositeControl, cancelled (+41 more)
 
 ### Community 88 - "ApplicationWindow.cpp"
 Cohesion: 0.09
-Nodes (14): acceptLocalFiles(), adoptLegacy(), ApplicationWindow, ApplicationWindow::ApplicationWindow(), m_legacyCommands, m_progress, m_progressTitle, m_status (+6 more)
+Nodes (13): acceptLocalFiles(), adoptLegacy(), ApplicationWindow, ApplicationWindow::ApplicationWindow(), m_legacyCommands, m_progress, m_progressTitle, m_status (+5 more)
 
 ### Community 89 - "CaptureHistoryWindow"
-Cohesion: 0.05
-Nodes (35): CaptureHistoryWindow, m_captureBusy, m_confirming, m_copyDeletionUrl, m_copyImage, m_copyPath, m_details, m_edit (+27 more)
+Cohesion: 0.04
+Nodes (42): CaptureHistoryWindow, CaptureHistoryWindow::CaptureHistoryWindow(), m_captureBusy, m_confirming, m_copyDeletionUrl, m_copyImage, m_copyPath, m_details (+34 more)
 
 ### Community 90 - "NewImageDialog"
 Cohesion: 0.05
 Nodes (31): NewImageDialog, m_background, m_buttons, m_cancelWork, m_chooseColour, m_clearInitial, m_closing, m_colour (+23 more)
 
 ### Community 91 - "PipelineResult"
-Cohesion: 0.06
-Nodes (36): ActionResult, action, artifacts, cancellationArrivedDuring, diagnostic, finishedAt, inputArtifact, missingArtifact (+28 more)
+Cohesion: 0.04
+Nodes (44): ActionResult, action, artifacts, cancellationArrivedDuring, diagnostic, finishedAt, inputArtifact, missingArtifact (+36 more)
 
 ### Community 92 - "ApplicationSettings.cpp"
 Cohesion: 0.12
@@ -874,12 +877,12 @@ Cohesion: 0.11
 Nodes (27): RectangleAnnotation, content, end, extra, id, start, style, visible (+19 more)
 
 ### Community 94 - "loadEditorPreferences()"
-Cohesion: 0.10
-Nodes (9): changeEditorPreferences(), loadEditorPreferences(), recentPreferenceValues(), serializeEditorPreferences(), previousFor(), EditorAppearanceTest, EditorPreferencesTest, envelope() (+1 more)
+Cohesion: 0.09
+Nodes (12): changeEditorPreferences(), drawingStyleFromPreferences(), invalid(), loadEditorPreferences(), number(), preferenceColor(), recentPreferenceValues(), serializeEditorPreferences() (+4 more)
 
 ### Community 95 - "serializePipelineJournal()"
 Cohesion: 0.10
-Nodes (8): records(), serializePipelineJournal(), bytes(), id(), observation(), PipelineJournalTest, pixels(), write()
+Nodes (7): records(), bytes(), id(), observation(), PipelineJournalTest, pixels(), write()
 
 ### Community 96 - "Linux implementation plan"
 Cohesion: 0.05
@@ -887,31 +890,31 @@ Nodes (38): action selection evidence, Guarded stroke/fill choices, Guarded dele
 
 ### Community 97 - "encodeQr()"
 Cohesion: 0.09
-Nodes (18): dataCodewords(), encodeQr(), gfMul(), qrByteCapacity(), QrEcc, H, L, M (+10 more)
+Nodes (15): dataCodewords(), encodeQr(), qrByteCapacity(), QrEcc, H, L, M, Q (+7 more)
 
 ### Community 98 - "IconConverterDialog"
 Cohesion: 0.07
 Nodes (18): IconConverterDialog, m_choose, m_chooser, m_error, m_palette, m_path, m_preview, m_save (+10 more)
 
 ### Community 99 - "OnboardingWizard"
-Cohesion: 0.10
-Nodes (13): OnboardingWizard, m_ports, m_skipping, m_state, m_testButton, m_testPending, m_testStatus, m_watchdog (+5 more)
-
-### Community 100 - "makeActivationRequest()"
-Cohesion: 0.11
-Nodes (14): actionName(), activationLaunchResult(), authorizedActivationPeer(), knownDiagnostic(), makeActivationRequest(), parseActivation(), parseActivationReply(), serializeActivationReply() (+6 more)
-
-### Community 101 - "PhysicalRect"
 Cohesion: 0.09
-Nodes (15): CaptureController::CaptureController(), m_workflowResolver, grab, SnapshotComposer, applyKeyboardStep(), composite(), CompositeControl, cancelled (+7 more)
+Nodes (14): setupGuideCommand(), OnboardingWizard, m_ports, m_skipping, m_state, m_testButton, m_testPending, m_testStatus (+6 more)
+
+### Community 100 - "ActivationProtocol.cpp"
+Cohesion: 0.20
+Nodes (11): actionName(), activationLaunchResult(), authorizedActivationPeer(), knownDiagnostic(), parseActivation(), parseActivationReply(), serializeActivationReply(), uniqueObjectKeys() (+3 more)
+
+### Community 101 - "PreferenceDialogTest"
+Cohesion: 0.08
+Nodes (13): ToolbarActionRegistry, manageEditorToolbar(), ActionObserver, added, apply(), bytes(), command(), draft() (+5 more)
 
 ### Community 102 - "ImageComparisonDialog"
-Cohesion: 0.06
+Cohesion: 0.05
 Nodes (29): ImageComparisonDialog, m_alignment, m_buttons, m_cancelLoad, m_closing, m_document, m_geometry, m_hooks (+21 more)
 
 ### Community 103 - "GstConversionRunner"
 Cohesion: 0.06
-Nodes (22): GstConversionRunner, m_diagnostics, m_generation, m_lastPercent, m_partial, m_pipeline, m_probeWork, m_request (+14 more)
+Nodes (24): GstConversionRunner, GstConversionRunner::GstConversionRunner(), m_diagnostics, m_generation, m_lastPercent, m_partial, m_pipeline, m_probeWork (+16 more)
 
 ### Community 104 - "D-LIN-001: Qt 6, dynamically linked."
 Cohesion: 0.17
@@ -934,8 +937,8 @@ Cohesion: 0.09
 Nodes (12): EditorPinTest, QTemporaryDir, fixture(), Gate, entered, finished, released, pins() (+4 more)
 
 ### Community 109 - "NativeEditorToolbar.cpp"
-Cohesion: 0.08
-Nodes (16): canonical(), NativeEditorToolbar, m_actions, m_gestures, m_ready, m_refreshing, m_refreshPending, m_separators (+8 more)
+Cohesion: 0.09
+Nodes (12): canonical(), NativeEditorToolbar, m_actions, m_gestures, m_ready, m_refreshing, m_refreshPending, m_separators (+4 more)
 
 ### Community 110 - "prepareNewImage()"
 Cohesion: 0.08
@@ -951,11 +954,11 @@ Nodes (15): catalogFile(), DestinationCatalog, DestinationCatalog::DestinationCa
 
 ### Community 113 - ".replace()"
 Cohesion: 0.09
-Nodes (23): Descriptor, value, failure(), filename(), Names, diagnostic, ids, NativePrivateRecords (+15 more)
+Nodes (22): Descriptor, value, failure(), filename(), Names, diagnostic, ids, NativePrivateRecords (+14 more)
 
 ### Community 114 - "RecentImages"
 Cohesion: 0.11
-Nodes (13): RecentImages, defaultMaximum, m_enabled, m_maximum, m_paths, m_revision, m_rules, maximumMaximum (+5 more)
+Nodes (14): previousFor(), RecentImages, defaultMaximum, m_enabled, m_maximum, m_paths, m_revision, m_rules (+6 more)
 
 ### Community 115 - "ErrorCode"
 Cohesion: 0.06
@@ -974,12 +977,12 @@ Cohesion: 0.08
 Nodes (16): AutoCaptureSession, DelayedCapture, failureBody(), QAction, QWidget, ScheduledCapture, m_attempt, m_autoAction (+8 more)
 
 ### Community 119 - "PointF"
-Cohesion: 0.08
-Nodes (25): PointF, x, y, validBalloonTail(), moveRectangleGeometry(), RectangleMoveResult, diagnostic, properties (+17 more)
+Cohesion: 0.10
+Nodes (21): chooseRectangle(), chooseRectangleCreation(), chooseRectangleProperties(), RectanglePropertiesDialog::RectanglePropertiesDialog(), moveRectangleGeometry(), RectangleMoveResult, diagnostic, properties (+13 more)
 
 ### Community 120 - "ExpansionContext"
-Cohesion: 0.07
-Nodes (25): ExpansionContext, computerName, counter, date, files, height, locale, loginDomain (+17 more)
+Cohesion: 0.11
+Nodes (15): ExpansionContext, computerName, counter, date, files, height, locale, loginDomain (+7 more)
 
 ### Community 121 - "FilterEffects1Test"
 Cohesion: 0.14
@@ -994,20 +997,20 @@ Cohesion: 0.06
 Nodes (30): CaptureActionPorts, actionStarted, annotation, annotationStyle, beforeUpload, chooseSaveAs, clipboard, fileOutput (+22 more)
 
 ### Community 124 - "planRetainedCaptureRetry()"
-Cohesion: 0.09
-Nodes (17): fileConsumer(), nativeAction(), PipelineRetryPlan, diagnostic, link, selected, planRetainedCaptureRetry(), unavailable() (+9 more)
+Cohesion: 0.13
+Nodes (11): fileConsumer(), nativeAction(), PipelineRetryPlan, diagnostic, link, selected, planRetainedCaptureRetry(), unavailable() (+3 more)
 
 ### Community 125 - "NativeCaptureWorkflowsTest"
 Cohesion: 0.08
 Nodes (8): manageCaptureWorkflows(), workflowActions(), bytes(), chooseActions(), nameWorkflow(), NativeCaptureWorkflowsTest, QTemporaryDir, receipt()
 
-### Community 126 - "EffectsDialogTest"
-Cohesion: 0.11
-Nodes (7): EffectsStore, m_file, EffectsDialogTest, QTemporaryDir, pixels(), registry(), source()
+### Community 126 - "HashCheckerDialog"
+Cohesion: 0.07
+Nodes (25): HashCheckerDialog, m_algorithm, m_buttons, m_cancel, m_cancelled, m_choose, m_compare, m_compute (+17 more)
 
 ### Community 127 - "readSxieArchive()"
-Cohesion: 0.10
-Nodes (14): extraValid(), range(), readSxieArchive(), safeName(), SxieArchive, entries, error, u16() (+6 more)
+Cohesion: 0.14
+Nodes (9): extraValid(), range(), readSxieArchive(), safeName(), SxieArchive, entries, error, u16() (+1 more)
 
 ### Community 128 - "SxcuFixturesTest.cpp"
 Cohesion: 0.15
@@ -1026,12 +1029,12 @@ Cohesion: 0.07
 Nodes (17): CapturedImageOpener, CaptureRecoveryActions, CaptureRecoveryActions::CaptureRecoveryActions(), m_annotationOpener, m_capture, m_dialog, m_dialogParent, m_discard (+9 more)
 
 ### Community 132 - "PortalWorkflowShortcuts"
-Cohesion: 0.06
-Nodes (23): PortalWorkflowShortcuts, m_authority, m_bindings, m_bus, m_closed, m_config, m_diagnostic, m_early (+15 more)
+Cohesion: 0.05
+Nodes (30): EarlyResponse, code, path, results, PortalShortcut, id, properties, PortalWorkflowShortcuts (+22 more)
 
 ### Community 133 - "PipelineJournalSnapshot"
-Cohesion: 0.07
-Nodes (26): invalid(), JournalWrite, diagnostic, stored, PipelineJournalParse, diagnostic, record, PipelineJournalSnapshot (+18 more)
+Cohesion: 0.08
+Nodes (25): invalid(), JournalWrite, diagnostic, stored, PipelineJournalParse, diagnostic, record, PipelineJournalSnapshot (+17 more)
 
 ### Community 134 - "CounterStore.cpp"
 Cohesion: 0.13
@@ -1058,40 +1061,40 @@ Cohesion: 0.07
 Nodes (32): Native editor Print Image, EditorPrintPorts, EditorPrintTest, EditorWindowTest, paintEditorPrintPage, print-delivery-unknown, Print Image, printFinished (+24 more)
 
 ### Community 140 - "OnboardingController"
-Cohesion: 0.08
-Nodes (16): installOnboarding(), OnboardingController, m_gotResult, m_interactive, m_lastBody, m_lastSuccess, m_load, m_loaded (+8 more)
+Cohesion: 0.09
+Nodes (15): installOnboarding(), OnboardingController, m_gotResult, m_interactive, m_lastBody, m_lastSuccess, m_load, m_loaded (+7 more)
 
 ### Community 141 - "ImageRecognitionDialog"
-Cohesion: 0.07
+Cohesion: 0.05
 Nodes (23): ImageRecognitionDialog, m_available, m_busy, m_cancel, m_copy, m_file, m_generation, m_kind (+15 more)
 
 ### Community 142 - "SelectionRotationDialog"
-Cohesion: 0.08
-Nodes (19): chooseSelectionRotation(), QLabel, QLineEdit, QPlainTextEdit, QPushButton, SelectionRotationChoice, degrees, diagnostic (+11 more)
+Cohesion: 0.11
+Nodes (14): QLabel, QLineEdit, QPlainTextEdit, QPushButton, SelectionRotationDialog, m_angle, m_degrees, m_document (+6 more)
 
 ### Community 143 - "Harness"
 Cohesion: 0.08
 Nodes (21): autoCaptureFinishedTitle(), autoCaptureSummaryText(), AutoSummary, captured, failed, skipped, stoppedByUser, CaptureScheduleTest (+13 more)
 
 ### Community 144 - "apply()"
-Cohesion: 0.10
-Nodes (24): apply(), bilinear(), cancelled(), CanvasResult, changed, document, error, image (+16 more)
+Cohesion: 0.07
+Nodes (33): cancelled(), fail(), prepare(), prepareCanvasEdit(), prepareCanvasPreview(), progress(), apply(), bilinear() (+25 more)
 
 ### Community 145 - "ManipulationEffects2.cpp"
-Cohesion: 0.21
+Cohesion: 0.22
 Nodes (23): add(), blend(), byte(), canvas(), canvasEffect(), corners(), displacement(), identity() (+15 more)
 
 ### Community 146 - "Recording.cpp"
-Cohesion: 0.12
-Nodes (19): Encoder, diagnostic, element, required, extension(), Format, Gif, Mp4 (+11 more)
+Cohesion: 0.18
+Nodes (12): extension(), Format, Gif, Mp4, WebM, generatedFilename(), Output::~Output(), pipeline() (+4 more)
 
 ### Community 147 - "CredentialResult"
 Cohesion: 0.15
 Nodes (8): CredentialResult, status, value, MemoryCredentialStore, m_forced, m_secrets, ObservedCredentials, lookups
 
 ### Community 148 - "CaptureSaveAsTest"
-Cohesion: 0.10
-Nodes (12): captureSaveAsTarget(), SaveAsTarget, diagnostic, path, bytes(), CaptureSaveAsTest, QTemporaryDir, choosePath() (+4 more)
+Cohesion: 0.05
+Nodes (14): pipelineResultJson(), captureSaveAsTarget(), SaveAsTarget, diagnostic, path, bytes(), CaptureSaveAsTest, QTemporaryDir (+6 more)
 
 ### Community 149 - "PortalColorPicker"
 Cohesion: 0.06
@@ -1106,8 +1109,8 @@ Cohesion: 0.07
 Nodes (21): ScheduledCapturePorts, blocked, notify, setTooltip, start, Fixture, blocked, clock (+13 more)
 
 ### Community 152 - "FakeView"
-Cohesion: 0.07
-Nodes (20): ScrollChoice, Discard, SaveFrames, SavePartial, ScrollOutcome, code, frames, image (+12 more)
+Cohesion: 0.08
+Nodes (16): ScrollOutcome, code, frames, image, message, seamless, status, FakeView (+8 more)
 
 ### Community 153 - "Status"
 Cohesion: 0.06
@@ -1118,12 +1121,12 @@ Cohesion: 0.13
 Nodes (14): bodyTypeString(), fieldsJson(), hasControl(), parseBody(), parseMethod(), readDestination(), requestMethodString(), takeFields() (+6 more)
 
 ### Community 155 - "CaptureHistoryTest"
-Cohesion: 0.08
-Nodes (13): applyCrop(), CaptureHistoryTest, QTemporaryDir, cropCapture(), cropPixels(), HistoryGate, entered, guiThread (+5 more)
+Cohesion: 0.09
+Nodes (14): applyCrop(), CaptureHistoryTest, QTemporaryDir, cropCapture(), cropPixels(), dialog(), HistoryGate, entered (+6 more)
 
-### Community 156 - "CaptureHistoryWindow.cpp"
-Cohesion: 0.15
-Nodes (7): CaptureHistoryWindow::CaptureHistoryWindow(), m_openUrl, m_technical, loadThumbnail(), placeholder(), sourceName(), uploadField()
+### Community 156 - "CaptureWorkflow"
+Cohesion: 0.08
+Nodes (26): CaptureOutput, directory, extra, pattern, CaptureOutputPreview, diagnostic, error, filename (+18 more)
 
 ### Community 157 - "MoveGesture"
 Cohesion: 0.08
@@ -1134,27 +1137,27 @@ Cohesion: 0.14
 Nodes (5): gatedComparison(), ImageComparisonDialogTest, QTemporaryDir, sample(), solid()
 
 ### Community 159 - "TextContentDialog"
-Cohesion: 0.08
-Nodes (24): QCheckBox, QComboBox, QDoubleSpinBox, QLabel, QLineEdit, QPlainTextEdit, TextContentDialog, m_alignment (+16 more)
+Cohesion: 0.05
+Nodes (39): QCheckBox, QComboBox, QDoubleSpinBox, QLabel, QLineEdit, QPlainTextEdit, TextContentDialog, m_alignment (+31 more)
 
 ### Community 160 - "WatchFolderService"
 Cohesion: 0.08
 Nodes (13): FileUploadController, WatchFolderService, m_attempted, m_blocked, m_captures, m_pendingKey, m_pendingPath, m_reported (+5 more)
 
 ### Community 161 - "PreferenceRead"
-Cohesion: 0.09
-Nodes (17): failure(), FilePreferenceStorage, m_path, Kind, Failed, Missing, Readable, owned() (+9 more)
+Cohesion: 0.07
+Nodes (22): EditorPreferenceStore, m_diagnostics, m_envelope, m_preferences, m_snapshot, failure(), FilePreferenceStorage, m_path (+14 more)
 
 ### Community 162 - "FilenameGenerator.cpp"
 Cohesion: 0.20
-Nodes (21): acceptsArgument(), applyEmptyRule(), errorCodeName(), expand(), finalizeComponent(), formatCounter(), isBlank(), isCounterToken() (+13 more)
+Nodes (18): acceptsArgument(), applyEmptyRule(), errorCodeName(), expand(), finalizeComponent(), isBlank(), isCounterToken(), isPortableInvalid() (+10 more)
 
 ### Community 163 - "PreparedUploadRequest"
 Cohesion: 0.07
-Nodes (21): PreparedUploadRequest, body, contentType, destination, fileName, headers, method, sensitiveValues (+13 more)
+Nodes (23): FilePreparation, destinationName, existingFile, missingDestination, request, PreparedUploadRequest, body, contentType (+15 more)
 
 ### Community 164 - "parseUploadResponse()"
-Cohesion: 0.11
+Cohesion: 0.10
 Nodes (6): jsonPath(), parseUploadResponse(), UploadHeaders, webUrl(), xmlPath(), UploadResponseTest
 
 ### Community 165 - "FilterEffects4Test"
@@ -1166,72 +1169,72 @@ Cohesion: 0.18
 Nodes (7): FilterEffects7Test, fixture(), img(), px(), run(), singlePixel(), solid()
 
 ### Community 167 - "FakeRemoteDesktop"
-Cohesion: 0.12
+Cohesion: 0.13
 Nodes (12): FakeRemoteDesktop, axisCalls, bus, failAxis, log, motions, onAxis, sessionPath (+4 more)
 
 ### Community 168 - "AudioDevice"
-Cohesion: 0.08
-Nodes (19): describe(), RecordingDevices, RecordingDevices::create(), GstElement, AudioDevice, id, label, monitor (+11 more)
+Cohesion: 0.14
+Nodes (10): describe(), RecordingDevices, RecordingDevices::create(), GstElement, inspectTrack(), Tracks, audio, height (+2 more)
 
 ### Community 169 - "AppContext"
-Cohesion: 0.07
-Nodes (25): ActivationDispatcher, AppContext, activation, defaultCaptureFolder, dialogParent, invocationOrigin, invoke, journal (+17 more)
+Cohesion: 0.06
+Nodes (27): ActivationDispatcher, AppContext, activation, defaultCaptureFolder, dialogParent, invocationOrigin, invoke, journal (+19 more)
 
 ### Community 170 - "ConversionRunner"
-Cohesion: 0.09
-Nodes (9): ConversionRunner, public, code(), ImageRecognitionDialogTest, FakeRunner, cancels, last, running (+1 more)
+Cohesion: 0.15
+Nodes (7): code(), ImageRecognitionDialogTest, FakeRunner, cancels, last, running, starts
 
 ### Community 171 - "FileUploadController"
 Cohesion: 0.07
 Nodes (22): FileUploadController, m_busy, m_cap, m_currentName, m_currentPath, m_dialogParent, m_executor, m_existingFile (+14 more)
 
 ### Community 172 - "IconWriterTest.cpp"
-Cohesion: 0.15
-Nodes (13): encodeIcon(), isOfferedSize(), validateSizes(), writeIcon(), decodePng(), height, width, IconWriterTest (+5 more)
+Cohesion: 0.09
+Nodes (22): writeIcon(), decodePng(), Entry, bitCount, bytesInRes, colorCount, height, imageOffset (+14 more)
 
 ### Community 173 - "ScrollDialogView"
 Cohesion: 0.07
 Nodes (10): ScrollCaptureView, public, ScrollDialogView, m_box, m_closing, m_dialog, m_grab, m_hint (+2 more)
 
 ### Community 174 - "CredentialStore"
-Cohesion: 0.11
-Nodes (8): CredentialStore, DestinationCatalogTest, QTemporaryDir, FailingStore, failOnStore, inner, stores, plain()
+Cohesion: 0.15
+Nodes (7): DestinationCatalogTest, QTemporaryDir, FailingStore, failOnStore, inner, stores, plain()
 
 ### Community 175 - "UploadDestinationsDialogTest"
 Cohesion: 0.11
 Nodes (8): CatalogEntry, destination, problems, UploadDestinationsDialogTest, m_confirm, m_reports, m_secretAnswer, QTemporaryDir
 
 ### Community 176 - "SxcuImport.cpp"
-Cohesion: 0.21
+Cohesion: 0.22
 Nodes (20): allocate(), Bag, secrets, seen, used, warnings, importSxcu(), isSecretName() (+12 more)
 
 ### Community 177 - "Harness"
 Cohesion: 0.07
-Nodes (20): FakeSession, Harness, admitted, answer, cancelHook, grabFails, grabs, makeRemote (+12 more)
+Nodes (24): ScrollChoice, Discard, SaveFrames, SavePartial, Harness, admitted, answer, cancelHook (+16 more)
 
 ### Community 178 - "CaptureHistoryWindowTest"
-Cohesion: 0.19
-Nodes (8): QListWidgetItem, captureHistoryItems(), CaptureHistoryWindowTest, find(), newId(), png(), record(), writePng()
+Cohesion: 0.20
+Nodes (9): QListWidgetItem, serializePipelineJournal(), CaptureHistoryWindowTest, find(), newId(), png(), record(), recovered() (+1 more)
 
 ### Community 179 - "saveEdit()"
-Cohesion: 0.16
-Nodes (6): saveEdit(), bytes(), edited(), EditorSaveTest, pixels(), write()
+Cohesion: 0.15
+Nodes (5): bytes(), edited(), EditorSaveTest, pixels(), write()
 
 ### Community 180 - "NewImageDialogTest"
 Cohesion: 0.18
 Nodes (5): dimensions(), fixture(), gatedNew(), NewImageDialogTest, QTemporaryDir
 
 ### Community 181 - "PortalRemoteDesktop"
-Cohesion: 0.08
-Nodes (8): PortalRemoteDesktop, m_bus, m_config, m_expectedPath, m_ready, m_session, m_step, public
+Cohesion: 0.07
+Nodes (12): PortalRemoteDesktop, m_bus, m_config, m_expectedPath, m_ready, m_session, m_step, PortalRemoteDesktop::PortalRemoteDesktop() (+4 more)
 
 ### Community 182 - "EditorPreferences"
-Cohesion: 0.08
-Nodes (20): drawingStyleFromPreferences(), EditorPreferences, diagnostics, fields, readOnly, recent, values, invalid() (+12 more)
+Cohesion: 0.10
+Nodes (16): EditorPreferences, diagnostics, fields, readOnly, recent, values, PreferenceChange, diagnostics (+8 more)
 
 ### Community 183 - "Effect"
-Cohesion: 0.07
-Nodes (18): Category, Adjustments, Drawings, Filters, Manipulations, Effect, fake(), FakeEffect (+10 more)
+Cohesion: 0.13
+Nodes (11): Category, Adjustments, Drawings, Filters, Manipulations, Fake, probe, s (+3 more)
 
 ### Community 184 - "UploadExecutor"
 Cohesion: 0.10
@@ -1242,24 +1245,20 @@ Cohesion: 0.08
 Nodes (27): Auto Crop, CANVAS-WORKERS-EVIDENCE.json, Clear Annotations, Clear Image, Crop, Owned canvas mutation preparation and rotation previews, Flatten, QtCore (+19 more)
 
 ### Community 186 - "ComparisonView"
-Cohesion: 0.11
+Cohesion: 0.12
 Nodes (6): ComparisonView, m_dragging, m_images, m_layout, m_reveal, public
-
-### Community 187 - "PortalColorPicker.cpp"
-Cohesion: 0.11
-Nodes (4): colorFromPortal(), permissionDenied(), requestPath(), unpackVariant()
 
 ### Community 188 - "HotkeyBindings.cpp"
 Cohesion: 0.11
 Nodes (14): SettingsDialog, BindingResult, conflictingAction, diagnostic, ok, captureHotkeyActions(), HotkeyAction, id (+6 more)
 
 ### Community 189 - "WorkflowExecutionHistoryDialog"
-Cohesion: 0.08
-Nodes (20): QLabel, QPushButton, QTreeWidget, WorkflowExecutionHistoryDialog, m_busy, m_captureBusy, m_confirming, m_forget (+12 more)
+Cohesion: 0.05
+Nodes (28): WorkflowExecutionEntry, diagnostic, id, result, snapshot, WorkflowExecutionListing, diagnostic, entries (+20 more)
 
 ### Community 190 - "runEffect()"
-Cohesion: 0.12
-Nodes (6): runEffect(), AdjustmentEffectsTest, fixture(), EffectFrameworkTest, parameterSpec(), sourceImage()
+Cohesion: 0.09
+Nodes (7): resolveParameters(), runEffect(), AdjustmentEffectsTest, fixture(), EffectFrameworkTest, parameterSpec(), sourceImage()
 
 ### Community 191 - "AdjustmentEffects2Test"
 Cohesion: 0.16
@@ -1282,24 +1281,24 @@ Cohesion: 0.10
 Nodes (9): CaptureUploadTest, HttpFixture, hold, received, server, status, wire, pixels() (+1 more)
 
 ### Community 196 - "ScriptedExecutor"
-Cohesion: 0.08
-Nodes (11): JournaledExecutor, m_interruptionDiagnostic, ActionExecutor, kindName(), ScriptedExecutor, ran, states, temporaryFileCreatable (+3 more)
+Cohesion: 0.06
+Nodes (21): JournaledExecutor, m_interruptionDiagnostic, ActionExecutor, ActionKind, Analysis, Confirmation, Destructive, External (+13 more)
 
-### Community 197 - "runEditorPrint()"
-Cohesion: 0.14
-Nodes (6): runEditorPrint(), EditorPrintTest, QTemporaryDir, fixture(), pdfChoice(), waitGate()
+### Community 197 - "runEditorPrint"
+Cohesion: 0.04
+Nodes (45): awaitWorker(), cancelled(), destroyProgress(), EditorPrintChoice, action, percentOfFit, printer, EditorPrintOutcome (+37 more)
 
 ### Community 198 - "AppearancePalette"
-Cohesion: 0.12
-Nodes (24): translated(), appearanceContrastRatio(), AppearancePalette, alternateBase, base, buttonText, highlight, highlightedText (+16 more)
+Cohesion: 0.10
+Nodes (25): translated(), appearanceContrastRatio(), AppearancePalette, alternateBase, base, buttonText, highlight, highlightedText (+17 more)
 
 ### Community 199 - "createShellDispatcher()"
 Cohesion: 0.13
 Nodes (14): activationFailureMessage(), addCapture(), captureSurfaces(), commandWindow(), createShellDispatcher(), effectiveWorkflow(), installCapture(), installRetainedCapture() (+6 more)
 
 ### Community 200 - "windowTitle"
-Cohesion: 0.10
-Nodes (14): AnnotationColorChoice, color, diagnostic, chooseAnnotationColor(), CaptureSaveAsDialog::CaptureSaveAsDialog(), chooseRectangle(), chooseRectangleCreation(), chooseRectangleProperties() (+6 more)
+Cohesion: 0.11
+Nodes (11): CanvasRotationDialog::CanvasRotationDialog(), CanvasRotationPreview, m_image, CaptureSaveAsDialog::CaptureSaveAsDialog(), chooseSelectionRotation(), SelectionRotationChoice, degrees, diagnostic (+3 more)
 
 ### Community 201 - "AutoCaptureSession"
 Cohesion: 0.09
@@ -1315,18 +1314,18 @@ Nodes (15): CommandRegistry, m_entries, m_sequence, public, CommandSpec, group, 
 
 ### Community 204 - "RecordingActions"
 Cohesion: 0.11
-Nodes (10): QFormLayout, QSystemTrayIcon, RecordingActions, m_actions, m_folder, m_icon, m_ordered, m_selectRegion (+2 more)
+Nodes (9): QSystemTrayIcon, RecordingActions, m_actions, m_folder, m_icon, m_ordered, m_selectRegion, m_settings (+1 more)
 
 ### Community 205 - "QrMatrix"
-Cohesion: 0.09
-Nodes (15): QrImageResult, error, image, ok, qrMinimumPixels(), renderQr(), QrMatrix, mask (+7 more)
+Cohesion: 0.12
+Nodes (11): qrMinimumPixels(), renderQr(), QrMatrix, mask, modules, size, version, QrResult (+3 more)
 
-### Community 206 - "SessionState"
-Cohesion: 0.09
-Nodes (22): m_publish, SessionOutcome, diagnostic, lastRegion, rectangle, state, SessionState, Authorizing (+14 more)
+### Community 206 - "PresetDialog"
+Cohesion: 0.08
+Nodes (16): PresetDialog, m_apply, m_busy, m_canApply, m_commit, m_document, m_export, m_list (+8 more)
 
 ### Community 207 - "stitchScrollFrames()"
-Cohesion: 0.19
+Cohesion: 0.18
 Nodes (7): stitchScrollFrames(), framed(), framesAt(), mix(), ScrollStitchTest, slice(), tallPage()
 
 ### Community 208 - "ComparisonLayout"
@@ -1334,8 +1333,8 @@ Cohesion: 0.10
 Nodes (18): check(), ComparisonLayout, canvas, first, firstOffset, second, secondOffset, ComparisonLayoutResult (+10 more)
 
 ### Community 209 - "ToolbarPreferences.cpp"
-Cohesion: 0.18
-Nodes (10): defaultToolbarItems(), effectiveToolbarItems(), knownToolbarAction(), parseToolbarHotkey(), resetToolbarItems(), toolbarHotkeyDiagnostic(), validateToolbarChange(), validateToolbarItems() (+2 more)
+Cohesion: 0.13
+Nodes (14): defaultToolbarItems(), effectiveToolbarItems(), knownToolbarAction(), parseToolbarHotkey(), resetToolbarItems(), toolbarHotkeyDiagnostic(), ToolbarValidation, diagnostics (+6 more)
 
 ### Community 210 - "SxcuImportResult"
 Cohesion: 0.10
@@ -1350,100 +1349,104 @@ Cohesion: 0.20
 Nodes (8): canvas(), changed(), fixture(), ManipulationEffects2Test, QTemporaryDir, ramp(), run(), solid()
 
 ### Community 214 - "FileUploadHistoryRecord"
-Cohesion: 0.10
-Nodes (17): FileUploadHistoryRecord, createdAt, destinationName, failureCode, origin, path, result, taskId (+9 more)
+Cohesion: 0.06
+Nodes (29): CaptureHistoryJob, erased, kind, listing, missing, paths, ready, thumbnails (+21 more)
 
 ### Community 215 - "AnnotationObjectNavigator"
-Cohesion: 0.10
-Nodes (9): AnnotationObjectNavigator, AnnotationObjectNavigator::AnnotationObjectNavigator(), m_canvas, m_objects, m_ready, m_refreshing, public, EditorCanvas (+1 more)
+Cohesion: 0.15
+Nodes (7): AnnotationObjectNavigator, m_canvas, m_objects, m_ready, m_refreshing, public, EditorCanvas
 
-### Community 216 - "ImageRecognitionDialog.cpp"
-Cohesion: 0.11
-Nodes (6): ImageRecognitionKind, QrCode, Text, ImageRecognitionDialog::ImageRecognitionDialog(), selectNativeRegion(), unavailable()
-
-### Community 217 - "defaultCaptureWorkflows()"
+### Community 216 - ".acquired"
 Cohesion: 0.17
-Nodes (4): NativeWorkflowExecutions, m_records, NativeWorkflowExecutions::NativeWorkflowExecutions(), defaultCaptureWorkflows()
+Nodes (3): selectNativeRegion(), unavailable(), raise
+
+### Community 217 - "defaultCaptureWorkflows"
+Cohesion: 0.11
+Nodes (10): NativeWorkflowExecutions, m_records, NativeWorkflowExecutions::NativeWorkflowExecutions(), defaultCaptureWorkflows(), path, read(), uuid(), workflow() (+2 more)
 
 ### Community 218 - "XerahS for Linux (`linux-qt`)"
 Cohesion: 0.08
 Nodes (24): Headless workflow discovery, Linked retry, linux-qt reference edition, Native capture pipeline, Native image editor, Native xerahs command window and tray, Private editor preferences, Production Qt Core libraries (+16 more)
 
 ### Community 219 - "LastRegion"
-Cohesion: 0.12
+Cohesion: 0.14
 Nodes (16): coordinate(), LastRegionRead, file, region, LastRegionStore, m_file, parse(), readCoordinate() (+8 more)
 
 ### Community 220 - "CaptureHistoryItem"
 Cohesion: 0.10
-Nodes (17): CaptureHistoryFile, byteLength, height, path, width, CaptureHistoryItem, captureSource, createdAt (+9 more)
+Nodes (18): CaptureHistoryFile, byteLength, height, path, width, CaptureHistoryItem, captureSource, createdAt (+10 more)
 
 ### Community 221 - "ExpansionError"
 Cohesion: 0.20
-Nodes (14): Expander, m_counter, m_mode, m_twelveHour, ExpansionError, code, offset, token (+6 more)
+Nodes (15): Expander, m_counter, m_mode, m_twelveHour, formatCounter(), padNumber(), Segment, count (+7 more)
 
 ### Community 222 - "WorkflowShortcutPlan"
 Cohesion: 0.12
 Nodes (14): captureShortcutPlan(), WorkflowShortcut, description, id, preferredTrigger, WorkflowShortcutPlan, diagnostic, entries (+6 more)
 
 ### Community 223 - "FilterEffects2Test"
-Cohesion: 0.17
+Cohesion: 0.16
 Nodes (7): FilterEffects2Test, fixture(), meanChannel(), run(), solid(), uniqueColors(), varied()
 
 ### Community 224 - "FixtureReply"
 Cohesion: 0.09
-Nodes (6): FixtureManager, mode, safeRedirect, FixtureReply, m_bytes, UploadExecutorTest
+Nodes (7): QNetworkReply, FixtureManager, mode, safeRedirect, FixtureReply, m_bytes, UploadExecutorTest
 
 ### Community 225 - "VideoConverterIntegrationTest"
-Cohesion: 0.12
-Nodes (9): GstElementAvailability, initGst(), Pick, codec, container, VideoConverterIntegrationTest, input, pick (+1 more)
+Cohesion: 0.17
+Nodes (7): Pick, codec, container, VideoConverterIntegrationTest, input, pick, QTemporaryDir
 
 ### Community 226 - "Builder"
-Cohesion: 0.20
-Nodes (7): bit(), Builder, m_ecc, m_fn, m_mod, m_size, m_ver
+Cohesion: 0.17
+Nodes (10): bit(), Builder, m_ecc, m_fn, m_mod, m_size, m_ver, gfMul() (+2 more)
 
-### Community 227 - "FilterEffects7.cpp"
-Cohesion: 0.18
-Nodes (16): byte(), dilateAlpha(), identity(), outlineEffect(), phase(), Premul, a, b (+8 more)
+### Community 227 - "PhysicalPoint"
+Cohesion: 0.12
+Nodes (15): boundingBox(), clampPhysical(), clampTo(), mapToPhysical(), PhysicalPoint, x, y, reaches() (+7 more)
 
 ### Community 228 - "ColorPickerDialog"
-Cohesion: 0.11
-Nodes (19): ColorPickerDialog, m_applying, m_color, m_copies, m_copyAll, m_hex, m_hexError, m_lines (+11 more)
+Cohesion: 0.08
+Nodes (21): ColorPickerDialog, ColorPickerDialog::ColorPickerDialog(), m_applying, m_color, m_copies, m_copyAll, m_hex, m_hexError (+13 more)
 
 ### Community 229 - "Tool"
 Cohesion: 0.09
 Nodes (21): Tool, Arrow, Blur, Crop, Cursor, CutOut, Ellipse, Emoji (+13 more)
 
 ### Community 230 - "IconWriter.cpp"
-Cohesion: 0.23
-Nodes (17): buildIcon(), BuiltEntry, bitCount, data, size, iconEntryImage(), isValidImage(), paddedMaskRowSize() (+9 more)
+Cohesion: 0.19
+Nodes (21): buildIcon(), BuiltEntry, bitCount, data, size, encodeIcon(), iconEntryImage(), iconSizes() (+13 more)
 
 ### Community 231 - "State"
+Cohesion: 0.07
+Nodes (14): Context, m_state, OwnedWork, m_state, run(), State, cancelled, done (+6 more)
+
+### Community 232 - "HashCheckerDialog.cpp"
 Cohesion: 0.13
-Nodes (11): Context, m_state, run(), State, cancelled, done, owner, progress (+3 more)
+Nodes (6): acceptLocalFiles(), HashCheckerDialog::HashCheckerDialog(), localFilePaths(), percentOf(), verdictFor(), weakWarning()
 
 ### Community 233 - "Codec"
-Cohesion: 0.11
-Nodes (13): Codec, bitrateProperty, bitrateScale, containers, encoders, hardware, id, label (+5 more)
+Cohesion: 0.07
+Nodes (26): Codec, bitrateProperty, bitrateScale, containers, encoders, hardware, id, label (+18 more)
 
 ### Community 234 - "ManipulationEffectsTest"
 Cohesion: 0.21
 Nodes (5): expectPixels(), fixture(), ManipulationEffectsTest, pixelsOf(), run()
 
 ### Community 235 - "recognizeTextImage()"
-Cohesion: 0.17
-Nodes (6): cancelled(), failed(), recognizeTextImage(), stopping(), OcrRecognitionTest, printedText()
+Cohesion: 0.22
+Nodes (7): ImageRecognitionDialog::ImageRecognitionDialog(), cancelled(), recognizeTextImage(), stopping(), textRecognitionAvailable(), OcrRecognitionTest, printedText()
 
 ### Community 236 - "CaptureComposition"
-Cohesion: 0.10
-Nodes (12): CaptureComposition, cancelled, mutex, progress, ready, result, ComposedSnapshot, cancelled (+4 more)
+Cohesion: 0.15
+Nodes (7): composite, ComposedSnapshot, cancelled, diagnostic, image, composeSnapshot(), SnapshotCompositionTest
 
 ### Community 237 - "runEditorPin()"
 Cohesion: 0.10
 Nodes (13): EditorPinOutcome, action, publicationAttempted, EditorPinPorts, beforeRender, publish, EditorPinSnapshot, disclosures (+5 more)
 
 ### Community 238 - "NativeDesktopAppearance"
-Cohesion: 0.10
-Nodes (13): NativeDesktopAppearance, m_bus, m_generation, m_motionDisabled, m_owner, m_ownerAvailable, m_previousEffects, m_readPending (+5 more)
+Cohesion: 0.06
+Nodes (19): known(), NativeDesktopAppearance, m_bus, m_generation, m_motionDisabled, m_owner, m_ownerAvailable, m_previousEffects (+11 more)
 
 ### Community 239 - "OnboardingProgress.cpp"
 Cohesion: 0.17
@@ -1454,20 +1457,20 @@ Cohesion: 0.10
 Nodes (10): PinWindow, kMaxOpacity, kMaxZoom, kMinOpacity, m_dragging, m_dragOffset, m_image, m_opacity (+2 more)
 
 ### Community 241 - "RandomSource"
-Cohesion: 0.13
-Nodes (10): FixedRandomSource, m_bytes, m_position, makeFixedRandomSource(), makePreviewRandomSource(), preview(), PreviewRandomSource, m_next (+2 more)
+Cohesion: 0.15
+Nodes (8): FixedRandomSource, m_bytes, m_position, makeFixedRandomSource(), PreviewRandomSource, m_next, RandomSource, SystemRandomSource
 
-### Community 242 - "manageEditorAppearance()"
-Cohesion: 0.16
-Nodes (5): manageEditorAppearance(), applyAppearancePreferences(), changeDraft(), manual(), NativeEditorAppearanceTest
+### Community 242 - "FileHashTest"
+Cohesion: 0.14
+Nodes (5): hashFile(), HashProgress, FileHashTest, oneShot(), writeFile()
 
 ### Community 243 - ".showColor()"
-Cohesion: 0.22
+Cohesion: 0.21
 Nodes (4): formatAll(), ColorPickerDialogTest, lineLabel(), recentTexts()
 
-### Community 245 - "NativeDesktopAppearanceTest"
-Cohesion: 0.21
-Nodes (5): NativeDesktopAppearanceTest, m_client, m_native, m_service, QDBusConnection
+### Community 245 - "FakePortal"
+Cohesion: 0.08
+Nodes (16): NativeDesktopAppearance::NativeDesktopAppearance(), PortalAppearanceSettings, FakePortal, changeDuringNextRead, delayNext, namespaces, pending, reads (+8 more)
 
 ### Community 246 - "PreferenceDialog"
 Cohesion: 0.14
@@ -1475,23 +1478,23 @@ Nodes (7): destroyDialog(), PreferenceDialog, m_committing, m_finished, m_picker
 
 ### Community 248 - "catalogueIndex()"
 Cohesion: 0.15
-Nodes (12): ActionSelectionChoice, action, available, selected, actionSelectionChoices(), ActionSelectionValidation, accepted, diagnostic (+4 more)
+Nodes (11): ActionSelectionChoice, action, available, selected, actionSelectionChoices(), ActionSelectionValidation, accepted, diagnostic (+3 more)
 
 ### Community 249 - "CensusEffect"
 Cohesion: 0.11
 Nodes (17): CensusEffect, category, id, mode, parameters, CensusParameter, id, kind (+9 more)
 
 ### Community 250 - "RecordingTest"
-Cohesion: 0.17
-Nodes (6): pipeline, elements(), FakeEncoderPort, path, RecordingTest, request()
+Cohesion: 0.27
+Nodes (4): pipeline, elements(), RecordingTest, request()
 
 ### Community 251 - "buildUploadRequest()"
-Cohesion: 0.17
-Nodes (7): buildUploadRequest(), controls(), encoded(), jsonEscape(), quoted(), sample(), UploadRequestTest
+Cohesion: 0.13
+Nodes (10): buildUploadRequest(), controls(), encoded(), jsonEscape(), quoted(), UploadRequestOptions, maxInputBytes, randomSeed (+2 more)
 
 ### Community 252 - "HttpFixture"
-Cohesion: 0.12
-Nodes (8): CaptureBeforeUploadTest, HttpFixture, hold, received, server, status, wire, pixels()
+Cohesion: 0.22
+Nodes (6): HttpFixture, hold, received, server, status, wire
 
 ### Community 253 - "FileManager"
 Cohesion: 0.12
@@ -1502,28 +1505,28 @@ Cohesion: 0.12
 Nodes (9): HttpFixture, bodies, held, holdFirst, m_done, m_wire, received, server (+1 more)
 
 ### Community 255 - "ActionSelectionTest"
-Cohesion: 0.20
-Nodes (5): ActionSelectionTest, chooser(), pixels(), receipt(), resultActions()
+Cohesion: 0.15
+Nodes (7): ActionSelectionTest, configured, selector, chooser(), pixels(), receipt(), resultActions()
 
 ### Community 256 - "Native screenshot transport and capture qualification"
 Cohesion: 0.11
 Nodes (19): capture-permission-denied, capture-source-failed, CapturePipelineTest, Native screenshot transport and capture qualification, loadRaster, PIPELINE-RESULTS.md, PortalScreenshot, PortalScreenshotTest (+11 more)
 
-### Community 257 - "runEditorPreparation()"
-Cohesion: 0.11
-Nodes (12): runEditorHistory(), destroyProgress(), EditorPreparationResult, Cancelled, Failed, Ready, EditorPreparationUi, accessibleName (+4 more)
+### Community 257 - "EffectPreset"
+Cohesion: 0.09
+Nodes (16): EffectPreset, assets, error, extra, legacy, name, steps, PresetStep (+8 more)
 
 ### Community 258 - "runEditorSave()"
-Cohesion: 0.12
-Nodes (15): EditorSavePhase, Complete, Encoding, PublishingRaster, Rendering, SavingAnnotations, EditorSaveReceiptPtr, phaseText() (+7 more)
+Cohesion: 0.08
+Nodes (24): EditorSavePhase, Complete, Encoding, PublishingRaster, Rendering, SavingAnnotations, EditorSaveReceiptPtr, SaveOutcome (+16 more)
 
 ### Community 259 - ".setImage()"
-Cohesion: 0.18
-Nodes (4): IconConverterDialogTest, previewLabel(), saveButton(), sourceImage()
+Cohesion: 0.13
+Nodes (5): IconConverterDialog::IconConverterDialog(), IconConverterDialogTest, previewLabel(), saveButton(), sourceImage()
 
-### Community 260 - "FakePortal"
-Cohesion: 0.12
-Nodes (10): PortalAppearanceSettings, FakePortal, changeDuringNextRead, delayNext, namespaces, pending, reads, rejectReads (+2 more)
+### Community 260 - "hyprlandSnapTargets"
+Cohesion: 0.13
+Nodes (7): hyprlandSnapTargets(), number(), safelyMaps(), discover(), topology(), window(), WindowSnapTargetsTest
 
 ### Community 261 - "XerahS for Linux (`linux-qt`)"
 Cohesion: 0.11
@@ -1538,23 +1541,23 @@ Cohesion: 0.16
 Nodes (18): ActionSelection, ActionSelectionTest, CapturePipeline, Effective-plan write-ahead recording, Linked output retry, Native per-run capture action selection, Per-run capture action chooser, PostCapturePipelineTest (+10 more)
 
 ### Community 264 - "CanvasCropHooks"
-Cohesion: 0.13
-Nodes (6): CanvasCropDialog::CanvasCropDialog(), CanvasCropHooks, beforePrepare, CropPreview, m_image, palette
+Cohesion: 0.19
+Nodes (5): CanvasCropDialog::CanvasCropDialog(), CanvasCropHooks, beforePrepare, CropPreview, m_image
 
 ### Community 265 - "CropRegion"
 Cohesion: 0.13
 Nodes (12): edge, CropRegion, height, left, top, width, normalizedCropRegion(), validCropRegion() (+4 more)
 
-### Community 266 - "HistoryState"
-Cohesion: 0.11
-Nodes (14): HistoryState, document, selection, sourceRegion, stateId, StyleEditResult, accepted, defaultsChanged (+6 more)
+### Community 266 - "RasterSaveOptions"
+Cohesion: 0.17
+Nodes (13): RasterFormat, Jpeg, Png, WebP, rasterFormatFromSuffix(), rasterFormatId(), rasterFormatName(), rasterFormatSuffix() (+5 more)
 
 ### Community 267 - "CounterError"
 Cohesion: 0.11
 Nodes (16): CounterError, Busy, Changed, Corrupt, NewerVersion, None, Overflow, Unsafe (+8 more)
 
 ### Community 268 - "State"
-Cohesion: 0.11
+Cohesion: 0.10
 Nodes (14): Session, m_state, public, State, Cancelled, Completed, Failed, Idle (+6 more)
 
 ### Community 269 - "StoreStatus"
@@ -1565,57 +1568,61 @@ Nodes (14): PrivateJsonFile::PrivateJsonFile(), safePath(), StoreStatus, Busy, C
 Cohesion: 0.22
 Nodes (9): cmyk(), degrees(), formatColor(), formatName(), hueDegrees(), isHexDigit(), parseHexColor(), percent() (+1 more)
 
-### Community 271 - "OwnedWork"
-Cohesion: 0.15
-Nodes (3): OwnedWork, m_state, OwnedWorkTest
+### Community 271 - "makeActivationRequest"
+Cohesion: 0.16
+Nodes (3): makeActivationRequest(), ActivationProtocolTest, json()
+
+### Community 272 - "composeComparison"
+Cohesion: 0.17
+Nodes (6): describe(), ComparisonAlignment, Center, TopLeft, composeComparison(), ImageComparisonTest
 
 ### Community 273 - "installWorkflows()"
-Cohesion: 0.15
-Nodes (7): applyShellVisibility(), installPreferences(), installWorkflowExecutionHistory(), adoptShortcut(), commandWindow(), installWorkflows(), shortcutPlan()
+Cohesion: 0.18
+Nodes (5): installWorkflowExecutionHistory(), adoptShortcut(), commandWindow(), installWorkflows(), shortcutPlan()
 
 ### Community 274 - "ActivationReply"
 Cohesion: 0.12
 Nodes (14): Receipt, fingerprint, reply, ActivationReply, diagnostic, id, state, ActivationReplyState (+6 more)
 
 ### Community 275 - "textRecognitionAvailable()"
-Cohesion: 0.24
-Nodes (6): textRecognitionAvailable(), qrScanningAvailable(), CaptureRecognitionTest, qr(), receipt(), text()
+Cohesion: 0.20
+Nodes (4): CaptureRecognitionTest, qr(), receipt(), text()
 
 ### Community 276 - "RectanglePropertiesDialog"
-Cohesion: 0.12
+Cohesion: 0.13
 Nodes (9): QLabel, QLineEdit, RectanglePropertiesDialog, m_fields, m_original, m_properties, m_purpose, m_status (+1 more)
 
 ### Community 277 - "ScrollCaptureSettings"
-Cohesion: 0.12
-Nodes (16): ScrollCaptureSettings, hideMs, positionPointer, settleMs, stitch, wheelSteps, ScrollStitcher::ScrollStitcher(), ScrollStitchOptions (+8 more)
+Cohesion: 0.20
+Nodes (10): ScrollStitcher::ScrollStitcher(), ScrollStitchOptions, confidenceThreshold, endOfPageFrames, footerBand, headerBand, maxFrames, maxHeight (+2 more)
 
 ### Community 278 - ".loadError()"
 Cohesion: 0.20
 Nodes (4): portsFor(), readFile(), WatchFolderServiceTest, writeFile()
 
-### Community 279 - "CapturePairedSaveTest"
-Cohesion: 0.21
-Nodes (5): CapturePairedSaveTest, native(), pixels(), receipt(), rectangle()
+### Community 279 - "CapturePipelineResult"
+Cohesion: 0.12
+Nodes (9): CapturePipelineResult, annotationDocument, diagnostic, file, filenamePattern, files, saveDirectory, sidecarIntent (+1 more)
 
 ### Community 280 - "ToolbarHotkey"
 Cohesion: 0.13
 Nodes (13): ToolbarAction, beginGroup, id, visible, ToolbarHotkey, key, modifiers, text (+5 more)
 
 ### Community 281 - "Work"
-Cohesion: 0.13
-Nodes (13): Work, cancelled, preview, progress, ready, revision, CanvasPreview, composite (+5 more)
+Cohesion: 0.25
+Nodes (6): Work, cancelled, preview, progress, ready, revision
 
 ### Community 282 - ".restoreHistory()"
-Cohesion: 0.16
+Cohesion: 0.15
 Nodes (3): selection, EditorHistoryHooks, beforePrepare
 
-### Community 283 - "CaptureHistoryJob"
+### Community 283 - "ScrollStitchResult"
 Cohesion: 0.12
-Nodes (12): CaptureHistoryJob, erased, kind, listing, missing, paths, ready, thumbnails (+4 more)
+Nodes (12): ScrollJoin, accepted, confidence, frame, offset, ScrollStitchResult, code, frames (+4 more)
 
 ### Community 284 - "EditorFileIdentity"
-Cohesion: 0.13
-Nodes (12): EditorFileIdentity, changedNanos, changedSeconds, device, inode, length, mode, modifiedNanos (+4 more)
+Cohesion: 0.10
+Nodes (19): EditorFileIdentity, changedNanos, changedSeconds, device, inode, length, mode, modifiedNanos (+11 more)
 
 ### Community 285 - "attachCommandWindow()"
 Cohesion: 0.14
@@ -1626,7 +1633,7 @@ Cohesion: 0.12
 Nodes (10): UploadLifetime, catalog, destinations, destinationsDialog, files, service, store, uploadFile (+2 more)
 
 ### Community 287 - "OnboardingWizard.cpp"
-Cohesion: 0.27
+Cohesion: 0.26
 Nodes (6): commandButton(), describeDefaultWorkflow(), OnboardingWizard::OnboardingWizard(), saveProblem(), textLabel(), button
 
 ### Community 288 - "OnboardingPorts"
@@ -1638,8 +1645,8 @@ Cohesion: 0.17
 Nodes (5): choice(), select(), SettingsDialog::SettingsDialog(), spin(), setAutostart()
 
 ### Community 290 - "AdjustmentEffects.cpp"
-Cohesion: 0.16
-Nodes (13): Adjustment, Alpha, Brightness, Contrast, Grayscale, Invert, Saturation, Matrix (+5 more)
+Cohesion: 0.15
+Nodes (12): Adjustment, Alpha, Brightness, Contrast, Grayscale, Invert, Saturation, Matrix (+4 more)
 
 ### Community 291 - "CounterReservation"
 Cohesion: 0.13
@@ -1650,8 +1657,8 @@ Cohesion: 0.30
 Nodes (9): authorizeRoot(), capturesPath(), fingerprint(), matches(), readStoreSnapshot(), watchFile(), WatchFolders::WatchFolders(), within() (+1 more)
 
 ### Community 293 - ".private()"
-Cohesion: 0.25
-Nodes (6): choose(), forget(), read(), status(), table(), write()
+Cohesion: 0.20
+Nodes (9): choose(), forget(), read(), record(), status(), table(), uuid(), WorkflowExecutionHistoryTest (+1 more)
 
 ### Community 294 - "CommandSurface"
 Cohesion: 0.17
@@ -1662,56 +1669,48 @@ Cohesion: 0.16
 Nodes (6): QWidget, CaptureSaveAsDialog, m_error, m_target, public, QLabel
 
 ### Community 296 - "CaptureAnnotationDialog::HistoryWork"
-Cohesion: 0.13
+Cohesion: 0.14
 Nodes (9): CaptureAnnotationDialog::HistoryWork, cancelled, done, generation, progress, redo, source, state (+1 more)
 
 ### Community 297 - "NativeAnnotationTools.cpp"
-Cohesion: 0.26
+Cohesion: 0.25
 Nodes (5): CaptureAnnotationDialog::CaptureAnnotationDialog(), annotationDeleteAction(), annotationOrderActions(), annotationToolActions(), annotationToolInstructions()
 
 ### Community 298 - "ToolsFeature.cpp"
-Cohesion: 0.22
+Cohesion: 0.20
 Nodes (6): addDialog(), installToolDialogs(), installTools(), parentWidget(), presentOwnedDialog(), toolSurfaces()
 
-### Community 299 - "IconConverterDialog.cpp"
-Cohesion: 0.21
-Nodes (3): acceptLocalFiles(), localFilePaths(), bytes()
-
-### Community 300 - "WorkflowExecutionEntry"
-Cohesion: 0.14
-Nodes (8): WorkflowExecutionEntry, diagnostic, id, result, snapshot, WorkflowExecutionListing, diagnostic, entries
+### Community 300 - "AudioDevice"
+Cohesion: 0.13
+Nodes (13): AudioDevice, id, label, monitor, AudioSelection, devices, diagnostics, DeviceMonitor (+5 more)
 
 ### Community 301 - "CanvasAction"
 Cohesion: 0.13
 Nodes (15): CanvasAction, AutoCrop, ClearAnnotations, ClearImageAndAnnotations, Crop, CutOut, Flatten, FlipHorizontal (+7 more)
 
-### Community 302 - "planConversion()"
-Cohesion: 0.27
-Nodes (3): planConversion(), VideoConversionTest, SetAvailability
-
-### Community 303 - "Entry"
-Cohesion: 0.13
-Nodes (12): Entry, bitCount, bytesInRes, colorCount, imageOffset, planes, reserved, Icon (+4 more)
+### Community 303 - "PortalColorPickerTest"
+Cohesion: 0.23
+Nodes (3): PortalColorPickerTest, client, QDBusConnection
 
 ### Community 304 - "EditorSaveControl"
-Cohesion: 0.26
-Nodes (12): boundRaster(), cancelled(), EditorSaveControl, cancelled, progress, EditorSaveHooks, beforePublish, encode (+4 more)
+Cohesion: 0.29
+Nodes (9): EditorSaveControl, cancelled, progress, EditorSaveHooks, beforePublish, encode, progress(), retryEditorSidecar() (+1 more)
 
 ### Community 305 - "EditorDestination"
 Cohesion: 0.22
-Nodes (10): destination(), EditorDestination, identity, kind, EditorDestinationKind, Missing, Other, Regular (+2 more)
+Nodes (8): EditorDestination, identity, kind, EditorDestinationKind, Missing, Other, Regular, unchanged()
 
-### Community 306 - "Directory"
-Cohesion: 0.21
-Nodes (7): Directory, device, fd, inode, path, NativeSidecarStore, name
+### Community 306 - "EditorSave.cpp"
+Cohesion: 0.12
+Nodes (20): boundRaster(), cancelled(), Descriptor, value, destination(), Directory, device, fd (+12 more)
 
 ### Community 307 - "Outcome"
-Cohesion: 0.14
-Nodes (9): ScreenshotDecode, cancelled, image, mutex, ready, Outcome, Cancelled, Failed (+1 more)
+Cohesion: 0.22
+Nodes (5): ScreenshotDecode, cancelled, image, mutex, ready
 
-### Community 308 - "WorkflowShortcutPortalConfig"
-Cohesion: 0.14
-Nodes (11): EarlyResponse, code, path, results, PortalShortcut, id, properties, WorkflowShortcutPortalConfig (+3 more)
+### Community 308 - "ScrollStitcher"
+Cohesion: 0.15
+Nodes (11): ScrollStitcher, m_body, m_bodyRows, m_footer, m_frames, m_header, m_joins, m_noNew (+3 more)
 
 ### Community 309 - "WatchFolders"
 Cohesion: 0.14
@@ -1721,16 +1720,16 @@ Nodes (8): WatchFolderService::WatchFolderService(), WatchFolders, m_directory, 
 Cohesion: 0.20
 Nodes (6): lastRegionStorageDiagnostic(), LastRegionStore::LastRegionStore(), bytes(), LastRegionStoreTest, put(), region()
 
-### Community 311 - "KeyboardStep"
+### Community 311 - "NativeCaptureWorkflows"
 Cohesion: 0.14
-Nodes (14): Action, Move, Resize, Edge, Bottom, Left, Right, Top (+6 more)
+Nodes (4): NativeCaptureWorkflows, public, discoverNativeWorkflows(), nativeCaptureWorkflowPath()
 
 ### Community 312 - "ExpansionResult"
-Cohesion: 0.21
-Nodes (7): ExpansionResult, nextCounter, outcome, Failure, error, makeSystemRandomSource(), FilenameGeneratorTest
+Cohesion: 0.11
+Nodes (16): ExpansionError, code, offset, token, ExpansionRequest, extension, maxLength, mode (+8 more)
 
 ### Community 313 - "spec()"
-Cohesion: 0.19
+Cohesion: 0.20
 Nodes (3): CommandRegistryTest, menuEntries(), spec()
 
 ### Community 314 - "PipelineHistoryDialogTest"
@@ -1749,21 +1748,21 @@ Nodes (13): Linux conformance adapter, Dirty graphs remain queryable, Dynamic Qt
 Cohesion: 0.24
 Nodes (4): AnnotationObjectNavigatorTest, choose(), document(), image()
 
-### Community 318 - "EditorPrint.cpp"
-Cohesion: 0.31
-Nodes (8): cancelled(), destroyProgress(), failed(), paintEditorPrintPage(), QPrinter, submitEditorPrint(), unknown(), validated()
+### Community 318 - "Outcome"
+Cohesion: 0.17
+Nodes (6): colorFromPortal(), unpackVariant(), Outcome, Cancelled, Failed, Success
 
-### Community 319 - "EditorPrintChoice"
-Cohesion: 0.15
-Nodes (9): EditorPrintChoice, action, percentOfFit, printer, EditorPrintSnapshot, colour, disclosures, grayscale (+1 more)
+### Community 319 - "QByteArray"
+Cohesion: 0.27
+Nodes (5): put16(), put32(), set16(), set32(), zip()
 
 ### Community 320 - "ComparisonHooks"
-Cohesion: 0.18
-Nodes (8): ComparisonHooks, beforePrepare, ComparisonView::ComparisonView(), describe(), ImageComparisonDialog::ImageComparisonDialog(), ComparisonAlignment, Center, TopLeft
+Cohesion: 0.22
+Nodes (4): ComparisonHooks, beforePrepare, ComparisonView::ComparisonView(), ImageComparisonDialog::ImageComparisonDialog()
 
 ### Community 321 - "FileUploadPorts"
-Cohesion: 0.15
-Nodes (7): FileUploadController::FileUploadController(), FileUploadPorts, catalogPath, credentials, history, maxInputBytes, openDestinations
+Cohesion: 0.17
+Nodes (6): FileUploadController::FileUploadController(), FileUploadPorts, catalogPath, credentials, history, maxInputBytes
 
 ### Community 322 - "Work"
 Cohesion: 0.15
@@ -1782,12 +1781,12 @@ Cohesion: 0.15
 Nodes (11): PortalRemoteDesktop, ScrollCapturePorts, acquire, desktopOrigin, notify, release, remote, saveFrames (+3 more)
 
 ### Community 326 - "DesktopAppearance"
-Cohesion: 0.15
-Nodes (10): decodeDesktopAppearance(), DesktopAppearance, accent, colorScheme, highContrast, reducedMotion, DesktopColorScheme, Dark (+2 more)
+Cohesion: 0.20
+Nodes (9): DesktopAppearance, accent, colorScheme, highContrast, reducedMotion, DesktopColorScheme, Dark, Light (+1 more)
 
-### Community 327 - "EditorPreferenceStore"
-Cohesion: 0.18
-Nodes (6): EditorPreferenceStore, m_diagnostics, m_envelope, m_preferences, m_snapshot, PreferenceStorage
+### Community 327 - "PointF"
+Cohesion: 0.23
+Nodes (5): emojiImage(), PointF, x, y, nextStepValue()
 
 ### Community 328 - "Conversion"
 Cohesion: 0.15
@@ -1798,16 +1797,16 @@ Cohesion: 0.15
 Nodes (8): Harness, commands, dir, persisted, ports, saves, settings, testCaptures
 
 ### Community 330 - "ActionSelectionDialog"
-Cohesion: 0.20
-Nodes (7): ActionSelectionDialog, m_choices, m_error, m_selected, public, QCheckBox, QLabel
+Cohesion: 0.16
+Nodes (8): ActionSelectionDialog, m_choices, m_error, m_selected, m_selector, public, QCheckBox, QLabel
 
 ### Community 331 - "CommandGroup"
 Cohesion: 0.17
 Nodes (11): CommandGroup, Application, Capture, Files, Preferences, Record, Schedule, Tools (+3 more)
 
-### Community 332 - "Work"
-Cohesion: 0.18
-Nodes (8): awaitWorker(), Work, action, cancel, diagnostic, percent, ready, snapshot
+### Community 332 - "ScrollStatus"
+Cohesion: 0.17
+Nodes (9): ScrollStatus, Cancelled, Continue, EndOfPage, Invalid, LowConfidence, MaxFrames, MaxHeight (+1 more)
 
 ### Community 334 - "Local recognition dependencies"
 Cohesion: 0.17
@@ -1830,20 +1829,20 @@ Cohesion: 0.18
 Nodes (3): CapturePinPrintTest, pins(), wheel()
 
 ### Community 339 - "FileUploadResultDialog.cpp"
-Cohesion: 0.31
-Nodes (3): FileUploadResultDialog::FileUploadResultDialog(), line(), selectable()
+Cohesion: 0.29
+Nodes (4): openDestinations, FileUploadResultDialog::FileUploadResultDialog(), line(), selectable()
 
 ### Community 341 - "scanQrImage()"
-Cohesion: 0.25
-Nodes (3): scanQrImage(), code(), QrRecognitionTest
+Cohesion: 0.23
+Nodes (4): qrScanningAvailable(), scanQrImage(), code(), QrRecognitionTest
 
 ### Community 342 - "Rule"
 Cohesion: 0.18
 Nodes (10): Action, Copy, Move, Upload, Rule, action, enabled, filters (+2 more)
 
 ### Community 343 - "MapStore"
-Cohesion: 0.25
-Nodes (4): MapStore, failWrites, files, pngHeader()
+Cohesion: 0.33
+Nodes (3): MapStore, failWrites, files
 
 ### Community 344 - "CompositionGate"
 Cohesion: 0.18
@@ -1853,13 +1852,13 @@ Nodes (8): CompositionGate, calls, done, entered, released, threshold, ReleaseGa
 Cohesion: 0.20
 Nodes (9): EditorSaveArtifact, Raster, Sidecar, SaveGate, entered, finished, released, stage (+1 more)
 
-### Community 346 - "EditorSaveReceipt"
-Cohesion: 0.20
-Nodes (9): EditorSaveReceipt, directoryDevice, directoryInode, document, encoding, path, previousSidecar, raster (+1 more)
+### Community 346 - "HttpFixture"
+Cohesion: 0.18
+Nodes (6): HttpFixture, hold, received, server, status, wire
 
-### Community 347 - "SaveOutcome"
-Cohesion: 0.20
-Nodes (9): SaveOutcome, cancelled, rasterError, rasterReused, rasterSaved, receipt, sidecarError, sidecarPath (+1 more)
+### Community 348 - "ScrollCaptureSettings"
+Cohesion: 0.22
+Nodes (6): ScrollCaptureSettings, hideMs, positionPointer, settleMs, stitch, wheelSteps
 
 ### Community 349 - "Work"
 Cohesion: 0.20
@@ -1874,7 +1873,7 @@ Cohesion: 0.20
 Nodes (10): Appearance, Apply, Owned native preference dialogs, Drawing Defaults, native-preference-dialogs, PREFERENCE-DIALOGS-EVIDENCE.json, PreferenceDialog, QtCore (+2 more)
 
 ### Community 353 - "AutoCropPolicy"
-Cohesion: 0.20
+Cohesion: 0.18
 Nodes (10): AutoCropPolicy, alphaThreshold, border, color, includeAnnotations, tolerance, CropBorder, Color (+2 more)
 
 ### Community 354 - "ErrorCode"
@@ -1884,10 +1883,6 @@ Nodes (10): ErrorCode, CounterOverflow, FilePermissionDenied, FileUnavailable, I
 ### Community 356 - "pixels()"
 Cohesion: 0.29
 Nodes (3): pixels(), receipt(), stateOf()
-
-### Community 357 - "acceptDimensions()"
-Cohesion: 0.29
-Nodes (3): acceptDimensions(), hoverViewPoint(), viewPointInPixel()
 
 ### Community 358 - "acceptAuto()"
 Cohesion: 0.27
@@ -1902,24 +1897,24 @@ Cohesion: 0.22
 Nodes (6): AnnotationClipboardPorts, publish, read, AnnotationClipboardRead, bytes, diagnostic
 
 ### Community 361 - "Work"
-Cohesion: 0.22
-Nodes (8): Work, cancelled, displaySource, done, preview, progress, region, revision
+Cohesion: 0.13
+Nodes (14): Work, cancelled, displaySource, done, preview, progress, region, revision (+6 more)
 
-### Community 362 - "Temporary"
-Cohesion: 0.25
-Nodes (6): Descriptor, value, Temporary, fd, name, published
-
-### Community 363 - "NativeEditorAppearance"
+### Community 362 - "Choices"
 Cohesion: 0.22
-Nodes (4): NativeEditorAppearance, m_queued, public, QWidget
+Nodes (9): Choices, Border, Compositing, Dash, Interpolation, None, Placement, RotateFlip (+1 more)
+
+### Community 363 - "chooseAnnotationColor"
+Cohesion: 0.29
+Nodes (4): chooseAnnotationColor(), ColorTarget, Fill, Stroke
 
 ### Community 364 - "ManualClock"
 Cohesion: 0.31
 Nodes (4): ManualClock, m_now, TimeBound, endMs
 
-### Community 365 - "RectangleHandle"
-Cohesion: 0.22
-Nodes (9): RectangleHandle, Bottom, BottomLeft, BottomRight, Left, Right, Top, TopLeft (+1 more)
+### Community 365 - "EditorCopyPayload"
+Cohesion: 0.29
+Nodes (4): EditorCopyPayload, disclosures, image, png
 
 ### Community 366 - "ColorFormat"
 Cohesion: 0.22
@@ -1945,13 +1940,13 @@ Nodes (4): OnboardingPage, done, init, validate
 Cohesion: 0.36
 Nodes (4): Pixels, data, h, w
 
-### Community 373 - "Request"
-Cohesion: 0.25
-Nodes (8): Request, bitrateKbps, codecId, container, includeAudio, inputPath, outputPath, overwrite
-
 ### Community 374 - "UploadOutcome"
 Cohesion: 0.25
 Nodes (7): UploadOutcome, code, deletionUrl, errorMessage, httpStatus, thumbnailUrl, url
+
+### Community 375 - "PortalScreenshot.cpp"
+Cohesion: 0.10
+Nodes (6): QDBusMessage, denied(), QDBusMessage, xerahs_portal_screenshot, menuEntries(), menuTitled()
 
 ### Community 376 - "EffectGoldenHashTest"
 Cohesion: 0.29
@@ -1960,10 +1955,6 @@ Nodes (3): EffectGoldenHashTest, fixture(), hash()
 ### Community 378 - "PreparedCropEdit"
 Cohesion: 0.29
 Nodes (4): PreparedCropEdit, displaySource, edit, region
-
-### Community 379 - "EditorPrintOutcome"
-Cohesion: 0.29
-Nodes (7): EditorPrintOutcome, abandoned, action, cancellationArrivedDuring, snapshot, submissionAttempted, EditorPrintSnapshotPtr
 
 ### Community 380 - "NewImageHooks"
 Cohesion: 0.29
@@ -1985,10 +1976,6 @@ Nodes (4): NativeInstanceOptions, maximumClients, peerUser, timeoutMs
 Cohesion: 0.29
 Nodes (4): PortalColorPicker::PortalColorPicker(), PortalColorPickerConfig, callTimeoutMs, service
 
-### Community 386 - "PortalRemoteDesktopConfig"
-Cohesion: 0.29
-Nodes (4): PortalRemoteDesktop::PortalRemoteDesktop(), PortalRemoteDesktopConfig, callTimeoutMs, service
-
 ### Community 387 - "Step"
 Cohesion: 0.29
 Nodes (7): Step, Closed, Creating, Idle, Ready, Selecting, Starting
@@ -2005,9 +1992,9 @@ Nodes (7): Phase, Binding, Creating, Idle, Owner, Ready, Stopped
 Cohesion: 0.29
 Nodes (5): SecretValue, contentType, parameters, session, value
 
-### Community 391 - "mapCrop()"
-Cohesion: 0.29
-Nodes (4): CropMapping, diagnostic, rectangle, mapCrop()
+### Community 391 - ".outputFinalizationAbortAndCollision"
+Cohesion: 0.11
+Nodes (10): CropMapping, diagnostic, rectangle, mapCrop(), Output, m_destination, m_temporary, RecordingIntegrationTest (+2 more)
 
 ### Community 392 - "StoreRead"
 Cohesion: 0.29
@@ -2029,17 +2016,29 @@ Nodes (6): NewGate, calls, entered, finished, released, workerThread
 Cohesion: 0.29
 Nodes (4): HttpFixture, received, request, server
 
+### Community 397 - "ActionSelectionDialog::ActionSelectionDialog()"
+Cohesion: 0.32
+Nodes (3): ActionSelectionDialog::ActionSelectionDialog(), availableActions(), label()
+
 ### Community 398 - "Work"
 Cohesion: 0.33
 Nodes (5): Work, cancelled, failed, percent, ready
 
 ### Community 399 - "installFiles()"
-Cohesion: 0.40
-Nodes (3): commandWindow(), fileSurfaces(), installFiles()
+Cohesion: 0.33
+Nodes (4): imageFileFilter(), commandWindow(), fileSurfaces(), installFiles()
+
+### Community 400 - "NativeAnnotationTools.h"
+Cohesion: 0.33
+Nodes (5): EditorCanvas, QAction, QLabel, QObject, QWidget
 
 ### Community 401 - "ImageRecognitionResult"
+Cohesion: 0.25
+Nodes (5): ImageRecognitionResult, cancelled, diagnostic, values, failed()
+
+### Community 402 - "QrImageResult"
 Cohesion: 0.33
-Nodes (4): ImageRecognitionResult, cancelled, diagnostic, values
+Nodes (4): QrImageResult, error, image, ok
 
 ### Community 403 - "FakeStore"
 Cohesion: 0.33
@@ -2049,9 +2048,9 @@ Nodes (4): FakeStore, error, saves, values
 Cohesion: 0.33
 Nodes (4): EnvironmentValue, m_name, m_set, m_value
 
-### Community 408 - "FilePreparation"
-Cohesion: 0.40
-Nodes (5): FilePreparation, destinationName, existingFile, missingDestination, request
+### Community 408 - "ParseMode"
+Cohesion: 0.33
+Nodes (5): ParseMode, Filename, Path, Text, Url
 
 ### Community 410 - "Kind"
 Cohesion: 0.40
@@ -2061,21 +2060,9 @@ Nodes (5): Kind, Busy, Failed, Forwarded, Primary
 Cohesion: 0.40
 Nodes (3): Response, code, uri
 
-### Community 414 - "Order"
-Cohesion: 0.40
-Nodes (5): Order, Back, Backward, Forward, Front
-
 ### Community 415 - "NewImageResult"
 Cohesion: 0.40
 Nodes (3): NewImageResult, error, image
-
-### Community 416 - "ToolbarValidation"
-Cohesion: 0.40
-Nodes (4): ToolbarValidation, diagnostics, items, valid
-
-### Community 418 - "Gate"
-Cohesion: 0.40
-Nodes (4): Gate, entered, finished, released
 
 ### Community 419 - "QueuedFile"
 Cohesion: 0.50
@@ -2097,10 +2084,6 @@ Nodes (4): Workflow CLI:, build/xerahs --list-workflows --non-interactive --json
 Cohesion: 0.50
 Nodes (4): Mode, Auto, Delay, Idle
 
-### Community 427 - "Permission"
-Cohesion: 0.50
-Nodes (4): Permission, Authorized, Denied, Restricted
-
 ### Community 428 - "Kind"
 Cohesion: 0.50
 Nodes (4): Kind, Literal, Separator, Token
@@ -2110,24 +2093,24 @@ Cohesion: 0.50
 Nodes (4): PortalRgb, blue, green, red
 
 ## Knowledge Gaps
-- **3537 isolated node(s):** `beforePrepare`, `m_annotationActions`, `m_annotationClipboard`, `m_annotationMessage`, `m_annotationMessageState` (+3532 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 5725 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **60 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **3541 isolated node(s):** `public`, `m_choices`, `m_selected`, `m_selector`, `m_error` (+3536 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 5729 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **63 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Native editor save and companion repair` connect `Native editor Print Image` to `EditorWindowTest.cpp`, `Linux contract scope audit`, `qtest`, `Native paired capture persistence`?**
-  _High betweenness centrality (0.089) - this node is a cross-community bridge._
+- **Why does `xerahs_core` connect `xerahs` to `Native Linux CMake build`, `EditorWindowTest.cpp`, `qtest`, `CounterStore.cpp`, `ActivationRequest`, `xerahs_editor_source`, `RasterSaveOptions`, `ColorFormats.cpp`, `apply()`, `EditorSession`, `workflows/CaptureWorkflows.cpp`, `RegionSession`, `CredentialResult`, `WorkflowExecution.cpp`, `CaptureSchedule`, `UploadDestination.cpp`, `runPipeline()`, `FilenameGenerator.cpp`, `parseUploadResponse()`, `WatchFolders.cpp`, `ScrollStitch.cpp`, `annotationId()`, `SxcuImport.cpp`, `render()`, `FileHashTest`, `HotkeyBindings.cpp`, `Argb`, `runRows()`, `EditorViewport`, `AppearancePalette`, `ComparisonLayout`, `ToolbarPreferences.cpp`, `SxcuImportResult`, `VideoConversion.cpp`, `PipelineJournal.cpp`, `LastRegion`, `ApplicationSettings.cpp`, `RectangleAnnotation`, `loadEditorPreferences()`, `WorkflowShortcutPlan`, `encodeQr()`, `PhysicalPoint`, `ActivationProtocol.cpp`, `DestinationCatalog`, `RecentImages`, `PointF`, `catalogueIndex()`, `planRetainedCaptureRetry()`?**
+  _High betweenness centrality (0.078) - this node is a cross-community bridge._
 - **Are the 9 inferred relationships involving `ParamValues` (e.g. with `deserializeParameters()` and `.handComputedPixels()`) actually correct?**
   _`ParamValues` has 9 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `beforePrepare`, `m_annotationActions`, `m_annotationClipboard` to the rest of the system?**
-  _3537 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **What connects `public`, `m_choices`, `m_selected` to the rest of the system?**
+  _3541 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Native Linux CMake build` be split into smaller, more focused modules?**
-  _Cohesion score 0.023834399895520438 - nodes in this community are weakly interconnected._
-- **Why does `xerahs_core` connect `xerahs_core` to `Native Linux CMake build`, `EditorWindowTest.cpp`, `xerahs`, `qtest`, `CounterStore.cpp`, `ActivationRequest`, `Effect.h`, `HashCheckerDialog`, `ColorFormats.cpp`, `apply()`, `EditorSession`, `workflows/CaptureWorkflows.cpp`, `RegionSession`, `CredentialResult`, `WorkflowExecution.cpp`, `CaptureSchedule`, `UploadDestination.cpp`, `runPipeline()`, `FilenameGenerator.cpp`, `WatchFolders.cpp`, `ScrollStitcher`, `annotationId()`, `SxcuImport.cpp`, `render()`, `FileHashTest`, `HotkeyBindings.cpp`, `Argb`, `EditorViewport`, `AppearancePalette`, `EditorSaveDialog`, `ToolbarPreferences.cpp`, `VideoConversion.cpp`, `PipelineJournal.cpp`, `RegionGeometry.cpp`, `ExpansionContext`, `RectangleAnnotation`, `ApplicationSettings.cpp`, `WorkflowShortcutPlan`, `encodeQr()`, `makeActivationRequest()`, `DestinationCatalog`, `RecentImages`, `PointF`, `catalogueIndex()`, `buildUploadRequest()`?**
-  _High betweenness centrality (0.082) - this node is a cross-community bridge._
+  _Cohesion score 0.022507557391278323 - nodes in this community are weakly interconnected._
+- **Why does `QApplication` connect `QApplication` to `xerahs`, `CaptureRecoveryActions`, `serializeDocument()`, `xerahs_editor_source`, `FileUploadTest`, `HashCheckerDialogTest.cpp`, `PortalScreenshotTest`, `EffectsDialog`, `Harness`, `installWorkflows()`, `.start()`, `textRecognitionAvailable()`, `ActionOutcome`, `CaptureSaveAsTest`, `adopt()`, `NativeEditorPreferences.cpp`, `CaptureHistoryTest`, `readSxiePreset`, `ImageComparisonDialogTest`, `LoadedSource`, `AppContext`, `AutoCaptureDialog`, `runEditorCopy()`, `ConversionRunner`, `CaptureHistoryWindowTest`, `saveCapture()`, `NewImageDialogTest`, `HotkeyBindings.cpp`, `.private()`, `EditorViewport`, `AppearancePalette`, `createShellDispatcher()`, `runEditorPrint`, `runEditorUpload()`, `PipelineHistoryDialog`, `.setInitialImage()`, `CapturePinPrintTest`, `QrCodeDialog`, `.acquired`, `CaptureHistoryWindow`, `defaultCaptureWorkflows`, `ApplicationSettings.cpp`, `ApplicationWindowTest`, `ColorPickerDialog`, `pixels()`, `acceptDimensions()`, `PreferenceDialogTest`, `HashCheckerDialog.cpp`, `acceptAuto()`, `recognizeTextImage()`, `.fromCapturedImage()`, `NativeEditorToolbar.cpp`, `WorkflowShortcutsTest`, `main()`, `.showColor()`, `FakePortal`, `QrCodeDialogTest`, `NativeCaptureWorkflowsTest`, `ActionSelectionTest`?**
+  _High betweenness centrality (0.062) - this node is a cross-community bridge._
 - **Should `EditorWindowTest.cpp` be split into smaller, more focused modules?**
-  _Cohesion score 0.053753860774530766 - nodes in this community are weakly interconnected._
-- **Why does `Linux contract scope audit` connect `Linux contract scope audit` to `Owned native preference dialogs`, `Guarded native keyboard transforms`, `Guarded native selection rotation`, `Native capture annotation handoff`, `Linux ImageEditor`, `Native editor Print Image`, `Native annotation object selection`, `Native editor Copy Image`, `Native paired capture persistence`, `Native capture Crop and verified source handoff`?**
-  _High betweenness centrality (0.059) - this node is a cross-community bridge._
+  _Cohesion score 0.053042992741485204 - nodes in this community are weakly interconnected._
+- **Why does `Native editor save and companion repair` connect `Native editor Print Image` to `EditorWindowTest.cpp`, `EditorSave.cpp`, `Linux contract scope audit`, `Native paired capture persistence`?**
+  _High betweenness centrality (0.062) - this node is a cross-community bridge._

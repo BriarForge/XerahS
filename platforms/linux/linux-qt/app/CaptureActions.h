@@ -53,7 +53,7 @@ struct CaptureActionPorts {
   std::function<xerahs::actions::ActionOutcome(const LoadedSource &, const xerahs::actions::CancellationToken &)> print;
   std::function<void(const QString &)> actionStarted;
   // Internal worker-to-GUI selection bridge supplied by CapturePipeline.
-  std::function<xerahs::actions::ActionOutcome(const xerahs::actions::CancellationToken &)> selection;
+  std::function<xerahs::actions::ActionOutcome(const QString &, const xerahs::actions::CancellationToken &)> selection;
   // Worker bridge replaced by CapturePipeline; the injected actual boundary
   // runs on the GUI, like clipboard. It must report its actual outcome.
   std::function<xerahs::actions::ActionOutcome(const QString &, const CaptureFile &, const xerahs::actions::CancellationToken &)> fileOutput;

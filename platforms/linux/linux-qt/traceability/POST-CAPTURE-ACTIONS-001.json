@@ -286,7 +286,7 @@
         "selection-cancel",
         "selection-window-replaces-action-set"
       ],
-      "note": "The per-run chooser does not change the saved profile. Capture workflows now explicitly creates/edits named region profiles, saves a default atomically and preserves it across restart. Run selected and the existing capture command resolve a saved profile; unsupported actions remain unavailable before acquisition. Full quick-task/action families, other entry points and native/human qualification remain Required. Explicit saved-profile editing now includes save folder/pattern and deterministic preview with failed-draft correction; chooser-only changes remain per-run.",
+      "note": "Native quick-task-menu and after-capture-window now use the same asynchronous selector, engine and canonical result/journal model. Catalogue filtering prevents selector loops; a later chooser inherits the effective plan. Native saved workflow restart, Save/Copy/empty choices, cancellation/lifetime, effective journal and linked retry are covered by ActionSelectionTest and NativeCaptureWorkflowsTest. The per-run chooser does not change the saved profile. Capture workflows now explicitly creates/edits named region profiles, saves a default atomically and preserves it across restart. Run selected and the existing capture command resolve a saved profile; unsupported actions remain unavailable before acquisition. Full quick-task/action families, other entry points and native/human qualification remain Required. Explicit saved-profile editing now includes save folder/pattern and deterministic preview with failed-draft correction; chooser-only changes remain per-run.",
       "disposition": "Required",
       "evidence": [
         "platforms/linux/linux-qt/app/ACTION-SELECTION.md",
@@ -305,7 +305,7 @@
           "selection-cancel",
           "selection-window-replaces-action-set"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
+        "coverage": "Native quick-task and after-capture selection are implemented candidates. Complete catalogue, persistent option semantics and supported-target/human qualification remain unproven.",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
@@ -454,7 +454,7 @@
     "PCA-014": {
       "status": "partial",
       "vectors": [],
-      "note": "Native after-capture selection shares the engine, but quick-task-menu and the full quick-action inventory have no native executor/entry surface. Native saved capture actions now execute local ocr/ocr-clipboard/qr-scan through the shared recognition service and GUI result bridge. Text stays executor/window-owned and is excluded from canonical receipts and journals. Explicit OCR clipboard with no text is a successful ocr-no-text no-op, preserving prior clipboard contents. Failed OCR skips its dependent clipboard; cancellation stops later actions. CaptureRecognitionTest covers real decoders, saved pixels, result/copy thread ownership, privacy and no-text behavior. Full catalogue/target qualification remains partial.",
+      "note": "Native quick-task-menu and after-capture-window now use the same asynchronous selector, engine and canonical result/journal model. Catalogue filtering prevents selector loops; a later chooser inherits the effective plan. Native saved workflow restart, Save/Copy/empty choices, cancellation/lifetime, effective journal and linked retry are covered by ActionSelectionTest and NativeCaptureWorkflowsTest. Native saved capture actions now execute local ocr/ocr-clipboard/qr-scan through the shared recognition service and GUI result bridge. Text stays executor/window-owned and is excluded from canonical receipts and journals. Explicit OCR clipboard with no text is a successful ocr-no-text no-op, preserving prior clipboard contents. Failed OCR skips its dependent clipboard; cancellation stops later actions. CaptureRecognitionTest covers real decoders, saved pixels, result/copy thread ownership, privacy and no-text behavior. Full catalogue/target qualification remains partial.",
       "disposition": "Required",
       "evidence": [
         "platforms/linux/linux-qt/app/ACTION-SELECTION.md",
@@ -476,7 +476,7 @@
       "audit": {
         "classification": "partial",
         "spec_line": 75,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
+        "coverage": "Native quick-task and after-capture selection are implemented candidates. Complete catalogue, persistent option semantics and supported-target/human qualification remain unproven.",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/CaptureRecognitionTest.cpp"
@@ -722,12 +722,13 @@
         "legacy-flags-map-to-actions"
       ],
       "disposition": "Required",
-      "note": "The actual native per-run chooser normalizes executor-available Save/Copy choices through the Qt Core catalogue and the same replacement engine used by published vectors. A Core hook publishes the effective full plan before recording the selector and beginning later actions, so journals and recovered results contain only chosen remaining work. Native PNG/clipboard/empty, cancellation, retry and real-process kill/reopen fixtures verify this seam. Legacy import and full configured/quick-task/catalogue UI/shared/native/human qualification remain Required.",
+      "note": "Native quick-task-menu and after-capture-window now use the same asynchronous selector, engine and canonical result/journal model. Catalogue filtering prevents selector loops; a later chooser inherits the effective plan. Native saved workflow restart, Save/Copy/empty choices, cancellation/lifetime, effective journal and linked retry are covered by ActionSelectionTest and NativeCaptureWorkflowsTest. The actual native per-run chooser normalizes executor-available Save/Copy choices through the Qt Core catalogue and the same replacement engine used by published vectors. A Core hook publishes the effective full plan before recording the selector and beginning later actions, so journals and recovered results contain only chosen remaining work. Native PNG/clipboard/empty, cancellation, retry and real-process kill/reopen fixtures verify this seam. Legacy import and full configured/quick-task/catalogue UI/shared/native/human qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
         "platforms/linux/linux-qt/tests/ActionSelectionTest.cpp",
         "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
-        "platforms/linux/linux-qt/app/ACTION-SELECTION.md"
+        "platforms/linux/linux-qt/app/ACTION-SELECTION.md",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
       ],
       "audit": {
         "classification": "implemented",
@@ -736,7 +737,7 @@
           "selection-window-replaces-action-set",
           "legacy-flags-map-to-actions"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "coverage": "Native quick-task and after-capture selection are implemented candidates. Complete catalogue, persistent option semantics and supported-target/human qualification remain unproven.",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },

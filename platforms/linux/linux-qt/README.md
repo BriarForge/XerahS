@@ -278,3 +278,11 @@ ctest --test-dir build --output-on-failure
 The Product Contract workflow also builds this edition in Ubuntu 24.04 and
 runs the native tests and implemented conformance capabilities on every push
 and pull request.
+
+
+**Quick task menu:** Saved capture workflows can show a per-capture action
+chooser before any output. It shares the existing action engine and receipts.
+Choices leave saved defaults unchanged; Cancel preserves the captured pixels.
+A later after-capture chooser inherits the accepted choices and cannot reopen an
+earlier selector. [Selection evidence](app/ACTION-SELECTION.md) records native
+workflow restart, output pixels, cancellation, journal and retry checks.

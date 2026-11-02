@@ -13,8 +13,9 @@ Pin to Screen action; verify those paths alongside the existing save/copy flows.
 Editor upload now confirms a frozen destination and exposes a usable URL result.
 Local QR scanning and English OCR now share native consented file/screen/region
 inputs. Their dependencies are approved in DEPENDENCIES.md, and saved capture profiles
-now invoke OCR, OCR clipboard and QR scanning through the same services. Next
-finish the remaining capture/post-capture action families and task-host
+now invoke OCR, OCR clipboard and QR scanning through the same services. Native
+quick-task selection now shares the action chooser, effective journal plan and
+retry engine, including a later after-capture selector. Next finish the remaining capture/post-capture action families and task-host
 integration under approved semantics. Explicit migration, recovery/retention,
 release trust and unresolved policy questions remain blocked on Mike as recorded
 in the backlog. Preserve existing recording, scheduling, tools/effects,

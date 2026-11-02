@@ -22,11 +22,22 @@ CapturePipelineReceipt receipt(const QSignalSpy &spy) { return qvariant_cast<Cap
 QStringList resultActions(const CapturePipelineReceipt &result) {
   QStringList ids; for (const auto &action : result->pipeline.orderedResults) ids.append(action.action); return ids;
 }
-const QStringList configured{"after-capture-window", "save", "image-clipboard"};
 }
 class ActionSelectionTest final : public QObject {
   Q_OBJECT
+  QString selector;
+  QStringList configured;
 private slots:
+  void initTestCase_data() {
+    QTest::addColumn<QString>("selector");
+    QTest::newRow("after capture") << QString("after-capture-window");
+    QTest::newRow("quick task") << QString("quick-task-menu");
+  }
+  void init() {
+    QFETCH_GLOBAL(QString, selector);
+    this->selector = selector;
+    configured = {selector, "save", "image-clipboard"};
+  }
   void replacementRunsOnlyChosenNativeActionsAndJournalsTheEffectivePlan_data() {
     QTest::addColumn<bool>("save"); QTest::addColumn<bool>("copy");
     QTest::newRow("save only") << true << false;
@@ -50,7 +61,7 @@ private slots:
     saveBox->setChecked(save); copyBox->setChecked(copy);
     auto *run = dialog->findChild<QPushButton *>("runCaptureActions"); QVERIFY(run);
     run->setFocus(); QTest::keyClick(run, Qt::Key_Space); QTRY_COMPARE(done.count(), 1); QTRY_VERIFY(!dialog);
-    const auto result = receipt(done); QStringList expected{"after-capture-window"};
+    const auto result = receipt(done); QStringList expected{selector};
     if (save) expected.append("save"); if (copy) expected.append("image-clipboard");
     QCOMPARE(resultActions(result), expected); QCOMPARE(result->pipeline.state, PipelineState::Completed);
     QCOMPARE(result->workingMedia, pixels()); QCOMPARE(bool(result->file), save); QCOMPARE(copies, copy ? 1 : 0);
@@ -63,7 +74,7 @@ private slots:
     } else { QVERIFY(!QFileInfo::exists(dir.filePath("output"))); QVERIFY(!QFileInfo::exists(dir.filePath("state"))); }
     if (copy) QCOMPARE(QApplication::clipboard()->image(), pixels());
     else QCOMPARE(QApplication::clipboard()->text(), QString("private fixture clipboard"));
-    QCOMPARE(configured, (QStringList{"after-capture-window", "save", "image-clipboard"}));
+    QCOMPARE(configured, (QStringList{selector, "save", "image-clipboard"}));
   }
   void keyboardCancellationAndClosePreservePixelsWithoutOutputs_data() {
     QTest::addColumn<QString>("method");
@@ -89,10 +100,34 @@ private slots:
     QVERIFY(!QFileInfo::exists(dir.filePath("output"))); QVERIFY(!QFileInfo::exists(dir.filePath("state")));
     QCOMPARE(QApplication::clipboard()->text(), QString("cancel fixture clipboard"));
   }
+  void quickSelectionCanChooseTheLaterSelectorWithoutRepeatingItself() {
+    if (selector != "quick-task-menu") QSKIP("Quick selector ordering");
+    QTemporaryDir dir; int copies = 0;
+    CaptureActionPorts ports; ports.clipboard = [&](const QImage &, const CancellationToken &) { ++copies; return ActionOutcome{}; };
+    auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    CapturePipeline pipeline(pixels(), dir.filePath("output"), "chain", configured, nullptr, ports, journal);
+    QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_VERIFY(chooser());
+    QPointer<ActionSelectionDialog> first(chooser());
+    QVERIFY(!first->findChild<QCheckBox *>("capture-action-quick-task-menu"));
+    auto *later = first->findChild<QCheckBox *>("capture-action-after-capture-window");
+    QVERIFY(later); QVERIFY(later->isEnabled()); later->setChecked(true);
+    first->findChild<QCheckBox *>("capture-action-image-clipboard")->setChecked(false); first->accept();
+    QTRY_VERIFY(chooser() && chooser() != first.data());
+    auto *second = chooser(); QVERIFY(!second->findChild<QCheckBox *>("capture-action-after-capture-window"));
+    QVERIFY(!second->findChild<QCheckBox *>("capture-action-quick-task-menu"));
+    QVERIFY(!second->findChild<QCheckBox *>("capture-action-image-clipboard")->isChecked());
+    second->accept(); QTRY_COMPARE(done.count(), 1);
+    const auto result = receipt(done);
+    QCOMPARE(resultActions(result), (QStringList{"quick-task-menu", "after-capture-window", "save"}));
+    QCOMPARE(result->pipeline.state, PipelineState::Completed); QCOMPARE(copies, 0); QVERIFY(result->file);
+    QCOMPARE(QImage(result->file->path), pixels());
+    const auto entries = journal->list().entries; QCOMPARE(entries.size(), size_t(1));
+    QVERIFY(entries[0].parsed.record); QCOMPARE(entries[0].parsed.record->selected, resultActions(result));
+  }
   void unavailableCatalogueIsAccessibleAndCannotBeAccepted() {
     QTemporaryDir dir; CapturePipeline pipeline(pixels(), dir.filePath("output"), "capture", configured);
     QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_VERIFY(chooser()); auto *dialog = chooser();
-    const auto boxes = dialog->findChildren<QCheckBox *>(); QCOMPARE(boxes.size(), 20);
+    const auto boxes = dialog->findChildren<QCheckBox *>(); QCOMPARE(boxes.size(), selector == "quick-task-menu" ? 21 : 20);
     auto *implementedUpload = dialog->findChild<QCheckBox *>("capture-action-upload"); QVERIFY(implementedUpload); QVERIFY(implementedUpload->isEnabled());
     auto *upload = dialog->findChild<QCheckBox *>("capture-action-custom-actions"); QVERIFY(upload); QVERIFY(!upload->isEnabled());
     QVERIFY(upload->text().contains("unavailable")); auto *interface = QAccessible::queryAccessibleInterface(upload); QVERIFY(interface);
@@ -124,7 +159,7 @@ private slots:
     CapturePipeline retry(source, nullptr, ports, journal); QSignalSpy next(&retry, &CapturePipeline::finished); retry.start(); QTRY_COMPARE(next.count(), 1);
     QVERIFY(!chooser()); QCOMPARE(saves, 1); QCOMPARE(copies, 2); const auto result = receipt(next);
     QCOMPARE(resultActions(result), QStringList{"image-clipboard"});
-    QCOMPARE(result->pipeline.retry->preservedSuccessfulActions, (QStringList{"after-capture-window", "save"}));
+    QCOMPARE(result->pipeline.retry->preservedSuccessfulActions, (QStringList{selector, "save"}));
     QCOMPARE(result->file->path, source->file->path); QCOMPARE(journal->list().entries.size(), size_t(2));
   }
   void destroyingTheTransientParentCancelsTheWorkerWithoutOutput() {

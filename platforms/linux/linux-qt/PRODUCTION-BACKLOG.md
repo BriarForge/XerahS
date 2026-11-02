@@ -38,6 +38,12 @@ Graph relationships were navigation aids and were not used as conformance eviden
 
 ## Changes since the previous full audit
 
+Native quick-task selection now uses the existing asynchronous chooser and
+shared action engine. Saved workflows expose the action, and native tests cover
+workflow restart, actual output, effective plan journaling, cancellation,
+linked retry and a later after-capture selector inheriting accepted choices.
+PCA-014 remains partial for the full quick-action inventory and qualification.
+
 PCA-020 now has native before-upload confirmation evidence. Cancel, Escape and
 close skip upload while preserving the saved image, clipboard and later pin.
 The confirmed destination is frozen, credentials stay unread until consent, and
@@ -83,7 +89,7 @@ bounds. These features are preserved, not scheduled for reimplementation.
 ## Ranked work
 
 1. Remaining native annotation options and fields (EA-005/006/008/010/011/016/019): choose one approved text border/fill, ellipse/blur, border/arrow/shadow or all-tool asset/transfer slice. Preserve existing asynchronous formatted creation/editing, fractional/default values, numeric Step admission and history; do not redo completed controls.
-2. Native post-capture quick-task and explicit deletion flows (PCA-014/021): one approved action per iteration through the shared engine, stable results and consent. Injected executor tests do not count as native flows.
+2. Native post-capture explicit deletion and remaining quick-action flows (PCA-014/021): one approved action per iteration through the shared engine, stable results and consent. Injected executor tests do not count as native flows.
 3. Capture breadth (RC-013/015/019/020, CORE-014/016): cursor option and output exclusion, remaining overlay/picker options and physical/performance coverage under approved semantics. Recapture and mixed-monitor identity/mapping remain blocked below; retain durable RC-017 storage and tested RC-007 confirmation.
 4. Canvas and editor output breadth (EC-004/009/011/013/014/017, EO-007/009/010/011/014/016): clipboard/screen insertion, all-tool affine/flatten behavior and remaining output hosts. Background/smart-padding and new saved quality/matte defaults require decisions below. Preserve tested PNG/JPEG/WebP Save As and companion-only repair.
 5. Application/workflow breadth (CORE-017/018/019/020/021/023/024/025; WFCAT-004/008/010/011/012/014/015/017): recording/upload/watch-folder/action-family gaps and bounded history search/paging/retention. Confirmed execution metadata removal exists; do not redo it or infer all history coverage.
