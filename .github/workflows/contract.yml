@@ -15,14 +15,19 @@ jobs:
         run: |
           apt-get update
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-            ca-certificates git cmake ninja-build g++ qt6-base-dev zlib1g-dev python3 dbus-daemon poppler-utils
+            ca-certificates git cmake ninja-build g++ qt6-base-dev qt6-image-formats-plugins \
+            fonts-dejavu-core zlib1g-dev python3 dbus-daemon poppler-utils
       - uses: actions/checkout@v4
+      - name: Prepare the desktop test user
+        run: |
+          useradd --create-home xerahs-ci
+          chown -R xerahs-ci:xerahs-ci "$GITHUB_WORKSPACE"
       - name: Configure native Linux
-        run: cmake -S platforms/linux/linux-qt -B platforms/linux/linux-qt/build -G Ninja
+        run: runuser -u xerahs-ci -- cmake -S platforms/linux/linux-qt -B platforms/linux/linux-qt/build -G Ninja
       - name: Build native Linux
-        run: cmake --build platforms/linux/linux-qt/build --parallel 2
+        run: runuser -u xerahs-ci -- cmake --build platforms/linux/linux-qt/build --parallel 2
       - name: Verify native tests and implemented contract vectors
-        run: ctest --test-dir platforms/linux/linux-qt/build --output-on-failure
+        run: runuser -u xerahs-ci -- ctest --test-dir platforms/linux/linux-qt/build --output-on-failure
 
   lint:
     runs-on: ubuntu-latest
