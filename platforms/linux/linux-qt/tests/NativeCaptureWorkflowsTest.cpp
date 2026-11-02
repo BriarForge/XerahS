@@ -128,13 +128,13 @@ private slots:
     QVERIFY(CaptureActions::selectableActions().contains("upload"));
   }
   void unsupportedSavedActionsAreVisibleAndCannotRun() {
-    QTemporaryDir dir; NativeCaptureWorkflows host(dir.filePath("workflows.json")); auto catalog = *host.store().current().catalog; catalog.entries[0].actions = QStringList{"ocr"};
+    QTemporaryDir dir; NativeCaptureWorkflows host(dir.filePath("workflows.json")); auto catalog = *host.store().current().catalog; catalog.entries[0].actions = QStringList{"custom-actions"};
     QVERIFY(host.save(catalog, host.store().revision()).saved); QVERIFY(!host.resolve().workflow); QWidget parent; bool visible = false;
     QTimer::singleShot(0, this, [&] {
       auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog);
       const QPointer<QDialog> weak(dialog); const auto close = qScopeGuard([weak] { if (weak) weak->reject(); });
       auto *list = dialog->findChild<QListWidget *>("captureWorkflowActions");
-      for (int row = 0; row < list->count(); ++row) if (list->item(row)->data(Qt::UserRole).toString() == "ocr") visible = list->item(row)->text().contains("Unavailable") && list->item(row)->checkState() == Qt::Checked;
+      for (int row = 0; row < list->count(); ++row) if (list->item(row)->data(Qt::UserRole).toString() == "custom-actions") visible = list->item(row)->text().contains("Unavailable") && list->item(row)->checkState() == Qt::Checked;
       QVERIFY(!dialog->findChild<QPushButton *>("runCaptureWorkflow")->isEnabled());
     });
     QVERIFY(!manageCaptureWorkflows(host, &parent, [] { return true; })); QVERIFY(visible);

@@ -595,6 +595,21 @@
         "tests/OcrRecognitionTest.cpp",
         "tests/ImageRecognitionDialogTest.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "PCA-002",
+        "PCA-013",
+        "PCA-014",
+        "PCA-015",
+        "WFCAT-011"
+      ],
+      "outcome": "Saved capture workflows now run local OCR/QR and explicit OCR clipboard through existing ordered worker/GUI pipeline. Empty OCR leaves clipboard unchanged; recognition values are omitted from durable receipts and journals. Retained metadata does not authorize recognition retry.",
+      "evidence": [
+        "tests/CaptureRecognitionTest.cpp",
+        "app/CaptureActions.cpp",
+        "app/CapturePipeline.cpp"
+      ]
     }
   ],
   "audit_method": "Read all 16 manifest capability specifications (345 IDs); classify 325 desktop rows against current native production/test seams, retain 20 mobile-only IDs outside scope. Refresh source/test provenance and remaining scope without treating old traceability notes or graph edges as compliance evidence.",

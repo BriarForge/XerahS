@@ -6,6 +6,7 @@
 #include "actions/PostCapturePipeline.h"
 #include "CaptureSave.h"
 #include "EditorSource.h"
+#include "ImageRecognition.h"
 #include "uploads/CredentialStore.h"
 #include <memory>
 
@@ -55,6 +56,11 @@ struct CaptureActionPorts {
   // Empty selects the system temporary directory. The managed PNG is private
   // and belongs to this executor, never to saved capture history.
   QString uploadTemporaryDirectory;
+  // GUI-only owned-value presentation. The service keeps its own values if
+  // successful. Empty uses an independent native recognition result window.
+  std::function<xerahs::actions::ActionOutcome(ImageRecognitionKind, const QStringList &,
+      const xerahs::actions::CancellationToken &)> recognitionResult;
+
 };
 
 class CaptureActions final : public xerahs::actions::ActionExecutor {
@@ -75,6 +81,7 @@ public:
   static xerahs::actions::ActionOutcome copyTextToNativeClipboard(const QString &text);
   static xerahs::actions::ActionOutcome pinToNativeScreen(const QImage &media);
   static xerahs::actions::ActionOutcome printNativeImage(const LoadedSource &source);
+  static xerahs::actions::ActionOutcome showNativeRecognition(ImageRecognitionKind, const QStringList &);
   static QStringList selectableActions();
   static QString actionLabel(const QString &id);
 
@@ -95,6 +102,9 @@ private:
 
   xerahs::actions::ActionOutcome upload(const xerahs::actions::ActionRequest &request);
   xerahs::actions::ActionOutcome copyUrl(const xerahs::actions::CancellationToken &cancellation);
+  xerahs::actions::ActionOutcome recognize(ImageRecognitionKind, const xerahs::actions::CancellationToken &);
+  xerahs::actions::ActionOutcome copyRecognizedText(const xerahs::actions::CancellationToken &);
+  QString m_recognizedText;
   QString m_uploadUrl;
   std::unique_ptr<QTemporaryFile> m_uploadFile;
   QImage m_media;

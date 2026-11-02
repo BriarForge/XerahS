@@ -96,6 +96,9 @@ void ImageRecognitionDialog::setBusy(bool busy) {
   m_busy = busy; m_file->setEnabled(!busy && m_available); m_screen->setEnabled(!busy && m_available); m_region->setEnabled(!busy && m_available);
   m_cancel->setEnabled(busy); m_copy->setEnabled(!busy && !m_values.isEmpty());
 }
+void ImageRecognitionDialog::showRecognizedValues(const QStringList &values) {
+  if (!m_busy) complete(m_generation, {values, {}, false});
+}
 void ImageRecognitionDialog::scanFile() {
   if (m_busy || !m_available) return;
   const QPointer<ImageRecognitionDialog> owner(this); const auto generation = ++m_generation;

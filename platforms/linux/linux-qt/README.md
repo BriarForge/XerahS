@@ -255,6 +255,15 @@ sessions are disposed on close. Missing libraries or English data are explained.
 [Dependency approval and versions](DEPENDENCIES.md) records the optional native
 ZXing/Tesseract integration. Recognition never invokes capture save/upload tasks.
 
+**Capture workflow recognition:** Saved profiles and the capture action chooser
+now offer Recognize text (OCR), Copy recognized text, and Scan QR codes. They
+process the final working pixels locally and show an independent result window.
+OCR clipboard copies only when that task is explicitly selected; no text is a
+successful no-op that preserves the clipboard. Failed recognition skips the
+dependent clipboard task. Recognized values are not written into capture
+receipts or journal records. Cancel Capture stops recognition and later actions.
+Recognition retry is not available from retained journal metadata.
+
 ## Build and test
 
 See [`../AGENTS.md`](../AGENTS.md) for the toolchain. On Ubuntu 24.04:

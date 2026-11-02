@@ -30,8 +30,10 @@ namespace {
 struct ClipboardCall {
   QImage media;
   std::optional<QString> text;  // PCA-024: set for url-clipboard; media is unused then
-  enum class Kind { Image, Text, Pin, Print } kind = Kind::Image;
+  enum class Kind { Image, Text, Pin, Print, Recognition } kind = Kind::Image;
   LoadedSource source;  // print only
+  ImageRecognitionKind recognitionKind = ImageRecognitionKind::QrCode;
+  QStringList recognizedValues;
   bool claimed = false;
   bool done = false;
   ActionOutcome result;
@@ -48,6 +50,9 @@ QString actionActivity(const QString &id) {
   if (id == "save-as") return QStringLiteral("Choose a new PNG path. Cancel skips Save As; Cancel Capture stops later actions.");
   if (id == "image-clipboard") return QStringLiteral("Copying capture to the clipboard.");
   if (id == "url-clipboard") return QStringLiteral("Copying the upload URL to the clipboard.");
+  if (id == "ocr") return QStringLiteral("Recognizing capture text locally. Cancel Capture stops recognition.");
+  if (id == "ocr-clipboard") return QStringLiteral("Copying recognized text to the clipboard.");
+  if (id == "qr-scan") return QStringLiteral("Scanning capture QR codes locally. Cancel Capture stops recognition.");
   if (id == "after-capture-window") return QStringLiteral("Choose actions for this capture. Escape cancels before saving or copying.");
   if (id == "file-clipboard") return QStringLiteral("Copying the saved file to the clipboard.");
   if (id == "path-clipboard") return QStringLiteral("Copying the saved file path to the clipboard.");
@@ -180,6 +185,14 @@ void CapturePipeline::start() {
     auto call = std::make_shared<ClipboardCall>(); call->source = source; call->kind = ClipboardCall::Kind::Print;
     std::unique_lock<std::mutex> lock(state->mutex); state->clipboard = call;
     // The native print dialog is interactive; once claimed, wait for its real outcome.
+    state->changed.wait(lock, [&] { return call->done || (token.requested() && !call->claimed); });
+    return call->done ? call->result : cancelled();
+  };
+  ports.recognitionResult = [state](ImageRecognitionKind kind, const QStringList &values, const CancellationToken &token) {
+    if (token.requested()) return cancelled();
+    auto call = std::make_shared<ClipboardCall>(); call->kind = ClipboardCall::Kind::Recognition;
+    call->recognitionKind = kind; call->recognizedValues = values;
+    std::unique_lock<std::mutex> lock(state->mutex); state->clipboard = call;
     state->changed.wait(lock, [&] { return call->done || (token.requested() && !call->claimed); });
     return call->done ? call->result : cancelled();
   };
@@ -393,11 +406,14 @@ void CapturePipeline::poll() {
   if (call) {
     ActionOutcome result;
     const auto clipboard = m_ports.clipboard; const auto textClipboard = m_ports.textClipboard;
-    const auto pin = m_ports.pin; const auto print = m_ports.print;
+    const auto pin = m_ports.pin; const auto print = m_ports.print; const auto recognition = m_ports.recognitionResult;
     try {
       if (state->cancellation.requested()) result = cancelled();
       else if (call->kind == ClipboardCall::Kind::Pin) result = pin ? pin(call->media, state->cancellation) : CaptureActions::pinToNativeScreen(call->media);
       else if (call->kind == ClipboardCall::Kind::Print) result = print ? print(call->source, state->cancellation) : CaptureActions::printNativeImage(call->source);
+      else if (call->kind == ClipboardCall::Kind::Recognition) result = recognition
+          ? recognition(call->recognitionKind, call->recognizedValues, state->cancellation)
+          : CaptureActions::showNativeRecognition(call->recognitionKind, call->recognizedValues);
       else if (call->text) result = textClipboard ? textClipboard(*call->text, state->cancellation) : CaptureActions::copyTextToNativeClipboard(*call->text);
       else result = clipboard ? clipboard(call->media, state->cancellation) : CaptureActions::copyImageToNativeClipboard(call->media);
     }

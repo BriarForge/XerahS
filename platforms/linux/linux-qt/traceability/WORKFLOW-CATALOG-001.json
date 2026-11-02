@@ -238,14 +238,20 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Profiles can invoke the existing region-image annotation/output path. OCR/QR/hash/combine/split/effects/tools and complete family input/metadata schemas remain Required. Mike approved Tesseract 5.5.3 and zxing-cpp 3.1.1; standalone local OCR/QR input tools now work. Saved-workflow/after-capture OCR/QR dispatch and remaining family schemas still require integration.",
+      "note": "Profiles can invoke the existing region-image annotation/output path. OCR/QR/hash/combine/split/effects/tools and complete family input/metadata schemas remain Required. Mike approved Tesseract 5.5.3 and zxing-cpp 3.1.1; standalone local OCR/QR input tools now work. Saved-workflow/after-capture OCR/QR dispatch and remaining family schemas still require integration. Native saved capture actions now execute local ocr/ocr-clipboard/qr-scan through the shared recognition service and GUI result bridge. Text stays executor/window-owned and is excluded from canonical receipts and journals. Explicit OCR clipboard with no text is a successful ocr-no-text no-op, preserving prior clipboard contents. Failed OCR skips its dependent clipboard; cancellation stops later actions. CaptureRecognitionTest covers real decoders, saved pixels, result/copy thread ownership, privacy and no-text behavior. Full catalogue/target qualification remains partial.",
       "audit": {
         "classification": "partial",
         "spec_line": 42,
         "coverage": "Partial production behavior is present; complete requirement remains unproven. All 436 ledger actions, complete recording/clipboard/upload entry-point and state taxonomy, bounded search/paging/retention, retry/arbitration and MCP/assistant authority remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/CaptureRecognitionTest.cpp"
+        ]
       },
-      "dependency_approval": "platforms/linux/linux-qt/DEPENDENCIES.md"
+      "dependency_approval": "platforms/linux/linux-qt/DEPENDENCIES.md",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CaptureRecognitionTest.cpp"
+      ]
     },
     "WFCAT-012": {
       "status": "partial",

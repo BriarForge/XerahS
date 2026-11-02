@@ -38,6 +38,12 @@ Graph relationships were navigation aids and were not used as conformance eviden
 
 ## Changes since the previous full audit
 
+Saved capture workflows now execute local OCR, explicit OCR clipboard and QR
+scanning through the same native services. Real decoder/pipeline fixtures cover
+saved media, action order, local results, no-text clipboard preservation,
+failure/cancellation and the absence of recognized values in durable reports.
+The complete action/workflow catalogues remain partial.
+
 EU-004 moves from dependency-blocked to implemented candidate after explicit
 ZXing/Tesseract approval and native File/Screen/Region scanner tests. Local
 English OCR also has real recognition/cancellation and missing-model tests.
@@ -101,7 +107,7 @@ bounds. These features are preserved, not scheduled for reimplementation.
 ## Verification and limits
 
 The audit gate configures a Debug Ninja build, builds with eight jobs and runs all
-122 registered CTest targets with six-way concurrency. Contract lint, backlog and
+123 registered CTest targets with six-way concurrency. Contract lint, backlog and
 generated desktop progress freshness are separate required checks. A green local
 suite proves candidate behavior exercised by those tests; it does not qualify
 unavailable desktops, hardware, physical accessibility, security review or releases.

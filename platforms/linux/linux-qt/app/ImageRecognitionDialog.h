@@ -28,6 +28,9 @@ public:
   ~ImageRecognitionDialog() override;
   QStringList values() const { return m_values; }
   bool busy() const { return m_busy; }
+  // Adopts already decoded, owned text for a capture result. No image is
+  // captured, uploaded or copied; a busy input operation is not replaced.
+  void showRecognizedValues(const QStringList &values);
 public slots:
   void scanFile();
   void scanScreen();

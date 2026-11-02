@@ -3,6 +3,7 @@
 #include "EditorCanvasOperations.h"
 #include "EditorPrint.h"
 #include "PinWindow.h"
+#include "ImageRecognitionDialog.h"
 #include "SecretServiceCredentialStore.h"
 #include "uploads/CatalogPath.h"
 #include "uploads/DestinationCatalog.h"
@@ -42,6 +43,9 @@ QString CaptureActions::actionLabel(const QString &id) {
   if (id == "print") return "Print image";
   if (id == "url-clipboard") return "Copy URL to clipboard";
   if (id == "annotation") return "Annotate capture";
+  if (id == "ocr") return "Recognize text (OCR)";
+  if (id == "ocr-clipboard") return "Copy recognized text";
+  if (id == "qr-scan") return "Scan QR codes";
   return names.value(id, id);
 }
 
@@ -69,6 +73,9 @@ ActionOutcome CaptureActions::run(const ActionRequest &request) {
     if (request.spec.id == "upload") return upload(request);
     if (request.spec.id == "url-clipboard") return copyUrl(request.cancellation);
     if (request.spec.id == "annotation") return annotate(request.cancellation);
+    if (request.spec.id == "ocr") return recognize(ImageRecognitionKind::Text, request.cancellation);
+    if (request.spec.id == "qr-scan") return recognize(ImageRecognitionKind::QrCode, request.cancellation);
+    if (request.spec.id == "ocr-clipboard") return copyRecognizedText(request.cancellation);
     if (request.spec.id == QStringLiteral("save")) return save(request.cancellation);
     if (request.spec.id == QStringLiteral("save-as")) return saveAs(request.cancellation);
     if (request.spec.id == QStringLiteral("image-clipboard")) return copyImage(request.cancellation);
@@ -77,6 +84,35 @@ ActionOutcome CaptureActions::run(const ActionRequest &request) {
     if (request.spec.id == "file-clipboard" || request.spec.id == "path-clipboard" || request.spec.id == "reveal") return outputFile(request);
     return failed(kActionUnavailable);
   } catch (...) { return failed(diagnostic::actionFailed); }
+}
+
+ActionOutcome CaptureActions::recognize(ImageRecognitionKind kind, const CancellationToken &cancellation) {
+  const xerahs::editor::RenderControl control{[&] { return cancellation.requested(); }, {}};
+  if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
+  if (QCoreApplication::instance() && QThread::currentThread() == QCoreApplication::instance()->thread())
+    return failed("recognition-worker-required");
+  const auto result = kind == ImageRecognitionKind::Text ? recognizeTextImage(m_media, control) : scanQrImage(m_media, control);
+  if (cancellation.requested() || result.cancelled) return {ActionState::Cancelled, {}, {}};
+  if (!result.diagnostic.isEmpty()) return failed(result.diagnostic);
+  const auto shown = m_ports.recognitionResult ? m_ports.recognitionResult(kind, result.values, cancellation)
+      : failed("recognition-result-unavailable");
+  if (shown.state == ActionState::Succeeded && !shown.outcomeUnknown && kind == ImageRecognitionKind::Text)
+    m_recognizedText = result.values.join('\n');
+  return shown;
+}
+ActionOutcome CaptureActions::copyRecognizedText(const CancellationToken &cancellation) {
+  if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
+  if (m_recognizedText.isEmpty()) return {ActionState::Succeeded, QStringLiteral("ocr-no-text"), {}};
+  return m_ports.textClipboard ? m_ports.textClipboard(m_recognizedText, cancellation) : failed("clipboard-unavailable");
+}
+ActionOutcome CaptureActions::showNativeRecognition(ImageRecognitionKind kind, const QStringList &values) {
+  const auto *application = qobject_cast<QApplication *>(QCoreApplication::instance());
+  if (!application || QThread::currentThread() != application->thread()) return failed("recognition-result-unavailable");
+  auto dialog = std::make_unique<ImageRecognitionDialog>(kind);
+  dialog->showRecognizedValues(values);
+  dialog->show();
+  dialog.release();
+  return {};
 }
 
 bool CaptureActions::createTemporaryUploadFile() {

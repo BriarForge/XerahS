@@ -1283,3 +1283,21 @@ foreach(recognition_test qr-recognition ocr-recognition image-recognition-dialog
   add_test(NAME ${recognition_test} COMMAND ${recognition_test}-test)
   set_tests_properties(${recognition_test} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 endforeach()
+
+# Capture recognition uses the same local service as the utility windows.
+add_executable(capture-recognition-test tests/CaptureRecognitionTest.cpp
+  app/CapturePipeline.cpp app/CapturePipeline.h app/CaptureActions.cpp app/CaptureActions.h
+  app/CaptureSave.cpp app/CaptureSave.h)
+set_target_properties(capture-recognition-test PROPERTIES AUTOMOC ON)
+target_link_libraries(capture-recognition-test PRIVATE xerahs_file_output xerahs_action_selection
+  xerahs_pipeline_journal xerahs_upload_executor xerahs_secret_service xerahs_qr_code Qt6::Test)
+add_test(NAME capture-recognition COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-recognition-test>)
+set_tests_properties(capture-recognition PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+get_property(XERAHS_NATIVE_TARGETS DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+foreach(native_target IN LISTS XERAHS_NATIVE_TARGETS)
+  get_target_property(native_sources ${native_target} SOURCES)
+  if("app/CaptureActions.cpp" IN_LIST native_sources)
+    target_link_libraries(${native_target} PRIVATE xerahs_image_recognition)
+  endif()
+endforeach()
