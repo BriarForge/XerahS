@@ -39,6 +39,9 @@ LoadedSource loadSource(const QString &path, const xerahs::editor::RenderControl
 // Captured pixels become an owned, untitled source. No file/sidecar is read or
 // written, and no durable path is inferred from an earlier pipeline save.
 LoadedSource prepareCapturedSource(const QImage &image, const xerahs::editor::RenderControl &control = {});
+// EC-003: validates downloaded bytes with the shared RasterSource decoder and
+// returns an owned, untitled source. Nothing is written or inferred as a path.
+LoadedSource prepareDownloadedSource(const QByteArray &bytes, const xerahs::editor::RenderControl &control = {});
 // Reopens an owned in-memory document; no saved raster or sidecar path is read.
 LoadedSource prepareCapturedDocument(const xerahs::editor::AnnotationDocument &document,
                                     const xerahs::editor::RenderControl &control = {});

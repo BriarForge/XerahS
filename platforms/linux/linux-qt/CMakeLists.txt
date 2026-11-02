@@ -81,6 +81,8 @@ add_library(xerahs_core STATIC
   src/image-editor/ImageComparison.h
   src/image-editor/NewImage.cpp
   src/image-editor/NewImage.h
+  src/image-editor/ImageUrl.cpp
+  src/image-editor/ImageUrl.h
   src/image-editor/RecentImages.cpp
   src/image-editor/RecentImages.h
   src/image-editor/EditorPreferences.cpp
@@ -169,9 +171,16 @@ target_include_directories(xerahs_pin_window PUBLIC app)
 target_link_libraries(xerahs_pin_window PUBLIC Qt6::Widgets)
 target_compile_options(xerahs_pin_window PRIVATE -Wall -Wextra -Wpedantic)
 
+# EC-003 native network worker and guarded dialog (policy is in xerahs_core).
+add_library(xerahs_url_open STATIC app/UrlDownload.cpp app/UrlDownload.h app/UrlOpenDialog.cpp app/UrlOpenDialog.h)
+set_target_properties(xerahs_url_open PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_url_open PUBLIC app)
+target_link_libraries(xerahs_url_open PUBLIC xerahs_core Qt6::Network Qt6::Widgets)
+target_compile_options(xerahs_url_open PRIVATE -Wall -Wextra -Wpedantic)
+
 add_library(xerahs_editor_source STATIC app/EditorSource.cpp app/EditorSource.h app/EditorHistory.cpp app/EditorHistory.h app/EditorPreparation.cpp app/EditorPreparation.h app/EditorCanvasWorker.cpp app/EditorCanvasWorker.h app/EditorSave.cpp app/EditorSave.h app/EditorSaveDialog.cpp app/EditorSaveDialog.h app/EditorSaveProgress.cpp app/EditorCopy.cpp app/EditorCopy.h app/EditorPrint.cpp app/EditorPrint.h app/EditorPrintDialog.cpp app/EditorPin.cpp app/EditorPin.h app/EditorUpload.cpp app/EditorUpload.h app/EditorWallpaper.cpp app/EditorWallpaper.h app/PortalWallpaper.cpp app/PortalWallpaper.h app/AnnotationClipboard.cpp app/AnnotationClipboard.h)
 target_include_directories(xerahs_editor_source PUBLIC app)
-target_link_libraries(xerahs_editor_source PUBLIC xerahs_editor_codecs xerahs_pin_window xerahs_file_upload xerahs_upload_executor xerahs_secret_service Qt6::Widgets Qt6::DBus Qt6::PrintSupport)
+target_link_libraries(xerahs_editor_source PUBLIC xerahs_url_open xerahs_editor_codecs xerahs_pin_window xerahs_file_upload xerahs_upload_executor xerahs_secret_service Qt6::Widgets Qt6::DBus Qt6::PrintSupport)
 target_compile_options(xerahs_editor_source PRIVATE -Wall -Wextra -Wpedantic)
 add_library(xerahs_editor_canvas STATIC app/EditorCanvas.cpp app/EditorCanvas.h
   app/NativeAnnotationTools.cpp app/NativeAnnotationTools.h
@@ -726,6 +735,28 @@ target_link_libraries(native-preference-dialogs-test PRIVATE xerahs_editor_sourc
 add_test(NAME native-preference-dialogs COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:native-preference-dialogs-test>)
 set_tests_properties(native-preference-dialogs PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+
+# EC-003 policy, worker and editor flow. The loopback server is a test fixture only.
+add_executable(image-url-test tests/ImageUrlTest.cpp)
+set_target_properties(image-url-test PROPERTIES AUTOMOC ON)
+target_link_libraries(image-url-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME image-url COMMAND image-url-test)
+set_tests_properties(image-url PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+
+add_executable(url-download-test tests/UrlDownloadTest.cpp tests/UrlTestServer.h)
+target_include_directories(url-download-test PRIVATE tests)
+set_target_properties(url-download-test PROPERTIES AUTOMOC ON)
+target_link_libraries(url-download-test PRIVATE xerahs_url_open xerahs_editor_codecs Qt6::Network Qt6::Widgets Qt6::Test)
+add_test(NAME url-download COMMAND url-download-test)
+set_tests_properties(url-download PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 60)
+
+add_executable(editor-url-open-test tests/EditorUrlOpenTest.cpp tests/UrlTestServer.h ${XERAHS_PREFERENCE_TEST_SOURCES})
+target_include_directories(editor-url-open-test PRIVATE tests)
+set_target_properties(editor-url-open-test PROPERTIES AUTOMOC ON)
+target_link_libraries(editor-url-open-test PRIVATE xerahs_editor_source xerahs_editor_canvas xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Network Qt6::Test)
+add_test(NAME editor-url-open COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:editor-url-open-test>)
+set_tests_properties(editor-url-open PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 60)
 
 add_executable(editor-open-test tests/EditorOpenTest.cpp app/EditorOpen.cpp app/EditorOpen.h)
 set_target_properties(editor-open-test PROPERTIES AUTOMOC ON)

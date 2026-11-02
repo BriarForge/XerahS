@@ -77,6 +77,14 @@ LoadedSource prepareCapturedSource(const QImage &image, const RenderControl &con
     catch (...) { return fail(diagnostic::documentInvalid); }
 }
 
+LoadedSource prepareDownloadedSource(const QByteArray &bytes, const RenderControl &control) {
+  try {
+    const LoadedRaster raster = decodeRaster(bytes, {control.cancelled, [&](int p) { progress(control, p * 30 / 100); }});
+    if (!raster.diagnostic.isEmpty()) return fail(raster.diagnostic);
+    return prepareCapturedSource(raster.image, {control.cancelled, [&](int p) { progress(control, 30 + p * 70 / 100); }});
+  } catch (const std::bad_alloc &) { return fail(diagnostic::sourceTooLarge); }
+}
+
 static LoadedSource loadSourceImpl(const QString &path, const RenderControl &control) {
   const LoadedRaster raster = loadRaster(path, {control.cancelled, [&](int p) { progress(control, p * 45 / 100); }});
   if (!raster.diagnostic.isEmpty()) return fail(raster.diagnostic);

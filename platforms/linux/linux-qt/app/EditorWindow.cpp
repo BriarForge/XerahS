@@ -208,6 +208,9 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   auto *open = fileMenu->addAction(QStringLiteral("Open Image…"));
   open->setObjectName(QStringLiteral("openImage")); open->setShortcut(QKeySequence::Open);
   connect(open, &QAction::triggered, this, [this] { openImage(); });
+  auto *openUrl = fileMenu->addAction(QStringLiteral("Open Image from URL…"));  // no default shortcut: URL access stays deliberate
+  openUrl->setObjectName(QStringLiteral("openImageFromUrl"));
+  connect(openUrl, &QAction::triggered, this, [this] { openImageFromUrl(); });
   addRecentImagesMenu(fileMenu, [this](const QString &path) { openImage(path); }, [this] {
     if (m_canvasOperationPending) return;
     const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
@@ -689,7 +692,7 @@ void EditorWindow::refresh() {
   m_wallpaperAction->setEnabled(ready && !m_canvasOperationPending && !m_closePending && wallpaperAvailable); if (!owner) return;
   m_wallpaperAction->setToolTip(wallpaperAvailable ? m_wallpaperAction->statusTip() : "Set as Wallpaper is unavailable: no wallpaper confirmation service was provided.");
   if (!owner) return;
-  setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName(),
+  setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(!m_path.isEmpty() ? QFileInfo(m_path).fileName() : m_sourceLabel.isEmpty() ? QStringLiteral("Untitled image") : QStringLiteral("Untitled image (from %1)").arg(m_sourceLabel),
                                                     m_session->dirty() ? QStringLiteral(" •") : QString()));
   if (!owner) return;
   updatePointerStatus();
@@ -777,7 +780,7 @@ bool EditorWindow::replacementCurrent(quint64 state, quint64 generation, const Q
   m_annotationMessage = "The document or selection changed. The image was not replaced. Try again."; m_annotationMessageState = m_session->stateId(); refresh(); return false;
 }
 
-void EditorWindow::adoptSession(std::unique_ptr<EditorSession> next, const QString &path, QImage source, const QImage &display) {
+void EditorWindow::adoptSession(std::unique_ptr<EditorSession> next, const QString &path, QImage source, const QImage &display, const QString &sourceLabel) {
   const QPointer<EditorWindow> owner(this);
   // Keep the old session alive until the canvas has cancelled its gesture and
   // switched its session pointer. Retaining the widget preserves action bindings.
@@ -786,7 +789,7 @@ void EditorWindow::adoptSession(std::unique_ptr<EditorSession> next, const QStri
   applyCreationDefaults();
   m_image = std::move(source);
   m_sourceBytes = m_session->document().sourceImagePng;
-  m_path = path;
+  m_path = path; m_sourceLabel = sourceLabel;
   m_partialSave.reset(); m_partialSaveState.reset();
   m_saveMessage.clear(); m_saveMessageState.reset();
   m_failedCopy.reset(); m_failedCopyState.reset(); m_copyMessage.clear(); m_copyMessageState.reset();
@@ -843,6 +846,49 @@ bool EditorWindow::openImage(const QString &path) {
   });
   if (!guard || !adopted) return false;
   recordRecentImage(target); return bool(guard);
+}
+
+bool EditorWindow::openImageFromUrl() {
+  if (m_canvasOperationPending || m_outputPending || m_closePending || m_canvas->interactionActive()) return false;
+  const QPointer<EditorWindow> guard(this); const auto state = m_session->stateId(), generation = m_canvas->documentGeneration(); const auto selection = m_session->selection();
+  const auto hooks = m_openHooks; const auto options = m_urlOpenOptions;
+  m_canvasOperationPending = true;
+  const auto pending = qScopeGuard([guard] { if (guard) { guard->m_canvasOperationPending = false; guard->refresh(); } });
+  std::optional<DownloadedImage> downloaded; LoadedSource source;
+  // The dialog owns the transfer; closing it, or this window, aborts the download.
+  withOutputBusy([guard, options, hooks, &downloaded, &source] {
+    if (!guard) return false;
+    QPointer<UrlOpenDialog> dialog(new UrlOpenDialog(guard, options));
+    const auto answer = dialog->exec();
+    if (dialog && answer == QDialog::Accepted) downloaded = dialog->takeResult();
+    disposeCanvasDialog(dialog.data());
+    if (!guard || !downloaded) return false;
+    source = openDownloadedSource(downloaded->bytes, guard, hooks); return bool(source.document);
+  });
+  if (!guard || !downloaded || source.diagnostic == u"canvas-cancelled") return false;
+  const auto current = [&] { return replacementCurrent(state, generation, selection); };
+  if (!current()) return false;
+  if (!source.document) {
+    withOutputBusy([guard, label = downloaded->label, diagnostic = source.diagnostic] {
+      if (guard) editorWarning(guard, "Cannot open image from URL", QStringLiteral("The file from %1 is not a usable image.\n\n%2\n\nThe current image was not changed. Nothing was kept.").arg(label, describe(diagnostic)));
+      return false; });
+    return false;
+  }
+  std::unique_ptr<EditorSession> next;
+  try { next = std::make_unique<EditorSession>(std::move(*source.document), EditorSession::InitialPersistence::Unsaved); }
+  catch (const std::bad_alloc &) { editorWarning(guard, "Cannot open image from URL", describe(diagnostic::documentTooLarge)); return false; }
+  if (!guard) return false;
+  const QString label = downloaded->label;
+  const int choice = confirmReplacement(QStringLiteral("the image from %1").arg(label));
+  if (!guard || choice == QMessageBox::Cancel || !current()) return false;
+  const bool adopted = withOutputBusy([guard, &current, &next, &source, label] {
+    if (!guard || !current()) return false;
+    guard->adoptSession(std::move(next), {}, std::move(source.image), source.displayImage, label); return bool(guard);
+  });
+  if (!guard || !adopted) return false;
+  m_annotationMessage = QStringLiteral("Opened from %1 · downloaded to memory only, no local copy kept · Save to keep one").arg(label);
+  m_annotationMessageState = m_session->stateId(); refresh();
+  return bool(guard);
 }
 
 void EditorWindow::restoreHistory(bool redo) {

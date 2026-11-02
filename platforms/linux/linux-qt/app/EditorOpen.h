@@ -9,6 +9,8 @@ struct EditorOpenHooks { std::function<void()> beforePrepare; };
 LoadedSource openSource(const QString &path, QWidget *parent = nullptr, const EditorOpenHooks &hooks = {});
 LoadedSource openCapturedSource(const QImage &image, QWidget *parent = nullptr, const EditorOpenHooks &hooks = {});
 LoadedSource openCapturedDocument(const xerahs::editor::AnnotationDocument &document, QWidget *parent = nullptr, const EditorOpenHooks &hooks = {});
+// EC-003: owned preparation of bytes already downloaded; no path or file is read.
+LoadedSource openDownloadedSource(const QByteArray &bytes, QWidget *parent = nullptr, const EditorOpenHooks &hooks = {});
 QString imageFileFilter();
 // Preserve POSIX symlink/parent-segment resolution when making CLI paths absolute.
 QString absoluteImagePath(const QString &path);

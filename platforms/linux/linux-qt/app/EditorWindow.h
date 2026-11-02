@@ -17,6 +17,7 @@
 #include "ImageComparisonDialog.h"
 #include "NewImageDialog.h"
 #include "EditorOpen.h"
+#include "UrlOpenDialog.h"
 
 #include <QImage>
 #include <QMainWindow>
@@ -47,6 +48,11 @@ public:
   static EditorWindow *fromCapturedDocument(const xerahs::editor::AnnotationDocument &document, QWidget *parent = nullptr);
   // Empty path invokes the native picker; recent-file actions pass an explicit path.
   bool openImage(const QString &path = {});
+  // EC-003: explicit dialog, HTTPS by default, bounded download held in memory only.
+  // Ends exactly where openImage does: validated source, dirty Save/Discard/Cancel,
+  // then an untitled session. Returns false when nothing was replaced.
+  bool openImageFromUrl();
+  void setUrlOpenOptions(UrlOpenOptions options) { m_urlOpenOptions = std::move(options); }
   void setNewImageHooks(NewImageHooks hooks) { m_newImageHooks = std::move(hooks); }
   void setOpenHooks(EditorOpenHooks hooks) { m_openHooks = std::move(hooks); }
   void setCanvasHooks(EditorCanvasHooks hooks) { m_canvasHooks = std::move(hooks); }
@@ -88,7 +94,7 @@ private:
   int confirmReplacement(const QString &replacement);
   bool replacementCurrent(quint64 state, quint64 generation, const QSet<QUuid> &selection);
   void adoptSession(std::unique_ptr<xerahs::editor::EditorSession> session, const QString &path,
-                    QImage source, const QImage &display);
+                    QImage source, const QImage &display, const QString &sourceLabel = {});
   bool save(bool chooseFile);
   bool retrySave();
   bool performSave(const QString &target, const EditorSaveReceiptPtr &repair = {}, const xerahs::editor::RasterSaveOptions &encoding = {});
@@ -154,6 +160,8 @@ private:
   QAction *m_retrySave = nullptr;
   NewImageHooks m_newImageHooks;
   EditorOpenHooks m_openHooks;
+  UrlOpenOptions m_urlOpenOptions;
+  QString m_sourceLabel;  // remote host of an opened URL image, empty otherwise
   EditorCanvasHooks m_canvasHooks;
   ComparisonHooks m_comparisonHooks;
   EditorHistoryHooks m_historyHooks;

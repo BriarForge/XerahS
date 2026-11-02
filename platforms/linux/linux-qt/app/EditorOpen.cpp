@@ -58,6 +58,9 @@ LoadedSource openSource(const QString &path, QWidget *parent, const EditorOpenHo
   if ((parent && !owner) || choice == SourceChoice::Unspecified) return failure(QStringLiteral("canvas-cancelled"));
   return runWork([source, choice](const RenderControl &control) { return resolveSourceChoice(source, choice, control); }, parent, hooks);
 }
+LoadedSource openDownloadedSource(const QByteArray &bytes, QWidget *parent, const EditorOpenHooks &hooks) {
+  return runWork([bytes](const RenderControl &control) { return prepareDownloadedSource(bytes, control); }, parent, hooks);
+}
 LoadedSource openCapturedSource(const QImage &image, QWidget *parent, const EditorOpenHooks &hooks) {
   // A QImage may wrap caller-owned bytes. Bound and own that ingress before a
   // cancellable native wait can return and release the caller's backing buffer.

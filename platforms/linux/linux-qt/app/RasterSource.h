@@ -12,5 +12,7 @@ struct LoadedRaster {
   QByteArray fileBytes;
   QString diagnostic;
 };
+// Same validation as loadRaster for bytes already in memory (e.g. a URL download).
+LoadedRaster decodeRaster(QByteArray bytes, const xerahs::editor::RenderControl &control = {});
 LoadedRaster loadRaster(const QString &path, const xerahs::editor::RenderControl &control = {});
 } // namespace xerahs::app

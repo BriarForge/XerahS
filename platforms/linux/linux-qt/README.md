@@ -86,6 +86,8 @@ review limits. With no tray host, the window provides the current commands.
 
 - **Open image** (tray menu or `xerahs --edit FILE`) opens the editor. Editor **File → Open Image…**, Ctrl+O, replaces the current session after loading succeeds and a dirty document's Save/Discard/Cancel confirmation. Loading exposes progress and cancellation; failed or cancelled opening preserves the current session. Saving to the same candidate path reloads the newly saved raster and sidecar before replacement.
 
+- **Open Image from URL…** (editor File menu, no default shortcut, EC-003) asks for an address and downloads nothing until Download is pressed. https:// only; plain http:// needs a per-request checkbox; redirects are capped at 5 and never downgrade to http; the 1 GiB encoded cap is enforced while streaming; the bytes are validated by the shared decoder and replace the session through the usual Save/Discard/Cancel flow as an untitled unsaved image. The download is held in memory only (no local copy is written; the remote server sees the request). Policy: `src/image-editor/ImageUrl`; worker/dialog: `app/UrlDownload`, `app/UrlOpenDialog`.
+
 - **Save / Save As…** in the editor saves one owned document snapshot on a worker
   with progress and Cancel. PNG and required editable annotations must both
   persist before the document is clean; failed Save As keeps the current path.

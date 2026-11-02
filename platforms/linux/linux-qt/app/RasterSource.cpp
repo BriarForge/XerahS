@@ -45,6 +45,15 @@ LoadedRaster loadRaster(const QString &path, const RenderControl &control) {
       if (length > 0)
         progress(control, int(std::min(10.0, double(bytes.size()) / length * 10)));
     }
+    return decodeRaster(std::move(bytes), control);
+  } catch (const std::bad_alloc &) {
+    return fail(diagnostic::sourceTooLarge);
+  }
+}
+LoadedRaster decodeRaster(QByteArray bytes, const RenderControl &control) {
+  try {
+    if (bytes.size() > kMaxEncodedImageBytes)
+      return fail(diagnostic::sourceTooLarge);
     if (bytes.isEmpty())
       return fail(diagnostic::sourceEmpty);
     if (cancelled(control))
