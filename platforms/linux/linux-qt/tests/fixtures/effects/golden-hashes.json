@@ -2801,5 +2801,20 @@
                 "sha256": "cbcc6e3d48f06964419dfd5da3c1ff30b51e506707beea6f7373d4a5eff44b53"
             }
         ]
+    },
+    "native_font_oracles": {
+        "ascii_art": {
+            "fixture": "ascii-art-native-glyphs.json",
+            "font": "QFontDatabase::systemFont(FixedFont), 8 pixels",
+            "pixel_oracle": "Frozen glyph positions/colors painted by native Qt; the historical sha256 values below describe an unrecorded workstation font and are retained for provenance, not cross-host comparison."
+        },
+        "draw_text": {
+            "font": "Arial if installed, otherwise native application font; 36 pixels",
+            "pixel_oracle": "Fixed default Qt drawing instructions in EffectGoldenHashTest; historical sha256 values retained as unrecorded-workstation provenance."
+        },
+        "text_watermark": {
+            "font": "Arial if installed, otherwise native application font; 15 pixels",
+            "pixel_oracle": "Fixed default Qt drawing instructions in EffectGoldenHashTest; historical sha256 values retained as unrecorded-workstation provenance."
+        }
     }
 }

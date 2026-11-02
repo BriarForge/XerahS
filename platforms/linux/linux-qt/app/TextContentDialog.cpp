@@ -27,7 +27,7 @@ TextContentDialog::TextContentDialog(const xerahs::editor::RectangleAnnotation &
   auto *familyStatus = new QLabel(this); familyStatus->setObjectName("annotationFontFamilyStatus"); familyStatus->setTextFormat(Qt::PlainText); familyStatus->setWordWrap(true); form->addRow(familyStatus);
   const auto describeFamily = [this, familyStatus] {
     const auto family = m_family->currentText();
-    familyStatus->setText(family.isEmpty() ? "Native default font." : QFontDatabase::hasFamily(family) ? "Installed native font." :
+    familyStatus->setText(family.isEmpty() ? "Native default font." : xerahs::editor::nativeFontFamilyAvailable(family) ? "Installed native font." :
       "font-family-unavailable: This font is unavailable. Text uses the native default. Its saved family stays unchanged until you apply a replacement.");
   };
   connect(m_family, &QComboBox::currentTextChanged, this, describeFamily); describeFamily();
@@ -94,7 +94,7 @@ void TextContentDialog::accept() {
   // files) unless the user actually changes the displayed size.
   if (m_size->value() != m_initialSize) content.fontSize = m_size->value();
   const auto family = m_family->currentText();
-  if (!xerahs::editor::validFontFamily(family) || (!family.isEmpty() && family != m_shape.content.fontFamily && !QFontDatabase::hasFamily(family))) {
+  if (!xerahs::editor::validFontFamily(family) || (!family.isEmpty() && family != m_shape.content.fontFamily && !xerahs::editor::nativeFontFamilyAvailable(family))) {
     m_error->setText("font-family-unavailable: Choose an installed font family or clear the field to use the native default."); m_family->setFocus(); return;
   }
   content.fontFamily = family;

@@ -2,9 +2,16 @@
 #include "image-editor/effects/EffectSupport.h"
 #include <QCryptographicHash>
 #include <QFile>
+#include <QFileInfo>
+#include <QDir>
+#include <QFontDatabase>
+#include <QFontInfo>
+#include <QFontMetricsF>
 #include <QGuiApplication>
 #include <QJsonDocument>
 #include <QJsonArray>
+#include <QPainter>
+#include <QPainterPath>
 #include <QTest>
 using namespace xerahs::effects;
 namespace {
@@ -32,6 +39,61 @@ QString hash(const QImage &image) {
       digest.addData(QByteArrayView(rgba, 4));
     }
   return QString::fromLatin1(digest.result().toHex());
+}
+// The glyph plan is frozen independently of the renderer: rational averages
+// of the input fixture determine its characters and RGBA values. Only glyph
+// rasterization is delegated to the host's native Qt/font stack. A workstation
+// font's pixel hash cannot describe every supported Linux installation.
+QImage nativeAsciiGolden(const QJsonObject &golden, int index) {
+  const auto fixtures = golden.value("fixtures").toArray();
+  if (fixtures.size() != 3) return {};
+  const auto plan = fixtures[index].toObject();
+  QImage expected(plan.value("width").toInt(), plan.value("height").toInt(), QImage::Format_ARGB32_Premultiplied);
+  if (expected.isNull()) return {};
+  expected.fill(QColor(golden.value("background").toString()));
+  QPainter painter(&expected);
+  painter.setRenderHint(QPainter::Antialiasing);
+  painter.setRenderHint(QPainter::TextAntialiasing);
+  QFont font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+  font.setPixelSize(golden.value("font_pixel_size").toInt());
+  painter.setFont(font);
+  const auto cells = plan.value("cells").toArray();
+  if (cells.size() != ((expected.width() + 7) / 8) * ((expected.height() + 7) / 8)) return {};
+  for (const auto &value : cells) {
+    const auto cell = value.toObject(); const auto rgba = cell.value("rgba").toArray();
+    if (rgba.size() != 4 || cell.value("glyph").toString().size() != 1) return {};
+    painter.setPen(QColor(rgba[0].toInt(), rgba[1].toInt(), rgba[2].toInt(), rgba[3].toInt()));
+    painter.drawText(QPointF(cell.value("x").toInt(), float(cell.value("y").toInt()) + float(golden.value("baseline_offset").toDouble())), cell.value("glyph").toString());
+  }
+  painter.end();
+  return expected.convertToFormat(QImage::Format_ARGB32);
+}
+// Fixed default drawing instructions, independent of the effect registry and
+// its parameter/placement helpers. Native Qt supplies the environmental glyph
+// outlines and metrics; text, colors, sizes, padding and placement stay locked.
+QImage nativeTextGolden(const QImage &source, bool watermark) {
+  QFont font;
+  font.setFamily(QFontDatabase::families().contains("Arial", Qt::CaseInsensitive) ? QStringLiteral("Arial") : QGuiApplication::font().family());
+  font.setPixelSize(watermark ? 15 : 36); font.setBold(false); font.setItalic(false);
+  const QFontMetricsF metrics(font);
+  QImage expected = source.copy();
+  QPainter painter(&expected); painter.setRenderHint(QPainter::Antialiasing); painter.setRenderHint(QPainter::SmoothPixmapTransform);
+  if (!watermark) {
+    QPainterPath text; text.setFillRule(Qt::WindingFill); text.addText(0, metrics.ascent(), font, "Text");
+    const auto bounds = text.boundingRect();
+    text.translate(-bounds.left(), -bounds.top()); painter.fillPath(text, QColor(235, 235, 235));
+  } else {
+    const int width = int(std::ceil(metrics.horizontalAdvance("Text watermark") + 10));
+    const int height = int(std::ceil(std::max(metrics.ascent() + metrics.descent(), 15.0) + 10));
+    const QRectF box(source.width() - width - 5, source.height() - height - 5, width, height);
+    const double radius = std::min(4.0, std::min(width, height) / 2.0);
+    painter.setPen(Qt::NoPen); painter.setBrush(QColor(42, 47, 56)); painter.drawRoundedRect(box, radius, radius);
+    painter.setPen(QPen(Qt::black, 1)); painter.setBrush(Qt::NoBrush); painter.drawRoundedRect(box, radius, radius);
+    painter.setFont(font); painter.setPen(QColor(235, 235, 235));
+    painter.drawText(QPointF(box.left() + 5, box.top() + 5 + metrics.ascent()), "Text watermark");
+  }
+  painter.end();
+  return expected;
 }
 // Original two-buffer algorithms, retained independently to check scratch-buffer reuse.
 std::vector<float> referenceBlur(std::vector<float> input, int w, int h, float sigma, bool clampEdges, bool normalized) {
@@ -118,16 +180,35 @@ private slots:
     QVERIFY(result.image.isNull());
   }
   void everyRegisteredEffect() {
-    QJsonObject actual;
+    QFile nativeFile(QFileInfo(EFFECT_GOLDEN_FIXTURE).dir().filePath("ascii-art-native-glyphs.json"));
+    QVERIFY(nativeFile.open(QIODevice::ReadOnly));
+    QJsonParseError nativeError;
+    const auto nativeGolden = QJsonDocument::fromJson(nativeFile.readAll(), &nativeError).object();
+    QCOMPARE(nativeError.error, QJsonParseError::NoError);
+    const auto nativeFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    qInfo() << "Native ASCII golden font:" << QFontInfo(nativeFont).family() << "Qt:" << qVersion();
+    QJsonObject actual, nativeOutputs;
     for (const auto *spec : builtinEffects().specs()) {
-      QJsonArray outputs;
+      QJsonArray outputs, native;
       for (int i = 0; i < 3; ++i) {
         EffectContext context;
         context.seed = 0;
+        // Keep the reference and effect in the same native-font context. In
+        // Qt 6.4, painting another point size can change cached glyph outlines;
+        // pre-rendering every reference upfront would alter that environment.
+        QImage reference;
+        if (spec->id == "ascii_art") reference = nativeAsciiGolden(nativeGolden, i);
+        else if (spec->id == "draw_text" || spec->id == "text_watermark")
+          reference = nativeTextGolden(fixture(i), spec->id == "text_watermark");
+        if (spec->id == "ascii_art" || spec->id == "draw_text" || spec->id == "text_watermark") {
+          QVERIFY(!reference.isNull()); QCOMPARE(reference.size(), fixture(i).size());
+          native.append(QJsonObject{{"error", ""}, {"sha256", hash(reference)}});
+        }
         const auto result = runEffect(*builtinEffects().find(spec->id), fixture(i), {}, context);
         outputs.append(QJsonObject{{"error", result.error}, {"sha256", hash(result.image)}});
       }
       actual.insert(spec->id, outputs);
+      if (!native.isEmpty()) nativeOutputs.insert(spec->id, native);
     }
     QFile file(EFFECT_GOLDEN_FIXTURE);
     QVERIFY(file.open(QIODevice::ReadOnly));
@@ -135,12 +216,18 @@ private slots:
     const auto document = QJsonDocument::fromJson(file.readAll(), &error);
     QCOMPARE(error.error, QJsonParseError::NoError);
     const auto expected = document.object().value("effects").toObject();
+    const auto nativeOracles = document.object().value("native_font_oracles").toObject();
+    QCOMPARE(nativeOracles.keys(), QStringList({"ascii_art", "draw_text", "text_watermark"}));
+    QCOMPARE(nativeOutputs.keys(), nativeOracles.keys());
     // Every locked effect must still exist and match. Effects registered after the lock
     // was taken are covered by their own tests until the lock is deliberately refreshed.
+    QStringList mismatches;
     for (auto it = expected.begin(); it != expected.end(); ++it) {
-      QVERIFY2(actual.contains(it.key()), qPrintable(QStringLiteral("locked effect missing: ") + it.key()));
-      QVERIFY2(actual.value(it.key()) == it.value(), qPrintable(it.key()));
+      if (!actual.contains(it.key())) { mismatches.append(QStringLiteral("locked effect missing: ") + it.key()); continue; }
+      const QJsonValue oracle = nativeOutputs.contains(it.key()) ? nativeOutputs.value(it.key()) : it.value();
+      if (actual.value(it.key()) != oracle) mismatches.append(it.key());
     }
+    QVERIFY2(mismatches.isEmpty(), qPrintable(mismatches.join(", ")));
   }
 };
 QTEST_MAIN(EffectGoldenHashTest)

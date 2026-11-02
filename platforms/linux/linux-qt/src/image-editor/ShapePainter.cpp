@@ -16,6 +16,11 @@
 
 namespace xerahs::editor {
 
+bool nativeFontFamilyAvailable(const QString &family) {
+  return !family.isEmpty() && (QFontDatabase::hasFamily(family) ||
+      QFontDatabase::families().contains(family, Qt::CaseInsensitive));
+}
+
 namespace {
 
 QColor color(Argb value) { return QColor::fromRgba(value); }
@@ -107,7 +112,7 @@ int horizontalAlignment(const ShapeContent &content, int fallback) {
 QFont textFont(QFont font, const RectangleAnnotation &shape) {
   // Resolve against installed native families without changing the document.
   // An unavailable saved family uses exactly the same font as legacy content.
-  if (!shape.content.fontFamily.isEmpty() && QFontDatabase::hasFamily(shape.content.fontFamily)) font.setFamily(shape.content.fontFamily);
+  if (!shape.content.fontFamily.isEmpty() && nativeFontFamilyAvailable(shape.content.fontFamily)) font.setFamily(shape.content.fontFamily);
   font.setPixelSize(std::max(1, int(std::lround(shapeFontSize(shape)))));
   if (shape.content.textBold.has_value()) font.setBold(*shape.content.textBold);
   if (shape.content.textItalic.has_value()) font.setItalic(*shape.content.textItalic);

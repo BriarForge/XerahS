@@ -19,6 +19,10 @@ QTransform shapeRotation(const RectangleAnnotation &shape);
 double shapeFontSize(const RectangleAnnotation &shape);
 double shapeStrength(const RectangleAnnotation &shape);
 
+// Qt 6.4 lists generic native families (Serif, Sans Serif, Monospace) while
+// hasFamily() rejects them. Treat every offered native family as available.
+bool nativeFontFamilyAvailable(const QString &family);
+
 // Paints `shape` in document coordinates on a painter whose transform maps
 // document pixels. Region types (blur, pixelate) sample `source`, the
 // immutable source pixels, never earlier annotations (EA-011).
