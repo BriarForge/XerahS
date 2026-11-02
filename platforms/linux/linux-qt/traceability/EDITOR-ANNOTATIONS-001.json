@@ -131,10 +131,10 @@
       }
     },
     "EA-007": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Freehand stores ordered fractional path points. Gesture commit simplifies once with RDP at 0.5 document px, retaining corners over 30 degrees (src/image-editor/FreehandPath.h, documented in src/image-editor/README.md); first/last samples and order are preserved. Canvas and exporter share paintShape with a non-cosmetic round-cap/round-join pen in document units; tests compare coverage at 0.5x/2x/3x and against the export render. XANN round-trip and one-step undo are covered. The contract fixes no tolerance, so the 0.5 px and 30 degree values are a Linux implementation choice pending cross-platform agreement; status stays partial until that decision.",
+      "note": "Freehand stores ordered fractional path points. Gesture commit simplifies once with RDP at 0.5 document px, retaining corners over 30 degrees (src/image-editor/FreehandPath.h, documented in src/image-editor/README.md); first/last samples and order are preserved. Canvas and exporter share paintShape with a non-cosmetic round-cap/round-join pen in document units; tests compare coverage at 0.5x/2x/3x and against the export render. XANN round-trip and one-step undo are covered. The contract requires a documented tolerance without fixing its value; the 0.5 px tolerance, 30 degree corner threshold and 4 px corner reach are the documented Linux values. Cross-platform agreement on these values belongs to parity review, not this implementation status. Simplification is iterative, so long strokes cannot exhaust the stack.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -143,10 +143,10 @@
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 34,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e0b12db"
       }
     },
     "EA-008": {

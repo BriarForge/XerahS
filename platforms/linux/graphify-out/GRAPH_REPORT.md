@@ -1,17 +1,17 @@
 # Graph Report - linux  (2026-11-03)
 
 ## Corpus Check
-- 593 files · ~617,281 words
+- 593 files · ~617,311 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 9 file(s) not represented in the graph (top: .sxcu 5, (none) 1, .desktop 1)
 
 ## Summary
-- 13269 nodes · 33505 edges · 491 communities (418 shown, 73 thin omitted)
+- 13269 nodes · 33506 edges · 491 communities (418 shown, 73 thin omitted)
 - Extraction: 86% EXTRACTED · 14% INFERRED · 0% AMBIGUOUS · INFERRED: 4644 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e0b12dbe`
+- Built from commit: `38ef724a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -2213,7 +2213,7 @@ Nodes (4): DialogResult, accepted, acted, timedOut
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `xerahs_core` connect `Native Linux CMake build` to `EditorWindow.cpp`, `algorithm`, `Effect.h`, `xerahs`, `planRetainedCaptureRetry`, `EditorSession`, `loadEditorPreferences`, `buildUploadRequest`, `actionSelectionChoices`, `WorkflowExecution.cpp`, `CounterStore.cpp`, `ScrollStitcher`, `Argb`, `ColorFormats.cpp`, `RegionSession`, `CanvasOperation`, `ExpansionContext`, `FileHash.cpp`, `annotationId`, `qtest`, `RectangleProperties`, `WatchFolders.cpp`, `AnnotationDocument.cpp`, `parseUploadResponse`, `FilenameGenerator.cpp`, `PhysicalRect`, `EditorViewport`, `RasterSaveOptions`, `HotkeyBindings.cpp`, `UploadDestination.cpp`, `AppearancePalette`, `PipelineJournal.cpp`, `runPipeline`, `serializeActivation`, `CaptureSchedule`, `MemoryCredentialStore`, `LastRegionStore.cpp`, `ComparisonLayout`, `RectangleAnnotation`, `workflows/CaptureWorkflows.cpp`, `ApplicationSettings.cpp`, `WorkflowShortcutPlan`, `VideoConversion.cpp`, `SxcuImport.cpp`, `RecentImages`, `DestinationCatalog`, `ActivationRequest`, `PostCapturePipeline.h`, `Builder`?**
-  _High betweenness centrality (0.089) - this node is a cross-community bridge._
+  _High betweenness centrality (0.088) - this node is a cross-community bridge._
 - **Are the 9 inferred relationships involving `ParamValues` (e.g. with `deserializeParameters()` and `.handComputedPixels()`) actually correct?**
   _`ParamValues` has 9 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `public`, `m_choices`, `m_selected` to the rest of the system?**
@@ -2221,8 +2221,8 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `EditorWindow.cpp` be split into smaller, more focused modules?**
   _Cohesion score 0.05416666666666667 - nodes in this community are weakly interconnected._
 - **Why does `Native editor save and companion repair` connect `Native capture result journal and recovery` to `qtest`, `Linux contract scope audit`?**
-  _High betweenness centrality (0.043) - this node is a cross-community bridge._
+  _High betweenness centrality (0.062) - this node is a cross-community bridge._
 - **Should `QApplication` be split into smaller, more focused modules?**
   _Cohesion score 0.04103896103896104 - nodes in this community are weakly interconnected._
-- **Why does `QApplication` connect `QApplication` to `.start`, `ColorPickerDialog`, `viewPointInPixel`, `xerahs`, `HttpFixture`, `serializeDocument`, `FakeRunner`, `runEditorUpload`, `ActionOutcome`, `PortalScreenshotTest`, `AutoCaptureDialog`, `pixels`, `HashCheckerDialog`, `initializeNativeEditorPreferences`, `runEditorCopy`, `ImageInsertTest`, `.publish`, `CaptureSaveAsTest`, `CaptureHistoryWindow.cpp`, `QrCodeDialog`, `CaptureAnnotationTest`, `runEditorPrint`, `PinWindow.cpp`, `CaptureRecoveryActions`, `CaptureHistoryTest`, `ImageComparisonDialogTest`, `ImageInsertDialog`, `ApplicationWindow.cpp`, `QrCodeDialogTest`, `EffectsDialogTest`, `AppContext`, `.qrShowsOwnedResultsAndKeepsPixelsAndJournalPrivate`, `defaultCaptureWorkflows`, `installWorkflows`, `CaptureHistoryWindowTest`, `PhysicalRect`, `.setFile`, `saveCapture`, `NewImageDialogTest`, `readSxiePreset`, `EditorViewport`, `.private`, `NativeEditorToolbar`, `LoadedSource`, `HotkeyBindings.cpp`, `FileUploadTest`, `AppearancePalette`, `serializeActivation`, `.setInitialImage`, `createShellDispatcher`, `CapturePinPrintTest`, `.fromCapturedImage`, `ApplicationWindowTest`, `ApplicationSettings.cpp`, `ActionSelectionTest`, `WorkflowShortcutsTest`, `acceptAuto`, `makeActivationRequest`, `ImageRecognitionDialog::ImageRecognitionDialog`, `.showColor`, `main`, `NativeCaptureWorkflowsTest`, `NativeDesktopAppearanceTest`?**
-  _High betweenness centrality (0.041) - this node is a cross-community bridge._
+- **Why does `Linux contract scope audit` connect `Linux contract scope audit` to `Guarded annotation colour choices`, `Native editor Copy Image`, `Native annotation duplication and object clipboard`, `Guarded native keyboard transforms`, `Guarded native selection rotation`, `Native editor Print Image`, `Native saved-file outputs`, `Native capture Crop and verified source handoff`, `Linux ImageEditor`, `Native capture result journal and recovery`?**
+  _High betweenness centrality (0.056) - this node is a cross-community bridge._

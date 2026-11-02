@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
 
 namespace xerahs::editor {
 namespace {
@@ -15,18 +16,24 @@ double segmentDistance(const PointF &p, const PointF &a, const PointF &b) {
   return distance(p, {a.x + t * dx, a.y + t * dy});
 }
 
+// Iterative Ramer-Douglas-Peucker: long strokes must not recurse per sample.
 void rdp(const std::vector<PointF> &pts, std::size_t first, std::size_t last, std::vector<bool> &keep) {
-  if (last <= first + 1) return;
-  double worst = 0;
-  std::size_t index = first;
-  for (std::size_t i = first + 1; i < last; ++i) {
-    const double d = segmentDistance(pts[i], pts[first], pts[last]);
-    if (d > worst) { worst = d; index = i; }
+  std::vector<std::pair<std::size_t, std::size_t>> spans{{first, last}};
+  while (!spans.empty()) {
+    const auto [from, to] = spans.back();
+    spans.pop_back();
+    if (to <= from + 1) continue;
+    double worst = 0;
+    std::size_t index = from;
+    for (std::size_t i = from + 1; i < to; ++i) {
+      const double d = segmentDistance(pts[i], pts[from], pts[to]);
+      if (d > worst) { worst = d; index = i; }
+    }
+    if (worst <= kFreehandToleranceDocumentPixels) continue;
+    keep[index] = true;
+    spans.emplace_back(from, index);
+    spans.emplace_back(index, to);
   }
-  if (worst <= kFreehandToleranceDocumentPixels) return;
-  keep[index] = true;
-  rdp(pts, first, index, keep);
-  rdp(pts, index, last, keep);
 }
 
 // Turning angle in degrees at pts[i], measured to the nearest samples at least
