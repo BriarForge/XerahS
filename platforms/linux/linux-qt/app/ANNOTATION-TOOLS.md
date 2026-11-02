@@ -113,3 +113,21 @@ Next independent work: native Rectangle pointer resize handles and complete
 selected-object controls under EA-003/005/018; implement Ellipse from the shared
 decision when supplied. All remaining tools, assets, effects, outputs and the
 full application/capture/recording/upload/workflow/packaging matrix stay in scope.
+
+## EA-005 border style, corner radius and shadow (Rectangle and Ellipse)
+
+Implemented natively with provisional persistence pending the same product
+decision as above. Field names and the BorderStyle members (`Solid`, `Dash`,
+`Dot`, `DashDot`, `DashDotDot`) come from the reference-baseline census;
+the `.xann` schema does not define them. Persisted per annotation as
+`borderStyle`, `cornerRadius` (Rectangle only; an Ellipse keeps any such field
+as an unknown field), `shadow`, `shadowBlurRadius`, `shadowColor`,
+`shadowOffsetX`, `shadowOffsetY`, `shadowOpacity`. Absent means Solid, 0 and no
+shadow; the writer omits a field group that is at its default. Open for the
+owners: numeric shadow defaults (reference `Annotation.DefaultShadow*`), ranges,
+whether the shadow offset follows rotation (here it stays in document axes),
+whether a transparent fill casts a shadow (here only painted alpha does), and
+golden pixels. A Rectangle with any of these fields renders through the shared
+painter; an undecorated one keeps the exact ES-025 renderer. Edit > Rectangle
+Properties edits a selected shape (one undo step); Edit > Shape Style Defaults
+sets the creation defaults for the session without touching existing objects.

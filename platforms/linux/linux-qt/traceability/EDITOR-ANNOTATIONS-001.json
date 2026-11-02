@@ -13,7 +13,9 @@
     "platforms/linux/linux-qt/app/EditorCanvas.cpp",
     "platforms/linux/linux-qt/app/NativeAnnotationTools.cpp",
     "platforms/linux/linux-qt/app/TextContentDialog.cpp",
-    "platforms/linux/linux-qt/app/TextContentDialog.h"
+    "platforms/linux/linux-qt/app/TextContentDialog.h",
+    "platforms/linux/linux-qt/app/RectanglePropertiesDialog.cpp",
+    "platforms/linux/linux-qt/app/EditorWindow.cpp"
   ],
   "requirements": {
     "EA-001": {
@@ -96,8 +98,9 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Bounds, stroke/fill, width, opacity, rotation, visibility and order exist for Rectangle/Ellipse. Border styles, corner/shadow fields and approved complete Ellipse document compatibility are not implemented/accepted.",
+      "note": "Native Rectangle/Ellipse preserve bounds, stroke, fill, thickness, opacity, rotation, visibility and z-order, and now also border style (Solid/Dash/Dot/DashDot/DashDotDot), Rectangle-only corner radius and shadow (blur, offset X/Y, opacity, colour): bounded XANN read/write with unknown fields kept, legacy documents load as Solid/0/no shadow, one shared paintShape path for canvas and export, one-undo-step native edit dialog, creation-default dialog, copy/paste/duplicate. Kept partial: the Product Contract publishes no XANN schema, field names, value spellings, ranges or numeric shadow defaults for these fields (only the rectangle core fields; Ellipse has no recognized schema, see app/ANNOTATION-TOOLS.md EA-005-LINUX-2026-10-14), so the persisted names follow the reference-baseline census (borderStyle, cornerRadius, shadow, shadowBlurRadius, shadowColor, shadowOffsetX, shadowOffsetY, shadowOpacity) with PROVISIONAL shadow defaults (blur 4, offset 4/4, opacity 0.5, #FF000000) and this build's own bounds (corner 0..10000, blur 0..1000, offset +-10000, opacity 0..1) pending product decision; Rectangle/Ellipse golden pixels for dashes, rounded corners and shadows are not shared fixtures; creation defaults for the new fields are per editor session, not persisted preferences.",
       "evidence": [
+        "platforms/linux/linux-qt/tests/ShapeStyleTest.cpp",
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",

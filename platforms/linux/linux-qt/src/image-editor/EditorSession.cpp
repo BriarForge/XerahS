@@ -13,13 +13,21 @@ bool finiteGeometry(const RectangleAnnotation &r) {
 bool sameEditableFields(const RectangleAnnotation &a, const RectangleAnnotation &b) {
   return a.start == b.start && a.end == b.end && a.style.strokeWidth == b.style.strokeWidth &&
       a.style.strokeColor == b.style.strokeColor && a.style.fillColor == b.style.fillColor &&
-      a.style.rotationDegrees == b.style.rotationDegrees && a.style.opacity == b.style.opacity &&
+      a.style.rotationDegrees == b.style.rotationDegrees && a.style.opacity == b.style.opacity && sameDecoration(a.style, b.style) &&
       a.content.text == b.content.text && a.content.fontSize == b.content.fontSize && a.content.points == b.content.points && a.content.textAlignment == b.content.textAlignment && a.content.textBold == b.content.textBold && a.content.textItalic == b.content.textItalic && a.content.textColor == b.content.textColor && a.content.textFillColor == b.content.textFillColor && a.content.balloonBorderColor == b.content.balloonBorderColor && a.content.fontFamily == b.content.fontFamily &&
       a.content.stepValue == b.content.stepValue && a.content.strength == b.content.strength;
 }
 bool sameStyle(const RectangleStyle &a, const RectangleStyle &b) {
   return a.strokeColor == b.strokeColor && a.fillColor == b.fillColor && a.strokeWidth == b.strokeWidth &&
-      a.rotationDegrees == b.rotationDegrees && a.opacity == b.opacity;
+      a.rotationDegrees == b.rotationDegrees && a.opacity == b.opacity && sameDecoration(a, b);
+}
+// EA-005: only Rectangle and Ellipse carry border/shadow; only Rectangle a
+// corner radius. Everything else is stored at the legacy defaults so memory
+// and the reloaded document agree.
+RectangleStyle normalizedStyle(const QString &type, RectangleStyle style) {
+  if (!hasShapeDecoration(type)) { style.borderStyle = BorderStyle::Solid; style.shadow = ShapeShadow{}; }
+  if (type != shape::rectangle) style.cornerRadius = 0;
+  return style;
 }
 } // namespace
 
@@ -31,7 +39,8 @@ EditorSession::EditorSession(AnnotationDocument document, InitialPersistence per
 
 bool EditorSession::setCreationStyle(const RectangleStyle &style) {
   if (!std::isfinite(style.strokeWidth) || style.strokeWidth <= 0 || style.strokeWidth > 10000 ||
-      !std::isfinite(style.rotationDegrees) || !std::isfinite(style.opacity) || style.opacity < 0 || style.opacity > 1)
+      !std::isfinite(style.rotationDegrees) || !std::isfinite(style.opacity) || style.opacity < 0 || style.opacity > 1 ||
+      !validDecoration(shape::rectangle, style))
     return false;
   m_tool = style;
   return true;
@@ -79,7 +88,7 @@ std::optional<QUuid> EditorSession::createShape(const RectangleProperties &draft
   rectangle.id = QUuid::createUuid();
   rectangle.start = {std::min(start.x, end.x), std::min(start.y, end.y)};
   rectangle.end = {std::max(start.x, end.x), std::max(start.y, end.y)};
-  rectangle.style = draft.style;
+  rectangle.style = normalizedStyle(content.type, draft.style);
   rectangle.content = content;
   // ES-003: zero area (zero width or zero height) is rejected.
   m_editDiagnostic = rectanglePropertiesDiagnostic({rectangle.start, rectangle.end, rectangle.style});
@@ -130,7 +139,20 @@ bool EditorSession::editRectangleProperties(const QUuid &id, const RectangleProp
   if (!selected) { m_editDiagnostic = "annotation-type-unsupported"; return false; }
   if (!selectionEditable()) { m_editDiagnostic = "annotation-selection-protected"; return false; }
   m_editDiagnostic = rectanglePropertiesDiagnostic(properties); if (!m_editDiagnostic.isEmpty()) return false;
-  return changeSelected([&](RectangleAnnotation &r) { r.start = properties.start; r.end = properties.end; r.style = properties.style; });
+  return changeSelected([&](RectangleAnnotation &r) { r.start = properties.start; r.end = properties.end; r.style = normalizedStyle(r.type(), properties.style); });
+}
+
+EditorSession::StyleEditResult EditorSession::editDecorationDefaults(const RectangleStyle &next, quint64 expectedState,
+    const QSet<QUuid> &expectedSelection, const RectangleStyle &expectedDefaults) {
+  if (!validDecoration(shape::rectangle, next)) { m_editDiagnostic = "annotation-style-invalid"; return {false, false, false, m_editDiagnostic}; }
+  m_editDiagnostic.clear();
+  // Defaults never touch the document or history (EA-014); only freshness is checked.
+  if (stateId() != expectedState || m_selection != expectedSelection || !sameStyle(m_tool, expectedDefaults)) {
+    m_editDiagnostic = "annotation-edit-stale"; return {false, false, false, m_editDiagnostic};
+  }
+  const bool changed = !sameDecoration(m_tool, next);
+  m_tool.borderStyle = next.borderStyle; m_tool.cornerRadius = next.cornerRadius; m_tool.shadow = next.shadow;
+  return {true, false, changed, {}};
 }
 
 bool EditorSession::editShapeContent(const QUuid &id, const ShapeContent &content, quint64 expectedState) {

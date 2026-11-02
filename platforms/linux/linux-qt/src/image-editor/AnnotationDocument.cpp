@@ -93,6 +93,48 @@ bool isUuid(const QString &text) {
   return pattern.match(text).hasMatch();
 }
 
+
+// EA-005: optional decoration fields of Rectangle and Ellipse. Absent fields
+// keep the legacy defaults; present ones are validated and bounded.
+const QStringList kDecorationKeys = {
+    QStringLiteral("borderStyle"),    QStringLiteral("shadow"),        QStringLiteral("shadowBlurRadius"),
+    QStringLiteral("shadowColor"),    QStringLiteral("shadowOffsetX"), QStringLiteral("shadowOffsetY"),
+    QStringLiteral("shadowOpacity")};
+const QString kCornerRadiusKey = QStringLiteral("cornerRadius");
+
+bool parseDecoration(const QJsonObject &o, const QString &type, RectangleStyle &style) {
+  const auto number = [&](const char16_t *key, double low, double high, double &out) {
+    if (!o.contains(key)) return true;
+    const QJsonValue v = o.value(key);
+    if (!isFiniteNumber(v) || v.toDouble() < low || v.toDouble() > high) return false;
+    out = v.toDouble();
+    return true;
+  };
+  if (o.contains(u"borderStyle")) {
+    const QJsonValue v = o.value(u"borderStyle");
+    const auto parsed = v.isString() ? parseBorderStyle(v.toString()) : std::nullopt;
+    if (!parsed) return false;
+    style.borderStyle = *parsed;
+  }
+  if (type == shape::rectangle && !number(u"cornerRadius", 0, kMaxCornerRadius, style.cornerRadius)) return false;
+  if (o.contains(u"shadow")) {
+    if (!o.value(u"shadow").isBool()) return false;
+    style.shadow.enabled = o.value(u"shadow").toBool();
+  }
+  if (!number(u"shadowBlurRadius", 0, kMaxShadowBlur, style.shadow.blurRadius) ||
+      !number(u"shadowOffsetX", -kMaxShadowOffset, kMaxShadowOffset, style.shadow.offsetX) ||
+      !number(u"shadowOffsetY", -kMaxShadowOffset, kMaxShadowOffset, style.shadow.offsetY) ||
+      !number(u"shadowOpacity", 0, 1, style.shadow.opacity))
+    return false;
+  if (o.contains(u"shadowColor")) {
+    const QJsonValue v = o.value(u"shadowColor");
+    const auto color = v.isString() ? parseColor(v.toString()) : std::nullopt;
+    if (!color) return false;
+    style.shadow.color = *color;
+  }
+  return true;
+}
+
 std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &findings) {
   if (!value.isObject()) {
     findings.invalid = true;
@@ -201,8 +243,16 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
                                    o.value(u"opacity").toDouble(1.0)};
   rectangle.visible = o.value(u"visible").toBool(true);
   rectangle.content = std::move(content);
+  if (hasShapeDecoration(type) && !parseDecoration(o, type, rectangle.style)) {
+    findings.invalid = true;
+    return std::nullopt;
+  }
   for (auto it = o.begin(); it != o.end(); ++it) {
     if (!kKnownRectangleKeys.contains(it.key())) rectangle.extra.insert(it.key(), it.value());
+  }
+  if (hasShapeDecoration(type)) {
+    for (const auto &key : kDecorationKeys) rectangle.extra.remove(key);
+    if (type == shape::rectangle) rectangle.extra.remove(kCornerRadiusKey);  // Ellipse keeps an unknown cornerRadius verbatim
   }
   if (type == shape::text || type == shape::speechBalloon) {
     for (const auto &key : {QStringLiteral("textAlignment"), QStringLiteral("textBold"), QStringLiteral("textItalic"), QStringLiteral("textColor"), QStringLiteral("fontFamily"), QStringLiteral("textFillColor")}) rectangle.extra.remove(key);
@@ -214,6 +264,38 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
 QJsonObject pointJson(const PointF &p) { return QJsonObject{{QStringLiteral("x"), p.x}, {QStringLiteral("y"), p.y}}; }
 
 }  // namespace
+
+QString borderStyleName(BorderStyle style) {
+  switch (style) {
+    case BorderStyle::Dash: return QStringLiteral("Dash");
+    case BorderStyle::Dot: return QStringLiteral("Dot");
+    case BorderStyle::DashDot: return QStringLiteral("DashDot");
+    case BorderStyle::DashDotDot: return QStringLiteral("DashDotDot");
+    case BorderStyle::Solid: break;
+  }
+  return QStringLiteral("Solid");
+}
+std::optional<BorderStyle> parseBorderStyle(const QString &name) {
+  for (const BorderStyle style : {BorderStyle::Solid, BorderStyle::Dash, BorderStyle::Dot, BorderStyle::DashDot, BorderStyle::DashDotDot})
+    if (borderStyleName(style) == name) return style;
+  return std::nullopt;
+}
+bool hasShapeDecoration(const QString &type) { return type == shape::rectangle || type == shape::ellipse; }
+bool hasDecoration(const QString &type, const RectangleStyle &style) {
+  if (!hasShapeDecoration(type)) return false;
+  return style.borderStyle != BorderStyle::Solid || (type == shape::rectangle && style.cornerRadius != 0) || style.shadow.enabled;
+}
+bool validDecoration(const QString &type, const RectangleStyle &style) {
+  if (!hasShapeDecoration(type)) return true;
+  const auto in = [](double v, double low, double high) { return std::isfinite(v) && v >= low && v <= high; };
+  const ShapeShadow &sh = style.shadow;
+  return (type != shape::rectangle || in(style.cornerRadius, 0, kMaxCornerRadius)) && in(sh.blurRadius, 0, kMaxShadowBlur) &&
+         in(sh.offsetX, -kMaxShadowOffset, kMaxShadowOffset) && in(sh.offsetY, -kMaxShadowOffset, kMaxShadowOffset) &&
+         in(sh.opacity, 0, 1);
+}
+bool sameDecoration(const RectangleStyle &a, const RectangleStyle &b) {
+  return a.borderStyle == b.borderStyle && a.cornerRadius == b.cornerRadius && a.shadow == b.shadow;
+}
 
 QStringList shapeTypes() {
   return {shape::rectangle, shape::ellipse, shape::line, shape::arrow, shape::freehand, shape::text,
@@ -402,6 +484,26 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
     o.insert(QStringLiteral("rotationDegrees"), rectangle.style.rotationDegrees);
     o.insert(QStringLiteral("opacity"), rectangle.style.opacity);
     o.insert(QStringLiteral("visible"), rectangle.visible);
+    if (hasShapeDecoration(content.type)) {
+      const RectangleStyle &style = rectangle.style;
+      if (style.borderStyle != BorderStyle::Solid) o.insert(QStringLiteral("borderStyle"), borderStyleName(style.borderStyle));
+      else o.remove(QStringLiteral("borderStyle"));
+      if (content.type == shape::rectangle) {
+        if (style.cornerRadius != 0) o.insert(kCornerRadiusKey, style.cornerRadius); else o.remove(kCornerRadiusKey);
+      }
+      if (style.shadow != ShapeShadow{}) {
+        o.insert(QStringLiteral("shadow"), style.shadow.enabled);
+        o.insert(QStringLiteral("shadowBlurRadius"), style.shadow.blurRadius);
+        o.insert(QStringLiteral("shadowColor"), formatColor(style.shadow.color));
+        o.insert(QStringLiteral("shadowOffsetX"), style.shadow.offsetX);
+        o.insert(QStringLiteral("shadowOffsetY"), style.shadow.offsetY);
+        o.insert(QStringLiteral("shadowOpacity"), style.shadow.opacity);
+      } else {
+        for (const auto &key : {QStringLiteral("shadow"), QStringLiteral("shadowBlurRadius"), QStringLiteral("shadowColor"),
+                                QStringLiteral("shadowOffsetX"), QStringLiteral("shadowOffsetY"), QStringLiteral("shadowOpacity")})
+          o.remove(key);
+      }
+    }
     // Pending clarification (ROOT-ESCALATE-001): the schema has zIndex but
     // SPEC.md orders annotations by array position. The array is treated as
     // authoritative and zIndex is rewritten to match it.

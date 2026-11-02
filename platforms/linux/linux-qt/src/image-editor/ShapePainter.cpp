@@ -121,6 +121,69 @@ QFont textFont(QFont font, const RectangleAnnotation &shape) {
   return font;
 }
 
+
+Qt::PenStyle penStyleOf(BorderStyle style) {
+  switch (style) {
+    case BorderStyle::Dash: return Qt::DashLine;
+    case BorderStyle::Dot: return Qt::DotLine;
+    case BorderStyle::DashDot: return Qt::DashDotLine;
+    case BorderStyle::DashDotDot: return Qt::DashDotDotLine;
+    case BorderStyle::Solid: break;
+  }
+  return Qt::SolidLine;
+}
+
+// EA-005: the stroke of a Rectangle or Ellipse. Dashed styles use flat caps,
+// otherwise round caps would fuse dashes and dots back into a solid line.
+QPen borderPen(const RectangleStyle &style, bool rectangle) {
+  const bool solid = style.borderStyle == BorderStyle::Solid;
+  QPen pen(color(style.strokeColor), style.strokeWidth, penStyleOf(style.borderStyle),
+           solid ? (rectangle ? Qt::SquareCap : Qt::RoundCap) : Qt::FlatCap, rectangle ? Qt::MiterJoin : Qt::RoundJoin);
+  return pen;
+}
+
+void drawBox(QPainter &painter, const RectangleAnnotation &shape, const QRectF &box) {
+  painter.setBrush(color(shape.style.fillColor));
+  painter.setPen(borderPen(shape.style, shape.type() == shape::rectangle));
+  if (shape.type() == shape::ellipse) { painter.drawEllipse(box); return; }
+  // Corner radius is Rectangle only; clamp so opposite corners never overlap.
+  const double radius = std::min({shape.style.cornerRadius, box.width() / 2, box.height() / 2});
+  if (radius > 0) painter.drawRoundedRect(box, radius, radius); else painter.drawRect(box);
+}
+
+// EA-005: the shadow is the shape's own silhouette (fill and stroke alpha),
+// offset in document axes, blurred, then tinted. It is rasterized at document
+// resolution so the canvas (any zoom) and the exporter produce the same
+// pixels; the result is drawn under the shape before it.
+void paintShadow(QPainter &painter, const RectangleAnnotation &shape, const QRectF &box) {
+  const ShapeShadow &shadow = shape.style.shadow;
+  const int radius = std::max(0, int(std::lround(shadow.blurRadius)));
+  const QTransform rotation = shapeRotation(shape);
+  const double reach = shape.style.strokeWidth / 2 + 3.0 * radius + 2;
+  const QRect region = rotation.mapRect(box).adjusted(-reach, -reach, reach, reach).toAlignedRect();
+  constexpr qint64 kMaxShadowPixels = 64LL * 1024 * 1024;
+  if (region.width() < 1 || region.height() < 1 || qint64(region.width()) * region.height() > kMaxShadowPixels) return;
+  QImage mask(region.size(), QImage::Format_ARGB32_Premultiplied);
+  mask.fill(Qt::transparent);
+  {
+    QPainter inner(&mask);
+    inner.setRenderHint(QPainter::Antialiasing);
+    inner.translate(-region.topLeft());
+    inner.setWorldTransform(rotation, true);
+    drawBox(inner, shape, box);
+  }
+  boxBlur(mask, radius);
+  QPainter tint(&mask);
+  tint.setCompositionMode(QPainter::CompositionMode_SourceIn);
+  QColor c = color(shadow.color);
+  c.setAlphaF(std::clamp(c.alphaF() * shadow.opacity, 0.0, 1.0));
+  tint.fillRect(mask.rect(), c);
+  tint.end();
+  painter.save();
+  painter.drawImage(QPointF(region.topLeft()) + QPointF(shadow.offsetX, shadow.offsetY), mask);
+  painter.restore();
+}
+
 void paintBalloon(QPainter &painter, const RectangleAnnotation &shape) {
   const RectangleStyle &style = shape.style;
   const QRectF box = bounds(shape);
@@ -218,17 +281,14 @@ void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImag
   painter.save();
   painter.setRenderHint(QPainter::Antialiasing);
   painter.setRenderHint(QPainter::TextAntialiasing);
-  painter.setWorldTransform(shapeRotation(shape), true);
   painter.setOpacity(painter.opacity() * style.opacity);
+  // EA-005: the shadow offset follows document axes, so it is drawn before the
+  // shape's own rotation is applied.
+  if (hasShapeDecoration(type) && style.shadow.enabled) paintShadow(painter, shape, box);
+  painter.setWorldTransform(shapeRotation(shape), true);
   const QPen stroke(color(style.strokeColor), style.strokeWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-  if (type == shape::rectangle) {
-    painter.setBrush(color(style.fillColor));
-    painter.setPen(QPen(color(style.strokeColor), style.strokeWidth, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
-    painter.drawRect(box);
-  } else if (type == shape::ellipse) {
-    painter.setBrush(color(style.fillColor));
-    painter.setPen(stroke);
-    painter.drawEllipse(box);
+  if (type == shape::rectangle || type == shape::ellipse) {
+    drawBox(painter, shape, box);
   } else if (isPathShape(type)) {
     QPainterPath path;
     for (std::size_t i = 0; i < shape.content.points.size(); ++i) {

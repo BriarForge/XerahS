@@ -29,6 +29,35 @@ struct PointF {
   bool operator==(const PointF &o) const { return x == o.x && y == o.y; }
 };
 
+// EA-005: border style member names are the ones the reference baseline
+// declares (kova-0.29.0 BorderStyle: Solid, Dash, Dot, DashDot, DashDotDot).
+enum class BorderStyle { Solid, Dash, Dot, DashDot, DashDotDot };
+QString borderStyleName(BorderStyle style);
+std::optional<BorderStyle> parseBorderStyle(const QString &name);
+
+// EA-005: drop shadow of a Rectangle or Ellipse. Field names follow the
+// reference baseline (Shadow, ShadowBlurRadius, ShadowColor, ShadowOffsetX,
+// ShadowOffsetY, ShadowOpacity). The Product Contract does not yet publish
+// numeric defaults (Annotation.DefaultShadow*) or ranges; the values below
+// are PROVISIONAL creation defaults pending a product decision, and the
+// ranges are this build's bounded validation (see kMax* below).
+struct ShapeShadow {
+  bool enabled = false;
+  double blurRadius = 4;
+  double offsetX = 4;
+  double offsetY = 4;
+  double opacity = 0.5;  // 0..1, multiplies the colour alpha
+  Argb color = 0xFF000000;
+  bool operator==(const ShapeShadow &o) const {
+    return enabled == o.enabled && blurRadius == o.blurRadius && offsetX == o.offsetX && offsetY == o.offsetY &&
+           opacity == o.opacity && color == o.color;
+  }
+  bool operator!=(const ShapeShadow &o) const { return !(*this == o); }
+};
+inline constexpr double kMaxCornerRadius = 10000;
+inline constexpr double kMaxShadowBlur = 1000;
+inline constexpr double kMaxShadowOffset = 10000;
+
 // ES-003, ES-023, ES-024: qualification defaults.
 struct RectangleStyle {
   Argb strokeColor = 0xFFFF0000;
@@ -36,7 +65,18 @@ struct RectangleStyle {
   double strokeWidth = 4;
   double rotationDegrees = 0;
   double opacity = 1;
+  // EA-005. Absent in older documents: Solid, 0 and no shadow.
+  BorderStyle borderStyle = BorderStyle::Solid;
+  double cornerRadius = 0;  // Rectangle only; ignored for every other type
+  ShapeShadow shadow;
 };
+// True when `style` is not the legacy undecorated look for `type`.
+bool hasDecoration(const QString &type, const RectangleStyle &style);
+// Finite and within range (EA-020). Fields that do not apply to `type` are not checked.
+bool validDecoration(const QString &type, const RectangleStyle &style);
+bool sameDecoration(const RectangleStyle &a, const RectangleStyle &b);
+// Types that carry the EA-005 fields.
+bool hasShapeDecoration(const QString &type);
 
 // EA-001: the document types of the box-bounded annotation tools. Every
 // type shares bounds, style, selection, move, resize, rotation and history.

@@ -64,6 +64,10 @@ public:
   StyleEditResult editStrokeWidth(double, quint64 expectedState, const QSet<QUuid> &expectedSelection,
       const RectangleStyle &expectedDefaults);
   bool setOpacity(double opacity);
+  // EA-005/EA-014: replace only the border style, corner radius and shadow of
+  // the creation defaults. Existing objects and history are never touched.
+  StyleEditResult editDecorationDefaults(const RectangleStyle &next, quint64 expectedState,
+      const QSet<QUuid> &expectedSelection, const RectangleStyle &expectedDefaults);
   // ES-004: keyboard and pointer parity operations, each one history operation.
   // Resizing moves the bottom-right corner; a result without positive area is rejected.
   bool resizeSelection(double dw, double dh);

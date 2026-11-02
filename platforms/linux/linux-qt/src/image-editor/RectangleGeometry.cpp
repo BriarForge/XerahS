@@ -8,6 +8,8 @@ QString rectanglePropertiesDiagnostic(const RectangleProperties &p) {
   if (!std::isfinite(p.style.strokeWidth) || p.style.strokeWidth <= 0 || p.style.strokeWidth > 10000 ||
       !std::isfinite(p.style.rotationDegrees) || !std::isfinite(p.style.opacity) || p.style.opacity < 0 || p.style.opacity > 1)
     return "annotation-style-invalid";
+  // EA-005: finite, bounded border/corner/shadow fields (the strictest, Rectangle, reading).
+  if (!validDecoration(shape::rectangle, p.style)) return "annotation-style-invalid";
   // Stroke-grown rotated export bounds must also remain finite. Valid scalar
   // fields alone do not prevent overflowing derived geometry (ES-025).
   double angle = std::fmod(p.style.rotationDegrees, 360.0); if (angle < 0) angle += 360;

@@ -399,6 +399,9 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   m_rectangleProperties = edit->addAction("Rectangle &Properties…"); m_rectangleProperties->setObjectName("rectangleProperties");
   m_rectangleProperties->setAutoRepeat(false); m_rectangleProperties->setStatusTip("Edit the selected rectangle's bounds, stroke, fill, opacity and rotation. Creation defaults stay unchanged.");
   connect(m_rectangleProperties, &QAction::triggered, this, [this] { rectangleDialog(false); });
+  m_shapeStyleDefaults = edit->addAction("Shape &Style Defaults…"); m_shapeStyleDefaults->setObjectName("shapeStyleDefaults");
+  m_shapeStyleDefaults->setAutoRepeat(false); m_shapeStyleDefaults->setStatusTip("Set the border style, rectangle corner radius and shadow used by new rectangles and ellipses. Existing objects stay unchanged.");
+  connect(m_shapeStyleDefaults, &QAction::triggered, this, [this] { shapeStyleDefaultsDialog(); });
   m_copyAction = edit->addAction("&Copy Image"); m_copyAction->setObjectName("copyImage");
   m_copyAction->setShortcut(QKeySequence::Copy);
   m_copyAction->setAutoRepeat(false);
@@ -509,6 +512,22 @@ bool EditorWindow::rectangleDialog(bool creation) {
     owner->m_annotationMessage = owner->m_session->editDiagnostic().isEmpty() ? QString() : annotationEditMessage(owner->m_session->editDiagnostic());
     owner->m_annotationMessageState = owner->m_session->stateId();
     owner->m_canvas->viewport()->update(); owner->refresh(); return changed;
+  });
+}
+
+bool EditorWindow::shapeStyleDefaultsDialog() {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive()) return false;
+  const auto defaults = m_session->toolStyle(); const auto state = m_session->stateId(), generation = m_canvas->documentGeneration();
+  const auto selection = m_session->selection(); const QPointer<EditorWindow> owner(this);
+  return withOutputBusy([owner, defaults, state, generation, selection] {
+    if (!owner) return false;
+    const auto chosen = chooseDecorationDefaults(defaults, owner);
+    if (!owner || !chosen) return false;
+    QString diagnostic;
+    if (generation != owner->m_canvas->documentGeneration()) diagnostic = "annotation-edit-stale";
+    else { diagnostic = owner->m_session->editDecorationDefaults(*chosen, state, selection, defaults).diagnostic; }
+    owner->m_annotationMessage = diagnostic.isEmpty() ? QString() : annotationEditMessage(diagnostic);
+    owner->m_annotationMessageState = owner->m_session->stateId(); owner->refresh(); return diagnostic.isEmpty();
   });
 }
 

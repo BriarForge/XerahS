@@ -183,7 +183,13 @@ RenderResult render(const ArgbImage &source, const std::vector<Annotation> &anno
     const auto *rectangle = std::get_if<RectangleAnnotation>(&annotation);
     if (!rectangle || !rectangle->visible) continue;
     const RectangleStyle &style = rectangle->style;
-    if (rectangle->type() != shape::rectangle) {
+    // EA-005: a Rectangle with a border style, corner radius or shadow shares the
+    // painter path with every other shape; an undecorated one keeps the exact ES-025 renderer.
+    if (rectangle->type() != shape::rectangle || hasDecoration(rectangle->type(), style)) {
+      if (!validDecoration(rectangle->type(), style)) {
+        result.error = RenderError::InvalidGeometry;
+        return result;
+      }
       if (!std::isfinite(rectangle->left()) || !std::isfinite(rectangle->top()) || !std::isfinite(rectangle->right()) ||
           !std::isfinite(rectangle->bottom()) || !std::isfinite(style.rotationDegrees) || !std::isfinite(style.opacity) ||
           rectangle->right() <= rectangle->left() || rectangle->bottom() <= rectangle->top()) {

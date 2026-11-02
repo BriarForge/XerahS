@@ -109,6 +109,8 @@ private:
   bool setWallpaper();
   bool transferAnnotations(const QString &command);
   bool rectangleDialog(bool creation);
+  // EA-005/EA-014: guarded dialog for the border, corner and shadow creation defaults.
+  bool shapeStyleDefaultsDialog();
   bool rotateSelected();
   bool editColor(xerahs::editor::EditorSession::ColorTarget);
   bool changeStrokeWidth(bool increase);
@@ -148,6 +150,7 @@ private:
   QAction *m_delete = nullptr;
   QAction *m_rotate = nullptr;
   QAction *m_rectangleProperties = nullptr;
+  QAction *m_shapeStyleDefaults = nullptr;
   QAction *m_createRectangle = nullptr;
   QAction *m_clearAnnotations = nullptr;
   QDockWidget *m_annotationsDock = nullptr;
