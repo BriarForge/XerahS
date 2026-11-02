@@ -7,9 +7,9 @@ Product Contract **0.3.1**. Percentages are **recorded implementation coverage**
 | Platform | Implementation coverage | Implemented / desktop requirements |
 |---|---:|---:|
 | [macOS](../macos/PROGRESS.md) | **0.0%** | 0 / 324 |
-| [Linux](PROGRESS.md) | **30.9%** | 100 / 324 |
+| [Linux](PROGRESS.md) | **31.2%** | 101 / 324 |
 | [Windows](../windows/PROGRESS.md) | **0.0%** | 0 / 324 |
-| **Overall desktop** | **10.3%** | **100 / 972 platform-requirement pairs** |
+| **Overall desktop** | **10.4%** | **101 / 972 platform-requirement pairs** |
 
 Only requirements explicitly marked `implemented` in a platform traceability map receive credit. Partial, not-started and missing/unassessed rows receive no credit. Overall sums the three platforms' implemented rows and divides by their combined desktop requirement count.
 
@@ -19,7 +19,7 @@ Requirement labels are unweighted: a catalogue requirement can cover hundreds of
 
 ## Current position
 
-- **Linux:** 100 implemented, 194 partial, 30 not started, 0 without a recorded implementation status. [Native platform evidence](README.md).
+- **Linux:** 101 implemented, 194 partial, 29 not started, 0 without a recorded implementation status. [Native platform evidence](README.md).
 
 Linux figures cover the `linux-qt` reference edition. Candidate editions and supported desktop-environment qualification remain separate. Existing maps retain their recorded audit dates and versions; regenerating this report does not constitute a new implementation audit.
 
@@ -37,7 +37,7 @@ Next work follows the [implementation plan](linux-qt/IMPLEMENTATION.md) and [mea
 | [EDITOR-EFFECTS-001](../../product-contract/capabilities/EDITOR-EFFECTS-001/SPEC.md) | 50.0% | 9 | 9 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-EFFECTS-001.json) |
 | [EDITOR-CANVAS-001](../../product-contract/capabilities/EDITOR-CANVAS-001/SPEC.md) | 64.7% | 11 | 5 | 1 | 0 | [Linux map](linux-qt/traceability/EDITOR-CANVAS-001.json) |
 | [EDITOR-OUTPUT-ACTIONS-001](../../product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001/SPEC.md) | 6.2% | 1 | 15 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-OUTPUT-ACTIONS-001.json) |
-| [EDITOR-SETTINGS-001](../../product-contract/capabilities/EDITOR-SETTINGS-001/SPEC.md) | 0.0% | 0 | 14 | 2 | 0 | [Linux map](linux-qt/traceability/EDITOR-SETTINGS-001.json) |
+| [EDITOR-SETTINGS-001](../../product-contract/capabilities/EDITOR-SETTINGS-001/SPEC.md) | 6.2% | 1 | 14 | 1 | 0 | [Linux map](linux-qt/traceability/EDITOR-SETTINGS-001.json) |
 | [EDITOR-UTILITIES-001](../../product-contract/capabilities/EDITOR-UTILITIES-001/SPEC.md) | 47.4% | 9 | 7 | 3 | 0 | [Linux map](linux-qt/traceability/EDITOR-UTILITIES-001.json) |
 | [SETTINGS-CATALOG-001](../../product-contract/capabilities/SETTINGS-CATALOG-001/SPEC.md) | 0.0% | 0 | 17 | 3 | 0 | [Linux map](linux-qt/traceability/SETTINGS-CATALOG-001.json) |
 | [WORKFLOW-CATALOG-001](../../product-contract/capabilities/WORKFLOW-CATALOG-001/SPEC.md) | 0.0% | 0 | 18 | 0 | 0 | [Linux map](linux-qt/traceability/WORKFLOW-CATALOG-001.json) |
