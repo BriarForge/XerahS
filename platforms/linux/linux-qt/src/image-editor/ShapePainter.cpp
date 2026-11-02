@@ -1,5 +1,7 @@
 #include "image-editor/ShapePainter.h"
 
+#include "image-editor/FreehandPath.h"
+
 #include <QBuffer>
 #include <QCryptographicHash>
 #include <QFont>
@@ -316,9 +318,7 @@ std::optional<ShapeGeometry> shapeGeometry(const QString &type, const std::vecto
   if (isPathShape(type)) {
     std::vector<PointF> kept;
     if (type == shape::freehand) {
-      kept.push_back(first);
-      for (const PointF &p : gesture) if (std::hypot(p.x - kept.back().x, p.y - kept.back().y) >= 1) kept.push_back(p);
-      if (kept.back().x != last.x || kept.back().y != last.y) kept.push_back(last);
+      kept = simplifyFreehand(gesture);  // EA-007: documented tolerance, corners retained
     } else {
       kept = {first, last};
     }

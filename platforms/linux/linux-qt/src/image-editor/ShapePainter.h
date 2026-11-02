@@ -37,8 +37,8 @@ QImage decodeAsset(const QByteArray &png);
 // EA-004: turns a creation gesture (pointer samples in document pixels) into
 // bounds and content. Path types keep their ordered points as fractions of
 // bounds padded to at least one pixel per axis, so straight horizontal or
-// vertical lines are valid. Freehand drops samples closer than 1 pixel to the
-// previous kept sample (EA-007 tolerance). Step and Text accept a click and
+// vertical lines are valid. Freehand is simplified once here by
+// simplifyFreehand (FreehandPath.h: 0.5 px RDP tolerance, corners over 30 deg kept). Step and Text accept a click and
 // use a default size centred on (step) or starting at (text) the point.
 struct ShapeGeometry {
   PointF start, end;

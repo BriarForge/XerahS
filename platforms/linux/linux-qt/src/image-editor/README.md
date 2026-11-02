@@ -111,3 +111,14 @@ worker inputs and result publication, releases cancellation/owner teardown witho
 joining, guards nested dialogs and freezes session replacement admission. Borrowed
 QImage buffers are bounded/copied at native ingress; decoding, colour conversion,
 composition and PNG preparation remain on workers. Core policies remain unchanged.
+
+## Freehand simplification (EDITOR-ANNOTATIONS-001 EA-007)
+
+`FreehandPath.h` (`simplifyFreehand`, Qt Core only) simplifies a freehand gesture once, at commit, in document (source-pixel) units:
+
+- Tolerance: Ramer-Douglas-Peucker with epsilon 0.5 document pixels. No dropped sample lies farther than 0.5 px from the kept path.
+- Corners: a vertex whose direction change exceeds 30 degrees (measured between chords to the nearest samples at least 4 px before and after, so dense sub-pixel jitter is not a corner) is retained regardless of the tolerance; within a run of such vertices the sharpest is kept.
+- The first and last samples are always kept, order is never changed, and only raw samples are kept (nothing is interpolated). Consecutive identical samples are dropped. Non-finite samples, single-point and click-sized gestures are rejected by `shapeGeometry` as before.
+- Rendering uses the stroke width in document units (non-cosmetic round-cap, round-join pen) through `paintShape`, shared by the canvas preview and the exporter, so the stroke is identical at every viewport zoom and scales with export scale.
+
+These values are a Linux implementation choice pending cross-platform agreement. They do not change stored data compatibility: points remain ordered fractions of the shape bounds.

@@ -59,6 +59,8 @@ add_library(xerahs_core STATIC
   src/image-editor/AnnotationTransfer.h
   src/image-editor/AnnotationRenderer.cpp
   src/image-editor/AnnotationRenderer.h
+  src/image-editor/FreehandPath.cpp
+  src/image-editor/FreehandPath.h
   src/image-editor/ShapePainter.cpp
   src/image-editor/ShapePainter.h
   src/image-editor/CanvasOperations.cpp

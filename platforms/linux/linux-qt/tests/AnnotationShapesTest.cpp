@@ -4,12 +4,16 @@
 #include "image-editor/AnnotationRenderer.h"
 #include "image-editor/CanvasOperations.h"
 #include "image-editor/EditorSession.h"
+#include "image-editor/FreehandPath.h"
 #include "image-editor/ShapePainter.h"
 
 #include <QApplication>
 #include <QBuffer>
+#include <QImage>
+#include <QPainter>
 #include <QSignalSpy>
 #include <QTest>
+#include <cmath>
 #include <limits>
 
 using namespace xerahs::app;
@@ -44,6 +48,43 @@ bool same(const ArgbImage &a, const ArgbImage &b, qint64 left, qint64 top, qint6
   for (qint64 y = top; y < bottom; ++y)
     for (qint64 x = left; x < right; ++x) if (a.at(x, y) != b.at(x, y)) return false;
   return true;
+}
+
+// EA-007 helpers.
+double segDistance(const PointF &p, const PointF &a, const PointF &b) {
+  const double dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
+  const double t = l2 > 0 ? std::clamp(((p.x - a.x) * dx + (p.y - a.y) * dy) / l2, 0.0, 1.0) : 0.0;
+  return std::hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+}
+// Largest distance from any raw sample to the simplified polyline.
+double maxDeviation(const std::vector<PointF> &raw, const std::vector<PointF> &simple) {
+  double worst = 0;
+  for (const PointF &p : raw) {
+    double best = 1e18;
+    for (std::size_t i = 0; i + 1 < simple.size(); ++i) best = std::min(best, segDistance(p, simple[i], simple[i + 1]));
+    worst = std::max(worst, best);
+  }
+  return worst;
+}
+bool isSubsequence(const std::vector<PointF> &raw, const std::vector<PointF> &simple) {
+  std::size_t at = 0;
+  for (const PointF &p : raw) if (at < simple.size() && p == simple[at]) ++at;
+  return at == simple.size();
+}
+// Paints one shape the way the canvas does (document coordinates under a view scale).
+QImage paintedAt(const RectangleAnnotation &shape, int w, int h, double scale) {
+  QImage image(int(std::lround(w * scale)), int(std::lround(h * scale)), QImage::Format_ARGB32_Premultiplied);
+  image.fill(Qt::transparent);
+  QPainter painter(&image);
+  painter.scale(scale, scale);
+  paintShape(painter, shape, QImage());
+  return image;
+}
+double coverage(const QImage &image) {  // sum of alpha in pixel units
+  double sum = 0;
+  for (int y = 0; y < image.height(); ++y)
+    for (int x = 0; x < image.width(); ++x) sum += qAlpha(image.pixel(x, y)) / 255.0;
+  return sum;
 }
 }  // namespace
 
@@ -119,6 +160,93 @@ private slots:
     const auto step = shapeGeometry(shape::step, {{50, 50}, {50, 50}});
     QVERIFY(step); QCOMPARE(step->start.x, 34.0); QCOMPARE(step->end.y, 66.0);
     QVERIFY(!shapeGeometry(shape::ellipse, {{5, 5}, {5, 30}}));
+  }
+
+
+  void freehandSimplificationRemovesJitterButKeepsOrderEndpointsAndCorners() {
+    // An L: 60 px right then 60 px down, sampled every 1 px with +/-0.2 px jitter (peak-to-peak under the 0.5 px tolerance).
+    std::vector<PointF> raw;
+    for (int i = 0; i <= 60; ++i) raw.push_back({double(i), 100 + ((i % 2) ? 0.2 : -0.2)});
+    for (int i = 1; i <= 60; ++i) raw.push_back({60 + ((i % 2) ? 0.2 : -0.2), 100.0 + i});
+    const auto simple = simplifyFreehand(raw);
+    QVERIFY(simple.size() < raw.size() / 4);
+    QVERIFY(isSubsequence(raw, simple));                      // order preserved, only raw samples
+    QCOMPARE(simple.front(), raw.front()); QCOMPARE(simple.back(), raw.back());
+    QVERIFY(maxDeviation(raw, simple) <= kFreehandToleranceDocumentPixels + 1e-9);
+    bool corner = false;                                      // a kept vertex near (60,100)
+    for (const PointF &p : simple) corner = corner || std::hypot(p.x - 60, p.y - 100) <= 1.5;
+    QVERIFY(corner);
+    // Zigzag with sharp 90 degree turns every 10 px keeps every apex.
+    std::vector<PointF> zig;
+    for (int k = 0; k < 5; ++k) { const double x = k * 10; zig.push_back({x, 0}); zig.push_back({x + 5, 10}); }
+    const auto kept = simplifyFreehand(zig);
+    QCOMPARE(kept.size(), zig.size());
+    // A straight line collapses to its endpoints; duplicates are dropped.
+    const auto line = simplifyFreehand({{0, 0}, {0, 0}, {3, 0.1}, {6, -0.1}, {10, 0}});
+    QCOMPARE(line.size(), std::size_t(2));
+    QCOMPARE(simplifyFreehand({{1, 1}, {1, 1}}).size(), std::size_t(1));
+  }
+
+  void freehandSimplificationNeverExceedsToleranceOnCurves() {
+    std::vector<PointF> arc;  // radius 80 quarter circle, 0.7 px steps
+    for (int i = 0; i <= 160; ++i) { const double a = i * 0.0125 * M_PI / 1.0 / 2 / 1.0; arc.push_back({80 * std::cos(a), 80 * std::sin(a)}); }
+    const auto simple = simplifyFreehand(arc);
+    QVERIFY(simple.size() < arc.size());
+    QVERIFY(isSubsequence(arc, simple));
+    QVERIFY(maxDeviation(arc, simple) <= kFreehandToleranceDocumentPixels + 1e-9);
+  }
+
+  void freehandGestureAdmissionIsUnchanged() {
+    QVERIFY(!shapeGeometry(shape::freehand, {}));
+    QVERIFY(!shapeGeometry(shape::freehand, {{1, 1}}));
+    QVERIFY(!shapeGeometry(shape::freehand, {{1, 1}, {1, 1}, {1.2, 1.1}}));  // a click
+    QVERIFY(!shapeGeometry(shape::freehand, {{0, 0}, {std::numeric_limits<double>::quiet_NaN(), 3}, {9, 9}}));
+    QVERIFY(!shapeGeometry(shape::freehand, {{0, 0}, {std::numeric_limits<double>::infinity(), 3}}));
+    QVERIFY(shapeGeometry(shape::freehand, {{0, 0}, {40, 0}}));              // a straight stroke is valid
+  }
+
+  void freehandStrokeIsIdenticalAtEveryZoomAndExportScale() {
+    std::vector<PointF> raw{{10, 20}, {40, 20}, {40, 60}, {70, 30}, {90, 30}};
+    const auto geometry = shapeGeometry(shape::freehand, raw);
+    QVERIFY(geometry);
+    auto freehand = shapeOf(shape::freehand, geometry->start, geometry->end, geometry->points);
+    freehand.style = {0xFF0000FF, 0x00000000, 6, 0, 1};
+    const QImage one = paintedAt(freehand, 100, 80, 1.0);
+    const double base = coverage(one);
+    QVERIFY(base > 500);
+    for (const double scale : {0.5, 2.0, 3.0}) {
+      const double scaled = coverage(paintedAt(freehand, 100, 80, scale)) / (scale * scale);
+      // Stroke width is in document units: coverage scales with area, within 3 %.
+      QVERIFY2(std::abs(scaled - base) / base < 0.03, qPrintable(QString("scale %1: %2 vs %3").arg(scale).arg(scaled).arg(base)));
+    }
+    // Export path (AnnotationRenderer) at 1x matches the canvas painter within 1 % coverage.
+    auto d = document(100, 80);
+    d.annotations = {freehand};
+    ArgbImage white = solidImage(100, 80, 0xFFFFFFFF);
+    const auto exported = renderDocument(white, d);
+    QVERIFY(exported.image);
+    double inked = 0;  // blue stroke on white: red channel drops from 255 to 0
+    for (qint64 y = 0; y < 80; ++y) for (qint64 x = 0; x < 100; ++x) inked += (255 - qRed(exported.image->at(x, y))) / 255.0;
+    QVERIFY2(std::abs(inked - base) / base < 0.01, qPrintable(QString("export %1 vs canvas %2").arg(inked).arg(base)));
+    // Round caps and joins: the stroke end extends half the width beyond the last point.
+    QVERIFY(qAlpha(one.pixel(92, 30)) > 200);
+    QVERIFY(qAlpha(one.pixel(94, 30)) == 0 || qAlpha(one.pixel(94, 30)) < 255);
+  }
+
+  void freehandSimplifiedPointsRoundTripAndCreateOneHistoryStep() {
+    std::vector<PointF> raw;
+    for (int i = 0; i <= 50; ++i) raw.push_back({double(i), 20 + ((i % 2) ? 0.2 : -0.2)});
+    for (int i = 1; i <= 30; ++i) raw.push_back({50.0, 20.0 + i});
+    const auto geometry = shapeGeometry(shape::freehand, raw);
+    QVERIFY(geometry); QVERIFY(geometry->points.size() <= 4);
+    EditorSession session(document(200, 150));
+    ShapeContent content; content.type = shape::freehand; content.points = geometry->points;
+    QVERIFY(session.createShape({geometry->start, geometry->end, {0xFFFF0000, 0, 4, 0, 1}}, content, session.stateId(), session.selection()));
+    QCOMPARE(session.undoCount(), 1);
+    const auto parsed = parseDocument(serializeDocument(session.document()));
+    QVERIFY(parsed.document);
+    QCOMPARE(std::get<RectangleAnnotation>(parsed.document->annotations[0]).content.points, geometry->points);
+    QVERIFY(session.undo()); QVERIFY(session.document().annotations.empty());
   }
 
   void everyShapeTypeRoundTripsThroughXann() {
