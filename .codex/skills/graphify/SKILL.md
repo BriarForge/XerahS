@@ -366,6 +366,25 @@ print(f'Merged {len(chunks)} chunks: {total_in:,} in / {total_out:,} out tokens'
 "
 ```
 
+**Semantic provenance is explicit.** A line location such as `L17` is evidence,
+not an AST origin. Graphify's legacy fallback treats line-located records without
+`_origin` as AST records; semantic records with that shape can then merge away
+saved semantic identities and trigger the preservation guard. Before caching or
+building, stamp every semantic node, edge, and hyperedge with
+`_origin: "semantic"`. Keep IDs, source locations, confidence, and coverage intact.
+
+For this repository, resolve `SEMANTIC_ORIGIN_TOOL` below to the absolute path of
+`tools/graphify/semantic_origin.py` beside the repository's tooling. Normalize the
+new semantic-only fragment before saving it to cache:
+
+```bash
+$(cat graphify-out/.graphify_python) 'SEMANTIC_ORIGIN_TOOL' graphify-out/.graphify_semantic_new.json graphify-out/.graphify_semantic_new.json
+```
+
+The helper rejects explicit AST-origin records. Stop and repair their producer or
+semantic cache if that happens. Never run it on an AST extraction or a combined
+AST-plus-semantic extraction, and never disable Graphify's preservation guard.
+
 Save new results to cache. Pass the same SPEC_PATH as Step B0 — it stamps each entry with the prompt that produced it, and a write under a different prompt than the read lands where the next run won't look (#1939):
 ```bash
 $(cat graphify-out/.graphify_python) -c "
@@ -415,6 +434,13 @@ Path('graphify-out/.graphify_semantic.json').write_text(json.dumps(merged, inden
 print(f'Extraction complete - {len(deduped)} nodes, {len(all_edges)} edges ({len(cached[\"nodes\"])} from cache, {len(new.get(\"nodes\",[]))} new)')
 "
 ```
+Normalize the complete semantic-only fragment again after combining cache hits
+with fresh records, so older cache entries also carry explicit provenance:
+
+```bash
+$(cat graphify-out/.graphify_python) 'SEMANTIC_ORIGIN_TOOL' graphify-out/.graphify_semantic.json graphify-out/.graphify_semantic.json
+```
+
 Clean up temp files: `rm -f graphify-out/.graphify_cached.json graphify-out/.graphify_uncached.txt graphify-out/.graphify_semantic_new.json`
 
 #### Part C - Merge AST + semantic into final extraction
@@ -736,6 +762,14 @@ If the user says yes, run `/graphify query "[question]"` on the graph and walk t
 The graph is the map. Your job after the pipeline is to be the guide.
 
 ---
+
+## XerahS code-refresh runtime
+
+For this repository, apply `tools/graphify/runtime_patch.py` once with Graphify's
+installed Python interpreter before code-only updates. Resolve the script from
+the repository root; the command is idempotent. It disables semantic
+identity-deduplication only in code refresh, preserving distinct saved decisions
+and leaving all overwrite guards enabled. See `tools/graphify/README.md`.
 
 ## Interpreter guard for subcommands
 

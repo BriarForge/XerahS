@@ -50,3 +50,56 @@ again in a new clone, then install this dispatcher. The project install appends 
 `## graphify` section to each scope's `AGENTS.md`; delete it, because the root
 `AGENTS.md` already governs every scope. Do not commit caches or
 machine-specific hook scripts from `.git`.
+
+## Semantic fragment origin
+
+Prepare semantic-only fragments before saving the semantic cache or passing them
+to Graphify's builder. The tracked Graphify skill includes this step for fresh
+extractions and for the combined cached/fresh semantic fragment:
+
+```sh
+python tools/graphify/semantic_origin.py /path/to/semantic.json /path/to/semantic.json
+```
+
+The helper gives every semantic node, edge and hyperedge an explicit
+`_origin: "semantic"` while preserving IDs, source locations, confidence and
+coverage. It operates on an owned copy and replaces the destination atomically.
+Invalid input and explicit AST provenance leave an existing output untouched.
+Never pass the combined AST-plus-semantic extraction to this helper.
+
+This fixes a producer ambiguity exposed by the Linux graph: semantic nodes had
+precise `L17`-style locations but omitted `_origin`. Graphify's legacy fallback
+classified them as AST, so loading the graph could merge older semantic records
+into those falsely classified nodes. Its preservation guard then correctly
+rejected the apparent loss. A location says where evidence is; it does not say
+which extractor produced it. Keep the guard enabled. Existing affected graphs
+need a one-time provenance repair using their verified original semantic
+fragment; this helper does not relabel saved graphs or guess node provenance.
+
+Verify the fragment preparation and hook dispatcher with:
+
+```sh
+python -m unittest discover tools/graphify/tests -v
+```
+
+## Code-only refresh runtime fix
+
+The affected Graphify runtime also deduplicates saved semantic records during a
+code-only rebuild. Two separately recorded decisions with the same source and
+label can then collapse, and the preservation guard correctly refuses the write.
+Code refresh must preserve those identities; semantic extraction decides when
+semantic records should be reconciled.
+
+Apply the narrow, idempotent patch using Graphify's installed Python interpreter,
+from the repository root:
+
+```sh
+/path/to/graphify/python tools/graphify/runtime_patch.py
+```
+
+This adds `dedup=False` only to the runtime's code-refresh graph construction.
+It leaves extraction and all preservation checks enabled. The script refuses an
+unrecognized implementation instead of editing arbitrary package code. Reapply
+after reinstalling an affected Graphify release. The end-to-end regression runs
+ordinary `graphify update .` twice and verifies that distinct same-named semantic
+decisions and their rationale survive.
