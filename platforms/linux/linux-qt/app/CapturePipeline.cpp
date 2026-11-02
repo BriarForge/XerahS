@@ -20,7 +20,10 @@ std::vector<CaptureFile> CapturePipelineResult::savedFiles() const { return file
 PipelineRetryPlan CapturePipelineResult::retryPlan() const {
   if (pipeline.finalWorkingMedia == "annotation" && !annotationDocument) return {{}, {}, "retry-media-unavailable"};
   bool save = false, saveAs = false;
-  for (const auto &saved : savedFiles()) { save |= saved.artifact == "save.file"; saveAs |= saved.artifact == "save-as.file"; }
+  for (const auto &saved : savedFiles()) {
+    save |= saved.artifact == "save.file" && saved.identity.has_value();
+    saveAs |= saved.artifact == "save-as.file" && saved.identity.has_value();
+  }
   for (const auto &action : pipeline.orderedResults)
     if (hasAcknowledgedPartialRaster(action.action, action.state, action.artifacts) && (!sidecarIntent || !annotationDocument))
       return {{}, {}, "retry-media-unavailable"};
@@ -268,6 +271,10 @@ void CapturePipeline::start() {
       if (!journal.published(facts)) throw std::runtime_error("pipeline-journal-unavailable");
       if (externalRaster) externalRaster(files);
     };
+    const auto externalDeletion = ports.deletion.observe;
+    ports.deletion.observe = [&journal, externalDeletion](const DeletionRecovery &recovery) {
+      return journal.deletionRecovery(recovery) && (!externalDeletion || externalDeletion(recovery));
+    };
     CaptureActions actions(media, directory, pattern, ports, {}, inheritedFiles, source ? source->annotationDocument : std::nullopt, source && source->sidecarIntent); JournaledExecutor executor(actions, journal);
     const auto currentFiles = [&actions, id] {
       std::vector<SavedFileArtifact> facts;
@@ -282,7 +289,8 @@ void CapturePipeline::start() {
     PipelineOptions options;
     if (source) options.inheritedWorkingMedia = source->pipeline.finalWorkingMedia;
     if (retryRequested) for (const auto &file : inheritedFiles) {
-      options.inheritedSaveAvailable |= file.artifact == "save.file"; options.inheritedSaveAsAvailable |= file.artifact == "save-as.file";
+      options.inheritedSaveAvailable |= file.artifact == "save.file" && file.identity.has_value();
+      options.inheritedSaveAsAvailable |= file.artifact == "save-as.file" && file.identity.has_value();
     }
     try { state->result->pipeline = runPipeline(id, selected, options, executor, state->cancellation, hooks); }
     catch (...) {

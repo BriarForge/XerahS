@@ -155,7 +155,8 @@ add_library(xerahs_pipeline_journal STATIC app/NativePipelineJournal.cpp app/Nat
 target_include_directories(xerahs_pipeline_journal PUBLIC app)
 target_link_libraries(xerahs_pipeline_journal PUBLIC xerahs_core)
 target_compile_options(xerahs_pipeline_journal PRIVATE -Wall -Wextra -Wpedantic)
-add_library(xerahs_file_output STATIC app/CaptureFileIdentity.cpp app/CaptureFileOutput.cpp app/CaptureFileOutput.h)
+add_library(xerahs_file_output STATIC app/CaptureFileIdentity.cpp app/CaptureFileOutput.cpp app/CaptureFileOutput.h
+  app/CaptureDelete.cpp app/CaptureDelete.h)
 target_include_directories(xerahs_file_output PUBLIC app)
 target_link_libraries(xerahs_file_output PUBLIC xerahs_core Qt6::Gui Qt6::DBus)
 target_compile_options(xerahs_file_output PRIVATE -Wall -Wextra -Wpedantic)
@@ -1310,6 +1311,24 @@ target_link_libraries(image-insert-test PRIVATE xerahs_editor_canvas Qt6::Test)
 add_test(NAME image-insert COMMAND image-insert-test)
 set_tests_properties(image-insert PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 
+add_executable(capture-delete-fixture tests/CaptureDeleteFixture.cpp
+  app/CapturePipeline.cpp app/CapturePipeline.h app/CaptureActions.cpp app/CaptureActions.h
+  app/CaptureSave.cpp app/CaptureSave.h)
+set_target_properties(capture-delete-fixture PROPERTIES AUTOMOC ON)
+target_link_libraries(capture-delete-fixture PRIVATE xerahs_file_output xerahs_action_selection
+  xerahs_pipeline_journal xerahs_upload_executor xerahs_secret_service)
+add_executable(capture-delete-test tests/CaptureDeleteTest.cpp
+  app/CapturePipeline.cpp app/CapturePipeline.h app/CaptureActions.cpp app/CaptureActions.h
+  app/CaptureSave.cpp app/CaptureSave.h app/PipelineHistoryDialog.cpp app/PipelineHistoryDialog.h
+  app/PipelineResultDialog.cpp app/PipelineResultDialog.h)
+set_target_properties(capture-delete-test PROPERTIES AUTOMOC ON)
+target_link_libraries(capture-delete-test PRIVATE xerahs_file_output xerahs_action_selection
+  xerahs_pipeline_journal xerahs_upload_executor xerahs_secret_service Qt6::Test)
+target_compile_definitions(capture-delete-test PRIVATE CAPTURE_DELETE_FIXTURE="$<TARGET_FILE:capture-delete-fixture>")
+add_dependencies(capture-delete-test capture-delete-fixture)
+add_test(NAME capture-delete COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-delete-test>)
+set_tests_properties(capture-delete PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 45)
 get_property(XERAHS_NATIVE_TARGETS DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
 foreach(native_target IN LISTS XERAHS_NATIVE_TARGETS)
   get_target_property(native_sources ${native_target} SOURCES)

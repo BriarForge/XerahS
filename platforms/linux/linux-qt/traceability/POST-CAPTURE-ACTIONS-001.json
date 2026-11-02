@@ -660,13 +660,13 @@
       ]
     },
     "PCA-021": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "delete-guard-after-failed-upload",
         "delete-after-successful-upload"
       ],
       "disposition": "Required",
-      "note": "Core delete guards have vectors, but CaptureActions has no native delete executor branch; domain guard tests do not prove a user-reachable deletion flow.",
+      "note": "Explicitly selected native Delete uses the shared engine creation/dependency guard and live current-attempt raster identity. It stages in a private same-filesystem directory under a durably journaled intent, verifies the moved inode, and unlinks only the bound owned file. Replacements are restored without overwrite or retained at a private path until explicit user recovery/removal, as approved by Mike. Restart history exposes recovery paths without authorizing cleanup and protects pending/retained records from Forget. Inherited/retry files cannot authorize deletion. Saved-file precedence, Save As fallback, failed consumers/uploads, mutation/symlink/hardlink/ancestor refusal, cancellation, process termination, unknown acknowledgements and retained sidecars have native fixtures.",
       "evidence": [
         "platforms/linux/linux-qt/app/FILE-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp",
@@ -678,17 +678,19 @@
         "platforms/linux/linux-qt/tests/PipelineJournalTest.cpp",
         "platforms/linux/linux-qt/tests/PipelineHistoryDialogTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp"
+        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureDeleteTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureDeleteFixture.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 108,
         "published_vectors": [
           "delete-guard-after-failed-upload",
           "delete-after-successful-upload"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate production filesystem/pipeline/history flow. Shared engine eligibility stays authoritative; security review, physical-target and human/release acceptance remain separate.",
+        "reviewed_at_revision": "2737088da919a7422d4653432082a6981b538a6f"
       }
     },
     "PCA-022": {
@@ -862,9 +864,19 @@
         "confirmation",
         "destroyedOwner",
         "reviewPayload"
+      ],
+      "platforms/linux/linux-qt/tests/CaptureDeleteTest.cpp": [
+        "pipeline",
+        "changedEntry",
+        "recoveryWireVersionPreservesOlderHistory",
+        "ownerDestructionBeforeMovePreservesOriginal",
+        "pairedSaveKeepsEditableCompanion",
+        "recoveryMetadataNeverAuthorizesAnArbitraryPath",
+        "inheritedFileNeverGrantsDelete",
+        "interruptedStaging"
       ]
     },
-    "remaining_scope": "Native quick-task and guarded deletion, complete recovery/retention and all action-family target qualification remain incomplete.",
+    "remaining_scope": "Complete recovery/retention, remaining action families and supported-target/human qualification remain incomplete.",
     "reviewed_requirement_count": 24,
     "finding": "Shared catalogue ordering, artifact dependencies, cancellation, canonical results and retries have engine/native tests. Native capture uploads use saved paths or managed private temporary PNG files; opt-in before-upload confirmation freezes consent and declines only upload.",
     "review_anchor": {

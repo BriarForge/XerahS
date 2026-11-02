@@ -43,6 +43,15 @@ QDialog *makePipelineResultDialog(const QJsonObject &report, QWidget *parent, co
   for (int column = 0; column < 4; ++column) table->resizeColumnToContents(column);
   layout->addWidget(table);
   const auto native = report.value("extensions").toObject().value("com.xerahs.app").toObject();
+  const auto deletionRecovery = native.value("recovery").toObject().value("deletion_recovery").toObject();
+  if (!deletionRecovery.isEmpty() && (deletionRecovery.value("state") == "pending" || deletionRecovery.value("state") == "retained")) {
+    auto *recovery = new QLabel(QStringLiteral("Deletion recovery needs review. The staging path may contain a displaced file. "
+        "Nothing here is retried or deleted automatically. Recover it to a safe location, or remove it only after explicit inspection.\n"
+        "Original path: %1\nPrivate staging path: %2")
+        .arg(deletionRecovery.value("original_path").toString(), deletionRecovery.value("staging_path").toString()), dialog);
+    recovery->setObjectName("captureDeletionRecovery"); recovery->setTextFormat(Qt::PlainText); recovery->setWordWrap(true);
+    recovery->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard); layout->addWidget(recovery);
+  }
   const auto upload = native.value("upload_result").toObject();
   for (const auto *key : {"url", "thumbnail_url", "deletion_url", "error_message"}) {
     const auto text = upload.value(QLatin1String(key)).toString(); if (text.isEmpty()) continue;

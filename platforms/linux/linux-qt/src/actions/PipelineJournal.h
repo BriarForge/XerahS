@@ -7,6 +7,10 @@
 namespace xerahs::actions {
 constexpr qint64 maximumJournalBytes = 1048576;
 bool validJournalTaskId(const QString &id);
+// Private recovery observation. Never authority to remove a path on restart.
+struct DeletionRecovery {
+  QString originalPath, stagingPath, state;
+};
 // A write-ahead observation, never authority to repeat an action or delete an
 // artifact. Only the result metadata is durable; image pixels are not stored.
 struct PipelineJournalSnapshot {
@@ -18,6 +22,7 @@ struct PipelineJournalSnapshot {
   std::optional<QString> pendingSavePath;
   std::optional<QString> pendingSaveArtifact;
   bool terminal = false;
+  std::optional<DeletionRecovery> deletionRecovery;
 };
 QByteArray serializePipelineJournal(const PipelineJournalSnapshot &snapshot);
 struct RecoveredPipelineJournal {
@@ -29,6 +34,7 @@ struct RecoveredPipelineJournal {
   std::optional<QString> pendingSavePath;
   std::optional<QString> pendingSaveArtifact;
   bool terminal = false;
+  std::optional<DeletionRecovery> deletionRecovery;
 };
 struct PipelineJournalParse {
   std::optional<RecoveredPipelineJournal> record;
@@ -53,6 +59,7 @@ public:
   bool begin();
   bool before(const ActionSpec &action);
   bool beforePublish(const QString &path, bool companion = false);
+  bool deletionRecovery(const DeletionRecovery &recovery);
   // Acknowledge the PNG while its save action is still pending, before a
   // companion write. Storage failure blocks that next durable effect.
   bool published(const std::vector<SavedFileArtifact> &files);

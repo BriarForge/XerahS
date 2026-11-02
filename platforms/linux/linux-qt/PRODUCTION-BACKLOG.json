@@ -16,10 +16,10 @@
   "desktop_capability_count": 15,
   "counts": {
     "blocked": 6,
-    "implemented": 96,
+    "implemented": 97,
     "not-applicable": 1,
     "not-started": 27,
-    "partial": 195
+    "partial": 194
   },
   "capabilities": [
     {
@@ -35,8 +35,8 @@
       "capability": "POST-CAPTURE-ACTIONS-001",
       "requirements": 24,
       "counts": {
-        "implemented": 15,
-        "partial": 9
+        "implemented": 16,
+        "partial": 8
       },
       "trace": "traceability/POST-CAPTURE-ACTIONS-001.json"
     },

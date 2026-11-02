@@ -15,7 +15,10 @@ Local QR scanning and English OCR now share native consented file/screen/region
 inputs. Their dependencies are approved in DEPENDENCIES.md, and saved capture profiles
 now invoke OCR, OCR clipboard and QR scanning through the same services. Native
 quick-task selection now shares the action chooser, effective journal plan and
-retry engine, including a later after-capture selector. Next finish the remaining capture/post-capture action families and task-host
+retry engine, including a later after-capture selector. File/clipboard image insertion
+now embeds an editable aspect-preserving asset in one history step. Opt-in native
+capture deletion has private staging and approved explicit recovery retention.
+Next finish the remaining capture/post-capture action families and task-host
 integration under approved semantics. Explicit migration, recovery/retention,
 release trust and unresolved policy questions remain blocked on Mike as recorded
 in the backlog. Preserve existing recording, scheduling, tools/effects,

@@ -33,13 +33,16 @@ QByteArray serializePipelineJournal(const PipelineJournalSnapshot &snapshot) {
   auto result = snapshot.result;
   if (!snapshot.terminal) result.state = PipelineState::Interrupted;
   result.workingMediaRetained = false;
-  QJsonObject value{{"format", format}, {"version", 1}, {"task_id", result.taskId},
+  QJsonObject value{{"format", format}, {"version", snapshot.deletionRecovery ? 2 : 1}, {"task_id", result.taskId},
       {"created_at", snapshot.createdAt.toUTC().toString(Qt::ISODateWithMs)},
       {"selected_actions", QJsonArray::fromStringList(snapshot.selected)}, {"terminal", snapshot.terminal},
       {"result", pipelineResultJson(result, snapshot.files)}};
   if (snapshot.pendingAction) value.insert("pending_action", *snapshot.pendingAction);
   if (snapshot.pendingSavePath) value.insert("pending_save_path", *snapshot.pendingSavePath);
   if (snapshot.pendingSaveArtifact) value.insert("pending_save_artifact", *snapshot.pendingSaveArtifact);
+  if (snapshot.deletionRecovery) value.insert("deletion_recovery", QJsonObject{
+      {"original_path", snapshot.deletionRecovery->originalPath}, {"staging_path", snapshot.deletionRecovery->stagingPath},
+      {"state", snapshot.deletionRecovery->state}});
   return QJsonDocument(value).toJson(QJsonDocument::Compact);
 }
 PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString &expectedTaskId) {
@@ -48,7 +51,11 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
   if (error.error != QJsonParseError::NoError || !document.isObject()) return invalid();
   const auto value = document.object();
   if (value.value("format") != format) return invalid();
-  if (value.value("version") != QJsonValue(1)) return {{}, QStringLiteral("pipeline-journal-version-unsupported")};
+  if (value.value("version") != QJsonValue(1) && value.value("version") != QJsonValue(2))
+    return {{}, QStringLiteral("pipeline-journal-version-unsupported")};
+  // Recovery-bearing records use a new wire version so older binaries refuse
+  // to forget metadata they cannot interpret. Ordinary v1 history stays valid.
+  if ((value.value("version") == QJsonValue(2)) != value.contains("deletion_recovery")) return invalid();
   if (value.value("task_id") != expectedTaskId || !timeValue(value.value("created_at")) ||
       !value.value("terminal").isBool() || !value.value("selected_actions").isArray() || !value.value("result").isObject()) return invalid();
   RecoveredPipelineJournal record;
@@ -155,6 +162,14 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
     record.pendingSaveArtifact = artifact;
   }
   if (record.terminal && completed.size() != record.selected.size()) return invalid();
+  if (value.contains("deletion_recovery")) {
+    if (!value.value("deletion_recovery").isObject() || !record.selected.contains("delete")) return invalid();
+    const auto recovery = value.value("deletion_recovery").toObject();
+    const auto state = recovery.value("state").toString();
+    if (!pathValue(recovery.value("original_path")) || !pathValue(recovery.value("staging_path")) ||
+        (state != "pending" && state != "retained" && state != "restored" && state != "removed")) return invalid();
+    record.deletionRecovery = DeletionRecovery{recovery.value("original_path").toString(), recovery.value("staging_path").toString(), state};
+  }
   // Recovery never invents an action failure or repeats external work. An
   // unacknowledged network action, like any pending action, has unknown outcome.
   auto extensions = record.report.value("extensions").toObject(); auto native = metadata;
@@ -162,6 +177,7 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
   if (record.pendingAction) recovery.insert("unknown_action", *record.pendingAction);
   if (record.pendingSavePath) recovery.insert("unconfirmed_save_path", *record.pendingSavePath);
   if (record.pendingSaveArtifact) recovery.insert("unknown_artifact", *record.pendingSaveArtifact);
+  if (record.deletionRecovery) recovery.insert("deletion_recovery", value.value("deletion_recovery"));
   native.insert("recovery", recovery); extensions.insert("com.xerahs.app", native); record.report.insert("extensions", extensions);
   return {std::move(record), {}};
 }
@@ -201,6 +217,13 @@ bool PipelineJournalRecorder::beforePublish(const QString &path, bool companion)
 bool PipelineJournalRecorder::published(const std::vector<SavedFileArtifact> &files) {
   m_snapshot.files = files; m_snapshot.pendingSavePath.reset(); m_snapshot.pendingSaveArtifact.reset();
   return !m_storage || persist();
+}
+bool PipelineJournalRecorder::deletionRecovery(const DeletionRecovery &recovery) {
+  // Destructive staging must remain discoverable even if this process dies.
+  // A pipeline with no durable journal cannot start it.
+  if (!m_storage || m_snapshot.pendingAction != QStringLiteral("delete")) return false;
+  m_snapshot.deletionRecovery = recovery;
+  return persist();
 }
 void PipelineJournalRecorder::completed(const ActionResult &result, const std::vector<SavedFileArtifact> &files) {
   m_snapshot.result.orderedResults.push_back(result);

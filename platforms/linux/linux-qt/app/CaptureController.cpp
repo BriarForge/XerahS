@@ -678,6 +678,7 @@ void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt, b
       } else if (action.action == "file-clipboard") done.append(QStringLiteral("copied image file"));
       else if (action.action == "path-clipboard") done.append(QStringLiteral("copied file path"));
       else if (action.action == "reveal") done.append(QStringLiteral("file manager acknowledged the show request"));
+      else if (action.action == "delete") done.append(QStringLiteral("deleted the saved capture file; retained pixels are kept"));
       if (action.cancellationArrivedDuring) done.append(QStringLiteral("%1 finished after cancellation was requested").arg(label));
     } else {
       if (xerahs::actions::hasAcknowledgedPartialRaster(action.action, action.state, action.artifacts)) {

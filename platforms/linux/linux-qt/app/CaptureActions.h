@@ -5,6 +5,7 @@
 
 #include "actions/PostCapturePipeline.h"
 #include "CaptureSave.h"
+#include "CaptureDelete.h"
 #include "EditorSource.h"
 #include "ImageRecognition.h"
 #include "uploads/CredentialStore.h"
@@ -70,6 +71,7 @@ struct CaptureActionPorts {
       const xerahs::actions::CancellationToken &)> recognitionResult;
   std::function<xerahs::actions::ActionOutcome(const CaptureUploadReview &,
       const xerahs::actions::CancellationToken &)> beforeUpload;
+  CaptureDeleteHooks deletion;
 
 };
 
@@ -110,6 +112,7 @@ private:
   xerahs::actions::ActionOutcome pin(const xerahs::actions::CancellationToken &cancellation);
   xerahs::actions::ActionOutcome print(const xerahs::actions::CancellationToken &cancellation);
   xerahs::actions::ActionOutcome outputFile(const xerahs::actions::ActionRequest &request);
+  xerahs::actions::ActionOutcome removeFile(const xerahs::actions::ActionRequest &request);
 
   xerahs::actions::ActionOutcome upload(const xerahs::actions::ActionRequest &request);
   xerahs::actions::ActionOutcome copyUrl(const xerahs::actions::CancellationToken &cancellation);
@@ -130,6 +133,7 @@ private:
   std::optional<xerahs::editor::AnnotationDocument> m_annotationDocument;
   bool m_sidecarIntent = false;
   std::vector<CaptureFile> m_sidecars;
+  QStringList m_currentPublications;
 };
 
 }  // namespace xerahs::app

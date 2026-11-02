@@ -45,7 +45,8 @@ Current retained pixels and the journal are separate lifetimes.
 Records live in `$XDG_STATE_HOME/com.xerahs.app/pipelines`, or
 `~/.local/state/com.xerahs.app/pipelines` when the environment value is absent
 or relative. No store is created by startup or read-only history inspection.
-The versioned envelope is `com.xerahs.app/pipeline-journal`, version 1. The
+The versioned envelope is `com.xerahs.app/pipeline-journal`: version 1 for ordinary
+history and version 2 for deletion-recovery observations. The
 canonical result remains inside `result`; recovery observations appear only in
 `extensions.com.xerahs.app.recovery`. No pixels, clipboard payload, OCR text,
 credentials or exception messages enter this production boundary. Saved paths
@@ -113,9 +114,10 @@ The following owner/conformance clarifications remain concrete release work:
    a guessed pathname/prefix is not permission to delete user data.
 3. Qualify a shared persisted schema and independently derived recovery/retry
    vectors, linked retry identity, prerequisites and explicit resolution of
-   unknown network outcomes across platforms/editions. Upload and managed
-   temporary-file native execution remain unimplemented; presentation of an
-   injected unknown upload is not production uploader evidence.
+   unknown network outcomes across platforms/editions. Native uploads now use
+   saved files or owner-private managed temporary PNG files, with actual local
+   HTTP/cleanup/cancellation evidence in CaptureUploadTest. Full recovery and
+   supported-target qualification remain separate.
 
 [Explicit retained-pixel save/clipboard retry](RETRY-POLICY.md) now creates a
 new linked journal, preserving original/previous identity, actual file creator
@@ -163,3 +165,22 @@ known-PNG/unknown-companion restart review. Actual native/private-bus and
 killed-process fixtures verify these additive candidate seams. Workflow defaults,
 complete save/removal/format policy, shared persisted compatibility, catalogue
 recovery and all native/human acceptance gates remain Required.
+
+## Guarded native deletion
+
+Explicit Delete records a private `deletion_recovery` observation before moving
+a current-attempt raster into a private same-filesystem staging directory.
+Only the verified original is removed. A racing replacement is restored without
+overwrite; a restore conflict retains the entry until explicit recovery/removal,
+as Mike approved during this implementation session. Restart history presents
+selectable plain-text original/staging paths and never executes cleanup.
+Forget is unavailable while recovery remains pending or retained.
+
+Recovery-bearing records use wire version 2. Version 1 history remains readable;
+older binaries reject version 2 and preserve it, protecting recovery evidence.
+A lost acknowledgement or process termination stays interrupted/unknown. Saved
+metadata remains historical fact after deletion, while its live identity no
+longer grants file availability. A verified original restored after failed
+unlink receives its updated live identity. Foreign entries never receive one.
+`CaptureDeleteTest` and its killed-process fixture exercise these paths. This
+bounded policy does not resolve general temporary-media retention or release review.

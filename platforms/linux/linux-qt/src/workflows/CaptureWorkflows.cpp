@@ -57,7 +57,7 @@ QString captureSourceLabel(const QString &source) {
   if (source == "active-window") return QStringLiteral("Active window");
   return {};
 }
-QStringList implementedCaptureActions() { return {"quick-task-menu", "annotation", "save", "save-as", "image-clipboard", "file-clipboard", "path-clipboard", "reveal", "before-upload-window", "upload", "url-clipboard", "ocr", "ocr-clipboard", "qr-scan", "pin", "print"}; }
+QStringList implementedCaptureActions() { return {"quick-task-menu", "annotation", "save", "save-as", "image-clipboard", "file-clipboard", "path-clipboard", "reveal", "before-upload-window", "upload", "url-clipboard", "ocr", "ocr-clipboard", "qr-scan", "pin", "print", "delete"}; }
 QJsonObject workflowDiscoveryError(const QString &diagnostic) {
   static const QSet<QString> errors{"usage-invalid", "workflow-invalid", "workflow-too-large", "workflow-newer-version",
       "workflow-upgrade-conflict", "workflow-changed", "settings-unsafe-path", "settings-private-storage-required",

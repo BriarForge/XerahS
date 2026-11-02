@@ -293,3 +293,13 @@ embedding run on a cancellable worker. The inserted object keeps alpha and aspec
 ratio and is one undoable edit; Cancel or a changed session keeps the document
 unchanged. `ImageInsertTest` covers native input, orientation, history and XANN
 roundtrip. Per-image bounds apply; aggregate document-resource qualification remains open.
+
+**Delete saved capture:** This opt-in workflow/chooser action removes only the
+current pipeline's resolved saved raster after earlier file-dependent actions
+succeed. It preserves pixels in memory and leaves sidecars and other saved
+aliases alone. A private, durably recorded staging step verifies the exact file
+before removal. A concurrent replacement is restored without overwrite or kept
+at the private recovery path shown in Capture History. Mike approved keeping
+such files until explicit recovery/removal. Recovery paths never authorize
+automatic cleanup or retry; pending/retained records cannot be forgotten.
+`CaptureDeleteTest` covers real filesystem/HTTP, restart and native history flows.

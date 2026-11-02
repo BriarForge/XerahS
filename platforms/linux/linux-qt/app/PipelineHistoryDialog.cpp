@@ -54,7 +54,10 @@ void PipelineHistoryDialog::updateAvailability() {
   const auto *entry = selectedEntry(); const bool idle = !m_job && !m_confirming;
   const bool busy = m_captureBusy && m_captureBusy();
   m_refresh->setEnabled(idle && !busy); m_review->setEnabled(idle && entry && bool(entry->parsed.record));
-  m_forget->setEnabled(idle && entry && bool(entry->parsed.record) && !busy);
+  const auto recovery = entry && entry->parsed.record ? entry->parsed.record->deletionRecovery : std::nullopt;
+  const bool recoveryPending = recovery && (recovery->state == "pending" || recovery->state == "retained");
+  m_forget->setEnabled(idle && entry && bool(entry->parsed.record) && !busy && !recoveryPending);
+  m_forget->setToolTip(recoveryPending ? QStringLiteral("Keep this recovery record: review the private staging path and recover or remove its contents explicitly.") : QString{});
 }
 void PipelineHistoryDialog::refresh() {
   if (m_job || m_confirming || !m_storage) return;
@@ -110,6 +113,8 @@ void PipelineHistoryDialog::review() {
 void PipelineHistoryDialog::forget() {
   if (m_job || m_confirming || (m_captureBusy && m_captureBusy())) return;
   const auto *entry = selectedEntry(); if (!entry || !entry->parsed.record) return;
+  if (entry->parsed.record->deletionRecovery && (entry->parsed.record->deletionRecovery->state == "pending" ||
+      entry->parsed.record->deletionRecovery->state == "retained")) return;
   const auto snapshot = *entry; m_confirming = true; updateAvailability();
   auto *box = new QMessageBox(QMessageBox::Question, QStringLiteral("Forget capture result?"),
       QStringLiteral("Remove this result record from history? This removes its recovery evidence. Saved files, clipboard contents, editor documents and current retained pixels are kept."),

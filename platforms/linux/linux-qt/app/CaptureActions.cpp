@@ -49,6 +49,7 @@ QString CaptureActions::actionLabel(const QString &id) {
   if (id == "ocr") return "Recognize text (OCR)";
   if (id == "ocr-clipboard") return "Copy recognized text";
   if (id == "qr-scan") return "Scan QR codes";
+  if (id == "delete") return "Delete saved capture after successful file actions";
   return names.value(id, id);
 }
 
@@ -86,6 +87,7 @@ ActionOutcome CaptureActions::run(const ActionRequest &request) {
     if (request.spec.id == QStringLiteral("image-clipboard")) return copyImage(request.cancellation);
     if (request.spec.id == "pin") return pin(request.cancellation);
     if (request.spec.id == "print") return print(request.cancellation);
+    if (request.spec.id == "delete") return removeFile(request);
     if (request.spec.id == "file-clipboard" || request.spec.id == "path-clipboard" || request.spec.id == "reveal") return outputFile(request);
     return failed(kActionUnavailable);
   } catch (...) { return failed(diagnostic::actionFailed); }
@@ -283,6 +285,7 @@ ActionOutcome CaptureActions::save(const CancellationToken &cancellation) {
   const auto result = saveCapture(m_media, m_directory, m_pattern, m_ports.save);
   if (!result.file) return failedSave("save", result.diagnostic);
   m_savedFile = result.file; m_savedPath = result.file->path;
+  m_currentPublications.append("save.file");
   // FN-016/PCA-007: retain the acknowledged PNG, but stop the save here if
   // its counter could not be persisted. Never invent a sidecar acknowledgement.
   if (!result.diagnostic.isEmpty()) return failed(result.diagnostic);
@@ -318,6 +321,7 @@ ActionOutcome CaptureActions::saveAs(const CancellationToken &cancellation) {
   if (result.cancelled) return {ActionState::Cancelled, {}, {}};
   if (!result.file) return failedSave("save-as", result.diagnostic);
   m_savedAsFile = result.file; if (!m_savedFile) m_savedPath = result.file->path;
+  m_currentPublications.append("save-as.file");
   return finishSave("save-as", *m_savedAsFile, cancellation);
 }
 ActionOutcome CaptureActions::outputFile(const ActionRequest &request) {
@@ -326,6 +330,13 @@ ActionOutcome CaptureActions::outputFile(const ActionRequest &request) {
   const auto validation = validateCaptureFile(*file); if (!validation.isEmpty()) return failed(validation);
   if (!m_ports.fileOutput) return failed(kActionUnavailable);
   return m_ports.fileOutput(request.spec.id, *file, request.cancellation);
+}
+ActionOutcome CaptureActions::removeFile(const ActionRequest &request) {
+  if (QCoreApplication::instance() && QThread::currentThread() == QCoreApplication::instance()->thread())
+    return failed("delete-worker-required");
+  auto &file = request.inputArtifact == QStringLiteral("save.file") ? m_savedFile : m_savedAsFile;
+  if (!file || request.inputArtifact != file->artifact || !m_currentPublications.contains(file->artifact)) return failed("delete-guard");
+  return deleteCaptureFile(*file, request.cancellation, m_ports.deletion);
 }
 
 ActionOutcome CaptureActions::copyImageToNativeClipboard(const QImage &media) {

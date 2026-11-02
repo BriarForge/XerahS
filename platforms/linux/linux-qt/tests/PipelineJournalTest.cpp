@@ -134,7 +134,7 @@ private slots:
   }
   void malformedOrFutureRecordsFailClosed() {
     const auto task = id(); const auto original = QJsonDocument::fromJson(serializePipelineJournal(observation(task))).object();
-    auto value = original; value.insert("version", 2);
+    auto value = original; value.insert("version", 3);
     QCOMPARE(parsePipelineJournal(QJsonDocument(value).toJson(), task).diagnostic, QString("pipeline-journal-version-unsupported"));
     value = original; value.insert("terminal", true); QVERIFY(!parsePipelineJournal(QJsonDocument(value).toJson(), task).record);
     value = original; value.insert("pending_action", "save"); QVERIFY(!parsePipelineJournal(QJsonDocument(value).toJson(), task).record);
@@ -168,7 +168,7 @@ private slots:
     QVERIFY(QFile::link(artifact, path + '/' + task + ".json"));
     QVERIFY(!storage.list().entries.front().parsed.record); QVERIFY(!storage.replace(task, {}, encoded).stored); QCOMPARE(bytes(artifact), QByteArray("KEEP"));
     QVERIFY(QFile::remove(path + '/' + task + ".json"));
-    auto value = QJsonDocument::fromJson(encoded).object(); value.insert("version", 2); const auto future = QJsonDocument(value).toJson();
+    auto value = QJsonDocument::fromJson(encoded).object(); value.insert("version", 3); const auto future = QJsonDocument(value).toJson();
     write(path + '/' + task + ".json", future);
     QCOMPARE(storage.list().entries.front().parsed.diagnostic, QString("pipeline-journal-version-unsupported"));
     QVERIFY(!storage.erase(task, future).stored); QCOMPARE(bytes(path + '/' + task + ".json"), future);
