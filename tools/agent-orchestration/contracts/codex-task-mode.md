@@ -1,0 +1,19 @@
+# Contract: editor task mode and convenience preferences (EO-011, EO-012, EO-013, ESET-014)
+
+Worktree: /home/mike/Work/BriarForge/XerahS/worktrees/codex (detached at origin/main). The files EditorWindow.cpp/h and CMakeLists.txt are shared with other agents: keep your edits there minimal and localized.
+
+Requirements (product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001/SPEC.md, EDITOR-SETTINGS-001/SPEC.md, EDITOR-SESSION-001 close policy):
+- EO-011: Continue in task mode MUST return an owned rendered result and the `Continue` outcome exactly once. Auto-copy and auto-close preferences MUST run only after the result is ready and MUST report partial failures distinctly.
+- EO-012: Cancel in task mode MUST return `Cancel` without a rendered result or external side effect. If dirty, discard confirmation MUST follow the session close policy.
+- EO-013: Exit in standalone mode MUST distinguish Save, Discard, Cancel, keep the editor open on cancelled or failed Save, and MUST NOT treat a host callback return as success unless its success contract is satisfied.
+- ESET-014: Auto-copy, auto-close, quick-crop, insert-dialog, notification, zoom-to-fit and exit-confirmation preferences MUST never bypass required consent, destructive confirmation, permissions, validation or error reporting.
+
+Current Linux state (traceability notes): capture annotation Apply returns owned pixels through guarded worker lifetime tests; cancellation keeps the source; native dirty Save/Discard/Cancel and failed-save tests exist. Missing: a real task-mode host (after-capture "open in editor" → Continue/Cancel back into the post-capture action pipeline), auto-copy/auto-close preferences, standalone exit/shutdown and every callback outcome, and ESET-014 preferences.
+
+Do:
+1. Wire the editor's task mode to the actual capture pipeline host (find how after-capture "annotate/open in editor" currently hands off; graphify first). Continue returns exactly one owned rendered result to the host and the remaining post-capture actions run on it; Cancel returns Cancel with no output and no side effects (no clipboard, no file, no upload). Window close / app quit in task mode = Cancel path with dirty confirmation per the session close policy.
+2. Add the editor convenience preferences to the existing private editor preference store (ESET pattern: versioned, field-level repair, unknown fields preserved, Apply/Cancel in the native editor settings UI): auto-copy on Continue, auto-close after Continue, zoom-to-fit on open, exit confirmation, and any of quick-crop / insert-dialog / notification that already have a behavior to attach to (do not invent behavior for ones with no feature yet — list them). Defaults: if the contract or a ledger fixes them, use those; otherwise decide by how ShareX, Flameshot and Greenshot behave by default and pick what satisfies most users, and write the rationale (one line per field, with the three apps' behavior) into the traceability note and your report. Never let a preference skip a consent dialog, a destructive confirmation, validation or an error report — prove that with tests (e.g. exit-confirmation off still prompts when a Save failed? decide per contract; auto-close never closes when auto-copy failed and reports it distinctly).
+3. Standalone exit: Save/Discard/Cancel; failed or cancelled Save keeps the editor open; a host callback that returns without meeting its success contract is reported as failure.
+4. Tests: native tests through the real host path for Continue (exactly once, owned pixels, later actions run), Cancel (no side effects — assert clipboard/file/upload untouched), dirty close in task mode, auto-copy success/failure × auto-close, preference persistence/repair/unknown-field round-trip, standalone exit matrix.
+Update EO-011, EO-012, EO-013, ESET-014 rows honestly.
+
