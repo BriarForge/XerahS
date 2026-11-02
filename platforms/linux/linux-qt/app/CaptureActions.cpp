@@ -19,6 +19,8 @@
 #include <QGuiApplication>
 #include <QThread>
 #include <QMap>
+#include <QMessageBox>
+#include <QPushButton>
 
 namespace xerahs::app {
 
@@ -39,6 +41,7 @@ QString CaptureActions::actionLabel(const QString &id) {
       {"file-clipboard", "Copy image file"}, {"path-clipboard", "Copy file path"}, {"reveal", "Show saved file in folder"},
       {"after-capture-window", "Choose capture actions"}};
   if (id == "upload") return "Upload capture";
+  if (id == "before-upload-window") return "Confirm before uploading";
   if (id == "pin") return "Pin image on screen";
   if (id == "print") return "Print image";
   if (id == "url-clipboard") return "Copy URL to clipboard";
@@ -70,6 +73,7 @@ ActionOutcome CaptureActions::run(const ActionRequest &request) {
   try {
     if (m_ports.actionStarted) m_ports.actionStarted(request.spec.id);
     if (request.spec.id == QStringLiteral("after-capture-window") && m_ports.selection) return m_ports.selection(request.cancellation);
+    if (request.spec.id == "before-upload-window") return beforeUpload(request.cancellation);
     if (request.spec.id == "upload") return upload(request);
     if (request.spec.id == "url-clipboard") return copyUrl(request.cancellation);
     if (request.spec.id == "annotation") return annotate(request.cancellation);
@@ -124,6 +128,50 @@ bool CaptureActions::createTemporaryUploadFile() {
   m_uploadFile = std::move(file);
   return true;
 }
+ActionOutcome CaptureActions::beforeUpload(const CancellationToken &cancellation) {
+  using namespace xerahs::uploads;
+  if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
+  if (QCoreApplication::instance() && QThread::currentThread() == QCoreApplication::instance()->thread())
+    return failed("upload-worker-required");
+  DestinationCatalog catalog(defaultCatalogPath(m_ports.uploadCatalogPath));
+  if (!catalog.loadCode().isEmpty()) return failed(catalog.loadCode());
+  const auto destination = catalog.defaultDestination();
+  if (!destination) return failed("upload-destination-missing");
+  const auto problems = validateDestination(*destination);
+  if (!problems.isEmpty()) return failed(problems.first());
+  // Only an origin crosses the GUI boundary. Request paths, templates and
+  // credentials remain on the worker, and the approved destination is frozen.
+  const QUrl requestUrl(destination->requestUrl);
+  QUrl origin; origin.setScheme(requestUrl.scheme()); origin.setHost(requestUrl.host()); origin.setPort(requestUrl.port());
+  CaptureUploadReview review{m_media.scaled(QSize(640, 480), Qt::KeepAspectRatio, Qt::SmoothTransformation).copy(),
+      m_media.size(), destination->name, origin};
+  if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
+  if (review.preview.isNull()) return failed("upload-preview-unavailable");
+  auto result = m_ports.beforeUpload ? m_ports.beforeUpload(review, cancellation) : failed("upload-confirmation-unavailable");
+  if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
+  if (result.state == ActionState::Succeeded && !result.outcomeUnknown) m_confirmedUploadDestination = *destination;
+  return result;
+}
+ActionOutcome CaptureActions::confirmNativeUpload(const CaptureUploadReview &review, const CancellationToken &cancellation) {
+  const auto *application = qobject_cast<QApplication *>(QCoreApplication::instance());
+  if (!application || QThread::currentThread() != application->thread()) return failed("upload-confirmation-unavailable");
+  if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
+  QMessageBox dialog(QMessageBox::Question, "Upload capture?", {}, QMessageBox::Yes | QMessageBox::Cancel);
+  dialog.setObjectName("captureBeforeUploadDialog");
+  dialog.setTextFormat(Qt::PlainText);
+  dialog.setText(QString("Upload this %1 × %2 image to %3?\n%4\n\nThe image will leave this device and be sent to this destination.")
+      .arg(review.originalDimensions.width()).arg(review.originalDimensions.height()).arg(review.destinationName, review.origin.toString()));
+  if (review.origin.scheme() == "http") dialog.setInformativeText("Warning: HTTP sends the image without transport encryption.");
+  dialog.setIconPixmap(QPixmap::fromImage(review.preview));
+  dialog.button(QMessageBox::Yes)->setText("Upload");
+  dialog.setDefaultButton(QMessageBox::Cancel);
+  dialog.setEscapeButton(QMessageBox::Cancel);
+  QTimer cancellationPoll;
+  QObject::connect(&cancellationPoll, &QTimer::timeout, &dialog, [&] { if (cancellation.requested()) dialog.reject(); });
+  cancellationPoll.start(10);
+  const auto choice = dialog.exec();
+  return {(!cancellation.requested() && choice == QMessageBox::Yes) ? ActionState::Succeeded : ActionState::Cancelled, {}, {}};
+}
 ActionOutcome CaptureActions::upload(const ActionRequest &request) {
   using namespace xerahs::uploads;
   if (request.cancellation.requested()) return {ActionState::Cancelled, {}, {}};
@@ -132,11 +180,11 @@ ActionOutcome CaptureActions::upload(const ActionRequest &request) {
     return failed("upload-worker-required");
   const auto path = defaultCatalogPath(m_ports.uploadCatalogPath);
   DestinationCatalog catalog(path);
-  const auto destination = catalog.defaultDestination();
+  const auto destination = m_confirmedUploadDestination ? m_confirmedUploadDestination : catalog.defaultDestination();
   const auto failure = [](const QString &code, const QString &message) {
     auto out = failed(code); out.upload = UploadResult{{}, {}, {}, message}; return out;
   };
-  if (!catalog.loadCode().isEmpty()) return failure(catalog.loadCode(), "Could not read Upload destinations.");
+  if (!m_confirmedUploadDestination && !catalog.loadCode().isEmpty()) return failure(catalog.loadCode(), "Could not read Upload destinations.");
   if (!destination) return failure("upload-destination-missing", "No upload destination. Add one in Upload destinations.");
   UploadInput input; input.mimeType = "image/png";
   if (request.inputArtifact == "save.file" || request.inputArtifact == "save-as.file") {

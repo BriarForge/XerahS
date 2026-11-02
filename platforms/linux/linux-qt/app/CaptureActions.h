@@ -8,6 +8,8 @@
 #include "EditorSource.h"
 #include "ImageRecognition.h"
 #include "uploads/CredentialStore.h"
+#include "uploads/UploadDestination.h"
+#include <QUrl>
 #include <memory>
 
 #include <QImage>
@@ -23,6 +25,12 @@ struct CaptureAnnotationChoice {
   QString diagnostic;
   bool sidecarIntent = false;
   std::optional<xerahs::editor::CropRegion> sourceRegion = {};
+};
+struct CaptureUploadReview {
+  QImage preview;
+  QSize originalDimensions;
+  QString destinationName;
+  QUrl origin;
 };
 struct CaptureActionPorts {
   // CapturePipeline invokes save/actionStarted on its worker and clipboard on
@@ -60,6 +68,8 @@ struct CaptureActionPorts {
   // successful. Empty uses an independent native recognition result window.
   std::function<xerahs::actions::ActionOutcome(ImageRecognitionKind, const QStringList &,
       const xerahs::actions::CancellationToken &)> recognitionResult;
+  std::function<xerahs::actions::ActionOutcome(const CaptureUploadReview &,
+      const xerahs::actions::CancellationToken &)> beforeUpload;
 
 };
 
@@ -82,6 +92,7 @@ public:
   static xerahs::actions::ActionOutcome pinToNativeScreen(const QImage &media);
   static xerahs::actions::ActionOutcome printNativeImage(const LoadedSource &source);
   static xerahs::actions::ActionOutcome showNativeRecognition(ImageRecognitionKind, const QStringList &);
+  static xerahs::actions::ActionOutcome confirmNativeUpload(const CaptureUploadReview &, const xerahs::actions::CancellationToken &);
   static QStringList selectableActions();
   static QString actionLabel(const QString &id);
 
@@ -104,6 +115,8 @@ private:
   xerahs::actions::ActionOutcome copyUrl(const xerahs::actions::CancellationToken &cancellation);
   xerahs::actions::ActionOutcome recognize(ImageRecognitionKind, const xerahs::actions::CancellationToken &);
   xerahs::actions::ActionOutcome copyRecognizedText(const xerahs::actions::CancellationToken &);
+  xerahs::actions::ActionOutcome beforeUpload(const xerahs::actions::CancellationToken &);
+  std::optional<xerahs::uploads::UploadDestination> m_confirmedUploadDestination;
   QString m_recognizedText;
   QString m_uploadUrl;
   std::unique_ptr<QTemporaryFile> m_uploadFile;

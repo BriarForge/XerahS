@@ -639,21 +639,25 @@
       ]
     },
     "PCA-020": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "before-upload-declined"
       ],
       "disposition": "Required",
-      "note": "Declined confirmation semantics have injected Core vectors; the native executor has no before-upload-window branch or presentation flow.",
+      "note": "Opt-in native before-upload confirmation shows an owned bounded preview, original dimensions and destination origin. Cancel, Escape and close produce cancelled; upload is skipped with upload-declined while saved files, clipboard and later independent pin are preserved. Global cancellation and owner destruction stop later work. Consent freezes the destination; credentials are not read before confirmation.",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 104,
         "published_vectors": [
           "before-upload-declined"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Tested Linux candidate production flow with real native dialog and local HTTP fixture; physical/accessibility/human qualification remains separate.",
+        "reviewed_at_revision": "64990584b83be6d91b0a6e17706717cf121d98a1"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CaptureBeforeUploadTest.cpp",
+        "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp"
+      ]
     },
     "PCA-021": {
       "status": "partial",
@@ -852,11 +856,16 @@
         "unknownSelectionIsReportedAndNeverRuns",
         "unknownLegacyFlagIsReported",
         "pipelinesAreIsolated"
+      ],
+      "platforms/linux/linux-qt/tests/CaptureBeforeUploadTest.cpp": [
+        "confirmation",
+        "destroyedOwner",
+        "reviewPayload"
       ]
     },
-    "remaining_scope": "Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
+    "remaining_scope": "Native quick-task and guarded deletion, complete recovery/retention and all action-family target qualification remain incomplete.",
     "reviewed_requirement_count": 24,
-    "finding": "Shared catalogue ordering, artifact dependencies, cancellation, canonical results and retries have engine/native tests. CaptureActions uploads saved paths, but its no-save path still encodes QBuffer bytes rather than a managed physical temporary file.",
+    "finding": "Shared catalogue ordering, artifact dependencies, cancellation, canonical results and retries have engine/native tests. Native capture uploads use saved paths or managed private temporary PNG files; opt-in before-upload confirmation freezes consent and declines only upload.",
     "review_anchor": {
       "production": {
         "path": "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",

@@ -4,7 +4,7 @@ Audit date: 2026-10-28. Reviewed source: `e7528f29a44236ddbb153e1ab28039697573e3
 
 This is a source/test audit of every capability in `product-contract/manifest.yaml`,
 not release approval or an accepted platform disposition. The 325 desktop rows
-classify **94 tested candidate implementations**, **197 partial**, **27 not started**,
+classify **95 tested candidate implementations**, **196 partial**, **27 not started**,
 **6 blocked**, and **one mobile-scope-only row** (CORE-029). All 20 MOB requirements
 are outside Linux desktop scope. Linked field, action and algorithm ledgers remain
 obligations; these unweighted labels do not measure product readiness.
@@ -21,7 +21,7 @@ Graph relationships were navigation aids and were not used as conformance eviden
 | Capability | Candidate counts | Current source/test finding | Remaining scope |
 |---|---|---|---|
 | [FILENAME-GENERATION-001](traceability/FILENAME-GENERATION-001.json) | 25 implemented, 2 partial | Immutable expansion context, Unicode-scalar sanitization, token/random vectors, preview and persisted reservation tests are present. Native failed-counter publication now retains the published PNG and reports failure. | Explicit native random-file permission flow and crash/power-loss atomicity between publication and counter persistence remain incomplete. |
-| [POST-CAPTURE-ACTIONS-001](traceability/POST-CAPTURE-ACTIONS-001.json) | 14 implemented, 10 partial | Shared catalogue ordering, artifact dependencies, cancellation, canonical results and retries have engine/native tests. CaptureActions uploads saved paths or a real owner-private managed PNG with native file/HTTP/cleanup fixtures. | Quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete. |
+| [POST-CAPTURE-ACTIONS-001](traceability/POST-CAPTURE-ACTIONS-001.json) | 15 implemented, 9 partial | Shared catalogue ordering, artifact dependencies, cancellation, canonical results and retries have engine/native tests. CaptureActions uploads saved paths or a real owner-private managed PNG with native file/HTTP/cleanup fixtures. | Quick-task native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete. |
 | [REGION-CAPTURE-001](traceability/REGION-CAPTURE-001.json) | 9 implemented, 3 not-started, 15 partial | RegionSession implements physical geometry/state vectors; native settings freeze quick-confirm/snapping before acquisition, handles resize, and LastRegionStore atomically saves geometry after acquired pixels through OwnedWork. | CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete. |
 | [EDITOR-SESSION-001](traceability/EDITOR-SESSION-001.json) | 18 implemented, 3 not-started, 9 partial | Production session/history, bounded XANN parsing, exact rectangle compositor, source binding and owned native save/copy/print/history paths have automated fixtures. Partial raster/companion acknowledgement remains honest. | Complete color/profile and all-tool compatibility, separate autosave/recovery and retention, performance, approved shared visual fixtures and physical/native qualification remain incomplete. Legacy fallback sidecar policy remains blocked. |
 | [EDITOR-ANNOTATIONS-001](traceability/EDITOR-ANNOTATIONS-001.json) | 20 partial | Native tools reach all modes; text/balloon creation and editing use guarded asynchronous dialogs with family/style/alignment/text color/tail/fractional size. Numeric Step and fractional strength edits, create admission bounds, history/reload and ownership regressions are tested. | Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers. |
@@ -37,6 +37,11 @@ Graph relationships were navigation aids and were not used as conformance eviden
 | [COMPATIBILITY-CATALOG-001](traceability/COMPATIBILITY-CATALOG-001.json) | 6 not-started, 12 partial | XANN, private native JSON, isolated SXCU secret-reference import and SXIE data parsing have bounded/malformed/unknown-field fixtures. Tests do not constitute legacy migration acceptance. | Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete. |
 
 ## Changes since the previous full audit
+
+PCA-020 now has native before-upload confirmation evidence. Cancel, Escape and
+close skip upload while preserving the saved image, clipboard and later pin.
+The confirmed destination is frozen, credentials stay unread until consent, and
+global cancellation or owner destruction prevents a late upload.
 
 Saved capture workflows now execute local OCR, explicit OCR clipboard and QR
 scanning through the same native services. Real decoder/pipeline fixtures cover
@@ -78,14 +83,13 @@ bounds. These features are preserved, not scheduled for reimplementation.
 ## Ranked work
 
 1. Remaining native annotation options and fields (EA-005/006/008/010/011/016/019): choose one approved text border/fill, ellipse/blur, border/arrow/shadow or all-tool asset/transfer slice. Preserve existing asynchronous formatted creation/editing, fractional/default values, numeric Step admission and history; do not redo completed controls.
-2. Managed temporary uploads (PCA-006/019): replace the native no-save QBuffer/fileBytes path with the contracted managed temporary.file lifecycle, acknowledgement and cleanup behavior. Resolve any unspecified retention policy with Mike; keep credential review gates intact.
-3. Native post-capture quick-task, before-upload and explicit deletion flows (PCA-014/020/021): one approved action per iteration through the shared engine, stable results and consent. Injected executor tests do not count as native flows.
-4. Capture breadth (RC-013/015/019/020, CORE-014/016): cursor option and output exclusion, remaining overlay/picker options and physical/performance coverage under approved semantics. Recapture and mixed-monitor identity/mapping remain blocked below; retain durable RC-017 storage and tested RC-007 confirmation.
-5. Canvas and editor output breadth (EC-004/009/011/013/014/017, EO-007/009/010/011/014/016): clipboard/screen insertion, all-tool affine/flatten behavior and remaining output hosts. Background/smart-padding and new saved quality/matte defaults require decisions below. Preserve tested PNG/JPEG/WebP Save As and companion-only repair.
-6. Application/workflow breadth (CORE-017/018/019/020/021/023/024/025; WFCAT-004/008/010/011/012/014/015/017): recording/upload/watch-folder/action-family gaps and bounded history search/paging/retention. Confirmed execution metadata removal exists; do not redo it or infer all history coverage.
-7. Settings/interfaces/compatibility (SETCAT-*, IFCAT-*, COMPCAT-*): approved field/action ledgers, complete CLI operations, isolated explicit import/export/migration with backup/rollback, supported legacy fixtures and all native value boundaries. Secret, plugin and MCP authority remain blocked.
-8. Privacy/recovery and qualification after real features (ES-018/020, PCA-012/013, CORE-027/030/036): approved retention and separate recovery state, native fault/resource/performance matrix and Ubuntu/Fedora/Arch with GNOME/Plasma/wlroots/Wayland/X11. Investigate the recorded one-off parallel scroll test failure without changing the unapproved threshold or weakening tests. Human security/privacy/a11y/licensing/parity and release gates remain.
-9. Blocked Step breadth (EA-009): alphabetic/Roman mappings, explicit start/reset and tail/all-style behavior wait for the exact product questions below. Numeric allocation and full-range asynchronous numeric editing are tested candidates; do not redo them.
+2. Native post-capture quick-task and explicit deletion flows (PCA-014/021): one approved action per iteration through the shared engine, stable results and consent. Injected executor tests do not count as native flows.
+3. Capture breadth (RC-013/015/019/020, CORE-014/016): cursor option and output exclusion, remaining overlay/picker options and physical/performance coverage under approved semantics. Recapture and mixed-monitor identity/mapping remain blocked below; retain durable RC-017 storage and tested RC-007 confirmation.
+4. Canvas and editor output breadth (EC-004/009/011/013/014/017, EO-007/009/010/011/014/016): clipboard/screen insertion, all-tool affine/flatten behavior and remaining output hosts. Background/smart-padding and new saved quality/matte defaults require decisions below. Preserve tested PNG/JPEG/WebP Save As and companion-only repair.
+5. Application/workflow breadth (CORE-017/018/019/020/021/023/024/025; WFCAT-004/008/010/011/012/014/015/017): recording/upload/watch-folder/action-family gaps and bounded history search/paging/retention. Confirmed execution metadata removal exists; do not redo it or infer all history coverage.
+6. Settings/interfaces/compatibility (SETCAT-*, IFCAT-*, COMPCAT-*): approved field/action ledgers, complete CLI operations, isolated explicit import/export/migration with backup/rollback, supported legacy fixtures and all native value boundaries. Secret, plugin and MCP authority remain blocked.
+7. Privacy/recovery and qualification after real features (ES-018/020, PCA-012/013, CORE-027/030/036): approved retention and separate recovery state, native fault/resource/performance matrix and Ubuntu/Fedora/Arch with GNOME/Plasma/wlroots/Wayland/X11. Investigate the recorded one-off parallel scroll test failure without changing the unapproved threshold or weakening tests. Human security/privacy/a11y/licensing/parity and release gates remain.
+8. Blocked Step breadth (EA-009): alphabetic/Roman mappings, explicit start/reset and tail/all-style behavior wait for the exact product questions below. Numeric allocation and full-range asynchronous numeric editing are tested candidates; do not redo them.
 
 ## Blocked on Mike
 
@@ -107,7 +111,7 @@ bounds. These features are preserved, not scheduled for reimplementation.
 ## Verification and limits
 
 The audit gate configures a Debug Ninja build, builds with eight jobs and runs all
-123 registered CTest targets with six-way concurrency. Contract lint, backlog and
+124 registered CTest targets with six-way concurrency. Contract lint, backlog and
 generated desktop progress freshness are separate required checks. A green local
 suite proves candidate behavior exercised by those tests; it does not qualify
 unavailable desktops, hardware, physical accessibility, security review or releases.

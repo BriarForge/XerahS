@@ -1294,6 +1294,15 @@ target_link_libraries(capture-recognition-test PRIVATE xerahs_file_output xerahs
 add_test(NAME capture-recognition COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-recognition-test>)
 set_tests_properties(capture-recognition PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+add_executable(capture-before-upload-test tests/CaptureBeforeUploadTest.cpp
+  app/CapturePipeline.cpp app/CapturePipeline.h app/CaptureActions.cpp app/CaptureActions.h
+  app/CaptureSave.cpp app/CaptureSave.h)
+set_target_properties(capture-before-upload-test PROPERTIES AUTOMOC ON)
+target_link_libraries(capture-before-upload-test PRIVATE xerahs_file_output xerahs_action_selection
+  xerahs_pipeline_journal xerahs_upload_executor xerahs_secret_service Qt6::Test)
+add_test(NAME capture-before-upload COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-before-upload-test>)
+set_tests_properties(capture-before-upload PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 get_property(XERAHS_NATIVE_TARGETS DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
 foreach(native_target IN LISTS XERAHS_NATIVE_TARGETS)
   get_target_property(native_sources ${native_target} SOURCES)

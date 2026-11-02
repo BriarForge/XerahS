@@ -14,7 +14,7 @@ class CaptureWorkflowsTest final : public QObject {
 private slots:
   void currentNativeOutputDefinitionsAreDiscoverable_data() {
     QTest::addColumn<QString>("action");
-    for (const auto *id : {"upload", "url-clipboard", "ocr", "ocr-clipboard", "qr-scan", "pin", "print"}) QTest::newRow(id) << QString::fromLatin1(id);
+    for (const auto *id : {"before-upload-window", "upload", "url-clipboard", "ocr", "ocr-clipboard", "qr-scan", "pin", "print"}) QTest::newRow(id) << QString::fromLatin1(id);
   }
   void currentNativeOutputDefinitionsAreDiscoverable() {
     QFETCH(QString, action); QTemporaryDir dir; FilePreferenceStorage storage(dir.filePath("workflows.json")); CaptureWorkflowStore store(storage);
