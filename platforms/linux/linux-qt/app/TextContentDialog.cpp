@@ -18,7 +18,7 @@ TextContentDialog::TextContentDialog(const xerahs::editor::RectangleAnnotation &
   const bool balloon = shape.type() == xerahs::editor::shape::speechBalloon;
   setObjectName(balloon ? "balloonContentDialog" : "textContentDialog"); setWindowTitle(balloon ? "Speech balloon text and tail" : "Text annotation"); setAccessibleName(windowTitle());
   setAttribute(Qt::WA_DeleteOnClose); setWindowModality(Qt::WindowModal);
-  auto *layout = new QVBoxLayout(this); auto *form = new QFormLayout; layout->addLayout(form);
+  auto *layout = new QVBoxLayout(this); m_layout = layout; auto *form = new QFormLayout; layout->addLayout(form);
   m_text = new QPlainTextEdit(shape.content.text, this); m_text->setObjectName("balloonText"); m_text->setAccessibleName(balloon ? "Balloon text" : "Annotation text"); form->addRow("&Text", m_text);
   m_family = new QComboBox(this); m_family->setObjectName("annotationFontFamily"); m_family->setAccessibleName("Font family; empty uses the native default");
   m_family->setEditable(true); m_family->setInsertPolicy(QComboBox::NoInsert); m_family->addItem(QString{}); m_family->addItems(QFontDatabase::families());
@@ -84,6 +84,11 @@ TextContentDialog::TextContentDialog(const xerahs::editor::RectangleAnnotation &
   buttons->button(QDialogButtonBox::Apply)->setAutoDefault(false); buttons->button(QDialogButtonBox::Cancel)->setDefault(true);
   connect(buttons->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, &TextContentDialog::accept);
   connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject); resize(560, 430);
+}
+void TextContentDialog::showPreferenceNotice(const QString &notice) {
+  auto *label = new QLabel(notice, this); label->setObjectName("annotationFontPreferenceNotice");
+  label->setTextFormat(Qt::PlainText); label->setWordWrap(true); label->setAccessibleName("Saved default font notice");
+  m_layout->insertWidget(0, label);
 }
 void TextContentDialog::accept() {
   auto content = m_shape.content; content.text = m_text->toPlainText();

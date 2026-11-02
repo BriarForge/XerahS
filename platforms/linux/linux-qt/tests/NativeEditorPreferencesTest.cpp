@@ -4,8 +4,14 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QDialog>
+#include <QComboBox>
+#include <QDoubleSpinBox>
 #include <QDialogButtonBox>
+#include <QFontDatabase>
+#include "image-editor/ShapePainter.h"
 #include <QElapsedTimer>
+#include <QDir>
+#include <QFileInfo>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -26,6 +32,23 @@ using namespace xerahs::editor;
 namespace {
 QByteArray bytes(const QString &path) {
   QFile file(path); return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray{};
+}
+bool writePrivate(const QString &path, const QByteArray &data) {
+  QFile file(path); return QDir().mkpath(QFileInfo(path).absolutePath()) && QFile::setPermissions(QFileInfo(path).absolutePath(), QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner) &&
+      file.open(QIODevice::WriteOnly) && file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner) && file.write(data) == data.size();
+}
+QByteArray textEnvelope(const QJsonObject &current) {
+  return QJsonDocument(QJsonObject{{"format", "com.xerahs.app/linux-qt/editor-settings"}, {"version", 1}, {"current", current}, {"previous", QJsonObject{}}}).toJson(QJsonDocument::Indented);
+}
+// Opens the Drawing Defaults dialog, lets `edit` change the draft, then Apply or Cancel.
+bool runDrawingDialog(const std::function<void(QDialog &)> &edit, bool apply) {
+  bool entered = false; QTimer timer; QElapsedTimer deadline; deadline.start();
+  QObject::connect(&timer, &QTimer::timeout, [&] {
+    auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!dialog || entered) return;
+    entered = true; edit(*dialog);
+    dialog->findChild<QDialogButtonBox *>()->button(apply ? QDialogButtonBox::Ok : QDialogButtonBox::Cancel)->click();
+  });
+  timer.start(5); const bool result = manageDrawingDefaults(); timer.stop(); return entered && result;
 }
 bool optIn(int maximum = 10) {
   auto draft = recentImageHistory(); const auto revision = draft.revision();
@@ -129,6 +152,93 @@ private slots:
     }
     const auto expected = nativeEditorPreferences().values;
     QVERIFY(initializeNativeEditorPreferences(path).isEmpty()); QCOMPARE(nativeEditorPreferences().values, expected);
+  }
+  void missingSavedFontFallsBackWithoutRewritingUntilExplicitReplacement() {
+    QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");
+    QVERIFY(writePrivate(path, textEnvelope({{"TextFontFamily", "Gone Sans"}, {"TextFontSize", 27.75}, {"TextHorizontalAlignment", "Right"},
+        {"SpeechBalloonFontFamily", "Gone Sans"}, {"StepType", "UppercaseRoman"}, {"FutureOption", true}})));
+    const auto original = bytes(path); QVERIFY(!original.isEmpty());
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
+    // Use: resolve creation defaults repeatedly; the stored bytes never change.
+    for (int i = 0; i < 3; ++i) {
+      const auto defaults = contentDefaultsFromPreferences(nativeEditorPreferences(), nativeFontFamilyAvailable);
+      QVERIFY(defaults.text.familyUnavailable); QVERIFY(defaults.text.fontFamily.isEmpty());
+      QCOMPARE(defaults.text.requestedFamily, QStringLiteral("Gone Sans")); QCOMPARE(defaults.text.fontSize, 27.75);
+      QCOMPARE(defaults.text.alignment, QStringLiteral("right")); QVERIFY(defaults.stepStyleInert);
+    }
+    QCOMPARE(bytes(path), original);
+    // The dialog shows the unavailable family, and Cancel leaves the file alone.
+    QVERIFY(!runDrawingDialog([](QDialog &dialog) {
+      QVERIFY(dialog.findChild<QLabel *>("defaultTextFontUnavailable")); QVERIFY(dialog.findChild<QLabel *>("defaultBalloonFontUnavailable"));
+      auto *family = dialog.findChild<QComboBox *>("defaultTextFontFamily"); QVERIFY(family);
+      QCOMPARE(family->currentData().toString(), QStringLiteral("Gone Sans")); QVERIFY(family->currentText().contains("not installed"));
+      QCOMPARE(dialog.findChild<QDoubleSpinBox *>("defaultTextFontSize")->value(), 27.75);
+      QCOMPARE(dialog.findChild<QComboBox *>("defaultStepStyle")->currentData().toString(), QStringLiteral("UppercaseRoman"));
+      dialog.findChild<QSpinBox *>("defaultStrokeThickness")->setValue(9);
+    }, false));
+    QCOMPARE(bytes(path), original);
+    // A replacement that is not installed is refused; the stored family stays.
+    const auto refused = applyDrawingDefaults({{"TextFontFamily", "Another Missing Font"}}, nativeEditorPreferenceRevision());
+    QVERIFY(!refused.saved); QCOMPARE(refused.diagnostic, QStringLiteral("font-family-unavailable")); QCOMPARE(bytes(path), original);
+    QVERIFY(editorPreferenceDiagnosticMessage(refused.diagnostic).contains("not installed"));
+    // Applying an unrelated change with the family untouched keeps the saved family and step style.
+    QSignalSpy events(&nativeEditorPreferenceEvents(), &NativeEditorPreferenceEvents::drawingDefaultsChanged);
+    QVERIFY(runDrawingDialog([](QDialog &dialog) { dialog.findChild<QSpinBox *>("defaultStrokeThickness")->setValue(9); }, true));
+    QCOMPARE(events.count(), 1);
+    auto reloaded = QJsonDocument::fromJson(bytes(path)).object().value("current").toObject();
+    QCOMPARE(reloaded.value("TextFontFamily"), QJsonValue("Gone Sans")); QCOMPARE(reloaded.value("TextFontSize"), QJsonValue(27.75));
+    QCOMPARE(reloaded.value("StepType"), QJsonValue("UppercaseRoman")); QCOMPARE(reloaded.value("FutureOption"), QJsonValue(true));
+    QCOMPARE(reloaded.value("Thickness"), QJsonValue(9));
+    // An explicit replacement through the dialog is the only thing that rewrites the family.
+    const auto installed = QFontDatabase::families(); QVERIFY(!installed.isEmpty());
+    QVERIFY(runDrawingDialog([&](QDialog &dialog) {
+      auto *family = dialog.findChild<QComboBox *>("defaultTextFontFamily"); const int index = family->findData(installed.first()); QVERIFY(index >= 0);
+      family->setCurrentIndex(index); dialog.findChild<QDoubleSpinBox *>("defaultTextFontSize")->setValue(40);
+      dialog.findChild<QCheckBox *>("defaultTextBold")->setChecked(false); dialog.findChild<QCheckBox *>("defaultTextItalic")->setChecked(true);
+      auto *align = dialog.findChild<QComboBox *>("defaultTextAlignment"); align->setCurrentIndex(align->findData("Left"));
+    }, true));
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
+    const auto &values = nativeEditorPreferences().values;
+    QCOMPARE(values.value("TextFontFamily").toString(), installed.first()); QCOMPARE(values.value("TextFontSize"), QJsonValue(40));
+    QCOMPARE(values.value("TextBold"), QJsonValue(false)); QCOMPARE(values.value("TextItalic"), QJsonValue(true));
+    QCOMPARE(values.value("TextHorizontalAlignment"), QJsonValue("Left"));
+    QCOMPARE(values.value("SpeechBalloonFontFamily"), QJsonValue("Gone Sans"));
+    QCOMPARE(values.value("StepType"), QJsonValue("UppercaseRoman"));
+    const auto resolved = contentDefaultsFromPreferences(nativeEditorPreferences(), nativeFontFamilyAvailable);
+    QVERIFY(!resolved.text.familyUnavailable); QCOMPARE(resolved.text.fontFamily, installed.first()); QVERIFY(resolved.balloon.familyUnavailable);
+  }
+  void textDefaultsPublishOnlyAfterSuccessfulPersistenceAndRejectInvalidDraftsAtomically() {
+    QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
+    QVERIFY(applyDrawingDefaults({{"Thickness", 5}}, nativeEditorPreferenceRevision()).saved);
+    QSignalSpy events(&nativeEditorPreferenceEvents(), &NativeEditorPreferenceEvents::drawingDefaultsChanged);
+    const auto original = nativeEditorPreferences().values; const auto revision = nativeEditorPreferenceRevision(); const auto storedBytes = bytes(path);
+    {
+      QLockFile lock(path + ".lock"); QVERIFY(lock.tryLock(0));
+      const auto locked = applyDrawingDefaults({{"TextFontSize", 33.5}, {"StepFontSize", 20}}, revision);
+      QVERIFY(!locked.saved); QCOMPARE(locked.diagnostic, QStringLiteral("settings-locked"));
+      QCOMPARE(events.count(), 0); QCOMPARE(nativeEditorPreferences().values, original); QCOMPARE(bytes(path), storedBytes);
+    }
+    for (const auto &bad : {QJsonObject{{"TextFontSize", 0.5}}, QJsonObject{{"TextHorizontalAlignment", "Justify"}}, QJsonObject{{"StepType", ""}},
+                            QJsonObject{{"SpeechBalloonTextBold", "yes"}}, QJsonObject{{"StepFontSize", 2001}}}) {
+      auto change = bad; change.insert("Thickness", 7);
+      const auto rejected = applyDrawingDefaults(change, revision);
+      QVERIFY(!rejected.saved); QVERIFY(rejected.diagnostic.startsWith("invalid-"));
+      QVERIFY(!editorPreferenceDiagnosticMessage(rejected.diagnostic).isEmpty());
+      QCOMPARE(nativeEditorPreferences().values, original); QCOMPARE(events.count(), 0); QCOMPARE(bytes(path), storedBytes);
+    }
+    QVERIFY(!applyDrawingDefaults({{"UnrelatedField", 1}}, revision).saved);
+    QVERIFY(applyDrawingDefaults({{"TextFontSize", 1}, {"SpeechBalloonFontSize", 2000}, {"StepFontSize", 0.5}, {"StepType", "LowercaseLetter"},
+        {"SpeechBalloonTextHorizontalAlignment", "Right"}, {"TextFontFamily", ""}}, revision).saved);
+    QCOMPARE(events.count(), 1);
+    QCOMPARE(nativeEditorPreferences().values.value("SpeechBalloonFontSize"), QJsonValue(2000));
+    QCOMPARE(contentDefaultsFromPreferences(nativeEditorPreferences(), nativeFontFamilyAvailable).balloon.alignment, QStringLiteral("right"));
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
+    QCOMPARE(nativeEditorPreferences().values.value("StepType"), QJsonValue("LowercaseLetter"));
+    QCOMPARE(nativeEditorPreferences().values.value("StepFontSize"), QJsonValue(0.5));
+    // A stale draft cannot overwrite the newer state.
+    const auto stale = applyDrawingDefaults({{"TextFontSize", 50}}, revision);
+    QVERIFY(!stale.saved); QCOMPARE(stale.diagnostic, QStringLiteral("settings-changed-in-session"));
   }
   void invalidDrawingDraftRemainsOpenWithoutPublishingAnyField() {
     QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");

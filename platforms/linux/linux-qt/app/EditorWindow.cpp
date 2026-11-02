@@ -1,4 +1,5 @@
 #include "EditorWindow.h"
+#include "image-editor/ShapePainter.h"
 #include "EditorSaveDialog.h"
 #include "EffectsDialog.h"
 #include "FileUploadResultDialog.h"
@@ -556,6 +557,8 @@ void EditorWindow::applyCreationDefaults() {
   auto style = m_session->toolStyle();
   style.strokeColor = defaults.strokeColor; style.fillColor = defaults.fillColor; style.strokeWidth = defaults.strokeWidth;
   m_session->setCreationStyle(style);
+  // ESET-008: missing fonts resolve to the native default here; the stored preference is never rewritten.
+  m_session->setContentDefaults(contentDefaultsFromPreferences(nativeEditorPreferences(), nativeFontFamilyAvailable));
 }
 
 bool EditorWindow::editColor(EditorSession::ColorTarget target) {

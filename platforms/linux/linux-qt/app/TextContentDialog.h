@@ -7,6 +7,7 @@ class QLineEdit;
 class QPlainTextEdit;
 class QDoubleSpinBox;
 class QLabel;
+class QVBoxLayout;
 namespace xerahs::app {
 // Edits existing content only. Caller guards document/selection identity and
 // commits the complete choice through EditorSession as one history operation.
@@ -16,7 +17,10 @@ public:
   TextContentDialog(const xerahs::editor::RectangleAnnotation &shape, QWidget *parent);
   std::optional<xerahs::editor::ShapeContent> choice() const { return m_choice; }
   void accept() override;
+  // ESET-008: tells the user the saved default family is unavailable here.
+  void showPreferenceNotice(const QString &notice);
 private:
+  QVBoxLayout *m_layout = nullptr;
   xerahs::editor::RectangleAnnotation m_shape;
   QPlainTextEdit *m_text;
   QDoubleSpinBox *m_size;

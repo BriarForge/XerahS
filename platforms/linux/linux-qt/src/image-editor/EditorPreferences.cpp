@@ -17,7 +17,46 @@ const QJsonObject defaults{
   {QStringLiteral("WindowHeight"), 720}, {QStringLiteral("IsWindowMaximized"), true},
   {QStringLiteral("RememberRecentImagePaths"), false}, {QStringLiteral("MaxRecentImageFiles"), RecentImages::defaultMaximum},
   {QStringLiteral("RecentImageFiles"), QJsonArray{}},
+  {QStringLiteral("TextFontFamily"), QString()}, {QStringLiteral("TextFontSize"), 24},
+  {QStringLiteral("TextBold"), true}, {QStringLiteral("TextItalic"), false},
+  {QStringLiteral("TextHorizontalAlignment"), QStringLiteral("Center")},
+  {QStringLiteral("SpeechBalloonFontFamily"), QString()}, {QStringLiteral("SpeechBalloonFontSize"), 24},
+  {QStringLiteral("SpeechBalloonTextBold"), true}, {QStringLiteral("SpeechBalloonTextItalic"), false},
+  {QStringLiteral("SpeechBalloonTextHorizontalAlignment"), QStringLiteral("Center")},
+  {QStringLiteral("StepFontSize"), 0}, {QStringLiteral("StepType"), QStringLiteral("Numeric")},
   {QStringLiteral("ToolbarItems"), defaultToolbarItems()}};
+// ESET-008 field kinds. Names follow the reference ImageEditorOptions.
+enum class TextField { None, Family, Size, StepSize, Flag, Alignment, StepStyle };
+TextField textFieldKind(const QString &key) {
+  if (key == u"TextFontFamily" || key == u"SpeechBalloonFontFamily") return TextField::Family;
+  if (key == u"TextFontSize" || key == u"SpeechBalloonFontSize") return TextField::Size;
+  if (key == u"StepFontSize") return TextField::StepSize;
+  if (key == u"TextBold" || key == u"TextItalic" || key == u"SpeechBalloonTextBold" || key == u"SpeechBalloonTextItalic") return TextField::Flag;
+  if (key == u"TextHorizontalAlignment" || key == u"SpeechBalloonTextHorizontalAlignment") return TextField::Alignment;
+  if (key == u"StepType") return TextField::StepStyle;
+  return TextField::None;
+}
+constexpr int maximumFamilyLength = 256;
+bool plainShortString(const QJsonValue &value, int maximum, bool allowEmpty) {
+  if (!value.isString()) return false;
+  const QString text = value.toString();
+  if (text.size() > maximum || (!allowEmpty && text.isEmpty())) return false;
+  for (const QChar c : text) if (c.unicode() < 0x20 || c.unicode() == 0x7F) return false;
+  return true;
+}
+bool textFieldValid(TextField kind, const QJsonValue &value) {
+  switch (kind) {
+    case TextField::Family: return plainShortString(value, maximumFamilyLength, true);
+    case TextField::Size: return value.isDouble() && std::isfinite(value.toDouble()) && value.toDouble() >= 1 && value.toDouble() <= 2000;
+    case TextField::StepSize: return value.isDouble() && std::isfinite(value.toDouble()) && value.toDouble() >= 0 && value.toDouble() <= 2000;
+    case TextField::Flag: return value.isBool();
+    case TextField::Alignment: return value.isString() && QStringList{"Left", "Center", "Right"}.contains(value.toString());
+    // Unknown or not-yet-implemented style names stay inert, preserved data.
+    case TextField::StepStyle: return plainShortString(value, 64, false);
+    case TextField::None: break;
+  }
+  return false;
+}
 const QStringList nonPersistentFields{QStringLiteral("BorderColor"), QStringLiteral("FillColor"), QStringLiteral("AccentColor")};
 std::optional<Argb> preferenceColor(const QJsonValue &value) {
   if (!value.isString()) return {};
@@ -77,6 +116,12 @@ EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRul
         result.values.insert(QStringLiteral("ToolbarItems"), resetToolbarItems(retained));
       }
     }
+  }
+  for (auto it = defaults.begin(); it != defaults.end(); ++it) {
+    const auto kind = textFieldKind(it.key());
+    if (kind == TextField::None || !stored.contains(it.key())) continue;
+    if (textFieldValid(kind, stored.value(it.key()))) result.values.insert(it.key(), stored.value(it.key()));
+    else invalid(result, it.key());
   }
   for (const auto &key : {QStringLiteral("Theme"), QStringLiteral("BlurStrength"), QStringLiteral("Thickness"),
                          QStringLiteral("RememberRecentImagePaths"), QStringLiteral("MaxRecentImageFiles"),
@@ -153,6 +198,36 @@ RectangleStyle drawingStyleFromPreferences(const EditorPreferences &preferences)
   const auto thickness = preferences.values.value(u"Thickness");
   if (number(thickness, 1, 10000, true)) style.strokeWidth = thickness.toDouble();
   return style;
+}
+bool stepStyleImplemented(const QString &style) { return style == u"Numeric"; }
+ContentCreationDefaults contentDefaultsFromPreferences(const EditorPreferences &preferences,
+    const std::function<bool(const QString &)> &familyAvailable) {
+  const auto &values = preferences.values;
+  const auto text = [&](const char *family, const char *size, const char *bold, const char *italic, const char *alignment) {
+    TextCreationDefaults out;
+    const auto fallback = [&](const char *key) { return defaults.value(QLatin1String(key)); };
+    const auto pick = [&](const char *key, TextField kind) {
+      const auto value = values.value(QLatin1String(key));
+      return textFieldValid(kind, value) ? value : fallback(key);
+    };
+    out.requestedFamily = pick(family, TextField::Family).toString();
+    out.familyUnavailable = !out.requestedFamily.isEmpty() && !(familyAvailable && familyAvailable(out.requestedFamily));
+    out.fontFamily = out.familyUnavailable ? QString() : out.requestedFamily;
+    out.fontSize = pick(size, TextField::Size).toDouble();
+    out.bold = pick(bold, TextField::Flag).toBool(); out.italic = pick(italic, TextField::Flag).toBool();
+    out.alignment = pick(alignment, TextField::Alignment).toString().toLower();
+    return out;
+  };
+  ContentCreationDefaults result;
+  result.text = text("TextFontFamily", "TextFontSize", "TextBold", "TextItalic", "TextHorizontalAlignment");
+  result.balloon = text("SpeechBalloonFontFamily", "SpeechBalloonFontSize", "SpeechBalloonTextBold",
+      "SpeechBalloonTextItalic", "SpeechBalloonTextHorizontalAlignment");
+  const auto step = values.value(u"StepFontSize");
+  result.stepFontSize = textFieldValid(TextField::StepSize, step) ? step.toDouble() : 0;
+  const auto style = values.value(u"StepType");
+  result.requestedStepStyle = textFieldValid(TextField::StepStyle, style) ? style.toString() : QStringLiteral("Numeric");
+  result.stepStyleInert = !stepStyleImplemented(result.requestedStepStyle);
+  return result;
 }
 EditorWindowPreferences windowPreferencesFromPreferences(const EditorPreferences &preferences) {
   EditorWindowPreferences window;

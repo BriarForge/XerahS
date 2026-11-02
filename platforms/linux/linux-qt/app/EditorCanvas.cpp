@@ -470,7 +470,7 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
       RectangleAnnotation draft;
       draft.start = geometry->start; draft.end = geometry->end; draft.style = m_creation->style;
       draft.content.type = type; draft.content.points = geometry->points;
-      if (type == shape::step) draft.content.stepValue = nextStepValue(m_session->document());
+      if (type == shape::step) { draft.content.stepValue = nextStepValue(m_session->document()); draft.content.fontSize = m_creation->content.stepFontSize; }
       paintShape(p, draft, m_displaySource.isNull() ? m_image : m_displaySource);
     } else if (m_tool == Tool::CutOut) {
       // Preview the whole strip that will be removed.
@@ -547,7 +547,7 @@ void EditorCanvas::mousePressEvent(QMouseEvent *event) {
     if (!shapeType(m_tool).isEmpty()) {
       m_drag = std::make_pair(at, at);
       m_path = {{at.x(), at.y()}};
-      m_creation = CreationSnapshot{m_session->toolStyle(), m_session->stateId(), m_session->selection()};
+      m_creation = CreationSnapshot{m_session->toolStyle(), m_session->contentDefaults(), m_session->stateId(), m_session->selection()};
     }
   }
   viewport()->update();
@@ -648,9 +648,13 @@ bool EditorCanvas::createFromGesture(const std::vector<PointF> &gesture) {
     return m_session->createShape({gesture.front(), gesture.front(), creation->style}, content, creation->state, creation->selection), true;
   }
   content.points = geometry->points;
-  if (type == shape::step) content.stepValue = nextStepValue(m_session->document());
+  if (type == shape::step) { content.stepValue = nextStepValue(m_session->document()); content.fontSize = creation->content.stepFontSize; }
   if (type == shape::speechBalloon) content.points = {{0.2, 1.6}};  // default tail below the balloon
   if (type == shape::text || type == shape::speechBalloon) {
+    // ESET-008: saved defaults seed this new object only; the dialog may override them.
+    const auto &saved = type == shape::text ? creation->content.text : creation->content.balloon;
+    content.fontFamily = saved.fontFamily; content.fontSize = saved.fontSize; content.textBold = saved.bold;
+    content.textItalic = saved.italic; content.textAlignment = saved.alignment;
     RectangleAnnotation draft;
     draft.start = geometry->start; draft.end = geometry->end; draft.style = creation->style; draft.content = content;
     textContentDialog(draft, this, creation);
@@ -671,6 +675,12 @@ bool EditorCanvas::textContentDialog(const RectangleAnnotation &snapshot, QWidge
                                     std::optional<CreationSnapshot> creation) {
   if (!isEnabled() || m_annotationDialogPending) return false;
   auto *dialog = new TextContentDialog(snapshot, parent ? parent : this);
+  if (creation) {
+    const auto &saved = snapshot.type() == shape::text ? creation->content.text : creation->content.balloon;
+    if (saved.familyUnavailable)
+      dialog->showPreferenceNotice(QStringLiteral("font-family-unavailable: The saved default font \"%1\" is not installed. This object uses the native default font. "
+          "Your saved default is unchanged until you save a replacement in Drawing Defaults.").arg(saved.requestedFamily));
+  }
   return contentDialog(dialog, [dialog] { return dialog->choice(); }, snapshot, creation);
 }
 

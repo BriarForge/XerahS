@@ -2,7 +2,12 @@
 #include "DrawingDefaultsDialog.h"
 #include "NativeEditorPreferences.h"
 #include "NativeEditorAppearance.h"
+#include "image-editor/ShapePainter.h"
+#include <QCheckBox>
 #include <QColorDialog>
+#include <QComboBox>
+#include <QDoubleSpinBox>
+#include <QFontDatabase>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QFormLayout>
@@ -48,6 +53,66 @@ bool manageDrawingDefaults(QWidget *parent) {
   auto *thickness = new QSpinBox(dialog); thickness->setObjectName(QStringLiteral("defaultStrokeThickness"));
   thickness->setAccessibleName(QStringLiteral("Stroke thickness in pixels")); thickness->setRange(1, 10000);
   thickness->setValue(original.values.value(u"Thickness").toInt()); form->addRow(QStringLiteral("Thickness (pixels)"), thickness);
+  // ESET-008: Text, Speech Balloon and Step content defaults.
+  struct TextControls { QString familyKey, sizeKey, boldKey, italicKey, alignKey; QComboBox *family; QDoubleSpinBox *size; QCheckBox *bold, *italic; QComboBox *align; double initialSize = 0; double savedSize = 0; };
+  const auto textSection = [=](const QString &title, const QString &prefix, const QString &familyKey, const QString &sizeKey,
+                               const QString &boldKey, const QString &italicKey, const QString &alignKey) {
+    TextControls c{familyKey, sizeKey, boldKey, italicKey, alignKey, nullptr, nullptr, nullptr, nullptr, nullptr};
+    auto *heading = new QLabel(title, dialog); heading->setTextFormat(Qt::PlainText); form->addRow(heading);
+    c.family = new QComboBox(dialog); c.family->setObjectName(prefix + QStringLiteral("FontFamily"));
+    c.family->setAccessibleName(title + QStringLiteral(" font family"));
+    c.family->addItem(QStringLiteral("System default"), QString());
+    for (const auto &name : QFontDatabase::families()) c.family->addItem(name, name);
+    const QString saved = original.values.value(familyKey).toString();
+    if (!saved.isEmpty() && c.family->findData(saved) < 0) {
+      // The saved family stays selectable so Apply does not rewrite it by accident.
+      c.family->insertItem(1, xerahs::editor::nativeFontFamilyAvailable(saved) ? saved : saved + QStringLiteral(" (not installed)"), saved);
+    }
+    c.family->setCurrentIndex(std::max(0, c.family->findData(saved)));
+    form->addRow(QStringLiteral("Font family"), c.family);
+    if (!saved.isEmpty() && !xerahs::editor::nativeFontFamilyAvailable(saved)) {
+      auto *note = new QLabel(QStringLiteral("The saved font \"%1\" is not installed. New objects use the system default font until you choose a replacement.").arg(saved), dialog);
+      note->setObjectName(prefix + QStringLiteral("FontUnavailable")); note->setWordWrap(true); note->setTextFormat(Qt::PlainText); form->addRow(note);
+    }
+    c.size = new QDoubleSpinBox(dialog); c.size->setObjectName(prefix + QStringLiteral("FontSize")); c.size->setAccessibleName(title + QStringLiteral(" font size in pixels"));
+    c.size->setDecimals(4); c.size->setRange(1, 2000); c.savedSize = original.values.value(sizeKey).toDouble(24); c.size->setValue(c.savedSize); c.initialSize = c.size->value();
+    form->addRow(QStringLiteral("Font size (pixels)"), c.size);
+    c.bold = new QCheckBox(QStringLiteral("Bold"), dialog); c.bold->setObjectName(prefix + QStringLiteral("Bold")); c.bold->setChecked(original.values.value(boldKey).toBool());
+    c.italic = new QCheckBox(QStringLiteral("Italic"), dialog); c.italic->setObjectName(prefix + QStringLiteral("Italic")); c.italic->setChecked(original.values.value(italicKey).toBool());
+    form->addRow(c.bold); form->addRow(c.italic);
+    c.align = new QComboBox(dialog); c.align->setObjectName(prefix + QStringLiteral("Alignment")); c.align->setAccessibleName(title + QStringLiteral(" horizontal alignment"));
+    for (const auto *name : {"Left", "Center", "Right"}) c.align->addItem(QLatin1String(name), QLatin1String(name));
+    c.align->setCurrentIndex(std::max(0, c.align->findData(original.values.value(alignKey).toString())));
+    form->addRow(QStringLiteral("Alignment"), c.align);
+    return c;
+  };
+  const auto textControls = textSection(QStringLiteral("Text annotations"), QStringLiteral("defaultText"), QStringLiteral("TextFontFamily"),
+      QStringLiteral("TextFontSize"), QStringLiteral("TextBold"), QStringLiteral("TextItalic"), QStringLiteral("TextHorizontalAlignment"));
+  const auto balloonControls = textSection(QStringLiteral("Speech balloons"), QStringLiteral("defaultBalloon"), QStringLiteral("SpeechBalloonFontFamily"),
+      QStringLiteral("SpeechBalloonFontSize"), QStringLiteral("SpeechBalloonTextBold"), QStringLiteral("SpeechBalloonTextItalic"), QStringLiteral("SpeechBalloonTextHorizontalAlignment"));
+  auto *stepHeading = new QLabel(QStringLiteral("Step numbers"), dialog); form->addRow(stepHeading);
+  auto *stepSize = new QDoubleSpinBox(dialog); stepSize->setObjectName(QStringLiteral("defaultStepFontSize"));
+  stepSize->setAccessibleName(QStringLiteral("Step number font size in pixels; zero sizes it from the step")); stepSize->setDecimals(4);
+  stepSize->setRange(0, 2000); stepSize->setSpecialValueText(QStringLiteral("Automatic")); const double savedStepSize = original.values.value(u"StepFontSize").toDouble(); stepSize->setValue(savedStepSize); const double initialStepSize = stepSize->value();
+  form->addRow(QStringLiteral("Font size (pixels)"), stepSize);
+  const QString savedStep = original.values.value(u"StepType").toString();
+  auto *stepStyle = new QComboBox(dialog); stepStyle->setObjectName(QStringLiteral("defaultStepStyle")); stepStyle->setAccessibleName(QStringLiteral("Step style"));
+  stepStyle->addItem(QStringLiteral("Numeric"), QStringLiteral("Numeric"));
+  if (!stepStyleImplemented(savedStep)) {
+    // Saved but not yet implemented: kept as-is, new steps stay numeric.
+    stepStyle->addItem(savedStep + QStringLiteral(" (not available yet)"), savedStep); stepStyle->setCurrentIndex(1);
+  }
+  form->addRow(QStringLiteral("Style"), stepStyle);
+  const auto textDraft = [](QJsonObject &changes, const TextControls &c) {
+    changes.insert(c.familyKey, c.family->currentData().toString()); changes.insert(c.sizeKey, c.size->value() == c.initialSize ? c.savedSize : c.size->value());
+    changes.insert(c.boldKey, c.bold->isChecked()); changes.insert(c.italicKey, c.italic->isChecked());
+    changes.insert(c.alignKey, c.align->currentData().toString());
+  };
+  const auto resetText = [](const TextControls &c, const EditorPreferences &d) {
+    c.family->setCurrentIndex(std::max(0, c.family->findData(d.values.value(c.familyKey).toString()))); c.size->setValue(d.values.value(c.sizeKey).toDouble());
+    c.bold->setChecked(d.values.value(c.boldKey).toBool()); c.italic->setChecked(d.values.value(c.italicKey).toBool());
+    c.align->setCurrentIndex(std::max(0, c.align->findData(d.values.value(c.alignKey).toString())));
+  };
   auto *format = new QLabel(QStringLiteral("Colours use #RRGGBB or #AARRGGBB. For example, #80FF0000 is half-transparent red."), dialog);
   format->setWordWrap(true); layout->addWidget(format);
   auto *error = new QLabel(dialog); error->setObjectName(QStringLiteral("drawingDefaultsError"));
@@ -62,12 +127,18 @@ bool manageDrawingDefaults(QWidget *parent) {
     const auto defaults = loadEditorPreferences({});
     stroke->setText(defaults.values.value(u"BorderColorHex").toString()); if (!dialog) return;
     fill->setText(defaults.values.value(u"FillColorHex").toString()); if (!dialog) return;
-    thickness->setValue(defaults.values.value(u"Thickness").toInt()); if (dialog) error->clear();
+    thickness->setValue(defaults.values.value(u"Thickness").toInt()); if (!dialog) return;
+    resetText(textControls, defaults); resetText(balloonControls, defaults);
+    stepSize->setValue(defaults.values.value(u"StepFontSize").toDouble()); stepStyle->setCurrentIndex(0);
+    if (dialog) error->clear();
   });
   QObject::connect(buttons, &QDialogButtonBox::accepted, dialog, [=] {
     if (!dialog || !dialog->ready()) return;
-    const QJsonObject changes{{QStringLiteral("BorderColorHex"), stroke->text()},
+    const QJsonObject base{{QStringLiteral("BorderColorHex"), stroke->text()},
         {QStringLiteral("FillColorHex"), fill->text()}, {QStringLiteral("Thickness"), thickness->value()}};
+    QJsonObject changes = base;
+    textDraft(changes, textControls); textDraft(changes, balloonControls);
+    changes.insert(QStringLiteral("StepFontSize"), stepSize->value() == initialStepSize ? savedStepSize : stepSize->value()); changes.insert(QStringLiteral("StepType"), stepStyle->currentData().toString());
     dialog->commit([changes, revision] { return applyDrawingDefaults(changes, revision); }, [=](const PreferenceWrite &written) {
       if (written.diagnostic == u"invalid-BorderColorHex" || written.diagnostic == u"invalid-FillColorHex") {
         error->setText(QStringLiteral("Enter stroke and fill colours as #RRGGBB or #AARRGGBB."));

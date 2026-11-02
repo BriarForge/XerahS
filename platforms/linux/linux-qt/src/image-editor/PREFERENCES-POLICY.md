@@ -25,6 +25,13 @@ initializer evidence alone does not approve shared defaults. Blur's fallback
 | `Thickness` | Integer, 4 | 1..10000, within the production editor width limit | Non-secret drawing default; affects new objects, without editing existing objects | `SET-IMAGE-EDITOR-OPTIONS-THICKNESS-001`; core and native validation/isolation/restart/history tests |
 | `BorderColorHex` | String, `#FFFF0000` | Exactly `#RRGGBB` or `#AARRGGBB`, hexadecimal digits; canonical uppercase `#AARRGGBB` | Non-secret drawing default; alpha, including transparent RGB, survives; applies to new objects | `SET-IMAGE-EDITOR-OPTIONS-BORDER-COLOR-HEX-001`; core alpha/invalid/restart tests; default agrees with the ES rectangle qualification default; native Apply/Cancel, picker and persistence tests |
 | `FillColorHex` | String, `#00000000` | Same canonical colour validation as border | Non-secret drawing default; applies to new objects | `SET-IMAGE-EDITOR-OPTIONS-FILL-COLOR-HEX-001`; core alpha/invalid/restart tests; default agrees with the ES rectangle qualification default; native Apply/Cancel, picker and persistence tests |
+| `TextFontFamily`, `SpeechBalloonFontFamily` | String, `` (empty = native default font) | At most 256 characters, no control characters; any name is valid data, including families not installed here | Non-secret creation default for new Text/Balloon objects. A family that is not a usable native font (`QFontDatabase`) resolves to the native default at use, the UI says so, and the stored value is never rewritten until the user explicitly saves a replacement. Replacement via Drawing Defaults must be installed | `SET-IMAGE-EDITOR-OPTIONS-TEXT-FONT-FAMILY-001`, `...-SPEECH-BALLOON-FONT-FAMILY-001`; core, native missing-font and explicit-replacement tests. Linux default is empty rather than the reference `Segoe UI`, which Linux does not ship |
+| `TextFontSize`, `SpeechBalloonFontSize` | Finite number, 24 | 1..2000 pixels; fractional values allowed | Non-secret creation default; the native boxes are fixed-size (click boxes 320x48 and 240x80), so the reference 48 would overflow them; 24 equals the existing native size | `SET-IMAGE-EDITOR-OPTIONS-TEXT-FONT-SIZE-001`, `...-SPEECH-BALLOON-FONT-SIZE-001`; core boundary and canvas creation tests |
+| `TextBold`, `SpeechBalloonTextBold` | Boolean, true (reference default) | Boolean only | Non-secret creation default | `SET-IMAGE-EDITOR-OPTIONS-TEXT-BOLD-001`, `...-SPEECH-BALLOON-TEXT-BOLD-001` |
+| `TextItalic`, `SpeechBalloonTextItalic` | Boolean, false (reference default) | Boolean only | Non-secret creation default | `SET-IMAGE-EDITOR-OPTIONS-TEXT-ITALIC-001`, `...-SPEECH-BALLOON-TEXT-ITALIC-001` |
+| `TextHorizontalAlignment`, `SpeechBalloonTextHorizontalAlignment` | Enum string, `Center` (reference default) | `Left`, `Center`, `Right` (reference enum names) | Non-secret creation default | `SET-IMAGE-EDITOR-OPTIONS-TEXT-HORIZONTAL-ALIGNMENT-001`, `...-SPEECH-BALLOON-TEXT-HORIZONTAL-ALIGNMENT-001` |
+| `StepFontSize` | Finite number, 0 (automatic) | 0..2000 pixels; 0 sizes the number from the step circle | Non-secret creation default. The reference default 30 does not fit the native 32-pixel click-created step, so 0 keeps the current proportional size | `SET-IMAGE-EDITOR-OPTIONS-STEP-FONT-SIZE-001` |
+| `StepType` | String, `Numeric` | Non-empty, at most 64 characters, no control characters. Only `Numeric` is implemented; `UppercaseLetter`, `LowercaseLetter`, `UppercaseRoman`, `LowercaseRoman` and any future name are preserved inert and new steps stay numeric | Non-secret creation default | `SET-IMAGE-EDITOR-OPTIONS-STEP-TYPE-001`; alphabetic and Roman numbering remain blocked on product questions |
 | `RememberWindowState` | Boolean, true (candidate census default) | Boolean only | Local layout preference; false stops memory and excludes size/maximized state from both versions | `SET-IMAGE-EDITOR-OPTIONS-REMEMBER-WINDOW-STATE-001`; core/native opt-out, failure and previous-record recovery tests |
 | `WindowWidth` | Finite number, 1280 (candidate census default) | 1..16777215 logical pixels; fractional input is supported and floored for integer widget geometry | Local layout preference; normal client width, constrained to current work area | `SET-IMAGE-EDITOR-OPTIONS-WINDOW-WIDTH-001`; core bounds/isolation and native restore/close/display tests |
 | `WindowHeight` | Finite number, 720 (candidate census default) | Same range/units as width | Local layout preference; normal client height, constrained to current work area | `SET-IMAGE-EDITOR-OPTIONS-WINDOW-HEIGHT-001`; core bounds/isolation and native restore/close/display tests |
@@ -124,6 +131,18 @@ Recent paths must stay excluded from telemetry and support exports. The store
 performs no network access and has no credential import/export authority.
 Full secret-field classification and secure-service settings are separate
 Required work, not implied by compatible unknown-field retention here.
+
+## Native text, balloon and step defaults (ESET-008)
+
+The Drawing Defaults draft also edits the Text, Speech Balloon and Step
+fields above. New objects of those types copy them at gesture start (frozen
+like border, fill and thickness); existing objects, selection and history never
+change, and the per-object dialog never edits the saved preference. An
+unavailable saved family resolves to the native default at creation, the
+creation dialog and Drawing Defaults both say it is not installed, and only an
+explicit Apply of a chosen replacement rewrites it. Re-applying the dialog with
+the family untouched keeps the stored bytes for that field. Native capture
+annotation does not yet use these defaults.
 
 ## Native drawing defaults
 

@@ -1,4 +1,5 @@
 #include "NativeEditorPreferences.h"
+#include "image-editor/ShapePainter.h"
 #include <QDir>
 #include <QStandardPaths>
 #include <memory>
@@ -13,7 +14,15 @@ struct PreferenceHost {
   quint64 revision = 0;
 };
 PreferenceHost &host() { static PreferenceHost instance; return instance; }
+const QStringList &textDefaultKeys() {
+  static const QStringList keys{"TextFontFamily", "TextFontSize", "TextBold", "TextItalic", "TextHorizontalAlignment",
+      "SpeechBalloonFontFamily", "SpeechBalloonFontSize", "SpeechBalloonTextBold", "SpeechBalloonTextItalic",
+      "SpeechBalloonTextHorizontalAlignment", "StepFontSize", "StepType"};
+  return keys;
+}
 bool drawingChanged(const EditorPreferences &before, const EditorPreferences &after) {
+  for (const auto &key : textDefaultKeys())
+    if (before.values.value(key) != after.values.value(key)) return true;
   for (const auto *key : {"BorderColorHex", "FillColorHex", "Thickness"})
     if (before.values.value(QLatin1String(key)) != after.values.value(QLatin1String(key))) return true;
   return false;
@@ -83,8 +92,16 @@ PreferenceWrite applyDrawingDefaults(const QJsonObject &changes, quint64 expecte
   auto &state = host();
   if (state.revision != expectedRevision) return {false, QStringLiteral("settings-changed-in-session")};
   for (auto it = changes.begin(); it != changes.end(); ++it)
-    if (it.key() != u"BorderColorHex" && it.key() != u"FillColorHex" && it.key() != u"Thickness")
+    if (it.key() != u"BorderColorHex" && it.key() != u"FillColorHex" && it.key() != u"Thickness" && !textDefaultKeys().contains(it.key()))
       return {false, QStringLiteral("invalid-drawing-defaults")};
+  // ESET-008: a replacement family must be usable now. Re-submitting the stored
+  // (possibly unavailable) family is allowed and leaves it exactly as saved.
+  for (const auto *key : {"TextFontFamily", "SpeechBalloonFontFamily"}) {
+    const auto family = changes.value(QLatin1String(key));
+    if (family.isString() && !family.toString().isEmpty() && family != state.current.values.value(QLatin1String(key)) &&
+        !xerahs::editor::nativeFontFamilyAvailable(family.toString()))
+      return {false, QStringLiteral("font-family-unavailable")};
+  }
   auto changed = changeEditorPreferences(state.current, changes);
   if (!changed.preferences) return {false, changed.diagnostics.value(0)};
   // A style update cannot reset the recent list's monotonic draft revision.
@@ -159,6 +176,8 @@ QString editorPreferenceDiagnosticMessage(const QString &diagnostic) {
     return QStringLiteral("The current preference record is damaged. A compatible previous record was recovered.");
   if (diagnostic == u"recent-paths-ignored-without-opt-in")
     return QStringLiteral("Stored recent paths were ignored because remembering images was not enabled.");
+  if (diagnostic == u"font-family-unavailable")
+    return QStringLiteral("That font is not installed. Choose an installed font or the system default. Your saved font is unchanged.");
   if (diagnostic == u"invalid-drawing-defaults") return QStringLiteral("The drawing preference change is not supported.");
   if (diagnostic == u"invalid-window-state") return QStringLiteral("The window preference change is not supported.");
   if (diagnostic == u"invalid-appearance-preferences") return QStringLiteral("The appearance preference change is not supported.");
@@ -185,6 +204,13 @@ QString editorPreferenceDiagnosticMessage(const QString &diagnostic) {
         field == u"MaxRecentImageFiles" ? QStringLiteral("Maximum recent images") :
         field == u"RememberRecentImagePaths" ? QStringLiteral("Remember recent images") :
         field == u"RecentImageFiles" ? QStringLiteral("Recent image list") :
+        field == u"TextFontFamily" ? QStringLiteral("Text font family") : field == u"TextFontSize" ? QStringLiteral("Text font size") :
+        field == u"TextBold" ? QStringLiteral("Text bold") : field == u"TextItalic" ? QStringLiteral("Text italic") :
+        field == u"TextHorizontalAlignment" ? QStringLiteral("Text alignment") :
+        field == u"SpeechBalloonFontFamily" ? QStringLiteral("Balloon font family") : field == u"SpeechBalloonFontSize" ? QStringLiteral("Balloon font size") :
+        field == u"SpeechBalloonTextBold" ? QStringLiteral("Balloon text bold") : field == u"SpeechBalloonTextItalic" ? QStringLiteral("Balloon text italic") :
+        field == u"SpeechBalloonTextHorizontalAlignment" ? QStringLiteral("Balloon text alignment") :
+        field == u"StepFontSize" ? QStringLiteral("Step font size") : field == u"StepType" ? QStringLiteral("Step style") :
         field == u"ToolbarItems" ? QStringLiteral("Toolbar layout") : QStringLiteral("Preference version");
     return QStringLiteral("%1 was invalid and is using its default.").arg(label);
   }

@@ -27,6 +27,7 @@
 #include <QScrollBar>
 #include <QSignalSpy>
 #include <QTest>
+#include <limits>
 #include <QWheelEvent>
 #include <QTransform>
 #include <QDialogButtonBox>
@@ -265,6 +266,63 @@ private slots:
     if (mode == "owner") { QSignalSpy changes(canvas.get(), &EditorCanvas::changed); const auto count = changes.count(); canvas.reset(); QCoreApplication::processEvents(); QCOMPARE(changes.count(), count); QVERIFY(!dialog); }
     else { if (dialog) dialog->accept(); QTRY_VERIFY(!canvas->interactionActive()); }
     QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo); if (replacement) QCOMPARE(serializeDocument(replacement->document()), otherBefore);
+  }
+  void newTextBalloonAndStepObjectsTakeFrozenContentDefaultsAndExistingObjectsDoNotChange() {
+    EditorSession session(document()); const auto source = image(); ContentCreationDefaults defaults;
+    defaults.text.fontFamily = QString(); defaults.text.fontSize = 31.5; defaults.text.bold = false; defaults.text.italic = true; defaults.text.alignment = "right";
+    defaults.balloon.fontSize = 19.25; defaults.balloon.bold = true; defaults.balloon.alignment = "left";
+    defaults.stepFontSize = 22.5; QVERIFY(session.setContentDefaults(defaults));
+    EditorCanvas canvas(session, source); canvas.resize(900, 700); canvas.show(); QCoreApplication::processEvents(); canvas.resetZoom();
+    const auto at = [&](double x, double y) { return canvas.viewState().toView({x, y}).toPoint(); };
+    canvas.setTool(EditorCanvas::Tool::Text);
+    QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, at(100, 100));
+    auto changed = defaults; changed.text.fontSize = 99; changed.text.alignment = "left"; QVERIFY(session.setContentDefaults(changed));  // after gesture start: frozen
+    QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, at(350, 250));
+    auto *dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    QCOMPARE(dialog->findChild<QDoubleSpinBox *>("balloonFontSize")->value(), 31.5);
+    QCOMPARE(dialog->findChild<QComboBox *>("annotationTextAlignment")->currentData().toString(), QString("right"));
+    QCOMPARE(dialog->findChild<QCheckBox *>("annotationTextBold")->checkState(), Qt::Unchecked);
+    QCOMPARE(dialog->findChild<QCheckBox *>("annotationTextItalic")->checkState(), Qt::Checked);
+    QVERIFY(!dialog->findChild<QLabel *>("annotationFontPreferenceNotice"));
+    dialog->findChild<QPlainTextEdit *>("balloonText")->setPlainText("First"); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive());
+    const auto first = *session.selectedRectangle();
+    QCOMPARE(first.content.fontSize, 31.5); QCOMPARE(first.content.textAlignment, QString("right")); QCOMPARE(first.content.textBold, std::optional<bool>(false));
+    QCOMPARE(first.content.textItalic, std::optional<bool>(true)); QVERIFY(first.content.fontFamily.isEmpty());
+    // Changing defaults later never edits the existing object.
+    QVERIFY(session.setContentDefaults(defaults)); QCOMPARE(session.selectedRectangle()->content.fontSize, 31.5);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    canvas.setTool(EditorCanvas::Tool::SpeechBalloon);
+    QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, at(400, 300)); QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, at(700, 420));
+    dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog); QVERIFY(dialog->findChild<QLabel *>("annotationFontPreferenceNotice") == nullptr);
+    dialog->findChild<QPlainTextEdit *>("balloonText")->setPlainText("Balloon"); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive());
+    QCOMPARE(session.selectedRectangle()->content.fontSize, 19.25); QCOMPARE(session.selectedRectangle()->content.textAlignment, QString("left"));
+    QCOMPARE(session.selectedRectangle()->content.textBold, std::optional<bool>(true));
+    canvas.setTool(EditorCanvas::Tool::Step);
+    QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, at(50, 400)); QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, at(90, 440));
+    QCOMPARE(session.selectedRectangle()->type(), shape::step); QCOMPARE(session.selectedRectangle()->content.fontSize, 22.5);
+    QCOMPARE(session.selectedRectangle()->content.stepValue, qint64(1));
+  }
+  void unavailableSavedFontShowsNoticeAndCreatesWithNativeFallback() {
+    EditorSession session(document()); const auto source = image(); ContentCreationDefaults defaults;
+    defaults.text.requestedFamily = "Gone Sans"; defaults.text.familyUnavailable = true; defaults.text.fontFamily = QString();
+    QVERIFY(session.setContentDefaults(defaults));
+    EditorCanvas canvas(session, source); canvas.resize(900, 700); canvas.show(); QCoreApplication::processEvents(); canvas.resetZoom(); canvas.setTool(EditorCanvas::Tool::Text);
+    QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, canvas.viewState().toView({100, 100}).toPoint()); QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, canvas.viewState().toView({350, 250}).toPoint());
+    auto *dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog);
+    auto *notice = dialog->findChild<QLabel *>("annotationFontPreferenceNotice"); QVERIFY(notice);
+    QVERIFY(notice->text().contains("Gone Sans")); QVERIFY(notice->text().contains("font-family-unavailable"));
+    QVERIFY(dialog->findChild<QComboBox *>("annotationFontFamily")->currentText().isEmpty());
+    dialog->findChild<QPlainTextEdit *>("balloonText")->setPlainText("Fallback"); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive());
+    QVERIFY(session.selectedRectangle()->content.fontFamily.isEmpty());
+  }
+  void invalidContentDefaultsAreRejectedWithoutChangingTheSession() {
+    EditorSession session(document()); ContentCreationDefaults good; good.text.fontSize = 40; QVERIFY(session.setContentDefaults(good));
+    for (const double bad : {0.0, 0.5, 2001.0, std::numeric_limits<double>::quiet_NaN()}) {
+      auto defaults = good; defaults.balloon.fontSize = bad; QVERIFY(!session.setContentDefaults(defaults));
+    }
+    auto badStep = good; badStep.stepFontSize = -1; QVERIFY(!session.setContentDefaults(badStep));
+    auto badAlign = good; badAlign.text.alignment = "justify"; QVERIFY(!session.setContentDefaults(badAlign));
+    QCOMPARE(session.contentDefaults().text.fontSize, 40.0);
   }
   void creationSurvivesFocusTransferToItsDialog() {
     EditorSession session(document()); const auto source = image(); EditorCanvas canvas(session, source); canvas.resize(900, 700); canvas.show(); QCoreApplication::processEvents(); canvas.resetZoom(); canvas.setTool(EditorCanvas::Tool::Text);

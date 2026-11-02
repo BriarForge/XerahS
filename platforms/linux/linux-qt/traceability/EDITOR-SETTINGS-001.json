@@ -232,15 +232,22 @@
     },
     "ESET-008": {
       "disposition": "Required",
-      "status": "not-started",
+      "status": "partial",
       "vectors": [],
-      "note": "Persisted font/weight/italic/alignment/Step-style preference coverage has not started. Native per-object Text/SpeechBalloon font family/fractional size/style controls and missing-family fallback now exist, but they are not saved preference semantics or approved defaults.",
+      "note": "Persisted Text/SpeechBalloon font family, fractional size (1..2000), bold, italic, Left/Center/Right alignment, Step font size (0..2000, 0 = automatic) and Step style use reference ImageEditorOptions field names, validate per field (invalid -> default + invalid-<field> diagnostic, whole multi-field change rejected), round-trip unknown fields, honour newer-version read-only and atomic failure. Missing fonts: creation resolves to the native default font, the creation dialog and Drawing Defaults show the family is not installed, and the stored bytes are unchanged by load/use/Cancel/unrelated Apply; only an explicit Apply of an installed replacement rewrites it (an uninstalled replacement is refused with font-family-unavailable). Step style: only Numeric is implemented; alphabetic/Roman and unknown names are preserved inert and new steps stay numeric (blocked on product questions). New Text/Balloon/Step objects freeze these defaults at gesture start via EditorSession content defaults; existing objects, selection and history never change and per-object dialog edits never touch the saved preference (no save-as-default shortcut was added). Preferences publish to every open editor only after successful persistence. Rationale for deviations from the reference: Linux default family is empty (native font) because Segoe UI is not shipped; Text/Balloon size 24 and Step size automatic because native objects have fixed-size boxes (click boxes 320x48, 240x80, 32) that the reference 48/30 would overflow; bold true, italic false, Center alignment follow the reference. StepTextBold is not persisted because native steps have no per-object bold. Remaining: native capture annotation does not yet use these defaults, no save-as-default in the per-object dialog, alphabetic/Roman step numbering, other emphasis/redaction defaults, shared approved ledger defaults for the deviations above, and human/a11y qualification.",
       "audit": {
-        "classification": "not-started",
+        "classification": "partial",
         "spec_line": 32,
-        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "coverage": "Partial production behavior is present: persisted text/balloon/step defaults, missing-font fallback without rewrite, creation defaults and Drawing Defaults UI are tested. Capture-annotation use, alphabetic/Roman step styles and approved ledger defaults remain.",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
+        "platforms/linux/linux-qt/tests/PreferenceDialogTest.cpp",
+        "platforms/linux/linux-qt/src/image-editor/PREFERENCES-POLICY.md"
+      ]
     },
     "ESET-009": {
       "disposition": "Required",

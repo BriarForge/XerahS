@@ -200,6 +200,129 @@ private slots:
     QCOMPARE(before.values.value("Theme").toString(), QStringLiteral("Light"));
     QCOMPARE(rejected.diagnostics, QStringList{"invalid-Thickness"});
   }
+  // ESET-008: persisted Text, SpeechBalloon and Step defaults.
+  void textDefaultsHaveDocumentedDefaultsAndResolveToCreationDefaults() {
+    const auto loaded = loadEditorPreferences({});
+    QCOMPARE(loaded.values.value("TextFontFamily"), QJsonValue(""));
+    QCOMPARE(loaded.values.value("TextFontSize"), QJsonValue(24));
+    QCOMPARE(loaded.values.value("TextBold"), QJsonValue(true));
+    QCOMPARE(loaded.values.value("TextHorizontalAlignment"), QJsonValue("Center"));
+    QCOMPARE(loaded.values.value("StepType"), QJsonValue("Numeric"));
+    QCOMPARE(loaded.values.value("StepFontSize"), QJsonValue(0));
+    const auto defaults = contentDefaultsFromPreferences(loaded, [](const QString &) { return true; });
+    QCOMPARE(defaults.text.alignment, QStringLiteral("center")); QVERIFY(defaults.text.bold); QVERIFY(!defaults.text.italic);
+    QVERIFY(!defaults.text.familyUnavailable); QVERIFY(!defaults.stepStyleInert); QCOMPARE(defaults.stepFontSize, 0.0);
+    const auto custom = loadEditorPreferences({{"TextFontFamily", "Installed"}, {"TextFontSize", 17.25}, {"TextBold", false},
+        {"TextItalic", true}, {"TextHorizontalAlignment", "Right"}, {"SpeechBalloonFontSize", 31.5},
+        {"SpeechBalloonTextHorizontalAlignment", "Left"}, {"StepFontSize", 12.5}});
+    QVERIFY(custom.diagnostics.isEmpty());
+    const auto resolved = contentDefaultsFromPreferences(custom, [](const QString &f) { return f == "Installed"; });
+    QCOMPARE(resolved.text.fontFamily, QStringLiteral("Installed")); QCOMPARE(resolved.text.fontSize, 17.25);
+    QVERIFY(!resolved.text.bold); QVERIFY(resolved.text.italic); QCOMPARE(resolved.text.alignment, QStringLiteral("right"));
+    QCOMPARE(resolved.balloon.fontSize, 31.5); QCOMPARE(resolved.balloon.alignment, QStringLiteral("left"));
+    QCOMPARE(resolved.stepFontSize, 12.5);
+  }
+  void textDefaultBoundariesAndInvalidValuesRecoverPerField_data() {
+    QTest::addColumn<QString>("field"); QTest::addColumn<QJsonValue>("value"); QTest::addColumn<bool>("valid");
+    const double inf = std::numeric_limits<double>::infinity();
+    for (const auto *size : {"TextFontSize", "SpeechBalloonFontSize"}) {
+      QTest::newRow(qPrintable(QString(size) + "-min")) << QString(size) << QJsonValue(1) << true;
+      QTest::newRow(qPrintable(QString(size) + "-fraction")) << QString(size) << QJsonValue(12.375) << true;
+      QTest::newRow(qPrintable(QString(size) + "-max")) << QString(size) << QJsonValue(2000) << true;
+      QTest::newRow(qPrintable(QString(size) + "-under")) << QString(size) << QJsonValue(0.99) << false;
+      QTest::newRow(qPrintable(QString(size) + "-zero")) << QString(size) << QJsonValue(0) << false;
+      QTest::newRow(qPrintable(QString(size) + "-over")) << QString(size) << QJsonValue(2000.01) << false;
+      QTest::newRow(qPrintable(QString(size) + "-inf")) << QString(size) << QJsonValue(inf) << false;
+      QTest::newRow(qPrintable(QString(size) + "-string")) << QString(size) << QJsonValue("24") << false;
+    }
+    QTest::newRow("step-size-auto") << QString("StepFontSize") << QJsonValue(0) << true;
+    QTest::newRow("step-size-max") << QString("StepFontSize") << QJsonValue(2000) << true;
+    QTest::newRow("step-size-negative") << QString("StepFontSize") << QJsonValue(-1) << false;
+    QTest::newRow("step-size-over") << QString("StepFontSize") << QJsonValue(2001) << false;
+    for (const auto *flag : {"TextBold", "TextItalic", "SpeechBalloonTextBold", "SpeechBalloonTextItalic"}) {
+      QTest::newRow(qPrintable(QString(flag) + "-true")) << QString(flag) << QJsonValue(true) << true;
+      QTest::newRow(qPrintable(QString(flag) + "-number")) << QString(flag) << QJsonValue(1) << false;
+    }
+    for (const auto *align : {"TextHorizontalAlignment", "SpeechBalloonTextHorizontalAlignment"}) {
+      for (const auto *ok : {"Left", "Center", "Right"}) QTest::newRow(qPrintable(QString(align) + ok)) << QString(align) << QJsonValue(ok) << true;
+      QTest::newRow(qPrintable(QString(align) + "-justify")) << QString(align) << QJsonValue("Justify") << false;
+      QTest::newRow(qPrintable(QString(align) + "-lower")) << QString(align) << QJsonValue("left") << false;
+    }
+    for (const auto *family : {"TextFontFamily", "SpeechBalloonFontFamily"}) {
+      QTest::newRow(qPrintable(QString(family) + "-empty")) << QString(family) << QJsonValue("") << true;
+      QTest::newRow(qPrintable(QString(family) + "-256")) << QString(family) << QJsonValue(QString(256, 'x')) << true;
+      QTest::newRow(qPrintable(QString(family) + "-257")) << QString(family) << QJsonValue(QString(257, 'x')) << false;
+      QTest::newRow(qPrintable(QString(family) + "-control")) << QString(family) << QJsonValue("Bad\nFont") << false;
+      QTest::newRow(qPrintable(QString(family) + "-number")) << QString(family) << QJsonValue(3) << false;
+    }
+    QTest::newRow("step-style-numeric") << QString("StepType") << QJsonValue("Numeric") << true;
+    QTest::newRow("step-style-blocked") << QString("StepType") << QJsonValue("UppercaseRoman") << true;
+    QTest::newRow("step-style-future") << QString("StepType") << QJsonValue("FutureStyle9") << true;
+    QTest::newRow("step-style-empty") << QString("StepType") << QJsonValue("") << false;
+    QTest::newRow("step-style-number") << QString("StepType") << QJsonValue(2) << false;
+  }
+  void textDefaultBoundariesAndInvalidValuesRecoverPerField() {
+    QFETCH(QString, field); QFETCH(QJsonValue, value); QFETCH(bool, valid);
+    const auto loaded = loadEditorPreferences({{field, value}, {"Thickness", 9}});
+    QCOMPARE(loaded.fields.value(field), valid ? PreferenceFieldState::Valid : PreferenceFieldState::Invalid);
+    QCOMPARE(loaded.diagnostics, valid ? QStringList{} : QStringList{"invalid-" + field});
+    QCOMPARE(loaded.values.value("Thickness"), QJsonValue(9));
+    QCOMPARE(loaded.values.value(field), valid ? value : loadEditorPreferences({}).values.value(field));
+    const auto changed = changeEditorPreferences(loadEditorPreferences({}), {{field, value}});
+    QCOMPARE(bool(changed.preferences), valid);
+  }
+  void inertStepStylesAreNotImplementedButPreserved() {
+    for (const auto *style : {"UppercaseLetter", "LowercaseLetter", "UppercaseRoman", "LowercaseRoman", "FutureStyle9"}) {
+      const auto loaded = loadEditorPreferences({{"StepType", style}});
+      const auto defaults = contentDefaultsFromPreferences(loaded, [](const QString &) { return true; });
+      QVERIFY(defaults.stepStyleInert); QCOMPARE(defaults.requestedStepStyle, QString(style));
+      const auto changed = changeEditorPreferences(loaded, {{"Thickness", 5}});
+      QVERIFY(changed.preferences);
+      QCOMPARE(serializeEditorPreferences(*changed.preferences).value("StepType"), QJsonValue(style));
+    }
+    QVERIFY(stepStyleImplemented("Numeric")); QVERIFY(!stepStyleImplemented("UppercaseLetter"));
+  }
+  void missingFontResolvesToFallbackWithoutRewritingStoredPreference() {
+    MemoryStorage storage;
+    storage.artifact = {PreferenceRead::Kind::Readable, envelope(QJsonObject{{"TextFontFamily", "Segoe Missing"},
+        {"SpeechBalloonFontFamily", "Segoe Missing"}, {"FutureOption", true}}), {}};
+    const QByteArray original = storage.artifact.bytes;
+    EditorPreferenceStore store(storage);
+    QVERIFY(store.diagnostics().isEmpty());
+    const auto defaults = contentDefaultsFromPreferences(store.preferences(), [](const QString &) { return false; });
+    QVERIFY(defaults.text.familyUnavailable); QVERIFY(defaults.text.fontFamily.isEmpty());
+    QCOMPARE(defaults.text.requestedFamily, QStringLiteral("Segoe Missing")); QVERIFY(defaults.balloon.familyUnavailable);
+    EditorPreferenceStore again(storage); (void)contentDefaultsFromPreferences(again.preferences(), [](const QString &) { return false; });
+    QCOMPARE(storage.artifact.bytes, original); QCOMPARE(storage.replacements, 0);
+    // Saving an unrelated field keeps the unavailable family; only a chosen replacement changes it.
+    auto unrelated = changeEditorPreferences(store.preferences(), {{"Thickness", 6}});
+    QVERIFY(unrelated.preferences); QVERIFY(store.save(*unrelated.preferences).saved);
+    QCOMPARE(section(storage, "current").value("TextFontFamily"), QJsonValue("Segoe Missing"));
+    auto replacement = changeEditorPreferences(store.preferences(), {{"TextFontFamily", "Replacement"}});
+    QVERIFY(replacement.preferences); QVERIFY(store.save(*replacement.preferences).saved);
+    QCOMPARE(section(storage, "current").value("TextFontFamily"), QJsonValue("Replacement"));
+    QCOMPARE(section(storage, "current").value("SpeechBalloonFontFamily"), QJsonValue("Segoe Missing"));
+    QCOMPARE(section(storage, "previous").value("TextFontFamily"), QJsonValue("Segoe Missing"));
+    QCOMPARE(section(storage, "current").value("FutureOption"), QJsonValue(true));
+  }
+  void textDefaultsHonourNewerVersionUnknownAndAtomicFailure() {
+    const auto newer = loadEditorPreferences({{"schemaVersion", 2}, {"TextFontSize", 30}});
+    QVERIFY(newer.readOnly); QVERIFY(!changeEditorPreferences(newer, {{"TextFontSize", 31}}).preferences);
+    MemoryStorage storage;
+    storage.artifact = {PreferenceRead::Kind::Readable, envelope(QJsonObject{{"TextFontSize", 30}, {"FutureTextOption", QJsonObject{{"x", 1}}}}), {}};
+    EditorPreferenceStore store(storage); const QByteArray original = storage.artifact.bytes;
+    auto changed = changeEditorPreferences(store.preferences(), {{"TextFontSize", 33.5}, {"StepType", "UppercaseLetter"}});
+    QVERIFY(changed.preferences); storage.failReplace = true;
+    QVERIFY(!store.save(*changed.preferences).saved);
+    QCOMPARE(storage.artifact.bytes, original); QCOMPARE(store.preferences().values.value("TextFontSize"), QJsonValue(30));
+    storage.failReplace = false; QVERIFY(store.save(*changed.preferences).saved);
+    QCOMPARE(section(storage, "current").value("TextFontSize"), QJsonValue(33.5));
+    QCOMPARE(section(storage, "current").value("FutureTextOption").toObject(), (QJsonObject{{"x", 1}}));
+    QCOMPARE(section(storage, "previous").value("TextFontSize"), QJsonValue(30));
+    // One invalid text field in a multi-field change rejects the whole change.
+    const auto rejected = changeEditorPreferences(store.preferences(), {{"TextBold", false}, {"TextFontSize", 2001}});
+    QVERIFY(!rejected.preferences); QCOMPARE(rejected.diagnostics, QStringList{"invalid-TextFontSize"});
+  }
   void newerAndMalformedVersionsNeverDowngrade() {
     for (const auto &value : {QJsonValue(2), QJsonValue("1"), QJsonValue(0), QJsonValue(1.5)}) {
       const auto loaded = loadEditorPreferences({{"schemaVersion", value}, {"Theme", "Light"}});

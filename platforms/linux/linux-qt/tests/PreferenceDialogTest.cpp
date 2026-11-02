@@ -10,6 +10,8 @@
 #include <QCheckBox>
 #include <QColorDialog>
 #include <QComboBox>
+#include <QDir>
+#include <QFileInfo>
 #include <QDialogButtonBox>
 #include <QFile>
 #include <QLabel>
@@ -191,6 +193,29 @@ private slots:
     window->findChild<QAction *>("customizeToolbar")->trigger(); QVERIFY(changed); QCOMPARE(nativeEditorPreferenceRevision(), revision + 2);
     QTRY_COMPARE(bar->actions().size(), 1); QCOMPARE(bar->actions().first(), window->findChild<QAction *>("undo"));
     const auto saved = nativeEditorPreferences().values.value("ToolbarItems"); QVERIFY(initializeNativeEditorPreferences(path).isEmpty()); QCOMPARE(nativeEditorPreferences().values.value("ToolbarItems"), saved);
+  }
+  void textDefaultsPublishToEveryOpenEditorOnlyAfterPersistenceAndStartNewWindows() {
+    QTemporaryDir dir; const auto path = dir.filePath("prefs.json"); QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
+    QImage image(16, 12, QImage::Format_ARGB32); image.fill(Qt::blue);
+    QPointer<EditorWindow> one(EditorWindow::fromCapturedImage(image)), two(EditorWindow::fromCapturedImage(image)); QVERIFY(one && two);
+    const auto cleanup = qScopeGuard([&] { delete one.data(); delete two.data(); });
+    auto *first = one->findChild<EditorCanvas *>(), *second = two->findChild<EditorCanvas *>();
+    QCOMPARE(first->contentCreationDefaults().text.fontSize, 24.0); QVERIFY(first->contentCreationDefaults().text.bold);
+    const auto revision = nativeEditorPreferenceRevision();
+    { // A failed write publishes nothing to either window.
+      QLockFile lock(path + ".lock"); QVERIFY(!QFile::exists(path)); QVERIFY(QDir().mkpath(QFileInfo(path).absolutePath())); QVERIFY(lock.tryLock(0));
+      QVERIFY(!applyDrawingDefaults({{"TextFontSize", 44.5}, {"StepFontSize", 18}}, revision).saved);
+      QCOMPARE(first->contentCreationDefaults().text.fontSize, 24.0); QCOMPARE(second->contentCreationDefaults().stepFontSize, 0.0);
+    }
+    QVERIFY(applyDrawingDefaults({{"TextFontSize", 44.5}, {"SpeechBalloonTextHorizontalAlignment", "Left"}, {"StepFontSize", 18}}, revision).saved);
+    for (auto *canvas : {first, second}) {
+      const auto &defaults = canvas->contentCreationDefaults();
+      QCOMPARE(defaults.text.fontSize, 44.5); QCOMPARE(defaults.balloon.alignment, QString("left")); QCOMPARE(defaults.stepFontSize, 18.0);
+      QVERIFY(!defaults.text.familyUnavailable);
+    }
+    QPointer<EditorWindow> three(EditorWindow::fromCapturedImage(image)); QVERIFY(three);
+    const auto cleanupThree = qScopeGuard([&] { delete three.data(); });
+    QCOMPARE(three->findChild<EditorCanvas *>()->contentCreationDefaults().text.fontSize, 44.5);
   }
   void unchangedDrawingApplyRecoversFailedLocalDefaultsWithoutHistory() {
     QTemporaryDir dir; const auto path = dir.filePath("prefs.json"); QVERIFY(initializeNativeEditorPreferences(path).isEmpty());

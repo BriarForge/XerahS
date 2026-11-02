@@ -46,6 +46,17 @@ bool EditorSession::setCreationStyle(const RectangleStyle &style) {
   return true;
 }
 
+bool EditorSession::setContentDefaults(const ContentCreationDefaults &defaults) {
+  const auto text = [](const TextCreationDefaults &t) {
+    return std::isfinite(t.fontSize) && t.fontSize >= 1 && t.fontSize <= 2000 && validFontFamily(t.fontFamily) &&
+        validTextAlignment(t.alignment) && !t.alignment.isEmpty();
+  };
+  if (!text(defaults.text) || !text(defaults.balloon) || !std::isfinite(defaults.stepFontSize) ||
+      defaults.stepFontSize < 0 || defaults.stepFontSize > 2000) return false;
+  m_contentDefaults = defaults;
+  return true;
+}
+
 void EditorSession::commit(AnnotationDocument document) {
   commitWithSelection(std::move(document), m_selection);
 }

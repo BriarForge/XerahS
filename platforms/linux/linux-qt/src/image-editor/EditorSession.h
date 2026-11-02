@@ -28,6 +28,10 @@ public:
 
   // ESET-006: changing creation defaults never edits selection or history.
   bool setCreationStyle(const RectangleStyle &style);
+  // ESET-008: Text/SpeechBalloon/Step content defaults for later creations.
+  // Like creation style, this never edits existing objects, selection or history.
+  const ContentCreationDefaults &contentDefaults() const { return m_contentDefaults; }
+  bool setContentDefaults(const ContentCreationDefaults &defaults);
 
   // ES-003, ES-024: returns the new ID, or nullopt for a zero-area drag.
   std::optional<QUuid> createRectangle(PointF start, PointF end);
@@ -164,6 +168,7 @@ private:
   std::optional<quint64> m_checkpoint = 0;
   QSet<QUuid> m_selection;
   RectangleStyle m_tool;
+  ContentCreationDefaults m_contentDefaults;
   QString m_editDiagnostic;
 };
 

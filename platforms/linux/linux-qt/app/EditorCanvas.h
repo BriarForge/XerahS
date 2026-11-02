@@ -44,6 +44,7 @@ public:
   bool editColor(xerahs::editor::EditorSession::ColorTarget, QWidget *parent);
   bool canEditStyle() const { return m_session->canEditStyle(); }
   double creationStrokeWidth() const { return m_session->toolStyle().strokeWidth; }
+  const xerahs::editor::ContentCreationDefaults &contentCreationDefaults() const { return m_session->contentDefaults(); }
   bool changeStrokeWidth(bool increase);
   bool canOrderSelection() const { return m_session->canOrderSelection(); }
   bool reorderSelection(xerahs::editor::EditorSession::Order);
@@ -120,6 +121,7 @@ private:
   std::vector<xerahs::editor::PointF> m_path;  // freehand samples of the live drag
   struct CreationSnapshot {
     xerahs::editor::RectangleStyle style;
+    xerahs::editor::ContentCreationDefaults content;
     quint64 state;
     QSet<QUuid> selection;
   };

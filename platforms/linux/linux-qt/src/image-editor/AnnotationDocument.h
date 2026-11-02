@@ -76,6 +76,23 @@ bool sameDecoration(const RectangleStyle &a, const RectangleStyle &b);
 // Types that carry the EA-005 fields.
 bool hasShapeDecoration(const QString &type);
 
+// ESET-008: creation-time content defaults for new Text, SpeechBalloon and Step
+// objects. They never edit existing objects. `requestedFamily` is the saved
+// preference; `fontFamily` is the usable native family ("" = native default).
+struct TextCreationDefaults {
+  QString requestedFamily, fontFamily;
+  bool familyUnavailable = false;
+  double fontSize = 24;
+  bool bold = true, italic = false;
+  QString alignment = QStringLiteral("center");  // left, center, right
+};
+struct ContentCreationDefaults {
+  TextCreationDefaults text, balloon;
+  double stepFontSize = 0;  // 0 sizes the number from the step circle
+  QString requestedStepStyle = QStringLiteral("Numeric");
+  bool stepStyleInert = false;  // saved style is preserved but not implemented
+};
+
 // EA-001: the document types of the box-bounded annotation tools. Every
 // type shares bounds, style, selection, move, resize, rotation and history.
 namespace shape {

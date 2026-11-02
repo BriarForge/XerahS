@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include <QMap>
 #include <QSizeF>
+#include <functional>
 #include <optional>
 
 namespace xerahs::editor {
@@ -27,6 +28,13 @@ PreferenceChange changeEditorPreferences(const EditorPreferences &current, const
 QJsonObject recentPreferenceValues(const RecentImages &recent);
 // ESET-006/007: saved drawing defaults are separate from annotation state.
 RectangleStyle drawingStyleFromPreferences(const EditorPreferences &preferences);
+// ESET-008: saved Text/SpeechBalloon/Step defaults. `familyAvailable` reports
+// whether a family is a usable native font; a missing family resolves to the
+// native default without touching the stored preference.
+ContentCreationDefaults contentDefaultsFromPreferences(const EditorPreferences &preferences,
+    const std::function<bool(const QString &)> &familyAvailable);
+// Implemented Step styles; other saved names stay inert preference data.
+bool stepStyleImplemented(const QString &style);
 constexpr double maximumEditorWindowExtent = 16777215; // Qt's QWidget extent limit, in logical pixels.
 struct EditorWindowPreferences {
   bool remember = true;
