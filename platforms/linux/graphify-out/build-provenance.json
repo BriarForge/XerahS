@@ -22,11 +22,11 @@
     "ast_preserved": true
   },
   "ast_refresh": {
-    "source_revision": "1a2577063974a88c3aa1c875101563cefb867f49",
+    "source_revision": "94ae69dac2839203d28ccc897dfafabf658c153b",
     "semantic_documents_preserved": true,
-    "hyperedges_preserved": 2,
+    "hyperedges_preserved": 1,
     "external_model_labeling_used": false,
-    "slice": "Native speech-balloon border color"
+    "slice": "Portal-to-quick-task capture verification reconciled with concurrent native selector"
   },
   "semantic_refresh": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
@@ -54,5 +54,43 @@
     "unaffected_node_ids_preserved": true,
     "token_usage": "unknown: delegation tool exposes no usage field",
     "method": "Complete changed-document extraction; no external model clustering; deliberate source-scoped replacement after coverage and preservation assertions."
+  },
+  "goal_checkpoint_refresh": {
+    "source_parents": [
+      "590862cff75719dc1fbdf045df02624ced4c5e2c",
+      "7b0bec165e7b43b17b4d8711c6c9537d36bd22b4"
+    ],
+    "documents": [
+      {
+        "path": "linux-qt/CMakeLists.txt",
+        "lines_read": 1338,
+        "sha256": "9ee46a19c26519c6c819ac19769f344b1013e9c1560c55b3204529f92c0ce48e"
+      },
+      {
+        "path": "linux-qt/README.md",
+        "lines_read": 305,
+        "sha256": "03958c43d32c7fb1c990a0bb13052457dd3230027388c973c0ef5ffa92bef0e3"
+      },
+      {
+        "path": "linux-qt/IMPLEMENTATION.md",
+        "lines_read": 301,
+        "sha256": "6715fe4a02cfd3f7a9470cd9cd11266e07809cb2b9ec8a3ad6e461ddb906b81f"
+      },
+      {
+        "path": "linux-qt/PRODUCTION-BACKLOG.md",
+        "lines_read": 137,
+        "sha256": "85bf4c79ca1a1845177d61592a3de97c40f3465192c620924aa10208d9daa85d"
+      },
+      {
+        "path": "linux-qt/app/JOURNAL-RECOVERY.md",
+        "lines_read": 186,
+        "sha256": "957a4ec49071598e923f379575b5064766f504eb739c286707c0c72707e5d9d5"
+      }
+    ],
+    "saved_semantic_identities_preserved": 600,
+    "new_semantic_concepts": 26,
+    "both_parent_graph_identity_sets_preserved": true,
+    "token_usage_status": "unavailable_host_agent",
+    "method": "Full changed-document semantic extraction followed by merged-source AST refresh; dedup disabled, overwrite guards enabled; generated progress excluded."
   }
 }

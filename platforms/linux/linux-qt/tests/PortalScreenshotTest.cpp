@@ -642,6 +642,31 @@ private slots:
     QCOMPARE(result->pipeline.orderedResults.size(), size_t(1)); QCOMPARE(result->pipeline.orderedResults[0].inputArtifact, std::optional<QString>{"save.file"});
     QCOMPARE(journal->list().entries.size(), size_t(2));
   }
+  void quickTaskWorkflowCapturesThroughPortalThenChoosesAndSavesCurrentRunOnly() {
+    using namespace xerahs::workflows; using namespace xerahs::actions;
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto before = bytes(path);
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    NativeWorkflowExecutions executions(dir.filePath("executions")); auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, {}, {}, journal);
+    auto workflow = defaultCaptureWorkflows().entries[0]; workflow.actions = QStringList{"quick-task-menu", "image-clipboard"};
+    workflow.output.directory = dir.filePath("chosen"); workflow.output.pattern = "quick-%widthx%height"; const auto snapshot = workflowJson(workflow);
+    const auto executionId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    auto run = controller.prepareWorkflowCapture(workflow, executionId, "native-shell", executions.writer()); QVERIFY(run); run(); run = {};
+    QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35});
+    QTRY_VERIFY(qobject_cast<ActionSelectionDialog *>(QApplication::activeModalWidget()));
+    auto *dialog = qobject_cast<ActionSelectionDialog *>(QApplication::activeModalWidget());
+    QVERIFY(controller.busy()); QVERIFY(!overlayExists()); QVERIFY(!QFileInfo::exists(workflow.output.directory));
+    auto *save = dialog->findChild<QCheckBox *>("capture-action-save"); auto *copy = dialog->findChild<QCheckBox *>("capture-action-image-clipboard"); QVERIFY(save && copy);
+    QVERIFY(!save->isChecked()); QVERIFY(copy->isChecked()); save->setChecked(true); copy->setChecked(false); dialog->accept();
+    QTRY_VERIFY(!controller.busy()); const auto result = controller.lastPipelineResult(); QVERIFY(result && result->file);
+    QCOMPARE(result->file->path, dir.filePath("chosen/quick-30x25.png")); QCOMPARE(QImage(result->file->path), result->workingMedia);
+    QCOMPARE(result->pipeline.orderedResults.size(), size_t(2)); QCOMPARE(result->pipeline.orderedResults[0].action, QString("quick-task-menu"));
+    QCOMPARE(result->pipeline.orderedResults[0].state, ActionState::Succeeded); QCOMPARE(result->pipeline.orderedResults[1].action, QString("save")); QCOMPARE(result->pipeline.orderedResults[1].state, ActionState::Succeeded);
+    QCOMPARE(portal.calls, 1); QCOMPARE(bytes(path), before); QCOMPARE(workflowJson(workflow), snapshot);
+    const auto records = journal->list(); QCOMPARE(records.entries.size(), size_t(1)); QVERIFY(records.entries[0].parsed.record && records.entries[0].parsed.record->terminal);
+    QCOMPARE(records.entries[0].parsed.record->selected, (QStringList{"quick-task-menu", "save"}));
+    QCOMPARE(result->pipeline.workflowSnapshot.value("actions"), QJsonValue(QJsonArray::fromStringList({"quick-task-menu", "image-clipboard"})));
+  }
   void perRunSelectionCancelsBeforeEffectsAndDoesNotChangeTheNextDefaultCapture() {
     QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto before = bytes(path);
     FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString(); int copies = 0;
