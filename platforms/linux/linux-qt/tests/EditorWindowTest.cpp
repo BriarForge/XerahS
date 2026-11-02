@@ -21,6 +21,7 @@
 #include <QItemSelectionModel>
 
 #include <QAction>
+#include <QBuffer>
 #include <QColorSpace>
 #include <QClipboard>
 #include <QColorDialog>
@@ -2666,6 +2667,91 @@ private slots:
     QCOMPARE(saved.colorSpace(), original.colorSpace());
     trigger(*window, QStringLiteral("undo"));
     QVERIFY(window->statusBar()->currentMessage().startsWith(QStringLiteral("60 × 40")));
+  }
+
+  void nativeRotateAndFlipCarryEveryAnnotationAsOneUndoableOperationAndReload() {
+    QTemporaryDir dir; const QString path = dir.filePath("transform.png");
+    const QImage original = fixture(); QVERIFY(original.save(path));
+    QImage assetPixels(4, 3, QImage::Format_ARGB32);
+    for (int y = 0; y < 3; ++y) for (int x = 0; x < 4; ++x) assetPixels.setPixel(x, y, qRgba(40 + x * 50, 30 + y * 80, 200 - x * 20, 255));
+    QByteArray assetBytes; { QBuffer buffer(&assetBytes); QVERIFY(buffer.open(QIODevice::WriteOnly)); QVERIFY(assetPixels.save(&buffer, "PNG")); }
+    auto d = *loadSource(path).document;
+    const auto make = [](const QString &type, PointF start, PointF end, double rotation, std::vector<PointF> points) {
+      RectangleAnnotation a; a.id = QUuid::createUuid(); a.start = start; a.end = end; a.style = {0xFFFF0000, 0x00000000, 3, rotation, 1};
+      a.content.type = type; a.content.points = std::move(points); return a;
+    };
+    auto arrow = make(shape::arrow, {10, 6}, {30, 18}, 30, {{0, .5}, {1, .25}});
+    auto balloon = make(shape::speechBalloon, {34, 4}, {54, 16}, 0, {{1.25, .5}}); balloon.content.text = QStringLiteral("Hi");
+    auto asset = make(shape::cursor, {35, 22}, {55, 36}, 0, {}); asset.content.imageKey = QStringLiteral("asset");
+    d.annotations = {arrow, balloon, asset}; d.embeddedImages = {{QStringLiteral("asset"), assetBytes}};
+    QVERIFY(saveEdit(path, original, d).sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);
+    window->show(); QTest::qWait(10);
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas);
+    const auto start = serializeDocument(canvas->annotationDocument());
+    QCOMPARE(canvas->annotationDocument().annotations.size(), std::size_t(3));
+    const auto shapeAt = [&](std::size_t i) { return std::get<RectangleAnnotation>(canvas->annotationDocument().annotations[i]); };
+    // Rotate 90 clockwise: centre (20,12) -> (H-12, 20) = (28,20) on the 40x60 canvas.
+    trigger(*window, QStringLiteral("canvasAction%1").arg(int(CanvasAction::RotateClockwise)));
+    QVERIFY(window->statusBar()->currentMessage().startsWith(QStringLiteral("40 × 60")));
+    QCOMPARE(shapeAt(0).start, (PointF{18, 14})); QCOMPARE(shapeAt(0).end, (PointF{38, 26}));
+    QCOMPARE(shapeAt(0).style.rotationDegrees, 120.0); QCOMPARE(shapeAt(0).content.points[1], (PointF{1, .25}));
+    QCOMPARE(shapeAt(2).style.rotationDegrees, 90.0); QCOMPARE(shapeAt(1).content.points[0], (PointF{1.25, .5}));
+    const auto turned = serializeDocument(canvas->annotationDocument());
+    QCOMPARE(canvas->annotationDocument().embeddedImages.front().second, assetBytes);  // a rotation never touches asset bytes
+    // Flip horizontally: the cursor asset itself is mirrored, paths are mirrored in their own frame.
+    trigger(*window, QStringLiteral("canvasAction%1").arg(int(CanvasAction::FlipHorizontal)));
+    QVERIFY(window->statusBar()->currentMessage().startsWith(QStringLiteral("40 × 60")));
+    const auto flipped = serializeDocument(canvas->annotationDocument());
+    QVERIFY(flipped != turned);
+    QCOMPARE(shapeAt(0).start.x, 40 - 38.0); QCOMPARE(shapeAt(0).end.x, 40 - 18.0);
+    QCOMPARE(shapeAt(0).style.rotationDegrees, 60.0);  // 120 deg is nearer the y axis' reflection (60) than the x axis' (240)
+    QCOMPARE(shapeAt(0).content.points[0], (PointF{0, .5})); QCOMPARE(shapeAt(0).content.points[1], (PointF{1, .75}));
+    QImage assetAfter = QImage::fromData(canvas->annotationDocument().embeddedImages.front().second, "PNG").convertToFormat(QImage::Format_ARGB32);
+    QCOMPARE(assetAfter, assetPixels.flipped(Qt::Vertical));  // the cursor was turned 90 degrees, so the reflection lands on its local y
+    QCOMPARE(shapeAt(2).style.rotationDegrees, 90.0);
+    QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+    // Each operation is exactly one history entry.
+    trigger(*window, QStringLiteral("undo")); QCOMPARE(serializeDocument(canvas->annotationDocument()), turned);
+    QVERIFY(window->statusBar()->currentMessage().startsWith(QStringLiteral("40 × 60")));
+    trigger(*window, QStringLiteral("undo")); QCOMPARE(serializeDocument(canvas->annotationDocument()), start);
+    QVERIFY(window->statusBar()->currentMessage().startsWith(QStringLiteral("60 × 40")));
+    QVERIFY(!window->windowTitle().contains(QChar(0x2022))); QVERIFY(!window->findChild<QAction *>(QStringLiteral("undo"))->isEnabled());
+    QCOMPARE(canvas->annotationDocument().embeddedImages.front().second, assetBytes);
+    trigger(*window, QStringLiteral("redo")); trigger(*window, QStringLiteral("redo"));
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), flipped);
+    // Persist, then reload the PNG and its .xann sidecar.
+    trigger(*window, QStringLiteral("saveImage"));
+    QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+    const auto reopened = loadSource(path); QVERIFY(reopened.document);
+    QCOMPARE(reopened.image.size(), QSize(40, 60));
+    QCOMPARE(serializeDocument(*reopened.document).value(QStringLiteral("annotations")), flipped.value(QStringLiteral("annotations")));
+    QCOMPARE(reopened.document->embeddedImages, canvas->annotationDocument().embeddedImages);
+    for (int y = 0; y < 60; ++y) for (int x = 0; x < 40; ++x) QCOMPARE(reopened.image.pixel(x, y), original.pixel(y, x));  // rotate then mirror
+  }
+
+  void nativeTransformRefusalLeavesDocumentAndHistoryUntouched() {
+    QTemporaryDir dir; const QString path = dir.filePath("refuse.png");
+    const QImage original = fixture(); QVERIFY(original.save(path));
+    auto d = *loadSource(path).document;
+    RectangleAnnotation a; a.id = QUuid::createUuid(); a.start = {10, 6}; a.end = {30, 18}; a.style = {0xFFFF0000, 0, 3, 0, 1};
+    const auto id = QUuid::createUuid();
+    d.annotations = {a, UnsupportedAnnotation{id, {{"id", id.toString(QUuid::WithoutBraces)}, {"type", "future"}, {"payload", "keep"}}}};
+    QVERIFY(saveEdit(path, original, d).sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);
+    window->show(); QTest::qWait(10);
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas);
+    const auto before = serializeDocument(canvas->annotationDocument()); const QString title = window->windowTitle();
+    for (CanvasAction action : {CanvasAction::RotateClockwise, CanvasAction::FlipVertical}) {
+      bool refused = false;
+      QTimer timer; connect(&timer, &QTimer::timeout, [&] {
+        if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) { refused = true; QVERIFY(box->text().contains("cannot transform")); box->accept(); }
+      });
+      timer.start(5); trigger(*window, QStringLiteral("canvasAction%1").arg(int(action))); timer.stop(); QVERIFY(refused);
+      QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QCOMPARE(window->windowTitle(), title);
+      QVERIFY(!window->findChild<QAction *>(QStringLiteral("undo"))->isEnabled());
+      QVERIFY(window->statusBar()->currentMessage().startsWith(QStringLiteral("60 × 40")));
+    }
   }
 
   void cancelledDialogPreservesCleanHistoryAndSource() {

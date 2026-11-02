@@ -93,9 +93,22 @@ are copied exactly; annotation translation and removal use the crop policy.
 Quarter-turn rotations and flips permute pixels without interpolation. An
 annotation uses half-open boundary coordinates; a pixel index refers to its
 centre. Clockwise rotation therefore maps pixel `(x,y)` to `(H-1-y,x)` while
-mapping the boundary point to `(H-y,x)`. Rectangle centres and orientations
-transform together. Unknown directional assets require their tool-specific
-implementation before they can be transformed safely.
+mapping the boundary point to `(H-y,x)`. Every annotation type goes through
+one routine (`transformShape`, AnnotationTransform.h) that carries the object
+through the canvas affine map: the bounds centre is mapped and the half extents
+scale along the object's own axes. A rotation adds its angle to the object's
+orientation. A flip keeps readable text upright and absorbs the reflection in
+the object's own frame, since the document has no mirror field: path, arrow,
+line and balloon-tail points are mirrored as fractions of the bounds, and the
+local axis is chosen so the stored rotation stays closest to the original
+(ties use the local x axis). Image, Emoji and Cursor assets are mirrored by
+re-encoding the embedded PNG on the same local axis, once per key, so the
+reflection stays inside the single history entry; rotations never touch
+asset bytes. Text and step glyphs are not mirrored. Quarter and half turns and
+flips are bit exact for exact input, and the exact inverse restores the same
+geometry. Hidden objects transform too. Objects the build does not know, a
+reflection that cannot be decomposed, and assets that cannot be decoded refuse
+the whole operation with no partial result.
 
 Custom rotation uses the canvas centre as its pivot; positive angles rotate
 clockwise. Angles are normalized modulo 360. Expansion uses
@@ -127,11 +140,16 @@ or bilinear interpolation. The aspect lock derives height from width rounded
 to the nearest integer. Sampling aligns pixel centres and clamps at image
 edges. Bilinear interpolation weights premultiplied colour and alpha before
 returning non-premultiplied bytes, so transparent RGB does not create halos.
-Uniform resizing transforms rectangle bounds and stroke width. Non-uniform
-resizing that would shear a rotated rectangle or require different stroke
-widths on its axes currently reports an unsupported transform; affine object
-support remains required. This also covers aspect-locked sizes whose integer
-rounding makes the two scale factors unequal.
+Uniform resizing transforms bounds and stroke width. Non-uniform resizing
+scales each object along its own axes, so quarter-turned boxes swap their
+factors. It reports an unsupported transform, changing nothing, when it would
+shear an object that is not on a quarter turn, or when the object draws a
+visible stroke (rectangle, ellipse, line, arrow, freehand, balloon border,
+magnify frame) that would need different widths on its axes. Types that draw
+no stroke scale their inert width by the geometric mean. This also covers
+aspect-locked sizes whose integer rounding makes the two scale factors
+unequal. Font size, step marker size and effect strength are not rescaled by
+Resize Image; no contract rule defines that yet.
 
 Preparation runs on a worker with row-level cancellation/progress. The native
 PNG codec preserves the source colour profile. Encoding or cancellation failure
@@ -194,7 +212,6 @@ the actual worker to stop before releasing its immutable snapshots. Comparison
 never commits to the session or changes source pixels/profiles, annotations,
 selection, history, dirty checkpoints, disk files, or the main viewport.
 
-General affine annotations, inserted images and
-background composition remain subsequent work.
+Inserted images and background composition remain subsequent work.
 Shared goldens and the remaining qualification gates in
 `product-contract/READINESS.md` still apply.

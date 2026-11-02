@@ -1,9 +1,11 @@
 #include "image-editor/CanvasOperations.h"
+#include "image-editor/AnnotationTransform.h"
 #include "image-editor/CropRegion.h"
 
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <map>
 #include <new>
 #include <QSet>
 
@@ -26,13 +28,6 @@ CanvasResult failure(const QString &error) {
 double normalizedAngle(double angle) {
   angle = std::fmod(angle, 360.0);
   return angle < 0 ? angle + 360 : angle;
-}
-
-bool validRectangle(const RectangleAnnotation &r) {
-  return finite(r.start) && finite(r.end) && r.right() > r.left() && r.bottom() > r.top() &&
-         std::isfinite(r.right() - r.left()) && std::isfinite(r.bottom() - r.top()) &&
-         std::isfinite(r.style.rotationDegrees) && std::isfinite(r.style.strokeWidth) && r.style.strokeWidth > 0 &&
-         std::isfinite(r.style.opacity) && r.style.opacity >= 0 && r.style.opacity <= 1;
 }
 
 // Separating-axis intersection of the rotated, stroke-grown rectangle and
@@ -240,8 +235,6 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
   qint64 width = source.width, height = source.height;
   CanvasTransform transform;
   bool resample = false, clipAnnotations = false;
-  double angleDelta = 0;
-  bool reflection = false;
   switch (op.action) {
     case CanvasAction::Crop: {
       const auto region = normalizedCropRegion(width, height, op.start, op.end);
@@ -271,25 +264,25 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
     }
     case CanvasAction::RotateClockwise:
       width = source.height; height = source.width;
-      transform = {0, -1, 1, 0, double(source.height), 0}; angleDelta = 90;
+      transform = {0, -1, 1, 0, double(source.height), 0};
       break;
     case CanvasAction::RotateCounterClockwise:
       width = source.height; height = source.width;
-      transform = {0, 1, -1, 0, 0, double(source.width)}; angleDelta = -90;
+      transform = {0, 1, -1, 0, 0, double(source.width)};
       break;
     case CanvasAction::Rotate180:
-      transform = {-1, 0, 0, -1, double(source.width), double(source.height)}; angleDelta = 180;
+      transform = {-1, 0, 0, -1, double(source.width), double(source.height)};
       break;
     case CanvasAction::FlipHorizontal:
-      transform = {-1, 0, 0, 1, double(source.width), 0}; angleDelta = 180; reflection = true;
+      transform = {-1, 0, 0, 1, double(source.width), 0};
       break;
     case CanvasAction::FlipVertical:
-      transform = {1, 0, 0, -1, 0, double(source.height)}; reflection = true;
+      transform = {1, 0, 0, -1, 0, double(source.height)};
       break;
     case CanvasAction::RotateCustom: {
       if (!std::isfinite(op.rotationDegrees) ||
           (op.interpolation != Interpolation::Nearest && op.interpolation != Interpolation::Bilinear)) return failure(diagnostic::documentInvalid);
-      angleDelta = normalizedAngle(op.rotationDegrees);
+      const double angleDelta = normalizedAngle(op.rotationDegrees);
       const double radians = angleDelta * std::acos(-1.0) / 180;
       // Exact quarter turns avoid trigonometric drift and extra canvas pixels.
       const double cosine = angleDelta == 0 ? 1 : angleDelta == 90 || angleDelta == 270 ? 0 : angleDelta == 180 ? -1 : std::cos(radians);
@@ -304,6 +297,7 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
       transform = {cosine, -sine, sine, cosine,
           width / 2.0 - cosine * source.width / 2.0 + sine * source.height / 2.0,
           height / 2.0 - sine * source.width / 2.0 - cosine * source.height / 2.0};
+      transform.angleDegrees = angleDelta;
       resample = true;
       clipAnnotations = !op.expandCanvas;
       break;
@@ -323,39 +317,20 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
   AnnotationDocument next = document;
   next.canvasWidth = width; next.canvasHeight = height;
   std::vector<Annotation> annotations;
+  std::map<QString, std::pair<bool, bool>> assetMirrors;
   for (const Annotation &a : document.annotations) {
     if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));
     const auto *r = std::get_if<RectangleAnnotation>(&a);
     if (!r) return failure(QStringLiteral("canvas-annotation-transform-unsupported"));
-    if (!validRectangle(*r)) return failure(diagnostic::documentInvalid);
-    RectangleAnnotation moved = *r;
-    const PointF centre{r->left() / 2 + r->right() / 2, r->top() / 2 + r->bottom() / 2};
-    const PointF mapped = transform.map(centre);
-    double halfWidth = (r->right() - r->left()) / 2, halfHeight = (r->bottom() - r->top()) / 2;
-    if (op.action == CanvasAction::ResizeImage) {
-      const double angle = normalizedAngle(r->style.rotationDegrees);
-      if (transform.xx != transform.yy && std::fmod(angle, 90.0) != 0)
-        return failure(QStringLiteral("canvas-annotation-shear-unsupported"));
-      const bool swapped = angle == 90 || angle == 270;
-      halfWidth *= swapped ? transform.yy : transform.xx;
-      halfHeight *= swapped ? transform.xx : transform.yy;
-      // A single stroke width can preserve a uniformly scaled stroke only.
-      if (transform.xx != transform.yy && r->style.strokeColor >> 24)
-        return failure(QStringLiteral("canvas-annotation-shear-unsupported"));
-      moved.style.strokeWidth *= std::sqrt(transform.xx * transform.yy);
+    auto transformed = transformShape(*r, transform);
+    if (!transformed.shape) return failure(transformed.error);
+    RectangleAnnotation moved = std::move(*transformed.shape);
+    if (transformed.mirrorLocalX || transformed.mirrorLocalY) {
+      // Directional assets have no mirror field in the document: the embedded
+      // PNG itself is mirrored, once per key (all users share one reflection).
+      if (isAssetShape(moved.type()) && !moved.content.imageKey.isEmpty())
+        assetMirrors[moved.content.imageKey] = {transformed.mirrorLocalX, transformed.mirrorLocalY};
     }
-    moved.start = {mapped.x - halfWidth, mapped.y - halfHeight};
-    moved.end = {mapped.x + halfWidth, mapped.y + halfHeight};
-    const double oldAngle = normalizedAngle(r->style.rotationDegrees);
-    moved.style.rotationDegrees = normalizedAngle((reflection ? -oldAngle : oldAngle) + angleDelta);
-    if (reflection && r->type() != shape::rectangle) {
-      // Mirror paths and tails inside their bounds instead of turning the
-      // object upside down, so text stays readable after a flip.
-      const bool horizontal = op.action == CanvasAction::FlipHorizontal;
-      moved.style.rotationDegrees = normalizedAngle(-oldAngle);
-      for (PointF &p : moved.content.points) (horizontal ? p.x : p.y) = 1 - (horizontal ? p.x : p.y);
-    }
-    if (!validRectangle(moved)) return failure(diagnostic::documentInvalid);
     if (clipAnnotations) {
       const auto intersects = intersectsCanvas(moved, width, height);
       if (!intersects) return failure(diagnostic::documentInvalid);
@@ -364,6 +339,14 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
     annotations.emplace_back(std::move(moved));
   }
   next.annotations = std::move(annotations);
+  for (auto &[key, png] : next.embeddedImages) {
+    const auto found = assetMirrors.find(key);
+    if (found == assetMirrors.end()) continue;
+    if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));
+    auto mirrored = mirrorAssetPng(png, found->second.first, found->second.second);
+    if (!mirrored) return failure(QStringLiteral("canvas-annotation-transform-unsupported"));
+    png = std::move(*mirrored);
+  }
   progress(control, 0);
   ArgbImage image = solidImage(width, height, op.fill);
   if (resample) {

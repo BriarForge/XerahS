@@ -5,11 +5,14 @@
 #include "image-editor/AnnotationRenderer.h"
 
 #include <functional>
+#include <limits>
 
 namespace xerahs::editor {
 
 struct CanvasTransform {
   double xx = 1, xy = 0, yx = 0, yy = 1, dx = 0, dy = 0;
+  // Exact clockwise angle of a pure rotation when known; NaN otherwise.
+  double angleDegrees = std::numeric_limits<double>::quiet_NaN();
   PointF map(PointF boundaryPoint) const;
   // Pixel indices refer to pixel centres, unlike half-open annotation bounds.
   PointF mapPixel(PointF pixelIndex) const;

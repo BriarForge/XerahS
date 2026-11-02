@@ -65,6 +65,8 @@ add_library(xerahs_core STATIC
   src/image-editor/ShapePainter.h
   src/image-editor/CanvasOperations.cpp
   src/image-editor/CanvasOperations.h
+  src/image-editor/AnnotationTransform.cpp
+  src/image-editor/AnnotationTransform.h
   src/image-editor/CropRegion.cpp
   src/image-editor/CropRegion.h
   src/image-editor/EditorSession.cpp
@@ -686,6 +688,11 @@ add_executable(canvas-operations-test tests/CanvasOperationsTest.cpp)
 set_target_properties(canvas-operations-test PROPERTIES AUTOMOC ON)
 target_link_libraries(canvas-operations-test PRIVATE xerahs_editor_codecs Qt6::Test)
 add_test(NAME canvas-operations COMMAND canvas-operations-test)
+
+add_executable(annotation-transform-test tests/AnnotationTransformTest.cpp)
+set_target_properties(annotation-transform-test PROPERTIES AUTOMOC ON)
+target_link_libraries(annotation-transform-test PRIVATE xerahs_editor_codecs Qt6::Test)
+add_test(NAME annotation-transform COMMAND annotation-transform-test)
 
 add_executable(image-comparison-test tests/ImageComparisonTest.cpp)
 set_target_properties(image-comparison-test PROPERTIES AUTOMOC ON)

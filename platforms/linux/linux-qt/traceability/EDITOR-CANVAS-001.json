@@ -237,15 +237,19 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Native pixel resize has aspect locking, nearest and alpha-aware bilinear interpolation, dimension limits, and retained rectangle scaling. General non-uniform transforms of rotated or stroked annotations require affine object support; those cases currently fail atomically rather than distort or discard objects. Integer aspect rounding can also produce unequal scales. CanvasOperationsTest covers sampling, alpha and limits. Canvas mutations and custom rotation now use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required.",
+      "note": "Native pixel resize has aspect locking, nearest and alpha-aware bilinear interpolation, dimension limits, and now transforms every stored annotation type through the shared affine routine: uniform resize scales bounds and stroke width, non-uniform resize scales quarter-turned and unrotated objects along their own axes. Non-uniform resize still fails atomically, changing nothing, for objects off a quarter turn (shear) and for visibly stroked types (CANVAS-POLICY.md; no contract rule defines per-axis strokes); types without a drawn stroke scale. Font size, step marker size and effect strength are not rescaled under Resize Image because no contract rule exists (open question). Integer aspect rounding can still produce unequal scales. CanvasOperationsTest and AnnotationTransformTest cover sampling, alpha, limits and every type. Canvas mutations and custom rotation use owned immutable preparation/preview workers, frozen state/exact selection/generation, guarded Core commit and prepared source/private display publication. Owned configuration/clear/error dialogs, nonblocking cancel/child/owner recovery, untagged/P3 source interpretation, exact pixels/assets/history/checkpoints and actual PNG/.xann reopen are indexed in CANVAS-WORKERS.md. Geometry/pixel policy and shared vectors remain unchanged; complete tool/field/resource/native/privacy/security/a11y/parity/human/release qualification remains Required.",
       "evidence": [
         "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
-        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json"
+        "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json",
+        "platforms/linux/linux-qt/src/image-editor/CANVAS-POLICY.md",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationTransform.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransformTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 34,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Clipboard/screen insertion, all-tool resize/directional transforms, background composition, color/resource breadth and target qualification remain incomplete; smart padding is blocked on policy.",
+        "coverage": "Native resize with annotation transforms for all stored types is implemented and tested; complete requirement remains unproven (font/marker/strength scaling policy, per-axis stroke rule, display-scale distinction evidence, target qualification).",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
@@ -273,17 +277,21 @@
       "vectors": [
         "rotate-90-clockwise"
       ],
-      "note": "Source flips now mirror path points and existing shape/asset geometry, with tests. Complete arbitrary affine transformation of every annotation, background and directional asset remains.",
+      "note": "All 17 stored annotation types (rectangle, ellipse, line, arrow, freehand, text, step, highlight, blur, pixelate, speech-balloon, magnify, spotlight, smart-eraser, image, emoji, cursor) now pass through one shared affine routine (transformShape) for rotate 90/180/270, custom angle and flip H/V: centres and orientations map exactly, flips mirror path/tail points in the object's own frame and mirror embedded Image/Emoji/Cursor PNG pixels (no document field is added), text stays upright. Exact inputs stay exact and exact inverses restore the original geometry; unknown annotation types, undecodable assets or invalid geometry refuse the whole operation with no partial result. AnnotationTransformTest covers every type x transform x rotation (oracle, XANN reload, inverses, asset pixels, render equivalence); EditorWindowTest drives real rotate and flip actions with undo/redo, save and reload, and the refusal path. Remains partial: unknown (UnsupportedAnnotation) objects still block any canvas transform by design, there is no separate background layer, and shared goldens plus target qualification are outstanding.",
       "evidence": [
         "platforms/linux/linux-qt/app/CANVAS-WORKERS.md",
         "platforms/linux/linux-qt/app/CANVAS-WORKERS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
-        "platforms/linux/linux-qt/tests/CanvasOperationsTest.cpp"
+        "platforms/linux/linux-qt/tests/CanvasOperationsTest.cpp",
+        "platforms/linux/linux-qt/src/image-editor/CANVAS-POLICY.md",
+        "platforms/linux/linux-qt/src/image-editor/AnnotationTransform.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationTransformTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 39,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Clipboard/screen insertion, all-tool resize/directional transforms, background composition, color/resource breadth and target qualification remain incomplete; smart padding is blocked on policy.",
+        "coverage": "Native transform of all stored annotation types is implemented and tested; complete requirement remains unproven (background layer, unknown-type objects blocking the operation, target qualification).",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
