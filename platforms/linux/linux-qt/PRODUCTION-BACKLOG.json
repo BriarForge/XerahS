@@ -610,6 +610,23 @@
         "app/CaptureActions.cpp",
         "app/CapturePipeline.cpp"
       ]
+    },
+    {
+      "requirements": [
+        "PCA-009",
+        "PCA-014",
+        "PCA-023",
+        "WFCAT-002",
+        "WFCAT-005",
+        "WFCAT-006",
+        "WFCAT-016"
+      ],
+      "outcome": "Concurrent quick-task implementation 94ae69d retained during rebase. Additional private-bus PortalScreenshotTest evidence exercises a configured quick-task workflow through the real CaptureController: acquired region pixels reach the native chooser, run-only Save replaces the configured clipboard choice, an actual PNG is published, the effective plan is journaled, and borrowed source bytes plus the original workflow snapshot remain unchanged. This complements the concurrently landed native selector implementation; physical desktop qualification remains open.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/ActionSelectionTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+      ]
     }
   ],
   "audit_method": "Read all 16 manifest capability specifications (345 IDs); classify 325 desktop rows against current native production/test seams, retain 20 mobile-only IDs outside scope. Refresh source/test provenance and remaining scope without treating old traceability notes or graph edges as compliance evidence.",
