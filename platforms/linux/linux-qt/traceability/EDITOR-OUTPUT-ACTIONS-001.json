@@ -19,7 +19,11 @@
     "platforms/linux/linux-qt/app/EditorPin.h",
     "platforms/linux/linux-qt/app/EditorUpload.cpp",
     "platforms/linux/linux-qt/app/EditorUpload.h",
-    "platforms/linux/linux-qt/app/FileUploadResultDialog.cpp"
+    "platforms/linux/linux-qt/app/FileUploadResultDialog.cpp",
+    "platforms/linux/linux-qt/app/EditorWallpaper.cpp",
+    "platforms/linux/linux-qt/app/EditorWallpaper.h",
+    "platforms/linux/linux-qt/app/PortalWallpaper.cpp",
+    "platforms/linux/linux-qt/app/PortalWallpaper.h"
   ],
   "requirements": {
     "EO-001": {
@@ -249,16 +253,25 @@
       }
     },
     "EO-010": {
-      "status": "not-started",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "No native Set as Wallpaper output with display/layout selection, confirmation and generated-file disclosure is implemented.",
+      "note": "Linux realization: editor File > Set as Wallpaper... (Ctrl+Alt+W) renders one owned source+visible-annotation snapshot as sRGB PNG with alpha through the existing preparation worker, shows a guarded confirmation (target: desktop background / lock screen / both; optional desktop preview; the exact retained file path), then writes the PNG atomically with owner-only (0600) permissions under <XDG data>/com.xerahs.app/linux-qt/wallpapers/ and passes it as a file descriptor to org.freedesktop.portal.Wallpaper SetWallpaperFile (options set-on, show-preview) using the same Request/Response handling as the Screenshot portal (unique-owner subscription before the call, early-response buffering, Close on abandonment). The portal has no per-display selection, so the dialog states that the desktop applies the image to all displays with its own layout; no per-monitor backend is invented. Typed results: succeeded (file retained and path shown in status/signal), cancelled (dialog cancel writes no file and makes no portal call; portal response 1; cancel while waiting closes the Request and keeps/discloses the file because the desktop may already have applied it) and failed with stable codes wallpaper-render-failed, wallpaper-annotation-unsupported, wallpaper-encode-failed, wallpaper-storage-failed, wallpaper-permission-denied, wallpaper-service-unavailable, wallpaper-failed, wallpaper-confirmation-failed. A file the portal definitively did not use (cancel/failure/denied) is removed. Document, history, dirty state and viewport are unchanged; editor destruction during render or during the portal request is safe. Tested on a private session bus with a fake Wallpaper portal. Remaining: product-owner decision whether the portal target choice (background/lock screen/both, all displays) satisfies the 'target display/layout choice' wording as an Equivalent disposition (per-display and fill/fit layout selection are not offered by the portal), real desktop-portal qualification (GNOME/KDE/Hyprland backends), file retention/cleanup policy for old wallpaper files, and accessibility qualification.",
       "audit": {
-        "classification": "not-started",
+        "classification": "partial",
         "spec_line": 36,
-        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Native Set as Wallpaper flow with confirmation, disclosed private retained file, portal transport and typed success/cancel/failure results is present and tested against a fake portal. Per-display and layout (fill/fit) selection are not available through the portal; real desktop-portal and accessibility qualification remain.",
+        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/EditorWallpaperTest.cpp"
+        ]
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorWallpaperTest.cpp"
+      ],
+      "waiting_on": [
+        "Mike: decide whether the XDG Wallpaper portal target choice (background, lock screen, both; applied to all displays) is an acceptable Equivalent disposition for the per-display/layout choice in EO-010."
+      ]
     },
     "EO-011": {
       "status": "partial",

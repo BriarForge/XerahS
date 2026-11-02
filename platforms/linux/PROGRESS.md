@@ -19,7 +19,7 @@ Requirement labels are unweighted: a catalogue requirement can cover hundreds of
 
 ## Current position
 
-- **Linux:** 98 implemented, 194 partial, 32 not started, 0 without a recorded implementation status. [Native platform evidence](README.md).
+- **Linux:** 98 implemented, 195 partial, 31 not started, 0 without a recorded implementation status. [Native platform evidence](README.md).
 
 Linux figures cover the `linux-qt` reference edition. Candidate editions and supported desktop-environment qualification remain separate. Existing maps retain their recorded audit dates and versions; regenerating this report does not constitute a new implementation audit.
 
@@ -36,7 +36,7 @@ Next work follows the [implementation plan](linux-qt/IMPLEMENTATION.md) and [mea
 | [EDITOR-ANNOTATIONS-001](../../product-contract/capabilities/EDITOR-ANNOTATIONS-001/SPEC.md) | 5.0% | 1 | 19 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-ANNOTATIONS-001.json) |
 | [EDITOR-EFFECTS-001](../../product-contract/capabilities/EDITOR-EFFECTS-001/SPEC.md) | 50.0% | 9 | 9 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-EFFECTS-001.json) |
 | [EDITOR-CANVAS-001](../../product-contract/capabilities/EDITOR-CANVAS-001/SPEC.md) | 58.8% | 10 | 5 | 2 | 0 | [Linux map](linux-qt/traceability/EDITOR-CANVAS-001.json) |
-| [EDITOR-OUTPUT-ACTIONS-001](../../product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001/SPEC.md) | 6.2% | 1 | 14 | 1 | 0 | [Linux map](linux-qt/traceability/EDITOR-OUTPUT-ACTIONS-001.json) |
+| [EDITOR-OUTPUT-ACTIONS-001](../../product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001/SPEC.md) | 6.2% | 1 | 15 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-OUTPUT-ACTIONS-001.json) |
 | [EDITOR-SETTINGS-001](../../product-contract/capabilities/EDITOR-SETTINGS-001/SPEC.md) | 0.0% | 0 | 14 | 2 | 0 | [Linux map](linux-qt/traceability/EDITOR-SETTINGS-001.json) |
 | [EDITOR-UTILITIES-001](../../product-contract/capabilities/EDITOR-UTILITIES-001/SPEC.md) | 47.4% | 9 | 7 | 3 | 0 | [Linux map](linux-qt/traceability/EDITOR-UTILITIES-001.json) |
 | [SETTINGS-CATALOG-001](../../product-contract/capabilities/SETTINGS-CATALOG-001/SPEC.md) | 0.0% | 0 | 17 | 3 | 0 | [Linux map](linux-qt/traceability/SETTINGS-CATALOG-001.json) |

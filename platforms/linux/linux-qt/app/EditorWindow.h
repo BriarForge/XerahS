@@ -9,6 +9,7 @@
 #include "EditorPrint.h"
 #include "EditorPin.h"
 #include "EditorUpload.h"
+#include "EditorWallpaper.h"
 #include "AnnotationClipboard.h"
 #include "CanvasCropDialog.h"
 #include "EditorHistory.h"
@@ -57,6 +58,7 @@ public:
   void setPrintPorts(EditorPrintPorts ports);
   void setPinPorts(EditorPinPorts ports);
   void setUploadPorts(EditorUploadPorts ports);
+  void setWallpaperPorts(EditorWallpaperPorts ports);
   void setAnnotationClipboardPorts(AnnotationClipboardPorts ports);
 signals:
   // GUI-thread acknowledgement after checkpoint/partial receipt recording;
@@ -70,6 +72,9 @@ signals:
   void printFinished(const QString &state, const QString &diagnostic, bool cancellationArrivedDuring);
   void pinFinished(const QString &state, const QString &diagnostic);
   void uploadFinished(const QString &state, const QString &diagnostic, const QString &url);
+  // GUI acknowledgement while outputs are busy: state is succeeded/cancelled/failed, diagnostic a
+  // stable code, path the retained wallpaper PNG (empty when none remains). Owner deletion is safe.
+  void wallpaperFinished(const QString &state, const QString &diagnostic, const QString &path);
   void annotationTransferFinished(const QString &command, const QString &state, const QString &diagnostic, bool changed);
 
 protected:
@@ -95,6 +100,7 @@ private:
   bool retryPrint();
   bool pinImage();
   bool uploadImage();
+  bool setWallpaper();
   bool transferAnnotations(const QString &command);
   bool rectangleDialog(bool creation);
   bool rotateSelected();
@@ -178,6 +184,9 @@ private:
   QAction *m_uploadAction = nullptr;
   EditorUploadPorts m_uploadPorts;
   QString m_uploadMessage;
+  QAction *m_wallpaperAction = nullptr;
+  EditorWallpaperPorts m_wallpaperPorts;
+  QString m_wallpaperMessage;
   QMap<QString, QAction *> m_annotationActions;
   AnnotationClipboardPorts m_annotationClipboard;
   QString m_annotationMessage;

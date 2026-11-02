@@ -230,6 +230,14 @@ and Cancel. A missing service disables the action; failure keeps the document
 open and explains a new attempt. Desktop-service and accessibility qualification
 remain Required. `EditorPinTest` exercises the actual editor action and pin.
 
+**Editor Set as Wallpaper:** File → Set as Wallpaper… or Ctrl+Alt+W renders one
+owned sRGB PNG, asks for the target (desktop background, lock screen or both) and
+confirmation, keeps the PNG owner-private under `<XDG data>/com.xerahs.app/linux-qt/wallpapers/`
+(the path is shown), and applies it through the XDG Wallpaper portal. The portal
+has no per-display choice, so the desktop applies it to all displays. The
+document stays unchanged; results are succeeded, cancelled or failed with a
+stable `wallpaper-*` code.
+
 **Editor Upload Image:** File → Upload Image or Ctrl+U renders one owned PNG
 snapshot, shows the configured destination and publication implications, then
 asks for confirmation with Cancel selected. The confirmed destination stays

@@ -382,6 +382,10 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   m_uploadAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_U)); m_uploadAction->setAutoRepeat(false);
   m_uploadAction->setStatusTip("Upload one source and visible-annotation snapshot as sRGB PNG with alpha. Confirm the destination and publication before transmission.");
   connect(m_uploadAction, &QAction::triggered, this, [this] { uploadImage(); });
+  m_wallpaperAction = fileMenu->addAction("Set as &Wallpaper…"); m_wallpaperAction->setObjectName("setWallpaper");
+  m_wallpaperAction->setShortcut(QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_W)); m_wallpaperAction->setAutoRepeat(false);
+  m_wallpaperAction->setStatusTip("Set one source and visible-annotation snapshot as the desktop wallpaper through the desktop portal. Choose the target and confirm first; the desktop applies it to all displays.");
+  connect(m_wallpaperAction, &QAction::triggered, this, [this] { setWallpaper(); });
   auto *closeEditor = fileMenu->addAction(QStringLiteral("Close Editor"));
   closeEditor->setObjectName(QStringLiteral("closeEditor")); closeEditor->setShortcut(QKeySequence::Close);
   connect(closeEditor, &QAction::triggered, this, [this] { close(); });
@@ -681,6 +685,10 @@ void EditorWindow::refresh() {
   m_uploadAction->setEnabled(ready && !m_canvasOperationPending && !m_closePending && uploadAvailable); if (!owner) return;
   m_uploadAction->setToolTip(uploadAvailable ? m_uploadAction->statusTip() : "Upload Image is unavailable: no upload service was provided.");
   if (!owner) return;
+  const bool wallpaperAvailable = bool(m_wallpaperPorts.confirm);
+  m_wallpaperAction->setEnabled(ready && !m_canvasOperationPending && !m_closePending && wallpaperAvailable); if (!owner) return;
+  m_wallpaperAction->setToolTip(wallpaperAvailable ? m_wallpaperAction->statusTip() : "Set as Wallpaper is unavailable: no wallpaper confirmation service was provided.");
+  if (!owner) return;
   setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName(),
                                                     m_session->dirty() ? QStringLiteral(" •") : QString()));
   if (!owner) return;
@@ -698,6 +706,7 @@ void EditorWindow::refresh() {
   if (!m_printMessage.isEmpty()) status += " · " + m_printMessage;
   if (!m_pinMessage.isEmpty()) status += " · " + m_pinMessage;
   if (!m_uploadMessage.isEmpty()) status += " · " + m_uploadMessage;
+  if (!m_wallpaperMessage.isEmpty()) status += " · " + m_wallpaperMessage;
   if (!m_annotationMessage.isEmpty()) status += " · " + m_annotationMessage;
   auto *bar = statusBar(); const bool notify = bar->currentMessage() != status;
   // QStatusBar emits during its internal hide/show traversal. Complete that
@@ -1189,6 +1198,7 @@ bool EditorWindow::withOutputBusy(const std::function<bool()> &operation) {
   m_retryPrint->setEnabled(false); if (!guard) return false;
   m_pinAction->setEnabled(false); if (!guard) return false;
   m_uploadAction->setEnabled(false); if (!guard) return false;
+  m_wallpaperAction->setEnabled(false); if (!guard) return false;
   m_canvas->setEnabled(false); if (!guard) return false;
   menuBar()->setEnabled(false); if (!guard) return false;
   return operation();
@@ -1305,6 +1315,30 @@ bool EditorWindow::uploadImage() {
       auto *dialog = new FileUploadResultDialog(QStringLiteral("Edited image"), result, this);
       dialog->show();
     }
+    return success && bool(owner);
+  });
+}
+void EditorWindow::setWallpaperPorts(EditorWallpaperPorts ports) { m_wallpaperPorts = std::move(ports); refresh(); }
+bool EditorWindow::setWallpaper() {
+  if (m_outputPending || m_canvasOperationPending || m_closePending || !m_wallpaperPorts.confirm || m_canvas->interactionActive()) return false;
+  const QPointer<EditorWindow> owner(this);
+  const auto source = m_image; const auto document = m_session->document(); const auto ports = m_wallpaperPorts;
+  return withOutputBusy([this, owner, source, document, ports] {
+    const auto result = runEditorWallpaper(source, document, this, ports); if (!owner) return false;
+    const auto &action = result.action;
+    const bool success = action.state == xerahs::actions::ActionState::Succeeded && !action.outcomeUnknown;
+    const auto code = action.diagnostic.value_or(QString{});
+    const QString kept = result.fileRetained ? " The wallpaper image is kept at " + result.filePath + "." : QString{};
+    m_wallpaperMessage = success ? "Wallpaper set on all displays (" + result.target + "); the editable document is unchanged." + kept
+        : code == "wallpaper-cancel-requested" ? "Wallpaper request cancelled; the desktop may already have applied it. The document is unchanged." + kept
+        : action.state == xerahs::actions::ActionState::Cancelled ? "Wallpaper not set (cancelled); the editable document is unchanged"
+        : code == "wallpaper-annotation-unsupported" ? "A visible unsupported annotation cannot be set as wallpaper without losing it. The document is kept"
+        : code == "wallpaper-permission-denied" ? "The desktop denied setting the wallpaper; the document is kept"
+        : code == "wallpaper-service-unavailable" ? "This desktop has no wallpaper portal; the document is kept"
+        : "Wallpaper failed; the document is kept. Use Set as Wallpaper to try again with fresh confirmation";
+    if (!code.isEmpty() && code != "wallpaper-cancel-requested") m_wallpaperMessage += " (" + code + ")";
+    try { emit wallpaperFinished(xerahs::actions::actionStateName(action.state), code, result.fileRetained ? result.filePath : QString{}); }
+    catch (...) { if (owner) m_wallpaperMessage += " (completion observer failed)"; }
     return success && bool(owner);
   });
 }
