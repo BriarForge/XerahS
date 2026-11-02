@@ -4,7 +4,7 @@ Audit date: 2026-10-28. Reviewed source: `e7528f29a44236ddbb153e1ab28039697573e3
 
 This is a source/test audit of every capability in `product-contract/manifest.yaml`,
 not release approval or an accepted platform disposition. The 325 desktop rows
-classify **95 tested candidate implementations**, **196 partial**, **27 not started**,
+classify **96 tested candidate implementations**, **195 partial**, **27 not started**,
 **6 blocked**, and **one mobile-scope-only row** (CORE-029). All 20 MOB requirements
 are outside Linux desktop scope. Linked field, action and algorithm ledgers remain
 obligations; these unweighted labels do not measure product readiness.
@@ -26,7 +26,7 @@ Graph relationships were navigation aids and were not used as conformance eviden
 | [EDITOR-SESSION-001](traceability/EDITOR-SESSION-001.json) | 18 implemented, 3 not-started, 9 partial | Production session/history, bounded XANN parsing, exact rectangle compositor, source binding and owned native save/copy/print/history paths have automated fixtures. Partial raster/companion acknowledgement remains honest. | Complete color/profile and all-tool compatibility, separate autosave/recovery and retention, performance, approved shared visual fixtures and physical/native qualification remain incomplete. Legacy fallback sidecar policy remains blocked. |
 | [EDITOR-ANNOTATIONS-001](traceability/EDITOR-ANNOTATIONS-001.json) | 20 partial | Native tools reach all modes; text/balloon creation and editing use guarded asynchronous dialogs with family/style/alignment/text color/tail/fractional size. Numeric Step and fractional strength edits, create admission bounds, history/reload and ownership regressions are tested. | Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers. |
 | [EDITOR-EFFECTS-001](traceability/EDITOR-EFFECTS-001.json) | 9 implemented, 9 partial | Census tests enumerate 232 stable IDs and parameter inventories. Local runner, owned preview/Apply/Cancel, history, seeds, recents/favorites and inert unknown preset data have tests; catalogue presence alone does not establish each algorithm. | Approved local remove_background model, every parameter/asset/algorithm boundary and accepted cross-platform golden, hardware/native qualification and human SXIE review remain incomplete. |
-| [EDITOR-CANVAS-001](traceability/EDITOR-CANVAS-001.json) | 9 implemented, 2 not-started, 6 partial | New/Open, viewport-only zoom/pan, crop, auto-crop, canvas anchors, quarter/custom rotation, clear and comparison use tested production operations and owned preparation. Unknown/unsupported transforms are refused or retained explicitly. | Clipboard/screen insertion, all-tool resize/directional transforms, background composition, color/resource breadth and target qualification remain incomplete; smart padding is blocked on policy. |
+| [EDITOR-CANVAS-001](traceability/EDITOR-CANVAS-001.json) | 10 implemented, 2 not-started, 5 partial | New/Open, viewport-only zoom/pan, crop, auto-crop, canvas anchors, quarter/custom rotation, clear and comparison use tested production operations and owned preparation. Unknown/unsupported transforms are refused or retained explicitly. | All-tool resize/directional transforms, background composition, color/resource breadth and target qualification remain incomplete; smart padding is blocked on policy. |
 | [EDITOR-OUTPUT-ACTIONS-001](traceability/EDITOR-OUTPUT-ACTIONS-001.json) | 1 implemented, 1 not-started, 14 partial | Owned immutable save/copy/print paths and native PNG/JPEG/WebP Save As are present with explicit quality/matte and encoded-raster companion hashes. Tests cover atomic failures and companion-only repair without changing the durable path early. | Approved pin service/desktop qualification, task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved. |
 | [EDITOR-SETTINGS-001](traceability/EDITOR-SETTINGS-001.json) | 2 not-started, 14 partial | Private preference, recent-image, drawing, toolbar, appearance and window-placement stores/dialogs have atomic/unknown/conflict and native tests. Text font controls are per-object content, not persisted font preference coverage. | Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete. |
 | [EDITOR-UTILITIES-001](traceability/EDITOR-UTILITIES-001.json) | 4 blocked, 9 implemented, 6 partial | Production streamed hashes, QR generation, ICO writing, image comparison and structured atomic video conversion have tests. ToolsFeature exposes native windows and missing dependencies honestly. | Local QR scanning and English OCR now have approved dependencies and tested native input windows. The background-removal model remains unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked. |
@@ -37,6 +37,11 @@ Graph relationships were navigation aids and were not used as conformance eviden
 | [COMPATIBILITY-CATALOG-001](traceability/COMPATIBILITY-CATALOG-001.json) | 6 not-started, 12 partial | XANN, private native JSON, isolated SXCU secret-reference import and SXIE data parsing have bounded/malformed/unknown-field fixtures. Tests do not constitute legacy migration acceptance. | Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete. |
 
 ## Changes since the previous full audit
+
+EC-004 now has native file and clipboard image insertion with owned asynchronous
+validation, one-time orientation, preserved alpha/aspect, one-step history and
+XANN roundtrip evidence. Cancellation and stale/lifetime tests preserve the session.
+Optional screen insertion is not offered; aggregate resource qualification stays open.
 
 Native quick-task selection now uses the existing asynchronous chooser and
 shared action engine. Saved workflows expose the action, and native tests cover
@@ -117,7 +122,7 @@ bounds. These features are preserved, not scheduled for reimplementation.
 ## Verification and limits
 
 The audit gate configures a Debug Ninja build, builds with eight jobs and runs all
-124 registered CTest targets with six-way concurrency. Contract lint, backlog and
+125 registered CTest targets with six-way concurrency. Contract lint, backlog and
 generated desktop progress freshness are separate required checks. A green local
 suite proves candidate behavior exercised by those tests; it does not qualify
 unavailable desktops, hardware, physical accessibility, security review or releases.

@@ -16,10 +16,10 @@
   "desktop_capability_count": 15,
   "counts": {
     "blocked": 6,
-    "implemented": 95,
+    "implemented": 96,
     "not-applicable": 1,
     "not-started": 27,
-    "partial": 196
+    "partial": 195
   },
   "capabilities": [
     {
@@ -81,9 +81,9 @@
       "capability": "EDITOR-CANVAS-001",
       "requirements": 17,
       "counts": {
-        "implemented": 9,
+        "implemented": 10,
         "not-started": 2,
-        "partial": 6
+        "partial": 5
       },
       "trace": "traceability/EDITOR-CANVAS-001.json"
     },

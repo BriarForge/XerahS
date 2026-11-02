@@ -4,11 +4,10 @@
 #include "RectanglePropertiesDialog.h"
 #include "SelectionRotationDialog.h"
 #include "AnnotationColorDialog.h"
+#include "ImageInsertDialog.h"
 
 #include <QColorSpace>
 #include <QBuffer>
-#include <QFileDialog>
-#include <QImageReader>
 #include <QInputDialog>
 #include <QDialogButtonBox>
 #include <QPushButton>
@@ -798,22 +797,53 @@ QImage cursorImage() {
 // object in one history step. A click uses the asset's natural size.
 bool EditorCanvas::createAsset(const QString &type, const std::vector<PointF> &gesture, const CreationSnapshot &creation) {
   if (gesture.empty()) return false;
+  if (type == shape::image) {
+    auto *dialog = new ImageInsertDialog(this);
+    const auto generation = m_documentGeneration, serial = ++m_contentDialogSerial;
+    m_annotationDialogPending = true; m_creationDialog = dialog;
+    connect(dialog, &QDialog::finished, this, [this, dialog, gesture, creation, generation, serial](int result) {
+      if (serial != m_contentDialogSerial || !m_annotationDialogPending) return;
+      ++m_contentDialogSerial; m_annotationDialogPending = false; m_creationDialog.clear();
+      QString diagnostic;
+      if (result == QDialog::Accepted && dialog->choice().valid()) {
+        if (!isEnabled() || generation != m_documentGeneration || creation.state != m_session->stateId() || creation.selection != m_session->selection())
+          diagnostic = "annotation-edit-stale";
+        else {
+          const auto &asset = dialog->choice();
+          const PointF first = gesture.front(), last = gesture.back();
+          PointF start{std::min(first.x, last.x), std::min(first.y, last.y)};
+          const QSizeF dragged(std::abs(last.x - first.x), std::abs(last.y - first.y));
+          QSizeF size(asset.dimensions);
+          if (dragged.width() < 4 || dragged.height() < 4) {
+            start = first;
+            const QSizeF limit(std::max(32, m_image.width() * 3 / 4), std::max(32, m_image.height() * 3 / 4));
+            if (size.width() > limit.width() || size.height() > limit.height()) size.scale(limit, Qt::KeepAspectRatio);
+          } else size.scale(dragged, Qt::KeepAspectRatio);
+          ShapeContent content; content.type = shape::image;
+          content.imageKey = "asset-" + QUuid::createUuid().toString(QUuid::WithoutBraces);
+          m_session->createShape({start, {start.x + size.width(), start.y + size.height()}, creation.style}, content,
+              creation.state, creation.selection, {{content.imageKey, asset.png}});
+          diagnostic = m_session->editDiagnostic();
+        }
+      }
+      viewport()->update(); const QPointer<EditorCanvas> owner(this);
+      if (!diagnostic.isEmpty()) { emit editRejected(diagnostic); if (!owner) return; }
+      emit changed();
+    });
+    connect(dialog, &QObject::destroyed, this, [this, serial] {
+      QTimer::singleShot(0, this, [this, serial] {
+        if (serial == m_contentDialogSerial && m_annotationDialogPending) {
+          m_annotationDialogPending = false; m_creationDialog.clear(); emit changed();
+        }
+      });
+    });
+    const QPointer<EditorCanvas> owner(this); dialog->open(); if (owner) emit changed();
+    return false; // the owned asynchronous dialog commits and reports its result
+  }
   const QPointer<EditorCanvas> owner(this);
   QImage asset;
   m_annotationDialogPending = true;
-  if (type == shape::image) {
-    const QString path = QFileDialog::getOpenFileName(this, "Insert Image", {}, "Images (*.png *.jpg *.jpeg *.bmp *.gif *.webp)");
-    if (!owner) return false;
-    if (!path.isEmpty()) {
-      QImageReader reader(path);
-      const QSize size = reader.size();
-      // ES-028: reject oversized images before decoding.
-      if (size.isValid() && size.width() <= 16384 && size.height() <= 16384 && qint64(size.width()) * size.height() <= 64LL * 1024 * 1024)
-        asset = reader.read();
-      if (asset.isNull()) QMessageBox::warning(this, "Insert Image", "The image could not be read, or it is larger than 16384 pixels or 64 megapixels.");
-      if (!owner) return false;
-    }
-  } else if (type == shape::emoji) {
+  if (type == shape::emoji) {
     bool accepted = false;
     const QStringList emojis{"😀", "😂", "😍", "🤔", "😮", "😢", "😡", "👍", "👎", "👏", "🙏", "👉", "👆", "✅", "❌", "⚠️",
                              "❗", "❓", "⭐", "🔥", "💡", "🎉", "❤️", "🐞"};

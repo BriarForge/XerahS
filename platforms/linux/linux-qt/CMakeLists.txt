@@ -176,6 +176,7 @@ add_library(xerahs_editor_canvas STATIC app/EditorCanvas.cpp app/EditorCanvas.h
   app/RectanglePropertiesDialog.cpp app/RectanglePropertiesDialog.h
   app/SelectionRotationDialog.cpp app/SelectionRotationDialog.h
   app/TextContentDialog.cpp app/TextContentDialog.h
+  app/ImageInsert.cpp app/ImageInsert.h app/ImageInsertDialog.cpp app/ImageInsertDialog.h
   app/AnnotationColorDialog.cpp app/AnnotationColorDialog.h
   app/CanvasCropDialog.cpp app/CanvasCropDialog.h)
 set_target_properties(xerahs_editor_canvas PROPERTIES AUTOMOC ON)
@@ -1303,6 +1304,12 @@ target_link_libraries(capture-before-upload-test PRIVATE xerahs_file_output xera
 add_test(NAME capture-before-upload COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-before-upload-test>)
 set_tests_properties(capture-before-upload PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+add_executable(image-insert-test tests/ImageInsertTest.cpp)
+set_target_properties(image-insert-test PROPERTIES AUTOMOC ON)
+target_link_libraries(image-insert-test PRIVATE xerahs_editor_canvas Qt6::Test)
+add_test(NAME image-insert COMMAND image-insert-test)
+set_tests_properties(image-insert PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+
 get_property(XERAHS_NATIVE_TARGETS DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
 foreach(native_target IN LISTS XERAHS_NATIVE_TARGETS)
   get_target_property(native_sources ${native_target} SOURCES)

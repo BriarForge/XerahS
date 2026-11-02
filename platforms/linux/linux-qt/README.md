@@ -286,3 +286,10 @@ Choices leave saved defaults unchanged; Cancel preserves the captured pixels.
 A later after-capture chooser inherits the accepted choices and cannot reopen an
 earlier selector. [Selection evidence](app/ACTION-SELECTION.md) records native
 workflow restart, output pixels, cancellation, journal and retry checks.
+
+**Insert Image:** Select the Image annotation tool and click or drag on the canvas,
+then choose Image File or explicitly use the Clipboard Image. Validation and PNG
+embedding run on a cancellable worker. The inserted object keeps alpha and aspect
+ratio and is one undoable edit; Cancel or a changed session keeps the document
+unchanged. `ImageInsertTest` covers native input, orientation, history and XANN
+roundtrip. Per-image bounds apply; aggregate document-resource qualification remains open.

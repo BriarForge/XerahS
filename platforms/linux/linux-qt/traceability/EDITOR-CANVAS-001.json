@@ -131,17 +131,18 @@
     },
     "EC-004": {
       "disposition": "Required",
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "Image/Emoji/Cursor tool modes now validate and embed assets with AnnotationShapesTest source-removal/undo evidence. Complete clipboard/optional-screen insert and bypass-preference flows remain.",
+      "note": "Native Image annotation accepts an explicitly selected validated file or explicitly read clipboard image. Owned worker preparation validates per-image dimensions/resources, applies orientation once and embeds PNG with alpha. Aspect-fitted drag or natural-size click commits one editable annotation and one undo step. File and clipboard sources stay unchanged; Cancel, stale state/selection/source/tool and owner destruction cannot publish. No bypass preference or optional screen source is offered. Aggregate document resource limits and complete target qualification remain EC-017/ES-028 obligations.",
       "evidence": [
-        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp"
+        "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
+        "platforms/linux/linux-qt/tests/ImageInsertTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 18,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Clipboard/screen insertion, all-tool resize/directional transforms, background composition, color/resource breadth and target qualification remain incomplete; smart padding is blocked on policy.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate native file/clipboard source flow, aspect/alpha/orientation, one-step history, XANN roundtrip and cancellation/lifetime; no aggregate-resource, physical-target or human acceptance claim.",
+        "reviewed_at_revision": "94ae69dac2839203d28ccc897dfafabf658c153b"
       }
     },
     "EC-005": {
