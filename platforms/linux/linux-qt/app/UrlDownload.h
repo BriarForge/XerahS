@@ -3,7 +3,9 @@
 #pragma once
 #include "image-editor/ImageUrl.h"
 #include <QByteArray>
+#include <QList>
 #include <QObject>
+#include <QSslCertificate>
 #include <QUrl>
 
 class QNetworkAccessManager;
@@ -31,6 +33,9 @@ public:
   // `url` must already have passed validateImageUrl with the same opt-in.
   void start(const QUrl &url, bool allowPlainHttp, xerahs::editor::DownloadLimits limits = {});
   void cancel();
+  // TEST SEAM ONLY: extra trusted CAs added to the default TLS configuration.
+  // Production never calls this; verification stays on and unchanged.
+  void setExtraTrustedCas(const QList<QSslCertificate> &cas) { m_extraCas = cas; }
   bool running() const { return m_running; }
 signals:
   void progress(qint64 received, qint64 total);
@@ -50,6 +55,7 @@ private:
   QString m_abortReason;
   UrlDownloadResult m_result;
   QUrl m_current;
+  QList<QSslCertificate> m_extraCas;
 };
 }  // namespace xerahs::app
 Q_DECLARE_METATYPE(xerahs::app::UrlDownloadResult)

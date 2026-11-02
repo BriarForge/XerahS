@@ -22,6 +22,7 @@ inline constexpr char16_t badRedirect[] = u"url-redirect-invalid";
 inline constexpr char16_t httpStatus[] = u"url-http-status";
 inline constexpr char16_t tooLarge[] = u"url-too-large";
 inline constexpr char16_t timeout[] = u"url-timeout";
+inline constexpr char16_t tlsFailed[] = u"url-tls-failed";
 inline constexpr char16_t network[] = u"url-network-failed";
 inline constexpr char16_t cancelled[] = u"url-cancelled";
 inline constexpr char16_t emptyResponse[] = u"url-empty-response";

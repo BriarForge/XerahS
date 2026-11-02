@@ -4,6 +4,8 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QPointer>
+#include <QSslConfiguration>
+#include <QSslError>
 
 namespace xerahs::app {
 using namespace xerahs::editor;
@@ -38,6 +40,9 @@ void UrlDownload::request(const QUrl &url) {
   req.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);  // no local copy through Qt's cache either
   req.setAttribute(QNetworkRequest::CookieSaveControlAttribute, QNetworkRequest::Manual);
   req.setAttribute(QNetworkRequest::CookieLoadControlAttribute, QNetworkRequest::Manual);
+  if (!m_extraCas.isEmpty()) {
+    auto tls = QSslConfiguration::defaultConfiguration(); tls.addCaCertificates(m_extraCas); req.setSslConfiguration(tls);
+  }
   m_reply = m_manager->get(req);
   m_reply->setReadBufferSize(1 << 20);
   connect(m_reply, &QNetworkReply::readyRead, this, &UrlDownload::drain);
@@ -88,6 +93,7 @@ void UrlDownload::onFinished() {
   reply->deleteLater();
   if (!m_abortReason.isEmpty()) { complete(m_abortReason); return; }
   if (error == QNetworkReply::TimeoutError) { complete(text(urlDiagnostic::timeout)); return; }
+  if (error == QNetworkReply::SslHandshakeFailedError) { complete(text(urlDiagnostic::tlsFailed)); return; }
   if (error == QNetworkReply::OperationCanceledError) { complete(text(urlDiagnostic::cancelled)); return; }
   if (isRedirect(status) && error == QNetworkReply::NoError) {
     const auto decision = decideRedirect(m_current, rawLocation, m_result.redirects, m_allowPlainHttp, m_limits.maxRedirects);

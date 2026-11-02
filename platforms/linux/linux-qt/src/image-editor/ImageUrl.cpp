@@ -67,6 +67,7 @@ QString describeUrlDiagnostic(const QString &d) {
   if (is(urlDiagnostic::httpStatus)) return QStringLiteral("The server did not return an image (it reported an error).");
   if (is(urlDiagnostic::tooLarge)) return QStringLiteral("The download is larger than the size limit. Nothing was opened.");
   if (is(urlDiagnostic::timeout)) return QStringLiteral("The server stopped responding. Nothing was opened.");
+  if (is(urlDiagnostic::tlsFailed)) return QStringLiteral("The secure connection could not be verified (untrusted or mismatched certificate). Nothing was opened.");
   if (is(urlDiagnostic::network)) return QStringLiteral("The download failed. Check the address and your connection.");
   if (is(urlDiagnostic::cancelled)) return QStringLiteral("The download was cancelled. Nothing was opened.");
   if (is(urlDiagnostic::emptyResponse)) return QStringLiteral("The server returned no data.");

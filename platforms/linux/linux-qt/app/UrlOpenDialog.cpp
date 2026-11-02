@@ -61,7 +61,7 @@ void UrlOpenDialog::begin() {
   m_requestedHttp = m_allowHttp->isChecked();
   m_status->setText(QStringLiteral("Contacting %1…").arg(sourceLabel(*checked.url)));
   setBusy(true);
-  m_download = new UrlDownload(m_manager, this);
+  m_download = new UrlDownload(m_manager, this); m_download->setExtraTrustedCas(m_options.extraTrustedCas);
   connect(m_download, &UrlDownload::progress, this, [this](qint64 received, qint64 total) {
     if (total > 0) { m_progress->setRange(0, 1000); m_progress->setValue(int(double(received) / total * 1000)); }
     m_status->setText(QStringLiteral("Downloaded %1 KiB…").arg(received / 1024));

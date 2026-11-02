@@ -1,6 +1,8 @@
 // EC-003 network worker against a loopback server (plain http via per-request opt-in).
 #include "UrlDownload.h"
 #include "UrlTestServer.h"
+#include "TlsTestServer.h"
+#include <QSslSocket>
 #include <QEventLoop>
 #include <QNetworkAccessManager>
 #include <QSignalSpy>
@@ -82,6 +84,42 @@ private slots:
   void stalledServerTimesOut() {
     DownloadLimits limits; limits.timeoutMs = 400;
     QCOMPARE(run("/slow", limits).diagnostic, code(urlDiagnostic::timeout));
+  }
+  UrlDownloadResult runTls(const QString &url, bool trustTestCa) {
+    UrlDownload job(nam); QSignalSpy done(&job, &UrlDownload::finished);
+    if (trustTestCa) job.setExtraTrustedCas(TlsTestServer::ca());
+    job.start(QUrl(url), false, {});  // no http opt-in: this is the production https path
+    if (!done.wait(15000)) return {{}, "test-timeout", {}, 0};
+    return qvariant_cast<UrlDownloadResult>(done.first().first());
+  }
+  void tlsSuccessWithTrustedCa() {
+    if (!QSslSocket::supportsSsl()) QSKIP("Qt built without TLS");
+    TlsTestServer tls("server"); QVERIFY(tls.ok());
+    QCOMPARE(TlsTestServer::ca().size(), 1);
+    auto r = runTls(tls.base() + "/ok.png", true); QCOMPARE(r.diagnostic, QString()); QCOMPARE(r.bytes, tls.png());
+    r = runTls(tls.hostBase() + "/ok.png", true); QCOMPARE(r.diagnostic, QString());  // DNS SAN too
+  }
+  void tlsUntrustedCertificateRefused() {
+    if (!QSslSocket::supportsSsl()) QSKIP("Qt built without TLS");
+    TlsTestServer chained("server"), selfsigned("selfsigned"); QVERIFY(chained.ok() && selfsigned.ok());
+    // Production defaults: the test CA is not trusted, so even a CA-signed cert fails.
+    auto r = runTls(chained.base() + "/ok.png", false); QCOMPARE(r.diagnostic, code(urlDiagnostic::tlsFailed)); QVERIFY(r.bytes.isEmpty());
+    // Self-signed is refused even when the test CA is trusted.
+    r = runTls(selfsigned.base() + "/ok.png", true); QCOMPARE(r.diagnostic, code(urlDiagnostic::tlsFailed)); QVERIFY(r.bytes.isEmpty());
+    QCOMPARE(chained.requests + selfsigned.requests, 0);  // no HTTP request was ever sent
+  }
+  void tlsHostnameMismatchRefused() {
+    if (!QSslSocket::supportsSsl()) QSKIP("Qt built without TLS");
+    TlsTestServer wrong("mismatch"); QVERIFY(wrong.ok());
+    const auto r = runTls(wrong.base() + "/ok.png", true); QCOMPARE(r.diagnostic, code(urlDiagnostic::tlsFailed)); QCOMPARE(wrong.requests, 0);
+  }
+  void tlsToPlainHttpRedirectRefusedEvenWithOptIn() {
+    if (!QSslSocket::supportsSsl()) QSKIP("Qt built without TLS");
+    TlsTestServer tls("server"); QVERIFY(tls.ok());
+    UrlDownload job(nam); QSignalSpy done(&job, &UrlDownload::finished); job.setExtraTrustedCas(TlsTestServer::ca());
+    job.start(QUrl(tls.base() + "/to-http"), true, {}); QVERIFY(done.wait(15000));
+    const auto r = qvariant_cast<UrlDownloadResult>(done.first().first());
+    QCOMPARE(r.diagnostic, code(urlDiagnostic::downgrade)); QCOMPARE(tls.requests, 1); QVERIFY(r.bytes.isEmpty());
   }
   void unreachableHostIsValueFreeNetworkFailure() {
     UrlDownload job(nam); QSignalSpy done(&job, &UrlDownload::finished);

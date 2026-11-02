@@ -16,6 +16,7 @@ namespace xerahs::app {
 
 struct UrlOpenOptions {
   xerahs::editor::DownloadLimits limits;
+  QList<QSslCertificate> extraTrustedCas;     // test seam only; empty in production
   QNetworkAccessManager *manager = nullptr;  // injected by tests; the dialog makes its own otherwise
 };
 
