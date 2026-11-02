@@ -116,18 +116,20 @@ full application/capture/recording/upload/workflow/packaging matrix stay in scop
 
 ## EA-005 border style, corner radius and shadow (Rectangle and Ellipse)
 
-Implemented natively with provisional persistence pending the same product
-decision as above. Field names and the BorderStyle members (`Solid`, `Dash`,
-`Dot`, `DashDot`, `DashDotDot`) come from the reference-baseline census;
-the `.xann` schema does not define them. Persisted per annotation as
-`borderStyle`, `cornerRadius` (Rectangle only; an Ellipse keeps any such field
-as an unknown field), `shadow`, `shadowBlurRadius`, `shadowColor`,
-`shadowOffsetX`, `shadowOffsetY`, `shadowOpacity`. Absent means Solid, 0 and no
-shadow; the writer omits a field group that is at its default. Open for the
-owners: numeric shadow defaults (reference `Annotation.DefaultShadow*`), ranges,
-whether the shadow offset follows rotation (here it stays in document axes),
-whether a transparent fill casts a shadow (here only painted alpha does), and
-golden pixels. A Rectangle with any of these fields renders through the shared
-painter; an undecorated one keeps the exact ES-025 renderer. Edit > Rectangle
-Properties edits a selected shape (one undo step); Edit > Shape Style Defaults
-sets the creation defaults for the session without touching existing objects.
+Persisted per annotation using the reference XerahS `.xann` format (camelCase
+properties and enum values) so existing files interoperate: `borderStyle`
+(`solid`, `dash`, `dot`, `dashDot`, `dashDotDot`; read case-insensitively),
+`cornerRadius` (integer, Rectangle only; an Ellipse keeps any such field as an
+unknown field), `shadowEnabled`, `shadowColor`, `shadowBlurRadius`,
+`shadowOpacity`, `shadowOffsetX`, `shadowOffsetY`. Defaults match the
+reference: solid, 0, shadow off, `#80000000`, blur 4, opacity 1, offset 3/3.
+Absent means default and the writer omits a group that is at its default.
+Ranges (corner 0..10000, blur 0..1000, offsets within 10000, opacity 0..1) are
+this build's bounded validation. Shadow semantics (decided under the
+similar-apps rule): the shadow comes from the shape's painted alpha, its offset
+stays in document axes under rotation, and hit testing ignores it. A Rectangle
+with any of these fields renders through the shared painter; an undecorated one
+keeps the exact ES-025 renderer. Edit > Rectangle Properties edits a selected
+shape (one undo step); Edit > Shape Style Defaults sets session creation
+defaults without touching existing objects. Ellipse stroke-geometry golden
+parity remains pending clarification EA-005-LINUX-2026-10-14.

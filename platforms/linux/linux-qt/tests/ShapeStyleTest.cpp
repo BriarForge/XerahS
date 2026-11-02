@@ -61,9 +61,9 @@ private slots:
       d.annotations = {r};
       const auto saved = serializeDocument(d);
       const auto a = saved["annotations"].toArray()[0].toObject();
-      QCOMPARE(a["borderStyle"].toString(), QString("DashDot"));
+      QCOMPARE(a["borderStyle"].toString(), QString("dashDot"));
       QCOMPARE(a.contains("cornerRadius"), type == shape::rectangle);
-      QCOMPARE(a["shadow"].toBool(), true); QCOMPARE(a["shadowBlurRadius"].toDouble(), 3.0);
+      QCOMPARE(a["shadowEnabled"].toBool(), true); QCOMPARE(a["shadowBlurRadius"].toDouble(), 3.0);
       QCOMPARE(a["shadowOffsetX"].toDouble(), 6.0); QCOMPARE(a["shadowOffsetY"].toDouble(), -2.5);
       QCOMPARE(a["shadowOpacity"].toDouble(), 0.625); QCOMPARE(a["shadowColor"].toString(), QString("#FF102030"));
       const auto loaded = parseDocument(saved); QVERIFY(loaded.document);
@@ -84,14 +84,16 @@ private slots:
       const auto list = parseAnnotationList(serializeAnnotationList({r})); QVERIFY(list.annotations);
       QCOMPARE(std::get<RectangleAnnotation>((*list.annotations)[0]).style.borderStyle, style);
     }
-    QVERIFY(!parseBorderStyle("dash")); QVERIFY(!parseBorderStyle(""));
+    QVERIFY(!parseBorderStyle("dashed")); QVERIFY(!parseBorderStyle(""));
+    QCOMPARE(parseBorderStyle("DASHDOT"), std::optional<BorderStyle>(BorderStyle::DashDot));
+    QCOMPARE(parseBorderStyle("DashDotDot"), std::optional<BorderStyle>(BorderStyle::DashDotDot));
   }
 
   void olderDocumentsLoadWithDefaultsAndStaySerializedWithoutNewFields() {
     auto d = document(); d.annotations = {make(shape::rectangle, {10, 10}, {50, 50}), make(shape::ellipse, {5, 5}, {40, 30})};
     const auto saved = serializeDocument(d);
     for (const auto &item : saved["annotations"].toArray()) {
-      for (const auto &key : {"borderStyle", "cornerRadius", "shadow", "shadowBlurRadius", "shadowColor", "shadowOffsetX", "shadowOffsetY", "shadowOpacity"})
+      for (const auto &key : {"borderStyle", "cornerRadius", "shadowEnabled", "shadowBlurRadius", "shadowColor", "shadowOffsetX", "shadowOffsetY", "shadowOpacity"})
         QVERIFY2(!item.toObject().contains(key), key);
     }
     const auto loaded = parseDocument(saved); QVERIFY(loaded.document);
@@ -107,14 +109,15 @@ private slots:
     const double inf = std::numeric_limits<double>::infinity();
     for (const auto &type : {shape::rectangle, shape::ellipse}) {
       const auto row = [&](const char *name, const char *key, QJsonValue v) { QTest::newRow(qPrintable(type + "-" + name)) << type << QString(key) << v; };
-      row("style-name", "borderStyle", "dashed"); row("style-number", "borderStyle", 2); row("style-lowercase", "borderStyle", "dash");
-      row("shadow-string", "shadow", "yes"); row("blur-negative", "shadowBlurRadius", -1); row("blur-huge", "shadowBlurRadius", 1000.5);
+      row("style-name", "borderStyle", "dashed"); row("style-number", "borderStyle", 2); row("style-fractional-word", "borderStyle", "dash dot");
+      row("shadow-string", "shadowEnabled", "yes"); row("blur-negative", "shadowBlurRadius", -1); row("blur-huge", "shadowBlurRadius", 1000.5);
       row("blur-inf", "shadowBlurRadius", inf); row("offset-huge", "shadowOffsetX", 10001); row("offset-neg-huge", "shadowOffsetY", -10001);
       row("opacity-high", "shadowOpacity", 1.5); row("opacity-neg", "shadowOpacity", -0.1); row("color-bad", "shadowColor", "#123456");
       row("color-number", "shadowColor", 5);
     }
     QTest::newRow("rectangle-corner-negative") << shape::rectangle << QString("cornerRadius") << QJsonValue(-1);
     QTest::newRow("rectangle-corner-huge") << shape::rectangle << QString("cornerRadius") << QJsonValue(10001);
+    QTest::newRow("rectangle-corner-fractional") << shape::rectangle << QString("cornerRadius") << QJsonValue(4.5);
     QTest::newRow("rectangle-corner-string") << shape::rectangle << QString("cornerRadius") << QJsonValue("4");
   }
   void outOfRangeAndNonFiniteValuesAreRejected() {
@@ -126,7 +129,7 @@ private slots:
 
   void validBoundaryValuesAreAccepted() {
     auto r = make(shape::rectangle, {1, 1}, {9, 9});
-    const auto o = withDecorationKeys(r, {{"cornerRadius", 10000}, {"shadow", true}, {"shadowBlurRadius", 1000}, {"shadowOffsetX", -10000},
+    const auto o = withDecorationKeys(r, {{"cornerRadius", 10000}, {"shadowEnabled", true}, {"shadowBlurRadius", 1000}, {"shadowOffsetX", -10000},
                                           {"shadowOffsetY", 10000}, {"shadowOpacity", 0}});
     QVERIFY(parseAnnotationList(QJsonArray{o}).annotations);
   }
@@ -139,6 +142,35 @@ private slots:
     QCOMPARE(back.style.cornerRadius, 0.0);
     const auto again = serializeAnnotationList(*parsed.annotations)[0].toObject();
     QCOMPARE(again["cornerRadius"].toString(), QString("vendor-value")); QCOMPARE(again["vendorField"].toInt(), 7);
+  }
+
+  void referenceStyleXannJsonLoadsAndRoundTrips() {
+    // Hand-written in the shape the reference XerahS (camelCase JSON) emits.
+    const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    const auto make = [&](const QString &type, const QString &idText) {
+      return QJsonObject{{"id", idText}, {"type", type}, {"zIndex", 0}, {"visible", true}, {"opacity", 0.9},
+          {"start", QJsonObject{{"x", 10}, {"y", 20}}}, {"end", QJsonObject{{"x", 80}, {"y", 60}}},
+          {"strokeColor", "#FF112233"}, {"fillColor", "#00000000"}, {"strokeWidth", 3}, {"rotationDegrees", 0},
+          {"borderStyle", "DashDot"}, {"cornerRadius", 8}, {"shadowEnabled", true}, {"shadowColor", "#80000000"},
+          {"shadowBlurRadius", 4}, {"shadowOpacity", 1}, {"shadowOffsetX", 3}, {"shadowOffsetY", 3}, {"vendor", "kept"}};
+    };
+    const auto list = parseAnnotationList(QJsonArray{make("rectangle", id), make("ellipse", QUuid::createUuid().toString(QUuid::WithoutBraces))});
+    QVERIFY(list.annotations);
+    const auto &rect = std::get<RectangleAnnotation>((*list.annotations)[0]);
+    QCOMPARE(rect.style.borderStyle, BorderStyle::DashDot); QCOMPARE(rect.style.cornerRadius, 8.0);
+    QCOMPARE(rect.style.shadow, (ShapeShadow{true, 4, 3, 3, 1, 0x80000000}));
+    const auto &ell = std::get<RectangleAnnotation>((*list.annotations)[1]);
+    QCOMPARE(ell.style.cornerRadius, 0.0);  // Ellipse never interprets cornerRadius
+    const auto out = serializeAnnotationList(*list.annotations);
+    const auto r = out[0].toObject(), e = out[1].toObject();
+    QCOMPARE(r["borderStyle"].toString(), QString("dashDot")); QCOMPARE(r["cornerRadius"].toInt(), 8);
+    QCOMPARE(r["shadowEnabled"].toBool(), true); QCOMPARE(r["shadowColor"].toString(), QString("#80000000"));
+    QCOMPARE(r["vendor"].toString(), QString("kept")); QVERIFY(!r.contains("shadow"));
+    QCOMPARE(e["cornerRadius"].toInt(), 8);  // preserved verbatim as an unknown field
+    const auto again = parseAnnotationList(out); QVERIFY(again.annotations);
+    QCOMPARE(serializeAnnotationList(*again.annotations), out);
+    // Defaults equal the reference defaults.
+    QCOMPARE(ShapeShadow{}, (ShapeShadow{false, 4, 3, 3, 1, 0x80000000}));
   }
 
   void disabledShadowKeepsItsParametersAcrossReload() {
@@ -314,7 +346,7 @@ private slots:
     connect(&timer, &QTimer::timeout, [&] {
       auto *dialog = qobject_cast<RectanglePropertiesDialog *>(QApplication::activeModalWidget()); if (!dialog || acted) return; acted = true;
       auto *style = dialog->findChild<QComboBox *>("shapeBorderStyle"); QVERIFY(style);
-      style->setCurrentIndex(style->findText("DashDotDot"));
+      style->setCurrentIndex(style->findText("dashDotDot"));
       QCOMPARE(dialog->findChild<QLineEdit *>("shapeCornerRadius") != nullptr, type == shape::rectangle);
       if (type == shape::rectangle) dialog->findChild<QLineEdit *>("shapeCornerRadius")->setText("12");
       dialog->findChild<QCheckBox *>("shapeShadow")->setChecked(true);
@@ -345,7 +377,7 @@ private slots:
         auto *dialog = qobject_cast<RectanglePropertiesDialog *>(QApplication::activeModalWidget()); if (!dialog || acted) return; acted = true;
         QCOMPARE(dialog->objectName(), QString("shapeStyleDefaultsDialog"));
         QVERIFY(!dialog->findChild<QLineEdit *>("rectangleLeft")); QVERIFY(!dialog->findChild<QLineEdit *>("rectangleStrokeWidth"));
-        auto *style = dialog->findChild<QComboBox *>("shapeBorderStyle"); style->setCurrentIndex(style->findText("Dot"));
+        auto *style = dialog->findChild<QComboBox *>("shapeBorderStyle"); style->setCurrentIndex(style->findText("dot"));
         dialog->findChild<QLineEdit *>("shapeCornerRadius")->setText("6"); dialog->findChild<QCheckBox *>("shapeShadow")->setChecked(true);
         if (apply) dialog->accept(); else dialog->reject();
       });

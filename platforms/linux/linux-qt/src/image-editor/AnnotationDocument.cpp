@@ -97,7 +97,7 @@ bool isUuid(const QString &text) {
 // EA-005: optional decoration fields of Rectangle and Ellipse. Absent fields
 // keep the legacy defaults; present ones are validated and bounded.
 const QStringList kDecorationKeys = {
-    QStringLiteral("borderStyle"),    QStringLiteral("shadow"),        QStringLiteral("shadowBlurRadius"),
+    QStringLiteral("borderStyle"),    QStringLiteral("shadowEnabled"), QStringLiteral("shadowBlurRadius"),
     QStringLiteral("shadowColor"),    QStringLiteral("shadowOffsetX"), QStringLiteral("shadowOffsetY"),
     QStringLiteral("shadowOpacity")};
 const QString kCornerRadiusKey = QStringLiteral("cornerRadius");
@@ -116,10 +116,12 @@ bool parseDecoration(const QJsonObject &o, const QString &type, RectangleStyle &
     if (!parsed) return false;
     style.borderStyle = *parsed;
   }
-  if (type == shape::rectangle && !number(u"cornerRadius", 0, kMaxCornerRadius, style.cornerRadius)) return false;
-  if (o.contains(u"shadow")) {
-    if (!o.value(u"shadow").isBool()) return false;
-    style.shadow.enabled = o.value(u"shadow").toBool();
+  if (type == shape::rectangle && (!number(u"cornerRadius", 0, kMaxCornerRadius, style.cornerRadius) ||
+                                   (o.contains(u"cornerRadius") && !isInteger(o.value(u"cornerRadius")))))
+    return false;
+  if (o.contains(u"shadowEnabled")) {
+    if (!o.value(u"shadowEnabled").isBool()) return false;
+    style.shadow.enabled = o.value(u"shadowEnabled").toBool();
   }
   if (!number(u"shadowBlurRadius", 0, kMaxShadowBlur, style.shadow.blurRadius) ||
       !number(u"shadowOffsetX", -kMaxShadowOffset, kMaxShadowOffset, style.shadow.offsetX) ||
@@ -267,17 +269,17 @@ QJsonObject pointJson(const PointF &p) { return QJsonObject{{QStringLiteral("x")
 
 QString borderStyleName(BorderStyle style) {
   switch (style) {
-    case BorderStyle::Dash: return QStringLiteral("Dash");
-    case BorderStyle::Dot: return QStringLiteral("Dot");
-    case BorderStyle::DashDot: return QStringLiteral("DashDot");
-    case BorderStyle::DashDotDot: return QStringLiteral("DashDotDot");
+    case BorderStyle::Dash: return QStringLiteral("dash");
+    case BorderStyle::Dot: return QStringLiteral("dot");
+    case BorderStyle::DashDot: return QStringLiteral("dashDot");
+    case BorderStyle::DashDotDot: return QStringLiteral("dashDotDot");
     case BorderStyle::Solid: break;
   }
-  return QStringLiteral("Solid");
+  return QStringLiteral("solid");
 }
 std::optional<BorderStyle> parseBorderStyle(const QString &name) {
   for (const BorderStyle style : {BorderStyle::Solid, BorderStyle::Dash, BorderStyle::Dot, BorderStyle::DashDot, BorderStyle::DashDotDot})
-    if (borderStyleName(style) == name) return style;
+    if (borderStyleName(style).compare(name, Qt::CaseInsensitive) == 0) return style;
   return std::nullopt;
 }
 bool hasShapeDecoration(const QString &type) { return type == shape::rectangle || type == shape::ellipse; }
@@ -289,7 +291,7 @@ bool validDecoration(const QString &type, const RectangleStyle &style) {
   if (!hasShapeDecoration(type)) return true;
   const auto in = [](double v, double low, double high) { return std::isfinite(v) && v >= low && v <= high; };
   const ShapeShadow &sh = style.shadow;
-  return (type != shape::rectangle || in(style.cornerRadius, 0, kMaxCornerRadius)) && in(sh.blurRadius, 0, kMaxShadowBlur) &&
+  return (type != shape::rectangle || (in(style.cornerRadius, 0, kMaxCornerRadius) && std::floor(style.cornerRadius) == style.cornerRadius)) && in(sh.blurRadius, 0, kMaxShadowBlur) &&
          in(sh.offsetX, -kMaxShadowOffset, kMaxShadowOffset) && in(sh.offsetY, -kMaxShadowOffset, kMaxShadowOffset) &&
          in(sh.opacity, 0, 1);
 }
@@ -492,14 +494,14 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
         if (style.cornerRadius != 0) o.insert(kCornerRadiusKey, style.cornerRadius); else o.remove(kCornerRadiusKey);
       }
       if (style.shadow != ShapeShadow{}) {
-        o.insert(QStringLiteral("shadow"), style.shadow.enabled);
+        o.insert(QStringLiteral("shadowEnabled"), style.shadow.enabled);
         o.insert(QStringLiteral("shadowBlurRadius"), style.shadow.blurRadius);
         o.insert(QStringLiteral("shadowColor"), formatColor(style.shadow.color));
         o.insert(QStringLiteral("shadowOffsetX"), style.shadow.offsetX);
         o.insert(QStringLiteral("shadowOffsetY"), style.shadow.offsetY);
         o.insert(QStringLiteral("shadowOpacity"), style.shadow.opacity);
       } else {
-        for (const auto &key : {QStringLiteral("shadow"), QStringLiteral("shadowBlurRadius"), QStringLiteral("shadowColor"),
+        for (const auto &key : {QStringLiteral("shadowEnabled"), QStringLiteral("shadowBlurRadius"), QStringLiteral("shadowColor"),
                                 QStringLiteral("shadowOffsetX"), QStringLiteral("shadowOffsetY"), QStringLiteral("shadowOpacity")})
           o.remove(key);
       }

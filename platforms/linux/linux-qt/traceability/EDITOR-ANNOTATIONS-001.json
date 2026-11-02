@@ -95,10 +95,10 @@
       }
     },
     "EA-005": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native Rectangle/Ellipse preserve bounds, stroke, fill, thickness, opacity, rotation, visibility and z-order, and now also border style (Solid/Dash/Dot/DashDot/DashDotDot), Rectangle-only corner radius and shadow (blur, offset X/Y, opacity, colour): bounded XANN read/write with unknown fields kept, legacy documents load as Solid/0/no shadow, one shared paintShape path for canvas and export, one-undo-step native edit dialog, creation-default dialog, copy/paste/duplicate. Kept partial: the Product Contract publishes no XANN schema, field names, value spellings, ranges or numeric shadow defaults for these fields (only the rectangle core fields; Ellipse has no recognized schema, see app/ANNOTATION-TOOLS.md EA-005-LINUX-2026-10-14), so the persisted names follow the reference-baseline census (borderStyle, cornerRadius, shadow, shadowBlurRadius, shadowColor, shadowOffsetX, shadowOffsetY, shadowOpacity) with PROVISIONAL shadow defaults (blur 4, offset 4/4, opacity 0.5, #FF000000) and this build's own bounds (corner 0..10000, blur 0..1000, offset +-10000, opacity 0..1) pending product decision; Rectangle/Ellipse golden pixels for dashes, rounded corners and shadows are not shared fixtures; creation defaults for the new fields are per editor session, not persisted preferences.",
+      "note": "Rectangle and Ellipse preserve bounds, stroke, fill, border style (solid/dash/dot/dashDot/dashDotDot), thickness, Rectangle-only corner radius, shadow, opacity, rotation, visibility and z-order through bounded XANN read/write (unknown fields kept, legacy documents load at defaults), one shared paintShape path for canvas and export, a one-undo-step native edit dialog, session creation defaults, and copy/paste/duplicate. Persisted names, camelCase enum spellings and defaults follow the reference XerahS .xann format for compatibility (COMPCAT): ShareX/XerahS ShareX.ImageEditor Core/Annotations/Base/Annotation.cs, Shapes/RectangleAnnotation.cs, BorderStyle.cs and Core/Persistence/XannProjectFileService.cs. Shadow-from-painted-alpha and document-axis offset semantics were decided by Aoife under Mike's similar-apps rule. Ranges are this build's bounded validation. Separate pending clarification EA-005-LINUX-2026-10-14 (Ellipse stroke-geometry golden pixels, shared schema/fixtures) does not block field preservation. New creation-default fields are session-scoped, not persisted preferences.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ShapeStyleTest.cpp",
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
@@ -108,9 +108,9 @@
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 28,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "coverage": "EA-005 field preservation is implemented and covered by ShapeStyleTest (round-trip, defaults, rejection, export pixels, native edit/undo, transfer, reference-format JSON). Ellipse golden-pixel parity remains a separate pending clarification.",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },

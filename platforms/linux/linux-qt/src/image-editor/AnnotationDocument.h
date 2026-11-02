@@ -29,25 +29,23 @@ struct PointF {
   bool operator==(const PointF &o) const { return x == o.x && y == o.y; }
 };
 
-// EA-005: border style member names are the ones the reference baseline
-// declares (kova-0.29.0 BorderStyle: Solid, Dash, Dot, DashDot, DashDotDot).
+// EA-005: border style members follow the reference XANN format (camelCase
+// on write: solid, dash, dot, dashDot, dashDotDot; read case-insensitively).
 enum class BorderStyle { Solid, Dash, Dot, DashDot, DashDotDot };
 QString borderStyleName(BorderStyle style);
 std::optional<BorderStyle> parseBorderStyle(const QString &name);
 
-// EA-005: drop shadow of a Rectangle or Ellipse. Field names follow the
-// reference baseline (Shadow, ShadowBlurRadius, ShadowColor, ShadowOffsetX,
-// ShadowOffsetY, ShadowOpacity). The Product Contract does not yet publish
-// numeric defaults (Annotation.DefaultShadow*) or ranges; the values below
-// are PROVISIONAL creation defaults pending a product decision, and the
-// ranges are this build's bounded validation (see kMax* below).
+// EA-005: drop shadow of a Rectangle or Ellipse. Field names and defaults
+// follow the reference XANN format for interoperability with existing files
+// (shadowEnabled, shadowColor, shadowBlurRadius, shadowOpacity, shadowOffsetX,
+// shadowOffsetY). Ranges are this build's bounded validation (kMax* below).
 struct ShapeShadow {
   bool enabled = false;
   double blurRadius = 4;
-  double offsetX = 4;
-  double offsetY = 4;
-  double opacity = 0.5;  // 0..1, multiplies the colour alpha
-  Argb color = 0xFF000000;
+  double offsetX = 3;
+  double offsetY = 3;
+  double opacity = 1;  // 0..1, multiplies the colour alpha
+  Argb color = 0x80000000;
   bool operator==(const ShapeShadow &o) const {
     return enabled == o.enabled && blurRadius == o.blurRadius && offsetX == o.offsetX && offsetY == o.offsetY &&
            opacity == o.opacity && color == o.color;
@@ -67,7 +65,7 @@ struct RectangleStyle {
   double opacity = 1;
   // EA-005. Absent in older documents: Solid, 0 and no shadow.
   BorderStyle borderStyle = BorderStyle::Solid;
-  double cornerRadius = 0;  // Rectangle only; ignored for every other type
+  double cornerRadius = 0;  // whole pixels, Rectangle only; ignored for every other type
   ShapeShadow shadow;
 };
 // True when `style` is not the legacy undecorated look for `type`.
