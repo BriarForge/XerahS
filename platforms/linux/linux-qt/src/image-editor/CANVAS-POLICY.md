@@ -140,16 +140,23 @@ or bilinear interpolation. The aspect lock derives height from width rounded
 to the nearest integer. Sampling aligns pixel centres and clamps at image
 edges. Bilinear interpolation weights premultiplied colour and alpha before
 returning non-premultiplied bytes, so transparent RGB does not create halos.
-Uniform resizing transforms bounds and stroke width. Non-uniform resizing
-scales each object along its own axes, so quarter-turned boxes swap their
-factors. It reports an unsupported transform, changing nothing, when it would
-shear an object that is not on a quarter turn, or when the object draws a
-visible stroke (rectangle, ellipse, line, arrow, freehand, balloon border,
-magnify frame) that would need different widths on its axes. Types that draw
-no stroke scale their inert width by the geometric mean. This also covers
-aspect-locked sizes whose integer rounding makes the two scale factors
-unequal. Font size, step marker size and effect strength are not rescaled by
-Resize Image; no contract rule defines that yet.
+Resize Image follows the reference XerahS app (Core/Editor/EditorCore.cs
+`ScaleAnnotations`, Core/Annotations/Base/Annotation.cs `Scale`,
+Text/TextAnnotation.cs `Scale`), which never refuses a resize; these are
+determinations under the similar-apps rule for behavior the contract leaves
+open. With world factors sx and sy: each object's centre maps through the
+scale; its local box extents scale along its own axes (quarter-turned boxes
+swap the factors, so no approximation arises); stroke width is multiplied by
+`min(sx, sy)`; the font size of Text and SpeechBalloon is multiplied by `sy`
+(an unset size materialises the 24 px default first); a Step with a stored
+font size scales it by `sy`, and one with none derives its size from its box
+height, so it follows the box. Effect strengths (blur, pixelate, magnify,
+spotlight) are not rescaled. Uniform resizing is the case sx == sy, so
+behavior is continuous. For an object off a quarter turn under unequal
+factors the result is a deterministic approximation: no shear is stored, so
+its local width scales by sx and its local height by sy about the mapped
+centre, and its rotation is kept. Aspect-locked sizes whose integer rounding
+makes sx and sy unequal use the same rule.
 
 Preparation runs on a worker with row-level cancellation/progress. The native
 PNG codec preserves the source colour profile. Encoding or cancellation failure

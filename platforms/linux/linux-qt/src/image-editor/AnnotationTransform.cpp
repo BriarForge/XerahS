@@ -51,20 +51,6 @@ std::pair<double, double> cosSin(double degrees) {  // degrees already in [0,360
   return {std::cos(radians), std::sin(radians)};
 }
 
-// Tool types whose stroke width is actually drawn. For the others the width
-// is inert data, so unequal per-axis scale cannot distort their appearance.
-bool rendersStrokeWidth(const RectangleAnnotation &r) {
-  const QString &type = r.type();
-  return type == shape::rectangle || type == shape::ellipse || isPathShape(type) ||
-         type == shape::speechBalloon || type == shape::magnify;
-}
-
-bool strokeVisible(const RectangleAnnotation &r) {
-  if (!rendersStrokeWidth(r)) return false;
-  const Argb color = r.type() == shape::speechBalloon ? r.content.balloonBorderColor.value_or(r.style.strokeColor) : r.style.strokeColor;
-  return (color >> 24) != 0;
-}
-
 }  // namespace
 
 bool validShapeGeometry(const RectangleAnnotation &r) {
@@ -91,7 +77,12 @@ ShapeTransformResult transformShape(const RectangleAnnotation &r, const CanvasTr
   const PointF b2{-t.xx * s + t.xy * c, -t.yx * s + t.yy * c};
   double l1 = std::hypot(b1.x, b1.y), l2 = std::hypot(b2.x, b2.y);
   if (!finite(l1) || !finite(l2) || !(l1 > 0) || !(l2 > 0)) return fail(diagnostic::documentInvalid);
-  if (std::abs(b1.x * b2.x + b1.y * b2.y) > kTolerance * l1 * l2) return fail(shear);  // would shear the box
+  // A per-axis scale of an object off a quarter turn would shear its box. No
+  // shear is stored, so (as in the reference app) the local width and height
+  // scale by the world x and y factors and the rotation is kept.
+  const bool sheared = std::abs(b1.x * b2.x + b1.y * b2.y) > kTolerance * l1 * l2;
+  if (sheared && !(diagonal && det > 0)) return fail(shear);
+  if (sheared) { l1 = std::abs(t.xx); l2 = std::abs(t.yy); }
   if (std::abs(l1 - 1) <= kScaleTolerance) l1 = 1;
   if (std::abs(l2 - 1) <= kScaleTolerance) l2 = 1;
   if (std::abs(l1 - l2) <= kScaleTolerance * std::max(l1, l2)) l2 = l1;
@@ -100,7 +91,9 @@ ShapeTransformResult transformShape(const RectangleAnnotation &r, const CanvasTr
   bool mirrorX = false, mirrorY = false;
   if (det > 0) {
     double phi;
-    if (diagonal) {
+    if (sheared) {
+      phi = 0;
+    } else if (diagonal) {
       phi = t.xx < 0 ? 180 : 0;
     } else {
       const double a1 = std::hypot(t.xx, t.yx), a2 = std::hypot(t.xy, t.yy);
@@ -125,12 +118,15 @@ ShapeTransformResult transformShape(const RectangleAnnotation &r, const CanvasTr
   moved.start = {mapped.x - halfWidth, mapped.y - halfHeight};
   moved.end = {mapped.x + halfWidth, mapped.y + halfHeight};
   moved.style.rotationDegrees = newAngle;
-  if (l1 != l2) {
-    // One stroke width cannot be drawn with different widths on each axis.
-    if (strokeVisible(r)) return fail(shear);
-    moved.style.strokeWidth *= std::sqrt(l1 * l2);
-  } else if (l1 != 1) {
-    moved.style.strokeWidth *= l1;
+  // World scale factors drive stroke width and font size like the reference
+  // app: stroke *= min(sx, sy), font size *= sy. Rotations and flips leave 1.
+  const double worldX = diagonal ? std::abs(t.xx) : l1, worldY = diagonal ? std::abs(t.yy) : l1;
+  const double strokeScale = std::min(worldX, worldY);
+  if (strokeScale != 1) moved.style.strokeWidth *= strokeScale;
+  if (worldY != 1 && (isTextShape(r.type()))) {
+    // Step markers with no stored size follow their box height instead.
+    if (r.content.fontSize > 0) moved.content.fontSize = r.content.fontSize * worldY;
+    else if (r.type() != shape::step) moved.content.fontSize = shapeFontSize(r) * worldY;
   }
   if (mirrorX) for (PointF &p : moved.content.points) p.x = 1 - p.x;
   if (mirrorY) for (PointF &p : moved.content.points) p.y = 1 - p.y;

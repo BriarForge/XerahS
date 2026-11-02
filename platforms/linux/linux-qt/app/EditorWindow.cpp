@@ -1199,7 +1199,7 @@ bool EditorWindow::commitCanvas(PreparedCanvasEdit prepared, quint64 state, cons
       !m_session->commitCanvas(*prepared.result.document, state, selection))) prepared.result.error = m_session->editDiagnostic().isEmpty() ? "document-invalid" : m_session->editDiagnostic();
   if (prepared.result.error) {
     QString message = *prepared.result.error;
-    if (message == u"canvas-annotation-shear-unsupported") message = QStringLiteral("Keep the aspect ratio locked to preserve rotated or stroked annotations.");
+    if (message == u"canvas-annotation-shear-unsupported") message = QStringLiteral("An annotation cannot be transformed by this operation. The document has been kept unchanged.");
     else if (message == u"canvas-annotation-render-unsupported") message = QStringLiteral("This document contains visible annotation types this editor cannot flatten yet. The document has been kept unchanged.");
     else if (message == u"canvas-annotation-transform-unsupported") message = QStringLiteral("This document contains annotation types this editor cannot transform yet.");
     else if (message == diagnostic::documentTooLarge) message = QStringLiteral("The requested image exceeds the editor's dimensions or memory limits.");

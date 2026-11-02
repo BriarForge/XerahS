@@ -93,9 +93,6 @@ std::vector<Case> cases() {
           {"resize-2x", resizeTo(80, 60), true}, {"resize-half", resizeTo(20, 15), true},
           {"resize-nonuniform", resizeTo(80, 45), true}};
 }
-bool strokeDrawn(const QString &type) {
-  return type == shape::rectangle || type == shape::ellipse || isPathShape(type) || type == shape::speechBalloon || type == shape::magnify;
-}
 
 void compare(PointF actual, PointF expected, bool exact) {
   if (exact) { QCOMPARE(actual.x, expected.x); QCOMPARE(actual.y, expected.y); }
@@ -126,12 +123,6 @@ private slots:
     const auto d = documentWith(original);
     const auto result = applyCanvasOperation(d, solidImage(kW, kH, 0xFF336699), c.op);
     const bool nonUniform = c.name == "resize-nonuniform";
-    if (nonUniform && (rotation == 37.5 || strokeDrawn(type))) {
-      // No rule defines per-axis stroke widths or shear: refuse atomically.
-      QCOMPARE(result.error, std::optional<QString>(QStringLiteral("canvas-annotation-shear-unsupported")));
-      QVERIFY(!result.document && !result.image && !result.changed);
-      return;
-    }
     QVERIFY2(!result.error, qPrintable(result.error.value_or(QString()))); QVERIFY(result.document && result.image);
     QCOMPARE(result.document->annotations.size(), std::size_t(1));
     const auto &moved = std::get<RectangleAnnotation>(result.document->annotations[0]);
@@ -140,14 +131,23 @@ private slots:
     QCOMPARE(moved.id, original.id); QCOMPARE(moved.type(), original.type()); QCOMPARE(moved.visible, original.visible);
     QCOMPARE(moved.extra, original.extra); QCOMPARE(moved.style.opacity, original.style.opacity);
     QCOMPARE(moved.style.strokeColor, original.style.strokeColor); QCOMPARE(moved.style.fillColor, original.style.fillColor);
-    QCOMPARE(moved.content.text, original.content.text); QCOMPARE(moved.content.fontSize, original.content.fontSize);
+    QCOMPARE(moved.content.text, original.content.text);
     QCOMPARE(moved.content.stepValue, original.content.stepValue); QCOMPARE(moved.content.strength, original.content.strength);
     QCOMPARE(moved.content.imageKey, original.content.imageKey); QCOMPARE(moved.content.textAlignment, original.content.textAlignment);
     QCOMPARE(moved.content.points.size(), original.content.points.size());
-    // Stroke width follows the object's own scale (rotations and flips keep it).
+    // Reference-app scaling: stroke *= min(sx, sy), font size *= sy; strength is never rescaled.
     const bool resize = c.op.action == CanvasAction::ResizeImage;
-    const double scale = !resize ? 1 : nonUniform ? std::sqrt(2.0 * 1.5) : double(c.op.width) / kW;
-    if (nonUniform) QVERIFY(std::abs(moved.style.strokeWidth - 4 * scale) < 1e-9); else QCOMPARE(moved.style.strokeWidth, 4 * scale);
+    const double sx = !resize ? 1 : double(c.op.width) / kW, sy = !resize ? 1 : double(c.op.height) / kH;
+    QCOMPARE(moved.style.strokeWidth, 4 * std::min(sx, sy));
+    QCOMPARE(moved.content.fontSize, original.content.fontSize * sy);
+    if (nonUniform && rotation == 37.5) {
+      // No shear is stored: local extents scale by the world factors, rotation is kept.
+      QCOMPARE(moved.style.rotationDegrees, 37.5);
+      QCOMPARE(moved.right() - moved.left(), 20 * sx); QCOMPARE(moved.bottom() - moved.top(), 12 * sy);
+      compare({moved.left() / 2 + moved.right() / 2, moved.top() / 2 + moved.bottom() / 2}, {20 * sx, 12 * sy}, true);
+      for (std::size_t i = 0; i < original.content.points.size(); ++i) compare(moved.content.points[i], original.content.points[i], true);
+      return;
+    }
     // Oracle: the sample at the (possibly mirrored) local fraction is where the map put the old one.
     const auto t = [&](PointF p) { return result.transform.map(p); };
     const auto before = samples(original);
@@ -321,6 +321,22 @@ private slots:
     QVERIFY2(outliers <= (type == shape::freehand ? 8 : 0), qPrintable(QString("worst channel difference %1 at %2 pixels").arg(worst).arg(outliers)));
   }
 
+  void defaultFontSizesScaleWithResizeLikeStoredOnes() {
+    const auto source = solidImage(kW, kH, 0);
+    for (const QString &type : {shape::text, shape::speechBalloon}) {
+      auto a = make(type, 0); a.content.fontSize = 0;
+      const auto r = applyCanvasOperation(documentWith(a), source, resizeTo(80, 45));
+      QCOMPARE(std::get<RectangleAnnotation>(r.document->annotations[0]).content.fontSize, 24 * 1.5);
+    }
+    // A step with no stored size derives it from its (scaled) box height.
+    auto step = make(shape::step, 0); step.content.fontSize = 0;
+    const auto r = applyCanvasOperation(documentWith(step), source, resizeTo(80, 45));
+    QCOMPARE(std::get<RectangleAnnotation>(r.document->annotations[0]).content.fontSize, 0.0);
+    // Effect strength is never rescaled.
+    const auto blur = applyCanvasOperation(documentWith(make(shape::blur, 0)), source, resizeTo(80, 60));
+    QCOMPARE(std::get<RectangleAnnotation>(blur.document->annotations[0]).content.strength, 7.0);
+  }
+
   void customRotationKeepsAnglesAndRefusesNothingForUniformScale() {
     const auto d = documentWith(make(shape::rectangle, 17));
     const auto r = applyCanvasOperation(d, solidImage(kW, kH, 0), custom(30, true));
@@ -338,19 +354,19 @@ private slots:
     d.annotations = {good, UnsupportedAnnotation{QUuid::createUuid(), {}}};
     for (const Case &c : cases()) {
       const auto r = applyCanvasOperation(d, source, c.op);
-      // The stroked rectangle precedes the opaque object, so the shear refusal wins for per-axis resizes.
-      QCOMPARE(r.error, std::optional<QString>(c.name == "resize-nonuniform" ? QStringLiteral("canvas-annotation-shear-unsupported") : QStringLiteral("canvas-annotation-transform-unsupported")));
+      QCOMPARE(r.error, std::optional<QString>(QStringLiteral("canvas-annotation-transform-unsupported")));
       QVERIFY(!r.document && !r.image && !r.changed);
     }
-    // A later object that cannot be carried discards the whole operation.
-    auto e = baseDocument(); e.annotations = {good, make(shape::arrow, 37.5)};
+    // A later opaque object discards the whole operation, even after earlier ones transformed.
+    auto e = baseDocument(); e.annotations = {good, make(shape::arrow, 37.5), UnsupportedAnnotation{QUuid::createUuid(), {}}};
     auto r = applyCanvasOperation(e, source, resizeTo(80, 45));
-    QCOMPARE(r.error, std::optional<QString>(QStringLiteral("canvas-annotation-shear-unsupported"))); QVERIFY(!r.document && !r.image);
-    // Rounded aspect-locked sizes give unequal scales: stroked shapes refuse, unstroked scale.
+    QCOMPARE(r.error, std::optional<QString>(QStringLiteral("canvas-annotation-transform-unsupported"))); QVERIFY(!r.document && !r.image);
+    // Aspect-locked rounding gives unequal scales; every type still scales deterministically.
     auto lockedOp = resizeTo(7, 1); lockedOp.lockAspect = true;
-    QVERIFY(applyCanvasOperation(documentWith(good), source, lockedOp).error);
-    const auto unstroked = applyCanvasOperation(documentWith(make(shape::highlight, 0)), source, lockedOp);
-    QVERIFY2(unstroked.document, qPrintable(unstroked.error.value_or(QString())));
+    for (const QString &type : shapeTypes()) {
+      const auto scaled = applyCanvasOperation(documentWith(make(type, 0)), source, lockedOp);
+      QVERIFY2(scaled.document, qPrintable(type + ": " + scaled.error.value_or(QString())));
+    }
     // An undecodable embedded asset cannot be mirrored: refuse, keep nothing.
     auto broken = baseDocument(); broken.embeddedImages = {{kAsset, QByteArray("not a png")}}; broken.annotations = {make(shape::image, 0)};
     r = applyCanvasOperation(broken, source, action(CanvasAction::FlipVertical));
