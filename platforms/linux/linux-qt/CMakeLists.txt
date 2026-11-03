@@ -24,6 +24,8 @@ add_library(xerahs_core STATIC
   src/workflows/CaptureWorkflows.h
   src/workflows/WorkflowShortcuts.cpp
   src/workflows/WorkflowShortcuts.h
+  src/shell/NotificationPolicy.cpp
+  src/shell/NotificationPolicy.h
   src/shell/ActivationDispatcher.cpp
   src/shell/ActivationDispatcher.h
   src/shell/ActivationProtocol.cpp
@@ -284,6 +286,7 @@ add_library(xerahs_app OBJECT
   app/AutoCaptureDialog.h
   app/ScheduledCapture.cpp
   app/ScheduledCapture.h
+  app/AppContext.cpp
   app/CaptureRecoveryActions.cpp
   app/CaptureRecoveryActions.h
   app/CapturePipeline.cpp
@@ -1247,6 +1250,11 @@ add_test(NAME private-json-file COMMAND private-json-file-test)
 add_executable(scheduled-capture-test tests/ScheduledCaptureTest.cpp
                app/ScheduledCapture.cpp app/ScheduledCapture.h
                app/DelayedCapture.cpp app/DelayedCapture.h
+# CORE-010: private notification previews.
+add_executable(notification-policy-test tests/NotificationPolicyTest.cpp)
+set_target_properties(notification-policy-test PROPERTIES AUTOMOC ON)
+target_link_libraries(notification-policy-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME notification-policy COMMAND notification-policy-test)
                app/AutoCaptureDialog.cpp app/AutoCaptureDialog.h)
 set_target_properties(scheduled-capture-test PROPERTIES AUTOMOC ON)
 target_include_directories(scheduled-capture-test PRIVATE app)

@@ -86,7 +86,7 @@ void attachUploadWindow(AppContext &ctx, ApplicationWindow &window) {
   QObject::connect(state.service, &WatchFolderService::notify, &window, [&ctx](const QString &message, bool success) {
     if (auto *home = qobject_cast<ApplicationWindow *>(ctx.dialogParent ? ctx.dialogParent() : nullptr))
       home->showResult(QStringLiteral("Watch folders"), message, success);
-    ctx.tray.showMessage(QStringLiteral("Watch folders"), message, success ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning);
+    postTrayMessage(ctx, QStringLiteral("Watch folders"), message, success);
   });
   QObject::connect(state.watch, &QAction::triggered, &window, [&ctx, &window] {
     WatchFoldersDialog dialog(*lifetime().service, &window);

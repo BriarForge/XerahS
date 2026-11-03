@@ -65,7 +65,7 @@ void installScrollingCapture(AppContext &ctx) {
   ports.submit = [&ctx](const QImage &image) { return ctx.capture.submitExternalImage(image, QStringLiteral("scrolling")); };
   ports.notify = [&ctx](const QString &title, const QString &body, bool success) {
     if (auto *window = commandWindow(ctx)) window->showResult(title, body, success);
-    ctx.tray.showMessage(title, body, success ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning, 5000);
+    postTrayMessage(ctx, title, body, success, 5000);
   };
   auto *scrolling = new ScrollCapture(std::move(ports), {}, &ctx.app);
   scrolling->setPreferences(settings::capturePreferencesPort(ctx.settings));  // CORE-015 settings
@@ -198,7 +198,7 @@ void installCapture(AppContext &ctx) {
     if (success && ctx.settings.current().values.value(QStringLiteral("playCaptureSound")).toBool()) QApplication::beep();
     // Failures are always reported; the setting only quiets successes.
     if (success && !ctx.settings.current().values.value(QStringLiteral("showNotification")).toBool()) return;
-    ctx.tray.showMessage(title, body, success ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning, 5000);
+    postTrayMessage(ctx, title, body, success, 5000);
   });
   QObject::connect(&ctx.capture, &CaptureController::notify, &ctx.app, [&ctx](const QString &title, const QString &body, bool success) {
     if (auto *window = commandWindow(ctx)) window->showResult(title, body, success);

@@ -46,7 +46,7 @@ QVector<SettingField> settingFields() {
   return {{"saveFolder", Section::General, "profile", "workflow"}, {"filenamePattern", Section::General, "profile", "workflow"},
     {"startAtLogin", Section::General, "profile"}, {"showTrayIcon", Section::General, "profile"},
     {"regionCapture.quickConfirm", Section::Capture, "profile"}, {"regionCapture.snapping", Section::Capture, "profile"},
-    {"playCaptureSound", Section::Capture, "profile"}, {"showNotification", Section::Capture, "profile"},
+    {"playCaptureSound", Section::Capture, "profile"}, {"showNotification", Section::Capture, "profile"}, {"privateNotifications", Section::Capture, "profile"},
     {"delayedCapture.seconds", Section::Capture, "profile"}, {"delayedCapture.source", Section::Capture, "profile"},
     {"autoCapture.source", Section::Capture, "profile"}, {"autoCapture.intervalMs", Section::Capture, "profile"},
     {"autoCapture.boundKind", Section::Capture, "profile"}, {"autoCapture.count", Section::Capture, "profile"},
@@ -82,7 +82,7 @@ QJsonObject defaultSettings(const QString &saveFolder) {
   for (auto it = defaults.entries.cbegin(); it != defaults.entries.cend(); ++it) bindings.insert(it.key(), it.value());
   return {{"saveFolder", saveFolder}, {"filenamePattern", workflows::CaptureOutput{}.pattern}, {"startAtLogin", false},
     {"regionCapture.quickConfirm", true}, {"regionCapture.snapping", true},
-    {"showTrayIcon", true}, {"playCaptureSound", false}, {"showNotification", true},
+    {"showTrayIcon", true}, {"playCaptureSound", false}, {"showNotification", true}, {"privateNotifications", false},
     {"delayedCapture.seconds", 3}, {"delayedCapture.source", "full-screen"}, {"autoCapture.source", "full-screen"},
     {"autoCapture.intervalMs", 5000}, {"autoCapture.boundKind", "count"}, {"autoCapture.count", 10}, {"autoCapture.durationMinutes", 60},
     {"scrollingCapture.settleMs", 300}, {"scrollingCapture.wheelSteps", 5}, {"scrollingCapture.headerBand", 0},

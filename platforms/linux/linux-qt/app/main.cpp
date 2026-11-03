@@ -244,7 +244,7 @@ int main(int argc, char *argv[]) {
       window->showResult(title, body, ok);
       if (raiseWindow) window->activate();
     }
-    ctx.tray.showMessage(title, body, ok ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning, 5000);
+    xerahs::app::postTrayMessage(ctx, title, body, ok, 5000);
   };
   auto dispatcher = xerahs::app::installShellFeatures(ctx, request.action == ActivationAction::Activate);
   xerahs::app::ApplicationWindow window(commands);

@@ -43,7 +43,7 @@ void installRecording(AppContext &ctx) {
   QObject::connect(&ctx.recording, &RecordingController::notify, &ctx.app,
       [&ctx](const QString &title, const QString &body, bool success) {
         if (auto *window = commandWindow(ctx)) window->showResult(title, body, success);
-        ctx.tray.showMessage(title, body, success ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning);
+        postTrayMessage(ctx, title, body, success);
       });
   QObject::connect(&ctx.recording, &RecordingController::changed, &ctx.app, [&ctx] {
     if (auto *window = commandWindow(ctx))

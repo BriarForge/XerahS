@@ -73,6 +73,29 @@ private slots:
     QVERIFY(!validateCaptureFile(file).isEmpty()); QApplication::clipboard()->setText("unchanged fixture");
     QCOMPARE(copyCaptureFile("file-clipboard", file).state, ActionState::Failed); QCOMPARE(QApplication::clipboard()->text(), QString("unchanged fixture"));
   }
+  // CORE-010: a reveal or copy action on a capture that was deleted or moved away fails safely, with no
+  // file-manager call, no clipboard change and no file recreated.
+  void staleActionsAfterDeleteOrMoveFailSafely_data() {
+    QTest::addColumn<bool>("remove");
+    QTest::newRow("deleted") << true;
+    QTest::newRow("moved-away") << false;
+  }
+  void staleActionsAfterDeleteOrMoveFailSafely() {
+    QFETCH(bool, remove); QTemporaryDir dir; const auto saved = saveCapture(pixels(), dir.filePath("output"), "capture"); QVERIFY(saved.file);
+    const auto file = *saved.file; FileManager manager(server); QObject owner;
+    if (remove) QVERIFY(QFile::remove(file.path)); else QVERIFY(QFile::rename(file.path, dir.filePath("moved.png")));
+    QVERIFY(!validateCaptureFile(file).isEmpty());
+    std::optional<ActionOutcome> result; int callbacks = 0;
+    revealCaptureFile(file, &owner, [&](ActionOutcome value) { result = value; ++callbacks; }, client);
+    QTRY_VERIFY(result); QCOMPARE(result->state, ActionState::Failed); QVERIFY(result->diagnostic.has_value()); QVERIFY(!result->diagnostic->isEmpty());
+    QVERIFY(!result->diagnostic->contains(file.path)); QTest::qWait(30); QCOMPARE(callbacks, 1); QCOMPARE(manager.calls, 0);
+    QApplication::clipboard()->setText("unchanged fixture");
+    for (const auto *action : {"file-clipboard", "path-clipboard"}) {
+      const auto copied = copyCaptureFile(action, file); QCOMPARE(copied.state, ActionState::Failed); QVERIFY(copied.diagnostic.has_value());
+      QCOMPARE(QApplication::clipboard()->text(), QString("unchanged fixture"));
+    }
+    QVERIFY(!QFileInfo::exists(file.path));
+  }
   void actualFileAndPathClipboardCarryCopyUrisWithoutChangingTheSavedBytes() {
     QTemporaryDir dir; const auto saved = saveCapture(pixels(), dir.path(), "capture ü #"); QVERIFY(saved.file); const auto before = bytes(saved.file->path);
     const auto outcome = copyCaptureFile("file-clipboard", *saved.file); const auto *mime = QApplication::clipboard()->mimeData(); QVERIFY(mime);

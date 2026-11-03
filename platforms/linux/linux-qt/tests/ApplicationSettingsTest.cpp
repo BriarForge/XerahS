@@ -440,7 +440,7 @@ private slots:
     const QJsonValue longText(QString(4097, QChar('a'))), embeddedNul(QString("a") + QChar(0) + "b");
     const QVector<QJsonValue> wrongTypes{QJsonValue("true"), QJsonValue(0), QJsonValue(1), QJsonValue(QJsonValue::Null), QJsonValue(QJsonArray{}), QJsonValue(QJsonObject{}), QJsonValue(1.5)};
     QMap<QString, QPair<QVector<QJsonValue>, QVector<QJsonValue>>> matrix; // key -> good, bad
-    for (const char *key : {"startAtLogin", "showTrayIcon", "playCaptureSound", "showNotification", "regionCapture.quickConfirm", "regionCapture.snapping", "scrollingCapture.positionPointer"})
+    for (const char *key : {"startAtLogin", "showTrayIcon", "playCaptureSound", "showNotification", "privateNotifications", "regionCapture.quickConfirm", "regionCapture.snapping", "scrollingCapture.positionPointer"})
       matrix[key] = {{true, false}, wrongTypes + QVector<QJsonValue>{"", nan, inf, "yes"}};
     const QMap<QString, QPair<int, int>> ranges{{"delayedCapture.seconds", {1, 60}}, {"autoCapture.intervalMs", {1000, 86400000}}, {"autoCapture.count", {1, 10000}},
       {"autoCapture.durationMinutes", {1, 1440}}, {"scrollingCapture.settleMs", {0, 5000}}, {"scrollingCapture.wheelSteps", {1, 50}}, {"scrollingCapture.headerBand", {0, 2000}},

@@ -63,4 +63,8 @@ struct AppContext {
   std::function<void(shell::ActivationAction action, const QString &path, bool chooseActions, const QString &workflowId, const QString &source)> invoke = {};
 };
 
+// CORE-010: the single door to the desktop notification. Private previews reduce the body to the
+// operation title and the true result; the command window keeps the full text.
+void postTrayMessage(AppContext &ctx, const QString &title, const QString &body, bool ok, int millisecondsVisible = 10000);
+
 }  // namespace xerahs::app
