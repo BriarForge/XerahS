@@ -78,6 +78,7 @@ QStringList DestinationCatalog::secretNames(const UploadDestination &destination
 }
 
 DestinationCatalog::ImportOutcome DestinationCatalog::addImported(const SxcuImportResult &import, CredentialStore &credentials) {
+  if (import.acceptanceBlocked) return {QStringLiteral("import-critical-unsupported"), {}, {}};
   if (!import.ok) return {import.code.isEmpty() ? QStringLiteral("import-failed") : import.code, {}, {}};
   if (!writable()) return {QStringLiteral("catalog-read-only"), {}, {}};
   auto destination = import.destination;

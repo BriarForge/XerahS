@@ -114,6 +114,18 @@ HotkeyBindings hotkeys(const QJsonObject &values) {
 }
 SettingsRead repairSettings(const QJsonObject &input, const QString &saveFolder, const QStringList &deprecated) {
   SettingsRead result{input, {}, true, {}}; const auto defaults = defaultSettings(saveFolder);
+  for (auto it = input.begin(); it != input.end(); ++it) {
+    const bool unknown = !defaults.contains(it.key());
+    if ((unknown && compatibility::containsTraversal(it.value(), it.key())) ||
+        (unknown && compatibility::unsafeUnknown(it.key())) ||
+        ((unknown || it.key() == "hotkeys") && compatibility::containsUnsafeUnknown(it.value()))) {
+      result.values = defaults; result.writable = false;
+      result.diagnostics = {QStringLiteral("settings-unsafe-unknown")};
+      result.report.add(compatibility::ImportDisposition::Rejected, input.size());
+      result.report.add(compatibility::ImportDisposition::Defaulted, defaults.size());
+      return result;
+    }
+  }
   for (const auto &field : settingFields()) {
     const auto value = input.value(field.key); bool valid = true;
     if (value.isUndefined()) { result.values.insert(field.key, defaults.value(field.key)); result.fields.insert(field.key, FieldState::Missing); continue; }
@@ -145,7 +157,25 @@ SettingsRead repairSettings(const QJsonObject &input, const QString &saveFolder,
     result.fields.insert("hotkeys." + it.key(), FieldState::Missing);
     const auto accepted = checked.assign(it.key(), it.value().toString()); bindings.insert(it.key(), accepted.ok ? it.value() : QJsonValue(""));
   }
-  result.values.insert("hotkeys", bindings); return result;
+  result.values.insert("hotkeys", bindings);
+  using D = compatibility::ImportDisposition;
+  for (auto it = result.fields.begin(); it != result.fields.end(); ++it) {
+    switch (it.value()) {
+      case FieldState::Missing: result.report.add(D::Defaulted); break;
+      case FieldState::Invalid: result.report.add(D::Rejected); result.report.add(D::Defaulted); break;
+      case FieldState::Deprecated: result.report.add(D::Quarantined); break;
+      case FieldState::Unknown: result.report.add(D::Retained); break;
+      case FieldState::NewerVersion: result.report.add(D::Rejected); break;
+      case FieldState::Valid: {
+        const bool nested = it.key().startsWith("hotkeys.");
+        const auto key = nested ? it.key().mid(8) : it.key();
+        const auto before = nested ? input.value("hotkeys").toObject().value(key) : input.value(key);
+        const auto after = nested ? bindings.value(key) : result.values.value(key);
+        result.report.add(before == after ? D::Retained : D::Transformed); break;
+      }
+    }
+  }
+  return result;
 }
 QJsonObject resetSection(const QJsonObject &values, Section section, const QString &saveFolder) {
   auto next = values; const auto defaults = defaultSettings(saveFolder);
@@ -170,29 +200,49 @@ ApplicationSettingsStore::ApplicationSettingsStore(QString path, QString saveFol
   const auto read = settingsFile(m_path).read();
   if (read.status != storage::StoreStatus::Missing) {
     QString diagnostic;
-    if (read.status == storage::StoreStatus::Ok || read.status == storage::StoreStatus::Invalid || read.status == storage::StoreStatus::NewerVersion) {
+    if (!read.diagnostic.isEmpty()) diagnostic = "settings-" + read.diagnostic;
+    if (diagnostic.isEmpty() && (read.status == storage::StoreStatus::Ok || read.status == storage::StoreStatus::Invalid || read.status == storage::StoreStatus::NewerVersion)) {
       const auto format = read.document.value("format");
       if (!read.document.value("values").isObject() || (!format.isUndefined() && format != QJsonValue(QStringLiteral("com.xerahs.app/linux-qt/application-settings"))))
         diagnostic = "settings-invalid-restore-previous-or-repair-file";
       else if (read.document.value("version") != QJsonValue(1)) diagnostic = "settings-version-unsupported";
-    } else diagnostic = "settings-read-failed";
+    } else if (diagnostic.isEmpty()) diagnostic = read.status == storage::StoreStatus::TooLarge ? "settings-too-large" : "settings-read-failed";
     if (!diagnostic.isEmpty()) {
       m_current = {defaultSettings(m_saveFolder), {diagnostic}, false, {}};
+      m_current.report.add(compatibility::ImportDisposition::Rejected);
       // A future envelope is read-only: its fields are not interpreted, never downgraded.
       const auto version = read.document.value("version");
       m_current.fields.insert("version", diagnostic == "settings-version-unsupported" && version.isDouble() && version.toDouble() > 1 ? FieldState::NewerVersion : FieldState::Invalid);
       if (m_current.fields.value("version") == FieldState::NewerVersion) for (const auto &field : settingFields()) m_current.fields.insert(field.key, FieldState::NewerVersion);
       return;
     }
+    auto unknownEnvelope = read.document;
+    for (const auto *key : {"format", "version", "values", "previous"}) unknownEnvelope.remove(QLatin1String(key));
+    if (compatibility::containsUnsafeUnknown(unknownEnvelope) || compatibility::containsTraversal(unknownEnvelope)) {
+      m_current = {defaultSettings(m_saveFolder), {"settings-unsafe-unknown"}, false, {}};
+      m_current.report.add(compatibility::ImportDisposition::Rejected, unknownEnvelope.size()); return;
+    }
+    if ((read.document.contains("previous") && !read.document.value("previous").isObject()) ||
+        (read.document.value("previous").isObject() && !repairSettings(read.document.value("previous").toObject(), m_saveFolder).writable)) {
+      m_current = {defaultSettings(m_saveFolder), {"settings-unsafe-unknown"}, false, {}};
+      m_current.report.add(compatibility::ImportDisposition::Rejected); return;
+    }
     m_snapshot = read.snapshot;
     m_envelope = read.document;
   }
   m_current = repairSettings(m_envelope.value("values").toObject(), m_saveFolder);
+  if (m_current.writable && !m_envelope.isEmpty()) {
+    // The recovery snapshot stays inert, but is retained in the atomic envelope.
+    auto retainedEnvelope = m_envelope; retainedEnvelope.remove("values"); retainedEnvelope.remove("previous");
+    m_current.report.add(compatibility::ImportDisposition::Retained,
+        retainedEnvelope.size() + m_envelope.value("previous").toObject().size());
+  }
 }
-QString ApplicationSettingsStore::save(const QJsonObject &values) {
+QString ApplicationSettingsStore::save(const QJsonObject &values, compatibility::ExportReport *report) {
+  if (report) *report = {QStringLiteral("com.xerahs.app/linux-qt/application-settings"), 1, {QStringLiteral("profile-local-save-folder")}};
   if (!m_current.writable) return "settings-read-only";
   const auto repaired = repairSettings(values, m_saveFolder);
-  if (!repaired.diagnostics.isEmpty()) return repaired.diagnostics.join('\n');
+  if (!repaired.writable || !repaired.diagnostics.isEmpty()) return repaired.diagnostics.join('\n');
   if (!QDir().mkpath(QFileInfo(m_path).absolutePath())) return "settings-directory-failed";
   auto envelope = m_envelope; envelope.insert("version", 1); envelope.insert("values", repaired.values);
   // Keep the previous version inside the same atomic artifact.

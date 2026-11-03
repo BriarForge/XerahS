@@ -180,6 +180,7 @@ void saveAnnotations(SaveOutcome &outcome, Directory &directory, const EditorSav
   if (cancelled(control) || !outcome.receipt || !boundRaster(directory, *outcome.receipt, control, false)) { outcome.sidecarError = diagnostic::sidecarSaveFailed; return; }
   NativeSidecarStore store(directory, *outcome.receipt, control, hooks);
   const auto saved = saveSidecar(store, outcome.receipt->path, outcome.receipt->document, true);
+  outcome.annotationExport = saved.report;
   outcome.sidecarSaved = saved.ok; outcome.sidecarPath = saved.sidecarPath;
   if (!saved.ok) outcome.sidecarError = diagnostic::sidecarSaveFailed;
 }

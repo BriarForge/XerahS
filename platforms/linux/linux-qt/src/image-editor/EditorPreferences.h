@@ -2,6 +2,7 @@
 #pragma once
 #include "AnnotationDocument.h"
 #include "RecentImages.h"
+#include "storage/Compatibility.h"
 #include <QJsonObject>
 #include <QMap>
 #include <QSizeF>
@@ -16,6 +17,7 @@ struct EditorPreferences {
   QMap<QString, PreferenceFieldState> fields;
   QStringList diagnostics;
   bool readOnly = false;
+  compatibility::ImportReport report = {};
 };
 EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRules rules = RecentPathRules::Posix);
 QJsonObject serializeEditorPreferences(const EditorPreferences &preferences);

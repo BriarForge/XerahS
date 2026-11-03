@@ -93,6 +93,9 @@ UploadDestinationsDialog::UploadDestinationsDialog(DestinationCatalog &catalog, 
   buttons->addWidget(close);
   auto *layout = new QVBoxLayout(this);
   layout->addLayout(columns);
+  m_importReport = new QLabel(this); m_importReport->setObjectName(QStringLiteral("destinationImportReport"));
+  m_importReport->setTextFormat(Qt::PlainText); m_importReport->setWordWrap(true);
+  m_importReport->setAccessibleName(QStringLiteral("Destination import report")); layout->addWidget(m_importReport);
   layout->addLayout(buttons);
   resize(720, 420);
 
@@ -178,10 +181,16 @@ void UploadDestinationsDialog::checkSecrets() {
 void UploadDestinationsDialog::importFile(const QString &path) {
   if (m_busy) return;
   QFile file(path);
-  if (!file.open(QIODevice::ReadOnly)) { m_ports.report(this, QStringLiteral("The file could not be opened.")); return; }
-  if (file.size() > kMaxSxcuBytes) { m_ports.report(this, codeText(QStringLiteral("too-large"))); return; }
-  const auto import = uploads::importSxcu(file.readAll());
-  if (!import.ok) { m_ports.report(this, codeText(import.code)); return; }
+  if (!file.open(QIODevice::ReadOnly)) {
+    compatibility::ImportReport report; report.add(compatibility::ImportDisposition::Rejected);
+    m_importReport->setText(report.summary());
+    m_ports.report(this, QStringLiteral("The file could not be opened.\n") + report.summary()); return;
+  }
+  const auto import = uploads::importSxcu(file.read(kMaxSxcuBytes + 1));
+  m_importReport->setText(import.report.summary());
+  if (!import.ok || import.acceptanceBlocked) {
+    m_ports.report(this, codeText(import.ok ? QStringLiteral("import-critical-unsupported") : import.code) + "\n" + import.report.summary()); return;
+  }
   auto *catalog = &m_catalog;
   auto *credentials = &m_credentials;
   runCredentialWork(

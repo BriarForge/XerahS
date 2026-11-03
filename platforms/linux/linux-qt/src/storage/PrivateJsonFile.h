@@ -36,6 +36,7 @@ struct StoreRead {
   QJsonObject document;                        // the whole envelope, format and version included
   int version = 0;
   QByteArray snapshot;                         // exact bytes read; empty when Missing
+  QString diagnostic;                         // value-free JSON boundary code, when available
 };
 
 struct StoreOptions {

@@ -52,6 +52,8 @@ private slots:
     QTimer::singleShot(0, [&] {
       auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog);
       changeDraft(*dialog);
+      auto *report = dialog->findChild<QLabel *>("editorPreferenceImportReport"); QVERIFY(report);
+      QVERIFY(report->text().contains("quarantined:"));
       if (reset) dialog->findChild<QPushButton *>("resetAppearance")->click();
       QCOMPARE(one.palette(), palette); QCOMPARE(two.palette(), palette); QCOMPARE(bytes(path), before);
       auto *check = dialog->findChild<QCheckBox *>("useSystemTheme");

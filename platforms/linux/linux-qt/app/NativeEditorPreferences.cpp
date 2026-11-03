@@ -171,6 +171,11 @@ QString rememberEditorImage(const QString &absolutePath) {
   return publish(std::move(*changed.preferences)).diagnostic;
 }
 QString editorPreferenceDiagnosticMessage(const QString &diagnostic) {
+  if (diagnostic == u"settings-unsafe-unknown" || diagnostic == u"settings-path-traversal")
+    return QStringLiteral("Stored preferences contain unsafe unsupported content. Defaults are in use and the original file was left untouched.");
+  if (diagnostic == u"settings-duplicate-key" || diagnostic == u"settings-invalid-encoding" ||
+      diagnostic == u"settings-too-deep" || diagnostic == u"settings-too-many-elements")
+    return QStringLiteral("Stored preferences failed bounded input validation. Defaults are in use and the original file was left untouched.");
   if (diagnostic == u"invalid-schemaVersion")
     return QStringLiteral("The stored preference version is invalid. Defaults are in use and the file was left untouched.");
   if (diagnostic == u"settings-read-only" || diagnostic == u"settings-newer-version")

@@ -61,7 +61,7 @@ private slots:
     for (const auto &stem : {QString("capture"), QString("chosen")}) {
       const auto rasterPath = dir.filePath(stem + ".png"); const auto sidecarPath = rasterPath + ".xann";
       QCOMPARE(QImage(rasterPath), result->workingMedia); const auto parsed = xerahs::editor::readXann(bytes(sidecarPath)); QVERIFY(parsed.document);
-      QCOMPARE(parsed.document->imagePath, rasterPath); QCOMPARE(parsed.document->annotations.size(), size_t(1));
+      QCOMPARE(parsed.document->imagePath, QFileInfo(rasterPath).fileName());  // COMPCAT-006: portable basename, no machine path QCOMPARE(parsed.document->annotations.size(), size_t(1));
       QCOMPARE(QImage::fromData(parsed.document->sourceImagePng, "PNG"), pixels());
       QCOMPARE(parsed.document->imageHash, QString("sha256:") + QString::fromLatin1(QCryptographicHash::hash(bytes(rasterPath), QCryptographicHash::Sha256).toHex()));
       const auto loaded = loadSource(rasterPath); QVERIFY(loaded.document); QCOMPARE(loaded.document->annotations.size(), size_t(1));

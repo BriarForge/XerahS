@@ -20,7 +20,7 @@ namespace {
 
 using namespace xerahs::editor;
 
-QString now() { return QDateTime::currentDateTimeUtc().toString(Qt::ISODate); }
+QString now() { return QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs); }
 
 LoadedSource fail(const QString &diagnostic) {
   LoadedSource result;
@@ -127,7 +127,8 @@ static LoadedSource loadSourceImpl(const QString &path, const RenderControl &con
     progress(control, 75);
     if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
     // ES-015: a failed sidecar must never become a writable bare-raster session.
-    if (!parsed.document) return fail(parsed.error.value_or(diagnostic::documentInvalid));
+    if (!parsed.document) { auto failed = fail(parsed.error.value_or(diagnostic::documentInvalid)); failed.importReport = parsed.report; return failed; }
+    result.importReport = parsed.report;
     QImage embedded;
     if (!embedded.loadFromData(parsed.document->sourceImagePng, "PNG")) return fail(diagnostic::documentInvalid);
     embedded = embedded.convertToFormat(QImage::Format_ARGB32);
@@ -144,6 +145,7 @@ static LoadedSource loadSourceImpl(const QString &path, const RenderControl &con
       progress(control, 100);
       if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
       LoadedSource pending;
+      pending.importReport = parsed.report;
       pending.pendingChoice = PendingSourceChoice{*parsed.document, image, embedded, currentDisplay, embeddedDisplay,
           normalizedPng, path, hash, *sidecar.readPath};
       return pending;
@@ -191,6 +193,7 @@ LoadedSource resolveSourceChoice(const LoadedSource &pending, SourceChoice choic
   result.image = choice == SourceChoice::CurrentRaster ? sources.currentRaster : sources.embeddedSource;
   result.displayImage = choice == SourceChoice::CurrentRaster ? sources.currentDisplay : sources.embeddedDisplay;
   result.sidecarPath = sources.sidecarPath;
+  result.importReport = pending.importReport;
   return result;
 }
 

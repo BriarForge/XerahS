@@ -2,6 +2,7 @@
 #include "shell/ErrorPresentation.h"
 #include "actions/PipelineResultJson.h"
 #include <cmath>
+#include "storage/JsonBoundary.h"
 #include <QJsonDocument>
 #include <algorithm>
 namespace xerahs::workflows {
@@ -66,9 +67,9 @@ QJsonObject object(const WorkflowExecutionRecord &r, int version = 2) {
 QByteArray serializeWorkflowExecution(const WorkflowExecutionRecord &r) { return QJsonDocument(object(r)).toJson(QJsonDocument::Compact); }
 std::optional<WorkflowExecutionRecord> parseWorkflowExecution(const QByteArray &bytes, const QString &id) {
   if (QUuid(id).isNull() || !xerahs::actions::validJournalTaskId(id) || bytes.size() > xerahs::actions::maximumJournalBytes) return {};
-  QJsonParseError error; const auto doc = QJsonDocument::fromJson(bytes, &error);
-  if (error.error != QJsonParseError::NoError || !doc.isObject()) return {};
-  const auto o = doc.object();
+  const auto parsed = xerahs::compatibility::readJson(bytes, {xerahs::actions::maximumJournalBytes, 64, 100000});
+  if (!parsed.ok() || !parsed.document.isObject()) return {};
+  const auto o = parsed.document.object();
   if (o.value("format") != "com.xerahs.app/linux-qt/workflow-execution" || (o.value("version") != 1 && o.value("version") != 2) || o.value("id") != id) return {};
   WorkflowExecutionRecord r; r.id = id;
   for (const auto *key : {"origin", "state", "startedAt", "finishedAt", "pipelineId", "diagnostic"}) if (!o.value(QLatin1String(key)).isString()) return {};

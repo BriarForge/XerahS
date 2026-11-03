@@ -2,6 +2,7 @@
 // Behavioural reference: ShareX.ImageEffectsLib/{ImageEffectPackager,ImageEffectPreset,
 // {Adjustments,Drawings,Filters,Manipulations}/*.cs}. ShareX Team, GPLv3.
 #include "SxiePreset.h"
+#include "storage/JsonBoundary.h"
 #include "SxieArchive.h"
 #include <QBuffer>
 #include <QImageReader>
@@ -31,7 +32,31 @@ struct Mapping {
   ParamValues defaults;
 };
 #include "SxieMappingTable.cpp"
-EffectPreset fail(const QString &code) { EffectPreset p; p.error = code; return p; }
+EffectPreset fail(const QString &code) {
+  EffectPreset p; p.error = code; p.report.add(compatibility::ImportDisposition::Rejected); return p;
+}
+bool traversal(const QString &path) {
+  QString portable = path; portable.replace('\\', '/');
+  for (const auto &part : portable.split('/')) if (part == ".." || part == ".") return true;
+  return path.contains(QChar(0));
+}
+bool safeAssetName(const QString &path) {
+  return !path.isEmpty() && !path.startsWith('/') && !path.contains('\\') && !path.contains(':') && !traversal(path);
+}
+bool unsafeExtras(QJsonObject object, const QStringList &known) {
+  for (const auto &key : known) {
+    if (key != "Effects" && compatibility::containsUnsafeUnknown(object.value(key))) return true;
+    object.remove(key);
+  }
+  return compatibility::containsUnsafeUnknown(object) || compatibility::containsTraversal(object);
+}
+bool unsafeLegacyStep(const QJsonObject &object) {
+  QStringList known{"$type", "Enabled"};
+  const auto type = object.value("$type").toString().section(',', 0, 0).trimmed();
+  for (const auto &mapping : mappings) if (type == QLatin1String(mapping.type))
+    for (const auto &property : mapping.properties) known.append(QLatin1String(property.property));
+  return unsafeExtras(object, known);
+}
 bool validateAsset(const QByteArray &bytes) {
   QBuffer buffer; buffer.setData(bytes); if (!buffer.open(QIODevice::ReadOnly)) return false;
   QImageReader reader(&buffer); reader.setAutoTransform(false);
@@ -271,30 +296,63 @@ EffectPreset readSxiePreset(const QByteArray &bytes, const EffectRegistry &regis
     }
   }
   if (config.size() > 4 * 1024 * 1024) return fail("sxie-config-size");
-  const auto json = QJsonDocument::fromJson(config);
+  const auto checked = compatibility::readJson(config, {4 * 1024 * 1024, 64, 100000});
+  if (!checked.ok()) return fail("sxie-" + checked.code);
+  const auto json = checked.document;
   if (!json.isObject() || !json.object().value("Effects").isArray()) return fail("sxie-config-invalid");
-  preset.legacy = json.object(); preset.name = preset.legacy.value("Name").toString();
+  preset.legacy = json.object(); preset.name = preset.legacy.value("Name").toString().normalized(QString::NormalizationForm_C);
+  if (unsafeExtras(preset.legacy, {"Name", "Effects"})) return fail("preset-unsafe-content");
+  using compatibility::ImportDisposition;
+  preset.report.add(ImportDisposition::Retained, preset.legacy.size());
+  if (!preset.legacy.contains("Name")) preset.report.add(ImportDisposition::Defaulted);
+  if (preset.name != preset.legacy.value("Name").toString()) preset.report.add(ImportDisposition::Transformed);
   const auto steps = preset.legacy.value("Effects").toArray();
   if (steps.size() > 256) return fail("preset-step-limit");
   for (const auto &value : steps) {
     if (!value.isObject()) return fail("sxie-effect-invalid");
     PresetStep step; step.legacy = value.toObject();
+    if (unsafeLegacyStep(step.legacy)) return fail("preset-unsafe-content");
+    if (step.legacy.value("ImageLocation").isString() && traversal(step.legacy.value("ImageLocation").toString())) return fail("preset-path-traversal");
+    if (!step.legacy.contains("Enabled")) preset.report.add(ImportDisposition::Defaulted);
     if (step.legacy.contains("Enabled") && !step.legacy.value("Enabled").isBool()) return fail("sxie-effect-invalid");
     step.enabled = step.legacy.value("Enabled").toBool(true);
     const auto type = step.legacy.value("$type").toString().section(',', 0, 0).trimmed();
     const Mapping *mapping = nullptr;
     for (const auto &m : mappings) if (type == QLatin1String(m.type)) { mapping = &m; break; }
     if (!mapping) step.diagnostics.append("preset-effect-unsupported");
-    else mapStep(step, *mapping, registry, preset.assets);
+    else {
+      mapStep(step, *mapping, registry, preset.assets);
+      for (const auto &property : mapping->properties)
+        if (!step.legacy.contains(QLatin1String(property.property))) preset.report.add(ImportDisposition::Defaulted);
+    }
+    preset.report.add(step.supported ? ImportDisposition::Transformed : ImportDisposition::Quarantined);
+    if (!step.enabled) preset.report.add(ImportDisposition::Ignored);
     preset.steps.append(step);
   }
   return preset;
 }
-QByteArray writeXsiePreset(const EffectPreset &preset, const EffectRegistry &registry) {
+QByteArray writeXsiePreset(const EffectPreset &preset, const EffectRegistry &registry, compatibility::ExportReport *report) {
+  if (report) { *report = {QStringLiteral("com.xerahs.app/effect-preset"), 1, {}}; }
+  // These APIs can also receive a programmatically constructed candidate. Refuse
+  // unsafe unknown content rather than serializing it through an ordinary export.
+  if (compatibility::containsUnsafeUnknown(preset.extra) || unsafeExtras(preset.legacy, {"Name", "Effects"})) return {};
+  for (const auto &raw : preset.legacy.value("Effects").toArray()) if (unsafeLegacyStep(raw.toObject())) return {};
+  for (const auto &step : preset.steps) {
+    QStringList knownParams; const auto *schema = registry.find(step.id);
+    if (schema) for (const auto &param : schema->spec().parameters) knownParams.append(param.id);
+    if (unsafeExtras(QJsonObject::fromVariantMap(step.parameters), knownParams)) return {};
+    if (compatibility::containsUnsafeUnknown(step.extra) || unsafeLegacyStep(step.legacy)) return {};
+    const auto location = step.legacy.value("ImageLocation").toString();
+    if (report && !location.isEmpty() && !preset.assets.contains(location)) report->omissions.append("external-asset-not-embedded");
+  }
   QJsonArray steps;
   for (const auto &s : preset.steps) {
     const auto *effect = registry.find(s.id);
-    const auto params = effect && s.supported ? serializeParameters(effect->spec(), s.parameters) : QJsonObject::fromVariantMap(s.parameters);
+    auto params = QJsonObject::fromVariantMap(s.parameters);
+    if (effect && s.supported) {
+      const auto canonical = serializeParameters(effect->spec(), s.parameters);
+      for (auto it = canonical.begin(); it != canonical.end(); ++it) params.insert(it.key(), it.value());
+    }
     QJsonObject entry = s.extra;
     const QJsonObject fields{{"id", s.id}, {"parameters", params}, {"seed", QString::number(s.seed)},
         {"enabled", s.enabled}, {"supported", s.supported}, {"legacy", s.legacy}, {"diagnostics", QJsonArray::fromStringList(s.diagnostics)}};
@@ -311,16 +369,25 @@ QByteArray writeXsiePreset(const EffectPreset &preset, const EffectRegistry &reg
 }
 EffectPreset readXsiePreset(const QByteArray &bytes, const EffectRegistry &registry) {
   if (bytes.size() > 192 * 1024 * 1024) return fail("preset-size-limit");
-  const auto json = QJsonDocument::fromJson(bytes); const auto root = json.object();
+  const auto checked = compatibility::readJson(bytes, {192 * 1024 * 1024, 64, 100000});
+  if (!checked.ok()) return fail("preset-" + checked.code);
+  const auto json = checked.document; const auto root = json.object();
   if (!json.isObject() || root.value("format") != "com.xerahs.app/effect-preset" || root.value("version") != 1 ||
       !root.value("steps").isArray() || !root.value("assets").isObject() || !root.value("legacy").isObject()) return fail("preset-format-invalid");
-  EffectPreset p; p.name = root.value("name").toString(); p.legacy = root.value("legacy").toObject();
+  EffectPreset p; p.name = root.value("name").toString().normalized(QString::NormalizationForm_C); p.legacy = root.value("legacy").toObject();
+  using compatibility::ImportDisposition;
+  p.report.add(ImportDisposition::Retained, root.size());
+  if (p.name != root.value("name").toString()) p.report.add(ImportDisposition::Transformed);
+  if (unsafeExtras(p.legacy, {"Name", "Effects"})) return fail("preset-unsafe-content");
+  for (const auto &v : p.legacy.value("Effects").toArray()) if (unsafeLegacyStep(v.toObject())) return fail("preset-unsafe-content");
   p.extra = root;
   for (const auto &key : {"format", "version", "name", "steps", "assets", "legacy"}) p.extra.remove(key);
+  if (compatibility::containsUnsafeUnknown(p.extra) || compatibility::containsTraversal(p.extra)) return fail("preset-unsafe-content");
   if (root.value("steps").toArray().size() > 256) return fail("preset-step-limit");
   qint64 total = 0; const auto assets = root.value("assets").toObject();
   if (assets.size() > 256) return fail("preset-asset-limit");
   for (auto it = assets.begin(); it != assets.end(); ++it) {
+    if (!safeAssetName(it.key())) return fail("preset-path-traversal");
     const auto decoded = QByteArray::fromBase64Encoding(it.value().toString().toLatin1(), QByteArray::AbortOnBase64DecodingErrors);
     total += decoded.decoded.size();
     if (!it.value().isString() || !decoded || decoded.decoded.size() > 32 * 1024 * 1024 || total > 128 * 1024 * 1024 || !validateAsset(decoded.decoded)) return fail("preset-asset-invalid");
@@ -333,18 +400,32 @@ EffectPreset readXsiePreset(const QByteArray &bytes, const EffectRegistry &regis
     if (!seedOk || QString::number(s.seed) != o.value("seed").toString()) return fail("preset-seed-invalid");
     s.extra = o;
     for (const auto &key : {"id", "parameters", "seed", "enabled", "supported", "legacy", "diagnostics"}) s.extra.remove(key);
+    if (compatibility::containsUnsafeUnknown(s.extra) || compatibility::containsTraversal(s.extra)) return fail("preset-unsafe-content");
     s.enabled = o.value("enabled").toBool(); s.legacy = o.value("legacy").toObject();
+    if (unsafeLegacyStep(s.legacy)) return fail("preset-unsafe-content");
+    if (traversal(s.legacy.value("ImageLocation").toString())) return fail("preset-path-traversal");
     for (const auto &d : o.value("diagnostics").toArray()) s.diagnostics.append(d.toString());
     const auto params = o.value("parameters").toObject();
     s.parameters = params.toVariantMap();
+    const auto *schema = registry.find(s.id); QStringList knownParams;
+    if (schema) for (const auto &param : schema->spec().parameters) {
+      knownParams.append(param.id);
+      if (!params.contains(param.id)) p.report.add(ImportDisposition::Defaulted);
+    }
+    if (unsafeExtras(params, knownParams)) return fail("preset-unsafe-content");
+    if (schema) for (const auto &param : schema->spec().parameters) if (param.kind == ParamKind::FilePath && traversal(params.value(param.id).toString())) return fail("preset-path-traversal");
     if (o.value("supported").toBool()) {
       const auto *effect = registry.find(s.id);
       if (effect) {
         const auto resolved = deserializeParameters(effect->spec(), params);
-        if (resolved.ok()) { s.parameters = resolved.values; validateStep(s, registry, p.assets); }
+        if (resolved.ok()) { s.parameters = resolved.values;
+          for (auto it = params.begin(); it != params.end(); ++it) if (!knownParams.contains(it.key())) s.parameters.insert(it.key(), it.value().toVariant());
+          validateStep(s, registry, p.assets); }
         else s.diagnostics.append(resolved.error + ":" + resolved.parameter);
       } else s.diagnostics.append("preset-effect-unsupported");
     }
+    p.report.add(s.supported ? ImportDisposition::Retained : ImportDisposition::Quarantined);
+    if (!s.enabled) p.report.add(ImportDisposition::Ignored);
     p.steps.append(s);
   }
   return p;

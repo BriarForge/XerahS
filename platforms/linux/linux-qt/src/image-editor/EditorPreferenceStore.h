@@ -11,7 +11,7 @@ struct PreferenceRead {
   QByteArray bytes;
   QString diagnostic;
 };
-struct PreferenceWrite { bool saved = false; QString diagnostic; };
+struct PreferenceWrite { bool saved = false; QString diagnostic; compatibility::ExportReport report = {}; };
 class PreferenceStorage {
 public:
   virtual ~PreferenceStorage() = default;
@@ -31,6 +31,7 @@ public:
   explicit EditorPreferenceStore(PreferenceStorage &storage) : m_storage(storage) { reload(); }
   const EditorPreferences &preferences() const { return m_preferences; }
   const QStringList &diagnostics() const { return m_diagnostics; }
+  const compatibility::ImportReport &importReport() const { return m_preferences.report; }
   void reload();
   PreferenceWrite save(const EditorPreferences &preferences);
 private:

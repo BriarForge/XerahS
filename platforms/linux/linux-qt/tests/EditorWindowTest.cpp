@@ -242,6 +242,20 @@ class EditorWindowTest : public QObject {
   Q_OBJECT
   QTemporaryDir dialogPreferences;
 private slots:
+  void xannImportReportAppearsOnOpenAndReplacement() {
+    QTemporaryDir dir; const auto path = dir.filePath("report.png"); QVERIFY(fixture().save(path));
+    QVERIFY(initializeNativeEditorPreferences(dir.filePath("preferences.json")).isEmpty());
+    auto document = *loadSource(path).document; RectangleAnnotation shape;
+    shape.id = QUuid::createUuid(); shape.start = {1, 1}; shape.end = {8, 8}; document.annotations = {shape};
+    QVERIFY(saveEdit(path, fixture(), document).sidecarSaved);
+    const auto imported = loadSource(path); QVERIFY(imported.importReport);
+    QPointer<EditorWindow> window = EditorWindow::open(path); QVERIFY(window);
+    QVERIFY(window->statusBar()->currentMessage().contains(imported.importReport->summary()));
+    QVERIFY(window->openImage(path));
+    QVERIFY(window->statusBar()->currentMessage().contains(imported.importReport->summary()));
+    delete window.data();
+  }
+
   void initTestCase() {
     QCoreApplication::setAttribute(Qt::AA_DontUseNativeDialogs);
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());

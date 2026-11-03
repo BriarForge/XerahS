@@ -1,5 +1,6 @@
 // SETCAT-005, FN-016, CORE-012, CORE-013: private atomic JSON storage.
 #include "PrivateJsonFile.h"
+#include "JsonBoundary.h"
 
 #include <QDir>
 #include <QFile>
@@ -65,10 +66,13 @@ StoreRead PrivateJsonFile::read() const {
   out.snapshot = file.read(limit);
   if (file.error() != QFileDevice::NoError) { out.status = StoreStatus::ReadFailed; return out; }
   if (out.snapshot.size() > m_options.maxBytes) { out.status = StoreStatus::TooLarge; return out; }
-  QJsonParseError error;
-  const auto document = QJsonDocument::fromJson(out.snapshot, &error);
-  if (error.error != QJsonParseError::NoError || !document.isObject()) { out.status = StoreStatus::Invalid; return out; }
-  out.document = document.object();
+  const auto parsed = compatibility::readJson(out.snapshot, {m_options.maxBytes, 64, 100000});
+  if (!parsed.ok() || !parsed.document.isObject()) {
+    out.status = StoreStatus::Invalid;
+    out.diagnostic = parsed.ok() ? QStringLiteral("invalid-json") : parsed.code;
+    return out;
+  }
+  out.document = parsed.document.object();
   const auto format = out.document.value("format");
   const auto version = out.document.value("version");
   if (m_options.format.isEmpty() || (format != QJsonValue(m_options.format) && !(format.isUndefined() && m_options.acceptLegacyWithoutFormat)) ||
@@ -111,6 +115,7 @@ StoreStatus PrivateJsonFile::write(QJsonObject payload, int version, const QByte
   payload.insert("version", version);
   const auto bytes = QJsonDocument(payload).toJson();
   if (bytes.size() > m_options.maxBytes) return StoreStatus::TooLarge;
+  if (!compatibility::readJson(bytes, {m_options.maxBytes, 64, 100000}).ok()) return StoreStatus::Invalid;
   QSaveFile file(m_path);
   file.setDirectWriteFallback(false);
   if (!file.open(QIODevice::WriteOnly) || !file.setPermissions(QFile::ReadOwner | QFile::WriteOwner) ||

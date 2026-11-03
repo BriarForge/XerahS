@@ -4,6 +4,8 @@
 // annotation-document.schema.json; requirement IDs refer to SPEC.md.
 #pragma once
 
+#include "storage/Compatibility.h"
+
 #include <QByteArray>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -260,10 +262,13 @@ inline const QString sidecarSaveFailed = QStringLiteral("sidecar-save-failed");
 constexpr qint64 kMaxDimension = 100000;
 constexpr qint64 kMaxPixels = 268435456;
 constexpr qint64 kMaxDecompressedJsonBytes = 1073741824;
+constexpr qint64 kMaxCompressedXannBytes = 268435456;
+constexpr qint64 kMaxXannExpansionRatio = 1024;
 
 struct ParseResult {
   std::optional<AnnotationDocument> document;
   std::optional<QString> error;
+  compatibility::ImportReport report;
 };
 
 // ES-015, ES-017, ES-028, ES-029: validates a decoded payload. Image
@@ -273,6 +278,7 @@ QJsonObject serializeDocument(const AnnotationDocument &document);
 struct AnnotationListResult {
   std::optional<std::vector<Annotation>> annotations;
   QString diagnostic;
+  compatibility::ImportReport report;
 };
 // The document and object-transfer boundaries use the same field validation
 // and canonical serialization; unknown types remain inert document data.
@@ -282,7 +288,7 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &);
 // ES-013: gzip-wrapped UTF-8 JSON. readXann enforces the decompressed limit
 // while inflating.
 ParseResult readXann(const QByteArray &gzip, qint64 maxJsonBytes = kMaxDecompressedJsonBytes);
-std::optional<QByteArray> writeXann(const AnnotationDocument &document);
+std::optional<QByteArray> writeXann(const AnnotationDocument &document, compatibility::ExportReport *report = nullptr);
 
 // ES-030.
 struct SidecarPaths {
@@ -304,6 +310,7 @@ struct SidecarSaveResult {
   bool ok = true;
   std::optional<QString> sidecarPath;  // written sidecar, or nullopt
   std::optional<QString> diagnostic;   // sidecar-save-failed
+  compatibility::ExportReport report;
 };
 
 SidecarSaveResult saveSidecar(SidecarStore &store, const QString &rasterPath, const AnnotationDocument &document,

@@ -110,10 +110,15 @@ EditorWindow *EditorWindow::open(const QString &path, QWidget *parent) {
     if (parent && !owner) return false;
     const auto target = absoluteImagePath(path); auto source = openSource(target, owner, hooks);
     if ((parent && !owner) || source.diagnostic == u"canvas-cancelled") return false;
-    if (!source.document) { editorWarning(owner, "Cannot open image", QStringLiteral("%1\n\n%2").arg(QFileInfo(path).fileName(), describe(source.diagnostic))); return false; }
+    if (!source.document) {
+      QString detail = describe(source.diagnostic);
+      if (source.importReport) detail += QStringLiteral("\n\n") + source.importReport->summary();
+      editorWarning(owner, "Cannot open image", QStringLiteral("%1\n\n%2").arg(QFileInfo(path).fileName(), detail)); return false;
+    }
     try { window = new EditorWindow(target, std::move(source.image), std::move(*source.document), EditorSession::InitialPersistence::Saved, std::move(source.displayImage)); }
     catch (const std::bad_alloc &) { editorWarning(owner, "Cannot open image", describe(diagnostic::documentTooLarge)); return false; }
     window->setAttribute(Qt::WA_DeleteOnClose);
+    if (source.importReport) { window->m_importMessage = QStringLiteral("Annotation import: ") + source.importReport->summary(); window->refresh(); }
     if (!source.warnings.isEmpty()) {
       QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Information, "Annotations", source.warnings.join(QLatin1Char('\n')), QMessageBox::Ok, window)); box->setTextFormat(Qt::PlainText); box->exec(); disposeCanvasDialog(box.data());
     }
@@ -765,6 +770,7 @@ void EditorWindow::refresh() {
   if (!m_uploadMessage.isEmpty()) status += " · " + m_uploadMessage;
   if (!m_wallpaperMessage.isEmpty()) status += " · " + m_wallpaperMessage;
   if (!m_annotationMessage.isEmpty()) status += " · " + m_annotationMessage;
+  if (!m_importMessage.isEmpty()) status += " · " + m_importMessage;
   auto *bar = statusBar(); const bool notify = bar->currentMessage() != status;
   // QStatusBar emits during its internal hide/show traversal. Complete that
   // traversal before notifying observers that can destroy this window/bar.
@@ -848,7 +854,7 @@ void EditorWindow::adoptSession(std::unique_ptr<EditorSession> next, const QStri
   m_saveMessage.clear(); m_saveMessageState.reset();
   m_failedCopy.reset(); m_failedCopyState.reset(); m_copyMessage.clear(); m_copyMessageState.reset();
   m_failedPrint.reset(); m_failedPrintState.reset(); m_printMessage.clear(); m_printMessageState.reset();
-  m_annotationMessage.clear(); m_annotationMessageState.reset(); m_lastAnnotationPaste.clear(); m_annotationPasteOffset = 0;
+  m_annotationMessage.clear(); m_importMessage.clear(); m_annotationMessageState.reset(); m_lastAnnotationPaste.clear(); m_annotationPasteOffset = 0;
   m_canvas->resetDocument(*m_session, display);
   if (!owner) return;
   findChild<QAction *>(QStringLiteral("cropTool"))->setChecked(false);
@@ -877,7 +883,9 @@ bool EditorWindow::openImage(const QString &path) {
   const auto usable = [&] {
     if (source.diagnostic == u"canvas-cancelled") return false;
     if (source.document) return true;
-    withOutputBusy([guard, target, diagnostic = source.diagnostic] { if (guard) editorWarning(guard, "Cannot open image", QStringLiteral("%1\n\n%2").arg(QFileInfo(target).fileName(), describe(diagnostic))); return false; });
+    withOutputBusy([guard, target, diagnostic = source.diagnostic, report = source.importReport] {
+      if (guard) editorWarning(guard, "Cannot open image", QStringLiteral("%1\n\n%2").arg(QFileInfo(target).fileName(), describe(diagnostic) + (report ? "\n\n" + report->summary() : QString())));
+      return false; });
     return false;
   };
   if (!usable() || !guard) return false;
@@ -899,6 +907,7 @@ bool EditorWindow::openImage(const QString &path) {
     guard->adoptSession(std::move(next), target, std::move(source.image), source.displayImage); return bool(guard);
   });
   if (!guard || !adopted) return false;
+  if (source.importReport) m_importMessage = QStringLiteral("Annotation import: ") + source.importReport->summary();
   recordRecentImage(target); return bool(guard);
 }
 
@@ -1328,6 +1337,7 @@ bool EditorWindow::performSave(const QString &target, const EditorSaveReceiptPtr
     }
     m_partialSave.reset(); m_partialSaveState.reset();
     m_saveMessage = outcome.sidecarPath ? QString("Saved %1 and editable annotations").arg(format) : QString("Saved %1; no annotation companion needed").arg(format);
+    if (outcome.sidecarPath) m_saveMessage += QStringLiteral("; %1 version %2; non-portable omissions: %3").arg(outcome.annotationExport.target).arg(outcome.annotationExport.version).arg(outcome.annotationExport.omissions.size());
     if (outcome.cancelled) m_saveMessage += " (completed despite cancellation)";
     m_saveMessageState = state;
     m_path = target; m_saveEncoding = encoding;

@@ -201,6 +201,7 @@ private:
   QMap<QString, QAction *> m_annotationActions;
   AnnotationClipboardPorts m_annotationClipboard;
   QString m_annotationMessage;
+  QString m_importMessage;
   std::optional<quint64> m_annotationMessageState;
   QByteArray m_lastAnnotationPaste;
   double m_annotationPasteOffset = 0;

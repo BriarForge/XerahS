@@ -68,6 +68,8 @@ private slots:
     dialog.importFile(writeSxcu(kSxcu));
     settle(dialog);
     QVERIFY2(m_reports.isEmpty(), qPrintable(m_reports.join('\n')));
+    auto *report = dialog.findChild<QLabel *>("destinationImportReport"); QVERIFY(report);
+    QVERIFY(report->text().contains("transformed:")); QVERIFY(!report->text().contains("super-secret-value"));
     QCOMPARE(rows(dialog, "Destinations"), QStringList{QStringLiteral("Example (default)")});
     QTRY_COMPARE(rows(dialog, "Secrets"), QStringList{QStringLiteral("Authorization: stored")});
     for (auto *label : dialog.findChildren<QLabel *>()) QVERIFY(!label->text().contains("super-secret-value"));
@@ -113,7 +115,9 @@ private slots:
 
     m_reports.clear();
     dialog.importFile(writeSxcu("not json"));
-    QCOMPARE(m_reports, QStringList{QStringLiteral("This is not a valid custom uploader file.")});
+    QCOMPARE(m_reports.size(), 1);
+    QVERIFY(m_reports.first().startsWith("This is not a valid custom uploader file."));
+    QVERIFY(m_reports.first().contains("rejected: 1"));
   }
 
   void removeAsksFirstAndDeletesSecrets() {

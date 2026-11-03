@@ -6,7 +6,10 @@ namespace xerahs::editor {
 SourceBindingResult bindSource(const AnnotationDocument &document, const QByteArray &currentRasterPng,
                                const QString &rasterPath, const QString &rasterHash, SourceChoice choice) {
   try {
-    const auto valid = parseDocument(serializeDocument(document));
+    // The in-memory imagePath is a live filesystem path (it may legitimately hold '..'); XANN
+    // path validation applies to the portable serialized form, so validate without it.
+    auto validated = document; validated.imagePath.clear();
+    const auto valid = parseDocument(serializeDocument(validated));
     if (valid.error) return {std::nullopt, valid.error, false};
     if (choice != SourceChoice::Unspecified && choice != SourceChoice::CurrentRaster && choice != SourceChoice::EmbeddedSource)
       return {std::nullopt, diagnostic::documentInvalid, false};
@@ -17,7 +20,8 @@ SourceBindingResult bindSource(const AnnotationDocument &document, const QByteAr
     bound.imagePath = rasterPath;
     bound.imageHash = rasterHash;
     // Validate the selected header before reading it; never allocate pixels here.
-    const auto selected = parseDocument(serializeDocument(bound));
+    auto checked = bound; checked.imagePath.clear();
+    const auto selected = parseDocument(serializeDocument(checked));
     if (selected.error) return {std::nullopt, selected.error, false};
     const auto dimension = [&](int offset) {
       const auto *p = reinterpret_cast<const unsigned char *>(bound.sourceImagePng.constData() + offset);

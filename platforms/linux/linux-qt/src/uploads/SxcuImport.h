@@ -2,6 +2,7 @@
 #pragma once
 
 #include "UploadDestination.h"
+#include "storage/Compatibility.h"
 
 #include <QVector>
 
@@ -24,6 +25,10 @@ struct SxcuImportResult {
   UploadDestination destination;
   QVector<Secret> secrets;
   QVector<ImportWarning> warnings;
+  compatibility::ImportReport report;
+  // Quarantined metadata is inspectable only; it is never persisted or applied.
+  QJsonObject quarantine;
+  bool acceptanceBlocked = false;
 };
 
 // Parses a ShareX custom-uploader document. Secret-shaped header, query, and

@@ -1,4 +1,5 @@
 #include "SxcuImport.h"
+#include "storage/JsonBoundary.h"
 
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -27,33 +28,23 @@ void warn(Bag *bag, const QString &code, const QString &detail) {
   bag->warnings.append({code, detail.left(64)});
 }
 
-bool tooDeep(const QByteArray &bytes) {
-  int depth = 0;
-  bool inString = false;
-  bool escape = false;
-  for (qsizetype i = 0; i < bytes.size(); ++i) {
-    const unsigned char c = static_cast<unsigned char>(bytes.at(i));
-    if (inString) {
-      if (escape) escape = false;
-      else if (c == '\\') escape = true;
-      else if (c == '"') inString = false;
-      continue;
-    }
-    if (c == '"') inString = true;
-    else if (c == '{' || c == '[') {
-      if (++depth > kMaxDepth) return true;
-    } else if ((c == '}' || c == ']') && depth > 0) {
-      --depth;
-    }
-  }
-  return false;
-}
-
 bool isSecretName(const QString &name) {
   const auto lower = name.toLower();
   static constexpr const char *parts[] = {"apikey", "key", "token", "secret", "auth", "password", "cookie"};
   for (const char *part : parts)
     if (lower.contains(QLatin1String(part))) return true;
+  return false;
+}
+
+bool unsafeMetadata(const QJsonValue &value, const QString &key = {}) {
+  if ((!key.isEmpty() && compatibility::unsafeUnknown(key) && (!isSecretName(key) || key.contains("auth", Qt::CaseInsensitive) || !value.isString())) ||
+      key == "Regex" || key == "RegexList") return true;
+  if (value.isObject()) {
+    const auto o = value.toObject();
+    for (auto it = o.begin(); it != o.end(); ++it) if (unsafeMetadata(it.value(), it.key())) return true;
+  } else if (value.isArray()) {
+    for (const auto &item : value.toArray()) if (unsafeMetadata(item)) return true;
+  }
   return false;
 }
 
@@ -272,13 +263,14 @@ std::optional<QString> referencedSecret(const QString &value) {
 }
 
 SxcuImportResult importSxcu(const QByteArray &bytes) {
-  if (bytes.size() > kMaxDestinationBytes) return {{}, QStringLiteral("too-large"), {}, {}, {}};
-  if (tooDeep(bytes)) return {{}, QStringLiteral("too-deep"), {}, {}, {}};
-  QJsonParseError error;
-  const auto document = QJsonDocument::fromJson(bytes, &error);
-  if (error.error != QJsonParseError::NoError || !document.isObject()) return {{}, QStringLiteral("invalid-json"), {}, {}, {}};
-
-  auto root = document.object();
+  using compatibility::ImportDisposition;
+  const auto parsed = compatibility::readJson(bytes, {kMaxDestinationBytes, kMaxDepth, 100000});
+  if (!parsed.ok() || !parsed.document.isObject()) {
+    SxcuImportResult failed; failed.code = parsed.ok() ? QStringLiteral("invalid-json") : parsed.code;
+    failed.report.add(ImportDisposition::Rejected); return failed;
+  }
+  auto root = parsed.document.object();
+  const auto original = root;
   Bag bag;
   UploadDestination destination;
   destination.schemaVersion = kDestinationSchemaVersion;
@@ -332,8 +324,13 @@ SxcuImportResult importSxcu(const QByteArray &bytes) {
   for (auto &field : destination.arguments) takeSecret(&bag, &field.value, field.name);
   stripUserInfo(&bag, &destination);
 
-  QJsonObject extra;
-  for (auto it = root.begin(); it != root.end(); ++it) extra.insert(it.key(), scrub(&bag, it.value(), it.key(), true));
+  QJsonObject extra, quarantine;
+  for (auto it = root.begin(); it != root.end(); ++it) {
+    // Executable/authority metadata has no active destination representation.
+    // Keep it separate from extra, which is ordinary round-trip data.
+    if (unsafeMetadata(it.value(), it.key()) || compatibility::containsTraversal(it.value(), it.key())) quarantine.insert(it.key(), it.value());
+    else extra.insert(it.key(), scrub(&bag, it.value(), it.key(), true));
+  }
   destination.extra = extra;
 
   if (destination.name.trimmed().isEmpty()) {
@@ -343,9 +340,30 @@ SxcuImportResult importSxcu(const QByteArray &bytes) {
 
   SxcuImportResult result;
   result.ok = true;
+  destination.name = destination.name.normalized(QString::NormalizationForm_C);
   result.destination = std::move(destination);
   result.secrets = std::move(bag.secrets);
   result.warnings = std::move(bag.warnings);
+  result.quarantine = std::move(quarantine);
+  result.report.add(ImportDisposition::Retained, original.size() - result.quarantine.size());
+  if (result.destination.name != original.value("Name").toString() && original.value("Name").isString())
+    result.report.add(ImportDisposition::Transformed);
+  if (!hasMethod && !hasType) result.report.add(ImportDisposition::Defaulted);
+  if (!bodyPresent) result.report.add(ImportDisposition::Defaulted);
+  if (original.value("Name").toString().trimmed().isEmpty()) result.report.add(ImportDisposition::Defaulted);
+  result.report.add(ImportDisposition::Quarantined, result.quarantine.size());
+  result.acceptanceBlocked = !result.quarantine.isEmpty();
+  for (const auto &warning : result.warnings) {
+    if (warning.code == "secret-extracted" || warning.code == "split-query" || warning.code == "inferred-body")
+      result.report.add(ImportDisposition::Transformed);
+    else {
+      result.report.add(ImportDisposition::Rejected);
+      result.acceptanceBlocked = true;
+    }
+  }
+  if (result.acceptanceBlocked) result.code = QStringLiteral("import-critical-unsupported");
+  // RequestType is a legacy alias; when both are present only RequestMethod wins.
+  if (hasMethod && hasType) result.report.add(ImportDisposition::Ignored);
   return result;
 }
 

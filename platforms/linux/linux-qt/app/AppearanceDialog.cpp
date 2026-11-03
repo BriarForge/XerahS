@@ -24,6 +24,9 @@ bool manageEditorAppearance(QWidget *parent) {
   auto *layout = new QVBoxLayout(dialog);
   auto *description = new QLabel(QStringLiteral("Applies to all editor windows. Desktop high contrast and reduced motion remain in effect. Colours may adjust on screen for contrast; the saved accent stays unchanged."), dialog);
   description->setWordWrap(true); layout->addWidget(description);
+  auto *report = new QLabel(original.report.summary(), dialog);
+  report->setObjectName(QStringLiteral("editorPreferenceImportReport")); report->setTextFormat(Qt::PlainText);
+  report->setWordWrap(true); report->setAccessibleName(QStringLiteral("Preference import report")); layout->addWidget(report);
   auto *systemTheme = new QCheckBox(QStringLiteral("Use desktop theme"), dialog);
   systemTheme->setObjectName(QStringLiteral("useSystemTheme")); layout->addWidget(systemTheme);
   auto *form = new QFormLayout; layout->addLayout(form);

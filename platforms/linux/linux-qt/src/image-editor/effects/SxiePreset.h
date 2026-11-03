@@ -1,6 +1,7 @@
 // COMPAT-SXIE-001, EE-003, EE-008, EE-015..EE-016.
 #pragma once
 #include "Effect.h"
+#include "storage/Compatibility.h"
 #include <QJsonArray>
 namespace xerahs::effects {
 struct PresetStep {
@@ -17,10 +18,11 @@ struct EffectPreset {
   QMap<QString, QByteArray> assets;
   QJsonObject legacy, extra;
   QString error;
+  compatibility::ImportReport report;
   bool ok() const { return error.isEmpty(); }
 };
 quint64 defaultEffectSeed(const QString &id);
 EffectPreset readSxiePreset(const QByteArray &, const EffectRegistry & = builtinEffects());
 EffectPreset readXsiePreset(const QByteArray &, const EffectRegistry & = builtinEffects());
-QByteArray writeXsiePreset(const EffectPreset &, const EffectRegistry & = builtinEffects());
+QByteArray writeXsiePreset(const EffectPreset &, const EffectRegistry & = builtinEffects(), compatibility::ExportReport *report = nullptr);
 }

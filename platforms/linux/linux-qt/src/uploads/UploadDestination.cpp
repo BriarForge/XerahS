@@ -1,4 +1,5 @@
 #include "UploadDestination.h"
+#include "storage/JsonBoundary.h"
 
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -103,10 +104,9 @@ QString bodyTypeString(BodyType body) {
 
 DestinationRead readDestination(const QByteArray &bytes) {
   if (bytes.size() > kMaxDestinationBytes) return {{}, QStringLiteral("too-large")};
-  QJsonParseError error;
-  const auto document = QJsonDocument::fromJson(bytes, &error);
-  if (error.error != QJsonParseError::NoError || !document.isObject()) return {{}, QStringLiteral("invalid-json")};
-  auto root = document.object();
+  const auto parsed = xerahs::compatibility::readJson(bytes, {kMaxDestinationBytes, 64, 100000});
+  if (!parsed.ok() || !parsed.document.isObject()) return {{}, parsed.code == u"too-large" ? QStringLiteral("too-large") : QStringLiteral("invalid-json")};
+  auto root = parsed.document.object();
   const auto version = root.value(QStringLiteral("schemaVersion"));
   if (!version.isDouble() || version.toInt() != kDestinationSchemaVersion || version.toDouble() != kDestinationSchemaVersion) {
     return {{}, QStringLiteral("unsupported-schema")};

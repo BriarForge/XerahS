@@ -1,5 +1,6 @@
 #pragma once
 #include "HotkeyBindings.h"
+#include "storage/Compatibility.h"
 #include "capture/RegionSession.h"
 #include "workflows/CaptureWorkflows.h"
 #include <QJsonObject>
@@ -25,7 +26,7 @@ QStringList deprecatedSettingKeys();
 // a single optional .bak plus dated weekly copies; weekly archives belong to export (SETCAT-019).
 constexpr int retainedPreviousVersions = 1;
 QJsonObject defaultSettings(const QString &saveFolder);
-struct SettingsRead { QJsonObject values; QStringList diagnostics; bool writable = true; QMap<QString, FieldState> fields = {}; };
+struct SettingsRead { QJsonObject values; QStringList diagnostics; bool writable = true; QMap<QString, FieldState> fields = {}; compatibility::ImportReport report = {}; };
 // Diagnostics name fields only; they never repeat a stored value. `deprecated` is injectable for tests.
 SettingsRead repairSettings(const QJsonObject &input, const QString &saveFolder, const QStringList &deprecated = deprecatedSettingKeys());
 // Saved workflow fields win. Seeded, unsaved definitions inherit profile naming;
@@ -55,7 +56,7 @@ class ApplicationSettingsStore {
 public:
   ApplicationSettingsStore(QString path, QString saveFolder);
   const SettingsRead &current() const { return m_current; }
-  QString save(const QJsonObject &values);
+  QString save(const QJsonObject &values, compatibility::ExportReport *report = nullptr);
   // The values before the last successful save; empty when there is none.
   QJsonObject previousValues() const { return m_envelope.value("previous").toObject(); }
 private:

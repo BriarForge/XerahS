@@ -54,7 +54,7 @@ private:
   uploads::CredentialStore &m_credentials;
   UploadDestinationsPorts m_ports;
   QListWidget *m_list = nullptr;
-  QLabel *m_details = nullptr;
+  QLabel *m_details = nullptr, *m_importReport = nullptr;
   QListWidget *m_secrets = nullptr;
   QPushButton *m_import = nullptr, *m_default = nullptr, *m_secret = nullptr, *m_remove = nullptr;
   bool m_busy = false;

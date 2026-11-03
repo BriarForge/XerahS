@@ -1,4 +1,5 @@
 #include "PipelineJournal.h"
+#include "storage/JsonBoundary.h"
 #include "PipelineRetry.h"
 #include <QDir>
 #include <QJsonArray>
@@ -53,9 +54,9 @@ QByteArray serializePipelineJournal(const PipelineJournalSnapshot &snapshot) {
 }
 PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString &expectedTaskId) {
   if (bytes.size() > maximumJournalBytes || !validJournalTaskId(expectedTaskId)) return invalid();
-  QJsonParseError error; const auto document = QJsonDocument::fromJson(bytes, &error);
-  if (error.error != QJsonParseError::NoError || !document.isObject()) return invalid();
-  const auto value = document.object();
+  const auto parsed = compatibility::readJson(bytes, {maximumJournalBytes, 64, 100000});
+  if (!parsed.ok() || !parsed.document.isObject()) return invalid();
+  const auto value = parsed.document.object();
   if (value.value("format") != format) return invalid();
   if (value.value("version") != QJsonValue(1) && value.value("version") != QJsonValue(2) && value.value("version") != QJsonValue(3))
     return {{}, QStringLiteral("pipeline-journal-version-unsupported")};

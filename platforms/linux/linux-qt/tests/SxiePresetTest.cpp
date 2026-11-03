@@ -10,6 +10,7 @@
 #include <QTest>
 #include <QtEndian>
 #include <QLabel>
+#include <QLocale>
 #include <QListWidget>
 #include <QTemporaryDir>
 #include <QPushButton>
@@ -62,6 +63,68 @@ class SxiePresetTest : public QObject {
   Q_OBJECT
 private slots:
   void initTestCase() { QApplication::setAttribute(Qt::AA_DontUseNativeDialogs); }
+  void jsonBoundaryMatrix_data() {
+    QTest::addColumn<QByteArray>("bytes"); QTest::addColumn<QString>("suffix");
+    QTest::newRow("malformed") << QByteArray("{broken") << QString("invalid-json");
+    QTest::newRow("duplicate") << QByteArray("{\"Name\":1,\"\\u004eame\":2}") << QString("duplicate-key");
+    QTest::newRow("utf8") << QByteArray("{\"a\":\"\xff\"}") << QString("invalid-encoding");
+    QTest::newRow("depth") << QByteArray(65, '[') + "0" + QByteArray(65, ']') << QString("too-deep");
+    QTest::newRow("elements") << QByteArray("[") + QByteArray("0,").repeated(100001) + "0]" << QString("too-many-elements");
+  }
+  void jsonBoundaryMatrix() {
+    QFETCH(QByteArray, bytes); QFETCH(QString, suffix);
+    const auto legacy = readSxiePreset(zip({{"Config.json", bytes}}, false));
+    QCOMPARE(legacy.error, "sxie-" + suffix);
+    const auto native = readXsiePreset(bytes); QCOMPARE(native.error, "preset-" + suffix);
+    for (const auto &p : {legacy, native}) {
+      QVERIFY(!p.ok()); QVERIFY(p.steps.isEmpty());
+      QVERIFY(p.report.count(xerahs::compatibility::ImportDisposition::Rejected) > 0);
+    }
+    QCOMPARE(readSxiePreset(zip({{"Config.json", QByteArray(4 * 1024 * 1024 + 1, ' ')}}, false)).error, QString("sxie-config-size"));
+  }
+  void extensionsAndReportsAreInertAndValueFree() {
+    using D = xerahs::compatibility::ImportDisposition;
+    const QJsonObject unknown{{"$type", "Future.Brush"}, {"Enabled", false}, {"Label", "private-value"}};
+    auto imported = readSxiePreset(configZip({{"Effects", QJsonArray{unknown}}, {"Vendor", QJsonObject{{"note", "private-value"}}}}));
+    QVERIFY(imported.ok());
+    for (auto d : {D::Retained, D::Defaulted, D::Quarantined, D::Ignored}) QVERIFY(imported.report.count(d) > 0);
+    QVERIFY(!imported.report.summary().contains("private-value"));
+    xerahs::compatibility::ExportReport report;
+    auto bytes = writeXsiePreset(imported, builtinEffects(), &report);
+    QCOMPARE(report.target, QString("com.xerahs.app/effect-preset")); QCOMPARE(report.version, 1);
+    auto back = readXsiePreset(bytes); QVERIFY(back.ok()); QCOMPARE(back.steps[0].legacy, unknown); QCOMPARE(back.legacy, imported.legacy);
+    auto native = QJsonDocument::fromJson(bytes).object(); native.insert("Vendor", QJsonObject{{"note", "private-value"}});
+    auto steps = native["steps"].toArray(); auto step = steps[0].toObject();
+    step.insert("Vendor", QJsonArray{42, "opaque"}); auto params = step["parameters"].toObject(); params.insert("future_param", QJsonArray{42}); step["parameters"] = params;
+    steps[0] = step; native["steps"] = steps;
+    back = readXsiePreset(QJsonDocument(native).toJson()); QVERIFY(back.ok());
+    const auto roundTrip = QJsonDocument::fromJson(writeXsiePreset(back)).object();
+    QCOMPARE(roundTrip.value("Vendor"), native.value("Vendor"));
+    QCOMPARE(roundTrip.value("steps").toArray()[0].toObject().value("Vendor"), step.value("Vendor"));
+    QCOMPARE(roundTrip.value("steps").toArray()[0].toObject().value("parameters"), step.value("parameters"));
+    for (const auto *key : {"Authentication", "Command", "password", "$ref", "criticalFeature", "assetPath"}) {
+      auto unsafe = imported.legacy; unsafe.insert(key, "../private-value");
+      const auto bad = readSxiePreset(configZip(unsafe)); QVERIFY(!bad.ok()); QCOMPARE(bad.error, QString("preset-unsafe-content"));
+      auto unsafeNative = native; unsafeNative.insert(key, "../private-value");
+      QVERIFY(!readXsiePreset(QJsonDocument(unsafeNative).toJson()).ok());
+      QVERIFY(!bad.report.summary().contains("private-value"));
+    }
+  }
+  void canonicalPresetLocaleNewlineAndUnicode() {
+    using D = xerahs::compatibility::ImportDisposition;
+    struct Restore { QLocale locale; ~Restore() { QLocale::setDefault(locale); } } restore;
+    for (const auto &locale : {QLocale::c(), QLocale(QLocale::German), QLocale(QLocale::Turkish)})
+      for (bool crlf : {false, true}) {
+        QLocale::setDefault(locale);
+        auto root = readSxiePreset(fixture()).legacy;
+        root.insert("Name", QString::fromUtf8("Cafe\xcc\x81"));
+        auto json = QJsonDocument(root).toJson(); if (crlf) json.replace("\n", "\r\n");
+        const auto p = readSxiePreset(zip({{"Config.json", json}})); QVERIFY(p.ok());
+        QCOMPARE(p.name, QString::fromUtf8("Café")); QVERIFY(p.report.count(D::Transformed) > 0);
+        const auto native = writeXsiePreset(p); const auto back = readXsiePreset(native); QVERIFY(back.ok());
+        QCOMPARE(back.name, p.name); QCOMPARE(writeXsiePreset(back), native); QVERIFY(!native.contains('\r'));
+      }
+  }
   void unavailableMappedStepVisible() {
     const EffectRegistry unavailable;
     const auto preset = readSxiePreset(configZip({{"Effects", QJsonArray{QJsonObject{{"$type", "ShareX.ImageEffectsLib.Scale, ShareX.ImageEffectsLib"}}}}}), unavailable);
@@ -353,6 +416,7 @@ private slots:
     const auto path = temp.filePath("export.xsie");
     QVERIFY(QMetaObject::invokeMethod(picker, "fileSelected", Qt::DirectConnection, Q_ARG(QString, path))); picker->reject();
     QTRY_VERIFY(d.findChild<QLabel *>("presetStatus")->text().contains("Preset exported"));
+    QVERIFY(d.findChild<QLabel *>("presetStatus")->text().contains("com.xerahs.app/effect-preset version 1"));
     QFile file(path); QVERIFY(file.open(QIODevice::ReadOnly)); const auto bytes = file.readAll();
     QCOMPARE(writeXsiePreset(readXsiePreset(bytes)), writeXsiePreset(p));
     QVERIFY(!(file.permissions() & (QFile::ReadGroup | QFile::WriteGroup | QFile::ReadOther | QFile::WriteOther)));
@@ -372,6 +436,15 @@ private slots:
     QCOMPARE(readSxiePreset(zip({{"Config.json", a.entries["Config.json"]}, {"Assets/huge.png", huge}})).error, QString("sxie-asset-invalid"));
     auto native = QJsonDocument::fromJson(writeXsiePreset(withAsset)).object(); native["assets"] = QJsonObject{{"x", "!!!"}};
     QVERIFY(!readXsiePreset(QJsonDocument(native).toJson()).ok());
+  }
+  void exportReportsUnresolvedExternalAssetAsNonPortable() {
+    const QJsonObject effect{{"$type", "ShareX.ImageEffectsLib.DrawImage, ShareX.ImageEffectsLib"},
+        {"ImageLocation", "C:\\\\Users\\\\someone\\\\stamp.png"}, {"Offset", "1, 2"}, {"SizeMode", 0}, {"Placement", 1}, {"RotateFlip", "None"}, {"Opacity", 100}};
+    const auto preset = readSxiePreset(zip({{"Config.json", QJsonDocument(QJsonObject{{"Name", "External"}, {"Effects", QJsonArray{effect}}}).toJson()}}));
+    QVERIFY2(preset.ok(), qPrintable(preset.error));
+    xerahs::compatibility::ExportReport report; const auto bytes = writeXsiePreset(preset, builtinEffects(), &report);
+    QVERIFY(!bytes.isEmpty()); QCOMPARE(report.omissions, QStringList{"external-asset-not-embedded"});
+    for (const auto &code : report.omissions) QVERIFY(!code.contains("someone"));
   }
   void embeddedDrawImageAndPathRefusal() {
     QImage stamp(2, 2, QImage::Format_ARGB32); stamp.fill(Qt::red);
@@ -393,7 +466,9 @@ private slots:
     // An imported path can only address an embedded asset, never a host file.
     for (const auto &path : {"/etc/passwd", "../stamp.png", "https://example.com/x", "C:\\x"}) {
       auto e = effect; e["ImageLocation"] = path; root["Effects"] = QJsonArray{e};
-      const auto bad = readSxiePreset(configZip(root)); QVERIFY(bad.ok()); QVERIFY(!bad.steps[0].supported);
+      const auto bad = readSxiePreset(configZip(root));
+      if (QString::fromLatin1(path).startsWith("../")) { QVERIFY(!bad.ok()); QCOMPARE(bad.error, QString("preset-path-traversal")); }
+      else { QVERIFY(bad.ok()); QVERIFY(!bad.steps[0].supported); }
     }
     auto native = QJsonDocument::fromJson(bytes).object(); auto steps = native["steps"].toArray(); auto s = steps[0].toObject();
     auto params = s["parameters"].toObject(); params["image_location"] = "/etc/passwd"; s["parameters"] = params; steps[0] = s; native["steps"] = steps;

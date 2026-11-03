@@ -82,7 +82,7 @@ void PresetDialog::loadFile(const QString &path) {
   status({}, tr("Reading preset…")); const auto registry = m_registry;
   m_work = OwnedWork::run<EffectPreset>(this, [path, registry](const OwnedWork::Context &work) {
     QFile file(path); EffectPreset preset;
-    if (!file.open(QIODevice::ReadOnly) || file.size() > 192 * 1024 * 1024) { preset.error = "preset-read-failed"; return preset; }
+    if (!file.open(QIODevice::ReadOnly) || file.size() > 192 * 1024 * 1024) { preset.error = "preset-read-failed"; preset.report.add(compatibility::ImportDisposition::Rejected); return preset; }
     const auto bytes = file.read(192 * 1024 * 1024 + 1);
     if (work.cancelled()) { preset.error = "effect-cancelled"; return preset; }
     return path.endsWith(".sxie", Qt::CaseInsensitive) ? readSxiePreset(bytes, *registry) : readXsiePreset(bytes, *registry);
@@ -102,7 +102,7 @@ void PresetDialog::setPreset(EffectPreset preset) {
     any |= step.supported && step.enabled && !unavailable;
   }
   m_canApply = m_preset.ok() && any; m_apply->setEnabled(m_canApply); m_export->setEnabled(m_preset.ok());
-  status(m_preset.error, m_preset.ok() ? tr("Apply runs supported, enabled steps in order as one undo step. Unsupported data is retained for export.") : tr("The preset could not be read. The document is unchanged."));
+  status(m_preset.error, (m_preset.ok() ? tr("Apply runs supported, enabled steps in order as one undo step. Unsupported data is retained for export.") : tr("The preset could not be read. The document is unchanged.")) + "\n" + m_preset.report.summary());
 }
 void PresetDialog::accept() {
   if (m_busy || !m_apply->isEnabled()) return;
@@ -136,12 +136,16 @@ void PresetDialog::exportFile() {
       const auto read = file.read();
       if (read.status != storage::StoreStatus::Ok && read.status != storage::StoreStatus::Missing) return "preset-export-" + storage::storeStatusName(read.status);
       QByteArray snapshot;
-      const auto result = file.write(QJsonDocument::fromJson(writeXsiePreset(preset, *registry)).object(), 1, read.snapshot, &snapshot);
+      compatibility::ExportReport report;
+      const auto exported = writeXsiePreset(preset, *registry, &report);
+      if (exported.isEmpty()) return QStringLiteral("preset-export-unsafe-content");
+      const auto result = file.write(QJsonDocument::fromJson(exported).object(), 1, read.snapshot, &snapshot);
       return result == storage::StoreStatus::Ok ? QString() : "preset-export-" + storage::storeStatusName(result);
     }, [this, revision](QString error) {
       if (revision != m_revision) return;
       m_busy = false; m_apply->setEnabled(m_canApply); m_export->setEnabled(true);
-      status(error, error.isEmpty() ? tr("Preset exported.") : tr("The preset could not be saved."));
+      compatibility::ExportReport report; writeXsiePreset(m_preset, *m_registry, &report);
+      status(error, error.isEmpty() ? tr("Preset exported to %1 version %2. Non-portable omissions: %3.").arg(report.target).arg(report.version).arg(report.omissions.size()) : tr("The preset could not be saved."));
     });
   }); picker->open();
 }

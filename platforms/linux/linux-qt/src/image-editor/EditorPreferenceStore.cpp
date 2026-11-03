@@ -1,4 +1,5 @@
 #include "EditorPreferenceStore.h"
+#include "storage/JsonBoundary.h"
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -73,17 +74,29 @@ PreferenceWrite FilePreferenceStorage::replace(const PreferenceRead &expected, c
 void EditorPreferenceStore::reload() {
   m_snapshot = m_storage.read(); m_envelope = {}; m_diagnostics.clear(); m_preferences = loadEditorPreferences({});
   if (m_snapshot.kind == PreferenceRead::Kind::Missing) return;
-  if (m_snapshot.kind == PreferenceRead::Kind::Failed) { m_preferences.readOnly = true; m_diagnostics.append(m_snapshot.diagnostic); return; }
+  if (m_snapshot.kind == PreferenceRead::Kind::Failed) { m_preferences.report.add(compatibility::ImportDisposition::Rejected); m_preferences.readOnly = true; m_diagnostics.append(m_snapshot.diagnostic); return; }
   if (m_snapshot.bytes.size() > maximumPreferenceBytes) {
-    m_preferences.readOnly = true; m_diagnostics.append(QStringLiteral("settings-too-large")); return;
+    m_preferences.report.add(compatibility::ImportDisposition::Rejected); m_preferences.readOnly = true; m_diagnostics.append(QStringLiteral("settings-too-large")); return;
   }
-  QJsonParseError error; const auto document = QJsonDocument::fromJson(m_snapshot.bytes, &error);
-  if (error.error != QJsonParseError::NoError || !document.isObject()) {
-    m_preferences.readOnly = true; m_diagnostics.append(QStringLiteral("settings-invalid-json")); return;
+  const auto parsed = compatibility::readJson(m_snapshot.bytes);
+  if (!parsed.ok() || !parsed.document.isObject()) {
+    m_preferences.readOnly = true;
+    m_preferences.report = {}; m_preferences.report.add(compatibility::ImportDisposition::Rejected);
+    m_diagnostics.append(QStringLiteral("settings-") + (parsed.code.isEmpty() ? QStringLiteral("invalid-json") : parsed.code)); return;
   }
-  m_envelope = document.object();
+  m_envelope = parsed.document.object();
+  auto unknownEnvelope = m_envelope;
+  for (const auto *key : {"format", "version", "current", "previous"}) unknownEnvelope.remove(QLatin1String(key));
+  if ((m_envelope.contains(u"previous") && !m_envelope.value(u"previous").isObject()) ||
+      compatibility::containsUnsafeUnknown(unknownEnvelope) || compatibility::containsTraversal(unknownEnvelope) ||
+      (m_envelope.value(u"previous").isObject() &&
+       loadEditorPreferences(m_envelope.value(u"previous").toObject()).readOnly)) {
+    m_preferences.readOnly = true; m_preferences.report = {};
+    m_preferences.report.add(compatibility::ImportDisposition::Rejected);
+    m_diagnostics.append(QStringLiteral("settings-unsafe-unknown")); return;
+  }
   if (m_envelope.value(u"format") != format || m_envelope.value(u"version") != QJsonValue(1)) {
-    m_preferences.readOnly = true; m_diagnostics.append(m_envelope.value(u"version").toDouble() > 1 ?
+    m_preferences.report.add(compatibility::ImportDisposition::Rejected); m_preferences.readOnly = true; m_diagnostics.append(m_envelope.value(u"version").toDouble() > 1 ?
         QStringLiteral("settings-newer-version") : QStringLiteral("settings-invalid-format")); return;
   }
   const auto current = m_envelope.value(u"current");
@@ -91,9 +104,16 @@ void EditorPreferenceStore::reload() {
   else {
     const auto previous = m_envelope.value(u"previous");
     if (!previous.isObject() || (m_preferences = loadEditorPreferences(previous.toObject())).readOnly) {
-      m_preferences.readOnly = true; m_diagnostics.append(QStringLiteral("settings-invalid-current")); return;
+      m_preferences.report.add(compatibility::ImportDisposition::Rejected); m_preferences.readOnly = true; m_diagnostics.append(QStringLiteral("settings-invalid-current")); return;
     }
+    m_preferences.report.add(compatibility::ImportDisposition::Rejected);
+    m_preferences.report.add(compatibility::ImportDisposition::Transformed);
     m_diagnostics.append(QStringLiteral("recovered-previous-settings"));
+  }
+  if (!m_preferences.readOnly) {
+    m_preferences.report.add(compatibility::ImportDisposition::Retained, unknownEnvelope.size() + 2);
+    if (current.isObject() && m_envelope.value(u"previous").isObject())
+      m_preferences.report.add(compatibility::ImportDisposition::Retained, m_envelope.value(u"previous").toObject().size());
   }
   m_diagnostics.append(m_preferences.diagnostics);
 }
@@ -109,8 +129,13 @@ PreferenceWrite EditorPreferenceStore::save(const EditorPreferences &preferences
   envelope.insert(QStringLiteral("previous"), previousFor(m_preferences, verified));
   const QByteArray bytes = QJsonDocument(envelope).toJson(QJsonDocument::Indented);
   if (bytes.size() > maximumPreferenceBytes) return {false, QStringLiteral("settings-too-large")};
+  if (!compatibility::readJson(bytes).ok()) return {false, QStringLiteral("settings-boundary-invalid")};
   const auto written = m_storage.replace(m_snapshot, bytes); if (!written.saved) return written;
   m_snapshot = {PreferenceRead::Kind::Readable, bytes, {}}; m_envelope = std::move(envelope); m_preferences = verified;
-  return written;
+  auto outcome = written;
+  outcome.report = {format, 1, {}};
+  if (!verified.recent.paths().isEmpty()) outcome.report.omissions.append(QStringLiteral("profile-local-recent-paths"));
+  if (verified.values.value(u"RememberWindowState").toBool()) outcome.report.omissions.append(QStringLiteral("profile-local-window-state"));
+  return outcome;
 }
 }  // namespace xerahs::editor

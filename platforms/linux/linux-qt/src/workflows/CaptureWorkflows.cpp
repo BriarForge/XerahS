@@ -1,5 +1,6 @@
 #include "CaptureWorkflows.h"
 #include "shell/ErrorPresentation.h"
+#include "storage/JsonBoundary.h"
 #include "actions/PostCapturePipeline.h"
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -83,9 +84,9 @@ QByteArray workflowsJson(const CaptureWorkflows &c) {
 }
 WorkflowRead parseCaptureWorkflows(const QByteArray &bytes) {
   if (bytes.size() > maximumPreferenceBytes) return invalid("workflow-too-large");
-  QJsonParseError error; const auto document = QJsonDocument::fromJson(bytes, &error);
-  if (error.error != QJsonParseError::NoError || !document.isObject()) return invalid();
-  auto root = document.object();
+  const auto parsed = compatibility::readJson(bytes, {maximumPreferenceBytes, 64, 100000});
+  if (!parsed.ok() || !parsed.document.isObject()) return invalid();
+  auto root = parsed.document.object();
   if (root.value("version").toDouble() > 2) return invalid("workflow-newer-version");
   if (root.value("format") != format || (root.value("version") != QJsonValue(1) && root.value("version") != QJsonValue(2)) || !root.value("workflows").isArray() || !root.value("defaultId").isString()) return invalid();
   const bool legacy = root.value("version") == QJsonValue(1);

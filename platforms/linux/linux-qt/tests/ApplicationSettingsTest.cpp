@@ -65,6 +65,7 @@ private slots:
       for (auto *box : dialog.findChildren<QCheckBox *>()) if (box->accessibleName() == "Confirm region on pointer release" || box->accessibleName() == "Snap clicks to detected windows or controls") result.append(box); return result; };
     {
       xerahs::app::SettingsDialog dialog(store, dir.path(), {}, shortcuts, [&] { ++applied; });
+      auto *report = dialog.findChild<QLabel *>("settingsImportReport"); QVERIFY(report); QCOMPARE(report->text(), store.current().report.summary());
       const auto controls = boxes(dialog); QCOMPARE(controls.size(), 2); for (auto *box : controls) { QVERIFY(box->isChecked()); box->setChecked(false); }
       dialog.reject(); QCOMPARE(applied, 0); QVERIFY(!QFile::exists(dir.filePath("settings.json")));
     }
@@ -327,7 +328,7 @@ private slots:
     QTemporaryDir dir; auto input = defaultSettings(dir.path());
     input.remove("showTrayIcon");
     input.insert("showNotification", "secret-token-AAAA");
-    input.insert("legacy.option", "secret-legacy-BBBB"); input.insert("future.option", QJsonObject{{"password", "secret-future-CCCC"}});
+    input.insert("legacy.option", "secret-legacy-BBBB"); input.insert("future.option", QJsonObject{{"label", "future-CCCC"}});
     auto bindings = input.value("hotkeys").toObject(); bindings.insert("capture-region", "Alt+F4"); bindings.insert("future-action", "secret-action-DDDD"); bindings.remove("capture-monitor");
     input.insert("hotkeys", bindings);
     const auto read = repairSettings(input, dir.path(), {"legacy.option"});
@@ -728,9 +729,14 @@ private slots:
     auto bindings = poisoned.value("hotkeys").toObject(); bindings.insert("consent-granted", "F5"); bindings.insert("grant-portal", "F6"); poisoned.insert("hotkeys", bindings);
     QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(QJsonDocument(QJsonObject{{"version", 1}, {"values", poisoned}}).toJson()); file.close();
     ApplicationSettingsStore imported(path, dir.path()); const auto clean = repairSettings(defaultSettings(dir.path()), dir.path());
-    QVERIFY(imported.current().writable); QVERIFY(imported.current().diagnostics.isEmpty());
-    for (const auto &key : forged) { QCOMPARE(imported.current().fields.value(key), FieldState::Unknown); QCOMPARE(imported.current().values.value(key), poisoned.value(key)); } // kept, inert
-    QCOMPARE(imported.current().fields.value("hotkeys.consent-granted"), FieldState::Unknown);
+    QVERIFY(!imported.current().writable);
+    QCOMPARE(imported.current().diagnostics, QStringList{"settings-unsafe-unknown"});
+    QVERIFY(imported.current().report.count(xerahs::compatibility::ImportDisposition::Rejected) > 0);
+    for (const auto &key : forged) {
+      QVERIFY(!imported.current().values.contains(key));
+      auto single = defaultSettings(dir.path()); single.insert(key, poisoned.value(key));
+      QVERIFY2(!repairSettings(single, dir.path()).writable, qPrintable(key));
+    }
     // Every consumer sees exactly what it sees with clean settings.
     const auto a = regionSessionSettings(imported.current().values), b = regionSessionSettings(clean.values);
     QCOMPARE(a.quickConfirm, b.quickConfirm); QCOMPARE(a.snapping, b.snapping);
@@ -743,8 +749,11 @@ private slots:
       QCOMPARE(x.actions, y.actions); QCOMPARE(x.capture, y.capture); QCOMPARE(x.chooseActions, y.chooseActions);
       QCOMPARE(x.output.directory, y.output.directory); QCOMPARE(x.output.pattern, y.output.pattern); QCOMPARE(x.actions, workflow.actions); QCOMPARE(x.chooseActions, workflow.chooseActions);
     }
-    // A reset or an ordinary save keeps the forged keys inert; nothing turns into a declared field, and diagnostics never echo values.
-    auto reset = resetAll(imported.current().values, dir.path()); for (const auto &key : forged) QCOMPARE(reset.value(key), poisoned.value(key));
+    // COMPCAT-005 rejects authority-bearing unknowns; the original file remains recoverable, never an active settings candidate.
+    QVERIFY(file.open(QIODevice::ReadOnly)); const auto original = file.readAll(); file.close();
+    QVERIFY(!imported.save(defaultSettings(dir.path())).isEmpty());
+    QVERIFY(file.open(QIODevice::ReadOnly)); QCOMPARE(file.readAll(), original); file.close();
+    auto reset = resetAll(imported.current().values, dir.path()); for (const auto &key : forged) QVERIFY(!reset.contains(key));
     for (const auto &field : settingFields()) QCOMPARE(repairSettings(reset, dir.path()).fields.value(field.key), FieldState::Valid);
     auto bad = poisoned; bad.insert("showNotification", "secret-forged-ZZZZ"); const auto read = repairSettings(bad, dir.path());
     QVERIFY(!read.diagnostics.join('\n').contains("ZZZZ")); QVERIFY(!read.diagnostics.join('\n').contains("credentials"));
@@ -754,7 +763,8 @@ private slots:
     xerahs::app::SettingsDialog dialog(imported, dir.path(), plan, shortcuts, [] {});
     for (auto *widget : dialog.findChildren<QWidget *>()) QVERIFY2(!authority.match(widget->accessibleName()).hasMatch(), qPrintable(widget->accessibleName()));
     dialog.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply)->click();
-    for (const auto &key : forged) QCOMPARE(imported.current().values.value(key), poisoned.value(key)); // Apply neither grants nor strips them
+    for (const auto &key : forged) QVERIFY(!imported.current().values.contains(key)); // read-only Apply grants no authority
+    QVERIFY(file.open(QIODevice::ReadOnly)); QCOMPARE(file.readAll(), original);
   }
   void autostart() {
     QTemporaryDir dir; const auto old = qgetenv("XDG_CONFIG_HOME"); qputenv("XDG_CONFIG_HOME", dir.path().toUtf8());

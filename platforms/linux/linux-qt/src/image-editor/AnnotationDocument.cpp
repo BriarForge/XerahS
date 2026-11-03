@@ -1,4 +1,5 @@
 #include "image-editor/AnnotationDocument.h"
+#include "storage/JsonBoundary.h"
 
 #include <QDateTime>
 #include <QJsonArray>
@@ -42,6 +43,54 @@ bool isInteger(const QJsonValue &value) {
 }
 
 bool isFiniteNumber(const QJsonValue &value) { return value.isDouble() && std::isfinite(value.toDouble()); }
+
+using compatibility::ImportDisposition;
+
+bool traversal(const QString &text) {
+  QString path = text; path.replace(QLatin1Char('\\'), QLatin1Char('/'));
+  return path.contains(QChar(0)) || path.split(QLatin1Char('/')).contains(QStringLiteral(".."));
+}
+bool unsafePathContent(const QJsonValue &value) { return compatibility::containsTraversal(value); }
+// Preset operation receipts are an existing, inert native metadata schema.
+// Their legacy type tags are identifiers, never deserialized runtime types.
+// Only those declared tag positions are excluded from unknown-field checks.
+bool unsafeDocumentExtra(QJsonObject extra) {
+  const auto receipts = extra.take(QStringLiteral("effectPresetOperations"));
+  if (!receipts.isUndefined()) {
+    if (!receipts.isArray()) return true;
+    for (const auto &receipt : receipts.toArray()) {
+      if (!receipt.isObject()) return true;
+      auto preset = receipt.toObject();
+      if (preset.value("format") != "com.xerahs.app/effect-preset" || preset.value("version") != 1 ||
+          !preset.value("legacy").isObject() || !preset.value("steps").isArray()) return true;
+      auto stripTag = [](QJsonObject &legacy) {
+        const auto tag = legacy.take(QStringLiteral("$type"));
+        return tag.isUndefined() || (tag.isString() && tag.toString().size() <= 1024);
+      };
+      auto legacy = preset.value("legacy").toObject();
+      if (legacy.contains("Effects") && !legacy.value("Effects").isArray()) return true;
+      auto effects = legacy.value("Effects").toArray();
+      for (int n = 0; n < effects.size(); ++n) {
+        auto step = effects[n].toObject(); if (!effects[n].isObject() || !stripTag(step)) return true; effects[n] = step;
+      }
+      if (legacy.contains("Effects")) legacy.insert("Effects", effects);
+      preset.insert("legacy", legacy);
+      auto steps = preset.value("steps").toArray();
+      for (int n = 0; n < steps.size(); ++n) {
+        auto step = steps[n].toObject(); auto raw = step.value("legacy").toObject();
+        if (!steps[n].isObject() || !step.value("legacy").isObject() || !stripTag(raw)) return true;
+        step.insert("legacy", raw); steps[n] = step;
+      }
+      preset.insert("steps", steps);
+      if (compatibility::containsUnsafeUnknown(preset)) return true;
+    }
+  }
+  return compatibility::containsUnsafeUnknown(extra);
+}
+QString canonicalTime(const QString &text) {
+  const auto time = QDateTime::fromString(text, Qt::ISODate);
+  return time.isValid() ? time.toUTC().toString(Qt::ISODateWithMs) : text;
+}
 
 // Accumulates ES-029 failures so the highest-priority one is reported.
 struct Findings {
@@ -441,6 +490,7 @@ ParseResult parseDocument(const QJsonObject &payload) {
   const QJsonValue version = payload.value(u"version");
   if (isInteger(version) && version.toDouble() > 1) {
     result.error = diagnostic::documentVersionUnsupported;
+    result.report.add(ImportDisposition::Rejected);
     return result;
   }
 
@@ -456,11 +506,14 @@ ParseResult parseDocument(const QJsonObject &payload) {
     findings.invalid = true;
   }
   document.imagePath = payload.value(u"imagePath").toString();
+  if (traversal(document.imagePath)) {
+    result.error = QStringLiteral("document-path-traversal"); result.report.add(ImportDisposition::Rejected); return result;
+  }
   document.imageHash = payload.value(u"imageHash").toString();
   static const QRegularExpression hashPattern(QStringLiteral("^(|sha256:[0-9a-f]{64})$"));
   if (!hashPattern.match(document.imageHash).hasMatch()) findings.invalid = true;
-  document.createdAt = payload.value(u"createdAt").toString();
-  document.modifiedAt = payload.value(u"modifiedAt").toString();
+  document.createdAt = canonicalTime(payload.value(u"createdAt").toString());
+  document.modifiedAt = canonicalTime(payload.value(u"modifiedAt").toString());
   if (!QDateTime::fromString(document.createdAt, Qt::ISODate).isValid() ||
       !QDateTime::fromString(document.modifiedAt, Qt::ISODate).isValid()) {
     findings.invalid = true;
@@ -485,6 +538,7 @@ ParseResult parseDocument(const QJsonObject &payload) {
   } else {
     const QJsonObject images = embedded.toObject();
     for (auto it = images.begin(); it != images.end(); ++it) {
+      if (traversal(it.key())) { result.error = QStringLiteral("document-path-traversal"); result.report.add(ImportDisposition::Rejected); return result; }
       if (auto png = decodePng(it.value(), findings)) document.embeddedImages.emplace_back(it.key(), *png);
     }
   }
@@ -496,12 +550,20 @@ ParseResult parseDocument(const QJsonObject &payload) {
     findings.invalid = true;
   } else {
     auto parsed = parseAnnotationList(annotations.toArray());
+    result.report = parsed.report;
     if (parsed.annotations) document.annotations = std::move(*parsed.annotations);
+    else if (parsed.diagnostic != diagnostic::documentInvalid) { result.error = parsed.diagnostic; return result; }
     else findings.invalid = true;
   }
 
   for (auto it = payload.begin(); it != payload.end(); ++it) {
     if (!kKnownDocumentKeys.contains(it.key()) || it.key() == QStringLiteral("extensions")) {
+      if (unsafePathContent(QJsonObject{{it.key(), it.value()}})) {
+        result.error = QStringLiteral("document-path-traversal"); result.report.add(ImportDisposition::Rejected); return result;
+      }
+      if (compatibility::unsafeUnknown(it.key()) || unsafeDocumentExtra(QJsonObject{{it.key(), it.value()}})) {
+        result.error = QStringLiteral("document-unsafe-content"); result.report.add(ImportDisposition::Rejected); return result;
+      }
       document.extra.insert(it.key(), it.value());
     }
   }
@@ -510,6 +572,15 @@ ParseResult parseDocument(const QJsonObject &payload) {
   if (findings.tooLarge) result.error = diagnostic::documentTooLarge;
   else if (findings.invalid) result.error = diagnostic::documentInvalid;
   else result.document = std::move(document);
+  if (result.error) result.report.add(ImportDisposition::Rejected);
+  else {
+    for (auto it = payload.begin(); it != payload.end(); ++it) {
+      if (it.key() == u"annotations") continue; // records counted by the shared annotation parser
+      const bool transformed = (it.key() == u"createdAt" && it.value().toString() != result.document->createdAt) ||
+          (it.key() == u"modifiedAt" && it.value().toString() != result.document->modifiedAt);
+      result.report.add(transformed ? ImportDisposition::Transformed : ImportDisposition::Retained);
+    }
+  }
   return result;
 }
 
@@ -520,8 +591,8 @@ QJsonObject serializeDocument(const AnnotationDocument &document) {
   root.insert(QStringLiteral("imageHash"), document.imageHash);
   root.insert(QStringLiteral("canvasWidth"), document.canvasWidth);
   root.insert(QStringLiteral("canvasHeight"), document.canvasHeight);
-  root.insert(QStringLiteral("createdAt"), document.createdAt);
-  root.insert(QStringLiteral("modifiedAt"), document.modifiedAt);
+  root.insert(QStringLiteral("createdAt"), canonicalTime(document.createdAt));
+  root.insert(QStringLiteral("modifiedAt"), canonicalTime(document.modifiedAt));
   root.insert(QStringLiteral("sourceImagePngBase64"), QString::fromLatin1(document.sourceImagePng.toBase64()));
   QJsonObject embedded;
   for (const auto &[key, png] : document.embeddedImages) embedded.insert(key, QString::fromLatin1(png.toBase64()));
@@ -533,14 +604,40 @@ QJsonObject serializeDocument(const AnnotationDocument &document) {
 
 AnnotationListResult parseAnnotationList(const QJsonArray &items) {
   Findings findings; std::vector<Annotation> result; QSet<QUuid> ids;
+  compatibility::ImportReport report;
   for (const auto &item : items) {
-    auto annotation = parseAnnotation(item, findings); if (!annotation) continue;
-    const auto id = annotationId(*annotation); if (ids.contains(id)) findings.invalid = true;
-    ids.insert(id); result.push_back(std::move(*annotation));
+    auto annotation = parseAnnotation(item, findings);
+    if (!annotation) { report.add(ImportDisposition::Rejected); continue; }
+    const QUuid id = annotationId(*annotation);
+    if (ids.contains(id)) { findings.invalid = true; report.add(ImportDisposition::Rejected); continue; }
+    ids.insert(id);
+    const auto raw = item.toObject();
+    const auto *known = std::get_if<RectangleAnnotation>(&*annotation);
+    const QJsonObject extra = known ? known->extra : raw;
+    if (unsafePathContent(extra) || (known && traversal(known->content.imageKey))) {
+      report.add(ImportDisposition::Rejected);
+      return {std::nullopt, QStringLiteral("document-path-traversal"), report};
+    }
+    if (compatibility::containsUnsafeUnknown(extra)) {
+      report.add(ImportDisposition::Rejected);
+      return {std::nullopt, QStringLiteral("document-unsafe-content"), report};
+    }
+    if (!known) report.add(ImportDisposition::Quarantined); // inert UnsupportedAnnotation, never rendered/executed
+    else {
+      const auto canonical = serializeAnnotationList({*annotation}).at(0).toObject();
+      for (auto it = raw.begin(); it != raw.end(); ++it) {
+        // Array order is authoritative; the saved zIndex carries no ordering authority.
+        if (it.key() == u"zIndex") report.add(ImportDisposition::Ignored);
+        else report.add(canonical.value(it.key()) == it.value() ? ImportDisposition::Retained : ImportDisposition::Transformed);
+      }
+      for (auto it = canonical.begin(); it != canonical.end(); ++it) if (!raw.contains(it.key())) report.add(ImportDisposition::Defaulted);
+    }
+    result.push_back(std::move(*annotation));
   }
-  if (findings.invalid) return {std::nullopt, diagnostic::documentInvalid};
-  return {std::move(result), {}};
+  if (findings.invalid) return {std::nullopt, diagnostic::documentInvalid, report};
+  return {std::move(result), {}, report};
 }
+
 QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
   QJsonArray annotations;
   for (std::size_t index = 0; index < items.size(); ++index) {
@@ -635,10 +732,14 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
 
 ParseResult readXann(const QByteArray &gzip, qint64 maxJsonBytes) {
   ParseResult result;
+  const auto reject = [&](const QString &code) { result.error = code; result.report.add(ImportDisposition::Rejected); return result; };
+  if (gzip.size() > kMaxCompressedXannBytes) return reject(diagnostic::documentTooLarge);
+  if (gzip.isEmpty()) return reject(diagnostic::documentInvalid);
+  maxJsonBytes = std::min(maxJsonBytes, kMaxDecompressedJsonBytes);
+  const qint64 expansionLimit = std::max(qint64(1048576), qint64(gzip.size()) * kMaxXannExpansionRatio);
   z_stream stream{};
   if (inflateInit2(&stream, 16 + MAX_WBITS) != Z_OK) {
-    result.error = diagnostic::documentInvalid;
-    return result;
+    return reject(diagnostic::documentInvalid);
   }
   stream.next_in = reinterpret_cast<Bytef *>(const_cast<char *>(gzip.constData()));
   stream.avail_in = static_cast<uInt>(gzip.size());
@@ -652,29 +753,41 @@ ParseResult readXann(const QByteArray &gzip, qint64 maxJsonBytes) {
     if (status != Z_OK && status != Z_STREAM_END) break;
     const qint64 produced = static_cast<qint64>(sizeof buffer - stream.avail_out);
     // ES-028: stop inflating as soon as the limit is crossed.
-    if (json.size() + produced > maxJsonBytes) {
+    if (json.size() + produced > std::min(maxJsonBytes, expansionLimit)) {
       inflateEnd(&stream);
-      result.error = diagnostic::documentTooLarge;
-      return result;
+      return reject(diagnostic::documentTooLarge);
     }
     json.append(buffer, static_cast<qsizetype>(produced));
   }
+  const auto remaining = stream.avail_in;
   inflateEnd(&stream);
-  if (status != Z_STREAM_END) {
-    result.error = diagnostic::documentInvalid;
-    return result;
+  if (status != Z_STREAM_END || remaining != 0) return reject(diagnostic::documentInvalid);
+  const auto decoded = compatibility::readJson(json, {maxJsonBytes, 64, 1000000});
+  if (!decoded.ok()) {
+    if (decoded.code == u"invalid-json") return reject(diagnostic::documentInvalid);
+    if (decoded.code == u"too-large") return reject(diagnostic::documentTooLarge);
+    return reject(QStringLiteral("document-") + decoded.code);
   }
-  QJsonParseError error;
-  const QJsonDocument document = QJsonDocument::fromJson(json, &error);
-  if (error.error != QJsonParseError::NoError || !document.isObject()) {
-    result.error = diagnostic::documentInvalid;
-    return result;
-  }
-  return parseDocument(document.object());
+  if (!decoded.document.isObject()) return reject(diagnostic::documentInvalid);
+  return parseDocument(decoded.document.object());
 }
 
-std::optional<QByteArray> writeXann(const AnnotationDocument &document) {
-  const QByteArray json = QJsonDocument(serializeDocument(document)).toJson(QJsonDocument::Compact);
+std::optional<QByteArray> writeXann(const AnnotationDocument &document, compatibility::ExportReport *report) {
+  compatibility::ExportReport outcome{QStringLiteral("xann"), document.version, {}};
+  auto payload = serializeDocument(document);
+  QString path = document.imagePath; path.replace(QLatin1Char('\\'), QLatin1Char('/'));
+  const QString portable = path.mid(path.lastIndexOf(QLatin1Char('/')) + 1).normalized(QString::NormalizationForm_C);
+  if (portable != document.imagePath) outcome.omissions.append(QStringLiteral("nonportable-image-path"));
+  payload.insert(QStringLiteral("imagePath"), portable);
+  if (report) *report = outcome;
+  if (unsafeDocumentExtra(document.extra) || unsafePathContent(document.extra)) return std::nullopt;
+  for (const auto &annotation : document.annotations) {
+    const auto *known = std::get_if<RectangleAnnotation>(&annotation);
+    const auto extra = known ? known->extra : std::get<UnsupportedAnnotation>(annotation).raw;
+    if (compatibility::containsUnsafeUnknown(extra) || unsafePathContent(extra) || (known && traversal(known->content.imageKey))) return std::nullopt;
+  }
+  const QByteArray json = QJsonDocument(payload).toJson(QJsonDocument::Compact);
+  if (!compatibility::readJson(json, {kMaxDecompressedJsonBytes, 64, 1000000}).ok()) return std::nullopt;
   z_stream stream{};
   if (deflateInit2(&stream, Z_BEST_COMPRESSION, Z_DEFLATED, 16 + MAX_WBITS, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
     return std::nullopt;
@@ -687,7 +800,8 @@ std::optional<QByteArray> writeXann(const AnnotationDocument &document) {
   const int status = deflate(&stream, Z_FINISH);
   out.resize(static_cast<qsizetype>(stream.total_out));
   deflateEnd(&stream);
-  if (status != Z_STREAM_END) return std::nullopt;
+  if (status != Z_STREAM_END || out.size() > kMaxCompressedXannBytes ||
+      json.size() > std::max(qint64(1048576), qint64(out.size()) * kMaxXannExpansionRatio)) return std::nullopt;
   return out;
 }
 
@@ -707,6 +821,7 @@ SidecarPaths sidecarPaths(const QString &rasterPath, const std::function<bool(co
 SidecarSaveResult saveSidecar(SidecarStore &store, const QString &rasterPath, const AnnotationDocument &document,
                               bool sidecarIntent) {
   SidecarSaveResult result;
+  result.report = {QStringLiteral("xann"), document.version, {}};
   const QString path = sidecarPaths(rasterPath, [](const QString &) { return false; }).writePath;
   if (document.annotations.empty()) {
     // ES-014 removes the default, while ES-030 then exposes a baseline alias.
@@ -727,7 +842,7 @@ SidecarSaveResult saveSidecar(SidecarStore &store, const QString &rasterPath, co
   // Pending clarification (ROOT-ESCALATE-001): ES-014 ties sidecar intent only
   // to removal. A document with annotations always writes its sidecar, since
   // that is what keeps the edit re-editable (ES-011).
-  const std::optional<QByteArray> bytes = writeXann(document);
+  const std::optional<QByteArray> bytes = writeXann(document, &result.report);
   if (!bytes || !store.write(path, *bytes)) {
     result.ok = false;
     result.diagnostic = diagnostic::sidecarSaveFailed;

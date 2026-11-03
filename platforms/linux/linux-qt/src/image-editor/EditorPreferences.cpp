@@ -76,6 +76,41 @@ bool number(const QJsonValue &value, double minimum, double maximum, bool intege
 void invalid(EditorPreferences &result, const QString &key) {
   result.fields[key] = PreferenceFieldState::Invalid; result.diagnostics.append(QStringLiteral("invalid-") + key);
 }
+// Only declared fields carry behavior. Opaque extension records stay byte-for-byte
+// JSON values; authority/secret-shaped extensions block the whole candidate.
+bool unsafePreferences(const QJsonObject &stored) {
+  for (auto it = stored.begin(); it != stored.end(); ++it) {
+    if (!defaults.contains(it.key()) && !nonPersistentFields.contains(it.key()) &&
+        (compatibility::unsafeUnknown(it.key()) || compatibility::containsUnsafeUnknown(it.value()))) return true;
+    if (it.key() == u"ToolbarItems" && it.value().isArray())
+      for (const auto &entry : it.value().toArray()) {
+        auto extra = entry.toObject();
+        for (const auto *key : {"Id", "IsVisible", "BeginGroup", "Hotkey"}) extra.remove(QLatin1String(key));
+        if (compatibility::containsUnsafeUnknown(extra)) return true;
+      }
+  }
+  return false;
+}
+void reportPreferences(EditorPreferences &result, const QJsonObject &stored) {
+  using D = compatibility::ImportDisposition;
+  result.report = {};
+  for (auto it = result.fields.begin(); it != result.fields.end(); ++it) {
+    switch (it.value()) {
+      case PreferenceFieldState::Missing: result.report.add(D::Defaulted); break;
+      case PreferenceFieldState::Invalid: result.report.add(D::Rejected); result.report.add(D::Defaulted); break;
+      case PreferenceFieldState::NewerVersion: result.report.add(D::Rejected); break;
+      case PreferenceFieldState::NonPersistent: result.report.add(D::Ignored); break;
+      case PreferenceFieldState::Unknown: result.report.add(D::Retained); break;
+      case PreferenceFieldState::Valid:
+        if (it.key() == u"RecentImageFiles" && !result.recent.enabled() && !stored.value(it.key()).toArray().isEmpty())
+          result.report.add(D::Ignored);
+        else result.report.add(stored.value(it.key()) == result.values.value(it.key()) ? D::Retained : D::Transformed);
+        break;
+    }
+  }
+  for (const auto &entry : result.values.value(u"ToolbarItems").toArray())
+    if (!knownToolbarAction(entry.toObject().value(u"Id").toString())) result.report.add(D::Quarantined);
+}
 }  // namespace
 QJsonObject recentPreferenceValues(const RecentImages &recent) {
   return {{QStringLiteral("RememberRecentImagePaths"), recent.enabled()},
@@ -84,6 +119,17 @@ QJsonObject recentPreferenceValues(const RecentImages &recent) {
 }
 EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRules rules) {
   EditorPreferences result; result.recent = RecentImages(rules); result.values = defaults;
+  // RecentImageFiles are absolute filesystem identities the user opened; '..' keeps its kernel
+  // meaning through symlinks (EditorWindowTest::recentEntryPreservesTheOpenedSymlinkParentSource)
+  // and the path is never read while parsing. Every other embedded path field is checked.
+  auto checked = stored; checked.remove(QStringLiteral("RecentImageFiles"));
+  const bool traversal = compatibility::containsTraversal(checked);
+  if (unsafePreferences(stored) || traversal) {
+    result.readOnly = true; result.diagnostics.append(traversal ? QStringLiteral("settings-path-traversal") : QStringLiteral("settings-unsafe-unknown"));
+    result.report.add(compatibility::ImportDisposition::Rejected, stored.size());
+    result.report.add(compatibility::ImportDisposition::Defaulted, defaults.size());
+    return result;
+  }
   for (auto it = defaults.begin(); it != defaults.end(); ++it)
     result.fields[it.key()] = stored.contains(it.key()) ? PreferenceFieldState::Valid : PreferenceFieldState::Missing;
   for (auto it = stored.begin(); it != stored.end(); ++it) if (nonPersistentFields.contains(it.key())) {
@@ -96,7 +142,7 @@ EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRul
     result.readOnly = true;
     result.fields[QStringLiteral("schemaVersion")] = newer ? PreferenceFieldState::NewerVersion : PreferenceFieldState::Invalid;
     result.diagnostics.append(newer ? QStringLiteral("settings-newer-version") : QStringLiteral("invalid-schemaVersion"));
-    return result;
+    reportPreferences(result, stored); return result;
   }
   if (stored.contains(u"ToolbarItems")) {
     const auto toolbar = validateToolbarItems(stored.value(u"ToolbarItems"));
@@ -122,7 +168,10 @@ EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRul
   for (auto it = defaults.begin(); it != defaults.end(); ++it) {
     const auto kind = textFieldKind(it.key());
     if (kind == TextField::None || !stored.contains(it.key())) continue;
-    if (textFieldValid(kind, stored.value(it.key()))) result.values.insert(it.key(), stored.value(it.key()));
+    if (textFieldValid(kind, stored.value(it.key()))) {
+      const auto value = stored.value(it.key());
+      result.values.insert(it.key(), kind == TextField::Family ? QJsonValue(value.toString().normalized(QString::NormalizationForm_C)) : value);
+    }
     else invalid(result, it.key());
   }
   for (const auto &key : conveniencePreferenceFields()) {
@@ -172,7 +221,7 @@ EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRul
   if (!result.values.value(u"RememberWindowState").toBool())
     for (const auto *key : {"WindowWidth", "WindowHeight", "IsWindowMaximized"})
       result.values.insert(QLatin1String(key), defaults.value(QLatin1String(key)));
-  return result;
+  reportPreferences(result, stored); return result;
 }
 QJsonObject serializeEditorPreferences(const EditorPreferences &preferences) {
   QJsonObject values = preferences.values;

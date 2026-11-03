@@ -1,5 +1,10 @@
 #include "uploads/SxcuImport.h"
 
+#include "uploads/DestinationCatalog.h"
+#include "uploads/CredentialStore.h"
+#include <QJsonDocument>
+#include <QLocale>
+#include <QTemporaryDir>
 #include <QTest>
 #include <QUrl>
 
@@ -25,6 +30,57 @@ class SxcuImportTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void criticalMetadataCannotBeAccepted() {
+    using D = xerahs::compatibility::ImportDisposition;
+    for (const auto *key : {"Authentication", "unknownArguments", "Script", "$ref", "trustedConsent", "assetPath"}) {
+      QJsonObject input{{"RequestURL", "https://example.com/up"}, {key, "../private-value"}};
+      const auto imported = importSxcu(QJsonDocument(input).toJson());
+      QVERIFY(imported.ok); QVERIFY(imported.acceptanceBlocked);
+      QCOMPARE(imported.code, QString("import-critical-unsupported"));
+      QCOMPARE(imported.quarantine.value(key), input.value(key));
+      QVERIFY(!imported.destination.extra.contains(key));
+      QVERIFY(imported.report.count(D::Quarantined) > 0);
+      QVERIFY(!imported.report.summary().contains("private-value"));
+      QTemporaryDir dir; DestinationCatalog catalog(dir.filePath("destinations.json")); MemoryCredentialStore secrets;
+      QCOMPARE(catalog.addImported(imported, secrets).code, QString("import-critical-unsupported"));
+      QVERIFY(catalog.entries().isEmpty());
+    }
+  }
+  void boundaryMatrix_data() {
+    QTest::addColumn<QByteArray>("bytes"); QTest::addColumn<QString>("code");
+    QTest::newRow("malformed") << QByteArray("{broken") << QString("invalid-json");
+    QTest::newRow("duplicate") << QByteArray("{\"Name\":1,\"\\u004eame\":2}") << QString("duplicate-key");
+    QTest::newRow("utf8") << QByteArray("{\"a\":\"\xff\"}") << QString("invalid-encoding");
+    QTest::newRow("depth") << QByteArray(33, '[') + "0" + QByteArray(33, ']') << QString("too-deep");
+    QTest::newRow("bytes") << QByteArray(kMaxDestinationBytes + 1, ' ') << QString("too-large");
+    QTest::newRow("elements") << QByteArray("[") + QByteArray("0,").repeated(100001) + "0]" << QString("too-many-elements");
+    QTest::newRow("gzip-unsupported") << QByteArray::fromHex("1f8b0800000000000003") << QString("invalid-encoding");
+  }
+  void boundaryMatrix() {
+    QFETCH(QByteArray, bytes); QFETCH(QString, code); const auto imported = importSxcu(bytes);
+    QVERIFY(!imported.ok); QCOMPARE(imported.code, code); QVERIFY(imported.secrets.isEmpty());
+    QVERIFY(imported.report.count(xerahs::compatibility::ImportDisposition::Rejected) > 0);
+  }
+  void reportsAndCanonicalRoundTrip() {
+    using D = xerahs::compatibility::ImportDisposition;
+    struct Restore { QLocale locale; ~Restore() { QLocale::setDefault(locale); } } restore;
+    for (const auto &locale : {QLocale::c(), QLocale(QLocale::German), QLocale(QLocale::Turkish)}) {
+      QLocale::setDefault(locale);
+      for (bool crlf : {false, true}) {
+        QByteArray bytes = "{\n\"Name\":\"Cafe\\u0301\", \"RequestURL\":\"https://example.com/up\", \"FileFormName\":\"file\",\n\"Headers\":{\"Authorization\":\"private-value\"}, \"Future\":{\"number\":1.25}}";
+        if (crlf) bytes.replace("\n", "\r\n");
+        const auto imported = importSxcu(bytes); QVERIFY(imported.ok); QVERIFY(!imported.acceptanceBlocked);
+        for (auto d : {D::Retained, D::Transformed, D::Defaulted}) QVERIFY(imported.report.count(d) > 0);
+        QCOMPARE(imported.destination.name, QString::fromUtf8("Café"));
+        const auto written = writeDestination(imported.destination); QVERIFY(!written.contains("private-value"));
+        const auto back = readDestination(written); QVERIFY(back.destination);
+        QCOMPARE(back.destination->extra, imported.destination.extra);
+        const auto ignored = importSxcu("{\"RequestMethod\":\"POST\",\"RequestType\":\"POST\"}");
+        QCOMPARE(ignored.report.count(D::Ignored), qsizetype(1));
+        QVERIFY(!ignored.acceptanceBlocked);
+      }
+    }
+  }
   void importsCurrentUploaderAndExtractsSecrets() {
     const auto result = importSxcu(QByteArray(
         "{"

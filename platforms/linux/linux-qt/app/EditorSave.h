@@ -54,6 +54,7 @@ struct SaveOutcome {
   bool rasterReused = false;
   std::optional<QString> sidecarPath;
   EditorSaveReceiptPtr receipt;
+  xerahs::compatibility::ExportReport annotationExport;
 };
 SaveOutcome saveEdit(const QString &path, const QImage &source, const xerahs::editor::AnnotationDocument &document,
                     const EditorSaveControl &control = {}, const EditorSaveHooks &hooks = {},

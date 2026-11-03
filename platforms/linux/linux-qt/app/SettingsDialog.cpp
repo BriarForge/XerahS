@@ -54,6 +54,9 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   auto *layout = new QVBoxLayout(this);
   auto *scope = new QLabel("All preferences apply to this user profile. Saved workflow filename patterns and explicit folders override application defaults. Hotkeys are preferred triggers only; the desktop and user decide the final binding.", this);
   scope->setWordWrap(true); layout->addWidget(scope);
+  auto *report = new QLabel(store.current().report.summary(), this);
+  report->setObjectName(QStringLiteral("settingsImportReport")); report->setTextFormat(Qt::PlainText);
+  report->setWordWrap(true); report->setAccessibleName(QStringLiteral("Settings import report")); layout->addWidget(report);
   auto *tabs = new QTabWidget(this); tabs->setAccessibleName("Settings sections"); layout->addWidget(tabs);
   auto *general = new QWidget(tabs); auto *form = new QFormLayout(general); tabs->addTab(general, "&General");
   auto *folder = new QLineEdit(general); folder->setMaxLength(32768); folder->setAccessibleName("Default save folder"); form->addRow("&Default save folder", folder);

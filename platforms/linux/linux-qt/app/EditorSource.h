@@ -32,6 +32,7 @@ struct LoadedSource {
   QStringList warnings;          // user-facing: sidecar problems, source mismatch (ES-016)
   QString sidecarPath;           // sidecar the annotations came from, if any
   std::optional<PendingSourceChoice> pendingChoice;  // no usable document until explicitly resolved
+  std::optional<xerahs::compatibility::ImportReport> importReport;
 };
 
 // Never modifies `path`. Reopens annotations from the sidecar when one exists.
