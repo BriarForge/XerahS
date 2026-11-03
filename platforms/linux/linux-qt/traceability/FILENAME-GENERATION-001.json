@@ -355,7 +355,7 @@
       "vectors": [
         "invalid-repeat-does-not-consume-counter"
       ],
-      "note": "CounterStore persists per-profile locked reservations with restart/overflow/stale/corrupt/newer tests. Native Save now reports post-publication counter commit failure, retains the actual PNG and media, and records collision-adjusted counter context. Native tests cover reopen, collision, failed encoding and changed/newer/corrupt counter storage. Failed persistence is not atomic completion: automatic retry is refused to avoid another PNG; full crash/power-loss reservation qualification remains Required.",
+      "note": "CounterStore persists per-profile locked reservations with restart/overflow/stale/corrupt/newer tests. Native Save now reports post-publication counter commit failure, retains the actual PNG and media, and records collision-adjusted counter context. Native tests cover reopen, collision, failed encoding and changed/newer/corrupt counter storage. Failed persistence is not atomic completion: automatic retry is refused to avoid another PNG; full crash/power-loss reservation qualification remains Required. Audit 2026-11-03: NativeCaptureWorkflowsTest::cancelledAndInvalidPatternSavesLeaveTheCounterFileUntouched proves a save cancelled before the action starts and invalid-pattern saves (invalid repeat count, counter width out of range, ungranted %rf) leave the counter file byte-for-byte unchanged and the next valid save continues the sequence; counterWorkflowAdvancesOnlyOnPublishedNames proves a failed encode consumes nothing and a reserved name consumes the counter when a later action fails. Remains partial: FN-016 requires persistence to be atomic relative to name reservation, but the name is published before the counter is committed, so a commit failure or crash in that window leaves a published name with an unconsumed counter (CaptureSaveTest::counterCommitFailurePreservesPublishedPngAndReportsTheActualFault reports it rather than preventing it).",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
@@ -373,7 +373,7 @@
           "invalid-repeat-does-not-consume-counter"
         ],
         "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit native random-file permission flow and crash/power-loss atomicity between publication and counter persistence remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "reviewed_at_revision": "8390132afb6e0af51e58733900651c537d1c63a8"
       }
     },
     "FN-017": {

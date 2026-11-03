@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QDialog>
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QFileDialog>
@@ -125,6 +126,27 @@ private slots:
     workflow.actions = QStringList{"save", "image-clipboard"};  // a later action failing still consumes the reserved name
     ports.clipboard = [&](const QImage &, const CancellationToken &) { ActionOutcome failed; failed.state = ActionState::Failed; failed.diagnostic = "clipboard-unavailable"; return failed; };
     run(); QCOMPARE(name, QString("n004.png")); run(); QCOMPARE(name, QString("n005.png"));
+  }
+  // FN-016: cancellation or validation failure before a name is reserved leaves the
+  // persisted counter file byte-for-byte untouched; the next valid save continues the sequence.
+  void cancelledAndInvalidPatternSavesLeaveTheCounterFileUntouched_data() {
+    QTest::addColumn<QString>("mode"); QTest::newRow("cancelled-before-save") << QString("cancel"); QTest::newRow("invalid-repeat-count") << QString("invalid");
+    QTest::newRow("counter-width-out-of-range") << QString("width"); QTest::newRow("random-file-without-grant") << QString("file");
+  }
+  void cancelledAndInvalidPatternSavesLeaveTheCounterFileUntouched() {
+    QFETCH(QString, mode); QTemporaryDir dir; auto workflow = defaultCaptureWorkflows().entries[0]; workflow.actions = QStringList{"save"};
+    workflow.output.directory = dir.filePath("out"); workflow.output.pattern = "n%i{3}";
+    const auto counters = dir.filePath("counters.json"); CaptureActionPorts ports; ports.save.counterPath = counters;
+    QImage image(12, 8, QImage::Format_ARGB32); image.fill(Qt::blue); QString name; bool cancelNext = false;
+    const auto run = [&](const QString &pattern) {
+      CapturePipeline pipeline(image, workflow.output.directory, pattern, workflowActions(workflow), nullptr, ports, {}, nullptr, workflowSnapshot(workflow)); QSignalSpy done(&pipeline, &CapturePipeline::finished);
+      if (cancelNext) connect(&pipeline, &CapturePipeline::activityChanged, &pipeline, [&](const QString &text) { if (text == "Preparing capture actions.") pipeline.cancel(); });
+      pipeline.start(); QTRY_COMPARE(done.count(), 1); name = receipt(done)->file ? QFileInfo(receipt(done)->file->path).fileName() : QString{};
+    };
+    run("n%i{3}"); QCOMPARE(name, QString("n001.png")); const auto before = bytes(counters); QVERIFY(!before.isEmpty());
+    cancelNext = mode == "cancel"; run(mode == "invalid" ? "n%i{3}%ra{0}" : mode == "width" ? "n%i{257}" : mode == "file" ? "n%i{3}%rf{/private/input}" : "n%i{3}");
+    QVERIFY(name.isEmpty()); QCOMPARE(bytes(counters), before); QCOMPARE(QDir(workflow.output.directory).entryList(QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot), QStringList{"n001.png"});
+    cancelNext = false; run("n%i{3}"); QCOMPARE(name, QString("n002.png"));
   }
   void savedUploadActionIsAvailable() {
     QTemporaryDir dir; NativeCaptureWorkflows host(dir.filePath("workflows.json")); auto catalog = *host.store().current().catalog;
