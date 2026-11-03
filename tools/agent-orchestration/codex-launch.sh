@@ -16,7 +16,7 @@
 # State files (default <state-dir> = <worktree>/../.codex-state/<worktree-name>):
 #   run.log        appended Codex output      last.md     Codex's final message
 #   retry-after    epoch seconds before which no new start is attempted
-#   status         running | finished | usage-limit | failed
+#   status         running | finished | usage-limit | capacity | failed
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -66,6 +66,11 @@ if [[ -n "$limit" ]]; then
   echo $(( next + 120 )) > "$state/retry-after"
   echo usage-limit > "$state/status"
   echo "codex-launch: usage limit; retry after $(date -d "@$next" '+%F %R')"
+elif tail -n 40 "$log" | grep -q 'model is at capacity'; then
+  # Transient server-side capacity: retry on the next scheduler tick after 10 minutes.
+  echo $(( $(date +%s) + 600 )) > "$state/retry-after"
+  echo capacity > "$state/status"
+  echo "codex-launch: model at capacity; retry after $(date -d "@$(cat "$state/retry-after")" '+%R')"
 elif (( code == 0 )); then
   rm -f "$state/retry-after"; echo finished > "$state/status"; echo "codex-launch: finished"
 else
