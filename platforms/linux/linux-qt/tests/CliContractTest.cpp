@@ -1,5 +1,6 @@
 // Actual-process tests of the CLI contract in app/CLI-CONTRACT.md (IFCAT-008).
 #include "NativeInstance.h"
+#include "workflows/CaptureWorkflows.h"
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
@@ -11,6 +12,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <csignal>
+#include <memory>
 
 using namespace xerahs::app;
 using namespace xerahs::shell;
@@ -130,6 +132,84 @@ private slots:
     else QVERIFY(result.out.isEmpty());
     if (stderrPrefix.isEmpty()) QVERIFY2(result.err.isEmpty(), result.err.constData());
     else { QCOMPARE(result.err.count('\n'), 1); QVERIFY2(result.err.startsWith(stderrPrefix.toUtf8()), result.err.constData()); }
+  }
+
+  // IFCAT-010: no CLI mode, including every diagnostic or "verbose" setting
+  // that exists, prints secrets, tokens, saved profile content or private paths.
+  // The CLI has no verbose/diagnostic flag; such flags are refused as usage
+  // errors, and the only diagnostic channels (Qt logging rules, ambient
+  // environment) are exercised to prove they cannot weaken redaction.
+  void redactionHoldsInEveryCliModeEvenWithDiagnosticSettings_data() {
+    QTest::addColumn<QStringList>("arguments"); QTest::addColumn<QString>("profile"); QTest::addColumn<QString>("owner");
+    const QString id = "01234567-89ab-4cde-8123-456789abcdef";
+    QTest::newRow("help") << QStringList{"--help"} << QString("valid") << QString();
+    QTest::newRow("list-ok") << QStringList{"--list-workflows"} << QString("valid") << QString();
+    QTest::newRow("list-ok-json") << QStringList{"--list-workflows", "--json", "--non-interactive"} << QString("valid") << QString();
+    QTest::newRow("list-corrupt") << QStringList{"--list-workflows"} << QString("corrupt") << QString();
+    QTest::newRow("list-corrupt-json") << QStringList{"--list-workflows", "--json"} << QString("corrupt") << QString();
+    QTest::newRow("result-invalid-id") << QStringList{"--workflow-result", "secret-arg-token"} << QString("valid") << QString();
+    QTest::newRow("result-invalid-id-json") << QStringList{"--workflow-result", "secret-arg-token", "--json"} << QString("valid") << QString();
+    QTest::newRow("result-not-found") << QStringList{"--workflow-result", id, "--json"} << QString("valid") << QString();
+    QTest::newRow("result-corrupt-store") << QStringList{"--workflow-result", id} << QString("corrupt") << QString();
+    for (const auto *flag : {"--capture-region", "--capture-full-screen", "--capture-monitor", "--capture-active-window", "--start-recording", "--start-region-recording", "--stop-recording"}) {
+      QTest::newRow((QByteArray("refused") + flag).constData()) << QStringList{flag, "--non-interactive"} << QString("valid") << QString();
+      QTest::newRow((QByteArray("refused-json") + flag).constData()) << QStringList{flag, "--non-interactive", "--json"} << QString("valid") << QString();
+    }
+    QTest::newRow("refused-edit") << QStringList{"--edit", "/private-name/secret-arg.png", "--non-interactive"} << QString("valid") << QString();
+    QTest::newRow("refused-edit-json") << QStringList{"--edit", "/private-name/secret-arg.png", "--non-interactive", "--json"} << QString("valid") << QString();
+    QTest::newRow("refused-workflow-json") << QStringList{"--run-workflow", id, "--non-interactive", "--json"} << QString("valid") << QString();
+    QTest::newRow("usage-secret-flag") << QStringList{"--secret-arg-flag=secret-arg-token", "--non-interactive", "--json"} << QString("valid") << QString();
+    QTest::newRow("usage-secret-positional") << QStringList{"secret-arg-token", "--non-interactive"} << QString("valid") << QString();
+    for (const auto *flag : {"--verbose", "--debug", "--diagnostics", "--log=secret-arg-token", "-v", "-d"})
+      QTest::newRow((QByteArray("no-verbose-mode") + flag).constData()) << QStringList{flag, "--non-interactive", "--json"} << QString("valid") << QString();
+    for (const auto *owner : {"accept", "busy", "reject", "ack-drop"}) {
+      QTest::newRow((QByteArray("forward-edit-") + owner).constData()) << QStringList{"--edit", "/private-name/secret-arg.png", "--json"} << QString("valid") << QString(owner);
+      QTest::newRow((QByteArray("forward-workflow-") + owner).constData()) << QStringList{"--run-workflow", id} << QString("valid") << QString(owner);
+    }
+  }
+  void redactionHoldsInEveryCliModeEvenWithDiagnosticSettings() {
+    QFETCH(QStringList, arguments); QFETCH(QString, profile); QFETCH(QString, owner);
+    if (profile == u"corrupt") QVERIFY(writeCorruptWorkflowProfile());
+    else {
+      using namespace xerahs::workflows;
+      auto catalog = defaultCaptureWorkflows(); auto &entry = catalog.entries[0];
+      entry.name = "Workflow"; entry.output.directory = "/private-destination"; entry.output.pattern = "private-pattern"; entry.extra = {{"secret", "private-token"}};
+      const auto parent = temporary->filePath("XDG_CONFIG_HOME/com.xerahs.app/linux-qt"); QVERIFY(QDir().mkpath(parent));
+      QFile::setPermissions(parent, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
+      QFile file(parent + "/capture-workflows.json"); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(workflowsJson(catalog)); file.close();
+      QVERIFY(file.setPermissions(QFile::ReadOwner | QFile::WriteOwner));
+    }
+    std::unique_ptr<QProcess> fixture;
+    if (!owner.isEmpty()) {
+      fixture = std::make_unique<QProcess>();
+      fixture->start(QCoreApplication::applicationDirPath() + "/native-instance-fixture", {temporary->filePath("com.xerahs.app"), owner, QString::fromUtf8(serializeActivation(makeActivationRequest(ActivationAction::Activate)))});
+      QTRY_VERIFY(fixture->canReadLine()); QCOMPARE(json(fixture->readLine()).value("event"), QJsonValue("primary"));
+    }
+    const bool headless = owner.isEmpty();
+    for (const bool diagnostic : {false, true}) {
+      auto env = environment(headless);
+      env.insert("XERAHS_TOKEN", "secret-env-token"); env.insert("XERAHS_API_KEY", "secret-env-token"); env.insert("AWS_SECRET_ACCESS_KEY", "secret-env-token");
+      if (diagnostic) { env.insert("QT_LOGGING_RULES", "*.debug=true;*.info=true;*.warning=true"); env.insert("XERAHS_VERBOSE", "1"); env.insert("XERAHS_DEBUG", "1"); }
+      const auto result = run(arguments, env);
+      QCOMPARE(result.status, QProcess::NormalExit);
+      for (const auto &stream : {result.out, result.err}) {
+        for (const auto *forbidden : {"secret-arg", "secret-env", "private-token", "private-pattern", "private-destination", "/private-", "Traceback", "backtrace"})
+          QVERIFY2(!stream.contains(forbidden), qPrintable(QString("%1 leaked (diagnostic=%2): %3").arg(forbidden).arg(diagnostic).arg(QString::fromUtf8(stream))));
+        QVERIFY2(!stream.contains(temporary->path().toUtf8()), stream.constData());
+        auto withoutInvocation = stream; withoutInvocation.replace((QCoreApplication::applicationDirPath() + "/xerahs").toUtf8(), "xerahs");  // Help echoes argv[0], which the user passed.
+        QVERIFY2(!withoutInvocation.contains(QDir::homePath().toUtf8()) || QDir::homePath() == "/", stream.constData());
+      }
+      if (arguments.contains("--json") && !arguments.contains("--help")) {  // Each JSON line is one versioned object with only stable fields.
+        for (const auto &line : result.out.trimmed().split('\n')) {
+          const auto object = json(line); QCOMPARE(object.value("schemaVersion"), QJsonValue(1));
+          const QStringList allowed{"schemaVersion", "ok", "requestId", "workflowId", "delivery", "state", "error", "scope", "source", "runtimeStatus", "defaultWorkflowId", "workflows", "origin", "startedAt", "terminal", "lastRecordedState", "steps", "finishedAt", "pipelineTaskId", "diagnostic"};
+          for (const auto &key : object.keys()) QVERIFY2(allowed.contains(key), qPrintable(key));
+        }
+      }
+      if (arguments.first() == u"--verbose" || arguments.first() == u"--debug" || arguments.first() == u"--diagnostics" || arguments.first().startsWith("--log") || arguments.first() == u"-v" || arguments.first() == u"-d") {
+        QCOMPARE(result.exitCode, 1); QCOMPARE(json(result.out).value("error").toObject().value("code"), QJsonValue("usage-invalid"));
+      }
+    }
   }
 };
 QTEST_GUILESS_MAIN(CliContractTest)

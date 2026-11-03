@@ -74,3 +74,17 @@ See [workflow CLI evidence](WORKFLOW-CLI.md): `--non-interactive` refuses every
 operation that needs graphical interaction with `presentation-required` before
 QApplication, a display connection, instance election, preferences or portal
 requests, and never forwards to a running instance.
+
+## Redaction (IFCAT-010)
+
+Output is redacted by default and there is no switch that weakens it. The CLI
+prints only stable codes, fixed message text, opaque request/workflow UUIDs,
+versioned JSON fields and (for `--list-workflows`) the user's own workflow IDs
+and names. It never prints arguments, input or output paths, profile and
+storage locations, saved workflow folders/patterns/extra fields, capture
+content, credentials or tokens, or stack traces; `--help` shows only the
+invocation path the user typed. There is no verbose or diagnostic flag:
+`--verbose`, `--debug`, `--diagnostics`, `--log` and short forms are refused as
+`usage-invalid` without echoing the value, and ambient diagnostic settings
+(`QT_LOGGING_RULES`, any `XERAHS_*` variable) change nothing in the output.
+Verified for every mode in `CliContractTest::redactionHoldsInEveryCliModeEvenWithDiagnosticSettings`.
