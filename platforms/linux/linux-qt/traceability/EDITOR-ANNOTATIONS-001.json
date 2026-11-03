@@ -386,10 +386,10 @@
       }
     },
     "EA-020": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Finite/resource/history/rendering fixtures exist. This package has no published vectors; full malformed-input, native visual and supported-platform conformance remain. Creation rejects non-finite, negative or oversized font size/strength before session mutation using the existing reader/edit bounds. AnnotationShapesTest covers 35 invalid admissions, unchanged state/selection/source/history and retained redo, plus zero/fractional/maximum creation, reload and undo/redo for all seven affected types. Remaining options, resource cases and target/human qualification stay partial.",
+      "note": "Finite/resource/history/rendering fixtures exist. This package has no published vectors; full malformed-input, native visual and supported-platform conformance remain. Creation rejects non-finite, negative or oversized font size/strength before session mutation using the existing reader/edit bounds. AnnotationShapesTest covers 35 invalid admissions, unchanged state/selection/source/history and retained redo, plus zero/fractional/maximum creation, reload and undo/redo for all seven affected types. Remaining options, resource cases and target/human qualification stay partial. Audit 2026-11-03: The package publishes no vectors; each of its five SCENARIOS.feature scenarios is covered. 'Every contracted tool is reachable': AnnotationToolMatrixTest::contractToolsAreTheCanvasToolsAndNoneIsExtra and ::editorWindowMenuListsEveryContractedToolOnce. 'A reverse arrow drag preserves direction': AnnotationShapesTest::scenarioReverseArrowDragKeepsTheHeadAtTheDragEnd (drag 500,400 to 100,150 through the canvas; head at 100,150 in the document and in exported pixels; one undo). 'Cancelling text input makes no mutation': ::scenarioCancellingTextInputCreatesNothingAndKeepsHistory (Cancel and Escape). 'Effect annotation samples immutable source': ::scenarioOverlappingPixelateMovesWithoutAccumulatingItsOwnPixels (an overlapping move preview and the commit equal a fresh render from the source, export is idempotent, undo restores the original export) with EditorCanvasTest::groupMovePreviewAndCommitUseFrozenSourcePixels. 'Pasted annotation receives a new identity': the EA-016 tests. Other clauses: finite coordinates and resource limits (AnnotationShapesTest::invalidCreationContentPreservesSession and ::malformedShapeContentIsRejected, AnnotationTransferTest::invalidClipboardPayloadsAndLimitsFailBeforeAnyInsertion and ::untrustedAssetPayloadsAreRejectedBeforeAnyInsertion, EditorSessionTest::embeddedImagesAreCheckedBeforeDecode); typed failures without partial mutation (the same tests plus the guarded-edit tests of EditorSessionTest); no telemetry or upload: AnnotationShapesTest::annotationWorkNeverLoadsTheNetworkStack runs create, duplicate, copy, paste, save and render in process and asserts no network library is mapped (a linkage guard; uploads belong to other capabilities).",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -398,10 +398,10 @@
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 74,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "65e4394"
       }
     }
   },

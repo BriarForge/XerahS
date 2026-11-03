@@ -1,6 +1,7 @@
 // EDITOR-ANNOTATIONS-001 shape tools: gesture geometry, .xann persistence,
 // export rendering and native canvas creation for every box-bounded type.
 #include "EditorCanvas.h"
+#include "TextContentDialog.h"
 #include "image-editor/AnnotationRenderer.h"
 #include "image-editor/AnnotationTransfer.h"
 #include "image-editor/CanvasOperations.h"
@@ -558,6 +559,95 @@ private slots:
     QCOMPARE(serializeDocument(*file.document), serializeDocument(d));
     QSet<QUuid> everything; for (const auto &a : d.annotations) everything.insert(annotationId(a));
     const auto transferred = selectedAnnotationTransfer(d, everything, false); QVERIFY(!transferred.ok());  // unknown types are never transferred
+  }
+
+  // SCENARIOS.feature, scenario "A reverse arrow drag preserves direction".
+  void scenarioReverseArrowDragKeepsTheHeadAtTheDragEnd() {
+    QImage source(800, 600, QImage::Format_ARGB32); source.fill(Qt::white);
+    EditorSession session(document(800, 600)); EditorCanvas canvas(session, source); canvas.resize(900, 700); canvas.show(); QCoreApplication::processEvents(); canvas.resetZoom();
+    QCOMPARE(canvas.viewState().zoom(), 1.0); canvas.setTool(EditorCanvas::Tool::Arrow);
+    const auto view = [&](double x, double y) { return canvas.viewState().toView({x, y}).toPoint(); };
+    QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, view(500, 400));
+    QTest::mouseMove(canvas.viewport(), view(300, 250)); QTest::mouseMove(canvas.viewport(), view(100, 150));
+    QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, view(100, 150));
+    QCOMPARE(session.document().annotations.size(), std::size_t(1)); QCOMPARE(session.undoCount(), 1);  // one undo operation
+    const auto &arrow = std::get<RectangleAnnotation>(session.document().annotations[0]); QCOMPARE(arrow.type(), shape::arrow);
+    const auto absolute = [&](const PointF &p) { return PointF{arrow.start.x + p.x * (arrow.end.x - arrow.start.x), arrow.start.y + p.y * (arrow.end.y - arrow.start.y)}; };
+    const auto tail = absolute(arrow.content.points[0]), head = absolute(arrow.content.points[1]);
+    QVERIFY(std::abs(tail.x - 500) <= 1 && std::abs(tail.y - 400) <= 1); QVERIFY(std::abs(head.x - 100) <= 1 && std::abs(head.y - 150) <= 1);
+    // The exported pixels agree: the head (wider than the shaft) is at 100,150.
+    const auto painted = [&](const ArgbImage &image, int cx, int cy) {
+      int n = 0; for (int y = cy - 14; y <= cy + 14; ++y) for (int x = cx - 14; x <= cx + 14; ++x) if (x >= 0 && y >= 0 && x < 800 && y < 600 && image.at(x, y) != 0xFFFFFFFF) ++n;
+      return n;
+    };
+    const auto exported = renderDocument(solidImage(800, 600, 0xFFFFFFFF), session.document()); QVERIFY(exported.image);
+    QVERIFY(painted(*exported.image, 100, 150) > painted(*exported.image, 500, 400) + 40);
+    QVERIFY(session.undo()); QVERIFY(session.document().annotations.empty());
+  }
+  // EA-020: the annotation package must not reach the network by itself. Everything below runs in-process
+  // (create, edit, copy, paste, save, reload, render); the network stack must still be absent afterwards.
+  void annotationWorkNeverLoadsTheNetworkStack() {
+    EditorSession session(document(200, 150)); ShapeContent content; content.type = shape::text; content.text = "No telemetry";
+    const auto id = session.createShape({{10, 10}, {120, 60}, {}}, content, session.stateId(), session.selection()); QVERIFY(id);
+    session.select({*id}); QVERIFY(session.duplicateSelection().changed);
+    const auto offer = selectedAnnotationTransfer(session.document(), session.selection(), true); QVERIFY(offer.ok());
+    const auto incoming = parseAnnotationClipboard(offer.bytes); QVERIFY(incoming.ok());
+    QVERIFY(session.insertAnnotations(incoming.annotations, session.stateId(), 10, QUuid::createUuid, incoming.assets).changed);
+    const auto bytes = writeXann(session.document()); QVERIFY(bytes); QVERIFY(readXann(*bytes).document);
+    QVERIFY(renderDocument(solidImage(200, 150, 0xFFFFFFFF), session.document()).image);
+    QFile maps("/proc/self/maps"); QVERIFY(maps.open(QIODevice::ReadOnly)); const auto text = maps.readAll();
+    for (const char *library : {"libQt6Network", "libcurl", "libssl"}) QVERIFY2(!text.contains(library), library);
+  }
+  // Scenario "Cancelling text input makes no mutation".
+  void scenarioCancellingTextInputCreatesNothingAndKeepsHistory() {
+    QImage source(800, 600, QImage::Format_ARGB32); source.fill(Qt::white);
+    EditorSession session(document(800, 600)); QVERIFY(session.createRectangle({10, 10}, {40, 40})); const auto before = serializeDocument(session.document()); const auto undo = session.undoCount();
+    EditorCanvas canvas(session, source); canvas.resize(900, 700); canvas.show(); QCoreApplication::processEvents(); canvas.resetZoom(); canvas.setTool(EditorCanvas::Tool::Text);
+    for (const bool escape : {false, true}) {
+      const auto view = [&](double x, double y) { return canvas.viewState().toView({x, y}).toPoint(); };
+      QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, view(200, 200)); QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, view(420, 300));
+      auto *dialog = canvas.findChild<TextContentDialog *>(); QVERIFY(dialog); QVERIFY(canvas.interactionActive());  // an in-progress, empty editor
+      if (escape) QTest::keyClick(dialog, Qt::Key_Escape); else dialog->reject();
+      QTRY_VERIFY(!canvas.interactionActive());
+      QCOMPARE(session.document().annotations.size(), std::size_t(1)); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo);
+      QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    }
+    QVERIFY(!session.dirty() || session.undoCount() == undo);
+  }
+  // Scenario "Effect annotation samples immutable source": a pixelate that overlaps its own old place while it moves.
+  void scenarioOverlappingPixelateMovesWithoutAccumulatingItsOwnPixels() {
+    QImage source(400, 300, QImage::Format_ARGB32);
+    for (int y = 0; y < 300; ++y) for (int x = 0; x < 400; ++x) source.setPixel(x, y, ((x / 3) + (y / 5)) % 2 ? qRgb(240, 30, 30) : qRgb(20, 20, 220));
+    ArgbImage pixels; pixels.width = 400; pixels.height = 300; pixels.pixels.resize(400 * 300);
+    for (int y = 0; y < 300; ++y) for (int x = 0; x < 400; ++x) pixels.pixels[std::size_t(y * 400 + x)] = source.pixel(x, y);
+    EditorSession session(document(400, 300)); ShapeContent content; content.type = shape::pixelate; content.strength = 12;
+    const auto id = session.createShape({{100, 80}, {260, 200}, {0xFFFF0000, 0, 2, 0, 1}}, content, session.stateId(), session.selection()); QVERIFY(id);
+    session.select({*id}); const auto original = renderDocument(pixels, session.document()); QVERIFY(original.image);
+    EditorCanvas canvas(session, source); canvas.resize(600, 450); canvas.show(); QCoreApplication::processEvents(); canvas.resetZoom(); canvas.setTool(EditorCanvas::Tool::Select);
+    const auto view = [&](double x, double y) { return canvas.viewState().toView({x, y}).toPoint(); };
+    const auto undo = session.undoCount(); const auto before = serializeDocument(session.document());
+    QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, view(180, 140)); QVERIFY(canvas.interactionActive());
+    QTest::mouseMove(canvas.viewport(), view(200, 150)); QTest::mouseMove(canvas.viewport(), view(220, 170));  // +40,+30: overlaps the old region
+    QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo);  // the preview mutates nothing
+    const auto preview = canvas.viewport()->grab().toImage();
+    QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, view(220, 170));
+    QCOMPARE(session.undoCount(), undo + 1);
+    const auto &moved = std::get<RectangleAnnotation>(session.document().annotations[0]); QCOMPARE(moved.start.x, 140.0); QCOMPARE(moved.start.y, 110.0);
+    const auto committed = renderDocument(pixels, session.document()); QVERIFY(committed.image);
+    // The result equals a fresh render of the final geometry from the source only...
+    auto fresh = session.document(); auto &freshShape = std::get<RectangleAnnotation>(fresh.annotations[0]); freshShape.start = {140, 110}; freshShape.end = {300, 230};
+    const auto expected = renderDocument(pixels, fresh); QVERIFY(expected.image); QVERIFY(same(*committed.image, *expected.image, 0, 0, 400, 300));
+    // ...and rendering is idempotent: nothing in the output feeds back into a second export.
+    const auto again = renderDocument(pixels, session.document()); QVERIFY(again.image); QVERIFY(same(*again.image, *committed.image, 0, 0, 400, 300));
+    // The preview already showed those pixels: sample the interior of the new region on both.
+    const auto canvasPreview = preview; int compared = 0;
+    for (int y = 125; y < 215; y += 15) for (int x = 160; x < 285; x += 15) {
+      const QColor shown = canvasPreview.pixelColor(view(x, y)); const Argb want = committed.image->at(x, y);
+      if (qAbs(shown.red() - qRed(want)) <= 2 && qAbs(shown.green() - qGreen(want)) <= 2 && qAbs(shown.blue() - qBlue(want)) <= 2) ++compared;
+    }
+    QVERIFY2(compared >= 40, qPrintable(QString::number(compared)));
+    // Moving it back restores the original export exactly: no pixel was accumulated by the round trip.
+    QVERIFY(session.undo()); const auto restored = renderDocument(pixels, session.document()); QVERIFY(restored.image); QVERIFY(same(*restored.image, *original.image, 0, 0, 400, 300));
   }
 
   void everyShapeTypeRoundTripsThroughXann() {
