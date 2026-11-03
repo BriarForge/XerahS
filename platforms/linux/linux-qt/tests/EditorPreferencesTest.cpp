@@ -505,6 +505,36 @@ private slots:
       QCOMPARE(lastAnnotationToolFromPreferences(loaded), rememberableAnnotationTool(value.toString()) ? value.toString() : QStringLiteral("Rectangle"));
     if (field == u"ShadowColorHex" && valid) QCOMPARE(loaded.values.value(field).toString().size(), 9);
   }
+  // ESET-009: one inclusive range per numeric preference, enforced identically on load (per field), on change
+  // (whole-change rejection, the path used by automation and the native controls) and in the shared range table.
+  void everyNumericCreationPreferenceEnforcesItsInclusiveRangeOnLoadAndChange_data() {
+    QTest::addColumn<QString>("field"); QTest::addColumn<QJsonValue>("value"); QTest::addColumn<bool>("valid");
+    const QStringList fields{"BlurStrength", "Thickness", "CornerRadius", "ShadowBlurRadius", "ShadowOpacity", "ShadowOffsetX", "ShadowOffsetY",
+        "PixelateStrength", "MagnifierStrength", "SpotlightStrength", "SpotlightBlur", "TextFontSize", "SpeechBalloonFontSize", "StepFontSize"};
+    for (const auto &field : fields) {
+      const auto range = preferenceNumericRange(field); QVERIFY2(range, qPrintable(field));
+      const auto row = [&](const char *name, const QJsonValue &value, bool valid) { QTest::newRow(qPrintable(field + "-" + name)) << field << value << valid; };
+      row("minimum", range->minimum, true); row("maximum", range->maximum, true);
+      row("below", range->minimum - (range->integer ? 1 : 0.001), false); row("above", range->maximum + (range->integer ? 1 : 0.001), false);
+      row("string", QString::number(range->minimum), false); row("nan-text", "NaN", false); row("infinity-text", "Infinity", false);
+      row("null", QJsonValue(QJsonValue::Null), false); row("bool", true, false); row("array", QJsonArray{1}, false);
+      row("nan", std::numeric_limits<double>::quiet_NaN(), false); row("infinity", std::numeric_limits<double>::infinity(), false);
+      row("negative-infinity", -std::numeric_limits<double>::infinity(), false);
+      if (range->integer) row("fraction", range->minimum + 0.5, false); else row("fraction", range->minimum + (range->maximum - range->minimum) / 3, true);
+    }
+  }
+  void everyNumericCreationPreferenceEnforcesItsInclusiveRangeOnLoadAndChange() {
+    QFETCH(QString, field); QFETCH(QJsonValue, value); QFETCH(bool, valid);
+    const auto loaded = loadEditorPreferences({{field, value}, {"BorderStyle", "Dash"}});
+    QCOMPARE(loaded.fields.value(field), valid ? PreferenceFieldState::Valid : PreferenceFieldState::Invalid);
+    QCOMPARE(loaded.diagnostics, valid ? QStringList{} : QStringList{"invalid-" + field});
+    QCOMPARE(loaded.values.value("BorderStyle"), QJsonValue("Dash"));  // an invalid neighbour never resets a valid field
+    QCOMPARE(loaded.values.value(field), valid ? value : loadEditorPreferences({}).values.value(field));
+    QCOMPARE(preferenceNumberValid(field, value), valid);
+    const auto changed = changeEditorPreferences(loadEditorPreferences({}), {{field, value}, {"BorderStyle", "Dot"}});
+    QCOMPARE(bool(changed.preferences), valid);
+    if (!valid) QCOMPARE(changed.diagnostics, QStringList{"invalid-" + field});
+  }
   void creationDefaultsPersistAtomicallyRoundTripUnknownsAndRepairTheDamagedFieldOnly() {
     MemoryStorage storage;
     storage.artifact = {PreferenceRead::Kind::Readable, envelope(QJsonObject{{"CornerRadius", 3}, {"FutureCreationOption", QJsonObject{{"x", 1}}}}), {}};

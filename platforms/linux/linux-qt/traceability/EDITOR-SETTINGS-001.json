@@ -273,20 +273,22 @@
       "vectors": [
         "invalid-field-isolation"
       ],
-      "note": "Production blur/thickness/recent-limit validation rejects invalid types, fractional integers and non-finite or out-of-range numbers. Native thickness controls share the inclusive 1..10000 range; color/style Apply validates all fields before saving. Independent core boundaries and native rejection tests cover this subset. All other numeric effect fields and full UI/import/automation parity remain Required. Guarded native thickness now freezes state/exact selection/full defaults and native generation/preferences, restores defaults on batch refusal, and preserves one-step history/no-op/default-only behavior. Editor publication is weak-owner guarded with truthful failure; capture thickness stays local with an accessible numeric label. Actual input/refusal/lifetime/save/reopen/restart/capture evidence is indexed in ANNOTATION-THICKNESS.md. Full tool/field/resource/native/a11y/privacy/security/parity/human qualification remains Required.",
+      "note": "Production blur/thickness/recent-limit validation rejects invalid types, fractional integers and non-finite or out-of-range numbers. Native thickness controls share the inclusive 1..10000 range; color/style Apply validates all fields before saving. Independent core boundaries and native rejection tests cover this subset. All other numeric effect fields and full UI/import/automation parity remain Required. Guarded native thickness now freezes state/exact selection/full defaults and native generation/preferences, restores defaults on batch refusal, and preserves one-step history/no-op/default-only behavior. Editor publication is weak-owner guarded with truthful failure; capture thickness stays local with an accessible numeric label. Actual input/refusal/lifetime/save/reopen/restart/capture evidence is indexed in ANNOTATION-THICKNESS.md. Full tool/field/resource/native/a11y/privacy/security/parity/human qualification remains Required. Audit 2026-11-04: every numeric creation preference now has one inclusive range exported as preferenceNumericRange (BlurStrength 0..100, Thickness 1..10000 integer, CornerRadius 0..10000 integer, ShadowBlurRadius 0..1000, ShadowOpacity 0..1, ShadowOffsetX/Y -10000..10000, PixelateStrength 0..200, MagnifierStrength 0..10, SpotlightStrength 0..100, SpotlightBlur 0..200, text sizes 1..2000, StepFontSize 0..2000; effect maxima follow the reference toolbar, 0 keeps the renderer fallback). Load (per field), change (whole-change rejection, the path of the native controls, the conformance adapter and automation), the Drawing Defaults spin boxes and the session's creation-default check read that one table. Table-driven tests: EditorPreferencesTest::everyNumericCreationPreferenceEnforcesItsInclusiveRangeOnLoadAndChange (minimum, maximum, just below/above, string, NaN/Infinity text, null, bool, array, non-finite doubles, fractions for integer fields), NativeEditorPreferencesTest::everyNumericDrawingControlUsesTheSharedInclusiveRange, ::creationDefaultsPublishOnlyAfterSuccessfulPersistenceAndTheLastToolDoesNotFenceDrafts (one bad field rejects the change and names itself) and EditorCanvasTest::emphasisAndRedactionDefaultsSeedOnlyObjectsCreatedAfterThem (session refuses out-of-range and NaN defaults). Remains Required, so the row stays partial: background geometry fields (no background feature in this build) and per-tool thickness fields (see ESET-006).",
       "evidence": [
         "platforms/linux/linux-qt/app/ANNOTATION-THICKNESS.md",
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
-        "platforms/linux/linux-qt/app/ANNOTATION-THICKNESS-EVIDENCE.json"
+        "platforms/linux/linux-qt/app/ANNOTATION-THICKNESS-EVIDENCE.json",
+        "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 36,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Partial: blur, pixelate, magnifier, spotlight, shadow and related creation numbers share one validated inclusive range table across UI, load and automation; background geometry and per-tool thickness fields remain.",
+        "reviewed_at_revision": "6dfe5214b23beb66dd2c8e1002e46f60a10e4ff4"
       }
     },
     "ESET-010": {

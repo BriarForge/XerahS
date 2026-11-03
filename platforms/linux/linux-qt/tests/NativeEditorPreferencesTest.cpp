@@ -344,6 +344,29 @@ private slots:
     // A stale draft is still refused after a style change.
     QCOMPARE(applyDrawingDefaults({{"CornerRadius", 1}}, revision).diagnostic, QStringLiteral("settings-changed-in-session"));
   }
+  // ESET-009: the native controls use the same inclusive ranges as load, change and automation.
+  void everyNumericDrawingControlUsesTheSharedInclusiveRange() {
+    QTemporaryDir temporary; QVERIFY(initializeNativeEditorPreferences(temporary.filePath("native/settings.json")).isEmpty());
+    const QList<std::pair<QString, QString>> controls{{"defaultStrokeThickness", "Thickness"}, {"defaultCornerRadius", "CornerRadius"}, {"defaultShadowBlur", "ShadowBlurRadius"},
+        {"defaultShadowOpacity", "ShadowOpacity"}, {"defaultShadowOffsetX", "ShadowOffsetX"}, {"defaultShadowOffsetY", "ShadowOffsetY"}, {"defaultBlurStrength", "BlurStrength"},
+        {"defaultPixelateStrength", "PixelateStrength"}, {"defaultMagnifierStrength", "MagnifierStrength"}, {"defaultSpotlightStrength", "SpotlightStrength"},
+        {"defaultSpotlightBlur", "SpotlightBlur"}, {"defaultTextFontSize", "TextFontSize"}, {"defaultBalloonFontSize", "SpeechBalloonFontSize"}, {"defaultStepFontSize", "StepFontSize"}};
+    QTimer timer; QElapsedTimer deadline; deadline.start(); bool inspected = false, timedOut = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!dialog) return;
+      if (deadline.elapsed() > 5000) { timedOut = true; dialog->reject(); return; }
+      if (inspected) return; inspected = true;
+      for (const auto &[object, field] : controls) {
+        const auto range = preferenceNumericRange(field); QVERIFY2(range, qPrintable(field));
+        if (auto *spin = dialog->findChild<QSpinBox *>(object)) { QCOMPARE(double(spin->minimum()), range->minimum); QCOMPARE(double(spin->maximum()), range->maximum); QVERIFY(range->integer); }
+        else if (auto *real = dialog->findChild<QDoubleSpinBox *>(object)) {
+          QCOMPARE(real->minimum(), range->minimum); QCOMPARE(real->maximum(), range->maximum); QCOMPARE(real->decimals() == 0, range->integer);
+        } else QFAIL(qPrintable("missing control " + object));
+      }
+      dialog->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Cancel)->click();
+    });
+    timer.start(5); QVERIFY(!manageDrawingDefaults()); timer.stop(); QVERIFY(inspected && !timedOut);
+  }
   void invalidDrawingDraftRemainsOpenWithoutPublishingAnyField() {
     QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");
     QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
