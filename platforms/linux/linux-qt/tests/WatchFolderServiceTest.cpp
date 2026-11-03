@@ -44,6 +44,7 @@ class HttpFixture final : public QObject {
 public:
   QTcpServer server;
   int received = 0;
+  bool stall = false;
   QByteArray request;
   HttpFixture() {
     connect(&server, &QTcpServer::newConnection, this, [this] {
@@ -61,6 +62,7 @@ public:
           done = true;
           request = wire;
           ++received;
+          if (stall) return;
           const QByteArray body = R"({"url":"https://example.test/watched"})";
           peer->write("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: " + QByteArray::number(body.size()) +
                       "\r\nConnection: close\r\n\r\n" + body);
@@ -135,6 +137,107 @@ private slots:
     QCOMPARE(repeated.count(), 0);
     QCOMPARE(QDir(captures).entryList(QDir::Files), outputs);
     second.stop();
+  }
+
+  // CORE-025: one failing file is reported once, stays unprocessed in the store and does not block the next file.
+  void failingFileDoesNotBlockTheNext() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures");
+    const auto bad = dir.filePath("input/a.png"), good = dir.filePath("input/b.png");
+    QVERIFY(writeFile(bad));
+    QVERIFY(writeFile(good, "second file content"));
+    QVERIFY(QFile::setPermissions(bad, QFileDevice::Permissions()));
+    if (QFile(bad).open(QIODevice::ReadOnly)) QSKIP("Permissions are not enforced for this user");
+    qint64 now = 0;
+    QWidget owner;
+    FileUploadController uploads(portsFor(dir), &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    watch::Rule rule;
+    rule.action = watch::Action::Copy;
+    rule.path = dir.filePath("input");
+    QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy processed(&service, &WatchFolderService::processed);
+    service.start();
+    service.rescan();
+    now = 2000;
+    service.rescan();
+    QCOMPARE(processed.count(), 1);
+    QCOMPARE(processed.at(0).at(0).toString(), bad);
+    QCOMPARE(processed.at(0).at(1).toBool(), false);
+    now += 500;
+    service.rescan();
+    QCOMPARE(processed.count(), 2);
+    QCOMPARE(processed.at(1).at(0).toString(), good);
+    QCOMPARE(processed.at(1).at(1).toBool(), true);
+    for (int i = 0; i < 3; ++i) { now += 500; service.rescan(); }
+    QCOMPARE(processed.count(), 2);
+    QVERIFY(!store.processed(watch::fingerprint(bad)));
+    QVERIFY(store.processed(watch::fingerprint(good)));
+    QVERIFY(QFileInfo::exists(bad) && QFileInfo::exists(good));
+    const auto outputs = QDir(captures).entryList(QDir::Files);
+    QCOMPARE(outputs.size(), 1);
+    QCOMPARE(readFile(QDir(captures).filePath(outputs.first())), QByteArray("second file content"));
+    service.stop();
+    QFile::setPermissions(bad, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+  }
+
+  // CORE-025: stopping while an upload is in flight leaves the file in place, unchecked-in, and discoverable
+  // again by the same service after start() and by a fresh service after restart.
+  void stoppingMidUploadLeavesTheFileDiscoverable() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures");
+    const auto source = dir.filePath("input/new.png");
+    HttpFixture http;
+    http.stall = true;
+    QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    UploadDestination destination;
+    destination.id = QUuid::createUuid();
+    destination.name = "Watch fixture";
+    destination.requestUrl = QString("http://127.0.0.1:%1/upload").arg(http.server.serverPort());
+    destination.body = BodyType::MultipartFormData;
+    destination.fileFormName = "file";
+    destination.resultUrl = "{json:url}";
+    auto ports = portsFor(dir);
+    DestinationCatalog catalog(ports.catalogPath);
+    QCOMPARE(catalog.add(destination), QString());
+    qint64 now = 0;
+    QWidget owner;
+    FileUploadController uploads(ports, &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    watch::Rule rule;
+    rule.path = dir.filePath("input");
+    QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy processed(&service, &WatchFolderService::processed);
+    service.start();
+    QVERIFY(writeFile(source));
+    service.rescan();
+    now = 2000;
+    service.rescan();
+    QTRY_COMPARE_WITH_TIMEOUT(http.received, 1, 7000);
+    service.stop();
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
+    QCOMPARE(processed.first().at(1).toBool(), false);
+    QVERIFY(QFileInfo::exists(source));
+    QCOMPARE(readFile(source), QByteArray("watch fixture pixels"));
+    QVERIFY(!store.processed(watch::fingerprint(source)));
+    QVERIFY(QDir(captures).entryList(QDir::Files).isEmpty());
+    // The same service picks the file up again once started.
+    http.stall = false;
+    service.start();
+    now += 3000;
+    service.rescan();
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 2, 7000);
+    QCOMPARE(processed.at(1).at(0).toString(), source);
+    QCOMPARE(processed.at(1).at(1).toBool(), true);
+    QCOMPARE(http.received, 2);
+    QVERIFY(store.processed(watch::fingerprint(source)));
+    service.stop();
   }
 
   void uploadsOnceThroughDefaultDestinationAcrossRestart() {

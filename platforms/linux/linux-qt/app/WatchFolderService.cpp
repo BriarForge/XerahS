@@ -37,6 +37,8 @@ void WatchFolderService::complete(const QString &path, bool success, const QStri
     const auto saved = m_store.remember(m_pendingKey);
     if (!saved.isEmpty()) { m_blocked = true; emit notify(saved + ": watching stopped; completed action was not checkpointed.", false); }
   }
+  // A cancelled action (stop mid-processing) is not a verdict on the file: forget the attempt so it is discovered again.
+  if (!success && (!m_running || error == QLatin1String("cancelled"))) m_attempted.remove(m_pendingKey);
   emit processed(path, success);
   emit notify(success ? QStringLiteral("Processed %1").arg(QFileInfo(path).fileName()) : error, success);
   m_pendingPath.clear(); m_pendingKey.clear();
