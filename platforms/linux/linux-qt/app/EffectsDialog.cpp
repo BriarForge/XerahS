@@ -138,6 +138,22 @@ EffectsDialog::EffectsDialog(AnnotationDocument document, QImage source, Commit 
   m_category->addItems({tr("All effects"), tr("Adjustments"), tr("Drawings"), tr("Filters"), tr("Manipulations"), tr("Recent"), tr("Favorites")});
   m_search = new QLineEdit(this); m_search->setObjectName("effectsSearch"); m_search->setAccessibleName(tr("Search effects by name or ID")); m_search->setPlaceholderText(tr("Search effects"));
   discovery->addWidget(m_category); discovery->addWidget(m_search); layout->addLayout(discovery);
+  {
+    // EE-018: the browser lists every unavailable effect individually, and states the total up front.
+    QStringList unavailable;
+    for (const auto &effect : censusCatalog()) if (!m_registry->find(effect.id)) unavailable.append(effect.id + " — effect-unavailable: " + effectUnavailableReason(effect.id));
+    unavailable.sort();
+    if (!unavailable.isEmpty()) {
+      auto *row = new QHBoxLayout;
+      auto *notice = new QLabel((unavailable.size() == 1 ? tr("1 effect unavailable on Linux") : tr("%1 effects unavailable on Linux").arg(unavailable.size())), this); notice->setObjectName("effectsUnavailableNotice");
+      notice->setAccessibleName(notice->text()); notice->setAccessibleDescription(tr("Unavailable effects stay listed, disabled, with the reason. Expand the list to review them.")); notice->setToolTip(unavailable.join('\n'));
+      auto *toggle = new QPushButton(tr("Show list"), this); toggle->setObjectName("effectsUnavailableToggle"); toggle->setCheckable(true); toggle->setAutoDefault(false);
+      toggle->setAccessibleName(tr("Show or hide the list of unavailable effects")); row->addWidget(notice, 1); row->addWidget(toggle); layout->addLayout(row);
+      auto *details = new QListWidget(this); details->setObjectName("effectsUnavailableList"); details->setAccessibleName(tr("Unavailable effects and reasons")); details->addItems(unavailable);
+      details->setMaximumHeight(120); details->setVisible(false); layout->addWidget(details);
+      connect(toggle, &QPushButton::toggled, this, [toggle, details](bool shown) { details->setVisible(shown); toggle->setText(shown ? QObject::tr("Hide list") : QObject::tr("Show list")); });
+    }
+  }
   auto *body = new QHBoxLayout;
   m_list = new QListWidget(this); m_list->setObjectName("effectsList"); m_list->setAccessibleName(tr("Effects")); body->addWidget(m_list, 1);
   auto *right = new QVBoxLayout;

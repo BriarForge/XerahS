@@ -179,6 +179,18 @@ private slots:
     QVERIFY(QAccessible::queryAccessibleInterface(list)); QVERIFY(!categories->accessibleName().isEmpty());
     search->clear(); list->setFocus(); QTest::keyClick(list, Qt::Key_End); QCOMPARE(list->currentRow(), list->count() - 1);
   }
+  void unavailableEffectsAreSummarisedWithAnAccessibleExpandableList() {
+    QTemporaryDir temp; const auto loaded = source(); EffectsDialog d(*loaded.document, loaded.image, {}, nullptr, temp.filePath("state")); d.show();
+    int missing = 0; for (const auto &effect : censusCatalog()) if (!builtinEffects().find(effect.id)) ++missing;
+    QVERIFY(missing > 0); auto *notice = d.findChild<QLabel *>("effectsUnavailableNotice"); auto *toggle = d.findChild<QPushButton *>("effectsUnavailableToggle"); auto *details = d.findChild<QListWidget *>("effectsUnavailableList"); QVERIFY(notice && toggle && details);
+    QCOMPARE(notice->text(), missing == 1 ? QString("1 effect unavailable on Linux") : QString("%1 effects unavailable on Linux").arg(missing)); QCOMPARE(notice->accessibleName(), notice->text()); QVERIFY(!notice->accessibleDescription().isEmpty()); QVERIFY(!toggle->accessibleName().isEmpty()); QVERIFY(!details->accessibleName().isEmpty());
+    QVERIFY(notice->isVisible()); QVERIFY(!details->isVisible()); QCOMPARE(details->count(), missing); QCOMPARE(notice->toolTip().split('\n').size(), missing);
+    QStringList rows; for (int i = 0; i < details->count(); ++i) rows << details->item(i)->text();
+    QVERIFY(rows.contains("remove_background — effect-unavailable: needs an approved local model")); for (const auto &row : rows) QVERIFY(row.contains("effect-unavailable: "));
+    toggle->click(); QVERIFY(details->isVisible()); toggle->click(); QVERIFY(!details->isVisible());
+    // The notice never replaces the per-effect entries: every one stays in the browser, disabled.
+    auto *list = d.findChild<QListWidget *>("effectsList"); int disabled = 0; for (int i = 0; i < list->count(); ++i) if (!(list->item(i)->flags() & Qt::ItemIsEnabled)) ++disabled; QCOMPARE(disabled, missing);
+  }
   void unavailableCensusAndSearch() {
     QTemporaryDir temp; const auto loaded = source();
     EffectsDialog d(*loaded.document, loaded.image, {}, nullptr, temp.filePath("state"));
