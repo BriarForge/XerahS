@@ -367,7 +367,7 @@ private slots:
     QCOMPARE(calls, 1); QVERIFY(onGui); QCOMPARE(executions.result(id).value("state"), QJsonValue("succeeded")); QCOMPARE(bytes(path), original); QVERIFY(!QFile::exists(dir.filePath("outputs")));
   }
 
-  void counterPersistenceFailurePublishesNothingAndReportsFailedExecution() {
+  void counterPersistenceFailurePublishesNothingAndReportsPartialExecution() {
     using namespace xerahs::workflows; using namespace xerahs::actions;
     QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
     FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
@@ -386,7 +386,7 @@ private slots:
     QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
     const auto result = controller.lastPipelineResult(); QVERIFY(result && !result->file); QVERIFY(!result->workingMedia.isNull());
     QCOMPARE(result->pipeline.orderedResults[0].state, ActionState::Failed); QCOMPARE(result->pipeline.orderedResults[0].diagnostic, std::optional<QString>("counter-changed"));
-    QCOMPARE(executions.result(id).value("state"), QJsonValue("failed")); QVERIFY(!notices.isEmpty()); QVERIFY(!notices.last()[2].toBool());
+    QCOMPARE(executions.result(id).value("state"), QJsonValue("partial"));  // capture succeeded, save failed QVERIFY(!notices.isEmpty()); QVERIFY(!notices.last()[2].toBool());
     QVERIFY(!notices.last()[1].toString().contains("PNG saved"));
     QVERIFY(recovery.reviewAction()->isEnabled()); QCOMPARE(portal.calls, 1);
     QVERIFY(QDir(dir.filePath("output")).entryList({"*.png"}, QDir::Files).isEmpty());
