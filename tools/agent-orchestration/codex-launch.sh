@@ -58,9 +58,10 @@ codex exec -s workspace-write -C "$worktree" -o "$state/last.md" "$prompt" >> "$
 code=$?
 set -e
 
-limit="$(tail -n 40 "$log" | grep -o 'usage limit.*try again at [0-9:]* *[AP]M' | tail -n 1 || true)"
+# Codex reports either "try again at 12:23 PM" or "try again at Nov 9th, 2026 5:55 AM".
+limit="$(tail -n 40 "$log" | grep -oE 'usage limit.*try again at [^.]*[AP]M' | tail -n 1 || true)"
 if [[ -n "$limit" ]]; then
-  at="$(sed -E 's/.*try again at ([0-9:]+ *[AP]M).*/\1/' <<<"$limit")"
+  at="$(sed -E 's/.*try again at (.*[AP]M).*/\1/; s/([0-9]+)(st|nd|rd|th),/\1/' <<<"$limit")"
   next="$(date -d "$at" +%s)"
   (( next <= $(date +%s) )) && next="$(date -d "tomorrow $at" +%s)"
   echo $(( next + 120 )) > "$state/retry-after"
