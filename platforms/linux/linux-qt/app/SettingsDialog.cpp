@@ -7,6 +7,7 @@
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QFormLayout>
+#include <QHBoxLayout>
 #include <QGroupBox>
 #include <QHeaderView>
 #include <QLabel>
@@ -177,13 +178,20 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   connect(microphone, &QComboBox::currentIndexChanged, this, [=] { draft->insert("microphoneDevice", microphone->currentData().toString()); });
   auto *audioNote = new QLabel("Only these explicit inputs are captured. A missing input produces video without audio and a notification. GIF never contains audio.", recordingPage);
   audioNote->setWordWrap(true); recordingForm->addRow(audioNote);
-  auto *reset = new QPushButton("&Reset section…", this); layout->addWidget(reset);
-  connect(reset, &QPushButton::clicked, this, [=] {
-    collect(); const auto section = static_cast<Section>(tabs->currentIndex()); const auto changes = resetPreview(*draft, section, defaultFolder);
-    if (changes.isEmpty()) { status->setText("This section already has default values."); return; }
-    if (QMessageBox::question(this, "Reset profile section", "Preview of changes (other sections and user files are kept):\n" + changes.join('\n') + "\n\nReset this draft? Apply saves it; Cancel discards it.", QMessageBox::Reset | QMessageBox::Cancel, QMessageBox::Cancel) != QMessageBox::Reset) return;
-    *draft = resetSection(*draft, section, defaultFolder); refresh(); refreshAudio();
-  });
+  auto *resetRow = new QHBoxLayout(); layout->addLayout(resetRow);
+  auto *reset = new QPushButton("&Reset section…", this); resetRow->addWidget(reset);
+  auto *resetEverything = new QPushButton("Reset &all sections…", this); resetEverything->setAccessibleName("Reset all settings sections"); resetRow->addWidget(resetEverything); resetRow->addStretch();
+  // SETCAT-010: both resets only change this profile's draft after a preview; Cancel discards them.
+  auto resetDraft = [=](bool everything) {
+    collect(); const auto section = static_cast<Section>(tabs->currentIndex());
+    const auto changes = everything ? resetAllPreview(*draft, defaultFolder) : resetPreview(*draft, section, defaultFolder);
+    if (changes.isEmpty()) { status->setText(everything ? "All sections already have default values." : "This section already has default values."); return; }
+    const QString kept = everything ? "History, credentials, presets, workflows and your files are not changed." : "Other sections and user files are kept.";
+    if (QMessageBox::question(this, everything ? "Reset all profile sections" : "Reset profile section", "Preview of changes (" + kept + "):\n" + changes.join('\n') + "\n\nReset this draft? Apply saves it; Cancel discards it.", QMessageBox::Reset | QMessageBox::Cancel, QMessageBox::Cancel) != QMessageBox::Reset) return;
+    *draft = everything ? resetAll(*draft, defaultFolder) : resetSection(*draft, section, defaultFolder); refresh(); refreshAudio();
+  };
+  connect(reset, &QPushButton::clicked, this, [=] { resetDraft(false); });
+  connect(resetEverything, &QPushButton::clicked, this, [=] { resetDraft(true); });
   auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Apply | QDialogButtonBox::Cancel, this); layout->addWidget(buttons);
   auto save = [=, &store, &shortcuts]() {
     collect(); const auto repaired = repairSettings(*draft, defaultFolder);

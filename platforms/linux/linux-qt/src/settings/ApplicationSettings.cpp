@@ -158,6 +158,14 @@ QStringList resetPreview(const QJsonObject &values, Section section, const QStri
     changes.append(field.key + " (" + field.scope + "): " + QString::fromUtf8(QJsonDocument(QJsonArray{values.value(field.key), next.value(field.key)}).toJson(QJsonDocument::Compact)));
   return changes;
 }
+QJsonObject resetAll(const QJsonObject &values, const QString &saveFolder) {
+  auto next = values; for (const auto section : {Section::General, Section::Capture, Section::Hotkeys, Section::Recording}) next = resetSection(next, section, saveFolder);
+  return next;
+}
+QStringList resetAllPreview(const QJsonObject &values, const QString &saveFolder) {
+  QStringList changes; for (const auto section : {Section::General, Section::Capture, Section::Hotkeys, Section::Recording}) changes += resetPreview(values, section, saveFolder);
+  return changes;
+}
 ApplicationSettingsStore::ApplicationSettingsStore(QString path, QString saveFolder) : m_path(std::move(path)), m_saveFolder(std::move(saveFolder)) {
   const auto read = settingsFile(m_path).read();
   if (read.status != storage::StoreStatus::Missing) {

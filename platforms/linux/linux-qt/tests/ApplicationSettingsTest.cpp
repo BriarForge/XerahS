@@ -599,6 +599,83 @@ private slots:
     }
     callers.sort(); QCOMPARE(callers, (QStringList{"CaptureFeature.cpp", "OnboardingFeature.cpp"}));
   }
+  // SETCAT-010: Recording reset previews and cancels like the other sections; a full reset only rewrites this profile's settings.
+  void recordingSectionResetPreviewsCancelsAndApplies() {
+    QTemporaryDir dir; const auto path = dir.filePath("settings.json"); ApplicationSettingsStore store(path, dir.path());
+    auto values = store.current().values; values.insert("systemAudioDevice", "device.name:sys.monitor"); values.insert("microphoneDevice", "node.name:mic"); values.insert("future.keep", 3);
+    QVERIFY(store.save(values).isEmpty());
+    xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; });
+    const auto plan = xerahs::workflows::captureShortcutPlan(xerahs::workflows::defaultCaptureWorkflows(), xerahs::workflows::implementedCaptureActions(), HotkeyBindings::defaults());
+    xerahs::app::SettingsDialog dialog(store, dir.path(), plan, shortcuts, [] {});
+    auto *tabs = dialog.findChild<QTabWidget *>(); QCOMPARE(tabs->tabText(3), QString("&Recording")); tabs->setCurrentIndex(3);
+    QComboBox *system = nullptr, *mic = nullptr;
+    for (auto *combo : dialog.findChildren<QComboBox *>()) { if (combo->accessibleName() == "System audio device") system = combo; if (combo->accessibleName() == "Microphone") mic = combo; }
+    QVERIFY(system && mic); QCOMPARE(system->currentData().toString(), QString("device.name:sys.monitor")); QCOMPARE(mic->currentData().toString(), QString("node.name:mic"));
+    QPushButton *reset = nullptr; for (auto *button : dialog.findChildren<QPushButton *>()) if (button->text() == "&Reset section…") reset = button;
+    QVERIFY(reset);
+    QString preview; auto answer = [&](QMessageBox::StandardButton choice) {
+      QTimer::singleShot(0, [&preview, choice] { if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) { preview = box->text(); if (auto *chosen = box->button(choice)) chosen->click(); else box->done(choice); } });
+    };
+    answer(QMessageBox::Cancel); reset->click();
+    QVERIFY(preview.contains("systemAudioDevice (profile)")); QVERIFY(preview.contains("microphoneDevice (profile)")); QVERIFY(preview.contains("Other sections and user files are kept"));
+    QVERIFY(!preview.contains("saveFolder")); QVERIFY(!preview.contains("delayedCapture")); // only this section is affected
+    QCOMPARE(mic->currentData().toString(), QString("node.name:mic")); // Cancel leaves the draft untouched
+    answer(QMessageBox::Reset); reset->click();
+    QCOMPARE(system->currentData().toString(), QString()); QCOMPARE(mic->currentData().toString(), QString());
+    QCOMPARE(store.current().values.value("microphoneDevice"), QJsonValue("node.name:mic")); // nothing persisted before Apply
+    auto *buttons = dialog.findChild<QDialogButtonBox *>(); buttons->button(QDialogButtonBox::Apply)->click();
+    QCOMPARE(store.current().values.value("microphoneDevice"), QJsonValue("")); QCOMPARE(store.current().values.value("systemAudioDevice"), QJsonValue(""));
+    QCOMPARE(store.current().values.value("future.keep"), QJsonValue(3)); QCOMPARE(store.current().values.value("saveFolder"), values.value("saveFolder"));
+    QCOMPARE(store.current().values.value("hotkeys"), values.value("hotkeys"));
+  }
+  void fullResetOnlyRewritesSettingsAndKeepsHistoryCredentialsPresetsWorkflowsAndFiles() {
+    QTemporaryDir dir; QVERIFY(QDir().mkpath(dir.filePath("captures")));
+    // Stand-ins for the sibling stores and user files; the reset path has no handle to any of them.
+    const QMap<QString, QByteArray> siblings{{"history.json", "{\"history\":[1,2,3]}"}, {"credentials.json", "{\"secret-ref\":\"keyring\"}"}, {"presets.json", "{\"presets\":[\"a\"]}"},
+      {"workflows.json", "{\"workflows\":[\"w\"]}"}, {"captures/shot.png", "PNGDATA"}};
+    QMap<QString, QDateTime> times; QMap<QString, QByteArray> originals;
+    for (auto it = siblings.cbegin(); it != siblings.cend(); ++it) {
+      QFile file(dir.filePath(it.key())); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(it.value()); file.close(); times.insert(it.key(), QFileInfo(file).lastModified());
+    }
+    const auto path = dir.filePath("settings.json"); ApplicationSettingsStore store(path, dir.path());
+    auto values = store.current().values;
+    values.insert("saveFolder", dir.filePath("captures")); values.insert("filenamePattern", "x-%width"); values.insert("playCaptureSound", true); values.insert("delayedCapture.seconds", 9);
+    values.insert("scrollingCapture.maxFrames", 99); values.insert("microphoneDevice", "node.name:mic"); values.insert("future.keep", QJsonObject{{"a", 1}});
+    auto bindings = values.value("hotkeys").toObject(); bindings.insert("capture-region", "F9"); values.insert("hotkeys", bindings);
+    QVERIFY(store.save(values).isEmpty());
+    xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; });
+    const auto plan = xerahs::workflows::captureShortcutPlan(xerahs::workflows::defaultCaptureWorkflows(), xerahs::workflows::implementedCaptureActions(), HotkeyBindings::defaults());
+    QFile settingsFile(path); QVERIFY(settingsFile.open(QIODevice::ReadOnly)); const auto savedBytes = settingsFile.readAll(); settingsFile.close();
+    auto findReset = [](QDialog &dialog) { for (auto *button : dialog.findChildren<QPushButton *>()) if (button->accessibleName() == "Reset all settings sections") return button; return static_cast<QPushButton *>(nullptr); };
+    QString preview; auto answer = [&](QMessageBox::StandardButton choice) {
+      QTimer::singleShot(0, [&preview, choice] { if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) { preview = box->text(); if (auto *chosen = box->button(choice)) chosen->click(); else box->done(choice); } });
+    };
+    {
+      xerahs::app::SettingsDialog dialog(store, dir.path(), plan, shortcuts, [] {}); auto *reset = findReset(dialog); QVERIFY(reset);
+      answer(QMessageBox::Cancel); reset->click();
+      for (const char *key : {"saveFolder", "filenamePattern", "playCaptureSound", "delayedCapture.seconds", "scrollingCapture.maxFrames", "microphoneDevice", "hotkeys"}) QVERIFY2(preview.contains(key), key);
+      QVERIFY(preview.contains("History, credentials, presets, workflows and your files are not changed"));
+      answer(QMessageBox::Reset); reset->click(); // reset the draft, then close without applying
+      dialog.reject();
+    }
+    QVERIFY(settingsFile.open(QIODevice::ReadOnly)); QCOMPARE(settingsFile.readAll(), savedBytes); settingsFile.close(); // Cancel persisted nothing
+    {
+      xerahs::app::SettingsDialog dialog(store, dir.path(), plan, shortcuts, [] {}); auto *reset = findReset(dialog);
+      answer(QMessageBox::Reset); reset->click();
+      dialog.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply)->click();
+    }
+    const auto after = store.current().values; const auto defaults = defaultSettings(dir.path());
+    for (const auto &field : settingFields()) QCOMPARE(after.value(field.key), defaults.value(field.key));
+    QCOMPARE(after.value("future.keep"), values.value("future.keep")); // unknown fields survive a reset
+    QCOMPARE(after, resetAll(values, dir.path()));
+    QCOMPARE(store.previousValues(), values); // and the pre-reset profile is recoverable
+    for (auto it = siblings.cbegin(); it != siblings.cend(); ++it) {
+      QFile file(dir.filePath(it.key())); QVERIFY2(file.open(QIODevice::ReadOnly), qPrintable(it.key())); QCOMPARE(file.readAll(), it.value()); QCOMPARE(QFileInfo(file).lastModified(), times.value(it.key()));
+    }
+    QStringList names = QDir(dir.path()).entryList(QDir::Files); names.removeAll("settings.json.lock"); names.sort();
+    QCOMPARE(names, (QStringList{"credentials.json", "history.json", "presets.json", "settings.json", "workflows.json"}));
+    QCOMPARE(QDir(dir.filePath("captures")).entryList(QDir::Files), QStringList{"shot.png"});
+  }
   void autostart() {
     QTemporaryDir dir; const auto old = qgetenv("XDG_CONFIG_HOME"); qputenv("XDG_CONFIG_HOME", dir.path().toUtf8());
     const auto path = dir.filePath("autostart/com.xerahs.app.desktop");

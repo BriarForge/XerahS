@@ -39,6 +39,10 @@ xerahs::capture::SessionSettings regionSessionSettings(const QJsonObject &values
 HotkeyBindings hotkeys(const QJsonObject &values);
 QJsonObject resetSection(const QJsonObject &values, Section section, const QString &saveFolder);
 QStringList resetPreview(const QJsonObject &values, Section section, const QString &saveFolder);
+// Full reset: every declared field of every section returns to its default. Unknown and
+// deprecated fields survive; nothing outside this settings object is reachable from here.
+QJsonObject resetAll(const QJsonObject &values, const QString &saveFolder);
+QStringList resetAllPreview(const QJsonObject &values, const QString &saveFolder);
 // How delayed and automatic capture read and save their remembered choices.
 struct CapturePreferencesPort {
   std::function<QJsonObject()> values;
