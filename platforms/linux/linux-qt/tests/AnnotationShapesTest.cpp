@@ -2,6 +2,7 @@
 // export rendering and native canvas creation for every box-bounded type.
 #include "EditorCanvas.h"
 #include "image-editor/AnnotationRenderer.h"
+#include "image-editor/AnnotationTransfer.h"
 #include "image-editor/CanvasOperations.h"
 #include "image-editor/EditorSession.h"
 #include "image-editor/FreehandPath.h"
@@ -16,6 +17,7 @@
 #include <QTest>
 #include <cmath>
 #include <limits>
+#include <tuple>
 
 using namespace xerahs::app;
 using namespace xerahs::editor;
@@ -468,6 +470,94 @@ private slots:
     QVERIFY(decoded.hasAlphaChannel()); QCOMPARE(decoded.pixelColor(decoded.width() - 1, decoded.height() - 1).alpha(), 0);  // transparent corner survives
     QCOMPARE(cursor.content.imageKey, session.document().embeddedImages[0].first);
     QCOMPARE((cursor.end.x - cursor.start.x) / (cursor.end.y - cursor.start.y), double(decoded.width()) / decoded.height());  // click size keeps the asset ratio
+  }
+
+  // EA-019: one object of every one of the 17 drawable types, each with every field that applies to it set
+  // away from its default, plus embedded assets, an unknown type and compatible unknown fields.
+  void allSeventeenShapeTypesRoundTripEveryFieldThroughXann() {
+    QImage pixel(3, 3, QImage::Format_ARGB32); pixel.fill(QColor(10, 200, 30, 90));
+    QByteArray png; { QBuffer b(&png); QVERIFY(b.open(QIODevice::WriteOnly)); QVERIFY(pixel.save(&b, "PNG")); }
+    auto d = document(300, 300); d.imagePath = "source.png"; d.extra = {{"vendor", QJsonObject{{"keep", true}}}};
+    d.embeddedImages = {{"img-asset", png}, {"emoji-asset", png + QByteArray()}, {"cursor-asset", png}, {"unused-asset", png}};
+    int n = 0;
+    const auto base = [&](const QString &type, std::vector<PointF> points = {}) {
+      auto a = shapeOf(type, {10.0 + n * 3, 20.5 + n}, {60.0 + n * 3, 90.25 + n}, std::move(points)); ++n;
+      a.style = {0xCC112233, 0x44AABBCC, 3.5 + n, 12.5 + n, 0.75, BorderStyle::Solid, 0, {}, ArrowStyle::Classic};
+      a.extra = {{"vendorField", QString("keep-%1").arg(type)}, {"vendorNumber", n}}; return a;
+    };
+    const auto decorate = [](RectangleAnnotation &a) {
+      a.style.borderStyle = BorderStyle::DashDotDot; a.style.shadow = {true, 6.5, -2, 4.5, 0.4, 0x80102030};
+    };
+    std::vector<RectangleAnnotation> expected;
+    { auto a = base(shape::rectangle); decorate(a); a.style.cornerRadius = 9; expected.push_back(a); }
+    { auto a = base(shape::ellipse); decorate(a); expected.push_back(a); }
+    { auto a = base(shape::line, {{0, 0}, {1, 1}, {0.4, 1.7}}); decorate(a); expected.push_back(a); }
+    { auto a = base(shape::arrow, {{1, 0}, {0, 1}, {0.6, -0.5}}); decorate(a); a.style.arrowStyle = ArrowStyle::Double; expected.push_back(a); }
+    { auto a = base(shape::freehand, {{0, 0}, {0.25, 0.9}, {0.5, 0.1}, {1, 1}}); expected.push_back(a); }
+    { auto a = base(shape::text); a.content.text = "Line 1\nLíne 2 \xF0\x9F\x98\x80"; a.content.fontSize = 27.25; a.content.fontFamily = "Some Font That Is Not Installed";
+      a.content.textBold = false; a.content.textItalic = true; a.content.textAlignment = "right"; a.content.textColor = 0x7F010203; a.content.textFillColor = 0x00000000;
+      a.content.textBorderColor = 0x80FFEEDD; expected.push_back(a); }
+    { auto a = base(shape::speechBalloon, {{0.2, 1.6}}); a.content.text = "Hi"; a.content.fontSize = 19.5; a.content.fontFamily = "Serif"; a.content.textBold = true; a.content.textItalic = false;
+      a.content.textAlignment = "left"; a.content.textColor = 0xFF0A0B0C; a.content.textFillColor = 0x20304050; a.content.balloonBorderColor = 0x00ABCDEF; expected.push_back(a); }
+    { auto a = base(shape::step); a.content.stepValue = 4000; a.content.stepStyle = StepStyle::UppercaseRoman; a.content.fontSize = 31.5; expected.push_back(a); }
+    { auto a = base(shape::highlight); a.content.isEllipse = true; expected.push_back(a); }
+    { auto a = base(shape::blur); a.content.strength = 12.5; a.content.isEllipse = true; expected.push_back(a); }
+    { auto a = base(shape::pixelate); a.content.strength = 7.75; a.content.isEllipse = true; expected.push_back(a); }
+    { auto a = base(shape::magnify); a.content.strength = 3.5; a.content.isEllipse = true; expected.push_back(a); }
+    { auto a = base(shape::spotlight); a.content.strength = 42.5; a.content.isEllipse = true; a.content.blurAmount = 5.5; expected.push_back(a); }
+    { auto a = base(shape::smartEraser); a.visible = false; expected.push_back(a); }
+    { auto a = base(shape::image); a.content.imageKey = "img-asset"; expected.push_back(a); }
+    { auto a = base(shape::emoji); a.content.imageKey = "emoji-asset"; expected.push_back(a); }
+    { auto a = base(shape::cursor); a.content.imageKey = "cursor-asset"; expected.push_back(a); }
+    QCOMPARE(int(expected.size()), int(shapeTypes().size()));  // every type this build can draw
+    QStringList covered; for (const auto &a : expected) covered << a.type(); covered.sort(); auto all = shapeTypes(); all.sort(); QCOMPARE(covered, all);
+    QCOMPARE(expected.size(), std::size_t(17));  // the contract's 17 drawable types
+    for (const auto &a : expected) d.annotations.push_back(a);
+    const auto future = QUuid::createUuid();
+    d.annotations.insert(d.annotations.begin() + 5, UnsupportedAnnotation{future, {{"id", future.toString(QUuid::WithoutBraces)}, {"type", "future-widget"}, {"payload", QJsonObject{{"script", "alert(1)"}, {"n", 3}}}, {"zIndex", 5}}});
+    const auto expectField = [](const RectangleAnnotation &back, const RectangleAnnotation &want) {
+      const QByteArray tagBytes = want.type().toUtf8(); const char *tag = tagBytes.constData();
+      QVERIFY2(back.id == want.id, tag); QVERIFY2(back.type() == want.type(), tag);
+      QVERIFY2(back.start == want.start && back.end == want.end, tag); QVERIFY2(back.visible == want.visible, tag);
+      QVERIFY2(back.style.strokeColor == want.style.strokeColor && back.style.fillColor == want.style.fillColor, tag);
+      QVERIFY2(back.style.strokeWidth == want.style.strokeWidth && back.style.rotationDegrees == want.style.rotationDegrees && back.style.opacity == want.style.opacity, tag);
+      if (hasShapeDecoration(want.type())) { QVERIFY2(sameDecoration(back.style, want.style), tag); QVERIFY2(back.style.borderStyle == want.style.borderStyle && back.style.shadow == want.style.shadow, tag); }
+      if (want.type() == shape::rectangle) QVERIFY2(back.style.cornerRadius == want.style.cornerRadius, tag);
+      if (want.type() == shape::arrow) QVERIFY2(back.style.arrowStyle == want.style.arrowStyle, tag);
+      const auto &c = back.content, &w = want.content;
+      QVERIFY2(c.points == w.points, tag); QVERIFY2(c.text == w.text && c.fontSize == w.fontSize && c.fontFamily == w.fontFamily, tag);
+      QVERIFY2(c.textBold == w.textBold && c.textItalic == w.textItalic && c.textAlignment == w.textAlignment, tag);
+      QVERIFY2(c.textColor == w.textColor && c.textFillColor == w.textFillColor && c.textBorderColor == w.textBorderColor && c.balloonBorderColor == w.balloonBorderColor, tag);
+      QVERIFY2(c.stepValue == w.stepValue && c.stepStyle == w.stepStyle, tag);
+      QVERIFY2(c.strength == w.strength && c.isEllipse == w.isEllipse && c.blurAmount == w.blurAmount && c.imageKey == w.imageKey, tag);
+      QVERIFY2(back.extra == want.extra, tag);
+    };
+    const auto verify = [&](const AnnotationDocument &back) {
+      QCOMPARE(back.annotations.size(), d.annotations.size()); QCOMPARE(back.extra, d.extra);
+      // Assets are keyed JSON members: every key keeps its exact bytes (the member order is the key order).
+      QCOMPARE(back.embeddedImages.size(), d.embeddedImages.size());
+      for (const auto &[key, bytes] : d.embeddedImages) { const auto at = std::find_if(back.embeddedImages.begin(), back.embeddedImages.end(), [&](const auto &e) { return e.first == key; }); QVERIFY(at != back.embeddedImages.end()); QCOMPARE(at->second, bytes); }
+      for (std::size_t i = 0; i < d.annotations.size(); ++i) {
+        QCOMPARE(annotationId(back.annotations[i]), annotationId(d.annotations[i]));  // stable IDs in stable order
+        if (const auto *unknown = std::get_if<UnsupportedAnnotation>(&d.annotations[i])) {
+          const auto *kept = std::get_if<UnsupportedAnnotation>(&back.annotations[i]); QVERIFY(kept); QCOMPARE(kept->raw, unknown->raw); continue;  // verbatim, inert
+        }
+        const auto *got = std::get_if<RectangleAnnotation>(&back.annotations[i]); QVERIFY(got);
+        expectField(*got, std::get<RectangleAnnotation>(d.annotations[i]));
+        if (QTest::currentTestFailed()) return;
+      }
+    };
+    // JSON document, then the gzip .xann bytes a save writes, then a second generation: all identical.
+    const auto json = parseDocument(serializeDocument(d)); QVERIFY2(json.document, qPrintable(json.error.value_or(QString()))); verify(*json.document);
+    if (QTest::currentTestFailed()) return;
+    const auto bytes = writeXann(d); QVERIFY(bytes); const auto file = readXann(*bytes); QVERIFY(file.document); verify(*file.document);
+    if (QTest::currentTestFailed()) return;
+    QCOMPARE(serializeDocument(*file.document), serializeDocument(d)); QCOMPARE(serializeDocument(*parseDocument(serializeDocument(*file.document)).document), serializeDocument(d));
+    // The unknown type stays inert through a rendering pass and an object-transfer pass.
+    const auto rendered = renderDocument(solidImage(300, 300, 0xFFFFFFFF), *file.document); QVERIFY(rendered.image);
+    QCOMPARE(serializeDocument(*file.document), serializeDocument(d));
+    QSet<QUuid> everything; for (const auto &a : d.annotations) everything.insert(annotationId(a));
+    const auto transferred = selectedAnnotationTransfer(d, everything, false); QVERIFY(!transferred.ok());  // unknown types are never transferred
   }
 
   void everyShapeTypeRoundTripsThroughXann() {
