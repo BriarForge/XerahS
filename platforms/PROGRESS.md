@@ -7,9 +7,9 @@ Product Contract **0.3.1**. Percentages are **recorded implementation coverage**
 | Platform | Implementation coverage | Implemented / desktop requirements |
 |---|---:|---:|
 | [macOS](macos/PROGRESS.md) | **0.0%** | 0 / 324 |
-| [Linux](linux/PROGRESS.md) | **38.0%** | 123 / 324 |
+| [Linux](linux/PROGRESS.md) | **38.6%** | 125 / 324 |
 | [Windows](windows/PROGRESS.md) | **0.0%** | 0 / 324 |
-| **Overall desktop** | **12.7%** | **123 / 972 platform-requirement pairs** |
+| **Overall desktop** | **12.9%** | **125 / 972 platform-requirement pairs** |
 
 Only requirements explicitly marked `implemented` in a platform traceability map receive credit. Partial, not-started and missing/unassessed rows receive no credit. Overall sums the three platforms' implemented rows and divides by their combined desktop requirement count.
 
@@ -20,7 +20,7 @@ Requirement labels are unweighted: a catalogue requirement can cover hundreds of
 ## Current position
 
 - **macOS:** 0 implemented, 0 partial, 0 not started, 324 without a recorded implementation status. [Native platform evidence](macos/README.md).
-- **Linux:** 123 implemented, 173 partial, 28 not started, 0 without a recorded implementation status. [Native platform evidence](linux/README.md).
+- **Linux:** 125 implemented, 173 partial, 26 not started, 0 without a recorded implementation status. [Native platform evidence](linux/README.md).
 - **Windows:** 0 implemented, 0 partial, 0 not started, 324 without a recorded implementation status. [Native platform evidence](windows/README.md).
 
 ## Contract coverage
@@ -40,7 +40,7 @@ Requirement labels are unweighted: a catalogue requirement can cover hundreds of
 | [SETTINGS-CATALOG-001](../product-contract/capabilities/SETTINGS-CATALOG-001/SPEC.md) | 0.0% | 0 | 17 | 3 | 40 | [Linux map](linux/linux-qt/traceability/SETTINGS-CATALOG-001.json) |
 | [WORKFLOW-CATALOG-001](../product-contract/capabilities/WORKFLOW-CATALOG-001/SPEC.md) | 0.0% | 0 | 18 | 0 | 36 | [Linux map](linux/linux-qt/traceability/WORKFLOW-CATALOG-001.json) |
 | [INTERFACE-CATALOG-001](../product-contract/capabilities/INTERFACE-CATALOG-001/SPEC.md) | 0.0% | 0 | 15 | 3 | 36 | [Linux map](linux/linux-qt/traceability/INTERFACE-CATALOG-001.json) |
-| [CORE-PLATFORM-001](../product-contract/capabilities/CORE-PLATFORM-001/SPEC.md) | 1.9% | 2 | 28 | 6 | 72 | [Linux map](linux/linux-qt/traceability/CORE-PLATFORM-001.json) |
+| [CORE-PLATFORM-001](../product-contract/capabilities/CORE-PLATFORM-001/SPEC.md) | 3.7% | 4 | 28 | 4 | 72 | [Linux map](linux/linux-qt/traceability/CORE-PLATFORM-001.json) |
 | [COMPATIBILITY-CATALOG-001](../product-contract/capabilities/COMPATIBILITY-CATALOG-001/SPEC.md) | 0.0% | 0 | 12 | 6 | 36 | [Linux map](linux/linux-qt/traceability/COMPATIBILITY-CATALOG-001.json) |
 
 ## Next milestones and acceptance gates

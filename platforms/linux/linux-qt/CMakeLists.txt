@@ -837,6 +837,14 @@ add_test(NAME conformance
           --platform linux --edition linux-qt ${XERAHS_CAPABILITY_ARGS}
   WORKING_DIRECTORY "${XERAHS_REPO_ROOT}")
 
+# CORE-031/032 (ROOT-NUGET-001/002): every repository-owned NuGet manifest needs a fresh check record.
+add_test(NAME nuget-freshness
+  COMMAND Python3::Interpreter "${XERAHS_REPO_ROOT}/tools/nuget-freshness/check.py" --root "${XERAHS_REPO_ROOT}"
+  WORKING_DIRECTORY "${XERAHS_REPO_ROOT}")
+add_test(NAME nuget-freshness-selftest
+  COMMAND Python3::Interpreter -m unittest discover -s "${XERAHS_REPO_ROOT}/tools/nuget-freshness"
+  WORKING_DIRECTORY "${XERAHS_REPO_ROOT}")
+
 add_executable(workflow-execution-test tests/WorkflowExecutionTest.cpp)
 set_target_properties(workflow-execution-test PROPERTIES AUTOMOC ON)
 target_link_libraries(workflow-execution-test PRIVATE xerahs_pipeline_journal Qt6::Test)

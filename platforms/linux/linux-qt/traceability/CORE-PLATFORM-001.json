@@ -702,28 +702,36 @@
       }
     },
     "CORE-031": {
-      "status": "not-started",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "This CMake Linux edition introduces no NuGet dependency. Repository-wide authoritative NuGet maintenance before release qualification and the other contract triggers remain Required; no release qualification is claimed.",
+      "note": "tools/nuget-freshness/check.py (CTest nuget-freshness, self-tests nuget-freshness-selftest) finds every repository-owned NuGet manifest (project files, Directory.Packages.props, packages.config/lock files, nuspec, nuget.config) and fails when any declared package lacks a check record younger than 30 days, so a touched or newly added NuGet dependency cannot pass the gate unchecked. The Linux edition is CMake/Qt and the repository currently has no NuGet manifests, so the gate passes vacuously with an explicit message. Previous note: This CMake Linux edition introduces no NuGet dependency. Repository-wide authoritative NuGet maintenance before release qualification and the other contract triggers remain Required; no release qualification is claimed.",
       "audit": {
-        "classification": "not-started",
+        "classification": "implemented",
         "spec_line": 141,
-        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "4b2f5d8"
+      },
+      "evidence": [
+        "tools/nuget-freshness/check.py",
+        "tools/nuget-freshness/test_check.py"
+      ]
     },
     "CORE-032": {
-      "status": "not-started",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "No NuGet adoption is part of this checkpoint. Complete repository-wide source/version/time/verification records and any bounded retention approvals remain Required before release qualification.",
+      "note": "Each check record must carry source, checked_at, previous_version, latest_stable, selected_version and a 'passed' verification; a selection below latest stable must carry rejected_version, blocker, evidence, owner, remediation and next_review within 30 days of the check (tools/nuget-freshness/test_check.py covers each rule). Adoption's restore/build/test/packaging checks run through the normal suite once a NuGet dependency exists. Previous note: No NuGet adoption is part of this checkpoint. Complete repository-wide source/version/time/verification records and any bounded retention approvals remain Required before release qualification.",
       "audit": {
-        "classification": "not-started",
+        "classification": "implemented",
         "spec_line": 148,
-        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "4b2f5d8"
+      },
+      "evidence": [
+        "tools/nuget-freshness/check.py",
+        "tools/nuget-freshness/test_check.py"
+      ]
     },
     "CORE-033": {
       "status": "partial",
