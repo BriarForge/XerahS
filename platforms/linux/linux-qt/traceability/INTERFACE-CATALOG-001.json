@@ -12,7 +12,8 @@
     "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
     "platforms/linux/linux-qt/app/NativeInstance.cpp",
     "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
-    "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp"
+    "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
+    "platforms/linux/linux-qt/src/shell/TerminationSignals.cpp"
   ],
   "requirements": {
     "IFCAT-001": {
@@ -163,10 +164,10 @@
       }
     },
     "IFCAT-008": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "CLI launch/discovery/execution lookup have versioned JSON, help/exit and malformed-input tests. Complete commands, signal handling, progress/wait/cancel and precedence remain.",
+      "note": "CLI launch/discovery/execution lookup have versioned JSON (schemaVersion 1), help/exit and malformed-input tests. SIGINT/SIGTERM cancel the primary cleanly (event loop exit, normal teardown, lock released) with documented exit 130/143; arguments alone choose operation and output mode (no XERAHS_* environment switches; XDG_* only locates the profile); the stdout/stderr ownership and exit-code tables are in app/CLI-CONTRACT.md. Wait/cancel/live-progress CLI commands are not part of this row's text (see IFCAT-006 and WORKFLOW-CLI.md). Audit 2026-11-03: stable names: CliContractTest::standardStreamsFollowTheOwnershipTable(help) lists every flag; precedence: CliContractTest::environmentCannotSelectOperationOrOutputMode; stdout/stderr ownership: CliContractTest::standardStreamsFollowTheOwnershipTable (11 modes); exit codes 0/1/2: NativeInstanceTest::actualApplicationForwardsWorkflowIdsAndReportsOnlyDelivery, 130/143: CliContractTest::primaryExitsWithDocumentedStatusOnSigintAndSigterm plus TerminationSignalsTest (three cases); non-interactive: NativeInstanceTest::workflowCliRefusesMalformedHeadlessAndMissingProfilesWithoutSideEffects; versioned JSON: schemaVersion assertions in both suites. Rationale: arguments-only CLI and 128+signal follow the reference XerahS/ShareX daemons and Unix shell convention.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
@@ -174,13 +175,17 @@
         "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
+        "platforms/linux/linux-qt/app/CLI-CONTRACT.md",
+        "platforms/linux/linux-qt/src/shell/TerminationSignals.cpp",
+        "platforms/linux/linux-qt/tests/CliContractTest.cpp",
+        "platforms/linux/linux-qt/tests/TerminationSignalsTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 34,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e48015a1390a16d530f011e160b28c2d913ae728"
       }
     },
     "IFCAT-009": {

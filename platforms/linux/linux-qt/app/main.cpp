@@ -27,6 +27,7 @@
 #include "features/WorkflowFeature.h"
 #include "RecordingController.h"
 #include "image-editor/EditorPreferences.h"
+#include "shell/TerminationSignals.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
@@ -187,6 +188,18 @@ int main(int argc, char *argv[]) {
     return started.kind == xerahs::app::InstanceStart::Kind::Busy ? 2 : 1;
   }
 
+  // IFCAT-008: SIGINT/SIGTERM cancel cleanly. The event loop quits (closing
+  // windows and cancelling owned work through the normal teardown) and the
+  // process exits 128+signal (130/143). A repeated signal during shutdown is
+  // ignored; SIGKILL remains the only forced stop. See app/CLI-CONTRACT.md.
+  int terminationSignal = 0;
+  xerahs::shell::TerminationSignals termination;
+  QObject::connect(&termination, &xerahs::shell::TerminationSignals::requested, &app, [&terminationSignal](int received) {
+    if (terminationSignal) return;
+    terminationSignal = received;
+    QCoreApplication::exit(xerahs::shell::TerminationSignals::exitStatus(received));
+  });
+
   xerahs::app::NativeCaptureWorkflows workflows(xerahs::app::NativeCaptureWorkflows::defaultPath());
   if (request.action == ActivationAction::RunWorkflow && !workflows.resolve(QUuid(request.workflowId)).workflow) {
     reportLaunch(request, json, {}, "activation-unavailable"); return 1;
@@ -278,7 +291,7 @@ int main(int argc, char *argv[]) {
   }
   reportLaunch(request, json, "started");
   dispatch(request);
-  const int result = app.exec();
+  const int result = terminationSignal ? xerahs::shell::TerminationSignals::exitStatus(terminationSignal) : app.exec();
   instance.setAdmission({});
-  return result;
+  return terminationSignal ? xerahs::shell::TerminationSignals::exitStatus(terminationSignal) : result;
 }

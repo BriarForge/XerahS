@@ -28,6 +28,8 @@ add_library(xerahs_core STATIC
   src/shell/ActivationDispatcher.h
   src/shell/ActivationProtocol.cpp
   src/shell/ActivationProtocol.h
+  src/shell/TerminationSignals.cpp
+  src/shell/TerminationSignals.h
   src/actions/PostCapturePipeline.cpp
   src/actions/PostCapturePipeline.h
   src/actions/ActionSelection.cpp
@@ -475,6 +477,18 @@ target_link_libraries(native-instance-test PRIVATE xerahs_native_instance Qt6::T
 add_dependencies(native-instance-test native-instance-fixture xerahs)
 add_test(NAME native-instance COMMAND native-instance-test)
 set_tests_properties(native-instance PROPERTIES TIMEOUT 45)
+add_executable(termination-signals-test tests/TerminationSignalsTest.cpp)
+set_target_properties(termination-signals-test PROPERTIES AUTOMOC ON)
+target_include_directories(termination-signals-test PRIVATE src)
+target_link_libraries(termination-signals-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME termination-signals COMMAND termination-signals-test)
+set_tests_properties(termination-signals PROPERTIES TIMEOUT 30)
+add_executable(cli-contract-test tests/CliContractTest.cpp)
+set_target_properties(cli-contract-test PROPERTIES AUTOMOC ON)
+target_link_libraries(cli-contract-test PRIVATE xerahs_native_instance Qt6::Test)
+add_dependencies(cli-contract-test native-instance-fixture xerahs)
+add_test(NAME cli-contract COMMAND cli-contract-test)
+set_tests_properties(cli-contract PROPERTIES TIMEOUT 90)
 add_executable(toolbar-preferences-test tests/ToolbarPreferencesTest.cpp)
 set_target_properties(toolbar-preferences-test PROPERTIES AUTOMOC ON)
 target_link_libraries(toolbar-preferences-test PRIVATE xerahs_core Qt6::Test)
