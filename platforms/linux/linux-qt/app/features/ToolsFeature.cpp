@@ -67,6 +67,12 @@ void installToolDialogs(CommandRegistry &commands, const std::function<QWidget *
       [parent] {
         return new VideoConverterDialog(new GstConversionRunner, &availability, parentWidget(parent));
       });
+#else
+  const auto explanation = QStringLiteral("Requires GStreamer core, base and pbutils components; install them and enable video conversion in the XerahS build.");
+  auto *converter = commands.add(CommandSpec{QStringLiteral("video-converter"),
+      QStringLiteral("Video converter… (requires GStreamer core, base and pbutils)"), CommandGroup::Tools,
+      toolSurfaces(false), explanation});
+  if (converter) { converter->setEnabled(false); converter->setToolTip(explanation); }
 #endif
 }
 

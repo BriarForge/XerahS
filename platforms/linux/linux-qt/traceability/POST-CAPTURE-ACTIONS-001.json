@@ -218,7 +218,7 @@
       "vectors": [
         "save-failure-fallbacks"
       ],
-      "note": "Native Save and Save As encode once into an owner-private temporary and atomically publish through Linux RENAME_NOREPLACE. Save retries fresh random names on collision; Save As attempts the exact user-chosen new PNG path once and never replaces an existing destination. Qt Core validates bounded literal paths; the asynchronous native picker supports folder navigation, suffix completion and visible existing-file rejection. Actual absolute path, type, length, immutable naming context and creator ID for both file aliases enter the canonical result and journal; live identity remains in memory. Native tests verify real pixels, private publication, racing collision, failure cleanup, multiple artifacts and actual GUI selection. Full save variants/overwrite consent/formats, paired sidecars, configured storage/defaults, shared schema and native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Native annotation now accepts a cropped source only with declared internal lineage that the worker independently reproduces from original pixels. Actual numeric/pointer crop, cancellation, source/history/viewport and PNG/.xann output are indexed in CAPTURE-CROP.md. Full tool/field/resource/privacy/security/a11y/compatibility/parity/native/human/release qualification remains Required. Native counter-commit failure after PNG publication now records the real file and stable failure code, preserves working media and independent image clipboard, skips dependent file consumers and companion publication, and disables automatic retry with an explicit recovery explanation. CaptureSaveTest, CapturePipelineTest and PortalScreenshotTest cover changed/newer/corrupt storage, durable terminal results and partial workflow/UI reporting.",
+      "note": "CaptureSaveTest::publishesCompletePrivatePngAndRecordsActualArtifactAndContext proves absolute native path, image/png media type, actual byte length and filename context. CapturePipelineTest::failedCounterReservationKeepsMediaAndPublishesNoFile passes directly for both plain and companion intent, proving working-media preservation and clipboard after failed reservation. CaptureUploadTest::transfer(save-failed) now exercises production Save, native clipboard and permitted upload fallback with managed private temporary pixels, permissions, HTTP payload and cleanup assertions. Its runtime proof remains blocked here: the workspace sandbox refuses local TCP listen, and the registered ctest also cannot start its private D-Bus socket. Keep partial until Aoife runs capture-upload outside the sandbox. Existing managed temporary fallback semantics follow PCA-006/PCA-019 unchanged.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
@@ -232,7 +232,8 @@
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
         "platforms/linux/linux-qt/app/CAPTURE-CROP.md",
-        "platforms/linux/linux-qt/app/CAPTURE-CROP-EVIDENCE.json"
+        "platforms/linux/linux-qt/app/CAPTURE-CROP-EVIDENCE.json",
+        "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp"
       ],
       "disposition": "Required",
       "audit": {
@@ -241,8 +242,8 @@
         "published_vectors": [
           "save-failure-fallbacks"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Managed temporary.file lifecycle, quick-task and before-upload native flows, guarded native deletion, complete recovery/retention and all action-family qualification remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Metadata and failed-reservation media/clipboard verified locally. Added real production pipeline test for clipboard and managed-temporary HTTP upload after failed save; upload runtime verification is pending outside the socket-restricted sandbox.",
+        "reviewed_at_revision": "d5ba4c7793272c989a9f66cd3319a35521c5a182"
       }
     },
     "PCA-008": {
@@ -790,7 +791,7 @@
       ],
       "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp": [
         "waitAtSave",
-        "failedCounterCommitRetainsActualFileAndStopsUnsafeRetry",
+        "failedCounterReservationKeepsMediaAndPublishesNoFile",
         "retriesFailedSaveWithOriginalSettingsAndDoesNotRepeatSuccessfulClipboard",
         "retriesOnlyFailedClipboardAndKeepsTheExistingFileAndAppendOnlyLineage",
         "cancellingRetryBeforeStartKeepsTheOriginalArtifactPixelsAndDurableLink",
@@ -809,6 +810,8 @@
       ],
       "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp": [
         "transfer",
+        "temporaryFileCleanupAndIsolation",
+        "temporaryFileCreationFailureKeepsIndependentActions",
         "urlClipboard",
         "oldRecordsLoadWithoutUploadFields"
       ],

@@ -1428,3 +1428,13 @@ set_target_properties(editor-exit-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-exit-test PRIVATE xerahs_editor_source xerahs_editor_canvas xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
 add_test(NAME editor-exit COMMAND editor-exit-test)
 set_tests_properties(editor-exit PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
+# Exercise the genuine missing-GStreamer ToolsFeature branch even on equipped hosts.
+add_executable(tools-feature-unavailable-test tests/ToolsFeatureUnavailableTest.cpp
+  app/CommandRegistry.cpp app/CommandRegistry.h app/features/ToolsFeature.cpp app/features/ToolsFeature.h)
+set_target_properties(tools-feature-unavailable-test PROPERTIES AUTOMOC ON)
+target_include_directories(tools-feature-unavailable-test PRIVATE app)
+target_link_libraries(tools-feature-unavailable-test PRIVATE xerahs_color_picker xerahs_hash_checker
+  xerahs_icon_converter xerahs_video_converter_ui xerahs_qr_code xerahs_image_recognition Qt6::Test)
+add_test(NAME tools-feature-unavailable COMMAND tools-feature-unavailable-test)
+set_tests_properties(tools-feature-unavailable PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)

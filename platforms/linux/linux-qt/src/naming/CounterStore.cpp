@@ -71,8 +71,8 @@ CounterPeek CounterStore::peek(const QString &profileId) const {
 }
 
 // FN-016: the lock is held from reserve through commit (or rollback by
-// destruction), so two processes can never hold the same value, and a failed
-// or cancelled save leaves the file untouched and consumes nothing.
+// destruction), so two processes can never hold the same value. Validation or
+// cancellation before commit consumes nothing; commit precedes publication.
 CounterReserveResult CounterStore::reserve(const QString &profileId) const {
   CounterReserveResult result;
   if (profileId.isEmpty() || !QFileInfo(m_path).isAbsolute()) { result.error = CounterError::Unsafe; return result; }

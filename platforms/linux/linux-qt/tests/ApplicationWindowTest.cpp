@@ -209,7 +209,9 @@ private slots:
     QVERIFY(commands.action(QStringLiteral("video-converter")));
     QVERIFY(check(commands.action(QStringLiteral("video-converter")), [&owner] { return owner.findChildren<VideoConverterDialog *>(); }));
 #else
-    QVERIFY(!commands.action(QStringLiteral("video-converter")));
+    QVERIFY(commands.action(QStringLiteral("video-converter")));
+    QVERIFY(!commands.action(QStringLiteral("video-converter"))->isEnabled());
+    QVERIFY(commands.action(QStringLiteral("video-converter"))->toolTip().contains(QStringLiteral("GStreamer")));
 #endif
   }
 };

@@ -10,6 +10,8 @@
 #include <QPushButton>
 #include <QSignalSpy>
 #include <QStandardItemModel>
+#include <QSpinBox>
+#include <QThread>
 #include <QTemporaryDir>
 #include <QTest>
 
@@ -46,6 +48,45 @@ private slots:
     container->setCurrentIndex(container->findData("webm"));
     QCOMPARE(codec->count(), 3);   // Vp8, Vp9, Av1; none usable
     QCOMPARE(codec->currentData().toString(), QString("Vp8"));   // nothing usable: first row shown, Convert reports the reason
+  }
+  void bitrateControlReachesEveryApplicableCodecRequest() {
+    QSet<QString> elements;
+    for (const auto &codec : codecs()) for (const auto &encoder : codec.encoders) elements.insert(encoder);
+    for (const auto container : containers()) elements.insert(muxerFor(container));
+    SetAvailability port(elements);
+    for (const auto &codec : codecs()) {
+      auto *runner = new FakeRunner; VideoConverterDialog d(runner, &port);
+      auto *container = d.findChild<QComboBox *>("vcContainer");
+      auto *choice = d.findChild<QComboBox *>("vcCodec");
+      auto *bitrate = d.findChild<QSpinBox *>("vcBitrate");
+      container->setCurrentIndex(container->findData(containerId(codec.containers.first())));
+      choice->setCurrentIndex(choice->findData(codec.id));
+      QCOMPARE(choice->currentData().toString(), codec.id);
+      QCOMPARE(bitrate->isEnabled(), !codec.bitrateProperty.isEmpty());
+      bitrate->setValue(4321);
+      d.setInput(makeInput());
+      d.findChild<QPushButton *>("vcConvert")->click();
+      QCOMPARE(runner->starts, 1);
+      QCOMPARE(runner->last.codecId, codec.id);
+      QCOMPARE(runner->last.bitrateKbps, codec.bitrateProperty.isEmpty() ? 0 : 4321);
+      QVERIFY(!bitrate->isEnabled());
+      d.cancel();
+      QCOMPARE(bitrate->isEnabled(), !codec.bitrateProperty.isEmpty());
+    }
+  }
+  void queuedWorkerProgressUpdatesTheVisibleControl() {
+    SetAvailability port({"x264enc", "mp4mux"});
+    auto *runner = new FakeRunner; VideoConverterDialog d(runner, &port);
+    d.show(); d.setInput(makeInput()); d.convert();
+    QVERIFY(d.busy());
+    auto *progress = d.findChild<QProgressBar *>("vcProgress");
+    QCOMPARE(progress->value(), 0);
+    auto *worker = QThread::create([runner] { emit runner->progress(37); });
+    worker->start(); QVERIFY(worker->wait(5000)); delete worker;
+    QTRY_COMPARE(progress->value(), 37);
+    QVERIFY(progress->isVisible()); QVERIFY(d.busy());
+    ConversionResult ok; ok.outcome = Outcome::Success; ok.outputPath = d.output(); runner->complete(ok);
+    QCOMPARE(progress->value(), 100);
   }
   void convertFlowSuccessAndFolder() {
     SetAvailability port({"x264enc", "mp4mux", "matroskamux", "opusenc"});

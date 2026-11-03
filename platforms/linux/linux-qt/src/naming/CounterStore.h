@@ -57,7 +57,8 @@ public:
   CounterPeek peek(const QString &profileId) const;
   CounterReserveResult reserve(const QString &profileId) const;
   // Persists `next` (what the expander returned as nextCounter) and releases
-  // the lock. Call only after the name was successfully published (FN-016).
+  // the lock. This is the durable name reservation; call BEFORE publication
+  // after validation/encoding. A later publication failure does not undo it (FN-016).
   CounterError commit(CounterReservation &reservation, qint64 next) const;
 private:
   QString m_path;

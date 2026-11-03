@@ -621,7 +621,7 @@
         "unknownWorkflowOutputCannotAdmitCaptureOrWriteAnExecution",
         "supportedOutputWorkflowAdmissionKeepsPermissionDenialBeforeActions",
         "admittedPinAndPrintWorkflowsReachTheirActualNativePorts",
-        "counterPersistenceFailureKeepsPngAndReportsPartialExecutionWithoutRetry",
+        "counterPersistenceFailurePublishesNothingAndReportsFailedExecution",
         "actualApplicationLaunchAcknowledgementFindsItsDeniedExecutionHeadlessly",
         "admittedExecutionLinksRealPipelineBeforeOutputAndSurvivesRestart",
         "explicitRetryKeepsExecutionReferenceWithoutRewritingOriginalOutcome",

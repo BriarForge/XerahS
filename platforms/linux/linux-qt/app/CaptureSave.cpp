@@ -44,12 +44,12 @@ CaptureSaveResult saveCapture(const QImage &media, const QString &directory, con
     context.width = media.width(); context.height = media.height(); context.random = random.get(); context.files = &files;
     auto name = expand({pattern, ParseMode::Filename, QStringLiteral("png"), std::nullopt}, context);
     if (!name.ok()) return failure(QStringLiteral("filename-") + errorCodeName(name.error().code));
-    // FN-007/FN-016: a counter token reserves the persisted value now (lock held
-    // across publication) and commits only after the name is published; every
-    // earlier return rolls back by destroying the reservation.
+    // FN-007/FN-016: hold the counter lock while validating and encoding.
+    // Persist the advance as the name reservation before exposing the PNG.
     CounterStore counters(hooks.counterPath.isEmpty() ? defaultCounterPath() : hooks.counterPath);
     CounterReservation reservation;
-    if (name.nextCounter != context.counter && !hooks.counterProfile.isEmpty()) {
+    const bool persistentCounter = name.nextCounter != context.counter && !hooks.counterProfile.isEmpty();
+    if (persistentCounter) {
       auto reserved = counters.reserve(hooks.counterProfile);
       if (reserved.error != CounterError::None) return failure(counterErrorName(reserved.error));
       reservation = std::move(reserved.reservation); context.counter = reservation.value();
@@ -71,12 +71,25 @@ CaptureSaveResult saveCapture(const QImage &media, const QString &directory, con
     const auto length = encoded.size();
     const auto source = QFile::encodeName(encoded.fileName());
     for (int attempt = 0; attempt < 3; ++attempt) {
-      if (attempt) { if (reservation) context.counter = name.nextCounter; name = expand({pattern, ParseMode::Filename, QStringLiteral("png"), std::nullopt}, context); }
+      if (attempt) {
+        if (persistentCounter) {
+          auto reserved = counters.reserve(hooks.counterProfile);
+          if (reserved.error != CounterError::None) return failure(counterErrorName(reserved.error));
+          reservation = std::move(reserved.reservation); context.counter = reservation.value();
+        }
+        name = expand({pattern, ParseMode::Filename, QStringLiteral("png"), std::nullopt}, context);
+      }
       if (!name.ok()) return failure(QStringLiteral("filename-") + errorCodeName(name.error().code));
       const auto path = destination.filePath(name.value());
       filenameContext.insert("counter", context.counter);
       filenameContext.insert("next_counter", name.nextCounter);
       CaptureFile artifact{path, QStringLiteral("image/png"), length, filenameContext};
+      // A committed reservation survives publication failure or process death.
+      // Never expose this name if the private atomic counter write fails.
+      if (reservation) {
+        const auto committed = counters.commit(reservation, name.nextCounter);
+        if (committed != CounterError::None) return failure(counterErrorName(committed));
+      }
       if (hooks.publicationIntent) hooks.publicationIntent(path, false);
       if (hooks.beforePublish) hooks.beforePublish(path);
       const auto target = QFile::encodeName(path);
@@ -86,13 +99,6 @@ CaptureSaveResult saveCapture(const QImage &media, const QString &directory, con
       if (::syscall(SYS_renameat2, AT_FDCWD, source.constData(), AT_FDCWD, target.constData(), RENAME_NOREPLACE) == 0) {
         encoded.setAutoRemove(false);
         artifact.identity = captureFileIdentity(encoded.handle());
-        // The name is published; a failed commit cannot unpublish it and the
-        // exclusive rename already guards against reuse (FN-016).
-        if (reservation) {
-          CounterError committed = CounterError::WriteFailed;
-          try { committed = counters.commit(reservation, name.nextCounter); } catch (...) {}
-          if (committed != CounterError::None) return {std::move(artifact), counterErrorName(committed)};
-        }
         return {std::move(artifact), {}};
       }
       if (errno != EEXIST) return failure(QStringLiteral("save-write-failed"));

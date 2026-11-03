@@ -289,21 +289,24 @@
     },
     "EU-012": {
       "disposition": "Required",
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "The converter exposes the 15 codec choices of the utility catalog in catalog order, each with its compatible containers, encoder candidates, hardware flag and bitrate property, and VideoConversionTest checks the catalogue against the contract. The window offers the input file, the output folder and name, the bitrate where it is meaningful, progress, Cancel and an optional open-folder action, and the list, validation and success flows are tested. The whole utility is conditional on the build: the converter library is compiled only when XERAHS_RECORDING and GStreamer with pbutils are found, so on a target without GStreamer the command and its dialog are absent rather than offered and explained. Unconditional availability across the supported desktop targets remains Required.",
+      "note": "The native converter exposes all 15 catalog codecs with compatible containers, input and output folder/name, applicable bitrate, progress, cancellation and explicit optional Show in folder. VideoConverterDialogTest iterates every codec and proves enabled bitrate values reach the conversion request, animated-image codecs disable and omit bitrate, and queued worker progress updates the visible control. VideoConversionTest checks catalog identity; existing dialog and integration tests cover success, cancellation and output. Without GStreamer the same registered command remains visible, disabled, and explains the required GStreamer core, base and pbutils components; ToolsFeatureUnavailableTest compiles and exercises that actual build branch independently of installed libraries. Rationale: retain the existing encoder-default bitrate and explicit Show in folder behavior, avoiding automatic folder opening.",
       "evidence": [
         "platforms/linux/linux-qt/src/media/VideoConversion.cpp",
         "platforms/linux/linux-qt/app/VideoConverterDialog.cpp",
         "platforms/linux/linux-qt/app/VideoConverter.cpp",
         "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
-        "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp",
+        "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
+        "platforms/linux/linux-qt/tests/ToolsFeatureUnavailableTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 44,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. QR scanning/OCR dependencies and background-removal model remain unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "All EU-012 controls and request/progress wiring are exercised through the production dialog; all catalog codecs are checked and the actual missing-GStreamer registration is built and tested. Full utility accessibility, supported-desktop qualification and other EU requirements remain separate.",
+        "reviewed_at_revision": "d5ba4c7793272c989a9f66cd3319a35521c5a182"
       }
     },
     "EU-013": {
@@ -558,6 +561,18 @@
         "convertsAndPublishesAtomically",
         "cancelRemovesPartial",
         "refusesExistingOutput"
+      ],
+      "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp": [
+        "listsDisabledUnavailableCodecs",
+        "bitrateControlReachesEveryApplicableCodecRequest",
+        "queuedWorkerProgressUpdatesTheVisibleControl",
+        "convertFlowSuccessAndFolder",
+        "validationAndExistingOutput",
+        "cancelAndCloseWhileBusy",
+        "failureShowsStableCodeAndAccessibleNames"
+      ],
+      "platforms/linux/linux-qt/tests/ToolsFeatureUnavailableTest.cpp": [
+        "converterStaysVisibleWithAnActionableDependencyExplanation"
       ]
     },
     "remaining_scope": "QR scanning/OCR dependencies and background-removal model remain unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked.",

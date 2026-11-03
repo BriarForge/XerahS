@@ -7,6 +7,7 @@
 #include <QTest>
 #include <future>
 #include <unistd.h>
+#include <sys/wait.h>
 using namespace xerahs::app;
 namespace {
 QImage pixels() { QImage image(12, 8, QImage::Format_ARGB32); image.fill(QColor(23, 45, 67, 255)); return image; }
@@ -33,24 +34,75 @@ private slots:
     const auto failed = saveCapture(pixels(), dir.filePath("output"), "counter-%i{3}", hooks); QVERIFY(!failed.file); QVERIFY(!QFile::exists(hooks.counterPath));
     xerahs::naming::CounterStore store(hooks.counterPath); QCOMPARE(store.peek("profile").value, qint64(0));
   }
-  void counterCommitFailurePreservesPublishedPngAndReportsTheActualFault_data() {
+  void counterCommitFailurePublishesNothingAndReportsTheActualFault_data() {
     QTest::addColumn<QByteArray>("replacement"); QTest::addColumn<QString>("diagnostic");
     QTest::newRow("changed") << QByteArray(R"({"format":"com.xerahs.app/linux-qt/filename-counters","version":1,"counters":{"profile":"41"}})") << QString("counter-changed");
     QTest::newRow("newer") << QByteArray(R"({"format":"com.xerahs.app/linux-qt/filename-counters","version":2,"counters":{"profile":"41"}})") << QString("counter-newer-version");
     QTest::newRow("corrupt") << QByteArray("{private-counter-fixture") << QString("counter-corrupt");
   }
-  void counterCommitFailurePreservesPublishedPngAndReportsTheActualFault() {
+  void counterCommitFailurePublishesNothingAndReportsTheActualFault() {
     QFETCH(QByteArray, replacement); QFETCH(QString, diagnostic); QTemporaryDir dir;
     const auto counterPath = dir.filePath("state/counters.json"); CaptureSaveHooks hooks; hooks.counterPath = counterPath; hooks.counterProfile = "profile";
-    int encodes = 0; hooks.encode = [&](const QImage &image, QIODevice *output) { ++encodes; return image.save(output, "PNG"); };
-    hooks.beforePublish = [&](const QString &) {
+    int encodes = 0; hooks.encode = [&](const QImage &image, QIODevice *output) {
+      ++encodes;
       if (!write(counterPath, replacement) || !QFile::setPermissions(counterPath, QFile::ReadOwner | QFile::WriteOwner)) throw std::runtime_error("fixture write failed");
+      return image.save(output, "PNG");
     };
     const auto result = saveCapture(pixels(), dir.filePath("output"), "counter-%i{3}", hooks);
-    QVERIFY(result.file); QCOMPARE(result.diagnostic, diagnostic); QCOMPARE(encodes, 1); QCOMPARE(result.file->path, dir.filePath("output/counter-001.png"));
-    QCOMPARE(QImage(result.file->path), pixels()); QCOMPARE(bytes(counterPath), replacement); QVERIFY(result.file->identity);
-    QCOMPARE(QDir(dir.filePath("output")).entryList(QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot), QStringList{"counter-001.png"});
+    QVERIFY(!result.file); QCOMPARE(result.diagnostic, diagnostic); QCOMPARE(encodes, 1);
+    QCOMPARE(bytes(counterPath), replacement);
+    QVERIFY(QDir(dir.filePath("output")).entryList(QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot).isEmpty());
     QVERIFY(!result.diagnostic.contains("private"));
+  }
+  void counterWriteFailurePublishesNothing() {
+    QTemporaryDir dir; const auto state = dir.filePath("state");
+    CaptureSaveHooks hooks; hooks.counterPath = state + "/counters.json"; hooks.counterProfile = "profile";
+    hooks.encode = [&](const QImage &image, QIODevice *output) {
+      if (!QFile::setPermissions(state, QFile::ReadOwner | QFile::ExeOwner)) throw 1;
+      return image.save(output, "PNG");
+    };
+    const auto result = saveCapture(pixels(), dir.filePath("output"), "counter-%i{3}", hooks);
+    // Restore directory access even if an assertion fails below.
+    QVERIFY(QFile::setPermissions(state, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner));
+    QVERIFY(!result.file); QCOMPARE(result.diagnostic, QString("counter-write-failed"));
+    QVERIFY(!QFile::exists(hooks.counterPath));
+    QVERIFY(QDir(dir.filePath("output")).entryList(QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot).isEmpty());
+  }
+  void publicationFailureConsumesTheDurableReservation() {
+    QTemporaryDir dir; CaptureSaveHooks hooks;
+    hooks.counterPath = dir.filePath("state/counters.json"); hooks.counterProfile = "profile";
+    // Removing the encoded temporary forces the real rename to fail after reservation.
+    hooks.beforePublish = [&](const QString &path) {
+      QDir directory = QFileInfo(path).dir();
+      for (const auto &temp : directory.entryList({".xerahs-capture-*"}, QDir::Files | QDir::Hidden))
+        if (!directory.remove(temp)) throw 1;
+    };
+    const auto failed = saveCapture(pixels(), dir.filePath("output"), "counter-%i{3}", hooks);
+    QVERIFY(!failed.file); QCOMPARE(failed.diagnostic, QString("save-write-failed"));
+    xerahs::naming::CounterStore reopened(hooks.counterPath); QCOMPARE(reopened.peek("profile").value, qint64(1));
+    hooks.beforePublish = {};
+    const auto next = saveCapture(pixels(), dir.filePath("output"), "counter-%i{3}", hooks);
+    QVERIFY(next.file); QCOMPARE(next.file->path, dir.filePath("output/counter-002.png"));
+  }
+  void restartAfterAbortedPublicationDoesNotReuseReservedName() {
+    QTemporaryDir dir; CaptureSaveHooks hooks;
+    hooks.counterPath = dir.filePath("state/counters.json"); hooks.counterProfile = "profile";
+    // Exit without stack unwinding at the real pre-publication boundary.
+    // Reopening the store must work without destructors or a completed save.
+    hooks.beforePublish = [](const QString &) { ::_exit(73); };
+    const auto child = ::fork(); QVERIFY(child >= 0);
+    if (child == 0) {
+      saveCapture(pixels(), dir.filePath("output"), "counter-%i{3}", hooks);
+      ::_exit(74);
+    }
+    int status = 0; QCOMPARE(::waitpid(child, &status, 0), child);
+    QVERIFY(WIFEXITED(status)); QCOMPARE(WEXITSTATUS(status), 73);
+    QVERIFY(!QFile::exists(dir.filePath("output/counter-001.png")));
+    xerahs::naming::CounterStore reopened(hooks.counterPath);
+    QCOMPARE(reopened.peek("profile").value, qint64(1));
+    hooks.beforePublish = {};
+    const auto next = saveCapture(pixels(), dir.filePath("output"), "counter-%i{3}", hooks);
+    QVERIFY(next.file); QCOMPARE(next.file->path, dir.filePath("output/counter-002.png"));
   }
   void publishesCompletePrivatePngAndRecordsActualArtifactAndContext() {
     QTemporaryDir dir; const auto source = pixels(); const auto before = source.copy();
