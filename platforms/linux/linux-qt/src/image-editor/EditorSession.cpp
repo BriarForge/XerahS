@@ -471,7 +471,7 @@ EditorSession::TransferEditResult EditorSession::duplicateSelection(double offse
   if (!selected.ok()) return {false, selected.diagnostic, {}};
   return insertAnnotations(selected.annotations, stateId(), offset);
 }
-EditorSession::TransferEditResult EditorSession::insertAnnotations(const std::vector<Annotation> &objects, quint64 expectedState, double offset, const std::function<QUuid()> &newId) {
+EditorSession::TransferEditResult EditorSession::insertAnnotations(const std::vector<Annotation> &objects, quint64 expectedState, double offset, const std::function<QUuid()> &newId, const EmbeddedImages &assets) {
   if (expectedState != stateId()) return {false, "annotation-transfer-stale", {}};
   try {
     if (!std::isfinite(offset) || offset < 1 || offset > kMaxDimension) return {false, "annotation-transfer-invalid", {}};
@@ -479,15 +479,27 @@ EditorSession::TransferEditResult EditorSession::insertAnnotations(const std::ve
     if (document().annotations.size() > kMaxTransferDocumentObjects - objects.size()) return {false, "annotation-transfer-too-large", {}};
     QSet<QUuid> used; for (const auto &a : document().annotations) used.insert(annotationId(a));
     auto inserted = objects; QSet<QUuid> selection; QList<QUuid> ids;
+    // EA-016: pasted assets are untrusted. Each is re-validated, then reuses an identical existing
+    // asset or joins the document under a fresh key; incoming keys never overwrite existing ones.
+    auto next = document(); QHash<QString, QString> keys;
+    for (const auto &[key, png] : assets) {
+      if (!validEmbeddedPng(png)) return {false, "annotation-clipboard-asset-invalid", {}};
+      const auto same = std::find_if(next.embeddedImages.begin(), next.embeddedImages.end(), [&](const auto &existing) { return existing.second == png; });
+      if (same != next.embeddedImages.end()) { keys.insert(key, same->first); continue; }
+      QString fresh; do fresh = "asset-" + QUuid::createUuid().toString(QUuid::WithoutBraces);
+      while (std::any_of(next.embeddedImages.begin(), next.embeddedImages.end(), [&](const auto &existing) { return existing.first == fresh; }));
+      next.embeddedImages.emplace_back(fresh, png); keys.insert(key, fresh);
+    }
     for (auto &a : inserted) {
       auto &r = std::get<RectangleAnnotation>(a); const auto id = newId ? newId() : QUuid{};
       if (id.isNull() || used.contains(id)) return {false, "annotation-identity-failed", {}};
       used.insert(id); r.id = id; selection.insert(id); ids.append(id);
       r.start.x += offset; r.start.y += offset; r.end.x += offset; r.end.y += offset;
+      if (isAssetShape(r.type()) && keys.contains(r.content.imageKey)) r.content.imageKey = keys.value(r.content.imageKey);
     }
     const auto invalid = annotationTransferDiagnostic(inserted); if (!invalid.isEmpty()) return {false, invalid, {}};
     if (expectedState != stateId()) return {false, "annotation-transfer-stale", {}};
-    auto next = document(); next.annotations.insert(next.annotations.end(), inserted.begin(), inserted.end());
+    next.annotations.insert(next.annotations.end(), inserted.begin(), inserted.end());
     commitWithSelection(std::move(next), std::move(selection)); return {true, {}, ids};
   } catch (...) { return {false, "annotation-transfer-failed", {}}; }
 }

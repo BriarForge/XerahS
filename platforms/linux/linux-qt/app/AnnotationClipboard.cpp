@@ -20,7 +20,7 @@ AnnotationClipboardRead readAnnotationClipboard() {
     const auto *mime = service->mimeData();
     if (!mime || !mime->hasFormat(annotationClipboardMime)) return {{}, "annotation-clipboard-format-unavailable"};
     auto bytes = mime->data(annotationClipboardMime); // Qt owns native retrieval; no streaming API
-    if (bytes.size() > xerahs::editor::kMaxAnnotationClipboardBytes) return {{}, "annotation-transfer-too-large"};
+    if (bytes.size() > xerahs::editor::kMaxAnnotationAssetClipboardBytes) return {{}, "annotation-transfer-too-large"};
     return {std::move(bytes), {}};
   } catch (...) { return {{}, "annotation-clipboard-read-failed"}; }
 }

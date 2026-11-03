@@ -953,17 +953,35 @@ private slots:
     const auto difference = canvas->viewState().toView({pasted.start.x, pasted.start.y}) - canvas->viewState().toView({original.start.x, original.start.y});
     QVERIFY(std::abs(difference.x() - 10) < 1e-8); QVERIFY(std::abs(difference.y() - 10) < 1e-8);
   }
-  void nativeDuplicationPreservesEmbeddedAssetsAndAssetClipboardRefusalKeepsEverything() {
+  void nativeDuplicationPreservesEmbeddedAssetsAndAssetCopyPasteCarriesPixelsAcrossWindows() {
     QTemporaryDir dir; const auto prepared = prepareCapturedSource(fixture()); QVERIFY(prepared.document); auto document = *prepared.document;
     RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {4, 4}; r.end = {20, 15}; r.extra = {{"assetReference", "retained"}}; r.content.type = shape::image; r.content.imageKey = "retained"; document.annotations = {r}; document.embeddedImages = {{"retained", document.sourceImagePng}};
     std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedDocument(document)); QVERIFY(window); window->show(); auto *canvas = window->findChild<EditorCanvas *>();
     QTest::mouseClick(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView({7, 7}).toPoint()); trigger(*window, "duplicateAnnotations");
-    QVERIFY(window->statusBar()->currentMessage().contains("2 annotation(s)")); AnnotationClipboardPorts ports; int publications = 0;
-    ports.publish = [&](const QByteArray &) { ++publications; return xerahs::actions::ActionOutcome{}; }; window->setAnnotationClipboardPorts(ports); QApplication::clipboard()->setText("KEEP");
-    bool warned = false; QTimer timer; connect(&timer, &QTimer::timeout, [&] { if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) { warned = true; QVERIFY(box->text().contains("assets")); box->accept(); } });
-    timer.start(5); trigger(*window, "cutAnnotations"); timer.stop(); QVERIFY(warned); QCOMPARE(publications, 0); QCOMPARE(QApplication::clipboard()->text(), QString("KEEP")); QVERIFY(window->statusBar()->currentMessage().contains("2 annotation(s)"));
+    QVERIFY(window->statusBar()->currentMessage().contains("2 annotation(s)")); AnnotationClipboardPorts ports; QByteArray offer; int publications = 0;
+    ports.publish = [&](const QByteArray &bytes) { ++publications; offer = bytes; return xerahs::actions::ActionOutcome{}; }; window->setAnnotationClipboardPorts(ports);
+    // EA-016: copying an Image annotation now offers its pixels; the document is unchanged.
+    trigger(*window, "copyAnnotations"); QCOMPARE(publications, 1); QVERIFY(window->statusBar()->currentMessage().contains("2 annotation(s)"));
+    const auto copied = parseAnnotationClipboard(offer); QVERIFY2(copied.ok(), qPrintable(copied.diagnostic)); QCOMPARE(copied.assets.size(), std::size_t(1)); QCOMPARE(copied.assets[0].second, document.sourceImagePng);
+    // Another editor window pastes it: new identity, durable pixels, one undo, nothing else touched.
+    std::unique_ptr<EditorWindow> other(EditorWindow::fromCapturedImage(fixture())); QVERIFY(other); other->show(); auto *otherCanvas = other->findChild<EditorCanvas *>();
+    AnnotationClipboardPorts readPorts; readPorts.read = [&] { return AnnotationClipboardRead{offer, {}}; }; other->setAnnotationClipboardPorts(readPorts);
+    trigger(*other, "pasteAnnotations"); QVERIFY2(other->statusBar()->currentMessage().contains("1 annotation(s)"), qPrintable(other->statusBar()->currentMessage()));
+    const auto pastedPath = dir.filePath("pasted.png"); saveUntitled(*other, pastedPath); const auto pasted = loadSource(pastedPath); QVERIFY(pasted.document);
+    QCOMPARE(pasted.document->annotations.size(), size_t(1)); const auto &copy = std::get<RectangleAnnotation>(pasted.document->annotations[0]);
+    QCOMPARE(copy.type(), shape::image); QVERIFY(copy.id != r.id); QCOMPARE(copy.extra, r.extra);
+    QCOMPARE(pasted.document->embeddedImages.size(), std::size_t(1)); QCOMPARE(pasted.document->embeddedImages[0].first, copy.content.imageKey); QCOMPARE(pasted.document->embeddedImages[0].second, document.sourceImagePng);
+    trigger(*other, "undo"); QVERIFY(other->statusBar()->currentMessage().contains("0 annotation(s)"));
+    // A refused paste (tampered pixels) changes nothing.
+    auto tampered = offer; tampered.replace("iVBOR", "AAAAA"); readPorts.read = [&] { return AnnotationClipboardRead{tampered, {}}; }; other->setAnnotationClipboardPorts(readPorts);
+    bool warned = false; QTimer timer; connect(&timer, &QTimer::timeout, [&] { if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) { warned = true; box->accept(); } });
+    timer.start(5); trigger(*other, "pasteAnnotations"); timer.stop(); QVERIFY(warned); QVERIFY(!other->findChild<QAction *>("undo")->isEnabled());  // nothing was pasted, so there is nothing to undo
+    // Cut removes the selected objects after the publication is acknowledged; embedded pixels stay with the document.
+    trigger(*window, "cutAnnotations"); QCOMPARE(publications, 2); QVERIFY(window->statusBar()->currentMessage().contains("1 annotation(s)"));
+    trigger(*window, "undo"); QVERIFY(window->statusBar()->currentMessage().contains("2 annotation(s)"));
     const auto path = dir.filePath("duplicated.png"); saveUntitled(*window, path); const auto loaded = loadSource(path); QVERIFY(loaded.document); QCOMPARE(loaded.document->embeddedImages, document.embeddedImages); QCOMPARE(loaded.document->annotations.size(), size_t(2));
     QCOMPARE(std::get<RectangleAnnotation>(loaded.document->annotations[1]).extra, r.extra); QVERIFY(annotationId(loaded.document->annotations[1]) != r.id);
+    Q_UNUSED(otherCanvas);
   }
   void lockedNativeSelectionsKeepGeometryAndDisableDirectDeleteAndRotation() {
     const auto prepared = prepareCapturedSource(fixture()); auto document = *prepared.document; RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {4, 4}; r.end = {20, 15}; r.extra = {{"locked", true}}; document.annotations = {r};

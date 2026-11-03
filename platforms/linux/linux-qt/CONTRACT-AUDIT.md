@@ -82,8 +82,8 @@ protected direct edits and owned source/file/asset/default preservation. Native
 Cut requires acknowledged publication and keeps unknown outcomes unchanged.
 EA-016-LINUX-2026-10-14 remains pending for shared MIME/canonical/version rules,
 selected asset references/projection/collision handling, unknown/lock fields,
-offset/resource policy and deciding vectors. Asset-bearing clipboard copies are
-refused; local Duplicate preserves existing assets. Full tools, compatible
+offset/resource policy and deciding vectors. Asset-bearing clipboard copies carry
+the selected objects' validated PNGs (version 2); local Duplicate preserves existing assets. Full tools, compatible
 clipboard/assets, target/resource/privacy/security/a11y/human gates remain Required.
 
 1. Continue full native capture/operation qualification under

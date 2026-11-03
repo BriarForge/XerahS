@@ -310,10 +310,10 @@
       }
     },
     "EA-016": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Typed clipboard transfer and UUID replacement are tested for represented objects. Complete embedded-asset transfer and untrusted payload coverage for every newly added tool remains. Asset-free clipboard selections now work when the source document also contains unselected embedded images. Clipboard projection excludes those images and source/private document metadata. The version-1 offer/read boundaries both refuse selected Image/Emoji/Cursor references because they carry no pixels; in-document duplication retains assets. Seven failing Core baselines cover over-broad refusal and dangling offers/reads. Native Copy/Cut/undo/save/reopen and Core privacy/field/asset/history tests cover the changed behavior. Actual asset-bearing cross-document clipboard transfer remains partial. The headless GUI fixture publishes actual Qt MIME data with an explicitly acknowledged test port; production ownership/unknown-delivery guards are unchanged, and physical ownership qualification remains open.",
+      "note": "Typed clipboard transfer and UUID replacement are tested for represented objects. Complete embedded-asset transfer and untrusted payload coverage for every newly added tool remains. Asset-free clipboard selections now work when the source document also contains unselected embedded images. Clipboard projection excludes those images and source/private document metadata. The version-1 offer/read boundaries both refuse selected Image/Emoji/Cursor references because they carry no pixels; in-document duplication retains assets. Seven failing Core baselines cover over-broad refusal and dangling offers/reads. Native Copy/Cut/undo/save/reopen and Core privacy/field/asset/history tests cover the changed behavior. Actual asset-bearing cross-document clipboard transfer remains partial. The headless GUI fixture publishes actual Qt MIME data with an explicitly acknowledged test port; production ownership/unknown-delivery guards are unchanged, and physical ownership qualification remains open. Audit 2026-11-03: Copy and Cut now offer, and Paste reads, asset-bearing objects. An asset-bearing clipboard payload is version 2: the annotations plus an assets object carrying the base64 PNG of exactly the referenced Image/Emoji/Cursor keys (asset-free copies stay version 1; unselected assets are never included). Bounds: per-asset PNG at most 8 MiB, at most 32 assets, whole payload at most 16 MiB, annotation part at most 4 MiB; strict base64, PNG header checks (signature, IHDR, 1..100000 dimensions, at most 64M pixels, IEND) before any decode, canonical compact JSON only, no unreferenced or missing assets. On insertion each asset is re-validated and reuses an identical existing asset or joins the document under a fresh key (a clashing key never overwrites existing pixels); the objects get new stable IDs and the visible offset, and the whole paste is one undo. Duplicate keeps using the document's own assets. Proving tests: AnnotationTransferTest::assetBearingCopyPasteCarriesPixelsToAnotherDocumentWithNewIdentitiesAndKeys (image, emoji, cursor; cross-document and same-document, which is the contract scenario 'Pasted annotation receives a new identity'), ::everyDrawableTypeSurvivesCopyAndPasteWithItsFieldsAndAssets (all 17 types), ::untrustedAssetPayloadsAreRejectedBeforeAnyInsertion (17 malformed, oversized, tampered or inconsistent payloads), ::assetsThatBypassThePasteParserAreStillRevalidatedByTheSession, ::offersRefuseMissingInvalidAndOversizedSelectedAssets, ::cutOfAssetObjectsIsOfferedAndRemovesOnlyTheObjects, ::invalidClipboardPayloadsAndLimitsFailBeforeAnyInsertion; EditorWindowTest::nativeDuplicationPreservesEmbeddedAssetsAndAssetCopyPasteCarriesPixelsAcrossWindows (native menus, two editor windows, tampered paste refused, cut and undo, saved PNG plus sidecar reload) and ::pastedObjectsHaveVisibleViewportOffsetEvenWhenZoomedOut. Physical clipboard ownership qualification stays outside this classification.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -322,10 +322,10 @@
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 62,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "65e4394"
       }
     },
     "EA-017": {

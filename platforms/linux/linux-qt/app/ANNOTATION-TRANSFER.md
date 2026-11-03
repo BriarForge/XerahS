@@ -115,9 +115,16 @@ object/asset preservation but supplies no shared clipboard envelope, selected
 asset-reference schema or offset/resource policy. Example: a compatible rectangle
 extra field references `stamp`, while `embeddedImages` also contains an unrelated
 private image. Copying every image would disclose unrelated data; excluding all
-images could break the compatible reference. The current native clipboard refuses
-asset-bearing documents rather than choosing either lossy policy. Local Duplicate
-retains the document's complete asset map without disclosure or removal.
+images could break the compatible reference. Update 2026-11-03: the candidate
+transport now carries the embedded PNG of exactly the selected Image, Emoji and
+Cursor objects (payload version 2, `assets` member; asset-free copies stay version
+1). Unselected images are never disclosed. Limits: 8 MiB per asset, 32 assets, 16 MiB
+payload; strict base64, PNG header validation before any decode, canonical compact
+JSON, no missing or unreferenced assets, and re-validation on insertion. Pasted
+assets reuse identical pixels or take a fresh key; a clashing key never replaces
+existing pixels. Asset keys named only inside compatible extra fields are still not
+interpreted. Local Duplicate retains the document's complete asset map without
+disclosure or removal.
 
 The product owner/shared conformance owner must decide the interoperable MIME and
 version/canonicalization rules, recognized asset references/projection/key collision

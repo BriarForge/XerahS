@@ -106,8 +106,10 @@ public:
   // Caller owns this session exclusively. The identity factory is a pure,
   // caller-thread value provider; null/colliding IDs or a stale state reject
   // the complete insertion before this operation mutates history.
+  // `assets` are the pasted objects' embedded PNGs (EA-016). They join the document under keys
+  // that cannot collide with, or silently replace, existing assets; identical bytes share a key.
   TransferEditResult insertAnnotations(const std::vector<Annotation> &, quint64 expectedState,
-      double offset = 10, const std::function<QUuid()> &newId = QUuid::createUuid);
+      double offset = 10, const std::function<QUuid()> &newId = QUuid::createUuid, const EmbeddedImages &assets = {});
   TransferEditResult cutAnnotations(quint64 expectedState, const QSet<QUuid> &expectedSelection);
 
   bool undo();

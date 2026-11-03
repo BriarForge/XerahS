@@ -122,7 +122,8 @@ review limits. With no tray host, the window provides the current commands.
   the currently represented visible, unlocked rectangles. Insertions receive new
   IDs and an offset as one undoable operation; Copy keeps document history intact.
   Cut removes objects only after acknowledged publication. Unsupported/protected/
-  malformed batches and asset-bearing clipboard copies are visibly refused.
+  malformed batches and invalid or oversized embedded images are visibly refused;
+  Image, Emoji and Cursor copies carry their validated PNGs.
   Duplication retains existing document assets. The [transfer evidence](app/ANNOTATION-TRANSFER.md)
   records source/file/default/history preservation and remaining full tool/asset,
   shared clipboard and physical/human qualification.

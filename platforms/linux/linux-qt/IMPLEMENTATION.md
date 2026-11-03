@@ -184,7 +184,7 @@ EA-003/016/017/018/019/020, bounded complete-batch validation, fresh identities,
 exact history/selection and protected direct edits, with source/assets/files/defaults
 kept and no Cut after unknown delivery. Shared transport/asset-reference/offset/lock
 policy EA-016-LINUX-2026-10-14 remains pending; asset-bearing clipboard copies
-are refused without a lossy fallback. [Native annotation modes](app/ANNOTATION-TOOLS.md)
+carry only the selected objects' validated PNGs (payload version 2). [Native annotation modes](app/ANNOTATION-TOOLS.md)
 now add checked Select/Rectangle/Crop controls, shared capture guidance, live-gesture
 cancellation, finite complete-batch geometry refusal, rounded no-op protection and
 actual pre-command selection recovery. The shared schema defines only Rectangle

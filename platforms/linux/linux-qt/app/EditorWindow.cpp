@@ -448,7 +448,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     auto *action = edit->addAction(label); action->setObjectName(name); action->setShortcut(key); action->setAutoRepeat(false);
     action->setStatusTip(id == "paste" ? "Paste supported annotations with fresh identities and an offset; source pixels stay unchanged."
         : id == "duplicate-selection" ? "Duplicate supported visible, unlocked annotations as one undoable operation; source pixels and embedded assets stay unchanged."
-        : "Copy selected supported annotations and their compatible fields. Source pixels, document paths and embedded assets are excluded; asset-bearing copies are refused.");
+        : "Copy selected supported annotations and their compatible fields. Source pixels and document paths are excluded; the embedded images of selected Image, Emoji and Cursor objects travel with them.");
     m_annotationActions.insert(id, action); connect(action, &QAction::triggered, this, [this, id] { transferAnnotations(id); });
   };
   annotationCommand("cut-annotation", "cutAnnotations", "Cu&t Annotations", QKeySequence::Cut);
@@ -1528,7 +1528,7 @@ bool EditorWindow::transferAnnotations(const QString &command) {
         if (!parsed.ok()) action.diagnostic = parsed.diagnostic;
         else {
           const double offset = m_lastAnnotationPaste == read.bytes ? m_annotationPasteOffset + step : step;
-          recordEdit(m_session->insertAnnotations(parsed.annotations, state, offset));
+          recordEdit(m_session->insertAnnotations(parsed.annotations, state, offset, QUuid::createUuid, parsed.assets));
           if (changed) { m_lastAnnotationPaste = std::move(read.bytes); m_annotationPasteOffset = offset; }
         }
       }
@@ -1563,7 +1563,8 @@ bool EditorWindow::transferAnnotations(const QString &command) {
     if (!success && action.state != ActionState::Cancelled) {
       const auto explanation = action.outcomeUnknown ? "The clipboard may have changed, so Cut kept the selected objects. Check the clipboard before copying again."
           : partial ? "The clipboard contains the selected annotations, but they could not be removed. The editable document is kept."
-          : diagnostic == "annotation-clipboard-assets-unavailable" ? "Embedded-asset copying needs compatible asset support. No annotations or assets were dropped; the document and clipboard are kept."
+          : diagnostic == "annotation-clipboard-assets-unavailable" ? "A selected or pasted image annotation has no embedded pixels to carry. No annotations or assets were dropped; the document and clipboard are kept."
+          : diagnostic == "annotation-clipboard-asset-invalid" ? "A copied image is not a valid, safely sized PNG. No annotations or assets were added; the document and clipboard are kept."
           : diagnostic == "annotation-type-unsupported" ? "This selection contains an unsupported annotation. The whole selection is kept; no supported subset is transferred."
           : diagnostic == "annotation-selection-protected" ? "Hidden or locked annotations cannot be transferred by this command. The selection is kept."
           : diagnostic == "annotation-clipboard-format-unavailable" ? "The clipboard has no supported annotation payload. Image and text clipboard contents are kept."
