@@ -274,8 +274,8 @@ private slots:
     controller.captureRegion(); QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
     const auto receipt = controller.lastPipelineResult(); QVERIFY(receipt && receipt->file); QCOMPARE(QImage(receipt->file->path).size(), QSize(30, 25));
     QCOMPARE(bytes(metadataPath), newer); QVERIFY(!notified.isEmpty()); QVERIFY(!notified.last()[2].toBool());
-    const auto message = notified.last()[1].toString(); QVERIFY(message.contains(throws ? "last-region-storage-failed" : "last-region-storage-newer-version"));
-    QVERIFY(message.contains("Saved")); QVERIFY(!message.contains("Private metadata fixture"));
+    const auto message = notified.last()[1].toString(); QVERIFY(message.contains("Last-region storage needs review"));
+    QVERIFY(message.contains("save.file")); QVERIFY(!message.contains("Private metadata fixture")); QVERIFY(!message.contains(throws ? "last-region-storage-failed" : "last-region-storage-newer-version"));
   }
   void failedCompositionAndDestroyedMetadataOwnerNeverStartActionsOrCallBackLate() {
     using namespace xerahs::capture;
@@ -428,7 +428,7 @@ private slots:
     QTRY_VERIFY(overlayExists()); controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(!controller.busy());
     const auto result = controller.lastPipelineResult(); QVERIFY(result && !result->file); QVERIFY(!result->workingMedia.isNull());
     QCOMPARE(result->pipeline.orderedResults[0].state, ActionState::Failed); QCOMPARE(result->pipeline.orderedResults[0].diagnostic, std::optional<QString>("counter-changed"));
-    QCOMPARE(executions.result(id).value("state"), QJsonValue("partial"));  // capture succeeded, save failed QVERIFY(!notices.isEmpty()); QVERIFY(!notices.last()[2].toBool());
+    QCOMPARE(executions.result(id).value("state"), QJsonValue("permanent-failure"));  // no action published anything, so nothing partially succeeded QVERIFY(!notices.isEmpty()); QVERIFY(!notices.last()[2].toBool());
     QVERIFY(!notices.last()[1].toString().contains("PNG saved"));
     QVERIFY(recovery.reviewAction()->isEnabled()); QCOMPARE(portal.calls, 1);
     QVERIFY(QDir(dir.filePath("output")).entryList({"*.png"}, QDir::Files).isEmpty());
@@ -594,7 +594,7 @@ private slots:
     selection->findChild<QCheckBox *>("capture-action-path-clipboard")->setChecked(true);
     selection->findChild<QCheckBox *>("capture-action-image-clipboard")->setChecked(false); selection->accept();
     QTRY_VERIFY(!controller.busy()); const auto source = controller.lastPipelineResult(); QVERIFY(collision && source->file && source->annotationDocument);
-    QVERIFY(recovery.retryAction()->isEnabled()); QVERIFY(notifications.last()[1].toString().contains("editable companion failed")); QVERIFY(!notifications.last()[2].toBool());
+    QVERIFY(recovery.retryAction()->isEnabled()); QVERIFY(notifications.last()[1].toString().startsWith("Workflow: partial.")); QVERIFY(notifications.last()[1].toString().contains("save.file")); QVERIFY(!notifications.last()[1].toString().contains(source->file->path)); QVERIFY(!notifications.last()[2].toBool());
     const auto original = bytes(source->file->path); recovery.retryAction()->trigger(); QTRY_VERIFY(qobject_cast<QMessageBox *>(QApplication::activeModalWidget()));
     auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box->text().contains("retries only its .xann companion"));
     QCOMPARE(box->defaultButton(), box->button(QMessageBox::Cancel)); QTest::keyClick(box, Qt::Key_Escape); QTRY_VERIFY(!QApplication::activeModalWidget());
@@ -845,7 +845,11 @@ private slots:
     QVERIFY(controller.submitExternalImage(image, "scrolling"));
     QTRY_VERIFY(!controller.busy());
     QVERIFY(controller.lastPipelineResult());
-    QVERIFY(!notified.isEmpty()); QVERIFY(notified.last().at(0).toString().startsWith("Scrolling capture"));
+    QVERIFY(!notified.isEmpty());
+    // Unconfirmed clipboard ownership (e.g. the offscreen platform) is an honest interrupted
+    // terminal state, never a completion notice; with ownership the source-titled notice remains.
+    const auto title = notified.last().at(0).toString();
+    if (QGuiApplication::clipboard()->ownsClipboard()) QVERIFY(title.startsWith("Scrolling capture")); else QVERIFY(title.startsWith("Capture actions interrupted"));
     QVERIFY(controller.lastPipelineResult()->file); QCOMPARE(QImage(controller.lastPipelineResult()->file->path).size(), QSize(40, 90));
   }
   void init() {

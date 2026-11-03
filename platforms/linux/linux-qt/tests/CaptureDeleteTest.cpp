@@ -183,7 +183,7 @@ private slots:
     const auto current = serializePipelineJournal(snapshot); auto object = QJsonDocument::fromJson(current).object();
     QCOMPARE(object.value("version"), QJsonValue(2)); QVERIFY(parsePipelineJournal(current, id).record);
     object.insert("version", 1); QVERIFY(!parsePipelineJournal(QJsonDocument(object).toJson(), id).record);
-    object.insert("version", 3); QCOMPARE(parsePipelineJournal(QJsonDocument(object).toJson(), id).diagnostic, QString("pipeline-journal-version-unsupported"));
+    object.insert("version", 4); QCOMPARE(parsePipelineJournal(QJsonDocument(object).toJson(), id).diagnostic, QString("pipeline-journal-version-unsupported"));
   }
   void ownerDestructionBeforeMovePreservesOriginal() {
     QTemporaryDir dir; auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("journal"));

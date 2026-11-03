@@ -33,7 +33,13 @@ QByteArray serializePipelineJournal(const PipelineJournalSnapshot &snapshot) {
   auto result = snapshot.result;
   if (!snapshot.terminal) result.state = PipelineState::Interrupted;
   result.workingMediaRetained = false;
-  QJsonObject value{{"format", format}, {"version", 3}, {"task_id", result.taskId},
+  // v3 only when a failure class is recorded (older binaries must refuse what
+  // they cannot interpret); recovery-bearing records stay v2 and ordinary
+  // history stays v1 so it remains readable by earlier builds.
+  bool classified = false;
+  for (const auto &action : result.orderedResults) classified |= action.failureClass.has_value();
+  const int wireVersion = classified ? 3 : snapshot.deletionRecovery ? 2 : 1;
+  QJsonObject value{{"format", format}, {"version", wireVersion}, {"task_id", result.taskId},
       {"created_at", snapshot.createdAt.toUTC().toString(Qt::ISODateWithMs)},
       {"selected_actions", QJsonArray::fromStringList(snapshot.selected)}, {"terminal", snapshot.terminal},
       {"result", pipelineResultJson(result, snapshot.files)}};
@@ -185,8 +191,14 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
     if (fact.contains("failure_class")) action.failureClass = parseFailureClass(fact.value("failure_class").toString());
     for (const auto &entry : metadata.value("artifact_outcomes").toArray()) {
       const auto artifact = entry.toObject();
-      if (artifact.value("action") == action.action && artifact.value("state") == "succeeded")
-        action.artifacts.push_back({artifact.value("artifact").toString(), ActionState::Succeeded, {}, artifact.value("absent").toBool()});
+      if (artifact.value("action") != action.action) continue;
+      // Keep every validated outcome, including a failed or skipped companion:
+      // an acknowledged partial raster is only recognisable with its sidecar fact.
+      const auto outcomeState = artifact.value("state").toString();
+      ArtifactOutcome outcome; outcome.artifact = artifact.value("artifact").toString(); outcome.absent = artifact.value("absent").toBool();
+      outcome.state = outcomeState == "succeeded" ? ActionState::Succeeded : outcomeState == "failed" ? ActionState::Failed : ActionState::Skipped;
+      if (artifact.contains("diagnostic")) outcome.diagnostic = artifact.value("diagnostic").toString();
+      action.artifacts.push_back(outcome);
     }
     observed.orderedResults.push_back(action);
   }

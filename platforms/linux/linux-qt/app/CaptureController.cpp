@@ -662,18 +662,23 @@ void CaptureController::connectPipeline(CapturePipeline *pipeline) {
 }
 
 void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt, bool executionConfirmed) {
+  const auto &result = receipt->pipeline;
   const auto observation = receipt->terminalObservation();
   const auto terminal = observation.value("state").toString();
   const QString size = QStringLiteral("%1 × %2").arg(receipt->workingMedia.width()).arg(receipt->workingMedia.height());
-  // Notifications share opaque references with history/progress/logs. Paths,
-  // clipboard/OCR payloads and remote error bodies stay out of desktop notices.
+  // WFCAT-017: the body is the shared public observation (state + opaque output
+  // references) that the log, progress and history surfaces carry verbatim.
+  // Paths, clipboard/OCR payloads and remote error bodies stay out of notices;
+  // only storage-review flags are appended.
   QString body = receipt->terminalText();
   if (!m_lastRegionDiagnostic.isEmpty()) body += "; Last-region storage needs review.";
   if (!receipt->diagnostic.isEmpty()) body += "; Capture result storage needs review.";
   if (!executionConfirmed) body += "; Workflow execution storage could not confirm the outcome. Check capture result history before retrying.";
-  const auto title = terminal == "succeeded" ? sourceTitle(QStringLiteral("captured · %1")).arg(size) :
-      QStringLiteral("Capture actions %1 · %2").arg(terminal, size);
-  emit notify(title, body, executionConfirmed && terminal == "succeeded" &&
+  const auto title = result.state == xerahs::actions::PipelineState::Cancelled ? QStringLiteral("Capture actions cancelled · %1") :
+      result.state == xerahs::actions::PipelineState::Interrupted ? QStringLiteral("Capture actions interrupted · %1") :
+      terminal != "succeeded" ? QStringLiteral("Capture actions %2 · %1") :
+      result.retry ? QStringLiteral("Capture actions retried · %1") : sourceTitle(QStringLiteral("captured · %1"));
+  emit notify(title.arg(size, terminal), body, executionConfirmed && terminal == "succeeded" &&
       receipt->diagnostic.isEmpty() && m_lastRegionDiagnostic.isEmpty());
 }
 
