@@ -872,6 +872,7 @@ add_executable(application-settings-test tests/ApplicationSettingsTest.cpp
   app/XdgAutostart.cpp app/SettingsDialog.cpp)
 set_target_properties(application-settings-test PROPERTIES AUTOMOC ON)
 target_link_libraries(application-settings-test PRIVATE xerahs_workflow_shortcuts Qt6::Test)
+target_compile_definitions(application-settings-test PRIVATE XERAHS_APP_DIR="${CMAKE_CURRENT_SOURCE_DIR}/app")
 add_test(NAME application-settings COMMAND application-settings-test)
 set_tests_properties(application-settings PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 120)
 

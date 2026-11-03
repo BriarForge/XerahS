@@ -559,6 +559,46 @@ private slots:
     // Desktop-side text (XDG accelerator syntax, window or output handles) is transient and never in the file.
     for (const char *native : {"<Control>", "<Shift>", "<Alt>", "LOGO+", "CTRL+", "winId", "xid", "wl_output", "HWND", "CGDirectDisplayID", "portal"}) QVERIFY2(!bytes.contains(native), native);
   }
+  // SETCAT-009: scopes are declared, precedence is inspectable and the one resolver serves UI, CLI and automation.
+  void scopeAndPrecedenceAreDeclaredInspectableAndSharedByUiAndCli() {
+    const auto scopes = settingScopes();
+    for (const auto &field : settingFields()) {
+      QVERIFY2(scopes.contains(field.scope), qPrintable(field.key)); QVERIFY2(field.overriddenBy.isEmpty() || scopes.contains(field.overriddenBy), qPrintable(field.key));
+      const auto order = precedenceOrder(field.key); QCOMPARE(order.last(), QString("default")); QVERIFY(order.contains(field.scope));
+      QCOMPARE(order.size(), field.overriddenBy.isEmpty() ? 2 : 3);
+    }
+    QCOMPARE(precedenceOrder("saveFolder"), (QStringList{"workflow", "profile", "default"}));
+    QCOMPARE(precedenceOrder("filenamePattern"), (QStringList{"workflow", "profile", "default"}));
+    QCOMPARE(precedenceOrder("showTrayIcon"), (QStringList{"profile", "default"}));
+    QVERIFY(precedenceOrder("not-a-setting").isEmpty());
+    // The declared order is what the resolver does for every combination of explicit/blank and saved/seeded.
+    const auto base = xerahs::workflows::defaultCaptureWorkflows().entries.first();
+    auto values = defaultSettings("/tmp/profile"); values.insert("filenamePattern", "profile-%width");
+    for (const bool explicitDirectory : {false, true}) for (const bool saved : {false, true}) {
+      auto workflow = base; workflow.output.directory = explicitDirectory ? "/tmp/workflow" : QString{}; workflow.output.pattern = "workflow-%height";
+      const auto where = describeOutputPrecedence(workflow, saved); const auto resolved = withApplicationDefaults(workflow, values, saved);
+      QCOMPARE(where.directory, explicitDirectory ? QString("workflow") : QString("profile"));
+      QCOMPARE(where.pattern, saved ? QString("workflow") : QString("profile"));
+      QCOMPARE(resolved.output.directory, where.directory == "workflow" ? QString("/tmp/workflow") : QString("/tmp/profile"));
+      QCOMPARE(resolved.output.pattern, where.pattern == "workflow" ? QString("workflow-%height") : QString("profile-%width"));
+      QCOMPARE(withApplicationDefaults(resolved, values, saved).output.directory, resolved.output.directory); // resolving twice is stable
+    }
+    // CLI: --run-workflow carries only a workflow UUID; the primary resolves it with the same function as every UI capture.
+    auto read = [](const QString &name) { QFile file(QStringLiteral(XERAHS_APP_DIR) + "/" + name); if (!file.open(QIODevice::ReadOnly)) return QString(); return QString::fromUtf8(file.readAll()); };
+    const auto capture = read("features/CaptureFeature.cpp");
+    QCOMPARE(capture.count("workflows->resolve("), 1); // only inside effectiveWorkflow()
+    QVERIFY(capture.contains("choice.workflow = xerahs::settings::withApplicationDefaults(*choice.workflow,"));
+    QVERIFY(capture.contains("incoming.action == ActivationAction::RunWorkflow ? effectiveWorkflow(ctx, QUuid(incoming.workflowId)) : effectiveWorkflow(ctx)"));
+    QVERIFY(capture.contains("setDefaultWorkflowResolver([&ctx] { return effectiveWorkflow(ctx); })"));
+    const auto main = read("main.cpp"); const auto cliPart = main.left(main.indexOf("xerahs::settings::ApplicationSettingsStore settings("));
+    QVERIFY(main.contains("ApplicationSettingsStore settings(") && cliPart.contains("run-workflow"));
+    for (const char *forbidden : {"withApplicationDefaults", "repairSettings", "settings::", "output.directory", "output.pattern"}) QVERIFY2(!cliPart.contains(forbidden), forbidden);
+    QDir appDir(QStringLiteral(XERAHS_APP_DIR)); QStringList callers;
+    for (const auto &entry : appDir.entryInfoList({"*.cpp"}, QDir::Files) + QDir(appDir.filePath("features")).entryInfoList({"*.cpp"}, QDir::Files)) {
+      QFile file(entry.filePath()); QVERIFY(file.open(QIODevice::ReadOnly)); if (QString::fromUtf8(file.readAll()).contains("withApplicationDefaults(")) callers.append(entry.fileName());
+    }
+    callers.sort(); QCOMPARE(callers, (QStringList{"CaptureFeature.cpp", "OnboardingFeature.cpp"}));
+  }
   void autostart() {
     QTemporaryDir dir; const auto old = qgetenv("XDG_CONFIG_HOME"); qputenv("XDG_CONFIG_HOME", dir.path().toUtf8());
     const auto path = dir.filePath("autostart/com.xerahs.app.desktop");

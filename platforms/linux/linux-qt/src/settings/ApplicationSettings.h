@@ -8,8 +8,13 @@
 #include <functional>
 namespace xerahs::settings {
 enum class Section { General, Capture, Hotkeys, Recording };
-struct SettingField { QString key; Section section; QString scope; };
+// scope is where the value lives; overriddenBy names a more specific scope whose
+// explicit value wins when present (SETCAT-009). Precedence is the same for UI,
+// CLI and automation: they all resolve through withApplicationDefaults().
+struct SettingField { QString key; Section section; QString scope; QString overriddenBy = {}; };
 QVector<SettingField> settingFields();
+QStringList settingScopes();                       // the vocabulary a field scope must come from
+QStringList precedenceOrder(const QString &key);  // most specific first, ending with "default"
 // SETCAT-003: how each stored field was read. Missing/Unknown/Deprecated/NewerVersion are
 // informational and never block saving; only Invalid repairs add a diagnostic.
 enum class FieldState { Missing, Valid, Invalid, Unknown, Deprecated, NewerVersion };
@@ -27,6 +32,9 @@ SettingsRead repairSettings(const QJsonObject &input, const QString &saveFolder,
 // a blank workflow folder always inherits the profile folder.
 xerahs::workflows::CaptureWorkflow withApplicationDefaults(xerahs::workflows::CaptureWorkflow workflow,
     const QJsonObject &values, bool savedDefinition);
+// Where each output field of a resolved workflow came from: "workflow" or "profile".
+struct OutputPrecedence { QString directory, pattern; };
+OutputPrecedence describeOutputPrecedence(const xerahs::workflows::CaptureWorkflow &workflow, bool savedDefinition);
 xerahs::capture::SessionSettings regionSessionSettings(const QJsonObject &values);
 HotkeyBindings hotkeys(const QJsonObject &values);
 QJsonObject resetSection(const QJsonObject &values, Section section, const QString &saveFolder);

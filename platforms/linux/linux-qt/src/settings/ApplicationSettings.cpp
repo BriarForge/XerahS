@@ -43,7 +43,7 @@ bool validCaptureValue(const QString &key, const QJsonValue &value) {
 }
 
 QVector<SettingField> settingFields() {
-  return {{"saveFolder", Section::General, "profile"}, {"filenamePattern", Section::General, "profile"},
+  return {{"saveFolder", Section::General, "profile", "workflow"}, {"filenamePattern", Section::General, "profile", "workflow"},
     {"startAtLogin", Section::General, "profile"}, {"showTrayIcon", Section::General, "profile"},
     {"regionCapture.quickConfirm", Section::Capture, "profile"}, {"regionCapture.snapping", Section::Capture, "profile"},
     {"playCaptureSound", Section::Capture, "profile"}, {"showNotification", Section::Capture, "profile"},
@@ -56,6 +56,14 @@ QVector<SettingField> settingFields() {
     {"scrollingCapture.maxHeight", Section::Capture, "profile"}, {"scrollingCapture.maxFrames", Section::Capture, "profile"},
     {"scrollingCapture.positionPointer", Section::Capture, "profile"},
     {"hotkeys", Section::Hotkeys, "profile"}, {"systemAudioDevice", Section::Recording, "profile"}, {"microphoneDevice", Section::Recording, "profile"}};
+}
+QStringList settingScopes() { return {"global", "profile", "workflow", "task", "provider", "device", "window"}; }
+QStringList precedenceOrder(const QString &key) {
+  for (const auto &field : settingFields()) if (field.key == key) {
+    QStringList order; if (!field.overriddenBy.isEmpty()) order.append(field.overriddenBy);
+    order.append(field.scope); order.append("default"); return order;
+  }
+  return {};
 }
 QString fieldStateName(FieldState state) {
   switch (state) {
@@ -81,6 +89,9 @@ QJsonObject defaultSettings(const QString &saveFolder) {
     {"scrollingCapture.footerBand", 0}, {"scrollingCapture.maxHeight", 30000}, {"scrollingCapture.maxFrames", 40},
     {"scrollingCapture.positionPointer", true},
     {"hotkeys", bindings}, {"systemAudioDevice", ""}, {"microphoneDevice", ""}};
+}
+OutputPrecedence describeOutputPrecedence(const xerahs::workflows::CaptureWorkflow &workflow, bool savedDefinition) {
+  return {workflow.output.directory.isEmpty() ? "profile" : "workflow", savedDefinition ? "workflow" : "profile"};
 }
 xerahs::workflows::CaptureWorkflow withApplicationDefaults(xerahs::workflows::CaptureWorkflow workflow,
     const QJsonObject &values, bool savedDefinition) {
