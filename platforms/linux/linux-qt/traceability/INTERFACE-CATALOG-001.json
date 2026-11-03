@@ -189,10 +189,10 @@
       }
     },
     "IFCAT-009": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Non-interactive graphical refusal is tested before QApplication/services. All additional sensitive CLI operations need equivalent authority behavior.",
+      "note": "Non-interactive refusal is generic: any graphical operation (every capture source, edit, run-workflow, all recording commands and a plain launch) returns presentation-required (exit 1, fixed actionable text, requestId only) before QApplication, display, instance election, preferences or portal consent, and never forwards to a running instance. Read-only list/result commands never prompt. No current CLI command takes credentials or destructive approval, so those cases cannot arise until such commands exist. Audit 2026-11-03: each operation refused with presentation-required and no side effects: NativeInstanceTest::workflowCliRefusesMalformedHeadlessAndMissingProfilesWithoutSideEffects (rows run-workflow, capture-region, capture-full-screen, capture-monitor, capture-active-window, start-recording, stop-recording, region-recording-headless, edit, plain-launch; checks stable code, actionable stderr 'No operation was started.', no leaked argument, no display/profile/instance access); not forwarded to a live owner: NativeInstanceTest::nonInteractiveNeverForwardsToARunningOwnerOrPerformsTheOperation (all eight actions plus plain launch). Rationale: refusal over prompting matches ShareX/Flameshot headless behavior.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
@@ -203,10 +203,10 @@
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 37,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e48015a1390a16d530f011e160b28c2d913ae728"
       }
     },
     "IFCAT-010": {

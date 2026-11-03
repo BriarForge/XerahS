@@ -369,9 +369,35 @@ private slots:
     QTest::newRow("unknown-private-argument") << QStringList{"--private-secret", "--json"} << QString("usage-invalid") << false;
     QTest::newRow("non-interactive") << QStringList{"--run-workflow", id, "--non-interactive", "--json"} << QString("presentation-required") << true;
     QTest::newRow("region-recording-headless") << QStringList{"--start-region-recording", "--non-interactive", "--json"} << QString("presentation-required") << true;
+    // IFCAT-009: every sensitive operation is refused, not started, in non-interactive mode.
+    for (const auto *flag : {"--capture-region", "--capture-full-screen", "--capture-monitor", "--capture-active-window", "--start-recording", "--stop-recording"})
+      QTest::newRow(flag + 2) << QStringList{flag, "--non-interactive", "--json"} << QString("presentation-required") << true;
+    QTest::newRow("edit") << QStringList{"--edit", "/private-name/secret.png", "--non-interactive", "--json"} << QString("presentation-required") << true;
+    QTest::newRow("plain-launch") << QStringList{"--non-interactive", "--json"} << QString("presentation-required") << true;
     QTest::newRow("region-recording-conflict") << QStringList{"--start-region-recording", "--start-recording", "--json"} << QString("usage-invalid") << true;
     QTest::newRow("non-interactive-invalid") << QStringList{"--private-secret", "--non-interactive", "--json"} << QString("usage-invalid") << true;
     QTest::newRow("missing-profile") << QStringList{"--run-workflow", id, "--json"} << QString("activation-unavailable") << false;
+  }
+  void nonInteractiveNeverForwardsToARunningOwnerOrPerformsTheOperation_data() {
+    QTest::addColumn<QStringList>("arguments");
+    for (const auto *flag : {"--capture-region", "--capture-full-screen", "--capture-monitor", "--capture-active-window", "--start-recording", "--start-region-recording", "--stop-recording"})
+      QTest::newRow(flag + 2) << QStringList{flag};
+    QTest::newRow("edit") << QStringList{"--edit", "/private-name/secret.png"};
+    QTest::newRow("plain-launch") << QStringList{};
+    QTest::newRow("run-workflow") << QStringList{"--run-workflow", "01234567-89ab-4cde-8123-456789abcdef"};
+  }
+  void nonInteractiveNeverForwardsToARunningOwnerOrPerformsTheOperation() {
+    QFETCH(QStringList, arguments); directory = temporary->filePath("com.xerahs.app");
+    auto *owner = launch("accept"); awaitLine(*owner); QCOMPARE(line(owner->readLine()).value("event"), QJsonValue("primary"));
+    auto environment = QProcessEnvironment::systemEnvironment(); environment.insert("XDG_RUNTIME_DIR", temporary->path());
+    for (const auto *key : {"XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME"}) environment.insert(key, temporary->filePath(key));
+    environment.insert("DBUS_SESSION_BUS_ADDRESS", "unix:path=" + temporary->filePath("no-host-bus")); environment.insert("QT_QPA_PLATFORM", "offscreen"); environment.insert("QT_QPA_PLATFORMTHEME", "");
+    QProcess application; application.setProcessEnvironment(environment);
+    application.start(QCoreApplication::applicationDirPath() + "/xerahs", arguments + QStringList{"--non-interactive", "--json"});
+    QVERIFY(application.waitForFinished(5000)); QCOMPARE(application.exitStatus(), QProcess::NormalExit); QCOMPARE(application.exitCode(), 1);
+    QCOMPARE(line(application.readAllStandardOutput()).value("error").toObject().value("code"), QJsonValue("presentation-required"));
+    QTest::qWait(50); QVERIFY(!owner->canReadLine());  // The owner never saw the request.
+    QVERIFY(!QFileInfo::exists(temporary->filePath("XDG_CONFIG_HOME"))); QVERIFY(!QFileInfo::exists(temporary->filePath("XDG_STATE_HOME")));
   }
   void duplicateWorkflowFramesReplayReceiptWithoutDispatchingAgain() {
     NativeInstance instance(directory); QCOMPARE(instance.start(makeActivationRequest(ActivationAction::Activate)).kind, InstanceStart::Kind::Primary);
@@ -393,6 +419,10 @@ private slots:
     QVERIFY(application.waitForFinished(5000)); QCOMPARE(application.exitStatus(), QProcess::NormalExit); QCOMPARE(application.exitCode(), 1);
     const auto output = application.readAllStandardOutput(); QCOMPARE(output.count('\n'), 1); const auto result = line(output); QCOMPARE(result.value("error").toObject().value("code"), QJsonValue(error)); QVERIFY(!result.value("ok").toBool());
     const auto errors = application.readAllStandardError(); QVERIFY(!errors.contains("private-secret")); QVERIFY(!errors.contains("private-name")); QVERIFY(!errors.contains("could not connect to display"));
+    QVERIFY(!output.contains("private-name"));
+    if (error == "presentation-required") {  // Distinct and actionable: says what to do and that nothing started.
+      QVERIFY2(errors.contains("xerahs: presentation-required: "), errors.constData()); QVERIFY(errors.contains("needs the graphical XerahS application")); QVERIFY(errors.contains("No operation was started."));
+    }
     QVERIFY(!QFileInfo::exists(temporary->filePath("XDG_CONFIG_HOME"))); QVERIFY(!QFileInfo::exists(temporary->filePath("XDG_STATE_HOME")));
     if (error != "activation-unavailable") QVERIFY(!QFileInfo::exists(temporary->filePath("com.xerahs.app")));
   }
