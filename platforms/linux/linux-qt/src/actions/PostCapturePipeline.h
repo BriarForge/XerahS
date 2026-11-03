@@ -59,6 +59,12 @@ LegacyFlagMapping mapLegacyFlags(const QStringList &flags);
 enum class ActionState { Succeeded, Failed, Cancelled, Skipped };
 QString actionStateName(ActionState state);
 
+// WFCAT-004 refines a failed PCA step without changing its PCA state.
+enum class FailureClass { PermissionDenied, ValidationFailure, UnavailableDependency, TransientFailure, PermanentFailure };
+QString failureClassName(FailureClass failure);
+std::optional<FailureClass> parseFailureClass(const QString &name);
+FailureClass classifyFailure(const QString &diagnostic, int httpStatus = 0);
+
 enum class PipelineState { Completed, Cancelled, Interrupted };
 QString pipelineStateName(PipelineState state);
 
@@ -123,6 +129,7 @@ struct ActionOutcome {
   bool outcomeUnknown = false;
   std::vector<ArtifactOutcome> artifacts = {};
   std::optional<UploadResult> upload = {};
+  std::optional<FailureClass> failureClass = {};
 };
 
 class ActionExecutor {
@@ -149,6 +156,7 @@ struct ActionResult {
   bool cancellationArrivedDuring = false;
   std::vector<ArtifactOutcome> artifacts = {};
   std::optional<UploadResult> upload = {};
+  std::optional<FailureClass> failureClass = {};
 };
 
 // Settings snapshot taken before execution (SPEC "Definitions and model").

@@ -13,6 +13,55 @@ bool terminal(State s) { return s == State::Completed || s == State::Cancelled |
 QString stateName(State s) {
   return QStringList{"idle", "requesting-permission", "starting", "recording", "paused", "stopping", "completed", "cancelled", "failed", "permission-denied"}.at(int(s));
 }
+bool Session::observe(const Request &r, const QString &origin, workflows::WorkflowExecution::Writer writer) {
+  if (m_state != State::Idle || m_execution) return false;
+  const auto rectangle = [](const auto &value) -> QJsonValue {
+    return value ? QJsonValue(QJsonArray{value->x(), value->y(), value->width(), value->height()}) : QJsonValue(QJsonValue::Null);
+  };
+  QJsonObject snapshot{{"definitionVersion", 2}, {"id", m_id}, {"capture", "recording"}, {"format", extension(r.format)},
+      {"directory", r.folder}, {"filename", r.filename}, {"target", r.target == Target::Monitor ? "monitor" : "window"},
+      {"frameRate", r.frameRate}, {"quality", r.quality}, {"cursor", r.cursor}, {"systemAudioDevice", r.systemAudioDevice},
+      {"microphoneDevice", r.microphoneDevice}, {"region", rectangle(r.region)}, {"crop", rectangle(r.crop)},
+      {"streamSize", QJsonArray{r.streamSize.width(), r.streamSize.height()}}};
+  m_execution = std::make_unique<workflows::WorkflowExecution>(m_id, origin, snapshot, std::move(writer));
+  m_executionConfirmed = m_execution->admit() && m_execution->start();
+  return m_executionConfirmed;
+}
+QString Session::makeId() { return QUuid::createUuid().toString(QUuid::WithoutBraces); }
+ControlResult Session::result() const {
+  return {false, false, m_id, m_state, m_output, m_recoverable, m_diagnostic, !m_recoverable.isEmpty()};
+}
+void Session::outputs(const QString &published, const QString &recoverable) {
+  m_output = published; m_recoverable = recoverable;
+}
+bool Session::finalize(Output &output) {
+  if (m_state != State::Stopping) return false;
+  const auto error = output.publish();
+  if (!error.isEmpty()) return fail(output, error);
+  outputs(output.destination());
+  return send(Event::Finalized);
+}
+bool Session::fail(Output &output, const QString &diagnostic) {
+  if (m_state == State::Idle || terminal(m_state)) return false;
+  outputs({}, output.retainFailure());
+  return send(Event::Error, diagnostic);
+}
+ControlResult Session::control(const QString &sessionId, Event event) {
+  auto r = result();
+  if (sessionId != m_id) { r.diagnostic = "stale-recording-session"; return r; }
+  if (event != Event::Pause && event != Event::Resume && event != Event::Stop && event != Event::Abort) {
+    r.diagnostic = "invalid-recording-control"; return r;
+  }
+  // Repeated controls do not repeat native side effects or emit another terminal.
+  if ((event == Event::Stop && (m_state == State::Stopping || m_state == State::Completed)) ||
+      (event == Event::Pause && m_state == State::Paused) ||
+      (event == Event::Resume && m_state == State::Recording) ||
+      (event == Event::Abort && m_state == State::Cancelled)) { r.accepted = true; return r; }
+  const bool changed = send(event);
+  r = result(); r.accepted = changed; r.changed = changed;
+  if (!changed) r.diagnostic = "invalid-recording-transition";
+  return r;
+}
 bool Session::send(Event e, const QString &diagnostic) {
   if (terminal(m_state)) return false;
   State next = m_state;
@@ -27,10 +76,25 @@ bool Session::send(Event e, const QString &diagnostic) {
   else if (e == Event::Stop && (m_state == State::Recording || m_state == State::Paused)) next = State::Stopping;
   else if (e == Event::Finalized && m_state == State::Stopping) next = State::Completed;
   if (next == m_state) return false;
-  m_state = next; emit changed();
+  const auto previous = m_state;
+  m_state = next;
+  if (m_execution && m_executionConfirmed) {
+    if (next == State::Recording) m_executionConfirmed = m_execution->step(previous == State::Paused ? "resume-recording" : "start-recording", "succeeded");
+    else if (next == State::Paused) m_executionConfirmed = m_execution->step("pause-recording", "succeeded");
+    else if (terminal(next)) {
+      const auto action = next == State::Completed || previous == State::Stopping ? QString("stop-recording") :
+          e == Event::Abort ? QString("abort-recording") : QString("capture-recording");
+      const auto result = next == State::Completed ? QString("succeeded") : next == State::Cancelled ? QString("cancelled") :
+          next == State::PermissionDenied ? QString("permission-denied") : QString("failed");
+      const auto state = next == State::Failed ? xerahs::actions::failureClassName(xerahs::actions::classifyFailure(diagnostic)) : result;
+      m_executionConfirmed = m_execution->step(action, result, diagnostic) && m_execution->finish(state, diagnostic);
+    }
+  }
+  emit changed();
   if (terminal(next)) {
     static const QSet<QString> codes{"portal-unavailable", "portal-timeout", "portal-invalid-response", "target-lost", "encoder-unavailable", "encoder-start-failed", "encoder-failed", "finalize-timeout", "output-create-failed", "output-publish-failed", "request-invalid", "region-outside-stream", "region-mapping-unavailable"};
-    emit finished(next, next == State::Failed ? (codes.contains(diagnostic) ? diagnostic : QStringLiteral("encoder-failed")) : QString{});
+    m_diagnostic = next == State::Failed ? (codes.contains(diagnostic) ? diagnostic : QStringLiteral("encoder-failed")) : QString{};
+    emit finished(next, m_diagnostic);
   }
   return true;
 }
@@ -133,6 +197,12 @@ QString Output::reserve(const Request &r) {
 QString Output::publish() {
   if (m_temporary.isEmpty() || QFileInfo(m_temporary).size() == 0 || QFileInfo::exists(m_destination) || !QFile::rename(m_temporary, m_destination)) return "output-publish-failed";
   m_temporary.clear(); return {};
+}
+QString Output::retainFailure() {
+  if (m_temporary.isEmpty() || QFileInfo(m_temporary).size() <= 0) { abort(); return {}; }
+  const QString retained = m_temporary;
+  m_temporary.clear();
+  return retained;
 }
 void Output::abort() { if (!m_temporary.isEmpty()) QFile::remove(m_temporary); m_temporary.clear(); }
 }

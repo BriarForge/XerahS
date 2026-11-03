@@ -368,6 +368,8 @@ private slots:
     QTest::newRow("conflicting-actions") << QStringList{"--run-workflow", id, "--capture-region", "--json"} << QString("usage-invalid") << false;
     QTest::newRow("unknown-private-argument") << QStringList{"--private-secret", "--json"} << QString("usage-invalid") << false;
     QTest::newRow("non-interactive") << QStringList{"--run-workflow", id, "--non-interactive", "--json"} << QString("presentation-required") << true;
+    QTest::newRow("open-view-headless") << QStringList{"--non-interactive", "--json"} << QString("presentation-required") << true;
+    QTest::newRow("editor-headless") << QStringList{"--edit", "/tmp/private-secret.png", "--non-interactive", "--json"} << QString("presentation-required") << true;
     QTest::newRow("region-recording-headless") << QStringList{"--start-region-recording", "--non-interactive", "--json"} << QString("presentation-required") << true;
     // IFCAT-009: every sensitive operation is refused, not started, in non-interactive mode.
     for (const auto *flag : {"--capture-region", "--capture-full-screen", "--capture-monitor", "--capture-active-window", "--start-recording", "--stop-recording"})

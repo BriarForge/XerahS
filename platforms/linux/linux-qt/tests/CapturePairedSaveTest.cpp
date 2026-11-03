@@ -98,6 +98,8 @@ private slots:
     QVERIFY(!source->retryPlan().link->preservedSuccessfulActions.contains(action));
     CapturePipeline second(source, nullptr, ports, journal); QSignalSpy again(&second, &CapturePipeline::finished); second.start(); QTRY_COMPARE(again.count(), 1); const auto failedAgain = receipt(again);
     QCOMPARE(failedAgain->pipeline.orderedResults[0].state, ActionState::Failed); QVERIFY(failedAgain->retryPlan().available()); QCOMPARE(bytes(rasterPath), original);
+    QCOMPARE(pipelineTerminalState(failedAgain->pipeline), QString("partial"));
+    QCOMPARE(failedAgain->terminalObservation().value("state"), QJsonValue("partial"));
     QVERIFY(QDir().rmdir(sidecarPath));
     CapturePipeline third(failedAgain, nullptr, ports, journal); QSignalSpy final(&third, &CapturePipeline::finished); third.start(); QTRY_COMPARE(final.count(), 1); const auto repaired = receipt(final);
     QCOMPARE(repaired->pipeline.orderedResults.size(), size_t(1)); QCOMPARE(repaired->pipeline.orderedResults[0].state, ActionState::Succeeded);

@@ -1,4 +1,5 @@
 #include "CapturePipeline.h"
+#include "workflows/CaptureWorkflows.h"
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
@@ -31,6 +32,64 @@ void write(const QString &path, const QByteArray &data) { QFile file(path); if (
 class PipelineJournalTest final : public QObject {
   Q_OBJECT
 private slots:
+  void failureTaxonomyIsPersistedAndLegacyJournalsRemainReadable_data() {
+    QTest::addColumn<QString>("code"); QTest::addColumn<QString>("failure");
+    QTest::newRow("permission") << QString("capture-permission-denied") << QString("permission-denied");
+    QTest::newRow("validation") << QString("unsupported-content") << QString("validation-failure");
+    QTest::newRow("tesseract") << QString("ocr-unavailable") << QString("unavailable-dependency");
+    QTest::newRow("gstreamer") << QString("encoder-unavailable") << QString("unavailable-dependency");
+    QTest::newRow("destination") << QString("upload-destination-missing") << QString("unavailable-dependency");
+    QTest::newRow("timeout") << QString("timeout") << QString("transient-failure");
+    QTest::newRow("invalid-configuration") << QString("invalid-header") << QString("permanent-failure");
+    QTest::newRow("permanent") << QString("save-write-failed") << QString("permanent-failure");
+  }
+  void failureTaxonomyIsPersistedAndLegacyJournalsRemainReadable() {
+    QFETCH(QString, code); QFETCH(QString, failure); QTemporaryDir dir;
+    auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("journal"));
+    CaptureActionPorts ports;
+    ports.pin = [code](const QImage &, const CancellationToken &) { return ActionOutcome{ActionState::Failed, code, {}}; };
+    // A saved workflow journals even non-file actions; a standalone transient
+    // pin intentionally has no persistent capture history.
+    const auto workflow = xerahs::workflows::defaultCaptureWorkflows().entries.front();
+    CapturePipeline pipeline(pixels(), dir.filePath("output"), "capture", {"pin"}, nullptr, ports, journal,
+        nullptr, xerahs::workflows::workflowSnapshot(workflow));
+    QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_COMPARE(done.size(), 1);
+    const auto receipt = qvariant_cast<CapturePipelineReceipt>(done.first().first());
+    const auto &step = receipt->pipeline.orderedResults.front(); QVERIFY(step.failureClass);
+    QCOMPARE(failureClassName(*step.failureClass), failure);
+    const auto listing = journal->list(); QCOMPARE(listing.entries.size(), size_t(1));
+    auto root = QJsonDocument::fromJson(listing.entries.front().bytes).object(); QCOMPARE(root.value("version"), QJsonValue(3));
+    auto result = root.value("result").toObject(); auto steps = result.value("ordered_results").toArray();
+    QCOMPARE(steps.first().toObject().value("failure_class"), QJsonValue(failure));
+    QVERIFY(parsePipelineJournal(QJsonDocument(root).toJson(), receipt->pipeline.taskId).record);
+    auto legacyStep = steps.first().toObject(); legacyStep.remove("failure_class"); steps[0] = legacyStep;
+    result.insert("ordered_results", steps); root.insert("result", result); root.insert("version", 1);
+    QVERIFY(parsePipelineJournal(QJsonDocument(root).toJson(), receipt->pipeline.taskId).record);
+    root.insert("version", 3); legacyStep.insert("failure_class", "PRIVATE invalid class"); steps[0] = legacyStep;
+    result.insert("ordered_results", steps); root.insert("result", result);
+    QVERIFY(!parsePipelineJournal(QJsonDocument(root).toJson(), receipt->pipeline.taskId).record);
+  }
+  void saveHasNoSuccessBeforeDurablePublication() {
+    QTemporaryDir dir; auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("journal"));
+    CapturePipeline *running = nullptr; bool checked = false; bool noTerminal = false; int completions = 0;
+    CaptureActionPorts ports;
+    ports.save.beforePublish = [&](const QString &path) {
+      const auto listing = journal->list();
+      if (listing.entries.size() != 1 || !listing.entries.front().parsed.record) return;
+      const auto &record = *listing.entries.front().parsed.record;
+      checked = !QFile::exists(path) && !record.terminal && record.pendingAction == std::optional<QString>{"save"} && record.report.value("ordered_results").toArray().isEmpty();
+      QMetaObject::invokeMethod(running, [&] { noTerminal = completions == 0; }, Qt::BlockingQueuedConnection);
+    };
+    CapturePipeline pipeline(pixels(), dir.filePath("output"), "capture", {"save"}, nullptr, ports, journal); running = &pipeline;
+    connect(&pipeline, &CapturePipeline::finished, this, [&] { ++completions; });
+    QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_COMPARE(done.size(), 1);
+    QVERIFY(checked); QVERIFY(noTerminal);
+    const auto receipt = qvariant_cast<CapturePipelineReceipt>(done.first().first()); QVERIFY(receipt->file);
+    QCOMPARE(receipt->pipeline.orderedResults.front().state, ActionState::Succeeded);
+    QCOMPARE(QImage(receipt->file->path), pixels());
+    const auto record = journal->list().entries.front().parsed.record; QVERIFY(record); QVERIFY(record->terminal);
+    QCOMPARE(record->report.value("ordered_results").toArray().first().toObject().value("state"), QJsonValue("succeeded"));
+  }
   void killedCompanionSavePreservesKnownPngButDoesNotInventWholeSaveSuccess() {
     QTemporaryDir dir; QProcess process;
     process.start(QCoreApplication::applicationDirPath() + "/pipeline-journal-fixture", {dir.filePath("state"), dir.filePath("output"), "companion-before-publication"});
@@ -134,7 +193,7 @@ private slots:
   }
   void malformedOrFutureRecordsFailClosed() {
     const auto task = id(); const auto original = QJsonDocument::fromJson(serializePipelineJournal(observation(task))).object();
-    auto value = original; value.insert("version", 3);
+    auto value = original; value.insert("version", 999);
     QCOMPARE(parsePipelineJournal(QJsonDocument(value).toJson(), task).diagnostic, QString("pipeline-journal-version-unsupported"));
     value = original; value.insert("terminal", true); QVERIFY(!parsePipelineJournal(QJsonDocument(value).toJson(), task).record);
     value = original; value.insert("pending_action", "save"); QVERIFY(!parsePipelineJournal(QJsonDocument(value).toJson(), task).record);
@@ -168,7 +227,7 @@ private slots:
     QVERIFY(QFile::link(artifact, path + '/' + task + ".json"));
     QVERIFY(!storage.list().entries.front().parsed.record); QVERIFY(!storage.replace(task, {}, encoded).stored); QCOMPARE(bytes(artifact), QByteArray("KEEP"));
     QVERIFY(QFile::remove(path + '/' + task + ".json"));
-    auto value = QJsonDocument::fromJson(encoded).object(); value.insert("version", 3); const auto future = QJsonDocument(value).toJson();
+    auto value = QJsonDocument::fromJson(encoded).object(); value.insert("version", 999); const auto future = QJsonDocument(value).toJson();
     write(path + '/' + task + ".json", future);
     QCOMPARE(storage.list().entries.front().parsed.diagnostic, QString("pipeline-journal-version-unsupported"));
     QVERIFY(!storage.erase(task, future).stored); QCOMPARE(bytes(path + '/' + task + ".json"), future);
@@ -260,6 +319,32 @@ private slots:
     QCOMPARE(record->report.value("pipeline_state"), QJsonValue("interrupted"));
     QVERIFY(journal->erase(recovered.entries.front().taskId, recovered.entries.front().bytes).stored);
     QCOMPARE(QImage(result->file->path), pixels());
+  }
+  void publicTerminalObservationRejectsTamperingAndUpgradesLegacyReads() {
+    const auto task = id(); auto snapshot = observation(task);
+    snapshot.pendingAction.reset(); snapshot.terminal = true;
+    ActionResult upload; upload.action = "upload"; upload.state = ActionState::Failed;
+    upload.diagnostic = "network-error"; upload.failureClass = FailureClass::TransientFailure;
+    snapshot.result.orderedResults.push_back(upload);
+    const auto encoded = serializePipelineJournal(snapshot);
+    const auto valid = parsePipelineJournal(encoded, task); QVERIFY(valid.record);
+    const auto expected = valid.record->report.value("extensions").toObject().value("com.xerahs.app").toObject().value("terminal_observation").toObject();
+    QCOMPARE(expected.value("state"), QJsonValue("partial"));
+    for (const auto &mode : {QString("state"), QString("outputs"), QString("private")}) {
+      auto root = QJsonDocument::fromJson(encoded).object(); auto report = root.value("result").toObject();
+      auto extensions = report.value("extensions").toObject(); auto native = extensions.value("com.xerahs.app").toObject();
+      auto tampered = expected;
+      if (mode == "state") tampered.insert("state", "succeeded");
+      else if (mode == "outputs") tampered.insert("outputs", QJsonArray{"/PRIVATE/SECRET.png"});
+      else tampered.insert("diagnostic", "PRIVATE OCR text SECRET token");
+      native.insert("terminal_observation", tampered); extensions.insert("com.xerahs.app", native); report.insert("extensions", extensions); root.insert("result", report);
+      QVERIFY(!parsePipelineJournal(QJsonDocument(root).toJson(), task).record);
+    }
+    auto root = QJsonDocument::fromJson(encoded).object(); auto report = root.value("result").toObject();
+    auto extensions = report.value("extensions").toObject(); auto native = extensions.value("com.xerahs.app").toObject();
+    native.remove("terminal_observation"); extensions.insert("com.xerahs.app", native); report.insert("extensions", extensions); root.insert("result", report);
+    const auto legacy = parsePipelineJournal(QJsonDocument(root).toJson(), task); QVERIFY(legacy.record);
+    QCOMPARE(legacy.record->report.value("extensions").toObject().value("com.xerahs.app").toObject().value("terminal_observation").toObject(), expected);
   }
   void killedNativeWorkerRecoversUnknownPublicationOrClipboard_data() {
     QTest::addColumn<QString>("mode"); QTest::newRow("before-publication") << QString("before-publication"); QTest::newRow("after-save") << QString("after-save");

@@ -1,12 +1,58 @@
 #include "actions/PipelineResultJson.h"
 #include <QJsonArray>
+#include <QJsonDocument>
+#include <QSet>
 
 namespace xerahs::actions {
+QString pipelineTerminalState(const PipelineResult &result) {
+  if (result.state == PipelineState::Cancelled) return "cancelled";
+  if (result.state == PipelineState::Interrupted) return "interrupted";
+  bool succeeded = false, skipped = false, cancelled = false;
+  std::optional<FailureClass> failure;
+  for (const auto &action : result.orderedResults) {
+    succeeded |= action.state == ActionState::Succeeded || hasAcknowledgedPartialRaster(action.action, action.state, action.artifacts);
+    skipped |= action.state == ActionState::Skipped;
+    cancelled |= action.state == ActionState::Cancelled;
+    if (action.state == ActionState::Failed && !failure)
+      failure = action.failureClass.value_or(classifyFailure(action.diagnostic.value_or(diagnostic::actionFailed)));
+  }
+  if (succeeded && (failure || skipped || cancelled)) return "partial";
+  if (failure) return failureClassName(*failure);
+  if (cancelled) return "cancelled";
+  if (skipped) return "skipped";
+  return "succeeded";
+}
+QJsonObject pipelineObservationJson(const PipelineResult &result, const std::vector<SavedFileArtifact> &files) {
+  QJsonArray outputs; QSet<QString> seen;
+  const auto append = [&](const QString &task, const QString &artifact) {
+    const auto reference = task + "/" + artifact;
+    if (!seen.contains(reference)) { seen.insert(reference); outputs.append(reference); }
+  };
+  for (const auto &file : files) append(file.creatorTaskId.isEmpty() ? result.taskId : file.creatorTaskId, file.artifact);
+  for (const auto &action : result.orderedResults) {
+    const auto index = catalogueIndex(action.action);
+    if (!index || action.state != ActionState::Succeeded) continue;
+    for (const auto &artifact : catalogue()[size_t(*index)].produces) {
+      // File references come from acknowledged native publication, including
+      // prior attempts. Never manufacture a reference merely from a selected ID.
+      if (artifact != "save.file" && artifact != "save-as.file" && artifact != "save.sidecar" && artifact != "save-as.sidecar")
+        append(result.taskId, artifact);
+    }
+  }
+  return {{"task_id", result.taskId}, {"state", pipelineTerminalState(result)}, {"outputs", outputs}};
+}
+QString pipelineObservationText(const QJsonObject &observation) {
+  QStringList outputs;
+  for (const auto &reference : observation.value("outputs").toArray()) outputs.append(reference.toString());
+  return QStringLiteral("Workflow: %1. Output references: %2").arg(observation.value("state").toString(),
+      outputs.isEmpty() ? QStringLiteral("none") : outputs.join(QStringLiteral(", ")));
+}
 QJsonObject pipelineResultJson(const PipelineResult &result,
                               const std::vector<SavedFileArtifact> &files) {
   QJsonArray ordered, timings, artifacts, artifactOutcomes;
   for (const auto &action : result.orderedResults) {
     QJsonObject entry{{"action", action.action}, {"state", actionStateName(action.state)}};
+    if (action.failureClass) entry.insert("failure_class", failureClassName(*action.failureClass));
     if (action.diagnostic) entry.insert("diagnostic", *action.diagnostic);
     if (action.missingArtifact) entry.insert("missing_artifact", *action.missingArtifact);
     if (action.inputArtifact) entry.insert("input_artifact", *action.inputArtifact);
@@ -36,6 +82,7 @@ QJsonObject pipelineResultJson(const PipelineResult &result,
   }
   QJsonObject native{{"schema_version", 1}, {"task_id", result.taskId},
                      {"action_timings", timings}, {"file_artifacts", artifacts}};
+  native.insert("terminal_observation", pipelineObservationJson(result, files));
   if (result.upload) {
     QJsonObject upload;
     if (!result.upload->url.isEmpty()) upload.insert("url", result.upload->url);

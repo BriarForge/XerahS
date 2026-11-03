@@ -2,6 +2,7 @@
 #include "features/PreferencesFeature.h"
 
 #include "AppContext.h"
+#include "ApplicationControl.h"
 #include "AppearanceDialog.h"
 #include "ApplicationWindow.h"
 #include "CaptureController.h"
@@ -34,6 +35,7 @@ void installPreferences(AppContext &ctx) {
   auto *appearance = ctx.commands.add(CommandSpec{QStringLiteral("editor-appearance"), QStringLiteral("Editor appearance…"),
       CommandGroup::Preferences, CommandSurface::Tray | CommandSurface::Window | CommandSurface::PreferencesMenu});
   QObject::connect(settingsAction, &QAction::triggered, &ctx.app, [&ctx] {
+    if (!applicationControlAvailability(ctx.capture.busy()).isEmpty()) return;
     auto displayPlan = shortcutPlan(ctx);
     if (displayPlan.entries.isEmpty())
       for (const auto &action : xerahs::settings::captureHotkeyActions())
@@ -49,7 +51,9 @@ void installPreferences(AppContext &ctx) {
         [&ctx] { applyShellVisibility(ctx); }, qobject_cast<QWidget *>(ctx.dialogParent ? ctx.dialogParent() : nullptr));
     dialog.exec();
   });
-  QObject::connect(appearance, &QAction::triggered, &ctx.app, [] { manageEditorAppearance(); });
+  QObject::connect(appearance, &QAction::triggered, &ctx.app, [&ctx] {
+    if (applicationControlAvailability(ctx.capture.busy()).isEmpty()) manageEditorAppearance();
+  });
 }
 
 }  // namespace xerahs::app

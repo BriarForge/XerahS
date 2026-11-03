@@ -3,6 +3,7 @@
 #include "features/WorkflowExecutionHistoryFeature.h"
 
 #include "AppContext.h"
+#include "ApplicationControl.h"
 #include "ApplicationWindow.h"
 #include "features/CaptureFeature.h"
 #include "CaptureActions.h"
@@ -52,6 +53,7 @@ void installWorkflows(AppContext &ctx) {
   adoptShortcut(ctx, QStringLiteral("disable-workflow-shortcuts"), ctx.shortcuts->disableAction());
 
   QObject::connect(configure, &QAction::triggered, &ctx.app, [&ctx] {
+    if (!applicationControlAvailability(ctx.capture.busy()).isEmpty()) return;
     const auto selected = manageCaptureWorkflows(*ctx.workflows, commandWindow(ctx), [&ctx] { return !ctx.capture.busy(); });
     if (selected) ctx.invoke(xerahs::shell::ActivationAction::RunWorkflow, {}, false, selected->id.toString(QUuid::WithoutBraces), QStringLiteral("native-shell"));
   });

@@ -93,8 +93,10 @@ void PipelineHistoryDialog::poll() {
   m_listing = std::move(job->listing); m_table->clear();
   for (const auto &entry : m_listing.entries) {
     const auto &record = entry.parsed.record;
+    const auto observation = record ? record->report.value("extensions").toObject().value("com.xerahs.app").toObject().value("terminal_observation").toObject() : QJsonObject{};
     auto *item = new QTreeWidgetItem(m_table, {record ? record->createdAt.toLocalTime().toString(Qt::ISODateWithMs) : QString{},
-        record ? record->report.value("pipeline_state").toString() : QStringLiteral("Unavailable"), entry.taskId, entry.parsed.diagnostic});
+        record ? (observation.isEmpty() ? record->report.value("pipeline_state").toString() : observation.value("state").toString()) : QStringLiteral("Unavailable"), entry.taskId, entry.parsed.diagnostic});
+    item->setData(1, Qt::UserRole, observation);
     item->setData(0, Qt::UserRole, entry.taskId); if (entry.taskId == selected) m_table->setCurrentItem(item);
   }
   if (!m_table->currentItem() && m_table->topLevelItemCount()) m_table->setCurrentItem(m_table->topLevelItem(0));

@@ -34,6 +34,7 @@ WorkflowChoice NativeCaptureWorkflows::resolve(const QUuid &requested) const {
   return m_store.resolve(requested, CaptureActions::selectableActions());
 }
 QString workflowMessage(const QString &code) {
+  if (code == "unsupported-action") return "This workflow contains an unsupported action ID. The definition has been kept unchanged; use a compatible XerahS version or explicitly remove that action before running.";
   if (code == "workflow-action-unavailable") return "This workflow contains unavailable actions. Remove those actions to run it, or keep it for a later version.";
   if (code == "workflow-capture-unavailable") return "This capture type is unavailable. The workflow has been kept.";
   if (code == "workflow-newer-version") return "These workflows need a newer XerahS version. The file has been kept unchanged.";
@@ -134,7 +135,9 @@ private:
     m_host.reload(); m_catalog = m_host.store().current().catalog; m_revision = m_host.store().revision(); m_dirty = false;
     int selected = 0;
     if (m_catalog) for (int i = 0; i < m_catalog->entries.size(); ++i) if (m_catalog->entries[i].id == m_catalog->defaultId) selected = i;
-    refreshList(selected); m_status->setText(m_catalog ? "Changes affect future captures. Close keeps your last saved workflows." : workflowMessage(m_host.store().current().diagnostic));
+    refreshList(selected); m_status->setText(!m_catalog ? workflowMessage(m_host.store().current().diagnostic) :
+        m_host.store().current().migrationAvailable ? "Version 1 workflows are loaded with their original defaults. Saving changes explicitly upgrades them to version 2; Close keeps the original file." :
+        "Changes affect future captures. Close keeps your last saved workflows.");
   }
   void refreshList(int index) {
     m_loading = true; m_list->clear();

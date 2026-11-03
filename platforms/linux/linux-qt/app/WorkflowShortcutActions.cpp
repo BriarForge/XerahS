@@ -25,7 +25,10 @@ WorkflowShortcutActions::WorkflowShortcutActions(PlanProvider plan, std::functio
   m_disable = new QAction("Disable capture and workflow shortcuts", this); m_disable->setObjectName("disable-workflow-shortcuts");
   m_disable->setToolTip("Close this session's bindings. Saved workflows and the desktop's remembered choices are kept.");
   connect(m_enable, &QAction::triggered, this, &WorkflowShortcutActions::configure);
-  connect(m_disable, &QAction::triggered, this, [this] { disable("Workflow shortcuts disabled for this session."); }); refresh();
+  connect(m_disable, &QAction::triggered, this, [this] {
+    if (m_canConfigure && !m_canConfigure()) { emit notify("XerahS is busy. Disable shortcuts after the current capture or dialog finishes.", false); return; }
+    disable("Workflow shortcuts disabled for this session.");
+  }); refresh();
 }
 void WorkflowShortcutActions::configure() {
   if (pending()) return;

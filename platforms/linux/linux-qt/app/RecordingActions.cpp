@@ -44,7 +44,7 @@ void RecordingActions::refresh() {
     QPixmap pixmap = m_icon.pixmap(32, 32); QPainter painter(&pixmap); painter.setPen(Qt::white); painter.setBrush(Qt::red); painter.drawEllipse(20, 20, 11, 11); painter.end(); m_tray.setIcon(QIcon(pixmap));
   } else m_tray.setIcon(m_icon);
 }
-void RecordingActions::start(Format format, bool region) {
+void RecordingActions::start(Format format, bool region, QString origin) {
   if (m_controller.busy()) return;
   QDialog dialog; dialog.setWindowTitle(region ? "Record region" : "Screen recording"); QFormLayout layout(&dialog);
   QComboBox target; target.addItems({"Monitor (choose in portal)", "Window (choose in portal)"}); layout.addRow("Target", &target); target.setEnabled(!region);
@@ -70,10 +70,10 @@ void RecordingActions::start(Format format, bool region) {
   }
   if (region) {
     if (!m_selectRegion) return;
-    m_selectRegion([guard = QPointer<RecordingActions>(this), request](QRectF rectangle) mutable {
+    m_selectRegion([guard = QPointer<RecordingActions>(this), request, origin](QRectF rectangle) mutable {
       if (!guard) return;
-      request.region = rectangle; guard->m_controller.start(request);
+      request.region = rectangle; guard->m_controller.start(request, origin);
     });
-  } else m_controller.start(request);
+  } else m_controller.start(request, origin);
 }
 }

@@ -17,9 +17,11 @@ QDialog *makePipelineResultDialog(const QJsonObject &report, QWidget *parent, co
   dialog->resize(680, 420);
   auto *layout = new QVBoxLayout(dialog);
   const auto state = report.value("pipeline_state").toString();
+  const auto observation = report.value("extensions").toObject().value("com.xerahs.app").toObject().value("terminal_observation").toObject();
   auto *summary = new QLabel(state == "interrupted" ?
       QStringLiteral("Pipeline: interrupted. An action with an unknown outcome may have completed. Check its output before retrying; recovery does not repeat actions.") :
-      QStringLiteral("Pipeline: %1. Completed describes a finished run; individual actions can still fail.").arg(state), dialog);
+      observation.isEmpty() ? QStringLiteral("Pipeline: %1. Completed describes a finished run; individual actions can still fail.").arg(state) :
+      QStringLiteral("Workflow: %1. Output references: %2").arg(observation.value("state").toString(), QString::fromUtf8(QJsonDocument(observation.value("outputs").toArray()).toJson(QJsonDocument::Compact))), dialog);
   summary->setTextFormat(Qt::PlainText); summary->setWordWrap(true); layout->addWidget(summary);
   const auto retry = report.value("extensions").toObject().value("com.xerahs.app").toObject().value("retry").toObject();
   if (!retry.isEmpty()) {

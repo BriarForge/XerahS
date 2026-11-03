@@ -54,7 +54,7 @@ private slots:
     auto *refresh = dialog->findChild<QPushButton *>("refreshCaptureHistory"); QTest::qWait(40);
     QCOMPARE(table->topLevelItemCount(), 0); QVERIFY(!refresh->isEnabled());
     busy = false; QTRY_COMPARE(table->topLevelItemCount(), 1); QTRY_VERIFY(refresh->isEnabled());
-    QCOMPARE(table->topLevelItem(0)->text(1), QString("completed"));
+    QCOMPARE(table->topLevelItem(0)->text(1), QString("partial"));
   }
   void reviewIsKeyboardReachableAndImmutableWithPrivateDetailsHidden() {
     QTemporaryDir dir; const auto artifact = dir.filePath("<private source>.png"); QFile file(artifact); QVERIFY(file.open(QIODevice::WriteOnly)); file.write("KEEP"); file.close();

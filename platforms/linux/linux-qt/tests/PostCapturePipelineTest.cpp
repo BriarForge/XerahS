@@ -189,7 +189,7 @@ private slots:
     QCOMPARE(json.value("final_working_media").toString(), QString("capture"));
     QVERIFY(json.value("working_media_retained").toBool());
     const QJsonArray expected{QJsonObject{{"action", "save"}, {"state", "succeeded"}},
-        QJsonObject{{"action", "image-clipboard"}, {"state", "failed"}, {"diagnostic", "action-failed"}},
+        QJsonObject{{"action", "image-clipboard"}, {"state", "failed"}, {"diagnostic", "action-failed"}, {"failure_class", "permanent-failure"}},
         QJsonObject{{"action", "reveal"}, {"state", "succeeded"}, {"input_artifact", "save.file"}}};
     QCOMPARE(json.value("ordered_results").toArray(), expected);
     const auto metadata = json.value("extensions").toObject().value("com.xerahs.app").toObject();

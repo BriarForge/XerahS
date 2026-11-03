@@ -21,4 +21,10 @@ struct SavedFileArtifact {
 // by this boundary. This is a report, not a restart journal or retry authority.
 QJsonObject pipelineResultJson(const PipelineResult &result,
                               const std::vector<SavedFileArtifact> &files = {});
+// WFCAT-017: public observations use opaque artifact references. Actual paths,
+// remote URLs and naming settings remain only in the private result details.
+QString pipelineTerminalState(const PipelineResult &result);
+QJsonObject pipelineObservationJson(const PipelineResult &result,
+                                   const std::vector<SavedFileArtifact> &files = {});
+QString pipelineObservationText(const QJsonObject &observation);
 } // namespace xerahs::actions

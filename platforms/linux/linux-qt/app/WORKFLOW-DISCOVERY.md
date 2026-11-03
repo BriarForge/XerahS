@@ -19,9 +19,11 @@ Help returns text without GUI, instance election, preference reads or desktop bu
 
 The result contains `schemaVersion: 1`, `ok`, `scope: saved-definitions`,
 `source` (`saved-storage` or `initial-defaults`), `runtimeStatus: not-queried`,
+`definitionVersion`, `migration` (`available-on-save` for v1, otherwise `none`),
 `defaultWorkflowId`, and `workflows`. Each entry contains its canonical full UUID,
 name, capture (`region` or `unsupported`), and `definitionAvailable`. Unavailable
-entries add `diagnosticCode`. This explicit metadata query reveals workflow names;
+entries add `diagnosticCode`, including `unsupported-action` for unknown action IDs.
+This explicit metadata query reveals workflow names;
 it excludes output folders, filename patterns, actions, private extensions and
 unknown capture labels. Names/IDs keep saved order; duplicate names require IDs.
 

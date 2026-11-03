@@ -1,4 +1,5 @@
 #include "features/WorkflowExecutionHistoryFeature.h"
+#include "ApplicationControl.h"
 #include <QPointer>
 namespace xerahs::app {
 QAction *installWorkflowExecutionHistory(CommandRegistry &commands, WorkflowHistoryPorts ports,
@@ -9,6 +10,7 @@ QAction *installWorkflowExecutionHistory(CommandRegistry &commands, WorkflowHist
   if (!action || !owner) return action;
   auto window = std::make_shared<QPointer<WorkflowExecutionHistoryDialog>>();
   QObject::connect(action, &QAction::triggered, owner, [window, ports, captureBusy, parent, guard = QPointer<QObject>(owner)] {
+    if (!applicationControlAvailability().isEmpty()) return;
     if (*window) { (*window)->show(); if (*window) (*window)->raise(); if (*window) (*window)->activateWindow(); return; }
     QWidget *widget = parent ? parent() : nullptr; if (!guard) return;
     *window = new WorkflowExecutionHistoryDialog(ports, captureBusy, widget); (*window)->show();

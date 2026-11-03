@@ -45,13 +45,62 @@ private slots:
     w.extra = {{"futureSecretReference", "private-fixture"}}; w.actions.append("future-action");
     const auto parsed = parseCaptureWorkflows(workflowsJson(catalog)); QVERIFY(parsed.catalog);
     QCOMPARE(workflowsJson(*parsed.catalog), workflowsJson(catalog));
-    QCOMPARE(workflowAvailability(w, {"save", "image-clipboard"}), QString("workflow-action-unavailable"));
+    QCOMPARE(workflowAvailability(w, {"save", "image-clipboard"}), QString("unsupported-action"));
     const auto snapshot = workflowSnapshot(w); QVERIFY(!snapshot.contains("futureSecretReference")); QCOMPARE(snapshot.value("name"), QJsonValue(w.name));
     w.actions = QStringList{"save"}; w.chooseActions = true; QCOMPARE(workflowActions(w), QStringList({"after-capture-window", "save"}));
     QVERIFY(workflowAvailability(w, {"save"}).isEmpty());
     for (const auto *source : {"full-screen", "monitor", "active-window"}) { w.capture = source; QVERIFY(workflowAvailability(w, {"save"}).isEmpty()); }
     QCOMPARE(captureSourceLabel("active-window"), QString("Active window"));
     w.capture = "recording"; QCOMPARE(workflowAvailability(w, {"save"}), QString("workflow-capture-unavailable"));
+  }
+  void stableIdsAndCompatibleExtensionsSurviveSaveRestartAndResolution() {
+    QTemporaryDir dir; FilePreferenceStorage storage(dir.filePath("workflows.json")); CaptureWorkflowStore store(storage);
+    auto draft = *store.current().catalog; const auto id = draft.defaultId;
+    draft.extra = {{"futureRoot", QJsonObject{{"opaque", "private-root"}}}};
+    auto &workflow = draft.entries[0]; workflow.extra = {{"futureWorkflow", QJsonArray{1, "private-value"}}};
+    workflow.output.extra = {{"futureOutput", QJsonObject{{"enabled", true}}}};
+    workflow.actions = QStringList{"save", "image-clipboard"};
+    QVERIFY(store.save(draft, store.revision()).saved);
+    const auto saved = storage.read().bytes; const auto root = QJsonDocument::fromJson(saved).object();
+    QCOMPARE(root.value("version"), QJsonValue(2));
+    CaptureWorkflowStore reopened(storage); QVERIFY(reopened.current().catalog);
+    QCOMPARE(workflowsJson(*reopened.current().catalog), saved);
+    const auto choice = reopened.resolve(id, implementedCaptureActions()); QVERIFY(choice.workflow);
+    QCOMPARE(choice.workflow->id, id); QCOMPARE(choice.workflow->actions, QStringList({"save", "image-clipboard"}));
+    QCOMPARE(choice.workflow->extra, workflow.extra); QCOMPARE(choice.workflow->output.extra, workflow.output.extra);
+    QCOMPARE(reopened.current().catalog->extra, draft.extra);
+    QVERIFY(!reopened.current().migrationAvailable); QCOMPARE(reopened.current().sourceVersion, 2);
+    QCOMPARE(storage.read().bytes, saved);
+  }
+  void unsupportedActionRejectsTheWholePlanWithoutDroppingOrLeakingIt() {
+    QTemporaryDir dir; FilePreferenceStorage storage(dir.filePath("workflows.json")); CaptureWorkflowStore store(storage);
+    auto draft = *store.current().catalog;
+    draft.entries[0].actions = QStringList{"save", "future-private-action"};
+    draft.entries[0].extra = {{"futurePrivateParameters", "private-value"}};
+    QVERIFY(store.save(draft, store.revision()).saved); const auto saved = storage.read().bytes;
+    const auto choice = store.resolve(draft.defaultId, implementedCaptureActions());
+    QVERIFY(!choice.workflow); QCOMPARE(choice.diagnostic, QString("unsupported-action"));
+    const auto listing = store.discovery(implementedCaptureActions());
+    const auto entry = listing.value("workflows").toArray()[0].toObject();
+    QVERIFY(!entry.value("definitionAvailable").toBool()); QCOMPARE(entry.value("diagnosticCode"), QJsonValue("unsupported-action"));
+    const auto safe = QJsonDocument(listing).toJson(); QVERIFY(!safe.contains("future-private-action")); QVERIFY(!safe.contains("private-value"));
+    QCOMPARE(storage.read().bytes, saved);
+    CaptureWorkflowStore reopened(storage); QCOMPARE(reopened.current().catalog->entries[0].actions, draft.entries[0].actions);
+    // Known catalogue actions can instead be unavailable in this build.
+    auto known = draft.entries[0]; known.actions = QStringList{"save", "image-effects"};
+    QCOMPARE(workflowAvailability(known, implementedCaptureActions()), QString("workflow-action-unavailable"));
+  }
+  void invalidUnselectedDefinitionsRefuseAdmissionBeforeAnyPlanIsReturned() {
+    QTemporaryDir dir; const auto path = dir.filePath("workflows.json");
+    auto draft = defaultCaptureWorkflows(); auto second = draft.entries[0]; second.id = QUuid::createUuid(); second.name = "Other"; draft.entries.append(second);
+    auto root = QJsonDocument::fromJson(workflowsJson(draft)).object(); auto entries = root.value("workflows").toArray();
+    auto malformed = entries[1].toObject(); malformed.insert("actions", QJsonArray{"save", 42}); entries[1] = malformed; root.insert("workflows", entries);
+    const auto original = QJsonDocument(root).toJson(); QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly));
+    QVERIFY(file.setPermissions(QFile::ReadOwner | QFile::WriteOwner)); QCOMPARE(file.write(original), original.size()); file.close();
+    FilePreferenceStorage storage(path); CaptureWorkflowStore store(storage);
+    const auto choice = store.resolve(draft.defaultId, implementedCaptureActions());
+    QVERIFY(!choice.workflow); QCOMPARE(choice.diagnostic, QString("workflow-invalid"));
+    QVERIFY(!store.current().catalog); QCOMPARE(storage.read().bytes, original);
   }
   void invalidDefinitionsAreRejected_data() {
     QTest::addColumn<QString>("mode");
@@ -105,9 +154,14 @@ private slots:
     const auto original = QJsonDocument(root).toJson(); QTemporaryDir dir; const auto path = dir.filePath("legacy.json");
     QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); QVERIFY(file.setPermissions(QFile::ReadOwner | QFile::WriteOwner)); QCOMPARE(file.write(original), original.size()); file.close();
     FilePreferenceStorage storage(path); CaptureWorkflowStore store(storage); QVERIFY(store.current().catalog);
+    QCOMPARE(store.current().sourceVersion, 1); QVERIFY(store.current().migrationAvailable);
+    const auto discovery = store.discovery(implementedCaptureActions());
+    QCOMPARE(discovery.value("definitionVersion"), QJsonValue(1)); QCOMPARE(discovery.value("migration"), QJsonValue("available-on-save"));
     const auto draft = *store.current().catalog; QVERIFY(draft.entries[0].output.directory.isEmpty()); QCOMPARE(draft.entries[0].output.pattern, CaptureOutput{}.pattern);
     QCOMPARE(storage.read().bytes, original); QVERIFY(store.save(draft, store.revision()).saved);
     const auto upgraded = QJsonDocument::fromJson(storage.read().bytes).object(); QCOMPARE(upgraded.value("version"), QJsonValue(2));
+    QVERIFY(!store.current().migrationAvailable); QCOMPARE(store.current().sourceVersion, 2);
+    QCOMPARE(store.discovery(implementedCaptureActions()).value("migration"), QJsonValue("none"));
     const auto parsed = parseCaptureWorkflows(storage.read().bytes); QVERIFY(parsed.catalog); QCOMPARE(parsed.catalog->entries[0].extra.value("futureField"), QJsonValue("keep"));
     entry.insert("output", QJsonObject{{"futureAuthority", true}}); entries[0] = entry; root.insert("workflows", entries);
     const auto conflict = parseCaptureWorkflows(QJsonDocument(root).toJson()); QVERIFY(!conflict.catalog); QCOMPARE(conflict.diagnostic, QString("workflow-upgrade-conflict"));

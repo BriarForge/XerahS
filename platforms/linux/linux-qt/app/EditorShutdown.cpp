@@ -2,26 +2,46 @@
 #include <QApplication>
 #include <QEvent>
 #include <QPointer>
+#include <QScopedValueRollback>
+#include <QScopeGuard>
 #include <QVariant>
 #include <QWidget>
 namespace xerahs::app {
 namespace {
+bool shutdownBlockedByModalWork() {
+  const auto *modal = QApplication::activeModalWidget();
+  // The task editor itself owns a close policy. Its nested confirmation,
+  // picker or worker dialog must finish before shutdown can enter that policy.
+  return modal && !modal->property("xerahsGuardEditorClose").toBool();
+}
+}
+QString closeEditorsForShutdown() {
+  static bool closing = false;
+  if (closing || shutdownBlockedByModalWork()) return QStringLiteral("application-busy");
+  const QScopedValueRollback<bool> guard(closing, true);
+  const bool autoQuit = QApplication::quitOnLastWindowClosed();
+  QApplication::setQuitOnLastWindowClosed(false);
+  const auto restore = qScopeGuard([autoQuit] { QApplication::setQuitOnLastWindowClosed(autoQuit); });
+  QList<QPointer<QWidget>> editors;
+  for (auto *window : QApplication::topLevelWidgets())
+    if (window->property("xerahsGuardEditorClose").toBool()) editors.append(window);
+  if (auto *modal = QApplication::activeModalWidget()) {
+    editors.removeAll(modal); editors.prepend(modal);
+  }
+  for (const auto &editor : editors) {
+    if (shutdownBlockedByModalWork()) return QStringLiteral("application-busy");
+    if (editor && !editor->close()) return QStringLiteral("editor-close-cancelled");
+  }
+  return shutdownBlockedByModalWork() ? QStringLiteral("application-busy") : QString{};
+}
+namespace {
 class EditorQuitGuard final : public QObject {
 public:
   explicit EditorQuitGuard(QObject *parent) : QObject(parent) {}
-  bool closing = false;
   bool eventFilter(QObject *, QEvent *event) override {
     if (event->type() != QEvent::Quit) return false;
-    if (closing) { event->ignore(); return true; }
-    closing = true;
-    const auto windows = QApplication::topLevelWidgets();
-    QList<QPointer<QWidget>> editors;
-    for (auto *window : windows)
-      if (window->isVisible() && window->property("xerahsGuardEditorClose").toBool()) editors.append(window);
-    for (const auto &editor : editors) if (editor && !editor->close()) {
-      closing = false; event->ignore(); return true;
-    }
-    closing = false; return false;
+    if (closeEditorsForShutdown().isEmpty()) return false;
+    event->ignore(); return true;
   }
 };
 }

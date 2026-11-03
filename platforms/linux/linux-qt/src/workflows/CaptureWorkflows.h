@@ -34,7 +34,13 @@ struct CaptureWorkflows {
   QUuid defaultId;
   QJsonObject extra;
 };
-struct WorkflowRead { std::optional<CaptureWorkflows> catalog; QString diagnostic; };
+struct WorkflowRead {
+  std::optional<CaptureWorkflows> catalog;
+  QString diagnostic;
+  int sourceVersion = 2;
+  // Reading older definitions never rewrites storage; an explicit Save migrates.
+  bool migrationAvailable = false;
+};
 CaptureWorkflows defaultCaptureWorkflows();
 QStringList implementedCaptureActions();
 // CORE-014: the capture sources a saved workflow can start.

@@ -6,6 +6,7 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QUuid>
 using namespace xerahs::recording;
 namespace {
 Request request(const QString &folder = "/tmp") { Request r; r.folder = folder; r.filename = "recording.mp4"; return r; }
@@ -94,6 +95,59 @@ private slots:
     QCOMPARE(s.state(), State::Completed); QCOMPARE(result.size(), 1);
     Session failed; QSignalSpy error(&failed, &Session::finished); failed.send(Event::Request); failed.send(Event::Error, "/private/error");
     QCOMPARE(error.first().at(1).toString(), QString("encoder-failed"));
+  }
+  void targetedControlsAreIdempotentAndKeepThePublishedOutput() {
+    QTemporaryDir folder; Session session, stale;
+    QVERIFY(!QUuid(session.id()).isNull()); QVERIFY(session.id() != stale.id());
+    for (auto e : {Event::Request, Event::Granted, Event::Started}) QVERIFY(session.send(e));
+    const auto wrong = session.control(stale.id(), Event::Stop);
+    QVERIFY(!wrong.accepted); QCOMPARE(wrong.diagnostic, QString("stale-recording-session")); QCOMPARE(session.state(), State::Recording);
+    QCOMPARE(session.control(session.id(), Event::Resume).changed, false);
+    QVERIFY(session.control(session.id(), Event::Pause).changed);
+    QVERIFY(session.control(session.id(), Event::Pause).accepted);
+    QVERIFY(!session.control(session.id(), Event::Pause).changed);
+    QSignalSpy finished(&session, &Session::finished), changed(&session, &Session::changed);
+    const auto stopped = session.control(session.id(), Event::Stop);
+    QVERIFY(stopped.accepted); QVERIFY(stopped.changed); QCOMPARE(stopped.state, State::Stopping);
+    const auto repeated = session.control(session.id(), Event::Stop);
+    QVERIFY(repeated.accepted); QVERIFY(!repeated.changed); QCOMPARE(changed.size(), 1); QCOMPARE(finished.size(), 0);
+    Output output; auto r = request(folder.path()); QVERIFY(output.reserve(r).isEmpty());
+    FakeEncoderPort encoder; QVERIFY(encoder.begin(output.temporary())); QVERIFY(encoder.finalize());
+    QVERIFY(session.finalize(output));
+    const auto result = session.control(session.id(), Event::Stop);
+    const auto again = session.control(session.id(), Event::Stop);
+    QVERIFY(result.accepted); QVERIFY(!result.changed); QCOMPARE(result.output, output.destination());
+    QCOMPARE(again.output, result.output); QCOMPARE(again.sessionId, result.sessionId); QCOMPARE(finished.size(), 1);
+    QVERIFY(!session.control(session.id(), Event::Pause).accepted);
+    QVERIFY(!session.control(stale.id(), Event::Stop).accepted);
+  }
+  void encoderFailureRetainsPrivatePartialMediaButAbortDiscards() {
+    QTemporaryDir folder; QVERIFY(folder.isValid()); QString retained;
+    {
+      Output output; Session session; auto r = request(folder.path()); QVERIFY(output.reserve(r).isEmpty());
+      FakeEncoderPort encoder; QVERIFY(encoder.begin(output.temporary()));
+      for (auto e : {Event::Request, Event::Granted, Event::Started}) QVERIFY(session.send(e));
+      QVERIFY(session.fail(output, "encoder-failed")); retained = session.result().recoverableOutput; QVERIFY(!retained.isEmpty());
+      const auto result = session.result(); QCOMPARE(result.state, State::Failed); QVERIFY(result.output.isEmpty());
+      QCOMPARE(result.recoverableOutput, retained); QVERIFY(result.cleanupRequired); QCOMPARE(result.diagnostic, QString("encoder-failed"));
+      QVERIFY(!QFile::exists(output.destination())); QVERIFY(output.temporary().isEmpty());
+      QFile file(retained); QVERIFY(file.open(QIODevice::ReadOnly)); QCOMPARE(file.readAll(), QByteArray("partial"));
+      QCOMPARE(file.permissions() & (QFileDevice::ReadGroup | QFileDevice::WriteGroup | QFileDevice::ReadOther | QFileDevice::WriteOther), QFileDevice::Permissions{});
+      r.filename = "next.mp4"; QVERIFY(output.reserve(r).isEmpty()); output.abort();
+    }
+    QVERIFY(QFile::exists(retained)); // Neither a new session nor destruction deletes recovery data.
+    {
+      Output output; auto r = request(folder.path()); r.filename = "abort.mp4"; QVERIFY(output.reserve(r).isEmpty());
+      const auto partial = output.temporary(); FakeEncoderPort encoder; QVERIFY(encoder.begin(partial));
+      Session session; for (auto e : {Event::Request, Event::Granted, Event::Started}) QVERIFY(session.send(e));
+      QSignalSpy finished(&session, &Session::finished);
+      QVERIFY(session.control(session.id(), Event::Abort).accepted); output.abort();
+      QVERIFY(session.control(session.id(), Event::Abort).accepted); QCOMPARE(finished.size(), 1);
+      QVERIFY(!QFile::exists(partial)); QVERIFY(!QFile::exists(output.destination()));
+      QVERIFY(session.result().recoverableOutput.isEmpty()); QVERIFY(!session.result().cleanupRequired);
+    }
+    Output empty; auto r = request(folder.path()); r.filename = "empty.mp4"; QVERIFY(empty.reserve(r).isEmpty());
+    const auto temporary = empty.temporary(); QVERIFY(empty.retainFailure().isEmpty()); QVERIFY(!QFile::exists(temporary));
   }
   void validationAndNaming() {
     auto r = request(); QVERIFY(validate(r).isEmpty()); QCOMPARE(r.frameRate, 30);

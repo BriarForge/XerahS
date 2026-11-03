@@ -1,4 +1,5 @@
 #include "CaptureActions.h"
+#include "CaptureFileOutput.h"
 #include "workflows/CaptureWorkflows.h"
 #include "EditorCanvasOperations.h"
 #include "EditorPrint.h"
@@ -29,7 +30,8 @@ using namespace xerahs::actions;
 namespace {
 
 ActionOutcome failed(const QString &diagnostic) {
-  return ActionOutcome{ActionState::Failed, diagnostic, std::nullopt};
+  auto out = ActionOutcome{ActionState::Failed, diagnostic, std::nullopt};
+  out.failureClass = classifyFailure(diagnostic); return out;
 }
 
 }  // namespace
@@ -109,8 +111,9 @@ ActionOutcome CaptureActions::recognize(ImageRecognitionKind kind, const Cancell
 }
 ActionOutcome CaptureActions::copyRecognizedText(const CancellationToken &cancellation) {
   if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
-  if (m_recognizedText.isEmpty()) return {ActionState::Succeeded, QStringLiteral("ocr-no-text"), {}};
-  return m_ports.textClipboard ? m_ports.textClipboard(m_recognizedText, cancellation) : failed("clipboard-unavailable");
+  if (!m_recognizedText) return failed("unsupported-content");
+  if (m_recognizedText->isEmpty()) return {ActionState::Succeeded, QStringLiteral("ocr-no-text"), {}};
+  return m_ports.textClipboard ? m_ports.textClipboard(*m_recognizedText, cancellation) : copyTextToNativeClipboard(*m_recognizedText);
 }
 ActionOutcome CaptureActions::showNativeRecognition(ImageRecognitionKind kind, const QStringList &values) {
   const auto *application = qobject_cast<QApplication *>(QCoreApplication::instance());
@@ -203,23 +206,28 @@ ActionOutcome CaptureActions::upload(const ActionRequest &request) {
   const auto built = buildUploadRequest(*destination, input, *credentials);
   if (request.cancellation.requested()) return {ActionState::Cancelled, {}, {}};
   if (!built.request) return failure(built.code, built.errorMessage);
-  QNetworkAccessManager manager; UploadExecutor executor(&manager); QEventLoop loop; QTimer cancellation;
+  QNetworkAccessManager manager; UploadExecutor executor(&manager, nullptr, qBound(1, m_ports.uploadTimeoutMs, 60000)); QEventLoop loop; QTimer cancellation;
   cancellation.setInterval(10);
   UploadOutcome response;
   QObject::connect(&executor, &UploadExecutor::finished, &loop, [&](const UploadOutcome &out) { response = out; loop.quit(); });
   QObject::connect(&cancellation, &QTimer::timeout, &executor, [&] { if (request.cancellation.requested()) executor.cancel(); });
   cancellation.start(); executor.start(*built.request); loop.exec();
   if (response.code == "cancelled") return {ActionState::Cancelled, {}, {}};
-  if (!response.code.isEmpty()) return failure(response.code, response.errorMessage);
+  if (!response.code.isEmpty()) {
+    auto out = failure(response.code, response.errorMessage);
+    out.failureClass = classifyFailure(response.code, response.httpStatus); return out;
+  }
   m_uploadUrl = response.url;
   ActionOutcome out; out.upload = UploadResult{response.url, response.thumbnailUrl, response.deletionUrl, {}}; return out;
 }
 
 // PCA-024: only the upload URL, as plain text; a clipboard failure fails this action alone.
 ActionOutcome CaptureActions::copyUrl(const CancellationToken &cancellation) {
+  if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
   if (m_uploadUrl.isEmpty()) return failed("upload-url-unavailable");
   if (m_ports.textClipboard) return m_ports.textClipboard(m_uploadUrl, cancellation);
-  return copyTextToNativeClipboard(m_uploadUrl);
+  auto prepared = std::make_unique<QMimeData>(); prepared->setText(m_uploadUrl);
+  return publishWorkflowClipboard(std::move(prepared), WorkflowClipboardFormat::Url);
 }
 
 ActionOutcome CaptureActions::annotate(const CancellationToken &cancellation) {
@@ -297,6 +305,8 @@ ActionOutcome CaptureActions::save(const CancellationToken &cancellation) {
 }
 
 ActionOutcome CaptureActions::copyImage(const CancellationToken &cancellation) {
+  if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
+  if (m_media.isNull()) return failed("unsupported-content");
   if (m_ports.clipboard) return m_ports.clipboard(m_media, cancellation);
   return copyImageToNativeClipboard(m_media);
 }
@@ -344,14 +354,9 @@ ActionOutcome CaptureActions::removeFile(const ActionRequest &request) {
 }
 
 ActionOutcome CaptureActions::copyImageToNativeClipboard(const QImage &media) {
-  const auto *application = qobject_cast<QGuiApplication *>(QCoreApplication::instance());
-  if (!application || QThread::currentThread() != application->thread()) return failed(QStringLiteral("clipboard-unavailable"));
-  QClipboard *clipboard = QGuiApplication::clipboard();
-  clipboard->setImage(media);
-  // CORE-007: report success only when this process actually owns the
-  // clipboard afterwards.
-  if (!clipboard->ownsClipboard()) return failed(QStringLiteral("clipboard-unavailable"));
-  return ActionOutcome{ActionState::Succeeded, std::nullopt, std::nullopt};
+  if (media.isNull()) return failed("unsupported-content");
+  auto prepared = std::make_unique<QMimeData>(); prepared->setImageData(media);
+  return publishWorkflowClipboard(std::move(prepared), WorkflowClipboardFormat::Image);
 }
 
 ActionOutcome CaptureActions::pinToNativeScreen(const QImage &media) {
@@ -371,12 +376,8 @@ ActionOutcome CaptureActions::printNativeImage(const LoadedSource &source) {
 }
 
 ActionOutcome CaptureActions::copyTextToNativeClipboard(const QString &text) {
-  const auto *application = qobject_cast<QGuiApplication *>(QCoreApplication::instance());
-  if (!application || QThread::currentThread() != application->thread()) return failed(QStringLiteral("clipboard-unavailable"));
-  QClipboard *clipboard = QGuiApplication::clipboard();
-  clipboard->setText(text);
-  if (!clipboard->ownsClipboard()) return failed(QStringLiteral("clipboard-unavailable"));
-  return ActionOutcome{ActionState::Succeeded, std::nullopt, std::nullopt};
+  auto prepared = std::make_unique<QMimeData>(); prepared->setText(text);
+  return publishWorkflowClipboard(std::move(prepared), WorkflowClipboardFormat::Text);
 }
 
 }  // namespace xerahs::app

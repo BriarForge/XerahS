@@ -7,6 +7,7 @@
 #include <QThread>
 #include <QTimer>
 #include <QUuid>
+#include <QDebug>
 #include <condition_variable>
 #include <mutex>
 #include <stdexcept>
@@ -16,6 +17,11 @@ QJsonObject CapturePipelineResult::canonicalResult() const {
   std::vector<SavedFileArtifact> facts; for (const auto &saved : savedFiles()) facts.push_back(saved);
   return pipelineResultJson(pipeline, facts);
 }
+QJsonObject CapturePipelineResult::terminalObservation() const {
+  std::vector<SavedFileArtifact> facts; for (const auto &saved : savedFiles()) facts.push_back(saved);
+  return pipelineObservationJson(pipeline, facts);
+}
+QString CapturePipelineResult::terminalText() const { return pipelineObservationText(terminalObservation()); }
 std::vector<CaptureFile> CapturePipelineResult::savedFiles() const { return files.empty() && file ? std::vector<CaptureFile>{*file} : files; }
 PipelineRetryPlan CapturePipelineResult::retryPlan() const {
   if (pipeline.finalWorkingMedia == "annotation" && !annotationDocument) return {{}, {}, "retry-media-unavailable"};
@@ -470,6 +476,12 @@ void CapturePipeline::poll() {
   { std::lock_guard<std::mutex> lock(state->mutex); ready = state->ready; }
   if (!ready) return;
   m_timer->stop(); m_finished = true;
+  // The same privacy-safe facts reach the log, progress and notification;
+  // private history details retain the mapping from references to real outputs.
+  const auto observation = state->result->terminalObservation();
+  qInfo().noquote() << "Workflow terminal" << pipelineObservationText(observation);
+  emit terminalObserved(observation); if (!guard) return;
+  emit activityChanged(pipelineObservationText(observation)); if (!guard) return;
   emit finished(CapturePipelineReceipt(state->result));
 }
 } // namespace xerahs::app

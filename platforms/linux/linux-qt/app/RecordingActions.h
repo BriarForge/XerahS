@@ -17,7 +17,7 @@ public:
   QMap<QString, QAction *> actions() const { return m_actions; }
   // Registration order, which is the tray order within the Record group.
   QList<QAction *> orderedActions() const { return m_ordered; }
-  void start(recording::Format format, bool region = false);
+  void start(recording::Format format, bool region = false, QString origin = QStringLiteral("native-shell"));
   void setInputs(std::function<QJsonObject()> settings, std::function<void(std::function<void(QRectF)>)> selectRegion) {
     m_settings = std::move(settings); m_selectRegion = std::move(selectRegion);
   }

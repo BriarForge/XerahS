@@ -33,7 +33,7 @@ QByteArray serializePipelineJournal(const PipelineJournalSnapshot &snapshot) {
   auto result = snapshot.result;
   if (!snapshot.terminal) result.state = PipelineState::Interrupted;
   result.workingMediaRetained = false;
-  QJsonObject value{{"format", format}, {"version", snapshot.deletionRecovery ? 2 : 1}, {"task_id", result.taskId},
+  QJsonObject value{{"format", format}, {"version", 3}, {"task_id", result.taskId},
       {"created_at", snapshot.createdAt.toUTC().toString(Qt::ISODateWithMs)},
       {"selected_actions", QJsonArray::fromStringList(snapshot.selected)}, {"terminal", snapshot.terminal},
       {"result", pipelineResultJson(result, snapshot.files)}};
@@ -51,11 +51,11 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
   if (error.error != QJsonParseError::NoError || !document.isObject()) return invalid();
   const auto value = document.object();
   if (value.value("format") != format) return invalid();
-  if (value.value("version") != QJsonValue(1) && value.value("version") != QJsonValue(2))
+  if (value.value("version") != QJsonValue(1) && value.value("version") != QJsonValue(2) && value.value("version") != QJsonValue(3))
     return {{}, QStringLiteral("pipeline-journal-version-unsupported")};
   // Recovery-bearing records use a new wire version so older binaries refuse
   // to forget metadata they cannot interpret. Ordinary v1 history stays valid.
-  if ((value.value("version") == QJsonValue(2)) != value.contains("deletion_recovery")) return invalid();
+  if (value.value("version") != QJsonValue(3) && ((value.value("version") == QJsonValue(2)) != value.contains("deletion_recovery"))) return invalid();
   if (value.value("task_id") != expectedTaskId || !timeValue(value.value("created_at")) ||
       !value.value("terminal").isBool() || !value.value("selected_actions").isArray() || !value.value("result").isObject()) return invalid();
   RecoveredPipelineJournal record;
@@ -81,6 +81,8 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
     const auto actionState = action.value("state").toString();
     if (!index || *index <= previous || !record.selected.contains(id) ||
         (actionState != "succeeded" && actionState != "failed" && actionState != "cancelled" && actionState != "skipped")) return invalid();
+    if (action.contains("failure_class") && (value.value("version") != QJsonValue(3) || actionState != "failed" ||
+        !parseFailureClass(action.value("failure_class").toString()))) return invalid();
     previous = *index; completed.insert(id);
     if (record.selected.value(completed.size() - 1) != id) return invalid();
     for (const auto *key : {"diagnostic", "missing_artifact", "input_artifact"})
@@ -170,9 +172,36 @@ PipelineJournalParse parsePipelineJournal(const QByteArray &bytes, const QString
         (state != "pending" && state != "retained" && state != "restored" && state != "removed")) return invalid();
     record.deletionRecovery = DeletionRecovery{recovery.value("original_path").toString(), recovery.value("staging_path").toString(), state};
   }
+  // Rebuild the public observation from validated facts. A journal cannot
+  // inject a misleading success, a private payload or a forged output reference
+  // into notifications/history merely by supplying an extension object.
+  PipelineResult observed; observed.taskId = expectedTaskId;
+  observed.state = state == "cancelled" ? PipelineState::Cancelled : state == "interrupted" ? PipelineState::Interrupted : PipelineState::Completed;
+  for (const auto &entry : record.report.value("ordered_results").toArray()) {
+    const auto fact = entry.toObject(); ActionResult action; action.action = fact.value("action").toString();
+    const auto state = fact.value("state").toString();
+    action.state = state == "succeeded" ? ActionState::Succeeded : state == "failed" ? ActionState::Failed : state == "cancelled" ? ActionState::Cancelled : ActionState::Skipped;
+    if (fact.contains("diagnostic")) action.diagnostic = fact.value("diagnostic").toString();
+    if (fact.contains("failure_class")) action.failureClass = parseFailureClass(fact.value("failure_class").toString());
+    for (const auto &entry : metadata.value("artifact_outcomes").toArray()) {
+      const auto artifact = entry.toObject();
+      if (artifact.value("action") == action.action && artifact.value("state") == "succeeded")
+        action.artifacts.push_back({artifact.value("artifact").toString(), ActionState::Succeeded, {}, artifact.value("absent").toBool()});
+    }
+    observed.orderedResults.push_back(action);
+  }
+  std::vector<SavedFileArtifact> observedFiles;
+  for (const auto &entry : metadata.value("file_artifacts").toArray()) {
+    const auto fact = entry.toObject(); SavedFileArtifact file;
+    file.artifact = fact.value("artifact").toString(); file.creatorTaskId = fact.value("creator_task_id").toString();
+    observedFiles.push_back(file);
+  }
+  const auto publicObservation = pipelineObservationJson(observed, observedFiles);
+  if (metadata.contains("terminal_observation") && metadata.value("terminal_observation") != publicObservation) return invalid();
   // Recovery never invents an action failure or repeats external work. An
   // unacknowledged network action, like any pending action, has unknown outcome.
   auto extensions = record.report.value("extensions").toObject(); auto native = metadata;
+  native.insert("terminal_observation", publicObservation);
   QJsonObject recovery{{"schema_version", 1}, {"terminal", record.terminal}};
   if (record.pendingAction) recovery.insert("unknown_action", *record.pendingAction);
   if (record.pendingSavePath) recovery.insert("unconfirmed_save_path", *record.pendingSavePath);

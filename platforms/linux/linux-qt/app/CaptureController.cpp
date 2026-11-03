@@ -662,52 +662,19 @@ void CaptureController::connectPipeline(CapturePipeline *pipeline) {
 }
 
 void CaptureController::publishPipeline(const CapturePipelineReceipt &receipt, bool executionConfirmed) {
-  const auto &result = receipt->pipeline;
-
-  QStringList done;
-  QStringList failed;
-  if (!m_lastRegionDiagnostic.isEmpty()) failed.append(m_lastRegionDiagnostic);
-  for (const auto &action : result.orderedResults) {
-    const auto label = CaptureActions::actionLabel(action.action);
-    if (action.state == xerahs::actions::ActionState::Succeeded) {
-      if (action.action == "save" || action.action == "save-as") {
-        for (const auto &file : receipt->savedFiles()) if (file.artifact == action.action + ".file")
-          done.append(QStringLiteral("Saved %1").arg(QFileInfo(file.path).fileName()));
-      } else if (action.action == "upload" && result.upload) {
-        done.append(result.upload->url);
-      } else if (action.action == QStringLiteral("image-clipboard")) {
-        done.append(QStringLiteral("copied to clipboard"));
-      } else if (action.action == "file-clipboard") done.append(QStringLiteral("copied image file"));
-      else if (action.action == "path-clipboard") done.append(QStringLiteral("copied file path"));
-      else if (action.action == "reveal") done.append(QStringLiteral("file manager acknowledged the show request"));
-      else if (action.action == "delete") done.append(QStringLiteral("deleted the saved capture file; retained pixels are kept"));
-      if (action.cancellationArrivedDuring) done.append(QStringLiteral("%1 finished after cancellation was requested").arg(label));
-    } else {
-      if (xerahs::actions::hasAcknowledgedPartialRaster(action.action, action.state, action.artifacts)) {
-        for (const auto &file : receipt->savedFiles()) if (file.artifact == action.action + ".file")
-          done.append(QStringLiteral("PNG saved as %1; editable companion failed and document is retained").arg(QFileInfo(file.path).fileName()));
-      }
-      if (action.action == "save" && action.diagnostic && action.diagnostic->startsWith("counter-")) {
-        for (const auto &file : receipt->savedFiles()) if (file.artifact == "save.file")
-          done.append(QStringLiteral("PNG saved as %1; filename counter update failed. The saved file is kept; review counter storage before capturing again").arg(QFileInfo(file.path).fileName()));
-      }
-      auto description = label + QStringLiteral(" ") + xerahs::actions::actionStateName(action.state);
-      if (action.diagnostic) description += QStringLiteral(" (%1)").arg(*action.diagnostic);
-      if (action.action == "upload" && result.upload && !result.upload->errorMessage.isEmpty())
-        description += ": " + result.upload->errorMessage;
-      failed.append(description);
-    }
-  }
+  const auto observation = receipt->terminalObservation();
+  const auto terminal = observation.value("state").toString();
   const QString size = QStringLiteral("%1 × %2").arg(receipt->workingMedia.width()).arg(receipt->workingMedia.height());
-  QString body = done.join(QStringLiteral(", "));
-  if (body.isEmpty() && failed.isEmpty() && !receipt->file) body = QStringLiteral("Captured image kept in memory.");
-  if (!failed.isEmpty()) body += (body.isEmpty() ? QString() : QStringLiteral("; ")) + failed.join(QStringLiteral("; "));
-  if (!receipt->diagnostic.isEmpty()) body += QStringLiteral("; ") + receipt->diagnostic;
-  if (!executionConfirmed) body += QStringLiteral("; Workflow execution storage could not confirm the outcome. Completed outputs remain in capture result history; check before retrying.");
-  const auto title = result.state == xerahs::actions::PipelineState::Cancelled ? QStringLiteral("Capture actions cancelled · %1") :
-      result.state == xerahs::actions::PipelineState::Interrupted ? QStringLiteral("Capture actions interrupted · %1") :
-      result.retry ? QStringLiteral("Capture actions retried · %1") : sourceTitle(QStringLiteral("captured · %1"));
-  emit notify(title.arg(size), body, executionConfirmed && failed.isEmpty() && receipt->diagnostic.isEmpty());
+  // Notifications share opaque references with history/progress/logs. Paths,
+  // clipboard/OCR payloads and remote error bodies stay out of desktop notices.
+  QString body = receipt->terminalText();
+  if (!m_lastRegionDiagnostic.isEmpty()) body += "; Last-region storage needs review.";
+  if (!receipt->diagnostic.isEmpty()) body += "; Capture result storage needs review.";
+  if (!executionConfirmed) body += "; Workflow execution storage could not confirm the outcome. Check capture result history before retrying.";
+  const auto title = terminal == "succeeded" ? sourceTitle(QStringLiteral("captured · %1")).arg(size) :
+      QStringLiteral("Capture actions %1 · %2").arg(terminal, size);
+  emit notify(title, body, executionConfirmed && terminal == "succeeded" &&
+      receipt->diagnostic.isEmpty() && m_lastRegionDiagnostic.isEmpty());
 }
 
 void CaptureController::closeOverlays() {

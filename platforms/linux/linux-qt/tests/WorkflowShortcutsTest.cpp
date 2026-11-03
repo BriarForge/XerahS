@@ -191,6 +191,8 @@ private slots:
     connect(&actions, &WorkflowShortcutActions::notify, &window, [&window](const QString &body, bool ok) { window.showResult("Workflow shortcuts", body, ok); });
     QSignalSpy invoked(&actions, &WorkflowShortcutActions::workflowRequested); window.show(); auto *button = window.findChild<QToolButton *>("enable-workflow-shortcuts"); QVERIFY(button); button->setFocus(); QTest::keyClick(button, Qt::Key_Space); QCOMPARE(desktop.creates, 0); QVERIFY(window.findChild<QLabel *>("operationStatus")->text().contains("busy"));
     busy = false; QTest::keyClick(button, Qt::Key_Space); QTRY_VERIFY(actions.enableAction()->text().startsWith("Configure")); QVERIFY(actions.disableAction()->isEnabled());
+    busy = true; actions.disableAction()->trigger(); QVERIFY(actions.disableAction()->isEnabled()); QVERIFY(!desktop.closed.contains(desktop.session));
+    QVERIFY(window.findChild<QLabel *>("operationStatus")->text().contains("busy")); busy = false;
     desktop.press(plan().entries[0].id); QTRY_COMPARE(invoked.count(), 1); actions.invalidate(); QVERIFY(!actions.disableAction()->isEnabled()); QVERIFY(actions.enableAction()->isEnabled()); QTRY_VERIFY(desktop.closed.contains(desktop.session));
     actions.enableAction()->trigger(); QTRY_VERIFY(actions.enableAction()->text().startsWith("Configure")); QCOMPARE(desktop.creates, 2); actions.disableAction()->trigger(); QVERIFY(!actions.disableAction()->isEnabled());
     QVERIFY(window.findChild<QLabel *>("operationStatus")->text().contains("disabled"));

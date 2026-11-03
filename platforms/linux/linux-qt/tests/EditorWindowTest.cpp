@@ -2,6 +2,8 @@
 // PNG/sidecar reopening. All images and files are temporary fixtures.
 #include "EditorWindow.h"
 #include "image-editor/ToolbarPreferences.h"
+#include "EditorShutdown.h"
+#include "ApplicationControl.h"
 #include "EditorSaveDialog.h"
 #include "EditorCanvas.h"
 #include "CanvasCropDialog.h"
@@ -248,6 +250,38 @@ private slots:
   }
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  void applicationQuitUsesDirtyEditorClosePolicyAndBlocksModalWork() {
+    QTemporaryDir folder; QVERIFY(folder.isValid());
+    QVERIFY(initializeNativeEditorPreferences(folder.filePath("preferences.json")).isEmpty());
+    QPointer<EditorWindow> window(EditorWindow::fromCapturedImage(fixture())); QVERIFY(window);
+    window->show(); QVERIFY(window->windowTitle().contains(" •"));
+    QCOMPARE(applicationControlAvailability(false, false), QString("presentation-required"));
+    QCOMPARE(applicationControlAvailability(true), QString("application-busy"));
+    QDialog modal; modal.setWindowModality(Qt::ApplicationModal); modal.show();
+    QCOMPARE(applicationControlAvailability(), QString("application-busy"));
+    QCOMPARE(closeEditorsForShutdown(), QString("application-busy"));
+    QVERIFY(window->isVisible()); modal.hide();
+    bool asked = false; QTimer cancel;
+    connect(&cancel, &QTimer::timeout, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return;
+      asked = true; QCOMPARE(box->windowTitle(), QString("Unsaved changes"));
+      QCOMPARE(closeEditorsForShutdown(), QString("application-busy"));
+      box->done(QMessageBox::Cancel);
+    }); cancel.start(1);
+    QCOMPARE(closeEditorsForShutdown(), QString("editor-close-cancelled")); cancel.stop();
+    QVERIFY(asked); QVERIFY(window); QVERIFY(window->isVisible()); QVERIFY(window->windowTitle().contains(" •"));
+    asked = false; cancel.start(1);
+    QEvent quit(QEvent::Quit); QCoreApplication::sendEvent(qApp, &quit); cancel.stop();
+    QVERIFY(asked); QVERIFY(!quit.isAccepted()); QVERIFY(window); QVERIFY(window->isVisible());
+    // Hidden dirty editors remain subject to the same destructive confirmation.
+    window->hide(); asked = false; QTimer discard;
+    connect(&discard, &QTimer::timeout, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return;
+      asked = true; QCOMPARE(box->windowTitle(), QString("Unsaved changes")); box->done(QMessageBox::Discard);
+    }); discard.start(1);
+    QVERIFY(closeEditorsForShutdown().isEmpty()); discard.stop(); QVERIFY(asked);
+    delete window.data();
+  }
   void emptySaveWithBaselineCompanionReportsFailureWithoutDeletingEitherCompanion_data() {
     QTest::addColumn<bool>("keepDefault"); QTest::addColumn<bool>("lateAlias"); QTest::newRow("default-and-baseline") << true << false; QTest::newRow("baseline-only") << false << false; QTest::newRow("late-baseline") << true << true;
   }

@@ -23,6 +23,8 @@ struct CapturePipelineResult {
   // failure. Retry never reads the current preferences or decodes a saved path.
   QString saveDirectory, filenamePattern;
   QJsonObject canonicalResult() const;
+  QJsonObject terminalObservation() const;
+  QString terminalText() const;
   xerahs::actions::PipelineRetryPlan retryPlan() const;
   std::vector<CaptureFile> savedFiles() const;
 };
@@ -43,6 +45,7 @@ public:
   void cancel();
 signals:
   void activityChanged(const QString &text);
+  void terminalObserved(const QJsonObject &observation);
   void finished(const xerahs::app::CapturePipelineReceipt &result);
   void choosingActions();
 private:

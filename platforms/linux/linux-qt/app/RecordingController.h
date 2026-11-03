@@ -14,13 +14,15 @@ namespace xerahs::app {
 class RecordingController : public QObject {
   Q_OBJECT
 public:
-  explicit RecordingController(QObject *parent = nullptr);
+  explicit RecordingController(QObject *parent = nullptr, workflows::WorkflowExecution::Writer writer = {});
   ~RecordingController() override;
   QString unavailable(recording::Format format) const;
   bool busy() const;
   recording::State state() const;
+  QString sessionId() const { return m_session ? m_session->id() : QString{}; }
+  recording::ControlResult control(const QString &sessionId, recording::Event event);
   QString indicator() const;
-  void start(recording::Request request);
+  void start(recording::Request request, const QString &origin = QStringLiteral("native-shell"));
   void pauseResume();
   void stop();
   void abort();
@@ -36,7 +38,9 @@ private:
   void poll();
   void withoutAudio();
   void fail(const QString &code);
+  void stopEncoder();
   void teardown();
+  workflows::WorkflowExecution::Writer m_writer;
   RecordingDevices m_devices;
   QRectF m_streamDesktop;
   bool m_audioActive = false;

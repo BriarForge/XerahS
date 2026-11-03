@@ -33,7 +33,7 @@ private slots:
     const auto id = uuid(); WorkflowExecution execution(id, "native-shell", w, store.writer()); QVERIFY(execution.admit()); QVERIFY(execution.start()); QVERIFY(execution.finish("cancelled"));
     const auto result = store.result(id); QVERIFY(result.value("ok").toBool()); QCOMPARE(result.value("state"), QJsonValue("cancelled"));
     // A readable observation is not execution authority for an unknown action.
-    if (action == "future-native-action") QCOMPARE(workflowAvailability(w, implementedCaptureActions()), QString("workflow-action-unavailable"));
+    if (action == "future-native-action") QCOMPARE(workflowAvailability(w, implementedCaptureActions()), QString("unsupported-action"));
     QVERIFY(!result.contains("settings"));
     const auto path = dir.filePath("records/" + id + ".json"); const auto before = read(path);
     NativeWorkflowExecutions reopened(dir.filePath("records")); QCOMPARE(reopened.result(id), result); QCOMPARE(read(path), before);
@@ -72,6 +72,11 @@ private slots:
       PipelineResult result; result.taskId = pipelineId;
       result.state = mode == "cancel" ? PipelineState::Cancelled : mode == "interrupt" ? PipelineState::Interrupted : PipelineState::Completed;
       ActionResult step; step.action = "save"; step.state = mode == "partial" ? ActionState::Failed : ActionState::Succeeded; step.diagnostic = "private-exception-text"; result.orderedResults.push_back(step);
+      if (mode == "partial") {
+        result.orderedResults[0].state = ActionState::Succeeded;
+        ActionResult upload; upload.action = "upload"; upload.state = ActionState::Failed; upload.failureClass = FailureClass::PermanentFailure;
+        result.orderedResults.push_back(upload);
+      }
       QVERIFY(execution.complete(result)); expected = mode == "partial" ? "partial" : mode == "cancel" ? "cancelled" : mode == "interrupt" ? "interrupted" : "succeeded";
     }
     const auto query = store.result(id); QCOMPARE(query.value("state"), QJsonValue(expected)); QVERIFY(query.value("terminal").toBool()); QVERIFY(query.contains("finishedAt"));
@@ -146,7 +151,7 @@ private slots:
       if (mode != "unconfirmed") QVERIFY(execution.finish("permission-denied", "capture-permission-denied"));
     }
     if (mode == "corrupt") write(path, "{private-secret");
-    if (mode == "newer") { auto object = QJsonDocument::fromJson(read(path)).object(); object.insert("version", 2); write(path, QJsonDocument(object).toJson()); }
+    if (mode == "newer") { auto object = QJsonDocument::fromJson(read(path)).object(); object.insert("version", 999); write(path, QJsonDocument(object).toJson()); }
     if (mode == "unsafe") QVERIFY(QFile::setPermissions(path, QFile::ReadOwner | QFile::WriteOwner | QFile::ReadGroup));
     if (mode == "symlink") { const auto target = dir.filePath("private-record"); QVERIFY(QFile::rename(path, target)); QVERIFY(QFile::link(target, path)); }
     const auto before = read(path); QStringList args{"--workflow-result", mode == "invalid-id" ? "private-secret" : mode == "empty" ? "" : id, "--non-interactive", "--json"};

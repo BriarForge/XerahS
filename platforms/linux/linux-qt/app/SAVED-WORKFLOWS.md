@@ -40,10 +40,23 @@ the initial **Save and copy image** profile without writing until explicit Save.
 Qt Core production logic validates at most 64 profiles, 1–128-character names,
 128 action IDs per profile, default membership, UUID uniqueness, JSON types and
 the 1 MiB storage limit. Compatible unknown fields/actions/capture types survive
-round-trip. Unknown actions are visible as unavailable; unsupported definitions
-cannot run. Corrupt/newer/unsafe files are preserved read-only. Revision and
+round-trip. Unknown actions are visible as unavailable and return `unsupported-action`
+before admission; known catalogue actions missing from the build instead return
+`workflow-action-unavailable`. Unsupported definitions cannot run. The entire
+catalogue is structurally validated before resolving any selected profile, and
+the selected profile's capture, output pattern and every action are validated
+before acquisition. Corrupt/newer/unsafe files are preserved read-only. Revision and
 exact-byte checks reject stale writes/runs until Reload. The existing private
 atomic storage port supplies locking, permissions and compare-and-replace.
+
+The Linux reference edition has saved capture profiles and the built-in initial
+default; it has no separate workflow-preset import/export surface. Image-effect
+presets are a separate family. Version 1 reads explicitly report an available
+Save migration in discovery and the manager; reading or closing leaves the
+original bytes intact. Discovery reports `definitionVersion` and `migration`
+(`available-on-save` or `none`). Unknown root, workflow and output fields remain
+opaque and round-trip without acquiring execution authority. Keeping unknown
+actions until explicit removal preserves user definitions across app versions.
 
 Results and private restart journals include only known profile fields under
 `extensions.com.xerahs.app.capture_workflow`; unknown extensions are excluded.

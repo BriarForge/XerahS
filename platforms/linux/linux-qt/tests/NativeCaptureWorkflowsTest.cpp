@@ -154,17 +154,40 @@ private slots:
     QVERIFY(host.save(catalog, host.store().revision()).saved); QVERIFY(host.resolve().workflow);
     QVERIFY(CaptureActions::selectableActions().contains("upload"));
   }
+  void unsupportedSavedActionsAreVisibleAndCannotRun_data() {
+    QTest::addColumn<QString>("action"); QTest::addColumn<QString>("diagnostic");
+    QTest::newRow("known-unavailable") << QString("custom-actions") << QString("workflow-action-unavailable");
+    QTest::newRow("unknown") << QString("future-action") << QString("unsupported-action");
+  }
   void unsupportedSavedActionsAreVisibleAndCannotRun() {
-    QTemporaryDir dir; NativeCaptureWorkflows host(dir.filePath("workflows.json")); auto catalog = *host.store().current().catalog; catalog.entries[0].actions = QStringList{"custom-actions"};
-    QVERIFY(host.save(catalog, host.store().revision()).saved); QVERIFY(!host.resolve().workflow); QWidget parent; bool visible = false;
+    QFETCH(QString, action); QFETCH(QString, diagnostic);
+    QTemporaryDir dir; const auto path = dir.filePath("workflows.json"); NativeCaptureWorkflows host(path); auto catalog = *host.store().current().catalog; catalog.entries[0].actions = QStringList{action};
+    QVERIFY(host.save(catalog, host.store().revision()).saved); const auto original = bytes(path); QVERIFY(!host.resolve().workflow); QCOMPARE(host.resolve().diagnostic, diagnostic); QWidget parent; bool visible = false;
     QTimer::singleShot(0, this, [&] {
       auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog);
       const QPointer<QDialog> weak(dialog); const auto close = qScopeGuard([weak] { if (weak) weak->reject(); });
       auto *list = dialog->findChild<QListWidget *>("captureWorkflowActions");
-      for (int row = 0; row < list->count(); ++row) if (list->item(row)->data(Qt::UserRole).toString() == "custom-actions") visible = list->item(row)->text().contains("Unavailable") && list->item(row)->checkState() == Qt::Checked;
+      for (int row = 0; row < list->count(); ++row) if (list->item(row)->data(Qt::UserRole).toString() == action) visible = list->item(row)->text().contains("Unavailable") && list->item(row)->checkState() == Qt::Checked;
       QVERIFY(!dialog->findChild<QPushButton *>("runCaptureWorkflow")->isEnabled());
     });
-    QVERIFY(!manageCaptureWorkflows(host, &parent, [] { return true; })); QVERIFY(visible);
+    QVERIFY(!manageCaptureWorkflows(host, &parent, [] { return true; })); QVERIFY(visible); QCOMPARE(bytes(path), original);
+  }
+  void legacyMigrationIsPresentedAndClosePreservesOriginalBytes() {
+    QTemporaryDir dir; const auto path = dir.filePath("workflows.json");
+    auto root = QJsonDocument::fromJson(workflowsJson(defaultCaptureWorkflows())).object(); root.insert("version", 1);
+    auto entries = root.value("workflows").toArray(); auto entry = entries[0].toObject(); entry.remove("output"); entries[0] = entry; root.insert("workflows", entries);
+    const auto original = QJsonDocument(root).toJson(); QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly));
+    QVERIFY(file.setPermissions(QFile::ReadOwner | QFile::WriteOwner)); QCOMPARE(file.write(original), original.size()); file.close();
+    NativeCaptureWorkflows host(path); QWidget parent; bool observed = false;
+    QTimer::singleShot(0, this, [&] {
+      auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog);
+      const QPointer<QDialog> weak(dialog); const auto close = qScopeGuard([weak] { if (weak) weak->reject(); });
+      const auto status = dialog->findChild<QLabel *>("captureWorkflowStatus")->text();
+      QVERIFY(status.contains("Version 1")); QVERIFY(status.contains("explicitly upgrades"));
+      QVERIFY(!dialog->findChild<QPushButton *>("saveCaptureWorkflows")->isEnabled());
+      QVERIFY(dialog->findChild<QPushButton *>("runCaptureWorkflow")->isEnabled()); observed = true;
+    });
+    QVERIFY(!manageCaptureWorkflows(host, &parent, [] { return true; })); QVERIFY(observed); QCOMPARE(bytes(path), original);
   }
   void deletingSavedDefaultRequiresConfirmationAndUpdatesDefaultOnSave() {
     QTemporaryDir dir; const auto path = dir.filePath("workflows.json"); NativeCaptureWorkflows host(path); auto catalog = *host.store().current().catalog;

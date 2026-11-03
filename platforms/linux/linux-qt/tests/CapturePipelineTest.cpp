@@ -145,7 +145,7 @@ private slots:
     QCOMPARE(report.value("pipeline_state").toString(), QString("completed"));
     QCOMPARE(report.value("ordered_results").toArray(), (QJsonArray{
         QJsonObject{{"action", "save"}, {"state", "succeeded"}},
-        QJsonObject{{"action", "image-clipboard"}, {"state", "failed"}, {"diagnostic", "action-failed"}}}));
+        QJsonObject{{"action", "image-clipboard"}, {"state", "failed"}, {"diagnostic", "action-failed"}, {"failure_class", "permanent-failure"}}}));
     const auto metadata = report.value("extensions").toObject().value("com.xerahs.app").toObject();
     QCOMPARE(metadata.value("task_id").toString(), retained->pipeline.taskId);
     const auto file = metadata.value("file_artifacts").toArray().first().toObject();
@@ -258,9 +258,15 @@ private slots:
     QTemporaryDir dir; CapturePipeline pipeline(pixels(), dir.path(), "capture", {"image-clipboard"});
     QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_COMPARE(done.count(), 1);
     QCOMPARE(QGuiApplication::clipboard()->image(), pixels());
-    const auto &action = receipt(done)->pipeline.orderedResults.front();
-    if (QGuiApplication::clipboard()->ownsClipboard()) QCOMPARE(action.state, ActionState::Succeeded);
-    else { QCOMPARE(action.state, ActionState::Failed); QCOMPARE(*action.diagnostic, QString("clipboard-unavailable")); }
+    const auto result = receipt(done);
+    if (QGuiApplication::clipboard()->ownsClipboard()) {
+      QCOMPARE(result->pipeline.orderedResults.size(), size_t(1));
+      QCOMPARE(result->pipeline.orderedResults.front().state, ActionState::Succeeded);
+    } else {
+      QCOMPARE(result->pipeline.state, PipelineState::Interrupted);
+      QVERIFY(result->pipeline.orderedResults.empty());
+      QCOMPARE(result->diagnostic, QString("clipboard-delivery-unknown"));
+    }
   }
   void deletionAtInitialAvailabilityCannotLaunchAWorkerOrPublishOutput() {
     QTemporaryDir dir;

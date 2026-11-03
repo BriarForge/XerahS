@@ -29,6 +29,28 @@ const ActionResult &action(const CapturePipelineReceipt &r, const QString &id) {
 class CaptureRecognitionTest final : public QObject {
   Q_OBJECT
 private slots:
+  void imageOnlyPayloadCannotPretendToContainRecognizedText() {
+    QTemporaryDir dir; int copies = 0;
+    CaptureActionPorts ports; ports.textClipboard = [&](const QString &, const auto &) { ++copies; return ActionOutcome{}; };
+    CaptureActions executor(qr(), dir.path(), "fixture", ports); CancellationToken cancellation;
+    QApplication::clipboard()->setText("keep private clipboard");
+    const auto index = catalogueIndex("ocr-clipboard"); QVERIFY(index);
+    const auto result = executor.run({catalogue()[*index], {}, cancellation});
+    QCOMPARE(result.state, ActionState::Failed); QCOMPARE(result.diagnostic, std::optional<QString>{"unsupported-content"});
+    QCOMPARE(copies, 0); QCOMPARE(QApplication::clipboard()->text(), QString("keep private clipboard"));
+  }
+  void cancelledClipboardActionsDoNotReachTheirPublicationPorts() {
+    QTemporaryDir dir; int copies = 0; CancellationToken cancellation; cancellation.request();
+    CaptureActionPorts ports;
+    ports.clipboard = [&](const auto &, const auto &) { ++copies; return ActionOutcome{}; };
+    ports.textClipboard = [&](const auto &, const auto &) { ++copies; return ActionOutcome{}; };
+    CaptureActions executor(qr(), dir.path(), "fixture", ports);
+    for (const auto &id : {"image-clipboard", "url-clipboard", "ocr-clipboard"}) {
+      const auto index = catalogueIndex(id); QVERIFY(index);
+      QCOMPARE(executor.run({catalogue()[*index], {}, cancellation}).state, ActionState::Cancelled);
+    }
+    QCOMPARE(copies, 0);
+  }
   void cleanup() { for (auto *w : QApplication::topLevelWidgets()) if (qobject_cast<ImageRecognitionDialog *>(w)) delete w; }
   void qrShowsOwnedResultsAndKeepsPixelsAndJournalPrivate() {
     if (!qrScanningAvailable()) QSKIP("QR engine absent; unavailable path is tested separately.");
@@ -98,6 +120,7 @@ private slots:
     CapturePipeline pipeline(qr(),dir.path(),"fixture",{qrMissing?"qr-scan":"ocr"});QSignalSpy done(&pipeline,&CapturePipeline::finished);pipeline.start();QTRY_COMPARE(done.count(),1);
     const auto &result=receipt(done)->pipeline.orderedResults.front();QCOMPARE(result.state,ActionState::Failed);
     QCOMPARE(result.diagnostic,std::optional<QString>(qrMissing?"qr-scanner-unavailable":"ocr-unavailable"));
+    QCOMPARE(result.failureClass,std::optional<FailureClass>{FailureClass::UnavailableDependency});
   }
 };
 QTEST_MAIN(CaptureRecognitionTest)

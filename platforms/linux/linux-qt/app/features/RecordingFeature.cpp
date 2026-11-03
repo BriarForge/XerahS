@@ -21,11 +21,11 @@ ApplicationWindow *commandWindow(AppContext &ctx) {
 }  // namespace
 
 void startScreenRecording(AppContext &ctx) {
-  if (ctx.recordingActions) ctx.recordingActions->start(xerahs::recording::Format::Mp4);
+  if (ctx.recordingActions) ctx.recordingActions->start(xerahs::recording::Format::Mp4, false, ctx.invocationOrigin);
 }
 
 void startRegionRecording(AppContext &ctx) {
-  if (ctx.recordingActions) ctx.recordingActions->start(xerahs::recording::Format::Mp4, true);
+  if (ctx.recordingActions) ctx.recordingActions->start(xerahs::recording::Format::Mp4, true, ctx.invocationOrigin);
 }
 
 void installRecording(AppContext &ctx) {

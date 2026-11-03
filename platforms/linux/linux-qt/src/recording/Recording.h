@@ -1,5 +1,7 @@
 #pragma once
 #include <QObject>
+#include "workflows/WorkflowExecution.h"
+#include <memory>
 #include <QRect>
 #include <QRectF>
 #include <QVariantMap>
@@ -13,17 +15,40 @@ enum class State { Idle, RequestingPermission, Starting, Recording, Paused, Stop
 enum class Event { Request, Granted, Started, Pause, Resume, Stop, Finalized, Abort, Error, Denied, Cancel };
 bool terminal(State state);
 QString stateName(State state);
+struct ControlResult {
+  bool accepted = false, changed = false;
+  QString sessionId;
+  State state = State::Idle;
+  QString output, recoverableOutput, diagnostic;
+  bool cleanupRequired = false;
+};
+class Output;
+struct Request;
 class Session : public QObject {
   Q_OBJECT
 public:
   using QObject::QObject;
   State state() const { return m_state; }
+  QString id() const { return m_id; }
+  bool observe(const Request &request, const QString &origin, workflows::WorkflowExecution::Writer writer);
+  bool executionConfirmed() const { return m_executionConfirmed; }
+  ControlResult result() const;
+  // Native and headless controls must freeze the intended session at admission.
+  ControlResult control(const QString &sessionId, Event event);
+  void outputs(const QString &published, const QString &recoverable = {});
+  bool finalize(Output &output);
+  bool fail(Output &output, const QString &diagnostic);
   bool send(Event event, const QString &diagnostic = {});
 signals:
   void changed();
   void finished(xerahs::recording::State state, const QString &diagnostic);
 private:
   State m_state = State::Idle;
+  const QString m_id = makeId();
+  static QString makeId();
+  QString m_output, m_recoverable, m_diagnostic;
+  std::unique_ptr<workflows::WorkflowExecution> m_execution;
+  bool m_executionConfirmed = true;
 };
 enum class Format { Mp4, WebM, Gif };
 enum class Target { Monitor, Window };
@@ -61,6 +86,9 @@ public:
   QString temporary() const { return m_temporary; }
   QString destination() const { return m_destination; }
   QString publish();
+  // Release a nonempty private partial file from automatic cleanup. It is not
+  // a completed public recording and may need container repair by the user.
+  QString retainFailure();
   void abort();
 private:
   QString m_temporary, m_destination;

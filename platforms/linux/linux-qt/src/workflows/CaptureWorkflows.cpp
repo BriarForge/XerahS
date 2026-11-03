@@ -120,14 +120,17 @@ WorkflowRead parseCaptureWorkflows(const QByteArray &bytes) {
   }
   if (!ids.contains(catalog.defaultId)) return invalid();
   for (const auto *key : {"format", "version", "defaultId", "workflows"}) root.remove(QLatin1String(key));
-  catalog.extra = root; return {catalog, {}};
+  catalog.extra = root; return {catalog, {}, legacy ? 1 : 2, legacy};
 }
 QString workflowAvailability(const CaptureWorkflow &w, const QStringList &available) {
   CaptureWorkflows one{{w}, w.id, {}};
   if (!parseCaptureWorkflows(workflowsJson(one)).catalog) return "workflow-invalid";
   if (!implementedCaptureSources().contains(w.capture)) return "workflow-capture-unavailable";
   const auto preview = previewCaptureOutput(w.output); if (!preview.diagnostic.isEmpty()) return preview.diagnostic;
-  for (const auto &action : w.actions) if (!xerahs::actions::catalogueIndex(action) || !available.contains(action)) return "workflow-action-unavailable";
+  // Validate the whole plan before admission. An unknown ID is a definition
+  // compatibility problem, distinct from a known action unavailable here.
+  for (const auto &action : w.actions) if (!xerahs::actions::catalogueIndex(action)) return "unsupported-action";
+  for (const auto &action : w.actions) if (!available.contains(action)) return "workflow-action-unavailable";
   return {};
 }
 QStringList workflowActions(const CaptureWorkflow &w) {
@@ -169,6 +172,7 @@ QJsonObject CaptureWorkflowStore::discovery(const QStringList &available) const 
   }
   return {{"schemaVersion", 1}, {"ok", true}, {"scope", "saved-definitions"},
       {"source", m_snapshot.kind == PreferenceRead::Kind::Missing ? "initial-defaults" : "saved-storage"},
+      {"definitionVersion", m_current.sourceVersion}, {"migration", m_current.migrationAvailable ? "available-on-save" : "none"},
       {"runtimeStatus", "not-queried"}, {"defaultWorkflowId", m_current.catalog->defaultId.toString(QUuid::WithoutBraces)}, {"workflows", entries}};
 }
 WorkflowChoice CaptureWorkflowStore::resolve(const QUuid &requested, const QStringList &available) const {

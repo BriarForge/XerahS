@@ -78,6 +78,8 @@ struct CaptureActionPorts {
   std::function<xerahs::actions::ActionOutcome(const CaptureUploadReview &,
       const xerahs::actions::CancellationToken &)> beforeUpload;
   CaptureDeleteHooks deletion;
+  // Bounded upload deadline; same production executor, configurable for tests.
+  int uploadTimeoutMs = 60000;
 
 };
 
@@ -126,7 +128,7 @@ private:
   xerahs::actions::ActionOutcome copyRecognizedText(const xerahs::actions::CancellationToken &);
   xerahs::actions::ActionOutcome beforeUpload(const xerahs::actions::CancellationToken &);
   std::optional<xerahs::uploads::UploadDestination> m_confirmedUploadDestination;
-  QString m_recognizedText;
+  std::optional<QString> m_recognizedText;
   QString m_uploadUrl;
   std::unique_ptr<QTemporaryFile> m_uploadFile;
   QImage m_media;

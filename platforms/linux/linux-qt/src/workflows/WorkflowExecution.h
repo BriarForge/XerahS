@@ -19,11 +19,13 @@ class WorkflowExecution final {
 public:
   using Writer = std::function<xerahs::actions::JournalWrite(const QString &, const std::optional<QByteArray> &, const QByteArray &)>;
   WorkflowExecution(QString id, QString origin, const CaptureWorkflow &effective, Writer writer);
+  WorkflowExecution(QString id, QString origin, QJsonObject effectiveSettings, Writer writer);
   ~WorkflowExecution();
   WorkflowExecution(const WorkflowExecution &) = delete;
   WorkflowExecution &operator=(const WorkflowExecution &) = delete;
   bool admit();
   bool start();
+  bool step(const QString &action, const QString &state, const QString &diagnostic = {});
   bool processing(const QString &pipelineId);
   bool finish(const QString &state, const QString &diagnostic = {});
   bool complete(const xerahs::actions::PipelineResult &pipeline);

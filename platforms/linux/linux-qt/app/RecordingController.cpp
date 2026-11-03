@@ -1,4 +1,5 @@
 #include "RecordingController.h"
+#include "NativeWorkflowExecutions.h"
 #include <QDBusArgument>
 #include <QDBusConnectionInterface>
 #include <QDBusPendingCallWatcher>
@@ -8,7 +9,8 @@
 namespace xerahs::app {
 using namespace recording;
 namespace { const QString service = "org.freedesktop.portal.Desktop"; const QString desktop = "/org/freedesktop/portal/desktop"; const QString screenCast = "org.freedesktop.portal.ScreenCast"; }
-RecordingController::RecordingController(QObject *parent) : QObject(parent) {
+RecordingController::RecordingController(QObject *parent, workflows::WorkflowExecution::Writer writer) : QObject(parent),
+    m_writer(writer ? std::move(writer) : NativeWorkflowExecutions(NativeWorkflowExecutions::defaultDirectory()).writer()) {
 #ifdef XERAHS_GSTREAMER
   if (gst_init_check(nullptr, nullptr, nullptr)) {
     for (const auto &name : {"pipewiresrc", "videoconvert", "videorate", "videoscale", "capsfilter", "filesink", "x264enc", "openh264enc", "vah264enc", "vaapih264enc", "h264parse", "mp4mux", "vp9enc", "webmmux", "gifenc", "videocrop", "audiomixer", "audioconvert", "audioresample", "queue", "voaacenc", "avenc_aac", "opusenc"}) {
@@ -39,15 +41,26 @@ QString RecordingController::indicator() const {
   const qint64 seconds = (m_elapsed + (state() == State::Recording && m_clock.isValid() ? m_clock.elapsed() : 0)) / 1000;
   return QStringLiteral("XerahS · %1 · %2:%3 · %4 · %5").arg(stateName(state())).arg(seconds / 60).arg(seconds % 60, 2, 10, QLatin1Char('0')).arg(m_encoder.element).arg(m_audioActive ? QStringLiteral("Audio recording") : QStringLiteral("No audio"));
 }
-void RecordingController::start(Request request) {
+void RecordingController::start(Request request, const QString &origin) {
   if (busy()) return;
   teardown(); m_request = std::move(request); m_elapsed = 0; m_clock.invalidate();
   m_session = std::make_unique<Session>();
+  if (!m_session->observe(m_request, origin, m_writer)) {
+    m_session.reset();
+    emit notify("Recording not started", "Private workflow execution storage is unavailable. No recording was started. Review storage ownership, permissions and retained records before retrying.", false);
+    return;
+  }
   connect(m_session.get(), &Session::changed, this, &RecordingController::changed);
   connect(m_session.get(), &Session::finished, this, [this](State s, const QString &code) {
-    const auto path = m_output.destination(); teardown();
-    if (s == State::Completed) emit notify("Screen recording completed", path, true);
-    else emit notify("Screen recording " + stateName(s), code.isEmpty() ? stateName(s) : code + ". Retry recording after checking the source and output folder.", false);
+    const auto path = m_session->result().output;
+    stopEncoder();
+    const auto recovery = m_session->result().recoverableOutput;
+    teardown();
+    if (!m_session->executionConfirmed()) emit notify("Recording outcome unconfirmed", "Workflow storage could not confirm the outcome. Check recording output before retrying.", false);
+    else if (s == State::Completed) emit notify("Screen recording completed", path, true);
+    else emit notify("Screen recording " + stateName(s),
+                     (code.isEmpty() ? stateName(s) : code + ". Retry recording after checking the source and output folder.") +
+                     (recovery.isEmpty() ? QString{} : " Partial media retained for recovery (may require repair): " + recovery), false);
   });
   m_session->send(Event::Request);
   if (!validate(m_request).isEmpty()) { fail("request-invalid"); return; }
@@ -243,7 +256,7 @@ void RecordingController::poll() {
       gst_message_unref(message); gst_object_unref(bus);
       if (state() != State::Stopping) { fail("target-lost"); return; }
       gst_element_set_state(m_pipeline, GST_STATE_NULL); gst_object_unref(m_pipeline); m_pipeline = nullptr;
-      const auto error = m_output.publish(); if (!error.isEmpty()) fail(error); else m_session->send(Event::Finalized);
+      m_session->finalize(m_output);
       return;
     }
     if (type == GST_MESSAGE_STATE_CHANGED && GST_MESSAGE_SRC(message) == GST_OBJECT(m_pipeline)) {
@@ -257,32 +270,46 @@ void RecordingController::poll() {
   emit changed();
 }
 void RecordingController::pauseResume() {
-#ifdef XERAHS_GSTREAMER
-  if (!m_pipeline || (state() != State::Recording && state() != State::Paused)) return;
-  const bool pause = state() == State::Recording;
-  if (gst_element_set_state(m_pipeline, pause ? GST_STATE_PAUSED : GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) { fail("encoder-failed"); return; }
-  if (pause) { m_elapsed += m_clock.elapsed(); m_clock.invalidate(); } else m_clock.start();
-  m_session->send(pause ? Event::Pause : Event::Resume);
-#endif
+  control(sessionId(), state() == State::Paused ? Event::Resume : Event::Pause);
 }
 void RecordingController::stop() {
-#ifdef XERAHS_GSTREAMER
-  if (!m_pipeline || (state() != State::Recording && state() != State::Paused)) return;
-  if (state() == State::Recording) m_elapsed += m_clock.elapsed();
-  m_clock.invalidate(); m_session->send(Event::Stop);
-  // A paused pipeline must run to drain queued buffers and deliver EOS.
-  gst_element_set_state(m_pipeline, GST_STATE_PLAYING);
-  if (!gst_element_send_event(m_pipeline, gst_event_new_eos())) { fail("encoder-failed"); return; }
-  m_deadline.start(15000);
-#endif
+  control(sessionId(), Event::Stop);
 }
-void RecordingController::abort() { if (busy()) m_session->send(Event::Abort); }
-void RecordingController::fail(const QString &code) { if (busy()) m_session->send(Event::Error, code); }
-void RecordingController::teardown() {
-  ++m_generation; m_deadline.stop(); m_poll.stop();
+ControlResult RecordingController::control(const QString &sessionId, Event event) {
+  if (!m_session) { ControlResult result; result.diagnostic = "no-recording-session"; return result; }
+  const auto before = state();
+  auto result = m_session->control(sessionId, event);
+  if (!result.accepted || !result.changed) return result;
+#ifdef XERAHS_GSTREAMER
+  if (event == Event::Pause || event == Event::Resume) {
+    if (!m_pipeline || gst_element_set_state(m_pipeline, event == Event::Pause ? GST_STATE_PAUSED : GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) fail("encoder-failed");
+    else if (event == Event::Pause) { m_elapsed += m_clock.elapsed(); m_clock.invalidate(); } else m_clock.start();
+  } else if (event == Event::Stop) {
+    if (before == State::Recording) m_elapsed += m_clock.elapsed();
+    m_clock.invalidate();
+    // A paused pipeline must run to drain queued buffers and deliver EOS.
+    if (!m_pipeline || gst_element_set_state(m_pipeline, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE ||
+        !gst_element_send_event(m_pipeline, gst_event_new_eos())) fail("encoder-failed");
+    else m_deadline.start(15000);
+  }
+#else
+  Q_UNUSED(before);
+#endif
+  const auto current = m_session->result();
+  result.state = current.state; result.output = current.output; result.recoverableOutput = current.recoverableOutput;
+  result.cleanupRequired = current.cleanupRequired; result.diagnostic = current.diagnostic;
+  return result;
+}
+void RecordingController::abort() { control(sessionId(), Event::Abort); }
+void RecordingController::fail(const QString &code) { if (busy()) { stopEncoder(); m_session->fail(m_output, code); } }
+void RecordingController::stopEncoder() {
 #ifdef XERAHS_GSTREAMER
   if (m_pipeline) { gst_element_set_state(m_pipeline, GST_STATE_NULL); gst_object_unref(m_pipeline); m_pipeline = nullptr; }
 #endif
+}
+void RecordingController::teardown() {
+  ++m_generation; m_deadline.stop(); m_poll.stop();
+  stopEncoder();
   m_audioActive = false;
   m_fd = {};
   if (!m_path.isEmpty()) {

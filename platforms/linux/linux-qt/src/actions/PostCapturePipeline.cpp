@@ -182,6 +182,35 @@ QString actionStateName(ActionState state) {
   return {};
 }
 
+QString failureClassName(FailureClass failure) {
+  switch (failure) {
+    case FailureClass::PermissionDenied: return "permission-denied";
+    case FailureClass::ValidationFailure: return "validation-failure";
+    case FailureClass::UnavailableDependency: return "unavailable-dependency";
+    case FailureClass::TransientFailure: return "transient-failure";
+    case FailureClass::PermanentFailure: return "permanent-failure";
+  }
+  return {};
+}
+std::optional<FailureClass> parseFailureClass(const QString &name) {
+  for (const auto value : {FailureClass::PermissionDenied, FailureClass::ValidationFailure, FailureClass::UnavailableDependency,
+      FailureClass::TransientFailure, FailureClass::PermanentFailure})
+    if (failureClassName(value) == name) return value;
+  return {};
+}
+FailureClass classifyFailure(const QString &code, int httpStatus) {
+  if (httpStatus >= 500 || code == "timeout" || code == "network-error") return FailureClass::TransientFailure;
+  if (httpStatus >= 400) return FailureClass::PermanentFailure;
+  if (code.contains("permission") || code == "credential-denied") return FailureClass::PermissionDenied;
+  if (code == "dependency-unavailable" || code == "upload-destination-missing" || code == "ocr-unavailable" ||
+      code == "qr-scanner-unavailable" || code == "tesseract-unavailable" || code == "gstreamer-unavailable" || code == "encoder-unavailable" || code == "action-unavailable" ||
+      code == "missing-secret" || code == "credential-unavailable") return FailureClass::UnavailableDependency;
+  if (code == "request-invalid" || code == "workflow-invalid" || code == "unsupported-content" || code == "unsupported-action") return FailureClass::ValidationFailure;
+  // Invalid destination/HTTP configuration cannot succeed without a user edit.
+  // It is permanent for this attempt, distinct from workflow input validation.
+  return FailureClass::PermanentFailure;
+}
+
 QString pipelineStateName(PipelineState state) {
   switch (state) {
     case PipelineState::Completed: return QStringLiteral("completed");
@@ -237,6 +266,8 @@ PipelineResult runPipeline(const QString &taskId, const QStringList &selected,
   bool selectionCancelled = false;
 
   const auto record = [&](ActionResult actionResult) {
+    if (actionResult.state == ActionState::Failed && !actionResult.failureClass)
+      actionResult.failureClass = classifyFailure(actionResult.diagnostic.value_or(diagnostic::actionFailed));
     result.orderedResults.push_back(std::move(actionResult));
     if (hooks.actionFinished) hooks.actionFinished(result.orderedResults.back());
   };
@@ -317,6 +348,7 @@ PipelineResult runPipeline(const QString &taskId, const QStringList &selected,
       outcome.state = ActionState::Failed; outcome.diagnostic = diagnostic::actionFailed; outcome.artifacts.clear();
     }
     actionResult.state = outcome.state;
+    actionResult.failureClass = outcome.state == ActionState::Failed ? outcome.failureClass : std::nullopt;
     actionResult.diagnostic = outcome.diagnostic;
     actionResult.artifacts = outcome.artifacts;
     if (action.id == kUpload && outcome.upload) {
