@@ -1017,6 +1017,10 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
   if (modifiers == Qt::NoModifier && event->key() == Qt::Key_F2 && canEditShapeContent()) {
     editShapeContent(this); return;
   }
+  // shortcut-catalog Escape: after modal, effect and live gestures, Escape clears the selection.
+  if (modifiers == Qt::NoModifier && event->key() == Qt::Key_Escape && !m_session->selection().isEmpty()) {
+    event->accept(); selectAnnotations({}, m_session->stateId(), m_documentGeneration); return;
+  }
   if (modifiers == Qt::NoModifier && (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace)) {
     event->accept(); if (!event->isAutoRepeat()) deleteSelection(); return;
   }

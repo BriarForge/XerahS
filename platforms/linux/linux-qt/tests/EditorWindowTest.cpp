@@ -1,6 +1,7 @@
 // Actual native actions, modal dialogs, worker preparation, undo and persisted
 // PNG/sidecar reopening. All images and files are temporary fixtures.
 #include "EditorWindow.h"
+#include "image-editor/ToolbarPreferences.h"
 #include "EditorSaveDialog.h"
 #include "EditorCanvas.h"
 #include "CanvasCropDialog.h"
@@ -354,6 +355,87 @@ private slots:
       QTest::newRow(hotkey ? "front-key" : "front-menu") << QString("bringToFront") << QString("02413") << hotkey << true;
       QTest::newRow(hotkey ? "back-key" : "back-menu") << QString("sendToBack") << QString("13024") << hotkey << false;
     }
+  }
+  // ESET-016: every binding of the contract's shortcut-catalog.json maps to an available native
+  // action, is reserved by the toolbar policy, and follows the declared precedence.
+  void shortcutCatalogBindingsAreNativeReservedAndOrdered() {
+    QFile file(XERAHS_SHORTCUT_CATALOG); QVERIFY(file.open(QIODevice::ReadOnly));
+    const auto catalog = QJsonDocument::fromJson(file.readAll()).object();
+    QCOMPARE(catalog.value("precedence").toArray(), (QJsonArray{"active-text-entry", "modal-dialog", "active-effect-panel", "live-crop-or-gesture", "user-tool-hotkey", "editor-action"}));
+    const auto bindings = catalog.value("bindings").toArray(); QCOMPARE(bindings.size(), 28);
+    // Catalogue action -> native QAction object name. Pointer/canvas-local gestures have no QAction owner.
+    const QMap<QString, QString> actions{
+        {"delete-selection", "deleteSelection"}, {"clear-annotations", "clearAnnotations"}, {"undo", "undo"}, {"redo", "redo"},
+        {"cut-annotation", "cutAnnotations"}, {"copy-annotation", "copyAnnotations"}, {"copy-rendered-image", "copyImage"},
+        {"paste", "pasteAnnotations"}, {"duplicate-selection", "duplicateAnnotations"}, {"save", "saveImage"}, {"save-as", "saveAsImage"},
+        {"new-image", "newImage"}, {"open-image", "openImage"}, {"pin-to-screen", "pinImage"}, {"print", "printImage"}, {"upload", "uploadImage"},
+        {"toggle-toolbars", "toggleToolbars"}, {"flatten-image", "flattenImage"}};
+    const QStringList canvasGestures{"move-selection-1-pixel", "move-selection-10-pixels", "bring-to-front", "send-to-back", "bring-forward", "send-backward", "zoom-at-pointer"};
+    // Enter (confirm live crop or continue a capture task) and the session-close step of Escape have no editor
+    // owner in this edition: the crop is a guarded dialog, not a live overlay. Reported, not asserted native.
+    const QStringList notNativeInEditor{"confirm-crop-or-continue-task"};
+    QTemporaryDir dir; const auto path = dir.filePath("catalog.png"), prefs = dir.filePath("prefs.json"); QVERIFY(fixture().save(path));
+    QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty());
+    auto doc = *loadSource(path).document; QList<QUuid> ids;
+    for (const auto &box : {QRectF(3, 3, 11, 9), QRectF(20, 5, 15, 13), QRectF(40, 22, 15, 13)}) {
+      RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {box.left(), box.top()}; r.end = {box.right(), box.bottom()}; r.style = {0xFFFF0000, 0, 1, 0, 1}; doc.annotations.push_back(r); ids << r.id;
+    }
+    QVERIFY(saveEdit(path, fixture(), doc).sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); window->activateWindow();
+    auto *canvas = window->findChild<EditorCanvas *>(); canvas->setFocus(); QTRY_VERIFY(window->isActiveWindow());
+    QSet<QString> seen;
+    for (const auto &entry : bindings) {
+      const auto gesture = entry.toObject().value("gesture").toString(), action = entry.toObject().value("action").toString();
+      QVERIFY2(!gesture.isEmpty() && !action.isEmpty(), qPrintable(gesture)); seen.insert(action);
+      // 1. Reserved by the toolbar policy: user-defined hotkeys collide, the owning action alone keeps it.
+      QString keyGesture = gesture; keyGesture.replace("Arrow", "Left");
+      if (gesture != "Ctrl+Wheel") {
+        const auto hotkey = parseToolbarHotkey(keyGesture); QVERIFY2(hotkey, qPrintable(gesture));
+        QVERIFY2(!toolbarHotkeyDiagnostic(*hotkey, "crop-image").isEmpty(), qPrintable(gesture + " is not reserved against user hotkeys"));
+        if (knownToolbarAction(action)) QVERIFY2(toolbarHotkeyDiagnostic(*hotkey, action).isEmpty() || toolbarHotkeyDiagnostic(*hotkey, action) == "toolbar-reserved-hotkey", qPrintable(gesture));
+      }
+      // 2. Available native action with the declared gesture, reachable from a visible command surface.
+      if (actions.contains(action)) {
+        auto *native = window->findChild<QAction *>(actions.value(action)); QVERIFY2(native, qPrintable(action));
+        QVERIFY2(native->shortcuts().contains(QKeySequence(gesture)), qPrintable(gesture + " -> " + action));
+        bool inMenu = false; for (auto *menu : window->findChildren<QMenu *>()) inMenu |= menu->actions().contains(native);
+        QVERIFY2(inMenu, qPrintable(action + " has no menu command surface"));
+      } else QVERIFY2(canvasGestures.contains(action) || notNativeInEditor.contains(action) || action.startsWith("close-modal"), qPrintable("unmapped catalogue action " + action));
+    }
+    for (const auto &action : actions.keys()) QVERIFY2(seen.contains(action), qPrintable(action));
+    // Canvas-local gestures dispatch the contracted operation on the real window.
+    auto startX = [&](int index) { return std::get<RectangleAnnotation>(canvas->annotationDocument().annotations[size_t(index)]).start.x; };
+    QVERIFY(canvas->selectAnnotations({ids[1]}, canvas->annotationState(), canvas->documentGeneration()));
+    const double x0 = startX(1);
+    QTest::keyClick(canvas, Qt::Key_Right); QCOMPARE(startX(1), x0 + 1);
+    QTest::keyClick(canvas, Qt::Key_Right, Qt::ShiftModifier); QCOMPARE(startX(1), x0 + 11);
+    const auto idAt = [&](int index) { return annotationId(canvas->annotationDocument().annotations[size_t(index)]); };
+    QTest::keyClick(canvas, Qt::Key_Home); QCOMPARE(idAt(2), ids[1]);
+    QTest::keyClick(canvas, Qt::Key_End); QCOMPARE(idAt(0), ids[1]);
+    QTest::keyClick(canvas, Qt::Key_PageUp); QCOMPARE(idAt(1), ids[1]);
+    QTest::keyClick(canvas, Qt::Key_PageDown); QCOMPARE(idAt(0), ids[1]);
+    const double zoom = canvas->viewState().zoom(); const QPointF at = canvas->viewport()->rect().center();
+    QWheelEvent wheel(at, canvas->viewport()->mapToGlobal(at.toPoint()), {}, QPoint(0, 120), Qt::NoButton, Qt::ControlModifier, Qt::NoScrollPhase, false);
+    QApplication::sendEvent(canvas->viewport(), &wheel); QVERIFY(canvas->viewState().zoom() > zoom);
+    // Precedence: a live gesture takes Escape before the selection does; the selection clears on the next Escape.
+    QVERIFY(!canvas->annotationSelection().isEmpty());
+    const auto before = serializeDocument(canvas->annotationDocument());
+    const auto centre = canvas->viewState().toView(QPointF(startX(0) + 3, std::get<RectangleAnnotation>(canvas->annotationDocument().annotations[0]).start.y + 3)).toPoint();
+    QTest::mousePress(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, centre); QTest::mouseMove(canvas->viewport(), centre + QPoint(15, 9));
+    QVERIFY(canvas->interactionActive());
+    QTest::keyClick(canvas, Qt::Key_Escape); QTRY_VERIFY(!canvas->interactionActive());
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QVERIFY(!canvas->annotationSelection().isEmpty());
+    QTest::keyClick(canvas, Qt::Key_Escape); QVERIFY(canvas->annotationSelection().isEmpty()); QCOMPARE(serializeDocument(canvas->annotationDocument()), before);
+    // Precedence: text entry and modal dialogs take editor shortcuts (Ctrl+Z, Delete, Escape) before the editor does.
+    QVERIFY(canvas->selectAnnotations({ids[0]}, canvas->annotationState(), canvas->documentGeneration()));
+    QTest::keyClick(canvas, Qt::Key_Right); QVERIFY(window->findChild<QAction *>("undo")->isEnabled());
+    const auto edited = serializeDocument(canvas->annotationDocument());
+    QDialog modal(window.get()); modal.setModal(true); auto *line = new QLineEdit("seed", &modal); modal.show(); line->setFocus(); line->selectAll();
+    QTest::keyClicks(line, "changed"); QTest::keyClick(line, Qt::Key_Z, Qt::ControlModifier); QCOMPARE(line->text(), QString("seed"));
+    QTest::keyClick(line, Qt::Key_Delete); QTest::keyClick(line, Qt::Key_Y, Qt::ControlModifier);
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), edited); QVERIFY(!canvas->annotationSelection().isEmpty());
+    QTest::keyClick(&modal, Qt::Key_Escape); QVERIFY(!modal.isVisible());  // Escape closes the modal before touching the selection.
+    QVERIFY(!canvas->annotationSelection().isEmpty()); QCOMPARE(serializeDocument(canvas->annotationDocument()), edited);
   }
   void nativeOrderingCommandsPersistArrayOrderAndRenderedPixels() {
     QFETCH(QString, name); QFETCH(QString, indices); QFETCH(bool, hotkey); QFETCH(bool, blue); QTemporaryDir dir; const auto path = dir.filePath("order.png"), prefs = dir.filePath("prefs.json"); QVERIFY(fixture().save(path));

@@ -732,6 +732,7 @@ add_executable(editor-window-test tests/EditorWindowTest.cpp app/EditorWindow.cp
                app/NewImageDialog.cpp app/NewImageDialog.h)
 set_target_properties(editor-window-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-window-test PRIVATE xerahs_editor_source xerahs_editor_canvas xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
+target_compile_definitions(editor-window-test PRIVATE XERAHS_SHORTCUT_CATALOG="${XERAHS_REPO_ROOT}/product-contract/capabilities/EDITOR-SETTINGS-001/shortcut-catalog.json")
 # The aggregate class has 323 behavior rows and exceeded its 30 s CI deadline.
 # Partition actual Qt slots without omitting rows or raising any deadline.
 foreach(partition RANGE 0 2)
