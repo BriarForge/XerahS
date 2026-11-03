@@ -72,6 +72,10 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   captureScroll->setWidget(capture); tabs->addTab(captureScroll, "&Capture");
   auto *sound = new QCheckBox("Play capture &sound", capture); sound->setAccessibleName("Play capture sound"); captureForm->addRow(sound);
   auto *notification = new QCheckBox("Show &notification after capture", capture); notification->setAccessibleName("Show notification after capture"); captureForm->addRow(notification);
+  auto *privateNotification = new QCheckBox("Hide &private details in notifications", capture);
+  privateNotification->setAccessibleName("Hide private details in notifications");
+  privateNotification->setToolTip("Notifications show only the operation and its result. Paths, URLs and recognized text stay in the XerahS window.");
+  captureForm->addRow(privateNotification);
   auto *quickConfirm = new QCheckBox("Confirm region on pointer &release", capture);
   quickConfirm->setAccessibleName("Confirm region on pointer release"); captureForm->addRow(quickConfirm);
   auto *snapping = new QCheckBox("Snap clicks to detected &windows or controls", capture);
@@ -122,6 +126,7 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
     quickConfirm->setChecked(draft->value("regionCapture.quickConfirm").toBool());
     snapping->setChecked(draft->value("regionCapture.snapping").toBool());
     sound->setChecked(draft->value("playCaptureSound").toBool()); notification->setChecked(draft->value("showNotification").toBool());
+    privateNotification->setChecked(draft->value("privateNotifications").toBool());
     delaySeconds->setValue(draft->value("delayedCapture.seconds").toInt()); select(delaySource, draft->value("delayedCapture.source"));
     select(autoSource, draft->value("autoCapture.source")); autoInterval->setValue(draft->value("autoCapture.intervalMs").toInt() / 1000);
     select(autoKind, draft->value("autoCapture.boundKind")); autoCount->setValue(draft->value("autoCapture.count").toInt());
@@ -144,6 +149,7 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
     draft->insert("regionCapture.quickConfirm", quickConfirm->isChecked());
     draft->insert("regionCapture.snapping", snapping->isChecked());
     draft->insert("playCaptureSound", sound->isChecked()); draft->insert("showNotification", notification->isChecked());
+    draft->insert("privateNotifications", privateNotification->isChecked());
     draft->insert("delayedCapture.seconds", delaySeconds->value()); draft->insert("delayedCapture.source", delaySource->currentData().toString());
     draft->insert("autoCapture.source", autoSource->currentData().toString());
     // Sub-second stored intervals are kept until the user edits the field.

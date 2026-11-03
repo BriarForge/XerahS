@@ -84,6 +84,28 @@ private slots:
     }
   }
 
+  void privateNotificationsCheckboxAppliesAndCancels() {
+    QTemporaryDir dir; ApplicationSettingsStore store(dir.filePath("settings.json"), dir.path());
+    xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; }); int applied = 0;
+    auto checkbox = [](QDialog &dialog) { for (auto *candidate : dialog.findChildren<QCheckBox *>()) if (candidate->accessibleName() == "Hide private details in notifications") return candidate; return static_cast<QCheckBox *>(nullptr); };
+    {
+      xerahs::app::SettingsDialog dialog(store, dir.path(), {}, shortcuts, [&] { ++applied; });
+      auto *box = checkbox(dialog); QVERIFY(box); QVERIFY(!box->isChecked()); box->setChecked(true);
+      dialog.reject(); QCOMPARE(applied, 0); QVERIFY(!store.current().values.value("privateNotifications").toBool());
+    }
+    {
+      xerahs::app::SettingsDialog dialog(store, dir.path(), {}, shortcuts, [&] { ++applied; });
+      auto *box = checkbox(dialog); QVERIFY(box); box->setChecked(true);
+      dialog.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply)->click(); QCOMPARE(applied, 1);
+      QVERIFY(store.current().values.value("privateNotifications").toBool());
+    }
+    {
+      xerahs::app::SettingsDialog dialog(store, dir.path(), {}, shortcuts, [&] { ++applied; });
+      auto *box = checkbox(dialog); QVERIFY(box); QVERIFY(box->isChecked());
+      dialog.reject();
+    }
+  }
+
   void oldMaximumHotkeysSurviveNewRecordingAction() {
     auto old = defaultSettings("/tmp"); auto bindings = old.value("hotkeys").toObject(); bindings.remove("start-region-recording");
     while (bindings.size() < maximumHotkeyBindings - 1) bindings.insert(QUuid::createUuid().toString(QUuid::WithoutBraces), "");
