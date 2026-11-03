@@ -30,6 +30,12 @@ PointF quadraticControl(PointF start, PointF end, PointF anchor);
 // keeps its bounds (the anchor may then lie outside them). Returns false and
 // leaves `shape` unchanged when the result is not finite or in range.
 bool setLineCurve(RectangleAnnotation &shape, std::optional<PointF> anchor);
+// EA-003: distance in document pixels from `point`, given in the shape's own
+// unrotated frame, to the drawn path of a Line, Arrow (straight, curved or
+// legacy polyline) or Freehand stroke; nullopt for every other type. Select
+// hit testing uses it so empty space inside a diagonal's bounding box is not
+// a hit (reference XerahS: distance to path within a tolerance).
+std::optional<double> strokeDistance(const RectangleAnnotation &shape, PointF point);
 // Translation preserves style and validates all derived geometry before a
 // preview or an atomic selection edit can use the result.
 RectangleMoveResult moveRectangleGeometry(const RectangleProperties &, PointF delta);

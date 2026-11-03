@@ -14,7 +14,9 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QInputDialog>
+#include <QBuffer>
 #include <QPlainTextEdit>
+#include <QTransform>
 #include <QTimer>
 #include <QFile>
 #include <QJsonArray>
@@ -278,6 +280,95 @@ private slots:
     }
     QCOMPARE(canvas.tool(), tool); QVERIFY(action->isChecked());
     QVERIFY(label->text().contains("Escape cancels"));
+  }
+
+  // EA-003 for the directional, freehand and asset objects: Select hits the
+  // drawn path (not the bounding box) of Line, Arrow and Freehand and the whole
+  // box of Image, Emoji and Cursor, then selects, moves, resizes and rotates
+  // them in one undo step each and refuses hidden or locked objects.
+  void lineArrowFreehandAndAssetsSelectMoveResizeRotateAndProtect_data() {
+    QTest::addColumn<QString>("type");
+    for (const char *type : {"line", "arrow", "freehand", "image", "emoji", "cursor"}) QTest::newRow(type) << QString::fromLatin1(type);
+  }
+  void lineArrowFreehandAndAssetsSelectMoveResizeRotateAndProtect() {
+    QFETCH(QString, type);
+    const bool stroke = type == shape::line || type == shape::arrow || type == shape::freehand;
+    QByteArray png; { QBuffer buffer(&png); QVERIFY(buffer.open(QIODevice::WriteOnly)); QVERIFY(asset().save(&buffer, "PNG")); }
+    const auto build = [&](bool locked, bool hidden) {
+      auto session = std::make_unique<EditorSession>(document());
+      ShapeContent content; content.type = type; EmbeddedImages assets;
+      if (stroke) content.points = type == shape::freehand ? std::vector<PointF>{{0, 0}, {0.5, 0.5}, {1, 1}} : std::vector<PointF>{{0, 0}, {1, 1}};
+      else { content.imageKey = "asset-1"; assets = {{"asset-1", png}}; }
+      const auto id = session->createShape({{100, 100}, {300, 300}, {}}, content, session->stateId(), session->selection(), assets);
+      Q_ASSERT(id);
+      if (locked || hidden) {
+        auto doc = session->document(); auto &a = std::get<RectangleAnnotation>(doc.annotations[0]);
+        if (locked) a.extra = {{"locked", true}};
+        if (hidden) a.visible = false;
+        session = std::make_unique<EditorSession>(doc);
+      }
+      return std::make_pair(std::move(session), *id);
+    };
+    const QImage source = image();
+    const auto prepare = [&](EditorCanvas &canvas) {
+      canvas.resize(820, 640); canvas.show(); QTest::qWait(10); canvas.resetZoom(); canvas.setTool(EditorCanvas::Tool::Select);
+    };
+    const auto click = [&](EditorCanvas &canvas, QPointF at) { QTest::mouseClick(canvas.viewport(), Qt::LeftButton, {}, canvas.viewState().toView(at).toPoint()); };
+    const auto drag = [&](EditorCanvas &canvas, QPointF from, QPointF to) {
+      const QPoint a = canvas.viewState().toView(from).toPoint(), b = canvas.viewState().toView(to).toPoint();
+      QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, a); QTest::mouseMove(canvas.viewport(), b); QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, b);
+    };
+
+    auto [session, id] = build(false, false);
+    EditorCanvas canvas(*session, source); prepare(canvas); session->select({}); const int base = session->undoCount();
+    // Hit testing: inside the box but far from a diagonal stroke is empty space.
+    const QPointF miss = stroke ? QPointF(290, 110) : QPointF(500, 450);
+    click(canvas, miss); QVERIFY(session->selection().isEmpty()); QCOMPARE(session->undoCount(), base);
+    click(canvas, {200, 200}); QCOMPARE(session->selection(), QSet<QUuid>{id}); QCOMPARE(session->undoCount(), base);
+    if (stroke) {  // a few document pixels from the path still hits, far from it does not
+      session->select({}); click(canvas, {203, 197}); QCOMPARE(session->selection(), QSet<QUuid>{id});
+      session->select({}); click(canvas, {240, 160}); QVERIFY(session->selection().isEmpty());
+      click(canvas, {200, 200});
+    }
+    // Move: one undo step, bounds translate, content is untouched.
+    const auto content = session->selectedRectangle()->content;
+    drag(canvas, {200, 200}, {260, 200});
+    QCOMPARE(session->undoCount(), base + 1); QCOMPARE(session->selectedRectangle()->left(), 160.0); QCOMPARE(session->selectedRectangle()->right(), 360.0);
+    QVERIFY(session->selectedRectangle()->content.points == content.points); QCOMPARE(session->selectedRectangle()->content.imageKey, content.imageKey);
+    // Resize by the bottom-right handle: opposite corner fixed, one undo step.
+    const double gap = 2 + 3 / canvas.viewState().zoom();
+    drag(canvas, {360 + gap, 300 + gap}, {380 + gap, 310 + gap});
+    QCOMPARE(session->undoCount(), base + 2);
+    QCOMPARE(session->selectedRectangle()->left(), 160.0); QCOMPARE(session->selectedRectangle()->top(), 100.0);
+    QCOMPARE(session->selectedRectangle()->right(), 380.0); QCOMPARE(session->selectedRectangle()->bottom(), 310.0);
+    // Rotate: one undo step, and hit testing then follows the displayed shape.
+    QVERIFY(canvas.canRotateSelection()); QVERIFY(session->rotateSelection(90)); QCOMPARE(session->undoCount(), base + 3);
+    const auto *rotated = session->selectedRectangle(); QCOMPARE(rotated->style.rotationDegrees, 90.0);
+    const QPointF centre((rotated->left() + rotated->right()) / 2, (rotated->top() + rotated->bottom()) / 2);
+    const QPointF before(rotated->left() + 0.15 * (rotated->right() - rotated->left()), rotated->top() + 0.15 * (rotated->bottom() - rotated->top()));
+    QTransform turn; turn.translate(centre.x(), centre.y()); turn.rotate(90); turn.translate(-centre.x(), -centre.y());
+    session->select({}); click(canvas, turn.map(before)); QCOMPARE(session->selection(), QSet<QUuid>{id});
+    if (stroke) { session->select({}); click(canvas, before); QVERIFY(session->selection().isEmpty()); }
+    QVERIFY(session->undo()); QVERIFY(session->undo()); QVERIFY(session->undo()); QCOMPARE(session->undoCount(), base);
+
+    // Locked: selectable but never mutated; rotation is unavailable.
+    {
+      auto [locked, lockedId] = build(true, false); EditorCanvas protectedCanvas(*locked, source); prepare(protectedCanvas);
+      const auto original = serializeDocument(locked->document());
+      click(protectedCanvas, {200, 200}); QCOMPARE(locked->selection(), QSet<QUuid>{lockedId});
+      drag(protectedCanvas, {200, 200}, {260, 200});
+      QCOMPARE(serializeDocument(locked->document()), original); QCOMPARE(locked->undoCount(), 0);
+      QVERIFY(!protectedCanvas.canRotateSelection()); QVERIFY(!locked->rotateSelection(90)); QVERIFY(!locked->moveSelection(5, 5));
+      QVERIFY(!protectedCanvas.deleteSelection()); QCOMPARE(serializeDocument(locked->document()), original);
+    }
+    // Hidden: cannot be hit, selected or changed.
+    {
+      auto [hidden, hiddenId] = build(false, true); Q_UNUSED(hiddenId); EditorCanvas hiddenCanvas(*hidden, source); prepare(hiddenCanvas);
+      const auto original = serializeDocument(hidden->document());
+      click(hiddenCanvas, {200, 200}); QVERIFY(hidden->selection().isEmpty());
+      drag(hiddenCanvas, {200, 200}, {260, 200}); QCOMPARE(serializeDocument(hidden->document()), original); QCOMPARE(hidden->undoCount(), 0);
+      hidden->select({hiddenId}); QVERIFY(!hidden->moveSelection(5, 5)); QCOMPARE(serializeDocument(hidden->document()), original);
+    }
   }
 };
 

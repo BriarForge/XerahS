@@ -156,3 +156,17 @@ turns it on, so a return-to-Select behaviour is not offered and not claimed.
 checks all of this for every contracted tool and draws two objects in a row to
 prove the tool is still checked and active (Crop and CutOut request two
 operations; Select creates nothing).
+
+## Select hit testing for strokes and assets (EA-003)
+
+Rectangle-like shapes, text, effects and the Image/Emoji/Cursor assets are hit
+anywhere in their (rotated) bounds plus a tolerance of the larger of six
+screen pixels and half the stroke width. Line, Arrow (straight, curved or
+legacy polyline) and Freehand are hit only near their drawn path:
+`strokeDistance` (RectangleGeometry.h) measures the distance from the pointer,
+mapped into the object's unrotated frame, to the path (curves are flattened in
+about 4 px steps) and compares it with the same tolerance. This follows the
+reference XerahS (`HitTest` = distance to the path within a tolerance), so empty
+space inside a diagonal line's bounding box no longer selects it or starts a
+move. Hidden objects are never hit; locked objects can be selected but are never
+moved, resized, rotated or deleted.

@@ -1118,6 +1118,9 @@ std::optional<QUuid> EditorCanvas::topmostAt(QPointF at) const {
     const QRectF hit = box.adjusted(-slop, -slop, slop, slop);
     const QPointF local = rotation(*r).inverted().map(at);
     if (!hit.contains(local)) continue;
+    // EA-003: lines, arrows and freehand strokes are hit near their drawn path
+    // (reference XerahS distance-to-path), not anywhere in their bounding box.
+    if (const auto distance = strokeDistance(*r, {local.x(), local.y()})) { if (*distance > slop) continue; return r->id; }
     if (hasShapeEllipse(r->type()) && r->content.isEllipse) {  // EA-011: the corners of an elliptical region are not part of it
       const double nx = (local.x() - hit.center().x()) / (hit.width() / 2), ny = (local.y() - hit.center().y()) / (hit.height() / 2);
       if (nx * nx + ny * ny > 1) continue;

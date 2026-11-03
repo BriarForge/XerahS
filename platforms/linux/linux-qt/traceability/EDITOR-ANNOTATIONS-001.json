@@ -58,10 +58,10 @@
       }
     },
     "EA-003": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Box-bounded represented shapes share hit testing, selection, hidden/locked protection, movement, resizing and rotation. Complete directional/curved shape and asset interaction coverage remains.",
+      "note": "Select hit testing, single/additive selection, hidden/locked protection, movement, resizing and rotation are shared by all box-bounded shapes; Line, Arrow and Freehand are hit by stroke proximity like the reference XerahS (EditorCanvas::topmostAt, strokeDistance). Audit 2026-11-03: Line, Arrow, Freehand, Image, Emoji and Cursor are each selected, moved, resized by a handle and rotated in one undo step per edit; empty bounding-box space far from a stroke is not a hit, the displayed (rotated) stroke is; hidden objects are not hit and locked ones are selectable but unchanged by drag, rotate, move and delete (AnnotationToolMatrixTest::lineArrowFreehandAndAssetsSelectMoveResizeRotateAndProtect; rectangle and ellipse paths remain covered by EditorCanvasTest and EditorSessionTest). Remaining items above are qualification, not implementation status.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -70,10 +70,10 @@
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 22,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "ccaf3c6"
       }
     },
     "EA-004": {

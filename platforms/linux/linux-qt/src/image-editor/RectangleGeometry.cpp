@@ -49,6 +49,31 @@ std::optional<PointF> lineAnchor(const RectangleAnnotation &r) {
   if (!lineHasCurve(r)) return std::nullopt;
   return mapFraction(r, r.content.points[2]);
 }
+std::optional<double> strokeDistance(const RectangleAnnotation &r, PointF p) {
+  if (!(pathType(r) || r.type() == shape::freehand) || r.content.points.size() < 2) return std::nullopt;
+  std::vector<PointF> path;
+  if (r.type() == shape::freehand || r.content.points.size() > 3) {
+    for (const PointF &f : r.content.points) path.push_back(mapFraction(r, f));
+  } else if (lineHasCurve(r)) {
+    const PointF s = lineStart(r), e = lineEnd(r), c = quadraticControl(s, e, *lineAnchor(r));
+    const double length = std::hypot(c.x - s.x, c.y - s.y) + std::hypot(e.x - c.x, e.y - c.y);
+    const int steps = std::clamp(int(std::min(length, 8000.0) / 4), 16, 2000);
+    for (int i = 0; i <= steps; ++i) {
+      const double t = double(i) / steps, u = 1 - t;
+      path.push_back({u * u * s.x + 2 * u * t * c.x + t * t * e.x, u * u * s.y + 2 * u * t * c.y + t * t * e.y});
+    }
+  } else {
+    path = {lineStart(r), lineEnd(r)};
+  }
+  double best = INFINITY;
+  for (std::size_t i = 0; i + 1 < path.size(); ++i) {
+    const PointF a = path[i], b = path[i + 1];
+    const double dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
+    const double t = l2 > 0 ? std::clamp(((p.x - a.x) * dx + (p.y - a.y) * dy) / l2, 0.0, 1.0) : 0.0;
+    best = std::min(best, std::hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy)));
+  }
+  return best;
+}
 PointF quadraticControl(PointF s, PointF e, PointF a) { return {2 * a.x - 0.5 * (s.x + e.x), 2 * a.y - 0.5 * (s.y + e.y)}; }
 
 bool setLineCurve(RectangleAnnotation &r, std::optional<PointF> anchor) {
