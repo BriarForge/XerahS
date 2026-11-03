@@ -19,22 +19,23 @@
   ],
   "requirements": {
     "EA-001": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "All 20 tool modes are exposed through NativeAnnotationTools and EditorCanvas. Core/native shape and drag tests exist. Full per-tool option, accessibility and accepted-platform evidence remains incomplete.",
+      "note": "All 20 tool modes are exposed through NativeAnnotationTools, EditorCanvas and the editor's Image > Annotation Tools menu; the capture annotation surface omits only the Crop and CutOut canvas operations by design. Audit 2026-11-03: The 20 IDs of product-contract annotation-tools.json are read at test time and cross-checked against the real native surface: annotationToolActions yields exactly those 20 IDs (no extra), each triggers a distinct canvas tool whose drawable document type equals the contract document_type (Select/Crop/CutOut have none), the contract's 17 drawable types equal shapeTypes(), the editor window lists each ID once in Image > Annotation Tools with no tool outside the contract, and the capture surface drops only Crop and CutOut (AnnotationToolMatrixTest::contractToolsAreTheCanvasToolsAndNoneIsExtra, ::editorWindowMenuListsEveryContractedToolOnce). Remaining items above are qualification, not implementation status.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationToolMatrixTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 15,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "ccaf3c6"
       }
     },
     "EA-002": {

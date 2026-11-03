@@ -752,6 +752,18 @@ target_link_libraries(editor-pin-test PRIVATE xerahs_editor_source xerahs_editor
 add_test(NAME editor-pin COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:editor-pin-test>)
 set_tests_properties(editor-pin PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+
+# EDITOR-ANNOTATIONS-001 per-tool matrix: the contracted tool list against the
+# real actions, canvas, session and editor window.
+add_executable(annotation-tool-matrix-test tests/AnnotationToolMatrixTest.cpp ${XERAHS_PREFERENCE_TEST_SOURCES})
+set_target_properties(annotation-tool-matrix-test PROPERTIES AUTOMOC ON)
+target_include_directories(annotation-tool-matrix-test PRIVATE app)
+target_link_libraries(annotation-tool-matrix-test PRIVATE xerahs_editor_source xerahs_editor_canvas xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
+target_compile_definitions(annotation-tool-matrix-test PRIVATE
+  XERAHS_ANNOTATION_TOOLS="${XERAHS_REPO_ROOT}/product-contract/capabilities/EDITOR-ANNOTATIONS-001/annotation-tools.json")
+add_test(NAME annotation-tool-matrix COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:annotation-tool-matrix-test>)
+set_tests_properties(annotation-tool-matrix PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 60)
 add_executable(editor-wallpaper-test tests/EditorWallpaperTest.cpp ${XERAHS_PREFERENCE_TEST_SOURCES})
 set_target_properties(editor-wallpaper-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-wallpaper-test PRIVATE xerahs_editor_source xerahs_editor_canvas xerahs_editor_codecs Qt6::Widgets Qt6::DBus Qt6::Test)
@@ -1429,7 +1441,7 @@ foreach(target xerahs editor-window-test native-editor-preferences-test)
   target_sources(${target} PRIVATE app/ConveniencePreferencesDialog.cpp app/ConveniencePreferencesDialog.h)
 endforeach()
 # Derived editor tests reuse EditorWindow and therefore its preference command.
-foreach(target editor-pin-test editor-wallpaper-test editor-upload-test native-preference-dialogs-test editor-url-open-test effects-dialog-test sxie-preset-test)
+foreach(target editor-pin-test annotation-tool-matrix-test editor-wallpaper-test editor-upload-test native-preference-dialogs-test editor-url-open-test effects-dialog-test sxie-preset-test)
   target_sources(${target} PRIVATE app/ConveniencePreferencesDialog.cpp app/ConveniencePreferencesDialog.h)
 endforeach()
 get_target_property(XERAHS_TASK_TEST_SOURCES capture-annotation-test SOURCES)
