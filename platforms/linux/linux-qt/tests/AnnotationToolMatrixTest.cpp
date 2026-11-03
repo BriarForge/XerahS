@@ -34,6 +34,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <cmath>
+#include <functional>
 #include <limits>
 #include <memory>
 
@@ -694,6 +695,87 @@ private slots:
     act("saveImage"); QVERIFY(!dirty()); QCOMPARE(QImage(path).size(), QSize(80, 50));
     QCOMPARE(QImage(path).pixel(29, 0), pixels.pixel(29, 0)); QCOMPARE(QImage(path).pixel(30, 0), pixels.pixel(50, 0));
     act("undo"); QVERIFY(dirty()); act("redo"); QVERIFY(!dirty());
+  }
+
+  // EA-017: every listed mutation (create, edit, delete, paste, duplicate,
+  // order, style, crop, cut-out) is exactly one history operation that makes
+  // the saved document dirty, undoes back to the clean checkpoint, redoes to
+  // dirty, and saves clean. Selection and creation defaults are not mutations.
+  void everyListedMutationIsOneHistoryOperationWithExactDirtyState() {
+    const auto png = [](const ArgbImage &pixels) {
+      QImage out(int(pixels.width), int(pixels.height), QImage::Format_ARGB32);
+      for (qint64 y = 0; y < pixels.height; ++y) for (qint64 x = 0; x < pixels.width; ++x) out.setPixel(int(x), int(y), pixels.at(x, y));
+      QByteArray bytes; QBuffer buffer(&bytes); buffer.open(QIODevice::WriteOnly); out.save(&buffer, "PNG"); return bytes;
+    };
+    const ArgbImage pixels = gradient(100, 60);
+    auto base = document(100, 60); base.sourceImagePng = png(pixels); base.createdAt = base.modifiedAt = "2026-11-03T00:00:00Z";
+    EditorSession session(base);
+    const auto first = session.createRectangle({10, 10}, {40, 30}); const auto second = session.createRectangle({50, 10}, {90, 40}); QVERIFY(first && second);
+    ShapeContent text; text.type = shape::text; text.text = "Note";
+    const auto note = session.createShape({{10, 40}, {60, 55}, {}}, text, session.stateId(), session.selection()); QVERIFY(note);
+    session.markSaved(); QVERIFY(!session.dirty());
+
+    // Non-mutations leave the saved state clean.
+    session.select({*first}); session.select({*first, *second}); session.select({});
+    QVERIFY(session.setCreationStyle([] { RectangleStyle style; style.strokeColor = 0xFF00AA00; style.strokeWidth = 9; return style; }()));
+    QVERIFY(!session.dirty());
+    const int undoBefore = session.undoCount();
+    QCOMPARE(undoBefore, 3);
+    session.select({});
+
+    const auto run = [&](const char *name, const std::function<bool()> &mutation) {
+      QVERIFY2(!session.dirty(), name);
+      const int before = session.undoCount();
+      QVERIFY2(mutation(), name);
+      QVERIFY2(session.dirty(), name);
+      QVERIFY2(session.undoCount() == before + 1, name);  // exactly one history operation
+      QVERIFY2(session.undo(), name);
+      QVERIFY2(!session.dirty(), name);                    // the clean checkpoint is reachable again
+      QVERIFY2(session.redo(), name);
+      QVERIFY2(session.dirty(), name);
+      session.markSaved(); QVERIFY2(!session.dirty(), name);  // saving makes the result clean
+      QVERIFY2(session.undo(), name); QVERIFY2(session.dirty(), name);  // and undo past the save is dirty
+      session.markSaved();                                  // continue from the restored state
+    };
+    run("create", [&] { return session.createShape({{70, 45}, {95, 58}, {}}, ShapeContent{}, session.stateId(), session.selection()).has_value(); });
+    run("edit text", [&] { session.select({*note}); auto content = session.selectedRectangle()->content; content.text = "Changed"; return session.editShapeContent(*note, content, session.stateId()); });
+    run("edit properties", [&] { session.select({*first}); auto edit = RectangleProperties{session.selectedRectangle()->start, session.selectedRectangle()->end, session.selectedRectangle()->style};
+                                 edit.style.strokeWidth = 8; return session.editRectangleProperties(*first, edit, session.stateId()); });
+    run("move", [&] { session.select({*first}); return session.moveSelection(4, 3); });
+    run("resize", [&] { session.select({*first}); return session.resizeSelection(6, 5); });
+    run("rotate", [&] { session.select({*first}); return session.rotateSelection(30); });
+    run("style stroke colour", [&] { session.select({*first}); return session.setStrokeColor(0xFF0000FF); });
+    run("style fill colour", [&] { session.select({*first}); return session.setFillColor(0x8000FF00); });
+    run("style thickness", [&] { session.select({*first}); return session.setStrokeWidth(11); });
+    run("style opacity", [&] { session.select({*first}); return session.setOpacity(0.5); });
+    run("order forward", [&] { session.select({*first}); return session.reorderSelection(EditorSession::Order::Front); });
+    run("order backward", [&] { session.select({*second}); return session.reorderSelection(EditorSession::Order::Back); });
+    run("delete", [&] { session.select({*first}); return session.deleteSelection(); });
+    run("duplicate", [&] { session.select({*first}); return session.duplicateSelection().changed; });
+    run("paste", [&] { session.select({}); return session.insertAnnotations({session.document().annotations.front()}, session.stateId()).changed; });
+    run("cut", [&] { session.select({*second}); return session.cutAnnotations(session.stateId(), session.selection()).changed; });
+
+    // Canvas edits commit a replacement source and annotations atomically.
+    const auto canvasEdit = [&](CanvasOperation op) {
+      return [&session, &pixels, op, png] {
+        auto result = applyCanvasOperation(session.document(), pixels, op);
+        if (!result.document || !result.image) return false;
+        result.document->sourceImagePng = png(*result.image);
+        return session.commitCanvas(*result.document, session.stateId(), session.selection());
+      };
+    };
+    // The canvas edit keeps `pixels` of the original size, so reset it first when the canvas shrinks.
+    CanvasOperation crop; crop.action = CanvasAction::Crop; crop.start = {5, 5}; crop.end = {75, 45};
+    run("crop", canvasEdit(crop));
+    CanvasOperation columns; columns.action = CanvasAction::CutOut; columns.cutColumns = true; columns.start = {30, 0}; columns.end = {50, 60};
+    run("cut-out columns", canvasEdit(columns));
+    CanvasOperation rows; rows.action = CanvasAction::CutOut; rows.cutColumns = false; rows.start = {0, 20}; rows.end = {100, 30};
+    run("cut-out rows", canvasEdit(rows));
+
+    // A rejected mutation changes nothing: no history, no dirt, redo kept.
+    session.select({*note}); QVERIFY(session.undo()); session.markSaved(); const int redo = session.redoCount(); QVERIFY(redo > 0);
+    QVERIFY(!session.createShape({{5, 5}, {5, 5}, {}}, ShapeContent{}, session.stateId(), session.selection()));
+    QVERIFY(!session.dirty()); QCOMPARE(session.redoCount(), redo);
   }
 };
 
