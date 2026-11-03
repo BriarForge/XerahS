@@ -20,6 +20,7 @@
 #include <QPushButton>
 #include <QTableWidget>
 #include <QTemporaryDir>
+#include <QSet>
 #include <QtTest>
 using namespace xerahs::settings;
 class ApplicationSettingsTest : public QObject {
@@ -315,6 +316,69 @@ private slots:
     QVERIFY(file.open(QIODevice::WriteOnly)); auto future = envelope; future.insert("version", 2); future.insert("extension", 7); file.write(QJsonDocument(future).toJson()); file.close();
     ApplicationSettingsStore newer(path, dir.path()); QVERIFY(!newer.current().writable); QVERIFY(!newer.save(values).isEmpty());
     ApplicationSettingsStore blocked(dir.filePath("blocked"), dir.path()); QVERIFY(QDir().mkdir(dir.filePath("blocked"))); QVERIFY(!blocked.save(values).isEmpty()); QVERIFY(QFileInfo(dir.filePath("blocked")).isDir());
+  }
+  // SETCAT-003: every field-state class, secret-free diagnostics, unrelated fields survive.
+  void fieldStatesDistinguishAbsentValidInvalidUnknownDeprecatedAndNewer() {
+    QTemporaryDir dir; auto input = defaultSettings(dir.path());
+    input.remove("showTrayIcon");
+    input.insert("showNotification", "secret-token-AAAA");
+    input.insert("legacy.option", "secret-legacy-BBBB"); input.insert("future.option", QJsonObject{{"password", "secret-future-CCCC"}});
+    auto bindings = input.value("hotkeys").toObject(); bindings.insert("capture-region", "Alt+F4"); bindings.insert("future-action", "secret-action-DDDD"); bindings.remove("capture-monitor");
+    input.insert("hotkeys", bindings);
+    const auto read = repairSettings(input, dir.path(), {"legacy.option"});
+    QCOMPARE(read.fields.value("showTrayIcon"), FieldState::Missing);
+    QCOMPARE(read.fields.value("saveFolder"), FieldState::Valid);
+    QCOMPARE(read.fields.value("showNotification"), FieldState::Invalid);
+    QCOMPARE(read.fields.value("future.option"), FieldState::Unknown);
+    QCOMPARE(read.fields.value("legacy.option"), FieldState::Deprecated);
+    QCOMPARE(read.fields.value("hotkeys"), FieldState::Valid);
+    QCOMPARE(read.fields.value("hotkeys.capture-region"), FieldState::Invalid);
+    QCOMPARE(read.fields.value("hotkeys.future-action"), FieldState::Unknown);
+    QCOMPARE(read.fields.value("hotkeys.capture-monitor"), FieldState::Missing);
+    QCOMPARE(read.fields.value("hotkeys.capture-full-screen"), FieldState::Valid);
+    for (const auto &field : settingFields()) QVERIFY2(read.fields.contains(field.key), qPrintable(field.key));
+    // Without a declared deprecated key the same field is merely unknown.
+    QVERIFY(deprecatedSettingKeys().isEmpty());
+    QCOMPARE(repairSettings(input, dir.path()).fields.value("legacy.option"), FieldState::Unknown);
+    // Only Invalid repairs produce diagnostics; they name fields and never repeat a value.
+    QCOMPARE(read.diagnostics.size(), 2);
+    const auto text = read.diagnostics.join('\n');
+    QVERIFY(text.contains("showNotification")); QVERIFY(text.contains("hotkeys.capture-region"));
+    QVERIFY(!text.contains("secret")); QVERIFY(!text.contains("AAAA"));
+    // One failing field never discards unrelated valid, unknown or deprecated ones.
+    QCOMPARE(read.values.value("saveFolder"), input.value("saveFolder"));
+    QCOMPARE(read.values.value("legacy.option"), input.value("legacy.option"));
+    QCOMPARE(read.values.value("future.option"), input.value("future.option"));
+    QCOMPARE(read.values.value("hotkeys").toObject().value("future-action"), QJsonValue("secret-action-DDDD"));
+    QVERIFY(read.values.value("showNotification").toBool());
+    QSet<QString> names; for (auto s : {FieldState::Missing, FieldState::Valid, FieldState::Invalid, FieldState::Unknown, FieldState::Deprecated, FieldState::NewerVersion}) names.insert(fieldStateName(s));
+    QCOMPARE(names.size(), 6);
+  }
+  void storeReportsMissingFileAndNewerVersionFieldStates() {
+    QTemporaryDir dir; const auto path = dir.filePath("settings.json");
+    ApplicationSettingsStore fresh(path, dir.path());
+    for (const auto &field : settingFields()) QCOMPARE(fresh.current().fields.value(field.key), FieldState::Missing);
+    QVERIFY(fresh.current().diagnostics.isEmpty());
+    QJsonObject values = defaultSettings(dir.path()); values.insert("showNotification", "secret-token-EEEE");
+    QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly));
+    file.write(QJsonDocument(QJsonObject{{"version", 2}, {"values", values}, {"extension", 7}}).toJson()); file.close();
+    QVERIFY(file.open(QIODevice::ReadOnly)); const auto before = file.readAll(); file.close();
+    ApplicationSettingsStore newer(path, dir.path());
+    QVERIFY(!newer.current().writable); QCOMPARE(newer.current().fields.value("version"), FieldState::NewerVersion);
+    for (const auto &field : settingFields()) QCOMPARE(newer.current().fields.value(field.key), FieldState::NewerVersion);
+    QCOMPARE(newer.current().diagnostics, QStringList{"settings-version-unsupported"});
+    QVERIFY(!newer.save(defaultSettings(dir.path())).isEmpty());
+    QVERIFY(file.open(QIODevice::ReadOnly)); QCOMPARE(file.readAll(), before); file.close();
+    // A malformed version is invalid, not newer.
+    QVERIFY(file.open(QIODevice::WriteOnly)); file.write(QJsonDocument(QJsonObject{{"version", "two"}, {"values", values}}).toJson()); file.close();
+    ApplicationSettingsStore bad(path, dir.path()); QVERIFY(!bad.current().writable);
+    QCOMPARE(bad.current().fields.value("version"), FieldState::Invalid);
+    // A file on disk reports field-level states through the real store.
+    QVERIFY(file.open(QIODevice::WriteOnly)); values.insert("future.option", 1); file.write(QJsonDocument(QJsonObject{{"version", 1}, {"values", values}}).toJson()); file.close();
+    ApplicationSettingsStore disk(path, dir.path());
+    QCOMPARE(disk.current().fields.value("showNotification"), FieldState::Invalid);
+    QCOMPARE(disk.current().fields.value("future.option"), FieldState::Unknown);
+    QVERIFY(!disk.current().diagnostics.join('\n').contains("EEEE"));
   }
   void autostart() {
     QTemporaryDir dir; const auto old = qgetenv("XDG_CONFIG_HOME"); qputenv("XDG_CONFIG_HOME", dir.path().toUtf8());

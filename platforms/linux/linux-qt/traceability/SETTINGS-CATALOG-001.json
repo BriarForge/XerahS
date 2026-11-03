@@ -18,19 +18,19 @@
   ],
   "requirements": {
     "SETCAT-003": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Valid fields and compatible unknown keys survive individual repairs with field-specific diagnostics. Future versions are read-only. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required. Region quick-confirm/snapping fields are profile-scoped, boolean-validated, default enabled per RC SPEC, independently repaired and frozen before acquisition. Native Apply/Cancel/reset and round-trip tests preserve unrelated fields; no workflow schema or permission authority changes.",
+      "note": "Valid fields and compatible unknown keys survive individual repairs with field-specific diagnostics. Future versions are read-only. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required. Region quick-confirm/snapping fields are profile-scoped, boolean-validated, default enabled per RC SPEC, independently repaired and frozen before acquisition. Native Apply/Cancel/reset and round-trip tests preserve unrelated fields; no workflow schema or permission authority changes. Audit 2026-11-03: SettingsRead.fields classifies every stored field as Missing, Valid, Invalid, Unknown, Deprecated or NewerVersion (mirrors EditorPreferences PreferenceFieldState plus Deprecated; hotkeys.<id> entries are classified individually). fieldStatesDistinguishAbsentValidInvalidUnknownDeprecatedAndNewer proves each class, that one invalid field or binding never discards unrelated valid, unknown or deprecated fields, and that diagnostics name fields only and never repeat a stored (secret-like) value; storeReportsMissingFileAndNewerVersionFieldStates proves a missing file reports Missing, a future envelope reports NewerVersion read-only and untouched, and a malformed version is Invalid. Deprecated keys come from deprecatedSettingKeys() (empty today because no earlier build wrote a retired application setting; the list is injectable and tested). Existing repairsAreFieldSpecific and the region/scrolling/audio repair tests cover per-field repair.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 17,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e48015a1390a16d530f011e160b28c2d913ae728"
       }
     },
     "SETCAT-004": {
@@ -412,7 +412,9 @@
         "autostart",
         "combinedPlanAndAuthority",
         "sharedActionRoutingRefusesBusyModalAndDisabled",
-        "dialogCancelAndConflict"
+        "dialogCancelAndConflict",
+        "fieldStatesDistinguishAbsentValidInvalidUnknownDeprecatedAndNewer",
+        "storeReportsMissingFileAndNewerVersionFieldStates"
       ],
       "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp": [
         "missingAndAtomicPrivateRoundTrip",

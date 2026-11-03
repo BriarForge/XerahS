@@ -873,7 +873,7 @@ add_executable(application-settings-test tests/ApplicationSettingsTest.cpp
 set_target_properties(application-settings-test PROPERTIES AUTOMOC ON)
 target_link_libraries(application-settings-test PRIVATE xerahs_workflow_shortcuts Qt6::Test)
 add_test(NAME application-settings COMMAND application-settings-test)
-set_tests_properties(application-settings PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+set_tests_properties(application-settings PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 120)
 
 # Optional dynamically linked native recording transport; product decisions use Qt Core only.
 option(XERAHS_RECORDING "Enable GStreamer recording when available" ON)

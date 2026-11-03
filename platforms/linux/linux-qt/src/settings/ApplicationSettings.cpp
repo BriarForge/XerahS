@@ -53,6 +53,18 @@ QVector<SettingField> settingFields() {
     {"scrollingCapture.positionPointer", Section::Capture, "profile"},
     {"hotkeys", Section::Hotkeys, "profile"}, {"systemAudioDevice", Section::Recording, "profile"}, {"microphoneDevice", Section::Recording, "profile"}};
 }
+QString fieldStateName(FieldState state) {
+  switch (state) {
+    case FieldState::Missing: return "missing";
+    case FieldState::Valid: return "valid";
+    case FieldState::Invalid: return "invalid";
+    case FieldState::Unknown: return "unknown";
+    case FieldState::Deprecated: return "deprecated";
+    case FieldState::NewerVersion: return "newer-version";
+  }
+  return "invalid";
+}
+QStringList deprecatedSettingKeys() { return {}; }
 QJsonObject defaultSettings(const QString &saveFolder) {
   QJsonObject bindings; const auto defaults = HotkeyBindings::defaults();
   for (auto it = defaults.entries.cbegin(); it != defaults.entries.cend(); ++it) bindings.insert(it.key(), it.value());
@@ -85,11 +97,11 @@ HotkeyBindings hotkeys(const QJsonObject &values) {
   for (auto it = object.begin(); it != object.end(); ++it) if (stableActionId(it.key())) result.entries.insert(it.key(), it.value().toString());
   return result;
 }
-SettingsRead repairSettings(const QJsonObject &input, const QString &saveFolder) {
-  SettingsRead result{input, {}, true}; const auto defaults = defaultSettings(saveFolder);
+SettingsRead repairSettings(const QJsonObject &input, const QString &saveFolder, const QStringList &deprecated) {
+  SettingsRead result{input, {}, true, {}}; const auto defaults = defaultSettings(saveFolder);
   for (const auto &field : settingFields()) {
     const auto value = input.value(field.key); bool valid = true;
-    if (value.isUndefined()) { result.values.insert(field.key, defaults.value(field.key)); continue; }
+    if (value.isUndefined()) { result.values.insert(field.key, defaults.value(field.key)); result.fields.insert(field.key, FieldState::Missing); continue; }
     if (field.key == "saveFolder") valid = value.isString() && !value.toString().isEmpty() && workflows::captureDirectoryDiagnostic(value.toString()).isEmpty();
     else if (field.key == "filenamePattern") {
       workflows::CaptureOutput output; output.pattern = value.toString();
@@ -98,18 +110,24 @@ SettingsRead repairSettings(const QJsonObject &input, const QString &saveFolder)
     else if (field.section == Section::Recording) valid = value.isString() && value.toString().size() <= 4096 && !value.toString().contains(QChar(0));
     else if (field.section == Section::Capture) valid = validCaptureValue(field.key, value);
     else valid = value.isBool();
+    result.fields.insert(field.key, valid ? FieldState::Valid : FieldState::Invalid);
     if (!valid) { result.values.insert(field.key, defaults.value(field.key)); result.diagnostics.append(field.key + ": invalid value repaired"); }
   }
+  for (auto it = input.begin(); it != input.end(); ++it) if (!result.fields.contains(it.key()))
+    result.fields.insert(it.key(), deprecated.contains(it.key()) ? FieldState::Deprecated : FieldState::Unknown);
   auto bindings = result.values.value("hotkeys").toObject(); HotkeyBindings checked;
   // Validate individually; an invalid field never discards unrelated bindings.
   for (auto it = bindings.begin(); it != bindings.end(); ++it) {
-    if (!stableActionId(it.key())) continue; // Compatible future action IDs round-trip, never execute.
+    const auto state = "hotkeys." + it.key();
+    if (!stableActionId(it.key())) { result.fields.insert(state, FieldState::Unknown); continue; } // Compatible future action IDs round-trip, never execute.
     const auto accepted = it.value().isString() ? checked.assign(it.key(), it.value().toString()) : BindingResult{};
+    result.fields.insert(state, accepted.ok ? FieldState::Valid : FieldState::Invalid);
     if (!accepted.ok) { result.diagnostics.append("hotkeys." + it.key() + ": clear invalid/conflicting preference; change in desktop settings"); it.value() = ""; checked.entries.insert(it.key(), ""); }
     else it.value() = checked.entries.value(it.key());
   }
   const auto defaultBindings = defaults.value("hotkeys").toObject();
   for (auto it = defaultBindings.begin(); it != defaultBindings.end(); ++it) if (!bindings.contains(it.key())) {
+    result.fields.insert("hotkeys." + it.key(), FieldState::Missing);
     const auto accepted = checked.assign(it.key(), it.value().toString()); bindings.insert(it.key(), accepted.ok ? it.value() : QJsonValue(""));
   }
   result.values.insert("hotkeys", bindings); return result;
@@ -135,7 +153,14 @@ ApplicationSettingsStore::ApplicationSettingsStore(QString path, QString saveFol
         diagnostic = "settings-invalid-restore-previous-or-repair-file";
       else if (read.document.value("version") != QJsonValue(1)) diagnostic = "settings-version-unsupported";
     } else diagnostic = "settings-read-failed";
-    if (!diagnostic.isEmpty()) { m_current = {defaultSettings(m_saveFolder), {diagnostic}, false}; return; }
+    if (!diagnostic.isEmpty()) {
+      m_current = {defaultSettings(m_saveFolder), {diagnostic}, false, {}};
+      // A future envelope is read-only: its fields are not interpreted, never downgraded.
+      const auto version = read.document.value("version");
+      m_current.fields.insert("version", diagnostic == "settings-version-unsupported" && version.isDouble() && version.toDouble() > 1 ? FieldState::NewerVersion : FieldState::Invalid);
+      if (m_current.fields.value("version") == FieldState::NewerVersion) for (const auto &field : settingFields()) m_current.fields.insert(field.key, FieldState::NewerVersion);
+      return;
+    }
     m_snapshot = read.snapshot;
     m_envelope = read.document;
   }
