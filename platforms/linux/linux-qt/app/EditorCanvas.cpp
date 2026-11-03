@@ -897,6 +897,16 @@ QImage emojiImage(const QString &emoji) {
   painter.drawText(image.rect(), Qt::AlignCenter, emoji);
   return image;
 }
+// Reference catalog names (CLDR short names) of the emoji this picker offers, keyed by unicodeSequence.
+QString emojiDisplayName(const QString &sequence) {
+  static const QHash<QString, QString> names{{"1f600", "grinning face"}, {"1f602", "face with tears of joy"}, {"1f60d", "smiling face with heart-eyes"},
+      {"1f914", "thinking face"}, {"1f62e", "face with open mouth"}, {"1f622", "crying face"}, {"1f621", "enraged face"}, {"1f44d", "thumbs up"},
+      {"1f44e", "thumbs down"}, {"1f44f", "clapping hands"}, {"1f64f", "folded hands"}, {"1f449", "backhand index pointing right"},
+      {"1f446", "backhand index pointing up"}, {"2705", "check mark button"}, {"274c", "cross mark"}, {"26a0 fe0f", "warning"},
+      {"2757", "red exclamation mark"}, {"2753", "red question mark"}, {"2b50", "star"}, {"1f525", "fire"}, {"1f4a1", "light bulb"},
+      {"1f389", "party popper"}, {"2764 fe0f", "red heart"}, {"1f41e", "lady beetle"}};
+  return names.value(sequence);
+}
 QImage cursorImage() {
   // A standard arrow pointer: black with a white outline.
   QImage image(32, 48, QImage::Format_ARGB32_Premultiplied);
@@ -961,7 +971,7 @@ bool EditorCanvas::createAsset(const QString &type, const std::vector<PointF> &g
     return false; // the owned asynchronous dialog commits and reports its result
   }
   const QPointer<EditorCanvas> owner(this);
-  QImage asset;
+  QImage asset; QString emojiText;
   m_annotationDialogPending = true;
   if (type == shape::emoji) {
     bool accepted = false;
@@ -969,7 +979,7 @@ bool EditorCanvas::createAsset(const QString &type, const std::vector<PointF> &g
                              "❗", "❓", "⭐", "🔥", "💡", "🎉", "❤️", "🐞"};
     const QString chosen = QInputDialog::getItem(this, "Insert Emoji", "Emoji:", emojis, 0, true, &accepted);
     if (!owner) return false;
-    if (accepted && !chosen.trimmed().isEmpty()) asset = emojiImage(chosen.trimmed().left(16));
+    if (accepted && !chosen.trimmed().isEmpty()) { emojiText = chosen.trimmed().left(16); asset = emojiImage(emojiText); }
   } else {
     asset = cursorImage();
   }
@@ -989,6 +999,9 @@ bool EditorCanvas::createAsset(const QString &type, const std::vector<PointF> &g
   ShapeContent content;
   content.type = type;
   content.imageKey = "asset-" + QUuid::createUuid().toString(QUuid::WithoutBraces);
+  // EA-010: record which emoji was chosen and which cursor type was drawn, beside the pixels.
+  if (type == shape::emoji) { content.unicodeSequence = unicodeSequenceOf(emojiText); content.displayName = emojiDisplayName(content.unicodeSequence); }
+  else content.cursorType = QStringLiteral("Default");
   m_session->createShape({start, end, creation.style}, content, creation.state, creation.selection, {{content.imageKey, png}});
   return true;
 }

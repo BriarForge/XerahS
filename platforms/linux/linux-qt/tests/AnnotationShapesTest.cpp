@@ -530,6 +530,87 @@ private slots:
     json["points"] = QJsonArray{QJsonObject{{"x", 1.5}, {"y", 1.5}}, QJsonObject{{"x", 2}, {"y", 2}}}; QVERIFY(!parseAnnotationList(QJsonArray{json}).annotations);
     json["points"] = QJsonArray{QJsonObject{{"x", 1e308}, {"y", 1e308}}}; QVERIFY(!parseAnnotationList(QJsonArray{json}).annotations);
   }
+  // EA-010 asset metadata: reference Emoji unicodeSequence/displayName and Cursor cursorType, camelCase and optional.
+  void emojiAndCursorMetadataRoundTripValidateAndStayWithTheirType() {
+    QImage pixel(4, 4, QImage::Format_ARGB32); pixel.fill(QColor(1, 2, 3, 100)); const auto png = pngOf(pixel);
+    auto d = document(100, 100); d.embeddedImages = {{"e", png}, {"c", png}, {"bare", png}};
+    auto emoji = shapeOf(shape::emoji, {10, 10}, {40, 40}); emoji.content.imageKey = "e";
+    emoji.content.unicodeSequence = "2764 fe0f"; emoji.content.displayName = "red heart";
+    auto cursor = shapeOf(shape::cursor, {50, 10}, {70, 40}); cursor.content.imageKey = "c"; cursor.content.cursorType = "IBeam";
+    auto bare = shapeOf(shape::emoji, {10, 50}, {40, 80}); bare.content.imageKey = "bare";  // metadata is optional
+    d.annotations = {emoji, cursor, bare};
+    const auto payload = serializeDocument(d); const auto list = payload["annotations"].toArray();
+    QCOMPARE(list[0].toObject().value("unicodeSequence"), QJsonValue("2764 fe0f")); QCOMPARE(list[0].toObject().value("displayName"), QJsonValue("red heart"));
+    QCOMPARE(list[1].toObject().value("cursorType"), QJsonValue("iBeam"));  // reference camelCase spelling
+    QVERIFY(!list[2].toObject().contains("unicodeSequence")); QVERIFY(!list[2].toObject().contains("displayName")); QVERIFY(!list[1].toObject().contains("unicodeSequence"));
+    const auto reloaded = parseDocument(payload); QVERIFY(reloaded.document);
+    const auto &e = std::get<RectangleAnnotation>(reloaded.document->annotations[0]).content, &c = std::get<RectangleAnnotation>(reloaded.document->annotations[1]).content;
+    QCOMPARE(e.unicodeSequence, QString("2764 fe0f")); QCOMPARE(e.displayName, QString("red heart")); QCOMPARE(c.cursorType, QString("IBeam"));
+    QCOMPARE(serializeDocument(*reloaded.document), payload);  // byte-stable second round trip
+    QVERIFY(std::get<RectangleAnnotation>(reloaded.document->annotations[2]).content.unicodeSequence.isEmpty());
+    // Reference files: any case, hyphen separators; the metadata is consumed rather than duplicated in the unknown fields.
+    auto json = list[1].toObject(); json["cursorType"] = "WAITCURSOR"; auto parsed = parseAnnotationList(QJsonArray{json}); QVERIFY(parsed.annotations);
+    QCOMPARE(std::get<RectangleAnnotation>((*parsed.annotations)[0]).content.cursorType, QString("WaitCursor"));
+    QVERIFY(std::get<RectangleAnnotation>((*parsed.annotations)[0]).extra.value("cursorType").isUndefined());
+    for (const auto &name : cursorTypeNames()) { json["cursorType"] = cursorTypePersistedName(name); const auto each = parseAnnotationList(QJsonArray{json}); QVERIFY2(each.annotations, qPrintable(name)); }
+    json = list[0].toObject(); json["unicodeSequence"] = "1F600-200D-1F4A8"; QVERIFY(parseAnnotationList(QJsonArray{json}).annotations);
+    // Unusable metadata invalidates the document instead of being silently kept or dropped.
+    for (const QJsonValue &bad : {QJsonValue(""), QJsonValue("zz"), QJsonValue("110000"), QJsonValue("0"), QJsonValue("d800"), QJsonValue(5), QJsonValue("1f600  1f601"),
+                                  QJsonValue(QString(17 * 5, '1').replace(5, 1, ' ')), QJsonValue("1f600 1f601 1f602 1f603 1f604 1f605 1f606 1f607 1f608 1f609 1f60a 1f60b 1f60c 1f60d 1f60e 1f60f 1f610")}) {
+      json = list[0].toObject(); json["unicodeSequence"] = bad; QVERIFY2(!parseAnnotationList(QJsonArray{json}).annotations, qPrintable(QJsonDocument(QJsonArray{bad}).toJson()));
+    }
+    for (const QJsonValue &bad : {QJsonValue(""), QJsonValue(QString(257, 'x')), QJsonValue("tab\there"), QJsonValue(3)}) {
+      json = list[0].toObject(); json["displayName"] = bad; QVERIFY(!parseAnnotationList(QJsonArray{json}).annotations);
+    }
+    for (const QJsonValue &bad : {QJsonValue("spinner"), QJsonValue(""), QJsonValue(2), QJsonValue(true)}) {
+      json = list[1].toObject(); json["cursorType"] = bad; QVERIFY(!parseAnnotationList(QJsonArray{json}).annotations);
+    }
+    // On any other type the same names stay inert, preserved unknown fields.
+    auto rect = serializeAnnotationList({shapeOf(shape::rectangle, {0, 0}, {5, 5})})[0].toObject(); rect["cursorType"] = "spinner"; rect["unicodeSequence"] = "zz";
+    const auto kept = parseAnnotationList(QJsonArray{rect}); QVERIFY(kept.annotations);
+    QCOMPARE(serializeAnnotationList(*kept.annotations)[0].toObject().value("cursorType"), QJsonValue("spinner"));
+    // Creation refuses metadata on the wrong type or in the wrong form, with no history entry.
+    EditorSession session(document(200, 200)); const auto before = serializeDocument(session.document());
+    const std::vector<std::tuple<QString, QString, QString, QString>> refused{{shape::cursor, "1f600", "", ""}, {shape::emoji, "zz", "", ""}, {shape::emoji, "", QString(300, 'x'), ""},
+        {shape::emoji, "", "", "Hand"}, {shape::cursor, "", "", "spinner"}, {shape::cursor, "", "", "hand"}, {shape::rectangle, "", "", "Hand"}};
+    for (const auto &[type, sequence, name, cursorType] : refused) {
+      ShapeContent content; content.type = type; content.imageKey = "k"; content.unicodeSequence = sequence; content.displayName = name; content.cursorType = cursorType;
+      QVERIFY(!session.createShape({{10, 10}, {50, 50}, {}}, content, session.stateId(), session.selection(), {{"k", png}}));
+      QCOMPARE(session.editDiagnostic(), QString("annotation-style-invalid")); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), 0);
+    }
+    // Copy and paste keep the metadata with the pixels.
+    ShapeContent content; content.type = shape::emoji; content.imageKey = "k"; content.unicodeSequence = "1f525"; content.displayName = "fire";
+    const auto made = session.createShape({{10, 10}, {50, 50}, {}}, content, session.stateId(), session.selection(), {{"k", png}}); QVERIFY(made);
+    session.select({*made}); QVERIFY(session.duplicateSelection().changed);
+    const auto &copy = std::get<RectangleAnnotation>(session.document().annotations.back());
+    QCOMPARE(copy.content.unicodeSequence, QString("1f525")); QCOMPARE(copy.content.displayName, QString("fire")); QVERIFY(copy.id != *made);
+  }
+  void emojiPickerAndCursorToolRecordTheirMetadata() {
+    QImage source(300, 200, QImage::Format_ARGB32); source.fill(Qt::white);
+    EditorSession session(document(300, 200)); EditorCanvas canvas(session, source); canvas.resize(500, 400); canvas.show(); QCoreApplication::processEvents(); canvas.resetZoom();
+    const auto at = [&](double x, double y) { return canvas.viewState().toView({x, y}).toPoint(); };
+    const auto last = [&]() -> const RectangleAnnotation & { return std::get<RectangleAnnotation>(session.document().annotations.back()); };
+    // Cursor: this build draws one pointer, recorded with the reference Default type.
+    canvas.setTool(EditorCanvas::Tool::Cursor); QTest::mouseClick(canvas.viewport(), Qt::LeftButton, {}, at(100, 80));
+    QCOMPARE(last().type(), shape::cursor); QCOMPARE(last().content.cursorType, QString("Default")); QVERIFY(last().content.unicodeSequence.isEmpty());
+    // Emoji: the picked emoji's code points and catalog name travel with its pixels; a typed value is recorded without a name.
+    canvas.setTool(EditorCanvas::Tool::Emoji);
+    const std::vector<std::tuple<QString, QString, QString>> picks{{"", "1f600", "grinning face"}, {QString::fromUtf8("\xe2\x9d\xa4\xef\xb8\x8f"), "2764 fe0f", "red heart"},
+        {QString::fromUtf8("\xf0\x9f\x90\x99"), "1f419", ""}};
+    for (const auto &pick : picks) {
+      const QString typed = std::get<0>(pick), sequence = std::get<1>(pick), name = std::get<2>(pick);
+      QTimer picker; picker.setInterval(5);
+      QObject::connect(&picker, &QTimer::timeout, &picker, [&] {
+        if (auto *dialog = qobject_cast<QInputDialog *>(QApplication::activeModalWidget())) { picker.stop(); if (!typed.isEmpty()) { if (auto *combo = dialog->findChild<QComboBox *>()) { const int at = combo->findText(typed); if (at >= 0) combo->setCurrentIndex(at); else combo->setCurrentText(typed); } dialog->setTextValue(typed); } dialog->accept(); }
+      });
+      picker.start();
+      QTest::mouseClick(canvas.viewport(), Qt::LeftButton, {}, at(10 + 90.0 * (session.undoCount() - 2), 150)); picker.stop();
+      QCOMPARE(last().type(), shape::emoji); QCOMPARE(last().content.unicodeSequence, sequence); QCOMPARE(last().content.displayName, name);
+    }
+    const auto saved = serializeDocument(session.document()); const auto reloaded = parseDocument(saved); QVERIFY(reloaded.document);
+    QCOMPARE(serializeDocument(*reloaded.document), saved);
+  }
+
   // EA-019: one object of every one of the 17 drawable types, each with every field that applies to it set
   // away from its default, plus embedded assets, an unknown type and compatible unknown fields.
   void allSeventeenShapeTypesRoundTripEveryFieldThroughXann() {

@@ -95,6 +95,13 @@ std::optional<QUuid> EditorSession::createShape(const RectangleProperties &draft
   if (content.type == shape::step && !validStepValue(content.stepValue)) {
     m_editDiagnostic = "annotation-style-invalid"; return std::nullopt;
   }
+  // EA-010 metadata belongs to its own asset type only.
+  if ((!content.unicodeSequence.isEmpty() && (content.type != shape::emoji || !validUnicodeSequence(content.unicodeSequence))) ||
+      (!content.displayName.isEmpty() && (content.type != shape::emoji || !validEmojiDisplayName(content.displayName))) ||
+      (!content.cursorType.isEmpty() && (content.type != shape::cursor || !parseCursorTypeName(content.cursorType) ||
+       parseCursorTypeName(content.cursorType) != content.cursorType))) {
+    m_editDiagnostic = "annotation-style-invalid"; return std::nullopt;
+  }
   const auto start = draft.start, end = draft.end;
   // Check both supplied points before min/max: a NaN in the second operand
   // can otherwise disappear during normalization.

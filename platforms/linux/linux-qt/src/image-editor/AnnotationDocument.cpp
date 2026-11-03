@@ -329,6 +329,20 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
       ok = ok && o.value(u"imageKey").isString() && !o.value(u"imageKey").toString().isEmpty() && o.value(u"imageKey").toString().size() <= 256;
       content.imageKey = o.value(u"imageKey").toString();
     }
+    // EA-010: optional asset metadata, reference XANN names. A present but unusable value rejects the document.
+    if (type == shape::emoji) {
+      for (const auto &field : {std::pair{u"unicodeSequence", &content.unicodeSequence}, std::pair{u"displayName", &content.displayName}}) {
+        if (!o.contains(field.first)) continue;
+        const auto value = o.value(field.first);
+        const bool good = value.isString() && (field.first[0] == u'u' ? validUnicodeSequence(value.toString()) : validEmojiDisplayName(value.toString()));
+        if (!good) { ok = false; break; }
+        *field.second = value.toString();
+      }
+    }
+    if (type == shape::cursor && o.contains(u"cursorType")) {
+      const auto name = o.value(u"cursorType").isString() ? parseCursorTypeName(o.value(u"cursorType").toString()) : std::nullopt;
+      if (!name) ok = false; else content.cursorType = *name;
+    }
     if (!ok) {
       findings.invalid = true;
       return std::nullopt;
@@ -389,6 +403,8 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
   }
   if (type == shape::speechBalloon) rectangle.extra.remove(QStringLiteral("balloonBorderColor"));
   if (type == shape::step) rectangle.extra.remove(QStringLiteral("stepType"));
+  if (type == shape::emoji) { rectangle.extra.remove(QStringLiteral("unicodeSequence")); rectangle.extra.remove(QStringLiteral("displayName")); }
+  if (type == shape::cursor) rectangle.extra.remove(QStringLiteral("cursorType"));
   if (type == shape::text) rectangle.extra.remove(QStringLiteral("textBorderColor"));
   if (hasShapeEllipse(type)) rectangle.extra.remove(QStringLiteral("isEllipse"));
   if (hasShapeBlurAmount(type)) rectangle.extra.remove(QStringLiteral("blurAmount"));
@@ -687,6 +703,13 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
       else o.remove(QStringLiteral("stepType"));
     }
     if (isAssetShape(content.type)) o.insert(QStringLiteral("imageKey"), content.imageKey);
+    if (content.type == shape::emoji) {
+      if (!content.unicodeSequence.isEmpty()) o.insert(QStringLiteral("unicodeSequence"), content.unicodeSequence); else o.remove(QStringLiteral("unicodeSequence"));
+      if (!content.displayName.isEmpty()) o.insert(QStringLiteral("displayName"), content.displayName); else o.remove(QStringLiteral("displayName"));
+    }
+    if (content.type == shape::cursor) {
+      if (!content.cursorType.isEmpty()) o.insert(QStringLiteral("cursorType"), cursorTypePersistedName(content.cursorType)); else o.remove(QStringLiteral("cursorType"));
+    }
     if (hasShapeStrength(content.type)) o.insert(QStringLiteral("strength"), content.strength);
     // EA-011: defaults are omitted on write; a stale value from the source object is cleared.
     if (hasShapeEllipse(content.type)) {
@@ -897,6 +920,43 @@ bool validEmbeddedPng(const QByteArray &png) {
   };
   const qint64 width = be32(16), height = be32(20);
   return width >= 1 && height >= 1 && width <= kMaxDimension && height <= kMaxDimension && width * height <= kMaxAssetPixels;
+}
+const QStringList &cursorTypeNames() {
+  static const QStringList names{"AppStarting", "Arrow", "Cross", "Default", "Hand", "Help", "HSplit", "IBeam", "No", "NoMove2D",
+      "NoMoveHoriz", "NoMoveVert", "PanEast", "PanNE", "PanNorth", "PanNW", "PanSE", "PanSouth", "PanSW", "PanWest", "SizeAll",
+      "SizeNESW", "SizeNS", "SizeNWSE", "SizeWE", "UpArrow", "VSplit", "WaitCursor"};
+  return names;
+}
+std::optional<QString> parseCursorTypeName(const QString &name) {
+  for (const auto &candidate : cursorTypeNames()) if (candidate.compare(name, Qt::CaseInsensitive) == 0) return candidate;
+  return std::nullopt;
+}
+QString cursorTypePersistedName(const QString &canonical) {
+  QString name = canonical;
+  if (!name.isEmpty()) name[0] = name[0].toLower();
+  return name;
+}
+bool validUnicodeSequence(const QString &sequence) {
+  // Hex code points separated by single spaces or hyphens, as the reference catalog writes them.
+  const auto parts = sequence.split(QRegularExpression(QStringLiteral("[ -]")), Qt::KeepEmptyParts);
+  if (sequence.isEmpty() || parts.size() > kMaxEmojiCodePoints) return false;
+  for (const auto &part : parts) {
+    if (part.isEmpty() || part.size() > 6) return false;
+    bool ok = false; const uint value = part.toUInt(&ok, 16);
+    if (!ok || value == 0 || value > 0x10FFFF || (value >= 0xD800 && value <= 0xDFFF)) return false;
+    for (const QChar c : part) if (!c.isLetterOrNumber() || c.unicode() > 0x7F) return false;
+  }
+  return true;
+}
+bool validEmojiDisplayName(const QString &name) {
+  if (name.isEmpty() || name.size() > kMaxEmojiDisplayName) return false;
+  for (const QChar c : name) if (c.unicode() < 0x20 || c.unicode() == 0x7F) return false;
+  return true;
+}
+QString unicodeSequenceOf(const QString &emoji) {
+  QStringList parts;
+  for (const uint cp : emoji.toUcs4()) parts << QString::number(cp, 16);
+  return parts.join(QLatin1Char(' '));
 }
 bool validStepValue(qint64 value) { return value >= 0 && value <= kMaxStepValue; }
 

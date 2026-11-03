@@ -110,6 +110,20 @@ std::optional<StepStyle> parseStepStyle(const QString &);  // either spelling, c
 // 26 = Z, 27 = AA); Roman is standard subtractive with M repeated above 3999.
 QString formatStepValue(qint64 value, StepStyle style);
 
+// EA-010: the reference CursorType members, in reference order and spelling (PascalCase). The
+// persisted `cursorType` spelling is camelCase (first letter lowered, as the reference XANN policy
+// does) and is read case-insensitively.
+const QStringList &cursorTypeNames();
+std::optional<QString> parseCursorTypeName(const QString &name);  // canonical PascalCase, or nullopt
+QString cursorTypePersistedName(const QString &canonical);
+// EA-010: Emoji metadata, reference `unicodeSequence` (space separated hex code points) and
+// `displayName`. Both are optional; an empty value is "not recorded".
+inline constexpr int kMaxEmojiCodePoints = 16;
+inline constexpr int kMaxEmojiDisplayName = 256;
+bool validUnicodeSequence(const QString &sequence);
+bool validEmojiDisplayName(const QString &name);
+QString unicodeSequenceOf(const QString &emoji);
+
 struct ContentCreationDefaults {
   TextCreationDefaults text, balloon;
   double stepFontSize = 0;  // 0 sizes the number from the step circle
@@ -181,6 +195,9 @@ struct ShapeContent {
   bool isEllipse = false;   // EA-011: region effects only; false = rectangular region
   double blurAmount = 0;    // EA-011: Spotlight only; 0 = no blur of the dimmed area
   QString imageKey;       // asset types: key into AnnotationDocument::embeddedImages
+  // EA-010 asset metadata, optional and camelCase in the document as in the reference XANN format:
+  // Emoji `unicodeSequence` and `displayName`, Cursor `cursorType` (canonical PascalCase here).
+  QString unicodeSequence, displayName, cursorType;
   QString textAlignment;  // empty preserves legacy rendering; left, center, right
   std::optional<bool> textBold, textItalic; // absent retains the native font style of legacy files
   std::optional<Argb> textColor; // absent retains legacy stroke/automatic contrast
