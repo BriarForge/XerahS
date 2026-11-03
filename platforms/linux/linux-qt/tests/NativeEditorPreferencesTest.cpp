@@ -468,6 +468,29 @@ private slots:
     QVERIFY(!result.saved); QCOMPARE(result.diagnostic, QStringLiteral("settings-changed-in-session"));
     QCOMPARE(recentImageHistory().paths(), QStringList{"/private/two.png"}); QCOMPARE(bytes(path), stored);
   }
+  // ESET-002: native warning path reports Invalid fields but stays silent for Unknown ones,
+  // and the host exposes the Unknown field state. A newer record warns and is read-only.
+  void nativeWarningsNameInvalidFieldsButNeverUnknownOnes() {
+    QTemporaryDir temporary; const QString path = temporary.filePath("settings.json");
+    const QJsonObject future{{"enabled", true}};
+    QVERIFY(writePrivate(path, textEnvelope({{"Theme", "Light"}, {"FutureOption", future}})));
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty());  // Unknown alone: no warning.
+    QCOMPARE(nativeEditorPreferences().fields.value("FutureOption"), PreferenceFieldState::Unknown);
+    QCOMPARE(nativeEditorPreferences().fields.value("Theme"), PreferenceFieldState::Valid);
+    QVERIFY(!nativeEditorPreferences().readOnly);
+    QVERIFY(writePrivate(path, textEnvelope({{"FutureOption", future}, {"BlurStrength", "NaN"}})));
+    const auto diagnostics = initializeNativeEditorPreferences(path);
+    QCOMPARE(diagnostics, QStringList{"invalid-BlurStrength"});
+    QCOMPARE(nativeEditorPreferences().fields.value("FutureOption"), PreferenceFieldState::Unknown);
+    QCOMPARE(nativeEditorPreferences().fields.value("BlurStrength"), PreferenceFieldState::Invalid);
+    QVERIFY(!editorPreferenceDiagnosticMessage(diagnostics.front()).isEmpty());
+    QVERIFY(writePrivate(path, textEnvelope({{"schemaVersion", 2}, {"FutureOption", future}})));
+    const auto newer = initializeNativeEditorPreferences(path);
+    QVERIFY(newer.contains("settings-newer-version"));
+    QVERIFY(!editorPreferenceDiagnosticMessage("settings-newer-version").isEmpty());
+    QCOMPARE(nativeEditorPreferences().fields.value("schemaVersion"), PreferenceFieldState::NewerVersion);
+    QVERIFY(nativeEditorPreferences().readOnly);
+  }
   void damagedOrNewerNativeStorageIsVisibleReadOnlyAndUntouched() {
     QTemporaryDir temporary; const QString path = temporary.filePath("settings.json");
     const auto newer = QByteArray("{\"format\":\"com.xerahs.app/linux-qt/editor-settings\",\"version\":2,\"current\":{}}");

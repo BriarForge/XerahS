@@ -238,6 +238,28 @@ private slots:
     QCOMPARE(before.values.value("Theme").toString(), QStringLiteral("Light"));
     QCOMPARE(rejected.diagnostics, QStringList{"invalid-Thickness"});
   }
+  // ESET-002: Unknown is distinguished through the stored-file load path, stays
+  // silent (no diagnostic), is not conflated with Invalid, and survives a save.
+  void unknownFieldStateSurvivesStoreLoadWithoutDiagnosticOrInvalidConflation() {
+    const QJsonObject future{{"enabled", true}};
+    MemoryStorage storage; storage.artifact = {PreferenceRead::Kind::Readable,
+        envelope(QJsonObject{{"Theme", "Light"}, {"FutureOption", future}, {"BlurStrength", "NaN"}}), {}};
+    EditorPreferenceStore store(storage);
+    const auto &loaded = store.preferences();
+    QCOMPARE(loaded.fields.value("FutureOption"), PreferenceFieldState::Unknown);
+    QCOMPARE(loaded.fields.value("Theme"), PreferenceFieldState::Valid);
+    QCOMPARE(loaded.fields.value("BlurStrength"), PreferenceFieldState::Invalid);
+    QCOMPARE(loaded.fields.value("Thickness"), PreferenceFieldState::Missing);
+    QCOMPARE(store.diagnostics(), QStringList{"invalid-BlurStrength"});  // Unknown adds no diagnostic.
+    QVERIFY(!loaded.readOnly);
+    const auto changed = changeEditorPreferences(loaded, {{"Thickness", 7}}); QVERIFY(changed.preferences);
+    QVERIFY(store.save(*changed.preferences).saved);
+    EditorPreferenceStore restarted(storage);
+    QCOMPARE(restarted.preferences().fields.value("FutureOption"), PreferenceFieldState::Unknown);
+    QCOMPARE(section(storage, "current").value("FutureOption").toObject(), future);
+    QCOMPARE(restarted.preferences().fields.value("BlurStrength"), PreferenceFieldState::Valid);  // Repaired by the save.
+    QVERIFY(restarted.diagnostics().isEmpty());
+  }
   // ESET-008: persisted Text, SpeechBalloon and Step defaults.
   void textDefaultsHaveDocumentedDefaultsAndResolveToCreationDefaults() {
     const auto loaded = loadEditorPreferences({});

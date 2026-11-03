@@ -115,17 +115,21 @@
     },
     "ESET-002": {
       "disposition": "Required",
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "invalid-field-isolation"
       ],
-      "note": "Production loading distinguishes missing, valid, invalid, unknown and newer-version fields, repairs known invalid values independently and records value-free diagnostics. The winning native instance loads before opening editors and presents field recovery/read-only fallback through native warnings. Native host tests preserve unrelated/unknown values after recovery and a recent-list save. Remaining fields and complete recovery qualification remain Required. Window dimensions and memory/maximized flags now recover independently with field-specific native diagnostic labels.",
+      "note": "Production loading distinguishes missing, valid, invalid, unknown and newer-version fields, repairs known invalid values independently and records value-free diagnostics. The winning native instance loads before opening editors and presents field recovery/read-only fallback through native warnings. Native host tests preserve unrelated/unknown values after recovery and a recent-list save. Remaining fields and complete recovery qualification remain Required. Window dimensions and memory/maximized flags now recover independently with field-specific native diagnostic labels. Audit 2026-11-03 (Viktor, at 4b2f5d8): all five states are asserted: Missing/Valid/Invalid (EditorPreferencesTest invalid fields), Unknown (EditorPreferencesTest unknownRoundTripAndAtomicChanges and unknownFieldStateSurvivesStoreLoadWithoutDiagnosticOrInvalidConflation: stored-file load, no diagnostic, survives save/restart) and NewerVersion (textDefaultsHonourNewerVersionUnknownAndAtomicFailure); native warning path (NativeEditorPreferencesTest nativeWarningsNameInvalidFieldsButNeverUnknownOnes) warns for Invalid, stays silent for Unknown, read-only with settings-newer-version for newer; per-field isolation in nativeRecoveryKeepsUnrelatedAndUnknownPreferencesWhenTheListIsSaved.",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 13,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "4b2f5d861f5401a95d1b4e2ddd6a43025cc301f9"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp"
+      ]
     },
     "ESET-003": {
       "disposition": "Required",
