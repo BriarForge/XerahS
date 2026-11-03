@@ -279,16 +279,17 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native editor preference and desktop appearance tests exist. Full application theming, localization, runtime expansion, high contrast and reduced-motion qualification remain Required.",
+      "note": "Native editor preference and desktop appearance tests exist. Full application theming, localization, runtime expansion, high contrast and reduced-motion qualification remain Required. Application-level text expansion and fallback are now tested on the translatable QR window: a pseudo-locale that lengthens every tr() string by 40% neither clips buttons or labels nor exceeds the screen, and a string missing from the translation falls back to its source text (LocalizationExpansionTest). Remaining gaps, not closed: most application windows (command window, preferences, capture/recording dialogs) use QStringLiteral and are not translatable yet, no UI-language preference exists to prove the stored preference survives a fallback, and high contrast, reduced motion and full theming qualification remain Required. Audit 2026-11-03: LocalizationExpansionTest proves 40% expansion without clipping and missing-translation fallback for the QR window only; status stays partial because most windows are not yet translatable.",
       "evidence": [
         "platforms/linux/linux-qt/tests/NativeEditorAppearanceTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeDesktopAppearanceTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeDesktopAppearanceTest.cpp",
+        "platforms/linux/linux-qt/tests/LocalizationExpansionTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 42,
         "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "reviewed_at_revision": "36761b71125ac3effb4c7feb33d5bd480308c60b"
       }
     },
     "CORE-010": {

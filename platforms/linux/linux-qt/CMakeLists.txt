@@ -1303,6 +1303,13 @@ add_library(xerahs_effects STATIC
   src/image-editor/effects/FilterEffects6.cpp
   src/image-editor/effects/FilterEffects7.cpp)
 target_include_directories(xerahs_effects PUBLIC src)
+# CORE-009: pseudo-locale text expansion and missing-translation fallback on a translated window.
+add_executable(localization-expansion-test tests/LocalizationExpansionTest.cpp)
+set_target_properties(localization-expansion-test PROPERTIES AUTOMOC ON)
+target_link_libraries(localization-expansion-test PRIVATE xerahs_qr_code Qt6::Test)
+add_test(NAME localization-expansion COMMAND localization-expansion-test)
+set_tests_properties(localization-expansion PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
 target_link_libraries(xerahs_effects PUBLIC Qt6::Core Qt6::Gui)
 target_compile_options(xerahs_effects PRIVATE -Wall -Wextra -Wpedantic -ffp-contract=off)
 target_link_libraries(xerahs_app PUBLIC xerahs_effects)
