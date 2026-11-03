@@ -114,19 +114,19 @@
       }
     },
     "SETCAT-011": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Built-in action IDs and workflow UUIDs share syntax/reserved-gesture/collision validation. Conflicts return the other action without replacing it. Accessible Hotkeys UI displays preferred versus desktop-bound triggers and requests desktop setup. Desktop/user decides final bindings. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required.",
+      "note": "Built-in action IDs and workflow UUIDs share syntax/reserved-gesture/collision validation. Conflicts return the other action without replacing it. Accessible Hotkeys UI displays preferred versus desktop-bound triggers and requests desktop setup. Desktop/user decides final bindings. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required. Audit 2026-11-03: Stable action IDs, portable trigger syntax, reserved-gesture and collision validation, and non-replacing conflict results remain proven by portableBindings, collisionsAcrossWorkflowAndBuiltin, repairsAreFieldSpecific and dialogCancelAndConflict. hotkeysAreOperableByKeyboardAlone drives the Hotkeys page with key events only: Left/Right on the tab bar reach the page, Tab enters the action list, Up/Down choose an action, Enter moves to its trigger, typing and Enter assign it without the dialog treating Enter as OK, Shift+Tab returns to the list, a colliding trigger surfaces the hotkey-conflict result naming the other action with the instruction to change or clear it and replaces nothing, the first Escape cancels the pending edit, and the second Escape closes the dialog persisting nothing. Gap fixed: Enter in the trigger field previously fell through to the dialog default button and only the mouse-driven Set button assigned; the page now owns Enter and Escape for those two controls. Gestures other than keyboard triggers do not exist in this candidate.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 52,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e48015a1390a16d530f011e160b28c2d913ae728"
       }
     },
     "SETCAT-001": {
@@ -422,7 +422,8 @@
         "storedValuesUsePortableRepresentationsAndNoNativeValuesLeak",
         "scopeAndPrecedenceAreDeclaredInspectableAndSharedByUiAndCli",
         "recordingSectionResetPreviewsCancelsAndApplies",
-        "fullResetOnlyRewritesSettingsAndKeepsHistoryCredentialsPresetsWorkflowsAndFiles"
+        "fullResetOnlyRewritesSettingsAndKeepsHistoryCredentialsPresetsWorkflowsAndFiles",
+        "hotkeysAreOperableByKeyboardAlone"
       ],
       "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp": [
         "missingAndAtomicPrivateRoundTrip",

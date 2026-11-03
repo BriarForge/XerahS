@@ -8,6 +8,7 @@
 #include <QFileDialog>
 #include <QFormLayout>
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include <QGroupBox>
 #include <QHeaderView>
 #include <QLabel>
@@ -24,6 +25,16 @@
 namespace xerahs::app {
 using namespace xerahs::settings;
 namespace {
+// Keyboard-only Hotkeys use (SETCAT-011): a QDialog would treat a bare Enter as OK.
+class KeyFilter final : public QObject {
+public:
+  KeyFilter(QObject *parent, std::function<bool(QKeyEvent *)> handler) : QObject(parent), m_handler(std::move(handler)) {}
+  bool eventFilter(QObject *, QEvent *event) override {
+    return event->type() == QEvent::KeyPress && m_handler(static_cast<QKeyEvent *>(event));
+  }
+private:
+  std::function<bool(QKeyEvent *)> m_handler;
+};
 QSpinBox *spin(QWidget *parent, const QString &name, int minimum, int maximum, const QString &suffix = {}) {
   auto *box = new QSpinBox(parent); box->setRange(minimum, maximum); box->setSuffix(suffix); box->setAccessibleName(name);
   box->setKeyboardTracking(false); if (auto *edit = box->findChild<QLineEdit *>()) edit->setAccessibleName(name); return box;
@@ -150,6 +161,20 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
     auto object = draft->value("hotkeys").toObject(); object.insert(id, bindings.entries.value(id)); draft->insert("hotkeys", object);
     table->item(row, 1)->setText(bindings.entries.value(id)); status->setText("Preference updated in draft. Apply to save; change in desktop settings to request binding.");
   });
+  // Enter on an action moves to its trigger; Enter on the trigger assigns it; Escape on an
+  // edited trigger cancels the edit (a second Escape closes the dialog and discards the draft).
+  table->installEventFilter(new KeyFilter(table, [=](QKeyEvent *event) {
+    if (event->key() != Qt::Key_Return && event->key() != Qt::Key_Enter) return false;
+    trigger->setFocus(); trigger->selectAll(); return true;
+  }));
+  trigger->installEventFilter(new KeyFilter(trigger, [=](QKeyEvent *event) {
+    if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) { assign->click(); return true; }
+    const int row = table->currentRow();
+    if (event->key() == Qt::Key_Escape && row >= 0 && table->item(row, 1) && trigger->text() != table->item(row, 1)->text()) {
+      trigger->setText(table->item(row, 1)->text()); status->setText("Edit cancelled; the preferred trigger is unchanged."); return true;
+    }
+    return false;
+  }));
   connect(desktop, &QPushButton::clicked, this, [this, &shortcuts] {
     // Close the modal first: setup uses the same busy/modal admission as capture.
     reject(); QTimer::singleShot(0, &shortcuts, [&shortcuts] { shortcuts.changeInDesktopSettings(); });

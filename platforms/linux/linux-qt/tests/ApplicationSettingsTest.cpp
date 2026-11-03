@@ -676,6 +676,44 @@ private slots:
     QCOMPARE(names, (QStringList{"credentials.json", "history.json", "presets.json", "settings.json", "workflows.json"}));
     QCOMPARE(QDir(dir.filePath("captures")).entryList(QDir::Files), QStringList{"shot.png"});
   }
+  // SETCAT-011: the Hotkeys page works with the keyboard alone.
+  void hotkeysAreOperableByKeyboardAlone() {
+    QTemporaryDir dir; ApplicationSettingsStore store(dir.filePath("settings.json"), dir.path());
+    xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; });
+    const auto plan = xerahs::workflows::captureShortcutPlan(xerahs::workflows::defaultCaptureWorkflows(), xerahs::workflows::implementedCaptureActions(), HotkeyBindings::defaults());
+    xerahs::app::SettingsDialog dialog(store, dir.path(), plan, shortcuts, [] {});
+    dialog.show(); QVERIFY(QTest::qWaitForWindowExposed(&dialog)); dialog.activateWindow(); QApplication::setActiveWindow(&dialog);
+    auto *tabs = dialog.findChild<QTabWidget *>(); auto *table = dialog.findChild<QTableWidget *>(); QLineEdit *trigger = nullptr; QLabel *status = nullptr;
+    for (auto *field : dialog.findChildren<QLineEdit *>()) if (field->accessibleName() == "Preferred trigger for selected action") trigger = field;
+    for (auto *label : dialog.findChildren<QLabel *>()) if (label->accessibleName() == "Settings validation and conflicts") status = label;
+    QVERIFY(tabs && table && trigger && status);
+    auto key = [&](Qt::Key k, Qt::KeyboardModifiers m = Qt::NoModifier) { QWidget *target = QApplication::focusWidget() ? QApplication::focusWidget() : static_cast<QWidget *>(&dialog); QTest::keyClick(target, k, m); };
+    auto rowOf = [&](const QString &id) { for (int row = 0; row < table->rowCount(); ++row) if (table->item(row, 0)->data(Qt::UserRole).toString() == id) return row; return -1; };
+    auto selectByArrows = [&](const QString &id) { const int target = rowOf(id); QVERIFY(target >= 0); QVERIFY(table->hasFocus());
+      for (int guard = 0; table->currentRow() != target && guard < 200; ++guard) key(table->currentRow() < target ? Qt::Key_Down : Qt::Key_Up);
+      QCOMPARE(table->currentRow(), target); };
+    // Reach the page: the tab bar is a focus stop and Left/Right switch pages; Tab then enters the page's first control, the action list.
+    tabs->tabBar()->setFocus(); QTRY_VERIFY(tabs->tabBar()->hasFocus());
+    key(Qt::Key_Right); key(Qt::Key_Right); QCOMPARE(tabs->tabText(tabs->currentIndex()), QString("&Hotkeys"));
+    for (int guard = 0; !table->hasFocus() && guard < 5; ++guard) key(Qt::Key_Tab);
+    QVERIFY(table->hasFocus());
+    // Arrow to an action, Enter moves to its trigger, type, Enter assigns; the dialog stays open and nothing is persisted yet.
+    selectByArrows("capture-full-screen"); key(Qt::Key_Return); QVERIFY(trigger->hasFocus());
+    QTest::keyClicks(trigger, "Ctrl+F1"); QCOMPARE(trigger->text(), QString("Ctrl+F1")); key(Qt::Key_Return);
+    QVERIFY(dialog.isVisible()); QCOMPARE(table->item(rowOf("capture-full-screen"), 1)->text(), QString("Ctrl+F1")); QVERIFY(status->text().contains("Preference updated"));
+    QVERIFY(!QFile::exists(dir.filePath("settings.json")));
+    // Shift+Tab back to the list, pick a second action and ask for the same trigger: the conflict is surfaced and nothing is replaced.
+    key(Qt::Key_Backtab); QVERIFY(table->hasFocus());
+    selectByArrows("capture-region"); QCOMPARE(table->item(rowOf("capture-region"), 1)->text(), QString("Print"));
+    key(Qt::Key_Return); QVERIFY(trigger->hasFocus()); QTest::keyClicks(trigger, "Ctrl+F1"); key(Qt::Key_Return);
+    QVERIFY(dialog.isVisible()); QVERIFY(status->text().contains("hotkey-conflict")); QVERIFY(status->text().contains("capture-full-screen"));
+    QVERIFY(status->text().contains("Change or clear the conflicting binding"));
+    QCOMPARE(table->item(rowOf("capture-region"), 1)->text(), QString("Print")); QCOMPARE(table->item(rowOf("capture-full-screen"), 1)->text(), QString("Ctrl+F1"));
+    // Escape cancels the pending edit first, and only then closes the dialog and discards the draft.
+    key(Qt::Key_Escape); QVERIFY(dialog.isVisible()); QCOMPARE(trigger->text(), QString("Print")); QVERIFY(trigger->hasFocus());
+    key(Qt::Key_Escape); QVERIFY(!dialog.isVisible()); QCOMPARE(dialog.result(), int(QDialog::Rejected));
+    QVERIFY(!QFile::exists(dir.filePath("settings.json"))); QCOMPARE(store.current().values.value("hotkeys"), defaultSettings(dir.path()).value("hotkeys"));
+  }
   void autostart() {
     QTemporaryDir dir; const auto old = qgetenv("XDG_CONFIG_HOME"); qputenv("XDG_CONFIG_HOME", dir.path().toUtf8());
     const auto path = dir.filePath("autostart/com.xerahs.app.desktop");
