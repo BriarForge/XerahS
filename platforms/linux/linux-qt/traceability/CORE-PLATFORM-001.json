@@ -455,7 +455,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Region/screen recording supports selected system/microphone devices and GStreamer audio graphs with domain/integration tests. Complete consent/device-loss/synchronization/audio hardware and target qualification remain.",
+      "note": "Region/screen recording supports selected system/microphone devices and GStreamer audio graphs with domain/integration tests. Complete consent/device-loss/synchronization/audio hardware and target qualification remain. Audit of clauses: explicit system and microphone selection, a missing selected device producing no audio track at all (no partial mix) and a one-or-two input mix per container are tested (RecordingTest::explicitAudioSelection, finiteVideo audio-mix cases); the always-visible indicator states Audio recording or No audio (RecordingTest::captureIndicator). Not closed: platform permission and consent for the microphone are not exercised, audio and video synchronisation is not measured, loss of a device during recording is not tested, and the finiteVideo audio-mix cases are skipped on hosts without the GStreamer audio elements. Audit 2026-11-03: RecordingTest::explicitAudioSelection and captureIndicator prove explicit selection, no-track-when-missing and the active-capture indicator. Status stays partial for permission, synchronisation and mid-recording device loss.",
       "evidence": [
         "platforms/linux/linux-qt/tests/RecordingTest.cpp",
         "platforms/linux/linux-qt/tests/RecordingIntegrationTest.cpp"
@@ -464,7 +464,7 @@
         "classification": "partial",
         "spec_line": 79,
         "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "reviewed_at_revision": "36761b71125ac3effb4c7feb33d5bd480308c60b"
       }
     },
     "CORE-019": {
