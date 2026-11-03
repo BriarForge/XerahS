@@ -143,6 +143,11 @@ bool isPathShape(const QString &type);
 bool isTextShape(const QString &type);
 // EA-010: Image, Emoji and Cursor draw an embedded PNG named by imageKey.
 bool isAssetShape(const QString &type);
+// EA-010/EA-016: header-only check of untrusted PNG bytes, before any decode: the
+// signature, a leading IHDR with non-zero dimensions within ES-028 and a decoded
+// size the renderer accepts (at most 64M pixels), and the closing IEND chunk.
+inline constexpr qint64 kMaxAssetPixels = 64LL * 1024 * 1024;
+bool validEmbeddedPng(const QByteArray &png);
 // Types whose `strength` is user editable (blur, pixelate, magnify, spotlight).
 bool hasShapeStrength(const QString &type);
 // EA-011: Highlight, Blur, Pixelate, Magnify and Spotlight may declare an

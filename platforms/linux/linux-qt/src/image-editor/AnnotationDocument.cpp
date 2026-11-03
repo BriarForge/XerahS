@@ -766,6 +766,17 @@ QString formatStepValue(qint64 value, StepStyle style) {
   }
   return upper ? out : out.toLower();
 }
+bool validEmbeddedPng(const QByteArray &png) {
+  static const QByteArray signature("\x89PNG\r\n\x1a\n", 8);
+  static const QByteArray trailer("\x00\x00\x00\x00IEND\xAE\x42\x60\x82", 12);
+  if (png.size() < 33 + 12 || !png.startsWith(signature) || png.mid(12, 4) != QByteArrayLiteral("IHDR") || !png.endsWith(trailer)) return false;
+  const auto be32 = [&](int offset) {
+    const auto *p = reinterpret_cast<const unsigned char *>(png.constData() + offset);
+    return (qint64(p[0]) << 24) | (qint64(p[1]) << 16) | (qint64(p[2]) << 8) | qint64(p[3]);
+  };
+  const qint64 width = be32(16), height = be32(20);
+  return width >= 1 && height >= 1 && width <= kMaxDimension && height <= kMaxDimension && width * height <= kMaxAssetPixels;
+}
 bool validStepValue(qint64 value) { return value >= 0 && value <= kMaxStepValue; }
 
 bool validFontFamily(const QString &family) {

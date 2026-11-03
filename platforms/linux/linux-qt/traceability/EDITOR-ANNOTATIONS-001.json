@@ -198,7 +198,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Image/Emoji/Cursor embed validated PNG assets with alpha and survive source removal in native shape tests. Complete metadata/aspect/resource/compatibility matrix remains.",
+      "note": "Image/Emoji/Cursor embed validated PNG assets with alpha and survive source removal in native shape tests. Complete metadata/aspect/resource/compatibility matrix remains. Audit 2026-11-03: Emoji and Cursor (and Image) assets are now proven for alpha, aspect ratio, unsafe or oversized input and resize, all in AnnotationShapesTest: emojiAndCursorAssetsPreserveAlpha (translucent and fully transparent pixels render source-over; PNG bytes survive the .xann round trip untouched), emojiAndCursorAssetsKeepAspectRatioAtEverySize (wide, tall and square assets are letterboxed, never stretched), resizeKeepsEmojiAndCursorAssetsAndTheirAspectRatio (resize keeps key and bytes, is one undoable step and re-letterboxes), oversizedOrUnsafeEmojiAndCursorAssetsAreRejectedBeforeDecode (new assets must pass validEmbeddedPng: signature, IHDR, 1..100000 dimensions, at most 64M pixels, IEND; a refusal annotation-asset-invalid changes nothing; imports over the document limits are document-too-large before decode; the renderer refuses over-limit decodes and paints a placeholder), cursorToolCreatesAnAlphaAssetOnTheCanvas, with embeddedAssetsRenderWithTheirAspectRatioOrAPlaceholder (Image) and the existing source-removal tests. Remaining gap (an extra, so the row stays partial): the bullet requires the selected pixels and metadata; the reference persists Emoji UnicodeSequence/DisplayName and Cursor CursorType (and Image ImagePath), but this build stores only the rendered PNG and its key, offers one native cursor image and does not record which emoji was chosen.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -209,8 +209,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 43,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Partial: embedded PNG alpha, aspect ratio, oversize rejection, resize and source removal are tested; asset metadata (reference Emoji UnicodeSequence/DisplayName, Cursor CursorType) is not persisted.",
+        "reviewed_at_revision": "65e4394"
       }
     },
     "EA-011": {

@@ -81,6 +81,9 @@ std::optional<QUuid> EditorSession::createShape(const RectangleProperties &draft
   if (stateId() != expectedState || m_selection != expectedSelection) {
     m_editDiagnostic = "annotation-edit-stale"; return std::nullopt;
   }
+  // EA-010: an asset enters the document only if its header is sound and its size is within bounds.
+  for (const auto &asset : newAssets)
+    if (asset.first.isEmpty() || asset.first.size() > 256 || !validEmbeddedPng(asset.second)) { m_editDiagnostic = "annotation-asset-invalid"; return std::nullopt; }
   if (!std::isfinite(content.fontSize) || content.fontSize < 0 || content.fontSize > 2000 ||
       !std::isfinite(content.strength) || content.strength < 0 || content.strength > 1000 ||
       !std::isfinite(content.blurAmount) || content.blurAmount < 0 || content.blurAmount > kMaxBlurAmount) {

@@ -372,6 +372,104 @@ private slots:
     QCOMPARE(std::get<RectangleAnnotation>((*reloaded.annotations)[0]).content.stepValue, qint64(3));
     QVERIFY(std::get<RectangleAnnotation>((*reloaded.annotations)[0]).content.stepStyle == StepStyle::UppercaseLetter);
   }
+  // EA-010 helpers and tests for the Emoji and Cursor assets (Image is covered above).
+  static QByteArray pngOf(const QImage &image) {
+    QByteArray png; QBuffer buffer(&png); buffer.open(QIODevice::WriteOnly); image.save(&buffer, "PNG"); return png;
+  }
+  static QByteArray ihdrOnlyPng(quint32 width, quint32 height) {  // sound header and IEND, no pixel data to decode
+    QByteArray png("\x89PNG\r\n\x1a\n\0\0\0\x0dIHDR", 16);
+    for (quint32 v : {width, height}) for (int shift = 24; shift >= 0; shift -= 8) png.append(char((v >> shift) & 0xFF));
+    return png + QByteArray(9, '\0') + QByteArray("\0\0\0\0IEND\xAE\x42\x60\x82", 12);
+  }
+  void emojiAndCursorAssetsPreserveAlpha_data() { QTest::addColumn<QString>("type"); QTest::newRow("emoji") << shape::emoji; QTest::newRow("cursor") << shape::cursor; }
+  void emojiAndCursorAssetsPreserveAlpha() {
+    QFETCH(QString, type);
+    QImage asset(8, 8, QImage::Format_ARGB32); asset.fill(Qt::transparent);
+    for (int y = 0; y < 4; ++y) for (int x = 0; x < 8; ++x) asset.setPixel(x, y, qRgba(255, 0, 0, 128));  // translucent top half
+    for (int y = 4; y < 8; ++y) for (int x = 0; x < 8; ++x) asset.setPixel(x, y, qRgba(0, 0, 255, 255));  // opaque bottom half
+    auto d = document(100, 100); auto annotation = shapeOf(type, {10, 10}, {50, 50}); annotation.content.imageKey = "alpha";
+    d.embeddedImages = {{"alpha", pngOf(asset)}}; d.annotations = {annotation};
+    const auto reloaded = parseDocument(serializeDocument(d)); QVERIFY(reloaded.document);
+    QCOMPARE(reloaded.document->embeddedImages, d.embeddedImages);  // bytes, and so alpha, survive the round trip untouched
+    QCOMPARE(QImage::fromData(reloaded.document->embeddedImages[0].second, "PNG").pixelColor(0, 0).alpha(), 128);
+    const auto result = renderDocument(solidImage(100, 100, 0xFFFFFFFF), *reloaded.document); QVERIFY(result.image);
+    const Argb half = result.image->at(30, 20);  // white under 50% red
+    QVERIFY(qAbs(qRed(half) - 255) <= 1); QVERIFY(qAbs(qGreen(half) - 127) <= 2); QVERIFY(qAbs(qBlue(half) - 127) <= 2); QCOMPARE(qAlpha(half), 255);
+    QCOMPARE(result.image->at(30, 40), Argb(0xFF0000FF));  // opaque pixels replace the source
+    QCOMPARE(result.image->at(5, 5), Argb(0xFFFFFFFF));    // outside the object nothing changes
+    auto clear = annotation; d.annotations = {clear}; d.embeddedImages = {{"alpha", pngOf([] { QImage i(8, 8, QImage::Format_ARGB32); i.fill(Qt::transparent); return i; }())}};
+    const auto empty = renderDocument(solidImage(100, 100, 0xFF336699), d); QVERIFY(empty.image);
+    QVERIFY(same(*empty.image, solidImage(100, 100, 0xFF336699), 0, 0, 100, 100));  // a fully transparent asset leaves the source exact
+  }
+  void emojiAndCursorAssetsKeepAspectRatioAtEverySize_data() { emojiAndCursorAssetsPreserveAlpha_data(); }
+  void emojiAndCursorAssetsKeepAspectRatioAtEverySize() {
+    QFETCH(QString, type);
+    for (const QSize size : {QSize(20, 10), QSize(10, 20), QSize(7, 7)}) {
+      QImage asset(size, QImage::Format_ARGB32); asset.fill(QColor(0, 200, 0));
+      auto d = document(100, 100); auto annotation = shapeOf(type, {10, 10}, {50, 50}); annotation.content.imageKey = "a";
+      d.embeddedImages = {{"a", pngOf(asset)}}; d.annotations = {annotation};
+      const auto result = renderDocument(solidImage(100, 100, 0xFFFFFFFF), d); QVERIFY(result.image);
+      QCOMPARE(result.image->at(30, 30), Argb(0xFF00C800));  // the centre is covered
+      // The 40x40 box is letterboxed on the short side, never stretched.
+      const Argb band = size.width() == size.height() ? Argb(0xFF00C800) : Argb(0xFFFFFFFF);
+      if (size.width() > size.height()) { QCOMPARE(result.image->at(30, 15), band); QCOMPARE(result.image->at(30, 45), band); QCOMPARE(result.image->at(12, 30), Argb(0xFF00C800)); }
+      else if (size.width() < size.height()) { QCOMPARE(result.image->at(15, 30), band); QCOMPARE(result.image->at(45, 30), band); QCOMPARE(result.image->at(30, 12), Argb(0xFF00C800)); }
+      else { QCOMPARE(result.image->at(12, 12), band); QCOMPARE(result.image->at(48, 48), band); }
+    }
+  }
+  void resizeKeepsEmojiAndCursorAssetsAndTheirAspectRatio_data() { emojiAndCursorAssetsPreserveAlpha_data(); }
+  void resizeKeepsEmojiAndCursorAssetsAndTheirAspectRatio() {
+    QFETCH(QString, type);
+    QImage asset(20, 10, QImage::Format_ARGB32); asset.fill(QColor(0, 200, 0)); const auto png = pngOf(asset);
+    EditorSession session(document(200, 200)); ShapeContent content; content.type = type; content.imageKey = "k";
+    const auto id = session.createShape({{10, 10}, {50, 50}, {}}, content, session.stateId(), session.selection(), {{"k", png}});
+    QVERIFY(id); const auto undo = session.undoCount();
+    QVERIFY(session.resizeRectangle(*id, RectangleHandle::BottomRight, {60, 20}, session.stateId()));
+    QCOMPARE(session.undoCount(), undo + 1);
+    const auto &resized = std::get<RectangleAnnotation>(session.document().annotations[0]);
+    QCOMPARE(resized.end.x, 110.0); QCOMPARE(resized.end.y, 70.0); QCOMPARE(resized.content.imageKey, QString("k"));
+    QCOMPARE(session.document().embeddedImages.size(), std::size_t(1)); QCOMPARE(session.document().embeddedImages[0].second, png);  // pixels untouched by resize
+    const auto result = renderDocument(solidImage(200, 200, 0xFFFFFFFF), session.document()); QVERIFY(result.image);
+    // 100x60 box, 2:1 asset: a centred 100x50 band; the 5 px bands above and below stay white.
+    QCOMPARE(result.image->at(60, 40), Argb(0xFF00C800)); QCOMPARE(result.image->at(60, 12), Argb(0xFFFFFFFF)); QCOMPARE(result.image->at(60, 68), Argb(0xFFFFFFFF));
+    QVERIFY(session.undo()); QCOMPARE(std::get<RectangleAnnotation>(session.document().annotations[0]).end.x, 50.0);
+    QCOMPARE(session.document().embeddedImages[0].second, png);
+  }
+  void oversizedOrUnsafeEmojiAndCursorAssetsAreRejectedBeforeDecode_data() { emojiAndCursorAssetsPreserveAlpha_data(); }
+  void oversizedOrUnsafeEmojiAndCursorAssetsAreRejectedBeforeDecode() {
+    QFETCH(QString, type);
+    // Creation: only a sound, bounded PNG header enters the document, and a refusal changes nothing.
+    EditorSession session(document(200, 200)); ShapeContent content; content.type = type; content.imageKey = "k";
+    const auto before = serializeDocument(session.document()); const auto undo = session.undoCount();
+    for (const auto &bad : {QByteArray(), QByteArray("not a png at all, just text bytes......."), ihdrOnlyPng(0, 5), ihdrOnlyPng(200000, 1),
+                            ihdrOnlyPng(16384, 16384), ihdrOnlyPng(5, 0xFFFFFFFFu), QByteArray(ihdrOnlyPng(4, 4)).chopped(4)}) {
+      QVERIFY(!session.createShape({{10, 10}, {50, 50}, {}}, content, session.stateId(), session.selection(), {{"k", bad}}));
+      QCOMPARE(session.editDiagnostic(), QString("annotation-asset-invalid")); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo);
+    }
+    QVERIFY(session.createShape({{10, 10}, {50, 50}, {}}, content, session.stateId(), session.selection(), {{"k", ihdrOnlyPng(8000, 8000)}}));  // at the 64M-pixel bound
+    // Import: a header over the document limits is document-too-large before any decode; renderers refuse over-limit decodes.
+    auto d = document(100, 100); auto annotation = shapeOf(type, {10, 10}, {50, 50}); annotation.content.imageKey = "big"; d.annotations = {annotation};
+    d.embeddedImages = {{"big", ihdrOnlyPng(200000, 1)}};
+    QCOMPARE(parseDocument(serializeDocument(d)).error, std::optional<QString>(diagnostic::documentTooLarge));
+    d.embeddedImages = {{"big", ihdrOnlyPng(16000, 16000)}};  // legal in a document, but more than the renderer will decode
+    const auto parsed = parseDocument(serializeDocument(d)); QVERIFY(parsed.document);
+    QVERIFY(decodeAsset(ihdrOnlyPng(16000, 16000)).isNull()); QVERIFY(!validEmbeddedPng(ihdrOnlyPng(16000, 16000)));
+    const auto drawn = renderDocument(solidImage(100, 100, 0xFFFFFFFF), *parsed.document); QVERIFY(drawn.image);
+    QVERIFY(!same(*drawn.image, solidImage(100, 100, 0xFFFFFFFF), 10, 10, 50, 50));  // visible placeholder instead of a crash or a decode
+  }
+  void cursorToolCreatesAnAlphaAssetOnTheCanvas() {
+    QImage source(300, 200, QImage::Format_ARGB32); source.fill(Qt::white);
+    EditorSession session(document(300, 200)); EditorCanvas canvas(session, source); canvas.resize(500, 400); canvas.show(); QCoreApplication::processEvents(); canvas.resetZoom();
+    canvas.setTool(EditorCanvas::Tool::Cursor);
+    QTest::mouseClick(canvas.viewport(), Qt::LeftButton, {}, canvas.viewState().toView({100, 80}).toPoint());
+    QCOMPARE(session.undoCount(), 1); const auto &cursor = std::get<RectangleAnnotation>(session.document().annotations[0]);
+    QCOMPARE(cursor.type(), shape::cursor); QCOMPARE(session.document().embeddedImages.size(), std::size_t(1));
+    const QImage decoded = QImage::fromData(session.document().embeddedImages[0].second, "PNG"); QVERIFY(!decoded.isNull());
+    QVERIFY(decoded.hasAlphaChannel()); QCOMPARE(decoded.pixelColor(decoded.width() - 1, decoded.height() - 1).alpha(), 0);  // transparent corner survives
+    QCOMPARE(cursor.content.imageKey, session.document().embeddedImages[0].first);
+    QCOMPARE((cursor.end.x - cursor.start.x) / (cursor.end.y - cursor.start.y), double(decoded.width()) / decoded.height());  // click size keeps the asset ratio
+  }
+
   void everyShapeTypeRoundTripsThroughXann() {
     auto d = document();
     auto arrow = shapeOf(shape::arrow, {10, 10}, {60, 40}, {{1, 0}, {0, 1}});
