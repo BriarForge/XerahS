@@ -1234,6 +1234,24 @@ private slots:
     });
     timer.start(5); trigger(*window, "saveImage"); timer.stop(); QVERIFY(picked); QCOMPARE(storedBytes(bmp), bmpBytes); QVERIFY(!QFile::exists(bmp + ".xann")); QVERIFY(window->windowTitle().startsWith("legacy.bmp")); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
   }
+  void failedSaveReportsDestinationFormatAndRecoverabilityWithoutThePrivateExceptionPayload() {
+    QTemporaryDir dir; const auto path = dir.filePath("current.png"); QVERIFY(fixture().save(path)); const auto original = storedBytes(path); const QString secret = "PRIVATE exception payload";
+    QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); drawRectangle(*window->findChild<EditorCanvas *>());
+    EditorSaveHooks hooks; hooks.encode = [&](const QImage &, QIODevice *device) -> bool { device->write("partial"); throw std::runtime_error(secret.toStdString()); }; window->setSaveHooks(hooks);
+    static QStringList logged; logged.clear(); const auto previous = qInstallMessageHandler([](QtMsgType, const QMessageLogContext &, const QString &message) { logged.append(message); });
+    QTimer timer; bool reported = false; QStringList shown;
+    connect(&timer, &QTimer::timeout, [&] {
+      if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); box && box->windowTitle() == "Save incomplete" && !reported) {
+        reported = true; shown << box->windowTitle() << box->text() << box->informativeText() << box->detailedText(); QCOMPARE(box->textFormat(), Qt::PlainText); box->accept();
+      }
+    });
+    timer.start(5); trigger(*window, "saveImage"); timer.stop(); qInstallMessageHandler(previous);
+    QVERIFY(reported); QCOMPARE(storedBytes(path), original); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+    QVERIFY2(shown.join('\n').contains("Destination: " + path), qPrintable(shown.join('\n'))); QVERIFY(shown.join('\n').contains("Format: PNG"));
+    QVERIFY(shown.join('\n').contains("previous destination and editable document have been kept")); // recoverability
+    QVERIFY2(!shown.join('\n').contains("PRIVATE") && !logged.join('\n').contains("PRIVATE") && !window->windowTitle().contains("PRIVATE"), qPrintable(shown.join('\n') + logged.join('\n')));
+    for (auto *label : window->findChildren<QLabel *>()) QVERIFY(!label->text().contains("PRIVATE"));
+  }
   void splitJpegSaveAsRepairsCompanionWithoutAdoptingPathEarly() {
     QTemporaryDir dir; const auto original = dir.filePath("original.png"), target = dir.filePath("chosen.jpg"); QVERIFY(fixture().save(original)); const auto originalBytes = storedBytes(original);
     QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(original)); QVERIFY(window); window->show(); drawRectangle(*window->findChild<EditorCanvas *>());

@@ -102,6 +102,26 @@ private slots:
     const auto raced = saveEdit(path, source.image, *source.document, {}, hooks); QVERIFY(!raced.rasterSaved); QCOMPARE(bytes(path), QByteArray("FOREIGN"));
     QVERIFY(!QFile::exists(path + ".xann")); QVERIFY(QDir(dir.path()).entryList({".xerahs-editor-*"}, QDir::Files | QDir::Hidden).isEmpty());
   }
+  void resultsReportDestinationFormatAndRecoverabilityAndNeverCarryPrivatePayloads() {
+    QTemporaryDir dir; const auto path = dir.filePath("image.webp"); const auto source = edited(); QVERIFY(pixels().save(path, "WEBP")); const auto original = bytes(path);
+    const RasterSaveOptions options{RasterFormat::WebP, 80, {}}; const QString secret = "PRIVATE exception payload";
+    QStringList logged; static QStringList *sink = nullptr; sink = &logged; const auto previous = qInstallMessageHandler([](QtMsgType, const QMessageLogContext &, const QString &message) { if (sink) sink->append(message); });
+    EditorSaveHooks hooks; hooks.encode = [&](const QImage &, QIODevice *device) -> bool { device->write("partial"); throw std::runtime_error(secret.toStdString()); };
+    const auto failed = saveEdit(path, source.image, *source.document, {}, hooks, options);
+    // Not recoverable as a pair: nothing was published, no receipt, previous destination preserved, and only a stable code is reported.
+    QVERIFY(!failed.rasterSaved && !failed.sidecarSaved && !failed.receipt && !failed.cancelled); QCOMPARE(failed.rasterError, QString("raster-save-failed")); QVERIFY(failed.sidecarError.isEmpty()); QCOMPARE(bytes(path), original);
+    // Raster published, companion blocked: destination + format are reported through the receipt, and the code makes the split recoverable.
+    hooks.encode = {}; QVERIFY(QDir().mkdir(path + ".xann"));
+    const auto partial = saveEdit(path, source.image, *source.document, {}, hooks, options);
+    QVERIFY(partial.rasterSaved && !partial.sidecarSaved && partial.receipt); QCOMPARE(partial.sidecarError, QString("sidecar-save-failed")); QVERIFY(partial.rasterError.isEmpty());
+    QCOMPARE(partial.receipt->path, path); QCOMPARE(partial.receipt->encoding.format, RasterFormat::WebP); QCOMPARE(partial.receipt->encoding.quality, 80);
+    QVERIFY(QDir().rmdir(path + ".xann")); const auto repaired = retryEditorSidecar(partial.receipt, {}, hooks); QVERIFY(repaired.rasterSaved && repaired.sidecarSaved && repaired.rasterReused); QCOMPARE(repaired.receipt->path, path); QCOMPARE(repaired.receipt->encoding.format, RasterFormat::WebP);
+    qInstallMessageHandler(previous); sink = nullptr;
+    for (const auto &text : {failed.rasterError, failed.sidecarError, partial.rasterError, partial.sidecarError, repaired.rasterError, repaired.sidecarError, logged.join('\n'), partial.receipt->path, partial.receipt->rasterHash}) {
+      QVERIFY2(!text.contains(secret) && !text.contains("PRIVATE"), qPrintable(text));
+    }
+    QVERIFY(!failed.rasterError.contains(dir.path()) && !partial.sidecarError.contains(dir.path())); // codes are path-free, so telemetry never needs private path data
+  }
   void oversizedEncodedTemporaryIsRejectedWithoutReplacingOrBufferingIt() {
     QTemporaryDir dir; const auto path = dir.filePath("image.png"); const auto source = edited(); QVERIFY(pixels().save(path)); const auto original = bytes(path);
     EditorSaveHooks hooks; hooks.encode = [](const QImage &, QIODevice *device) {
