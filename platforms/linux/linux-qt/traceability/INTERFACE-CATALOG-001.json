@@ -105,7 +105,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Current native confirmation defaults and modal precedence have tests. Full focus restoration, destructive consequences and permission-flow review remains.",
+      "note": "Native confirmation defaults and modal precedence have tests. Remove-destination confirmation defaulted to Yes for a destructive keyring delete; it now defaults to No. Every one of the 20 choice confirmations in app/ (QMessageBox) is source-checked for an explicit safe default (Cancel/No/Save) and a non-generic title, the remove confirmation names the destination and the keyring deletion, and six real dialogs (QR code, colour picker, hash checker, icon converter, new image, open from URL) are driven modal: the modal trap exists only while open, the title identifies the purpose, a Cancel/Close action exists, no default button is destructive, Escape rejects, and focus returns to the host control. Remaining: the other ~30 modal dialog classes (editor, capture, workflow, history, settings, file pickers) are only covered by the source scan, not driven for focus restore; permission prompts are portal-owned and unreviewed. Audit 2026-11-03: ModalDialogsTest::everyChoiceConfirmationDefaultsToASafeButtonAndHasAPurposefulTitle (fails on the old implicit-Yes default), removingADestinationSaysWhatIsDeletedDefaultsToNoAndRestoresFocus and modalDialogsTrapFocusOnlyWhileActiveIdentifyPurposeEscapeAndRestoreFocus (6 dialogs). Not enough to classify every modal dialog, so the row stays partial. Rationale: default-Cancel/No for destructive confirmations is the Qt/GNOME HIG and reference ShareX behavior.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
@@ -113,13 +113,15 @@
         "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/ModalDialogsTest.cpp",
+        "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 23,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Partial production behavior is present; a safe default and non-generic title are source-checked for every choice confirmation and six dialogs are driven for focus trap, Escape and focus restore. The remaining modal dialog classes and portal permission prompts are unproven.",
+        "reviewed_at_revision": "e48015a1390a16d530f011e160b28c2d913ae728"
       }
     },
     "IFCAT-006": {

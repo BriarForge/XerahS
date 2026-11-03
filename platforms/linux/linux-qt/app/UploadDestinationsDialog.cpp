@@ -56,7 +56,8 @@ UploadDestinationsPorts nativeUploadDestinationsPorts() {
   };
   ports.confirmRemove = [](QWidget *parent, const QString &name) {
     return QMessageBox::question(parent, QStringLiteral("Remove destination"),
-                                 QStringLiteral("Remove \"%1\" and delete its secrets from the keyring?").arg(name)) == QMessageBox::Yes;
+                                 QStringLiteral("Remove \"%1\" and delete its secrets from the keyring?").arg(name),
+                                 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes;
   };
   ports.report = [](QWidget *parent, const QString &message) { QMessageBox::warning(parent, QStringLiteral("Upload destinations"), message); };
   return ports;
