@@ -572,7 +572,23 @@ void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImag
     const QColor fill = qAlpha(style.fillColor) > 0 ? color(style.fillColor) : color(style.strokeColor);
     painter.setPen(Qt::NoPen);
     painter.setBrush(fill);
-    painter.drawEllipse(box);
+    // EA-009: the optional tail is the two tangents from the tail tip to the circle (reference
+    // NumberAnnotation.TryGetTailPolygon). It is drawn with the circle as one silhouette, and is
+    // omitted while the tip is inside or on the circle.
+    QPainterPath silhouette; silhouette.addEllipse(box);
+    if (!shape.content.points.empty()) {
+      const QPointF tip = mapped(shape, shape.content.points[0]), centre = box.center();
+      const double radius = std::min(box.width(), box.height()) / 2, dx = tip.x() - centre.x(), dy = tip.y() - centre.y();
+      const double length = std::hypot(dx, dy);
+      if (radius > 0.001 && length > radius + 0.001) {
+        const QPointF direction(dx / length, dy / length), perpendicular(-direction.y(), direction.x());
+        const double projection = radius * radius / length, offset = radius * std::sqrt(length * length - radius * radius) / length;
+        const QPointF tangentCentre = centre + direction * projection;
+        QPainterPath tail; tail.moveTo(tangentCentre + perpendicular * offset); tail.lineTo(tip); tail.lineTo(tangentCentre - perpendicular * offset); tail.closeSubpath();
+        silhouette = silhouette.united(tail);
+      }
+    }
+    painter.drawPath(silhouette);
     QFont font = painter.font();
     font.setPixelSize(std::max(1, int(std::lround(shapeFontSize(shape)))));
     font.setBold(true);

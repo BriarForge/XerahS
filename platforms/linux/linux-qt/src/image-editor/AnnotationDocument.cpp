@@ -355,6 +355,12 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
                                    o.value(u"opacity").toDouble(1.0)};
   rectangle.visible = o.value(u"visible").toBool(true);
   rectangle.content = std::move(content);
+  // EA-009: a Step has at most one point, its tail tip, which must map to a finite position.
+  if (type == shape::step && !rectangle.content.points.empty() &&
+      (rectangle.content.points.size() > 1 || !validBalloonTail(rectangle, rectangle.content.points))) {
+    findings.invalid = true;
+    return std::nullopt;
+  }
   if (hasShapeDecoration(type) && !parseDecoration(o, type, rectangle.style)) {
     findings.invalid = true;
     return std::nullopt;

@@ -788,9 +788,30 @@ bool EditorCanvas::editShapeContent(QWidget *parent) {
       style->setCurrentIndex(std::max(0, style->findData(int(content.stepStyle))));
       form->insertWidget(std::max(0, form->count() - 1), style);
     }
-    return contentDialog(dialog, [dialog, content, style]() mutable -> std::optional<ShapeContent> {
+    // EA-009: the tail (reference NumberAnnotation tail point and TailEnabled) lives in the same dialog.
+    // The tip is a fraction of the step's own box, (0, 0) its top-left and (1, 1) its bottom-right;
+    // the reference default handle is one radius beyond the bottom-right corner, i.e. (1.5, 1.5).
+    QCheckBox *tail = nullptr; QDoubleSpinBox *tailX = nullptr, *tailY = nullptr;
+    const double initialX = content.points.empty() ? 1.5 : content.points[0].x, initialY = content.points.empty() ? 1.5 : content.points[0].y;
+    if (auto *form = dynamic_cast<QBoxLayout *>(dialog->layout())) {
+      tail = new QCheckBox("Show tail", dialog); tail->setObjectName("stepTailEnabled"); tail->setAccessibleName("Show step tail"); tail->setChecked(!content.points.empty());
+      const auto spin = [&](const char *name, const char *accessible, double value) {
+        auto *box = new QDoubleSpinBox(dialog); box->setObjectName(name); box->setAccessibleName(accessible); box->setDecimals(4);
+        box->setRange(-10000, 10000); box->setSingleStep(0.1); box->setValue(value); return box;
+      };
+      tailX = spin("stepTailX", "Tail tip X as a fraction of step width", initialX); tailY = spin("stepTailY", "Tail tip Y as a fraction of step height", initialY);
+      const auto sync = [tail, tailX, tailY] { tailX->setEnabled(tail->isChecked()); tailY->setEnabled(tail->isChecked()); };
+      QObject::connect(tail, &QCheckBox::toggled, dialog, sync); sync();
+      form->insertWidget(std::max(0, form->count() - 1), tail); form->insertWidget(std::max(0, form->count() - 1), tailX); form->insertWidget(std::max(0, form->count() - 1), tailY);
+    }
+    return contentDialog(dialog, [dialog, content, style, tail, tailX, tailY, initialX, initialY]() mutable -> std::optional<ShapeContent> {
       content.stepValue = dialog->intValue();
       if (style) content.stepStyle = static_cast<StepStyle>(style->currentData().toInt());
+      if (tail) {
+        if (!tail->isChecked()) content.points.clear();
+        else if (content.points.empty() || tailX->value() != initialX || tailY->value() != initialY)
+          content.points = {{tailX->value(), tailY->value()}};  // an untouched tip keeps its exact stored value
+      }
       return content;
     }, selected);
   }

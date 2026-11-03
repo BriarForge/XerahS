@@ -167,7 +167,7 @@ inline constexpr int kMaxTextLength = 100000;
 inline constexpr qint64 kMaxStepValue = 1000000000;
 struct ShapeContent {
   QString type = shape::rectangle;
-  // speech-balloon: points[0] is the tail tip. line and arrow: points[0] is
+  // speech-balloon and (EA-009) step: points[0] is the tail tip, none = no tail. line and arrow: points[0] is
   // the start and points[1] the end (direction); an optional points[2] is the
   // EA-006 curve anchor, the point the quadratic curve passes through at its
   // middle. All are fractions of the bounds, so move, resize, flip and any

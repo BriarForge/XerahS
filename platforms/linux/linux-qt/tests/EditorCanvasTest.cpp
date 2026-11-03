@@ -343,6 +343,39 @@ private slots:
     QCOMPARE(serializeAnnotationList(*reloaded.annotations), saved);
     QVERIFY(session.undo()); QVERIFY(last().content.stepStyle == StepStyle::LowercaseRoman); QCOMPARE(last().content.stepValue, qint64(8));
   }
+  void stepTailIsEditedThroughTheStepDialogInOneUndoStep() {
+    // EA-009 native path: the tail checkbox and tip fields share the Edit Step dialog's single Apply.
+    EditorSession session(document()); const auto source = image(); EditorCanvas canvas(session, source);
+    canvas.resize(900, 700); canvas.show(); QCoreApplication::processEvents(); canvas.resetZoom(); canvas.setTool(EditorCanvas::Tool::Step);
+    QTest::mouseClick(canvas.viewport(), Qt::LeftButton, {}, canvas.viewState().toView({100, 100}).toPoint());
+    const auto step = [&]() -> const RectangleAnnotation & { return std::get<RectangleAnnotation>(session.document().annotations.back()); };
+    QVERIFY(step().content.points.empty());  // the reference creates a step without a tail point
+    canvas.setTool(EditorCanvas::Tool::Select);
+    QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChild<QInputDialog *>(); QVERIFY(dialog);
+    auto *enabled = dialog->findChild<QCheckBox *>("stepTailEnabled"); auto *x = dialog->findChild<QDoubleSpinBox *>("stepTailX"), *y = dialog->findChild<QDoubleSpinBox *>("stepTailY");
+    QVERIFY(enabled && x && y); QVERIFY(!enabled->isChecked()); QVERIFY(!x->isEnabled()); QCOMPARE(x->value(), 1.5); QCOMPARE(y->value(), 1.5);
+    auto undo = session.undoCount(); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive());
+    QCOMPARE(session.undoCount(), undo); QVERIFY(step().content.points.empty());  // an untouched Apply is not a mutation
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<QInputDialog *>(); QVERIFY(dialog);
+    enabled = dialog->findChild<QCheckBox *>("stepTailEnabled"); x = dialog->findChild<QDoubleSpinBox *>("stepTailX"); y = dialog->findChild<QDoubleSpinBox *>("stepTailY");
+    enabled->setChecked(true); QVERIFY(x->isEnabled()); x->setValue(2); y->setValue(-0.75);
+    dialog->setIntValue(5); undo = session.undoCount(); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive());
+    QCOMPARE(session.undoCount(), undo + 1);  // number, style and tail change in one operation
+    QCOMPARE(step().content.stepValue, qint64(5)); QCOMPARE(step().content.points, (std::vector<PointF>{{2, -0.75}}));
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChild<QInputDialog *>(); QVERIFY(dialog);
+    enabled = dialog->findChild<QCheckBox *>("stepTailEnabled"); x = dialog->findChild<QDoubleSpinBox *>("stepTailX");
+    QVERIFY(enabled->isChecked()); QCOMPARE(x->value(), 2.0); QCOMPARE(dialog->findChild<QDoubleSpinBox *>("stepTailY")->value(), -0.75);
+    enabled->setChecked(false); undo = session.undoCount(); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive());
+    QCOMPARE(session.undoCount(), undo + 1); QVERIFY(step().content.points.empty());
+    QVERIFY(session.undo()); QCOMPARE(step().content.points, (std::vector<PointF>{{2, -0.75}}));
+    QVERIFY(session.undo()); QVERIFY(step().content.points.empty()); QCOMPARE(step().content.stepValue, qint64(1));
+    QVERIFY(session.redo()); QCOMPARE(step().content.points.size(), std::size_t(1));
+    // Saved and reopened with the tail.
+    const auto saved = serializeAnnotationList(session.document().annotations); const auto reloaded = parseAnnotationList(saved); QVERIFY(reloaded.annotations);
+    QCOMPARE(serializeAnnotationList(*reloaded.annotations), saved);
+  }
   void unavailableSavedFontShowsNoticeAndCreatesWithNativeFallback() {
     EditorSession session(document()); const auto source = image(); ContentCreationDefaults defaults;
     defaults.text.requestedFamily = "Gone Sans"; defaults.text.familyUnavailable = true; defaults.text.fontFamily = QString();

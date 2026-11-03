@@ -12,6 +12,11 @@
 #include <QApplication>
 #include <QBuffer>
 #include <QFile>
+#include <QComboBox>
+#include <QInputDialog>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QTimer>
 #include <QImage>
 #include <QPainter>
 #include <QSignalSpy>
@@ -19,6 +24,7 @@
 #include <cmath>
 #include <limits>
 #include <tuple>
+#include <vector>
 
 using namespace xerahs::app;
 using namespace xerahs::editor;
@@ -473,6 +479,57 @@ private slots:
     QCOMPARE((cursor.end.x - cursor.start.x) / (cursor.end.y - cursor.start.y), double(decoded.width()) / decoded.height());  // click size keeps the asset ratio
   }
 
+  // EA-009 Step tail (reference NumberAnnotation TailPoint/TailEnabled): points[0] is the tail tip as a fraction of
+  // the step's box; no point means no tail, the reference state before a tail point is set.
+  void stepTailRendersPersistsAndIsOneUndoableEdit() {
+    EditorSession session(document(200, 200)); ShapeContent content; content.type = shape::step; content.stepValue = 1;
+    const auto id = session.createShape({{20, 20}, {60, 60}, {0xFF0000FF, 0xFF0000FF, 4, 0, 1}}, content, session.stateId(), session.selection());
+    QVERIFY(id); QVERIFY(session.selectedRectangle()->content.points.empty());
+    const auto rendered = [&](const RectangleAnnotation &step) { QImage image(200, 200, QImage::Format_ARGB32); image.fill(Qt::white); QPainter p(&image); paintShape(p, step, image); p.end(); return image; };
+    const QRgb blue = QColor(0, 0, 255).rgb(), white = QColor(Qt::white).rgb();
+    QCOMPARE(rendered(*session.selectedRectangle()).pixel(75, 75), white);  // no tail yet
+    const auto undo = session.undoCount(); auto edited = session.selectedRectangle()->content; edited.points = {{1.5, 1.5}};  // the reference default handle
+    QVERIFY(session.editShapeContent(*id, edited, session.stateId())); QCOMPARE(session.undoCount(), undo + 1);
+    QCOMPARE(session.selectedRectangle()->content.points.size(), std::size_t(1));
+    const auto withTail = rendered(*session.selectedRectangle());
+    QCOMPARE(withTail.pixel(70, 70), blue); QCOMPARE(withTail.pixel(52, 52), blue);  // the tail runs from the circle to the tip at (80, 80)
+    QCOMPARE(withTail.pixel(60, 22), white); QCOMPARE(withTail.pixel(22, 60), white);  // away from the tail the box corners stay empty
+    // The same edit again is not a mutation; moving carries the tail with the step.
+    QVERIFY(!session.editShapeContent(*id, edited, session.stateId())); QCOMPARE(session.undoCount(), undo + 1);
+    QVERIFY(session.moveSelection(40, 0)); QCOMPARE(rendered(*session.selectedRectangle()).pixel(110, 70), blue);
+    QVERIFY(session.undo());
+    // Persisted: serialised as `points`, reloaded identically, and undo/redo walk through one operation.
+    const auto saved = serializeAnnotationList(session.document().annotations); const auto reloaded = parseAnnotationList(saved); QVERIFY(reloaded.annotations);
+    QCOMPARE(serializeAnnotationList(*reloaded.annotations), saved);
+    QCOMPARE(std::get<RectangleAnnotation>((*reloaded.annotations)[0]).content.points, (std::vector<PointF>{{1.5, 1.5}}));
+    QVERIFY(session.undo()); QVERIFY(session.selectedRectangle() == nullptr || session.selectedRectangle()->content.points.empty());
+    QVERIFY(std::get<RectangleAnnotation>(session.document().annotations[0]).content.points.empty());
+    QVERIFY(session.redo()); QCOMPARE(std::get<RectangleAnnotation>(session.document().annotations[0]).content.points.size(), std::size_t(1));
+    // Turning the tail off is one more operation; a tip inside the circle draws no tail.
+    session.select({*id}); edited.points.clear(); QVERIFY(session.editShapeContent(*id, edited, session.stateId()));
+    QCOMPARE(rendered(*session.selectedRectangle()).pixel(70, 70), white);
+    auto inside = *session.selectedRectangle(); inside.content.points = {{0.5, 0.5}};
+    QCOMPARE(rendered(inside).pixel(70, 70), white);
+  }
+  void stepTailRejectsInvalidTipsWithoutChangingHistoryOrDocuments() {
+    EditorSession session(document(200, 200)); ShapeContent content; content.type = shape::step; content.stepValue = 1;
+    const auto id = session.createShape({{20, 20}, {60, 60}, {}}, content, session.stateId(), session.selection()); QVERIFY(id);
+    const auto before = serializeDocument(session.document()); const auto undo = session.undoCount();
+    for (const auto &points : {std::vector<PointF>{{1.5, 1.5}, {2, 2}}, std::vector<PointF>{{std::numeric_limits<double>::infinity(), 0}},
+                               std::vector<PointF>{{0, std::numeric_limits<double>::quiet_NaN()}}, std::vector<PointF>{{1e308, 1e308}}}) {
+      auto edited = session.selectedRectangle()->content; edited.points = points;
+      QVERIFY(!session.editShapeContent(*id, edited, session.stateId())); QCOMPARE(session.editDiagnostic(), QString("annotation-style-invalid"));
+      QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), undo);
+      ShapeContent create = content; create.points = points;
+      QVERIFY(!session.createShape({{70, 70}, {110, 110}, {}}, create, session.stateId(), session.selection()));
+      QCOMPARE(session.editDiagnostic(), QString("annotation-style-invalid")); QCOMPARE(session.undoCount(), undo);
+    }
+    // Documents: two points, or a tip that does not map to a finite position, are invalid.
+    auto step = shapeOf(shape::step, {20, 20}, {60, 60}); step.content.stepValue = 1; step.content.points = {{1.5, 1.5}};
+    auto json = serializeAnnotationList({step})[0].toObject(); QVERIFY(parseAnnotationList(QJsonArray{json}).annotations);
+    json["points"] = QJsonArray{QJsonObject{{"x", 1.5}, {"y", 1.5}}, QJsonObject{{"x", 2}, {"y", 2}}}; QVERIFY(!parseAnnotationList(QJsonArray{json}).annotations);
+    json["points"] = QJsonArray{QJsonObject{{"x", 1e308}, {"y", 1e308}}}; QVERIFY(!parseAnnotationList(QJsonArray{json}).annotations);
+  }
   // EA-019: one object of every one of the 17 drawable types, each with every field that applies to it set
   // away from its default, plus embedded assets, an unknown type and compatible unknown fields.
   void allSeventeenShapeTypesRoundTripEveryFieldThroughXann() {

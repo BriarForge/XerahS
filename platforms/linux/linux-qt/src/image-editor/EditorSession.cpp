@@ -109,6 +109,11 @@ std::optional<QUuid> EditorSession::createShape(const RectangleProperties &draft
   rectangle.content = content;
   if (!hasShapeEllipse(content.type)) rectangle.content.isEllipse = false;
   if (!hasShapeBlurAmount(content.type)) rectangle.content.blurAmount = 0;
+  // EA-009: a Step has at most one point (its tail tip) that maps to a finite position.
+  if (content.type == shape::step && !content.points.empty() &&
+      (content.points.size() > 1 || !validBalloonTail(rectangle, content.points))) {
+    m_editDiagnostic = "annotation-style-invalid"; return std::nullopt;
+  }
   // ES-003: zero area (zero width or zero height) is rejected.
   m_editDiagnostic = rectanglePropertiesDiagnostic({rectangle.start, rectangle.end, rectangle.style});
   if (!m_editDiagnostic.isEmpty()) return std::nullopt;
@@ -206,6 +211,9 @@ bool EditorSession::editShapeContent(const QUuid &id, const ShapeContent &conten
   if (content.type == shape::speechBalloon && !validBalloonTail(*selected, content.points)) {
     m_editDiagnostic = "annotation-style-invalid"; return false;
   }
+  if (content.type == shape::step && (content.points.size() > 1 || !validBalloonTail(*selected, content.points))) {
+    m_editDiagnostic = "annotation-style-invalid"; return false;
+  }
   if ((content.type == shape::text || content.type == shape::speechBalloon) && content.text.size() > kMaxTextLength) { m_editDiagnostic = "annotation-style-invalid"; return false; }
   // Path geometry stays unchanged. A speech balloon's points encode its tail.
   return changeSelected([&](RectangleAnnotation &r) {
@@ -218,7 +226,7 @@ bool EditorSession::editShapeContent(const QUuid &id, const ShapeContent &conten
       r.content.points = content.points; r.content.balloonBorderColor = content.balloonBorderColor;
     }
     r.content.stepValue = content.stepValue; r.content.strength = content.strength;
-    if (r.type() == shape::step) r.content.stepStyle = content.stepStyle;
+    if (r.type() == shape::step) { r.content.stepStyle = content.stepStyle; r.content.points = content.points; }
     if (hasShapeEllipse(r.type())) r.content.isEllipse = content.isEllipse;
     if (hasShapeBlurAmount(r.type())) r.content.blurAmount = content.blurAmount;
   });
