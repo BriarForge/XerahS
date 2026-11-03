@@ -1832,6 +1832,7 @@ private slots:
   void cancelledPickerAndCorruptOpenPreserveTheCurrentSession_data() {
     QTest::addColumn<int>("failure");
     QTest::newRow("cancel-picker") << 0; QTest::newRow("unsupported-image") << 1; QTest::newRow("corrupt-sidecar") << 2;
+    QTest::newRow("truncated-png") << 3;  // EC-002/ES-029: a damaged raster reports source-corrupt
   }
   void cancelledPickerAndCorruptOpenPreserveTheCurrentSession() {
     QFETCH(int, failure);
@@ -1839,20 +1840,26 @@ private slots:
     const QImage original = fixture(); QVERIFY(original.save(path));
     if (failure == 1) { QFile bad(target); QVERIFY(bad.open(QIODevice::WriteOnly)); bad.write("bad"); }
     if (failure == 2) { QVERIFY(original.save(target)); QFile bad(target + ".xann"); QVERIFY(bad.open(QIODevice::WriteOnly)); bad.write("corrupt"); }
+    if (failure == 3) {  // a valid PNG cut inside its pixel data: header decodes, pixels do not
+      QVERIFY(original.save(target)); QFile full(target); QVERIFY(full.open(QIODevice::ReadWrite)); const QByteArray whole = full.readAll();
+      QVERIFY(whole.size() > 60); QVERIFY(full.resize(whole.size() - 20));
+      QCOMPARE(loadSource(target).diagnostic, diagnostic::sourceCorrupt);
+    }
     std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); window->resize(900, 600); window->show();
     auto *canvas = window->findChild<EditorCanvas *>(); canvas->resetZoom(); drawRectangle(*canvas); canvas->zoomIn();
     const QString status = window->statusBar()->currentMessage(), title = window->windowTitle();
     const double zoom = canvas->viewState().zoom(); const QPointF offset = canvas->viewState().offset();
-    bool picked = false, reported = false, confirmed = false; QTimer timer;
+    bool picked = false, reported = false, confirmed = false; QString shown; QTimer timer;
     connect(&timer, &QTimer::timeout, [&] {
       if (auto *picker = qobject_cast<QFileDialog *>(QApplication::activeModalWidget())) {
         picked = true; if (!failure) picker->reject(); else { picker->selectFile(target); QMetaObject::invokeMethod(picker, "accept"); }
       } else if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) {
-        reported = box->windowTitle() == u"Cannot open image"; confirmed = box->windowTitle() == u"Replace current image"; box->reject();
+        reported = box->windowTitle() == u"Cannot open image"; confirmed = box->windowTitle() == u"Replace current image"; shown = box->text(); box->reject();
       }
     });
     timer.start(5); trigger(*window, QStringLiteral("openImage")); timer.stop();
     QVERIFY(picked && !confirmed); QCOMPARE(reported, failure != 0);
+    if (failure == 3) QVERIFY2(shown.contains(u"target.png") && shown.contains(u"This image is damaged and cannot be read."), qPrintable(shown));
     QCOMPARE(window->statusBar()->currentMessage(), status); QCOMPARE(window->windowTitle(), title);
     QCOMPARE(canvas->viewState().zoom(), zoom); QCOMPARE(canvas->viewState().offset(), offset);
     QVERIFY(window->findChild<QAction *>("undo")->isEnabled() && window->findChild<QAction *>("deleteSelection")->isEnabled());
