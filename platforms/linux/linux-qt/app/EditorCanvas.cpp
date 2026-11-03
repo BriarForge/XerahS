@@ -182,7 +182,7 @@ QString EditorCanvas::toolOptions(Tool tool) {
     case Tool::Line: return "Options: stroke colour, thickness, opacity, border style, optional curve and drop shadow.";
     case Tool::Arrow: return "Options: stroke colour, thickness, opacity, border style, arrow style, optional curve and drop shadow.";
     case Tool::Freehand: return "Options: stroke colour, thickness and opacity; the stroke is simplified once when you release.";
-    case Tool::Text: return "Options: font family and size, bold, italic, alignment, text colour and fill colour, set in the text dialog.";
+    case Tool::Text: return "Options: font family and size, bold, italic, alignment, text colour, fill colour and letter outline, set in the text dialog.";
     case Tool::SpeechBalloon: return "Options: font family and size, bold, italic, alignment, text colour, fill colour, border colour and tail, set in the text dialog.";
     case Tool::Step: return "Options: step number and font size; the next number follows the highest existing step.";
     case Tool::Highlight: return "Options: tint (fill) colour and a rectangular or elliptical region.";

@@ -12,6 +12,10 @@
 #include <QImageReader>
 #include <QPainter>
 #include <QPainterPath>
+#include <QRawFont>
+#include <QGlyphRun>
+#include <QTextLayout>
+#include <QTextOption>
 
 #include <algorithm>
 #include <array>
@@ -210,6 +214,35 @@ QFont textFont(QFont font, const RectangleAnnotation &shape) {
   return font;
 }
 
+
+// EA-008: the reference draws Text with an outline behind the letters: the glyph outlines stroked with the
+// annotation's border colour and thickness, then filled with the text colour on top. One layout supplies
+// both the outline and the fill so they cannot drift apart.
+void paintOutlinedText(QPainter &painter, const QRectF &box, const QString &text, Qt::Alignment alignment,
+                       const QColor &fill, const QColor &border, double thickness) {
+  QTextLayout layout(text, painter.font());
+  QTextOption option(alignment | Qt::AlignTop); option.setWrapMode(QTextOption::WordWrap);
+  layout.setTextOption(option);
+  double y = 0;
+  layout.beginLayout();
+  for (QTextLine line = layout.createLine(); line.isValid(); line = layout.createLine()) {
+    line.setLineWidth(box.width()); line.setPosition({0, y}); y += line.height();
+  }
+  layout.endLayout();
+  QPainterPath outline;
+  for (const QGlyphRun &run : layout.glyphRuns()) {
+    const QRawFont raw = run.rawFont(); const auto indexes = run.glyphIndexes(); const auto positions = run.positions();
+    for (qsizetype i = 0; i < indexes.size(); ++i) outline.addPath(raw.pathForGlyph(indexes[i]).translated(positions[i] + box.topLeft()));
+  }
+  painter.save();
+  painter.setClipRect(box.adjusted(-thickness, -thickness, thickness, thickness), Qt::IntersectClip);
+  painter.setBrush(Qt::NoBrush);
+  painter.setPen(QPen(border, thickness, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+  painter.drawPath(outline);
+  painter.setPen(fill);
+  layout.draw(&painter, box.topLeft());
+  painter.restore();
+}
 
 Qt::PenStyle penStyleOf(BorderStyle style) {
   switch (style) {
@@ -525,9 +558,16 @@ void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImag
     const Argb fill = shape.content.textFillColor.value_or(style.fillColor);
     if (qAlpha(fill) > 0) painter.fillRect(box, color(fill));
     painter.setFont(textFont(painter.font(), shape));
-    painter.setPen(color(shape.content.textColor.value_or(style.strokeColor)));
+    const QColor textColor = color(shape.content.textColor.value_or(style.strokeColor));
     const double pad = std::min(4.0, std::min(box.width(), box.height()) / 4);
-    painter.drawText(box.adjusted(pad, pad, -pad, -pad), horizontalAlignment(shape.content, Qt::AlignLeft) | Qt::AlignTop | Qt::TextWordWrap, shape.content.text);
+    const QRectF textBox = box.adjusted(pad, pad, -pad, -pad);
+    const auto alignment = Qt::Alignment(horizontalAlignment(shape.content, Qt::AlignLeft));
+    if (shape.content.textBorderColor && qAlpha(*shape.content.textBorderColor) > 0 && style.strokeWidth > 0)
+      paintOutlinedText(painter, textBox, shape.content.text, alignment, textColor, color(*shape.content.textBorderColor), style.strokeWidth);
+    else {
+      painter.setPen(textColor);
+      painter.drawText(textBox, int(alignment | Qt::AlignTop) | Qt::TextWordWrap, shape.content.text);
+    }
   } else if (type == shape::step) {
     const QColor fill = qAlpha(style.fillColor) > 0 ? color(style.fillColor) : color(style.strokeColor);
     painter.setPen(Qt::NoPen);

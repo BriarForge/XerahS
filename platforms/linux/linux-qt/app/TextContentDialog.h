@@ -32,6 +32,7 @@ private:
   QLineEdit *m_color;
   QLineEdit *m_fillColor;
   QLineEdit *m_borderColor = nullptr;
+  QLineEdit *m_textBorder = nullptr;
   QLineEdit *m_x = nullptr, *m_y = nullptr;
   QLabel *m_error;
   std::optional<xerahs::editor::ShapeContent> m_choice;

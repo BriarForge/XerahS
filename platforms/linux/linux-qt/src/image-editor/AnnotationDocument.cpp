@@ -222,6 +222,10 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
       const auto value = o.value(u"textFillColor");
       if (!value.isString() || !(content.textFillColor = parseColor(value.toString()))) { findings.invalid = true; return std::nullopt; }
     }
+    if (type == shape::text && o.contains(u"textBorderColor")) {
+      const auto value = o.value(u"textBorderColor");
+      if (!value.isString() || !(content.textBorderColor = parseColor(value.toString()))) { findings.invalid = true; return std::nullopt; }
+    }
     if (type == shape::speechBalloon && o.contains(u"balloonBorderColor")) {
       const auto value = o.value(u"balloonBorderColor");
       if (!value.isString() || !(content.balloonBorderColor = parseColor(value.toString()))) { findings.invalid = true; return std::nullopt; }
@@ -330,6 +334,7 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
   }
   if (type == shape::speechBalloon) rectangle.extra.remove(QStringLiteral("balloonBorderColor"));
   if (type == shape::step) rectangle.extra.remove(QStringLiteral("stepType"));
+  if (type == shape::text) rectangle.extra.remove(QStringLiteral("textBorderColor"));
   if (hasShapeEllipse(type)) rectangle.extra.remove(QStringLiteral("isEllipse"));
   if (hasShapeBlurAmount(type)) rectangle.extra.remove(QStringLiteral("blurAmount"));
   return Annotation(rectangle);
@@ -564,6 +569,9 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
       if (!content.fontFamily.isEmpty()) o.insert(QStringLiteral("fontFamily"), content.fontFamily); else o.remove(QStringLiteral("fontFamily"));
       if (content.textColor.has_value()) o.insert(QStringLiteral("textColor"), formatColor(*content.textColor)); else o.remove(QStringLiteral("textColor"));
       if (content.textFillColor.has_value()) o.insert(QStringLiteral("textFillColor"), formatColor(*content.textFillColor)); else o.remove(QStringLiteral("textFillColor"));
+      if (content.type == shape::text) {
+        if (content.textBorderColor.has_value()) o.insert(QStringLiteral("textBorderColor"), formatColor(*content.textBorderColor)); else o.remove(QStringLiteral("textBorderColor"));
+      }
       for (const auto &field : {std::pair{QStringLiteral("textBold"), content.textBold}, std::pair{QStringLiteral("textItalic"), content.textItalic}}) {
         if (field.second.has_value()) o.insert(field.first, *field.second); else o.remove(field.first);
       }

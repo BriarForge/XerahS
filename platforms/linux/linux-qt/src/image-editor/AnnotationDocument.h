@@ -180,6 +180,10 @@ struct ShapeContent {
   QString fontFamily; // empty uses the native font; missing names remain preserved
   std::optional<Argb> textFillColor; // absent retains legacy fill; explicit zero remains transparent
   std::optional<Argb> balloonBorderColor; // speech balloon only; absent retains legacy stroke color
+  // EA-008, Text only: colour of the outline drawn around the glyphs (reference OutlinedTextControl:
+  // stroke colour and thickness, painted behind the text colour). Absent = no outline (legacy);
+  // zero alpha or a zero stroke width also draws none.
+  std::optional<Argb> textBorderColor;
 };
 
 struct RectangleAnnotation {

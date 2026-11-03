@@ -633,6 +633,78 @@ private slots:
     }
   }
 
+  void textBorderControlKeepsAlphaHistoryAndPersistence() {
+    // EA-008 Text border: an optional #AARRGGBB letter outline, edited natively, one history step, round-tripped.
+    const auto source = image(); auto initial = document(); initial.createdAt = initial.modifiedAt = "2026-11-03T00:00:00Z";
+    QBuffer buffer(&initial.sourceImagePng); QVERIFY(buffer.open(QIODevice::WriteOnly)); QVERIFY(source.save(&buffer, "PNG"));
+    EditorSession session(initial); ShapeContent content; content.type = shape::text; content.text = "Outline"; content.fontSize = 30;
+    content.textColor = 0xFF112233; content.textFillColor = 0x40123456; content.textAlignment = "right";
+    QVERIFY(session.createShape({{100, 100}, {400, 250}, {}}, content, session.stateId(), session.selection()));
+    const auto before = serializeDocument(session.document()); const auto initialUndo = session.undoCount(); EditorCanvas canvas(session, source);
+    QVERIFY(!before.value("annotations").toArray()[0].toObject().contains("textBorderColor"));
+    QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChildren<TextContentDialog *>().last();
+    auto *border = dialog->findChild<QLineEdit *>("annotationTextBorderColor"); QVERIFY(border); QVERIFY(border->text().isEmpty());
+    QVERIFY(!dialog->findChild<QLineEdit *>("annotationBalloonBorderColor"));
+    dialog->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), before); QCOMPARE(session.undoCount(), initialUndo);
+    QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChildren<TextContentDialog *>().last();
+    dialog->findChild<QLineEdit *>("annotationTextBorderColor")->setText("#80ABCDEF"); dialog->reject();
+    QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), before);
+    for (const auto &choice : {QString("#80aBcDeF"), QString("#00000000"), QString("#FF123456"), QString{}}) {
+      const auto previous = serializeDocument(session.document()); const auto count = session.undoCount();
+      QVERIFY(canvas.editShapeContent(&canvas)); dialog = canvas.findChildren<TextContentDialog *>().last();
+      border = dialog->findChild<QLineEdit *>("annotationTextBorderColor"); border->setText("bad-color"); dialog->accept();
+      QVERIFY(canvas.interactionActive()); QCOMPARE(serializeDocument(session.document()), previous);
+      QVERIFY(dialog->findChild<QLabel *>("balloonContentError")->text().startsWith("annotation-text-border-color-invalid:"));
+      border->setText(choice); dialog->accept(); dialog->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(session.undoCount(), count + 1);
+      const auto saved = serializeDocument(session.document()); const auto annotation = saved.value("annotations").toArray()[0].toObject();
+      if (choice.isEmpty()) QVERIFY(!annotation.contains("textBorderColor")); else QCOMPARE(annotation.value("textBorderColor"), QJsonValue(choice.toUpper()));
+      QCOMPARE(session.selectedRectangle()->content.textColor, content.textColor); QCOMPARE(session.selectedRectangle()->content.textFillColor, content.textFillColor);
+      QCOMPARE(session.selectedRectangle()->content.textAlignment, content.textAlignment); QCOMPARE(session.selectedRectangle()->content.fontSize, content.fontSize);
+      const auto parsed = parseDocument(saved); QVERIFY(parsed.document); QCOMPARE(serializeDocument(*parsed.document), saved);
+      QCOMPARE(session.document().sourceImagePng, initial.sourceImagePng);
+      const auto transfer = selectedAnnotationTransfer(session.document(), session.selection(), true); QVERIFY(transfer.ok());
+      const auto incoming = parseAnnotationClipboard(transfer.bytes); QVERIFY(incoming.ok());
+      QCOMPARE(serializeAnnotationList(incoming.annotations)[0].toObject().value("textBorderColor"), annotation.value("textBorderColor"));
+      QVERIFY(canvas.editShapeContent(&canvas)); auto *unchanged = canvas.findChildren<TextContentDialog *>().last();
+      QCOMPARE(unchanged->findChild<QLineEdit *>("annotationTextBorderColor")->text(), choice.toUpper());
+      unchanged->accept(); QTRY_VERIFY(!canvas.interactionActive()); QCOMPARE(session.undoCount(), count + 1); QCOMPARE(serializeDocument(session.document()), saved);
+      QVERIFY(session.undo()); QCOMPARE(serializeDocument(session.document()), previous); QVERIFY(session.redo()); QCOMPARE(serializeDocument(session.document()), saved);
+    }
+  }
+  void textBorderRendersAnOutlineBehindTheLettersAndStaysInertElsewhere() {
+    // EA-008 reference semantics (OutlinedTextControl): stroke colour/width outline behind the text colour.
+    auto doc = document(); doc.createdAt = doc.modifiedAt = "2026-11-03T00:00:00Z";
+    auto white = image(); QBuffer buffer(&doc.sourceImagePng); QVERIFY(buffer.open(QIODevice::WriteOnly)); QVERIFY(white.save(&buffer, "PNG"));
+    RectangleAnnotation text; text.id = QUuid::createUuid(); text.start = {100, 100}; text.end = {400, 250};
+    text.style.strokeWidth = 6; text.style.fillColor = 0; text.content.type = shape::text; text.content.text = "HI"; text.content.fontSize = 90;
+    text.content.textColor = 0xFFFF0000; text.content.textAlignment = "left"; text.content.textBold = true;
+    const auto source = solidImage(800, 600, 0xFFFFFFFF);
+    const auto count = [&](const RectangleAnnotation &annotation, Argb color, QRect area = QRect(0, 0, 800, 600)) {
+      auto d = doc; d.annotations = {annotation}; const auto result = renderDocument(source, d); int n = 0;
+      if (!result.image) return -1;
+      for (int y = area.top(); y <= area.bottom(); ++y) for (int x = area.left(); x <= area.right(); ++x) if (result.image->at(x, y) == color) ++n;
+      return n;
+    };
+    const auto legacyRed = count(text, 0xFFFF0000); QVERIFY(legacyRed > 500); QCOMPARE(count(text, 0xFF0000FF), 0);
+    auto bordered = text; bordered.content.textBorderColor = 0xFF0000FF;
+    QVERIFY(count(bordered, 0xFF0000FF) > 200);                      // the outline is drawn
+    QVERIFY(count(bordered, 0xFFFF0000) > 200);                      // the text colour stays on top
+    QVERIFY(count(bordered, 0xFFFF0000) <= legacyRed);               // the outline never replaces more than the letters' own edge
+    QCOMPARE(count(bordered, 0xFF0000FF, QRect(0, 0, 800, 90)), 0);  // nothing outside the text box plus the stroke
+    auto half = bordered; half.content.textBorderColor = 0x800000FF; QVERIFY(count(half, 0xFF0000FF) == 0);  // alpha applies; no opaque outline pixel
+    auto transparent = bordered; transparent.content.textBorderColor = 0x000000FF;                           // zero alpha draws nothing
+    QCOMPARE(count(transparent, 0xFF0000FF), 0); QCOMPARE(count(transparent, 0xFFFF0000), legacyRed);
+    // Another family keeps the same-named field as opaque data and draws no outline.
+    auto ellipse = bordered; ellipse.content.type = shape::rectangle; ellipse.content.textBorderColor.reset(); QCOMPARE(count(ellipse, 0xFF0000FF), 0);
+    auto payload = serializeDocument(doc); auto objects = payload.value("annotations").toArray();
+    auto object = serializeAnnotationList({text})[0].toObject(); object.insert("textBorderColor", "#GG000000"); objects = QJsonArray{object}; payload.insert("annotations", objects);
+    QVERIFY(!parseDocument(payload).document);                       // malformed colour is rejected before use
+    object.insert("type", "speech-balloon"); payload.insert("annotations", QJsonArray{object});
+    object.insert("textBorderColor", "#80102030"); object.insert("type", shape::speechBalloon); payload.insert("annotations", QJsonArray{object});
+    const auto kept = parseDocument(payload); QVERIFY(kept.document);
+    QCOMPARE(serializeDocument(*kept.document).value("annotations").toArray()[0].toObject().value("textBorderColor"), QJsonValue("#80102030"));
+    QVERIFY(!std::get<RectangleAnnotation>(kept.document->annotations[0]).content.textBorderColor.has_value());
+  }
   void regularTextDoesNotExposeBalloonBorderControl() {
     RectangleAnnotation annotation; annotation.content.type = shape::text; annotation.content.text = "Text";
     TextContentDialog dialog(annotation, nullptr);

@@ -61,6 +61,14 @@ TextContentDialog::TextContentDialog(const xerahs::editor::RectangleAnnotation &
   m_fillColor->setToolTip("Enter #AARRGGBB, including alpha. Zero alpha is transparent. Leave empty to use the original fill rule. This changes the fill only.");
   if (shape.content.textFillColor.has_value()) m_fillColor->setText(xerahs::editor::formatColor(*shape.content.textFillColor));
   form->addRow("Background &fill (#AARRGGBB)", m_fillColor);
+  if (!balloon) {
+    m_textBorder = new QLineEdit(this); m_textBorder->setObjectName("annotationTextBorderColor");
+    m_textBorder->setAccessibleName("Text outline color in #AARRGGBB format");
+    m_textBorder->setPlaceholderText("No outline (leave empty)");
+    m_textBorder->setToolTip("Enter #AARRGGBB, including alpha, to outline the letters with the annotation's stroke width. Zero alpha or an empty field draws no outline. This changes the outline only.");
+    if (shape.content.textBorderColor.has_value()) m_textBorder->setText(xerahs::editor::formatColor(*shape.content.textBorderColor));
+    form->addRow("Text &border (#AARRGGBB)", m_textBorder);
+  }
   if (balloon) {
     m_borderColor = new QLineEdit(this); m_borderColor->setObjectName("annotationBalloonBorderColor");
     m_borderColor->setAccessibleName("Speech balloon border color in #AARRGGBB format");
@@ -120,6 +128,15 @@ void TextContentDialog::accept() {
     content.textFillColor = xerahs::editor::parseColor(fillText);
     if (!content.textFillColor.has_value()) {
       m_error->setText("annotation-text-fill-color-invalid: Enter #AARRGGBB including alpha, or leave the field empty for the original fill."); m_fillColor->setFocus(); return;
+    }
+  }
+  if (m_textBorder) {
+    const auto borderText = m_textBorder->text().trimmed(); content.textBorderColor.reset();
+    if (!borderText.isEmpty()) {
+      content.textBorderColor = xerahs::editor::parseColor(borderText);
+      if (!content.textBorderColor.has_value()) {
+        m_error->setText("annotation-text-border-color-invalid: Enter #AARRGGBB including alpha, or leave the field empty for no outline."); m_textBorder->setFocus(); return;
+      }
     }
   }
   if (m_borderColor) {
