@@ -407,6 +407,82 @@ private slots:
     }
   }
 
+  // EA-014 / ESET-006, data-driven over every drawable tool and through the production path: persisted defaults ->
+  // native window -> pointer creation. A new object snapshots the defaults saved when it was created, changing the
+  // saved defaults afterwards never edits an existing object, and editing a selected object's style is one undo step.
+  void everyToolsNewObjectSnapshotsSavedDefaultsAndLaterChangesNeverTouchExistingObjects_data() { drawingToolIds_data(); }
+  void everyToolsNewObjectSnapshotsSavedDefaultsAndLaterChangesNeverTouchExistingObjects() {
+    QFETCH(QString, id);
+    QTemporaryDir dir; QVERIFY(dir.isValid()); const QString path = dir.filePath("canvas.png"), prefs = dir.filePath("native/prefs.json");
+    QVERIFY(image(400, 300).save(path)); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty());
+    const QJsonObject first{{"BorderColorHex", "#FF112233"}, {"FillColorHex", "#44556677"}, {"Thickness", 7}, {"CornerRadius", 5}, {"BorderStyle", "Dash"},
+        {"ArrowStyle", "Double"}, {"Shadow", true}, {"ShadowColorHex", "#80102030"}, {"ShadowBlurRadius", 6}, {"ShadowOpacity", 0.5}, {"ShadowOffsetX", -2},
+        {"ShadowOffsetY", 4}, {"CursorType", "Arrow"}, {"BlurStrength", 15}, {"PixelateStrength", 25}, {"MagnifierStrength", 5}, {"MagnifierEllipse", true},
+        {"SpotlightStrength", 40}, {"SpotlightBlur", 9}, {"SpotlightEllipse", true}, {"TextFontSize", 31}, {"SpeechBalloonFontSize", 29}, {"StepFontSize", 14}};
+    const QJsonObject second{{"BorderColorHex", "#FF998877"}, {"FillColorHex", "#20ABCDEF"}, {"Thickness", 3}, {"CornerRadius", 0}, {"BorderStyle", "Dot"},
+        {"ArrowStyle", "Line"}, {"Shadow", false}, {"ShadowColorHex", "#40AABBCC"}, {"ShadowBlurRadius", 1}, {"ShadowOpacity", 1}, {"ShadowOffsetX", 8},
+        {"ShadowOffsetY", 9}, {"CursorType", "Default"}, {"BlurStrength", 60}, {"PixelateStrength", 80}, {"MagnifierStrength", 8}, {"MagnifierEllipse", false},
+        {"SpotlightStrength", 70}, {"SpotlightBlur", 2}, {"SpotlightEllipse", false}, {"TextFontSize", 22}, {"SpeechBalloonFontSize", 20}, {"StepFontSize", 10}};
+    const auto lowered = [](QString name) { name[0] = name[0].toLower(); return name; };
+    const auto expect = [&](const RectangleAnnotation &a, const QJsonObject &d, const char *which) {
+      const QString label = id + QStringLiteral(" ") + QLatin1String(which); const auto &style = a.style; const auto &content = a.content; const QString type = a.type();
+      QVERIFY2(style.strokeColor == parseColor(d.value("BorderColorHex").toString()), qPrintable(label));
+      QVERIFY2(style.fillColor == parseColor(d.value("FillColorHex").toString()), qPrintable(label));
+      QVERIFY2(style.strokeWidth == d.value("Thickness").toDouble(), qPrintable(label));
+      if (hasShapeDecoration(type)) {
+        QVERIFY2(style.borderStyle == parseBorderStyle(lowered(d.value("BorderStyle").toString())), qPrintable(label));
+        QCOMPARE(style.shadow.enabled, d.value("Shadow").toBool());
+        if (style.shadow.enabled) {
+          QVERIFY2(style.shadow.color == parseColor(d.value("ShadowColorHex").toString()), qPrintable(label));
+          QCOMPARE(style.shadow.blurRadius, d.value("ShadowBlurRadius").toDouble()); QCOMPARE(style.shadow.opacity, d.value("ShadowOpacity").toDouble());
+          QCOMPARE(style.shadow.offsetX, d.value("ShadowOffsetX").toDouble()); QCOMPARE(style.shadow.offsetY, d.value("ShadowOffsetY").toDouble());
+        }
+      } else { QVERIFY2(style.borderStyle == BorderStyle::Solid && !style.shadow.enabled, qPrintable(label)); }
+      QCOMPARE(style.cornerRadius, type == shape::rectangle ? d.value("CornerRadius").toDouble() : 0.0);
+      QVERIFY2(style.arrowStyle == (type == shape::arrow ? parseArrowStyle(lowered(d.value("ArrowStyle").toString())).value() : ArrowStyle::Classic), qPrintable(label));
+      if (type == shape::blur) QCOMPARE(content.strength, d.value("BlurStrength").toDouble());
+      if (type == shape::pixelate) QCOMPARE(content.strength, d.value("PixelateStrength").toDouble());
+      if (type == shape::magnify) { QCOMPARE(content.strength, d.value("MagnifierStrength").toDouble()); QCOMPARE(content.isEllipse, d.value("MagnifierEllipse").toBool()); }
+      if (type == shape::spotlight) {
+        QCOMPARE(content.strength, d.value("SpotlightStrength").toDouble()); QCOMPARE(content.isEllipse, d.value("SpotlightEllipse").toBool());
+        QCOMPARE(content.blurAmount, d.value("SpotlightBlur").toDouble());
+      }
+      if (type == shape::cursor) QCOMPARE(content.cursorType, d.value("CursorType").toString());
+      if (type == shape::emoji) { QCOMPARE(content.unicodeSequence, QString("1f600")); QCOMPARE(content.displayName, QString("grinning face")); }
+      if (type == shape::text) QCOMPARE(content.fontSize, d.value("TextFontSize").toDouble());
+      if (type == shape::speechBalloon) QCOMPARE(content.fontSize, d.value("SpeechBalloonFontSize").toDouble());
+      if (type == shape::step) QCOMPARE(content.fontSize, d.value("StepFontSize").toDouble());
+    };
+    QVERIFY(applyDrawingDefaults(first, nativeEditorPreferenceRevision()).saved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->resize(900, 600); window->show(); QTest::qWait(10);
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas); canvas->resetZoom();
+    const auto tool = EditorCanvas::toolFromName(id); QVERIFY(tool);
+    canvas->setTool(*tool);
+    // The last tool is remembered for creation tools only (reference IsRememberableAnnotationTool).
+    QCOMPARE(lastAnnotationToolFromPreferences(nativeEditorPreferences()), rememberableAnnotationTool(id) ? id : QStringLiteral("Rectangle"));
+    drawObject(*canvas, {40, 40}, {140, 120}); QCOMPARE(canvas->annotationDocument().annotations.size(), std::size_t(1));
+    const auto firstObject = std::get<RectangleAnnotation>(canvas->annotationDocument().annotations[0]); expect(firstObject, first, "first");
+    const auto beforeChange = serializeAnnotationList(canvas->annotationDocument().annotations);
+    // Editing the saved defaults leaves the existing object byte-for-byte unchanged, and its history untouched.
+    QVERIFY(applyDrawingDefaults(second, nativeEditorPreferenceRevision()).saved);
+    QCOMPARE(serializeAnnotationList(canvas->annotationDocument().annotations), beforeChange);
+    QCOMPARE(window->findChild<QAction *>("undo")->isEnabled(), true);
+    drawObject(*canvas, {200, 40}, {300, 120}); QCOMPARE(canvas->annotationDocument().annotations.size(), std::size_t(2));
+    expect(std::get<RectangleAnnotation>(canvas->annotationDocument().annotations[1]), second, "second");
+    QCOMPARE(serializeAnnotationList({canvas->annotationDocument().annotations[0]}), QJsonArray{beforeChange[0]});  // still the first snapshot
+    // Editing a selected object's style is one undoable mutation of that object alone.
+    QVERIFY(canvas->selectAnnotations({firstObject.id}, canvas->annotationState(), canvas->documentGeneration()));
+    const auto both = serializeAnnotationList(canvas->annotationDocument().annotations);
+    window->findChild<QAction *>("increaseStroke")->trigger();
+    const auto edited = serializeAnnotationList(canvas->annotationDocument().annotations);
+    QCOMPARE(edited[0].toObject().value("strokeWidth").toDouble(), second.value("Thickness").toDouble() + 1);  // the toolbar step is taken from the current default
+    QCOMPARE(edited[1], both[1]);
+    window->findChild<QAction *>("undo")->trigger();
+    QCOMPARE(serializeAnnotationList(canvas->annotationDocument().annotations), both);  // a single undo restores everything
+    window->findChild<QAction *>("redo")->trigger();
+    QCOMPARE(serializeAnnotationList(canvas->annotationDocument().annotations), edited);
+  }
+
   // EA-004. Policy under test: out-of-canvas geometry is allowed for every
   // drawing tool (bounds are stored unclipped, normalized) and the exporter
   // clips it; zero-area gestures are rejected with a stable diagnostic and no

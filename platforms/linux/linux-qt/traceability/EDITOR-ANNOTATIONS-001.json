@@ -272,22 +272,23 @@
       }
     },
     "EA-014": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Creation copies style/content; explicit shape content edits participate in undo. Complete persisted tool defaults and all style fields remain. Text/balloon creation now freezes pointer-down style through the asynchronous content dialog, even when creation defaults change before release/Apply; it commits the draft once with explicit formatting. Saved defaults and other tool/style breadth remain partial. Audit 2026-11-03: gap re-checked, row stays partial. Existing: the global Drawing Defaults (stroke, fill, thickness, Text/Balloon/Step content) are persisted in the preference store and snapshotted by each new object (EditorWindowTest::savedDefaultsAffectOnlyNewAnnotationsAcrossOpenEditorsAndRestart); the decoration defaults (border style, corner radius, shadow, arrow style) are session-only (Edit > Shape Style Defaults). Not closed: per-tool persisted defaults, i.e. a separate saved default per tool as in the reference ImageEditorOptions (BorderStyle, ArrowStyle, Shadow*, per-tool colours and thickness). That needs new ESET-006 preference keys with validation, migration and policy text in PREFERENCES-POLICY.md, the dialog and tests, so it overlaps ESET-006 and is not a small change to the existing store.",
+      "note": "Creation copies style/content; explicit shape content edits participate in undo. Complete persisted tool defaults and all style fields remain. Text/balloon creation now freezes pointer-down style through the asynchronous content dialog, even when creation defaults change before release/Apply; it commits the draft once with explicit formatting. Saved defaults and other tool/style breadth remain partial. Audit 2026-11-03: gap re-checked, row stays partial. Existing: the global Drawing Defaults (stroke, fill, thickness, Text/Balloon/Step content) are persisted in the preference store and snapshotted by each new object (EditorWindowTest::savedDefaultsAffectOnlyNewAnnotationsAcrossOpenEditorsAndRestart); the decoration defaults (border style, corner radius, shadow, arrow style) are session-only (Edit > Shape Style Defaults). Not closed: per-tool persisted defaults, i.e. a separate saved default per tool as in the reference ImageEditorOptions (BorderStyle, ArrowStyle, Shadow*, per-tool colours and thickness). That needs new ESET-006 preference keys with validation, migration and policy text in PREFERENCES-POLICY.md, the dialog and tests, so it overlaps ESET-006 and is not a small change to the existing store. Audit 2026-11-04: defaults now persist (ESET-006), so the clause is proven for every drawable tool through the production path in AnnotationToolMatrixTest::everyToolsNewObjectSnapshotsSavedDefaultsAndLaterChangesNeverTouchExistingObjects, a 17-row test (one per document type) that saves defaults, opens a real editor window, draws the tool with the real pointer and dialogs, and checks the object's style, decoration (Rectangle only corner radius, Arrow only arrow style, others normalised), emphasis strength/ellipse/blur, cursor type, emoji metadata and text/balloon/step sizes; then saves different defaults and proves the existing object is byte-identical with its history untouched; a second object takes the new defaults; selecting the first and using the stroke command is one undo step that changes only that object, undo restores the document exactly and redo reapplies. It also proves the last tool is remembered for creation tools only. Per-tool colour/thickness defaults of the reference remain under ESET-006, but EA-014 itself states only that a new object snapshots the defaults that exist and that style edits are undoable mutations.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/AnnotationToolMatrixTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 56,
-        "coverage": "Partial: global defaults snapshot and persist; per-tool persisted defaults and persisted decoration defaults are not implemented (overlaps ESET-006).",
-        "reviewed_at_revision": "65e4394"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "6dfe5214b23beb66dd2c8e1002e46f60a10e4ff4"
       }
     },
     "EA-015": {
