@@ -1031,30 +1031,33 @@
       }
     },
     "ES-029": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "newer-version-read-only-failure",
         "duplicate-annotation-ids-rejected",
         "oversized-canvas-rejected-before-allocation"
       ],
-      "note": "Document diagnostics follow the required priority and sidecar-save-failed and raster-save-failed are reported; the source-* diagnostics arrive with the source loader. Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged.",
+      "note": "Document diagnostics follow the required priority and sidecar-save-failed and raster-save-failed are reported; the source-* diagnostics arrive with the source loader. Owned New Image/Open preparation and guarded replacement are indexed in NEW-OPEN-WORKERS.md. Workers own inputs/results and Cancel/child/owner teardown releases the UI without joining; late cancelled New Image work cannot publish. Initial/retained pixels are bounded and copied at ingress to own borrowed buffers. Native file/colour/source-choice/confirmation dialogs and standalone editor parents are owned/guarded; complete initial state precedes enabled Create controls. Frozen state/exact selection/generation fence replacement before consent and publication. Busy controls, stale refusal, redacted failure/retry, dirty Save/Discard/Cancel, overlapping explicit-save reload, profile/alpha/history and actual PNG/.xann reopen have native evidence. Physical helpers, resource/performance/target matrix, full native compatibility/a11y/privacy/security/parity/human/release qualification remain Required; shared policies/vectors and requirement labels are unchanged. Audit 2026-11-03: every ES-029 diagnostic has a named test: source-unsupported/source-empty/source-too-large (EditorSourceTest::rejectsNonImages, rasterHeadersAreLimitedBeforePixelDecode), source-corrupt (EditorSourceTest::truncatedPngReportsSourceCorruptWithoutCreatingASession), document-version-unsupported/document-invalid (EditorSourceTest::invalidOrNewerSidecarsNeverCreateABareRasterSession), document-too-large (EditorSessionTest::decompressionLimitIsEnforced, tooLargeOutranksInvalid), raster-save-failed (EditorSaveTest), sidecar-save-failed (EditorSessionTest::sidecarFailureKeepsSessionDirty), and the document priority order with all three failures applying together (EditorSessionTest::documentFailurePriorityIsVersionThenTooLargeThenInvalid, documentFailurePriorityHoldsThroughTheGzipReader).",
       "evidence": [
         "platforms/linux/linux-qt/app/NEW-OPEN-WORKERS.md",
         "platforms/linux/linux-qt/app/NEW-OPEN-WORKERS-EVIDENCE.json",
         "platforms/linux/linux-qt/tests/EditorOpenTest.cpp",
-        "platforms/linux/linux-qt/tests/NewImageDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/NewImageDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorSaveTest.cpp"
       ],
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 143,
         "published_vectors": [
           "newer-version-read-only-failure",
           "duplicate-annotation-ids-rejected",
           "oversized-canvas-rejected-before-allocation"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete color/profile and all-tool compatibility, separate autosave/recovery and retention, performance, approved shared visual fixtures and physical/native qualification remain incomplete. Legacy fallback sidecar policy remains blocked.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "8390132afb6e0af51e58733900651c537d1c63a8"
       }
     },
     "ES-030": {

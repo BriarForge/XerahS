@@ -619,7 +619,7 @@ set_tests_properties(native-window-discovery PROPERTIES TIMEOUT 10)
 
 add_executable(editor-session-test tests/EditorSessionTest.cpp)
 set_target_properties(editor-session-test PROPERTIES AUTOMOC ON)
-target_link_libraries(editor-session-test PRIVATE xerahs_core Qt6::Test)
+target_link_libraries(editor-session-test PRIVATE xerahs_core ZLIB::ZLIB Qt6::Test)
 add_test(NAME editor-session COMMAND editor-session-test)
 
 add_executable(editor-source-test tests/EditorSourceTest.cpp)

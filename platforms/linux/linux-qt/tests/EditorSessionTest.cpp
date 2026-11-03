@@ -7,6 +7,8 @@
 #include "image-editor/SourceBinding.h"
 
 #include <QJsonArray>
+#include <QJsonDocument>
+#include <zlib.h>
 #include <QTest>
 
 #include <map>
@@ -703,6 +705,40 @@ private slots:
     QJsonObject payload = serializeDocument(document(200000, 1));
     payload.insert(QStringLiteral("imageHash"), QStringLiteral("md5:nope"));
     QCOMPARE(parseDocument(payload).error, std::optional<QString>(diagnostic::documentTooLarge));
+  }
+
+  // ES-029: when version-unsupported, too-large and invalid all apply, the first in the stated
+  // order wins, and each later diagnostic appears as the earlier causes are removed.
+  void documentFailurePriorityIsVersionThenTooLargeThenInvalid() {
+    QJsonObject payload = serializeDocument(document(200000, 1));  // too large
+    payload.insert(QStringLiteral("imageHash"), QStringLiteral("md5:nope"));  // invalid
+    payload.insert(QStringLiteral("version"), 2);  // unsupported
+    QCOMPARE(parseDocument(payload).error, std::optional<QString>(diagnostic::documentVersionUnsupported));
+    QVERIFY(!parseDocument(payload).document);
+    payload.insert(QStringLiteral("version"), 1);
+    QCOMPARE(parseDocument(payload).error, std::optional<QString>(diagnostic::documentTooLarge));
+    payload.insert(QStringLiteral("canvasWidth"), 10); payload.insert(QStringLiteral("canvasHeight"), 10);
+    QCOMPARE(parseDocument(payload).error, std::optional<QString>(diagnostic::documentInvalid));
+    payload.insert(QStringLiteral("imageHash"), QString());
+    QVERIFY(parseDocument(payload).document);
+  }
+
+  // The same ladder through the real gzip container, so the order is not an artefact of the
+  // JSON-only entry point.
+  void documentFailurePriorityHoldsThroughTheGzipReader() {
+    const auto gzipOf = [](const QJsonObject &object) {
+      z_stream stream{}; deflateInit2(&stream, Z_BEST_COMPRESSION, Z_DEFLATED, 16 + MAX_WBITS, 8, Z_DEFAULT_STRATEGY);
+      QByteArray json = QJsonDocument(object).toJson(QJsonDocument::Compact), out(int(deflateBound(&stream, uLong(json.size()))), '\0');
+      stream.next_in = reinterpret_cast<Bytef *>(json.data()); stream.avail_in = uInt(json.size()); stream.next_out = reinterpret_cast<Bytef *>(out.data()); stream.avail_out = uInt(out.size());
+      deflate(&stream, Z_FINISH); out.truncate(int(stream.total_out)); deflateEnd(&stream); return out;
+    };
+    QJsonObject payload = serializeDocument(document(200000, 1));
+    payload.insert(QStringLiteral("imageHash"), QStringLiteral("md5:nope")); payload.insert(QStringLiteral("version"), 2);
+    QCOMPARE(readXann(gzipOf(payload)).error, std::optional<QString>(diagnostic::documentVersionUnsupported));
+    payload.insert(QStringLiteral("version"), 1); QCOMPARE(readXann(gzipOf(payload)).error, std::optional<QString>(diagnostic::documentTooLarge));
+    payload.insert(QStringLiteral("canvasWidth"), 10); payload.insert(QStringLiteral("canvasHeight"), 10); QCOMPARE(readXann(gzipOf(payload)).error, std::optional<QString>(diagnostic::documentInvalid));
+    // Decompressed-size overflow is also document-too-large and outranks an invalid body.
+    QCOMPARE(readXann(gzipOf(payload), 64).error, std::optional<QString>(diagnostic::documentTooLarge));
   }
 
   void lowercaseColoursAreAccepted() {

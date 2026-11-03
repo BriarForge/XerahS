@@ -276,6 +276,20 @@ private slots:
     auto missing = object; missing.remove("embeddedImages"); QStringList rejected; validate(schema, schema, missing, "#", rejected); QVERIFY(!rejected.isEmpty());
   }
 
+  // ES-029: a PNG cut inside its pixel data has a readable header but cannot be decoded.
+  void truncatedPngReportsSourceCorruptWithoutCreatingASession() {
+    QTemporaryDir dir; const QString path = dir.filePath("cut.png"); QImage image(40, 30, QImage::Format_ARGB32); image.fill(Qt::red); QVERIFY(image.save(path));
+    QFile whole(path); QVERIFY(whole.open(QIODevice::ReadOnly)); const QByteArray full = whole.readAll(); whole.close(); QVERIFY(full.size() > 80);
+    for (const int cut : {int(full.size()) - 20, int(full.size()) / 2}) {
+      QFile truncated(path); QVERIFY(truncated.open(QIODevice::WriteOnly | QIODevice::Truncate)); QCOMPARE(truncated.write(full.left(cut)), qint64(cut)); truncated.close();
+      QImageReader header(path); QVERIFY(header.canRead()); QCOMPARE(header.size(), QSize(40, 30));  // header intact, pixels not
+      const auto raster = loadRaster(path); QCOMPARE(raster.diagnostic, diagnostic::sourceCorrupt); QVERIFY(raster.image.isNull() && raster.fileBytes.isEmpty());
+      const auto loaded = loadSource(path); QVERIFY(!loaded.document && !loaded.pendingChoice); QCOMPARE(loaded.diagnostic, diagnostic::sourceCorrupt); QVERIFY(loaded.image.isNull());
+      QCOMPARE(decodeRaster(full.left(cut)).diagnostic, diagnostic::sourceCorrupt);
+      QVERIFY(!QFile::exists(path + ".xann"));
+    }
+  }
+
   void rejectsNonImages() {
     QTemporaryDir dir;
     QFile f(dir.filePath("bad.png"));
