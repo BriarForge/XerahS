@@ -23,6 +23,11 @@ QString failureBody(const QString &code) {
   return stable + QStringLiteral(": ") + message;
 }
 
+QString storageLowBody() {
+  return QStringLiteral("storage-low: free space in the captures folder is below %1 MiB. Free some space, then start auto capture again.")
+      .arg(xerahs::capture::kMinFreeStorageBytes / (1024 * 1024));
+}
+
 }  // namespace
 
 ScheduledCapture::ScheduledCapture(ScheduledCapturePorts ports, QObject *parent)
@@ -98,6 +103,10 @@ void ScheduledCapture::promptDelay() {
 }
 
 void ScheduledCapture::promptAuto() {
+  if (m_ports.condition && m_ports.condition() == xerahs::capture::AutoCondition::StorageLow) {
+    notify(QStringLiteral("Auto capture"), storageLowBody(), false, true);
+    return;
+  }
   if (m_delay->delayActive()) {
     notify(QStringLiteral("Auto capture"), QStringLiteral("Cancel the delayed capture before starting automatic capture."), false, false);
     return;
@@ -117,6 +126,17 @@ void ScheduledCapture::notify(const QString &title, const QString &body, bool ok
 }
 
 void ScheduledCapture::onAutoRequested(xerahs::capture::CaptureSource source) {
+  const auto condition = m_ports.condition ? m_ports.condition() : xerahs::capture::AutoCondition::Clear;
+  if (condition == xerahs::capture::AutoCondition::ScreenLocked) {
+    m_automatic->finishAttempt(xerahs::capture::AttemptDisposition::Skipped);
+    return;
+  }
+  if (condition == xerahs::capture::AutoCondition::StorageLow) {
+    m_automatic->finishAttempt(xerahs::capture::AttemptDisposition::Skipped);
+    notify(QStringLiteral("Auto capture stopped"), storageLowBody(), false, true);
+    m_automatic->stop();
+    return;
+  }
   if (m_ports.blocked && m_ports.blocked()) {
     m_automatic->finishAttempt(xerahs::capture::AttemptDisposition::Skipped);
     return;

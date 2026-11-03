@@ -52,6 +52,8 @@ add_library(xerahs_core STATIC
   src/capture/ScrollStitch.h
   src/capture/CaptureSchedule.cpp
   src/capture/CaptureSchedule.h
+  src/capture/CaptureConditions.cpp
+  src/capture/CaptureConditions.h
   src/capture/LastRegionStore.cpp src/capture/LastRegionStore.h
   src/capture/RegionGeometry.cpp
   src/capture/RegionGeometry.h
@@ -284,9 +286,11 @@ add_library(xerahs_app OBJECT
   app/DelayedCapture.h
   app/AutoCaptureDialog.cpp
   app/AutoCaptureDialog.h
+  app/AppContext.cpp
   app/ScheduledCapture.cpp
   app/ScheduledCapture.h
-  app/AppContext.cpp
+  app/ScreenLockWatcher.cpp
+  app/ScreenLockWatcher.h
   app/CaptureRecoveryActions.cpp
   app/CaptureRecoveryActions.h
   app/CapturePipeline.cpp
@@ -1246,21 +1250,33 @@ add_executable(private-json-file-test tests/PrivateJsonFileTest.cpp)
 set_target_properties(private-json-file-test PROPERTIES AUTOMOC ON)
 target_link_libraries(private-json-file-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME private-json-file COMMAND private-json-file-test)
-# CORE-016: attempt bookkeeping for delayed and automatic capture.
-add_executable(scheduled-capture-test tests/ScheduledCaptureTest.cpp
-               app/ScheduledCapture.cpp app/ScheduledCapture.h
-               app/DelayedCapture.cpp app/DelayedCapture.h
 # CORE-010: private notification previews.
 add_executable(notification-policy-test tests/NotificationPolicyTest.cpp)
 set_target_properties(notification-policy-test PROPERTIES AUTOMOC ON)
 target_link_libraries(notification-policy-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME notification-policy COMMAND notification-policy-test)
+# CORE-016: attempt bookkeeping for delayed and automatic capture.
+add_executable(scheduled-capture-test tests/ScheduledCaptureTest.cpp
+               app/ScheduledCapture.cpp app/ScheduledCapture.h
+               app/DelayedCapture.cpp app/DelayedCapture.h
                app/AutoCaptureDialog.cpp app/AutoCaptureDialog.h)
 set_target_properties(scheduled-capture-test PROPERTIES AUTOMOC ON)
 target_include_directories(scheduled-capture-test PRIVATE app)
 target_link_libraries(scheduled-capture-test PRIVATE xerahs_core Qt6::Widgets Qt6::Test)
 add_test(NAME scheduled-capture COMMAND scheduled-capture-test)
 set_tests_properties(scheduled-capture PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+# CORE-016: lock and storage conditions, with the D-Bus lock adapter on a private bus.
+add_executable(capture-conditions-test tests/CaptureConditionsTest.cpp
+               app/ScheduledCapture.cpp app/ScheduledCapture.h
+               app/DelayedCapture.cpp app/DelayedCapture.h
+               app/AutoCaptureDialog.cpp app/AutoCaptureDialog.h
+               app/ScreenLockWatcher.cpp app/ScreenLockWatcher.h)
+set_target_properties(capture-conditions-test PROPERTIES AUTOMOC ON)
+target_include_directories(capture-conditions-test PRIVATE app)
+target_link_libraries(capture-conditions-test PRIVATE xerahs_core Qt6::Widgets Qt6::DBus Qt6::Test)
+add_test(NAME capture-conditions COMMAND ${XERAHS_DBUS_RUN_SESSION}
+  --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-conditions-test>)
+set_tests_properties(capture-conditions PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 
 # EDITOR-UTILITIES-001 / EU-003: QR code generator. Append-only; main.cpp wires the tray.
 target_sources(xerahs_core PRIVATE src/tools/QrEncoder.cpp src/tools/QrEncoder.h)
@@ -1287,6 +1303,13 @@ target_link_libraries(qr-code-dialog-test PRIVATE xerahs_qr_code Qt6::Test)
 add_test(NAME qr-code-dialog COMMAND qr-code-dialog-test)
 set_tests_properties(qr-code-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 
+# CORE-009: pseudo-locale text expansion and missing-translation fallback on a translated window.
+add_executable(localization-expansion-test tests/LocalizationExpansionTest.cpp)
+set_target_properties(localization-expansion-test PROPERTIES AUTOMOC ON)
+target_link_libraries(localization-expansion-test PRIVATE xerahs_qr_code Qt6::Test)
+add_test(NAME localization-expansion COMMAND localization-expansion-test)
+set_tests_properties(localization-expansion PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
 # CORE-020, CORE-023: existing-file receipts share the native pipeline journal.
 target_link_libraries(xerahs_file_upload PUBLIC xerahs_pipeline_journal)
 
@@ -1311,13 +1334,6 @@ add_library(xerahs_effects STATIC
   src/image-editor/effects/FilterEffects6.cpp
   src/image-editor/effects/FilterEffects7.cpp)
 target_include_directories(xerahs_effects PUBLIC src)
-# CORE-009: pseudo-locale text expansion and missing-translation fallback on a translated window.
-add_executable(localization-expansion-test tests/LocalizationExpansionTest.cpp)
-set_target_properties(localization-expansion-test PROPERTIES AUTOMOC ON)
-target_link_libraries(localization-expansion-test PRIVATE xerahs_qr_code Qt6::Test)
-add_test(NAME localization-expansion COMMAND localization-expansion-test)
-set_tests_properties(localization-expansion PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
-
 target_link_libraries(xerahs_effects PUBLIC Qt6::Core Qt6::Gui)
 target_compile_options(xerahs_effects PRIVATE -Wall -Wextra -Wpedantic -ffp-contract=off)
 target_link_libraries(xerahs_app PUBLIC xerahs_effects)

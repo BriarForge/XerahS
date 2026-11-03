@@ -1,6 +1,7 @@
 // CORE-016: delayed and automatic capture actions, attempt results and tray status.
 #pragma once
 
+#include "capture/CaptureConditions.h"
 #include "capture/CaptureSchedule.h"
 #include "settings/ApplicationSettings.h"
 
@@ -21,6 +22,9 @@ struct ScheduledCapturePorts {
   // infer that from the title.
   std::function<void(const QString &title, const QString &body, bool ok, bool raiseWindow)> notify;
   std::function<void(const QString &tooltip)> setTooltip;
+  // CORE-016: screen-lock and storage conditions. Unset means Clear. ScreenLocked skips the tick
+  // (the run pauses); StorageLow refuses a new run and stops a running one.
+  std::function<xerahs::capture::AutoCondition()> condition;
 };
 
 class DelayedCapture;

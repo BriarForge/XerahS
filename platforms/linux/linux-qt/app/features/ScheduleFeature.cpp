@@ -5,10 +5,14 @@
 #include "CaptureController.h"
 #include "RecordingController.h"
 #include "ScheduledCapture.h"
+#include "ScreenLockWatcher.h"
 #include "WorkflowShortcutActions.h"
 #include "shell/ActivationDispatcher.h"
 
 #include <QApplication>
+#include <QDBusConnection>
+#include <QStandardPaths>
+#include <QStorageInfo>
 #include <QSystemTrayIcon>
 
 namespace xerahs::app {
@@ -25,6 +29,8 @@ void adopt(AppContext &ctx, const QString &id, QAction *action) {
 }  // namespace
 
 void installSchedule(AppContext &ctx) {
+  auto *lock = new xerahs::capture::ScreenLockState(&ctx.app);
+  new ScreenLockWatcher(*lock, QDBusConnection::sessionBus(), QDBusConnection::systemBus(), &ctx.app);
   auto *schedule = new ScheduledCapture(ScheduledCapturePorts{
       [&ctx] {
         return ctx.capture.busy() || ctx.recording.busy() || QApplication::activeModalWidget()
@@ -46,7 +52,18 @@ void installSchedule(AppContext &ctx) {
       [&ctx](const QString &title, const QString &body, bool ok, bool raiseWindow) {
         if (ctx.notify) ctx.notify(title, body, ok, raiseWindow);
       },
-      [&ctx](const QString &tooltip) { ctx.tray.setToolTip(tooltip); }},
+      [&ctx](const QString &tooltip) { ctx.tray.setToolTip(tooltip); },
+      [&ctx, lock] {
+        xerahs::capture::ConditionSources sources;
+        sources.screenLocked = [lock] { return lock->locked(); };
+        sources.freeBytes = [&ctx] {
+          auto folder = ctx.settings.current().values.value(QStringLiteral("saveFolder")).toString();
+          if (folder.isEmpty()) folder = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+          QStorageInfo info(folder);
+          return info.isValid() ? info.bytesAvailable() : qint64(-1);
+        };
+        return xerahs::capture::evaluate(sources);
+      }},
       &ctx.app);
   // CORE-016: the delay and auto-capture choices persist in the settings store.
   schedule->setPreferences(settings::capturePreferencesPort(ctx.settings));
