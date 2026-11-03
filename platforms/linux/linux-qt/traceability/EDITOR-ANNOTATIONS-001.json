@@ -288,10 +288,10 @@
       }
     },
     "EA-015": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Core and native ordering share stable IDs and deterministic group order tests. Full new-tool and accessible command qualification remains.",
+      "note": "Core and native ordering share stable IDs and deterministic group order tests. Full new-tool and accessible command qualification remains. Audit 2026-11-03 (Aoife, at 69db212): All four ordering commands are deterministic for single, grouped and opaque-only selections with relative order preserved, one history step, undo/redo, and persisted array order plus rendered pixels (EditorSessionTest, EditorCanvasTest, EditorWindowTest). Remaining items above are qualification, not implementation status.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -300,10 +300,10 @@
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 59,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "69db212"
       }
     },
     "EA-016": {

@@ -186,10 +186,10 @@
       }
     },
     "CORE-006": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native launch uses a private runtime directory, lifetime flock and authenticated bounded local IPC. Real-process tests cover simultaneous launch, busy/rejection, crash recovery, corrupt/lost acknowledgements, unsafe paths and actual application forwarding before preference initialization. Default-profile production behavior is implemented; complete profile integration, target-matrix/security/compatibility review, published shared scenarios/vectors and accepted parity remain Required. Workflow-ID activation now forwards through the authenticated primary before secondary preference initialization. Primary admission freezes a validated saved definition; missing/unavailable workflows and busy/modal conflicts are refused. Existing ownership, duplicate receipts and no-resend unknown-delivery policy remain. Native admitted region captures now persist a separate request/execution ID before acquisition, preserve early outcomes, link the real pipeline in both private observations and namespaced reports, and expose redacted headless lookup. Unfinished observations stay unconfirmed. Native descriptor storage is shared without changing existing PCA format or authority. Full application/catalogue/retention and target/human qualification remain Required.",
+      "note": "Native launch uses a private runtime directory, lifetime flock and authenticated bounded local IPC. Real-process tests cover simultaneous launch, busy/rejection, crash recovery, corrupt/lost acknowledgements, unsafe paths and actual application forwarding before preference initialization. Default-profile production behavior is implemented; complete profile integration, target-matrix/security/compatibility review, published shared scenarios/vectors and accepted parity remain Required. Workflow-ID activation now forwards through the authenticated primary before secondary preference initialization. Primary admission freezes a validated saved definition; missing/unavailable workflows and busy/modal conflicts are refused. Existing ownership, duplicate receipts and no-resend unknown-delivery policy remain. Native admitted region captures now persist a separate request/execution ID before acquisition, preserve early outcomes, link the real pipeline in both private observations and namespaced reports, and expose redacted headless lookup. Unfinished observations stay unconfirmed. Native descriptor storage is shared without changing existing PCA format or authority. Full application/catalogue/retention and target/human qualification remain Required. Audit 2026-11-03 (Aoife, at 69db212): One owner per profile is elected even for simultaneous processes; repeated launches forward validated requests to the existing owner; malformed, busy, untrusted and crashed-owner cases fail actionably without corrupting runtime state (NativeInstanceTest). Remaining items above are qualification, not implementation status.",
       "evidence": [
         "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
         "platforms/linux/linux-qt/src/shell/ActivationDispatcher.cpp",
@@ -204,10 +204,10 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 31,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "69db212"
       }
     },
     "CORE-007": {
@@ -261,18 +261,18 @@
       }
     },
     "CORE-008": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Resumable first-run wizard, optional page skipping, finish-later, private progress, corrupt/newer preservation, explicit hotkeys/uploads and test-capture denial are implemented and covered by OnboardingTest. Full native permission/consent/accessibility/target review remains.",
+      "note": "Resumable first-run wizard, optional page skipping, finish-later, private progress, corrupt/newer preservation, explicit hotkeys/uploads and test-capture denial are implemented and covered by OnboardingTest. Full native permission/consent/accessibility/target review remains. Audit 2026-11-03 (Aoife, at 69db212): Onboarding resumes and finishes later, skips only optional pages, names every control accessibly, states permission, credential, import, telemetry and default-workflow consequences, and declining everything keeps default capture working (OnboardingTest). Remaining items above are qualification, not implementation status.",
       "evidence": [
         "platforms/linux/linux-qt/tests/OnboardingTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 38,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "69db212"
       }
     },
     "CORE-009": {
