@@ -58,7 +58,11 @@ qt=platforms/linux/linux-qt
 cmake -S "$qt" -B "$qt/build" -G Ninja -DCMAKE_BUILD_TYPE=Debug >/dev/null
 cmake --build "$qt/build" -j"$(( $(nproc) / 2 ))" >/dev/null
 if ! ctest --test-dir "$qt/build" -j4 >/tmp/gate-ctest.$$ 2>&1; then
-  mapfile -t failed < <(sed -nE 's/^ *[0-9]+ - ([^ ]+) .*/\1/p' /tmp/gate-ctest.$$)
+  # CTest lists failures as "<tab> NN - name (Failed)"; match any leading whitespace.
+  mapfile -t failed < <(sed -nE 's/^[[:space:]]*[0-9]+ - ([^ ]+) \(.*/\1/p' /tmp/gate-ctest.$$)
+  if (( ${#failed[@]} == 0 )); then
+    echo "gate: ctest failed but no failing test names were parsed:" >&2; tail -n 20 /tmp/gate-ctest.$$ >&2; exit 1
+  fi
   for t in "${failed[@]}"; do
     echo "gate: rerunning $t alone"
     ctest --test-dir "$qt/build" -R "^${t}\$" --output-on-failure || { echo "gate: $t failed twice" >&2; exit 1; }

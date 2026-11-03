@@ -214,11 +214,11 @@
       ]
     },
     "PCA-007": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "save-failure-fallbacks"
       ],
-      "note": "CaptureSaveTest::publishesCompletePrivatePngAndRecordsActualArtifactAndContext proves absolute native path, image/png media type, actual byte length and filename context. CapturePipelineTest::failedCounterReservationKeepsMediaAndPublishesNoFile passes directly for both plain and companion intent, proving working-media preservation and clipboard after failed reservation. CaptureUploadTest::transfer(save-failed) now exercises production Save, native clipboard and permitted upload fallback with managed private temporary pixels, permissions, HTTP payload and cleanup assertions. Its runtime proof remains blocked here: the workspace sandbox refuses local TCP listen, and the registered ctest also cannot start its private D-Bus socket. Keep partial until Aoife runs capture-upload outside the sandbox. Existing managed temporary fallback semantics follow PCA-006/PCA-019 unchanged.",
+      "note": "CaptureSaveTest::publishesCompletePrivatePngAndRecordsActualArtifactAndContext proves absolute native path, image/png media type, actual byte length and filename context. CapturePipelineTest::failedCounterReservationKeepsMediaAndPublishesNoFile passes directly for both plain and companion intent, proving working-media preservation and clipboard after failed reservation. CaptureUploadTest::transfer(save-failed) now exercises production Save, native clipboard and permitted upload fallback with managed private temporary pixels, permissions, HTTP payload and cleanup assertions. Aoife ran capture-upload outside the sandbox (2026-11-03): after injecting the clipboard port (offscreen QPA never reports clipboard ownership), transfer(save-failed) passes, proving clipboard and permitted upload fallbacks receive the working media after a failed save. Existing managed temporary fallback semantics follow PCA-006/PCA-019 unchanged.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
@@ -237,13 +237,10 @@
       ],
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 51,
-        "published_vectors": [
-          "save-failure-fallbacks"
-        ],
-        "coverage": "Metadata and failed-reservation media/clipboard verified locally. Added real production pipeline test for clipboard and managed-temporary HTTP upload after failed save; upload runtime verification is pending outside the socket-restricted sandbox.",
-        "reviewed_at_revision": "d5ba4c7793272c989a9f66cd3319a35521c5a182"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "a584bea"
       }
     },
     "PCA-008": {

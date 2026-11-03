@@ -75,6 +75,10 @@ private slots:
     CaptureActionPorts ports; ports.uploadCatalogPath = dir.filePath("destinations.json"); ports.uploadCredentials = credentials;
     ports.uploadTemporaryDirectory = uploadDir.path();
     if (mode == "save-failed") ports.save.encode = [](const QImage &, QIODevice *) { return false; };
+    // Offscreen QPA never reports clipboard ownership, so inject the clipboard port
+    // (as CapturePipelineTest does) and assert it receives the working media.
+    QImage clipboardImage;
+    if (mode == "save-failed") ports.clipboard = [&](const QImage &image, const CancellationToken &) { clipboardImage = image; return ActionOutcome{}; };
     QGuiApplication::clipboard()->setText("before");
     bool worker = false, temporaryPixelsMatch = false, temporaryPrivate = false;
     QStringList temporaryPaths;
@@ -112,7 +116,7 @@ private slots:
       QCOMPARE(results[0].action, QString("save")); QCOMPARE(results[0].state, ActionState::Failed);
       QCOMPARE(results[0].diagnostic, std::optional<QString>("save-write-failed"));
       QCOMPARE(results[1].action, QString("image-clipboard")); QCOMPARE(results[1].state, ActionState::Succeeded);
-      QCOMPARE(QGuiApplication::clipboard()->image(), pixels()); QCOMPARE(receipt->workingMedia, pixels());
+      QCOMPARE(clipboardImage, pixels()); QCOMPARE(receipt->workingMedia, pixels());
       QVERIFY(!receipt->file);
     }
     if (mode == "temporary" || mode == "saved" || mode == "save-failed") {

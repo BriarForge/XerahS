@@ -7,9 +7,9 @@ Product Contract **0.3.1**. Percentages are **recorded implementation coverage**
 | Platform | Implementation coverage | Implemented / desktop requirements |
 |---|---:|---:|
 | [macOS](macos/PROGRESS.md) | **0.0%** | 0 / 324 |
-| [Linux](linux/PROGRESS.md) | **39.2%** | 127 / 324 |
+| [Linux](linux/PROGRESS.md) | **39.5%** | 128 / 324 |
 | [Windows](windows/PROGRESS.md) | **0.0%** | 0 / 324 |
-| **Overall desktop** | **13.1%** | **127 / 972 platform-requirement pairs** |
+| **Overall desktop** | **13.2%** | **128 / 972 platform-requirement pairs** |
 
 Only requirements explicitly marked `implemented` in a platform traceability map receive credit. Partial, not-started and missing/unassessed rows receive no credit. Overall sums the three platforms' implemented rows and divides by their combined desktop requirement count.
 
@@ -20,7 +20,7 @@ Requirement labels are unweighted: a catalogue requirement can cover hundreds of
 ## Current position
 
 - **macOS:** 0 implemented, 0 partial, 0 not started, 324 without a recorded implementation status. [Native platform evidence](macos/README.md).
-- **Linux:** 127 implemented, 171 partial, 26 not started, 0 without a recorded implementation status. [Native platform evidence](linux/README.md).
+- **Linux:** 128 implemented, 170 partial, 26 not started, 0 without a recorded implementation status. [Native platform evidence](linux/README.md).
 - **Windows:** 0 implemented, 0 partial, 0 not started, 324 without a recorded implementation status. [Native platform evidence](windows/README.md).
 
 ## Contract coverage
@@ -28,7 +28,7 @@ Requirement labels are unweighted: a catalogue requirement can cover hundreds of
 | Capability | Coverage | Implemented | Partial | Not started | Unassessed | Evidence |
 |---|---:|---:|---:|---:|---:|---|
 | [FILENAME-GENERATION-001](../product-contract/capabilities/FILENAME-GENERATION-001/SPEC.md) | 33.3% | 27 | 0 | 0 | 54 | [Linux map](linux/linux-qt/traceability/FILENAME-GENERATION-001.json) |
-| [POST-CAPTURE-ACTIONS-001](../product-contract/capabilities/POST-CAPTURE-ACTIONS-001/SPEC.md) | 23.6% | 17 | 7 | 0 | 48 | [Linux map](linux/linux-qt/traceability/POST-CAPTURE-ACTIONS-001.json) |
+| [POST-CAPTURE-ACTIONS-001](../product-contract/capabilities/POST-CAPTURE-ACTIONS-001/SPEC.md) | 25.0% | 18 | 6 | 0 | 48 | [Linux map](linux/linux-qt/traceability/POST-CAPTURE-ACTIONS-001.json) |
 | [REGION-CAPTURE-001](../product-contract/capabilities/REGION-CAPTURE-001/SPEC.md) | 14.8% | 12 | 12 | 3 | 54 | [Linux map](linux/linux-qt/traceability/REGION-CAPTURE-001.json) |
 | [EDITOR-SESSION-001](../product-contract/capabilities/EDITOR-SESSION-001/SPEC.md) | 25.6% | 23 | 4 | 3 | 60 | [Linux map](linux/linux-qt/traceability/EDITOR-SESSION-001.json) |
 | [EDITOR-ANNOTATIONS-001](../product-contract/capabilities/EDITOR-ANNOTATIONS-001/SPEC.md) | 8.3% | 5 | 15 | 0 | 40 | [Linux map](linux/linux-qt/traceability/EDITOR-ANNOTATIONS-001.json) |
