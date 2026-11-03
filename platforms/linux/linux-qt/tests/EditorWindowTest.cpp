@@ -1217,6 +1217,23 @@ private slots:
     timer.start(5); trigger(*window, "saveImage"); timer.stop(); QVERIFY(reported); QCOMPARE(encodes, 0); QCOMPARE(storedBytes(path), original);
     QVERIFY(!QFile::exists(path + ".xann")); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
   }
+  void saveUsesTheDurablePathOnlyAfterValidationAndSaveAsPickerIsAccessible() {
+    // EO-003: a valid durable path is written directly; a path that fails prior validation is never written and falls to the accessible picker.
+    QTemporaryDir dir; const auto path = dir.filePath("current.png"), bmp = dir.filePath("legacy.bmp"); QVERIFY(fixture().save(path)); QVERIFY(fixture().save(bmp, "BMP")); const auto bmpBytes = storedBytes(bmp);
+    QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty());
+    {
+      std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); drawRectangle(*window->findChild<EditorCanvas *>()); const auto before = storedBytes(path);
+      QTimer timer; bool pickerSeen = false; connect(&timer, &QTimer::timeout, [&] { if (auto *picker = qobject_cast<QFileDialog *>(QApplication::activeModalWidget())) { pickerSeen = true; picker->reject(); } });
+      timer.start(5); trigger(*window, "saveImage"); timer.stop(); QVERIFY(!pickerSeen); QVERIFY(storedBytes(path) != before); QVERIFY(QFile::exists(path + ".xann")); QVERIFY(window->windowTitle().startsWith("current.png")); QVERIFY(!window->windowTitle().contains(QChar(0x2022)));
+    }
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(bmp)); QVERIFY(window); window->show(); drawRectangle(*window->findChild<EditorCanvas *>());
+    QTimer timer; bool picked = false; connect(&timer, &QTimer::timeout, [&] {
+      auto *picker = qobject_cast<QFileDialog *>(QApplication::activeModalWidget()); if (!picker || picked) return; picked = true;
+      QCOMPARE(picker->objectName(), QString("editorSaveAsDialog")); QCOMPARE(picker->accessibleName(), QString("Save image destination and encoding")); QCOMPARE(picker->acceptMode(), QFileDialog::AcceptSave);
+      QVERIFY(!picker->windowTitle().isEmpty()); QVERIFY(picker->findChild<QLineEdit *>("editorSaveQuality")->accessibleName().contains("Encoding quality")); picker->reject();
+    });
+    timer.start(5); trigger(*window, "saveImage"); timer.stop(); QVERIFY(picked); QCOMPARE(storedBytes(bmp), bmpBytes); QVERIFY(!QFile::exists(bmp + ".xann")); QVERIFY(window->windowTitle().startsWith("legacy.bmp")); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+  }
   void splitJpegSaveAsRepairsCompanionWithoutAdoptingPathEarly() {
     QTemporaryDir dir; const auto original = dir.filePath("original.png"), target = dir.filePath("chosen.jpg"); QVERIFY(fixture().save(original)); const auto originalBytes = storedBytes(original);
     QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(original)); QVERIFY(window); window->show(); drawRectangle(*window->findChild<EditorCanvas *>());

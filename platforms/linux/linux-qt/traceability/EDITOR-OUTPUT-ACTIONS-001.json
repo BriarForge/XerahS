@@ -77,10 +77,10 @@
       }
     },
     "EO-003": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native PNG Save/Save As validate paths and adopt only complete successful results. Full user-facing formats and filesystem/platform qualification remain. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required.",
+      "note": "Native PNG Save/Save As validate paths and adopt only complete successful results. Full user-facing formats and filesystem/platform qualification remain. Native Save As now offers only PNG/JPEG/WebP with matching extensions, explicit required JPEG/WebP quality (0..100), and required opaque JPEG matte (#RRGGBB). PNG/WebP retain alpha; JPEG composites onto the chosen matte on the worker. Core validates options without clamping or invented persisted defaults. Actual codecs, bytes/hash, alpha/matte, quality changes, immutable source/annotations, pair reopen and companion-only repair are tested. Successful Save remembers chosen options only in that editor window; failed/partial Save As keeps the old durable path, and repair uses its acknowledged format without another encoding. Existing overwrite confirmation remains, all blocking save work now starts through OwnedWork, and an encoding-boundary cancellation regression prevents starting an encoder. Empty-document alpha messaging explicitly discloses that companions exist only with annotations, per ES-014. Full codec/profile/resource/native-target/fault/a11y/human qualification and reconciliation of the format-selection draft status remain Required. Audit 2026-11-03: Save writes the current durable path directly only when it passes validation, and a path that fails validation is never written: EditorWindowTest::saveUsesTheDurablePathOnlyAfterValidationAndSaveAsPickerIsAccessible (valid PNG path saves with no picker; an unsupported-extension durable path opens the picker instead and a cancel leaves file, companion and dirty title unchanged), with symlink/foreign-destination/oversize path refusal in EditorSaveTest::symlinksAndChangedCompanionsArePreservedAndParentSegmentsKeepKernelMeaning and encodeExceptionAndRacingReplacementPreserveThePreviousDestination. Save As uses the accessible native picker (EditorSaveDialogTest::saveAsPickerIsAnAccessibleSavePickerWithNamedControls and the window test assert the accessible name 'Save image destination and encoding', Save accept mode and named quality/matte controls) and never changes the current path before a complete write (EditorWindowTest::partialSaveAsKeepsTheCurrentPathUntilItsCompanionRepairCompletes, splitJpegSaveAsRepairsCompanionWithoutAdoptingPathEarly).",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
@@ -92,15 +92,15 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 15,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
           "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
           "platforms/linux/linux-qt/tests/EditorWindowTest.cpp"
         ],
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "reviewed_at_revision": "d5ba4c7793272c989a9f66cd3319a35521c5a182"
       }
     },
     "EO-004": {

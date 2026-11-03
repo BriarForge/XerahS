@@ -32,6 +32,11 @@ private slots:
     dialog.selectFile(dir.filePath("new.JPEG")); dialog.accept(); QCOMPARE(accepted.count(), 1); const auto options = dialog.encodingOptions(); QCOMPARE(options.format, RasterFormat::Jpeg); QCOMPARE(options.quality, 90); QCOMPARE(options.jpegMatte, std::optional<Argb>(0xFF112233));
     QVERIFY(!QFile::exists(dir.filePath("new.JPEG"))); // Choosing a destination never performs I/O publication.
   }
+  void saveAsPickerIsAnAccessibleSavePickerWithNamedControls() {
+    QTemporaryDir dir; EditorSaveDialog dialog(dir.filePath("new.png"));
+    QCOMPARE(dialog.accessibleName(), QString("Save image destination and encoding")); QCOMPARE(dialog.objectName(), QString("editorSaveAsDialog")); QCOMPARE(dialog.acceptMode(), QFileDialog::AcceptSave);
+    QVERIFY(!dialog.windowTitle().isEmpty()); QVERIFY(dialog.findChild<QLineEdit *>("editorSaveQuality")->accessibleName().contains("quality")); QVERIFY(dialog.findChild<QLineEdit *>("editorSaveJpegMatte")->accessibleName().contains("JPEG background"));
+  }
   void validatesOptionsWithoutClampingOrGuessingDefaults() {
     QVERIFY(validRasterSaveOptions({})); QVERIFY(!validRasterSaveOptions({RasterFormat::WebP, -1, {}})); QVERIFY(validRasterSaveOptions({RasterFormat::WebP, 0, {}}));
     QVERIFY(validRasterSaveOptions({RasterFormat::WebP, 100, {}})); QVERIFY(!validRasterSaveOptions({RasterFormat::WebP, 101, {}}));
