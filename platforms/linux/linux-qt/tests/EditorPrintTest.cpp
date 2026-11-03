@@ -9,7 +9,9 @@
 #include <QDoubleSpinBox>
 #include <QFile>
 #include <QDir>
+#include <QLabel>
 #include <QPointer>
+#include <QPrintDialog>
 #include <QPrintPreviewWidget>
 #include <QPrinter>
 #include <QPrinterInfo>
@@ -133,6 +135,30 @@ private slots:
     });
     timer.start(5); const auto result = runEditorPrint(source.image, *source.document, &owner, ports); timer.stop();
     QVERIFY(inspected); QCOMPARE(result.action.state, ActionState::Cancelled); QVERIFY(!result.submissionAttempted); QCOMPARE(QApplication::clipboard()->text(), QString("KEEP"));
+  }
+  void nativePrintDialogExposesTheSelectedPrinterAndCancelReturnsWithoutFilesOrSubmission() {
+    // EO-008: drive the real QPrintDialog path without hardware. The seams only supply the printer; the dialog code is production.
+    QTemporaryDir dir; const auto source = fixture(); const auto snapshot = EditorPrintSnapshot{source.image, source.image, {}}; QWidget owner;
+    auto selected = std::make_shared<QPrinter>(QPrinter::HighResolution); selected->setOutputFormat(QPrinter::PdfFormat); selected->setPrinterName("fixture-printer");
+    int selections = 0; EditorPrintDialogSeams seams; seams.printersAvailable = [] { return true; }; seams.selectPrinter = [&] { ++selections; return selected; };
+    QTimer timer; bool preview = false, nativeSeen = false;
+    connect(&timer, &QTimer::timeout, [&] {
+      auto *modal = QApplication::activeModalWidget(); if (!modal) return;
+      if (modal->objectName() == "editorPrintDialog") {
+        if (preview) { if (nativeSeen) modal->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Cancel)->click(); return; } preview = true; auto *print = modal->findChild<QPushButton *>("confirmPrint"); QVERIFY(print && print->isEnabled()); QVERIFY(modal->findChild<QLabel *>("printUnavailable") == nullptr);
+        QTimer::singleShot(0, print, [print] { print->click(); }); return;
+      }
+      if (auto *native = qobject_cast<QPrintDialog *>(modal); native && native->objectName() == "nativeImagePrintDialog" && !nativeSeen) {
+        nativeSeen = true; QCOMPARE(native->printer(), selected.get()); QVERIFY(!native->testOption(QAbstractPrintDialog::PrintToFile)); QVERIFY(!native->testOption(QAbstractPrintDialog::PrintSelection));
+        QVERIFY(native->testOption(QAbstractPrintDialog::PrintPageRange)); QCOMPARE(native->minPage(), 1); QCOMPARE(native->maxPage(), 1); QVERIFY(!native->windowTitle().isEmpty()); QVERIFY(native->isVisible());
+        QVERIFY(!native->findChildren<QComboBox *>().isEmpty()); // the printer selector is part of the shown dialog
+        native->reject();
+      }
+    });
+    timer.start(5);
+    const auto choice = chooseEditorPrinterWith(snapshot, &owner, seams); timer.stop();
+    QVERIFY(preview && nativeSeen); QCOMPARE(selections, 1); QCOMPARE(choice.action.state, ActionState::Cancelled); QVERIFY(!choice.printer);
+    QVERIFY(selected->outputFileName().isEmpty()); QVERIFY(QDir(dir.path()).entryList(QDir::NoDotAndDotDot | QDir::AllEntries).isEmpty()); QCOMPARE(QApplication::clipboard()->text(), QString("KEEP"));
   }
   void configurationCancellationExceptionAndOwnerDeletionCannotSubmit_data() { QTest::addColumn<int>("kind"); QTest::newRow("Cancel") << 0; QTest::newRow("exception") << 1; QTest::newRow("owner deletion") << 2; QTest::newRow("invalid scale") << 3; }
   void configurationCancellationExceptionAndOwnerDeletionCannotSubmit() {

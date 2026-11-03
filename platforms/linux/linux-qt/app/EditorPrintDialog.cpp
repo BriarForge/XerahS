@@ -14,7 +14,8 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 namespace xerahs::app {
-EditorPrintChoice chooseEditorPrinter(const EditorPrintSnapshot &snapshot, QWidget *parent) {
+EditorPrintChoice chooseEditorPrinter(const EditorPrintSnapshot &snapshot, QWidget *parent) { return chooseEditorPrinterWith(snapshot, parent, {}); }
+EditorPrintChoice chooseEditorPrinterWith(const EditorPrintSnapshot &snapshot, QWidget *parent, const EditorPrintDialogSeams &seams) {
   using namespace xerahs::actions;
   EditorPrintChoice cancelled{{ActionState::Cancelled, std::nullopt, std::nullopt}, {}, 100};
   // Preview uses an in-memory Qt preview engine, never a temporary PDF file.
@@ -58,16 +59,21 @@ EditorPrintChoice chooseEditorPrinter(const EditorPrintSnapshot &snapshot, QWidg
   auto *print = buttons->addButton("&Print…", QDialogButtonBox::ActionRole); print->setObjectName("confirmPrint"); print->setAutoDefault(false);
   auto *cancel = buttons->button(QDialogButtonBox::Cancel); cancel->setDefault(true); cancel->setFocus();
   layout->addWidget(buttons); QObject::connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
-  const auto available = QPrinterInfo::availablePrinters();
-  if (available.isEmpty()) {
+  const bool available = seams.printersAvailable ? seams.printersAvailable() : !QPrinterInfo::availablePrinters().isEmpty();
+  if (!available) {
     print->setEnabled(false); print->setToolTip("Printing is unavailable: no native printer was found. Add a printer in desktop settings, then open Print Image again.");
     auto *notice = new QLabel(print->toolTip(), dialog); notice->setObjectName("printUnavailable"); notice->setWordWrap(true); layout->insertWidget(1, notice);
   }
-  QObject::connect(print, &QPushButton::clicked, dialog, [dialog, printer, result, scale, available] {
-    if (!dialog || available.isEmpty()) return;
-    auto info = QPrinterInfo::defaultPrinter(); if (info.isNull()) info = available.first();
-    auto selected = std::make_shared<QPrinter>(info, QPrinter::HighResolution);
-    if (!selected->isValid()) return;
+  QObject::connect(print, &QPushButton::clicked, dialog, [dialog, printer, result, scale, available, seams] {
+    if (!dialog || !available) return;
+    std::shared_ptr<QPrinter> selected;
+    if (seams.selectPrinter) selected = seams.selectPrinter();
+    else {
+      const auto printers = QPrinterInfo::availablePrinters();
+      auto info = QPrinterInfo::defaultPrinter(); if (info.isNull() && !printers.isEmpty()) info = printers.first();
+      if (!info.isNull()) selected = std::make_shared<QPrinter>(info, QPrinter::HighResolution);
+    }
+    if (!selected || !selected->isValid()) return;
     selected->setFullPage(false); selected->setPageLayout(printer->pageLayout()); selected->setColorMode(printer->colorMode());
     selected->setDocName("XerahS image"); selected->setCreator("XerahS");
     QPointer<QPrintDialog> native(new QPrintDialog(selected.get(), dialog)); native->setObjectName("nativeImagePrintDialog"); native->setWindowTitle("Print Image");

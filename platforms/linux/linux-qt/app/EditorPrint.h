@@ -19,7 +19,13 @@ struct EditorPrintChoice {
   std::shared_ptr<QPrinter> printer; // exclusive use transfers to the submission worker
   double percentOfFit = 100;
 };
+// Test seams for the native printer flow; both default to the host's QPrinterInfo (no behavior change).
+struct EditorPrintDialogSeams {
+  std::function<bool()> printersAvailable;
+  std::function<std::shared_ptr<QPrinter>()> selectPrinter; // the printer the native QPrintDialog is constructed with
+};
 EditorPrintChoice chooseEditorPrinter(const EditorPrintSnapshot &, QWidget *parent);
+EditorPrintChoice chooseEditorPrinterWith(const EditorPrintSnapshot &, QWidget *parent, const EditorPrintDialogSeams &seams);
 bool paintEditorPrintPage(QPainter &, QPrinter &, const EditorPrintSnapshot &, double percentOfFit);
 xerahs::actions::ActionOutcome submitEditorPrint(QPrinter &, const EditorPrintSnapshot &, double percentOfFit, const std::atomic<bool> &cancelled);
 struct EditorPrintPorts {
