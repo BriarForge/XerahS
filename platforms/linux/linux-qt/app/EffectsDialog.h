@@ -20,8 +20,12 @@ class QDialogButtonBox;
 namespace xerahs::app {
 QString effectUnavailableReason(const QString &id);
 
+// ESET-013: reference ImageEditorOptions.DefaultFavoriteEffects (stable Linux IDs), seeded once on first run.
+const QStringList &defaultFavoriteEffects();
+constexpr int maximumRecentEffects = 10;  // Reference EffectBrowserPanel.MaxRecentEffects.
 struct EffectsLists {
   QStringList recent, favorites;
+  QStringList inertRecent, inertFavorites;  // Unknown/retired IDs: never shown, written back unchanged.
   QMap<QString, quint64> seeds;
   QByteArray snapshot;
   QString diagnostic;

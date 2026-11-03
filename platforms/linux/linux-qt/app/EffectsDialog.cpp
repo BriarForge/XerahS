@@ -44,6 +44,15 @@ QStringList knownIds(const QJsonArray &array, const EffectRegistry &registry) {
   }
   return ids;
 }
+QStringList unknownIds(const QJsonArray &array, const EffectRegistry &registry) {
+  QStringList ids;
+  for (const auto &entry : array) {
+    const auto id = entry.toString();
+    const bool known = registry.find(id) || std::any_of(censusCatalog().cbegin(), censusCatalog().cend(), [&](const CensusEffect &e) { return e.id == id; });
+    if (entry.isString() && !id.isEmpty() && !known && !ids.contains(id) && ids.size() < 100) ids.append(id);
+  }
+  return ids;
+}
 PreparedCanvasEdit failure(const QString &code) {
   PreparedCanvasEdit result; result.result.error = code; return result;
 }
@@ -51,6 +60,11 @@ QString defaultPath() {
   return QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) +
       QStringLiteral("/com.xerahs.app/linux-qt/effects-recents.json");
 }
+}
+const QStringList &defaultFavoriteEffects() {
+  static const QStringList ids{"resize_image", "resize_canvas", "crop_image", "auto_crop_image", "rotate_90_clockwise",
+      "rotate_90_counter_clockwise", "rotate_180", "flip_horizontal", "flip_vertical"};
+  return ids;
 }
 EffectsStore::EffectsStore(QString path)
     : m_file(std::move(path), {QStringLiteral("com.xerahs.app/effects-recents"), 1, 65536}) {}
@@ -66,7 +80,15 @@ EffectsLists EffectsStore::load(const EffectRegistry &registry) const {
     lists.diagnostic = "effects-store-invalid"; return lists;
   }
   lists.recent = knownIds(read.document.value("recent").toArray(), registry);
+  while (lists.recent.size() > maximumRecentEffects) lists.recent.removeLast();
   lists.favorites = knownIds(read.document.value("favorites").toArray(), registry);
+  lists.inertRecent = unknownIds(read.document.value("recent").toArray(), registry);
+  lists.inertFavorites = unknownIds(read.document.value("favorites").toArray(), registry);
+  // First run only (no store yet): seed the reference defaults. An existing store, with or without
+  // the marker, is never seeded, so an intentionally emptied or edited list stays as the user left it.
+  if (read.status == storage::StoreStatus::Missing) {
+    for (const auto &id : defaultFavoriteEffects()) if (registry.find(id) || std::any_of(censusCatalog().cbegin(), censusCatalog().cend(), [&](const CensusEffect &e) { return e.id == id; })) lists.favorites.append(id);
+  }
   const auto seeds = read.document.value("seeds").toObject();
   for (auto it = seeds.begin(); it != seeds.end(); ++it) {
     bool ok = false; const auto seed = it.value().toString().toULongLong(&ok);
@@ -80,7 +102,10 @@ EffectsLists EffectsStore::save(EffectsLists lists) const {
   lists.recent.removeAll(QString()); lists.favorites.removeAll(QString());
   QJsonObject seeds;
   for (auto it = lists.seeds.begin(); it != lists.seeds.end(); ++it) seeds.insert(it.key(), QString::number(it.value()));
-  const auto status = m_file.write({{"seeds", seeds}, {"recent", QJsonArray::fromStringList(lists.recent)},
+  for (const auto &id : lists.inertRecent) if (!lists.recent.contains(id)) lists.recent.append(id);
+  for (const auto &id : lists.inertFavorites) if (!lists.favorites.contains(id)) lists.favorites.append(id);
+  // `seeded` records that first-run defaults were considered; any saved store is never reseeded.
+  const auto status = m_file.write({{"seeded", true}, {"seeds", seeds}, {"recent", QJsonArray::fromStringList(lists.recent)},
       {"favorites", QJsonArray::fromStringList(lists.favorites)}}, 1, lists.snapshot, &lists.snapshot);
   if (status != storage::StoreStatus::Ok) lists.diagnostic = "effects-store-" + storage::storeStatusName(status);
   return lists;
@@ -182,7 +207,7 @@ EffectsDialog::EffectsDialog(AnnotationDocument document, QImage source, Commit 
           m_lists.seeds[step.id] = step.seed;
           m_lists.recent.removeAll(step.id); m_lists.recent.prepend(step.id);
         }
-        while (m_lists.recent.size() > 20) m_lists.recent.removeLast();
+        while (m_lists.recent.size() > maximumRecentEffects) m_lists.recent.removeLast();
         m_parameters->setEnabled(false); m_list->setEnabled(false); m_category->setEnabled(false); m_search->setEnabled(false);
         m_buttons->button(QDialogButtonBox::Apply)->setEnabled(false); persist(true); updateFavorite();
       });
@@ -465,7 +490,7 @@ void EffectsDialog::run(bool apply) {
       m_buttons->button(QDialogButtonBox::Cancel)->setText(tr("Close"));
       m_lists.seeds[id] = seed;
       m_lists.recent.removeAll(id); m_lists.recent.prepend(id);
-      while (m_lists.recent.size() > 20) m_lists.recent.removeLast();
+      while (m_lists.recent.size() > maximumRecentEffects) m_lists.recent.removeLast();
       m_closeAfterSave = true; updateFavorite();
       emit effectCommitted(id); if (owner) persist(true);
     } else {

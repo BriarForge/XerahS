@@ -359,10 +359,65 @@ private slots:
   void favoritesAndRecentEditing() {
     QTemporaryDir temp; const auto loaded = source(); const auto path = temp.filePath("state");
     EffectsDialog d(*loaded.document, loaded.image, {}, nullptr, path); d.show();
-    auto *favorite = d.findChild<QPushButton *>("effectsFavorite"); QTRY_VERIFY(favorite->isEnabled()); const auto id = d.selectedId(); favorite->click();
-    EffectsStore store(path); QTRY_COMPARE(store.load(builtinEffects()).favorites, QStringList{id});
-    auto *category = d.findChild<QComboBox *>("effectsCategory"); category->setCurrentIndex(6); QCOMPARE(d.findChild<QListWidget *>("effectsList")->count(), 1); favorite->click();
-    QTRY_VERIFY(store.load(builtinEffects()).favorites.isEmpty()); QCOMPARE(d.findChild<QListWidget *>("effectsList")->count(), 0);
+    auto *favorite = d.findChild<QPushButton *>("effectsFavorite"); QTRY_VERIFY(favorite->isEnabled()); const auto id = d.selectedId();
+    auto expected = defaultFavoriteEffects(); if (expected.contains(id)) expected.removeAll(id); else expected.append(id);
+    favorite->click();
+    EffectsStore store(path); QTRY_COMPARE(store.load(builtinEffects()).favorites, expected);
+    auto *category = d.findChild<QComboBox *>("effectsCategory"); category->setCurrentIndex(6); QCOMPARE(d.findChild<QListWidget *>("effectsList")->count(), int(expected.size())); favorite->click();
+    QTRY_COMPARE(store.load(builtinEffects()).favorites.size(), expected.size() - 1); QCOMPARE(d.findChild<QListWidget *>("effectsList")->count(), int(expected.size() - 1));
+  }
+  // ESET-013: first run seeds the reference ImageEditorOptions.DefaultFavoriteEffects; recents start empty.
+  void firstRunSeedsReferenceFavouritesAndEmptyRecents() {
+    QTemporaryDir temp; const auto path = temp.filePath("state");
+    const QStringList reference{"resize_image", "resize_canvas", "crop_image", "auto_crop_image", "rotate_90_clockwise",
+        "rotate_90_counter_clockwise", "rotate_180", "flip_horizontal", "flip_vertical"};
+    QCOMPARE(defaultFavoriteEffects(), reference);
+    for (const auto &id : reference) QVERIFY2(builtinEffects().find(id), qPrintable(id + " must be a registered Linux effect"));
+    EffectsStore store(path); const auto first = store.load(builtinEffects());
+    QVERIFY(first.diagnostic.isEmpty()); QCOMPARE(first.favorites, reference); QVERIFY(first.recent.isEmpty());
+    QCOMPARE(maximumRecentEffects, 10);
+    QCOMPARE(store.load(builtinEffects()).favorites, reference);  // Unsaved first run seeds the same list again.
+    EffectsDialog d(*source().document, source().image, {}, nullptr, path); d.show();
+    d.findChild<QComboBox *>("effectsCategory")->setCurrentIndex(6);
+    QTRY_COMPARE(d.findChild<QListWidget *>("effectsList")->count(), int(reference.size()));
+  }
+  void removedFavouriteIsNeverReseededAcrossRestarts() {
+    QTemporaryDir temp; const auto path = temp.filePath("state"); EffectsStore store(path);
+    auto lists = store.load(builtinEffects()); lists.favorites.removeAll("rotate_180"); QVERIFY(store.save(lists).diagnostic.isEmpty());
+    for (int restart = 0; restart < 2; ++restart) {
+      EffectsStore again(path); auto reloaded = again.load(builtinEffects());
+      QVERIFY(!reloaded.favorites.contains("rotate_180")); QCOMPARE(reloaded.favorites.size(), defaultFavoriteEffects().size() - 1);
+      QVERIFY(again.save(reloaded).diagnostic.isEmpty());
+    }
+    EffectsStore last(path); auto emptied = last.load(builtinEffects()); emptied.favorites.clear(); QVERIFY(last.save(emptied).diagnostic.isEmpty());
+    QVERIFY(EffectsStore(path).load(builtinEffects()).favorites.isEmpty());  // Removing everything is respected too.
+  }
+  void existingStoresAreNeverSeeded() {
+    for (const auto &favorites : {QJsonArray{"alpha"}, QJsonArray{}}) {
+      QTemporaryDir temp; const auto path = temp.filePath("state");
+      xerahs::storage::PrivateJsonFile raw(path, {"com.xerahs.app/effects-recents"});  // Pre-seeding store: no marker.
+      QCOMPARE(raw.write({{"recent", QJsonArray{}}, {"favorites", favorites}}, 1, {}, nullptr), xerahs::storage::StoreStatus::Ok);
+      const auto lists = EffectsStore(path).load(builtinEffects());
+      QCOMPARE(lists.favorites, favorites.isEmpty() ? QStringList{} : QStringList{"alpha"});
+    }
+  }
+  void unknownIdsStayInertAndRoundTripWhileRecentsAreBounded() {
+    QTemporaryDir temp; const auto path = temp.filePath("state");
+    QStringList known; QJsonArray recent{"retired-recent"};
+    for (const auto &entry : {"invert", "alpha", "grayscale", "sepia", "blur", "pixelate", "tv_static", "emboss", "sharpen", "brightness", "contrast", "hue"})
+      if (builtinEffects().find(entry)) { known << entry; recent.append(entry); }
+    QVERIFY(known.size() >= 11);
+    xerahs::storage::PrivateJsonFile raw(path, {"com.xerahs.app/effects-recents"});
+    QCOMPARE(raw.write({{"recent", recent}, {"favorites", QJsonArray{"retired-favourite", "alpha", "future-effect"}}}, 1, {}, nullptr), xerahs::storage::StoreStatus::Ok);
+    EffectsStore store(path); auto lists = store.load(builtinEffects());
+    QCOMPARE(lists.favorites, QStringList{"alpha"}); QCOMPARE(lists.recent, known.mid(0, maximumRecentEffects));
+    QCOMPARE(lists.inertFavorites, (QStringList{"retired-favourite", "future-effect"})); QCOMPARE(lists.inertRecent, QStringList{"retired-recent"});
+    lists.favorites = {"alpha", "invert"}; QVERIFY(store.save(lists).diagnostic.isEmpty());
+    const auto stored = raw.read().document;
+    QVERIFY(stored.value("favorites").toArray().contains(QJsonValue("retired-favourite"))); QVERIFY(stored.value("favorites").toArray().contains(QJsonValue("future-effect")));
+    QVERIFY(stored.value("recent").toArray().contains(QJsonValue("retired-recent")));
+    const auto again = EffectsStore(path).load(builtinEffects());
+    QCOMPARE(again.favorites, (QStringList{"alpha", "invert"})); QCOMPARE(again.inertFavorites, lists.inertFavorites);  // Never shown, never lost.
   }
 };
 QTEST_MAIN(EffectsDialogTest)

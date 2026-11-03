@@ -368,18 +368,18 @@
     },
     "ESET-013": {
       "disposition": "Required",
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "EffectsDialog/EffectsStore now persist stable recent/favorite IDs, order and retired-ID handling with native tests. Full editor preference ledger/default/round-trip/native qualification remains.",
+      "note": "EffectsDialog/EffectsStore now persist stable recent/favorite IDs, order and retired-ID handling with native tests. Full editor preference ledger/default/round-trip/native qualification remains. Audit 2026-11-03 (Viktor, at 4b2f5d8): default decision under Mike's similar-apps rule (same defaults as the reference XerahS app): first run (no effects store yet) seeds the favourites with the reference ImageEditorOptions.DefaultFavoriteEffects (resize_image, resize_canvas, crop_image, auto_crop_image, rotate_90_clockwise, rotate_90_counter_clockwise, rotate_180, flip_horizontal, flip_vertical; all nine are registered Linux effects) and recents start empty with the reference cap of 10 (EffectBrowserPanel MaxRecentEffects; Linux previously allowed 20). An existing store is never seeded, and every save writes a seeded marker, so a favourite the user removed (even all of them) is never re-added. Unknown or retired IDs are not shown but are kept inert in the store and written back unchanged. Proved by EffectsDialogTest firstRunSeedsReferenceFavouritesAndEmptyRecents, removedFavouriteIsNeverReseededAcrossRestarts, existingStoresAreNeverSeeded, unknownIdsStayInertAndRoundTripWhileRecentsAreBounded, storeRoundTripUnknownAndConflict (order, duplicates, retired IDs) and favoritesAndRecentEditing.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 50,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "4b2f5d861f5401a95d1b4e2ddd6a43025cc301f9"
       }
     },
     "ESET-014": {
