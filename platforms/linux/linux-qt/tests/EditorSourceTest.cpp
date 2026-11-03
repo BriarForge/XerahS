@@ -5,6 +5,15 @@
 #include "ComparisonImages.h"
 
 #include <QBuffer>
+#include <QCryptographicHash>
+#include <QDateTime>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QRegularExpression>
+#include <QStringDecoder>
+#include <QUuid>
+#include <zlib.h>
 #include <QColorSpace>
 #include <QFile>
 #include <QFileInfo>
@@ -18,6 +27,62 @@
 
 using namespace xerahs::app;
 using namespace xerahs::editor;
+
+namespace {
+// Independent gunzip (not the production reader): a gzip member holding UTF-8 JSON.
+QByteArray gunzip(const QByteArray &gzip) {
+  z_stream stream{}; if (inflateInit2(&stream, 16 + MAX_WBITS) != Z_OK) return {};
+  stream.next_in = reinterpret_cast<Bytef *>(const_cast<char *>(gzip.constData())); stream.avail_in = uInt(gzip.size());
+  QByteArray out; char buffer[65536]; int status = Z_OK;
+  while (status == Z_OK) { stream.next_out = reinterpret_cast<Bytef *>(buffer); stream.avail_out = sizeof buffer; status = inflate(&stream, Z_NO_FLUSH);
+    if (status != Z_OK && status != Z_STREAM_END) break; out.append(buffer, qsizetype(sizeof buffer - stream.avail_out)); }
+  inflateEnd(&stream); return status == Z_STREAM_END ? out : QByteArray{};
+}
+// Minimal validator for the JSON Schema keywords annotation-document.schema.json actually uses.
+// Every rule is read from the schema file; nothing about the document shape is hard-coded here.
+void validate(const QJsonObject &root, QJsonObject schema, const QJsonValue &value, const QString &where, QStringList &errors) {
+  if (schema.contains("$ref")) { QJsonValue node = root; for (const auto &part : schema.value("$ref").toString().mid(2).split('/')) node = node.toObject().value(part); schema = node.toObject(); }
+  const auto fail = [&](const QString &why) { errors << where + ": " + why; };
+  if (schema.contains("const") && value != schema.value("const")) fail("const mismatch");
+  if (const auto type = schema.value("type").toString(); !type.isEmpty()) {
+    const bool integer = value.isDouble() && value.toDouble() == std::floor(value.toDouble());
+    const bool ok = type == "string" ? value.isString() : type == "integer" ? integer : type == "number" ? value.isDouble() : type == "boolean" ? value.isBool() : type == "object" ? value.isObject() : type == "array" ? value.isArray() : false;
+    if (!ok) { fail("expected " + type); return; }
+  }
+  if (value.isDouble()) {
+    if (schema.contains("minimum") && value.toDouble() < schema.value("minimum").toDouble()) fail("below minimum");
+    if (schema.contains("maximum") && value.toDouble() > schema.value("maximum").toDouble()) fail("above maximum");
+    if (schema.contains("exclusiveMinimum") && value.toDouble() <= schema.value("exclusiveMinimum").toDouble()) fail("not above exclusiveMinimum");
+  }
+  if (value.isString()) {
+    const QString text = value.toString();
+    if (schema.contains("pattern") && !QRegularExpression(schema.value("pattern").toString()).match(text).hasMatch()) fail("pattern mismatch");
+    const auto format = schema.value("format").toString();
+    if (format == "date-time") {  // RFC 3339: explicit offset or Z
+      static const QRegularExpression rfc3339(R"(^\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}:\d{2}(\.\d+)?([Zz]|[+-]\d{2}:\d{2})$)");
+      if (!rfc3339.match(text).hasMatch() || !QDateTime::fromString(text, Qt::ISODate).isValid()) fail("not an RFC 3339 date-time");
+    }
+    if (format == "uuid" && QUuid::fromString(text).isNull()) fail("not a uuid");
+    if (schema.value("contentEncoding").toString() == "base64") {
+      const auto decoded = QByteArray::fromBase64Encoding(text.toLatin1(), QByteArray::AbortOnBase64DecodingErrors);
+      if (decoded.decodingStatus != QByteArray::Base64DecodingStatus::Ok || decoded.decoded.toBase64() != text.toLatin1()) fail("not canonical base64");
+      else if (schema.value("contentMediaType").toString() == "image/png" && !decoded.decoded.startsWith("\x89PNG\r\n\x1a\n")) fail("decoded content is not a PNG");
+    }
+  }
+  if (value.isObject()) {
+    const auto object = value.toObject(); const auto properties = schema.value("properties").toObject();
+    for (const auto &key : schema.value("required").toArray()) if (!object.contains(key.toString())) fail("missing required " + key.toString());
+    for (auto it = properties.begin(); it != properties.end(); ++it) if (object.contains(it.key())) validate(root, it.value().toObject(), object.value(it.key()), where + "/" + it.key(), errors);
+    if (schema.value("additionalProperties").isObject()) for (auto it = object.begin(); it != object.end(); ++it) if (!properties.contains(it.key())) validate(root, schema.value("additionalProperties").toObject(), it.value(), where + "/" + it.key(), errors);
+    if (schema.value("additionalProperties") == QJsonValue(false)) for (auto it = object.begin(); it != object.end(); ++it) if (!properties.contains(it.key())) fail("unexpected " + it.key());
+    for (const auto &rule : schema.value("allOf").toArray()) {
+      const auto branch = rule.toObject(); QStringList ifErrors; validate(root, branch.value("if").toObject(), value, where, ifErrors);
+      if (ifErrors.isEmpty() && branch.contains("then")) validate(root, branch.value("then").toObject(), value, where, errors);
+    }
+  }
+  if (value.isArray() && schema.contains("items")) { int i = 0; for (const auto &item : value.toArray()) validate(root, schema.value("items").toObject(), item, where + "/" + QString::number(i++), errors); }
+}
+}  // namespace
 
 class EditorSourceTest : public QObject {
   Q_OBJECT
@@ -175,6 +240,40 @@ private slots:
       QCOMPARE(comparison.image.pixel(x, y), image.pixel(x, y));
     QVERIFY(sidecar.open(QIODevice::ReadOnly)); QCOMPARE(sidecar.readAll(), QByteArray("corrupt"));
     QCOMPARE(QImage(path), image);
+  }
+
+  // ES-013: a document saved through the production path is a gzip stream of UTF-8 JSON that
+  // validates against the shared schema and carries every element the requirement lists.
+  void savedXannIsGzipUtf8JsonThatValidatesAgainstTheSharedSchema() {
+    QFile schemaFile(XERAHS_XANN_SCHEMA); QVERIFY2(schemaFile.open(QIODevice::ReadOnly), XERAHS_XANN_SCHEMA);
+    const auto schema = QJsonDocument::fromJson(schemaFile.readAll()).object(); QVERIFY(!schema.isEmpty()); const auto required = schema.value("required").toArray(); QVERIFY(required.size() >= 10);
+    QTemporaryDir dir; const QString path = dir.filePath("shot.png"); QImage blank(40, 30, QImage::Format_ARGB32); blank.fill(Qt::white); QVERIFY(blank.save(path));
+    LoadedSource first = loadSource(path); QVERIFY(first.document); EditorSession session(*first.document);
+    QVERIFY(session.createRectangle({5, 5}, {20, 20})); QVERIFY(session.createRectangle({6, 7}, {30, 25}));
+    auto document = session.document(); document.embeddedImages.emplace_back("asset", first.document->sourceImagePng);
+    const QList<QUuid> order{annotationId(document.annotations[0]), annotationId(document.annotations[1])};
+    const SaveOutcome outcome = saveEdit(path, first.image, document); QVERIFY(outcome.rasterSaved && outcome.sidecarSaved);
+    QFile sidecar(path + ".xann"); QVERIFY(sidecar.open(QIODevice::ReadOnly)); const QByteArray gzip = sidecar.readAll(); QCOMPARE(gzip.left(2), QByteArray("\x1f\x8b", 2));
+    const QByteArray json = gunzip(gzip); QVERIFY(!json.isEmpty());
+    QStringDecoder utf8(QStringDecoder::Utf8); const QString decoded = utf8(json); QVERIFY(!utf8.hasError()); QVERIFY(!decoded.isEmpty() && decoded.startsWith('{'));
+    QJsonParseError parseError; const auto payload = QJsonDocument::fromJson(json, &parseError); QCOMPARE(parseError.error, QJsonParseError::NoError); QVERIFY(payload.isObject());
+    const auto object = payload.object();
+    for (const auto &key : required) QVERIFY2(object.contains(key.toString()), qPrintable("missing required key " + key.toString()));
+    QStringList errors; validate(schema, schema, object, "#", errors); QVERIFY2(errors.isEmpty(), qPrintable(errors.join("\n")));
+    // The elements ES-013 names, checked against the real files rather than the schema alone.
+    QFile raster(path); QVERIFY(raster.open(QIODevice::ReadOnly));
+    QCOMPARE(object.value("imageHash").toString(), QString("sha256:") + QString::fromLatin1(QCryptographicHash::hash(raster.readAll(), QCryptographicHash::Sha256).toHex()));
+    QCOMPARE(object.value("canvasWidth").toInt(), 40); QCOMPARE(object.value("canvasHeight").toInt(), 30);
+    QVERIFY(QDateTime::fromString(object.value("createdAt").toString(), Qt::ISODate).isValid()); QVERIFY(QDateTime::fromString(object.value("modifiedAt").toString(), Qt::ISODate) >= QDateTime::fromString(object.value("createdAt").toString(), Qt::ISODate));
+    QCOMPARE(QImage::fromData(QByteArray::fromBase64(object.value("sourceImagePngBase64").toString().toLatin1()), "PNG"), blank);  // unannotated source
+    QCOMPARE(object.value("embeddedImages").toObject().keys(), QStringList{"asset"});
+    const auto annotations = object.value("annotations").toArray(); QCOMPARE(annotations.size(), 2);
+    for (int i = 0; i < 2; ++i) QCOMPARE(QUuid::fromString(annotations[i].toObject().value("id").toString()), order[i]);  // ordered
+    // The validator must reject what the schema forbids, or it proves nothing.
+    for (const auto &[key, bad] : {std::pair<QString, QJsonValue>{"version", 2}, {"canvasWidth", 100001}, {"imageHash", "md5:x"}, {"createdAt", "yesterday"}, {"sourceImagePngBase64", "AAAA"}, {"annotations", "none"}}) {
+      auto broken = object; broken.insert(key, bad); QStringList rejected; validate(schema, schema, broken, "#", rejected); QVERIFY2(!rejected.isEmpty(), qPrintable(key));
+    }
+    auto missing = object; missing.remove("embeddedImages"); QStringList rejected; validate(schema, schema, missing, "#", rejected); QVERIFY(!rejected.isEmpty());
   }
 
   void rejectsNonImages() {

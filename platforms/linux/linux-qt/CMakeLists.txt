@@ -625,7 +625,9 @@ add_test(NAME editor-session COMMAND editor-session-test)
 add_executable(editor-source-test tests/EditorSourceTest.cpp)
 set_target_properties(editor-source-test PROPERTIES AUTOMOC ON)
 target_include_directories(editor-source-test PRIVATE app)
-target_link_libraries(editor-source-test PRIVATE xerahs_editor_source Qt6::Test)
+target_link_libraries(editor-source-test PRIVATE xerahs_editor_source ZLIB::ZLIB Qt6::Test)
+target_compile_definitions(editor-source-test PRIVATE
+  XERAHS_XANN_SCHEMA="${XERAHS_REPO_ROOT}/product-contract/capabilities/EDITOR-SESSION-001/annotation-document.schema.json")
 add_test(NAME editor-source COMMAND editor-source-test)
 set_tests_properties(editor-source PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
 
