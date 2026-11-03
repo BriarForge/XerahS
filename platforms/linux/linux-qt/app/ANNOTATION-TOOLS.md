@@ -170,3 +170,19 @@ reference XerahS (`HitTest` = distance to the path within a tolerance), so empty
 space inside a diagonal line's bounding box no longer selects it or starts a
 move. Hidden objects are never hit; locked objects can be selected but are never
 moved, resized, rotated or deleted.
+
+## Creation geometry policy per tool (EA-004)
+
+Out-of-canvas geometry is allowed for every drawing tool: bounds are stored
+unclipped (normalized so start is the top-left corner, whatever the drag
+direction) and the exporter clips to the canvas, so an object entirely outside
+changes no exported pixel (Spotlight, which dims everything outside its region,
+is the one effect that still reaches the canvas). Zero-area gestures follow the
+tool: Rectangle, Ellipse, Highlight, Blur, Pixelate, Magnify, Spotlight and
+SmartEraser, and a Text, SpeechBalloon or Step drag with zero width or height,
+are rejected with `annotation-geometry-invalid` and no history; a Line, Arrow or
+Freehand with zero width or height is padded to one pixel, but a single point is
+not a stroke; a Text, SpeechBalloon or Step click places the default size, and
+Image, Emoji and Cursor use their natural size for thin or click gestures. NaN,
+infinite, overflowing and single-point gestures are rejected for every type.
+Each completed gesture is one history operation.

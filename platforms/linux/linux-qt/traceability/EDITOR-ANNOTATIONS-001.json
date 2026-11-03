@@ -77,10 +77,10 @@
       }
     },
     "EA-004": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Core creation validates bounds and finite values; native drag tests verify one undoable creation. Complete tool-specific clipping, path sampling and malformed-gesture matrix remains.",
+      "note": "Core creation validates bounds and finite values, normalizes reverse drags and commits one undoable operation per gesture; the per-tool out-of-canvas, zero-area and click policy is documented in app/ANNOTATION-TOOLS.md. Audit 2026-11-03: For each of the 17 drawing tools: a reverse drag extending past the canvas is stored normalized and unclipped as one history step and exports at the canvas size; an object entirely outside exports no change (Spotlight dims the canvas); vertical zero-width drags and clicks follow the documented per-tool rule, rejected cases give annotation-geometry-invalid with no history or dirty state; NaN, infinite, overflowing, empty and single-point gestures are rejected for every shape type at gesture and session level (AnnotationToolMatrixTest::creationAllowsOutOfCanvasAndNormalizesReverseDrags, ::exportClipsAnObjectEntirelyOutsideTheCanvas, ::zeroAreaAndClickGesturesFollowEachToolsRule, ::malformedGesturesAreRejectedForEveryShapeType). Remaining items above are qualification, not implementation status.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -89,10 +89,10 @@
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 25,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "ccaf3c6"
       }
     },
     "EA-005": {

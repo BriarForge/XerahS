@@ -370,6 +370,107 @@ private slots:
       hidden->select({hiddenId}); QVERIFY(!hidden->moveSelection(5, 5)); QCOMPARE(serializeDocument(hidden->document()), original);
     }
   }
+
+  // EA-004. Policy under test: out-of-canvas geometry is allowed for every
+  // drawing tool (bounds are stored unclipped, normalized) and the exporter
+  // clips it; zero-area gestures are rejected with a stable diagnostic and no
+  // history; click gestures follow each tool's own rule.
+  void drawingToolIds_data() {
+    QTest::addColumn<QString>("id"); QTest::addColumn<bool>("verticalDragCreates"); QTest::addColumn<bool>("clickCreates");
+    for (const char *id : {"Rectangle", "Ellipse", "Highlight", "Blur", "Pixelate", "Magnify", "Spotlight", "SmartEraser"})
+      QTest::newRow(id) << QString::fromLatin1(id) << false << false;          // box tools need positive width and height
+    for (const char *id : {"Line", "Arrow", "Freehand"})
+      QTest::newRow(id) << QString::fromLatin1(id) << true << false;           // straight strokes are padded; a point is not a stroke
+    for (const char *id : {"Text", "SpeechBalloon", "Step"})
+      QTest::newRow(id) << QString::fromLatin1(id) << false << true;           // a click places a default-size object
+    for (const char *id : {"Image", "Emoji", "Cursor"})
+      QTest::newRow(id) << QString::fromLatin1(id) << true << true;            // thin or click gestures use the asset's natural size
+  }
+  void creationAllowsOutOfCanvasAndNormalizesReverseDrags_data() { drawingToolIds_data(); }
+  void creationAllowsOutOfCanvasAndNormalizesReverseDrags() {
+    QFETCH(QString, id);
+    const QImage source = image(200, 150); EditorSession session(document(200, 150)); EditorCanvas canvas(session, source);
+    canvas.resize(820, 640); canvas.show(); QTest::qWait(10); canvas.resetZoom();
+    const auto actions = annotationToolActions(canvas, &canvas); toolAction(actions, id)->trigger();
+    QSignalSpy rejected(&canvas, &EditorCanvas::editRejected);
+    drawObject(canvas, {350, 300}, {150, 100});  // reverse, and extending 150 and 150 pixels beyond the canvas
+    QCOMPARE(rejected.count(), 0); QCOMPARE(session.undoCount(), 1); QCOMPARE(session.document().annotations.size(), std::size_t(1));
+    const auto &created = std::get<RectangleAnnotation>(session.document().annotations[0]);
+    QVERIFY(created.left() < created.right()); QVERIFY(created.top() < created.bottom());  // normalized
+    QVERIFY2(created.left() >= 150 && created.top() >= 100, qPrintable(id));
+    QVERIFY2(created.right() > 200 && created.bottom() > 150, qPrintable(id));            // not clipped to the 200x150 canvas
+    QVERIFY(created.right() <= 350 && created.bottom() <= 300);
+    // Export clips: the canvas size is unchanged and rendering succeeds.
+    const auto rendered = renderDocument(solidImage(200, 150, 0xFFFFFFFF), session.document());
+    QVERIFY(rendered.image && !rendered.error); QCOMPARE(rendered.image->width, qint64(200)); QCOMPARE(rendered.image->height, qint64(150));
+    QVERIFY(session.undo()); QVERIFY(session.document().annotations.empty());
+  }
+  void exportClipsAnObjectEntirelyOutsideTheCanvas_data() { drawingToolIds_data(); }
+  void exportClipsAnObjectEntirelyOutsideTheCanvas() {
+    QFETCH(QString, id);
+    const QImage source = image(200, 150); EditorSession session(document(200, 150)); EditorCanvas canvas(session, source);
+    canvas.resize(820, 640); canvas.show(); QTest::qWait(10); canvas.resetZoom();
+    const auto actions = annotationToolActions(canvas, &canvas); toolAction(actions, id)->trigger();
+    drawObject(canvas, {260, 200}, {340, 260});
+    QCOMPARE(session.document().annotations.size(), std::size_t(1)); QCOMPARE(session.undoCount(), 1);
+    const ArgbImage white = solidImage(200, 150, 0xFFFFFFFF);
+    const auto rendered = renderDocument(white, session.document());
+    QVERIFY(rendered.image && !rendered.error);
+    if (id == u"Spotlight") QVERIFY(rendered.image->pixels != white.pixels);  // dims everything outside its region, so the whole canvas
+    else QVERIFY2(rendered.image->pixels == white.pixels, qPrintable(id));    // otherwise nothing reaches the canvas
+  }
+  void zeroAreaAndClickGesturesFollowEachToolsRule_data() { drawingToolIds_data(); }
+  void zeroAreaAndClickGesturesFollowEachToolsRule() {
+    QFETCH(QString, id); QFETCH(bool, verticalDragCreates); QFETCH(bool, clickCreates);
+    for (const bool click : {false, true}) {
+      const QImage source = image(200, 150); EditorSession session(document(200, 150)); EditorCanvas canvas(session, source);
+      canvas.resize(820, 640); canvas.show(); QTest::qWait(10); canvas.resetZoom();
+      const auto actions = annotationToolActions(canvas, &canvas); toolAction(actions, id)->trigger();
+      QSignalSpy rejected(&canvas, &EditorCanvas::editRejected);
+      if (click) drawObject(canvas, {100, 60}, {100, 60}); else drawObject(canvas, {100, 60}, {100, 120});  // zero width
+      const bool creates = click ? clickCreates : verticalDragCreates;
+      if (creates) {
+        QCOMPARE(session.undoCount(), 1); QCOMPARE(rejected.count(), 0);
+        const auto &created = std::get<RectangleAnnotation>(session.document().annotations.at(0));
+        QVERIFY2(created.right() > created.left() && created.bottom() > created.top(), qPrintable(id + (click ? " click" : " vertical")));
+      } else {
+        QVERIFY2(session.document().annotations.empty(), qPrintable(id + (click ? " click" : " vertical")));
+        QCOMPARE(session.undoCount(), 0); QVERIFY(!session.dirty());
+        QCOMPARE(rejected.count(), 1); QCOMPARE(rejected[0][0].toString(), QString("annotation-geometry-invalid"));
+      }
+          }
+  }
+  // Non-finite, single-point and empty gestures never reach the document.
+  void malformedGesturesAreRejectedForEveryShapeType() {
+    const double nan = std::numeric_limits<double>::quiet_NaN(), inf = std::numeric_limits<double>::infinity();
+    const double huge = std::numeric_limits<double>::max();
+    for (const QString &type : shapeTypes()) {
+      const auto name = qPrintable(type);
+      QVERIFY2(!shapeGeometry(type, {}), name);
+      QVERIFY2(!shapeGeometry(type, {{nan, 10}, {50, 60}}), name);
+      QVERIFY2(!shapeGeometry(type, {{10, 10}, {50, nan}}), name);
+      QVERIFY2(!shapeGeometry(type, {{10, 10}, {inf, 60}}), name);
+      QVERIFY2(!shapeGeometry(type, {{10, 10}, {nan, nan}}), name);
+      if (isPathShape(type)) {
+        QVERIFY2(!shapeGeometry(type, {{10, 10}}), name);               // a single point is not a path
+        QVERIFY2(!shapeGeometry(type, {{10, 10}, {10, 10}, {10, 10}}), name);
+        QVERIFY2(!shapeGeometry(type, {{10, 10}, {20, 30}, {nan, 40}}), name);  // one bad sample spoils the whole stroke
+      }
+      // The owned creation path rejects the same inputs with a stable diagnostic and no history.
+      EditorSession session(document(200, 150)); ShapeContent content; content.type = type;
+      if (isPathShape(type)) content.points = {{0, 0}, {1, 1}};
+      const auto state = session.stateId();
+      std::vector<RectangleProperties> drafts;
+      const std::vector<std::pair<PointF, PointF>> spans{{{nan, 10}, {50, 60}}, {{10, 10}, {50, nan}}, {{10, 10}, {inf, 60}},
+          {{-huge, 10}, {huge, 60}}, {{10, 10}, {10, 60}}, {{10, 10}, {50, 10}}, {{10, 10}, {10, 10}}};
+      for (const auto &span : spans) { RectangleProperties draft; draft.start = span.first; draft.end = span.second; drafts.push_back(draft); }
+      for (const auto &draft : drafts) {
+        QVERIFY2(!session.createShape(draft, content, state, session.selection()), name);
+        QCOMPARE(session.editDiagnostic(), QString("annotation-geometry-invalid"));
+        QCOMPARE(session.undoCount(), 0); QVERIFY(session.document().annotations.empty()); QVERIFY(!session.dirty());
+      }
+    }
+  }
 };
 
 QTEST_MAIN(AnnotationToolMatrixTest)
