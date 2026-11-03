@@ -66,19 +66,19 @@
       }
     },
     "SETCAT-006": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Stable action IDs, portable modifier/key names, and Linux paths. The native adapter translates XDG accelerator syntax; current desktop descriptions stay transient. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required.",
+      "note": "Stable action IDs, portable modifier/key names, and Linux paths. The native adapter translates XDG accelerator syntax; current desktop descriptions stay transient. Full catalog coverage, published shared conformance, cross-platform parity and human desktop qualification remain Required. Audit 2026-11-03: storedValuesUsePortableRepresentationsAndNoNativeValuesLeak proves: hotkeys are stored only as stable action IDs with normalized portable modifier/key names (Ctrl, Alt, Shift, Meta order) while XDG accelerators, Qt key codes, Super/Win/Cmd spellings, lowercase and numeric codes are refused and numeric/native IDs are not stable action IDs; paths are absolute POSIX paths and Windows drive, UNC, file: and ~ spellings are refused; monitors are stored only as the semantic source name 'monitor'/'active-window' (the settings object holds no monitor index, output name or handle); audio devices are saved by the opaque device ID string the enumerator reports (never a list index) through the real dialog Apply; the saved file holds only declared portable keys, and desktop-bound trigger text, XDG accelerator syntax and window/output/display handle names never appear in it. The native adapter's translation to XDG syntax stays in app/PortalWorkflowShortcuts.cpp and is transient. Not applicable to this object (no field exists): URLs, time zones, languages, fonts, codecs; free-form monitor IDs and handles are not stored.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 30,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e48015a1390a16d530f011e160b28c2d913ae728"
       }
     },
     "SETCAT-009": {
@@ -418,7 +418,8 @@
         "saveEncodingIsLocaleIndependentUtf8",
         "retentionKeepsExactlyOnePreviousVersionInTheSameAtomicFile",
         "valueMatrixCoversEveryDeclaredFieldFamily",
-        "hotkeyMatrixRepairsEachBindingWithoutDiscardingOthers"
+        "hotkeyMatrixRepairsEachBindingWithoutDiscardingOthers",
+        "storedValuesUsePortableRepresentationsAndNoNativeValuesLeak"
       ],
       "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp": [
         "missingAndAtomicPrivateRoundTrip",

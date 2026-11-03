@@ -518,6 +518,47 @@ private slots:
     const auto clashRead = repairSettings(clash, dir.path()); QCOMPARE(clashRead.diagnostics.size(), 1);
     QVERIFY(clashRead.diagnostics.join('\n').contains("hotkeys.")); QVERIFY(!clashRead.diagnostics.join('\n').contains("Ctrl+Print"));
   }
+  // SETCAT-006: portable representations are what gets stored; native values are refused or never reach the file.
+  void storedValuesUsePortableRepresentationsAndNoNativeValuesLeak() {
+    // Hotkeys: portable modifier/key names only; XDG accelerators, Qt key codes and platform spellings are refused.
+    auto bindings = HotkeyBindings::defaults();
+    for (const auto &native : {"<Control><Shift>F1", "Control+F1", "Super+F1", "Win+F1", "Cmd+F1", "Ctrl+0x70", "16777264", "Qt::Key_F1", "Ctrl+KP_Enter", "ctrl+f1", "XF86AudioPlay", "CTRL+F1"})
+      QVERIFY2(!bindings.assign("capture-active-window", native).ok, native);
+    QCOMPARE(normalizeTrigger("Meta+Shift+Alt+Ctrl+F1"), "Ctrl+Alt+Shift+Meta+F1");
+    QVERIFY(bindings.assign("capture-active-window", "Shift+Ctrl+F1").ok);
+    QCOMPARE(bindings.entries.value("capture-active-window"), "Ctrl+Shift+F1");
+    for (const auto &action : captureHotkeyActions()) QVERIFY2(action.preferred.isEmpty() || normalizeTrigger(action.preferred) == action.preferred, qPrintable(action.id));
+    // Action identity is a stable name or a UUID, never a numeric index or native shortcut handle.
+    for (const auto &id : {"0", "1", "{capture-region}", "capture region", "Capture-Region", "capture-region\n"}) QVERIFY2(!stableActionId(id), id);
+    // Paths are absolute POSIX paths; Windows spellings are not portable on this platform.
+    for (const auto &path : {"C:\\Users\\me", "\\\\host\\share\\x", "file:///tmp/x", "~/x"})
+      QVERIFY2(!repairSettings([&] { auto v = defaultSettings("/tmp"); v.insert("saveFolder", path); return v; }(), "/tmp").diagnostics.isEmpty(), path);
+    // Through the real dialog and store: monitors and devices are saved as semantic names/IDs.
+    QTemporaryDir dir; const auto path = dir.filePath("settings.json");
+    ApplicationSettingsStore store(path, dir.path());
+    auto values = store.current().values; values.insert("systemAudioDevice", "device.name:speakers.monitor"); values.insert("microphoneDevice", "node.name:Studio mic");
+    values.insert("delayedCapture.source", "monitor"); values.insert("autoCapture.source", "active-window"); QVERIFY(store.save(values).isEmpty());
+    xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; });
+    const auto plan = xerahs::workflows::captureShortcutPlan(xerahs::workflows::defaultCaptureWorkflows(), xerahs::workflows::implementedCaptureActions(), HotkeyBindings::defaults());
+    {
+      xerahs::app::SettingsDialog dialog(store, dir.path(), plan, shortcuts, [] {});
+      for (auto *combo : dialog.findChildren<QComboBox *>()) if (combo->accessibleName() == "System audio device" || combo->accessibleName() == "Microphone")
+        QVERIFY2(combo->currentIndex() >= 0 && !combo->currentData().toString().isEmpty() && combo->currentData().typeId() == QMetaType::QString, qPrintable(combo->accessibleName())); // an ID, not a list index
+      auto *buttons = dialog.findChild<QDialogButtonBox *>(); buttons->button(QDialogButtonBox::Apply)->click();
+    }
+    QFile file(path); QVERIFY(file.open(QIODevice::ReadOnly)); const auto bytes = file.readAll(); file.close();
+    const auto stored = QJsonDocument::fromJson(bytes).object().value("values").toObject();
+    QCOMPARE(stored.value("systemAudioDevice"), QJsonValue("device.name:speakers.monitor")); QCOMPARE(stored.value("microphoneDevice"), QJsonValue("node.name:Studio mic"));
+    QCOMPARE(stored.value("delayedCapture.source"), QJsonValue("monitor"));
+    QCOMPARE(stored.value("saveFolder"), QJsonValue(dir.path())); QVERIFY(!dir.path().contains('\\'));
+    // Only declared portable fields are stored; the saved hotkeys object holds action IDs and normalized triggers.
+    QSet<QString> declared; for (const auto &field : settingFields()) declared.insert(field.key);
+    for (auto it = stored.begin(); it != stored.end(); ++it) QVERIFY2(declared.contains(it.key()), qPrintable(it.key()));
+    const auto savedBindings = stored.value("hotkeys").toObject();
+    for (auto it = savedBindings.begin(); it != savedBindings.end(); ++it) { QVERIFY(stableActionId(it.key())); QVERIFY(it.value().isString()); QCOMPARE(normalizeTrigger(it.value().toString()), it.value().toString()); }
+    // Desktop-side text (XDG accelerator syntax, window or output handles) is transient and never in the file.
+    for (const char *native : {"<Control>", "<Shift>", "<Alt>", "LOGO+", "CTRL+", "winId", "xid", "wl_output", "HWND", "CGDirectDisplayID", "portal"}) QVERIFY2(!bytes.contains(native), native);
+  }
   void autostart() {
     QTemporaryDir dir; const auto old = qgetenv("XDG_CONFIG_HOME"); qputenv("XDG_CONFIG_HOME", dir.path().toUtf8());
     const auto path = dir.filePath("autostart/com.xerahs.app.desktop");
