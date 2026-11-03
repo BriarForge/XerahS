@@ -28,8 +28,23 @@ struct PreferenceChange {
 // Invalid changes are rejected together. Loading repairs individual fields.
 PreferenceChange changeEditorPreferences(const EditorPreferences &current, const QJsonObject &changes);
 QJsonObject recentPreferenceValues(const RecentImages &recent);
-// ESET-006/007: saved drawing defaults are separate from annotation state.
+// ESET-006/009: one documented inclusive range per numeric preference, shared by load, change,
+// the native controls and any automation path. `integer` fields reject fractions.
+struct PreferenceRange { double minimum = 0, maximum = 0; bool integer = false; };
+std::optional<PreferenceRange> preferenceNumericRange(const QString &key);
+bool preferenceNumberValid(const QString &key, const QJsonValue &value);
+// ESET-006/007: saved drawing defaults are separate from annotation state. They carry the shared
+// stroke/fill/thickness plus the corner radius, border style, arrow style and shadow fields.
 RectangleStyle drawingStyleFromPreferences(const EditorPreferences &preferences);
+// The preference fields that persist `style` as creation defaults (the inverse of the above).
+QJsonObject drawingPreferenceValues(const RectangleStyle &style);
+// ESET-006: the stored LastUsedAnnotationTool, resolved like the reference
+// GetInitialAnnotationTool: only creation tools are remembered, anything else is Rectangle.
+// Names are the reference EditorTool members (also the native canvas tool names).
+QString lastAnnotationToolFromPreferences(const EditorPreferences &preferences);
+bool rememberableAnnotationTool(const QString &name);
+// Cursor choices this build can draw; every other reference CursorType is kept as inert data.
+bool cursorTypeImplemented(const QString &name);
 // ESET-008: saved Text/SpeechBalloon/Step defaults. `familyAvailable` reports
 // whether a family is a usable native font; a missing family resolves to the
 // native default without touching the stored preference.

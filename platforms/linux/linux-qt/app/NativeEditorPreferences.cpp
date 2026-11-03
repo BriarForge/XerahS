@@ -20,11 +20,23 @@ const QStringList &textDefaultKeys() {
       "SpeechBalloonTextHorizontalAlignment", "StepFontSize", "StepType"};
   return keys;
 }
+// ESET-006: shared border/fill/thickness, corner/border/arrow/cursor choices, shadow and
+// emphasis/redaction defaults. They affect only objects created after publication.
+const QStringList &styleDefaultKeys() {
+  static const QStringList keys{"BorderColorHex", "FillColorHex", "Thickness", "CornerRadius", "BorderStyle", "ArrowStyle", "CursorType",
+      "Shadow", "ShadowColorHex", "ShadowBlurRadius", "ShadowOpacity", "ShadowOffsetX", "ShadowOffsetY",
+      "BlurStrength", "PixelateStrength", "MagnifierStrength", "MagnifierEllipse", "SpotlightStrength", "SpotlightBlur", "SpotlightEllipse"};
+  return keys;
+}
+// The last tool seeds only windows opened afterwards, so it is writable here but is not a live publication.
+bool drawingKeyAllowed(const QString &key) {
+  return styleDefaultKeys().contains(key) || textDefaultKeys().contains(key) || key == u"LastUsedAnnotationTool";
+}
 bool drawingChanged(const EditorPreferences &before, const EditorPreferences &after) {
   for (const auto &key : textDefaultKeys())
     if (before.values.value(key) != after.values.value(key)) return true;
-  for (const auto *key : {"BorderColorHex", "FillColorHex", "Thickness"})
-    if (before.values.value(QLatin1String(key)) != after.values.value(QLatin1String(key))) return true;
+  for (const auto &key : styleDefaultKeys())
+    if (before.values.value(key) != after.values.value(key)) return true;
   return false;
 }
 bool appearanceChanged(const EditorPreferences &before, const EditorPreferences &after) {
@@ -45,7 +57,11 @@ PreferenceWrite publish(EditorPreferences next) {
   const bool appearance = appearanceChanged(state.current, next);
   const bool toolbar = state.current.values.value(u"ToolbarItems") != next.values.value(u"ToolbarItems");
   const bool memoryChanged = state.current.values.value(u"RememberWindowState") != next.values.value(u"RememberWindowState");
-  state.current = std::move(next); ++state.revision;
+  // Remembering the last tool conflicts with no open draft, so it does not fence them as stale.
+  auto before = state.current.values, after = next.values;
+  before.remove(QStringLiteral("LastUsedAnnotationTool")); after.remove(QStringLiteral("LastUsedAnnotationTool"));
+  const bool onlyLastTool = before == after && state.current.values.value(u"LastUsedAnnotationTool") != next.values.value(u"LastUsedAnnotationTool");
+  state.current = std::move(next); if (!onlyLastTool) ++state.revision;
   if (changed) emit nativeEditorPreferenceEvents().drawingDefaultsChanged();
   if (appearance) emit nativeEditorPreferenceEvents().appearanceChanged();
   if (toolbar) emit nativeEditorPreferenceEvents().toolbarChanged();
@@ -92,8 +108,7 @@ PreferenceWrite applyDrawingDefaults(const QJsonObject &changes, quint64 expecte
   auto &state = host();
   if (state.revision != expectedRevision) return {false, QStringLiteral("settings-changed-in-session")};
   for (auto it = changes.begin(); it != changes.end(); ++it)
-    if (it.key() != u"BorderColorHex" && it.key() != u"FillColorHex" && it.key() != u"Thickness" && !textDefaultKeys().contains(it.key()))
-      return {false, QStringLiteral("invalid-drawing-defaults")};
+    if (!drawingKeyAllowed(it.key())) return {false, QStringLiteral("invalid-drawing-defaults")};
   // ESET-008: a replacement family must be usable now. Re-submitting the stored
   // (possibly unavailable) family is allowed and leaves it exactly as saved.
   for (const auto *key : {"TextFontFamily", "SpeechBalloonFontFamily"}) {
@@ -232,6 +247,15 @@ QString editorPreferenceDiagnosticMessage(const QString &diagnostic) {
         field == u"SpeechBalloonTextBold" ? QStringLiteral("Balloon text bold") : field == u"SpeechBalloonTextItalic" ? QStringLiteral("Balloon text italic") :
         field == u"SpeechBalloonTextHorizontalAlignment" ? QStringLiteral("Balloon text alignment") :
         field == u"StepFontSize" ? QStringLiteral("Step font size") : field == u"StepType" ? QStringLiteral("Step style") :
+        field == u"LastUsedAnnotationTool" ? QStringLiteral("Last used tool") : field == u"CornerRadius" ? QStringLiteral("Corner radius") :
+        field == u"Shadow" ? QStringLiteral("Shadow") : field == u"ShadowColorHex" ? QStringLiteral("Shadow colour") :
+        field == u"ShadowBlurRadius" ? QStringLiteral("Shadow blur") : field == u"ShadowOpacity" ? QStringLiteral("Shadow opacity") :
+        field == u"ShadowOffsetX" ? QStringLiteral("Shadow horizontal offset") : field == u"ShadowOffsetY" ? QStringLiteral("Shadow vertical offset") :
+        field == u"BorderStyle" ? QStringLiteral("Border style") : field == u"ArrowStyle" ? QStringLiteral("Arrow style") :
+        field == u"CursorType" ? QStringLiteral("Cursor type") : field == u"PixelateStrength" ? QStringLiteral("Pixelate strength") :
+        field == u"MagnifierStrength" ? QStringLiteral("Magnifier strength") : field == u"MagnifierEllipse" ? QStringLiteral("Magnifier ellipse") :
+        field == u"SpotlightStrength" ? QStringLiteral("Spotlight strength") : field == u"SpotlightBlur" ? QStringLiteral("Spotlight blur") :
+        field == u"SpotlightEllipse" ? QStringLiteral("Spotlight ellipse") :
         field == u"ToolbarItems" ? QStringLiteral("Toolbar layout") : QStringLiteral("Preference version");
     return QStringLiteral("%1 was invalid and is using its default.").arg(label);
   }

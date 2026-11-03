@@ -118,6 +118,7 @@ private:
   bool deleteSelected();
   void recordRecentImage(const QString &absolutePath);
   void applyCreationDefaults();
+  void rememberAnnotationTool();
   void persistDrawingDefaults(quint64 expectedRevision);
   void refresh();
   void updatePointerStatus();

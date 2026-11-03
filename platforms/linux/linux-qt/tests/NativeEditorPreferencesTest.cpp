@@ -310,6 +310,40 @@ private slots:
     const auto stale = applyDrawingDefaults({{"TextFontSize", 50}}, revision);
     QVERIFY(!stale.saved); QCOMPARE(stale.diagnostic, QStringLiteral("settings-changed-in-session"));
   }
+  // ESET-006: creation defaults publish only after the write succeeded; the last tool never fences open drafts.
+  void creationDefaultsPublishOnlyAfterSuccessfulPersistenceAndTheLastToolDoesNotFenceDrafts() {
+    QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
+    QSignalSpy events(&nativeEditorPreferenceEvents(), &NativeEditorPreferenceEvents::drawingDefaultsChanged);
+    const auto original = nativeEditorPreferences().values; const auto revision = nativeEditorPreferenceRevision();
+    const QJsonObject change{{"CornerRadius", 9}, {"BorderStyle", "Dash"}, {"ArrowStyle", "Basic"}, {"CursorType", "Hand"}, {"Shadow", true},
+        {"ShadowColorHex", "#10203040"}, {"ShadowBlurRadius", 3}, {"ShadowOpacity", 0.5}, {"ShadowOffsetX", 1}, {"ShadowOffsetY", -1},
+        {"PixelateStrength", 70}, {"MagnifierStrength", 6}, {"MagnifierEllipse", true}, {"SpotlightStrength", 20}, {"SpotlightBlur", 11}, {"SpotlightEllipse", true}};
+    { QLockFile lock(path + ".lock"); QVERIFY(QDir().mkpath(QFileInfo(path).absolutePath())); QVERIFY(lock.tryLock(0));
+      const auto locked = applyDrawingDefaults(change, revision);
+      QVERIFY(!locked.saved); QCOMPARE(locked.diagnostic, QStringLiteral("settings-locked"));
+      QCOMPARE(events.count(), 0); QCOMPARE(nativeEditorPreferences().values, original); QCOMPARE(nativeEditorPreferenceRevision(), revision); }
+    QVERIFY(!QFile::exists(path));
+    for (const auto &field : change.keys()) {  // one bad field rejects the whole change and names itself, with a real label
+      auto bad = change; const auto value = change.value(field);
+      bad[field] = value.isBool() ? QJsonValue("x") : value.isDouble() ? QJsonValue(preferenceNumericRange(field) ? preferenceNumericRange(field)->maximum + 1 : -1) : QJsonValue("Bogus");
+      const auto rejected = applyDrawingDefaults(bad, revision);
+      QVERIFY2(!rejected.saved, qPrintable(field)); QCOMPARE(rejected.diagnostic, QString("invalid-") + field);
+      QVERIFY(!editorPreferenceDiagnosticMessage(rejected.diagnostic).contains("Preference version"));
+      QCOMPARE(events.count(), 0); QCOMPARE(nativeEditorPreferences().values, original); QVERIFY(!QFile::exists(path));
+    }
+    QVERIFY(applyDrawingDefaults(change, revision).saved); QCOMPARE(events.count(), 1);
+    QVERIFY(nativeEditorPreferenceRevision() > revision);
+    const auto afterStyle = nativeEditorPreferenceRevision();
+    QVERIFY(applyDrawingDefaults({{"LastUsedAnnotationTool", "Blur"}}, afterStyle).saved);
+    QCOMPARE(events.count(), 1); QCOMPARE(nativeEditorPreferenceRevision(), afterStyle);  // remembered, not a live publication
+    QVERIFY(applyDrawingDefaults({{"LastUsedAnnotationTool", "Lasso"}}, afterStyle).diagnostic == "invalid-LastUsedAnnotationTool");
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
+    for (auto it = change.begin(); it != change.end(); ++it) QCOMPARE(nativeEditorPreferences().values.value(it.key()), it.value());
+    QCOMPARE(nativeEditorPreferences().values.value("LastUsedAnnotationTool"), QJsonValue("Blur"));
+    // A stale draft is still refused after a style change.
+    QCOMPARE(applyDrawingDefaults({{"CornerRadius", 1}}, revision).diagnostic, QStringLiteral("settings-changed-in-session"));
+  }
   void invalidDrawingDraftRemainsOpenWithoutPublishingAnyField() {
     QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");
     QVERIFY(initializeNativeEditorPreferences(path).isEmpty());

@@ -110,6 +110,14 @@ std::optional<StepStyle> parseStepStyle(const QString &);  // either spelling, c
 // 26 = Z, 27 = AA); Roman is standard subtractive with M repeated above 3999.
 QString formatStepValue(qint64 value, StepStyle style);
 
+// ESET-006: creation defaults of the emphasis and redaction tools. Field names and
+// defaults follow the reference ImageEditorOptions (BlurStrength, PixelateStrength,
+// MagnifierStrength/Ellipse, SpotlightStrength/Blur/Ellipse). A strength of 0 keeps the
+// renderer's own fallback; the saved ranges live in EditorPreferences (preferenceNumericRange).
+struct EmphasisCreationDefaults {
+  double blurStrength = 30, pixelateStrength = 20, magnifyStrength = 2, spotlightStrength = 30, spotlightBlur = 0;
+  bool magnifyEllipse = false, spotlightEllipse = false;
+};
 // EA-010: the reference CursorType members, in reference order and spelling (PascalCase). The
 // persisted `cursorType` spelling is camelCase (first letter lowered, as the reference XANN policy
 // does) and is read case-insensitively.
@@ -125,6 +133,10 @@ bool validEmojiDisplayName(const QString &name);
 QString unicodeSequenceOf(const QString &emoji);
 
 struct ContentCreationDefaults {
+  EmphasisCreationDefaults emphasis;
+  QString requestedCursorType = QStringLiteral("Default");  // saved CursorType (reference name)
+  bool cursorTypeInert = false;                             // saved type is kept but this build cannot draw it
+  QString cursorType = QStringLiteral("Default");           // the usable type new Cursor objects record
   TextCreationDefaults text, balloon;
   double stepFontSize = 0;  // 0 sizes the number from the step circle
   QString requestedStepStyle = QStringLiteral("Numeric");

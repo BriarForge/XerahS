@@ -68,6 +68,7 @@
 #include <QSignalSpy>
 #include <QThread>
 #include <atomic>
+#include <functional>
 #include <thread>
 #include <stdexcept>
 #include <cmath>
@@ -156,6 +157,17 @@ void changeDrawingDefaults(EditorWindow &window, const QString &stroke, const QS
   });
   timer.start(5); trigger(window, QStringLiteral("drawingDefaults")); timer.stop(); QVERIFY(configured && !timedOut);
 }
+// ESET-006: drive the Drawing Defaults dialog beyond colour and thickness. `finish` must close the dialog.
+void editDefaults(EditorWindow &window, const std::function<void(QDialog &)> &edit, const std::function<void(QDialog &)> &finish) {
+  QTimer timer; QElapsedTimer deadline; deadline.start(); bool done = false, timedOut = false;
+  QObject::connect(&timer, &QTimer::timeout, [&] {
+    auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!dialog) return;
+    if (deadline.elapsed() > 5000) { timedOut = true; dialog->reject(); return; }
+    if (done) return; done = true; edit(*dialog); finish(*dialog);
+  });
+  timer.start(5); trigger(window, QStringLiteral("drawingDefaults")); timer.stop(); QVERIFY(done && !timedOut);
+}
+void clickButton(QDialog &dialog, QDialogButtonBox::StandardButton which) { dialog.findChild<QDialogButtonBox *>()->button(which)->click(); }
 void configureNewImage(NewImageDialog &dialog) {
   dialog.findChild<QSpinBox *>("newImageWidth")->setValue(64);
   dialog.findChild<QSpinBox *>("newImageHeight")->setValue(48);
@@ -1742,6 +1754,132 @@ private slots:
     const auto persisted = loadSource(restarted); QVERIFY(persisted.document);
     const auto &style = std::get<RectangleAnnotation>(persisted.document->annotations.front()).style;
     QCOMPARE(style.strokeWidth, 9.0); QCOMPARE(style.strokeColor, Argb{0x40123456}); QCOMPARE(style.fillColor, Argb{0x008899AA});
+  }
+  // ESET-006: corner radius, border/arrow/cursor choices, shadow fields and the emphasis/redaction defaults persist in
+  // the private store through the Drawing Defaults dialog (Apply/Cancel), publish to every open editor only after the
+  // write succeeded, and affect only objects created afterwards.
+  void drawingDefaultsDialogPersistsDecorationShadowCursorAndEmphasisForNewObjectsOnlyAcrossWindowsAndRestart() {
+    QTemporaryDir dir; const QString settings = dir.filePath("native/settings.json");
+    const QString first = dir.filePath("first.png"), second = dir.filePath("second.png"), restarted = dir.filePath("restart.png");
+    for (const auto &path : {first, second, restarted}) QVERIFY(fixture().save(path));
+    QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    std::unique_ptr<EditorWindow> one(EditorWindow::open(first)), two(EditorWindow::open(second)); QVERIFY(one && two);
+    for (auto *window : {one.get(), two.get()}) { window->resize(900, 600); window->show(); QTest::qWait(20); window->findChild<EditorCanvas *>()->resetZoom(); }
+    auto *canvasOne = one->findChild<EditorCanvas *>(), *canvasTwo = two->findChild<EditorCanvas *>();
+    const auto draw = [&](EditorCanvas *canvas, EditorCanvas::Tool tool, QPointF a, QPointF b) {
+      canvas->setTool(tool);
+      QTest::mousePress(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView(a).toPoint());
+      QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, Qt::NoModifier, canvas->viewState().toView(b).toPoint());
+    };
+    const auto last = [](EditorCanvas *canvas) { return std::get<RectangleAnnotation>(canvas->annotationDocument().annotations.back()); };
+    draw(canvasTwo, EditorCanvas::Tool::Rectangle, {2, 2}, {12, 10});  // exists before any change
+    QCOMPARE(canvasTwo->annotationDocument().annotations.size(), std::size_t(1));
+    const auto existing = serializeAnnotationList(canvasTwo->annotationDocument().annotations);
+    const auto edit = [](QDialog &dialog) {
+      dialog.findChild<QDoubleSpinBox *>("defaultCornerRadius")->setValue(6);
+      auto *border = dialog.findChild<QComboBox *>("defaultBorderStyle"); border->setCurrentIndex(border->findData("DashDot"));
+      auto *arrow = dialog.findChild<QComboBox *>("defaultArrowStyle"); arrow->setCurrentIndex(arrow->findData("Modern"));
+      dialog.findChild<QCheckBox *>("defaultShadow")->setChecked(true); dialog.findChild<QLineEdit *>("defaultShadowColour")->setText("#40112233");
+      dialog.findChild<QDoubleSpinBox *>("defaultShadowBlur")->setValue(9.5); dialog.findChild<QDoubleSpinBox *>("defaultShadowOpacity")->setValue(0.25);
+      dialog.findChild<QDoubleSpinBox *>("defaultShadowOffsetX")->setValue(-7); dialog.findChild<QDoubleSpinBox *>("defaultShadowOffsetY")->setValue(8.5);
+      auto *cursor = dialog.findChild<QComboBox *>("defaultCursorType"); cursor->setCurrentIndex(cursor->findData("Arrow"));
+      dialog.findChild<QDoubleSpinBox *>("defaultBlurStrength")->setValue(12.5); dialog.findChild<QDoubleSpinBox *>("defaultPixelateStrength")->setValue(41);
+      dialog.findChild<QDoubleSpinBox *>("defaultMagnifierStrength")->setValue(4); dialog.findChild<QCheckBox *>("defaultMagnifierEllipse")->setChecked(true);
+      dialog.findChild<QDoubleSpinBox *>("defaultSpotlightStrength")->setValue(55); dialog.findChild<QDoubleSpinBox *>("defaultSpotlightBlur")->setValue(6);
+      dialog.findChild<QCheckBox *>("defaultSpotlightEllipse")->setChecked(true);
+    };
+    // Cancel keeps everything, and nothing is written.
+    editDefaults(*one, edit, [](QDialog &d) { clickButton(d, QDialogButtonBox::Cancel); });
+    QVERIFY(!QFile::exists(settings)); QCOMPARE(nativeEditorPreferences().values.value("CornerRadius"), QJsonValue(0));
+    // An invalid shadow colour keeps the dialog open with a field message and writes nothing.
+    editDefaults(*one, edit, [](QDialog &d) {
+      d.findChild<QLineEdit *>("defaultShadowColour")->setText("shadow"); clickButton(d, QDialogButtonBox::Ok);
+      QTRY_VERIFY(d.findChild<QLabel *>("drawingDefaultsError")->text().contains("shadow")); QVERIFY(d.isVisible()); clickButton(d, QDialogButtonBox::Cancel);
+    });
+    QVERIFY(!QFile::exists(settings)); QCOMPARE(nativeEditorPreferences().values.value("Shadow"), QJsonValue(false));
+    // A failed write (another process holds the lock) leaves the live preferences and the other editor unchanged.
+    { QLockFile lock(settings + ".lock"); QVERIFY(QDir().mkpath(QFileInfo(settings).absolutePath())); QVERIFY(lock.tryLock(0));
+      editDefaults(*one, edit, [](QDialog &d) {
+        clickButton(d, QDialogButtonBox::Ok); QTRY_VERIFY(!d.findChild<QLabel *>("drawingDefaultsError")->text().isEmpty()); clickButton(d, QDialogButtonBox::Cancel);
+      });
+      QVERIFY(!QFile::exists(settings)); QCOMPARE(nativeEditorPreferences().values.value("CornerRadius"), QJsonValue(0));
+      draw(canvasTwo, EditorCanvas::Tool::Rectangle, {30, 2}, {36, 6}); QCOMPARE(last(canvasTwo).style.cornerRadius, 0.0); QVERIFY(!last(canvasTwo).style.shadow.enabled);
+      QCOMPARE(canvasTwo->annotationDocument().annotations.size(), std::size_t(2)); trigger(*two, "undo");
+    }
+    editDefaults(*one, edit, [](QDialog &d) { clickButton(d, QDialogButtonBox::Ok); });
+    const auto stored = QJsonDocument::fromJson(storedBytes(settings)).object().value("current").toObject();
+    QCOMPARE(stored.value("CornerRadius"), QJsonValue(6)); QCOMPARE(stored.value("BorderStyle"), QJsonValue("DashDot")); QCOMPARE(stored.value("ArrowStyle"), QJsonValue("Modern"));
+    QCOMPARE(stored.value("Shadow"), QJsonValue(true)); QCOMPARE(stored.value("ShadowColorHex"), QJsonValue("#40112233")); QCOMPARE(stored.value("ShadowBlurRadius"), QJsonValue(9.5));
+    QCOMPARE(stored.value("CursorType"), QJsonValue("Arrow")); QCOMPARE(stored.value("BlurStrength"), QJsonValue(12.5)); QCOMPARE(stored.value("PixelateStrength"), QJsonValue(41));
+    QCOMPARE(stored.value("SpotlightEllipse"), QJsonValue(true));
+    // The other, already open editor receives the defaults; its existing object is untouched.
+    QCOMPARE(serializeAnnotationList(std::vector<Annotation>(canvasTwo->annotationDocument().annotations.begin(), canvasTwo->annotationDocument().annotations.begin() + 1)), existing);
+    // Each object is drawn in the same empty spot and undone, so a later press never lands on an earlier object.
+    const auto check = [&](EditorWindow *window, EditorCanvas *canvas) {
+      const auto make = [&](EditorCanvas::Tool tool, const std::function<void(const RectangleAnnotation &)> &verify) {
+        const auto count = canvas->annotationDocument().annotations.size();
+        draw(canvas, tool, {30, 2}, {36, 6}); QCOMPARE(canvas->annotationDocument().annotations.size(), count + 1);
+        verify(last(canvas)); trigger(*window, "undo"); QCOMPARE(canvas->annotationDocument().annotations.size(), count);
+      };
+      make(EditorCanvas::Tool::Rectangle, [](const RectangleAnnotation &a) {
+        QCOMPARE(a.style.cornerRadius, 6.0); QVERIFY(a.style.borderStyle == BorderStyle::DashDot); QVERIFY(a.style.shadow.enabled);
+        QCOMPARE(a.style.shadow, (ShapeShadow{true, 9.5, -7, 8.5, 0.25, 0x40112233})); });
+      make(EditorCanvas::Tool::Arrow, [](const RectangleAnnotation &a) { QVERIFY(a.style.arrowStyle == ArrowStyle::Modern); });
+      make(EditorCanvas::Tool::Blur, [](const RectangleAnnotation &a) { QCOMPARE(a.content.strength, 12.5); });
+      make(EditorCanvas::Tool::Pixelate, [](const RectangleAnnotation &a) { QCOMPARE(a.content.strength, 41.0); });
+      make(EditorCanvas::Tool::Magnify, [](const RectangleAnnotation &a) { QCOMPARE(a.content.strength, 4.0); QVERIFY(a.content.isEllipse); });
+      make(EditorCanvas::Tool::Spotlight, [](const RectangleAnnotation &a) {
+        QCOMPARE(a.content.strength, 55.0); QCOMPARE(a.content.blurAmount, 6.0); QVERIFY(a.content.isEllipse); });
+      make(EditorCanvas::Tool::Cursor, [](const RectangleAnnotation &a) { QCOMPARE(a.content.cursorType, QString("Arrow")); });
+    };
+    check(two.get(), canvasTwo); check(one.get(), canvasOne);
+    QCOMPARE(serializeAnnotationList(std::vector<Annotation>(canvasTwo->annotationDocument().annotations.begin(), canvasTwo->annotationDocument().annotations.begin() + 1)), existing);
+    // Restart: the stored defaults seed the next session's creations.
+    one.reset(); two.reset(); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    std::unique_ptr<EditorWindow> again(EditorWindow::open(restarted)); QVERIFY(again); again->resize(900, 600); again->show();
+    auto *canvasAgain = again->findChild<EditorCanvas *>(); QTest::qWait(20); canvasAgain->resetZoom(); check(again.get(), canvasAgain);
+  }
+  // ESET-006: the last tool seeds the first tool of windows opened afterwards and never edits any object.
+  void lastToolIsRememberedForCreationToolsOnlyAndSeedsOnlyLaterWindows() {
+    QTemporaryDir dir; const QString settings = dir.filePath("native/settings.json"), path = dir.filePath("a.png"), other = dir.filePath("b.png");
+    QVERIFY(fixture().save(path)); QVERIFY(fixture().save(other)); QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());
+    std::unique_ptr<EditorWindow> one(EditorWindow::open(path)); QVERIFY(one); one->resize(900, 600); one->show();
+    auto *canvasOne = one->findChild<EditorCanvas *>(); QCOMPARE(canvasOne->tool(), EditorCanvas::Tool::Rectangle);
+    canvasOne->setTool(EditorCanvas::Tool::Ellipse);
+    QCOMPARE(QJsonDocument::fromJson(storedBytes(settings)).object().value("current").toObject().value("LastUsedAnnotationTool"), QJsonValue("Ellipse"));
+    std::unique_ptr<EditorWindow> two(EditorWindow::open(other)); QVERIFY(two); two->resize(900, 600); two->show();
+    auto *canvasTwo = two->findChild<EditorCanvas *>(); QCOMPARE(canvasTwo->tool(), EditorCanvas::Tool::Ellipse);
+    const auto before = serializeAnnotationList(canvasTwo->annotationDocument().annotations);
+    canvasOne->setTool(EditorCanvas::Tool::Blur);  // another window's choice is not applied live
+    QCOMPARE(canvasTwo->tool(), EditorCanvas::Tool::Ellipse); QCOMPARE(serializeAnnotationList(canvasTwo->annotationDocument().annotations), before);
+    QVERIFY(!one->windowTitle().contains(QChar(0x2022)));  // remembering a tool is not a document edit
+    // Non-creation tools (Select, Crop, Image, Emoji, CutOut) are not remembered.
+    for (const auto tool : {EditorCanvas::Tool::Select, EditorCanvas::Tool::Crop, EditorCanvas::Tool::Image, EditorCanvas::Tool::Emoji, EditorCanvas::Tool::CutOut}) {
+      canvasOne->setTool(tool); QCOMPARE(nativeEditorPreferences().values.value("LastUsedAnnotationTool"), QJsonValue("Blur"));
+    }
+    one.reset(); two.reset();
+    QVERIFY(initializeNativeEditorPreferences(settings).isEmpty());  // restart
+    std::unique_ptr<EditorWindow> restarted(EditorWindow::open(path)); QVERIFY(restarted);
+    QCOMPARE(restarted->findChild<EditorCanvas *>()->tool(), EditorCanvas::Tool::Blur); restarted.reset();
+    // A write failure keeps the selected tool usable and reports it; nothing is published.
+    { std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->resize(900, 600); window->show();
+      QLockFile lock(settings + ".lock"); QVERIFY(lock.tryLock(0)); const auto bytes = storedBytes(settings);
+      auto *canvas = window->findChild<EditorCanvas *>(); canvas->setTool(EditorCanvas::Tool::Pixelate); canvas->zoomIn(); canvas->setFocus(); QApplication::processEvents();
+      QCOMPARE(canvas->tool(), EditorCanvas::Tool::Pixelate); QCOMPARE(storedBytes(settings), bytes);
+      QCOMPARE(nativeEditorPreferences().values.value("LastUsedAnnotationTool"), QJsonValue("Blur"));
+      QVERIFY(window->statusBar()->currentMessage().contains("Drawing defaults could not be saved")); }
+    // A stored value that is not a remembered creation tool opens Rectangle; an unknown value is repaired alone.
+    for (const auto *stored : {"Select", "Image", "CutOut"}) {
+      QVERIFY(applyDrawingDefaults({{"LastUsedAnnotationTool", stored}}, nativeEditorPreferenceRevision()).saved);
+      std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); QCOMPARE(window->findChild<EditorCanvas *>()->tool(), EditorCanvas::Tool::Rectangle);
+    }
+    const auto raw = QJsonDocument::fromJson(storedBytes(settings)).object(); auto current = raw.value("current").toObject();
+    current["LastUsedAnnotationTool"] = "Lasso"; current["Thickness"] = 9; auto damaged = raw; damaged["current"] = current;
+    QFile file(settings); QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate)); file.write(QJsonDocument(damaged).toJson()); file.close();
+    QVERIFY(file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner));
+    QCOMPARE(initializeNativeEditorPreferences(settings), QStringList{"invalid-LastUsedAnnotationTool"});
+    std::unique_ptr<EditorWindow> repaired(EditorWindow::open(path)); QVERIFY(repaired);
+    QCOMPARE(repaired->findChild<EditorCanvas *>()->tool(), EditorCanvas::Tool::Rectangle); QCOMPARE(nativeEditorPreferences().values.value("Thickness"), QJsonValue(9));
   }
   void toolbarPreferenceFailurePreservesExplicitSelectionEditAndHistory() {
     QTemporaryDir dir; const QString settings = dir.filePath("native/settings.json"), path = dir.filePath("image.png");

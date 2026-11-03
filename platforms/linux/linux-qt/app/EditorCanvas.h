@@ -32,6 +32,9 @@ public:
   enum class Tool { Select, Rectangle, Crop, Ellipse, Line, Arrow, Freehand, Text, Step, Highlight, Blur, Pixelate,
                     SpeechBalloon, Magnify, Spotlight, SmartEraser, Image, Emoji, Cursor, CutOut };
   static QString shapeType(Tool tool);
+  // ESET-006: the reference EditorTool member name of a tool, and the tool a saved name selects.
+  static QString toolName(Tool tool);
+  static std::optional<Tool> toolFromName(const QString &name);
   // EA-002: the options that apply to `tool`, as one sentence starting "Options:".
   static QString toolOptions(Tool tool);
   Tool tool() const { return m_tool; }

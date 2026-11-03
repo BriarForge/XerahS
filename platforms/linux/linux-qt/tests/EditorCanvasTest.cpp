@@ -376,6 +376,53 @@ private slots:
     const auto saved = serializeAnnotationList(session.document().annotations); const auto reloaded = parseAnnotationList(saved); QVERIFY(reloaded.annotations);
     QCOMPARE(serializeAnnotationList(*reloaded.annotations), saved);
   }
+  void cursorToolRecordsTheSavedCursorTypeOnlyOnObjectsCreatedAfterIt() {
+    // ESET-006: the saved CursorType is frozen at pointer-down; an unavailable saved type records the default pointer.
+    EditorSession session(document()); const auto source = image(); ContentCreationDefaults defaults;
+    defaults.requestedCursorType = "Arrow"; defaults.cursorType = "Arrow"; QVERIFY(session.setContentDefaults(defaults));
+    EditorCanvas canvas(session, source); canvas.resize(900, 700); canvas.show(); QCoreApplication::processEvents(); canvas.resetZoom(); canvas.setTool(EditorCanvas::Tool::Cursor);
+    const auto at = [&](double x, double y) { return canvas.viewState().toView({x, y}).toPoint(); };
+    const auto cursorOf = [&](int index) { return std::get<RectangleAnnotation>(session.document().annotations[std::size_t(index)]).content.cursorType; };
+    QTest::mouseClick(canvas.viewport(), Qt::LeftButton, {}, at(100, 100)); QCOMPARE(cursorOf(0), QString("Arrow"));
+    defaults.requestedCursorType = "Hand"; defaults.cursorTypeInert = true; defaults.cursorType = "Default"; QVERIFY(session.setContentDefaults(defaults));
+    QTest::mouseClick(canvas.viewport(), Qt::LeftButton, {}, at(300, 100)); QCOMPARE(cursorOf(1), QString("Default"));
+    QCOMPARE(cursorOf(0), QString("Arrow"));  // the earlier object keeps its record
+    QCOMPARE(session.document().annotations.size(), std::size_t(2));
+  }
+  void emphasisAndRedactionDefaultsSeedOnlyObjectsCreatedAfterThem() {
+    // ESET-006/EA-014: strengths, region shapes and the spotlight blur freeze at pointer-down.
+    EditorSession session(document()); const auto source = image(); ContentCreationDefaults defaults;
+    defaults.emphasis.blurStrength = 11; defaults.emphasis.pixelateStrength = 22; defaults.emphasis.magnifyStrength = 3.5; defaults.emphasis.magnifyEllipse = true;
+    defaults.emphasis.spotlightStrength = 44; defaults.emphasis.spotlightBlur = 7; defaults.emphasis.spotlightEllipse = true;
+    QVERIFY(session.setContentDefaults(defaults));
+    EditorCanvas canvas(session, source); canvas.resize(900, 700); canvas.show(); QCoreApplication::processEvents(); canvas.resetZoom();
+    const auto at = [&](double x, double y) { return canvas.viewState().toView({x, y}).toPoint(); };
+    const auto last = [&]() -> const RectangleAnnotation & { return std::get<RectangleAnnotation>(session.document().annotations.back()); };
+    const auto draw = [&](EditorCanvas::Tool tool, double x, double y = 100) { canvas.setTool(tool); QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, at(x, y)); QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, at(x + 60, y + 60)); };
+    draw(EditorCanvas::Tool::Blur, 20); QCOMPARE(last().content.strength, 11.0); QVERIFY(!last().content.isEllipse);
+    draw(EditorCanvas::Tool::Pixelate, 100); QCOMPARE(last().content.strength, 22.0);
+    draw(EditorCanvas::Tool::Magnify, 180); QCOMPARE(last().content.strength, 3.5); QVERIFY(last().content.isEllipse);
+    draw(EditorCanvas::Tool::Spotlight, 260); QCOMPARE(last().content.strength, 44.0); QVERIFY(last().content.isEllipse); QCOMPARE(last().content.blurAmount, 7.0);
+    draw(EditorCanvas::Tool::Highlight, 340); QCOMPARE(last().content.strength, 0.0); QVERIFY(!last().content.isEllipse);
+    const auto before = serializeAnnotationList(session.document().annotations);
+    // New defaults never touch the existing four, and a gesture already under way keeps the values it began with.
+    auto changed = defaults; changed.emphasis.blurStrength = 90; changed.emphasis.pixelateStrength = 150; changed.emphasis.magnifyStrength = 9;
+    changed.emphasis.magnifyEllipse = false; changed.emphasis.spotlightStrength = 80; changed.emphasis.spotlightBlur = 0; changed.emphasis.spotlightEllipse = false;
+    canvas.setTool(EditorCanvas::Tool::Blur); QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, at(20, 300));
+    QVERIFY(session.setContentDefaults(changed)); QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, at(80, 360));
+    QCOMPARE(last().content.strength, 11.0);
+    QCOMPARE(std::vector<Annotation>(session.document().annotations.begin(), session.document().annotations.end() - 1).size(), std::size_t(5));
+    QCOMPARE(serializeAnnotationList(std::vector<Annotation>(session.document().annotations.begin(), session.document().annotations.begin() + 5)), before);
+    draw(EditorCanvas::Tool::Blur, 120, 300); QCOMPARE(last().content.strength, 90.0);
+    draw(EditorCanvas::Tool::Magnify, 200, 300); QCOMPARE(last().content.strength, 9.0); QVERIFY(!last().content.isEllipse);
+    draw(EditorCanvas::Tool::Spotlight, 280, 300); QCOMPARE(last().content.strength, 80.0); QVERIFY(!last().content.isEllipse); QCOMPARE(last().content.blurAmount, 0.0);
+    // Out-of-range defaults are refused by the session itself.
+    auto bad = defaults; bad.emphasis.pixelateStrength = 201; QVERIFY(!session.setContentDefaults(bad));
+    bad = defaults; bad.emphasis.magnifyStrength = std::numeric_limits<double>::quiet_NaN(); QVERIFY(!session.setContentDefaults(bad));
+    bad = defaults; bad.emphasis.spotlightBlur = -1; QVERIFY(!session.setContentDefaults(bad));
+    bad = defaults; bad.cursorType = "Spinner"; QVERIFY(!session.setContentDefaults(bad));
+    QCOMPARE(session.contentDefaults().emphasis.blurStrength, 90.0);
+  }
   void unavailableSavedFontShowsNoticeAndCreatesWithNativeFallback() {
     EditorSession session(document()); const auto source = image(); ContentCreationDefaults defaults;
     defaults.text.requestedFamily = "Gone Sans"; defaults.text.familyUnavailable = true; defaults.text.fontFamily = QString();

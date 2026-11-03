@@ -1,4 +1,5 @@
 #include "image-editor/EditorSession.h"
+#include "image-editor/EditorPreferences.h"
 
 #include <algorithm>
 #include <cmath>
@@ -53,8 +54,13 @@ bool EditorSession::setContentDefaults(const ContentCreationDefaults &defaults) 
     return std::isfinite(t.fontSize) && t.fontSize >= 1 && t.fontSize <= 2000 && validFontFamily(t.fontFamily) &&
         validTextAlignment(t.alignment) && !t.alignment.isEmpty();
   };
+  const auto &e = defaults.emphasis;
+  const auto within = [](const char *key, double value) { return preferenceNumberValid(QLatin1String(key), value); };
   if (!text(defaults.text) || !text(defaults.balloon) || !std::isfinite(defaults.stepFontSize) ||
-      defaults.stepFontSize < 0 || defaults.stepFontSize > 2000) return false;
+      defaults.stepFontSize < 0 || defaults.stepFontSize > 2000 || !within("BlurStrength", e.blurStrength) ||
+      !within("PixelateStrength", e.pixelateStrength) || !within("MagnifierStrength", e.magnifyStrength) ||
+      !within("SpotlightStrength", e.spotlightStrength) || !within("SpotlightBlur", e.spotlightBlur) ||
+      !parseCursorTypeName(defaults.cursorType)) return false;
   m_contentDefaults = defaults;
   return true;
 }

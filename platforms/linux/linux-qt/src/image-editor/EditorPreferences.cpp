@@ -26,6 +26,17 @@ const QJsonObject defaults{
   {QStringLiteral("SpeechBalloonTextBold"), true}, {QStringLiteral("SpeechBalloonTextItalic"), false},
   {QStringLiteral("SpeechBalloonTextHorizontalAlignment"), QStringLiteral("Center")},
   {QStringLiteral("StepFontSize"), 0}, {QStringLiteral("StepType"), QStringLiteral("Numeric")},
+  // ESET-006 creation defaults. Names follow the reference ImageEditorOptions. Defaults follow the
+  // reference except CornerRadius (0, the EA-005 undecorated rectangle; the reference 4 would change
+  // the shipped look of new rectangles) and ArrowStyle/BorderStyle, which agree with it.
+  {QStringLiteral("LastUsedAnnotationTool"), QStringLiteral("Rectangle")},
+  {QStringLiteral("CornerRadius"), 0}, {QStringLiteral("Shadow"), false},
+  {QStringLiteral("ShadowColorHex"), QStringLiteral("#80000000")}, {QStringLiteral("ShadowBlurRadius"), 4},
+  {QStringLiteral("ShadowOpacity"), 1}, {QStringLiteral("ShadowOffsetX"), 3}, {QStringLiteral("ShadowOffsetY"), 3},
+  {QStringLiteral("BorderStyle"), QStringLiteral("Solid")}, {QStringLiteral("ArrowStyle"), QStringLiteral("Classic")},
+  {QStringLiteral("CursorType"), QStringLiteral("Default")},
+  {QStringLiteral("PixelateStrength"), 20}, {QStringLiteral("MagnifierStrength"), 2}, {QStringLiteral("MagnifierEllipse"), false},
+  {QStringLiteral("SpotlightStrength"), 30}, {QStringLiteral("SpotlightBlur"), 0}, {QStringLiteral("SpotlightEllipse"), false},
   {QStringLiteral("ToolbarItems"), defaultToolbarItems()}};
 // ESET-008 field kinds. Names follow the reference ImageEditorOptions.
 enum class TextField { None, Family, Size, StepSize, Flag, Alignment, StepStyle };
@@ -59,6 +70,53 @@ bool textFieldValid(TextField kind, const QJsonValue &value) {
   }
   return false;
 }
+// ESET-006/009 creation fields beyond the text defaults. Numbers have one inclusive range each.
+const QMap<QString, PreferenceRange> &numericRanges() {
+  static const QMap<QString, PreferenceRange> ranges{
+      {QStringLiteral("BlurStrength"), {0, 100, false}}, {QStringLiteral("Thickness"), {1, 10000, true}},
+      {QStringLiteral("CornerRadius"), {0, kMaxCornerRadius, true}},
+      {QStringLiteral("ShadowBlurRadius"), {0, kMaxShadowBlur, false}}, {QStringLiteral("ShadowOpacity"), {0, 1, false}},
+      {QStringLiteral("ShadowOffsetX"), {-kMaxShadowOffset, kMaxShadowOffset, false}},
+      {QStringLiteral("ShadowOffsetY"), {-kMaxShadowOffset, kMaxShadowOffset, false}},
+      // Reference toolbar maxima (Pixelate 200, Magnify 10, Spotlight 100, Spotlight blur 200); 0 keeps the renderer fallback.
+      {QStringLiteral("PixelateStrength"), {0, 200, false}}, {QStringLiteral("MagnifierStrength"), {0, 10, false}},
+      {QStringLiteral("SpotlightStrength"), {0, 100, false}}, {QStringLiteral("SpotlightBlur"), {0, 200, false}},
+      {QStringLiteral("TextFontSize"), {1, 2000, false}}, {QStringLiteral("SpeechBalloonFontSize"), {1, 2000, false}},
+      {QStringLiteral("StepFontSize"), {0, 2000, false}}};
+  return ranges;
+}
+const QStringList &creationFlagFields() {
+  static const QStringList keys{"Shadow", "MagnifierEllipse", "SpotlightEllipse"};
+  return keys;
+}
+const QStringList &referenceToolNames() {
+  static const QStringList names{"Select", "Rectangle", "Ellipse", "Line", "Arrow", "Freehand", "Text", "SpeechBalloon", "Step", "Image",
+      "Emoji", "Cursor", "Highlight", "SmartEraser", "Blur", "Pixelate", "Magnify", "Spotlight", "Crop", "CutOut"};
+  return names;
+}
+const QStringList &creationEnumFields() {
+  static const QStringList keys{"LastUsedAnnotationTool", "BorderStyle", "ArrowStyle", "CursorType"};
+  return keys;
+}
+QStringList enumChoices(const QString &key) {
+  if (key == u"LastUsedAnnotationTool") return referenceToolNames();
+  if (key == u"CursorType") return cursorTypeNames();
+  QStringList names;
+  if (key == u"BorderStyle") for (const auto s : {BorderStyle::Solid, BorderStyle::Dash, BorderStyle::Dot, BorderStyle::DashDot, BorderStyle::DashDotDot}) names << borderStyleName(s);
+  else for (const auto s : {ArrowStyle::Classic, ArrowStyle::Modern, ArrowStyle::Double, ArrowStyle::Basic, ArrowStyle::Line}) names << arrowStyleName(s);
+  for (auto &name : names) name[0] = name[0].toUpper();  // preferences store PascalCase names
+  return names;
+}
+bool creationFieldValue(const QString &key, const QJsonValue &value, QJsonValue &normalized);
+const QStringList &creationFieldKeys() {
+  static QStringList keys = [] {
+    QStringList all{"CornerRadius", "ShadowColorHex", "ShadowBlurRadius", "ShadowOpacity", "ShadowOffsetX", "ShadowOffsetY",
+        "PixelateStrength", "MagnifierStrength", "SpotlightStrength", "SpotlightBlur"};
+    all << creationFlagFields() << creationEnumFields();
+    return all;
+  }();
+  return keys;
+}
 const QStringList nonPersistentFields{QStringLiteral("BorderColor"), QStringLiteral("FillColor"), QStringLiteral("AccentColor")};
 std::optional<Argb> preferenceColor(const QJsonValue &value) {
   if (!value.isString()) return {};
@@ -72,6 +130,18 @@ bool number(const QJsonValue &value, double minimum, double maximum, bool intege
   if (!value.isDouble()) return false;
   const double n = value.toDouble();
   return std::isfinite(n) && n >= minimum && n <= maximum && (!integer || std::floor(n) == n);
+}
+bool creationFieldValue(const QString &key, const QJsonValue &value, QJsonValue &normalized) {
+  normalized = value;
+  if (const auto range = numericRanges().find(key); range != numericRanges().end()) return number(value, range->minimum, range->maximum, range->integer);
+  if (creationFlagFields().contains(key)) return value.isBool();
+  if (key == u"ShadowColorHex") {
+    const auto color = preferenceColor(value);
+    if (color) normalized = formatColor(*color);
+    return color.has_value();
+  }
+  if (creationEnumFields().contains(key)) return value.isString() && enumChoices(key).contains(value.toString());
+  return false;
 }
 void invalid(EditorPreferences &result, const QString &key) {
   result.fields[key] = PreferenceFieldState::Invalid; result.diagnostics.append(QStringLiteral("invalid-") + key);
@@ -174,6 +244,11 @@ EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRul
     }
     else invalid(result, it.key());
   }
+  for (const auto &key : creationFieldKeys()) {
+    if (!stored.contains(key)) continue;
+    QJsonValue normalized;
+    if (creationFieldValue(key, stored.value(key), normalized)) result.values.insert(key, normalized); else invalid(result, key);
+  }
   for (const auto &key : conveniencePreferenceFields()) {
     if (!stored.contains(key)) continue;
     if (stored.value(key).isBool()) result.values.insert(key, stored.value(key));
@@ -247,12 +322,52 @@ PreferenceChange changeEditorPreferences(const EditorPreferences &current, const
     return {{}, next.diagnostics};
   return {std::move(next), {}};
 }
+std::optional<PreferenceRange> preferenceNumericRange(const QString &key) {
+  const auto it = numericRanges().find(key);
+  if (it == numericRanges().end()) return std::nullopt;
+  return *it;
+}
+bool preferenceNumberValid(const QString &key, const QJsonValue &value) {
+  const auto range = preferenceNumericRange(key);
+  return range && number(value, range->minimum, range->maximum, range->integer);
+}
+QJsonObject drawingPreferenceValues(const RectangleStyle &style) {
+  const auto pascal = [](QString name) { name[0] = name[0].toUpper(); return name; };
+  return {{QStringLiteral("BorderColorHex"), formatColor(style.strokeColor)}, {QStringLiteral("FillColorHex"), formatColor(style.fillColor)},
+      {QStringLiteral("Thickness"), style.strokeWidth}, {QStringLiteral("CornerRadius"), style.cornerRadius},
+      {QStringLiteral("BorderStyle"), pascal(borderStyleName(style.borderStyle))}, {QStringLiteral("ArrowStyle"), pascal(arrowStyleName(style.arrowStyle))},
+      {QStringLiteral("Shadow"), style.shadow.enabled}, {QStringLiteral("ShadowColorHex"), formatColor(style.shadow.color)},
+      {QStringLiteral("ShadowBlurRadius"), style.shadow.blurRadius}, {QStringLiteral("ShadowOpacity"), style.shadow.opacity},
+      {QStringLiteral("ShadowOffsetX"), style.shadow.offsetX}, {QStringLiteral("ShadowOffsetY"), style.shadow.offsetY}};
+}
+bool rememberableAnnotationTool(const QString &name) {
+  return referenceToolNames().contains(name) && !QStringList{"Select", "Image", "Emoji", "Crop", "CutOut"}.contains(name);
+}
+QString lastAnnotationToolFromPreferences(const EditorPreferences &preferences) {
+  const auto value = preferences.values.value(u"LastUsedAnnotationTool");
+  return value.isString() && rememberableAnnotationTool(value.toString()) ? value.toString() : QStringLiteral("Rectangle");
+}
+bool cursorTypeImplemented(const QString &name) { return name == u"Default" || name == u"Arrow"; }
 RectangleStyle drawingStyleFromPreferences(const EditorPreferences &preferences) {
   RectangleStyle style;
   style.strokeColor = preferenceColor(preferences.values.value(u"BorderColorHex")).value_or(style.strokeColor);
   style.fillColor = preferenceColor(preferences.values.value(u"FillColorHex")).value_or(style.fillColor);
   const auto thickness = preferences.values.value(u"Thickness");
   if (number(thickness, 1, 10000, true)) style.strokeWidth = thickness.toDouble();
+  // Each decoration field falls back to its undecorated default on its own, as on load.
+  const auto &values = preferences.values;
+  const auto pick = [&](const char *key) {
+    QJsonValue normalized; const QString name = QLatin1String(key);
+    return creationFieldValue(name, values.value(name), normalized) ? normalized : defaults.value(name);
+  };
+  style.cornerRadius = pick("CornerRadius").toDouble();
+  const auto enumName = [&](const char *key) { QString name = pick(key).toString(); name[0] = name[0].toLower(); return name; };
+  style.borderStyle = parseBorderStyle(enumName("BorderStyle")).value_or(BorderStyle::Solid);
+  style.arrowStyle = parseArrowStyle(enumName("ArrowStyle")).value_or(ArrowStyle::Classic);
+  style.shadow.enabled = pick("Shadow").toBool();
+  style.shadow.color = parseColor(pick("ShadowColorHex").toString()).value_or(style.shadow.color);
+  style.shadow.blurRadius = pick("ShadowBlurRadius").toDouble(); style.shadow.opacity = pick("ShadowOpacity").toDouble();
+  style.shadow.offsetX = pick("ShadowOffsetX").toDouble(); style.shadow.offsetY = pick("ShadowOffsetY").toDouble();
   return style;
 }
 namespace {
@@ -293,6 +408,18 @@ ContentCreationDefaults contentDefaultsFromPreferences(const EditorPreferences &
   result.requestedStepStyle = textFieldValid(TextField::StepStyle, style) ? style.toString() : QStringLiteral("Numeric");
   result.stepStyleInert = !stepStyleImplemented(result.requestedStepStyle);
   result.stepStyle = preferenceStepStyle(result.requestedStepStyle).value_or(StepStyle::Numeric);
+  const auto pick = [&](const char *key) {
+    QJsonValue normalized; const QString name = QLatin1String(key);
+    return creationFieldValue(name, values.value(name), normalized) ? normalized : defaults.value(name);
+  };
+  const auto blur = values.value(u"BlurStrength");
+  result.emphasis.blurStrength = preferenceNumberValid(QStringLiteral("BlurStrength"), blur) ? blur.toDouble() : defaults.value(u"BlurStrength").toDouble();
+  result.emphasis.pixelateStrength = pick("PixelateStrength").toDouble(); result.emphasis.magnifyStrength = pick("MagnifierStrength").toDouble();
+  result.emphasis.magnifyEllipse = pick("MagnifierEllipse").toBool(); result.emphasis.spotlightStrength = pick("SpotlightStrength").toDouble();
+  result.emphasis.spotlightBlur = pick("SpotlightBlur").toDouble(); result.emphasis.spotlightEllipse = pick("SpotlightEllipse").toBool();
+  result.requestedCursorType = pick("CursorType").toString();
+  result.cursorTypeInert = !cursorTypeImplemented(result.requestedCursorType);
+  result.cursorType = result.cursorTypeInert ? QStringLiteral("Default") : result.requestedCursorType;
   return result;
 }
 EditorWindowPreferences windowPreferencesFromPreferences(const EditorPreferences &preferences) {

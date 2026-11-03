@@ -422,6 +422,116 @@ private slots:
     const auto changed = changeEditorPreferences(loadEditorPreferences({}), {{field, value}});
     QCOMPARE(bool(changed.preferences), valid);
   }
+  // ESET-006: the creation defaults beyond colour/thickness/text. Names follow the reference ImageEditorOptions.
+  void creationDefaultsHaveDocumentedDefaultsAndResolveToCreationDefaults() {
+    const auto loaded = loadEditorPreferences({});
+    QVERIFY(loaded.diagnostics.isEmpty());
+    QCOMPARE(loaded.values.value("LastUsedAnnotationTool"), QJsonValue("Rectangle"));
+    QCOMPARE(loaded.values.value("BorderStyle"), QJsonValue("Solid")); QCOMPARE(loaded.values.value("ArrowStyle"), QJsonValue("Classic"));
+    QCOMPARE(loaded.values.value("CursorType"), QJsonValue("Default")); QCOMPARE(loaded.values.value("CornerRadius"), QJsonValue(0));
+    QCOMPARE(loaded.values.value("Shadow"), QJsonValue(false)); QCOMPARE(loaded.values.value("ShadowColorHex"), QJsonValue("#80000000"));
+    const auto plain = drawingStyleFromPreferences(loaded);
+    QVERIFY(!hasDecoration(shape::rectangle, plain)); QCOMPARE(plain.cornerRadius, 0.0);
+    QVERIFY(plain.borderStyle == BorderStyle::Solid); QVERIFY(plain.arrowStyle == ArrowStyle::Classic); QVERIFY(!plain.shadow.enabled);
+    const auto emphasis = contentDefaultsFromPreferences(loaded, [](const QString &) { return true; });
+    QCOMPARE(emphasis.emphasis.blurStrength, 30.0); QCOMPARE(emphasis.emphasis.pixelateStrength, 20.0);
+    QCOMPARE(emphasis.emphasis.magnifyStrength, 2.0); QCOMPARE(emphasis.emphasis.spotlightStrength, 30.0);
+    QCOMPARE(emphasis.emphasis.spotlightBlur, 0.0); QVERIFY(!emphasis.emphasis.magnifyEllipse); QVERIFY(!emphasis.emphasis.spotlightEllipse);
+    QCOMPARE(emphasis.cursorType, QStringLiteral("Default")); QVERIFY(!emphasis.cursorTypeInert);
+    const QJsonObject custom{{"LastUsedAnnotationTool", "Spotlight"}, {"CornerRadius", 12}, {"Shadow", true}, {"ShadowColorHex", "#40112233"},
+        {"ShadowBlurRadius", 9.5}, {"ShadowOpacity", 0.25}, {"ShadowOffsetX", -7}, {"ShadowOffsetY", 8.5}, {"BorderStyle", "DashDot"},
+        {"ArrowStyle", "Modern"}, {"CursorType", "Arrow"}, {"BlurStrength", 12.5}, {"PixelateStrength", 40}, {"MagnifierStrength", 4},
+        {"MagnifierEllipse", true}, {"SpotlightStrength", 55}, {"SpotlightBlur", 6}, {"SpotlightEllipse", true}};
+    const auto loadedCustom = loadEditorPreferences(custom);
+    QVERIFY(loadedCustom.diagnostics.isEmpty());
+    for (auto it = custom.begin(); it != custom.end(); ++it) QCOMPARE(loadedCustom.fields.value(it.key()), PreferenceFieldState::Valid);
+    const auto style = drawingStyleFromPreferences(loadedCustom);
+    QCOMPARE(style.cornerRadius, 12.0); QVERIFY(style.borderStyle == BorderStyle::DashDot); QVERIFY(style.arrowStyle == ArrowStyle::Modern);
+    QVERIFY(style.shadow.enabled); QCOMPARE(style.shadow.color, Argb{0x40112233}); QCOMPARE(style.shadow.blurRadius, 9.5);
+    QCOMPARE(style.shadow.opacity, 0.25); QCOMPARE(style.shadow.offsetX, -7.0); QCOMPARE(style.shadow.offsetY, 8.5);
+    QCOMPARE(lastAnnotationToolFromPreferences(loadedCustom), QStringLiteral("Spotlight"));
+    const auto content = contentDefaultsFromPreferences(loadedCustom, [](const QString &) { return true; });
+    QCOMPARE(content.emphasis.blurStrength, 12.5); QCOMPARE(content.emphasis.pixelateStrength, 40.0); QCOMPARE(content.emphasis.magnifyStrength, 4.0);
+    QVERIFY(content.emphasis.magnifyEllipse); QCOMPARE(content.emphasis.spotlightStrength, 55.0); QCOMPARE(content.emphasis.spotlightBlur, 6.0);
+    QVERIFY(content.emphasis.spotlightEllipse); QCOMPARE(content.cursorType, QStringLiteral("Arrow"));
+    // drawingPreferenceValues is the inverse of drawingStyleFromPreferences.
+    const auto roundTrip = loadEditorPreferences(drawingPreferenceValues(style));
+    QVERIFY(roundTrip.diagnostics.isEmpty()); QVERIFY(sameDecoration(drawingStyleFromPreferences(roundTrip), style));
+  }
+  void creationEnumFieldsValidateRepairPerFieldAndKeepInertCursorsAsData_data() {
+    QTest::addColumn<QString>("field"); QTest::addColumn<QJsonValue>("value"); QTest::addColumn<bool>("valid");
+    for (const auto *style : {"Solid", "Dash", "Dot", "DashDot", "DashDotDot"}) QTest::newRow(qPrintable(QString("border-") + style)) << QString("BorderStyle") << QJsonValue(style) << true;
+    for (const auto *style : {"Classic", "Modern", "Double", "Basic", "Line"}) QTest::newRow(qPrintable(QString("arrow-") + style)) << QString("ArrowStyle") << QJsonValue(style) << true;
+    for (const auto &name : cursorTypeNames()) QTest::newRow(qPrintable("cursor-" + name)) << QString("CursorType") << QJsonValue(name) << true;
+    for (const auto *tool : {"Select", "Rectangle", "Ellipse", "Line", "Arrow", "Freehand", "Text", "SpeechBalloon", "Step", "Image", "Emoji", "Cursor",
+                             "Highlight", "SmartEraser", "Blur", "Pixelate", "Magnify", "Spotlight", "Crop", "CutOut"})
+      QTest::newRow(qPrintable(QString("tool-") + tool)) << QString("LastUsedAnnotationTool") << QJsonValue(tool) << true;
+    QTest::newRow("border-lower") << QString("BorderStyle") << QJsonValue("solid") << false;
+    QTest::newRow("border-unknown") << QString("BorderStyle") << QJsonValue("Wavy") << false;
+    QTest::newRow("border-number") << QString("BorderStyle") << QJsonValue(1) << false;
+    QTest::newRow("arrow-unknown") << QString("ArrowStyle") << QJsonValue("Fancy") << false;
+    QTest::newRow("cursor-unknown") << QString("CursorType") << QJsonValue("Spinner") << false;
+    QTest::newRow("tool-unknown") << QString("LastUsedAnnotationTool") << QJsonValue("Lasso") << false;
+    QTest::newRow("tool-empty") << QString("LastUsedAnnotationTool") << QJsonValue("") << false;
+    QTest::newRow("tool-number") << QString("LastUsedAnnotationTool") << QJsonValue(3) << false;
+    for (const auto *flag : {"Shadow", "MagnifierEllipse", "SpotlightEllipse"}) {
+      QTest::newRow(qPrintable(QString(flag) + "-true")) << QString(flag) << QJsonValue(true) << true;
+      QTest::newRow(qPrintable(QString(flag) + "-string")) << QString(flag) << QJsonValue("true") << false;
+      QTest::newRow(qPrintable(QString(flag) + "-number")) << QString(flag) << QJsonValue(1) << false;
+    }
+    QTest::newRow("shadow-colour-argb") << QString("ShadowColorHex") << QJsonValue("#80010203") << true;
+    QTest::newRow("shadow-colour-rgb") << QString("ShadowColorHex") << QJsonValue("#010203") << true;
+    QTest::newRow("shadow-colour-name") << QString("ShadowColorHex") << QJsonValue("black") << false;
+    QTest::newRow("shadow-colour-short") << QString("ShadowColorHex") << QJsonValue("#123") << false;
+  }
+  void creationEnumFieldsValidateRepairPerFieldAndKeepInertCursorsAsData() {
+    QFETCH(QString, field); QFETCH(QJsonValue, value); QFETCH(bool, valid);
+    const auto loaded = loadEditorPreferences({{field, value}, {"Thickness", 9}, {"FutureCreation", 1}});
+    QCOMPARE(loaded.fields.value(field), valid ? PreferenceFieldState::Valid : PreferenceFieldState::Invalid);
+    QCOMPARE(loaded.diagnostics, valid ? QStringList{} : QStringList{"invalid-" + field});
+    QCOMPARE(loaded.values.value("Thickness"), QJsonValue(9)); QCOMPARE(loaded.values.value("FutureCreation"), QJsonValue(1));
+    if (!valid) QCOMPARE(loaded.values.value(field), loadEditorPreferences({}).values.value(field));
+    QCOMPARE(bool(changeEditorPreferences(loadEditorPreferences({}), {{field, value}}).preferences), valid);
+    if (field == u"CursorType" && valid) {
+      const auto content = contentDefaultsFromPreferences(loaded, [](const QString &) { return true; });
+      QCOMPARE(content.requestedCursorType, value.toString());
+      QCOMPARE(content.cursorTypeInert, !cursorTypeImplemented(value.toString()));
+      QCOMPARE(content.cursorType, cursorTypeImplemented(value.toString()) ? value.toString() : QStringLiteral("Default"));
+      // An unavailable saved cursor survives an unrelated save untouched.
+      const auto kept = changeEditorPreferences(loaded, {{"Thickness", 5}}); QVERIFY(kept.preferences);
+      QCOMPARE(serializeEditorPreferences(*kept.preferences).value("CursorType"), value);
+    }
+    if (field == u"LastUsedAnnotationTool" && valid)
+      QCOMPARE(lastAnnotationToolFromPreferences(loaded), rememberableAnnotationTool(value.toString()) ? value.toString() : QStringLiteral("Rectangle"));
+    if (field == u"ShadowColorHex" && valid) QCOMPARE(loaded.values.value(field).toString().size(), 9);
+  }
+  void creationDefaultsPersistAtomicallyRoundTripUnknownsAndRepairTheDamagedFieldOnly() {
+    MemoryStorage storage;
+    storage.artifact = {PreferenceRead::Kind::Readable, envelope(QJsonObject{{"CornerRadius", 3}, {"FutureCreationOption", QJsonObject{{"x", 1}}}}), {}};
+    EditorPreferenceStore store(storage);
+    auto changed = changeEditorPreferences(store.preferences(), {{"CornerRadius", 8}, {"Shadow", true}, {"ShadowBlurRadius", 12}, {"BorderStyle", "Dot"},
+        {"ArrowStyle", "Double"}, {"CursorType", "Hand"}, {"LastUsedAnnotationTool", "Blur"}, {"PixelateStrength", 33}, {"SpotlightEllipse", true}});
+    QVERIFY(changed.preferences); storage.failReplace = true;
+    const QByteArray original = storage.artifact.bytes;
+    QVERIFY(!store.save(*changed.preferences).saved);  // a failed write publishes nothing
+    QCOMPARE(storage.artifact.bytes, original); QCOMPARE(store.preferences().values.value("CornerRadius"), QJsonValue(3));
+    storage.failReplace = false; QVERIFY(store.save(*changed.preferences).saved);
+    const auto current = section(storage, "current");
+    QCOMPARE(current.value("CornerRadius"), QJsonValue(8)); QCOMPARE(current.value("BorderStyle"), QJsonValue("Dot"));
+    QCOMPARE(current.value("CursorType"), QJsonValue("Hand")); QCOMPARE(current.value("LastUsedAnnotationTool"), QJsonValue("Blur"));
+    QCOMPARE(current.value("FutureCreationOption").toObject(), (QJsonObject{{"x", 1}}));
+    QCOMPARE(section(storage, "previous").value("CornerRadius"), QJsonValue(3));
+    EditorPreferenceStore restarted(storage);
+    QCOMPARE(restarted.preferences().values.value("PixelateStrength"), QJsonValue(33));
+    QCOMPARE(restarted.preferences().values.value("SpotlightEllipse"), QJsonValue(true));
+    QCOMPARE(restarted.preferences().values.value("Shadow"), QJsonValue(true));
+    // A damaged stored field is repaired alone and the rest of the creation defaults survive.
+    const auto repaired = loadEditorPreferences({{"CornerRadius", -4}, {"BorderStyle", "Dash"}, {"ShadowOpacity", 0.5}, {"MagnifierStrength", "x"}});
+    QCOMPARE(repaired.diagnostics, (QStringList{"invalid-CornerRadius", "invalid-MagnifierStrength"}));
+    QCOMPARE(repaired.values.value("BorderStyle"), QJsonValue("Dash")); QCOMPARE(repaired.values.value("ShadowOpacity"), QJsonValue(0.5));
+    const auto newer = loadEditorPreferences({{"schemaVersion", 2}, {"CornerRadius", 8}});
+    QVERIFY(newer.readOnly); QVERIFY(!changeEditorPreferences(newer, {{"CornerRadius", 9}}).preferences);
+  }
   void inertStepStylesAreNotImplementedButPreserved() {
     for (const auto *style : {"FutureStyle9", "uppercaseletter", "Roman"}) {
       const auto loaded = loadEditorPreferences({{"StepType", style}});

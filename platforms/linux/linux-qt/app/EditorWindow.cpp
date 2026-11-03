@@ -179,6 +179,9 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   guardEditorShutdown(*this);
   applyCreationDefaults();
   m_canvas = new EditorCanvas(*m_session, m_image, nullptr, displaySource);
+  // ESET-006: the saved last tool selects the first tool of this window only; it never edits objects.
+  if (const auto saved = EditorCanvas::toolFromName(lastAnnotationToolFromPreferences(nativeEditorPreferences()))) m_canvas->setTool(*saved);
+  connect(m_canvas, &EditorCanvas::toolChanged, this, &EditorWindow::rememberAnnotationTool);
   if (conveniencePreferencesFromPreferences(nativeEditorPreferences()).zoomToFit)
     QTimer::singleShot(0, m_canvas, &EditorCanvas::zoomToFit);
   const auto tools = annotationToolActions(*m_canvas, this);
@@ -563,7 +566,11 @@ bool EditorWindow::shapeStyleDefaultsDialog() {
     if (!owner || !chosen) return false;
     QString diagnostic;
     if (generation != owner->m_canvas->documentGeneration()) diagnostic = "annotation-edit-stale";
-    else { diagnostic = owner->m_session->editDecorationDefaults(*chosen, state, selection, defaults).diagnostic; }
+    else {
+      const auto edit = owner->m_session->editDecorationDefaults(*chosen, state, selection, defaults); diagnostic = edit.diagnostic;
+      // ESET-006: the decoration defaults persist like the colour and thickness ones, after the session accepted them.
+      if (edit.accepted && edit.defaultsChanged) { owner->persistDrawingDefaults(nativeEditorPreferenceRevision()); if (!owner) return false; }
+    }
     owner->m_annotationMessage = diagnostic.isEmpty() ? QString() : annotationEditMessage(diagnostic);
     owner->m_annotationMessageState = owner->m_session->stateId(); owner->refresh(); return diagnostic.isEmpty();
   });
@@ -593,6 +600,7 @@ void EditorWindow::applyCreationDefaults() {
   const auto defaults = drawingStyleFromPreferences(nativeEditorPreferences());
   auto style = m_session->toolStyle();
   style.strokeColor = defaults.strokeColor; style.fillColor = defaults.fillColor; style.strokeWidth = defaults.strokeWidth;
+  style.cornerRadius = defaults.cornerRadius; style.borderStyle = defaults.borderStyle; style.arrowStyle = defaults.arrowStyle; style.shadow = defaults.shadow;
   m_session->setCreationStyle(style);
   // ESET-008: missing fonts resolve to the native default here; the stored preference is never rewritten.
   m_session->setContentDefaults(contentDefaultsFromPreferences(nativeEditorPreferences(), nativeFontFamilyAvailable));
@@ -666,11 +674,15 @@ bool EditorWindow::changeStrokeWidth(bool increase) {
     owner->m_annotationMessageState = owner->m_session->stateId(); owner->refresh(); return changed;
   });
 }
+void EditorWindow::rememberAnnotationTool() {
+  const QString name = EditorCanvas::toolName(m_canvas->tool());
+  if (!rememberableAnnotationTool(name) || name == lastAnnotationToolFromPreferences(nativeEditorPreferences())) return;
+  const auto written = applyDrawingDefaults({{QStringLiteral("LastUsedAnnotationTool"), name}}, nativeEditorPreferenceRevision());
+  if (!written.saved) m_drawingPreferenceDiagnostic = written.diagnostic;
+}
 void EditorWindow::persistDrawingDefaults(quint64 expectedRevision) {
   const auto style = m_session->toolStyle(); const QPointer<EditorWindow> owner(this);
-  const auto written = applyDrawingDefaults({{QStringLiteral("BorderColorHex"), formatColor(style.strokeColor)},
-      {QStringLiteral("FillColorHex"), formatColor(style.fillColor)}, {QStringLiteral("Thickness"), style.strokeWidth}},
-      expectedRevision);
+  const auto written = applyDrawingDefaults(drawingPreferenceValues(style), expectedRevision);
   if (owner) owner->m_drawingPreferenceDiagnostic = written.diagnostic;
 }
 

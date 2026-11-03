@@ -17,6 +17,8 @@
 #include <QPushButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
+#include <memory>
+#include <vector>
 
 namespace xerahs::app {
 using namespace xerahs::editor;
@@ -53,6 +55,57 @@ bool manageDrawingDefaults(QWidget *parent) {
   auto *thickness = new QSpinBox(dialog); thickness->setObjectName(QStringLiteral("defaultStrokeThickness"));
   thickness->setAccessibleName(QStringLiteral("Stroke thickness in pixels")); thickness->setRange(1, 10000);
   thickness->setValue(original.values.value(u"Thickness").toInt()); form->addRow(QStringLiteral("Thickness (pixels)"), thickness);
+  // ESET-006: shape decoration, shadow, cursor and emphasis/redaction creation defaults. Every number uses
+  // the shared inclusive range (ESET-009) so the control, config load and automation agree.
+  struct NumberControl { QString key; QDoubleSpinBox *spin; double saved, initial; };
+  struct FlagControl { QString key; QCheckBox *box; };
+  struct ChoiceControl { QString key; QComboBox *combo; };
+  const auto numbers = std::make_shared<std::vector<NumberControl>>();
+  const auto flags = std::make_shared<std::vector<FlagControl>>();
+  const auto choices = std::make_shared<std::vector<ChoiceControl>>();
+  const auto number = [=](const QString &key, const QString &label, const QString &name, const QString &unit) {
+    const auto range = preferenceNumericRange(key);
+    auto *spin = new QDoubleSpinBox(dialog); spin->setObjectName(name); spin->setAccessibleName(label + unit);
+    spin->setDecimals(range && range->integer ? 0 : 4); if (range) spin->setRange(range->minimum, range->maximum);
+    const double saved = original.values.value(key).toDouble(); spin->setValue(saved);
+    numbers->push_back({key, spin, saved, spin->value()}); form->addRow(label + unit, spin);
+  };
+  const auto flag = [=](const QString &key, const QString &label, const QString &name) {
+    auto *box = new QCheckBox(label, dialog); box->setObjectName(name); box->setChecked(original.values.value(key).toBool());
+    flags->push_back({key, box}); form->addRow(box);
+  };
+  const auto choice = [=](const QString &key, const QString &label, const QString &name, const QStringList &entries) {
+    auto *combo = new QComboBox(dialog); combo->setObjectName(name); combo->setAccessibleName(label);
+    for (const auto &entry : entries) combo->addItem(entry, entry);
+    const QString saved = original.values.value(key).toString();
+    if (combo->findData(saved) < 0) combo->addItem(saved + QStringLiteral(" (not available yet)"), saved);
+    combo->setCurrentIndex(std::max(0, combo->findData(saved)));
+    choices->push_back({key, combo}); form->addRow(label, combo);
+  };
+  auto *shapesHeading = new QLabel(QStringLiteral("Shapes, arrows and shadows"), dialog); form->addRow(shapesHeading);
+  number(QStringLiteral("CornerRadius"), QStringLiteral("Rectangle corner radius"), QStringLiteral("defaultCornerRadius"), QStringLiteral(" (pixels)"));
+  choice(QStringLiteral("BorderStyle"), QStringLiteral("Border style"), QStringLiteral("defaultBorderStyle"), {"Solid", "Dash", "Dot", "DashDot", "DashDotDot"});
+  choice(QStringLiteral("ArrowStyle"), QStringLiteral("Arrow style"), QStringLiteral("defaultArrowStyle"), {"Classic", "Modern", "Double", "Basic", "Line"});
+  flag(QStringLiteral("Shadow"), QStringLiteral("Drop shadow"), QStringLiteral("defaultShadow"));
+  auto *shadowColourRow = new QHBoxLayout;
+  auto *shadowColour = new QLineEdit(original.values.value(u"ShadowColorHex").toString(), dialog);
+  shadowColour->setObjectName(QStringLiteral("defaultShadowColour")); shadowColour->setAccessibleName(QStringLiteral("Shadow colour"));
+  shadowColour->setAccessibleDescription(QStringLiteral("Hexadecimal #RRGGBB or #AARRGGBB. The first pair in eight digits is alpha."));
+  shadowColourRow->addWidget(shadowColour); form->addRow(QStringLiteral("Shadow colour"), shadowColourRow);
+  number(QStringLiteral("ShadowBlurRadius"), QStringLiteral("Shadow blur"), QStringLiteral("defaultShadowBlur"), QStringLiteral(" (pixels)"));
+  number(QStringLiteral("ShadowOpacity"), QStringLiteral("Shadow opacity"), QStringLiteral("defaultShadowOpacity"), QStringLiteral(" (0 to 1)"));
+  number(QStringLiteral("ShadowOffsetX"), QStringLiteral("Shadow horizontal offset"), QStringLiteral("defaultShadowOffsetX"), QStringLiteral(" (pixels)"));
+  number(QStringLiteral("ShadowOffsetY"), QStringLiteral("Shadow vertical offset"), QStringLiteral("defaultShadowOffsetY"), QStringLiteral(" (pixels)"));
+  auto *cursorHeading = new QLabel(QStringLiteral("Cursor"), dialog); form->addRow(cursorHeading);
+  choice(QStringLiteral("CursorType"), QStringLiteral("Cursor type"), QStringLiteral("defaultCursorType"), {"Default", "Arrow"});
+  auto *emphasisHeading = new QLabel(QStringLiteral("Emphasis and redaction (0 keeps the tool's built-in strength)"), dialog); form->addRow(emphasisHeading);
+  number(QStringLiteral("BlurStrength"), QStringLiteral("Blur strength"), QStringLiteral("defaultBlurStrength"), QStringLiteral(" (pixels)"));
+  number(QStringLiteral("PixelateStrength"), QStringLiteral("Pixelate cell size"), QStringLiteral("defaultPixelateStrength"), QStringLiteral(" (pixels)"));
+  number(QStringLiteral("MagnifierStrength"), QStringLiteral("Magnifier zoom"), QStringLiteral("defaultMagnifierStrength"), QStringLiteral(" (factor)"));
+  flag(QStringLiteral("MagnifierEllipse"), QStringLiteral("Magnifier uses an elliptical region"), QStringLiteral("defaultMagnifierEllipse"));
+  number(QStringLiteral("SpotlightStrength"), QStringLiteral("Spotlight dimming"), QStringLiteral("defaultSpotlightStrength"), QStringLiteral(" (percent)"));
+  number(QStringLiteral("SpotlightBlur"), QStringLiteral("Spotlight blur of the dimmed area"), QStringLiteral("defaultSpotlightBlur"), QStringLiteral(" (pixels)"));
+  flag(QStringLiteral("SpotlightEllipse"), QStringLiteral("Spotlight uses an elliptical region"), QStringLiteral("defaultSpotlightEllipse"));
   // ESET-008: Text, Speech Balloon and Step content defaults.
   struct TextControls { QString familyKey, sizeKey, boldKey, italicKey, alignKey; QComboBox *family; QDoubleSpinBox *size; QCheckBox *bold, *italic; QComboBox *align; double initialSize = 0; double savedSize = 0; };
   const auto textSection = [=](const QString &title, const QString &prefix, const QString &familyKey, const QString &sizeKey,
@@ -133,6 +186,10 @@ bool manageDrawingDefaults(QWidget *parent) {
     fill->setText(defaults.values.value(u"FillColorHex").toString()); if (!dialog) return;
     thickness->setValue(defaults.values.value(u"Thickness").toInt()); if (!dialog) return;
     resetText(textControls, defaults); resetText(balloonControls, defaults);
+    for (const auto &control : *numbers) control.spin->setValue(defaults.values.value(control.key).toDouble());
+    for (const auto &control : *flags) control.box->setChecked(defaults.values.value(control.key).toBool());
+    for (const auto &control : *choices) control.combo->setCurrentIndex(std::max(0, control.combo->findData(defaults.values.value(control.key).toString())));
+    shadowColour->setText(defaults.values.value(u"ShadowColorHex").toString());
     stepSize->setValue(defaults.values.value(u"StepFontSize").toDouble()); stepStyle->setCurrentIndex(0);
     if (dialog) error->clear();
   });
@@ -142,11 +199,15 @@ bool manageDrawingDefaults(QWidget *parent) {
         {QStringLiteral("FillColorHex"), fill->text()}, {QStringLiteral("Thickness"), thickness->value()}};
     QJsonObject changes = base;
     textDraft(changes, textControls); textDraft(changes, balloonControls);
+    for (const auto &control : *numbers) changes.insert(control.key, control.spin->value() == control.initial ? control.saved : control.spin->value());
+    for (const auto &control : *flags) changes.insert(control.key, control.box->isChecked());
+    for (const auto &control : *choices) changes.insert(control.key, control.combo->currentData().toString());
+    changes.insert(QStringLiteral("ShadowColorHex"), shadowColour->text());
     changes.insert(QStringLiteral("StepFontSize"), stepSize->value() == initialStepSize ? savedStepSize : stepSize->value()); changes.insert(QStringLiteral("StepType"), stepStyle->currentData().toString());
     dialog->commit([changes, revision] { return applyDrawingDefaults(changes, revision); }, [=](const PreferenceWrite &written) {
-      if (written.diagnostic == u"invalid-BorderColorHex" || written.diagnostic == u"invalid-FillColorHex") {
-        error->setText(QStringLiteral("Enter stroke and fill colours as #RRGGBB or #AARRGGBB."));
-        if (dialog) (written.diagnostic == u"invalid-BorderColorHex" ? stroke : fill)->setFocus();
+      if (written.diagnostic == u"invalid-BorderColorHex" || written.diagnostic == u"invalid-FillColorHex" || written.diagnostic == u"invalid-ShadowColorHex") {
+        error->setText(QStringLiteral("Enter stroke, fill and shadow colours as #RRGGBB or #AARRGGBB."));
+        if (dialog) (written.diagnostic == u"invalid-BorderColorHex" ? stroke : written.diagnostic == u"invalid-FillColorHex" ? fill : shadowColour)->setFocus();
       } else error->setText(editorPreferenceDiagnosticMessage(written.diagnostic));
     });
   });

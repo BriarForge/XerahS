@@ -150,6 +150,25 @@ QString toolLabel(const QString &type) {
 }
 }  // namespace
 
+namespace {
+const std::array<std::pair<EditorCanvas::Tool, const char *>, 20> &toolNames() {
+  using T = EditorCanvas::Tool;
+  static const std::array<std::pair<T, const char *>, 20> names{{{T::Select, "Select"}, {T::Rectangle, "Rectangle"}, {T::Crop, "Crop"},
+      {T::Ellipse, "Ellipse"}, {T::Line, "Line"}, {T::Arrow, "Arrow"}, {T::Freehand, "Freehand"}, {T::Text, "Text"}, {T::Step, "Step"},
+      {T::Highlight, "Highlight"}, {T::Blur, "Blur"}, {T::Pixelate, "Pixelate"}, {T::SpeechBalloon, "SpeechBalloon"}, {T::Magnify, "Magnify"},
+      {T::Spotlight, "Spotlight"}, {T::SmartEraser, "SmartEraser"}, {T::Image, "Image"}, {T::Emoji, "Emoji"}, {T::Cursor, "Cursor"}, {T::CutOut, "CutOut"}}};
+  return names;
+}
+}  // namespace
+QString EditorCanvas::toolName(Tool tool) {
+  for (const auto &entry : toolNames()) if (entry.first == tool) return QLatin1String(entry.second);
+  return {};
+}
+std::optional<EditorCanvas::Tool> EditorCanvas::toolFromName(const QString &name) {
+  for (const auto &entry : toolNames()) if (name == QLatin1String(entry.second)) return entry.first;
+  return std::nullopt;
+}
+
 QString EditorCanvas::shapeType(Tool tool) {
   switch (tool) {
     case Tool::Select: case Tool::Crop: case Tool::CutOut: return {};
@@ -679,6 +698,14 @@ bool EditorCanvas::createFromGesture(const std::vector<PointF> &gesture) {
     return m_session->createShape({gesture.front(), gesture.front(), creation->style}, content, creation->state, creation->selection), true;
   }
   content.points = geometry->points;
+  // ESET-006: emphasis and redaction defaults seed this new object only (frozen at pointer-down).
+  if (hasShapeStrength(type)) {
+    const auto &emphasis = creation->content.emphasis;
+    content.strength = type == shape::blur ? emphasis.blurStrength : type == shape::pixelate ? emphasis.pixelateStrength
+        : type == shape::magnify ? emphasis.magnifyStrength : emphasis.spotlightStrength;
+    if (type == shape::magnify) content.isEllipse = emphasis.magnifyEllipse;
+    if (type == shape::spotlight) { content.isEllipse = emphasis.spotlightEllipse; content.blurAmount = emphasis.spotlightBlur; }
+  }
   if (type == shape::step) { content.stepValue = nextStepNumber(); content.stepStyle = creation->content.stepStyle; content.fontSize = creation->content.stepFontSize; }
   if (type == shape::speechBalloon) content.points = {{0.2, 1.6}};  // default tail below the balloon
   if (type == shape::text || type == shape::speechBalloon) {
@@ -1001,7 +1028,7 @@ bool EditorCanvas::createAsset(const QString &type, const std::vector<PointF> &g
   content.imageKey = "asset-" + QUuid::createUuid().toString(QUuid::WithoutBraces);
   // EA-010: record which emoji was chosen and which cursor type was drawn, beside the pixels.
   if (type == shape::emoji) { content.unicodeSequence = unicodeSequenceOf(emojiText); content.displayName = emojiDisplayName(content.unicodeSequence); }
-  else content.cursorType = QStringLiteral("Default");
+  else content.cursorType = creation.content.cursorType;
   m_session->createShape({start, end, creation.style}, content, creation.state, creation.selection, {{content.imageKey, png}});
   return true;
 }
