@@ -181,7 +181,8 @@ void HashCheckerDialog::compute() {
 }
 
 void HashCheckerDialog::cancel() {
-  if (!m_cancelled) return;
+  // Closing a finished window must not overwrite its terminal result with "Cancelling…".
+  if (!m_cancelled || !m_running) return;
   m_work.cancel();
   m_cancelled->store(true);
   m_progress->setEnabled(false);
