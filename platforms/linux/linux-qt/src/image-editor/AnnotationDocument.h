@@ -35,7 +35,14 @@ enum class BorderStyle { Solid, Dash, Dot, DashDot, DashDotDot };
 QString borderStyleName(BorderStyle style);
 std::optional<BorderStyle> parseBorderStyle(const QString &name);
 
-// EA-005: drop shadow of a Rectangle or Ellipse. Field names and defaults
+// EA-006: arrow head style. Names and members follow the reference XANN
+// format (`style`, camelCase: classic, modern, double, basic, line; read
+// case-insensitively). Modern is a straight tapered arrow and cannot be curved.
+enum class ArrowStyle { Classic, Modern, Double, Basic, Line };
+QString arrowStyleName(ArrowStyle style);
+std::optional<ArrowStyle> parseArrowStyle(const QString &name);
+
+// EA-005/EA-006: drop shadow of a Rectangle, Ellipse, Line or Arrow. Field names and defaults
 // follow the reference XANN format for interoperability with existing files
 // (shadowEnabled, shadowColor, shadowBlurRadius, shadowOpacity, shadowOffsetX,
 // shadowOffsetY). Ranges are this build's bounded validation (kMax* below).
@@ -55,6 +62,8 @@ struct ShapeShadow {
 inline constexpr double kMaxCornerRadius = 10000;
 inline constexpr double kMaxShadowBlur = 1000;
 inline constexpr double kMaxShadowOffset = 10000;
+// EA-006: the curve anchor is a fraction of the bounds; this bounds it.
+inline constexpr double kMaxCurveFraction = 1000000;
 
 // ES-003, ES-023, ES-024: qualification defaults.
 struct RectangleStyle {
@@ -67,13 +76,16 @@ struct RectangleStyle {
   BorderStyle borderStyle = BorderStyle::Solid;
   double cornerRadius = 0;  // whole pixels, Rectangle only; ignored for every other type
   ShapeShadow shadow;
+  // EA-006. Absent in older documents: Classic. Arrow only; ignored elsewhere.
+  ArrowStyle arrowStyle = ArrowStyle::Classic;
 };
 // True when `style` is not the legacy undecorated look for `type`.
 bool hasDecoration(const QString &type, const RectangleStyle &style);
 // Finite and within range (EA-020). Fields that do not apply to `type` are not checked.
 bool validDecoration(const QString &type, const RectangleStyle &style);
 bool sameDecoration(const RectangleStyle &a, const RectangleStyle &b);
-// Types that carry the EA-005 fields.
+// Types that carry the EA-005 border style and shadow: Rectangle, Ellipse
+// and (EA-006) Line and Arrow. Corner radius is Rectangle only, arrow style Arrow only.
 bool hasShapeDecoration(const QString &type);
 
 // ESET-008: creation-time content defaults for new Text, SpeechBalloon and Step
@@ -130,7 +142,12 @@ inline constexpr int kMaxTextLength = 100000;
 inline constexpr qint64 kMaxStepValue = 1000000000;
 struct ShapeContent {
   QString type = shape::rectangle;
-  std::vector<PointF> points;  // speech-balloon: points[0] is the tail tip
+  // speech-balloon: points[0] is the tail tip. line and arrow: points[0] is
+  // the start and points[1] the end (direction); an optional points[2] is the
+  // EA-006 curve anchor, the point the quadratic curve passes through at its
+  // middle. All are fractions of the bounds, so move, resize, flip and any
+  // shared transform carry the curve with the endpoints.
+  std::vector<PointF> points;
   QString text;           // text: content; step: unused
   double fontSize = 0;    // text and step; 0 uses the type default
   qint64 stepValue = 0;   // EA-009: the displayed step number

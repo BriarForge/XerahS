@@ -133,3 +133,9 @@ keeps the exact ES-025 renderer. Edit > Rectangle Properties edits a selected
 shape (one undo step); Edit > Shape Style Defaults sets session creation
 defaults without touching existing objects. Ellipse stroke-geometry golden
 parity remains pending clarification EA-005-LINUX-2026-10-14.
+
+## Line and Arrow style (EA-006)
+
+- Fields: `borderStyle` and the `shadow*` set exactly as for Rectangle and Ellipse; Arrow adds `style` (classic, modern, double, basic, line; omitted when classic). Omitted at default; older documents load at the defaults.
+- Curve: optional third entry of `points` (fraction of the bounds) that the quadratic curve passes through at its middle. The reference `curvePoint`/`curvePointActivated` (document pixels) are read and converted. Modern arrows are straight.
+- Edit in Edit > Properties (border, arrow style, curve, shadow); one undo step. Shape Style Defaults also sets the arrow style for new arrows.

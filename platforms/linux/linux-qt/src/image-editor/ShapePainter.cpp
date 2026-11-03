@@ -1,6 +1,7 @@
 #include "image-editor/ShapePainter.h"
 
 #include "image-editor/FreehandPath.h"
+#include "image-editor/RectangleGeometry.h"
 
 #include <QBuffer>
 #include <QCryptographicHash>
@@ -13,6 +14,7 @@
 
 #include <algorithm>
 #include <array>
+#include <functional>
 #include <cmath>
 #include <vector>
 
@@ -155,12 +157,13 @@ void drawBox(QPainter &painter, const RectangleAnnotation &shape, const QRectF &
 // offset in document axes, blurred, then tinted. It is rasterized at document
 // resolution so the canvas (any zoom) and the exporter produce the same
 // pixels; the result is drawn under the shape before it.
-void paintShadow(QPainter &painter, const RectangleAnnotation &shape, const QRectF &box) {
+// `extent` is the unrotated area the silhouette occupies and `draw` paints it.
+void paintShadow(QPainter &painter, const RectangleAnnotation &shape, const QRectF &extent, const std::function<void(QPainter &)> &draw) {
   const ShapeShadow &shadow = shape.style.shadow;
   const int radius = std::max(0, int(std::lround(shadow.blurRadius)));
   const QTransform rotation = shapeRotation(shape);
   const double reach = shape.style.strokeWidth / 2 + 3.0 * radius + 2;
-  const QRect region = rotation.mapRect(box).adjusted(-reach, -reach, reach, reach).toAlignedRect();
+  const QRect region = rotation.mapRect(extent).adjusted(-reach, -reach, reach, reach).toAlignedRect();
   constexpr qint64 kMaxShadowPixels = 64LL * 1024 * 1024;
   if (region.width() < 1 || region.height() < 1 || qint64(region.width()) * region.height() > kMaxShadowPixels) return;
   QImage mask(region.size(), QImage::Format_ARGB32_Premultiplied);
@@ -170,7 +173,7 @@ void paintShadow(QPainter &painter, const RectangleAnnotation &shape, const QRec
     inner.setRenderHint(QPainter::Antialiasing);
     inner.translate(-region.topLeft());
     inner.setWorldTransform(rotation, true);
-    drawBox(inner, shape, box);
+    draw(inner);
   }
   boxBlur(mask, radius);
   QPainter tint(&mask);
@@ -218,17 +221,132 @@ void paintBalloon(QPainter &painter, const RectangleAnnotation &shape) {
   painter.drawText(box.adjusted(pad, pad, -pad, -pad), horizontalAlignment(shape.content, Qt::AlignHCenter) | Qt::AlignVCenter | Qt::TextWordWrap, shape.content.text);
 }
 
-void paintArrowHead(QPainter &painter, QPointF from, QPointF tip, double width, const QColor &fill) {
-  const double dx = tip.x() - from.x(), dy = tip.y() - from.y();
-  const double length = std::hypot(dx, dy);
-  if (!(length > 0)) return;
-  const double size = std::max(width * 3, 12.0);
-  const double ux = dx / length, uy = dy / length;
-  const QPointF base(tip.x() - ux * size, tip.y() - uy * size);
-  const QPointF side(-uy * size / 2, ux * size / 2);
-  QPainterPath head;
-  head.moveTo(tip); head.lineTo(base + side); head.lineTo(base - side); head.closeSubpath();
-  painter.fillPath(head, fill);
+// EA-006: the drawable parts of a Line or Arrow, in document coordinates before
+// the shape's own rotation. `shaft` takes the border style; `filled` and
+// `stroked` are the arrow heads and always use a solid pen (dashing a head
+// would break its outline). The head geometry follows the reference XerahS
+// ArrowAnnotation: head half width is stroke width times 2 (classic, double),
+// 3 (modern) or 1.75 (basic, line), head length is three times that.
+struct LineParts {
+  QPainterPath shaft, filled, stroked;
+  QRectF extent() const { return shaft.boundingRect().united(filled.boundingRect()).united(stroked.boundingRect()); }
+};
+
+QPointF qpoint(PointF p) { return {p.x, p.y}; }
+
+bool unit(QPointF tangent, QPointF &u) {
+  const double length = std::hypot(tangent.x(), tangent.y());
+  if (!(length > 0)) return false;
+  u = tangent / length;
+  return true;
+}
+
+// Filled classic cap: tip, left base, a quadratic back curve to the right base.
+void addClassicCap(QPainterPath &out, QPointF tip, QPointF tangent, double halfWidth) {
+  QPointF u;
+  if (!unit(tangent, u)) return;
+  const QPointF perpendicular(-u.y(), u.x());
+  const QPointF base = tip - u * (halfWidth * 3);
+  out.moveTo(tip);
+  out.lineTo(base + perpendicular * halfWidth);
+  out.quadTo(tip - u * (halfWidth * 2), base - perpendicular * halfWidth);
+  out.closeSubpath();
+}
+
+LineParts lineParts(const RectangleAnnotation &shape) {
+  LineParts parts;
+  const auto &points = shape.content.points;
+  const bool arrow = shape.type() == shape::arrow;
+  const ArrowStyle style = shape.style.arrowStyle;
+  if (points.size() > 3) {  // legacy polyline: every point in order, head on the last segment
+    for (std::size_t i = 0; i < points.size(); ++i) {
+      const QPointF p = mapped(shape, points[i]);
+      if (i == 0) parts.shaft.moveTo(p); else parts.shaft.lineTo(p);
+    }
+    if (arrow) {
+      const QPointF tip = mapped(shape, points.back());
+      addClassicCap(parts.filled, tip, tip - mapped(shape, points[points.size() - 2]), std::max(shape.style.strokeWidth * 2, 6.0));
+    }
+    return parts;
+  }
+  const QPointF start = qpoint(lineStart(shape)), end = qpoint(lineEnd(shape));
+  const bool curved = lineHasCurve(shape);
+  QPointF controlPoint;
+  parts.shaft.moveTo(start);
+  if (curved) {
+    controlPoint = qpoint(quadraticControl({start.x(), start.y()}, {end.x(), end.y()}, *lineAnchor(shape)));
+    parts.shaft.quadTo(controlPoint, end);
+  } else {
+    parts.shaft.lineTo(end);
+  }
+  if (!arrow) return parts;
+  // Tangents follow the curve (reference: control point, falling back to the chord).
+  const auto tangentAt = [&](bool atEnd) {
+    QPointF t = atEnd ? end - (curved ? controlPoint : start) : (curved ? controlPoint : end) - start;
+    if (std::hypot(t.x(), t.y()) < 0.001) t = end - start;
+    return t;
+  };
+  const double width = shape.style.strokeWidth;
+  const QPointF endTangent = tangentAt(true);
+  QPointF u;
+  switch (style) {
+    case ArrowStyle::Modern: {
+      // Straight, tapered: a polygon from the start to a wide head (never curved).
+      if (!unit(end - start, u)) break;
+      parts.shaft = QPainterPath();
+      const double size = width * 3, headHeight = size * 2.5, baseWidth = size * 1.5;
+      const double wing = baseWidth * std::tan(3.14159265358979323846 / 5.14), shaftWidth = baseWidth * 0.25;
+      const QPointF perpendicular(-u.y(), u.x()), base = end - u * headHeight;
+      parts.filled.moveTo(start);
+      parts.filled.lineTo(base + perpendicular * shaftWidth);
+      parts.filled.lineTo(base + perpendicular * wing);
+      parts.filled.lineTo(end);
+      parts.filled.lineTo(base - perpendicular * wing);
+      parts.filled.lineTo(base - perpendicular * shaftWidth);
+      parts.filled.closeSubpath();
+      break;
+    }
+    case ArrowStyle::Basic: {
+      if (!unit(endTangent, u)) break;
+      const double half = width * 1.75;
+      const QPointF perpendicular(-u.y(), u.x()), base = end - u * (half * 3);
+      parts.filled.moveTo(end); parts.filled.lineTo(base + perpendicular * half); parts.filled.lineTo(base - perpendicular * half);
+      parts.filled.closeSubpath();
+      break;
+    }
+    case ArrowStyle::Line: {
+      if (!unit(endTangent, u)) break;
+      const double half = width * 1.75;
+      const QPointF perpendicular(-u.y(), u.x()), base = end - u * (half * 3);
+      parts.stroked.moveTo(base + perpendicular * half); parts.stroked.lineTo(end); parts.stroked.lineTo(base - perpendicular * half);
+      break;
+    }
+    case ArrowStyle::Double:
+      addClassicCap(parts.filled, start, -tangentAt(false), width * 2);
+      addClassicCap(parts.filled, end, endTangent, width * 2);
+      break;
+    case ArrowStyle::Classic:
+      addClassicCap(parts.filled, end, endTangent, width * 2);
+      break;
+  }
+  return parts;
+}
+
+void drawLineParts(QPainter &painter, const RectangleAnnotation &shape, const LineParts &parts) {
+  const RectangleStyle &style = shape.style;
+  const QColor ink = color(style.strokeColor);
+  painter.setBrush(Qt::NoBrush);
+  // Dashed styles use flat caps, otherwise round caps would fuse dashes back into a solid line.
+  const bool solid = style.borderStyle == BorderStyle::Solid;
+  QPen shaftPen(ink, style.strokeWidth, penStyleOf(style.borderStyle), solid ? Qt::RoundCap : Qt::FlatCap, Qt::RoundJoin);
+  painter.setPen(shaftPen);
+  painter.drawPath(parts.shaft);
+  const QPen headPen(ink, style.strokeWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+  painter.setPen(headPen);
+  painter.setBrush(ink);
+  painter.drawPath(parts.filled);
+  painter.setBrush(Qt::NoBrush);
+  painter.drawPath(parts.stroked);
 }
 
 }  // namespace
@@ -284,11 +402,18 @@ void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImag
   painter.setOpacity(painter.opacity() * style.opacity);
   // EA-005: the shadow offset follows document axes, so it is drawn before the
   // shape's own rotation is applied.
-  if (hasShapeDecoration(type) && style.shadow.enabled) paintShadow(painter, shape, box);
+  std::optional<LineParts> line;  // EA-006: Line and Arrow share the shape painter
+  if (type == shape::line || type == shape::arrow) line = lineParts(shape);
+  if (hasShapeDecoration(type) && style.shadow.enabled) {
+    if (line) paintShadow(painter, shape, line->extent(), [&](QPainter &inner) { drawLineParts(inner, shape, *line); });
+    else paintShadow(painter, shape, box, [&](QPainter &inner) { drawBox(inner, shape, box); });
+  }
   painter.setWorldTransform(shapeRotation(shape), true);
   const QPen stroke(color(style.strokeColor), style.strokeWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
   if (type == shape::rectangle || type == shape::ellipse) {
     drawBox(painter, shape, box);
+  } else if (line) {
+    drawLineParts(painter, shape, *line);
   } else if (isPathShape(type)) {
     QPainterPath path;
     for (std::size_t i = 0; i < shape.content.points.size(); ++i) {
@@ -298,10 +423,6 @@ void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImag
     painter.setBrush(Qt::NoBrush);
     painter.setPen(stroke);
     painter.drawPath(path);
-    const auto &points = shape.content.points;
-    if (type == shape::arrow && points.size() >= 2)
-      paintArrowHead(painter, mapped(shape, points[points.size() - 2]), mapped(shape, points.back()), style.strokeWidth,
-                     color(style.strokeColor));
   } else if (type == shape::text) {
     const Argb fill = shape.content.textFillColor.value_or(style.fillColor);
     if (qAlpha(fill) > 0) painter.fillRect(box, color(fill));

@@ -115,11 +115,12 @@
       }
     },
     "EA-006": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Ordered path points and direction survive movement/flip and round-trip tests. Curved control geometry, border/arrow style and shadow semantics are incomplete.",
+      "note": "Line and Arrow preserve ordered endpoints (direction), optional curved control geometry, border style (solid/dash/dot/dashDot/dashDotDot), thickness, arrow style (classic/modern/double/basic/line), shadow and opacity through bounded XANN read/write (unknown fields kept, older documents load at defaults and re-serialize byte-identically), one shared paintShape path for canvas and export, one-undo-step native edit dialog, session creation defaults, copy/paste/duplicate, move and resize. Decisions: (1) borderStyle, shadow* reuse the EA-005 names, values and defaults, which follow the reference XerahS Annotation.cs/LineAnnotation.cs/BorderStyle.cs; the reference Arrow has no borderStyle, so Arrow also accepts it (dashes the shaft, head stays solid) because EA-006 lists border style for both. (2) Arrow style is persisted as `style` with camelCase values classic/modern/double/basic/line, read case-insensitively, as in reference ArrowAnnotation.cs/ArrowStyle.cs; head geometry and size multipliers (2.0 classic/double, 3.0 modern, 1.75 basic/line, length 3x) follow the reference, so head size is derived from thickness and has no field; Modern is straight and drops the curve, as in the reference CurvedSegmentHelper. (3) The reference stores the curve as `curvePoint` {x,y} in document pixels plus `curvePointActivated` (a point the quadratic passes through at its middle). Here it is the optional third entry of the fractional `points`, so move/resize/flip and the shared all-annotation transform carry it with the endpoints; reference curvePoint/curvePointActivated are accepted on read and converted. Writes use points[2]. Lines or arrows with more than 3 points remain legacy polylines. Curve anchor fractions are bounded to +-1e6. (4) Shadow, ranges and the 1px minimum box follow EA-005. Open: no on-canvas curve drag handle yet (curve is edited in the properties dialog); golden pixels for arrow heads are not contract-defined.",
       "evidence": [
+        "platforms/linux/linux-qt/tests/LineArrowStyleTest.cpp",
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
@@ -127,9 +128,9 @@
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 31,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+        "coverage": "EA-006 field preservation is covered by LineArrowStyleTest (round-trip, reference-style JSON, defaults, rejection, dash gaps, head shape per style, curve geometry, shadow, canvas==export, native edit one undo step, copy/paste, move/resize direction and control geometry).",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },

@@ -22,6 +22,9 @@ private:
   void addDecorationRows(QFormLayout *, const xerahs::editor::RectangleAnnotation &);
   bool readDecoration(xerahs::editor::RectangleStyle &);
   QComboBox *m_borderStyle = nullptr;
+  QComboBox *m_arrowStyle = nullptr;  // EA-006: Arrow and the defaults dialog
+  QCheckBox *m_curve = nullptr;       // EA-006: Line and Arrow curve anchor rows
+  xerahs::editor::RectangleAnnotation m_source;
   QCheckBox *m_shadow = nullptr;
   bool m_hasCorner = false;
   xerahs::editor::RectangleProperties m_original;

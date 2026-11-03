@@ -116,6 +116,12 @@ bool parseDecoration(const QJsonObject &o, const QString &type, RectangleStyle &
     if (!parsed) return false;
     style.borderStyle = *parsed;
   }
+  if (type == shape::arrow && o.contains(u"style")) {
+    const QJsonValue v = o.value(u"style");
+    const auto parsed = v.isString() ? parseArrowStyle(v.toString()) : std::nullopt;
+    if (!parsed) return false;
+    style.arrowStyle = *parsed;
+  }
   if (type == shape::rectangle && (!number(u"cornerRadius", 0, kMaxCornerRadius, style.cornerRadius) ||
                                    (o.contains(u"cornerRadius") && !isInteger(o.value(u"cornerRadius")))))
     return false;
@@ -133,6 +139,30 @@ bool parseDecoration(const QJsonObject &o, const QString &type, RectangleStyle &
     const auto color = v.isString() ? parseColor(v.toString()) : std::nullopt;
     if (!color) return false;
     style.shadow.color = *color;
+  }
+  return true;
+}
+
+// EA-006: line/arrow curve anchor. Persisted as the optional third entry of
+// `points` (a fraction of the bounds like the endpoints). The reference XANN
+// format stores `curvePoint` {x, y} in document pixels plus
+// `curvePointActivated`; those are accepted on read when `points` holds only
+// the two endpoints, and converted to the fractional form.
+bool parseCurve(const QJsonObject &o, RectangleAnnotation &r) {
+  auto &points = r.content.points;
+  if (points.size() == 3) {
+    if (std::abs(points[2].x) > kMaxCurveFraction || std::abs(points[2].y) > kMaxCurveFraction) return false;
+    return std::isfinite(r.left() + points[2].x * (r.right() - r.left())) && std::isfinite(r.top() + points[2].y * (r.bottom() - r.top()));
+  }
+  if (points.size() == 2 && o.contains(u"curvePoint")) {
+    if (o.contains(u"curvePointActivated") && !o.value(u"curvePointActivated").isBool()) return false;
+    const auto anchor = parsePoint(o.value(u"curvePoint"));
+    if (!anchor) return false;
+    const double width = r.right() - r.left(), height = r.bottom() - r.top();
+    if (!o.value(u"curvePointActivated").toBool(false) || !(width > 0) || !(height > 0)) return true;
+    const PointF fraction{(anchor->x - r.left()) / width, (anchor->y - r.top()) / height};
+    if (!std::isfinite(fraction.x) || !std::isfinite(fraction.y) || std::abs(fraction.x) > kMaxCurveFraction || std::abs(fraction.y) > kMaxCurveFraction) return false;
+    points.push_back(fraction);
   }
   return true;
 }
@@ -249,9 +279,20 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
     findings.invalid = true;
     return std::nullopt;
   }
+  if ((type == shape::line || type == shape::arrow) && !parseCurve(o, rectangle)) {
+    findings.invalid = true;
+    return std::nullopt;
+  }
   for (auto it = o.begin(); it != o.end(); ++it) {
     if (!kKnownRectangleKeys.contains(it.key())) rectangle.extra.insert(it.key(), it.value());
   }
+  if (type == shape::line || type == shape::arrow) {
+    // Consumed reference curve fields are re-expressed as points[2]; an unusable one stays verbatim.
+    if (rectangle.content.points.size() == 3 && o.value(u"points").toArray().size() == 2 && o.value(u"curvePointActivated").toBool()) {
+      rectangle.extra.remove(QStringLiteral("curvePoint")); rectangle.extra.remove(QStringLiteral("curvePointActivated"));
+    }
+  }
+  if (type == shape::arrow) rectangle.extra.remove(QStringLiteral("style"));
   if (hasShapeDecoration(type)) {
     for (const auto &key : kDecorationKeys) rectangle.extra.remove(key);
     if (type == shape::rectangle) rectangle.extra.remove(kCornerRadiusKey);  // Ellipse keeps an unknown cornerRadius verbatim
@@ -282,10 +323,28 @@ std::optional<BorderStyle> parseBorderStyle(const QString &name) {
     if (borderStyleName(style).compare(name, Qt::CaseInsensitive) == 0) return style;
   return std::nullopt;
 }
-bool hasShapeDecoration(const QString &type) { return type == shape::rectangle || type == shape::ellipse; }
+QString arrowStyleName(ArrowStyle style) {
+  switch (style) {
+    case ArrowStyle::Modern: return QStringLiteral("modern");
+    case ArrowStyle::Double: return QStringLiteral("double");
+    case ArrowStyle::Basic: return QStringLiteral("basic");
+    case ArrowStyle::Line: return QStringLiteral("line");
+    case ArrowStyle::Classic: break;
+  }
+  return QStringLiteral("classic");
+}
+std::optional<ArrowStyle> parseArrowStyle(const QString &name) {
+  for (const ArrowStyle style : {ArrowStyle::Classic, ArrowStyle::Modern, ArrowStyle::Double, ArrowStyle::Basic, ArrowStyle::Line})
+    if (arrowStyleName(style).compare(name, Qt::CaseInsensitive) == 0) return style;
+  return std::nullopt;
+}
+bool hasShapeDecoration(const QString &type) {
+  return type == shape::rectangle || type == shape::ellipse || type == shape::line || type == shape::arrow;
+}
 bool hasDecoration(const QString &type, const RectangleStyle &style) {
   if (!hasShapeDecoration(type)) return false;
-  return style.borderStyle != BorderStyle::Solid || (type == shape::rectangle && style.cornerRadius != 0) || style.shadow.enabled;
+  return style.borderStyle != BorderStyle::Solid || (type == shape::rectangle && style.cornerRadius != 0) || style.shadow.enabled ||
+         (type == shape::arrow && style.arrowStyle != ArrowStyle::Classic);
 }
 bool validDecoration(const QString &type, const RectangleStyle &style) {
   if (!hasShapeDecoration(type)) return true;
@@ -296,7 +355,7 @@ bool validDecoration(const QString &type, const RectangleStyle &style) {
          in(sh.opacity, 0, 1);
 }
 bool sameDecoration(const RectangleStyle &a, const RectangleStyle &b) {
-  return a.borderStyle == b.borderStyle && a.cornerRadius == b.cornerRadius && a.shadow == b.shadow;
+  return a.borderStyle == b.borderStyle && a.cornerRadius == b.cornerRadius && a.shadow == b.shadow && a.arrowStyle == b.arrowStyle;
 }
 
 QStringList shapeTypes() {
@@ -490,6 +549,10 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
       const RectangleStyle &style = rectangle.style;
       if (style.borderStyle != BorderStyle::Solid) o.insert(QStringLiteral("borderStyle"), borderStyleName(style.borderStyle));
       else o.remove(QStringLiteral("borderStyle"));
+      if (content.type == shape::arrow) {
+        if (style.arrowStyle != ArrowStyle::Classic) o.insert(QStringLiteral("style"), arrowStyleName(style.arrowStyle));
+        else o.remove(QStringLiteral("style"));
+      }
       if (content.type == shape::rectangle) {
         if (style.cornerRadius != 0) o.insert(kCornerRadiusKey, style.cornerRadius); else o.remove(kCornerRadiusKey);
       }

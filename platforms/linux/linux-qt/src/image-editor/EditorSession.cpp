@@ -27,6 +27,7 @@ bool sameStyle(const RectangleStyle &a, const RectangleStyle &b) {
 RectangleStyle normalizedStyle(const QString &type, RectangleStyle style) {
   if (!hasShapeDecoration(type)) { style.borderStyle = BorderStyle::Solid; style.shadow = ShapeShadow{}; }
   if (type != shape::rectangle) style.cornerRadius = 0;
+  if (type != shape::arrow) style.arrowStyle = ArrowStyle::Classic;
   return style;
 }
 } // namespace
@@ -150,7 +151,19 @@ bool EditorSession::editRectangleProperties(const QUuid &id, const RectangleProp
   if (!selected) { m_editDiagnostic = "annotation-type-unsupported"; return false; }
   if (!selectionEditable()) { m_editDiagnostic = "annotation-selection-protected"; return false; }
   m_editDiagnostic = rectanglePropertiesDiagnostic(properties); if (!m_editDiagnostic.isEmpty()) return false;
-  return changeSelected([&](RectangleAnnotation &r) { r.start = properties.start; r.end = properties.end; r.style = normalizedStyle(r.type(), properties.style); });
+  if (properties.points) {  // EA-006: curve edit; only a Line or Arrow with 2 or 3 finite, bounded points
+    const auto &points = *properties.points;
+    const bool pathType = selected->type() == shape::line || selected->type() == shape::arrow;
+    bool valid = pathType && (points.size() == 2 || points.size() == 3);
+    for (const PointF &p : points) valid = valid && std::isfinite(p.x) && std::isfinite(p.y) && std::abs(p.x) <= kMaxCurveFraction && std::abs(p.y) <= kMaxCurveFraction;
+    if (!valid) { m_editDiagnostic = "annotation-geometry-invalid"; return false; }
+  }
+  return changeSelected([&](RectangleAnnotation &r) {
+    r.start = properties.start; r.end = properties.end; r.style = normalizedStyle(r.type(), properties.style);
+    if (properties.points) r.content.points = *properties.points;
+    // EA-006: a Modern arrow is straight; choosing it drops the curve anchor.
+    if (r.type() == shape::arrow && r.style.arrowStyle == ArrowStyle::Modern && r.content.points.size() == 3) setLineCurve(r, std::nullopt);
+  });
 }
 
 EditorSession::StyleEditResult EditorSession::editDecorationDefaults(const RectangleStyle &next, quint64 expectedState,
@@ -163,6 +176,7 @@ EditorSession::StyleEditResult EditorSession::editDecorationDefaults(const Recta
   }
   const bool changed = !sameDecoration(m_tool, next);
   m_tool.borderStyle = next.borderStyle; m_tool.cornerRadius = next.cornerRadius; m_tool.shadow = next.shadow;
+  m_tool.arrowStyle = next.arrowStyle;
   return {true, false, changed, {}};
 }
 

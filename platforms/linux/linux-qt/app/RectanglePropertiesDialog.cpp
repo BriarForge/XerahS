@@ -17,19 +17,19 @@
 namespace xerahs::app {
 using namespace xerahs::editor;
 RectanglePropertiesDialog::RectanglePropertiesDialog(const RectangleAnnotation &r, QWidget *parent, Purpose purpose)
-    : QDialog(parent), m_original{r.start, r.end, r.style}, m_purpose(purpose) {
+    : QDialog(parent), m_source(r), m_original{r.start, r.end, r.style}, m_purpose(purpose) {
   const bool creation = purpose == Purpose::Create, defaults = purpose == Purpose::Defaults;
   setObjectName(defaults ? "shapeStyleDefaultsDialog" : creation ? "rectangleCreationDialog" : "rectanglePropertiesDialog");
-  setWindowTitle(defaults ? "Shape style defaults" : creation ? "Create rectangle" : r.type() == shape::ellipse ? "Ellipse properties" : "Rectangle properties");
+  setWindowTitle(defaults ? "Shape style defaults" : creation ? "Create rectangle" : r.type() == shape::ellipse ? "Ellipse properties" : r.type() == shape::line ? "Line properties" : r.type() == shape::arrow ? "Arrow properties" : "Rectangle properties");
   setAccessibleName(windowTitle());
   setWindowModality(Qt::WindowModal);
   auto *layout = new QVBoxLayout(this);
   auto *intro = new QLabel(defaults
-      ? "Border style, corner radius and shadow for new rectangles and ellipses. Existing objects and history stay unchanged. Apply is not an undo step."
+      ? "Border style, corner radius, arrow style and shadow for new rectangles, ellipses, lines and arrows. Existing objects and history stay unchanged. Apply is not an undo step."
       : creation
       ? "Enter bounds in source-image pixels. Bounds may extend outside the image; export clips them. "
         "Create selects one new rectangle and records one undo step. The active tool stays unchanged."
-      : "Edit this rectangle in source-image pixels. Bounds may extend outside the image; export clips them. "
+      : "Edit this object in source-image pixels. Bounds may extend outside the image; export clips them. "
         "OK records one undo step. Creation defaults stay unchanged.", this);
   intro->setTextFormat(Qt::PlainText); intro->setWordWrap(true); layout->addWidget(intro);
   auto *form = new QFormLayout; layout->addLayout(form);
@@ -101,6 +101,22 @@ void RectanglePropertiesDialog::addDecorationRows(QFormLayout *form, const Recta
     m_borderStyle->addItem(borderStyleName(style), int(style));
   m_borderStyle->setCurrentIndex(m_borderStyle->findData(int(st.borderStyle)));
   form->addRow("Border style", m_borderStyle);
+  if (r.type() == shape::arrow || m_purpose == Purpose::Defaults) {
+    m_arrowStyle = new QComboBox(this); m_arrowStyle->setObjectName("shapeArrowStyle"); m_arrowStyle->setAccessibleName("Arrow style");
+    for (const auto arrow : {ArrowStyle::Classic, ArrowStyle::Modern, ArrowStyle::Double, ArrowStyle::Basic, ArrowStyle::Line})
+      m_arrowStyle->addItem(arrowStyleName(arrow), int(arrow));
+    m_arrowStyle->setCurrentIndex(m_arrowStyle->findData(int(st.arrowStyle)));
+    form->addRow("Arrow style", m_arrowStyle);
+  }
+  if ((r.type() == shape::line || r.type() == shape::arrow) && m_purpose == Purpose::Edit && r.content.points.size() >= 2 && r.content.points.size() <= 3) {
+    // EA-006: the curve passes through this point at its middle. Modern arrows stay straight.
+    const PointF s = lineStart(r), e = lineEnd(r);
+    const auto anchor = lineAnchor(r).value_or(PointF{(s.x + e.x) / 2 - (e.y - s.y) * 0.2, (s.y + e.y) / 2 + (e.x - s.x) * 0.2});
+    m_curve = new QCheckBox("Curved (Modern arrows stay straight)", this); m_curve->setObjectName("shapeCurve"); m_curve->setAccessibleName("Curved");
+    m_curve->setChecked(lineAnchor(r).has_value()); form->addRow(m_curve);
+    numeric("shapeCurveX", "Curve passes through X (pixels)", anchor.x, "Document X of the point the curve passes through at its middle.");
+    numeric("shapeCurveY", "Curve passes through Y (pixels)", anchor.y, "Document Y of the point the curve passes through at its middle.");
+  }
   m_hasCorner = r.type() == shape::rectangle || m_purpose == Purpose::Defaults;
   if (m_hasCorner) numeric("shapeCornerRadius", "Corner radius (pixels)", st.cornerRadius, "Rectangle corner radius from 0 to 10000 pixels; clamped to half the shorter side when drawn. Ellipses ignore it.");
   m_shadow = new QCheckBox("Drop shadow", this); m_shadow->setObjectName("shapeShadow"); m_shadow->setAccessibleName("Drop shadow");
@@ -119,6 +135,7 @@ bool RectanglePropertiesDialog::readDecoration(RectangleStyle &style) {
     out = v; return true;
   };
   style.borderStyle = BorderStyle(m_borderStyle->currentData().toInt());
+  if (m_arrowStyle) style.arrowStyle = ArrowStyle(m_arrowStyle->currentData().toInt());
   if ((m_hasCorner && !number("shapeCornerRadius", style.cornerRadius)) || !number("shapeShadowBlur", style.shadow.blurRadius) ||
       !number("shapeShadowOffsetX", style.shadow.offsetX) || !number("shapeShadowOffsetY", style.shadow.offsetY) ||
       !number("shapeShadowOpacity", style.shadow.opacity)) {
@@ -161,6 +178,21 @@ void RectanglePropertiesDialog::accept() {
     if (!stroke || !fill) { m_status->setText("Enter stroke and fill as #AARRGGBB colors. The document is unchanged."); return; }
     next.style.strokeColor = *stroke; next.style.fillColor = *fill;
     if (m_borderStyle && !readDecoration(next.style)) return;
+    if (m_curve) {
+      bool okX = false, okY = false;
+      const double x = m_fields["shapeCurveX"]->text().toDouble(&okX), y = m_fields["shapeCurveY"]->text().toDouble(&okY);
+      if (!okX || !okY || !std::isfinite(x) || !std::isfinite(y)) { m_status->setText("Enter finite curve coordinates using a decimal point. The document is unchanged."); return; }
+      const bool modern = m_source.type() == shape::arrow && next.style.arrowStyle == ArrowStyle::Modern;
+      const bool wantCurve = m_curve->isChecked() && !modern;
+      const auto before = lineAnchor(m_source);
+      if (wantCurve != before.has_value() || (wantCurve && !(*before == PointF{x, y}))) {
+        RectangleAnnotation draft = m_source; draft.start = next.start; draft.end = next.end; draft.style = next.style;
+        if (!setLineCurve(draft, wantCurve ? std::optional<PointF>(PointF{x, y}) : std::nullopt)) {
+          m_status->setText("The curve point is out of range. The document is unchanged."); return;
+        }
+        next.start = draft.start; next.end = draft.end; next.points = draft.content.points;
+      }
+    }
   }
   const auto invalid = rectanglePropertiesDiagnostic(next);
   if (!invalid.isEmpty()) {

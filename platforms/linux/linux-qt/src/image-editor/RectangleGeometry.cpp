@@ -1,4 +1,5 @@
 #include "image-editor/RectangleGeometry.h"
+#include <algorithm>
 #include <cmath>
 namespace xerahs::editor {
 QString rectanglePropertiesDiagnostic(const RectangleProperties &p) {
@@ -32,6 +33,55 @@ QString rectanglePropertiesDiagnostic(const RectangleProperties &p) {
   }
   return {};
 }
+namespace {
+PointF mapFraction(const RectangleAnnotation &r, const PointF &f) {
+  return {r.left() + f.x * (r.right() - r.left()), r.top() + f.y * (r.bottom() - r.top())};
+}
+bool pathType(const RectangleAnnotation &r) { return r.type() == shape::line || r.type() == shape::arrow; }
+}  // namespace
+
+bool lineHasCurve(const RectangleAnnotation &r) {
+  return pathType(r) && r.content.points.size() == 3 && !(r.type() == shape::arrow && r.style.arrowStyle == ArrowStyle::Modern);
+}
+PointF lineStart(const RectangleAnnotation &r) { return mapFraction(r, r.content.points.at(0)); }
+PointF lineEnd(const RectangleAnnotation &r) { return mapFraction(r, r.content.points.at(1)); }
+std::optional<PointF> lineAnchor(const RectangleAnnotation &r) {
+  if (!lineHasCurve(r)) return std::nullopt;
+  return mapFraction(r, r.content.points[2]);
+}
+PointF quadraticControl(PointF s, PointF e, PointF a) { return {2 * a.x - 0.5 * (s.x + e.x), 2 * a.y - 0.5 * (s.y + e.y)}; }
+
+bool setLineCurve(RectangleAnnotation &r, std::optional<PointF> anchor) {
+  if (!pathType(r) || r.content.points.size() < 2 || r.content.points.size() > 3) return false;
+  const PointF s = lineStart(r), e = lineEnd(r);
+  if (anchor && (!std::isfinite(anchor->x) || !std::isfinite(anchor->y))) return false;
+  double left = std::min(s.x, e.x), top = std::min(s.y, e.y), right = std::max(s.x, e.x), bottom = std::max(s.y, e.y);
+  if (anchor) {
+    // Exact extent of the quadratic: endpoints plus each axis extremum.
+    const PointF c = quadraticControl(s, e, *anchor);
+    const auto extremum = [](double p0, double p1, double p2) {
+      const double denominator = p0 - 2 * p1 + p2;
+      if (denominator == 0) return p0;
+      const double t = std::clamp((p0 - p1) / denominator, 0.0, 1.0);
+      return (1 - t) * (1 - t) * p0 + 2 * (1 - t) * t * p1 + t * t * p2;
+    };
+    const double ex = extremum(s.x, c.x, e.x), ey = extremum(s.y, c.y, e.y);
+    left = std::min(left, ex); right = std::max(right, ex); top = std::min(top, ey); bottom = std::max(bottom, ey);
+  }
+  if (!(right - left >= 1)) right = left + 1;  // a straight horizontal or vertical line keeps a 1px box
+  if (!(bottom - top >= 1)) bottom = top + 1;
+  RectangleAnnotation next = r;
+  if (r.style.rotationDegrees == 0) { next.start = {left, top}; next.end = {right, bottom}; }
+  if (!(next.right() - next.left() > 0) || !(next.bottom() - next.top() > 0)) return false;
+  const auto fraction = [&](PointF p) { return PointF{(p.x - next.left()) / (next.right() - next.left()), (p.y - next.top()) / (next.bottom() - next.top())}; };
+  next.content.points = {fraction(s), fraction(e)};
+  if (anchor) next.content.points.push_back(fraction(*anchor));
+  for (const PointF &p : next.content.points)
+    if (!std::isfinite(p.x) || !std::isfinite(p.y) || std::abs(p.x) > kMaxCurveFraction || std::abs(p.y) > kMaxCurveFraction) return false;
+  r = std::move(next);
+  return true;
+}
+
 RectangleMoveResult moveRectangleGeometry(const RectangleProperties &original, PointF delta) {
   if (!std::isfinite(delta.x) || !std::isfinite(delta.y)) return {{}, "annotation-geometry-invalid"};
   RectangleProperties next = original;
