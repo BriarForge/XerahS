@@ -275,7 +275,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Creation copies style/content; explicit shape content edits participate in undo. Complete persisted tool defaults and all style fields remain. Text/balloon creation now freezes pointer-down style through the asynchronous content dialog, even when creation defaults change before release/Apply; it commits the draft once with explicit formatting. Saved defaults and other tool/style breadth remain partial.",
+      "note": "Creation copies style/content; explicit shape content edits participate in undo. Complete persisted tool defaults and all style fields remain. Text/balloon creation now freezes pointer-down style through the asynchronous content dialog, even when creation defaults change before release/Apply; it commits the draft once with explicit formatting. Saved defaults and other tool/style breadth remain partial. Audit 2026-11-03: gap re-checked, row stays partial. Existing: the global Drawing Defaults (stroke, fill, thickness, Text/Balloon/Step content) are persisted in the preference store and snapshotted by each new object (EditorWindowTest::savedDefaultsAffectOnlyNewAnnotationsAcrossOpenEditorsAndRestart); the decoration defaults (border style, corner radius, shadow, arrow style) are session-only (Edit > Shape Style Defaults). Not closed: per-tool persisted defaults, i.e. a separate saved default per tool as in the reference ImageEditorOptions (BorderStyle, ArrowStyle, Shadow*, per-tool colours and thickness). That needs new ESET-006 preference keys with validation, migration and policy text in PREFERENCES-POLICY.md, the dialog and tests, so it overlaps ESET-006 and is not a small change to the existing store.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -286,8 +286,8 @@
       "audit": {
         "classification": "partial",
         "spec_line": 56,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Partial: global defaults snapshot and persist; per-tool persisted defaults and persisted decoration defaults are not implemented (overlaps ESET-006).",
+        "reviewed_at_revision": "65e4394"
       }
     },
     "EA-015": {
@@ -700,7 +700,7 @@
         "pointerStatusReportsPixelsOfTheChangedImage"
       ]
     },
-    "remaining_scope": "Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
+    "remaining_scope": "Step tail state, asset metadata (reference emoji sequence/display name and cursor type), per-tool persisted defaults (overlaps ESET-006), and physical/human accessibility and target qualification remain incomplete.",
     "reviewed_requirement_count": 20,
     "finding": "Native tools reach all modes; text/balloon creation and editing use guarded asynchronous dialogs with family/style/alignment/text color/tail/fractional size. Numeric Step and fractional strength edits, create admission bounds, history/reload and ownership regressions are tested.",
     "review_anchor": {
