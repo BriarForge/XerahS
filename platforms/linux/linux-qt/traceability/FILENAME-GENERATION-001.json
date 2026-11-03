@@ -192,31 +192,32 @@
       }
     },
     "FN-009": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "random-file-line",
         "random-file-permission-denied",
         "random-file-empty"
       ],
-      "note": "Expansion honours the caller's grant through RandomFileAccess. The production grant prompt arrives with the pattern editor UI. The native pattern editor now visibly denies random-file tokens without a read grant, before saving/running. Full grant UI/authority qualification remains Required.",
+      "note": "Expansion honours the caller's grant through RandomFileAccess. The production grant prompt arrives with the pattern editor UI. The native pattern editor now visibly denies random-file tokens without a read grant, before saving/running. Full grant UI/authority qualification remains Required. Audit 2026-11-03: FilenameGeneratorTest::randomFileReadsOneTrimmedLineWhenGranted (granted read of one trimmed line from LF/CRLF content), randomFileFailuresAreTypedAndExposeNothing (denied -> file-permission-denied; missing, non-UTF-8, truncated UTF-8, NUL content, empty and blank-only files -> file-unavailable, each with token %rf and offset, counter unchanged) and randomFileWithoutAGrantIsDeniedAndReadsNothing prove the clause; the shared random-file-line, random-file-permission-denied and random-file-empty vectors run through the conformance adapter, and CaptureWorkflowsTest/NativeCaptureWorkflowsTest cover the native denial. A truncated trailing UTF-8 sequence was previously accepted and now fails as non-text. The native app never offers a grant (the clause is MAY), so every production %rf is denied.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp"
       ],
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 60,
         "published_vectors": [
           "random-file-line",
           "random-file-permission-denied",
           "random-file-empty"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit native random-file permission flow and crash/power-loss atomicity between publication and counter persistence remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "8390132afb6e0af51e58733900651c537d1c63a8"
       }
     },
     "FN-010": {

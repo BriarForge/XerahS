@@ -381,7 +381,7 @@ private:
     if (read.status == RandomFileRead::Status::Missing) {
       return makeError(ErrorCode::FileUnavailable, segment.token, segment.offset);
     }
-    QStringDecoder decoder(QStringDecoder::Utf8);
+    QStringDecoder decoder(QStringDecoder::Utf8, QStringConverter::Flag::Stateless);  // stateless: a truncated trailing sequence is an error too
     const QString content = decoder(read.content);
     if (decoder.hasError() || content.contains(QChar(0))) {
       return makeError(ErrorCode::FileUnavailable, segment.token, segment.offset);
