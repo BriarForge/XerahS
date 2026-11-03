@@ -240,6 +240,12 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
               optionalNumber(u"fontSize", 0, 2000, content.fontSize) && optionalNumber(u"strength", 0, 1000, content.strength) &&
               optionalNumber(u"stepValue", 0, double(kMaxStepValue), stepValue) && (!o.contains(u"stepValue") || isInteger(o.value(u"stepValue")));
     content.stepValue = qint64(stepValue);
+    if (type == shape::step && o.contains(u"stepType")) {
+      const auto value = o.value(u"stepType");
+      const auto style = value.isString() ? parseStepStyle(value.toString()) : std::nullopt;
+      if (!style) { findings.invalid = true; return std::nullopt; }
+      content.stepStyle = *style;
+    }
     if (ok && hasShapeStrength(type) && !o.contains(u"strength")) {
       // EA-011 compatibility: the reference XerahS .xann spells effect strength `amount` and the Spotlight dim `darkenOpacity` (byte, 0..255).
       // They are read only when `strength` is absent, consumed so they are not preserved beside the `strength` this build writes.
@@ -323,6 +329,7 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
     for (const auto &key : {QStringLiteral("textAlignment"), QStringLiteral("textBold"), QStringLiteral("textItalic"), QStringLiteral("textColor"), QStringLiteral("fontFamily"), QStringLiteral("textFillColor")}) rectangle.extra.remove(key);
   }
   if (type == shape::speechBalloon) rectangle.extra.remove(QStringLiteral("balloonBorderColor"));
+  if (type == shape::step) rectangle.extra.remove(QStringLiteral("stepType"));
   if (hasShapeEllipse(type)) rectangle.extra.remove(QStringLiteral("isEllipse"));
   if (hasShapeBlurAmount(type)) rectangle.extra.remove(QStringLiteral("blurAmount"));
   return Annotation(rectangle);
@@ -563,7 +570,11 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
       if (!content.textAlignment.isEmpty()) o.insert(QStringLiteral("textAlignment"), content.textAlignment);
       else o.remove(QStringLiteral("textAlignment"));
     }
-    if (content.type == shape::step) o.insert(QStringLiteral("stepValue"), double(content.stepValue));
+    if (content.type == shape::step) {
+      o.insert(QStringLiteral("stepValue"), double(content.stepValue));
+      if (content.stepStyle != StepStyle::Numeric) o.insert(QStringLiteral("stepType"), stepStyleName(content.stepStyle));
+      else o.remove(QStringLiteral("stepType"));
+    }
     if (isAssetShape(content.type)) o.insert(QStringLiteral("imageKey"), content.imageKey);
     if (hasShapeStrength(content.type)) o.insert(QStringLiteral("strength"), content.strength);
     // EA-011: defaults are omitted on write; a stale value from the source object is cleared.
@@ -718,6 +729,35 @@ SidecarSaveResult saveSidecar(SidecarStore &store, const QString &rasterPath, co
   return result;
 }
 
+QString stepStyleName(StepStyle style) {
+  switch (style) {
+    case StepStyle::UppercaseLetter: return QStringLiteral("uppercaseLetter");
+    case StepStyle::LowercaseLetter: return QStringLiteral("lowercaseLetter");
+    case StepStyle::UppercaseRoman: return QStringLiteral("uppercaseRoman");
+    case StepStyle::LowercaseRoman: return QStringLiteral("lowercaseRoman");
+    case StepStyle::Numeric: break;
+  }
+  return QStringLiteral("numeric");
+}
+std::optional<StepStyle> parseStepStyle(const QString &name) {
+  for (const auto style : {StepStyle::Numeric, StepStyle::UppercaseLetter, StepStyle::LowercaseLetter, StepStyle::UppercaseRoman, StepStyle::LowercaseRoman})
+    if (name.compare(stepStyleName(style), Qt::CaseInsensitive) == 0) return style;
+  return std::nullopt;
+}
+QString formatStepValue(qint64 value, StepStyle style) {
+  if (value <= 0 || style == StepStyle::Numeric) return QString::number(value);
+  const bool upper = style == StepStyle::UppercaseLetter || style == StepStyle::UppercaseRoman;
+  QString out;
+  if (style == StepStyle::UppercaseLetter || style == StepStyle::LowercaseLetter) {
+    for (qint64 current = value; current > 0; current /= 26) { --current; out.prepend(QChar(u'A' + int(current % 26))); }
+  } else {
+    static const std::pair<int, const char *> symbols[] = {{1000, "M"}, {900, "CM"}, {500, "D"}, {400, "CD"}, {100, "C"}, {90, "XC"},
+                                                           {50, "L"}, {40, "XL"}, {10, "X"}, {9, "IX"}, {5, "V"}, {4, "IV"}, {1, "I"}};
+    for (const auto &symbol : symbols)
+      while (value >= symbol.first) { out += QLatin1String(symbol.second); value -= symbol.first; }
+  }
+  return upper ? out : out.toLower();
+}
 bool validStepValue(qint64 value) { return value >= 0 && value <= kMaxStepValue; }
 
 bool validFontFamily(const QString &family) {

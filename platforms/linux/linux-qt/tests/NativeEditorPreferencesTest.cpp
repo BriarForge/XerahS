@@ -226,7 +226,7 @@ private slots:
   void missingSavedFontFallsBackWithoutRewritingUntilExplicitReplacement() {
     QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");
     QVERIFY(writePrivate(path, textEnvelope({{"TextFontFamily", "Gone Sans"}, {"TextFontSize", 27.75}, {"TextHorizontalAlignment", "Right"},
-        {"SpeechBalloonFontFamily", "Gone Sans"}, {"StepType", "UppercaseRoman"}, {"FutureOption", true}})));
+        {"SpeechBalloonFontFamily", "Gone Sans"}, {"StepType", "FutureStyle9"}, {"FutureOption", true}})));
     const auto original = bytes(path); QVERIFY(!original.isEmpty());
     QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
     // Use: resolve creation defaults repeatedly; the stored bytes never change.
@@ -243,7 +243,7 @@ private slots:
       auto *family = dialog.findChild<QComboBox *>("defaultTextFontFamily"); QVERIFY(family);
       QCOMPARE(family->currentData().toString(), QStringLiteral("Gone Sans")); QVERIFY(family->currentText().contains("not installed"));
       QCOMPARE(dialog.findChild<QDoubleSpinBox *>("defaultTextFontSize")->value(), 27.75);
-      QCOMPARE(dialog.findChild<QComboBox *>("defaultStepStyle")->currentData().toString(), QStringLiteral("UppercaseRoman"));
+      QCOMPARE(dialog.findChild<QComboBox *>("defaultStepStyle")->currentData().toString(), QStringLiteral("FutureStyle9"));
       dialog.findChild<QSpinBox *>("defaultStrokeThickness")->setValue(9);
     }, false));
     QCOMPARE(bytes(path), original);
@@ -257,7 +257,7 @@ private slots:
     QCOMPARE(events.count(), 1);
     auto reloaded = QJsonDocument::fromJson(bytes(path)).object().value("current").toObject();
     QCOMPARE(reloaded.value("TextFontFamily"), QJsonValue("Gone Sans")); QCOMPARE(reloaded.value("TextFontSize"), QJsonValue(27.75));
-    QCOMPARE(reloaded.value("StepType"), QJsonValue("UppercaseRoman")); QCOMPARE(reloaded.value("FutureOption"), QJsonValue(true));
+    QCOMPARE(reloaded.value("StepType"), QJsonValue("FutureStyle9")); QCOMPARE(reloaded.value("FutureOption"), QJsonValue(true));
     QCOMPARE(reloaded.value("Thickness"), QJsonValue(9));
     // An explicit replacement through the dialog is the only thing that rewrites the family.
     const auto installed = QFontDatabase::families(); QVERIFY(!installed.isEmpty());
@@ -273,7 +273,7 @@ private slots:
     QCOMPARE(values.value("TextBold"), QJsonValue(false)); QCOMPARE(values.value("TextItalic"), QJsonValue(true));
     QCOMPARE(values.value("TextHorizontalAlignment"), QJsonValue("Left"));
     QCOMPARE(values.value("SpeechBalloonFontFamily"), QJsonValue("Gone Sans"));
-    QCOMPARE(values.value("StepType"), QJsonValue("UppercaseRoman"));
+    QCOMPARE(values.value("StepType"), QJsonValue("FutureStyle9"));
     const auto resolved = contentDefaultsFromPreferences(nativeEditorPreferences(), nativeFontFamilyAvailable);
     QVERIFY(!resolved.text.familyUnavailable); QCOMPARE(resolved.text.fontFamily, installed.first()); QVERIFY(resolved.balloon.familyUnavailable);
   }

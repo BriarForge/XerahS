@@ -9,6 +9,7 @@
 
 #include <QApplication>
 #include <QBuffer>
+#include <QFile>
 #include <QImage>
 #include <QPainter>
 #include <QSignalSpy>
@@ -249,6 +250,128 @@ private slots:
     QVERIFY(session.undo()); QVERIFY(session.document().annotations.empty());
   }
 
+  void stepStylesMapValuesLikeTheReference() {
+    // EA-009 vectors from the reference StepTypeFormatter: bijective base 26, subtractive Roman, M repeated.
+    struct Vector { qint64 value; const char *upper, *lower, *roman, *lowerRoman; };
+    const Vector vectors[] = {
+        {0, "0", "0", "0", "0"}, {-5, "-5", "-5", "-5", "-5"}, {1, "A", "a", "I", "i"}, {4, "D", "d", "IV", "iv"}, {9, "I", "i", "IX", "ix"},
+        {26, "Z", "z", "XXVI", "xxvi"}, {27, "AA", "aa", "XXVII", "xxvii"}, {52, "AZ", "az", "LII", "lii"},
+        {702, "ZZ", "zz", "DCCII", "dccii"}, {703, "AAA", "aaa", "DCCIII", "dcciii"},
+        {1994, "BXR", "bxr", "MCMXCIV", "mcmxciv"}, {3999, "EWU", "ewu", "MMMCMXCIX", "mmmcmxcix"}, {4000, "EWV", "ewv", "MMMM", "mmmm"}};
+    for (const auto &v : vectors) {
+      QCOMPARE(formatStepValue(v.value, StepStyle::Numeric), QString::number(v.value));
+      QCOMPARE(formatStepValue(v.value, StepStyle::UppercaseLetter), QString(v.upper));
+      QCOMPARE(formatStepValue(v.value, StepStyle::LowercaseLetter), QString(v.lower));
+      QCOMPARE(formatStepValue(v.value, StepStyle::UppercaseRoman), QString(v.roman));
+      QCOMPARE(formatStepValue(v.value, StepStyle::LowercaseRoman), QString(v.lowerRoman));
+    }
+  }
+  void stepStyleNamesFollowTheReferenceSpelling() {
+    for (const auto style : {StepStyle::Numeric, StepStyle::UppercaseLetter, StepStyle::LowercaseLetter, StepStyle::UppercaseRoman, StepStyle::LowercaseRoman}) {
+      const auto parsed = parseStepStyle(stepStyleName(style)); QVERIFY(parsed); QVERIFY(*parsed == style);
+    }
+    QCOMPARE(stepStyleName(StepStyle::UppercaseLetter), QString("uppercaseLetter"));
+    QCOMPARE(stepStyleName(StepStyle::LowercaseRoman), QString("lowercaseRoman"));
+    QVERIFY(parseStepStyle("UPPERCASEROMAN") && *parseStepStyle("UPPERCASEROMAN") == StepStyle::UppercaseRoman);
+    QVERIFY(!parseStepStyle("greek")); QVERIFY(!parseStepStyle(""));
+  }
+  void stepStyleRoundTripsPerObjectAndRejectsUnknownNames() {
+    auto d = document();
+    qint64 value = 1;
+    for (const auto style : {StepStyle::Numeric, StepStyle::UppercaseLetter, StepStyle::LowercaseLetter, StepStyle::UppercaseRoman, StepStyle::LowercaseRoman}) {
+      auto step = shapeOf(shape::step, {10.0 * double(value), 10}, {10.0 * double(value) + 8, 18});
+      step.content.stepValue = value * 27; step.content.stepStyle = style; ++value; d.annotations.push_back(step);
+    }
+    const auto json = serializeAnnotationList(d.annotations);
+    QVERIFY(!json[0].toObject().contains("stepType"));  // numeric is the legacy default and is omitted
+    QCOMPARE(json[1].toObject().value("stepType").toString(), QString("uppercaseLetter"));
+    QCOMPARE(json[4].toObject().value("stepType").toString(), QString("lowercaseRoman"));
+    const auto parsed = parseDocument(serializeDocument(d)); QVERIFY(parsed.document);
+    for (std::size_t i = 0; i < 5; ++i) {
+      const auto &back = std::get<RectangleAnnotation>(parsed.document->annotations[i]);
+      QVERIFY(back.content.stepStyle == std::get<RectangleAnnotation>(d.annotations[i]).content.stepStyle);
+      QCOMPARE(back.content.stepValue, std::get<RectangleAnnotation>(d.annotations[i]).content.stepValue);
+      QVERIFY(!back.extra.contains("stepType"));
+    }
+    QCOMPARE(serializeDocument(*parsed.document), serializeDocument(d));
+    // A reference file spells the value case-insensitively; an unknown name or type is invalid, and stepType on another tool stays inert.
+    auto payload = serializeDocument(d); auto list = payload["annotations"].toArray(); auto first = list[0].toObject();
+    first["stepType"] = "UppercaseRoman"; list[0] = first; payload["annotations"] = list;
+    const auto reference = parseDocument(payload); QVERIFY(reference.document);
+    QVERIFY(std::get<RectangleAnnotation>(reference.document->annotations[0]).content.stepStyle == StepStyle::UppercaseRoman);
+    for (const QJsonValue &bad : {QJsonValue("greek"), QJsonValue(2), QJsonValue(true), QJsonValue("")}) {
+      first["stepType"] = bad; list[0] = first; payload["annotations"] = list; QVERIFY(!parseDocument(payload).document);
+    }
+    auto rect = shapeOf(shape::rectangle, {0, 0}, {5, 5}); auto rectJson = serializeAnnotationList({rect})[0].toObject(); rectJson["stepType"] = "greek";
+    const auto kept = parseAnnotationList(QJsonArray{rectJson}); QVERIFY(kept.annotations);
+    QCOMPARE(serializeAnnotationList(*kept.annotations)[0].toObject().value("stepType").toString(), QString("greek"));
+  }
+  void stepStartAndResetAffectOnlyFutureAllocation() {
+    auto d = document(); StepSequence sequence;
+    QCOMPARE(nextStepValue(d, sequence), qint64(1));
+    sequence.start = 4; QCOMPARE(nextStepValue(d, sequence), qint64(4));  // explicit start on an empty document
+    auto two = shapeOf(shape::step, {0, 0}, {10, 10}); two.content.stepValue = 2;
+    auto seven = shapeOf(shape::step, {20, 0}, {30, 10}); seven.content.stepValue = 7;
+    d.annotations = {two, seven};
+    QCOMPARE(nextStepValue(d, sequence), qint64(8));  // one past the highest, above the start
+    sequence.start = 10; QCOMPARE(nextStepValue(d, sequence), qint64(10));  // never below the start
+    sequence.start = 1;
+    resetStepSequence(sequence, d);
+    QCOMPARE(nextStepValue(d, sequence), qint64(1));  // reset: next allocation is the start value
+    QCOMPARE(std::get<RectangleAnnotation>(d.annotations[0]).content.stepValue, qint64(2));  // existing objects keep values
+    QCOMPARE(std::get<RectangleAnnotation>(d.annotations[1]).content.stepValue, qint64(7));
+    auto fresh = shapeOf(shape::step, {40, 0}, {50, 10}); fresh.content.stepValue = 1; d.annotations.push_back(fresh);
+    QCOMPARE(nextStepValue(d, sequence), qint64(2));  // numbering continues from the new Step
+    d.annotations.pop_back(); QCOMPARE(nextStepValue(d, sequence), qint64(1));  // deleting or undoing it is deterministic
+    sequence.start = 5; QCOMPARE(nextStepValue(d, sequence), qint64(5));
+    sequence.start = 99; QCOMPARE(nextStepValue(d, sequence), qint64(10));  // out-of-range starts clamp to the reference 1..10
+    sequence.start = -3; QCOMPARE(nextStepValue(d, sequence), qint64(1));
+    // The legacy overload is the default sequence.
+    QCOMPARE(nextStepValue(d), qint64(8));
+  }
+  void stepStyleIsOneUndoableContentEditAndPaintsTheFormattedLabel() {
+    EditorSession session(document()); ShapeContent content; content.type = shape::step; content.stepValue = 27;
+    QVERIFY(session.createShape({{20, 20}, {70, 70}, {0xFFFF0000, 0xFF0000FF, 4, 0, 1}}, content, session.stateId(), session.selection()));
+    const auto before = session.undoCount(); const auto id = std::get<RectangleAnnotation>(session.document().annotations[0]).id;
+    content.stepStyle = StepStyle::UppercaseLetter;
+    QVERIFY(session.editShapeContent(id, content, session.stateId()));
+    QCOMPARE(session.undoCount(), before + 1);
+    QVERIFY(session.selectedRectangle()->content.stepStyle == StepStyle::UppercaseLetter);
+    // The label really changes: "27" and "AA" paint different pixels in the same circle.
+    QImage numeric(100, 100, QImage::Format_ARGB32), lettered = numeric; numeric.fill(Qt::white); lettered.fill(Qt::white);
+    auto step = *session.selectedRectangle(); step.content.stepStyle = StepStyle::Numeric;
+    { QPainter p(&numeric); paintShape(p, step, numeric); }
+    step.content.stepStyle = StepStyle::UppercaseRoman; step.content.stepValue = 4000;  // MMMM must shrink to fit, not overflow the circle
+    { QPainter p(&lettered); paintShape(p, step, lettered); }
+    QVERIFY(numeric != lettered);
+    for (int x = 0; x < 100; ++x) for (int y : {5, 90}) QCOMPARE(lettered.pixel(x, y), QColor(Qt::white).rgba());  // nothing leaks above or below the circle
+    QVERIFY(session.undo()); QVERIFY(std::get<RectangleAnnotation>(session.document().annotations[0]).content.stepStyle == StepStyle::Numeric);
+    QVERIFY(session.redo()); QVERIFY(std::get<RectangleAnnotation>(session.document().annotations[0]).content.stepStyle == StepStyle::UppercaseLetter);
+  }
+
+  void stepValuesStayStableAcrossDeleteReorderUndoRedoAndReload() {
+    EditorSession session(document(300, 100));
+    for (int i = 0; i < 4; ++i) {
+      ShapeContent content; content.type = shape::step; content.stepValue = nextStepValue(session.document()); content.stepStyle = i % 2 ? StepStyle::LowercaseRoman : StepStyle::UppercaseLetter;
+      QVERIFY(session.createShape({{10.0 + 40 * i, 10}, {40.0 + 40 * i, 40}, {}}, content, session.stateId(), session.selection()));
+    }
+    const auto values = [&] { QList<qint64> out; for (const auto &a : session.document().annotations) out << std::get<RectangleAnnotation>(a).content.stepValue; return out; };
+    QCOMPARE(values(), (QList<qint64>{1, 2, 3, 4}));
+    const auto second = std::get<RectangleAnnotation>(session.document().annotations[1]).id;
+    session.select({second}); QVERIFY(session.deleteSelection());
+    QCOMPARE(values(), (QList<qint64>{1, 3, 4}));  // deleting never renumbers the survivors
+    QCOMPARE(nextStepValue(session.document()), qint64(5));
+    session.select({std::get<RectangleAnnotation>(session.document().annotations[0]).id}); QVERIFY(session.reorderSelection(EditorSession::Order::Front));
+    QCOMPARE(values(), (QList<qint64>{3, 4, 1}));  // reordering moves values with their objects
+    const auto expected = serializeAnnotationList(session.document().annotations);
+    QVERIFY(session.undo()); QCOMPARE(values(), (QList<qint64>{1, 3, 4}));
+    QVERIFY(session.undo()); QCOMPARE(values(), (QList<qint64>{1, 2, 3, 4}));
+    QVERIFY(session.redo()); QVERIFY(session.redo()); QCOMPARE(serializeAnnotationList(session.document().annotations), expected);
+    const auto reloaded = parseAnnotationList(expected); QVERIFY(reloaded.annotations);
+    QCOMPARE(serializeAnnotationList(*reloaded.annotations), expected);
+    QCOMPARE(std::get<RectangleAnnotation>((*reloaded.annotations)[0]).content.stepValue, qint64(3));
+    QVERIFY(std::get<RectangleAnnotation>((*reloaded.annotations)[0]).content.stepStyle == StepStyle::UppercaseLetter);
+  }
   void everyShapeTypeRoundTripsThroughXann() {
     auto d = document();
     auto arrow = shapeOf(shape::arrow, {10, 10}, {60, 40}, {{1, 0}, {0, 1}});

@@ -10,6 +10,7 @@
 #include <QBuffer>
 #include <QBoxLayout>
 #include <QCheckBox>
+#include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QInputDialog>
 #include <QLabel>
@@ -500,7 +501,7 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
       RectangleAnnotation draft;
       draft.start = geometry->start; draft.end = geometry->end; draft.style = m_creation->style;
       draft.content.type = type; draft.content.points = geometry->points;
-      if (type == shape::step) { draft.content.stepValue = nextStepValue(m_session->document()); draft.content.fontSize = m_creation->content.stepFontSize; }
+      if (type == shape::step) { draft.content.stepValue = nextStepNumber(); draft.content.stepStyle = m_creation->content.stepStyle; draft.content.fontSize = m_creation->content.stepFontSize; }
       paintShape(p, draft, m_displaySource.isNull() ? m_image : m_displaySource);
     } else if (m_tool == Tool::CutOut) {
       // Preview the whole strip that will be removed.
@@ -678,7 +679,7 @@ bool EditorCanvas::createFromGesture(const std::vector<PointF> &gesture) {
     return m_session->createShape({gesture.front(), gesture.front(), creation->style}, content, creation->state, creation->selection), true;
   }
   content.points = geometry->points;
-  if (type == shape::step) { content.stepValue = nextStepValue(m_session->document()); content.fontSize = creation->content.stepFontSize; }
+  if (type == shape::step) { content.stepValue = nextStepNumber(); content.stepStyle = creation->content.stepStyle; content.fontSize = creation->content.stepFontSize; }
   if (type == shape::speechBalloon) content.points = {{0.2, 1.6}};  // default tail below the balloon
   if (type == shape::text || type == shape::speechBalloon) {
     // ESET-008: saved defaults seed this new object only; the dialog may override them.
@@ -692,6 +693,16 @@ bool EditorCanvas::createFromGesture(const std::vector<PointF> &gesture) {
   }
   m_session->createShape({geometry->start, geometry->end, creation->style}, content, creation->state, creation->selection);
   return true;
+}
+
+void EditorCanvas::setStepStartNumber(int start) {
+  m_stepSequence.start = std::clamp<qint64>(start, xerahs::editor::kMinStepStart, xerahs::editor::kMaxStepStart);
+  viewport()->update();
+}
+
+void EditorCanvas::resetStepNumbering() {
+  resetStepSequence(m_stepSequence, m_session->document());
+  viewport()->update();
 }
 
 bool EditorCanvas::canEditShapeContent() const {
@@ -767,8 +778,20 @@ bool EditorCanvas::editShapeContent(QWidget *parent) {
     if (auto *buttons = dialog->findChild<QDialogButtonBox *>()) {
       buttons->button(QDialogButtonBox::Ok)->setAutoDefault(false); buttons->button(QDialogButtonBox::Cancel)->setDefault(true);
     }
-    return contentDialog(dialog, [dialog, content]() mutable -> std::optional<ShapeContent> {
-      content.stepValue = dialog->intValue(); return content;
+    // EA-009: the style lives in the same dialog so one Apply is one history operation.
+    QComboBox *style = nullptr;
+    if (auto *form = dynamic_cast<QBoxLayout *>(dialog->layout())) {
+      style = new QComboBox(dialog);
+      style->setObjectName("stepStyleCombo"); style->setAccessibleName("Step style");
+      for (const auto candidate : {StepStyle::Numeric, StepStyle::UppercaseLetter, StepStyle::LowercaseLetter, StepStyle::UppercaseRoman, StepStyle::LowercaseRoman})
+        style->addItem(formatStepValue(1, candidate) + ", " + formatStepValue(2, candidate) + ", " + formatStepValue(3, candidate) + " ...", int(candidate));
+      style->setCurrentIndex(std::max(0, style->findData(int(content.stepStyle))));
+      form->insertWidget(std::max(0, form->count() - 1), style);
+    }
+    return contentDialog(dialog, [dialog, content, style]() mutable -> std::optional<ShapeContent> {
+      content.stepValue = dialog->intValue();
+      if (style) content.stepStyle = static_cast<StepStyle>(style->currentData().toInt());
+      return content;
     }, selected);
   }
   const QString &type = selected.type();

@@ -41,6 +41,7 @@
 #include <QListWidget>
 #include <QFormLayout>
 #include <QMenuBar>
+#include <QInputDialog>
 #include <QMessageBox>
 #include <QProgressDialog>
 #include <QPushButton>
@@ -411,6 +412,29 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   m_shapeStyleDefaults = edit->addAction("Shape &Style Defaults…"); m_shapeStyleDefaults->setObjectName("shapeStyleDefaults");
   m_shapeStyleDefaults->setAutoRepeat(false); m_shapeStyleDefaults->setStatusTip("Set the border style, rectangle corner radius and shadow used by new rectangles and ellipses. Existing objects stay unchanged.");
   connect(m_shapeStyleDefaults, &QAction::triggered, this, [this] { shapeStyleDefaultsDialog(); });
+  // EA-009: Step numbering is editing-session state; neither action touches the document or history.
+  auto *stepStart = edit->addAction("Step Start &Number…"); stepStart->setObjectName("stepStartNumber"); stepStart->setAutoRepeat(false);
+  stepStart->setStatusTip("Choose the number (1 to 10) the next Step starts from. Existing Steps keep their values.");
+  connect(stepStart, &QAction::triggered, this, [this] {
+    if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive()) return;
+    auto *dialog = new QInputDialog(this);
+    dialog->setObjectName("stepStartNumberDialog"); dialog->setWindowTitle("Step Start Number"); dialog->setAccessibleName("Step start number");
+    dialog->setWindowModality(Qt::WindowModal); dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->setInputMode(QInputDialog::IntInput); dialog->setLabelText("Start Steps from:");
+    dialog->setIntRange(int(kMinStepStart), int(kMaxStepStart)); dialog->setIntValue(m_canvas->stepStartNumber());
+    dialog->setOkButtonText("Apply"); dialog->setCancelButtonText("Cancel");
+    const QPointer<EditorWindow> owner(this);
+    connect(dialog, &QDialog::finished, this, [owner, dialog](int result) {
+      if (owner && result == QDialog::Accepted) owner->m_canvas->setStepStartNumber(dialog->intValue());
+    });
+    dialog->open();
+  });
+  auto *stepReset = edit->addAction("&Reset Step Numbering"); stepReset->setObjectName("resetStepNumbering"); stepReset->setAutoRepeat(false);
+  stepReset->setStatusTip("The next Step takes the start number. Existing Steps keep their values.");
+  connect(stepReset, &QAction::triggered, this, [this] {
+    if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive()) return;
+    m_canvas->resetStepNumbering();
+  });
   m_copyAction = edit->addAction("&Copy Image"); m_copyAction->setObjectName("copyImage");
   m_copyAction->setShortcut(QKeySequence::Copy);
   m_copyAction->setAutoRepeat(false);

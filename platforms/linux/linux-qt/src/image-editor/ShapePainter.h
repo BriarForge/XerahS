@@ -46,7 +46,20 @@ struct ShapeGeometry {
 };
 std::optional<ShapeGeometry> shapeGeometry(const QString &type, const std::vector<PointF> &gesture);
 
-// EA-009: the next step number is one past the highest existing step.
-qint64 nextStepValue(const AnnotationDocument &document);
+// EA-009: Step numbering state of one editing session. `start` is the explicit
+// starting value (reference range 1..10, default 1). `retired` holds the Steps
+// that existed when numbering was last reset; they keep their values but no
+// longer count toward the next allocation.
+inline constexpr qint64 kMinStepStart = 1;
+inline constexpr qint64 kMaxStepStart = 10;
+struct StepSequence {
+  qint64 start = kMinStepStart;
+  QSet<QUuid> retired;
+};
+// Deterministic allocation: one past the highest live (not retired) Step, but
+// never below the start value. With no live Step that is the start value.
+qint64 nextStepValue(const AnnotationDocument &document, const StepSequence &sequence = {});
+// Reset: the next allocation becomes the start value; existing Steps keep their values.
+void resetStepSequence(StepSequence &sequence, const AnnotationDocument &document);
 
 }  // namespace xerahs::editor

@@ -423,7 +423,7 @@ private slots:
     QCOMPARE(bool(changed.preferences), valid);
   }
   void inertStepStylesAreNotImplementedButPreserved() {
-    for (const auto *style : {"UppercaseLetter", "LowercaseLetter", "UppercaseRoman", "LowercaseRoman", "FutureStyle9"}) {
+    for (const auto *style : {"FutureStyle9", "uppercaseletter", "Roman"}) {
       const auto loaded = loadEditorPreferences({{"StepType", style}});
       const auto defaults = contentDefaultsFromPreferences(loaded, [](const QString &) { return true; });
       QVERIFY(defaults.stepStyleInert); QCOMPARE(defaults.requestedStepStyle, QString(style));
@@ -431,7 +431,23 @@ private slots:
       QVERIFY(changed.preferences);
       QCOMPARE(serializeEditorPreferences(*changed.preferences).value("StepType"), QJsonValue(style));
     }
-    QVERIFY(stepStyleImplemented("Numeric")); QVERIFY(!stepStyleImplemented("UppercaseLetter"));
+    QVERIFY(stepStyleImplemented("Numeric")); QVERIFY(!stepStyleImplemented("FutureStyle9")); QVERIFY(!stepStyleImplemented("uppercaseLetter"));
+  }
+  void everyReferenceStepStyleIsImplementedAndReachesCreationDefaults() {
+    // EA-009: the ESET-008 StepType names are the reference StepType members and are active now.
+    const std::pair<const char *, StepStyle> styles[] = {{"Numeric", StepStyle::Numeric}, {"UppercaseLetter", StepStyle::UppercaseLetter},
+        {"LowercaseLetter", StepStyle::LowercaseLetter}, {"UppercaseRoman", StepStyle::UppercaseRoman}, {"LowercaseRoman", StepStyle::LowercaseRoman}};
+    for (const auto &[name, style] : styles) {
+      QVERIFY(stepStyleImplemented(name));
+      const auto loaded = loadEditorPreferences({{"StepType", name}});
+      const auto defaults = contentDefaultsFromPreferences(loaded, [](const QString &) { return true; });
+      QVERIFY(!defaults.stepStyleInert); QCOMPARE(defaults.requestedStepStyle, QString(name)); QVERIFY(defaults.stepStyle == style);
+      const auto changed = changeEditorPreferences(loaded, {{"Thickness", 5}});
+      QVERIFY(changed.preferences);
+      QCOMPARE(serializeEditorPreferences(*changed.preferences).value("StepType"), QJsonValue(name));
+    }
+    const auto inert = contentDefaultsFromPreferences(loadEditorPreferences({{"StepType", "FutureStyle9"}}), [](const QString &) { return true; });
+    QVERIFY(inert.stepStyleInert); QVERIFY(inert.stepStyle == StepStyle::Numeric);
   }
   void missingFontResolvesToFallbackWithoutRewritingStoredPreference() {
     MemoryStorage storage;

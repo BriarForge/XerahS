@@ -302,6 +302,47 @@ private slots:
     QCOMPARE(session.selectedRectangle()->type(), shape::step); QCOMPARE(session.selectedRectangle()->content.fontSize, 22.5);
     QCOMPARE(session.selectedRectangle()->content.stepValue, qint64(1));
   }
+  void stepCreationUsesSavedStyleStartAndResetAndEditChangesOnlyTheSelectedStep() {
+    // EA-009 native path: pointer creation, start number, reset and the edit dialog.
+    EditorSession session(document()); const auto source = image(); ContentCreationDefaults defaults;
+    defaults.requestedStepStyle = "UppercaseLetter"; defaults.stepStyle = StepStyle::UppercaseLetter; QVERIFY(session.setContentDefaults(defaults));
+    EditorCanvas canvas(session, source); canvas.resize(900, 700); canvas.show(); QCoreApplication::processEvents(); canvas.resetZoom(); canvas.setTool(EditorCanvas::Tool::Step);
+    const auto at = [&](double x, double y) { return canvas.viewState().toView({x, y}).toPoint(); };
+    const auto place = [&](double x, double y) { QTest::mouseClick(canvas.viewport(), Qt::LeftButton, {}, at(x, y)); QVERIFY(session.selectedRectangle()); };
+    const auto last = [&]() -> const RectangleAnnotation & { return std::get<RectangleAnnotation>(session.document().annotations.back()); };
+    QCOMPARE(canvas.stepStartNumber(), 1);
+    place(100, 100); QCOMPARE(last().content.stepValue, qint64(1)); QVERIFY(last().content.stepStyle == StepStyle::UppercaseLetter);
+    place(200, 100); QCOMPARE(last().content.stepValue, qint64(2));
+    // A new default affects only Steps created afterwards.
+    defaults.stepStyle = StepStyle::LowercaseRoman; QVERIFY(session.setContentDefaults(defaults));
+    place(300, 100); QCOMPARE(last().content.stepValue, qint64(3)); QVERIFY(last().content.stepStyle == StepStyle::LowercaseRoman);
+    QVERIFY(std::get<RectangleAnnotation>(session.document().annotations[0]).content.stepStyle == StepStyle::UppercaseLetter);
+    // Reset: the next Step takes the start value; existing Steps keep their values and styles.
+    const auto undo = session.undoCount(); canvas.resetStepNumbering(); QCOMPARE(session.undoCount(), undo);
+    QCOMPARE(canvas.nextStepNumber(), qint64(1));
+    place(400, 100); QCOMPARE(last().content.stepValue, qint64(1));
+    QCOMPARE(std::get<RectangleAnnotation>(session.document().annotations[2]).content.stepValue, qint64(3));
+    place(500, 100); QCOMPARE(last().content.stepValue, qint64(2));
+    // Explicit start number, clamped to the reference range 1..10.
+    canvas.setStepStartNumber(7); QCOMPARE(canvas.stepStartNumber(), 7); canvas.resetStepNumbering();
+    place(100, 200); QCOMPARE(last().content.stepValue, qint64(7)); place(200, 200); QCOMPARE(last().content.stepValue, qint64(8));
+    canvas.setStepStartNumber(0); QCOMPARE(canvas.stepStartNumber(), 1); canvas.setStepStartNumber(11); QCOMPARE(canvas.stepStartNumber(), 10);
+    canvas.setStepStartNumber(1);
+    // Native edit: the dialog changes the selected Step's style in one undoable operation.
+    canvas.setTool(EditorCanvas::Tool::Select);
+    const auto id = last().id; const auto others = serializeAnnotationList(std::vector<Annotation>(session.document().annotations.begin(), session.document().annotations.end() - 1));
+    QVERIFY(canvas.editShapeContent(&canvas)); auto *dialog = canvas.findChild<QInputDialog *>(); QVERIFY(dialog);
+    auto *style = dialog->findChild<QComboBox *>("stepStyleCombo"); QVERIFY(style); QCOMPARE(style->count(), 5);
+    QCOMPARE(style->currentData().toInt(), int(StepStyle::LowercaseRoman));  // the style this Step was created with
+    style->setCurrentIndex(style->findData(int(StepStyle::UppercaseRoman))); dialog->setIntValue(14); const auto before = session.undoCount();
+    dialog->accept(); QTRY_VERIFY(!canvas.interactionActive());
+    QCOMPARE(session.undoCount(), before + 1); QCOMPARE(last().id, id); QCOMPARE(last().content.stepValue, qint64(14)); QVERIFY(last().content.stepStyle == StepStyle::UppercaseRoman);
+    QCOMPARE(serializeAnnotationList(std::vector<Annotation>(session.document().annotations.begin(), session.document().annotations.end() - 1)), others);
+    // Saved and reopened: style, value and ids survive the .xann round trip.
+    const auto saved = serializeAnnotationList(session.document().annotations); const auto reloaded = parseAnnotationList(saved); QVERIFY(reloaded.annotations);
+    QCOMPARE(serializeAnnotationList(*reloaded.annotations), saved);
+    QVERIFY(session.undo()); QVERIFY(last().content.stepStyle == StepStyle::LowercaseRoman); QCOMPARE(last().content.stepValue, qint64(8));
+  }
   void unavailableSavedFontShowsNoticeAndCreatesWithNativeFallback() {
     EditorSession session(document()); const auto source = image(); ContentCreationDefaults defaults;
     defaults.text.requestedFamily = "Gone Sans"; defaults.text.familyUnavailable = true; defaults.text.fontFamily = QString();

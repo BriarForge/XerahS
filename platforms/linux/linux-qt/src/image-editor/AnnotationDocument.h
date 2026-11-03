@@ -98,11 +98,22 @@ struct TextCreationDefaults {
   bool bold = true, italic = false;
   QString alignment = QStringLiteral("center");  // left, center, right
 };
+// EA-009: how a Step prints its number. Members, order and the persisted
+// `stepType` spelling (camelCase, read case-insensitively) follow the reference
+// StepType enum; the ESET-008 preference stores the PascalCase names.
+enum class StepStyle { Numeric, UppercaseLetter, LowercaseLetter, UppercaseRoman, LowercaseRoman };
+QString stepStyleName(StepStyle style);                    // numeric, uppercaseLetter, ...
+std::optional<StepStyle> parseStepStyle(const QString &);  // either spelling, case-insensitive
+// Values <= 0 print as plain decimal. Alphabetic is bijective base 26 (1 = A,
+// 26 = Z, 27 = AA); Roman is standard subtractive with M repeated above 3999.
+QString formatStepValue(qint64 value, StepStyle style);
+
 struct ContentCreationDefaults {
   TextCreationDefaults text, balloon;
   double stepFontSize = 0;  // 0 sizes the number from the step circle
   QString requestedStepStyle = QStringLiteral("Numeric");
-  bool stepStyleInert = false;  // saved style is preserved but not implemented
+  bool stepStyleInert = false;  // saved style is preserved but unknown to this build
+  StepStyle stepStyle = StepStyle::Numeric;  // the usable style new Steps are created with
 };
 
 // EA-001: the document types of the box-bounded annotation tools. Every
@@ -158,6 +169,7 @@ struct ShapeContent {
   QString text;           // text: content; step: unused
   double fontSize = 0;    // text and step; 0 uses the type default
   qint64 stepValue = 0;   // EA-009: the displayed step number
+  StepStyle stepStyle = StepStyle::Numeric;  // EA-009: persisted as `stepType`, omitted when numeric
   double strength = 0;    // blur radius or pixelate cell; 0 uses the default
   bool isEllipse = false;   // EA-011: region effects only; false = rectangular region
   double blurAmount = 0;    // EA-011: Spotlight only; 0 = no blur of the dimmed area

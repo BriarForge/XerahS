@@ -97,10 +97,14 @@ bool manageDrawingDefaults(QWidget *parent) {
   form->addRow(QStringLiteral("Font size (pixels)"), stepSize);
   const QString savedStep = original.values.value(u"StepType").toString();
   auto *stepStyle = new QComboBox(dialog); stepStyle->setObjectName(QStringLiteral("defaultStepStyle")); stepStyle->setAccessibleName(QStringLiteral("Step style"));
-  stepStyle->addItem(QStringLiteral("Numeric"), QStringLiteral("Numeric"));
+  // EA-009: names are the ESET-008 preference spellings.
+  for (const auto &entry : {std::pair{"Numeric", "1, 2, 3 ..."}, std::pair{"UppercaseLetter", "A, B, C ..."}, std::pair{"LowercaseLetter", "a, b, c ..."},
+                            std::pair{"UppercaseRoman", "I, II, III ..."}, std::pair{"LowercaseRoman", "i, ii, iii ..."}})
+    stepStyle->addItem(QStringLiteral("%1 (%2)").arg(QLatin1String(entry.first), QLatin1String(entry.second)), QLatin1String(entry.first));
+  stepStyle->setCurrentIndex(std::max(0, stepStyle->findData(savedStep)));
   if (!stepStyleImplemented(savedStep)) {
-    // Saved but not yet implemented: kept as-is, new steps stay numeric.
-    stepStyle->addItem(savedStep + QStringLiteral(" (not available yet)"), savedStep); stepStyle->setCurrentIndex(1);
+    // Saved by a newer build: kept as-is, new steps stay numeric.
+    stepStyle->addItem(savedStep + QStringLiteral(" (not available yet)"), savedStep); stepStyle->setCurrentIndex(stepStyle->count() - 1);
   }
   form->addRow(QStringLiteral("Style"), stepStyle);
   const auto textDraft = [](QJsonObject &changes, const TextControls &c) {

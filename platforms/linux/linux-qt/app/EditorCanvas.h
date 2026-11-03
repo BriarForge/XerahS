@@ -3,6 +3,7 @@
 
 #include "image-editor/EditorSession.h"
 #include "image-editor/EditorViewport.h"
+#include "image-editor/ShapePainter.h"
 
 #include <QAbstractScrollArea>
 #include <QImage>
@@ -57,6 +58,12 @@ public:
   bool createRectangle(QWidget *parent);
   // Edit the selected text, Step or strength annotation's own values.
   bool canEditShapeContent() const;
+  // EA-009: the explicit Step starting value (1..10) and the reset of the numbering. Both are
+  // editing-session state, not document content: no history entry, existing Steps keep their values.
+  int stepStartNumber() const { return int(m_stepSequence.start); }
+  void setStepStartNumber(int start);
+  void resetStepNumbering();
+  qint64 nextStepNumber() const { return xerahs::editor::nextStepValue(m_session->document(), m_stepSequence); }
   // Content edits open asynchronously; true means the dialog was opened.
   bool editShapeContent(QWidget *parent);
   // Borrowed only until mutation; native list models copy their displayed rows.
@@ -128,6 +135,7 @@ private:
     QSet<QUuid> selection;
   };
   std::optional<CreationSnapshot> m_creation;
+  xerahs::editor::StepSequence m_stepSequence;
   bool textContentDialog(const xerahs::editor::RectangleAnnotation &snapshot, QWidget *parent,
                          std::optional<CreationSnapshot> creation = std::nullopt);
   bool contentDialog(QDialog *dialog, std::function<std::optional<xerahs::editor::ShapeContent>()> choice,

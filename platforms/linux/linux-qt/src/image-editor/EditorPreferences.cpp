@@ -206,7 +206,16 @@ RectangleStyle drawingStyleFromPreferences(const EditorPreferences &preferences)
   if (number(thickness, 1, 10000, true)) style.strokeWidth = thickness.toDouble();
   return style;
 }
-bool stepStyleImplemented(const QString &style) { return style == u"Numeric"; }
+namespace {
+std::optional<StepStyle> preferenceStepStyle(const QString &style) {
+  for (const auto candidate : {StepStyle::Numeric, StepStyle::UppercaseLetter, StepStyle::LowercaseLetter, StepStyle::UppercaseRoman, StepStyle::LowercaseRoman}) {
+    QString name = stepStyleName(candidate); name[0] = name[0].toUpper();
+    if (style == name) return candidate;  // preferences store the exact PascalCase name
+  }
+  return std::nullopt;
+}
+}  // namespace
+bool stepStyleImplemented(const QString &style) { return preferenceStepStyle(style).has_value(); }
 ContentCreationDefaults contentDefaultsFromPreferences(const EditorPreferences &preferences,
     const std::function<bool(const QString &)> &familyAvailable) {
   const auto &values = preferences.values;
@@ -234,6 +243,7 @@ ContentCreationDefaults contentDefaultsFromPreferences(const EditorPreferences &
   const auto style = values.value(u"StepType");
   result.requestedStepStyle = textFieldValid(TextField::StepStyle, style) ? style.toString() : QStringLiteral("Numeric");
   result.stepStyleInert = !stepStyleImplemented(result.requestedStepStyle);
+  result.stepStyle = preferenceStepStyle(result.requestedStepStyle).value_or(StepStyle::Numeric);
   return result;
 }
 EditorWindowPreferences windowPreferencesFromPreferences(const EditorPreferences &preferences) {

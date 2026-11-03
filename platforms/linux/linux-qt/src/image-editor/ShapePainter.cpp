@@ -7,6 +7,7 @@
 #include <QCryptographicHash>
 #include <QFont>
 #include <QFontDatabase>
+#include <QFontMetricsF>
 #include <QHash>
 #include <QImageReader>
 #include <QPainter>
@@ -535,9 +536,16 @@ void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImag
     QFont font = painter.font();
     font.setPixelSize(std::max(1, int(std::lround(shapeFontSize(shape)))));
     font.setBold(true);
+    const QString label = formatStepValue(shape.content.stepValue, shape.content.stepStyle);
     painter.setFont(font);
+    // Alphabetic and Roman labels are wider than a digit: shrink them to stay inside the circle.
+    const double available = box.width() * 0.8, wide = QFontMetricsF(font).horizontalAdvance(label);
+    if (wide > available && available > 0) {
+      font.setPixelSize(std::max(1, int(std::floor(font.pixelSize() * available / wide))));
+      painter.setFont(font);
+    }
     painter.setPen(fill.lightnessF() > 0.6 ? Qt::black : Qt::white);
-    painter.drawText(box, Qt::AlignCenter, QString::number(shape.content.stepValue));
+    painter.drawText(box, Qt::AlignCenter, label);
   } else if (type == shape::speechBalloon) {
     paintBalloon(painter, shape);
   } else if (isAssetShape(type)) {
@@ -596,12 +604,17 @@ std::optional<ShapeGeometry> shapeGeometry(const QString &type, const std::vecto
   return ShapeGeometry{{left, top}, {right, bottom}, {}};
 }
 
-qint64 nextStepValue(const AnnotationDocument &document) {
+qint64 nextStepValue(const AnnotationDocument &document, const StepSequence &sequence) {
   qint64 highest = 0;
   for (const auto &annotation : document.annotations)
-    if (const auto *shape = std::get_if<RectangleAnnotation>(&annotation); shape && shape->type() == shape::step)
+    if (const auto *shape = std::get_if<RectangleAnnotation>(&annotation); shape && shape->type() == shape::step && !sequence.retired.contains(shape->id))
       highest = std::max(highest, shape->content.stepValue);
-  return highest + 1;
+  return std::max(highest + 1, std::clamp(sequence.start, kMinStepStart, kMaxStepStart));
+}
+
+void resetStepSequence(StepSequence &sequence, const AnnotationDocument &document) {
+  for (const auto &annotation : document.annotations)
+    if (const auto *shape = std::get_if<RectangleAnnotation>(&annotation); shape && shape->type() == shape::step) sequence.retired.insert(shape->id);
 }
 
 }  // namespace xerahs::editor

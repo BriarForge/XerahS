@@ -15,7 +15,7 @@ bool sameEditableFields(const RectangleAnnotation &a, const RectangleAnnotation 
       a.style.strokeColor == b.style.strokeColor && a.style.fillColor == b.style.fillColor &&
       a.style.rotationDegrees == b.style.rotationDegrees && a.style.opacity == b.style.opacity && sameDecoration(a.style, b.style) &&
       a.content.text == b.content.text && a.content.fontSize == b.content.fontSize && a.content.points == b.content.points && a.content.textAlignment == b.content.textAlignment && a.content.textBold == b.content.textBold && a.content.textItalic == b.content.textItalic && a.content.textColor == b.content.textColor && a.content.textFillColor == b.content.textFillColor && a.content.balloonBorderColor == b.content.balloonBorderColor && a.content.fontFamily == b.content.fontFamily &&
-      a.content.stepValue == b.content.stepValue && a.content.strength == b.content.strength &&
+      a.content.stepValue == b.content.stepValue && a.content.stepStyle == b.content.stepStyle && a.content.strength == b.content.strength &&
       a.content.isEllipse == b.content.isEllipse && a.content.blurAmount == b.content.blurAmount;
 }
 bool sameStyle(const RectangleStyle &a, const RectangleStyle &b) {
@@ -214,6 +214,7 @@ bool EditorSession::editShapeContent(const QUuid &id, const ShapeContent &conten
       r.content.points = content.points; r.content.balloonBorderColor = content.balloonBorderColor;
     }
     r.content.stepValue = content.stepValue; r.content.strength = content.strength;
+    if (r.type() == shape::step) r.content.stepStyle = content.stepStyle;
     if (hasShapeEllipse(r.type())) r.content.isEllipse = content.isEllipse;
     if (hasShapeBlurAmount(r.type())) r.content.blurAmount = content.blurAmount;
   });
