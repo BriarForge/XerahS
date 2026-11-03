@@ -195,6 +195,7 @@ void CaptureController::onSnapshot(int outcome, const QImage &image, const QStri
     if (result == PortalScreenshot::Outcome::Denied) {
       recordCaptureOutcome("permission-denied", diagnostic::capturePermissionDenied); if (!guard) return;
       emit notify(sourceTitle("capture denied"), diagnostic::capturePermissionDenied, false);
+      if (guard) emit capturePermissionDenied();
       if (guard) finish();
       return;
     }
@@ -583,6 +584,7 @@ void CaptureController::onOutcome(const SessionOutcome &outcome) {
     if (outcome.diagnostic) {
       const QString title = sourceTitle(outcome.state == SessionState::Failed ? QStringLiteral("capture failed") : QStringLiteral("capture cancelled"));
       emit notify(title, *outcome.diagnostic, false);
+      if (guard && *outcome.diagnostic == diagnostic::capturePermissionDenied) emit capturePermissionDenied();
     }
     if (!guard) return;
     // RC-008: a plain cancel shows nothing and starts no actions.

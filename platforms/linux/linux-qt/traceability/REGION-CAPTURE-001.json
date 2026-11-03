@@ -46,21 +46,25 @@
       ]
     },
     "RC-002": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "permission-denied-shows-no-overlay"
       ],
-      "note": "The portal owns native consent; explicit NotAllowed/AccessDenied errors return capture-permission-denied once. Response code 1 is user cancellation, not an inferred denial. Private-bus production tests prove no overlay, clipboard or save on denial and value-free diagnostics. Historical single-display Hyprland smoke evidence is not full qualification. Permission-settings navigation where available, physical consent and human capture-permission/security review remain Required.",
+      "note": "The portal owns native consent; explicit NotAllowed/AccessDenied errors return capture-permission-denied once. Response code 1 is user cancellation, not an inferred denial. Private-bus production tests prove no overlay, clipboard or save on denial and value-free diagnostics. Historical single-display Hyprland smoke evidence is not full qualification. Permission-settings navigation where available, physical consent and human capture-permission/security review remain Required. Audit 2026-11-03: Native consent and no prompt loop: the screenshot portal owns first-request consent and an explicit NotAllowed/AccessDenied returns capture-permission-denied once (PortalScreenshotTest::executionPreservesPrePipelineOutcomes denied row, PortalScreenshotTest::denialOffersPermissionGuidanceOnceAndNeverRepromptsOrLeavesOutput asserts one portal call, one capturePermissionDenied signal after settling, no overlay and no output). The denial now offers a 'How to allow screen capture' dialog (app/CapturePermissionHelp.cpp, wired in CaptureFeature) explaining GNOME Settings > Privacy, KDE System Settings > Privacy and 'flatpak permission-reset com.xerahs.app' for the portal store, with an Open Settings action that starts gnome-control-center privacy or systemsettings detached when found on PATH (the desktop's own app is preferred). CapturePermissionHelpTest covers both branches with injected PATH and launcher: route selection by desktop and availability, launching with the right program/arguments while the guidance stays open, a visible launch failure, manual-only guidance with no Open Settings action when no settings app exists, and a single dialog however many denials arrive. Linux has no universal settings UI for the portal permission store, so the manual steps are the documented route there.",
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 33,
         "published_vectors": [
           "permission-denied-shows-no-overlay"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "d5ba4c7793272c989a9f66cd3319a35521c5a182"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/CapturePermissionHelpTest.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+      ]
     },
     "RC-003": {
       "status": "partial",

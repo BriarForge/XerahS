@@ -227,6 +227,8 @@ add_executable(xerahs
   app/AppContext.h
   app/features/ApplicationFeature.cpp
   app/features/ApplicationFeature.h
+  app/CapturePermissionHelp.cpp
+  app/CapturePermissionHelp.h
   app/features/CaptureFeature.cpp
   app/features/CaptureFeature.h
   app/features/CommandWindowAttach.cpp
@@ -444,6 +446,12 @@ add_executable(activation-protocol-test tests/ActivationProtocolTest.cpp)
 set_target_properties(activation-protocol-test PROPERTIES AUTOMOC ON)
 target_link_libraries(activation-protocol-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME activation-protocol COMMAND activation-protocol-test)
+add_executable(capture-permission-help-test tests/CapturePermissionHelpTest.cpp app/CapturePermissionHelp.cpp app/CapturePermissionHelp.h)
+set_target_properties(capture-permission-help-test PROPERTIES AUTOMOC ON)
+target_include_directories(capture-permission-help-test PRIVATE app)
+target_link_libraries(capture-permission-help-test PRIVATE Qt6::Widgets Qt6::Test)
+add_test(NAME capture-permission-help COMMAND capture-permission-help-test)
+set_tests_properties(capture-permission-help PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 add_executable(application-window-test tests/ApplicationWindowTest.cpp app/ApplicationWindow.cpp app/ApplicationWindow.h
   app/CommandRegistry.cpp app/CommandRegistry.h app/features/ToolsFeature.cpp app/features/ToolsFeature.h)
 set_target_properties(application-window-test PROPERTIES AUTOMOC ON)

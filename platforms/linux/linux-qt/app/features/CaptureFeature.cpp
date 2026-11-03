@@ -4,6 +4,7 @@
 #include "AppContext.h"
 #include "ApplicationWindow.h"
 #include "CaptureController.h"
+#include "CapturePermissionHelp.h"
 #include "CaptureRecoveryActions.h"
 #include "CaptureWorkflows.h"
 #include "EditorWindow.h"
@@ -214,6 +215,9 @@ void installCapture(AppContext &ctx) {
   });
   QObject::connect(&ctx.capture, &CaptureController::notify, &ctx.app, [&ctx](const QString &title, const QString &body, bool success) {
     if (auto *window = commandWindow(ctx)) window->showResult(title, body, success);
+  });
+  QObject::connect(&ctx.capture, &CaptureController::capturePermissionDenied, &ctx.app, [&ctx] {
+    showCapturePermissionHelp(ctx.dialogParent ? ctx.dialogParent() : nullptr);
   });
   QObject::connect(&ctx.capture, &CaptureController::compositionProgressChanged, &ctx.app, [&ctx](int percent) {
     if (auto *window = commandWindow(ctx)) window->showProgress(QStringLiteral("Region capture"), percent);

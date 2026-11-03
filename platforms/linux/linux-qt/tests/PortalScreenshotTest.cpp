@@ -465,6 +465,15 @@ private slots:
     QCOMPARE(bytes(original->file->path), savedBytes); QCOMPARE(bytes(dir.filePath("executions/" + id + ".json")), recordBytes); QCOMPARE(executions.result(id).value("pipelineTaskId"), QJsonValue(original->pipeline.taskId)); QCOMPARE(portal.calls, 1); QCOMPARE(copies, 2);
     const auto records = journal->list(); QCOMPARE(records.entries.size(), size_t(2)); for (const auto &entry : records.entries) { QVERIFY(entry.parsed.record); QCOMPARE(entry.parsed.record->report.value("extensions").toObject().value("com.xerahs.app").toObject().value("workflow_execution_id"), QJsonValue(id)); }
   }
+  void denialOffersPermissionGuidanceOnceAndNeverRepromptsOrLeavesOutput() {
+    // RC-002: explicit NotAllowed returns capture-permission-denied once, signals the shell for settings guidance, and does not loop the portal.
+    QTemporaryDir dir; FakeScreenshotPortal portal(server); portal.error = "org.freedesktop.portal.Error.NotAllowed";
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    QSignalSpy notices(&controller, &CaptureController::notify), denied(&controller, &CaptureController::capturePermissionDenied);
+    controller.captureRegion(); QTRY_COMPARE(denied.count(), 1); QTRY_VERIFY(!controller.busy());
+    QCOMPARE(portal.calls, 1); QVERIFY(!overlayExists()); QVERIFY(!QFile::exists(dir.filePath("outputs"))); QVERIFY(!notices.isEmpty()); QCOMPARE(notices.last()[1].toString(), QString("capture-permission-denied"));
+    QTest::qWait(100); QCOMPARE(denied.count(), 1); QCOMPARE(portal.calls, 1);
+  }
   void executionPreservesPrePipelineOutcomes_data() {
     QTest::addColumn<QString>("mode"); for (const auto *mode : {"denied", "portal-cancel", "cancel-before-acquisition", "cancel-pending", "cancel-selection", "source-failure", "composition-failure", "destroy-pending"}) QTest::newRow(mode) << QString::fromLatin1(mode);
   }

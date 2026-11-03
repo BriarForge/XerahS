@@ -94,6 +94,8 @@ public slots:
 
 signals:
   void busyChanged(bool busy);
+  // RC-002: emitted once per denied capture so the shell can offer permission guidance; never starts another request.
+  void capturePermissionDenied();
   // CORE-010: the originating operation and its true result.
   void notify(const QString &title, const QString &body, bool success);
   void compositionProgressChanged(int percent);
