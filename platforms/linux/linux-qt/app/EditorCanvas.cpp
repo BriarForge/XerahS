@@ -8,7 +8,11 @@
 
 #include <QColorSpace>
 #include <QBuffer>
+#include <QBoxLayout>
+#include <QCheckBox>
+#include <QDoubleSpinBox>
 #include <QInputDialog>
+#include <QLabel>
 #include <QDialogButtonBox>
 #include <QPushButton>
 #include <QMessageBox>
@@ -668,7 +672,7 @@ bool EditorCanvas::canEditShapeContent() const {
   const auto *selected = m_session->selectedRectangle();
   if (!selected || !m_session->selectionEditable()) return false;
   const QString &type = selected->type();
-  return isTextShape(type) || hasShapeStrength(type);
+  return isTextShape(type) || hasShapeStrength(type) || hasShapeEllipse(type);
 }
 
 bool EditorCanvas::textContentDialog(const RectangleAnnotation &snapshot, QWidget *parent,
@@ -742,6 +746,21 @@ bool EditorCanvas::editShapeContent(QWidget *parent) {
     }, selected);
   }
   const QString &type = selected.type();
+  if (type == shape::highlight) {
+    // EA-011: Highlight has no strength; its only option is the region shape.
+    auto *dialog = new QInputDialog(parent ? parent : this);
+    dialog->setObjectName("strengthContentDialog"); dialog->setWindowTitle("Edit Highlight"); dialog->setAccessibleName("Highlight region shape");
+    dialog->setWindowModality(Qt::WindowModal); dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->setInputMode(QInputDialog::TextInput); dialog->setComboBoxItems({"Rectangle", "Ellipse"}); dialog->setComboBoxEditable(false);
+    dialog->setLabelText("Highlight region shape:"); dialog->setTextValue(content.isEllipse ? "Ellipse" : "Rectangle");
+    dialog->setOkButtonText("Apply"); dialog->setCancelButtonText("Cancel");
+    if (auto *buttons = dialog->findChild<QDialogButtonBox *>()) {
+      buttons->button(QDialogButtonBox::Ok)->setAutoDefault(false); buttons->button(QDialogButtonBox::Cancel)->setDefault(true);
+    }
+    return contentDialog(dialog, [dialog, content]() mutable -> std::optional<ShapeContent> {
+      content.isEllipse = dialog->textValue() == "Ellipse"; return content;
+    }, selected);
+  }
   QString label = type == shape::blur ? "Blur radius (pixels):" : type == shape::pixelate ? "Pixel cell size (pixels):"
       : type == shape::magnify ? "Zoom factor:" : "Dim the rest by (percent):";
   const double maximum = type == shape::magnify ? 16 : type == shape::spotlight ? 100 : 1000;
@@ -758,9 +777,30 @@ bool EditorCanvas::editShapeContent(QWidget *parent) {
   if (auto *buttons = dialog->findChild<QDialogButtonBox *>()) {
     buttons->button(QDialogButtonBox::Ok)->setAutoDefault(false); buttons->button(QDialogButtonBox::Cancel)->setDefault(true);
   }
-  return contentDialog(dialog, [dialog, content, initial]() mutable -> std::optional<ShapeContent> {
+  // EA-011: region effects also edit their shape; Spotlight its blur. These live in the same
+  // dialog so one Apply is one history operation.
+  QCheckBox *ellipse = nullptr; QDoubleSpinBox *blur = nullptr;
+  auto *form = dynamic_cast<QBoxLayout *>(dialog->layout());
+  if (form && hasShapeEllipse(type)) {
+    ellipse = new QCheckBox("Elliptical region", dialog);
+    ellipse->setObjectName("effectEllipseCheck"); ellipse->setAccessibleName("Elliptical region"); ellipse->setChecked(content.isEllipse);
+    form->insertWidget(std::max(0, form->count() - 1), ellipse);
+  }
+  const double initialBlur = content.blurAmount;
+  if (form && hasShapeBlurAmount(type)) {
+    auto *caption = new QLabel("Blur the dimmed area (pixels, 0 = none):", dialog);
+    blur = new QDoubleSpinBox(dialog);
+    blur->setObjectName("effectBlurAmountSpin"); blur->setAccessibleName("Blur the dimmed area (pixels)");
+    blur->setDecimals(17); blur->setRange(0, kMaxBlurAmount); blur->setValue(initialBlur);
+    form->insertWidget(std::max(0, form->count() - 1), caption);
+    form->insertWidget(std::max(0, form->count() - 1), blur);
+  }
+  const double initialShown = blur ? blur->value() : 0;
+  return contentDialog(dialog, [dialog, content, initial, ellipse, blur, initialShown]() mutable -> std::optional<ShapeContent> {
     const double chosen = dialog->doubleValue();
     if (chosen != initial) content.strength = chosen;
+    if (ellipse) content.isEllipse = ellipse->isChecked();
+    if (blur && blur->value() != initialShown) content.blurAmount = blur->value();
     return content;
   }, selected);
 }
@@ -1045,7 +1085,14 @@ std::optional<QUuid> EditorCanvas::topmostAt(QPointF at) const {
     if (!r || !r->visible) continue;
     const double slop = std::max(6 / m_view.zoom(), r->style.strokeWidth / 2);
     const QRectF box(QPointF(r->left(), r->top()), QPointF(r->right(), r->bottom()));
-    if (box.adjusted(-slop, -slop, slop, slop).contains(rotation(*r).inverted().map(at))) return r->id;
+    const QRectF hit = box.adjusted(-slop, -slop, slop, slop);
+    const QPointF local = rotation(*r).inverted().map(at);
+    if (!hit.contains(local)) continue;
+    if (hasShapeEllipse(r->type()) && r->content.isEllipse) {  // EA-011: the corners of an elliptical region are not part of it
+      const double nx = (local.x() - hit.center().x()) / (hit.width() / 2), ny = (local.y() - hit.center().y()) / (hit.height() / 2);
+      if (nx * nx + ny * ny > 1) continue;
+    }
+    return r->id;
   }
   return std::nullopt;
 }

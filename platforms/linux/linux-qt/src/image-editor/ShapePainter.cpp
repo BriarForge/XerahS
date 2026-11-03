@@ -66,27 +66,113 @@ void boxBlur(QImage &image, int radius) {
   for (int n = 0; n < 3; ++n) { pass(true); pass(false); }
 }
 
-QImage sampled(const QImage &source, const QRectF &box, QRect &target) {
-  target = box.toAlignedRect().intersected(source.rect());
-  if (target.isEmpty()) return {};
-  return source.copy(target).convertToFormat(QImage::Format_ARGB32_Premultiplied);
+// EA-011: the declared region of an effect in document coordinates: the
+// bounds (rectangle or inscribed ellipse) rotated about the bounds centre.
+QPainterPath effectRegion(const RectangleAnnotation &shape) {
+  QPainterPath path;
+  if (shape.content.isEllipse) path.addEllipse(bounds(shape)); else path.addRect(bounds(shape));
+  return shapeRotation(shape).map(path);
 }
 
+// Document pixels the effect may read or write: the region's integer bounding
+// box clipped to the source. Empty when the region lies outside the canvas.
+QRect effectTarget(const QPainterPath &region, const QImage &source) {
+  const QRectF box = region.boundingRect();
+  if (!std::isfinite(box.left()) || !std::isfinite(box.top()) || !std::isfinite(box.right()) || !std::isfinite(box.bottom())) return {};
+  const QRectF canvas(source.rect());
+  const QRectF clipped = box.intersected(canvas);
+  if (clipped.isEmpty()) return {};
+  return clipped.toAlignedRect().intersected(source.rect());
+}
+
+// Every pixel is read from `source`, the immutable source image. The result
+// replaces (not blends with) the canvas inside the region, so overlapping
+// effects never see each other's output (EA-011).
 void paintRegion(QPainter &painter, const RectangleAnnotation &shape, const QImage &source) {
-  QRect target;
-  QImage pixels = sampled(source, bounds(shape), target);
-  if (pixels.isNull()) return;
-  const int strength = std::max(1, int(std::lround(shapeStrength(shape))));
+  const QPainterPath region = effectRegion(shape);
+  const QRect target = effectTarget(region, source);
+  if (target.isEmpty()) return;
+  const int strength = std::max(1, int(std::lround(std::min(shapeStrength(shape), 1000.0))));
+  QImage pixels;
   if (shape.type() == shape::blur) {
-    boxBlur(pixels, strength);
+    // Pad by the blur's reach so the result inside the region does not depend on
+    // where the region's own edge happens to be; padding stops at the canvas.
+    const int pad = std::min(3 * strength, std::max(source.width(), source.height()));
+    const QRect padded = target.adjusted(-pad, -pad, pad, pad).intersected(source.rect());
+    QImage work = source.copy(padded).convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    boxBlur(work, strength);
+    pixels = work.copy(target.translated(-padded.topLeft()));
   } else {
+    pixels = source.copy(target).convertToFormat(QImage::Format_ARGB32_Premultiplied);
     const QSize reduced(std::max(1, pixels.width() / strength), std::max(1, pixels.height() / strength));
     pixels = pixels.scaled(reduced, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
-                 .scaled(pixels.size(), Qt::IgnoreAspectRatio, Qt::FastTransformation);
+                 .scaled(target.size(), Qt::IgnoreAspectRatio, Qt::FastTransformation);
   }
   painter.save();
-  painter.setClipRect(bounds(shape), Qt::IntersectClip);
+  painter.setClipPath(region, Qt::IntersectClip);
+  painter.setCompositionMode(QPainter::CompositionMode_Source);
   painter.drawImage(target.topLeft(), pixels);
+  painter.restore();
+}
+
+void paintHighlight(QPainter &painter, const RectangleAnnotation &shape, const QImage &source) {
+  const QPainterPath region = effectRegion(shape);
+  const QRect target = effectTarget(region, source);
+  if (target.isEmpty()) return;
+  const QColor tint = qAlpha(shape.style.fillColor) > 0 ? color(shape.style.fillColor) : QColor(255, 235, 59);
+  QImage pixels = source.copy(target).convertToFormat(QImage::Format_ARGB32_Premultiplied);
+  {
+    QPainter inner(&pixels);
+    inner.setCompositionMode(QPainter::CompositionMode_Multiply);
+    inner.fillRect(pixels.rect(), tint);
+  }
+  painter.save();
+  painter.setClipPath(region, Qt::IntersectClip);
+  painter.setCompositionMode(QPainter::CompositionMode_Source);
+  painter.drawImage(target.topLeft(), pixels);
+  painter.restore();
+}
+
+// Dims everything on the canvas outside the region; `blurAmount` first
+// replaces that area with a blur of the source.
+void paintSpotlight(QPainter &painter, const RectangleAnnotation &shape, const QImage &source) {
+  QPainterPath outside;
+  outside.addRect(QRectF(source.rect()));
+  outside = outside.subtracted(effectRegion(shape));
+  if (outside.isEmpty()) return;
+  painter.save();
+  painter.setClipPath(outside, Qt::IntersectClip);
+  const int radius = int(std::lround(std::min(shape.content.blurAmount, kMaxBlurAmount)));
+  if (radius >= 1) {
+    QImage blurred = source.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    boxBlur(blurred, radius);
+    painter.setCompositionMode(QPainter::CompositionMode_Source);
+    painter.drawImage(QPoint(0, 0), blurred);
+    painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+  }
+  painter.fillRect(source.rect(), QColor(0, 0, 0, std::clamp(int(std::lround(shapeStrength(shape) * 2.55)), 0, 255)));
+  painter.restore();
+}
+
+// Magnify: the centre of the bounds, enlarged by `strength`, read from the
+// source and drawn only inside the (possibly elliptical, rotated) region.
+void paintMagnify(QPainter &painter, const RectangleAnnotation &shape, const QImage &source) {
+  const QRectF box = bounds(shape);
+  const double zoom = std::max(1.0, std::min(shapeStrength(shape), 1000.0));
+  const QSizeF size(box.width() / zoom, box.height() / zoom);
+  const QRectF from(box.center() - QPointF(size.width() / 2, size.height() / 2), size);
+  const QRectF readable = from.intersected(QRectF(source.rect()));
+  if (readable.isEmpty()) return;
+  // Map only the part of `from` that lies on the canvas; never read outside it.
+  const QRectF to(box.left() + (readable.left() - from.left()) * zoom, box.top() + (readable.top() - from.top()) * zoom,
+                  readable.width() * zoom, readable.height() * zoom);
+  QPainterPath local;
+  if (shape.content.isEllipse) local.addEllipse(box); else local.addRect(box);
+  painter.save();
+  painter.setWorldTransform(shapeRotation(shape), true);
+  painter.setClipPath(local, Qt::IntersectClip);
+  painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
+  painter.drawImage(to, source, readable);
   painter.restore();
 }
 
@@ -408,6 +494,17 @@ void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImag
     if (line) paintShadow(painter, shape, line->extent(), [&](QPainter &inner) { drawLineParts(inner, shape, *line); });
     else paintShadow(painter, shape, box, [&](QPainter &inner) { drawBox(inner, shape, box); });
   }
+  // EA-011: effect types work in document space (their region is already
+  // rotated) and never draw outside it.
+  if (type == shape::highlight || type == shape::blur || type == shape::pixelate || type == shape::magnify ||
+      type == shape::spotlight) {
+    if (type == shape::highlight) paintHighlight(painter, shape, source);
+    else if (type == shape::magnify) paintMagnify(painter, shape, source);
+    else if (type == shape::spotlight) paintSpotlight(painter, shape, source);
+    else paintRegion(painter, shape, source);
+    painter.restore();
+    return;
+  }
   painter.setWorldTransform(shapeRotation(shape), true);
   const QPen stroke(color(style.strokeColor), style.strokeWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
   if (type == shape::rectangle || type == shape::ellipse) {
@@ -441,34 +538,8 @@ void paintShape(QPainter &painter, const RectangleAnnotation &shape, const QImag
     painter.setFont(font);
     painter.setPen(fill.lightnessF() > 0.6 ? Qt::black : Qt::white);
     painter.drawText(box, Qt::AlignCenter, QString::number(shape.content.stepValue));
-  } else if (type == shape::highlight) {
-    const QColor tint = qAlpha(style.fillColor) > 0 ? color(style.fillColor) : QColor(255, 235, 59);
-    painter.setCompositionMode(QPainter::CompositionMode_Multiply);
-    painter.fillRect(box, tint);
-  } else if (type == shape::blur || type == shape::pixelate) {
-    paintRegion(painter, shape, source);
   } else if (type == shape::speechBalloon) {
     paintBalloon(painter, shape);
-  } else if (type == shape::magnify) {
-    // EA-011: the centre of the bounds enlarged by `strength` from the source.
-    const double zoom = std::max(1.0, shapeStrength(shape));
-    const QSizeF size(box.width() / zoom, box.height() / zoom);
-    const QRectF from(box.center() - QPointF(size.width() / 2, size.height() / 2), size);
-    painter.save();
-    painter.setClipRect(box, Qt::IntersectClip);
-    painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
-    painter.drawImage(box, source, from);
-    painter.restore();
-    painter.setBrush(Qt::NoBrush);
-    painter.setPen(QPen(color(style.strokeColor), style.strokeWidth));
-    painter.drawRect(box);
-  } else if (type == shape::spotlight) {
-    // Dims the whole canvas except the ellipse; strength is the dim percent.
-    QPainterPath outside;
-    outside.addRect(QRectF(source.rect()).united(box));
-    QPainterPath hole;
-    hole.addEllipse(box);
-    painter.fillPath(outside.subtracted(hole), QColor(0, 0, 0, std::clamp(int(std::lround(shapeStrength(shape) * 2.55)), 0, 255)));
   } else if (isAssetShape(type)) {
     QImage asset;
     if (assets)

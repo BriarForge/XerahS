@@ -15,7 +15,8 @@ bool sameEditableFields(const RectangleAnnotation &a, const RectangleAnnotation 
       a.style.strokeColor == b.style.strokeColor && a.style.fillColor == b.style.fillColor &&
       a.style.rotationDegrees == b.style.rotationDegrees && a.style.opacity == b.style.opacity && sameDecoration(a.style, b.style) &&
       a.content.text == b.content.text && a.content.fontSize == b.content.fontSize && a.content.points == b.content.points && a.content.textAlignment == b.content.textAlignment && a.content.textBold == b.content.textBold && a.content.textItalic == b.content.textItalic && a.content.textColor == b.content.textColor && a.content.textFillColor == b.content.textFillColor && a.content.balloonBorderColor == b.content.balloonBorderColor && a.content.fontFamily == b.content.fontFamily &&
-      a.content.stepValue == b.content.stepValue && a.content.strength == b.content.strength;
+      a.content.stepValue == b.content.stepValue && a.content.strength == b.content.strength &&
+      a.content.isEllipse == b.content.isEllipse && a.content.blurAmount == b.content.blurAmount;
 }
 bool sameStyle(const RectangleStyle &a, const RectangleStyle &b) {
   return a.strokeColor == b.strokeColor && a.fillColor == b.fillColor && a.strokeWidth == b.strokeWidth &&
@@ -81,7 +82,8 @@ std::optional<QUuid> EditorSession::createShape(const RectangleProperties &draft
     m_editDiagnostic = "annotation-edit-stale"; return std::nullopt;
   }
   if (!std::isfinite(content.fontSize) || content.fontSize < 0 || content.fontSize > 2000 ||
-      !std::isfinite(content.strength) || content.strength < 0 || content.strength > 1000) {
+      !std::isfinite(content.strength) || content.strength < 0 || content.strength > 1000 ||
+      !std::isfinite(content.blurAmount) || content.blurAmount < 0 || content.blurAmount > kMaxBlurAmount) {
     m_editDiagnostic = "annotation-style-invalid"; return std::nullopt;
   }
   if ((content.type == shape::text || content.type == shape::speechBalloon) && (!validTextAlignment(content.textAlignment) || !validFontFamily(content.fontFamily))) {
@@ -102,6 +104,8 @@ std::optional<QUuid> EditorSession::createShape(const RectangleProperties &draft
   rectangle.end = {std::max(start.x, end.x), std::max(start.y, end.y)};
   rectangle.style = normalizedStyle(content.type, draft.style);
   rectangle.content = content;
+  if (!hasShapeEllipse(content.type)) rectangle.content.isEllipse = false;
+  if (!hasShapeBlurAmount(content.type)) rectangle.content.blurAmount = 0;
   // ES-003: zero area (zero width or zero height) is rejected.
   m_editDiagnostic = rectanglePropertiesDiagnostic({rectangle.start, rectangle.end, rectangle.style});
   if (!m_editDiagnostic.isEmpty()) return std::nullopt;
@@ -188,6 +192,7 @@ bool EditorSession::editShapeContent(const QUuid &id, const ShapeContent &conten
   if (!selectionEditable()) { m_editDiagnostic = "annotation-selection-protected"; return false; }
   if (content.type != selected->type() || !std::isfinite(content.fontSize) || content.fontSize < 0 || content.fontSize > 2000 ||
       !std::isfinite(content.strength) || content.strength < 0 || content.strength > 1000 || content.stepValue < 0 ||
+      !std::isfinite(content.blurAmount) || content.blurAmount < 0 || content.blurAmount > kMaxBlurAmount ||
       (content.type == shape::step && !validStepValue(content.stepValue)) ||
       ((content.type == shape::text || content.type == shape::speechBalloon) && content.text.isEmpty())) {
     m_editDiagnostic = "annotation-style-invalid"; return false;
@@ -209,6 +214,8 @@ bool EditorSession::editShapeContent(const QUuid &id, const ShapeContent &conten
       r.content.points = content.points; r.content.balloonBorderColor = content.balloonBorderColor;
     }
     r.content.stepValue = content.stepValue; r.content.strength = content.strength;
+    if (hasShapeEllipse(r.type())) r.content.isEllipse = content.isEllipse;
+    if (hasShapeBlurAmount(r.type())) r.content.blurAmount = content.blurAmount;
   });
 }
 

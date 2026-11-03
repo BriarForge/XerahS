@@ -230,8 +230,13 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
       if (!family.isString() || !validFontFamily(family.toString())) { findings.invalid = true; return std::nullopt; }
       content.fontFamily = family.toString();
     }
+    if (hasShapeEllipse(type) && o.contains(u"isEllipse")) {
+      if (!o.value(u"isEllipse").isBool()) { findings.invalid = true; return std::nullopt; }
+      content.isEllipse = o.value(u"isEllipse").toBool();
+    }
     double stepValue = 0;
-    bool ok = optionalNumber(u"fontSize", 0, 2000, content.fontSize) && optionalNumber(u"strength", 0, 1000, content.strength) &&
+    bool ok = (!hasShapeBlurAmount(type) || optionalNumber(u"blurAmount", 0, kMaxBlurAmount, content.blurAmount)) &&
+              optionalNumber(u"fontSize", 0, 2000, content.fontSize) && optionalNumber(u"strength", 0, 1000, content.strength) &&
               optionalNumber(u"stepValue", 0, double(kMaxStepValue), stepValue) && (!o.contains(u"stepValue") || isInteger(o.value(u"stepValue")));
     content.stepValue = qint64(stepValue);
     if (o.contains(u"text")) { ok = ok && o.value(u"text").isString() && o.value(u"text").toString().size() <= kMaxTextLength; content.text = o.value(u"text").toString(); }
@@ -301,6 +306,8 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
     for (const auto &key : {QStringLiteral("textAlignment"), QStringLiteral("textBold"), QStringLiteral("textItalic"), QStringLiteral("textColor"), QStringLiteral("fontFamily"), QStringLiteral("textFillColor")}) rectangle.extra.remove(key);
   }
   if (type == shape::speechBalloon) rectangle.extra.remove(QStringLiteral("balloonBorderColor"));
+  if (hasShapeEllipse(type)) rectangle.extra.remove(QStringLiteral("isEllipse"));
+  if (hasShapeBlurAmount(type)) rectangle.extra.remove(QStringLiteral("blurAmount"));
   return Annotation(rectangle);
 }
 
@@ -367,6 +374,11 @@ bool isAssetShape(const QString &type) { return type == shape::image || type == 
 bool hasShapeStrength(const QString &type) {
   return type == shape::blur || type == shape::pixelate || type == shape::magnify || type == shape::spotlight;
 }
+bool hasShapeEllipse(const QString &type) {
+  return type == shape::highlight || type == shape::blur || type == shape::pixelate || type == shape::magnify ||
+         type == shape::spotlight;
+}
+bool hasShapeBlurAmount(const QString &type) { return type == shape::spotlight; }
 bool isPathShape(const QString &type) { return type == shape::line || type == shape::arrow || type == shape::freehand; }
 bool isTextShape(const QString &type) { return type == shape::text || type == shape::step || type == shape::speechBalloon; }
 
@@ -537,6 +549,13 @@ QJsonArray serializeAnnotationList(const std::vector<Annotation> &items) {
     if (content.type == shape::step) o.insert(QStringLiteral("stepValue"), double(content.stepValue));
     if (isAssetShape(content.type)) o.insert(QStringLiteral("imageKey"), content.imageKey);
     if (hasShapeStrength(content.type)) o.insert(QStringLiteral("strength"), content.strength);
+    // EA-011: defaults are omitted on write; a stale value from the source object is cleared.
+    if (hasShapeEllipse(content.type)) {
+      if (content.isEllipse) o.insert(QStringLiteral("isEllipse"), true); else o.remove(QStringLiteral("isEllipse"));
+    }
+    if (hasShapeBlurAmount(content.type)) {
+      if (content.blurAmount != 0) o.insert(QStringLiteral("blurAmount"), content.blurAmount); else o.remove(QStringLiteral("blurAmount"));
+    }
     o.insert(QStringLiteral("start"), pointJson(rectangle.start));
     o.insert(QStringLiteral("end"), pointJson(rectangle.end));
     o.insert(QStringLiteral("strokeColor"), formatColor(rectangle.style.strokeColor));

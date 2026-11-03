@@ -134,6 +134,13 @@ bool isTextShape(const QString &type);
 bool isAssetShape(const QString &type);
 // Types whose `strength` is user editable (blur, pixelate, magnify, spotlight).
 bool hasShapeStrength(const QString &type);
+// EA-011: Highlight, Blur, Pixelate, Magnify and Spotlight may declare an
+// elliptical region (persisted `isEllipse`, default false = rectangle, as in
+// the reference XANN format). Spotlight alone has `blurAmount`, the blur radius
+// applied to the dimmed area outside its region (reference `blurAmount`, default 0).
+bool hasShapeEllipse(const QString &type);
+bool hasShapeBlurAmount(const QString &type);
+inline constexpr double kMaxBlurAmount = 1000;
 
 // Type-specific content. Path points are fractions of the bounds, so move,
 // resize and rotation of the bounds carry the path with them (EA-006/007).
@@ -152,6 +159,8 @@ struct ShapeContent {
   double fontSize = 0;    // text and step; 0 uses the type default
   qint64 stepValue = 0;   // EA-009: the displayed step number
   double strength = 0;    // blur radius or pixelate cell; 0 uses the default
+  bool isEllipse = false;   // EA-011: region effects only; false = rectangular region
+  double blurAmount = 0;    // EA-011: Spotlight only; 0 = no blur of the dimmed area
   QString imageKey;       // asset types: key into AnnotationDocument::embeddedImages
   QString textAlignment;  // empty preserves legacy rendering; left, center, right
   std::optional<bool> textBold, textItalic; // absent retains the native font style of legacy files
