@@ -5,9 +5,11 @@
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QLocale>
 #include <QLockFile>
 #include <QTemporaryDir>
 #include <QTest>
+#include <clocale>
 #include <limits>
 
 using namespace xerahs::editor;
@@ -156,6 +158,56 @@ private slots:
     EditorPreferenceStore restarted(storage);
     QCOMPARE(restarted.preferences().values.value("BorderColorHex"), QJsonValue("#00FF0012"));
     QCOMPARE(restarted.preferences().values.value("FillColorHex"), QJsonValue("#7F010203"));
+  }
+  // ESET-007: the canonical representation and numeric text never depend on the
+  // process locale, whether Qt's default (de_DE decimal comma, Arabic-Indic digits)
+  // or the C library's LC_NUMERIC (applied when the host has that locale installed).
+  void colorAndNumberParseAndWriteAreLocaleIndependent_data() {
+    QTest::addColumn<QLocale>("locale"); QTest::addColumn<QByteArray>("lcNumeric");
+    QTest::newRow("de_DE") << QLocale(QLocale::German, QLocale::Germany) << QByteArray("de_DE.UTF-8");
+    QTest::newRow("ar_EG") << QLocale(QLocale::Arabic, QLocale::Egypt) << QByteArray("ar_EG.UTF-8");
+    QTest::newRow("fa_IR") << QLocale(QLocale::Persian, QLocale::Iran) << QByteArray("fa_IR.UTF-8");
+    QTest::newRow("tr_TR") << QLocale(QLocale::Turkish, QLocale::Turkey) << QByteArray("tr_TR.UTF-8");
+  }
+  void colorAndNumberParseAndWriteAreLocaleIndependent() {
+    QFETCH(QLocale, locale); QFETCH(QByteArray, lcNumeric);
+    struct Restore {
+      QLocale qt = QLocale(); QByteArray c = std::setlocale(LC_NUMERIC, nullptr);
+      ~Restore() { QLocale::setDefault(qt); std::setlocale(LC_NUMERIC, c.constData()); }
+    } restore;
+    QLocale::setDefault(locale);
+    qputenv("LC_NUMERIC", lcNumeric);
+    const bool cApplied = std::setlocale(LC_NUMERIC, lcNumeric.constData()) != nullptr;  // Absent locales fall back to Qt-only coverage.
+    qInfo() << "LC_NUMERIC applied:" << cApplied << lcNumeric;
+    QVERIFY(QLocale().toString(12.5) != QStringLiteral("12.5") || locale.language() == QLocale::Turkish);  // Sanity: default really differs.
+    const QJsonObject input{{"BorderColorHex", "#1234abcd"}, {"FillColorHex", "#ab12ef"}, {"BlurStrength", 12.5}, {"Thickness", 9}};
+    auto loaded = loadEditorPreferences(input);
+    QVERIFY(loaded.diagnostics.isEmpty());
+    QCOMPARE(loaded.values.value("BorderColorHex"), QJsonValue("#1234ABCD"));
+    QCOMPARE(loaded.values.value("FillColorHex"), QJsonValue("#FFAB12EF"));
+    QCOMPARE(loaded.values.value("BlurStrength").toDouble(), 12.5);
+    const auto style = drawingStyleFromPreferences(loaded);
+    QCOMPARE(style.strokeColor, Argb{0x1234ABCD}); QCOMPARE(style.fillColor, Argb{0xFFAB12EF}); QCOMPARE(style.strokeWidth, 9.0);
+    MemoryStorage storage; EditorPreferenceStore store(storage); QVERIFY(store.save(loaded).saved);
+    const QString text = QString::fromUtf8(storage.artifact.bytes);
+    QVERIFY(text.contains("\"#1234ABCD\"")); QVERIFY(text.contains("\"#FFAB12EF\""));
+    QVERIFY2(text.contains("12.5"), qPrintable(text));
+    for (const QChar c : text) QVERIFY2(c.unicode() < 0x80, "stored text must be ASCII only: no locale digits or separators");
+    auto changed = changeEditorPreferences(store.preferences(), {{"BorderColorHex", "#00ff0012"}, {"BlurStrength", 0.25}});
+    QVERIFY(changed.preferences); QVERIFY(store.save(*changed.preferences).saved);
+    QVERIFY(QString::fromUtf8(storage.artifact.bytes).contains("0.25"));
+    EditorPreferenceStore restarted(storage);
+    QCOMPARE(restarted.preferences().values.value("BorderColorHex"), QJsonValue("#00FF0012"));
+    QCOMPARE(restarted.preferences().values.value("BlurStrength").toDouble(), 0.25);
+    // Locale digits and separators are never accepted as canonical colour text.
+    for (const QString &bad : {QStringLiteral("#\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668"), QStringLiteral("#12,34567")}) {
+      const auto invalid = loadEditorPreferences({{"BorderColorHex", bad}, {"Thickness", 4}});
+      QCOMPARE(invalid.diagnostics, QStringList{"invalid-BorderColorHex"});
+      QCOMPARE(invalid.values.value("BorderColorHex"), QJsonValue("#FFFF0000"));
+      QCOMPARE(invalid.values.value("Thickness"), QJsonValue(4));
+    }
+    const auto commaNumber = changeEditorPreferences(restarted.preferences(), {{"BlurStrength", "12,5"}});
+    QVERIFY(!commaNumber.preferences); QCOMPARE(commaNumber.diagnostics, QStringList{"invalid-BlurStrength"});
   }
   void invalidColorsRecoverIndependentlyAndRejectWholeChange_data() {
     QTest::addColumn<QJsonValue>("value");
