@@ -64,7 +64,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Current native dialogs expose tested load/empty/error/busy/result states. Full GUI surface-state matrix and unavailable-dependency presentation remain.",
+      "note": "Current native dialogs expose tested load/empty/error/busy/result states. A state matrix is now driven through the real widgets for the shell window and the QR, hash, icon and colour dialogs: initial, loading (determinate and indeterminate), empty, populated, validation error, permission denied (portal refusal and runtime-storage text), dependency unavailable (portal unavailable, no upload destination, video tooling), cancelled and terminal failure, each as plain visible text with an accessible alert for failures. Remaining: the same matrix for the other ~30 windows and dialogs (editor, capture, workflow, history, upload destinations, settings), partial-success presentation outside the capture result views, and a declared per-surface applicability list. Audit 2026-11-03: InterfaceStatesTest::shellWindowStatesAreVisibleTextWithAnAccessibleCue, qrDialogStates, hashCheckerStates, iconConverterStates, colourPickerStates. Row stays partial: only five surfaces are in the matrix.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
@@ -72,13 +72,14 @@
         "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/InterfaceStatesTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 16,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Partial production behavior is present; initial, loading, empty, populated, validation, denied, unavailable, cancelled and failure states are proven as text for the shell window and four tool dialogs. The remaining surfaces and a complete applicability matrix are unproven.",
+        "reviewed_at_revision": "e48015a1390a16d530f011e160b28c2d913ae728"
       }
     },
     "IFCAT-004": {
