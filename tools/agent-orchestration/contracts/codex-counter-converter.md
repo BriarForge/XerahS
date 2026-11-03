@@ -1,0 +1,17 @@
+# Contract: atomic counter reservation and Video Converter completion (FN-016, EU-012, PCA-007)
+
+Worktree: /home/mike/Work/BriarForge/XerahS/worktrees/codex (detached at origin/main). Keep edits to shared files (CMakeLists.txt, EditorWindow.cpp) minimal and localized.
+
+## FN-016 (FILENAME-GENERATION-001)
+"Counter persistence MUST be atomic relative to successful name reservation. Cancellation or validation failure before reservation MUST NOT consume a counter; a successfully reserved name MUST consume it even if a later workflow action fails."
+Today (CaptureSave.cpp) the PNG is published before `counters.commit`; a commit failure or crash in that window leaves a published name with an unconsumed counter (CaptureSaveTest::counterCommitFailurePreservesPublishedPngAndReportsTheActualFault reports it). Make reservation atomic: persist the counter advance (owner-private, atomic write, the existing counter store) as the reservation step BEFORE publishing the file under that name; if the counter write fails, nothing is published and the save fails with a stable code; if publication then fails, the counter stays consumed (spec: a reserved name consumes it). Crash-safety: a restart after a crash between reservation and publication must not reuse the name. Tests: injected counter-write failure → no file, stable error; publication failure after reservation → counter consumed, next save uses the next number; simulated crash (reserve then abort before publish, reload store) → next save does not reuse; cancellation/validation before reservation → counter bytes unchanged (existing NativeCaptureWorkflowsTest::cancelledAndInvalidPatternSavesLeaveTheCounterFileUntouched must stay green). Update CaptureSaveTest's old "reports the fault" test to the new contract. Mark FN-016 implemented if all clauses are proven.
+
+## PCA-007 (POST-CAPTURE-ACTIONS-001)
+"Save success MUST record the absolute native path, media type, byte length, and filename-generation context. Save failure MUST leave working media available for clipboard and permitted upload fallbacks."
+Success fields are proven by CaptureSaveTest::publishesCompletePrivatePngAndRecordsActualArtifactAndContext. Prove (and fix if needed) the failure clause through the real pipeline: a failed save still lets a later Copy action publish the working image and a permitted upload use the managed private temp file (CaptureUploadTest patterns). Mark implemented if proven.
+
+## EU-012 (EDITOR-UTILITIES-001)
+"Video Converter MUST expose the 15 codec choices recorded in the utility catalog, input, output folder/name, quality or bitrate where applicable, progress, cancellation, and optional open-folder behavior."
+The codec catalogue, input, output name, open-folder and cancel are tested. Missing: dialog tests proving the bitrate/quality control reaches the conversion request for codecs where it applies (and is disabled where not), and progress display updating from the worker. Also: when GStreamer is absent the converter is compiled out instead of being offered and explained — per EU-001's explanation rule, keep the tool visible and show a clear "requires GStreamer <components>" explanation with the action disabled (check how ToolsFeature handles other missing dependencies and match it). Tests for both. Mark implemented if every clause is proven.
+
+Defaults/semantics the contract doesn't fix: follow the reference XerahS app (read-only: /home/mike/Work/ShareX/XerahS), else what ShareX/Flameshot/Greenshot users expect; one-line rationale in the traceability note.
