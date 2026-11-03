@@ -73,6 +73,11 @@ AudioDevice audioDevice(const QVariantMap &properties, const QString &label);
 struct AudioSelection { QVector<AudioDevice> devices; QStringList diagnostics; };
 AudioSelection selectAudio(const Request &request, const DeviceMonitor &monitor);
 QString extension(Format format);
+// ScreenCast portal SelectSources values (1 monitor, 2 window; cursor_mode 2 embedded, 1 hidden).
+unsigned portalSourceType(Target target);
+unsigned portalCursorMode(bool cursor);
+// Always-visible capture indicator text: state, elapsed time, encoder and whether audio is being captured.
+QString indicatorText(State state, qint64 elapsedMs, const QString &encoder, bool audioActive);
 QString validate(const Request &request);
 QString generatedFilename(Format format);
 struct Encoder { QString element; QStringList required; QString diagnostic; };

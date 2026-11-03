@@ -133,6 +133,12 @@ AudioSelection selectAudio(const Request &r, const DeviceMonitor &monitor) {
   return result;
 }
 QString extension(Format f) { return f == Format::Mp4 ? "mp4" : f == Format::WebM ? "webm" : "gif"; }
+unsigned portalSourceType(Target target) { return target == Target::Monitor ? 1u : 2u; }
+unsigned portalCursorMode(bool cursor) { return cursor ? 2u : 1u; }
+QString indicatorText(State state, qint64 elapsedMs, const QString &encoder, bool audioActive) {
+  const qint64 seconds = elapsedMs / 1000;
+  return QStringLiteral("XerahS · %1 · %2:%3 · %4 · %5").arg(stateName(state)).arg(seconds / 60).arg(seconds % 60, 2, 10, QLatin1Char('0')).arg(encoder).arg(audioActive ? QStringLiteral("Audio recording") : QStringLiteral("No audio"));
+}
 QString validate(const Request &r) {
   if (r.frameRate < 1 || r.frameRate > 120 || r.quality < 0 || r.quality > 100) return "request-invalid";
   if (r.target != Target::Monitor && r.target != Target::Window) return "request-invalid";

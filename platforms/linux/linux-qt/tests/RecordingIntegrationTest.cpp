@@ -1,5 +1,6 @@
 #include "recording/Recording.h"
 #include <gst/gst.h>
+#include <QDir>
 #include <QFile>
 #include <QTemporaryDir>
 #include <QTest>
@@ -86,6 +87,42 @@ private slots:
       gst_element_set_state(tracks.pipeline, GST_STATE_NULL); gst_object_unref(inspectionBus); gst_object_unref(tracks.pipeline);
       QVERIFY(complete); QCOMPARE(tracks.video, 1); QCOMPARE(tracks.audio, audio ? 1 : 0);
       QCOMPARE(tracks.width, crop ? 100 : 160); QCOMPARE(tracks.height, crop ? 50 : 120);
+    }
+  }
+  // CORE-017: pause/resume keeps one valid file; abort leaves neither partial nor published output.
+  void pauseResumeAndAbort() {
+    QVERIFY(gst_init_check(nullptr, nullptr, nullptr));
+    QSet<QString> available;
+    for (const auto &name : {"videoconvert", "videorate", "videoscale", "capsfilter", "filesink", "x264enc", "openh264enc", "vah264enc", "vaapih264enc", "h264parse", "mp4mux", "vp9enc", "webmmux", "videotestsrc"}) {
+      auto *factory = gst_element_factory_find(name); if (factory) { available.insert(name); gst_object_unref(factory); }
+    }
+    const auto encoder = selectEncoder(Format::WebM, available);
+    if (!encoder.diagnostic.isEmpty() || !available.contains("videotestsrc")) QSKIP("Required GStreamer encoder/muxer/test source elements are missing");
+    for (const bool abort : {false, true}) {
+      QTemporaryDir folder; Request r; r.format = Format::WebM; r.folder = folder.path(); r.filename = abort ? "abort.webm" : "pause.webm";
+      Output output; QVERIFY(output.reserve(r).isEmpty());
+      const auto description = pipeline(r, encoder, "videotestsrc is-live=true num-buffers=30 ! video/x-raw,width=160,height=120,framerate=30/1");
+      GError *error = nullptr; auto *p = gst_parse_launch(description.toUtf8().constData(), &error);
+      const QString parseError = error ? QString::fromUtf8(error->message) : QString{}; if (error) g_error_free(error);
+      QVERIFY2(p && parseError.isEmpty(), qPrintable(parseError));
+      auto *sink = gst_bin_get_by_name(GST_BIN(p), "output"); g_object_set(sink, "location", output.temporary().toUtf8().constData(), nullptr); gst_object_unref(sink);
+      auto *bus = gst_element_get_bus(p);
+      QVERIFY(gst_element_set_state(p, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+      QTest::qWait(250);
+      if (abort) {
+        gst_element_set_state(p, GST_STATE_NULL); gst_object_unref(bus); gst_object_unref(p);
+        QVERIFY(QFile::exists(output.temporary())); output.abort();
+        QVERIFY(!QFile::exists(output.destination())); QVERIFY(QDir(folder.path()).entryList(QDir::Files | QDir::Hidden).isEmpty());
+        continue;
+      }
+      QVERIFY(gst_element_set_state(p, GST_STATE_PAUSED) != GST_STATE_CHANGE_FAILURE);
+      QTest::qWait(300);
+      QVERIFY(gst_element_set_state(p, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+      auto *message = gst_bus_timed_pop_filtered(bus, 10 * GST_SECOND, GstMessageType(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
+      const bool eos = message && GST_MESSAGE_TYPE(message) == GST_MESSAGE_EOS;
+      if (message) gst_message_unref(message); gst_element_set_state(p, GST_STATE_NULL); gst_object_unref(bus); gst_object_unref(p);
+      QVERIFY(eos); QVERIFY(output.publish().isEmpty());
+      QFile file(output.destination()); QVERIFY(file.open(QIODevice::ReadOnly)); QVERIFY(file.read(16).startsWith(QByteArray::fromHex("1a45dfa3")));
     }
   }
 };

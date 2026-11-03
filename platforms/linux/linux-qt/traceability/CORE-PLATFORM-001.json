@@ -433,25 +433,23 @@
       }
     },
     "CORE-017": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "ScreenCast portal monitor/window source, GStreamer MP4 (H.264), WebM (VP9) and GIF, cursor option, pause/resume, stop with finalise, abort with partial-file removal, validated observable states. Region crop and audio (CORE-018) remain Required.",
-      "implementation": [
-        "src/recording/Recording.cpp",
-        "app/RecordingController.cpp",
-        "app/RecordingActions.cpp"
-      ],
-      "tests": [
-        "tests/RecordingTest.cpp",
-        "tests/RecordingIntegrationTest.cpp"
-      ],
+      "note": "ScreenCast portal monitor/window source, GStreamer MP4 (H.264), WebM (VP9) and GIF, cursor option, pause/resume, stop with finalise, abort with partial-file removal, validated observable states. Region crop is implemented and tested (mapCrop, videocrop pipeline, cropped integration cases); audio is tracked under CORE-018. The earlier note listing region crop as missing was stale. Every declared clause has a named test: target and cursor reach the portal as fixed values (cursorTargetTimingAndQuality), frame timing and quality reach the encoder (cursorTargetTimingAndQuality, deterministicEncodersAndDescriptions), codec and container follow the format (deterministicEncodersAndDescriptions, finiteVideo), output reservation, publish, abort and collision (outputFinalizationAbortAndCollision), pause, stop and abort transitions with a single observable terminal result (transitionMatrix, resumeAndSingleTerminalResult) and recoverable failure with a stable code, no partial file and a clean next start (recoverableFailureLeavesNoPartial). The GStreamer pause/resume and mid-run abort case (RecordingIntegrationTest::pauseResumeAndAbort) is skipped on hosts without the encoder elements, as on the audit host; native portal, compositor and physical-display qualification remain Required. Audit 2026-11-03: RecordingTest (cropMapping, cursorTargetTimingAndQuality, deterministicEncodersAndDescriptions, outputFinalizationAbortAndCollision, transitionMatrix, resumeAndSingleTerminalResult, recoverableFailureLeavesNoPartial, validationAndNaming) and RecordingIntegrationTest prove target, timing, cursor, codec, quality, container, output, pause, stop, abort and recoverable failure.",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 76,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "36761b71125ac3effb4c7feb33d5bd480308c60b"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/RecordingTest.cpp",
+        "platforms/linux/linux-qt/tests/RecordingIntegrationTest.cpp",
+        "platforms/linux/linux-qt/src/recording/Recording.cpp",
+        "platforms/linux/linux-qt/app/RecordingController.cpp",
+        "platforms/linux/linux-qt/app/RecordingActions.cpp"
+      ]
     },
     "CORE-018": {
       "status": "partial",

@@ -2,6 +2,7 @@
 #include "shell/ActivationProtocol.h"
 #include "shell/ActivationDispatcher.h"
 #include "settings/HotkeyBindings.h"
+#include <QDir>
 #include <QFile>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -58,6 +59,50 @@ private slots:
       QCOMPARE(description.contains("audiomixer"), format != Format::Gif);
       QCOMPARE(description.contains("audioqueue1"), format != Format::Gif);
     }
+  }
+  // CORE-017: cursor, target, frame timing and quality reach the portal/encoder boundary deterministically.
+  void cursorTargetTimingAndQuality() {
+    QCOMPARE(portalSourceType(Target::Monitor), 1u); QCOMPARE(portalSourceType(Target::Window), 2u);
+    QCOMPARE(portalCursorMode(true), 2u); QCOMPARE(portalCursorMode(false), 1u);
+    QVERIFY(Request{}.cursor);
+    for (int fps : {1, 24, 60, 120}) {
+      auto r = request(); r.frameRate = fps;
+      QVERIFY(pipeline(r, selectEncoder(r.format, elements()), "videotestsrc").contains(QString("framerate=%1/1").arg(fps)));
+    }
+    const auto with = [&](Format format, int quality, const QString &element) {
+      auto r = request(); r.format = format; r.filename = "q." + extension(format); r.quality = quality;
+      auto available = elements();
+      for (const auto &other : QStringList{"x264enc", "openh264enc", "vah264enc", "vaapih264enc"}) if (other != element) available.remove(other);
+      return pipeline(r, selectEncoder(format, available), "videotestsrc");
+    };
+    QVERIFY(with(Format::Mp4, 0, "x264enc").contains("quantizer=50")); QVERIFY(with(Format::Mp4, 100, "x264enc").contains("quantizer=0"));
+    QVERIFY(with(Format::Mp4, 0, "openh264enc").contains("bitrate=500000")); QVERIFY(with(Format::Mp4, 100, "openh264enc").contains("bitrate=10000000"));
+    QVERIFY(with(Format::Mp4, 100, "vah264enc").contains("bitrate=10000"));
+    QVERIFY(with(Format::WebM, 0, "vp9enc").contains("cq-level=63")); QVERIFY(with(Format::WebM, 100, "vp9enc").contains("cq-level=0"));
+    QVERIFY(with(Format::Mp4, 25, "x264enc") != with(Format::Mp4, 75, "x264enc"));
+    // Container and codec follow the format; the three containers are distinct.
+    QVERIFY(with(Format::Mp4, 75, "x264enc").contains("mp4mux")); QVERIFY(with(Format::WebM, 75, "vp9enc").contains("webmmux"));
+    QVERIFY(!with(Format::Gif, 75, "gifenc").contains("mux"));
+  }
+  // CORE-018: the always-visible indicator states whether audio is captured and follows the recording state.
+  void captureIndicator() {
+    QCOMPARE(indicatorText(State::Recording, 65000, "x264enc", true), QString("XerahS · recording · 1:05 · x264enc · Audio recording"));
+    QCOMPARE(indicatorText(State::Paused, 9000, "vp9enc", false), QString("XerahS · paused · 0:09 · vp9enc · No audio"));
+    QVERIFY(indicatorText(State::Recording, 0, "x264enc", true) != indicatorText(State::Recording, 0, "x264enc", false));
+  }
+  // CORE-017: an encoder fault mid-recording ends in one Failed result with a stable code, removes the partial output,
+  // leaves any existing file alone and lets the next recording start cleanly.
+  void recoverableFailureLeavesNoPartial() {
+    QTemporaryDir folder; QVERIFY(folder.isValid()); auto r = request(folder.path()); r.filename = "fault.mp4";
+    Output output; FakeEncoderPort encoder; Session session; QSignalSpy finished(&session, &Session::finished);
+    QVERIFY(output.reserve(r).isEmpty());
+    for (auto e : {Event::Request, Event::Granted, Event::Started}) QVERIFY(session.send(e));
+    const auto temporary = output.temporary(); QVERIFY(encoder.begin(temporary)); QVERIFY(QFile::exists(temporary));
+    QVERIFY(session.send(Event::Error, "/home/user/private/path: gst error"));
+    QCOMPARE(finished.size(), 1); QCOMPARE(finished.first().at(0).value<State>(), State::Failed); QCOMPARE(finished.first().at(1).toString(), QString("encoder-failed"));
+    output.abort(); QVERIFY(!QFile::exists(temporary)); QVERIFY(!QFile::exists(output.destination()));
+    QVERIFY(QDir(folder.path()).entryList(QDir::Files | QDir::Hidden).isEmpty());
+    Session next; QVERIFY(next.send(Event::Request)); QVERIFY(output.reserve(r).isEmpty());
   }
   void transitionMatrix() {
     const QList<QList<Event>> paths{{}, {Event::Request}, {Event::Request, Event::Granted},

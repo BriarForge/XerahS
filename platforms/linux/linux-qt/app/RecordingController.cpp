@@ -39,7 +39,7 @@ QString RecordingController::unavailable(Format format) const {
 }
 QString RecordingController::indicator() const {
   const qint64 seconds = (m_elapsed + (state() == State::Recording && m_clock.isValid() ? m_clock.elapsed() : 0)) / 1000;
-  return QStringLiteral("XerahS · %1 · %2:%3 · %4 · %5").arg(stateName(state())).arg(seconds / 60).arg(seconds % 60, 2, 10, QLatin1Char('0')).arg(m_encoder.element).arg(m_audioActive ? QStringLiteral("Audio recording") : QStringLiteral("No audio"));
+  return indicatorText(state(), seconds * 1000, m_encoder.element, m_audioActive);
 }
 void RecordingController::start(Request request, const QString &origin) {
   if (busy()) return;
@@ -116,7 +116,7 @@ void RecordingController::response(uint code, const QVariantMap &results, const 
   if (m_method == "CreateSession") {
     if (results.value("session_handle").toString() != m_sessionPath) { fail("portal-invalid-response"); return; }
     m_bus.connect(m_owner, m_sessionPath, "org.freedesktop.portal.Session", "Closed", this, SLOT(closed()));
-    call("SelectSources", {QVariant::fromValue(QDBusObjectPath(m_sessionPath))}, {{"types", uint(m_request.target == Target::Monitor ? 1 : 2)}, {"multiple", false}, {"cursor_mode", uint(m_request.cursor ? 2 : 1)}});
+    call("SelectSources", {QVariant::fromValue(QDBusObjectPath(m_sessionPath))}, {{"types", portalSourceType(m_request.target)}, {"multiple", false}, {"cursor_mode", portalCursorMode(m_request.cursor)}});
   } else if (m_method == "SelectSources") {
     call("Start", {QVariant::fromValue(QDBusObjectPath(m_sessionPath)), QString{}}, {});
   } else if (m_method == "Start") {
@@ -124,7 +124,7 @@ void RecordingController::response(uint code, const QVariantMap &results, const 
     uint node = 0; QVariantMap properties; int count = 0;
     argument.beginArray(); while (!argument.atEnd()) { argument.beginStructure(); argument >> node >> properties; argument.endStructure(); ++count; } argument.endArray();
     if (count != 1 || !node) { fail("portal-invalid-response"); return; }
-    if (properties.contains("source_type") && properties.value("source_type").toUInt() != uint(m_request.target == Target::Monitor ? 1 : 2)) { fail("portal-invalid-response"); return; }
+    if (properties.contains("source_type") && properties.value("source_type").toUInt() != portalSourceType(m_request.target)) { fail("portal-invalid-response"); return; }
     if (m_request.region) {
       const auto pair = [](const QVariant &value) -> std::optional<QPoint> {
         if (value.metaType() != QMetaType::fromType<QDBusArgument>()) return {};
