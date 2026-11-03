@@ -7,6 +7,7 @@
 #include <QJsonDocument>
 #include <QLocale>
 #include <QLockFile>
+#include <QRegularExpression>
 #include <QTemporaryDir>
 #include <QTest>
 #include <clocale>
@@ -208,6 +209,44 @@ private slots:
     }
     const auto commaNumber = changeEditorPreferences(restarted.preferences(), {{"BlurStrength", "12,5"}});
     QVERIFY(!commaNumber.preferences); QCOMPARE(commaNumber.diagnostics, QStringList{"invalid-BlurStrength"});
+  }
+  // ESET-012: recent image paths are private local data. Every diagnostic the core load,
+  // store recovery and failed save produce is a closed value-free code, never path text.
+  void recentPathsNeverAppearInPreferenceDiagnostics() {
+    const QString secret = QStringLiteral("/home/private-sentinel/secret-photo.png");
+    const QRegularExpression code(QStringLiteral("^[A-Za-z0-9-]+$"));  // A path cannot match: no '/' or '.'.
+    QStringList produced;
+    auto collect = [&](const QStringList &diagnostics) { produced += diagnostics; };
+    // Opt-out with stored paths, a bad list, an over-maximum list, and a newer record.
+    collect(loadEditorPreferences({{"RecentImageFiles", QJsonArray{secret}}}).diagnostics);
+    collect(loadEditorPreferences({{"RememberRecentImagePaths", true}, {"RecentImageFiles", QJsonArray{secret, "relative/secret.png"}}}).diagnostics);
+    collect(loadEditorPreferences({{"RememberRecentImagePaths", true}, {"MaxRecentImageFiles", 1},
+        {"RecentImageFiles", QJsonArray{secret, secret + "2"}}}).diagnostics);
+    collect(loadEditorPreferences({{"schemaVersion", 2}, {"RecentImageFiles", QJsonArray{secret}}}).diagnostics);
+    collect(loadEditorPreferences({{"schemaVersion", secret}, {"RecentImageFiles", QJsonArray{secret}}}).diagnostics);
+    // Store recovery from a damaged current record whose previous record holds paths.
+    MemoryStorage recovery; recovery.artifact = {PreferenceRead::Kind::Readable,
+        envelope(QJsonValue(secret), QJsonObject{{"RememberRecentImagePaths", true}, {"RecentImageFiles", QJsonArray{secret}}}), {}};
+    EditorPreferenceStore recovered(recovery); collect(recovered.diagnostics());
+    QCOMPARE(recovered.preferences().recent.paths(), QStringList{secret});  // The data itself is intact and usable.
+    MemoryStorage damaged; damaged.artifact = {PreferenceRead::Kind::Readable, QByteArray("{\"x\":\"") + secret.toUtf8(), {}};
+    EditorPreferenceStore unreadable(damaged); collect(unreadable.diagnostics());
+    // Failed saves and rejected changes while paths are present.
+    MemoryStorage failing; failing.artifact = {PreferenceRead::Kind::Readable,
+        envelope(QJsonObject{{"RememberRecentImagePaths", true}, {"RecentImageFiles", QJsonArray{secret}}}), {}};
+    EditorPreferenceStore store(failing); collect(store.diagnostics());
+    auto change = changeEditorPreferences(store.preferences(), {{"Thickness", 3}}); QVERIFY(change.preferences);
+    failing.failReplace = true; collect({store.save(*change.preferences).diagnostic});
+    failing.failReplace = false; failing.artifact.bytes += " "; collect({store.save(*change.preferences).diagnostic});
+    const auto rejected = changeEditorPreferences(store.preferences(), {{"MaxRecentImageFiles", secret}, {"RecentImageFiles", QJsonArray{secret + "x"}}});
+    QVERIFY(!rejected.preferences); collect(rejected.diagnostics);
+    QVERIFY(!produced.isEmpty());
+    for (const QString &diagnostic : produced) {
+      QVERIFY2(!diagnostic.contains(QStringLiteral("private-sentinel")) && !diagnostic.contains(QStringLiteral("secret")), qPrintable(diagnostic));
+      QVERIFY2(code.match(diagnostic).hasMatch(), qPrintable(diagnostic));
+    }
+    QVERIFY(produced.contains("recent-paths-ignored-without-opt-in")); QVERIFY(produced.contains("invalid-RecentImageFiles"));
+    QVERIFY(produced.contains("settings-newer-version")); QVERIFY(produced.contains("recovered-previous-settings"));
   }
   void invalidColorsRecoverIndependentlyAndRejectWholeChange_data() {
     QTest::addColumn<QJsonValue>("value");

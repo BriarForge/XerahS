@@ -349,17 +349,22 @@
     },
     "ESET-012": {
       "disposition": "Required",
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "recent-deduplication"
       ],
-      "note": "Native editor/tray opt-in and bounded newest-first path management now persist in isolated private versioned storage. Apply writes before publishing; Cancel, failed writes and stale modal drafts preserve active/stored values. Remove, Clear, trim and opt-out prune forgotten paths from current and retained previous versions together. Actual Open/complete Save record paths, incomplete saves do not, and preference-save failures visibly survive focus/document refresh without undoing successful image work. Native restart/removal/locking/unknown-field/privacy tests pass; approved retention policy and human privacy/security/compatibility qualification remain Required.",
+      "note": "Native editor/tray opt-in and bounded newest-first path management now persist in isolated private versioned storage. Apply writes before publishing; Cancel, failed writes and stale modal drafts preserve active/stored values. Remove, Clear, trim and opt-out prune forgotten paths from current and retained previous versions together. Actual Open/complete Save record paths, incomplete saves do not, and preference-save failures visibly survive focus/document refresh without undoing successful image work. Native restart/removal/locking/unknown-field/privacy tests pass; approved retention policy and human privacy/security/compatibility qualification remain Required. Audit 2026-11-03 (Viktor, at 4b2f5d8): opt-in default, bound, de-duplication, single/full removal and missing-file tolerance are proven by RecentImagesTest and NativeEditorPreferencesTest (restart, removal, opt-out pruning); exclusion from telemetry/support data by EditorPreferencesTest recentPathsNeverAppearInPreferenceDiagnostics (closed value-free diagnostic codes across load, recovery, failed save and rejected change) and NativeEditorPreferencesTest recentPathsNeverAppearInWarningsDiagnosticsOrLogs (diagnostics, editorPreferenceDiagnosticMessage warning text and every Qt log message are path-free). Code search found no telemetry, crash-report, support-bundle or diagnostic-export producer in src/app/conformance-adapter (onboarding states XerahS has no telemetry); the only path display is the user-owned Recent Images menu and dialog.",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 47,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full approved field ledger/defaults, saved text/step/emphasis/background defaults, convenience preferences, retention/backup policy and all-field/all-platform vectors remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "4b2f5d861f5401a95d1b4e2ddd6a43025cc301f9"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/RecentImagesTest.cpp"
+      ]
     },
     "ESET-013": {
       "disposition": "Required",

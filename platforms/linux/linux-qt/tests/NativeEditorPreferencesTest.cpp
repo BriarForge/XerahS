@@ -491,6 +491,47 @@ private slots:
     QCOMPARE(nativeEditorPreferences().fields.value("schemaVersion"), PreferenceFieldState::NewerVersion);
     QVERIFY(nativeEditorPreferences().readOnly);
   }
+  // ESET-012: the application produces no log, telemetry, support or export text of its own
+  // for preferences; the only paths shown are the user-owned Recent Images menu and dialog.
+  // Diagnostics, user-visible warning text and every Qt log message stay value-free.
+  void recentPathsNeverAppearInWarningsDiagnosticsOrLogs() {
+    static QStringList logged;
+    logged.clear();
+    const auto previousHandler = qInstallMessageHandler([](QtMsgType, const QMessageLogContext &, const QString &message) { logged << message; });
+    struct Restore { QtMessageHandler handler; ~Restore() { qInstallMessageHandler(handler); } } restore{previousHandler};
+    const QString secret = QStringLiteral("/home/private-sentinel/secret-photo.png");
+    auto clean = [&](const QString &text) { return !text.contains(QStringLiteral("private-sentinel")) && !text.contains(QStringLiteral("secret-photo")); };
+    QStringList texts;
+    auto collect = [&](const QStringList &diagnostics) {
+      for (const auto &diagnostic : diagnostics) { texts << diagnostic << editorPreferenceDiagnosticMessage(diagnostic); }
+    };
+    QTemporaryDir temporary; const QString path = temporary.filePath("settings.json");
+    const QList<QJsonObject> stored{
+        {{"RecentImageFiles", QJsonArray{secret}}},  // Stored without opt-in.
+        {{"RememberRecentImagePaths", true}, {"RecentImageFiles", QJsonArray{secret, "relative/secret-photo.png"}}},  // Invalid list.
+        {{"schemaVersion", 2}, {"RememberRecentImagePaths", true}, {"RecentImageFiles", QJsonArray{secret}}},  // Newer record.
+        {{"RememberRecentImagePaths", true}, {"RecentImageFiles", QJsonArray{secret}}, {"BlurStrength", "NaN"}}};
+    for (const auto &current : stored) { QVERIFY(writePrivate(path, textEnvelope(current))); collect(initializeNativeEditorPreferences(path)); }
+    QVERIFY(texts.contains("recent-paths-ignored-without-opt-in")); QVERIFY(texts.contains("invalid-RecentImageFiles"));
+    QVERIFY(texts.contains("settings-newer-version"));
+    // Failed and refused saves while paths exist, including a read-only (newer) record.
+    QVERIFY(writePrivate(path, textEnvelope({{"RememberRecentImagePaths", true}, {"RecentImageFiles", QJsonArray{secret}}})));
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
+    auto draft = recentImageHistory(); const auto revision = draft.revision(); draft.remove(secret);
+    collect({applyRecentImagePreferences(draft, revision + 99).diagnostic});  // Stale draft.
+    QVERIFY(QFile::setPermissions(path, QFileDevice::ReadOwner)); QVERIFY(QFile::setPermissions(QFileInfo(path).absolutePath(), QFileDevice::ReadOwner | QFileDevice::ExeOwner));
+    collect({rememberEditorImage(secret + "2")});  // Directory not writable: save fails but the editor survives.
+    QFile::setPermissions(QFileInfo(path).absolutePath(), QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
+    QFile::setPermissions(path, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+    QVERIFY(writePrivate(path, textEnvelope({{"schemaVersion", 2}, {"RecentImageFiles", QJsonArray{secret}}})));
+    collect(initializeNativeEditorPreferences(path)); collect({rememberEditorImage(secret)});
+    for (const auto &code : {"settings-read-only", "settings-locked", "settings-changed-externally", "settings-changed-in-session", "recovered-previous-settings",
+                             "invalid-RecentImageFiles", "invalid-MaxRecentImageFiles", "invalid-schemaVersion", "settings-unsafe-path"})
+      collect({code});
+    QVERIFY(!texts.isEmpty());
+    for (const auto &text : texts) QVERIFY2(clean(text), qPrintable(text));
+    for (const auto &message : logged) QVERIFY2(clean(message), qPrintable(message));
+  }
   void damagedOrNewerNativeStorageIsVisibleReadOnlyAndUntouched() {
     QTemporaryDir temporary; const QString path = temporary.filePath("settings.json");
     const auto newer = QByteArray("{\"format\":\"com.xerahs.app/linux-qt/editor-settings\",\"version\":2,\"current\":{}}");
