@@ -171,21 +171,22 @@
     },
     "EE-008": {
       "disposition": "Required",
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "Every registered effect exposes a seed derived from defaultEffectSeed(id). The browser shows the seed, offers a new seed and stores the accepted seed per effect in the private effects store, and the committed effect operation records the seed that produced the pixels. Procedural randomness uses a SplitMix64 generator seeded only from the effect context, never from time or a global generator. EffectFrameworkTest passes the seed through unchanged and proves that one seed repeats identical pixels while another seed does not, and EffectsDialogTest proves the persisted seed reloads and reproduces the previewed pixels. Identical decoded pixels on all supported platforms for the same seed, renderer version and colour profile are not proven on this platform.",
+      "note": "Every registered effect exposes a seed derived from defaultEffectSeed(id). The browser shows the seed, offers a new seed and stores the accepted seed per effect in the private effects store, and the committed effect operation records the seed that produced the pixels. Procedural randomness uses a SplitMix64 generator seeded only from the effect context, never from time or a global generator. EffectFrameworkTest passes the seed through unchanged and proves that one seed repeats identical pixels while another seed does not, and EffectsDialogTest proves the persisted seed reloads and reproduces the previewed pixels. Identical decoded pixels on all supported platforms for the same seed, renderer version and colour profile are not proven on this platform. Audit 2026-11-03 (Aoife, at ef77af6): Procedural effects receive a persisted per-effect seed that is shown, can be renewed, is recorded on the committed operation and reproduces the preview; every registered effect is pixel-stable under a fixed seed. Cross-platform identity awaits the shared golden vectors. Remaining items above are qualification, not implementation status.",
       "evidence": [
         "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.h",
         "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
         "platforms/linux/linux-qt/app/EffectsDialog.cpp",
         "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp",
-        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectGoldenHashTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 39,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Approved local remove_background model, every parameter/asset/algorithm boundary and accepted cross-platform golden, hardware/native qualification and human SXIE review remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "ef77af6"
       }
     },
     "EE-009": {

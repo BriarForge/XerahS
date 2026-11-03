@@ -28,21 +28,22 @@
   ],
   "requirements": {
     "RC-001": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "permission-denied-shows-no-overlay"
       ],
-      "note": "Native Screenshot transport resolves and subscribes the unique owner before requesting pixels, uses native consent without an automatic retry, verifies the returned request handle and produces no overlay on denial/cancellation/failure. Private-bus tests exercise actual production transport and controller, missing/disconnected services, cold-start/legacy response ordering, owner/sender/path fencing and invalid input. Complete native backend/permission/compositor qualification and human security review remain Required.",
+      "note": "Native Screenshot transport resolves and subscribes the unique owner before requesting pixels, uses native consent without an automatic retry, verifies the returned request handle and produces no overlay on denial/cancellation/failure. Private-bus tests exercise actual production transport and controller, missing/disconnected services, cold-start/legacy response ordering, owner/sender/path fencing and invalid input. Complete native backend/permission/compositor qualification and human security review remain Required. Audit 2026-11-03 (Aoife, at ef77af6): The portal owns the native consent prompt; denied, restricted, missing/disconnected transport and cancel-at-availability all fail before any overlay, and the overlay appears only after pixels are delivered. Remaining items above are qualification, not implementation status.",
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 29,
-        "published_vectors": [
-          "permission-denied-shows-no-overlay"
-        ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "ef77af6"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp"
+      ]
     },
     "RC-002": {
       "status": "partial",
@@ -155,21 +156,22 @@
       ]
     },
     "RC-008": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "cancel-selected"
       ],
-      "note": "Core and native non-terminal capture cancellation discard all partial pixels and start no actions. Pending portal, actual overlay and confirming worker cancellation have private-bus production evidence. After pixel completion, selection is terminal; the visible action-phase hint gives Escape/Cancel Capture separate PCA-010 pipeline authority. An already running save may finish and retain its artifact while later clipboard work is cancelled; this does not revoke or repeat the completed capture. Full catalogue/native matrix/permission qualification remain Required.",
+      "note": "Core and native non-terminal capture cancellation discard all partial pixels and start no actions. Pending portal, actual overlay and confirming worker cancellation have private-bus production evidence. After pixel completion, selection is terminal; the visible action-phase hint gives Escape/Cancel Capture separate PCA-010 pipeline authority. An already running save may finish and retain its artifact while later clipboard work is cancelled; this does not revoke or repeat the completed capture. Full catalogue/native matrix/permission qualification remain Required. Audit 2026-11-03 (Aoife, at ef77af6): Cancellation from the pending portal request, overlay Escape, three composition points and the metadata write returns no image, writes no last region and starts no post-capture actions. Remaining items above are qualification, not implementation status.",
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 52,
-        "published_vectors": [
-          "cancel-selected"
-        ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "ef77af6"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp"
+      ]
     },
     "RC-009": {
       "status": "implemented",
@@ -223,11 +225,11 @@
       ]
     },
     "RC-011": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "click-selects-snapped-window"
       ],
-      "note": "Native Capture settings exposes snapping with the normative enabled default; disabled sessions skip discovery and refuse zero-area clicks. Private-bus tests prove options are frozen before acquisition and later enabled clicks use visible snap preview bounds. Existing native discovery filters and Core drag override remain tested. Compositor discovery breadth and physical qualification remain Required.",
+      "note": "Native Capture settings exposes snapping with the normative enabled default; disabled sessions skip discovery and refuse zero-area clicks. Private-bus tests prove options are frozen before acquisition and later enabled clicks use visible snap preview bounds. Existing native discovery filters and Core drag override remain tested. Compositor discovery breadth and physical qualification remain Required. Audit 2026-11-03 (Aoife, at ef77af6): Snapping uses native window discovery; exact target bounds are previewed before confirmation; free dragging overrides a snap preview and snapping can be disabled, with options frozen before acquisition. Remaining items above are qualification, not implementation status.",
       "disposition": "Required",
       "implementation": [
         "platforms/linux/linux-qt/src/capture/WindowSnapTargets.cpp",
@@ -240,16 +242,14 @@
         "platforms/linux/linux-qt/tests/WindowSnapTargetsTest.cpp",
         "platforms/linux/linux-qt/tests/NativeWindowDiscoveryTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 61,
-        "published_vectors": [
-          "click-selects-snapped-window"
-        ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "ef77af6"
       }
     },
     "RC-012": {

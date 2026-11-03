@@ -281,12 +281,12 @@
       }
     },
     "PCA-009": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "selection-cancel",
         "selection-window-replaces-action-set"
       ],
-      "note": "Native quick-task-menu and after-capture-window now use the same asynchronous selector, engine and canonical result/journal model. Catalogue filtering prevents selector loops; a later chooser inherits the effective plan. Native saved workflow restart, Save/Copy/empty choices, cancellation/lifetime, effective journal and linked retry are covered by ActionSelectionTest and NativeCaptureWorkflowsTest. The per-run chooser does not change the saved profile. Capture workflows now explicitly creates/edits named region profiles, saves a default atomically and preserves it across restart. Run selected and the existing capture command resolve a saved profile; unsupported actions remain unavailable before acquisition. Full quick-task/action families, other entry points and native/human qualification remain Required. Explicit saved-profile editing now includes save folder/pattern and deterministic preview with failed-draft correction; chooser-only changes remain per-run. Additional private-bus PortalScreenshotTest evidence exercises a configured quick-task workflow through the real CaptureController: acquired region pixels reach the native chooser, run-only Save replaces the configured clipboard choice, an actual PNG is published, the effective plan is journaled, and borrowed source bytes plus the original workflow snapshot remain unchanged. This complements the concurrently landed native selector implementation; physical desktop qualification remains open.",
+      "note": "Native quick-task-menu and after-capture-window now use the same asynchronous selector, engine and canonical result/journal model. Catalogue filtering prevents selector loops; a later chooser inherits the effective plan. Native saved workflow restart, Save/Copy/empty choices, cancellation/lifetime, effective journal and linked retry are covered by ActionSelectionTest and NativeCaptureWorkflowsTest. The per-run chooser does not change the saved profile. Capture workflows now explicitly creates/edits named region profiles, saves a default atomically and preserves it across restart. Run selected and the existing capture command resolve a saved profile; unsupported actions remain unavailable before acquisition. Full quick-task/action families, other entry points and native/human qualification remain Required. Explicit saved-profile editing now includes save folder/pattern and deterministic preview with failed-draft correction; chooser-only changes remain per-run. Additional private-bus PortalScreenshotTest evidence exercises a configured quick-task workflow through the real CaptureController: acquired region pixels reach the native chooser, run-only Save replaces the configured clipboard choice, an actual PNG is published, the effective plan is journaled, and borrowed source bytes plus the original workflow snapshot remain unchanged. This complements the concurrently landed native selector implementation; physical desktop qualification remains open. Audit 2026-11-03 (Aoife, at ef77af6): The native quick-task chooser changes only the current run's action set (journaled effective plan, saved workflow unchanged). Escape/close/cancel/destroy cancel before any mutation. Permanent workflow changes happen only through an explicit Save in the workflow editor. Remaining items above are qualification, not implementation status.",
       "disposition": "Required",
       "evidence": [
         "platforms/linux/linux-qt/app/ACTION-SELECTION.md",
@@ -299,14 +299,10 @@
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 58,
-        "published_vectors": [
-          "selection-cancel",
-          "selection-window-replaces-action-set"
-        ],
-        "coverage": "Native quick-task and after-capture selection are implemented candidates. Complete catalogue, persistent option semantics and supported-target/human qualification remain unproven.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "ef77af6"
       }
     },
     "PCA-010": {

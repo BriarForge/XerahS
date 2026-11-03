@@ -7,9 +7,9 @@ Product Contract **0.3.1**. Percentages are **recorded implementation coverage**
 | Platform | Implementation coverage | Implemented / desktop requirements |
 |---|---:|---:|
 | [macOS](../macos/PROGRESS.md) | **0.0%** | 0 / 324 |
-| [Linux](PROGRESS.md) | **31.2%** | 101 / 324 |
+| [Linux](PROGRESS.md) | **33.6%** | 109 / 324 |
 | [Windows](../windows/PROGRESS.md) | **0.0%** | 0 / 324 |
-| **Overall desktop** | **10.4%** | **101 / 972 platform-requirement pairs** |
+| **Overall desktop** | **11.2%** | **109 / 972 platform-requirement pairs** |
 
 Only requirements explicitly marked `implemented` in a platform traceability map receive credit. Partial, not-started and missing/unassessed rows receive no credit. Overall sums the three platforms' implemented rows and divides by their combined desktop requirement count.
 
@@ -19,7 +19,7 @@ Requirement labels are unweighted: a catalogue requirement can cover hundreds of
 
 ## Current position
 
-- **Linux:** 101 implemented, 194 partial, 29 not started, 0 without a recorded implementation status. [Native platform evidence](README.md).
+- **Linux:** 109 implemented, 186 partial, 29 not started, 0 without a recorded implementation status. [Native platform evidence](README.md).
 
 Linux figures cover the `linux-qt` reference edition. Candidate editions and supported desktop-environment qualification remain separate. Existing maps retain their recorded audit dates and versions; regenerating this report does not constitute a new implementation audit.
 
@@ -30,11 +30,11 @@ Next work follows the [implementation plan](linux-qt/IMPLEMENTATION.md) and [mea
 | Capability | Coverage | Implemented | Partial | Not started | Unassessed | Evidence |
 |---|---:|---:|---:|---:|---:|---|
 | [FILENAME-GENERATION-001](../../product-contract/capabilities/FILENAME-GENERATION-001/SPEC.md) | 92.6% | 25 | 2 | 0 | 0 | [Linux map](linux-qt/traceability/FILENAME-GENERATION-001.json) |
-| [POST-CAPTURE-ACTIONS-001](../../product-contract/capabilities/POST-CAPTURE-ACTIONS-001/SPEC.md) | 66.7% | 16 | 8 | 0 | 0 | [Linux map](linux-qt/traceability/POST-CAPTURE-ACTIONS-001.json) |
-| [REGION-CAPTURE-001](../../product-contract/capabilities/REGION-CAPTURE-001/SPEC.md) | 33.3% | 9 | 15 | 3 | 0 | [Linux map](linux-qt/traceability/REGION-CAPTURE-001.json) |
-| [EDITOR-SESSION-001](../../product-contract/capabilities/EDITOR-SESSION-001/SPEC.md) | 60.0% | 18 | 9 | 3 | 0 | [Linux map](linux-qt/traceability/EDITOR-SESSION-001.json) |
+| [POST-CAPTURE-ACTIONS-001](../../product-contract/capabilities/POST-CAPTURE-ACTIONS-001/SPEC.md) | 70.8% | 17 | 7 | 0 | 0 | [Linux map](linux-qt/traceability/POST-CAPTURE-ACTIONS-001.json) |
+| [REGION-CAPTURE-001](../../product-contract/capabilities/REGION-CAPTURE-001/SPEC.md) | 44.4% | 12 | 12 | 3 | 0 | [Linux map](linux-qt/traceability/REGION-CAPTURE-001.json) |
+| [EDITOR-SESSION-001](../../product-contract/capabilities/EDITOR-SESSION-001/SPEC.md) | 70.0% | 21 | 6 | 3 | 0 | [Linux map](linux-qt/traceability/EDITOR-SESSION-001.json) |
 | [EDITOR-ANNOTATIONS-001](../../product-contract/capabilities/EDITOR-ANNOTATIONS-001/SPEC.md) | 10.0% | 2 | 18 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-ANNOTATIONS-001.json) |
-| [EDITOR-EFFECTS-001](../../product-contract/capabilities/EDITOR-EFFECTS-001/SPEC.md) | 50.0% | 9 | 9 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-EFFECTS-001.json) |
+| [EDITOR-EFFECTS-001](../../product-contract/capabilities/EDITOR-EFFECTS-001/SPEC.md) | 55.6% | 10 | 8 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-EFFECTS-001.json) |
 | [EDITOR-CANVAS-001](../../product-contract/capabilities/EDITOR-CANVAS-001/SPEC.md) | 64.7% | 11 | 5 | 1 | 0 | [Linux map](linux-qt/traceability/EDITOR-CANVAS-001.json) |
 | [EDITOR-OUTPUT-ACTIONS-001](../../product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001/SPEC.md) | 6.2% | 1 | 15 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-OUTPUT-ACTIONS-001.json) |
 | [EDITOR-SETTINGS-001](../../product-contract/capabilities/EDITOR-SETTINGS-001/SPEC.md) | 6.2% | 1 | 14 | 1 | 0 | [Linux map](linux-qt/traceability/EDITOR-SETTINGS-001.json) |
