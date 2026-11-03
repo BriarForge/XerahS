@@ -42,8 +42,12 @@ for c in "$@"; do
       echo "gate: code conflict while applying $c; resolve by hand, then rerun from that commit:" >&2
       printf '  %s\n' $other >&2; exit 1
     fi
-    git checkout --ours -- "${unmerged[@]}"
-    git add -- "${unmerged[@]}"
+    # git rerere may already have resolved everything (no unmerged paths left).
+    if (( ${#unmerged[@]} > 0 )); then
+      git checkout --ours -- "${unmerged[@]}"
+      git add -- "${unmerged[@]}"
+    fi
+    git diff --cached --quiet && { git cherry-pick --skip >/dev/null; echo "gate: $c already applied, skipped"; continue; }
     GIT_EDITOR=true git cherry-pick --continue >/dev/null
   fi
   echo "gate: applied $c -> $(git rev-parse --short HEAD)"
