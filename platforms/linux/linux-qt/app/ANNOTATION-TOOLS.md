@@ -186,3 +186,20 @@ not a stroke; a Text, SpeechBalloon or Step click places the default size, and
 Image, Emoji and Cursor use their natural size for thin or click gestures. NaN,
 infinite, overflowing and single-point gestures are rejected for every type.
 Each completed gesture is one history operation.
+
+## Smart Eraser fill algorithm (EA-012)
+
+Smart Eraser is a deterministic fill, not content-aware removal, and the tool
+text says so. For an eraser whose unrotated bounds round outwards to the integer
+box [L,R) x [T,B), the fill is the mean colour of the one-pixel ring of source
+pixels with x in L-1..R and y in T-1..B that is not inside the box (corners
+once). Ring pixels outside the canvas are skipped. Each of alpha, red, green and
+blue is the integer sum divided by the pixel count (truncating, straight
+non-premultiplied channels). If no ring pixel lies on the canvas (the box covers
+it) the fill is opaque white. The ring is read from the immutable source image,
+never from earlier annotations or from the area being erased, and the fill is
+then painted over the (rotated) bounds with the object's opacity. The result is
+an annotation: undo removes it, redo restores identical pixels, and the source
+pixels are never rewritten. `AnnotationToolMatrixTest` checks the algorithm
+against an independent model for non-uniform rings, canvas-edge clipping, the
+empty ring, determinism, undo and redo.

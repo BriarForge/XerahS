@@ -70,6 +70,34 @@ QImage asset() {
   result.fill(qRgba(10, 140, 60, 200));
   return result;
 }
+
+// Reference model of the documented SmartEraser fill, written independently of
+// the painter: the integer mean of every in-canvas pixel on the one-pixel ring
+// around the integer box [left,right) x [top,bottom), or opaque white if none.
+Argb expectedEraserFill(const ArgbImage &source, int left, int top, int right, int bottom) {
+  qint64 sum[4] = {0, 0, 0, 0}, count = 0;
+  for (int y = top - 1; y <= bottom; ++y)
+    for (int x = left - 1; x <= right; ++x) {
+      const bool onRing = x == left - 1 || x == right || y == top - 1 || y == bottom;
+      if (!onRing || x < 0 || y < 0 || x >= source.width || y >= source.height) continue;
+      const Argb p = source.at(x, y);
+      sum[0] += p >> 24; sum[1] += (p >> 16) & 255; sum[2] += (p >> 8) & 255; sum[3] += p & 255; ++count;
+    }
+  if (!count) return 0xFFFFFFFF;
+  return (Argb(sum[0] / count) << 24) | (Argb(sum[1] / count) << 16) | (Argb(sum[2] / count) << 8) | Argb(sum[3] / count);
+}
+// Every pixel differs by position so a wrong ring shows up as a wrong mean.
+ArgbImage gradient(qint64 width, qint64 height) {
+  ArgbImage image = solidImage(width, height, 0xFF000000);
+  for (qint64 y = 0; y < height; ++y)
+    for (qint64 x = 0; x < width; ++x)
+      image.pixels[std::size_t(y * width + x)] = 0xFF000000 | (Argb((x * 37 + y * 11) % 256) << 16) | (Argb((x * 5 + y * 29) % 256) << 8) | Argb((x * 13 + y * 3 + 90) % 256);
+  return image;
+}
+RectangleAnnotation eraser(PointF start, PointF end) {
+  RectangleAnnotation a; a.id = QUuid::createUuid(); a.start = start; a.end = end; a.content.type = shape::smartEraser;
+  a.style.rotationDegrees = 0; return a;
+}
 QAction *toolAction(const QMap<QString, QAction *> &actions, const QString &id) {
   for (auto *action : actions) if (action->property("annotationToolId").toString() == id) return action;
   return nullptr;
@@ -470,6 +498,65 @@ private slots:
         QCOMPARE(session.undoCount(), 0); QVERIFY(session.document().annotations.empty()); QVERIFY(!session.dirty());
       }
     }
+  }
+
+  // EA-012: the documented fill is the mean colour of the one-pixel ring.
+  void smartEraserFillsWithTheMeanOfANonUniformRing() {
+    const ArgbImage source = gradient(60, 40); auto doc = document(60, 40); doc.annotations = {eraser({20, 15}, {40, 25})};
+    const auto rendered = renderDocument(source, doc); QVERIFY(rendered.image);
+    const Argb fill = expectedEraserFill(source, 20, 15, 40, 25);
+    QVERIFY(fill != source.at(19, 14) && fill != source.at(40, 25));  // a mean, not any single ring pixel
+    for (int y = 15; y < 25; ++y) for (int x = 20; x < 40; ++x) QCOMPARE(rendered.image->at(x, y), fill);
+    for (int y = 0; y < 40; ++y) for (int x = 0; x < 60; ++x)
+      if (x < 20 || x >= 40 || y < 15 || y >= 25) QCOMPARE(rendered.image->at(x, y), source.at(x, y));  // nothing else changes
+    // The interior content, unlike the ring, does not influence the fill.
+    ArgbImage altered = source; for (int y = 15; y < 25; ++y) for (int x = 20; x < 40; ++x) altered.pixels[std::size_t(y * 60 + x)] = 0xFF123456;
+    const auto again = renderDocument(altered, doc); QVERIFY(again.image); QCOMPARE(again.image->at(30, 20), fill);
+  }
+  void smartEraserClipsItsRingAtTheCanvasEdges() {
+    const ArgbImage source = gradient(30, 30);
+    struct Case { int l, t, r, b; };
+    for (const Case c : {Case{0, 0, 10, 10}, Case{20, 20, 30, 30}, Case{0, 12, 8, 20}, Case{22, 0, 30, 9}}) {
+      auto doc = document(30, 30); doc.annotations = {eraser({double(c.l), double(c.t)}, {double(c.r), double(c.b)})};
+      const auto rendered = renderDocument(source, doc); QVERIFY(rendered.image);
+      const Argb fill = expectedEraserFill(source, c.l, c.t, c.r, c.b);
+      for (int y = c.t; y < c.b; ++y) for (int x = c.l; x < c.r; ++x) QCOMPARE(rendered.image->at(x, y), fill);
+    }
+    // No ring pixel on the canvas at all: documented opaque white.
+    auto whole = document(30, 30); whole.annotations = {eraser({0, 0}, {30, 30})};
+    const auto all = renderDocument(source, whole); QVERIFY(all.image);
+    for (const Argb pixel : all.image->pixels) QCOMPARE(pixel, Argb(0xFFFFFFFF));
+  }
+  void smartEraserIsDeterministicAndReadsOnlyTheSource() {
+    const ArgbImage source = gradient(60, 40); auto doc = document(60, 40); doc.annotations = {eraser({20, 15}, {40, 25})};
+    const auto first = renderDocument(source, doc), second = renderDocument(source, doc);
+    QVERIFY(first.image && second.image); QVERIFY(first.image->pixels == second.image->pixels);
+    // An earlier annotation covering the ring does not change the fill: the ring is read from the immutable source.
+    auto covered = doc; RectangleAnnotation under; under.id = QUuid::createUuid(); under.start = {10, 5}; under.end = {50, 35};
+    under.style.fillColor = 0xFFFF0000; under.style.strokeColor = 0xFFFF0000; covered.annotations = {under, doc.annotations[0]};
+    const auto rendered = renderDocument(source, covered); QVERIFY(rendered.image);
+    QCOMPARE(rendered.image->at(30, 20), first.image->at(30, 20));
+    QCOMPARE(rendered.image->at(30, 20), expectedEraserFill(source, 20, 15, 40, 25));
+  }
+  void smartEraserResultIsPreservedByHistoryAndNeverEditsTheSource() {
+    const ArgbImage source = gradient(60, 40); EditorSession session(document(60, 40));
+    const auto before = renderDocument(source, session.document()); QVERIFY(before.image);
+    ShapeContent content; content.type = shape::smartEraser;
+    const auto id = session.createShape({{20, 15}, {40, 25}, {}}, content, session.stateId(), session.selection()); QVERIFY(id);
+    QCOMPARE(session.undoCount(), 1); QVERIFY(session.dirty());
+    const auto erased = renderDocument(source, session.document()); QVERIFY(erased.image);
+    QCOMPARE(erased.image->at(30, 20), expectedEraserFill(source, 20, 15, 40, 25));
+    const auto sourcePng = session.document().sourceImagePng;
+    QVERIFY(session.undo()); QVERIFY(!session.dirty());
+    QVERIFY(renderDocument(source, session.document()).image->pixels == before.image->pixels);   // content restored
+    QVERIFY(session.redo()); QCOMPARE(session.undoCount(), 1);
+    const auto redone = renderDocument(source, session.document()); QVERIFY(redone.image);
+    QVERIFY(redone.image->pixels == erased.image->pixels);  // the committed result survives undo and redo
+    QCOMPARE(session.document().sourceImagePng, sourcePng); // erasing is an annotation; the source pixels are never rewritten
+    // The tool and its text never claim content-aware removal.
+    const QImage display = image(60, 40); EditorCanvas canvas(session, display); canvas.setTool(EditorCanvas::Tool::SmartEraser);
+    const QString description = canvas.toolInstructions();
+    QVERIFY(description.contains("not content-aware"));
   }
 };
 

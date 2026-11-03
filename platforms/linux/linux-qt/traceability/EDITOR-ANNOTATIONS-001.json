@@ -232,10 +232,10 @@
       }
     },
     "EA-012": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Smart Eraser uses a documented deterministic simple fill, with source-preserving history tests. Full native controls and artifact/edge qualification remains.",
+      "note": "Smart Eraser uses a documented deterministic fill (mean colour of the one-pixel ring, algorithm in app/ANNOTATION-TOOLS.md), is not presented as content-aware, and keeps its result through source-preserving history. Audit 2026-11-03: A non-uniform ring, ring clipping at each canvas edge, the empty-ring white fallback, determinism and independence from earlier annotations, and undo/redo preserving identical pixels and the source PNG are checked against an independent model of the documented algorithm; the tool text says 'not content-aware' (AnnotationToolMatrixTest::smartEraserFillsWithTheMeanOfANonUniformRing, ::smartEraserClipsItsRingAtTheCanvasEdges, ::smartEraserIsDeterministicAndReadsOnlyTheSource, ::smartEraserResultIsPreservedByHistoryAndNeverEditsTheSource). Remaining items above are qualification, not implementation status.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -244,10 +244,10 @@
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 50,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "ccaf3c6"
       }
     },
     "EA-013": {
