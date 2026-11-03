@@ -26,6 +26,11 @@ struct CaptureAnnotationChoice {
   QString diagnostic;
   bool sidecarIntent = false;
   std::optional<xerahs::editor::CropRegion> sourceRegion = {};
+  // Task mode additionally returns an owned rendered result. Legacy annotation
+  // ports may omit it; both paths retain document/source validation.
+  QImage rendered = {};
+  bool cancelTask = false;
+  QString partialDiagnostic = {};
 };
 struct CaptureUploadReview {
   QImage preview;
@@ -61,6 +66,7 @@ struct CaptureActionPorts {
   std::function<CaptureSaveAsChoice(const QString &, const xerahs::actions::CancellationToken &)> chooseSaveAs;
   std::function<CaptureAnnotationChoice(const LoadedSource &, const xerahs::actions::CancellationToken &)> annotation;
   xerahs::editor::RectangleStyle annotationStyle;
+  std::function<QJsonObject()> editorPreferences; // GUI-only, sampled once on open
   std::function<void(const std::vector<CaptureFile> &)> rasterPublished;
   // Empty selects the system temporary directory. The managed PNG is private
   // and belongs to this executor, never to saved capture history.

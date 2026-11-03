@@ -42,4 +42,13 @@ struct EditorWindowPreferences {
   bool maximized = true;
 };
 EditorWindowPreferences windowPreferencesFromPreferences(const EditorPreferences &preferences);
+// Convenience settings never authorize consent or destructive-confirmation bypass.
+struct EditorConveniencePreferences {
+  bool autoCopy = false;
+  bool autoClose = false;
+  bool zoomToFit = false;
+  bool exitConfirmation = false;
+};
+EditorConveniencePreferences conveniencePreferencesFromPreferences(const EditorPreferences &preferences);
+QStringList conveniencePreferenceFields();
 }  // namespace xerahs::editor

@@ -2,6 +2,9 @@
 #include "EditorSource.h"
 #include "CanvasCropDialog.h"
 #include "EditorHistory.h"
+#include "EditorCopy.h"
+#include "OwnedWork.h"
+#include "image-editor/EditorPreferences.h"
 #include <QDialog>
 #include <QPointer>
 #include <QTimer>
@@ -21,11 +24,31 @@ public:
   std::optional<xerahs::editor::CropRegion> sourceRegion() const { return m_session.retainedSourceRegion(); }
   void setHistoryHooks(EditorHistoryHooks hooks) { m_historyHooks = std::move(hooks); }
   void setCropHooks(CanvasCropHooks hooks) { m_cropHooks = std::move(hooks); }
+  // GUI-thread, value-owned completion, exactly once. Publication is GUI-only;
+  // reentrant completion/close is fenced. Destruction abandons owned rendering.
+  void enableTaskMode(const xerahs::editor::EditorConveniencePreferences &preferences, EditorCopyPorts copy = {});
+  QImage renderedResult() const { return m_taskImage; }
+  void abandonTask(); // explicit upstream cancellation, no automatic outputs
+signals:
+  void taskFinished(const QString &outcome, const QString &diagnostic);
 public slots:
   void accept() override;
   void reject() override;
   void done(int result) override;
+protected:
+  void closeEvent(QCloseEvent *event) override;
 private:
+  void continueTask();
+  void cancelTask();
+  enum class TaskState { Inactive, Editing, Rendering, Completing, Completed };
+  TaskState m_taskState = TaskState::Inactive;
+  xerahs::editor::EditorConveniencePreferences m_taskPreferences;
+  EditorCopyPorts m_taskCopy;
+  OwnedWork m_taskWork;
+  QImage m_taskImage;
+  quint64 m_taskGeneration = 0;
+  bool m_taskConfirming = false;
+  bool m_taskCancelledDuringCopy = false;
   bool editingReady() const;
   void cropImage(xerahs::editor::CropRegion);
   void restoreHistory(bool redo);

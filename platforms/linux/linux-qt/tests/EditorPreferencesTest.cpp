@@ -45,6 +45,44 @@ bool privateWrite(const QString &path, const QByteArray &bytes) {
 class EditorPreferencesTest : public QObject {
   Q_OBJECT
 private slots:
+  void convenienceFieldsRecoverIndependentlyAndRoundTripWithUnknowns() {
+    const auto defaults = loadEditorPreferences({});
+    const auto convenience = conveniencePreferencesFromPreferences(defaults);
+    QVERIFY(!convenience.autoCopy); QVERIFY(!convenience.autoClose);
+    QVERIFY(!convenience.zoomToFit); QVERIFY(!convenience.exitConfirmation);
+    const QJsonObject unknown{{"nested", QJsonArray{"keep", 42}}};
+    for (const auto &key : conveniencePreferenceFields()) {
+      QCOMPARE(defaults.fields.value(key), PreferenceFieldState::Missing);
+      for (const auto &invalid : {QJsonValue("false"), QJsonValue(0), QJsonValue(QJsonValue::Null), QJsonValue(QJsonArray{})}) {
+        QJsonObject stored{{"Thickness", 8}, {"FutureConvenience", unknown}};
+        for (const auto &other : conveniencePreferenceFields()) stored.insert(other, true);
+        stored.insert(key, invalid);
+        const auto repaired = loadEditorPreferences(stored);
+        QCOMPARE(repaired.fields.value(key), PreferenceFieldState::Invalid);
+        QCOMPARE(repaired.values.value(key), QJsonValue(false));
+        QCOMPARE(repaired.values.value("Thickness"), QJsonValue(8));
+        QCOMPARE(repaired.diagnostics, QStringList{QStringLiteral("invalid-") + key});
+        for (const auto &other : conveniencePreferenceFields())
+          if (other != key) QCOMPARE(repaired.values.value(other), QJsonValue(true));
+        const auto rejected = changeEditorPreferences(defaults, {{key, invalid}, {"Thickness", 9}});
+        QVERIFY(!rejected.preferences);
+      }
+      for (bool value : {false, true}) {
+        MemoryStorage storage;
+        storage.artifact = {PreferenceRead::Kind::Readable,
+            envelope(QJsonObject{{"FutureConvenience", unknown}, {"Thickness", 8}}), {}};
+        EditorPreferenceStore store(storage);
+        const auto changed = changeEditorPreferences(store.preferences(), {{key, value}});
+        QVERIFY(changed.preferences); QVERIFY(store.save(*changed.preferences).saved);
+        EditorPreferenceStore restarted(storage);
+        QCOMPARE(restarted.preferences().values.value(key), QJsonValue(value));
+        QCOMPARE(restarted.preferences().fields.value(key), PreferenceFieldState::Valid);
+        QCOMPARE(restarted.preferences().values.value("Thickness"), QJsonValue(8));
+        QCOMPARE(section(storage, "current").value("FutureConvenience"), QJsonValue(unknown));
+        QCOMPARE(section(storage, "previous").value("FutureConvenience"), QJsonValue(unknown));
+      }
+    }
+  }
   void windowFieldsRecoverIndependentlyAndRespectInclusiveBounds() {
     const auto defaults = windowPreferencesFromPreferences(loadEditorPreferences({}));
     QVERIFY(defaults.remember); QVERIFY(defaults.maximized); QCOMPARE(defaults.normalSize, QSizeF(1280, 720));

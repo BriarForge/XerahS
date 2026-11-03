@@ -23,7 +23,10 @@
     "platforms/linux/linux-qt/app/EditorWallpaper.cpp",
     "platforms/linux/linux-qt/app/EditorWallpaper.h",
     "platforms/linux/linux-qt/app/PortalWallpaper.cpp",
-    "platforms/linux/linux-qt/app/PortalWallpaper.h"
+    "platforms/linux/linux-qt/app/PortalWallpaper.h",
+    "platforms/linux/linux-qt/app/CaptureEditorTask.cpp",
+    "platforms/linux/linux-qt/app/EditorShutdown.cpp",
+    "platforms/linux/linux-qt/app/CapturePipeline.cpp"
   ],
   "requirements": {
     "EO-001": {
@@ -277,60 +280,66 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Capture annotation Apply returns owned pixels and a result through guarded worker lifetime tests. Complete editor task-mode and auto-copy/auto-close preference behavior remains.",
+      "note": "Native after-capture annotation is now a task host: Continue renders one immutable owned snapshot before auto-copy, returns Continue once, and feeds verified pixels to later capture actions. Auto-copy failure/unknown/cancellation-during is distinct in UI and retained pipeline artifact outcomes; auto-close never hides it. Read-only completed views cannot re-run Continue. Native EditorTaskTest covers copy success/failure/skipped/exception times auto-close, reentrancy, owned pixels, actual PNG output, journal round-trip, callback owner destruction and upstream cancellation. Physical desktop and full target qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
         "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
-        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorTaskTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorExitTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 39,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Native after-capture annotation is now a task host: Continue renders one immutable owned snapshot before auto-copy, returns Continue once, and feeds verified pixels to later capture actions. Auto-copy failure/unknown/cancellation-during is distinct in UI and retained pipeline artifact outcomes; auto-close never hides it. Read-only completed views cannot re-run Continue. Native EditorTaskTest covers copy success/failure/skipped/exception times auto-close, reentrancy, owned pixels, actual PNG output, journal round-trip, callback owner destruction and upstream cancellation. Physical desktop and full target qualification remain Required.",
+        "reviewed_at_revision": "43b11bbf5dda234d6d1b65bfd720ed58dedcc898"
       }
     },
     "EO-012": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Capture annotation cancellation keeps the source and stops its handoff. Complete task-mode dirty confirmation/host integration remains.",
+      "note": "Native task Cancel, Escape and window close use Save/Discard/Cancel for dirty sessions even with optional exit confirmation off; confirmed Discard emits one Cancel with no result and cancels later pipeline actions. Tests assert clipboard sentinel, save callback, files and upload boundary untouched; application Quit uses the same refusal/Cancel path. Explicit upstream Cancel Capture retires workers without automatic outputs. Product question for Aoife: task-close Save explicitly writes an editable copy and keeps the task open; only a subsequent Discard emits Cancel, separating Save intent from a side-effect-free Cancel. No new policy was added to the Product Contract.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
         "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
-        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorTaskTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorExitTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 42,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Native task Cancel, Escape and window close use Save/Discard/Cancel for dirty sessions even with optional exit confirmation off; confirmed Discard emits one Cancel with no result and cancels later pipeline actions. Tests assert clipboard sentinel, save callback, files and upload boundary untouched; application Quit uses the same refusal/Cancel path. Explicit upstream Cancel Capture retires workers without automatic outputs. Product question for Aoife: task-close Save explicitly writes an editable copy and keeps the task open; only a subsequent Discard emits Cancel, separating Save intent from a side-effect-free Cancel. No new policy was added to the Product Contract.",
+        "reviewed_at_revision": "43b11bbf5dda234d6d1b65bfd720ed58dedcc898"
       }
     },
     "EO-013": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native dirty Save/Discard/Cancel and failed-save replacement tests exist. Complete standalone exit/shutdown and all callback outcomes remain.",
+      "note": "Standalone close retains Save/Discard/Cancel and now also routes application Quit through editor close policies. Cancelled picker, encode failure, empty true-return and wrong-content PNG callback keep the dirty editor open and previous destination intact; successful Save requires artifact persistence and the current session clean checkpoint. Optional clean-close confirmation cannot suppress dirty confirmation. EditorExitTest covers the native close/save matrix; JPEG/WebP callback-content equivalence and desktop session-manager forced termination remain unverified.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
         "platforms/linux/linux-qt/tests/EditorPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
-        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorTaskTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorExitTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 45,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Standalone close retains Save/Discard/Cancel and now also routes application Quit through editor close policies. Cancelled picker, encode failure, empty true-return and wrong-content PNG callback keep the dirty editor open and previous destination intact; successful Save requires artifact persistence and the current session clean checkpoint. Optional clean-close confirmation cannot suppress dirty confirmation. EditorExitTest covers the native close/save matrix; JPEG/WebP callback-content equivalence and desktop session-manager forced termination remain unverified.",
+        "reviewed_at_revision": "43b11bbf5dda234d6d1b65bfd720ed58dedcc898"
       }
     },
     "EO-014": {
@@ -427,8 +436,8 @@
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
-    "checked_at": "2026-10-28T16:55:54.347787+00:00",
+    "source_revision": "43b11bbf5dda234d6d1b65bfd720ed58dedcc898",
+    "checked_at": "2026-11-02T22:07:31.093358+00:00",
     "specification": "product-contract/capabilities/EDITOR-OUTPUT-ACTIONS-001/SPEC.md",
     "specification_sha256": "5c966c9f044cd1135c70e7d69e345b1cfb4ffffabd26f58e6ec9e7eb582c824f",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -609,21 +618,21 @@
         "pointerStatusReportsPixelsOfTheChangedImage"
       ]
     },
-    "remaining_scope": "Complete editor upload/pin/task host integration, wallpaper, every codec/profile/callback/permission/disk fault and target/accessibility qualification remain incomplete. Format selection metadata is still draft and persisted encoding defaults unapproved.",
+    "remaining_scope": "Complete codec/profile/callback/permission/disk fault and physical desktop/accessibility qualification remain Required. Task-close explicit Save semantics need Aoife/product-owner review; JPEG/WebP custom encoder content equivalence is not established.",
     "reviewed_requirement_count": 16,
-    "finding": "Owned immutable save/copy/print paths and native PNG/JPEG/WebP Save As are present with explicit quality/matte and encoded-raster companion hashes. Tests cover atomic failures and companion-only repair without changing the durable path early.",
+    "finding": "Task Continue/Cancel now connects native capture editing to real remaining post-capture outputs with owned worker rendering, exactly-once completion, optional copy/close and distinct partial facts. Standalone close and Quit retain dirty Save/Discard/Cancel; unfulfilled encoder acknowledgements cannot publish empty or wrong-content PNG output.",
     "review_anchor": {
       "production": {
-        "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
-        "sha256": "541d7d2d9254c13e6f527b63af5bf8e5b4486d521edcd8a6ecf9aea7deb5245c"
+        "path": "platforms/linux/linux-qt/app/CaptureEditorTask.cpp",
+        "sha256": "b83ac4bf678e3d29c1a4e8285d40b4c44d012e45398e1706e92104aebcd9307b"
       },
       "test": {
-        "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
-        "method": "encodedFormatsKeepEditableSourceHashAndChosenAlphaPolicy",
-        "line": 34,
-        "sha256": "1254980dc20b87e3934fc3fe5a960867ac332840fd90caf481ba3ad72085ad03"
+        "path": "platforms/linux/linux-qt/tests/EditorTaskTest.cpp",
+        "method": "continueOnceOwnsPixelsAndRunsLaterActions",
+        "line": 31,
+        "sha256": "93a9c88a16c57a9458efb8e5b0762256e1aecc4f9b22f327d8d11998d82e4437"
       },
-      "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
+      "interpretation": "EXTRACTED production/native test anchors describe the slice; automated results and remaining qualification are recorded separately. Partial rows do not claim release parity."
     }
   }
 }

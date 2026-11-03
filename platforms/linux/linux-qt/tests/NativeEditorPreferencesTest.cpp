@@ -1,6 +1,7 @@
 #include "NativeEditorPreferences.h"
 #include "RecentImageMenu.h"
 #include "DrawingDefaultsDialog.h"
+#include "ConveniencePreferencesDialog.h"
 #include <QApplication>
 #include <QCheckBox>
 #include <QDialog>
@@ -72,6 +73,75 @@ void changeDialog(const QString &operation, bool apply) {
 class NativeEditorPreferencesTest : public QObject {
   Q_OBJECT
 private slots:
+  void convenienceApplyPersistsAndRejectsStaleInvalidAndFailedWrites() {
+    QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");
+    FilePreferenceStorage storage(path); EditorPreferenceStore seed(storage);
+    const QJsonObject future{{"mode", "preserved"}};
+    auto prepared = changeEditorPreferences(seed.preferences(), {{"FutureConvenience", future}, {"Thickness", 9}});
+    QVERIFY(prepared.preferences); QVERIFY(seed.save(*prepared.preferences).saved);
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty()); QVERIFY(optIn());
+    QVERIFY(rememberEditorImage("/private/keep.png").isEmpty());
+    const auto recentRevision = recentImageHistory().revision(); const auto revision = nativeEditorPreferenceRevision();
+    const QJsonObject changes{{"AutoCopyImageToClipboard", true}, {"AutoCloseEditorOnTask", true},
+        {"ZoomToFitOnOpen", true}, {"ShowExitConfirmation", true}};
+    QVERIFY(applyConveniencePreferences(changes, revision).saved);
+    QCOMPARE(recentImageHistory().revision(), recentRevision);
+    const auto before = bytes(path); const auto current = nativeEditorPreferenceRevision();
+    const auto stale = applyConveniencePreferences({{"AutoCloseEditorOnTask", false}}, revision);
+    QVERIFY(!stale.saved); QCOMPARE(stale.diagnostic, QString("settings-changed-in-session"));
+    const auto invalid = applyConveniencePreferences({{"ZoomToFitOnOpen", "yes"}}, current);
+    QVERIFY(!invalid.saved); QCOMPARE(invalid.diagnostic, QString("invalid-ZoomToFitOnOpen"));
+    const auto unknown = applyConveniencePreferences({{"Thickness", 10}}, current);
+    QVERIFY(!unknown.saved); QCOMPARE(unknown.diagnostic, QString("invalid-convenience-preferences"));
+    QLockFile lock(path + ".lock"); QVERIFY(lock.tryLock(0));
+    QVERIFY(!applyConveniencePreferences({{"AutoCloseEditorOnTask", false}}, current).saved);
+    QCOMPARE(bytes(path), before); QCOMPARE(nativeEditorPreferenceRevision(), current);
+    QVERIFY(nativeEditorPreferences().values.value("AutoCloseEditorOnTask").toBool()); lock.unlock();
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
+    for (auto it = changes.begin(); it != changes.end(); ++it) QCOMPARE(nativeEditorPreferences().values.value(it.key()), it.value());
+    QCOMPARE(nativeEditorPreferences().values.value("FutureConvenience"), QJsonValue(future));
+    QCOMPARE(nativeEditorPreferences().values.value("Thickness"), QJsonValue(9));
+    QCOMPARE(recentImageHistory().paths(), QStringList{"/private/keep.png"});
+  }
+  void convenienceDialogApplyCancelAndFailedPersistence_data() {
+    QTest::addColumn<QString>("mode");
+    QTest::newRow("apply") << QString("apply");
+    QTest::newRow("cancel") << QString("cancel");
+    QTest::newRow("write-failure") << QString("write-failure");
+    QTest::newRow("stale-draft") << QString("stale-draft");
+  }
+  void convenienceDialogApplyCancelAndFailedPersistence() {
+    QFETCH(QString, mode);
+    QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");
+    QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
+    QVERIFY(applyConveniencePreferences({{"AutoCopyImageToClipboard", false}}, nativeEditorPreferenceRevision()).saved);
+    const auto before = bytes(path); bool visited = false, failureReported = false;
+    QLockFile lock(path + ".lock");
+    if (mode == "write-failure") QVERIFY(lock.tryLock(0));
+    QTimer::singleShot(0, [&] {
+      auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget()); QVERIFY(dialog);
+      QCOMPARE(dialog->objectName(), QString("conveniencePreferencesDialog")); visited = true;
+      for (const auto &key : conveniencePreferenceFields()) {
+        auto *check = dialog->findChild<QCheckBox *>(key); QVERIFY(check); QVERIFY(!check->accessibleName().isEmpty()); check->setChecked(true);
+      }
+      auto *exit = dialog->findChild<QCheckBox *>("ShowExitConfirmation");
+      QVERIFY(exit->accessibleDescription().contains("Unsaved changes always"));
+      if (mode == "stale-draft") QVERIFY(applyDrawingDefaults({{"Thickness", 9}}, nativeEditorPreferenceRevision()).saved);
+      auto *buttons = dialog->findChild<QDialogButtonBox *>();
+      buttons->button(mode == "cancel" ? QDialogButtonBox::Cancel : QDialogButtonBox::Ok)->click();
+      if (mode == "write-failure" || mode == "stale-draft") {
+        QVERIFY(dialog->isVisible()); failureReported = !dialog->findChild<QLabel *>("conveniencePreferencesError")->text().isEmpty();
+        buttons->button(QDialogButtonBox::Cancel)->click();
+      }
+    });
+    QCOMPARE(manageConveniencePreferences(), mode == "apply"); QVERIFY(visited);
+    QCOMPARE(failureReported, mode == "write-failure" || mode == "stale-draft");
+    for (const auto &key : conveniencePreferenceFields()) QCOMPARE(nativeEditorPreferences().values.value(key).toBool(), mode == "apply");
+    if (mode != "apply" && mode != "stale-draft") QCOMPARE(bytes(path), before);
+    if (mode == "stale-draft") QCOMPARE(nativeEditorPreferences().values.value("Thickness"), QJsonValue(9));
+    lock.unlock(); QVERIFY(initializeNativeEditorPreferences(path).isEmpty());
+    for (const auto &key : conveniencePreferenceFields()) QCOMPARE(nativeEditorPreferences().values.value(key).toBool(), mode == "apply");
+  }
   void windowChangesKeepRecentsAndUnrelatedFieldsWhileRejectingInvalidOrStaleWrites() {
     QTemporaryDir temporary; const QString path = temporary.filePath("native/settings.json");
     FilePreferenceStorage storage(path); EditorPreferenceStore seed(storage);

@@ -193,6 +193,15 @@ QString pipelineStateName(PipelineState state) {
 
 bool validSavedOutputOutcomes(const QString &action, ActionState state, const std::vector<ArtifactOutcome> &outcomes) {
   if (outcomes.empty()) return true;
+  // EO-011: rendering/Continue succeeds independently of optional clipboard
+  // publication. Preserve both facts through the real pipeline and journal.
+  if (action == "annotation") {
+    if (state != ActionState::Succeeded || outcomes.size() != 2) return false;
+    const auto &task = outcomes[0]; const auto &copy = outcomes[1];
+    return task.artifact == "editor.task" && task.state == ActionState::Succeeded && !task.diagnostic && !task.absent &&
+        copy.artifact == "editor.auto-copy" && copy.state == ActionState::Failed && !copy.absent && copy.diagnostic &&
+        QStringList{"editor-task-auto-copy-failed", "editor-task-auto-copy-unknown", "editor-task-auto-copy-cancelled-during"}.contains(*copy.diagnostic);
+  }
   if ((action != "save" && action != "save-as") || outcomes.size() != 2) return false;
   const auto &raster = outcomes[0]; const auto &sidecar = outcomes[1];
   if (raster.artifact != action + ".file" || sidecar.artifact != action + ".sidecar" || raster.absent ||

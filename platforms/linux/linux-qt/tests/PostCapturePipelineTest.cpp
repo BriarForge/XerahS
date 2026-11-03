@@ -66,6 +66,17 @@ class PostCapturePipelineTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void taskCopyPartialFactsRetainSuccessfulTransformation() {
+    const std::vector<ArtifactOutcome> facts{{"editor.task", ActionState::Succeeded, {}}, {"editor.auto-copy", ActionState::Failed, "editor-task-auto-copy-failed"}};
+    QVERIFY(validSavedOutputOutcomes("annotation", ActionState::Succeeded, facts));
+    QVERIFY(!validSavedOutputOutcomes("annotation", ActionState::Failed, facts));
+    QVERIFY(!validSavedOutputOutcomes("save", ActionState::Succeeded, facts));
+    auto invalid = facts; invalid[1].diagnostic = "private callback value";
+    QVERIFY(!validSavedOutputOutcomes("annotation", ActionState::Succeeded, invalid));
+    invalid = facts; invalid[0].state = ActionState::Failed;
+    QVERIFY(!validSavedOutputOutcomes("annotation", ActionState::Succeeded, invalid));
+  }
+
   void partialRasterAcknowledgementSatisfiesConsumersButNeverGrantsDeletion() {
     class PartialExecutor final : public ActionExecutor {
     public:

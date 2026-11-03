@@ -13,6 +13,8 @@
 #include "EditorOpen.h"
 #include "RecentImageMenu.h"
 #include "DrawingDefaultsDialog.h"
+#include "ConveniencePreferencesDialog.h"
+#include "EditorShutdown.h"
 #include "NativeEditorWindowState.h"
 #include "NativeEditorAppearance.h"
 #include "AppearanceDialog.h"
@@ -168,8 +170,11 @@ EditorWindow *EditorWindow::fromCapturedDocument(const AnnotationDocument &docum
 EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument document,
                            EditorSession::InitialPersistence persistence, QImage displaySource)
     : m_path(path), m_image(std::move(image)), m_session(std::make_unique<EditorSession>(std::move(document), persistence)) {
+  guardEditorShutdown(*this);
   applyCreationDefaults();
   m_canvas = new EditorCanvas(*m_session, m_image, nullptr, displaySource);
+  if (conveniencePreferencesFromPreferences(nativeEditorPreferences()).zoomToFit)
+    QTimer::singleShot(0, m_canvas, &EditorCanvas::zoomToFit);
   const auto tools = annotationToolActions(*m_canvas, this);
   auto *instructions = annotationToolInstructions(*m_canvas, this);
   instructions->setMaximumWidth(460);
@@ -223,6 +228,9 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(customizeToolbar, &QAction::triggered, this, [this] {
     configurePreferences([this] { return manageEditorToolbar(this, m_toolbarActions); });
   });
+  auto *convenience = preferences->addAction(QStringLiteral("Task and convenience preferences…"));
+  convenience->setObjectName("conveniencePreferences");
+  connect(convenience, &QAction::triggered, this, [this] { configurePreferences([this] { return manageConveniencePreferences(this); }); });
   auto *drawingDefaults = preferences->addAction(QStringLiteral("Drawing Defaults…"));
   drawingDefaults->setObjectName(QStringLiteral("drawingDefaults"));
   connect(drawingDefaults, &QAction::triggered, this, [this] {
@@ -1558,6 +1566,13 @@ void EditorWindow::closeEvent(QCloseEvent *event) {
   if (m_canvasOperationPending || m_closePending || m_outputPending || m_canvas->interactionActive()) { event->ignore(); return; }
   const QPointer<EditorWindow> guard(this); m_closePending = true;
   const auto closing = qScopeGuard([guard] { if (guard) guard->m_closePending = false; });
+  if (!m_session->dirty() && conveniencePreferencesFromPreferences(nativeEditorPreferences()).exitConfirmation) {
+    QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, "Close editor", "Close this editor?", QMessageBox::Close | QMessageBox::Cancel, this));
+    box->setDefaultButton(QMessageBox::Cancel); const int answer = box->exec();
+    if (box) box->setParent(nullptr);
+    delete box.data();
+    if (!guard || answer != QMessageBox::Close) { event->ignore(); return; }
+  }
   if (m_session->dirty()) {
     // ES-008: Save, Discard, Cancel.
     QMessageBox box(QMessageBox::Question, QStringLiteral("Unsaved changes"),
@@ -1566,7 +1581,7 @@ void EditorWindow::closeEvent(QCloseEvent *event) {
     box.setDefaultButton(QMessageBox::Save);
     const auto choice = box.exec(); box.setParent(nullptr);
     switch (choice) {
-      case QMessageBox::Save: if (!save(false)) { event->ignore(); return; } break;
+      case QMessageBox::Save: if (!save(false) || !guard || m_session->dirty()) { event->ignore(); return; } break;
       case QMessageBox::Discard: break;
       default: event->ignore(); return;
     }

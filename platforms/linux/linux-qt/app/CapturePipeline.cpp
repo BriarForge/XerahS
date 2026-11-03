@@ -82,7 +82,7 @@ struct CapturePipelineState {
 };
 namespace {
 void completeAnnotation(const std::shared_ptr<CapturePipelineState> &state, const std::shared_ptr<AnnotationCall> &call, CaptureAnnotationChoice choice) {
-  { std::lock_guard<std::mutex> lock(state->mutex); if (call->done) return; call->choice = std::move(choice); call->done = true; }
+  { std::lock_guard<std::mutex> lock(state->mutex); if (call->done) return; if (choice.cancelTask) state->cancellation.request(); call->choice = std::move(choice); call->done = true; }
   state->changed.notify_all();
 }
 void completeSaveAs(const std::shared_ptr<CapturePipelineState> &state, const std::shared_ptr<SaveAsCall> &call, CaptureSaveAsChoice choice) {
@@ -233,7 +233,7 @@ void CapturePipeline::start() {
   ports.annotation = [state](const LoadedSource &source, const CancellationToken &token) {
     if (token.requested()) return CaptureAnnotationChoice{};
     auto call = std::make_shared<AnnotationCall>(); call->source = source;
-    std::unique_lock<std::mutex> lock(state->mutex); state->annotation = call; state->activity = "Annotate capture. Cancel skips annotation; Cancel Capture stops later actions.";
+    std::unique_lock<std::mutex> lock(state->mutex); state->annotation = call; state->activity = "Edit capture. Continue runs later actions; Cancel stops this task.";
     state->changed.wait(lock, [&] { return call->done || token.requested(); });
     if (!token.requested() && call->choice.document) state->activity = "Rendering accepted annotations. Cancel Capture prevents adoption at the next safe boundary.";
     return token.requested() ? CaptureAnnotationChoice{} : call->choice;
@@ -323,7 +323,7 @@ void CapturePipeline::cancel() {
   if (!guard) return;
   if (m_saveAsDialog) m_saveAsDialog->reject();
   if (!guard) return;
-  if (m_annotationDialog) m_annotationDialog->reject();
+  if (m_annotationDialog) m_annotationDialog->abandonTask();
   if (!guard) return;
   emit activityChanged(QStringLiteral("Cancellation requested. Finishing the current action safely."));
 }
@@ -349,14 +349,22 @@ void CapturePipeline::poll() {
         if (!guard) return;
       } else {
         auto *dialog = new CaptureAnnotationDialog(annotation->source, m_selectionParent, m_ports.annotationStyle); m_annotationDialog = dialog;
-        const auto parent = m_selectionParent;
-        connect(dialog, &QDialog::finished, this, [state, annotation, dialog, parent](int result) {
-          const CaptureAnnotationChoice choice = result == QDialog::Accepted ? CaptureAnnotationChoice{dialog->document(), {}, dialog->sidecarIntent(), dialog->sourceRegion()} : CaptureAnnotationChoice{};
-          const auto ownedState = state; const auto ownedCall = annotation;
-          if (parent) parent->activateWindow();
-          completeAnnotation(ownedState, ownedCall, choice);
+        const auto preferences = xerahs::editor::loadEditorPreferences(m_ports.editorPreferences ? m_ports.editorPreferences() : QJsonObject{});
+        EditorCopyPorts copy;
+        if (m_ports.clipboard) copy.publish = [native = m_ports.clipboard, state](const EditorCopyPayload &payload) { return native(payload.image, state->cancellation); };
+        dialog->enableTaskMode(xerahs::editor::conveniencePreferencesFromPreferences(preferences), std::move(copy));
+        connect(dialog, &CaptureAnnotationDialog::taskFinished, this, [this, state, annotation, dialog](const QString &outcome, const QString &diagnostic) {
+          CaptureAnnotationChoice choice;
+          if (outcome == "Continue") {
+            choice.document = dialog->document(); choice.sidecarIntent = dialog->sidecarIntent();
+            choice.sourceRegion = dialog->sourceRegion(); choice.rendered = dialog->renderedResult(); choice.partialDiagnostic = diagnostic;
+          } else choice.cancelTask = true;
+          // The completed read-only view belongs to its native window lifetime,
+          // not to a pipeline that may be retired immediately after completion.
+          m_annotationDialog.clear();
+          completeAnnotation(state, annotation, std::move(choice));
         });
-        connect(dialog, &QObject::destroyed, this, [state, annotation] { completeAnnotation(state, annotation, {}); });
+        connect(dialog, &QObject::destroyed, this, [state, annotation] { CaptureAnnotationChoice choice; choice.cancelTask = true; completeAnnotation(state, annotation, std::move(choice)); });
         dialog->show(); if (!guard || !m_annotationDialog) return;
         dialog->raise(); if (!guard || !m_annotationDialog) return;
         dialog->activateWindow(); if (!guard) return;

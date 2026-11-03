@@ -6,6 +6,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QImageWriter>
+#include <QImageReader>
 #include <QColorSpace>
 #include <QPainter>
 #include <QUuid>
@@ -217,6 +218,18 @@ SaveOutcome saveEdit(const QString &requested, const QImage &source, const Annot
     if (encoding.quality >= 0) writer.setQuality(encoding.quality);
     const bool encoded = hooks.encode ? hooks.encode(raster, &output) : writer.write(raster);
     if (!encoded || !output.flush() || ::fsync(temporary.fd.value) != 0) { outcome.rasterError = diagnostic::rasterSaveFailed; return outcome; }
+    // A host encoder returning true is only an acknowledgement. Verify it
+    // produced a decodable image of the requested format/dimensions before
+    // replacing an existing destination or marking the session saved.
+    if (hooks.encode) {
+      QFile verification;
+      if (!verification.open(temporary.fd.value, QIODevice::ReadOnly, QFileDevice::DontCloseHandle) || !verification.seek(0)) { outcome.rasterError = diagnostic::rasterSaveFailed; return outcome; }
+      QImageReader reader(&verification);
+      const auto actualFormat = reader.format().toLower();
+      const auto decoded = reader.read();
+      if (actualFormat != rasterFormatId(encoding.format).toLatin1() || decoded.isNull() || decoded.size() != raster.size() ||
+          (encoding.format == RasterFormat::Png && decoded.convertToFormat(QImage::Format_ARGB32) != raster.convertToFormat(QImage::Format_ARGB32))) { outcome.rasterError = diagnostic::rasterSaveFailed; return outcome; }
+    }
     receipt->rasterHash = hashDescriptor(temporary.fd.value, control);
     if (receipt->rasterHash.isEmpty() || cancelled(control)) { outcome.cancelled = cancelled(control); if (!outcome.cancelled) outcome.rasterError = diagnostic::rasterSaveFailed; return outcome; }
     receipt->document.imagePath = path; receipt->document.imageHash = receipt->rasterHash;

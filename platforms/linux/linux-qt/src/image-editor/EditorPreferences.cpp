@@ -15,6 +15,8 @@ const QJsonObject defaults{
   {QStringLiteral("FillColorHex"), QStringLiteral("#00000000")},
   {QStringLiteral("RememberWindowState"), true}, {QStringLiteral("WindowWidth"), 1280},
   {QStringLiteral("WindowHeight"), 720}, {QStringLiteral("IsWindowMaximized"), true},
+  {QStringLiteral("AutoCopyImageToClipboard"), false}, {QStringLiteral("AutoCloseEditorOnTask"), false},
+  {QStringLiteral("ZoomToFitOnOpen"), false}, {QStringLiteral("ShowExitConfirmation"), false},
   {QStringLiteral("RememberRecentImagePaths"), false}, {QStringLiteral("MaxRecentImageFiles"), RecentImages::defaultMaximum},
   {QStringLiteral("RecentImageFiles"), QJsonArray{}},
   {QStringLiteral("TextFontFamily"), QString()}, {QStringLiteral("TextFontSize"), 24},
@@ -122,6 +124,11 @@ EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRul
     if (kind == TextField::None || !stored.contains(it.key())) continue;
     if (textFieldValid(kind, stored.value(it.key()))) result.values.insert(it.key(), stored.value(it.key()));
     else invalid(result, it.key());
+  }
+  for (const auto &key : conveniencePreferenceFields()) {
+    if (!stored.contains(key)) continue;
+    if (stored.value(key).isBool()) result.values.insert(key, stored.value(key));
+    else invalid(result, key);
   }
   for (const auto &key : {QStringLiteral("Theme"), QStringLiteral("BlurStrength"), QStringLiteral("Thickness"),
                          QStringLiteral("RememberRecentImagePaths"), QStringLiteral("MaxRecentImageFiles"),
@@ -237,5 +244,15 @@ EditorWindowPreferences windowPreferencesFromPreferences(const EditorPreferences
   if (number(width, 1, maximumEditorWindowExtent, false)) window.normalSize.setWidth(width.toDouble());
   if (number(height, 1, maximumEditorWindowExtent, false)) window.normalSize.setHeight(height.toDouble());
   return window;
+}
+QStringList conveniencePreferenceFields() {
+  return {QStringLiteral("AutoCopyImageToClipboard"), QStringLiteral("AutoCloseEditorOnTask"),
+      QStringLiteral("ZoomToFitOnOpen"), QStringLiteral("ShowExitConfirmation")};
+}
+EditorConveniencePreferences conveniencePreferencesFromPreferences(const EditorPreferences &preferences) {
+  return {preferences.values.value(u"AutoCopyImageToClipboard").toBool(false),
+      preferences.values.value(u"AutoCloseEditorOnTask").toBool(false),
+      preferences.values.value(u"ZoomToFitOnOpen").toBool(false),
+      preferences.values.value(u"ShowExitConfirmation").toBool(false)};
 }
 }  // namespace xerahs::editor

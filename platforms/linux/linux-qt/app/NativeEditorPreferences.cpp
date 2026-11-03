@@ -140,6 +140,17 @@ QString rememberEditorWindowState(const QJsonObject &window) {
   if (!changed) return {};
   return applyWindowPreferences(window, host().revision).diagnostic;
 }
+PreferenceWrite applyConveniencePreferences(const QJsonObject &changes, quint64 expectedRevision) {
+  auto &state = host();
+  if (state.revision != expectedRevision) return {false, QStringLiteral("settings-changed-in-session")};
+  const auto fields = conveniencePreferenceFields();
+  for (auto it = changes.begin(); it != changes.end(); ++it)
+    if (!fields.contains(it.key())) return {false, QStringLiteral("invalid-convenience-preferences")};
+  auto changed = changeEditorPreferences(state.current, changes);
+  if (!changed.preferences) return {false, changed.diagnostics.value(0)};
+  changed.preferences->recent = state.current.recent;
+  return publish(std::move(*changed.preferences));
+}
 PreferenceWrite applyToolbarPreferences(const QJsonArray &items, quint64 expectedRevision) {
   auto &state = host();
   if (state.revision != expectedRevision) return {false, QStringLiteral("settings-changed-in-session")};
@@ -181,6 +192,7 @@ QString editorPreferenceDiagnosticMessage(const QString &diagnostic) {
   if (diagnostic == u"invalid-drawing-defaults") return QStringLiteral("The drawing preference change is not supported.");
   if (diagnostic == u"invalid-window-state") return QStringLiteral("The window preference change is not supported.");
   if (diagnostic == u"invalid-appearance-preferences") return QStringLiteral("The appearance preference change is not supported.");
+  if (diagnostic == u"invalid-convenience-preferences") return QStringLiteral("The convenience preference change is not supported.");
   if (diagnostic == u"toolbar-unknown-action") return QStringLiteral("Some toolbar commands are unavailable in this editor version. Their settings are preserved and their hotkeys are inactive.");
   if (diagnostic == u"toolbar-unknown-action-change") return QStringLiteral("Unavailable toolbar commands must be preserved unchanged.");
   if (diagnostic == u"toolbar-invalid-list") return QStringLiteral("The toolbar list is invalid or exceeds 256 items.");
@@ -201,6 +213,10 @@ QString editorPreferenceDiagnosticMessage(const QString &diagnostic) {
         field == u"RememberWindowState" ? QStringLiteral("Remember window state") :
         field == u"WindowWidth" ? QStringLiteral("Window width") : field == u"WindowHeight" ? QStringLiteral("Window height") :
         field == u"IsWindowMaximized" ? QStringLiteral("Maximized window state") :
+        field == u"AutoCopyImageToClipboard" ? QStringLiteral("Auto-copy on Continue") :
+        field == u"AutoCloseEditorOnTask" ? QStringLiteral("Auto-close after Continue") :
+        field == u"ZoomToFitOnOpen" ? QStringLiteral("Zoom to fit on open") :
+        field == u"ShowExitConfirmation" ? QStringLiteral("Exit confirmation") :
         field == u"MaxRecentImageFiles" ? QStringLiteral("Maximum recent images") :
         field == u"RememberRecentImagePaths" ? QStringLiteral("Remember recent images") :
         field == u"RecentImageFiles" ? QStringLiteral("Recent image list") :

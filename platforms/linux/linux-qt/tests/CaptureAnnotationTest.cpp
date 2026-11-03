@@ -7,6 +7,7 @@
 #include "NativeEditorPreferences.h"
 #include "CanvasCropDialog.h"
 #include <QBuffer>
+#include <QMessageBox>
 #include <QColorSpace>
 #include <QElapsedTimer>
 #include <QProgressDialog>
@@ -58,6 +59,12 @@ class CaptureAnnotationTest final : public QObject {
   Q_OBJECT
   QTemporaryDir dialogPreferences;
 private slots:
+  void cleanup() {
+    QList<QPointer<CaptureAnnotationDialog>> editors;
+    for (auto *widget : QApplication::topLevelWidgets())
+      if (auto *capture = qobject_cast<CaptureAnnotationDialog *>(widget)) editors.append(capture);
+    for (const auto &editor : editors) delete editor.data();
+  }
   void globalCancelAndPipelineDestructionReleasePendingCropWorkers_data() {
     QTest::addColumn<bool>("destroy"); QTest::newRow("cancel") << false; QTest::newRow("destroy") << true;
   }
@@ -183,9 +190,23 @@ private slots:
     } else if (mode == "cancel-crop" || mode == "no-op") { QCOMPARE(serializeDocument(canvas->annotationDocument()), serializeDocument(original)); QVERIFY(capture->findChild<QAction *>("redo")->isEnabled()); }
     QVERIFY(capture->sourceRegion() && *capture->sourceRegion() == retained); QCOMPARE(canvas->creationStrokeWidth(), 3.0); capture->findChild<QCheckBox *>("captureSaveAnnotationSidecar")->setChecked(true);
     if (mode == "numeric" && qEnvironmentVariableIsSet("XERAHS_CROP_QA")) QVERIFY(capture->grab().save(qEnvironmentVariable("XERAHS_CROP_QA")));
-    if (mode == "cancel-capture") capture->reject(); else capture->accept(); QTRY_COMPARE(done.count(), 1); const auto result = receipt(done); QVERIFY(result->file); QCOMPARE(QImage(result->file->path), result->workingMedia);
-    if (mode == "cancel-capture") { QCOMPARE(result->workingMedia, input); QVERIFY(!result->annotationDocument); QVERIFY(!QFile::exists(result->file->path + ".xann")); }
-    else { QVERIFY(result->annotationDocument); const auto expectedSource = input.copy(int(retained.left), int(retained.top), int(retained.width), int(retained.height)); QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), expectedSource); QCOMPARE(result->workingMedia.size(), expectedSource.size()); const auto reopened = loadSource(result->file->path); QVERIFY(reopened.document); QCOMPARE(reopened.document->sourceImagePng, result->annotationDocument->sourceImagePng); QCOMPARE(serializeDocument(*reopened.document).value("annotations"), serializeDocument(*result->annotationDocument).value("annotations"));
+    if (mode == "cancel-capture") {
+      // EO-012 now cancels the task, rather than skipping annotation and saving
+      // the original. ES-008 still requires explicit discard of the crop edits.
+      bool confirmed = false;
+      QTimer::singleShot(0, [&] {
+        auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); QVERIFY(box);
+        confirmed = true; box->button(QMessageBox::Discard)->click();
+      });
+      capture->reject(); QVERIFY(confirmed);
+    } else capture->accept();
+    QTRY_COMPARE(done.count(), 1); const auto result = receipt(done);
+    if (mode == "cancel-capture") {
+      QCOMPARE(result->pipeline.state, PipelineState::Cancelled); QCOMPARE(result->workingMedia, input);
+      QVERIFY(!result->annotationDocument); QVERIFY(result->files.empty());
+      QVERIFY(!QFile::exists(dir.filePath("crop.png"))); QVERIFY(!QFile::exists(dir.filePath("crop.png.xann")));
+    }
+    else { QVERIFY(result->file); QCOMPARE(QImage(result->file->path), result->workingMedia); QVERIFY(result->annotationDocument); const auto expectedSource = input.copy(int(retained.left), int(retained.top), int(retained.width), int(retained.height)); QCOMPARE(QImage::fromData(result->annotationDocument->sourceImagePng, "PNG"), expectedSource); QCOMPARE(result->workingMedia.size(), expectedSource.size()); const auto reopened = loadSource(result->file->path); QVERIFY(reopened.document); QCOMPARE(reopened.document->sourceImagePng, result->annotationDocument->sourceImagePng); QCOMPARE(serializeDocument(*reopened.document).value("annotations"), serializeDocument(*result->annotationDocument).value("annotations"));
       QCOMPARE(result->workingMedia.pixelColor(0, 0), expectedSource.pixelColor(0, 0)); }
     QCOMPARE(nativeEditorPreferenceRevision(), revision); QCOMPARE(input, cropPixels());
   }
@@ -618,13 +639,14 @@ private slots:
     QVERIFY(journal->list().entries[0].parsed.record); QCOMPARE(journal->list().entries[0].parsed.record->report.value("final_working_media"), QJsonValue("annotation"));
     QVERIFY(!result->canonicalResult().value("extensions").toObject().value("com.xerahs.app").toObject().contains("sourceImagePng"));
   }
-  void escapeSkipsAnnotationAndIndependentOutputsUseOriginalPixels() {
+  void escapeCancelsTaskBeforeIndependentOutputs() {
     QTemporaryDir dir; CapturePipeline pipeline(pixels(), dir.path(), "original", {"annotation", "save"}); QSignalSpy done(&pipeline, &CapturePipeline::finished);
     pipeline.start(); QTRY_VERIFY(dialog()); dialog()->findChild<QCheckBox *>("captureSaveAnnotationSidecar")->setChecked(true);
-    QTest::keyClick(dialog(), Qt::Key_Escape); QTRY_COMPARE(done.count(), 1); const auto result = receipt(done);
-    QCOMPARE(result->pipeline.orderedResults[0].state, ActionState::Cancelled); QCOMPARE(result->pipeline.orderedResults[1].state, ActionState::Succeeded);
-    QCOMPARE(result->pipeline.finalWorkingMedia, QString("capture")); QVERIFY(!result->annotationDocument); QCOMPARE(QImage(result->file->path), pixels());
-    QVERIFY(!result->sidecarIntent); QVERIFY(!QFile::exists(result->file->path + ".xann"));
+    QTimer timer; connect(&timer, &QTimer::timeout, [] { if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) box->button(QMessageBox::Discard)->click(); });
+    timer.start(5); QTest::keyClick(dialog(), Qt::Key_Escape); timer.stop(); QTRY_COMPARE(done.count(), 1); const auto result = receipt(done);
+    QCOMPARE(result->pipeline.state, PipelineState::Cancelled); QCOMPARE(result->pipeline.orderedResults[0].state, ActionState::Cancelled);
+    QCOMPARE(result->pipeline.finalWorkingMedia, QString("capture")); QVERIFY(!result->annotationDocument); QVERIFY(result->files.empty());
+    QVERIFY(!result->sidecarIntent); QVERIFY(!QFile::exists(dir.filePath("original.png.xann")));
   }
   void rectangleCreationUsesTheFrozenPreferenceSnapshot() {
     QTemporaryDir dir; CaptureActionPorts ports; ports.annotationStyle.fillColor = 0xff00ff00; ports.annotationStyle.strokeWidth = 1;

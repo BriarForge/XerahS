@@ -252,7 +252,11 @@ ActionOutcome CaptureActions::annotate(const CancellationToken &cancellation) {
   const auto rendered = renderEditorImage(acceptedSource, *parsed.document, control);
   if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
   if (rendered.image.isNull()) return failed(rendered.diagnostic);
-  m_media = rendered.image; m_annotationDocument = *parsed.document; m_sidecarIntent = choice.sidecarIntent; return {};
+  if (!choice.rendered.isNull() && choice.rendered != rendered.image) return failed("editor-task-result-invalid");
+  m_media = choice.rendered.isNull() ? rendered.image : choice.rendered; m_annotationDocument = *parsed.document; m_sidecarIntent = choice.sidecarIntent;
+  ActionOutcome outcome;
+  if (!choice.partialDiagnostic.isEmpty()) outcome.artifacts = {{"editor.task", ActionState::Succeeded, {}}, {"editor.auto-copy", ActionState::Failed, choice.partialDiagnostic}};
+  return outcome;
 }
 ActionOutcome CaptureActions::failedSave(const QString &action, const QString &code) const {
   auto outcome = failed(code);

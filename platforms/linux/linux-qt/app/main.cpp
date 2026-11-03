@@ -208,6 +208,7 @@ int main(int argc, char *argv[]) {
   const auto uploadCatalogPath = QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath("upload-destinations.json");
   auto uploadCredentials = std::make_shared<xerahs::app::SecretServiceCredentialStore>();
   xerahs::app::CaptureActionPorts capturePorts; capturePorts.uploadCatalogPath = uploadCatalogPath;
+  capturePorts.editorPreferences = [] { return xerahs::app::nativeEditorPreferences().values; };
   // The pipeline constructs its own keyring store on its worker thread.
   const auto journal = std::make_shared<xerahs::app::NativePipelineJournal>(xerahs::app::NativePipelineJournal::defaultDirectory());
   CaptureController capture(settings.current().values.value("saveFolder").toString(), nullptr, {}, {}, capturePorts, journal);

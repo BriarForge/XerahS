@@ -32,7 +32,7 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   auto *layout = new QVBoxLayout(this);
   auto *intro = new QLabel("Select a tool to draw rectangles or edit existing objects. Apply sends the edited image to the remaining capture actions. "
       "Cancel skips annotation and keeps the original capture. PNG capture saves contain rendered pixels.", this);
-  intro->setTextFormat(Qt::PlainText); intro->setWordWrap(true); layout->addWidget(intro);
+  intro->setObjectName("captureAnnotationIntro"); intro->setTextFormat(Qt::PlainText); intro->setWordWrap(true); layout->addWidget(intro);
   auto *bar = new QToolBar("Annotation controls", this); layout->addWidget(bar);
   auto *splitter = new QSplitter(this); layout->addWidget(splitter, 1);
   m_canvas = new EditorCanvas(m_session, m_image, splitter, source.displayImage); splitter->addWidget(m_canvas);
@@ -155,7 +155,14 @@ CaptureAnnotationDialog::CaptureAnnotationDialog(const LoadedSource &source, QWi
   resize(780, 600); m_canvas->setFocus();
 }
 CaptureAnnotationDialog::~CaptureAnnotationDialog() {
-  m_closing = true;
+  // A host clipboard callback can destroy this owner after receiving pixels.
+  // Its delivery is then uncertain, but a ready Continue must never turn into
+  // Cancel (which would falsely promise no external effect).
+  if (m_taskState == TaskState::Completing) {
+    m_taskState = TaskState::Completed;
+    try { emit taskFinished("Continue", m_taskPreferences.autoCopy ? QString("editor-task-auto-copy-unknown") : QString{}); } catch (...) {}
+  }
+  m_closing = true; m_taskWork.cancel();
   if (m_historyWork) m_historyWork->cancelled.store(true);
   m_historyPoll.stop();
   if (m_historyDialog) disconnect(m_historyDialog, nullptr, this, nullptr);
@@ -286,14 +293,19 @@ void CaptureAnnotationDialog::pollHistory() {
   m_status->setText(QString("Restored canvas history: %1 × %2 pixels.").arg(m_image.width()).arg(m_image.height()));
 }
 void CaptureAnnotationDialog::accept() {
+  if (m_taskState != TaskState::Inactive) { continueTask(); return; }
   if (!editingReady()) { m_status->setText("Finish or cancel the current gesture before applying annotations."); return; }
   try { m_accepted = m_session.document(); }
   catch (...) { m_status->setText("The annotations could not be prepared. The capture was kept."); return; }
   m_sidecarIntent = m_saveSidecar->isChecked(); done(QDialog::Accepted);
 }
-void CaptureAnnotationDialog::reject() { done(QDialog::Rejected); }
+void CaptureAnnotationDialog::reject() {
+  if (m_taskState != TaskState::Inactive) { cancelTask(); return; }
+  done(QDialog::Rejected);
+}
 void CaptureAnnotationDialog::done(int result) {
   if (m_closing) return;
+  if (m_taskState != TaskState::Inactive && m_taskState != TaskState::Completed) { if (result == Accepted) continueTask(); else cancelTask(); return; }
   if (result == QDialog::Accepted && !m_accepted) { accept(); return; }
   m_closing = true;
   const QPointer<CaptureAnnotationDialog> owner(this); if (m_historyWork) m_historyWork->cancelled.store(true);

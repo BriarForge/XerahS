@@ -68,7 +68,10 @@
     "platforms/linux/linux-qt/app/AnnotationColorDialog.cpp",
     "platforms/linux/linux-qt/app/EditorWindow.h",
     "platforms/linux/linux-qt/app/EditorSave.cpp",
-    "platforms/linux/linux-qt/app/PreferenceDialog.h"
+    "platforms/linux/linux-qt/app/PreferenceDialog.h",
+    "platforms/linux/linux-qt/app/ConveniencePreferencesDialog.cpp",
+    "platforms/linux/linux-qt/app/CaptureEditorTask.cpp",
+    "platforms/linux/linux-qt/app/EditorShutdown.cpp"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
@@ -364,15 +367,21 @@
     },
     "ESET-014": {
       "disposition": "Required",
-      "status": "not-started",
+      "status": "partial",
       "vectors": [],
-      "note": "Persistent automation/convenience preferences with consent and error invariants remain Required.",
+      "note": "Four additive schema-v1 boolean preferences use the private atomic store, per-field repair and compatible unknown-field retention; guarded native Apply/Cancel and stale/failed write tests preserve the document. Auto-copy/auto-close run after task rendering and retain partial failures; ZoomToFitOnOpen changes viewport only; ShowExitConfirmation controls extra clean-close prompting and never dirty Save/Discard/Cancel. Deferred quick-crop: current pointer/numeric crop has required preview/Apply, no separate convenience behavior that can safely skip it. Deferred insert-dialog: current image picker/options are the sole validated insertion/consent path, no independently optional dialog behavior. Deferred notification: editor has status/completion/error reporting, no optional editor desktop-notification feature. Default rationale follows (not a parity claim): AutoCopyImageToClipboard=false: ShareX RegionCaptureOptions defaults EditorAutoCopyImage=false; Flameshot documents explicit Copy and save-after-copy=false; Greenshot documents explicit clipboard export; keep clipboard intent explicit. AutoCloseEditorOnTask=false: ShareX RegionCaptureOptions defaults AutoCloseEditorOnTask=false; Flameshot capture UI completes its chosen action (no equivalent standalone Continue); Greenshot retains editor/export workflow; keep review/recovery visible. ZoomToFitOnOpen=false: ShareX RegionCaptureOptions defaults ZoomToFitOnOpen=false; Flameshot works at captured screen scale (no standalone opening equivalent); Greenshot documents resizing the editor to the screenshot, rather than mandatory fit scaling; preserve 100% inspection and offer Fit. ShowExitConfirmation=false: none of the three cited user guides documents a mandatory extra clean-close confirmation; use quiet clean close while ES-008 dirty Save/Discard/Cancel remains mandatory. ShareX defaults for the first three fields were verified in primary source; Flameshot/Greenshot have different editor/task models, so remaining choices use documented behavior rather than a claim of equivalent toggles. Sources checked 2026-11-03: https://getsharex.com/docs/image-editor ; https://raw.githubusercontent.com/ShareX/ShareX/master/ShareX.ScreenCaptureLib/RegionCaptureOptions.cs ; https://raw.githubusercontent.com/flameshot-org/flameshot/master/flameshot.example.ini ; https://getgreenshot.org/help/ .",
       "audit": {
-        "classification": "not-started",
+        "classification": "partial",
         "spec_line": 53,
-        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Four additive schema-v1 boolean preferences use the private atomic store, per-field repair and compatible unknown-field retention; guarded native Apply/Cancel and stale/failed write tests preserve the document. Auto-copy/auto-close run after task rendering and retain partial failures; ZoomToFitOnOpen changes viewport only; ShowExitConfirmation controls extra clean-close prompting and never dirty Save/Discard/Cancel. Deferred quick-crop: current pointer/numeric crop has required preview/Apply, no separate convenience behavior that can safely skip it. Deferred insert-dialog: current image picker/options are the sole validated insertion/consent path, no independently optional dialog behavior. Deferred notification: editor has status/completion/error reporting, no optional editor desktop-notification feature. Default rationale follows (not a parity claim): AutoCopyImageToClipboard=false: ShareX RegionCaptureOptions defaults EditorAutoCopyImage=false; Flameshot documents explicit Copy and save-after-copy=false; Greenshot documents explicit clipboard export; keep clipboard intent explicit. AutoCloseEditorOnTask=false: ShareX RegionCaptureOptions defaults AutoCloseEditorOnTask=false; Flameshot capture UI completes its chosen action (no equivalent standalone Continue); Greenshot retains editor/export workflow; keep review/recovery visible. ZoomToFitOnOpen=false: ShareX RegionCaptureOptions defaults ZoomToFitOnOpen=false; Flameshot works at captured screen scale (no standalone opening equivalent); Greenshot documents resizing the editor to the screenshot, rather than mandatory fit scaling; preserve 100% inspection and offer Fit. ShowExitConfirmation=false: none of the three cited user guides documents a mandatory extra clean-close confirmation; use quiet clean close while ES-008 dirty Save/Discard/Cancel remains mandatory. ShareX defaults for the first three fields were verified in primary source; Flameshot/Greenshot have different editor/task models, so remaining choices use documented behavior rather than a claim of equivalent toggles. Sources checked 2026-11-03: https://getsharex.com/docs/image-editor ; https://raw.githubusercontent.com/ShareX/ShareX/master/ShareX.ScreenCaptureLib/RegionCaptureOptions.cs ; https://raw.githubusercontent.com/flameshot-org/flameshot/master/flameshot.example.ini ; https://getgreenshot.org/help/ .",
+        "reviewed_at_revision": "43b11bbf5dda234d6d1b65bfd720ed58dedcc898"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/EditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorTaskTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorExitTest.cpp"
+      ]
     },
     "ESET-015": {
       "disposition": "Required",
@@ -444,8 +453,8 @@
   },
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
-    "checked_at": "2026-10-28T16:55:54.347787+00:00",
+    "source_revision": "43b11bbf5dda234d6d1b65bfd720ed58dedcc898",
+    "checked_at": "2026-11-02T22:07:31.097738+00:00",
     "specification": "product-contract/capabilities/EDITOR-SETTINGS-001/SPEC.md",
     "specification_sha256": "b17ead0b988d71b300c9d46415f9b2e0bc7be0bab7c07942e61ef2133ae9dbba",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -531,16 +540,16 @@
     "finding": "Private preference, recent-image, drawing, toolbar, appearance and window-placement stores/dialogs have atomic/unknown/conflict and native tests. Text font controls are per-object content, not persisted font preference coverage.",
     "review_anchor": {
       "production": {
-        "path": "platforms/linux/linux-qt/src/image-editor/EditorPreferenceStore.cpp",
-        "sha256": "fc87eccd37cacafa817253e1879c2463f75724e4866a272d16bd08e5508b4437"
+        "path": "platforms/linux/linux-qt/app/NativeEditorPreferences.cpp",
+        "sha256": "249dbe7b6caf44a9b5fa1a9a411683f13ae20eefb8d64da7089df64638fa5e56"
       },
       "test": {
-        "path": "platforms/linux/linux-qt/tests/PreferenceDialogTest.cpp",
-        "method": "applyPublicationIsSerialAndOwnerSafe",
-        "line": 123,
-        "sha256": "3ad072256ff232414af4a57f889a963799f58f425f90bc70e1fea3ec16193f8a"
+        "path": "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
+        "method": "convenienceApplyPersistsAndRejectsStaleInvalidAndFailedWrites",
+        "line": 53,
+        "sha256": "5e619cf341d45e2382524f7e3c395e490ceda59c535700ee8d6377d3646125b7"
       },
-      "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
+      "interpretation": "EXTRACTED production/native test anchors describe the slice; automated results and remaining qualification are recorded separately. Partial rows do not claim release parity."
     }
   }
 }
