@@ -846,10 +846,9 @@ private slots:
     QTRY_VERIFY(!controller.busy());
     QVERIFY(controller.lastPipelineResult());
     QVERIFY(!notified.isEmpty());
-    // Unconfirmed clipboard ownership (e.g. the offscreen platform) is an honest interrupted
-    // terminal state, never a completion notice; with ownership the source-titled notice remains.
+    // A clipboard problem fails only its own action, so the save still completes the run as partial or succeeded.
     const auto title = notified.last().at(0).toString();
-    if (QGuiApplication::clipboard()->ownsClipboard()) QVERIFY(title.startsWith("Scrolling capture")); else QVERIFY(title.startsWith("Capture actions interrupted"));
+    if (QGuiApplication::clipboard()->ownsClipboard()) QVERIFY(title.startsWith("Scrolling capture")); else QVERIFY(title.startsWith("Capture actions partial"));
     QVERIFY(controller.lastPipelineResult()->file); QCOMPARE(QImage(controller.lastPipelineResult()->file->path).size(), QSize(40, 90));
   }
   void init() {

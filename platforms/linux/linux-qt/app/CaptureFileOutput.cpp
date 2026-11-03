@@ -52,7 +52,8 @@ ActionOutcome publishWorkflowClipboard(std::unique_ptr<QMimeData> prepared, Work
     attempted = true; clipboard->setMimeData(prepared.release());
     if (offered && clipboard->mimeData() == offered.data() && clipboard->ownsClipboard()) return {};
   } catch (...) { if (!attempted) return failed("clipboard-failed"); }
-  auto result = failed("clipboard-delivery-unknown"); result.outcomeUnknown = true; return result;
+  // PCA-024: an unconfirmed publish fails only this action; the remaining actions still run.
+  return failed("clipboard-unavailable");
 }
 ActionOutcome copyCaptureFile(const QString &action, const CaptureFile &file) {
   const auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance());

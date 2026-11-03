@@ -203,7 +203,7 @@ FailureClass classifyFailure(const QString &code, int httpStatus) {
   if (httpStatus >= 400) return FailureClass::PermanentFailure;
   if (code.contains("permission") || code == "credential-denied") return FailureClass::PermissionDenied;
   if (code == "dependency-unavailable" || code == "upload-destination-missing" || code == "ocr-unavailable" ||
-      code == "qr-scanner-unavailable" || code == "tesseract-unavailable" || code == "gstreamer-unavailable" || code == "encoder-unavailable" || code == "action-unavailable" ||
+      code == "qr-scanner-unavailable" || code == "tesseract-unavailable" || code == "gstreamer-unavailable" || code == "encoder-unavailable" || code == "action-unavailable" || code == "clipboard-unavailable" ||
       code == "missing-secret" || code == "credential-unavailable") return FailureClass::UnavailableDependency;
   if (code == "request-invalid" || code == "workflow-invalid" || code == "unsupported-content" || code == "unsupported-action") return FailureClass::ValidationFailure;
   // Invalid destination/HTTP configuration cannot succeed without a user edit.

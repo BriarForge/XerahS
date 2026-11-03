@@ -40,7 +40,7 @@ private slots:
     else QCOMPARE(actual->text(), kind == WorkflowClipboardFormat::Path ? path : kind == WorkflowClipboardFormat::Url ? url : privateText);
     QVERIFY(!result.diagnostic || !result.diagnostic->contains("PRIVATE"));
     if (QApplication::clipboard()->ownsClipboard()) { QCOMPARE(result.state, ActionState::Succeeded); QVERIFY(!result.outcomeUnknown); }
-    else { QVERIFY(result.outcomeUnknown); QCOMPARE(result.diagnostic, std::optional<QString>{"clipboard-delivery-unknown"}); }
+    else { QCOMPARE(result.state, ActionState::Failed); QVERIFY(!result.outcomeUnknown); QCOMPARE(result.diagnostic, std::optional<QString>{"clipboard-unavailable"}); }
   }
   void unsupportedFormatsPreserveTheExistingClipboard_data() {
     QTest::addColumn<int>("format");
@@ -72,8 +72,8 @@ private slots:
     auto offer = std::make_unique<QMimeData>(); offer->setText("PRIVATE offered result");
     const auto result = publishWorkflowClipboard(std::move(offer), WorkflowClipboardFormat::Text);
     disconnect(connection);
-    QVERIFY(replaced); QCOMPARE(result.state, ActionState::Failed); QVERIFY(result.outcomeUnknown);
-    QCOMPARE(result.diagnostic, std::optional<QString>{"clipboard-delivery-unknown"});
+    QVERIFY(replaced); QCOMPARE(result.state, ActionState::Failed); QVERIFY(!result.outcomeUnknown);
+    QCOMPARE(result.diagnostic, std::optional<QString>{"clipboard-unavailable"});
     QCOMPARE(QApplication::clipboard()->text(), QString("FOREIGN PRIVATE content"));
   }
   void explicitPublicClassificationSurvivesPublication() {

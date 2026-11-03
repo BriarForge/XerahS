@@ -263,9 +263,11 @@ private slots:
       QCOMPARE(result->pipeline.orderedResults.size(), size_t(1));
       QCOMPARE(result->pipeline.orderedResults.front().state, ActionState::Succeeded);
     } else {
-      QCOMPARE(result->pipeline.state, PipelineState::Interrupted);
-      QVERIFY(result->pipeline.orderedResults.empty());
-      QCOMPARE(result->diagnostic, QString("clipboard-delivery-unknown"));
+      QCOMPARE(result->pipeline.state, PipelineState::Completed);
+      QCOMPARE(result->pipeline.orderedResults.size(), size_t(1));
+      QCOMPARE(result->pipeline.orderedResults.front().state, ActionState::Failed);
+      QCOMPARE(*result->pipeline.orderedResults.front().diagnostic, QString("clipboard-unavailable"));
+      QCOMPARE(*result->pipeline.orderedResults.front().failureClass, FailureClass::UnavailableDependency);
     }
   }
   void deletionAtInitialAvailabilityCannotLaunchAWorkerOrPublishOutput() {
