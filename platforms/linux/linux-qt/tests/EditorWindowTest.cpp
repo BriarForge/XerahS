@@ -1040,6 +1040,25 @@ private slots:
     window->activateWindow(); canvas->setFocus(); QTRY_VERIFY(window->isActiveWindow()); QTRY_COMPARE(QApplication::focusWidget(), canvas);
     QTest::keyClick(canvas, Qt::Key_C, Qt::ControlModifier); QCOMPARE(publications, 2); QCOMPARE(window->windowTitle(), title); QCOMPARE(saved.count(), 0);
   }
+  // EO-002: format loss is disclosed to the user. Copying a non-sRGB source says in the
+  // visible status that its colours were converted; an sRGB source claims no conversion.
+  void copyStatusDisclosesSourceColourConversion_data() {
+    QTest::addColumn<bool>("linear"); QTest::newRow("linear-profile-source") << true; QTest::newRow("srgb-source") << false;
+  }
+  void copyStatusDisclosesSourceColourConversion() {
+    QFETCH(bool, linear); QTemporaryDir dir; const auto path = dir.filePath("image.png"); auto image = fixture();
+    if (linear) image.setColorSpace(QColorSpace::SRgbLinear);
+    QVERIFY(image.save(path)); QCOMPARE(QImage(path).colorSpace(), image.colorSpace());
+    QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty()); std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
+    EditorCopyPorts ports; EditorCopyPayloadPtr payload;
+    ports.publish = [&](const EditorCopyPayload &value) { payload = std::make_shared<EditorCopyPayload>(value); QApplication::clipboard()->setImage(value.image); return xerahs::actions::ActionOutcome{}; };
+    window->setCopyPorts(ports); QSignalSpy copied(window.get(), &EditorWindow::copyFinished); const auto title = window->windowTitle();
+    window->findChild<QAction *>("copyImage")->trigger(); QCOMPARE(copied.count(), 1); QCOMPARE(copied.first()[0].toString(), QString("succeeded")); QVERIFY(payload);
+    const QString status = window->statusBar()->currentMessage();
+    QVERIFY2(status.contains("Image copied with alpha and PNG; clipboard uses sRGB"), qPrintable(status));
+    QCOMPARE(status.contains("(source colours converted to sRGB)"), linear); QCOMPARE(payload->disclosures.contains("clipboard-colour-converted-to-srgb"), linear);
+    QCOMPARE(window->windowTitle(), title);  // copying does not change dirty state
+  }
   void copyCancellationIsResponsiveAndBlocksOtherOutputAndDocumentActions() {
     QTemporaryDir dir; const auto path = dir.filePath("image.png"); QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(dir.filePath("prefs/editor.json")).isEmpty());
     std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show(); drawRectangle(*window->findChild<EditorCanvas *>()); const auto title = window->windowTitle();
