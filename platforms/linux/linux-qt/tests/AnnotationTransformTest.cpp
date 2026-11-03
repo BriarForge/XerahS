@@ -317,8 +317,9 @@ private slots:
       for (int shift : {0, 8, 16, 24}) pixelWorst = std::max(pixelWorst, std::abs(int((a >> shift) & 255) - int((e >> shift) & 255)));
       worst = std::max(worst, pixelWorst); if (pixelWorst > 6) ++outliers;
     }
-    // The Qt stroker joins reversed polylines with a few asymmetric edge pixels.
-    QVERIFY2(outliers <= (type == shape::freehand ? 8 : 0), qPrintable(QString("worst channel difference %1 at %2 pixels").arg(worst).arg(outliers)));
+    // The Qt stroker joins reversed polylines, and the reference arrow head's
+    // curved back edge (EA-006), with a few asymmetric antialiasing pixels.
+    QVERIFY2(outliers <= (type == shape::freehand || type == shape::arrow ? 8 : 0), qPrintable(QString("worst channel difference %1 at %2 pixels").arg(worst).arg(outliers)));
   }
 
   void defaultFontSizesScaleWithResizeLikeStoredOnes() {
