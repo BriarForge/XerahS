@@ -1,5 +1,6 @@
 // Actual-process tests of the CLI contract in app/CLI-CONTRACT.md (IFCAT-008).
 #include "NativeInstance.h"
+#include "shell/ErrorPresentation.h"
 #include "workflows/CaptureWorkflows.h"
 #include <QCoreApplication>
 #include <QDir>
@@ -13,6 +14,7 @@
 #include <QTest>
 #include <csignal>
 #include <memory>
+#include <QUuid>
 
 using namespace xerahs::app;
 using namespace xerahs::shell;
@@ -112,7 +114,7 @@ private slots:
     QTest::newRow("list-ok-json") << QStringList{"--list-workflows", "--json"} << false << 0 << QString("json") << QString();
     QTest::newRow("list-error") << QStringList{"--list-workflows"} << true << 1 << QString("json") << QString("xerahs: workflow-");
     QTest::newRow("list-error-json") << QStringList{"--list-workflows", "--json"} << true << 1 << QString("json") << QString();
-    QTest::newRow("result-error") << QStringList{"--workflow-result", "private-secret"} << false << 1 << QString("json") << QString("xerahs: Execution could not be read");
+    QTest::newRow("result-error") << QStringList{"--workflow-result", "private-secret"} << false << 1 << QString("json") << QString("xerahs: workflow-execution-id-invalid: ");
     QTest::newRow("result-error-json") << QStringList{"--workflow-result", "private-secret", "--json"} << false << 1 << QString("json") << QString();
     QTest::newRow("refusal") << QStringList{"--capture-region", "--non-interactive"} << false << 1 << QString("empty") << QString("xerahs: presentation-required: ");
     QTest::newRow("refusal-json") << QStringList{"--capture-region", "--non-interactive", "--json"} << false << 1 << QString("json") << QString("xerahs: presentation-required: ");
@@ -210,6 +212,41 @@ private slots:
         QCOMPARE(result.exitCode, 1); QCOMPARE(json(result.out).value("error").toObject().value("code"), QJsonValue("usage-invalid"));
       }
     }
+  }
+
+  // IFCAT-016: the stderr line and exit status of a real failing process come
+  // from the shared presentation table, keyed by the code in the JSON result.
+  void stderrAndExitStatusComeFromThePresentationTable_data() {
+    QTest::addColumn<QStringList>("arguments"); QTest::addColumn<QString>("profile"); QTest::addColumn<QString>("owner"); QTest::addColumn<QString>("code");
+    QTest::newRow("presentation-required") << QStringList{"--capture-region", "--non-interactive", "--json"} << QString() << QString() << QString("presentation-required");
+    QTest::newRow("usage-invalid") << QStringList{"--private-secret", "--non-interactive", "--json"} << QString() << QString() << QString("usage-invalid");
+    QTest::newRow("workflow-id-invalid") << QStringList{"--run-workflow", "not-a-uuid", "--json"} << QString() << QString() << QString("workflow-id-invalid");
+    QTest::newRow("workflow-invalid") << QStringList{"--list-workflows"} << QString("corrupt") << QString() << QString("workflow-invalid");
+    QTest::newRow("execution-id-invalid") << QStringList{"--workflow-result", "not-a-uuid"} << QString() << QString() << QString("workflow-execution-id-invalid");
+    QTest::newRow("busy") << QStringList{"--capture-region", "--json"} << QString() << QString("busy") << QString("activation-busy");
+    QTest::newRow("rejected") << QStringList{"--capture-region", "--json"} << QString() << QString("reject") << QString("activation-unavailable");
+    QTest::newRow("handler-failed") << QStringList{"--capture-region", "--json"} << QString() << QString("throw") << QString("activation-handler-failed");
+    QTest::newRow("delivery-unknown") << QStringList{"--capture-region", "--json"} << QString() << QString("ack-drop") << QString("activation-delivery-unknown");
+    QTest::newRow("instance-unavailable") << QStringList{"--capture-region", "--json"} << QString() << QString("no-listen") << QString("instance-unavailable");
+  }
+  void stderrAndExitStatusComeFromThePresentationTable() {
+    QFETCH(QStringList, arguments); QFETCH(QString, profile); QFETCH(QString, owner); QFETCH(QString, code);
+    if (profile == u"corrupt") QVERIFY(writeCorruptWorkflowProfile());
+    std::unique_ptr<QProcess> fixture;
+    if (!owner.isEmpty()) {
+      fixture = std::make_unique<QProcess>();
+      fixture->start(QCoreApplication::applicationDirPath() + "/native-instance-fixture", {temporary->filePath("com.xerahs.app"), owner, QString::fromUtf8(serializeActivation(makeActivationRequest(ActivationAction::Activate)))});
+      QTRY_VERIFY(fixture->canReadLine()); QCOMPARE(json(fixture->readLine()).value("event"), QJsonValue("primary"));
+    }
+    const auto result = run(arguments, environment(owner.isEmpty()));
+    QCOMPARE(result.status, QProcess::NormalExit);
+    QCOMPARE(json(result.out).value("error").toObject().value("code").toString(), code);
+    QCOMPARE(result.exitCode, xerahs::shell::errorExitCode(code));
+    const QString expected = QString("xerahs: %1: %2\n").arg(code, xerahs::shell::errorMessage(code));
+    if (arguments.contains("--json") && (arguments.contains("--list-workflows") || arguments.contains("--workflow-result"))) QVERIFY(result.err.isEmpty());  // lookup commands stay quiet under --json
+    else QCOMPARE(QString::fromUtf8(result.err), expected);
+    if (code == u"activation-busy") QCOMPARE(result.exitCode, 2);
+    if (json(result.out).contains("requestId")) QVERIFY(QUuid(json(result.out).value("requestId").toString()).toString(QUuid::WithoutBraces) == json(result.out).value("requestId").toString());
   }
 };
 QTEST_GUILESS_MAIN(CliContractTest)

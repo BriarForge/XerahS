@@ -28,6 +28,8 @@ add_library(xerahs_core STATIC
   src/shell/ActivationDispatcher.h
   src/shell/ActivationProtocol.cpp
   src/shell/ActivationProtocol.h
+  src/shell/ErrorPresentation.cpp
+  src/shell/ErrorPresentation.h
   src/shell/TerminationSignals.cpp
   src/shell/TerminationSignals.h
   src/actions/PostCapturePipeline.cpp
@@ -483,6 +485,11 @@ target_include_directories(termination-signals-test PRIVATE src)
 target_link_libraries(termination-signals-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME termination-signals COMMAND termination-signals-test)
 set_tests_properties(termination-signals PROPERTIES TIMEOUT 30)
+add_executable(error-presentation-test tests/ErrorPresentationTest.cpp)
+set_target_properties(error-presentation-test PROPERTIES AUTOMOC ON)
+target_link_libraries(error-presentation-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME error-presentation COMMAND error-presentation-test)
+set_tests_properties(error-presentation PROPERTIES TIMEOUT 30)
 add_executable(cli-contract-test tests/CliContractTest.cpp)
 set_target_properties(cli-contract-test PROPERTIES AUTOMOC ON)
 target_link_libraries(cli-contract-test PRIVATE xerahs_native_instance xerahs_core Qt6::Test)

@@ -27,6 +27,7 @@
 #include "features/WorkflowFeature.h"
 #include "RecordingController.h"
 #include "image-editor/EditorPreferences.h"
+#include "shell/ErrorPresentation.h"
 #include "shell/TerminationSignals.h"
 
 #include <QApplication>
@@ -54,12 +55,16 @@ void writeCommandJson(const QJsonObject &result) {
   const auto bytes = QJsonDocument(result).toJson(QJsonDocument::Compact);
   std::fwrite(bytes.constData(), 1, size_t(bytes.size()), stdout); std::fputc('\n', stdout); std::fflush(stdout);
 }
+// Every failure prints one "xerahs: <code>: <message>" line (suppressed by --json
+// for lookup commands) using the shared presentation table (IFCAT-016).
+int reportFailure(const QString &code, bool quiet) {
+  if (!quiet) std::fprintf(stderr, "xerahs: %s: %s\n", qPrintable(code), qPrintable(xerahs::shell::errorMessage(code)));
+  return xerahs::shell::errorExitCode(code);
+}
 int reportDiscovery(const QJsonObject &result, bool quiet) {
   writeCommandJson(result);
   if (result.value("ok").toBool()) return 0;
-  if (!quiet) std::fprintf(stderr, "xerahs: %s: Saved workflows could not be listed. Check the command, or open Capture workflows to review and reload the saved configuration.\n",
-      qPrintable(result.value("error").toObject().value("code").toString()));
-  return 1;
+  return reportFailure(result.value("error").toObject().value("code").toString(), quiet);
 }
 
 void reportLaunch(const xerahs::shell::ActivationRequest &request, bool json, const QString &delivery = {}, const QString &diagnostic = {}) {
@@ -140,7 +145,7 @@ int main(int argc, char *argv[]) {
   const bool discoveryCommand = std::any_of(rawArguments.cbegin(), rawArguments.cend(), [](const QString &argument) { return argument == "--list-workflows" || argument.startsWith("--list-workflows="); });
   const bool resultCommand = std::any_of(rawArguments.cbegin(), rawArguments.cend(), [](const QString &argument) { return argument == "--workflow-result" || argument.startsWith("--workflow-result="); });
   const auto reportUsage = [&](const QString &diagnostic) {
-    if (resultCommand) { writeCommandJson(xerahs::workflows::workflowExecutionError(diagnostic)); return 1; }
+    if (resultCommand) { const auto error = xerahs::workflows::workflowExecutionError(diagnostic); writeCommandJson(error); return reportFailure(error.value("error").toObject().value("code").toString(), rawArguments.contains("--json")); }
     if (discoveryCommand) return reportDiscovery(xerahs::workflows::workflowDiscoveryError(diagnostic), rawArguments.contains("--json"));
     reportLaunch(makeActivationRequest(ActivationAction::Activate), rawArguments.contains("--json"), {}, diagnostic); return 1;
   };
@@ -158,8 +163,7 @@ int main(int argc, char *argv[]) {
       QCoreApplication cli(argc, argv); cli.setApplicationName("XerahS");
       const auto result = xerahs::app::NativeWorkflowExecutions(xerahs::app::NativeWorkflowExecutions::defaultDirectory()).result(parser.value(workflowResult));
       writeCommandJson(result);
-      if (!result.value("ok").toBool() && !parser.isSet(jsonOption)) std::fprintf(stderr, "xerahs: Execution could not be read. Use the full launch request UUID and check private workflow storage.\n");
-      return result.value("ok").toBool() ? 0 : 1;
+      return result.value("ok").toBool() ? 0 : reportFailure(result.value("error").toObject().value("code").toString(), parser.isSet(jsonOption));
     }
     if (parser.isSet(listWorkflows)) {
       QCoreApplication cli(argc, argv); cli.setApplicationName("XerahS");
@@ -185,7 +189,7 @@ int main(int argc, char *argv[]) {
   if (started.kind == xerahs::app::InstanceStart::Kind::Forwarded) { reportLaunch(request, json, "running-instance"); return 0; }
   if (started.kind != xerahs::app::InstanceStart::Kind::Primary) {
     reportLaunch(request, json, {}, started.diagnostic);
-    return started.kind == xerahs::app::InstanceStart::Kind::Busy ? 2 : 1;
+    return xerahs::shell::errorExitCode(started.kind == xerahs::app::InstanceStart::Kind::Busy ? QStringLiteral("activation-busy") : started.diagnostic);
   }
 
   // IFCAT-008: SIGINT/SIGTERM cancel cleanly. The event loop quits (closing
@@ -287,7 +291,7 @@ int main(int argc, char *argv[]) {
   if (admitted != ActivationReplyState::Accepted) {
     reportLaunch(request, json, {}, admitted == ActivationReplyState::Busy ? "activation-busy" : "activation-unavailable");
     instance.setAdmission({});
-    return admitted == ActivationReplyState::Busy ? 2 : 1;
+    return xerahs::shell::errorExitCode(admitted == ActivationReplyState::Busy ? QStringLiteral("activation-busy") : QStringLiteral("activation-unavailable"));
   }
   reportLaunch(request, json, "started");
   dispatch(request);

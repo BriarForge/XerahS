@@ -34,11 +34,11 @@ Rationale: the reference XerahS/ShareX command lines are argument-only.
 |---|---|---|---|
 | `--help` | help text | empty | 0 |
 | `--list-workflows`, success | one JSON line | empty | 0 |
-| `--list-workflows`, failure | one JSON error line | one `xerahs: <code>: <message>` line, unless `--json` | 1 |
+| `--list-workflows`, failure | one JSON error line | one `xerahs: <code>: <message>` line, unless `--json` | per code (1) |
 | `--workflow-result`, success | one JSON line | empty | 0 |
-| `--workflow-result`, failure | one JSON error line | one `xerahs: Execution could not be read…` line, unless `--json` | 1 |
+| `--workflow-result`, failure | one JSON error line | one `xerahs: <code>: <message>` line, unless `--json` | per code (1) |
 | launch (capture, edit, recording, run-workflow), accepted | empty, or one JSON line with `--json` | empty | 0 |
-| launch, refused or failed | empty, or one JSON error line with `--json` | one `xerahs: <code>: <message>` line (always, including with `--json`) | 1, or 2 for busy |
+| launch, refused or failed | empty, or one JSON error line with `--json` | one `xerahs: <code>: <message>` line (always, including with `--json`) | per code: 1, or 2 for busy |
 | usage errors | as launch, refused | as launch, refused | 1 |
 
 stdout carries only the requested result (help text or JSON documents, one per
@@ -88,3 +88,23 @@ invocation path the user typed. There is no verbose or diagnostic flag:
 `usage-invalid` without echoing the value, and ambient diagnostic settings
 (`QT_LOGGING_RULES`, any `XERAHS_*` variable) change nothing in the output.
 Verified for every mode in `CliContractTest::redactionHoldsInEveryCliModeEvenWithDiagnosticSettings`.
+
+## Error presentation and retry (IFCAT-016)
+
+`src/shell/ErrorPresentation` is the single table of stable interface error
+codes (activation replies, launch results, `--list-workflows`, `--workflow-result`).
+Each row fixes the user text, the exit status and the retry rule, and the JSON
+producers accept exactly the table's codes (anything else collapses to a fixed
+code), so a surface cannot print a raw payload. Every launch result keeps the
+request UUID as its correlation ID; no result carries arguments, paths, payloads
+or stack traces.
+
+| Retry rule | Meaning | Codes |
+|---|---|---|
+| Safe | Nothing started, or only a read failed: repeating the identical request is harmless; text may say "Try again" | `activation-busy` (exit 2), `instance-unavailable`, `workflow-changed` |
+| AfterChange | The identical request fails the same way until input, configuration or environment changes; text never says "Try again" | usage, id, storage, permission, version and refusal codes (including `presentation-required`) |
+| CheckFirst | The outcome is unknown; inspect the running instance first and never retry automatically | `activation-delivery-unknown`, `activation-handler-failed`, unknown codes |
+
+Verified by `ErrorPresentationTest` and `CliContractTest::stderrAndExitStatusComeFromThePresentationTable`.
+Other domain code families (pipeline outcomes, portal, upload, recording, editor)
+keep their own presentation and are not covered by this table.

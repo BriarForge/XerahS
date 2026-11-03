@@ -1,4 +1,5 @@
 #include "WorkflowExecution.h"
+#include "shell/ErrorPresentation.h"
 #include <QJsonDocument>
 #include <algorithm>
 namespace xerahs::workflows {
@@ -59,7 +60,7 @@ std::optional<WorkflowExecutionRecord> parseWorkflowExecution(const QByteArray &
   return r;
 }
 QJsonObject workflowExecutionError(const QString &code) {
-  const auto safe = QStringList{"usage-invalid", "workflow-execution-id-invalid", "workflow-execution-not-found", "workflow-execution-invalid", "workflow-storage-unavailable"}.contains(code) ? code : QStringLiteral("workflow-storage-unavailable");
+  const auto safe = xerahs::shell::isStableErrorCode(code, xerahs::shell::ExecutionSurface) ? code : QStringLiteral("workflow-storage-unavailable");
   return {{"schemaVersion", 1}, {"ok", false}, {"error", QJsonObject{{"code", safe}}}};
 }
 QJsonObject workflowExecutionResult(const WorkflowExecutionRecord &r) {

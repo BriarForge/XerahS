@@ -1,4 +1,5 @@
 #include "ActivationProtocol.h"
+#include "ErrorPresentation.h"
 #include <QDir>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -44,11 +45,7 @@ QString actionName(ActivationAction action) {
   }
   return {};
 }
-bool knownDiagnostic(const QString &value) {
-  static const QSet<QString> values{"activation-invalid", "activation-version-unsupported", "activation-busy",
-                                   "activation-unavailable", "activation-handler-failed", "activation-peer-denied"};
-  return values.contains(value);
-}
+bool knownDiagnostic(const QString &value) { return isStableErrorCode(value, WireReplySurface); }
 }
 bool startsCapture(ActivationAction action) {
   return action == ActivationAction::CaptureRegion || action == ActivationAction::CaptureRegionChooseActions ||
@@ -131,11 +128,8 @@ bool authorizedActivationPeer(quint64 expectedUser, std::optional<quint64> peerU
   return peerUser && *peerUser == expectedUser;
 }
 QJsonObject activationLaunchResult(const ActivationRequest &request, const QString &delivery, const QString &diagnostic) {
-  static const QSet<QString> errors{"usage-invalid", "workflow-id-invalid", "workflow-unavailable", "presentation-required",
-      "instance-unavailable", "instance-storage-denied", "instance-endpoint-conflict", "instance-already-started",
-      "instance-lock-failed", "instance-listen-failed", "activation-delivery-unknown"};
   QString code = diagnostic;
-  if (!code.isEmpty() && !knownDiagnostic(code) && !errors.contains(code)) code = "activation-handler-failed";
+  if (!code.isEmpty() && !isStableErrorCode(code, LaunchSurface)) code = "activation-handler-failed";
   if (code.isEmpty() && delivery != "started" && delivery != "running-instance") code = "activation-handler-failed";
   QJsonObject result{{"schemaVersion", 1}, {"ok", code.isEmpty()}};
   if (validId(request.id)) result.insert("requestId", request.id);

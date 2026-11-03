@@ -13,7 +13,8 @@
     "platforms/linux/linux-qt/app/NativeInstance.cpp",
     "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
     "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
-    "platforms/linux/linux-qt/src/shell/TerminationSignals.cpp"
+    "platforms/linux/linux-qt/src/shell/TerminationSignals.cpp",
+    "platforms/linux/linux-qt/src/shell/ErrorPresentation.cpp"
   ],
   "requirements": {
     "IFCAT-001": {
@@ -312,7 +313,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native/domain stable codes and request/execution IDs have tests. Full user-facing mapping/redaction/safe-retry convergence across all new surfaces remains.",
+      "note": "Native/domain stable codes and request/execution IDs have tests. The CLI/activation/workflow-lookup family (30 stable codes) now has one presentation table (src/shell/ErrorPresentation) giving every code fixed text, exit status and a Safe/AfterChange/CheckFirst retry rule, shared by the JSON producers, CLI stderr, exit codes and the window's activation messages; launch results keep the request UUID as correlation ID and nothing else. Remaining: the other domain code families shown by GUI surfaces (capture pipeline outcomes, portal/permission, upload, recording, editor save/open) are not in the table and have no all-codes mapping test; no MCP/provider surfaces exist. Audit 2026-11-03: CLI/activation family proven by ErrorPresentationTest::everyStableCodeHasFixedTextExitStatusAndRetryRule, unknownCodesGetTheGenericPresentationWithoutEcho and producersAcceptExactlyTheTableCodesAndLaunchResultsKeepTheCorrelationId, and CliContractTest::stderrAndExitStatusComeFromThePresentationTable (10 real failure paths incl. busy exit 2, delivery-unknown, handler-failed). Other families unproven, so the row stays partial. Rationale: retry only for nothing-started failures follows the reference busy/'try again' wording.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
@@ -320,13 +321,17 @@
         "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
+        "platforms/linux/linux-qt/src/shell/ErrorPresentation.cpp",
+        "platforms/linux/linux-qt/tests/ErrorPresentationTest.cpp",
+        "platforms/linux/linux-qt/tests/CliContractTest.cpp",
+        "platforms/linux/linux-qt/app/CLI-CONTRACT.md"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 63,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Partial production behavior is present; CLI/activation/workflow-lookup error codes are proven end to end. Other GUI domain error families (pipeline, portal, upload, recording, editor), MCP and provider surfaces remain unproven.",
+        "reviewed_at_revision": "e48015a1390a16d530f011e160b28c2d913ae728"
       }
     },
     "IFCAT-017": {

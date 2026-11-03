@@ -1,4 +1,5 @@
 #include "CaptureWorkflows.h"
+#include "shell/ErrorPresentation.h"
 #include "actions/PostCapturePipeline.h"
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -59,10 +60,7 @@ QString captureSourceLabel(const QString &source) {
 }
 QStringList implementedCaptureActions() { return {"quick-task-menu", "annotation", "save", "save-as", "image-clipboard", "file-clipboard", "path-clipboard", "reveal", "before-upload-window", "upload", "url-clipboard", "ocr", "ocr-clipboard", "qr-scan", "pin", "print", "delete"}; }
 QJsonObject workflowDiscoveryError(const QString &diagnostic) {
-  static const QSet<QString> errors{"usage-invalid", "workflow-invalid", "workflow-too-large", "workflow-newer-version",
-      "workflow-upgrade-conflict", "workflow-changed", "settings-unsafe-path", "settings-private-storage-required",
-      "settings-too-large", "settings-read-failed", "workflow-storage-unavailable"};
-  return {{"schemaVersion", 1}, {"ok", false}, {"error", QJsonObject{{"code", errors.contains(diagnostic) ? diagnostic : QStringLiteral("workflow-storage-unavailable")}}}};
+  return {{"schemaVersion", 1}, {"ok", false}, {"error", QJsonObject{{"code", xerahs::shell::isStableErrorCode(diagnostic, xerahs::shell::DiscoverySurface) ? diagnostic : QStringLiteral("workflow-storage-unavailable")}}}};
 }
 CaptureWorkflows defaultCaptureWorkflows() {
   CaptureWorkflow initial; initial.id = QUuid("8df729a2-7d23-49c0-8566-4e4f6d282729");
