@@ -21,6 +21,10 @@
 #include <QTableWidget>
 #include <QTemporaryDir>
 #include <QSet>
+#include <QUuid>
+#include <clocale>
+#include <limits>
+#include <string>
 #include <QtTest>
 using namespace xerahs::settings;
 class ApplicationSettingsTest : public QObject {
@@ -379,6 +383,53 @@ private slots:
     QCOMPARE(disk.current().fields.value("showNotification"), FieldState::Invalid);
     QCOMPARE(disk.current().fields.value("future.option"), FieldState::Unknown);
     QVERIFY(!disk.current().diagnostics.join('\n').contains("EEEE"));
+  }
+  // SETCAT-004: locale-independent UTF-8 JSON, and the documented retention rule.
+  void saveEncodingIsLocaleIndependentUtf8() {
+    QTemporaryDir dir; const auto path = dir.filePath("settings.json");
+    const QLocale oldLocale; const std::string oldC = std::setlocale(LC_ALL, nullptr);
+    QLocale::setDefault(QLocale(QLocale::Arabic, QLocale::Egypt));
+    // Best effort: a comma-decimal C locale if the host has one installed; the Qt default above always differs from C.
+    for (const char *name : {"de_DE.UTF-8", "de_DE.utf8", "fr_FR.UTF-8"}) if (std::setlocale(LC_ALL, name)) break;
+    {
+      ApplicationSettingsStore store(path, dir.path()); auto values = store.current().values;
+      const QString folder = dir.filePath(QString::fromUtf8("Übersicht/日本語"));
+      values.insert("saveFolder", folder); values.insert("autoCapture.intervalMs", 5000); values.insert("scrollingCapture.maxHeight", 100000);
+      values.insert("future.ratio", 1.5); values.insert("future.negative", -0.25); values.insert("future.text", QString::fromUtf8("ß—é"));
+      QVERIFY2(store.save(values).isEmpty(), "save under non-C locale");
+      QFile file(path); QVERIFY(file.open(QIODevice::ReadOnly)); const auto bytes = file.readAll(); file.close();
+      QVERIFY(!bytes.startsWith("\xEF\xBB\xBF")); QVERIFY(!bytes.contains('\r'));
+      QVERIFY(bytes.contains("1.5")); QVERIFY(!bytes.contains("1,5")); QVERIFY(bytes.contains("-0.25"));
+      QVERIFY(bytes.contains("5000")); QVERIFY(!bytes.contains("5,000")); QVERIFY(bytes.contains("100000"));
+      for (const char16_t digit : {u'\u0665', u'\u0660', u'\u0661'}) QVERIFY(!QString::fromUtf8(bytes).contains(QChar(digit)));
+      const auto text = QString::fromUtf8(bytes); QVERIFY(!text.contains(QChar(0xFFFD))); QCOMPARE(text.toUtf8(), bytes); // valid UTF-8 only
+      QJsonParseError error; const auto parsed = QJsonDocument::fromJson(bytes, &error); QCOMPARE(error.error, QJsonParseError::NoError);
+      QCOMPARE(parsed.object().value("values").toObject().value("saveFolder").toString(), folder);
+      ApplicationSettingsStore reopened(path, dir.path()); QCOMPARE(reopened.current().values, values);
+    }
+    std::setlocale(LC_ALL, oldC.c_str()); QLocale::setDefault(oldLocale);
+  }
+  void retentionKeepsExactlyOnePreviousVersionInTheSameAtomicFile() {
+    QCOMPARE(retainedPreviousVersions, 1);
+    QTemporaryDir dir; const auto path = dir.filePath("settings.json");
+    ApplicationSettingsStore store(path, dir.path()); QVERIFY(store.previousValues().isEmpty());
+    QList<QJsonObject> generations;
+    for (int i = 0; i < 4; ++i) {
+      auto values = store.current().values; values.insert("delayedCapture.seconds", 10 + i); values.insert("future.generation", i);
+      QVERIFY(store.save(values).isEmpty()); generations.append(store.current().values);
+      if (i == 0) QVERIFY(store.previousValues().isEmpty()); // nothing existed before the first save
+      else QCOMPARE(store.previousValues(), generations[i - 1]);
+    }
+    QFile file(path); QVERIFY(file.open(QIODevice::ReadOnly)); const auto envelope = QJsonDocument::fromJson(file.readAll()).object(); file.close();
+    QCOMPARE(envelope.value("previous").toObject(), generations[2]); QCOMPARE(envelope.value("values").toObject(), generations[3]);
+    QVERIFY(!envelope.value("previous").toObject().contains("previous")); // never a chain of history
+    // No dated copies, backup folders or temporary files accumulate beside the settings file.
+    QStringList files = QDir(dir.path()).entryList(QDir::AllEntries | QDir::NoDotAndDotDot); files.removeAll("settings.json.lock");
+    QCOMPARE(files, QStringList{"settings.json"});
+    // The retained version is reloadable after a restart and can be restored by saving it back.
+    ApplicationSettingsStore reopened(path, dir.path()); QCOMPARE(reopened.previousValues(), generations[2]);
+    QVERIFY(reopened.save(reopened.previousValues()).isEmpty()); QCOMPARE(reopened.current().values.value("delayedCapture.seconds").toInt(), 12);
+    QCOMPARE(reopened.previousValues(), generations[3]);
   }
   void autostart() {
     QTemporaryDir dir; const auto old = qgetenv("XDG_CONFIG_HOME"); qputenv("XDG_CONFIG_HOME", dir.path().toUtf8());
