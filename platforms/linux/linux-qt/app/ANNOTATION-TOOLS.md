@@ -139,3 +139,20 @@ parity remains pending clarification EA-005-LINUX-2026-10-14.
 - Fields: `borderStyle` and the `shadow*` set exactly as for Rectangle and Ellipse; Arrow adds `style` (classic, modern, double, basic, line; omitted when classic). Omitted at default; older documents load at the defaults.
 - Curve: optional third entry of `points` (fraction of the bounds) that the quadratic curve passes through at its middle. The reference `curvePoint`/`curvePointActivated` (document pixels) are read and converted. Modern arrows are straight.
 - Edit in Edit > Properties (border, arrow style, curve, shadow); one undo step. Shape Style Defaults also sets the arrow style for new arrows.
+
+## Active tool, options and keep-active (EA-002)
+
+Choosing any of the 20 tools checks its action and unchecks the others.
+`EditorCanvas::toolInstructions()` (canvas and instruction-label accessible
+description, label tooltip) states, per tool: the pointer gesture, an
+`Options:` sentence from `EditorCanvas::toolOptions` listing the options that
+apply to that tool (the same sentence is appended to the action's status tip and
+tooltip), keyboard guidance (Escape cancels a live gesture, arrow/R/Delete/
+ordering keys) and, for every creation tool, "stays active". Tools stay active
+after a completed object: the reference XerahS option
+`SwitchToSelectionToolAfterDrawing` defaults to false, and no Linux preference
+turns it on, so a return-to-Select behaviour is not offered and not claimed.
+`AnnotationToolMatrixTest::everyToolShowsStateOptionsInstructionsAndKeepsItselfActive`
+checks all of this for every contracted tool and draws two objects in a row to
+prove the tool is still checked and active (Crop and CutOut request two
+operations; Select creates nothing).

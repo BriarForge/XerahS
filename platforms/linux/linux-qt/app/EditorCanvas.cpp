@@ -173,6 +173,32 @@ QString EditorCanvas::shapeType(Tool tool) {
   return {};
 }
 
+QString EditorCanvas::toolOptions(Tool tool) {
+  switch (tool) {
+    case Tool::Select: return "Options: none for the tool itself; colour, thickness, rotation, ordering and Properties act on the selected objects.";
+    case Tool::Rectangle: return "Options: stroke and fill colour, thickness, opacity, border style, corner radius and drop shadow.";
+    case Tool::Ellipse: return "Options: stroke and fill colour, thickness, opacity, border style and drop shadow.";
+    case Tool::Line: return "Options: stroke colour, thickness, opacity, border style, optional curve and drop shadow.";
+    case Tool::Arrow: return "Options: stroke colour, thickness, opacity, border style, arrow style, optional curve and drop shadow.";
+    case Tool::Freehand: return "Options: stroke colour, thickness and opacity; the stroke is simplified once when you release.";
+    case Tool::Text: return "Options: font family and size, bold, italic, alignment, text colour and fill colour, set in the text dialog.";
+    case Tool::SpeechBalloon: return "Options: font family and size, bold, italic, alignment, text colour, fill colour, border colour and tail, set in the text dialog.";
+    case Tool::Step: return "Options: step number and font size; the next number follows the highest existing step.";
+    case Tool::Highlight: return "Options: tint (fill) colour and a rectangular or elliptical region.";
+    case Tool::Blur: return "Options: blur radius and a rectangular or elliptical region.";
+    case Tool::Pixelate: return "Options: pixel cell size and a rectangular or elliptical region.";
+    case Tool::Magnify: return "Options: zoom factor and a rectangular or elliptical region.";
+    case Tool::Spotlight: return "Options: dim percentage, a rectangular or elliptical region and blur of the dimmed area.";
+    case Tool::SmartEraser: return "Options: none; the area is filled with the mean colour of the pixels just outside it (not content-aware removal).";
+    case Tool::Image: return "Options: the image file or clipboard image, chosen after you place it; its aspect ratio and transparency are kept.";
+    case Tool::Emoji: return "Options: the emoji, chosen after you place it.";
+    case Tool::Cursor: return "Options: none; places a mouse pointer image.";
+    case Tool::Crop: return "Options: none; the dragged region is kept, and Crop Image offers numeric bounds.";
+    case Tool::CutOut: return "Options: none; a wider than tall drag removes columns, otherwise rows.";
+  }
+  return {};
+}
+
 QString EditorCanvas::toolInstructions() const {
   QString text;
   switch (m_tool) {
@@ -201,7 +227,7 @@ QString EditorCanvas::toolInstructions() const {
     case Tool::Crop:
       text = "Crop stays active: drag to choose the retained image region."; break;
   }
-  return text + " Create Rectangle offers keyboard entry of bounds with captured creation defaults. Drag a selected rectangle's square handles to resize; the opposite handle stays fixed. Rectangle Properties offers numeric bounds and style controls. "
+  return text + " " + toolOptions(m_tool) + " Create Rectangle offers keyboard entry of bounds with captured creation defaults. Drag a selected rectangle's square handles to resize; the opposite handle stays fixed. Rectangle Properties offers numeric bounds and style controls. "
       "Double-click or F2 edits the selected text, step number, blur radius or pixel size. Escape cancels a gesture. Arrows move one image pixel; Shift+arrows move ten. Alt+arrows move the bottom-right corner one pixel; Alt+Shift+arrows move it ten. R rotates clockwise 90 degrees; Shift+R rotates counterclockwise. Held transform keys repeat. Delete removes selected objects. Home/End bring to front/send to back; Page Up/Down bring forward/send backward. Control+wheel zooms; Space+drag pans.";
 }
 

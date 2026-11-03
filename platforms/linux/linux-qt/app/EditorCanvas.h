@@ -31,6 +31,8 @@ public:
   enum class Tool { Select, Rectangle, Crop, Ellipse, Line, Arrow, Freehand, Text, Step, Highlight, Blur, Pixelate,
                     SpeechBalloon, Magnify, Spotlight, SmartEraser, Image, Emoji, Cursor, CutOut };
   static QString shapeType(Tool tool);
+  // EA-002: the options that apply to `tool`, as one sentence starting "Options:".
+  static QString toolOptions(Tool tool);
   Tool tool() const { return m_tool; }
   void setTool(Tool);
   QString toolInstructions() const;

@@ -77,6 +77,7 @@ QMap<QString, QAction *> annotationToolActions(EditorCanvas &canvas, QObject *ow
           : tool == Tool::Crop ? "Drag the region to keep. The crop tool stays active after completion."
           : tool == Tool::CutOut ? "Drag across a strip to remove it and close the gap. The tool stays active after completion."
           : "Draw " + EditorCanvas::shapeType(tool) + " objects on blank canvas. The tool stays active after each completed object.");
+      action->setStatusTip(action->statusTip() + " " + EditorCanvas::toolOptions(tool));
       action->setToolTip(action->statusTip());
     };
     QObject::connect(&canvas, &EditorCanvas::toolChanged, action, update); update();
