@@ -12,6 +12,32 @@ This repository is **not a fork** of [ShareX/XerahS](https://github.com/ShareX/X
 
 Application identity: `com.xerahs.app` / "XerahS". The native application replaces Avalonia XerahS after full-parity acceptance, with explicit settings migration and recovery safeguards.
 
+## Progress
+
+Recorded implementation coverage as of 2026-11-04, from the
+[platform progress reports](platforms/PROGRESS.md):
+
+| OS | Implementation coverage | Current status |
+|---|---:|---|
+| [Linux](platforms/linux/PROGRESS.md) | **53.4%** — 173 / 324 desktop requirements | Native Qt application in development; 125 requirements partial and 26 not started. |
+| [Windows](platforms/windows/PROGRESS.md) | **0.0%** — 0 / 324 desktop requirements | Native application not started; requirement implementation unassessed. |
+| [macOS](platforms/macos/PROGRESS.md) | **0.0%** — 0 / 324 desktop requirements | Native application not started; requirement implementation unassessed. |
+| [Android](platforms/android/README.md) | Not yet assessed | Native application not started; mobile scope tracked separately. |
+| [iOS / iPadOS](platforms/ios/README.md) | Not yet assessed | Native application not started; mobile scope tracked separately; distribution licensing review required. |
+
+Coverage counts only requirements explicitly marked implemented. Partial and
+unassessed requirements receive no credit. These unweighted percentages measure
+recorded contract coverage, **not production readiness or remaining effort**.
+Release still requires supported-target qualification, conformance, parity, and
+human security, privacy and accessibility reviews. Mobile requirements are
+outside the desktop denominator; see [MOBILE-PLATFORM-001](product-contract/capabilities/MOBILE-PLATFORM-001/SPEC.md).
+
+The Product Contract is version 0.3.1 with lifecycle `draft`. Its
+[backlog status](product-contract/backlog/STATUS.md) tracks contract work;
+platform reports track native implementation. See
+[native implementation readiness](product-contract/READINESS.md) for sequencing
+and acceptance gates. Update this snapshot when regenerating platform progress.
+
 ## Architecture
 
 Start at [BXIP001](docs/proposals/BXIP001-contract-first-agent-native-platform-architecture/README.md). ShareX Team tracks the same proposal as XIP0086.
@@ -39,18 +65,6 @@ docs/proposals/     BXIP001 and later proposals
 ## License
 
 GNU GPL v3. See [LICENSE](LICENSE). Copyright ShareX Team.
-
-## Status
-
-Contract drafting phase. The Product Contract (`product-contract/manifest.yaml`,
-version 0.3.1, lifecycle `draft`) lists 16 capabilities with human approval
-records, and every parity-ledger row from the pinned `kova-0.29.0` baseline
-links to a stable requirement ID. See
-[product-contract/backlog/STATUS.md](product-contract/backlog/STATUS.md) for the
-generated completion view. The contract is ready for native coding to start on
-Windows, macOS, Linux, Android, and iOS; see
-[product-contract/READINESS.md](product-contract/READINESS.md). Native
-implementations and conformance runners have not landed yet.
 
 ## Verification
 
