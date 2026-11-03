@@ -515,7 +515,7 @@ private slots:
     QCOMPARE(expected.size(), std::size_t(17));  // the contract's 17 drawable types
     for (const auto &a : expected) d.annotations.push_back(a);
     const auto future = QUuid::createUuid();
-    d.annotations.insert(d.annotations.begin() + 5, UnsupportedAnnotation{future, {{"id", future.toString(QUuid::WithoutBraces)}, {"type", "future-widget"}, {"payload", QJsonObject{{"script", "alert(1)"}, {"n", 3}}}, {"zIndex", 5}}});
+    d.annotations.insert(d.annotations.begin() + 5, UnsupportedAnnotation{future, {{"id", future.toString(QUuid::WithoutBraces)}, {"type", "future-widget"}, {"payload", QJsonObject{{"label", "future"}, {"n", 3}}}, {"zIndex", 5}}});
     const auto expectField = [](const RectangleAnnotation &back, const RectangleAnnotation &want) {
       const QByteArray tagBytes = want.type().toUtf8(); const char *tag = tagBytes.constData();
       QVERIFY2(back.id == want.id, tag); QVERIFY2(back.type() == want.type(), tag);
