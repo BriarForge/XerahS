@@ -25,6 +25,7 @@
 #include <clocale>
 #include <limits>
 #include <string>
+#include <QRegularExpression>
 #include <QtTest>
 using namespace xerahs::settings;
 class ApplicationSettingsTest : public QObject {
@@ -713,6 +714,47 @@ private slots:
     key(Qt::Key_Escape); QVERIFY(dialog.isVisible()); QCOMPARE(trigger->text(), QString("Print")); QVERIFY(trigger->hasFocus());
     key(Qt::Key_Escape); QVERIFY(!dialog.isVisible()); QCOMPARE(dialog.result(), int(QDialog::Rejected));
     QVERIFY(!QFile::exists(dir.filePath("settings.json"))); QCOMPARE(store.current().values.value("hotkeys"), defaultSettings(dir.path()).value("hotkeys"));
+  }
+  // SETCAT-012: a saved or imported settings object is only ever data; it cannot pre-grant consent, confirmation or credential authority.
+  void savedOrImportedSettingsCannotGrantConsentConfirmationOrCredentialAuthority() {
+    QTemporaryDir dir; const auto path = dir.filePath("settings.json");
+    // The declared catalogue offers no field that could carry authority.
+    const QRegularExpression authority("consent|permission|credential|secret|token|password|apikey|api-key|authori[sz]|cookie|bypass|skipconfirm|autoconfirm|trust|grant", QRegularExpression::CaseInsensitiveOption);
+    for (const auto &field : settingFields()) QVERIFY2(!authority.match(field.key).hasMatch(), qPrintable(field.key));
+    const QStringList forged{"portalConsent", "captureConsentGranted", "screencast.restoreToken", "remoteDesktop.consent", "permissions", "skipConfirmation", "confirmDestructive", "autoConfirm",
+      "uploadAuthorized", "allowUploadWithoutConsent", "credentials", "oauthToken", "apiKey", "password", "cookies", "trustedExecutables", "consent"};
+    auto poisoned = defaultSettings(dir.path());
+    for (const auto &key : forged) poisoned.insert(key, key == "credentials" ? QJsonValue(QJsonObject{{"token", "secret-forged-ZZZZ"}}) : key == "permissions" ? QJsonValue(QJsonArray{"screen", "audio", "upload"}) : QJsonValue(true));
+    auto bindings = poisoned.value("hotkeys").toObject(); bindings.insert("consent-granted", "F5"); bindings.insert("grant-portal", "F6"); poisoned.insert("hotkeys", bindings);
+    QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(QJsonDocument(QJsonObject{{"version", 1}, {"values", poisoned}}).toJson()); file.close();
+    ApplicationSettingsStore imported(path, dir.path()); const auto clean = repairSettings(defaultSettings(dir.path()), dir.path());
+    QVERIFY(imported.current().writable); QVERIFY(imported.current().diagnostics.isEmpty());
+    for (const auto &key : forged) { QCOMPARE(imported.current().fields.value(key), FieldState::Unknown); QCOMPARE(imported.current().values.value(key), poisoned.value(key)); } // kept, inert
+    QCOMPARE(imported.current().fields.value("hotkeys.consent-granted"), FieldState::Unknown);
+    // Every consumer sees exactly what it sees with clean settings.
+    const auto a = regionSessionSettings(imported.current().values), b = regionSessionSettings(clean.values);
+    QCOMPARE(a.quickConfirm, b.quickConfirm); QCOMPARE(a.snapping, b.snapping);
+    QCOMPARE(hotkeys(imported.current().values).entries, hotkeys(clean.values).entries); // forged action IDs never become bindings
+    QVERIFY(!hotkeys(imported.current().values).entries.contains("consent-granted"));
+    QVERIFY(HotkeyBindings::defaults().assign("consent-granted", "F5").diagnostic == "hotkey-action-invalid");
+    const auto catalog = xerahs::workflows::defaultCaptureWorkflows();
+    for (const bool saved : {false, true}) for (const auto &workflow : catalog.entries) {
+      const auto x = withApplicationDefaults(workflow, imported.current().values, saved), y = withApplicationDefaults(workflow, clean.values, saved);
+      QCOMPARE(x.actions, y.actions); QCOMPARE(x.capture, y.capture); QCOMPARE(x.chooseActions, y.chooseActions);
+      QCOMPARE(x.output.directory, y.output.directory); QCOMPARE(x.output.pattern, y.output.pattern); QCOMPARE(x.actions, workflow.actions); QCOMPARE(x.chooseActions, workflow.chooseActions);
+    }
+    // A reset or an ordinary save keeps the forged keys inert; nothing turns into a declared field, and diagnostics never echo values.
+    auto reset = resetAll(imported.current().values, dir.path()); for (const auto &key : forged) QCOMPARE(reset.value(key), poisoned.value(key));
+    for (const auto &field : settingFields()) QCOMPARE(repairSettings(reset, dir.path()).fields.value(field.key), FieldState::Valid);
+    auto bad = poisoned; bad.insert("showNotification", "secret-forged-ZZZZ"); const auto read = repairSettings(bad, dir.path());
+    QVERIFY(!read.diagnostics.join('\n').contains("ZZZZ")); QVERIFY(!read.diagnostics.join('\n').contains("credentials"));
+    // The settings window shows no control that could grant or remove consent, confirmation or credentials.
+    xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; });
+    const auto plan = xerahs::workflows::captureShortcutPlan(xerahs::workflows::defaultCaptureWorkflows(), xerahs::workflows::implementedCaptureActions(), HotkeyBindings::defaults());
+    xerahs::app::SettingsDialog dialog(imported, dir.path(), plan, shortcuts, [] {});
+    for (auto *widget : dialog.findChildren<QWidget *>()) QVERIFY2(!authority.match(widget->accessibleName()).hasMatch(), qPrintable(widget->accessibleName()));
+    dialog.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply)->click();
+    for (const auto &key : forged) QCOMPARE(imported.current().values.value(key), poisoned.value(key)); // Apply neither grants nor strips them
   }
   void autostart() {
     QTemporaryDir dir; const auto old = qgetenv("XDG_CONFIG_HOME"); qputenv("XDG_CONFIG_HOME", dir.path().toUtf8());
