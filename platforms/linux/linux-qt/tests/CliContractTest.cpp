@@ -204,7 +204,7 @@ private slots:
       if (arguments.contains("--json") && !arguments.contains("--help")) {  // Each JSON line is one versioned object with only stable fields.
         for (const auto &line : result.out.trimmed().split('\n')) {
           const auto object = json(line); QCOMPARE(object.value("schemaVersion"), QJsonValue(1));
-          const QStringList allowed{"schemaVersion", "ok", "requestId", "workflowId", "delivery", "state", "error", "scope", "source", "runtimeStatus", "defaultWorkflowId", "workflows", "origin", "startedAt", "terminal", "lastRecordedState", "steps", "finishedAt", "pipelineTaskId", "diagnostic"};
+          const QStringList allowed{"schemaVersion", "ok", "requestId", "workflowId", "delivery", "state", "error", "scope", "source", "runtimeStatus", "defaultWorkflowId", "workflows", "origin", "startedAt", "terminal", "lastRecordedState", "steps", "finishedAt", "pipelineTaskId", "diagnostic", "definitionVersion", "migration"};
           for (const auto &key : object.keys()) QVERIFY2(allowed.contains(key), qPrintable(key));
         }
       }
