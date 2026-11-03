@@ -14,17 +14,12 @@
 #include "ApplicationWindow.h"
 #include "AppContext.h"
 #include "CommandRegistry.h"
+#include "features/CommandWindowAttach.h"
 #include "features/ApplicationFeature.h"
 #include "features/CaptureFeature.h"
-#include "features/CommandWindowAttach.h"
-#include "features/FilesFeature.h"
-#include "features/OnboardingFeature.h"
 #include "features/PreferencesFeature.h"
-#include "features/RecordingFeature.h"
-#include "features/ScheduleFeature.h"
-#include "features/ToolsFeature.h"
-#include "features/UploadFeature.h"
-#include "features/WorkflowFeature.h"
+#include "features/ShellFeatures.h"
+#include "shell/ActivationDispatcher.h"
 #include "RecordingController.h"
 #include "image-editor/EditorPreferences.h"
 #include "shell/ErrorPresentation.h"
@@ -251,17 +246,7 @@ int main(int argc, char *argv[]) {
     }
     ctx.tray.showMessage(title, body, ok ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning, 5000);
   };
-  auto dispatcher = xerahs::app::createShellDispatcher(ctx);
-  xerahs::app::installCapture(ctx);
-  xerahs::app::installSchedule(ctx);
-  xerahs::app::installRecording(ctx);
-  xerahs::app::installWorkflows(ctx);
-  xerahs::app::installTools(ctx);
-  xerahs::app::installFiles(ctx);
-  xerahs::app::installUpload(ctx);
-  xerahs::app::installPreferences(ctx);
-  xerahs::app::installOnboarding(ctx, request.action == ActivationAction::Activate);
-  xerahs::app::installApplication(ctx);
+  auto dispatcher = xerahs::app::installShellFeatures(ctx, request.action == ActivationAction::Activate);
   xerahs::app::ApplicationWindow window(commands);
   home = &window;
   commands.populate(&menu, xerahs::app::CommandSurface::Tray);

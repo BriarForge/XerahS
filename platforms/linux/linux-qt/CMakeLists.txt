@@ -223,7 +223,8 @@ target_compile_options(xerahs_workflow_shortcuts PRIVATE -Wall -Wextra -Wpedanti
 
 # The XerahS application (D-LIN-001: Qt Widgets). Product logic stays in
 # xerahs_core; app/ only wires it to Qt and the desktop.
-add_executable(xerahs
+# The application's shell wiring lives in an object library so tests can build the real command registry.
+add_library(xerahs_app OBJECT
   app/CaptureWorkflows.cpp
   app/CaptureWorkflows.h
   app/ApplicationWindow.cpp
@@ -255,6 +256,8 @@ add_executable(xerahs
   app/features/ScheduleFeature.h
   app/features/ToolsFeature.cpp
   app/features/ToolsFeature.h
+  app/features/ShellFeatures.cpp
+  app/features/ShellFeatures.h
   app/features/UploadFeature.cpp
   app/features/UploadFeature.h
   app/WorkflowExecutionHistoryDialog.cpp
@@ -323,11 +326,14 @@ add_executable(xerahs
   app/SettingsDialog.cpp
   app/SettingsDialog.h
   app/XdgAutostart.cpp
-  app/main.cpp
 )
+set_target_properties(xerahs_app PROPERTIES AUTOMOC ON)
+target_include_directories(xerahs_app PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/app)
+target_link_libraries(xerahs_app PUBLIC xerahs_window_discovery xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_native_instance xerahs_workflow_shortcuts xerahs_workflow_discovery xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus)
+target_compile_options(xerahs_app PRIVATE -Wall -Wextra -Wpedantic)
+add_executable(xerahs app/main.cpp)
 set_target_properties(xerahs PROPERTIES AUTOMOC ON)
-target_include_directories(xerahs PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-target_link_libraries(xerahs PRIVATE xerahs_window_discovery xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_native_instance xerahs_workflow_shortcuts xerahs_workflow_discovery xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus)
+target_link_libraries(xerahs PRIVATE xerahs_app)
 target_compile_options(xerahs PRIVATE -Wall -Wextra -Wpedantic)
 
 find_program(XERAHS_DBUS_RUN_SESSION dbus-run-session REQUIRED)
@@ -937,7 +943,7 @@ if(XERAHS_RECORDING AND GSTREAMER_FOUND)
   target_compile_definitions(xerahs_recording PUBLIC XERAHS_GSTREAMER=1)
 endif()
 target_compile_options(xerahs_recording PRIVATE -Wall -Wextra -Wpedantic)
-target_link_libraries(xerahs PRIVATE xerahs_recording)
+target_link_libraries(xerahs_app PUBLIC xerahs_recording)
 add_executable(recording-test tests/RecordingTest.cpp)
 set_target_properties(recording-test PROPERTIES AUTOMOC ON)
 target_link_libraries(recording-test PRIVATE xerahs_recording_core xerahs_core Qt6::Test)
@@ -967,6 +973,11 @@ set_target_properties(xerahs_upload_destinations PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_upload_destinations PUBLIC app)
 target_link_libraries(xerahs_upload_destinations PUBLIC xerahs_core Qt6::Widgets)
 target_compile_options(xerahs_upload_destinations PRIVATE -Wall -Wextra -Wpedantic)
+add_executable(shell-commands-test tests/ShellCommandsTest.cpp)
+set_target_properties(shell-commands-test PROPERTIES AUTOMOC ON)
+target_link_libraries(shell-commands-test PRIVATE xerahs_app Qt6::Test)
+add_test(NAME shell-commands COMMAND shell-commands-test)
+set_tests_properties(shell-commands PROPERTIES TIMEOUT 60)
 add_executable(modal-dialogs-test tests/ModalDialogsTest.cpp app/NewImageDialog.cpp app/NewImageDialog.h)
 set_target_properties(modal-dialogs-test PROPERTIES AUTOMOC ON)
 target_compile_definitions(modal-dialogs-test PRIVATE XERAHS_APP_DIR="${CMAKE_CURRENT_SOURCE_DIR}/app")
@@ -999,7 +1010,7 @@ foreach(surface Request Response Executor)
 endforeach()
 
 # CORE-020, CORE-021: native capture upload integration.
-target_link_libraries(xerahs PRIVATE xerahs_upload_executor xerahs_secret_service xerahs_upload_destinations)
+target_link_libraries(xerahs_app PUBLIC xerahs_upload_executor xerahs_secret_service xerahs_upload_destinations)
 foreach(upload_capture_target pipeline-journal-fixture pipeline-journal-test capture-pipeline-test
     action-selection-test capture-file-output-test capture-save-as-test capture-annotation-test
     capture-history-test capture-paired-save-test portal-screenshot-test native-capture-workflows-test workflow-shortcuts-test)
@@ -1032,7 +1043,7 @@ set_target_properties(xerahs_color_picker PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_color_picker PUBLIC app)
 target_link_libraries(xerahs_color_picker PUBLIC xerahs_core Qt6::Widgets Qt6::DBus)
 target_compile_options(xerahs_color_picker PRIVATE -Wall -Wextra -Wpedantic)
-target_link_libraries(xerahs PRIVATE xerahs_color_picker)
+target_link_libraries(xerahs_app PUBLIC xerahs_color_picker)
 
 add_executable(portal-color-picker-test tests/PortalColorPickerTest.cpp)
 set_target_properties(portal-color-picker-test PROPERTIES AUTOMOC ON)
@@ -1067,7 +1078,7 @@ set_target_properties(xerahs_file_upload PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_file_upload PUBLIC app)
 target_link_libraries(xerahs_file_upload PUBLIC xerahs_upload_executor xerahs_secret_service Qt6::Widgets)
 target_compile_options(xerahs_file_upload PRIVATE -Wall -Wextra -Wpedantic)
-target_link_libraries(xerahs PRIVATE xerahs_file_upload)
+target_link_libraries(xerahs_app PUBLIC xerahs_file_upload)
 
 add_executable(file-upload-test tests/FileUploadTest.cpp app/ApplicationWindow.cpp app/ApplicationWindow.h
   app/CommandRegistry.cpp app/CommandRegistry.h)
@@ -1084,7 +1095,7 @@ set_target_properties(xerahs_hash_checker PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_hash_checker PUBLIC app)
 target_link_libraries(xerahs_hash_checker PUBLIC xerahs_core Qt6::Widgets)
 target_compile_options(xerahs_hash_checker PRIVATE -Wall -Wextra -Wpedantic)
-target_link_libraries(xerahs PRIVATE xerahs_hash_checker)
+target_link_libraries(xerahs_app PUBLIC xerahs_hash_checker)
 
 add_executable(file-hash-test tests/FileHashTest.cpp)
 set_target_properties(file-hash-test PROPERTIES AUTOMOC ON)
@@ -1104,7 +1115,7 @@ set_target_properties(xerahs_watch_folders PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_watch_folders PUBLIC app)
 target_link_libraries(xerahs_watch_folders PUBLIC xerahs_core xerahs_file_upload Qt6::Widgets)
 target_compile_options(xerahs_watch_folders PRIVATE -Wall -Wextra -Wpedantic)
-target_link_libraries(xerahs PRIVATE xerahs_watch_folders)
+target_link_libraries(xerahs_app PUBLIC xerahs_watch_folders)
 
 add_executable(watch-folders-test tests/WatchFoldersTest.cpp)
 set_target_properties(watch-folders-test PROPERTIES AUTOMOC ON)
@@ -1132,7 +1143,7 @@ set_target_properties(xerahs_video_converter_ui PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_video_converter_ui PUBLIC app)
 target_link_libraries(xerahs_video_converter_ui PUBLIC xerahs_core Qt6::Widgets)
 target_compile_options(xerahs_video_converter_ui PRIVATE -Wall -Wextra -Wpedantic)
-target_link_libraries(xerahs PRIVATE xerahs_video_converter_ui)
+target_link_libraries(xerahs_app PUBLIC xerahs_video_converter_ui)
 if(XERAHS_RECORDING AND GSTREAMER_FOUND)
   pkg_check_modules(GSTREAMER_PBUTILS QUIET IMPORTED_TARGET gstreamer-pbutils-1.0)
 endif()
@@ -1143,7 +1154,7 @@ if(XERAHS_RECORDING AND GSTREAMER_FOUND AND GSTREAMER_PBUTILS_FOUND)
   target_link_libraries(xerahs_video_converter PUBLIC xerahs_core xerahs_video_converter_ui PkgConfig::GSTREAMER PkgConfig::GSTREAMER_PBUTILS)
   target_compile_definitions(xerahs_video_converter PUBLIC XERAHS_VIDEO_CONVERTER=1)
   target_compile_options(xerahs_video_converter PRIVATE -Wall -Wextra -Wpedantic)
-  target_link_libraries(xerahs PRIVATE xerahs_video_converter)
+  target_link_libraries(xerahs_app PUBLIC xerahs_video_converter)
   target_link_libraries(application-window-test PRIVATE xerahs_video_converter)
 endif()
 
@@ -1182,7 +1193,7 @@ set_target_properties(xerahs_icon_converter PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_icon_converter PUBLIC app)
 target_link_libraries(xerahs_icon_converter PUBLIC xerahs_core Qt6::Widgets)
 target_compile_options(xerahs_icon_converter PRIVATE -Wall -Wextra -Wpedantic)
-target_link_libraries(xerahs PRIVATE xerahs_icon_converter)
+target_link_libraries(xerahs_app PUBLIC xerahs_icon_converter)
 target_link_libraries(application-window-test PRIVATE xerahs_color_picker xerahs_hash_checker xerahs_icon_converter xerahs_video_converter_ui)
 
 add_executable(icon-writer-test tests/IconWriterTest.cpp)
@@ -1224,7 +1235,7 @@ set_target_properties(xerahs_qr_code PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_qr_code PUBLIC app)
 target_link_libraries(xerahs_qr_code PUBLIC xerahs_core Qt6::Widgets)
 target_compile_options(xerahs_qr_code PRIVATE -Wall -Wextra -Wpedantic)
-target_link_libraries(xerahs PRIVATE xerahs_qr_code)
+target_link_libraries(xerahs_app PUBLIC xerahs_qr_code)
 
 add_executable(qr-encoder-test tests/QrEncoderTest.cpp)
 set_target_properties(qr-encoder-test PROPERTIES AUTOMOC ON)
@@ -1264,7 +1275,7 @@ add_library(xerahs_effects STATIC
 target_include_directories(xerahs_effects PUBLIC src)
 target_link_libraries(xerahs_effects PUBLIC Qt6::Core Qt6::Gui)
 target_compile_options(xerahs_effects PRIVATE -Wall -Wextra -Wpedantic -ffp-contract=off)
-target_link_libraries(xerahs PRIVATE xerahs_effects)
+target_link_libraries(xerahs_app PUBLIC xerahs_effects)
 
 foreach(effect_test IN ITEMS EffectFramework CensusCatalog AdjustmentEffects AdjustmentEffects2 DrawingEffects FilterEffects1 ManipulationEffects ManipulationEffects2 FilterEffects3 FilterEffects2 FilterEffects4 FilterEffects5 FilterEffects6 FilterEffects7)
   add_executable(${effect_test}-test tests/${effect_test}Test.cpp)
@@ -1393,7 +1404,7 @@ if(TARGET PkgConfig::XERAHS_TESSERACT)
 else()
   message(STATUS "OCR unavailable: optional Tesseract >=5.5.3 is not installed")
 endif()
-target_link_libraries(xerahs PRIVATE xerahs_image_recognition xerahs_portal_screenshot)
+target_link_libraries(xerahs_app PUBLIC xerahs_image_recognition xerahs_portal_screenshot)
 target_link_libraries(application-window-test PRIVATE xerahs_image_recognition)
 foreach(recognition_test qr-recognition ocr-recognition image-recognition-dialog)
   if(recognition_test STREQUAL "qr-recognition")
@@ -1464,7 +1475,7 @@ endforeach()
 # EO-011/012/013 and ESET-014 share the native task lifetime and preference UI.
 target_sources(xerahs_editor_source PRIVATE app/EditorShutdown.cpp app/EditorShutdown.h)
 target_sources(xerahs_action_selection PRIVATE app/CaptureEditorTask.cpp)
-foreach(target xerahs editor-window-test native-editor-preferences-test)
+foreach(target xerahs_app editor-window-test native-editor-preferences-test)
   target_sources(${target} PRIVATE app/ConveniencePreferencesDialog.cpp app/ConveniencePreferencesDialog.h)
 endforeach()
 # Derived editor tests reuse EditorWindow and therefore its preference command.

@@ -14,7 +14,8 @@
     "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
     "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
     "platforms/linux/linux-qt/src/shell/TerminationSignals.cpp",
-    "platforms/linux/linux-qt/src/shell/ErrorPresentation.cpp"
+    "platforms/linux/linux-qt/src/shell/ErrorPresentation.cpp",
+    "platforms/linux/linux-qt/app/features/ShellFeatures.cpp"
   ],
   "requirements": {
     "IFCAT-001": {
@@ -340,7 +341,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Current registry shares availability. Optional video tooling is omitted when unavailable; approved explanations and complete native capability dispositions remain.",
+      "note": "Current registry shares availability. Optional video tooling is omitted or visibly disabled with its reason when unavailable. The shell's feature installers now run through one function (installShellFeatures, shared by main and tests), so the real registry is checked: every one of the registered commands has a handler or is a disabled command that states why it is unavailable, window buttons and tray entries are the shared wired actions, and no enabled button in the tool dialogs opened through their commands is inert. Remaining: approved capability/platform dispositions (CORE-PLATFORM-001 ledger dispositions are incomplete) decide which unavailable integrations need an equivalent versus explanation versus absence, so 'follows disposition' is unproven; dialogs outside the tool set were not opened through the registry. Audit 2026-11-03: ShellCommandsTest::everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation (fails for an enabled handler-less command), windowButtonsAndTrayEntriesAreTheSharedWiredActions, noEnabledButtonInAnOpenedToolDialogIsInert; ToolsFeatureUnavailableTest covers the missing-GStreamer branch. Row stays partial pending approved dispositions (product decision).",
       "evidence": [
         "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
@@ -348,13 +349,16 @@
         "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/app/features/ShellFeatures.cpp",
+        "platforms/linux/linux-qt/tests/ToolsFeatureUnavailableTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 66,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Partial production behavior is present; no inert command or tool-dialog button exists in the real registry, and unavailable tooling is explained or absent. Approved per-capability dispositions and the remaining dialogs are unproven.",
+        "reviewed_at_revision": "e48015a1390a16d530f011e160b28c2d913ae728"
       }
     },
     "IFCAT-018": {
