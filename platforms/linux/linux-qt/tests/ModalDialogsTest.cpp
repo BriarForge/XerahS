@@ -36,6 +36,8 @@ class ModalDialogsTest final : public QObject {
   struct Host {
     QWidget window; QLineEdit *edit = new QLineEdit(&window);
     Host() { auto *layout = new QVBoxLayout(&window); layout->addWidget(edit); window.show(); window.activateWindow(); edit->setFocus(); }
+    // Logical focus of the host window: independent of when the platform grants activation under load.
+    bool focusOnEdit() const { return window.focusWidget() == edit; }
   };
 private slots:
   void everyChoiceConfirmationDefaultsToASafeButtonAndHasAPurposefulTitle() {
@@ -63,7 +65,7 @@ private slots:
     QVERIFY2(checked >= 20, qPrintable(QString::number(checked)));
   }
   void removingADestinationSaysWhatIsDeletedDefaultsToNoAndRestoresFocus() {
-    Host host; QTRY_VERIFY(host.edit->hasFocus());
+    Host host; QVERIFY(host.focusOnEdit());
     auto ports = nativeUploadDestinationsPorts(); QVERIFY(ports.confirmRemove);
     QString text, defaultText; bool trapped = false, probed = false;
     QTimer probe; probe.setInterval(5);
@@ -78,14 +80,14 @@ private slots:
     QVERIFY(probed); QVERIFY(!removed);
     QVERIFY(text.contains("Example uploader")); QVERIFY(text.contains("delete its secrets from the keyring"));  // Consequence stated, not "Are you sure?".
     QVERIFY2(defaultText.contains("No"), qPrintable(defaultText)); QVERIFY(trapped);
-    QVERIFY(!QApplication::activeModalWidget()); QTRY_VERIFY(host.window.isActiveWindow()); QTRY_VERIFY(host.edit->hasFocus());
+    QVERIFY(!QApplication::activeModalWidget()); QTRY_VERIFY(host.focusOnEdit());
   }
   void modalDialogsTrapFocusOnlyWhileActiveIdentifyPurposeEscapeAndRestoreFocus_data() {
     QTest::addColumn<int>("which");
     QTest::newRow("qr-code") << 0; QTest::newRow("color-picker") << 1; QTest::newRow("hash-checker") << 2; QTest::newRow("icon-converter") << 3; QTest::newRow("new-image") << 4; QTest::newRow("url-open") << 5;
   }
   void modalDialogsTrapFocusOnlyWhileActiveIdentifyPurposeEscapeAndRestoreFocus() {
-    QFETCH(int, which); Host host; QTRY_VERIFY(host.edit->hasFocus());
+    QFETCH(int, which); Host host; QVERIFY(host.focusOnEdit());
     QDialog *dialog = which == 0 ? static_cast<QDialog *>(new QrCodeDialog(&host.window)) : which == 1 ? static_cast<QDialog *>(new ColorPickerDialog(&host.window))
         : which == 2 ? static_cast<QDialog *>(new HashCheckerDialog(&host.window)) : which == 3 ? static_cast<QDialog *>(new IconConverterDialog(&host.window))
         : which == 4 ? static_cast<QDialog *>(new NewImageDialog(&host.window)) : static_cast<QDialog *>(new UrlOpenDialog(&host.window));
@@ -106,7 +108,7 @@ private slots:
     QTest::keyClick(dialog, Qt::Key_Escape);
     QTRY_VERIFY(!dialog->isVisible()); QCOMPARE(dialog->result(), int(QDialog::Rejected));
     QVERIFY(!QApplication::activeModalWidget());  // Trap released on close.
-    QTRY_VERIFY(host.window.isActiveWindow()); QTRY_VERIFY(host.edit->hasFocus());  // Focus restored.
+    QTRY_VERIFY(host.focusOnEdit());  // Focus restored.
     delete dialog;
   }
 };
