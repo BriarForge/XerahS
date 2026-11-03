@@ -431,6 +431,93 @@ private slots:
     QVERIFY(reopened.save(reopened.previousValues()).isEmpty()); QCOMPARE(reopened.current().values.value("delayedCapture.seconds").toInt(), 12);
     QCOMPARE(reopened.previousValues(), generations[3]);
   }
+  // SETCAT-005: boundary and malformed-value matrix for every declared field.
+  void valueMatrixCoversEveryDeclaredFieldFamily() {
+    QTemporaryDir dir; const auto path = dir.filePath("settings.json");
+    const QJsonValue nan(std::numeric_limits<double>::quiet_NaN()), inf(std::numeric_limits<double>::infinity());
+    const QJsonValue longText(QString(4097, QChar('a'))), embeddedNul(QString("a") + QChar(0) + "b");
+    const QVector<QJsonValue> wrongTypes{QJsonValue("true"), QJsonValue(0), QJsonValue(1), QJsonValue(QJsonValue::Null), QJsonValue(QJsonArray{}), QJsonValue(QJsonObject{}), QJsonValue(1.5)};
+    QMap<QString, QPair<QVector<QJsonValue>, QVector<QJsonValue>>> matrix; // key -> good, bad
+    for (const char *key : {"startAtLogin", "showTrayIcon", "playCaptureSound", "showNotification", "regionCapture.quickConfirm", "regionCapture.snapping", "scrollingCapture.positionPointer"})
+      matrix[key] = {{true, false}, wrongTypes + QVector<QJsonValue>{"", nan, inf, "yes"}};
+    const QMap<QString, QPair<int, int>> ranges{{"delayedCapture.seconds", {1, 60}}, {"autoCapture.intervalMs", {1000, 86400000}}, {"autoCapture.count", {1, 10000}},
+      {"autoCapture.durationMinutes", {1, 1440}}, {"scrollingCapture.settleMs", {0, 5000}}, {"scrollingCapture.wheelSteps", {1, 50}}, {"scrollingCapture.headerBand", {0, 2000}},
+      {"scrollingCapture.footerBand", {0, 2000}}, {"scrollingCapture.maxHeight", {1000, 100000}}, {"scrollingCapture.maxFrames", {2, 500}}};
+    for (auto it = ranges.cbegin(); it != ranges.cend(); ++it) {
+      const auto [low, high] = it.value();
+      matrix[it.key()] = {{low, high, (low + high) / 2}, {low - 1, high + 1, low + 0.5, QString::number(low), true, QJsonValue(QJsonValue::Null), QJsonArray{}, QJsonObject{}, nan, inf, -std::numeric_limits<double>::infinity(), 1e300, -1e300, std::numeric_limits<int>::min()}};
+    }
+    const QVector<QJsonValue> badEnum{"", " ", "Full-Screen", "FULL-SCREEN", "fullscreen", "full_screen", "monitor ", "scrolling", 1, true, QJsonValue(QJsonValue::Null), QJsonArray{}, QJsonObject{}, embeddedNul, longText};
+    matrix["delayedCapture.source"] = {{"full-screen", "monitor", "active-window", "region"}, badEnum};
+    matrix["autoCapture.source"] = {{"full-screen", "monitor", "active-window"}, badEnum + QVector<QJsonValue>{"region"}};
+    matrix["autoCapture.boundKind"] = {{"count", "time"}, badEnum};
+    matrix["saveFolder"] = {{dir.path(), "/tmp/captures", QString::fromUtf8("/tmp/Übersicht/日本語"), "/tmp/with space"},
+      {"", "relative/dir", "../bad", "/a/../b", "/a/./b", "~/captures", "C:\\Users\\me\\Pictures", "\\\\server\\share", "/tmp/new\nline", "/tmp/tab\there", embeddedNul, QString("/") + QString(32768, QChar('d')), 5, true, QJsonValue(QJsonValue::Null), QJsonArray{}, QJsonObject{}}};
+    matrix["filenamePattern"] = {{"x", "profile-%width", "Shot %y-%mo-%d", xerahs::workflows::CaptureOutput{}.pattern},
+      {"", "%rf{private}", QString(4097, QChar('p')), embeddedNul, 7, false, QJsonValue(QJsonValue::Null), QJsonArray{}, QJsonObject{}}};
+    for (const char *key : {"systemAudioDevice", "microphoneDevice"})
+      matrix[key] = {{"", "device.name:alsa_output.pci.monitor", QString::fromUtf8("node.name:Mikrofon Übersicht"), QString(4096, QChar('d'))},
+        {longText, embeddedNul, 5, true, QJsonValue(QJsonValue::Null), QJsonArray{}, QJsonObject{}}};
+    // hotkeys has its own matrix below; here only the container shape.
+    QJsonObject tooMany; for (int i = 0; i < maximumHotkeyBindings + 1; ++i) tooMany.insert(QUuid::createUuid().toString(QUuid::WithoutBraces), "");
+    matrix["hotkeys"] = {{QJsonObject{}, defaultSettings(dir.path()).value("hotkeys")}, {"Print", 5, true, QJsonValue(QJsonValue::Null), QJsonArray{"Print"}, tooMany}};
+    for (const auto &field : settingFields()) QVERIFY2(matrix.contains(field.key), qPrintable("no matrix row for " + field.key));
+    QCOMPARE(matrix.size(), settingFields().size());
+    const auto baseline = defaultSettings(dir.path());
+    for (auto it = matrix.cbegin(); it != matrix.cend(); ++it) {
+      const auto key = it.key();
+      for (const auto &good : it.value().first) {
+        auto input = baseline; input.insert(key, good); const auto read = repairSettings(input, dir.path());
+        QVERIFY2(read.diagnostics.isEmpty(), qPrintable(key + " rejected a boundary value: " + read.diagnostics.join(';')));
+        QCOMPARE(read.fields.value(key), FieldState::Valid); if (key != "hotkeys") QCOMPARE(read.values.value(key), good);
+        ApplicationSettingsStore store(path, dir.path()); QVERIFY2(store.save(input).isEmpty(), qPrintable(key));
+        QFile::remove(path);
+      }
+      for (const auto &bad : it.value().second) {
+        auto input = baseline; input.insert(key, bad); input.insert("future.keep", 1);
+        const auto read = repairSettings(input, dir.path());
+        QVERIFY2(read.diagnostics.join('\n').contains(key), qPrintable(key + " accepted a malformed value " + QString::fromUtf8(QJsonDocument(QJsonArray{bad}).toJson(QJsonDocument::Compact))));
+        QCOMPARE(read.fields.value(key), FieldState::Invalid); QCOMPARE(read.values.value(key), baseline.value(key)); // repaired to the default
+        auto expected = baseline; expected.insert("future.keep", 1); QCOMPARE(read.values, expected); // nothing else changes
+        QCOMPARE(read.diagnostics.size(), 1);
+        ApplicationSettingsStore store(path, dir.path()); QVERIFY2(!store.save(input).isEmpty(), qPrintable(key + " saved a malformed value"));
+        QVERIFY(!QFile::exists(path));
+        // The same value read from disk repairs the same way without discarding unrelated fields.
+        QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(QJsonDocument(QJsonObject{{"version", 1}, {"values", input}}).toJson()); file.close();
+        ApplicationSettingsStore disk(path, dir.path()); QCOMPARE(disk.current().values, expected); QVERIFY(disk.current().writable); QFile::remove(path);
+      }
+    }
+  }
+  void hotkeyMatrixRepairsEachBindingWithoutDiscardingOthers() {
+    QTemporaryDir dir; const auto baseline = defaultSettings(dir.path());
+    for (const QString &trigger : {"Ctrl+Shift+F12", "F35", "Meta+Space", "Alt+Return", "Ctrl+9", "Shift+Up", ""}) {
+      auto input = baseline; auto bindings = input.value("hotkeys").toObject(); bindings.insert("capture-active-window", trigger); input.insert("hotkeys", bindings);
+      const auto read = repairSettings(input, dir.path()); QVERIFY2(read.diagnostics.isEmpty(), qPrintable(trigger));
+      QCOMPARE(read.values.value("hotkeys").toObject().value("capture-active-window").toString(), trigger);
+    }
+    { auto input = baseline; auto bindings = input.value("hotkeys").toObject(); bindings.insert("capture-active-window", "Shift+Ctrl+F1"); input.insert("hotkeys", bindings);
+      QCOMPARE(repairSettings(input, dir.path()).values.value("hotkeys").toObject().value("capture-active-window").toString(), "Ctrl+Shift+F1"); }
+    const QVector<QJsonValue> bad{"Ctrl+Ctrl+Print", "Super+Print", "Ctrl+", "+", "0x1234", "Ctrl+F36", "<Control>F1", "ctrl+f1", "Ctrl+Alt+F4", "Alt+F4", "Alt+Tab", "Meta+L", "Ctrl+Alt+Delete",
+      QString(129, QChar('F')), QString("F1") + QChar(0), 5, true, QJsonValue(QJsonValue::Null), QJsonArray{}, QJsonObject{}};
+    for (const auto &trigger : bad) {
+      auto input = baseline; auto bindings = input.value("hotkeys").toObject(); bindings.insert("capture-active-window", trigger); input.insert("hotkeys", bindings);
+      const auto read = repairSettings(input, dir.path());
+      QCOMPARE(read.diagnostics.size(), 1); QVERIFY(read.diagnostics.first().startsWith("hotkeys.capture-active-window"));
+      QCOMPARE(read.fields.value("hotkeys.capture-active-window"), FieldState::Invalid);
+      auto repaired = read.values.value("hotkeys").toObject(); QCOMPARE(repaired.value("capture-active-window").toString(), QString{});
+      repaired.remove("capture-active-window"); auto expected = baseline.value("hotkeys").toObject(); expected.remove("capture-active-window"); QCOMPARE(repaired, expected); // others intact
+    }
+    // Bound: more than the allowed number of bindings is a collection error repaired as one field.
+    QJsonObject many; for (int i = 0; i <= maximumHotkeyBindings; ++i) many.insert(QUuid::createUuid().toString(QUuid::WithoutBraces), "");
+    auto input = baseline; input.insert("hotkeys", many); const auto read = repairSettings(input, dir.path());
+    QCOMPARE(read.fields.value("hotkeys"), FieldState::Invalid); QCOMPARE(read.values.value("hotkeys"), baseline.value("hotkeys"));
+    QJsonObject exact; for (int i = 0; i < maximumHotkeyBindings; ++i) exact.insert(QUuid::createUuid().toString(QUuid::WithoutBraces), "");
+    input.insert("hotkeys", exact); QCOMPARE(repairSettings(input, dir.path()).fields.value("hotkeys"), FieldState::Valid);
+    // Two actions asking for the same trigger: the first (key order) keeps it, the other is cleared with a diagnostic.
+    auto clash = baseline; auto bindings = clash.value("hotkeys").toObject(); bindings.insert("capture-scrolling", "Ctrl+Print"); clash.insert("hotkeys", bindings);
+    const auto clashRead = repairSettings(clash, dir.path()); QCOMPARE(clashRead.diagnostics.size(), 1);
+    QVERIFY(clashRead.diagnostics.join('\n').contains("hotkeys.")); QVERIFY(!clashRead.diagnostics.join('\n').contains("Ctrl+Print"));
+  }
   void autostart() {
     QTemporaryDir dir; const auto old = qgetenv("XDG_CONFIG_HOME"); qputenv("XDG_CONFIG_HOME", dir.path().toUtf8());
     const auto path = dir.filePath("autostart/com.xerahs.app.desktop");

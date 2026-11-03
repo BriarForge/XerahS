@@ -16,6 +16,10 @@ bool integerInRange(const QJsonValue &value, int minimum, int maximum) {
   const double number = value.toDouble();
   return number == std::floor(number) && number >= minimum && number <= maximum;
 }
+bool hasControlCharacter(const QString &text) {
+  for (const auto c : text) if (c.unicode() < 32 || c.unicode() == 127) return true;
+  return false;
+}
 bool oneOf(const QJsonValue &value, std::initializer_list<const char *> allowed) {
   if (!value.isString()) return false;
   for (const char *candidate : allowed) if (value.toString() == QLatin1String(candidate)) return true;
@@ -105,7 +109,7 @@ SettingsRead repairSettings(const QJsonObject &input, const QString &saveFolder,
     if (field.key == "saveFolder") valid = value.isString() && !value.toString().isEmpty() && workflows::captureDirectoryDiagnostic(value.toString()).isEmpty();
     else if (field.key == "filenamePattern") {
       workflows::CaptureOutput output; output.pattern = value.toString();
-      valid = value.isString() && !output.pattern.isEmpty() && workflows::previewCaptureOutput(output).diagnostic.isEmpty();
+      valid = value.isString() && !output.pattern.isEmpty() && !hasControlCharacter(output.pattern) && workflows::previewCaptureOutput(output).diagnostic.isEmpty();
     } else if (field.key == "hotkeys") valid = value.isObject() && value.toObject().size() <= maximumHotkeyBindings;
     else if (field.section == Section::Recording) valid = value.isString() && value.toString().size() <= 4096 && !value.toString().contains(QChar(0));
     else if (field.section == Section::Capture) valid = validCaptureValue(field.key, value);
