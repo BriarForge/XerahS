@@ -295,6 +295,42 @@ private slots:
     QCOMPARE(out[0].toObject().value("blurAmount").toDouble(), 7.5);
   }
 
+  void referenceAmountAndDarkenOpacityAreReadAsStrengthAliasesAndWrittenAsStrength() {
+    // EA-011 compatibility: the reference XerahS .xann spells effect strength `amount` and Spotlight dim `darkenOpacity` (0..255).
+    AnnotationDocument d = baseDocument();
+    for (const auto &type : {shape::blur, shape::pixelate, shape::magnify, shape::spotlight, shape::spotlight, shape::spotlight, shape::blur, shape::highlight}) d.annotations.push_back(effect(type, {10, 10}, {60, 50}));
+    QJsonObject payload = serializeDocument(d); QJsonArray list = payload.value("annotations").toArray();
+    auto edit = [&](int i, const std::function<void(QJsonObject &)> &f) { auto o = list[i].toObject(); o.remove("strength"); f(o); list[i] = o; };
+    edit(0, [](QJsonObject &o) { o.insert("amount", 14.5); o.insert("futureField", 1); });
+    edit(1, [](QJsonObject &o) { o.insert("amount", 6); });
+    edit(2, [](QJsonObject &o) { o.insert("amount", 3.0); });
+    edit(3, [](QJsonObject &o) { o.insert("darkenOpacity", 180); o.insert("amount", 99); o.insert("isEllipse", true); });  // byte dim; Spotlight has no `amount` in the reference
+    edit(4, [](QJsonObject &o) { o.insert("darkenOpacity", 0); });
+    edit(5, [](QJsonObject &o) { o.insert("darkenOpacity", 255); o.insert("strength", 40); });                                   // explicit strength wins
+    edit(6, [](QJsonObject &o) { o.insert("amount", 20); o.insert("strength", 5); });
+    edit(7, [](QJsonObject &o) { o.insert("amount", 20); });                                                                    // Highlight has no strength: stays an unknown field
+    payload.insert("annotations", list);
+    const auto parsed = parseDocument(payload); QVERIFY(parsed.document);
+    auto shapeAt = [&](int i) { const auto *r = std::get_if<RectangleAnnotation>(&parsed.document->annotations[i]); return r; };
+    QCOMPARE(shapeAt(0)->content.strength, 14.5); QCOMPARE(shapeAt(1)->content.strength, 6.0); QCOMPARE(shapeAt(2)->content.strength, 3.0);
+    QVERIFY(qAbs(shapeAt(3)->content.strength - 180 / 2.55) < 1e-9); QVERIFY(shapeAt(3)->content.isEllipse);
+    QVERIFY(shapeAt(4)->content.strength > 0 && shapeAt(4)->content.strength < 0.1); QCOMPARE(shapeAt(5)->content.strength, 40.0); QCOMPARE(shapeAt(6)->content.strength, 5.0); QCOMPARE(shapeAt(7)->content.strength, 0.0);
+    // The dim a reference file asked for is the dim that is painted (alpha = percent * 2.55), including "no dim" at 0.
+    QCOMPARE(int(std::lround(shapeAt(3)->content.strength * 2.55)), 180); QCOMPARE(int(std::lround(shapeAt(4)->content.strength * 2.55)), 0);
+    const auto out = serializeDocument(*parsed.document).value("annotations").toArray();
+    QCOMPARE(out[0].toObject().value("strength").toDouble(), 14.5); QVERIFY(!out[0].toObject().contains("amount")); QCOMPARE(out[0].toObject().value("futureField").toInt(), 1);
+    QVERIFY(!out[3].toObject().contains("darkenOpacity")); QVERIFY(qAbs(out[3].toObject().value("strength").toDouble() - 180 / 2.55) < 1e-9); QCOMPARE(out[3].toObject().value("amount").toInt(), 99);  // unrelated spelling is preserved verbatim
+    QCOMPARE(out[5].toObject().value("strength").toDouble(), 40.0); QCOMPARE(out[5].toObject().value("darkenOpacity").toInt(), 255);
+    QCOMPARE(out[6].toObject().value("strength").toDouble(), 5.0); QCOMPARE(out[6].toObject().value("amount").toInt(), 20); QCOMPARE(out[7].toObject().value("amount").toInt(), 20); QVERIFY(!out[7].toObject().contains("strength"));
+    // A second round trip is stable, and invalid aliases are rejected like an invalid `strength`.
+    QCOMPARE(serializeDocument(*parseDocument(serializeDocument(*parsed.document)).document), serializeDocument(*parsed.document));
+    struct Bad { int index; QString key; QJsonValue value; };
+    for (const auto &bad : {Bad{0, "amount", "x"}, Bad{0, "amount", -1}, Bad{0, "amount", 1001}, Bad{3, "darkenOpacity", "x"}, Bad{3, "darkenOpacity", -1}, Bad{3, "darkenOpacity", 256}}) {
+      auto broken = list; auto o = broken[bad.index].toObject(); o.insert(bad.key, bad.value); broken[bad.index] = o; auto copy = payload; copy.insert("annotations", broken);
+      QVERIFY2(!parseDocument(copy).document, qPrintable(bad.key));
+    }
+  }
+
   void invalidOptionsAreRejectedWithTheDocumentDiagnostic_data() {
     QTest::addColumn<QString>("type"); QTest::addColumn<QString>("key"); QTest::addColumn<QJsonValue>("value");
     QTest::newRow("ellipse-string") << shape::blur << "isEllipse" << QJsonValue("yes");

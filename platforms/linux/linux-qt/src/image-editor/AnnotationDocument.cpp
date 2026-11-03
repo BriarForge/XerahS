@@ -193,6 +193,7 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
   const QString type = o.value(u"type").toString();
   if (!shapeTypes().contains(type)) return Annotation(UnsupportedAnnotation{QUuid(id), o});
   ShapeContent content;
+  QString consumedAlias;  // EA-011 reference alias read in place of `strength`
   content.type = type;
   if (type != shape::rectangle) {
     const auto optionalNumber = [&](const char16_t *key, double low, double high, double &out) {
@@ -239,6 +240,21 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
               optionalNumber(u"fontSize", 0, 2000, content.fontSize) && optionalNumber(u"strength", 0, 1000, content.strength) &&
               optionalNumber(u"stepValue", 0, double(kMaxStepValue), stepValue) && (!o.contains(u"stepValue") || isInteger(o.value(u"stepValue")));
     content.stepValue = qint64(stepValue);
+    if (ok && hasShapeStrength(type) && !o.contains(u"strength")) {
+      // EA-011 compatibility: the reference XerahS .xann spells effect strength `amount` and the Spotlight dim `darkenOpacity` (byte, 0..255).
+      // They are read only when `strength` is absent, consumed so they are not preserved beside the `strength` this build writes.
+      const bool spot = type == shape::spotlight; const char16_t *key = spot ? u"darkenOpacity" : u"amount";
+      if (o.contains(key)) {
+        const QJsonValue v = o.value(key);
+        if (!isFiniteNumber(v) || v.toDouble() < 0 || v.toDouble() > (spot ? 255.0 : 1000.0)) ok = false;
+        else {
+          // Spotlight strength is the dim percentage (alpha = percent * 2.55), and 0 means "use the default"; a fully
+          // transparent reference dim therefore maps to a sub-visible percentage that still paints alpha 0.
+          content.strength = spot ? std::max(v.toDouble() / 2.55, 0.01) : v.toDouble();
+          consumedAlias = QString::fromUtf16(key);
+        }
+      }
+    }
     if (o.contains(u"text")) { ok = ok && o.value(u"text").isString() && o.value(u"text").toString().size() <= kMaxTextLength; content.text = o.value(u"text").toString(); }
     if (o.contains(u"points")) {
       const QJsonArray points = o.value(u"points").toArray();
@@ -298,6 +314,7 @@ std::optional<Annotation> parseAnnotation(const QJsonValue &value, Findings &fin
     }
   }
   if (type == shape::arrow) rectangle.extra.remove(QStringLiteral("style"));
+  if (!consumedAlias.isEmpty()) rectangle.extra.remove(consumedAlias);
   if (hasShapeDecoration(type)) {
     for (const auto &key : kDecorationKeys) rectangle.extra.remove(key);
     if (type == shape::rectangle) rectangle.extra.remove(kCornerRadiusKey);  // Ellipse keeps an unknown cornerRadius verbatim
