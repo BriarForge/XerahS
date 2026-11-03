@@ -222,3 +222,19 @@ selection, history, dirty checkpoints, disk files, or the main viewport.
 Inserted images and background composition remain subsequent work.
 Shared goldens and the remaining qualification gates in
 `product-contract/READINESS.md` still apply.
+
+Cut Out (EA-013) removes whole columns (a wider than tall drag) or rows from
+the strip rounded to whole pixels, closes the gap, and fails atomically if
+nothing or everything would be removed, the points are not finite or an
+unsupported annotation is present. Pixels after the strip move back by its
+size. Annotations follow the reference XerahS rule along the cut axis: wholly
+inside the strip, removed; starting at or after the strip's end, moved back by
+the strip size; ending at or before the strip's end, unchanged; spanning the
+strip's end, shortened (each point past the strip moves back, each point inside
+collapses to the strip's start, path points keep their document positions). A
+rotated object is classified by its rotated extent and, when it spans the end,
+moves as a whole if its centre is at or after the end. Hidden and locked
+objects follow the same rule. The reference moves a spanning object's start
+point back even when it lies before the strip; that reads as a defect, and its
+own per-point collapse rule (used here for every point) is applied instead.
+Stable IDs and order survive; the whole edit is one history operation.

@@ -251,10 +251,10 @@
       }
     },
     "EA-013": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Crop and Cut Out have actual atomic source/annotation transforms and tests. Full multi-type/asset intersection and accessibility qualification remains.",
+      "note": "Crop and Cut Out have atomic source/annotation transforms and tests. Cut Out follows the reference annotation rule (removed inside the strip, shortened when spanning, moved back when after), recorded in src/image-editor/CANVAS-POLICY.md. Audit 2026-11-03: Cut Out is verified on both axes with exact pixel movement for a reverse drag, annotations before, wholly inside, after, spanning the strip end, starting inside it, ending inside it, a line with path points kept at document positions, and rotated objects, with stable IDs and order, atomic refusal of empty, whole-canvas, NaN and unsupported-annotation cases (AnnotationToolMatrixTest::cutOutMovesPixelsAndAnnotationsByTheDocumentedRule); the native editor applies Crop and Cut Out (columns and rows) from the pointer as single undoable, dirty-tracked operations that save clean (::cropAndCutOutAreOneNativeHistoryOperationWithDirtyState); Crop's explicit retained region and annotation translation remain covered by EditorWindowTest ownedCropUsesNativeBoundsHistoryAndPersistence. Remaining items above are qualification, not implementation status.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -263,10 +263,10 @@
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 53,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "ccaf3c6"
       }
     },
     "EA-014": {

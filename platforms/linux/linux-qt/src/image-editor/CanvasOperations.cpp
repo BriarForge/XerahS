@@ -191,9 +191,16 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
     return result;
   }
   if (op.action == CanvasAction::CutOut) {
-    // EA-013 coordinate rule: pixels after the strip move back by its size.
-    // An annotation moves with them when its bounds centre is at or after the
-    // strip's end; otherwise it keeps its position.
+    // EA-013 coordinate rule (reference XerahS CutOutAnnotation.AdjustAnnotation):
+    // pixels after the strip move back by its size. Along the cut axis an
+    // annotation whose extent lies wholly inside the strip is removed; one that
+    // starts at or after the strip's end moves back with the pixels; one that
+    // ends at or before the strip's end keeps its position; one that spans the
+    // strip's end is shortened, each of its points past the strip moving back
+    // by the strip size and each point inside it collapsing onto the strip's
+    // start. Path points are kept at their document positions. A rotated
+    // object is classified by its rotated extent; one that spans the strip
+    // moves as a whole when its centre is at or after the strip's end.
     if (!finite(op.start) || !finite(op.end)) return failure(diagnostic::documentInvalid);
     const bool columns = op.cutColumns;
     const qint64 extent = columns ? source.width : source.height;
@@ -207,14 +214,44 @@ CanvasResult apply(const AnnotationDocument &document, const ArgbImage &source,
     const qint64 height = columns ? source.height : source.height - removed;
     AnnotationDocument next = document;
     next.canvasWidth = width; next.canvasHeight = height;
+    const double cutFrom = double(from), cutTo = double(to), cut = double(removed);
+    const auto collapse = [&](double v) { return v >= cutTo ? v - cut : (v > cutFrom ? cutFrom : v); };
+    std::vector<Annotation> kept;
     for (Annotation &annotation : next.annotations) {
       auto *r = std::get_if<RectangleAnnotation>(&annotation);
       if (!r) return failure(QStringLiteral("canvas-annotation-transform-unsupported"));
-      const double centre = columns ? r->left() / 2 + r->right() / 2 : r->top() / 2 + r->bottom() / 2;
-      if (centre < to) continue;
-      (columns ? r->start.x : r->start.y) -= removed;
-      (columns ? r->end.x : r->end.y) -= removed;
+      double lo = columns ? r->left() : r->top(), hi = columns ? r->right() : r->bottom();
+      const double angle = normalizedAngle(r->style.rotationDegrees);
+      const bool rotated = angle != 0;
+      if (rotated) {
+        const double radians = angle * (std::acos(-1.0) / 180);
+        const double halfW = (r->right() - r->left()) / 2, halfH = (r->bottom() - r->top()) / 2;
+        const double centre = columns ? r->left() / 2 + r->right() / 2 : r->top() / 2 + r->bottom() / 2;
+        const double reach = columns ? halfW * std::abs(std::cos(radians)) + halfH * std::abs(std::sin(radians))
+                                     : halfW * std::abs(std::sin(radians)) + halfH * std::abs(std::cos(radians));
+        lo = centre - reach; hi = centre + reach;
+      }
+      if (lo >= cutFrom && hi <= cutTo) continue;  // wholly inside the removed strip
+      if (lo >= cutTo) {
+        (columns ? r->start.x : r->start.y) -= cut; (columns ? r->end.x : r->end.y) -= cut;
+      } else if (hi > cutTo) {
+        if (rotated) {
+          const double centre = columns ? r->left() / 2 + r->right() / 2 : r->top() / 2 + r->bottom() / 2;
+          if (centre >= cutTo) { (columns ? r->start.x : r->start.y) -= cut; (columns ? r->end.x : r->end.y) -= cut; }
+        } else {
+          double &s0 = columns ? r->start.x : r->start.y, &e0 = columns ? r->end.x : r->end.y;
+          const double oldStart = s0, oldSpan = e0 - s0;
+          const double newStart = collapse(oldStart), newEnd = collapse(e0);
+          for (PointF &f : r->content.points) {
+            double &fraction = columns ? f.x : f.y;
+            fraction = (collapse(oldStart + fraction * oldSpan) - newStart) / (newEnd - newStart);
+          }
+          s0 = newStart; e0 = newEnd;
+        }
+      }
+      kept.push_back(std::move(annotation));
     }
+    next.annotations = std::move(kept);
     ArgbImage image = solidImage(width, height, 0);
     for (qint64 y = 0; y < height; ++y) {
       if (cancelled(control)) return failure(QStringLiteral("canvas-cancelled"));

@@ -1,6 +1,7 @@
 // EDITOR-ANNOTATIONS-001 tool-matrix evidence: every contracted tool is
 // checked against the real native actions, canvas and session. Fixtures use
 // temporary preferences and in-memory images only.
+#include "CanvasCropDialog.h"
 #include "EditorCanvas.h"
 #include "EditorWindow.h"
 #include "NativeAnnotationTools.h"
@@ -8,11 +9,14 @@
 #include "NativeEditorPreferences.h"
 #include "TextContentDialog.h"
 #include "image-editor/AnnotationRenderer.h"
+#include "image-editor/CanvasOperations.h"
 #include "image-editor/ShapePainter.h"
 
 #include <QAction>
 #include <QApplication>
 #include <QClipboard>
+#include <QDialogButtonBox>
+#include <QPushButton>
 #include <QInputDialog>
 #include <QBuffer>
 #include <QPlainTextEdit>
@@ -557,6 +561,139 @@ private slots:
     const QImage display = image(60, 40); EditorCanvas canvas(session, display); canvas.setTool(EditorCanvas::Tool::SmartEraser);
     const QString description = canvas.toolInstructions();
     QVERIFY(description.contains("not content-aware"));
+  }
+
+  // EA-013: CutOut removes the declared span on either axis and moves pixels
+  // and annotations by one deterministic rule (the reference XerahS rule).
+  void cutOutMovesPixelsAndAnnotationsByTheDocumentedRule_data() {
+    QTest::addColumn<bool>("columns");
+    QTest::newRow("columns") << true;
+    QTest::newRow("rows") << false;
+  }
+  void cutOutMovesPixelsAndAnnotationsByTheDocumentedRule() {
+    QFETCH(bool, columns);
+    // The strip is 40..60 along the cut axis; the other axis is 0..30 for every object.
+    const auto at = [&](double along, double across) { return columns ? PointF{along, across} : PointF{across, along}; };
+    const auto box = [&](const QString &type, double from, double to, std::vector<PointF> points = {}) {
+      RectangleAnnotation a; a.id = QUuid::createUuid(); a.content.type = type; a.content.points = std::move(points);
+      a.start = at(from, 0); a.end = at(to, 30); a.style.strokeWidth = 2; return a;
+    };
+    const qint64 length = 100, other = 30;
+    ArgbImage source = solidImage(columns ? length : other, columns ? other : length, 0xFF000000);
+    for (qint64 y = 0; y < source.height; ++y) for (qint64 x = 0; x < source.width; ++x)
+      source.pixels[std::size_t(y * source.width + x)] = 0xFF000000 | Argb((columns ? x : y) * 2) << 8 | Argb(columns ? y : x);
+    const auto before = box(shape::rectangle, 10, 30), inside = box(shape::ellipse, 45, 55), after = box(shape::rectangle, 70, 90),
+        spanning = box(shape::rectangle, 20, 80), startsInside = box(shape::rectangle, 50, 80), endsAtStrip = box(shape::rectangle, 10, 50),
+        line = box(shape::line, 30, 90, {{0, 0}, {0.5, 0.5}, {1, 1}});
+    auto rotatedInside = box(shape::rectangle, 20, 80); rotatedInside.start = at(20, 10); rotatedInside.end = at(80, 20);  // 60 x 10 box
+    // Rotated a quarter turn about its centre (50) it spans 45..55 along the cut axis, wholly inside the strip.
+    rotatedInside.style.rotationDegrees = columns ? 90 : 0;
+    if (!columns) { rotatedInside.start = at(45, 0); rotatedInside.end = at(55, 30); rotatedInside.style.rotationDegrees = 0; }
+    auto rotatedAfter = box(shape::rectangle, 70, 90); rotatedAfter.style.rotationDegrees = 90;  // 20 x 30 turned: 75..95 or so, wholly after
+    rotatedAfter.start = at(75, 5); rotatedAfter.end = at(85, 25); rotatedAfter.style.rotationDegrees = 90;
+    auto doc = document(source.width, source.height);
+    doc.annotations = {before, inside, after, spanning, startsInside, endsAtStrip, line, rotatedInside, rotatedAfter};
+    CanvasOperation op; op.action = CanvasAction::CutOut; op.cutColumns = columns;
+    op.start = at(60, 5); op.end = at(40, 25);  // reverse drag; only the cut axis matters
+    const auto result = applyCanvasOperation(doc, source, op);
+    QVERIFY(result.document && result.image && !result.error);
+    QCOMPARE(result.image->width, columns ? qint64(80) : other); QCOMPARE(result.image->height, columns ? other : qint64(80));
+    QCOMPARE(result.document->canvasWidth, result.image->width); QCOMPARE(result.document->canvasHeight, result.image->height);
+    // Pixels: those before the strip stay, those after move back by 20; the strip is gone.
+    for (qint64 y = 0; y < result.image->height; ++y) for (qint64 x = 0; x < result.image->width; ++x) {
+      const qint64 along = columns ? x : y; const qint64 sx = columns && along >= 40 ? x + 20 : x, sy = !columns && along >= 40 ? y + 20 : y;
+      QCOMPARE(result.image->at(x, y), source.at(sx, sy));
+    }
+    const auto &out = result.document->annotations;
+    const auto get = [&](const RectangleAnnotation *original) -> const RectangleAnnotation * {
+      for (const auto &a : out) if (annotationId(a) == original->id) return &std::get<RectangleAnnotation>(a);
+      return nullptr;
+    };
+    const auto lo = [&](const RectangleAnnotation *r) { return columns ? r->start.x : r->start.y; };
+    const auto hi = [&](const RectangleAnnotation *r) { return columns ? r->end.x : r->end.y; };
+    const auto crossLo = [&](const RectangleAnnotation *r) { return columns ? r->start.y : r->start.x; };
+    const auto crossHi = [&](const RectangleAnnotation *r) { return columns ? r->end.y : r->end.x; };
+    QVERIFY(get(&before)); QCOMPARE(lo(get(&before)), 10.0); QCOMPARE(hi(get(&before)), 30.0);               // before: unchanged
+    QVERIFY(!get(&inside));                                                                                    // wholly inside: removed
+    QVERIFY(get(&after)); QCOMPARE(lo(get(&after)), 50.0); QCOMPARE(hi(get(&after)), 70.0);                    // after: moves back by 20
+    QVERIFY(get(&spanning)); QCOMPARE(lo(get(&spanning)), 20.0); QCOMPARE(hi(get(&spanning)), 60.0);          // spans the end: shortened
+    QVERIFY(get(&startsInside)); QCOMPARE(lo(get(&startsInside)), 40.0); QCOMPARE(hi(get(&startsInside)), 60.0);  // starts inside: starts at the cut
+    QVERIFY(get(&endsAtStrip)); QCOMPARE(lo(get(&endsAtStrip)), 10.0); QCOMPARE(hi(get(&endsAtStrip)), 50.0); // ends inside the strip: kept
+    QCOMPARE(crossLo(get(&spanning)), 0.0); QCOMPARE(crossHi(get(&spanning)), 30.0);                          // the other axis is never touched
+    // A path keeps its points at their document positions: 30 stays, 60 (past the strip) becomes 40, 90 becomes 70.
+    const auto *path = get(&line); QVERIFY(path);
+    QCOMPARE(lo(path), 30.0); QCOMPARE(hi(path), 70.0);
+    const double span = hi(path) - lo(path), middle = columns ? path->content.points[1].x : path->content.points[1].y;
+    QCOMPARE(lo(path) + middle * span, 40.0);
+    QVERIFY(!get(&rotatedInside));                                                                              // rotated extent inside the strip: removed
+    QVERIFY(get(&rotatedAfter)); QCOMPARE(lo(get(&rotatedAfter)), 55.0); QCOMPARE(hi(get(&rotatedAfter)), 65.0);  // rotated, after: moves back
+    // Stable IDs and document order for everything kept.
+    QList<QUuid> order; for (const auto &a : out) order << annotationId(a);
+    QList<QUuid> expected; for (const QUuid &id : {before.id, after.id, spanning.id, startsInside.id, endsAtStrip.id, line.id, rotatedAfter.id}) expected << id;
+    QCOMPARE(order.size(), expected.size());
+    for (const auto &id : expected) QVERIFY(order.contains(id));
+    // Degenerate spans are refused without a partial result.
+    for (const auto &bad : {std::make_pair(at(0, 0), at(100, 30)), std::make_pair(at(50, 0), at(50, 30)),
+                            std::make_pair(PointF{std::numeric_limits<double>::quiet_NaN(), 0}, at(60, 30))}) {
+      CanvasOperation invalid = op; invalid.start = bad.first; invalid.end = bad.second;
+      const auto refused = applyCanvasOperation(doc, source, invalid);
+      QVERIFY(refused.error); QVERIFY(!refused.document); QVERIFY(!refused.image);
+    }
+    auto unsupported = doc; UnsupportedAnnotation future; future.id = QUuid::createUuid(); future.raw = QJsonObject{{"type", "future"}}; unsupported.annotations.push_back(future);
+    const auto refused = applyCanvasOperation(unsupported, source, op); QVERIFY(refused.error); QVERIFY(!refused.document);
+  }
+
+  // EA-013/EA-017 native: Crop (pointer + dialog) and CutOut (pointer, both
+  // axes) are single history operations that mark the document dirty, undo to
+  // the clean checkpoint, redo, and save as clean.
+  void cropAndCutOutAreOneNativeHistoryOperationWithDirtyState() {
+    QTemporaryDir dir; const QString path = dir.filePath("canvas.png");
+    QImage pixels(100, 60, QImage::Format_ARGB32);
+    for (int y = 0; y < 60; ++y) for (int x = 0; x < 100; ++x) pixels.setPixel(x, y, qRgb(x * 2, y * 4, 90));
+    QVERIFY(pixels.save(path));
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->resize(900, 600); window->show(); QTest::qWait(10);
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas); canvas->resetZoom(); canvas->setFocus();
+    const auto dirty = [&] { return window->windowTitle().contains(" •"); };
+    const auto act = [&](const char *name) { auto *a = window->findChild<QAction *>(name); Q_ASSERT(a); a->trigger(); };
+    const auto size = [&] { return QSize(int(canvas->annotationDocument().canvasWidth), int(canvas->annotationDocument().canvasHeight)); };
+    const auto drag = [&](QPointF from, QPointF to) {
+      QTest::mousePress(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView(from).toPoint());
+      QTest::mouseRelease(canvas->viewport(), Qt::LeftButton, {}, canvas->viewState().toView(to).toPoint());
+    };
+    QVERIFY(!dirty()); QVERIFY(!window->findChild<QAction *>("undo")->isEnabled()); QCOMPARE(size(), QSize(100, 60));
+
+    // Crop: the pointer proposes the region, the native dialog applies it.
+    QTimer applyCrop; applyCrop.setInterval(5);
+    connect(&applyCrop, &QTimer::timeout, &applyCrop, [&] {
+      if (auto *dialog = qobject_cast<CanvasCropDialog *>(QApplication::activeModalWidget())) {
+        applyCrop.stop(); auto *apply = dialog->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply);
+        QTRY_VERIFY(apply->isEnabled()); apply->click();
+      }
+    });
+    act("cropTool"); applyCrop.start(); drag({10, 10}, {70, 50}); applyCrop.stop();
+    const QSize cropped = size(); QVERIFY(cropped.width() >= 60 && cropped.width() <= 61 && cropped.height() >= 40 && cropped.height() <= 41);  // pointer edges round outwards
+    QVERIFY(dirty()); QVERIFY(window->findChild<QAction *>("undo")->isEnabled()); QVERIFY(!window->findChild<QAction *>("redo")->isEnabled());
+    act("undo"); QCOMPARE(size(), QSize(100, 60)); QVERIFY(!dirty()); QVERIFY(window->findChild<QAction *>("redo")->isEnabled());  // back at the clean checkpoint
+    act("redo"); QCOMPARE(size(), cropped); QVERIFY(dirty());
+    act("undo"); QVERIFY(!dirty());
+
+    // CutOut columns: a 20 px strip at x = 30..50.
+    act("cutoutTool"); canvas->resetZoom();
+    drag({30, 20}, {50, 25});
+    QTRY_COMPARE(size(), QSize(80, 60)); QVERIFY(dirty()); QVERIFY(window->findChild<QAction *>("undo")->isEnabled()); QVERIFY(!window->findChild<QAction *>("redo")->isEnabled());
+    QCOMPARE(canvas->tool(), EditorCanvas::Tool::CutOut);
+    act("undo"); QCOMPARE(size(), QSize(100, 60)); QVERIFY(!dirty()); QVERIFY(window->findChild<QAction *>("redo")->isEnabled());
+    act("redo"); QCOMPARE(size(), QSize(80, 60)); QVERIFY(dirty());
+    // CutOut rows on the already cut canvas: a 10 px strip at y = 20..30 (taller than wide drag).
+    drag({40, 20}, {44, 30});
+    QTRY_COMPARE(size(), QSize(80, 50)); QVERIFY(dirty());
+    act("undo"); QCOMPARE(size(), QSize(80, 60)); QVERIFY(dirty());      // still dirty: the first cut is not the saved state
+    act("undo"); QCOMPARE(size(), QSize(100, 60)); QVERIFY(!dirty());
+    act("redo"); act("redo"); QCOMPARE(size(), QSize(80, 50)); QVERIFY(dirty());
+    // Saving makes the cut canvas the clean state, and undo is dirty again.
+    act("saveImage"); QVERIFY(!dirty()); QCOMPARE(QImage(path).size(), QSize(80, 50));
+    QCOMPARE(QImage(path).pixel(29, 0), pixels.pixel(29, 0)); QCOMPARE(QImage(path).pixel(30, 0), pixels.pixel(50, 0));
+    act("undo"); QVERIFY(dirty()); act("redo"); QVERIFY(!dirty());
   }
 };
 
