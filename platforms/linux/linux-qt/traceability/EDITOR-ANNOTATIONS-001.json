@@ -346,10 +346,10 @@
       }
     },
     "EA-018": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native keyboard selection, gestures, tool actions and accessibility interfaces have fixtures. Screen-reader, high contrast, focus, text scaling and every option/handle need live qualification.",
+      "note": "Native keyboard selection, gestures, tool actions and accessibility interfaces have fixtures; selection, handle and focus cues are luminance/pattern cues (app/ANNOTATION-TOOLS.md). Screen-reader, high contrast and text scaling need live qualification. Audit 2026-11-03: Rendered frames are converted to grayscale and compared with the same frame unselected: the selection outline shows as a dash pattern with at least 20 contrasting columns and 6 transitions, all eight handles show white fill and dark outline against mid-gray, for rectangle, ellipse, line, arrow, freehand, text, step, image, blur, pixelate, smart eraser, highlight, magnify and spotlight objects; the canvas focus frame changes the grayscale edge; every one of the 20 tools is a named, checkable accessible control and Escape cancels a live gesture of each drawing, Crop and CutOut tool with no history, dirt, dialog or signal (AnnotationToolMatrixTest::selectionAndHandleCuesSurviveGrayscale, ::canvasFocusCueSurvivesGrayscale, ::everyToolHasAnAccessibleControlAndEscapeCancelsItsLiveGesture). Remaining items above are qualification, not implementation status.",
       "evidence": [
         "platforms/linux/linux-qt/tests/AnnotationShapesTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
@@ -358,10 +358,10 @@
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 68,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Text border/fill semantics, border/arrow/shadow and all-tool asset/transfer/affine breadth, ellipse/blur options and physical accessibility remain incomplete. Alphabetic/Roman/start/reset semantics await product answers.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "ccaf3c6"
       }
     },
     "EA-019": {

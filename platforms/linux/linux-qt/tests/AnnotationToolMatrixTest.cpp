@@ -12,7 +12,10 @@
 #include "image-editor/CanvasOperations.h"
 #include "image-editor/ShapePainter.h"
 
+#include <QAccessible>
 #include <QAction>
+#include <QToolBar>
+#include <QToolButton>
 #include <QApplication>
 #include <QClipboard>
 #include <QDialogButtonBox>
@@ -776,6 +779,96 @@ private slots:
     session.select({*note}); QVERIFY(session.undo()); session.markSaved(); const int redo = session.redoCount(); QVERIFY(redo > 0);
     QVERIFY(!session.createShape({{5, 5}, {5, 5}, {}}, ShapeContent{}, session.stateId(), session.selection()));
     QVERIFY(!session.dirty()); QCOMPARE(session.redoCount(), redo);
+  }
+
+  // EA-018: selection outline, resize handles and focus must be visible
+  // without colour. Each frame is converted to grayscale and the cues are
+  // measured as luminance contrast against the same frame without them.
+  void selectionAndHandleCuesSurviveGrayscale_data() {
+    QTest::addColumn<QString>("type");
+    for (const char *type : {"rectangle", "ellipse", "line", "arrow", "freehand", "text", "step", "image", "blur", "pixelate",
+                             "smart-eraser", "highlight", "magnify", "spotlight"}) QTest::newRow(type) << QString::fromLatin1(type);
+  }
+  void selectionAndHandleCuesSurviveGrayscale() {
+    QFETCH(QString, type);
+    QImage source(300, 200, QImage::Format_ARGB32); source.fill(qRgb(128, 128, 128));  // mid gray: both white and black cues must stand out
+    EditorSession session(document(300, 200));
+    ShapeContent content; content.type = type;
+    if (isPathShape(type)) content.points = type == shape::freehand ? std::vector<PointF>{{0, 0}, {0.5, 1}, {1, 0}} : std::vector<PointF>{{0, 0}, {1, 1}};
+    if (type == shape::text) content.text = "Label";
+    if (type == shape::step) content.stepValue = 1;
+    const auto id = session.createShape({{100, 80}, {200, 140}, {}}, content, session.stateId(), session.selection()); QVERIFY(id);
+    EditorCanvas canvas(session, source); canvas.resize(520, 440); canvas.show(); QTest::qWait(10); canvas.resetZoom();
+    session.select({}); canvas.viewport()->update(); const QImage plain = canvas.viewport()->grab().toImage().convertToFormat(QImage::Format_Grayscale8);
+    session.select({*id}); canvas.viewport()->update(); const QImage marked = canvas.viewport()->grab().toImage().convertToFormat(QImage::Format_Grayscale8);
+    QCOMPARE(marked.size(), plain.size());
+    const auto diffAt = [&](int x, int y) { return std::abs(qGray(marked.pixel(x, y)) - qGray(plain.pixel(x, y))); };
+
+    // Outline: a band around the bounds that differs from the unselected frame by luminance alone,
+    // as a dash pattern rather than a solid line (a pattern cue, not only a hue).
+    const double gap = 2 + 3 / canvas.viewState().zoom();
+    const QPointF topLeft = canvas.viewState().toView({100 - gap, 80 - gap}), topRight = canvas.viewState().toView({200 + gap, 80 - gap});
+    int transitions = 0; bool wasStrong = false; int strongColumns = 0;
+    for (int x = int(topLeft.x()) + 12; x < int(topRight.x()) - 12; ++x) {
+      int strongest = 0; for (int y = int(topLeft.y()) - 2; y <= int(topLeft.y()) + 1; ++y) strongest = std::max(strongest, diffAt(x, y));
+      const bool strong = strongest >= 60; strongColumns += strong;
+      if (x > int(topLeft.x()) + 12 && strong != wasStrong) ++transitions;
+      wasStrong = strong;
+    }
+    QVERIFY2(strongColumns >= 20, qPrintable(QString("%1 outline columns differ in luminance").arg(strongColumns)));
+    QVERIFY2(transitions >= 6, qPrintable(QString("%1 dash transitions").arg(transitions)));
+
+    // Handles: all eight, each a white square with a dark outline over the mid-gray image.
+    const auto handleCentres = std::vector<QPointF>{{100 - gap, 80 - gap}, {150, 80 - gap}, {200 + gap, 80 - gap}, {200 + gap, 110},
+                                                    {200 + gap, 140 + gap}, {150, 140 + gap}, {100 - gap, 140 + gap}, {100 - gap, 110}};
+    for (const QPointF &centre : handleCentres) {
+      const QPoint c = canvas.viewState().toView(centre).toPoint();
+      int light = 0, dark = 0, changed = 0;
+      for (int y = c.y() - 5; y <= c.y() + 5; ++y) for (int x = c.x() - 5; x <= c.x() + 5; ++x) {
+        const int g = qGray(marked.pixel(x, y)); light += g >= 230; dark += g <= 90; changed += diffAt(x, y) >= 60;
+      }
+      QVERIFY2(light >= 20 && dark >= 8 && changed >= 40, qPrintable(QString("handle at %1,%2: light %3 dark %4 changed %5").arg(c.x()).arg(c.y()).arg(light).arg(dark).arg(changed)));
+    }
+  }
+
+  // The focus ring is also a luminance cue: focus changes the frame's gray edge.
+  void canvasFocusCueSurvivesGrayscale() {
+    const QImage source = image(300, 200); EditorSession session(document(300, 200)); EditorCanvas canvas(session, source);
+    canvas.resize(520, 440); canvas.show(); canvas.activateWindow(); QTest::qWait(10);
+    canvas.clearFocus(); canvas.viewport()->update(); const QImage unfocused = canvas.viewport()->grab().toImage().convertToFormat(QImage::Format_Grayscale8);
+    canvas.setFocus(); QTRY_VERIFY(canvas.hasFocus()); canvas.viewport()->update(); const QImage focused = canvas.viewport()->grab().toImage().convertToFormat(QImage::Format_Grayscale8);
+    int strong = 0, edge = 0;
+    for (int x = 0; x < focused.width(); ++x) for (int y : {1, 2, focused.height() - 2, focused.height() - 3}) { ++edge; strong += std::abs(qGray(focused.pixel(x, y)) - qGray(unfocused.pixel(x, y))) >= 40; }
+    QVERIFY2(strong * 2 >= edge / 2, qPrintable(QString("%1 of %2 focus-edge samples differ").arg(strong).arg(edge)));
+  }
+
+  // Every tool is a named, checkable native control, and a keyboard user can
+  // cancel a live gesture of every tool with Escape.
+  void everyToolHasAnAccessibleControlAndEscapeCancelsItsLiveGesture_data() {
+    QTest::addColumn<QString>("id");
+    for (const auto &tool : contractTools()) QTest::newRow(qPrintable(tool.id)) << tool.id;
+  }
+  void everyToolHasAnAccessibleControlAndEscapeCancelsItsLiveGesture() {
+    QFETCH(QString, id);
+    const QImage source = image(); EditorSession session(document()); EditorCanvas canvas(session, source);
+    canvas.resize(820, 640); canvas.show(); QTest::qWait(10); canvas.resetZoom();
+    const auto actions = annotationToolActions(canvas, &canvas); QAction *action = toolAction(actions, id); QVERIFY(action);
+    QToolBar bar; bar.addAction(action); bar.show();
+    auto *button = qobject_cast<QToolButton *>(bar.widgetForAction(action)); QVERIFY(button);
+    auto *accessible = QAccessible::queryAccessibleInterface(button); QVERIFY(accessible);
+    QCOMPARE(normalized(accessible->text(QAccessible::Name)), id.toLower());
+    QTest::mouseClick(button, Qt::LeftButton); QVERIFY(action->isChecked()); QVERIFY(accessible->state().checked);
+    QVERIFY(!accessible->text(QAccessible::Description).isEmpty() || !action->toolTip().isEmpty());
+    if (id == u"Select") return;  // nothing to draw: selection gestures are covered by the move and resize tests
+    QSignalSpy cropped(&canvas, &EditorCanvas::cropRequested), cut(&canvas, &EditorCanvas::cutOutRequested);
+    const QPoint a = canvas.viewState().toView({100, 100}).toPoint(), b = canvas.viewState().toView({300, 250}).toPoint();
+    canvas.setFocus(); QTest::mousePress(canvas.viewport(), Qt::LeftButton, {}, a); QTest::mouseMove(canvas.viewport(), (a + b) / 2);
+    QVERIFY(canvas.interactionActive());
+    QTest::keyClick(&canvas, Qt::Key_Escape); QVERIFY(!canvas.interactionActive());
+    QTest::mouseRelease(canvas.viewport(), Qt::LeftButton, {}, b);
+    QVERIFY(session.document().annotations.empty()); QCOMPARE(session.undoCount(), 0); QVERIFY(!session.dirty());
+    QCOMPARE(cropped.count() + cut.count(), 0); QVERIFY(!canvas.findChild<TextContentDialog *>()); QVERIFY(!canvas.findChild<ImageInsertDialog *>());
+    QVERIFY(action->isChecked());  // cancelling a gesture leaves the tool selected
   }
 };
 

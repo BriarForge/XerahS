@@ -203,3 +203,16 @@ an annotation: undo removes it, redo restores identical pixels, and the source
 pixels are never rewritten. `AnnotationToolMatrixTest` checks the algorithm
 against an independent model for non-uniform rings, canvas-edge clipping, the
 empty ring, determinism, undo and redo.
+
+## Non-colour cues (EA-018)
+
+Selection is drawn as a 2 px white underlay with a dashed highlight line over
+it, so it reads as a dash pattern and by luminance without relying on hue. The
+eight resize handles are 8 px white squares with a black outline, distinct from
+mid-gray, light and dark images alike. The focused canvas draws a highlight
+frame. Escape cancels a live gesture of every tool. `AnnotationToolMatrixTest`
+converts rendered frames to grayscale and measures the outline's dash pattern,
+all eight handles and the focus frame as luminance contrast against the same
+frame without them, for fourteen object types including the redaction and
+effect regions; it also checks each tool's accessible name and checked state and
+that Escape cancels a live gesture for all 19 gesture tools.
