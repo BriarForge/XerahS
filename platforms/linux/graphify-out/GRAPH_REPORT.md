@@ -1,17 +1,17 @@
 # Graph Report - linux  (2026-11-04)
 
 ## Corpus Check
-- 687 files · ~745,044 words
+- 687 files · ~745,149 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 9 file(s) not represented in the graph (top: .sxcu 5, (none) 1, .desktop 1)
 
 ## Summary
-- 15487 nodes · 39972 edges · 536 communities (451 shown, 85 thin omitted)
+- 15487 nodes · 39977 edges · 536 communities (450 shown, 86 thin omitted)
 - Extraction: 85% EXTRACTED · 15% INFERRED · 0% AMBIGUOUS · INFERRED: 6011 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `dfccbd39`
+- Built from commit: `05bd627c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -576,7 +576,7 @@
 ## Hyperedges (group relationships)
 - **Historical candidate checkpoint series** — platforms_linux_linux_qt_contract_audit_historical_annotation_and_output_checkpoints, platforms_linux_linux_qt_contract_audit_historical_owned_worker_checkpoints, platforms_linux_linux_qt_contract_audit_historical_saved_workflows, platforms_linux_linux_qt_contract_audit_historical_cli_shortcuts_and_discovery, platforms_linux_linux_qt_contract_audit_historical_execution_identity, platforms_linux_linux_qt_contract_audit_historical_measured_audit_and_qt_baseline [EXTRACTED 1.00]
 
-## Communities (536 total, 85 thin omitted)
+## Communities (536 total, 86 thin omitted)
 
 ### Community 0 - "ConfigurationPaths"
 Cohesion: 0.22
@@ -599,8 +599,8 @@ Cohesion: 0.03
 Nodes (83): add(), registerMoreAdjustmentEffects(), add(), registerDrawingEffects(), Category, Adjustments, Drawings, Filters (+75 more)
 
 ### Community 5 - "xerahs"
-Cohesion: 0.04
-Nodes (36): QAction, QScreen, QMenu, QWidget, AppContext, AppContext, ApplicationWindow, QMenu (+28 more)
+Cohesion: 0.03
+Nodes (40): QAction, QScreen, QObject, QMenu, QWidget, AppContext, AppContext, ApplicationWindow (+32 more)
 
 ### Community 6 - "CaptureController"
 Cohesion: 0.03
@@ -759,8 +759,8 @@ Cohesion: 0.05
 Nodes (53): Document generation guard, Capture workflow storage, Frozen workflow definition, Remaining scope and next feature, Saved capture workflows — native candidate evidence, Saved region profiles, Storage and compatibility boundary, User behavior (+45 more)
 
 ### Community 45 - "NativeEditorPreferences.h"
-Cohesion: 0.10
-Nodes (16): QWidget, QWidget, QMainWindow, QWidget, QWindow, QMenu, QWidget, editor-window-test (+8 more)
+Cohesion: 0.09
+Nodes (15): QWidget, QWidget, QWindow, QMenu, QWidget, editor-window-test, native-desktop-appearance-test, native-editor-appearance-test (+7 more)
 
 ### Community 46 - "ImageInsertDialog"
 Cohesion: 0.05
@@ -1326,10 +1326,6 @@ Nodes (8): QListWidgetItem, captureHistoryItems(), CaptureHistoryWindowTest, fin
 Cohesion: 0.14
 Nodes (5): bytes(), edited(), EditorSaveTest, pixels(), write()
 
-### Community 189 - "IconConverterDialog.cpp"
-Cohesion: 0.09
-Nodes (4): QObject, acceptLocalFiles(), localFilePaths(), denied()
-
 ### Community 190 - "button"
 Cohesion: 0.11
 Nodes (18): algorithmChoiceSelectsTheAlgorithm(), button(), cancelAnswersAnInFlightReadWithoutADigest(), closingWhileHashingStopsTheRead(), compareAcceptsCaseAndSurroundingSpaces(), computeShowsTheDigest(), computingWithoutAFileDoesNothing(), copyPutsTheDigestOnTheClipboard() (+10 more)
@@ -1620,7 +1616,7 @@ Nodes (23): describe(), RecordingDevices, RecordingDevices::create(), GstElement
 
 ### Community 264 - "qtest"
 Cohesion: 0.05
-Nodes (14): QWidget, CaptureAnnotationDialog::closeEvent(), QWidget, QWidget, QrCodeDialog::QrCodeDialog(), QCloseEvent, WatchFolderService, atomic() (+6 more)
+Nodes (13): QWidget, CaptureAnnotationDialog::closeEvent(), QWidget, QWidget, QrCodeDialog::QrCodeDialog(), QCloseEvent, WatchFolderService, atomic() (+5 more)
 
 ### Community 265 - "Native screenshot transport and capture qualification"
 Cohesion: 0.11
@@ -2385,12 +2381,12 @@ Nodes (4): PreferenceRange, integer, maximum, minimum
 ## Knowledge Gaps
 - **4042 isolated node(s):** `public`, `m_choices`, `m_selected`, `m_selector`, `m_error` (+4037 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 6723 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **85 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **86 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `xerahs_core` connect `Native Linux CMake build` to `xerahs_core`, `xerahs`, `Codec`, `planRetainedCaptureRetry`, `Argb`, `PreparedUploadRequest`, `actionSelectionChoices`, `RectangleAnnotation`, `CounterStore.cpp`, `ScrollStitch.cpp`, `ColorFormats.cpp`, `ToolbarPreferences.cpp`, `FileHash.cpp`, `EditorPreferences.cpp`, `ExpansionContext`, `UploadDestination`, `AnnotationDocument.h`, `AppearancePalette`, `WatchFolders.cpp`, `NativeEditorPreferences.h`, `AnnotationDocument.cpp`, `CredentialResult`, `MoveGesture`, `FilenameGenerator.cpp`, `Session`, `IconConverterDialog.cpp`, `apply`, `ActivationProtocol.cpp`, `EditorViewport`, `encodeQr`, `ApplicationSettingsTest`, `PipelineJournal.cpp`, `PipelineResult`, `runPipeline`, `WorkflowExecution.cpp`, `CaptureSchedule`, `EditorSession`, `ComparisonLayout`, `workflows/CaptureWorkflows.cpp`, `WorkflowShortcutPlan`, `RegionSession`, `RasterSaveOptions`, `PhysicalRect`, `VideoConversion.cpp`, `SxcuImport.cpp`, `RecentImages`, `DestinationCatalog`, `WorkflowStoragePath.h`, `ActivationRequest`, `ApplicationSettingsTest`?**
+- **Why does `xerahs_core` connect `Native Linux CMake build` to `xerahs_core`, `xerahs`, `Codec`, `planRetainedCaptureRetry`, `Argb`, `PreparedUploadRequest`, `actionSelectionChoices`, `RectangleAnnotation`, `CounterStore.cpp`, `ScrollStitch.cpp`, `ColorFormats.cpp`, `ToolbarPreferences.cpp`, `FileHash.cpp`, `EditorPreferences.cpp`, `ExpansionContext`, `UploadDestination`, `AnnotationDocument.h`, `AppearancePalette`, `WatchFolders.cpp`, `NativeEditorPreferences.h`, `AnnotationDocument.cpp`, `CredentialResult`, `MoveGesture`, `FilenameGenerator.cpp`, `Session`, `apply`, `ActivationProtocol.cpp`, `EditorViewport`, `encodeQr`, `ApplicationSettingsTest`, `PipelineJournal.cpp`, `PipelineResult`, `runPipeline`, `WorkflowExecution.cpp`, `CaptureSchedule`, `EditorSession`, `ComparisonLayout`, `workflows/CaptureWorkflows.cpp`, `WorkflowShortcutPlan`, `RegionSession`, `RasterSaveOptions`, `PhysicalRect`, `VideoConversion.cpp`, `SxcuImport.cpp`, `RecentImages`, `DestinationCatalog`, `WorkflowStoragePath.h`, `ActivationRequest`, `ApplicationSettingsTest`?**
   _High betweenness centrality (0.081) - this node is a cross-community bridge._
 - **Are the 9 inferred relationships involving `ParamValues` (e.g. with `deserializeParameters()` and `.handComputedPixels()`) actually correct?**
   _`ParamValues` has 9 INFERRED edges - model-reasoned connections that need verification._
