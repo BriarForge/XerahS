@@ -206,6 +206,7 @@ private slots:
       QVERIFY(!surface.contains("PRIVATE")); QVERIFY(!surface.contains("SECRET")); QVERIFY(!surface.contains("token"));
       QVERIFY(!surface.contains(result->file->path)); QVERIFY(!surface.contains("iVBOR"));
     }
+  }
   void screenshotColorPickerUsesPermissionPortalAndExplicitSampling() {
     QTemporaryDir dir; const auto path = fixtureImage(dir, QSize(40,30));
     FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
