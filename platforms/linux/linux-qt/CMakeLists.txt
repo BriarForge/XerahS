@@ -1310,9 +1310,10 @@ add_test(NAME qr-code-dialog COMMAND qr-code-dialog-test)
 set_tests_properties(qr-code-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 
 # CORE-009: pseudo-locale text expansion and missing-translation fallback on a translated window.
-add_executable(localization-expansion-test tests/LocalizationExpansionTest.cpp)
+add_executable(localization-expansion-test tests/LocalizationExpansionTest.cpp
+  app/XdgAutostart.cpp app/SettingsDialog.cpp)
 set_target_properties(localization-expansion-test PROPERTIES AUTOMOC ON)
-target_link_libraries(localization-expansion-test PRIVATE xerahs_qr_code Qt6::Test)
+target_link_libraries(localization-expansion-test PRIVATE xerahs_qr_code xerahs_workflow_shortcuts xerahs_recording_devices Qt6::Test)
 add_test(NAME localization-expansion COMMAND localization-expansion-test)
 set_tests_properties(localization-expansion PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 

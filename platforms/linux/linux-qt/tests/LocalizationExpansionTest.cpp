@@ -1,13 +1,18 @@
 // CORE-009: a pseudo-locale that lengthens every translated string by 40% neither clips controls nor
 // overflows the screen, and a string missing from the translation falls back to its source text.
 #include "QrCodeDialog.h"
+#include "SettingsDialog.h"
+#include "settings/ApplicationSettings.h"
+#include "workflows/WorkflowShortcuts.h"
 
 #include <QAbstractButton>
 #include <QApplication>
+#include <QCheckBox>
 #include <QFontMetrics>
 #include <QLabel>
 #include <QScreen>
 #include <QSet>
+#include <QTemporaryDir>
 #include <QTest>
 #include <QTranslator>
 
@@ -78,6 +83,41 @@ private slots:
     QApplication::removeTranslator(&pseudo);
     QrCodeDialog plain;
     QCOMPARE(plain.windowTitle(), QStringLiteral("QR Code"));
+  }
+
+  void preferencesDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      QTemporaryDir dir;
+      QVERIFY(dir.isValid());
+      xerahs::settings::ApplicationSettingsStore store(dir.filePath("ApplicationSettings.json"), dir.path());
+      xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; });
+      xerahs::app::SettingsDialog dialog(store, dir.path(), {}, shortcuts, [] {});
+      dialog.show();
+      int checked = 0;
+      for (auto *button : dialog.findChildren<QAbstractButton *>()) {
+        if (button->text().isEmpty()) continue;
+        QVERIFY2(button->text().contains(QChar(0x2022)), qPrintable(button->text()));
+        ++checked;
+      }
+      for (auto *label : dialog.findChildren<QLabel *>()) {
+        if (label->text().isEmpty()) continue;
+        // The import report counts machine dispositions; it is a diagnostic, not translatable prose.
+        if (label->objectName() == QLatin1String("settingsImportReport")) continue;
+        QVERIFY2(label->text().contains(QChar(0x2022)), qPrintable(label->text()));
+        ++checked;
+      }
+      QVERIFY(checked >= 15);
+      bool sawSound = false;
+      for (auto *box : dialog.findChildren<QCheckBox *>()) {
+        if (!box->accessibleName().startsWith(QLatin1String("Play capture sound"))) continue;
+        QVERIFY2(box->accessibleName().contains(QChar(0x2022)), qPrintable(box->accessibleName()));
+        sawSound = true;
+      }
+      QVERIFY(sawSound);
+    }
+    QApplication::removeTranslator(&pseudo);
   }
 };
 
