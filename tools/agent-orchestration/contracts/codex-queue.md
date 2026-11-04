@@ -10,7 +10,8 @@ pushes your work later. **You never push.**
   Never touch `/home/mike/Work/BriarForge/XerahS` itself or any other worktree (`claude`, `minimax`, ...).
 - Paths below are relative to `platforms/linux/linux-qt/` unless they start with `/` or with `tools/`/`product-contract/`
   (those are relative to the worktree root).
-- Log file (create if missing): `/home/mike/Work/BriarForge/XerahS/worktrees/.codex-state/queue-log.md`.
+- Log file (create if missing): `/home/mike/Work/BriarForge/XerahS/worktrees/codex-stores/.codex-queue-log.md`
+  (inside the workspace so the sandbox can write it; git ignores it through `.git/info/exclude`; never commit it).
 - Read once per run, before the first slice: `AGENTS.md`, `platforms/AGENTS.md`, `platforms/linux/AGENTS.md`,
   `platforms/linux/linux-qt/README.md`, and `tools/agent-orchestration/implementer-brief.md` (the shared engineering
   rules; they apply to every slice below, except where this file says otherwise).
