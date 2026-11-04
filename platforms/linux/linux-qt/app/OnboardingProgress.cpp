@@ -1,12 +1,16 @@
 // CORE-008: onboarding progress store.
 #include "OnboardingProgress.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QJsonArray>
 #include <QStandardPaths>
 
 namespace xerahs::app {
 namespace {
+
+// CORE-009: the progress store has no Q_OBJECT class, so it names its own translation context.
+QString text(const char *source) { return QCoreApplication::translate("OnboardingProgress", source); }
 
 storage::StoreOptions options() {
   storage::StoreOptions o;
@@ -35,12 +39,12 @@ const QStringList &onboardingPages() {
 }
 
 QString onboardingDiagnosticMessage(const QString &code) {
-  if (code == u"onboarding-store-newer") return QStringLiteral("The setup guide progress file was written by a newer XerahS. It was left untouched and this guide starts fresh without saving progress.");
-  if (code == u"onboarding-store-invalid") return QStringLiteral("The setup guide progress file is unreadable. It was left untouched and this guide starts fresh without saving progress.");
-  if (code == u"onboarding-store-unsafe") return QStringLiteral("The setup guide progress file or its folder is not private to you. It was left untouched and progress is not saved.");
-  if (code == u"onboarding-store-changed") return QStringLiteral("The setup guide progress file changed on disk, so this progress was not saved. Reopen Setup guide to continue.");
-  if (code == u"onboarding-store-busy") return QStringLiteral("The setup guide progress file is in use. This progress was not saved.");
-  return QStringLiteral("The setup guide progress could not be read or saved. Check the XerahS configuration folder.");
+  if (code == u"onboarding-store-newer") return text("The setup guide progress file was written by a newer XerahS. It was left untouched and this guide starts fresh without saving progress.");
+  if (code == u"onboarding-store-invalid") return text("The setup guide progress file is unreadable. It was left untouched and this guide starts fresh without saving progress.");
+  if (code == u"onboarding-store-unsafe") return text("The setup guide progress file or its folder is not private to you. It was left untouched and progress is not saved.");
+  if (code == u"onboarding-store-changed") return text("The setup guide progress file changed on disk, so this progress was not saved. Reopen Setup guide to continue.");
+  if (code == u"onboarding-store-busy") return text("The setup guide progress file is in use. This progress was not saved.");
+  return text("The setup guide progress could not be read or saved. Check the XerahS configuration folder.");
 }
 
 OnboardingStore::OnboardingStore(QString path) : m_file(std::move(path), options()) {}
@@ -97,9 +101,9 @@ bool autoOpenOnboarding(bool interactiveLaunch, const OnboardingLoad &load) {
 }
 
 CommandSpec setupGuideCommand() {
-  return CommandSpec{QStringLiteral("setup-guide"), QStringLiteral("Setup guide…"), CommandGroup::Preferences,
+  return CommandSpec{QStringLiteral("setup-guide"), text("Setup guide…"), CommandGroup::Preferences,
       CommandSurface::Tray | CommandSurface::PreferencesMenu,
-      QStringLiteral("Opens the first-run setup guide: capture permission, save folder, hotkeys, uploads and privacy.")};
+      text("Opens the first-run setup guide: capture permission, save folder, hotkeys, uploads and privacy.")};
 }
 
 }  // namespace xerahs::app

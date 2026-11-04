@@ -20,6 +20,8 @@
 #include "ImageRecognitionDialog.h"
 #include "NativePipelineJournal.h"
 #include "NewImageDialog.h"
+#include "OnboardingProgress.h"
+#include "OnboardingWizard.h"
 #include "PipelineHistoryDialog.h"
 #include "PipelineResultDialog.h"
 #include "QrCodeDialog.h"
@@ -447,6 +449,32 @@ private slots:
       QVERIFY2(offenders.isEmpty(), qPrintable(offenders));
       QVERIFY2(collected.buttons.size() + collected.labels.size() >= 3,
           qPrintable(QString::number(collected.buttons.size() + collected.labels.size())));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void onboardingWizardFirstPageTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      OnboardingWizard wizard(OnboardingPorts{}, OnboardingState{});
+      wizard.show();
+      // The wizard's pages hold runtime data in their tables and preview lines; the prose is translated.
+      const int checked = translatedTexts(wizard, {});
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+      QVERIFY2(wizard.windowTitle().contains(QChar(0x2022)), qPrintable(wizard.windowTitle()));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void onboardingProgressTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      // The progress store explains a diagnostic in prose and keeps the code itself literal.
+      const auto message = onboardingDiagnosticMessage(QStringLiteral("onboarding-store-newer"));
+      QVERIFY2(message.contains(QChar(0x2022)), qPrintable(message));
+      QVERIFY2(message.startsWith("The setup guide progress file"), qPrintable(message));
     }
     QApplication::removeTranslator(&pseudo);
   }
