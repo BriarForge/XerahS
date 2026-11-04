@@ -3,7 +3,9 @@
 // and watch-folders dialogs. Every state is reached through the real widget and
 // must be visible as text (never colour alone) with an accessible cue.
 // States that a surface cannot be in are declared "n/a" with the reason.
+#include "ActionSelectionDialog.h"
 #include "AppearanceDialog.h"
+#include "AutoCaptureDialog.h"
 #include "ApplicationWindow.h"
 #include "CaptureHistoryWindow.h"
 #include "ColorPickerDialog.h"
@@ -30,6 +32,7 @@
 #include "actions/PipelineJournal.h"
 #include "features/ToolsFeature.h"
 #include "media/VideoConversion.h"
+#include "settings/ApplicationSettings.h"
 #include "uploads/CredentialStore.h"
 #include "watch/WatchFolders.h"
 #include <QAccessible>
@@ -38,6 +41,7 @@
 #include <QCheckBox>
 #include <QClipboard>
 #include <QComboBox>
+#include <QDateTimeEdit>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDir>
@@ -54,6 +58,7 @@
 #include <QPointer>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QRadioButton>
 #include <QSlider>
 #include <QSpinBox>
 #include <QStandardItemModel>
@@ -221,6 +226,93 @@ class InterfaceStatesTest final : public QObject {
   }
 private slots:
   void initTestCase() { QVERIFY(dir.isValid()); QAccessible::installUpdateHandler(record); }
+
+  // Auto capture: initial, populated, validation, running, error.
+  // empty: n/a because the dialog always opens with its default source, interval and count.
+  // loading: n/a because the dialog has no background work of its own.
+  // cancelled: n/a because cancelling closes the dialog without a message.
+  // denied: n/a because the dialog asks for no permission.
+  // unavailable: n/a because the dialog has no optional dependency.
+  void autoCaptureDialogStates() {
+    const qint64 now = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
+    {
+      // Without a preferences port the dialog has no bound yet, and says so.
+      AutoCaptureDialog dialog([now] { return now; }, false);
+      dialog.show();
+      auto *status = dialog.findChild<QLabel *>("autoCaptureStatus");
+      auto *source = dialog.findChild<QComboBox *>("autoCaptureSource");
+      auto *interval = dialog.findChild<QSpinBox *>("autoCaptureInterval");
+      auto *start = dialog.findChild<QPushButton *>("autoCaptureStart");
+      auto *countBound = dialog.findChild<QRadioButton *>("autoCaptureCountBound");
+      auto *timeBound = dialog.findChild<QRadioButton *>("autoCaptureTimeBound");
+      auto *end = dialog.findChild<QDateTimeEdit *>("autoCaptureEnd");
+      QVERIFY(status && source && interval && start && countBound && timeBound && end);
+      QVERIFY2(!dialog.windowTitle().trimmed().isEmpty(), "the dialog names its purpose");                              // initial
+      QVERIFY2(source->currentText() == "Full screen", qPrintable(source->currentText()));                             // initial: the default source is shown
+      QCOMPARE(interval->value(), 5);                                                                                // initial
+      QVERIFY2(status->text().contains("Choose a bound"), qPrintable(status->text()));                               // validation: the missing bound is named
+      QVERIFY(!start->isEnabled());
+      countBound->setChecked(true);
+      QVERIFY2(status->text().contains("Ready"), qPrintable(status->text()));                                         // populated: a complete request is ready
+      QVERIFY(start->isEnabled());
+      timeBound->setChecked(true);
+      end->setDateTime(QDateTime::fromMSecsSinceEpoch(now - 3600000));
+      QVERIFY2(status->text().contains("End time must be after"), qPrintable(status->text()));                        // validation: the end time in the past is refused
+      QVERIFY(!start->isEnabled());
+    }
+    {
+      // A store that refuses the write reports it and still lets the capture start.
+      xerahs::settings::CapturePreferencesPort preferences;
+      preferences.values = [] { return QJsonObject{}; };
+      preferences.save = [](const QJsonObject &) { return QStringLiteral("settings-write-failed"); };
+      AutoCaptureDialog dialog([now] { return now; }, false, preferences);
+      dialog.show();
+      auto *status = dialog.findChild<QLabel *>("autoCaptureStatus");
+      QVERIFY(status);
+      QVERIFY2(status->text().contains("Ready"), qPrintable(status->text()));                                         // populated
+      dialog.findChild<QPushButton *>("autoCaptureStart")->click();
+      QVERIFY2(status->text().contains("Could not remember this choice"), qPrintable(status->text()));                 // error: the refused write is named
+      QVERIFY2(status->text().contains("settings-write-failed"), qPrintable(status->text()));
+    }
+    {
+      AutoCaptureDialog running([now] { return now; }, true);
+      running.show();
+      auto *status = running.findChild<QLabel *>("autoCaptureStatus");
+      auto *source = running.findChild<QComboBox *>("autoCaptureSource");
+      QVERIFY(status && source);
+      QVERIFY2(status->text().contains("Automatic capture is running"), qPrintable(status->text()));                    // running
+      QVERIFY(!source->isEnabled());
+    }
+  }
+
+  // Action selection: initial, populated, unavailable, validation.
+  // empty: n/a because the dialog always lists the whole catalogue of actions.
+  // loading: n/a because the dialog has no background work of its own.
+  // error: n/a because the only refusal it can produce is the selection validation, which it reports in the same label.
+  // cancelled: n/a because cancelling closes the dialog without a message.
+  // denied: n/a because the dialog asks for no permission.
+  void actionSelectionDialogStates() {
+    // "image-effects" is a catalogue action this build does not implement, so it is listed but cannot run.
+    ActionSelectionDialog dialog({"save", "image-effects"}, QSize(640, 480));
+    dialog.show();
+    auto *error = dialog.findChild<QLabel *>("captureSelectionError");
+    auto *save = dialog.findChild<QCheckBox *>("capture-action-save");
+    auto *effects = dialog.findChild<QCheckBox *>("capture-action-image-effects");
+    QVERIFY(error && save && effects);
+    QVERIFY2(!dialog.windowTitle().trimmed().isEmpty(), "the dialog names its purpose");                                // initial
+    bool introVisible = false;
+    for (const auto *label : dialog.findChildren<QLabel *>())
+      if (!label->isHidden() && !label->text().trimmed().isEmpty()) { introVisible = true; break; }
+    QVERIFY2(introVisible, "the dialog opens with visible prose");                                                    // initial
+    QVERIFY2(save->isChecked(), "the configured action is already chosen");                                           // populated
+    QVERIFY2(effects->text().contains("unavailable"), qPrintable(effects->text()));                                    // unavailable: the row says so
+    QVERIFY2(!effects->isEnabled(), "an unavailable action cannot be chosen");                                         // unavailable
+    QVERIFY2(effects->accessibleDescription().contains("unavailable"), "the accessible cue names the unavailable action");  // unavailable
+    dialog.findChild<QPushButton *>("runCaptureActions")->click();
+    QVERIFY2(error->text().contains("cannot run"), qPrintable(error->text()));                                         // validation: the selection is refused in words
+    QVERIFY2(error->text().contains("selection-action-unavailable"), qPrintable(error->text()));
+    QVERIFY2(dialog.isVisible(), "the dialog stays open so the choice can be corrected");                              // validation
+  }
 
   // Pipeline history: initial, loading, empty, populated, unavailable, error.
   // validation: n/a because the dialog takes no typed input; it only lists records.
