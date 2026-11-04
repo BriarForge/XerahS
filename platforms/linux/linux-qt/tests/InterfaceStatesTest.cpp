@@ -1,33 +1,47 @@
 // IFCAT-003 state matrix for the main native surfaces: the shell window and the
-// QR, hash, icon and colour dialogs. Every state is reached through the real
-// widget and must be visible as text (never colour alone) with an accessible cue.
+// QR, hash, icon, colour, new-image, URL, recognition, comparison, video-converter
+// and watch-folders dialogs. Every state is reached through the real widget and
+// must be visible as text (never colour alone) with an accessible cue.
 // States that a surface cannot be in are declared "n/a" with the reason.
 #include "ApplicationWindow.h"
 #include "ColorPickerDialog.h"
 #include "CommandRegistry.h"
+#include "FileUploadController.h"
 #include "HashCheckerDialog.h"
 #include "IconConverterDialog.h"
+#include "ImageComparisonDialog.h"
 #include "ImageRecognitionDialog.h"
+#include "NativePipelineJournal.h"
 #include "NewImageDialog.h"
 #include "QrCodeDialog.h"
 #include "UrlOpenDialog.h"
+#include "VideoConverterDialog.h"
+#include "WatchFolderService.h"
+#include "WatchFoldersDialog.h"
 #include "features/ToolsFeature.h"
+#include "media/VideoConversion.h"
+#include "uploads/CredentialStore.h"
+#include "watch/WatchFolders.h"
 #include <QAccessible>
 #include <QBuffer>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
+#include <QDir>
 #include <QFile>
 #include <QImage>
 #include <QLabel>
 #include <QLineEdit>
+#include <QListWidget>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QPlainTextEdit>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QSlider>
 #include <QSpinBox>
+#include <QStandardItemModel>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QThreadPool>
@@ -38,6 +52,7 @@
 #include <cstring>
 #include <stdexcept>
 #include <thread>
+#include <unistd.h>
 
 using namespace xerahs::app;
 
@@ -118,6 +133,33 @@ QByteArray pngBytes() {
   QImage image(2, 2, QImage::Format_ARGB32); image.fill(Qt::blue);
   QBuffer buffer; buffer.open(QIODevice::WriteOnly); image.save(&buffer, "PNG"); return buffer.data();
 }
+
+// The comparison worker blocks here until the test releases it, so the loading
+// and cancelled states are reached deterministically. Only the first load waits.
+struct ComparisonGate { std::atomic<int> calls{0}; std::atomic<bool> entered{false}, released{false}; };
+ComparisonHooks gatedComparisonHooks(const std::shared_ptr<ComparisonGate> &gate) {
+  return {[gate] {
+    if (++gate->calls != 1) return;
+    gate->entered.store(true);
+    while (!gate->released.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }};
+}
+
+// A conversion runner that never reaches GStreamer: the dialog's states are
+// driven entirely by the injected runner.
+class FakeConversionRunner final : public xerahs::media::ConversionRunner {
+public:
+  void start(const xerahs::media::Request &request) override { last = request; ++starts; running = true; }
+  void cancel() override {
+    if (!running) return;
+    ++cancels; running = false;
+    xerahs::media::ConversionResult result; result.outcome = xerahs::media::Outcome::Cancelled;
+    emit finished(result);
+  }
+  bool busy() const override { return running; }
+  void complete(const xerahs::media::ConversionResult &result) { running = false; emit finished(result); }
+  xerahs::media::Request last; int starts = 0, cancels = 0; bool running = false;
+};
 }
 
 class InterfaceStatesTest final : public QObject {
@@ -373,6 +415,215 @@ private slots:
       QVERIFY2(plain.findChild<QLabel *>("recognitionStatus")->text().contains("unavailable"), "the missing scanner is named");
       QVERIFY(!plain.findChild<QPushButton *>("recognitionFile")->isEnabled());
     }
+  }
+  // Comparison: initial, empty, loading, cancelled, populated, validation, failure.
+  // denied: n/a because the dialog asks for no permission; a refused file is a validation error.
+  // unavailable: n/a because the dialog has no optional dependency; its decoder is always built in.
+  // The file pickers are never opened: every load goes through the public loadFile() entry point.
+  void imageComparisonDialogStates() {
+    QImage source(64, 48, QImage::Format_ARGB32); source.fill(Qt::white);
+    const auto gate = std::make_shared<ComparisonGate>();
+    ImageComparisonDialog dialog({}, source, nullptr, gatedComparisonHooks(gate));
+    auto *first = dialog.findChild<QLabel *>("comparisonInput0");
+    auto *second = dialog.findChild<QLabel *>("comparisonInput1");
+    auto *geometry = dialog.findChild<QLabel *>("comparisonGeometry");
+    auto *status = dialog.findChild<QLabel *>("comparisonStatus");
+    auto *progress = dialog.findChild<QProgressBar *>("comparisonProgress");
+    auto *cancel = dialog.findChild<QPushButton *>("cancelComparisonLoad");
+    auto *slider = dialog.findChild<QSlider *>("comparisonDivider");
+    QVERIFY(first && second && geometry && status && progress && cancel && slider);
+    QCOMPARE(first->text(), QString("No image selected"));                                                   // initial / empty
+    QCOMPARE(second->text(), QString("No image selected"));
+    QVERIFY2(geometry->text().contains("must be validated"), qPrintable(geometry->text()));                // empty: it explains itself
+    QVERIFY(status->text().isEmpty());                                                                      // initial: nothing is loading yet
+    dialog.show();
+    QTRY_VERIFY(gate->entered.load());
+    QVERIFY2(status->text().contains("Preparing"), qPrintable(status->text()));                             // loading
+    QVERIFY(progress->isVisible());
+    QVERIFY(cancel->isEnabled());
+    cancel->click();
+    QVERIFY2(status->text().contains("Load cancelled"), qPrintable(status->text()));                         // cancelled
+    QVERIFY(!progress->isVisible());
+    QCOMPARE(first->text(), QString("No image selected"));
+    gate->released.store(true);
+    QVERIFY(QThreadPool::globalInstance()->waitForDone(5000));
+    const auto firstPath = dir.filePath("first.png"), secondPath = dir.filePath("second.png");
+    QImage red(4, 2, QImage::Format_ARGB32); red.fill(Qt::red); QVERIFY(red.save(firstPath));
+    QImage blue(2, 4, QImage::Format_ARGB32); blue.fill(Qt::blue); QVERIFY(blue.save(secondPath));
+    QVERIFY(dialog.loadFile(0, firstPath));
+    QTRY_VERIFY(first->text().contains("first.png"));
+    QVERIFY(dialog.loadFile(1, secondPath));
+    QTRY_VERIFY(slider->isEnabled());                                                                        // populated
+    QVERIFY2(first->text().contains("4 × 2"), qPrintable(first->text()));
+    QVERIFY2(second->text().contains("2 × 4"), qPrintable(second->text()));
+    QVERIFY2(status->text().contains("Move the divider"), qPrintable(status->text()));
+    QVERIFY2(geometry->text().contains("Comparison canvas"), qPrintable(geometry->text()));
+    const auto validatedFirst = first->text(), validatedSecond = second->text();
+    const auto badPath = dir.filePath("bad.png");
+    QFile bad(badPath); QVERIFY(bad.open(QIODevice::WriteOnly)); bad.write("not an image"); bad.close();
+    QVERIFY(dialog.loadFile(0, badPath));
+    QTRY_VERIFY(status->text().contains("not a supported image"));                                           // validation
+    QCOMPARE(first->text(), validatedFirst);
+    QCOMPARE(second->text(), validatedSecond);
+    ImageComparisonDialog broken({}, source, nullptr,
+                                ComparisonHooks{[] { throw std::runtime_error("private comparison detail"); }});
+    broken.show();
+    auto *brokenStatus = broken.findChild<QLabel *>("comparisonStatus");
+    QVERIFY(brokenStatus);
+    QTRY_VERIFY_WITH_TIMEOUT(brokenStatus->text().contains("could not be prepared"), 5000);                  // failure
+    QVERIFY(!brokenStatus->text().contains("private"));
+    QCOMPARE(brokenStatus->textFormat(), Qt::PlainText);
+    QTRY_VERIFY_WITH_TIMEOUT(brokenStatus->accessibleDescription().contains("could not be prepared"), 5000);  // failure: the accessible cue carries it
+  }
+  // Video converter: initial, empty, validation, populated, loading, cancelled, failure, success.
+  // denied: n/a because the dialog asks for no permission.
+  // The unavailable state is reached with media::NoElements, where every codec is refused with
+  // its reason; the conversion states use a fake element set, so no GStreamer element is used.
+  void videoConverterDialogStates() {
+    const auto clip = dir.filePath("clip.mkv");
+    QFile file(clip); QVERIFY(file.open(QIODevice::WriteOnly)); file.write("x"); file.close();
+    xerahs::media::NoElements noElements;
+    VideoConverterDialog unavailable(new FakeConversionRunner, &noElements); unavailable.show();
+    auto *unavailableStatus = unavailable.findChild<QLabel *>("vcStatus");
+    auto *unavailableCodec = unavailable.findChild<QComboBox *>("vcCodec");
+    auto *unavailableModel = qobject_cast<QStandardItemModel *>(unavailableCodec ? unavailableCodec->model() : nullptr);
+    QVERIFY(unavailableStatus && unavailableCodec && unavailableModel);
+    QVERIFY2(unavailableStatus->text().contains("Choose or drop a video"), qPrintable(unavailableStatus->text()));  // initial
+    QVERIFY(unavailable.input().isEmpty());
+    QVERIFY(unavailable.findChild<QLineEdit *>("vcOutput")->text().isEmpty());
+    QVERIFY(!unavailableModel->item(0)->isEnabled());                                                        // dependency unavailable: the codec stays listed but disabled
+    QVERIFY2(unavailableCodec->itemData(0, Qt::ToolTipRole).toString().contains("GStreamer"),
+             qPrintable(unavailableCodec->itemData(0, Qt::ToolTipRole).toString()));
+    unavailable.setInput(clip);
+    unavailable.findChild<QPushButton *>("vcConvert")->click();
+    QVERIFY2(unavailableStatus->text().contains("VC_CODEC_UNAVAILABLE"), qPrintable(unavailableStatus->text()));  // dependency unavailable
+    QVERIFY2(unavailableStatus->text().contains("GStreamer"), qPrintable(unavailableStatus->text()));
+    xerahs::media::SetAvailability availability({"x264enc", "mp4mux"});
+    auto *runner = new FakeConversionRunner;
+    VideoConverterDialog dialog(runner, &availability); dialog.show();
+    auto *status = dialog.findChild<QLabel *>("vcStatus");
+    auto *output = dialog.findChild<QLineEdit *>("vcOutput");
+    auto *convert = dialog.findChild<QPushButton *>("vcConvert");
+    auto *cancel = dialog.findChild<QPushButton *>("vcCancel");
+    auto *show = dialog.findChild<QPushButton *>("vcShow");
+    auto *progress = dialog.findChild<QProgressBar *>("vcProgress");
+    QVERIFY(status && output && convert && cancel && show && progress);
+    QVERIFY2(status->text().contains("Choose or drop a video"), qPrintable(status->text()));                  // initial
+    QVERIFY(dialog.input().isEmpty());
+    QVERIFY(output->text().isEmpty());
+    convert->click();
+    QVERIFY2(status->text().contains("VC_EMPTY_INPUT"), qPrintable(status->text()));                         // empty / validation: no input is named
+    QCOMPARE(runner->starts, 0);
+    dialog.setInput(clip);
+    QVERIFY2(status->text().contains("Ready to convert"), qPrintable(status->text()));                       // populated
+    QVERIFY2(output->text().endsWith("clip-converted.mp4"), qPrintable(output->text()));
+    output->setText(clip);
+    convert->click();
+    QVERIFY2(status->text().contains("VC_OUTPUT_IS_INPUT"), qPrintable(status->text()));                      // validation
+    QCOMPARE(runner->starts, 0);
+    output->setText(dir.filePath("out.mp4"));
+    convert->click();
+    QCOMPARE(runner->starts, 1);
+    QVERIFY(dialog.busy());
+    QVERIFY2(status->text().contains("Converting"), qPrintable(status->text()));                              // loading
+    QVERIFY(progress->isVisible());
+    QVERIFY(!convert->isEnabled());
+    QVERIFY(cancel->isEnabled());
+    emit runner->progress(37);
+    QTRY_COMPARE(progress->value(), 37);
+    cancel->click();
+    QVERIFY2(status->text().contains("Cancelled"), qPrintable(status->text()));                               // cancelled
+    QVERIFY(!dialog.busy());
+    convert->click();
+    xerahs::media::ConversionResult failed; failed.outcome = xerahs::media::Outcome::Failed;
+    failed.error = xerahs::media::ErrorCode::PipelineFailed; failed.message = "boom";
+    runner->complete(failed);
+    QVERIFY2(status->text().contains("VC_PIPELINE_FAILED"), qPrintable(status->text()));                      // failure
+    QVERIFY2(status->text().contains("boom"), qPrintable(status->text()));
+    QTRY_VERIFY(status->accessibleDescription().contains("VC_PIPELINE_FAILED"));                               // failure: the accessible cue carries it
+    convert->click();
+    xerahs::media::ConversionResult served; served.outcome = xerahs::media::Outcome::Success;
+    served.outputPath = output->text();
+    runner->complete(served);
+    QVERIFY2(status->text().contains("Saved"), qPrintable(status->text()));                                   // populated: the result is named
+    QCOMPARE(progress->value(), 100);
+    QVERIFY(show->isVisibleTo(&dialog));
+    dialog.setFolderOpener([](const QString &) { return false; });
+    show->click();
+    QVERIFY2(status->text().contains("No file manager"), qPrintable(status->text()));                          // failure: the folder cannot be shown
+  }
+  // Watch folders: initial, empty, validation, error, denied, populated.
+  // loading: n/a because the dialog applies rules synchronously and reports the outcome in the same label.
+  // cancelled: n/a because the dialog has no long-running operation to cancel.
+  // unavailable: n/a because the dialog has no optional dependency; a broken store is reported as an error.
+  // The folder picker is never opened: every rule is typed into the path field.
+  void watchFoldersDialogStates() {
+    const auto captures = dir.filePath("captures");
+    QVERIFY(QDir().mkpath(captures));
+    xerahs::watch::WatchFolders store(dir.filePath("watch-store"));
+    QVERIFY(store.loadError().isEmpty());
+    auto credentials = std::make_shared<xerahs::uploads::MemoryCredentialStore>();
+    auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("history"));
+    FileUploadPorts ports; ports.catalogPath = dir.filePath("destinations.json");
+    ports.credentials = credentials; ports.history = journal;
+    FileUploadController uploads(ports);
+    WatchFolderService service(store, uploads, [&] { return captures; });
+    WatchFoldersDialog dialog(service); dialog.show();
+    auto *list = dialog.findChild<QListWidget *>("watchFolders");
+    auto *error = dialog.findChild<QLabel *>("watchError");
+    auto *path = dialog.findChild<QLineEdit *>("watchPath");
+    auto *filters = dialog.findChild<QLineEdit *>("watchFilters");
+    auto *add = dialog.findChild<QPushButton *>("addWatchFolder");
+    QVERIFY(list && error && path && filters && add);
+    QString description;
+    for (auto *label : dialog.findChildren<QLabel *>())
+      if (label->text().startsWith("New matching files are processed")) description = label->text();
+    QVERIFY2(!description.isEmpty(), "the dialog explains what watching does in words");                       // initial
+    QCOMPARE(list->count(), 0);                                                                              // empty
+    QVERIFY(error->text().isEmpty());
+    const auto watched = dir.filePath("watched");
+    QVERIFY(QDir().mkpath(watched));
+    path->setText(watched);
+    filters->setText("");
+    lastAlert = QAccessible::InvalidEvent;
+    add->click();
+    QCOMPARE(error->text(), QString("watch-filter-required"));                                               // validation: a filter is required
+    QTRY_COMPARE(lastAlert, QAccessible::Alert);                                                            // validation: the error raises an accessible alert
+    filters->setText("sub/*.png");
+    add->click();
+    QCOMPARE(error->text(), QString("watch-filter-invalid"));                                               // validation: a filter may not cross folders
+    filters->setText("*.png");
+    path->setText(dir.filePath("missing"));
+    add->click();
+    QCOMPARE(error->text(), QString("watch-directory-required"));                                           // error: the folder does not exist
+    path->setText(captures);
+    add->click();
+    QCOMPARE(error->text(), QString("watch-capture-loop"));                                                 // error: the captures folder may not be watched
+    const auto denied = dir.filePath("denied");
+    QVERIFY(QDir().mkpath(denied));
+    QVERIFY(QFile::setPermissions(denied, QFile::ExeOwner));
+    if (geteuid() == 0) {
+      // denied: n/a because the process is root and bypasses the directory permission bits
+    } else {
+      path->setText(denied);
+      add->click();
+      QCOMPARE(error->text(), QString("watch-directory-denied"));                                           // denied: the folder may not be read
+    }
+    QFile::setPermissions(denied, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
+    path->setText(watched);
+    add->click();
+    QVERIFY(error->text().isEmpty());
+    QCOMPARE(list->count(), 1);                                                                             // populated
+    QVERIFY2(list->item(0)->text().contains("watched"), qPrintable(list->item(0)->text()));
+    QVERIFY2(list->item(0)->text().contains("Upload"), qPrintable(list->item(0)->text()));
+    const auto second = dir.filePath("watched-two");
+    QVERIFY(QDir().mkpath(second));
+    QVERIFY(QDir(watched).removeRecursively());
+    path->setText(second);
+    add->click();
+    QVERIFY(error->text().isEmpty());
+    QCOMPARE(list->count(), 2);
+    QVERIFY2(list->item(0)->text().contains("folder missing"), qPrintable(list->item(0)->text()));            // error: a missing folder stays visible
   }
 };
 QTEST_MAIN(InterfaceStatesTest)
