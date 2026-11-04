@@ -14,6 +14,7 @@
 #include "QrCodeDialog.h"
 #include "RectanglePropertiesDialog.h"
 #include "SettingsDialog.h"
+#include "TextContentDialog.h"
 #include "UploadDestinationsDialog.h"
 #include "UrlOpenDialog.h"
 #include "VideoConverterDialog.h"
@@ -393,6 +394,27 @@ private slots:
       const int checked = translatedTexts(dialog, {});
       QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
       QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void textContentDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      xerahs::editor::RectangleAnnotation text;
+      text.content.type = xerahs::editor::shape::text;
+      TextContentDialog textDialog(text, nullptr);
+      xerahs::editor::RectangleAnnotation balloon;
+      balloon.content.type = xerahs::editor::shape::speechBalloon;
+      TextContentDialog balloonDialog(balloon, nullptr);
+      // The font, size and colour fields hold runtime values; only the prose is translated.
+      const int textChecked = translatedTexts(textDialog, {});
+      const int balloonChecked = translatedTexts(balloonDialog, {});
+      QVERIFY2(textChecked >= 3, qPrintable(QString::number(textChecked)));
+      QVERIFY2(balloonChecked >= 3, qPrintable(QString::number(balloonChecked)));
+      QVERIFY2(textDialog.windowTitle().contains(QChar(0x2022)), qPrintable(textDialog.windowTitle()));
+      QVERIFY2(balloonDialog.windowTitle().contains(QChar(0x2022)), qPrintable(balloonDialog.windowTitle()));
     }
     QApplication::removeTranslator(&pseudo);
   }
