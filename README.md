@@ -19,7 +19,7 @@ Recorded implementation coverage as of 2026-11-04, from the
 
 | OS | Implementation coverage | Current status |
 |---|---:|---|
-| [Linux](platforms/linux/PROGRESS.md) | **53.4%** — 173 / 324 desktop requirements | Native Qt application in development; 125 requirements partial and 26 not started. |
+| [Linux](platforms/linux/PROGRESS.md) | **61.7%** — 200 / 324 desktop requirements | Native Qt application in development; 102 requirements partial and 22 not started. |
 | [Windows](platforms/windows/PROGRESS.md) | **0.0%** — 0 / 324 desktop requirements | Native application not started; requirement implementation unassessed. |
 | [macOS](platforms/macos/PROGRESS.md) | **0.0%** — 0 / 324 desktop requirements | Native application not started; requirement implementation unassessed. |
 | [Android](platforms/android/README.md) | Not yet assessed | Native application not started; mobile scope tracked separately. |
@@ -37,6 +37,12 @@ The Product Contract is version 0.3.1 with lifecycle `draft`. Its
 platform reports track native implementation. See
 [native implementation readiness](product-contract/READINESS.md) for sequencing
 and acceptance gates. Update this snapshot when regenerating platform progress.
+
+Linux work is orchestrated across several coding agents; the launchers, the
+integration gate (rebuild and full test suite before every push) and the shared
+implementer brief are in [tools/agent-orchestration](tools/agent-orchestration/README.md).
+Open Linux work and the decisions waiting for the product owner are tracked in the
+[production backlog](platforms/linux/linux-qt/PRODUCTION-BACKLOG.md).
 
 ## Architecture
 
