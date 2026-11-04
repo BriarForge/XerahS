@@ -72,6 +72,8 @@ PresetDialog::PresetDialog(editor::AnnotationDocument document, QImage source, E
   auto *buttons = new QDialogButtonBox(QDialogButtonBox::Apply | QDialogButtonBox::Cancel, this);
   m_apply = buttons->button(QDialogButtonBox::Apply); m_apply->setEnabled(false);
   m_export = buttons->addButton(tr("Export preset…"), QDialogButtonBox::ActionRole); m_export->setEnabled(false); m_export->setObjectName("presetExport");
+  // Apply is the default (as in the Effects dialog); the secondary Export action never becomes the Enter target.
+  m_export->setAutoDefault(false); m_apply->setDefault(true);
   connect(m_apply, &QPushButton::clicked, this, &PresetDialog::accept);
   connect(buttons, &QDialogButtonBox::rejected, this, &PresetDialog::reject);
   connect(m_export, &QPushButton::clicked, this, &PresetDialog::exportFile); layout->addWidget(buttons);

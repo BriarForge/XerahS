@@ -2,16 +2,24 @@
 // expose a safe default and a cancel action, restore focus on close, and never
 // hide a destructive consequence behind generic confirmation text.
 #include "ColorPickerDialog.h"
+#include "EffectsDialog.h"
+#include "FileUploadController.h"
 #include "HashCheckerDialog.h"
 #include "IconConverterDialog.h"
 #include "ImageComparisonDialog.h"
 #include "ImageInsertDialog.h"
 #include "ImageRecognitionDialog.h"
 #include "NewImageDialog.h"
+#include "PresetDialog.h"
 #include "UrlOpenDialog.h"
 #include "QrCodeDialog.h"
 #include "UploadDestinationsDialog.h"
+#include "VideoConverterDialog.h"
+#include "WatchFolderService.h"
+#include "WatchFoldersDialog.h"
 #include "image-editor/AnnotationDocument.h"
+#include "media/VideoConversion.h"
+#include "watch/WatchFolders.h"
 #include <QApplication>
 #include <QDialogButtonBox>
 #include <QDirIterator>
@@ -21,18 +29,28 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QRegularExpression>
+#include <QTemporaryDir>
 #include <QTest>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <functional>
+#include <memory>
 
 using namespace xerahs::app;
 
 namespace {
 bool safeLabel(const QString &text) {
-  static const QRegularExpression destructive(R"(delete|remove|clear|discard|forget|reset|overwrite|replace|erase)", QRegularExpression::CaseInsensitiveOption);
+  static const QRegularExpression destructive(R"(\b(delete|remove|clear|discard|forget|reset|overwrite|replace|erase)\b)", QRegularExpression::CaseInsensitiveOption);
   return !destructive.match(text).hasMatch();
 }
+
+// A runner that never converts: the modal contract must not depend on an encoder.
+class IdleRunner final : public xerahs::media::ConversionRunner {
+public:
+  void start(const xerahs::media::Request &) override {}
+  void cancel() override {}
+  bool busy() const override { return false; }
+};
 }
 
 class ModalDialogsTest final : public QObject {
@@ -91,15 +109,33 @@ private slots:
     QTest::addColumn<int>("which");
     QTest::newRow("qr-code") << 0; QTest::newRow("color-picker") << 1; QTest::newRow("hash-checker") << 2; QTest::newRow("icon-converter") << 3; QTest::newRow("new-image") << 4; QTest::newRow("url-open") << 5;
     QTest::newRow("image-insert") << 6; QTest::newRow("scan-qr") << 7; QTest::newRow("recognize-text") << 8; QTest::newRow("image-comparison") << 9;
+    QTest::newRow("watch-folders") << 10; QTest::newRow("video-converter") << 11; QTest::newRow("effects") << 12; QTest::newRow("presets") << 13;
   }
   void modalDialogsTrapFocusOnlyWhileActiveIdentifyPurposeEscapeAndRestoreFocus() {
     QFETCH(int, which); Host host; QVERIFY(host.focusOnEdit());
     QImage comparisonImage(64, 48, QImage::Format_ARGB32); comparisonImage.fill(Qt::white);
+    // Rows 10..13 take injected ports. These helpers must outlive the dialog.
+    QTemporaryDir dir;
+    QImage sourceImage(64, 48, QImage::Format_ARGB32); sourceImage.fill(Qt::white);
+    xerahs::editor::AnnotationDocument sourceDocument;
+    auto credentials = std::make_shared<xerahs::uploads::MemoryCredentialStore>();
+    auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("history"));
+    xerahs::watch::WatchFolders watchStore(dir.filePath("watch"));
+    FileUploadPorts uploadPorts; uploadPorts.catalogPath = dir.filePath("destinations.json");
+    uploadPorts.credentials = credentials; uploadPorts.history = journal;
+    FileUploadController uploads(uploadPorts);
+    WatchFolderService watcher(watchStore, uploads, [&] { return dir.filePath("captures"); });
+    xerahs::media::NoElements availability;
+    auto registry = std::make_shared<xerahs::effects::EffectRegistry>(xerahs::effects::builtinEffects());
     QDialog *dialog = which == 0 ? static_cast<QDialog *>(new QrCodeDialog(&host.window)) : which == 1 ? static_cast<QDialog *>(new ColorPickerDialog(&host.window))
         : which == 2 ? static_cast<QDialog *>(new HashCheckerDialog(&host.window)) : which == 3 ? static_cast<QDialog *>(new IconConverterDialog(&host.window))
         : which == 4 ? static_cast<QDialog *>(new NewImageDialog(&host.window)) : which == 5 ? static_cast<QDialog *>(new UrlOpenDialog(&host.window))
         : which == 6 ? static_cast<QDialog *>(new ImageInsertDialog(&host.window)) : which == 7 ? static_cast<QDialog *>(new ImageRecognitionDialog(ImageRecognitionKind::QrCode, &host.window))
-        : which == 8 ? static_cast<QDialog *>(new ImageRecognitionDialog(ImageRecognitionKind::Text, &host.window)) : static_cast<QDialog *>(new ImageComparisonDialog(xerahs::editor::AnnotationDocument{}, comparisonImage, &host.window));
+        : which == 8 ? static_cast<QDialog *>(new ImageRecognitionDialog(ImageRecognitionKind::Text, &host.window)) : which == 9 ? static_cast<QDialog *>(new ImageComparisonDialog(xerahs::editor::AnnotationDocument{}, comparisonImage, &host.window))
+        : which == 10 ? static_cast<QDialog *>(new WatchFoldersDialog(watcher, &host.window))
+        : which == 11 ? static_cast<QDialog *>(new VideoConverterDialog(new IdleRunner, &availability, &host.window))
+        : which == 12 ? static_cast<QDialog *>(new EffectsDialog(sourceDocument, sourceImage, [](PreparedCanvasEdit) { return false; }, &host.window, dir.filePath("effects.json")))
+        : static_cast<QDialog *>(new PresetDialog(sourceDocument, sourceImage, [](PreparedCanvasEdit) { return false; }, registry, &host.window));
     QVERIFY(!QApplication::activeModalWidget());  // No trap before it opens.
     dialog->setModal(true); dialog->open();
     QTRY_VERIFY(dialog->isVisible()); QCOMPARE(QApplication::activeModalWidget(), dialog);

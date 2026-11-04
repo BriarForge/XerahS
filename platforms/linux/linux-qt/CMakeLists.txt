@@ -1006,7 +1006,7 @@ add_executable(modal-dialogs-test tests/ModalDialogsTest.cpp app/NewImageDialog.
                app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h)
 set_target_properties(modal-dialogs-test PROPERTIES AUTOMOC ON)
 target_compile_definitions(modal-dialogs-test PRIVATE XERAHS_APP_DIR="${CMAKE_CURRENT_SOURCE_DIR}/app")
-target_link_libraries(modal-dialogs-test PRIVATE xerahs_upload_destinations xerahs_qr_code xerahs_color_picker xerahs_hash_checker xerahs_icon_converter xerahs_url_open xerahs_editor_codecs xerahs_editor_canvas xerahs_image_recognition Qt6::Test)
+target_link_libraries(modal-dialogs-test PRIVATE xerahs_upload_destinations xerahs_qr_code xerahs_color_picker xerahs_hash_checker xerahs_icon_converter xerahs_url_open xerahs_editor_codecs xerahs_editor_canvas xerahs_image_recognition xerahs_watch_folders xerahs_video_converter_ui xerahs_editor_source Qt6::Test)
 add_test(NAME modal-dialogs COMMAND modal-dialogs-test)
 set_tests_properties(modal-dialogs PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 60)
 add_executable(upload-destinations-dialog-test tests/UploadDestinationsDialogTest.cpp)
