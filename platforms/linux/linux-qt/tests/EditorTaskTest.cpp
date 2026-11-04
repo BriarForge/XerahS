@@ -146,6 +146,18 @@ private slots:
     QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_VERIFY(task()); task()->accept(); QTRY_COMPARE(done.count(), 1);
     QCOMPARE(copies, 0); QCOMPARE(receipt(done)->workingMedia, pixels());
   }
+  void enterContinuesTheTaskWhenNothingIsSelected() {
+    QTemporaryDir dir; int copies = 0; CaptureActionPorts ports;
+    ports.clipboard = [&](const QImage &, const CancellationToken &) { ++copies; return ActionOutcome{}; };
+    CapturePipeline pipeline(pixels(), dir.path(), "none", {"annotation"}, nullptr, ports);
+    QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_VERIFY(task());
+    auto *continueButton = task()->findChild<QPushButton *>("applyCaptureAnnotation"); QVERIFY(continueButton); QVERIFY(continueButton->isDefault());
+    auto *canvas = task()->findChild<xerahs::app::EditorCanvas *>(); QVERIFY(canvas);
+    canvas->setFocus();
+    QTest::keyClick(canvas, Qt::Key_Return);
+    QTRY_COMPARE(done.count(), 1);
+    QCOMPARE(copies, 0); QCOMPARE(receipt(done)->workingMedia, pixels());
+  }
 };
 QTEST_MAIN(EditorTaskTest)
 #include "EditorTaskTest.moc"

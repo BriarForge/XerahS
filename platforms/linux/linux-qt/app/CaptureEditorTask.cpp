@@ -22,6 +22,9 @@ void CaptureAnnotationDialog::enableTaskMode(const xerahs::editor::EditorConveni
   guardEditorShutdown(*this);
   findChild<QLabel *>("captureAnnotationIntro")->setText("Continue sends one rendered image to the remaining capture actions. Cancel stops the task without saving, copying or uploading. Dirty close always offers Save, Discard and Cancel.");
   findChild<QPushButton *>("applyCaptureAnnotation")->setText("Continue");
+  // shortcut-catalog Enter (confirm-crop-or-continue-task): in task mode Continue is the default button.
+  if (auto *buttons = findChild<QDialogButtonBox *>()) buttons->button(QDialogButtonBox::Cancel)->setDefault(false);
+  auto *continueButton = findChild<QPushButton *>("applyCaptureAnnotation"); continueButton->setAutoDefault(true); continueButton->setDefault(true);
   // Fit runs after layout has a viewport. No document/history changes.
   if (preferences.zoomToFit) QTimer::singleShot(0, m_canvas, &EditorCanvas::zoomToFit);
 }
