@@ -7,6 +7,7 @@
 #include "CaptureSaveAsDialog.h"
 #include "CanvasCropDialog.h"
 #include "CanvasRotationDialog.h"
+#include "CaptureHistoryWindow.h"
 #include "ColorPickerDialog.h"
 #include "ConveniencePreferencesDialog.h"
 #include "DrawingDefaultsDialog.h"
@@ -85,7 +86,7 @@ public:
 
 // Counts the button and label texts that carry the pseudo-locale marker, and reports the first one that
 // does not. Skipped object names hold runtime data (a size in pixels), not prose.
-int translatedTexts(QDialog &dialog, const QStringList &runtimeData) {
+int translatedTexts(QWidget &dialog, const QStringList &runtimeData) {
   const auto skipped = [&runtimeData](const QString &name) {
     for (const auto &prefix : runtimeData)
       if (name.startsWith(prefix)) return true;
@@ -446,6 +447,22 @@ private slots:
       QVERIFY2(offenders.isEmpty(), qPrintable(offenders));
       QVERIFY2(collected.buttons.size() + collected.labels.size() >= 3,
           qPrintable(QString::number(collected.buttons.size() + collected.labels.size())));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void captureHistoryWindowTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      QTemporaryDir dir;
+      QVERIFY(dir.isValid());
+      auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("history"));
+      CaptureHistoryWindow window(journal, [] { return false; }, [](const QString &, QWidget *) {});
+      // The file names, sizes and dates in the list hold runtime values; the buttons and the status are prose.
+      const int checked = translatedTexts(window, {});
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+      QVERIFY2(window.windowTitle().contains(QChar(0x2022)), qPrintable(window.windowTitle()));
     }
     QApplication::removeTranslator(&pseudo);
   }
