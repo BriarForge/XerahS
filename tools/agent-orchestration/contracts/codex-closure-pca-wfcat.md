@@ -1,0 +1,15 @@
+# Contract: close post-capture and workflow rows (PCA-008, 011, 012, 013, 014, 015; WFCAT-012, 013, 016, 017)
+
+Worktree: /home/mike/Work/BriarForge/XerahS/worktrees/codex-stores (detached at origin/main). Shared files get minimal, localized edits. For each row: read the full requirement bullet (POST-CAPTURE-ACTIONS-001 / WORKFLOW-CATALOG-001 SPEC.md), list its clauses, map each clause to a named passing test (read the test body), close only the real gaps, and promote the row to implemented when every clause is proven (append "Audit 2026-11-04: ..." naming the tests; audit.classification implemented; coverage "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification."). One row at a time, so a usage-limit stop leaves complete rows. Physical/desktop/human qualification is NOT a blocker (same as every implemented row).
+
+Known gaps to check first:
+- PCA-015: prove two concurrent pipelines isolate working media, settings snapshots, cancellation, filename counters, temporary files and results by task ID (one test running two CapturePipeline instances with interleaved actions; cancel one; assert the other is unaffected).
+- PCA-013: a privacy sweep: run pipelines whose clipboard/OCR/upload paths carry sentinel secrets/recognized text/credentials and assert none appear in journal records, execution history, notifications, logs (qInstallMessageHandler) or result dialogs; every user-visible error carries a stable code.
+- PCA-011/012: confirm retry targets only failed/dependency-skipped actions plus prerequisites, links to the original result, survives restart, distinguishes interrupted from failed, and never claims an upload failed when its remote outcome is unknown.
+- PCA-008, PCA-014: verify and promote if proven.
+- WFCAT-012: Aoife's decision under Mike's similar-apps rule: Abort discards the partial recording (ShareX and OBS-style "abort" semantics), Stop finalizes, encoder failure preserves a recoverable partial file when one exists. Write this declaration into the recording documentation next to the recording code (the CORE-017 "declare ... abort ... behavior" clause) and cite it in WFCAT-012; prove each with tests.
+- WFCAT-013: add tests that authority-expanding application-control actions (e.g. enabling global hotkeys, changing upload destinations, exit with running work) require destructive/explicit confirmation and that agent/headless entry points cannot perform them without the presentation-required result.
+- WFCAT-016: workflow presets do not exist. If the requirement only demands presets where they exist, record that and prove the definition clauses; otherwise report it as the remaining gap.
+- WFCAT-017: extend the four-surface terminal observation (log, history, notification, progress) to recording runs; a partial-failure notification must not claim completion.
+
+Unspecified semantics: follow the reference XerahS app (read-only /home/mike/Work/ShareX/XerahS), else ShareX/Flameshot/Greenshot majority; one-line rationale in the row note. List any test you could not run in the sandbox by exact name.
