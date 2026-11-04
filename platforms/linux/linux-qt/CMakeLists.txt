@@ -1318,6 +1318,7 @@ add_executable(localization-expansion-test tests/LocalizationExpansionTest.cpp
   app/ConveniencePreferencesDialog.cpp app/ConveniencePreferencesDialog.h
   app/AutoCaptureDialog.cpp app/AutoCaptureDialog.h
   app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h
+  app/CapturePermissionHelp.cpp app/CapturePermissionHelp.h
   app/CanvasRotationDialog.cpp app/CanvasRotationDialog.h
   app/NativeEditorAppearance.cpp app/NativeEditorAppearance.h
   app/NativeDesktopAppearance.cpp app/NativeDesktopAppearance.h

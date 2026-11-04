@@ -3,11 +3,14 @@
 #include "AppearanceDialog.h"
 #include "ActionSelectionDialog.h"
 #include "AutoCaptureDialog.h"
+#include "CapturePermissionHelp.h"
+#include "CaptureSaveAsDialog.h"
 #include "CanvasCropDialog.h"
 #include "CanvasRotationDialog.h"
 #include "ColorPickerDialog.h"
 #include "ConveniencePreferencesDialog.h"
 #include "DrawingDefaultsDialog.h"
+#include "EditorSaveDialog.h"
 #include "FileUploadController.h"
 #include "HashCheckerDialog.h"
 #include "IconConverterDialog.h"
@@ -37,9 +40,11 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QDialog>
+#include <QFile>
 #include <QFontMetrics>
 #include <QImage>
 #include <QLabel>
+#include <QScopedPointer>
 #include <QScreen>
 #include <QSet>
 #include <QSet>
@@ -437,6 +442,61 @@ private slots:
       QVERIFY2(offenders.isEmpty(), qPrintable(offenders));
       QVERIFY2(collected.buttons.size() + collected.labels.size() >= 3,
           qPrintable(QString::number(collected.buttons.size() + collected.labels.size())));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void captureSaveAsDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      QTemporaryDir dir;
+      QVERIFY(dir.isValid());
+      CaptureSaveAsDialog dialog(dir.path());
+      // The chosen path is runtime data; the guidance text and the picker captions are prose.
+      const int checked = translatedTexts(dialog, {});
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+      QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void editorSaveDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      QTemporaryDir dir;
+      QVERIFY(dir.isValid());
+      EditorSaveDialog dialog(dir.filePath("capture.png"));
+      // The chosen path and the quality value are runtime data; the option labels are prose.
+      const int checked = translatedTexts(dialog, {});
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+      QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void capturePermissionHelpTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      QTemporaryDir dir;
+      QVERIFY(dir.isValid());
+      // A stand-in settings program, so the dialog offers its Open Settings action.
+      QFile settings(dir.filePath("gnome-control-center"));
+      QVERIFY(settings.open(QIODevice::WriteOnly));
+      settings.close();
+      QVERIFY(settings.setPermissions(QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner));
+      CapturePermissionHelpPorts ports;
+      ports.searchPath = [&] { return QStringList{dir.path()}; };
+      ports.desktop = [] { return QStringLiteral("GNOME"); };
+      ports.launch = [](const QString &, const QStringList &) { return true; };
+      QScopedPointer<QDialog> dialog(makeCapturePermissionHelp(nullptr, ports));
+      QVERIFY(dialog);
+      // The settings program name is a product name; the guidance text and the button are prose.
+      const int checked = translatedTexts(*dialog, {});
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+      QVERIFY2(dialog->windowTitle().contains(QChar(0x2022)), qPrintable(dialog->windowTitle()));
     }
     QApplication::removeTranslator(&pseudo);
   }
