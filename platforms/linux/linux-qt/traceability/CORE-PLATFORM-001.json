@@ -599,7 +599,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "The private native launch protocol has version/UUID correlation, kernel peer authentication, bounded intake/concurrency, redacted failures and limited receipt replay. This candidate is not an approved shared CLI/MCP API. Full shared operations, progress/cancellation, consent, assistant/shell/watch-folder coverage and human review remain Required. Native --run-workflow accepts a full UUID; --json returns a versioned admission/delivery acknowledgement, not terminal workflow success or pipeline identity. --non-interactive refuses graphical operations before GUI/election/preferences/portal. Discovery, wait/cancel/progress/result linkage and approved shared CLI/MCP semantics remain Required. An explicit GlobalShortcuts portal session offers only supported saved UUID/name pairs. Unique-owner/session/request correlation, accepted-subset checks, no preferred keys, explicit disable/cancel/reconfigure, bounded deadlines and fail-closed owner/session loss are native candidate behavior. This adds no consent bypass, shell key grabs or compositor writes; all broader automation and human review remain Required. --list-workflows now exposes a versioned read-only saved-definition query through QtCore before GUI, instance election or desktop-service connections; --non-interactive permits it and plain help is headless. Runtime readiness/consent/busy state is explicitly not queried. The activation protocol and execution authority are unchanged; task/result correlation and full shared CLI/MCP coverage remain Required.",
+      "note": "Audit 2026-11-05: C07 closes the unambiguous internal launch-protocol audit without approving shared CLI/MCP/assistant authority. Versioning and operation round-trip: ActivationProtocolTest::validRequestsRetainExactPathsAndIndependentOperationNames now includes region recording; futureVersionsAreDistinctAndTheByteBoundaryIsInclusive/malformedDataCannotManufactureAuthority reject unsupported versions, duplicate keys, unknown authority fields, invalid IDs and oversized/ambiguous requests. repliesRequireCorrelationAndOnlyPublishStableErrors/authenticationRequiresAnActualMatchingKernelUser prove correlated allowlisted errors and peer identity. NativeInstanceTest::simultaneousProcessesElectOnlyOneOwner/forwardsToOneRealProcessWithoutReplacingItsSocket prove real-process single-instance behavior; intakeDeadlineFreesCapacityWithoutAcceptingIncompleteWork/partialMalformedOversizedAndMultipleFramesNeverDispatch prove bounded intake and client capacity; maximumRequestBoundaryAndDuplicateReceiptsUseProductionValidation/busyRetryDoesNotCacheAnOperationThatNeverStarted prove bounded idempotent receipt handling without treating busy as execution. peerAuthenticationPrecedesSendingPrivatePayload/deniedIncomingCredentialsCannotReachAdmission exercise kernel-identity boundaries; actualApplicationForwardsBeforeOpeningPreferencesOrDesktopServices and missingOrUntrustedAcknowledgementsNeverElectOrResend prove no second instance or blind resend after uncertain delivery. ActivationProtocolTest::workflowAdmissionFreezesSettingsAndReservesBeforePreparation preserves the frozen definition and modal/busy boundary. CliContractTest::environmentCannotSelectOperationOrOutputMode/redactionHoldsInEveryCliModeEvenWithDiagnosticSettings and ErrorPresentationTest::producersAcceptExactlyTheTableCodesAndLaunchResultsKeepTheCorrelationId prove real CLI stable errors, stream redaction, consent refusal and no environment-selected capture. Internal --list-workflows and --workflow-result are versioned read-only definition/observation queries; launch acknowledgements do not claim completed outputs. Four affected suites pass with real isolated process/socket fixtures. Remaining: approved shared operations and authority across MCP/assistant/shell/watch-folder surfaces, full progress/wait/cancel protocol and associated human consent/security review. Those boundaries are Never decide items and remain partial; this audit adds no operation, permission bypass or public protocol approval.",
       "evidence": [
         "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
         "platforms/linux/linux-qt/app/NativeInstance.cpp",
@@ -612,13 +612,15 @@
         "platforms/linux/linux-qt/app/WORKFLOW-SHORTCUTS.md",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-DISCOVERY.md",
-        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/CliContractTest.cpp",
+        "platforms/linux/linux-qt/tests/ErrorPresentationTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 109,
         "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "reviewed_at_revision": "1009cc9"
       }
     },
     "CORE-025": {
