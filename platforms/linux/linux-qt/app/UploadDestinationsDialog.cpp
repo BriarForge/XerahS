@@ -4,6 +4,7 @@
 #include "DestinationConnectionTest.h"
 #include <QCloseEvent>
 
+#include <QCoreApplication>
 #include <QDialogButtonBox>
 #include <QFile>
 #include <QFileDialog>
@@ -26,81 +27,84 @@ constexpr qint64 kMaxSxcuBytes = 1024 * 1024;
 
 QString statusText(CredentialStatus status) {
   switch (status) {
-  case CredentialStatus::Ok: return QStringLiteral("stored");
-  case CredentialStatus::NotFound: return QStringLiteral("missing, set it before uploading");
-  case CredentialStatus::Denied: return QStringLiteral("keyring locked or access refused");
-  case CredentialStatus::Unavailable: return QStringLiteral("no keyring service available");
+  case CredentialStatus::Ok: return QCoreApplication::translate("UploadDestinationsDialog", "stored");
+  case CredentialStatus::NotFound: return QCoreApplication::translate("UploadDestinationsDialog", "missing, set it before uploading");
+  case CredentialStatus::Denied: return QCoreApplication::translate("UploadDestinationsDialog", "keyring locked or access refused");
+  case CredentialStatus::Unavailable: return QCoreApplication::translate("UploadDestinationsDialog", "no keyring service available");
   }
   return {};
 }
 
 QString codeText(const QString &code, const QString &secretName = {}) {
   if (code == QStringLiteral("secret-store-failed"))
-    return QStringLiteral("The secret \"%1\" could not be saved to the keyring, so the destination was not added.").arg(secretName);
-  if (code == QStringLiteral("catalog-changed-reopen")) return QStringLiteral("Destinations were changed elsewhere. Close and reopen this window.");
-  if (code == QStringLiteral("catalog-read-only")) return QStringLiteral("The destinations file could not be read, so it will not be changed.");
-  if (code == QStringLiteral("secrets-not-removed")) return QStringLiteral("The destination was removed, but its secrets could not be deleted from the keyring.");
-  if (code == QStringLiteral("invalid-json")) return QStringLiteral("This is not a valid custom uploader file.");
-  if (code == QStringLiteral("too-large")) return QStringLiteral("This file is too large to be a custom uploader.");
-  return QStringLiteral("The change failed (%1).").arg(code);
+    return QCoreApplication::translate("UploadDestinationsDialog", "The secret \"%1\" could not be saved to the keyring, so the destination was not added.").arg(secretName);
+  if (code == QStringLiteral("catalog-changed-reopen")) return QCoreApplication::translate("UploadDestinationsDialog", "Destinations were changed elsewhere. Close and reopen this window.");
+  if (code == QStringLiteral("catalog-read-only")) return QCoreApplication::translate("UploadDestinationsDialog", "The destinations file could not be read, so it will not be changed.");
+  if (code == QStringLiteral("secrets-not-removed")) return QCoreApplication::translate("UploadDestinationsDialog", "The destination was removed, but its secrets could not be deleted from the keyring.");
+  if (code == QStringLiteral("invalid-json")) return QCoreApplication::translate("UploadDestinationsDialog", "This is not a valid custom uploader file.");
+  if (code == QStringLiteral("too-large")) return QCoreApplication::translate("UploadDestinationsDialog", "This file is too large to be a custom uploader.");
+  return QCoreApplication::translate("UploadDestinationsDialog", "The change failed (%1).").arg(code);
 }
 }  // namespace
 
 UploadDestinationsPorts nativeUploadDestinationsPorts() {
   UploadDestinationsPorts ports;
   ports.chooseSxcu = [](QWidget *parent) {
-    return QFileDialog::getOpenFileName(parent, QStringLiteral("Import custom uploader"), {}, QStringLiteral("Custom uploaders (*.sxcu *.json)"));
+    return QFileDialog::getOpenFileName(parent, QCoreApplication::translate("UploadDestinationsDialog", "Import custom uploader"), {},
+                                       QCoreApplication::translate("UploadDestinationsDialog", "Custom uploaders (*.sxcu *.json)"));
   };
   ports.askSecret = [](QWidget *parent, const QString &name) -> std::optional<QString> {
     bool ok = false;
-    const auto value = QInputDialog::getText(parent, QStringLiteral("Set secret"), QStringLiteral("Value for \"%1\":").arg(name), QLineEdit::Password, {}, &ok);
+    const auto value = QInputDialog::getText(parent, QCoreApplication::translate("UploadDestinationsDialog", "Set secret"),
+                                             QCoreApplication::translate("UploadDestinationsDialog", "Value for \"%1\":").arg(name),
+                                             QLineEdit::Password, {}, &ok);
     if (!ok) return std::nullopt;
     return value;
   };
   ports.confirmDefault = [](QWidget *parent, const QString &name) {
-    return QMessageBox::question(parent, QStringLiteral("Change upload destination"),
-        QStringLiteral("Use \"%1\" for future uploads? Only explicitly requested uploads will be sent.").arg(name),
+    return QMessageBox::question(parent, QCoreApplication::translate("UploadDestinationsDialog", "Change upload destination"),
+        QCoreApplication::translate("UploadDestinationsDialog", "Use \"%1\" for future uploads? Only explicitly requested uploads will be sent.").arg(name),
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes;
   };
   ports.confirmRemove = [](QWidget *parent, const QString &name) {
-    return QMessageBox::question(parent, QStringLiteral("Remove destination"),
-                                 QStringLiteral("Remove \"%1\" and delete its secrets from the keyring?").arg(name),
+    return QMessageBox::question(parent, QCoreApplication::translate("UploadDestinationsDialog", "Remove destination"),
+                                 QCoreApplication::translate("UploadDestinationsDialog", "Remove \"%1\" and delete its secrets from the keyring?").arg(name),
                                  QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes;
   };
-  ports.report = [](QWidget *parent, const QString &message) { QMessageBox::warning(parent, QStringLiteral("Upload destinations"), message); };
+  ports.report = [](QWidget *parent, const QString &message) { QMessageBox::warning(parent, QCoreApplication::translate("UploadDestinationsDialog", "Upload destinations"), message); };
   return ports;
 }
 
 UploadDestinationsDialog::UploadDestinationsDialog(DestinationCatalog &catalog, uploads::CredentialStore &credentials,
                                                    UploadDestinationsPorts ports, QWidget *parent)
     : QDialog(parent), m_catalog(catalog), m_credentials(credentials), m_ports(std::move(ports)) {
-  new NativeAccessibility(*this, "Manage destinations and keyring references. Connection tests are explicit and cancellable. Close cancels a running connection test.", true);
-  setWindowTitle(QStringLiteral("Upload destinations"));
+  new NativeAccessibility(*this, tr("Manage destinations and keyring references. Connection tests are explicit and cancellable. Close cancels a running connection test."), true);
+  setWindowTitle(tr("Upload destinations"));
   m_list = new QListWidget(this);
-  m_list->setAccessibleName(QStringLiteral("Destinations"));
+  m_list->setAccessibleName(tr("Destinations"));
   m_details = new QLabel(this);
   m_details->setWordWrap(true);
   m_details->setTextInteractionFlags(Qt::TextSelectableByMouse);
   m_secrets = new QListWidget(this);
-  m_secrets->setAccessibleName(QStringLiteral("Secrets"));
-  m_import = new QPushButton(QStringLiteral("&Import .sxcu…"), this);
-  m_default = new QPushButton(QStringLiteral("Make &default"), this);
-  m_secret = new QPushButton(QStringLiteral("Set &secret…"), this);
-  m_remove = new QPushButton(QStringLiteral("&Remove"), this);
-  m_test = new QPushButton(QStringLiteral("&Test connection"), this);
-  m_test->setObjectName("testDestinationConnection"); m_test->setAccessibleName("Test destination connection");
-  m_test->setAccessibleDescription("Explicitly sends a HEAD request with destination credentials, without capture content. Upload permission is not verified.");
-  m_cancelTest = new QPushButton(QStringLiteral("Cancel test"), this);
-  m_cancelTest->setObjectName("cancelDestinationConnection"); m_cancelTest->setAccessibleName("Cancel connection test");
+  m_secrets->setAccessibleName(tr("Secrets"));
+  m_import = new QPushButton(tr("&Import .sxcu…"), this);
+  m_default = new QPushButton(tr("Make &default"), this);
+  m_secret = new QPushButton(tr("Set &secret…"), this);
+  m_remove = new QPushButton(tr("&Remove"), this);
+  m_test = new QPushButton(tr("&Test connection"), this);
+  m_test->setObjectName("testDestinationConnection"); m_test->setAccessibleName(tr("Test destination connection"));
+  m_test->setAccessibleDescription(tr("Explicitly sends a HEAD request with destination credentials, without capture content. Upload permission is not verified."));
+  m_cancelTest = new QPushButton(tr("Cancel test"), this);
+  m_cancelTest->setObjectName("cancelDestinationConnection"); m_cancelTest->setAccessibleName(tr("Cancel connection test"));
   m_cancelTest->setEnabled(false);
-  m_testStatus = new QLabel("Connection tests send an explicit HEAD request with destination credentials. No capture content is sent; upload permission is not verified.", this);
-  m_testStatus->setObjectName("destinationConnectionStatus"); m_testStatus->setAccessibleName("Destination connection test status");
+  m_testStatus = new QLabel(tr("Connection tests send an explicit HEAD request with destination credentials. No capture content is sent; upload permission is not verified."), this);
+  m_testStatus->setObjectName("destinationConnectionStatus"); m_testStatus->setAccessibleName(tr("Destination connection test status"));
   m_testStatus->setWordWrap(true); m_testStatus->setTextFormat(Qt::PlainText);
   auto *close = new QDialogButtonBox(QDialogButtonBox::Close, this);
 
   auto *side = new QVBoxLayout;
   side->addWidget(m_details);
-  side->addWidget(new QLabel(QStringLiteral("Secrets:"), this));
+  side->addWidget(new QLabel(tr("Secrets:"), this));
   side->addWidget(m_secrets);
   auto *columns = new QHBoxLayout;
   columns->addWidget(m_list, 1);
@@ -113,7 +117,7 @@ UploadDestinationsDialog::UploadDestinationsDialog(DestinationCatalog &catalog, 
   layout->addLayout(columns);
   m_importReport = new QLabel(this); m_importReport->setObjectName(QStringLiteral("destinationImportReport"));
   m_importReport->setTextFormat(Qt::PlainText); m_importReport->setWordWrap(true);
-  m_importReport->setAccessibleName(QStringLiteral("Destination import report")); layout->addWidget(m_importReport);
+  m_importReport->setAccessibleName(tr("Destination import report")); layout->addWidget(m_importReport);
   layout->addLayout(buttons);
   auto *testButtons = new QHBoxLayout; testButtons->addWidget(m_test); testButtons->addWidget(m_cancelTest); testButtons->addStretch();
   layout->addLayout(testButtons); layout->addWidget(m_testStatus);
@@ -148,8 +152,8 @@ void UploadDestinationsDialog::refresh(const QUuid &select) {
   int row = 0;
   for (const auto &entry : m_catalog.entries()) {
     auto label = entry.destination.name;
-    if (entry.destination.id == m_catalog.defaultId()) label += QStringLiteral(" (default)");
-    if (!entry.problems.isEmpty()) label += QStringLiteral(" (cannot upload)");
+    if (entry.destination.id == m_catalog.defaultId()) label += tr(" (default)");
+    if (!entry.problems.isEmpty()) label += tr(" (cannot upload)");
     auto *item = new QListWidgetItem(label, m_list);
     item->setData(Qt::UserRole, entry.destination.id.toString(QUuid::WithoutBraces));
     if (entry.destination.id == keep) row = m_list->count() - 1;
@@ -163,21 +167,21 @@ void UploadDestinationsDialog::showSelected() {
   const auto destination = m_catalog.find(selectedId());
   updateButtons();
   QStringList recovery;
-  if (!m_catalog.loadCode().isEmpty()) recovery << QStringLiteral("%1: Saved destinations are unavailable. Restore a compatible file and reopen this window; the original is kept.").arg(m_catalog.loadCode());
-  if (m_catalog.unreadableCount()) recovery << QStringLiteral("%1 unreadable or duplicate-ID entries are preserved without being used. Repair the saved file to recover them.").arg(m_catalog.unreadableCount());
-  if (!m_catalog.entries().isEmpty() && m_catalog.defaultId().isNull()) recovery << QStringLiteral("The default destination is missing. Select a destination and choose Make default.");
+  if (!m_catalog.loadCode().isEmpty()) recovery << tr("%1: Saved destinations are unavailable. Restore a compatible file and reopen this window; the original is kept.").arg(m_catalog.loadCode());
+  if (m_catalog.unreadableCount()) recovery << tr("%1 unreadable or duplicate-ID entries are preserved without being used. Repair the saved file to recover them.").arg(m_catalog.unreadableCount());
+  if (!m_catalog.entries().isEmpty() && m_catalog.defaultId().isNull()) recovery << tr("The default destination is missing. Select a destination and choose Make default.");
   if (!destination) {
     if (!recovery.isEmpty()) { m_details->setText(recovery.join('\n')); return; }
-    m_details->setText(m_catalog.entries().isEmpty() ? QStringLiteral("No destinations yet. Import a ShareX custom uploader (.sxcu) to add one.") : QString());
+    m_details->setText(m_catalog.entries().isEmpty() ? tr("No destinations yet. Import a ShareX custom uploader (.sxcu) to add one.") : QString());
     return;
   }
   QStringList lines = recovery;
-  lines << QStringLiteral("%1 %2").arg(uploads::requestMethodString(destination->method), destination->requestUrl) << QStringLiteral("Body: %1").arg(uploads::bodyTypeString(destination->body));
+  lines << tr("%1 %2").arg(uploads::requestMethodString(destination->method), destination->requestUrl) << tr("Body: %1").arg(uploads::bodyTypeString(destination->body));
   if (const auto problems = uploads::validateDestination(*destination); !problems.isEmpty())
-    lines << QStringLiteral("Cannot upload: %1").arg(problems.join(QStringLiteral(", ")));
+    lines << tr("Cannot upload: %1").arg(problems.join(QStringLiteral(", ")));
   m_details->setText(lines.join('\n'));
   for (const auto &name : DestinationCatalog::secretNames(*destination)) {
-    auto *item = new QListWidgetItem(QStringLiteral("%1: checking…").arg(name), m_secrets);
+    auto *item = new QListWidgetItem(tr("%1: checking…").arg(name), m_secrets);
     item->setData(Qt::UserRole, name);
   }
   if (m_secrets->count() > 0) m_secrets->setCurrentRow(0);
@@ -200,7 +204,7 @@ void UploadDestinationsDialog::checkSecrets() {
         const auto statuses = result.toList();
         if (selectedId() == id && m_secrets->count() == names.size())
           for (int i = 0; i < names.size(); ++i)
-            m_secrets->item(i)->setText(QStringLiteral("%1: %2").arg(names.at(i), statusText(CredentialStatus(statuses.value(i).toInt()))));
+            m_secrets->item(i)->setText(tr("%1: %2").arg(names.at(i), statusText(CredentialStatus(statuses.value(i).toInt()))));
         emit secretsChecked();
       });
 }
@@ -211,7 +215,7 @@ void UploadDestinationsDialog::importFile(const QString &path) {
   if (!file.open(QIODevice::ReadOnly)) {
     compatibility::ImportReport report; report.add(compatibility::ImportDisposition::Rejected);
     m_importReport->setText(report.summary());
-    m_ports.report(this, QStringLiteral("The file could not be opened.\n") + report.summary()); return;
+    m_ports.report(this, tr("The file could not be opened.\n") + report.summary()); return;
   }
   const auto import = uploads::importSxcu(file.read(kMaxSxcuBytes + 1));
   m_importReport->setText(import.report.summary());
@@ -253,7 +257,7 @@ void UploadDestinationsDialog::setSecret(const QString &name) {
                     [this, name](const QVariant &result) {
                       const auto status = CredentialStatus(result.toInt());
                       if (status != CredentialStatus::Ok)
-                        m_ports.report(this, QStringLiteral("The secret \"%1\" was not saved: %2.").arg(name, statusText(status)));
+                        m_ports.report(this, tr("The secret \"%1\" was not saved: %2.").arg(name, statusText(status)));
                       showSelected();
                     });
 }
@@ -302,7 +306,7 @@ void UploadDestinationsDialog::testConnection() {
   const auto destination = m_catalog.find(selectedId()); if (!destination) return;
   m_testing = true; const auto generation = ++m_testGeneration;
   m_list->setEnabled(false); updateButtons();
-  m_testStatus->setText("Preparing connection test… Cancel stops the test before any further network action.");
+  m_testStatus->setText(tr("Preparing connection test… Cancel stops the test before any further network action."));
   m_testStatus->setAccessibleDescription(m_testStatus->text());
   const QPointer<UploadDestinationsDialog> owner(this); emit busyChanged(true); if (!owner) return;
   auto *credentials = &m_credentials;
@@ -322,7 +326,7 @@ void UploadDestinationsDialog::testConnection() {
           test->deleteLater();
           if (generation == m_testGeneration) finishConnectionTest(code);
         });
-        m_testStatus->setText("Testing destination connection… No capture content is being sent. Cancel is available.");
+        m_testStatus->setText(tr("Testing destination connection… No capture content is being sent. Cancel is available."));
         m_testStatus->setAccessibleDescription(m_testStatus->text());
         test->start(*prepared.request);
       });
@@ -337,11 +341,11 @@ void UploadDestinationsDialog::cancelConnectionTest() {
 }
 void UploadDestinationsDialog::finishConnectionTest(const QString &code) {
   m_testing = false; m_list->setEnabled(!m_busy); updateButtons();
-  const auto explanation = code == "connection-test-succeeded" ? "Endpoint accepted HEAD. Upload permission is not verified." :
-      code == "connection-test-cancelled" ? "Connection test cancelled." :
-      code == "connection-test-unsupported" ? "Endpoint does not support HEAD. No upload was attempted." :
-      code == "connection-test-redirect-refused" ? "Endpoint redirected. Credentials were not forwarded; check the configured endpoint." :
-      "Connection test failed. Check the endpoint, credentials and service availability before testing again.";
+  const auto explanation = code == "connection-test-succeeded" ? tr("Endpoint accepted HEAD. Upload permission is not verified.") :
+      code == "connection-test-cancelled" ? tr("Connection test cancelled.") :
+      code == "connection-test-unsupported" ? tr("Endpoint does not support HEAD. No upload was attempted.") :
+      code == "connection-test-redirect-refused" ? tr("Endpoint redirected. Credentials were not forwarded; check the configured endpoint.") :
+      tr("Connection test failed. Check the endpoint, credentials and service availability before testing again.");
   m_testStatus->setText(code + ": " + explanation); m_testStatus->setAccessibleDescription(m_testStatus->text());
   emit busyChanged(m_busy);
 }

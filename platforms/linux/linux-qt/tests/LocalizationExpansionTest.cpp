@@ -2,6 +2,7 @@
 // overflows the screen, and a string missing from the translation falls back to its source text.
 #include "QrCodeDialog.h"
 #include "SettingsDialog.h"
+#include "UploadDestinationsDialog.h"
 #include "settings/ApplicationSettings.h"
 #include "workflows/WorkflowShortcuts.h"
 
@@ -116,6 +117,37 @@ private slots:
         sawSound = true;
       }
       QVERIFY(sawSound);
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void uploadDestinationsDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      QTemporaryDir dir;
+      QVERIFY(dir.isValid());
+      xerahs::uploads::DestinationCatalog catalog(dir.filePath(QStringLiteral("destinations.json")));
+      xerahs::uploads::MemoryCredentialStore credentials;
+      UploadDestinationsPorts ports;
+      ports.chooseSxcu = [](QWidget *) { return QString(); };
+      ports.askSecret = [](QWidget *, const QString &) { return std::optional<QString>{}; };
+      ports.confirmRemove = [](QWidget *, const QString &) { return true; };
+      ports.report = [](QWidget *, const QString &) {};
+      UploadDestinationsDialog dialog(catalog, credentials, ports);
+      int checked = 0;
+      for (auto *button : dialog.findChildren<QAbstractButton *>()) {
+        if (button->text().isEmpty()) continue;
+        QVERIFY2(button->text().contains(QChar(0x2022)), qPrintable(button->text()));
+        ++checked;
+      }
+      for (auto *label : dialog.findChildren<QLabel *>()) {
+        if (label->text().isEmpty()) continue;
+        QVERIFY2(label->text().contains(QChar(0x2022)), qPrintable(label->text()));
+        ++checked;
+      }
+      QVERIFY(checked >= 5);
+      QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
     }
     QApplication::removeTranslator(&pseudo);
   }
