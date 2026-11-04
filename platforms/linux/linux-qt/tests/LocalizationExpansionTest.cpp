@@ -12,6 +12,7 @@
 #include "NativePipelineJournal.h"
 #include "NewImageDialog.h"
 #include "QrCodeDialog.h"
+#include "RectanglePropertiesDialog.h"
 #include "SettingsDialog.h"
 #include "UploadDestinationsDialog.h"
 #include "UrlOpenDialog.h"
@@ -377,6 +378,21 @@ private slots:
       QVERIFY2(offenders.isEmpty(), qPrintable(offenders));
       QVERIFY2(collected.buttons.size() + collected.labels.size() >= 3,
           qPrintable(QString::number(collected.buttons.size() + collected.labels.size())));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void rectanglePropertiesDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      xerahs::editor::RectangleAnnotation annotation;
+      annotation.start = {0, 0}; annotation.end = {120, 80};
+      RectanglePropertiesDialog dialog(annotation, nullptr, RectanglePropertiesDialog::Purpose::Edit);
+      // The numeric and colour fields hold runtime values; only the prose is translated.
+      const int checked = translatedTexts(dialog, {});
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+      QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
     }
     QApplication::removeTranslator(&pseudo);
   }
