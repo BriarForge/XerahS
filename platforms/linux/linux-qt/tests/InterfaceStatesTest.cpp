@@ -19,12 +19,15 @@
 #include "ImageRecognitionDialog.h"
 #include "NativePipelineJournal.h"
 #include "NewImageDialog.h"
+#include "PipelineHistoryDialog.h"
 #include "PresetDialog.h"
 #include "QrCodeDialog.h"
 #include "UrlOpenDialog.h"
 #include "VideoConverterDialog.h"
 #include "WatchFolderService.h"
+#include "WorkflowExecutionHistoryDialog.h"
 #include "WatchFoldersDialog.h"
+#include "actions/PipelineJournal.h"
 #include "features/ToolsFeature.h"
 #include "media/VideoConversion.h"
 #include "uploads/CredentialStore.h"
@@ -55,6 +58,7 @@
 #include <QSpinBox>
 #include <QStandardItemModel>
 #include <QTemporaryDir>
+#include <QTreeWidget>
 #include <QTest>
 #include <QThreadPool>
 #include <QTimer>
@@ -217,6 +221,105 @@ class InterfaceStatesTest final : public QObject {
   }
 private slots:
   void initTestCase() { QVERIFY(dir.isValid()); QAccessible::installUpdateHandler(record); }
+
+  // Pipeline history: initial, loading, empty, populated, unavailable, error.
+  // validation: n/a because the dialog takes no typed input; it only lists records.
+  // cancelled: n/a because the record read is the only background work and it cannot be cancelled.
+  // denied: n/a because the dialog asks for no permission.
+  void pipelineHistoryDialogStates() {
+    const auto directory = dir.filePath("pipeline-history-states");
+    auto storage = std::make_shared<NativePipelineJournal>(directory);
+    PipelineHistoryDialog dialog(storage, [] { return false; });
+    dialog.show();
+    auto *status = dialog.findChild<QLabel *>("captureHistoryStatus");
+    auto *table = dialog.findChild<QTreeWidget *>("captureHistoryRecords");
+    QVERIFY(status && table);
+    QVERIFY2(!dialog.windowTitle().trimmed().isEmpty(), "the dialog names its purpose");                              // initial
+    QVERIFY2(status->text().contains("Reading capture results"), qPrintable(status->text()));                         // loading
+    QTRY_VERIFY(status->text().contains("0 result records"));                                                        // empty
+    QCOMPARE(table->topLevelItemCount(), 0);
+    const auto id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    xerahs::actions::PipelineJournalSnapshot snapshot;
+    snapshot.result.taskId = id; snapshot.selected = {"save"}; snapshot.terminal = true;
+    snapshot.createdAt = QDateTime::currentDateTimeUtc();
+    xerahs::actions::ActionResult saved; saved.action = "save"; saved.state = xerahs::actions::ActionState::Succeeded;
+    snapshot.result.orderedResults = {saved};
+    QVERIFY(storage->replace(id, {}, xerahs::actions::serializePipelineJournal(snapshot)).stored);
+    dialog.findChild<QPushButton *>("refreshCaptureHistory")->click();
+    QTRY_COMPARE(table->topLevelItemCount(), 1);
+    QVERIFY2(status->text().contains("1 result records"), qPrintable(status->text()));                                // populated
+    const auto broken = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    QFile unreadable(QDir(directory).filePath(broken + ".json"));
+    QVERIFY(unreadable.open(QIODevice::WriteOnly)); unreadable.write("not a journal record"); unreadable.close();
+    dialog.findChild<QPushButton *>("refreshCaptureHistory")->click();
+    QTRY_COMPARE(table->topLevelItemCount(), 2);
+    bool unavailable = false;
+    for (int row = 0; row < table->topLevelItemCount(); ++row) unavailable |= table->topLevelItem(row)->text(1).contains("Unavailable");
+    QVERIFY2(unavailable, "a record that cannot be read is listed as unavailable");                                  // unavailable
+    QFile stray(QDir(directory).filePath("stray.json"));
+    QVERIFY(stray.open(QIODevice::WriteOnly)); stray.write("{}"); stray.close();
+    dialog.findChild<QPushButton *>("refreshCaptureHistory")->click();
+    QTRY_VERIFY(status->text().contains("could not be read"));                                                      // error
+  }
+
+  // Workflow execution history: initial, loading, empty, populated, unavailable, error.
+  // validation: n/a because the dialog takes no typed input; it only lists records.
+  // cancelled: n/a because the record read is the only background work and it cannot be cancelled.
+  // denied: n/a because the dialog asks for no permission.
+  void workflowExecutionHistoryDialogStates() {
+    {
+      // The listing port blocks, so the reading state stays on screen until the test releases it.
+      const auto gate = std::make_shared<WorkGate>();
+      WorkflowHistoryPorts ports;
+      ports.list = [gate] {
+        gate->entered.store(true);
+        while (!gate->released.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        return WorkflowExecutionListing{};
+      };
+      WorkflowExecutionHistoryDialog dialog(ports, [] { return false; });
+      dialog.show();
+      auto *status = dialog.findChild<QLabel *>("workflowExecutionHistoryStatus");
+      auto *table = dialog.findChild<QTreeWidget *>("workflowExecutionRecords");
+      QVERIFY(status && table);
+      QVERIFY2(!dialog.windowTitle().trimmed().isEmpty(), "the dialog names its purpose");                            // initial
+      QTRY_VERIFY(gate->entered.load());
+      QVERIFY2(status->text().contains("Reading workflow execution metadata"), qPrintable(status->text()));           // loading
+      gate->released.store(true);
+      QTRY_VERIFY(status->text().contains("0 execution records"));                                                  // empty
+      QCOMPARE(table->topLevelItemCount(), 0);
+    }
+    {
+      WorkflowHistoryPorts ports;
+      ports.list = [] {
+        WorkflowExecutionListing listing;
+        WorkflowExecutionEntry entry; entry.id = "fixture-execution";
+        entry.result = QJsonObject{{"startedAt", "2026-01-01T00:00:00.000Z"}, {"state", "completed"}, {"origin", "native-shell"}};
+        listing.entries.push_back(entry);
+        WorkflowExecutionEntry unreadable; unreadable.id = "fixture-unreadable"; unreadable.diagnostic = "workflow-record-unreadable";
+        listing.entries.push_back(unreadable);
+        return listing;
+      };
+      WorkflowExecutionHistoryDialog dialog(ports, [] { return false; });
+      dialog.show();
+      auto *status = dialog.findChild<QLabel *>("workflowExecutionHistoryStatus");
+      auto *table = dialog.findChild<QTreeWidget *>("workflowExecutionRecords");
+      QVERIFY(status && table);
+      QTRY_COMPARE(table->topLevelItemCount(), 2);
+      QVERIFY2(status->text().contains("2 execution records"), qPrintable(status->text()));                            // populated
+      bool unavailable = false;
+      for (int row = 0; row < table->topLevelItemCount(); ++row) unavailable |= table->topLevelItem(row)->text(1).contains("Unavailable");
+      QVERIFY2(unavailable, "a record that cannot be read is listed as unavailable");                                  // unavailable
+    }
+    {
+      WorkflowHistoryPorts ports;
+      ports.list = [] { WorkflowExecutionListing listing; listing.diagnostic = "workflow-storage-unavailable"; return listing; };
+      WorkflowExecutionHistoryDialog dialog(ports, [] { return false; });
+      dialog.show();
+      auto *status = dialog.findChild<QLabel *>("workflowExecutionHistoryStatus");
+      QVERIFY(status);
+      QTRY_VERIFY(status->text().contains("could not be read"));                                                      // error
+    }
+  }
 
   // Capture history: initial, loading, empty, populated, validation, error.
   // cancelled: n/a because the history read is the only background work and it cannot be cancelled.
