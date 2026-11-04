@@ -61,7 +61,7 @@ FileUploadResultDialog::FileUploadResultDialog(const QString &fileName, const up
 }
 
 FileUploadResultDialog::FileUploadResultDialog(const QString &fileName, const QString &message, std::function<void()> openDestinations,
-                                               QWidget *parent)
+                                               QWidget *parent, const QString &detail)
     : QDialog(parent) {
   setObjectName(QStringLiteral("fileUploadResultDialog"));
   setWindowTitle(QStringLiteral("File upload"));
@@ -71,6 +71,7 @@ FileUploadResultDialog::FileUploadResultDialog(const QString &fileName, const QS
   auto *layout = new QVBoxLayout(this);
   layout->addWidget(line(this, QStringLiteral("uploadFileName"), fileName));
   layout->addWidget(line(this, QStringLiteral("uploadMessage"), message));
+  if (!detail.isEmpty()) layout->addWidget(line(this, QStringLiteral("uploadPublicationStatus"), detail));
   if (openDestinations) {
     auto *button = new QPushButton(QStringLiteral("Upload destinations…"), this);
     button->setObjectName(QStringLiteral("openUploadDestinations"));

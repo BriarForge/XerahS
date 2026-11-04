@@ -185,14 +185,15 @@ void FileUploadController::closeProgress() {
   m_progress = nullptr;
 }
 
-void FileUploadController::showFailure(const QString &fileName, const QString &message, bool missingDestination) {
-  uploads::UploadOutcome outcome; outcome.errorMessage = message; outcome.attempts = m_historyRecord.result.attempts;
+void FileUploadController::showFailure(const QString &fileName, const QString &message, bool missingDestination, const QString &detail) {
+  uploads::UploadOutcome outcome; outcome.errorMessage = detail.isEmpty() ? message : message + ": " + detail;
+  outcome.attempts = m_historyRecord.result.attempts;
   if (m_historyRecord.failureCode.isEmpty()) m_historyRecord.failureCode = "upload-failed";
-  recordCompletion(outcome, [this, fileName, message, missingDestination](const QString &historyError) {
+  recordCompletion(outcome, [this, fileName, message, missingDestination, detail](const QString &historyError) {
     emit fileCompleted(m_currentPath, false, message);
     closeProgress();
     auto *dialog = new FileUploadResultDialog(fileName, historyError.isEmpty() ? message : message + '\n' + historyError,
-        missingDestination ? m_ports.openDestinations : std::function<void()>{}, m_dialogParent);
+        missingDestination ? m_ports.openDestinations : std::function<void()>{}, m_dialogParent, detail);
     dialog->show(); scheduleNext();
   });
 }
@@ -232,9 +233,8 @@ void FileUploadController::onFinished(const uploads::UploadOutcome &outcome) {
   m_historyRecord.result.attempts = outcome.attempts;
   if (m_stop || outcome.code == QLatin1String("cancelled")) {
     m_historyRecord.failureCode = "cancelled";
-    showFailure(m_currentName, outcome.attempts > 0
-        ? QStringLiteral("cancelled: remote publication is unconfirmed. Review the destination before retrying.")
-        : QStringLiteral("cancelled"));
+    showFailure(m_currentName, QStringLiteral("cancelled"), false, outcome.attempts > 0
+        ? tr("Remote publication is unconfirmed. Review the destination before retrying.") : QString{});
     return;
   }
   if (!outcome.code.isEmpty()) {

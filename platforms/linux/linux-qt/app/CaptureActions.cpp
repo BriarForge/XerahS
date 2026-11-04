@@ -216,8 +216,9 @@ ActionOutcome CaptureActions::upload(const ActionRequest &request) {
   QObject::connect(&cancellation, &QTimer::timeout, &executor, [&] { if (request.cancellation.requested()) executor.cancel(); });
   cancellation.start(); executor.start(*built.request); loop.exec();
   if (response.code == "cancelled") {
-    ActionOutcome out{ActionState::Cancelled, {}, {}};
-    out.upload = UploadResult{{}, {}, {}, {}, response.attempts}; return out;
+    // Attempts do not acknowledge publication. Cancelled transfers have no
+    // upload result for receipts or dependent URL consumers.
+    return {ActionState::Cancelled, {}, {}};
   }
   if (!response.code.isEmpty()) {
     auto out = failure(response.code, response.errorMessage);

@@ -60,6 +60,8 @@ public:
   HttpFixture() {
     connect(&server, &QTcpServer::newConnection, this, [this] {
       auto *peer = server.nextPendingConnection();
+      // A deleted peer address can be reused by the next queued transfer.
+      m_wire.remove(peer); m_done.remove(peer);
       connect(peer, &QTcpSocket::disconnected, peer, &QObject::deleteLater);
       connect(peer, &QTcpSocket::readyRead, this, [this, peer] { read(peer); });
     });
@@ -364,6 +366,35 @@ private slots:
     QTest::qWait(200);
     QCOMPARE(http.received, 1);
     QCOMPARE(dialogs().size(), 1);
+  }
+
+  void cancelledTransferKeepsPublicationWarningSeparateFromStatusAndHistory() {
+    QTemporaryDir dir; HttpFixture http; http.holdFirst = true;
+    QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    const auto destination = http.destination();
+    const auto catalogPath = dir.filePath("destinations.json");
+    DestinationCatalog catalog(catalogPath); QVERIFY(catalog.add(destination).isEmpty());
+    auto credentials = std::make_shared<MemoryCredentialStore>();
+    QVERIFY(credentials->store(destination.id, "token", "fixture-secret").ok());
+    const auto path = writeFile(dir, "cancelled.txt", "synthetic upload"); QVERIFY(!path.isEmpty());
+    QWidget owner; FileUploadController controller(portsFor(catalogPath, credentials), &owner);
+    QSignalSpy idle(&controller, &FileUploadController::finished);
+    controller.upload({path}); QTRY_COMPARE_WITH_TIMEOUT(http.received, 1, 7000);
+    controller.cancel(); QTRY_COMPARE_WITH_TIMEOUT(idle.count(), 1, 7000);
+    QCOMPARE(dialogs().size(), 1);
+    QCOMPARE(dialogs().first()->findChild<QLabel *>("uploadMessage")->text(), QString("cancelled"));
+    auto *warning = dialogs().first()->findChild<QLabel *>("uploadPublicationStatus");
+    QVERIFY(warning); QVERIFY(warning->isVisible());
+    QVERIFY(warning->text().contains("publication is unconfirmed"));
+    NativePipelineJournal history(dir.filePath("history"));
+    const auto records = history.list(); QCOMPARE(records.entries.size(), size_t(1));
+    QVERIFY(records.entries.front().parsed.record);
+    const auto upload = records.entries.front().parsed.record->report.value("extensions").toObject()
+        .value("com.xerahs.app").toObject().value("upload_result").toObject();
+    QVERIFY(upload.value("url").toString().isEmpty());
+    QCOMPARE(upload.value("attempts").toInt(), 1);
+    QVERIFY(upload.value("error_message").toString().contains("publication is unconfirmed"));
+    QVERIFY(QFileInfo::exists(path)); QCOMPARE(http.received, 1);
   }
 
   void droppedFilesUploadSequentially() {

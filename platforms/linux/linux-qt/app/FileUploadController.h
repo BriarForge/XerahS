@@ -59,7 +59,7 @@ private:
   void recordCompletion(const uploads::UploadOutcome &outcome, std::function<void(QString)> done);
   void showProgress(const QString &fileName);
   void closeProgress();
-  void showFailure(const QString &fileName, const QString &message, bool missingDestination = false);
+  void showFailure(const QString &fileName, const QString &message, bool missingDestination = false, const QString &detail = {});
   void showSuccess(const QString &fileName, const uploads::UploadOutcome &outcome);
   void scheduleNext();
   void onProgress(qint64 sent, qint64 total);
