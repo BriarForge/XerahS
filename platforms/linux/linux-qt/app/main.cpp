@@ -199,6 +199,11 @@ int main(int argc, char *argv[]) {
     QCoreApplication::exit(xerahs::shell::TerminationSignals::exitStatus(received));
   });
 
+  const auto recovery = xerahs::app::recoverNativeSettings();
+  if (!recovery.isEmpty()) {
+    QMessageBox::warning(nullptr, "Settings recovery", recovery + "\nSettings were kept for recovery. Close other instances and retry."); return 1;
+  }
+
   xerahs::app::NativeCaptureWorkflows workflows(xerahs::app::NativeCaptureWorkflows::defaultPath());
   if (request.action == ActivationAction::RunWorkflow && !workflows.resolve(QUuid(request.workflowId)).workflow) {
     reportLaunch(request, json, {}, "activation-unavailable"); return 1;

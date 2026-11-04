@@ -1,0 +1,1 @@
+{"ApplicationVersion":"0.19.0","CustomUploaders":[{"Id":"d3f08486-bff6-48b8-b676-a7b7a7a107dc","Name":"Fixture uploader","Item":{"Name":"Fixture uploader","RequestMethod":"POST","RequestURL":"https://example.com/upload","Body":"MultipartFormData","FileFormName":"file","Headers":{"Authorization":"fixture-secret-never-export"},"URL":"{json:url}"}}]}

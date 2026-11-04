@@ -63,7 +63,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Current parsers validate isolated candidates; invalid uploader/preset/document tests exist. Complete application/workflow/history/credential migration is absent.",
+      "note": "Native profile imports parse into an isolated candidate, preview every affected store and publish only after confirmation under exact-byte fences. Second-store prepare/publish failures restore the first store byte-for-byte; process-interrupted publication recovers at startup. Reference conversion uses the same coordinator and preserves unrelated native records. Unsupported reference history, provider-plugin and credential migrations remain excluded and reported; broader compatibility-format acceptance remains Required. Rationale: source named-enum behavior is followed only where equivalent; unsupported records stay in the source instead of acquiring partial execution behavior.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -71,12 +71,19 @@
         "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
+        "platforms/linux/linux-qt/src/settings/ReferenceMigration.cpp",
+        "platforms/linux/linux-qt/tests/ConfigurationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/ReferenceMigrationTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/app/SettingsDialog.cpp",
+        "platforms/linux/linux-qt/src/settings/ReferenceMigration.h"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 16,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
+        "coverage": "Current worktree: application-settings, configuration-transfer, reference-migration and native-surface-accessibility pass (100% tests passed out of 4). Final full suite: 71% tests passed, 47 tests failed out of 162; failures are 40 private-D-Bus startup failures and 7 socket-dependent suites blocked by the sandbox. editor-window-1/2/3 were rerun serially and fail before test startup because the bus cannot bind. Contract lint and generated-progress check pass. Runtime-observed legacy fixtures, supported-target/cross-platform qualification and human privacy/parity review remain Required; no waiver is claimed.",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
@@ -162,7 +169,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Current native UUID/action-based JSON and typed uploader import exist. Complete Avalonia application/workflow migration and enum/path/collection compatibility remain.",
+      "note": "Native profile transfer now explicitly validates semantic UUID/action IDs, uploader method/body enums, references, paths, colours, geometry and bounded/duplicate collections, with named family tests. Workflow v1 upgrades explicitly to v2 without granting authority to an old output extension; unsupported bundle/store versions are rejected. Reference named-enum workflows and legacy custom uploaders convert into stable UUIDv5 identities. Native value-family tests pass; full reference-format, runtime-observed and cross-platform fixture qualification remains Required. Rationale: source named-enum behavior is followed only where equivalent; unsupported records stay in the source instead of acquiring partial execution behavior.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -170,12 +177,19 @@
         "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
+        "platforms/linux/linux-qt/src/settings/ReferenceMigration.cpp",
+        "platforms/linux/linux-qt/tests/ConfigurationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/ReferenceMigrationTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/app/SettingsDialog.cpp",
+        "platforms/linux/linux-qt/src/settings/ReferenceMigration.h"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 29,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
+        "coverage": "Current worktree: application-settings, configuration-transfer, reference-migration and native-surface-accessibility pass (100% tests passed out of 4). Final full suite: 71% tests passed, 47 tests failed out of 162; failures are 40 private-D-Bus startup failures and 7 socket-dependent suites blocked by the sandbox. editor-window-1/2/3 were rerun serially and fail before test startup because the bus cannot bind. Contract lint and generated-progress check pass. Runtime-observed legacy fixtures, supported-target/cross-platform qualification and human privacy/parity review remain Required; no waiver is claimed.",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },
@@ -342,16 +356,25 @@
       }
     },
     "COMPCAT-017": {
-      "status": "not-started",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "No complete user-confirmed application/history/credential migration with durable completion detection, rollback and duplicate prevention exists.",
+      "note": "Explicit previous-app migration now writes a private recoverable native backup before publication, records source/target/converter versions, a SHA-256 source fingerprint and value-free outcome, detects completed retries, merges stable UUIDv5 workflow/destination IDs, and offers confirmed restore/dismiss controls. Tests cover dry run, confirmation, middle failure, stale source/native snapshots, retry without duplicates, exact restore and backup dismissal. Reference history/provider-plugin/credential conversion remains unsupported and reported; no such records are imported or duplicated. Runtime-observed legacy/cross-platform qualification and human review remain Required. Rationale: source named-enum behavior is followed only where equivalent; unsupported records stay in the source instead of acquiring partial execution behavior.",
       "audit": {
-        "classification": "not-started",
+        "classification": "partial",
         "spec_line": 69,
-        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "coverage": "Current worktree: application-settings, configuration-transfer, reference-migration and native-surface-accessibility pass (100% tests passed out of 4). Final full suite: 71% tests passed, 47 tests failed out of 162; failures are 40 private-D-Bus startup failures and 7 socket-dependent suites blocked by the sandbox. editor-window-1/2/3 were rerun serially and fail before test startup because the bus cannot bind. Contract lint and generated-progress check pass. Runtime-observed legacy fixtures, supported-target/cross-platform qualification and human privacy/parity review remain Required; no waiver is claimed.",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
+        "platforms/linux/linux-qt/src/settings/ReferenceMigration.cpp",
+        "platforms/linux/linux-qt/tests/ConfigurationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/ReferenceMigrationTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/app/SettingsDialog.cpp",
+        "platforms/linux/linux-qt/src/settings/ReferenceMigration.h"
+      ]
     },
     "COMPCAT-018": {
       "status": "partial",

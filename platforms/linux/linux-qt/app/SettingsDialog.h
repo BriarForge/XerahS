@@ -1,5 +1,6 @@
 #pragma once
 #include "settings/ApplicationSettings.h"
+#include "settings/ConfigurationTransfer.h"
 #include "WorkflowShortcutActions.h"
 #include <QDialog>
 #include <functional>
@@ -9,6 +10,7 @@ class SettingsDialog final : public QDialog {
 public:
   SettingsDialog(xerahs::settings::ApplicationSettingsStore &store, QString defaultFolder,
       const xerahs::workflows::WorkflowShortcutPlan &plan, WorkflowShortcutActions &shortcuts,
-      std::function<void()> applied, QWidget *parent = nullptr);
+      std::function<void()> applied, QWidget *parent = nullptr, xerahs::settings::ConfigurationPaths transferPaths = {},
+      std::function<void()> imported = {});
 };
 }

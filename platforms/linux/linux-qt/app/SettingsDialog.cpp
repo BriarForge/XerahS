@@ -1,6 +1,7 @@
 #include "NativeAccessibility.h"
 #include "NativeWindowPlacement.h"
 #include "SettingsDialog.h"
+#include "settings/ReferenceMigration.h"
 #include "RecordingDevices.h"
 #include "XdgAutostart.h"
 #include <QApplication>
@@ -17,6 +18,8 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QPointer>
+#include <QFile>
 #include <QSpinBox>
 #include <QScrollArea>
 #include <QTabWidget>
@@ -50,7 +53,8 @@ void select(QComboBox *box, const QJsonValue &value) { const int index = box->fi
 }
 SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultFolder,
     const xerahs::workflows::WorkflowShortcutPlan &plan, WorkflowShortcutActions &shortcuts,
-    std::function<void()> applied, QWidget *parent) : QDialog(parent) {
+    std::function<void()> applied, QWidget *parent, ConfigurationPaths transferPaths,
+    std::function<void()> imported) : QDialog(parent) {
   new NativeWindowPlacement(*this);
   new NativeAccessibility(*this, "Review settings sections and validation. Apply saves the draft; Cancel discards unapplied edits.", false);
   setWindowTitle("XerahS Settings"); setAccessibleName("XerahS Settings"); setModal(true); resize(820, 520);
@@ -62,7 +66,9 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   report->setObjectName(QStringLiteral("settingsImportReport")); report->setTextFormat(Qt::PlainText);
   report->setWordWrap(true); report->setAccessibleName(QStringLiteral("Settings import report")); layout->addWidget(report);
   auto *tabs = new QTabWidget(this); tabs->setAccessibleName("Settings sections"); layout->addWidget(tabs);
-  auto *general = new QWidget(tabs); auto *form = new QFormLayout(general); tabs->addTab(general, "&General");
+  auto *general = new QWidget(tabs); auto *form = new QFormLayout(general);
+  auto *generalScroll = new QScrollArea(tabs); generalScroll->setAccessibleName("General settings"); generalScroll->setFocusPolicy(Qt::NoFocus); generalScroll->setWidgetResizable(true); generalScroll->setFrameShape(QFrame::NoFrame);
+  generalScroll->setWidget(general); tabs->addTab(generalScroll, "&General");
   auto *nativeChoices = new QLabel("Native accessibility: desktop input, font scaling, notification delivery and Do Not Disturb remain controlled by your desktop. "
       "Editor Appearance can follow desktop theme, high contrast and reduced motion without changing saved desktop choices. "
       "Degraded: reduced-contrast colour substitutions are unavailable; the selected native/editor theme is retained. "
@@ -78,6 +84,23 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   auto *pattern = new QLineEdit(general); pattern->setMaxLength(4096); pattern->setAccessibleName("Filename pattern"); form->addRow("&Filename pattern", pattern);
   auto *login = new QCheckBox("Start XerahS at &login", general); login->setAccessibleName("Start XerahS at login"); form->addRow(login);
   auto *tray = new QCheckBox("Show &tray icon", general); tray->setAccessibleName("Show tray icon"); form->addRow(tray);
+  auto *exportSettings = new QPushButton("Export settings…", general);
+  exportSettings->setObjectName("exportSettings"); exportSettings->setAccessibleName(exportSettings->text()); form->addRow(exportSettings);
+  auto *importSettings = new QPushButton("Import settings…", general);
+  importSettings->setObjectName("importSettings"); importSettings->setAccessibleName(importSettings->text()); form->addRow(importSettings);
+  exportSettings->setEnabled(transferPaths.configured()); importSettings->setEnabled(transferPaths.configured());
+  auto *migrateSettings = new QPushButton("Import from XerahS (previous app)…", general);
+  migrateSettings->setObjectName("migrateReferenceSettings"); migrateSettings->setAccessibleName(migrateSettings->text()); form->addRow(migrateSettings);
+  migrateSettings->setEnabled(transferPaths.configured());
+  auto *restoreSettings = new QPushButton("Restore previous settings…", general);
+  restoreSettings->setObjectName("restorePreviousSettings"); restoreSettings->setAccessibleName(restoreSettings->text()); form->addRow(restoreSettings);
+  auto *dismissBackup = new QPushButton("Dismiss previous settings backup…", general);
+  dismissBackup->setObjectName("dismissMigrationBackup"); dismissBackup->setAccessibleName(dismissBackup->text()); form->addRow(dismissBackup);
+  auto refreshBackup = [=] { const bool available = transferPaths.configured() && ReferenceMigration(transferPaths).backupAvailable(); restoreSettings->setEnabled(available); dismissBackup->setEnabled(available); };
+  refreshBackup();
+  auto *transferNote = new QLabel("Transfer saved application preferences, editor preferences, workflows and destinations. "
+      "Exports omit credentials, local folders, devices, recent paths and window placement. Import replaces these four stores after preview; history and user files are kept.", general);
+  transferNote->setWordWrap(true); form->addRow(transferNote);
   auto *capture = new QWidget(tabs); auto *captureForm = new QFormLayout(capture);
   auto *captureScroll = new QScrollArea(tabs); captureScroll->setFocusPolicy(Qt::NoFocus); captureScroll->setWidgetResizable(true); captureScroll->setFrameShape(QFrame::NoFrame);
   captureScroll->setWidget(capture); tabs->addTab(captureScroll, "&Capture");
@@ -237,6 +260,86 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   };
   connect(reset, &QPushButton::clicked, this, [=] { resetDraft(false); });
   connect(resetEverything, &QPushButton::clicked, this, [=] { resetDraft(true); });
+  // Owned nonblocking pickers/preview: owner deletion cancels without publishing.
+  auto published = [=, &store, &shortcuts] {
+    store = ApplicationSettingsStore(transferPaths.application, defaultFolder);
+    *draft = store.current().values; refresh(); refreshAudio(); refreshBackup();
+    QPointer<SettingsDialog> owner(this);
+    shortcuts.invalidate(); if (!owner) return;
+    if (imported) imported();
+    if (!owner) return;
+    if (applied) applied();
+    if (!owner) return;
+    status->setText("Settings imported or restored. Credentials were not imported. Preferred hotkeys need desktop confirmation.");
+  };
+  auto previewTransfer = [=](const ConfigurationPlan &plan, const QString &title, const QString &description, std::function<QString()> commit) {
+    report->setText(plan.report.summary() + "\n" + plan.code);
+    if (!plan.valid()) { status->setText(plan.code); return; }
+    auto *confirm = new QMessageBox(QMessageBox::Question, title,
+        description + "\nUnapplied preferences will be discarded. History, credentials and user files are kept. "
+        "Secrets must be authorized separately.\n" + plan.report.summary(), QMessageBox::Apply | QMessageBox::Cancel, this);
+    confirm->setTextFormat(Qt::PlainText); confirm->setDetailedText(plan.preview()); confirm->setDefaultButton(QMessageBox::Cancel);
+    confirm->setObjectName("configurationImportPreview"); confirm->setAttribute(Qt::WA_DeleteOnClose);
+    connect(confirm, &QMessageBox::finished, this, [=](int result) {
+      if (result != QMessageBox::Apply) return;
+      const auto code = commit(); refreshBackup();
+      if (!code.isEmpty()) { status->setText(code); return; }
+      published();
+    });
+    confirm->open();
+  };
+  auto transfer = [=](bool importing) {
+    auto *picker = new QFileDialog(this, importing ? "Import settings" : "Export saved settings");
+    picker->setObjectName("configurationFilePicker"); picker->setAttribute(Qt::WA_DeleteOnClose);
+    picker->setAcceptMode(importing ? QFileDialog::AcceptOpen : QFileDialog::AcceptSave);
+    picker->setFileMode(importing ? QFileDialog::ExistingFile : QFileDialog::AnyFile);
+    picker->setNameFilter("XerahS configuration (*.json)"); picker->setDefaultSuffix("json"); picker->setWindowModality(Qt::WindowModal);
+    connect(picker, &QFileDialog::fileSelected, this, [=](const QString &path) {
+      ConfigurationTransfer transfer(transferPaths);
+      if (!importing) {
+        compatibility::ExportReport omissions; const auto code = transfer.exportFile(path, &omissions);
+        status->setText(code.isEmpty() ? "Saved settings exported. Omissions: " + omissions.omissions.join(", ") : code); return;
+      }
+      QFile input(path);
+      if (!input.open(QIODevice::ReadOnly) || input.size() > 8 * 1024 * 1024) { status->setText("configuration-read-failed-or-too-large"); return; }
+      const auto plan = transfer.inspect(input.read(8 * 1024 * 1024 + 1));
+      previewTransfer(plan, "Import settings preview", "Replace saved application, editor, workflow and destination settings?",
+          [=] { return ConfigurationTransfer(transferPaths).apply(plan, true); });
+    });
+    picker->open();
+  };
+  connect(exportSettings, &QPushButton::clicked, this, [transfer] { transfer(false); });
+  connect(importSettings, &QPushButton::clicked, this, [transfer] { transfer(true); });
+  connect(migrateSettings, &QPushButton::clicked, this, [=] {
+    auto *picker = new QFileDialog(this, "Choose previous XerahS settings folder", ReferenceMigration::defaultSourceFolder());
+    picker->setObjectName("referenceSettingsFolderPicker"); picker->setAttribute(Qt::WA_DeleteOnClose);
+    picker->setFileMode(QFileDialog::Directory); picker->setOption(QFileDialog::ShowDirsOnly); picker->setWindowModality(Qt::WindowModal);
+    connect(picker, &QFileDialog::fileSelected, this, [=](const QString &folder) {
+      const auto plan = ReferenceMigration(transferPaths).inspectFolder(folder);
+      if (plan.completed) { status->setText("migration-already-completed: source fingerprint matches; no changes or duplicates."); return; }
+      previewTransfer(plan.configuration, "Import from previous XerahS preview",
+          "Merge supported previous-app settings? Unsupported records stay in the source. A recoverable native-settings backup will be retained until you dismiss it.",
+          [=] { return ReferenceMigration(transferPaths).apply(folder, plan, true); });
+    });
+    picker->open();
+  });
+  auto backupAction = [=](bool restore) {
+    const auto revision = ReferenceMigration(transferPaths).backupRevision();
+    if (revision.isEmpty()) { status->setText("migration-backup-unavailable"); return; }
+    auto *confirm = new QMessageBox(QMessageBox::Question, restore ? "Restore previous settings" : "Dismiss previous settings backup",
+        restore ? "Replace current application, editor, workflow and destination settings with the saved pre-migration backup? History, credentials and user files are kept."
+                : "Permanently discard the pre-migration settings backup? The migration completion record is retained to prevent duplicates.",
+        QMessageBox::Apply | QMessageBox::Cancel, this);
+    confirm->setObjectName("migrationBackupConfirmation"); confirm->setDefaultButton(QMessageBox::Cancel); confirm->setAttribute(Qt::WA_DeleteOnClose);
+    connect(confirm, &QMessageBox::finished, this, [=](int result) {
+      if (result != QMessageBox::Apply) return;
+      const auto code = restore ? ReferenceMigration(transferPaths).restore(true, revision) : ReferenceMigration(transferPaths).dismissBackup(true, revision);
+      refreshBackup(); if (!code.isEmpty()) { status->setText(code); return; }
+      if (restore) published(); else status->setText("Previous settings backup dismissed. Completion detection remains available.");
+    }); confirm->open();
+  };
+  connect(restoreSettings, &QPushButton::clicked, this, [=] { backupAction(true); });
+  connect(dismissBackup, &QPushButton::clicked, this, [=] { backupAction(false); });
   auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Apply | QDialogButtonBox::Cancel, this); layout->addWidget(buttons);
   auto save = [=, &store, &shortcuts]() {
     collect(); const auto repaired = repairSettings(*draft, defaultFolder);

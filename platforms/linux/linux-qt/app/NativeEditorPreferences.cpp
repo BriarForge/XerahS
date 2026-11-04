@@ -1,4 +1,5 @@
 #include "NativeEditorPreferences.h"
+#include "settings/ConfigurationTransfer.h"
 #include "image-editor/ShapePainter.h"
 #include <QDir>
 #include <QStandardPaths>
@@ -74,6 +75,12 @@ quint64 nativeEditorPreferenceRevision() { return host().revision; }
 QString nativeEditorPreferencePath() {
   const QString directory = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
   return directory.isEmpty() ? QString() : QDir(directory).filePath(QStringLiteral("com.xerahs.app/linux-qt/editor-settings.json"));
+}
+QString recoverNativeSettings() {
+  const auto config = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+  const auto generic = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
+  return xerahs::settings::ConfigurationTransfer({QDir(config).filePath("application-settings.json"), nativeEditorPreferencePath(),
+      QDir(generic).filePath("com.xerahs.app/linux-qt/capture-workflows.json"), QDir(config).filePath("upload-destinations.json"), {}}).recover();
 }
 QStringList initializeNativeEditorPreferences(const QString &path) {
   auto &state = host(); const auto before = state.current;

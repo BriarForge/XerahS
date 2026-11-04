@@ -17,6 +17,8 @@ add_library(xerahs_core STATIC
   src/watch/WatchFolders.cpp
   src/watch/WatchFolders.h
   src/settings/HotkeyBindings.cpp
+  src/settings/ReferenceMigration.cpp
+  src/settings/ConfigurationTransfer.cpp
   src/settings/ApplicationSettings.cpp
   src/workflows/WorkflowExecution.cpp
   src/workflows/WorkflowExecution.h
@@ -1603,3 +1605,16 @@ set_target_properties(native-surface-accessibility-test PROPERTIES AUTOMOC ON)
 target_link_libraries(native-surface-accessibility-test PRIVATE xerahs_app Qt6::Test)
 add_test(NAME native-surface-accessibility COMMAND native-surface-accessibility-test)
 set_tests_properties(native-surface-accessibility PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 90)
+
+add_executable(configuration-transfer-test tests/ConfigurationTransferTest.cpp)
+set_target_properties(configuration-transfer-test PROPERTIES AUTOMOC ON)
+target_link_libraries(configuration-transfer-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME configuration-transfer COMMAND configuration-transfer-test)
+set_tests_properties(configuration-transfer PROPERTIES TIMEOUT 30)
+
+add_executable(reference-migration-test tests/ReferenceMigrationTest.cpp)
+set_target_properties(reference-migration-test PROPERTIES AUTOMOC ON)
+target_link_libraries(reference-migration-test PRIVATE xerahs_core Qt6::Test)
+target_compile_definitions(reference-migration-test PRIVATE REFERENCE_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/reference-settings")
+add_test(NAME reference-migration COMMAND reference-migration-test)
+set_tests_properties(reference-migration PROPERTIES TIMEOUT 30)

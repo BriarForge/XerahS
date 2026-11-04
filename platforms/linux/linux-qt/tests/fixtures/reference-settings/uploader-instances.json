@@ -1,0 +1,1 @@
+{"Instances":[{"InstanceId":"reference-provider-id","ProviderId":"unsupported-provider","DisplayName":"Unsupported fixture provider","SettingsJson":"{\"apiToken\":\"fixture-secret-never-export\"}"}],"DefaultInstances":{"Image":"reference-provider-id"}}

@@ -8,6 +8,7 @@
 #include "CaptureController.h"
 #include "CaptureWorkflows.h"
 #include "SettingsDialog.h"
+#include "NativeEditorPreferences.h"
 #include "WorkflowShortcutActions.h"
 #include "features/WorkflowFeature.h"
 #include "settings/ApplicationSettings.h"
@@ -48,7 +49,9 @@ void installPreferences(AppContext &ctx) {
         if (!listed) displayPlan.entries.append({id, workflow.name + QStringLiteral(" (unavailable)"), {}});
       }
     SettingsDialog dialog(ctx.settings, ctx.defaultCaptureFolder, displayPlan, *ctx.shortcuts,
-        [&ctx] { applyShellVisibility(ctx); }, qobject_cast<QWidget *>(ctx.dialogParent ? ctx.dialogParent() : nullptr));
+        [&ctx] { applyShellVisibility(ctx); }, qobject_cast<QWidget *>(ctx.dialogParent ? ctx.dialogParent() : nullptr),
+        {ctx.settings.path(), nativeEditorPreferencePath(), NativeCaptureWorkflows::defaultPath(), ctx.uploadCatalogPath, ctx.defaultCaptureFolder},
+        [&ctx] { initializeNativeEditorPreferences(nativeEditorPreferencePath()); ctx.workflows->reload(); });
     dialog.exec();
   });
   QObject::connect(appearance, &QAction::triggered, &ctx.app, [&ctx] {

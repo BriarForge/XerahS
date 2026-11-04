@@ -16,6 +16,7 @@ signals:
 NativeEditorPreferenceEvents &nativeEditorPreferenceEvents();
 quint64 nativeEditorPreferenceRevision();
 QString nativeEditorPreferencePath();
+QString recoverNativeSettings();
 QStringList initializeNativeEditorPreferences(const QString &path = {});
 const xerahs::editor::EditorPreferences &nativeEditorPreferences();
 bool nativeEditorPreferencePersistence();

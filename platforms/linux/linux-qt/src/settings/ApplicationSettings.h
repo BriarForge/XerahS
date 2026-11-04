@@ -55,6 +55,7 @@ CapturePreferencesPort capturePreferencesPort(ApplicationSettingsStore &store);
 class ApplicationSettingsStore {
 public:
   ApplicationSettingsStore(QString path, QString saveFolder);
+  const QString &path() const { return m_path; }
   const SettingsRead &current() const { return m_current; }
   QString save(const QJsonObject &values, compatibility::ExportReport *report = nullptr);
   // The values before the last successful save; empty when there is none.

@@ -382,16 +382,25 @@
       }
     },
     "SETCAT-019": {
-      "status": "not-started",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Full explicit versioned application settings import/export and retained/transformed/rejected/secret preview are absent.",
+      "note": "Native General-page Export settings and Import settings now transfer version-1 com.xerahs.app/configuration application/editor/workflow/destination stores through isolated validation and an owned Apply/Cancel preview. Atomic staged writes, snapshot fencing, private recovery journal, rollback on second-store failure and startup recovery are tested; credentials and nonportable omissions are listed. Rationale: retain receiver-local folders/devices/autostart and editor recents/window placement when omitted. Broader shared legacy/cross-platform compatibility fixtures and human privacy/parity review remain Required. The same validated candidate/publication path now serves explicit previous-app migration and confirmed backup restoration. Export locks retain previous artifacts; duplicate/deep/oversized inputs are refused. Prior native recovery snapshots are omitted from portable bundles.",
       "audit": {
-        "classification": "not-started",
+        "classification": "partial",
         "spec_line": 83,
-        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
+        "coverage": "Current worktree: application-settings, configuration-transfer, reference-migration and native-surface-accessibility pass (100% tests passed out of 4). Final full suite: 71% tests passed, 47 tests failed out of 162; failures are 40 private-D-Bus startup failures and 7 socket-dependent suites blocked by the sandbox. editor-window-1/2/3 were rerun serially and fail before test startup because the bus cannot bind. Contract lint and generated-progress check pass. Runtime-observed legacy fixtures, supported-target/cross-platform qualification and human privacy/parity review remain Required; no waiver is claimed.",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
+        "platforms/linux/linux-qt/app/SettingsDialog.cpp",
+        "platforms/linux/linux-qt/tests/ConfigurationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/src/settings/ReferenceMigration.cpp",
+        "platforms/linux/linux-qt/tests/ReferenceMigrationTest.cpp",
+        "platforms/linux/linux-qt/src/settings/ReferenceMigration.h"
+      ]
     },
     "SETCAT-020": {
       "status": "partial",

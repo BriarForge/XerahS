@@ -1,4 +1,5 @@
 #include "settings/ApplicationSettings.h"
+#include "settings/ReferenceMigration.h"
 #include "workflows/WorkflowShortcuts.h"
 #include "XdgAutostart.h"
 #include "SettingsDialog.h"
@@ -10,6 +11,9 @@
 #include <QTabWidget>
 #include <QDialogButtonBox>
 #include <QFile>
+#include <QFileDialog>
+#include <QPointer>
+#include <QStandardPaths>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QLockFile>
@@ -31,6 +35,59 @@ using namespace xerahs::settings;
 class ApplicationSettingsTest : public QObject {
   Q_OBJECT
 private slots:
+  void explicitMigrationPreviewBackupRestoreAndDismissControls() {
+    struct TestPaths { bool old = QStandardPaths::isTestModeEnabled(); TestPaths() { QStandardPaths::setTestModeEnabled(true); } ~TestPaths() { QStandardPaths::setTestModeEnabled(old); } } testPaths;
+    QTemporaryDir source, native;
+    QFile input(source.filePath("ApplicationConfig.json")); QVERIFY(input.open(QIODevice::WriteOnly)); input.write("{\"ApplicationVersion\":\"0.19.0\",\"ShowTray\":false}"); input.close();
+    ConfigurationPaths paths{native.filePath("app.json"), native.filePath("editor.json"), native.filePath("workflows.json"), native.filePath("destinations.json"), native.path()};
+    ApplicationSettingsStore store(paths.application, native.path()); QVERIFY(store.save(store.current().values).isEmpty());
+    xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; });
+    xerahs::app::SettingsDialog dialog(store, native.path(), {}, shortcuts, [] {}, nullptr, paths); dialog.show();
+    auto *restore = dialog.findChild<QPushButton *>("restorePreviousSettings"); QVERIFY(restore); QVERIFY(!restore->isEnabled());
+    QVERIFY(!ReferenceMigration(paths).backupAvailable());
+    dialog.findChild<QPushButton *>("migrateReferenceSettings")->click();
+    auto *picker = dialog.findChild<QFileDialog *>("referenceSettingsFolderPicker"); QVERIFY(picker);
+    QMetaObject::invokeMethod(picker, "fileSelected", Qt::DirectConnection, Q_ARG(QString, source.path())); picker->reject();
+    auto *preview = dialog.findChild<QMessageBox *>("configurationImportPreview"); QVERIFY(preview); QVERIFY(!ReferenceMigration(paths).backupAvailable());
+    preview->done(QMessageBox::Apply); QVERIFY(restore->isEnabled()); QVERIFY(!store.current().values["showTrayIcon"].toBool());
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    restore->click(); auto *confirm = dialog.findChild<QMessageBox *>("migrationBackupConfirmation"); QVERIFY(confirm); confirm->done(QMessageBox::Apply);
+    QVERIFY(store.current().values["showTrayIcon"].toBool()); QVERIFY(restore->isEnabled());
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    dialog.findChild<QPushButton *>("dismissMigrationBackup")->click(); confirm = dialog.findChild<QMessageBox *>("migrationBackupConfirmation"); QVERIFY(confirm); confirm->done(QMessageBox::Apply);
+    QVERIFY(!restore->isEnabled()); QVERIFY(!ReferenceMigration(paths).backupAvailable());
+  }
+
+  void configurationControlsPreviewCancelConfirmAndOwnerTeardown() {
+    QTemporaryDir dir;
+    ConfigurationPaths paths{dir.filePath("app.json"), dir.filePath("editor.json"), dir.filePath("workflows.json"), dir.filePath("destinations.json"), dir.path()};
+    ConfigurationTransfer transfer(paths); const auto exportPath = dir.filePath("export.json"); QVERIFY(transfer.exportFile(exportPath).isEmpty());
+    ApplicationSettingsStore store(paths.application, dir.path());
+    xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; });
+    int imported = 0;
+    auto *dialog = new xerahs::app::SettingsDialog(store, dir.path(), {}, shortcuts, [] {}, nullptr, paths, [&] { ++imported; });
+    dialog->show();
+    dialog->findChild<QPushButton *>("exportSettings")->click();
+    auto *exportPicker = dialog->findChild<QFileDialog *>("configurationFilePicker"); QVERIFY(exportPicker);
+    const auto uiExport = dir.filePath("ui-export.json");
+    QMetaObject::invokeMethod(exportPicker, "fileSelected", Qt::DirectConnection, Q_ARG(QString, uiExport)); exportPicker->reject();
+    QVERIFY(QFile::exists(uiExport)); QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    auto choose = [&] {
+      dialog->findChild<QPushButton *>("importSettings")->click();
+      auto *picker = dialog->findChild<QFileDialog *>("configurationFilePicker"); QVERIFY(picker);
+      QMetaObject::invokeMethod(picker, "fileSelected", Qt::DirectConnection, Q_ARG(QString, exportPath));
+      picker->reject();
+    };
+    choose(); auto *preview = dialog->findChild<QMessageBox *>("configurationImportPreview"); QVERIFY(preview);
+    QVERIFY(!QFile::exists(paths.application)); preview->done(QMessageBox::Cancel); QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QCOMPARE(imported, 0); QVERIFY(!QFile::exists(paths.application));
+    choose(); preview = dialog->findChild<QMessageBox *>("configurationImportPreview"); QVERIFY(preview); preview->done(QMessageBox::Apply);
+    QCOMPARE(imported, 1); QVERIFY(QFile::exists(paths.application));
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    choose(); QPointer<QMessageBox> orphan = dialog->findChild<QMessageBox *>("configurationImportPreview"); QVERIFY(orphan);
+    delete dialog; QVERIFY(!orphan); QCOMPARE(imported, 1);
+  }
+
   void nativeAccessibilityFallbackIsVisibleAndDoesNotPersistDesktopChoices() {
     QTemporaryDir dir; ApplicationSettingsStore store(dir.filePath("settings.json"), dir.path());
     xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; });

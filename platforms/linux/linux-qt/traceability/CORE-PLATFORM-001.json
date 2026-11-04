@@ -87,15 +87,22 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native display/desktop/runtime identity is XerahS/com.xerahs.app. Reference live settings are never imported implicitly. Previewed explicit replacement migration, backup and recovery remain Required.",
+      "note": "XerahS/com.xerahs.app identity is retained. General-page Import from XerahS (previous app) is explicit, starts at XDG_CONFIG_HOME/xerahs (fallback ~/.config/xerahs), previews supported application/workflow/legacy custom-uploader conversion and creates a recoverable native backup before writes. Reference files are read-only, bounded and symlink-refused; SecretsStore and history databases are never opened. Restore previous settings remains available until confirmed dismissal. Synthetic source-shaped fixtures at reference revision 27b89b57771a4c6fb84191382a64926d8b5efec7 cover confirm/failure/retry/restore. Unsupported provider/editor/history/custom-path conversion, actual runtime-observation fixtures and human privacy/parity review remain Required. Rationale: source named-enum behavior is followed only where equivalent; unsupported records stay in the source instead of acquiring partial execution behavior.",
       "evidence": [
         "platforms/linux/linux-qt/app/main.cpp",
-        "platforms/linux/linux-qt/packaging/com.xerahs.app.desktop"
+        "platforms/linux/linux-qt/packaging/com.xerahs.app.desktop",
+        "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
+        "platforms/linux/linux-qt/src/settings/ReferenceMigration.cpp",
+        "platforms/linux/linux-qt/tests/ConfigurationTransferTest.cpp",
+        "platforms/linux/linux-qt/tests/ReferenceMigrationTest.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+        "platforms/linux/linux-qt/app/SettingsDialog.cpp",
+        "platforms/linux/linux-qt/src/settings/ReferenceMigration.h"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 14,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "coverage": "Current worktree: application-settings, configuration-transfer, reference-migration and native-surface-accessibility pass (100% tests passed out of 4). Final full suite: 71% tests passed, 47 tests failed out of 162; failures are 40 private-D-Bus startup failures and 7 socket-dependent suites blocked by the sandbox. editor-window-1/2/3 were rerun serially and fail before test startup because the bus cannot bind. Contract lint and generated-progress check pass. Runtime-observed legacy fixtures, supported-target/cross-platform qualification and human privacy/parity review remain Required; no waiver is claimed.",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },

@@ -1,0 +1,8 @@
+{
+  "ApplicationVersion":"0.19.0",
+  "DefaultTaskSettings":{"GeneralSettings":{"PlaySoundAfterCapture":true}},
+  "Hotkeys":[
+    {"Id":"reference-region-id","Enabled":true,"HotkeyInfo":{"Key":"F9","Modifiers":"Control, Shift"},"TaskSettings":{"Description":"Reference region","Job":"RectangleRegion","AfterCaptureJob":"SaveImageToFile, CopyImageToClipboard","AfterUploadJob":"CopyURLToClipboard","OverrideScreenshotsFolder":true,"ScreenshotsFolder":"/tmp/reference-captures","UploadSettings":{"NameFormatPattern":"reference-%y%mo%d"}}},
+    {"Id":"unsupported-external-action","Enabled":true,"TaskSettings":{"Description":"Not imported","Job":"RectangleRegion","AfterCaptureJob":"PerformActions, UploadImageToHost","DestinationInstanceId":"provider-id"}}
+  ]
+}
