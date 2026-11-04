@@ -2,6 +2,8 @@
 // expose a safe default and a cancel action, restore focus on close, and never
 // hide a destructive consequence behind generic confirmation text.
 #include "AppearanceDialog.h"
+#include "CanvasCropDialog.h"
+#include "CanvasRotationDialog.h"
 #include "ColorPickerDialog.h"
 #include "DrawingDefaultsDialog.h"
 #include "EffectsDialog.h"
@@ -14,6 +16,7 @@
 #include "NewImageDialog.h"
 #include "PresetDialog.h"
 #include "RectanglePropertiesDialog.h"
+#include "SelectionRotationDialog.h"
 #include "TextContentDialog.h"
 #include "UrlOpenDialog.h"
 #include "QrCodeDialog.h"
@@ -33,9 +36,11 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QRegularExpression>
+#include <QSet>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTimer>
+#include <QUuid>
 #include <QVBoxLayout>
 #include <functional>
 #include <memory>
@@ -153,6 +158,7 @@ private slots:
     QTest::newRow("watch-folders") << 10; QTest::newRow("video-converter") << 11; QTest::newRow("effects") << 12; QTest::newRow("presets") << 13;
     QTest::newRow("editor-appearance") << 14; QTest::newRow("drawing-defaults") << 15;
     QTest::newRow("rectangle-properties") << 16; QTest::newRow("text-content") << 17;
+    QTest::newRow("canvas-crop") << 18; QTest::newRow("canvas-rotation") << 19; QTest::newRow("selection-rotation") << 20;
   }
   void modalDialogsTrapFocusOnlyWhileActiveIdentifyPurposeEscapeAndRestoreFocus() {
     QFETCH(int, which); Host host; QVERIFY(host.focusOnEdit());
@@ -170,6 +176,10 @@ private slots:
     xerahs::editor::AnnotationDocument sourceDocument;
     xerahs::editor::RectangleAnnotation rectangle; rectangle.start = {0, 0}; rectangle.end = {120, 80};
     xerahs::editor::RectangleAnnotation textShape; textShape.content.type = xerahs::editor::shape::text;
+    xerahs::editor::RectangleAnnotation rotated; rotated.id = QUuid::createUuid();
+    rotated.start = {10, 10}; rotated.end = {60, 40};
+    xerahs::editor::AnnotationDocument rotationDocument; rotationDocument.annotations = {rotated};
+    xerahs::editor::CropRegion cropRegion{0, 0, 64, 48};
     auto credentials = std::make_shared<xerahs::uploads::MemoryCredentialStore>();
     auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("history"));
     xerahs::watch::WatchFolders watchStore(dir.filePath("watch"));
@@ -189,6 +199,9 @@ private slots:
         : which == 12 ? static_cast<QDialog *>(new EffectsDialog(sourceDocument, sourceImage, [](PreparedCanvasEdit) { return false; }, &host.window, dir.filePath("effects.json")))
         : which == 16 ? static_cast<QDialog *>(new RectanglePropertiesDialog(rectangle, &host.window))
         : which == 17 ? static_cast<QDialog *>(new TextContentDialog(textShape, &host.window))
+        : which == 18 ? static_cast<QDialog *>(new CanvasCropDialog(xerahs::editor::AnnotationDocument{}, sourceImage, cropRegion, &host.window))
+        : which == 19 ? static_cast<QDialog *>(new CanvasRotationDialog(xerahs::editor::AnnotationDocument{}, sourceImage, &host.window))
+        : which == 20 ? static_cast<QDialog *>(new SelectionRotationDialog(rotationDocument, QSet<QUuid>{rotated.id}, &host.window))
         : static_cast<QDialog *>(new PresetDialog(sourceDocument, sourceImage, [](PreparedCanvasEdit) { return false; }, registry, &host.window));
     QVERIFY(!QApplication::activeModalWidget());  // No trap before it opens.
     dialog->setModal(true); dialog->open();
