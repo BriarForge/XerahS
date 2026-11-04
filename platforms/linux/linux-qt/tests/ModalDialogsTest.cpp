@@ -1,7 +1,10 @@
 // IFCAT-005: modal dialogs trap focus only while active, identify their purpose,
 // expose a safe default and a cancel action, restore focus on close, and never
 // hide a destructive consequence behind generic confirmation text.
+#include "ActionSelectionDialog.h"
 #include "AppearanceDialog.h"
+#include "AutoCaptureDialog.h"
+#include "ConveniencePreferencesDialog.h"
 #include "CanvasCropDialog.h"
 #include "CanvasRotationDialog.h"
 #include "ColorPickerDialog.h"
@@ -28,6 +31,7 @@
 #include "media/VideoConversion.h"
 #include "watch/WatchFolders.h"
 #include <QApplication>
+#include <QDateTime>
 #include <QDialogButtonBox>
 #include <QDirIterator>
 #include <QFile>
@@ -159,14 +163,16 @@ private slots:
     QTest::newRow("editor-appearance") << 14; QTest::newRow("drawing-defaults") << 15;
     QTest::newRow("rectangle-properties") << 16; QTest::newRow("text-content") << 17;
     QTest::newRow("canvas-crop") << 18; QTest::newRow("canvas-rotation") << 19; QTest::newRow("selection-rotation") << 20;
+    QTest::newRow("auto-capture") << 21; QTest::newRow("action-selection") << 22; QTest::newRow("convenience-preferences") << 23;
   }
   void modalDialogsTrapFocusOnlyWhileActiveIdentifyPurposeEscapeAndRestoreFocus() {
     QFETCH(int, which); Host host; QVERIFY(host.focusOnEdit());
-    if (which == 14 || which == 15) {
+    if (which == 14 || which == 15 || which == 23) {
       // These preference dialogs are opened by their own entry point, which runs the modal loop.
       QVERIFY(!QApplication::activeModalWidget());  // No trap before it opens.
       if (which == 14) verifyOwnModalLoop([&] { manageEditorAppearance(&host.window); }, host);
-      else verifyOwnModalLoop([&] { manageDrawingDefaults(&host.window); }, host);
+      else if (which == 15) verifyOwnModalLoop([&] { manageDrawingDefaults(&host.window); }, host);
+      else verifyOwnModalLoop([&] { manageConveniencePreferences(&host.window); }, host);
       return;
     }
     QImage comparisonImage(64, 48, QImage::Format_ARGB32); comparisonImage.fill(Qt::white);
@@ -202,6 +208,8 @@ private slots:
         : which == 18 ? static_cast<QDialog *>(new CanvasCropDialog(xerahs::editor::AnnotationDocument{}, sourceImage, cropRegion, &host.window))
         : which == 19 ? static_cast<QDialog *>(new CanvasRotationDialog(xerahs::editor::AnnotationDocument{}, sourceImage, &host.window))
         : which == 20 ? static_cast<QDialog *>(new SelectionRotationDialog(rotationDocument, QSet<QUuid>{rotated.id}, &host.window))
+        : which == 21 ? static_cast<QDialog *>(new AutoCaptureDialog([] { return QDateTime::currentMSecsSinceEpoch(); }, false, &host.window))
+        : which == 22 ? static_cast<QDialog *>(new ActionSelectionDialog({}, QSize(640, 480), &host.window))
         : static_cast<QDialog *>(new PresetDialog(sourceDocument, sourceImage, [](PreparedCanvasEdit) { return false; }, registry, &host.window));
     QVERIFY(!QApplication::activeModalWidget());  // No trap before it opens.
     dialog->setModal(true); dialog->open();
