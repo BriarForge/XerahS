@@ -23,9 +23,9 @@ private slots:
     QTest::newRow("upload-url") << "https://example.test/u/SECRET-TOKEN-123" << true << "Completed. Open XerahS for details.";
     QTest::newRow("ocr-text") << "Recognised: account 12-3456 balance 99,999" << true << "Completed. Open XerahS for details.";
     QTest::newRow("coded-failure") << "upload-failed: https://example.test/u/SECRET-TOKEN-123 refused" << false
-                                   << "upload-failed: failed. Open XerahS for details.";
-    QTest::newRow("uncoded-failure") << "Could not write /home/mike/secret/plan.png" << false << "Failed. Open XerahS for details.";
-    QTest::newRow("sentence-colon-is-not-a-code") << "Could not save: /home/mike/secret.png" << false << "Failed. Open XerahS for details.";
+                                   << "upload-failed: attention required. Open XerahS for details.";
+    QTest::newRow("uncoded-failure") << "Could not write /home/mike/secret/plan.png" << false << "Attention required. Open XerahS for details.";
+    QTest::newRow("sentence-colon-is-not-a-code") << "Could not save: /home/mike/secret.png" << false << "Attention required. Open XerahS for details.";
   }
   void privatePreviewKeepsOperationAndTrueResultOnly() {
     QFETCH(QString, body); QFETCH(bool, ok); QFETCH(QString, expected);

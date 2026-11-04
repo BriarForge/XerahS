@@ -114,6 +114,7 @@ bool hasAcknowledgedPartialRaster(const QString &action, ActionState state, cons
 // CORE-020, CORE-021: public upload receipts; credentials never cross this boundary.
 struct UploadResult {
   QString url, thumbnailUrl, deletionUrl, errorMessage;
+  int attempts = 0; // optional native receipt metadata; 0 for legacy receipts
 };
 
 struct ActionOutcome {

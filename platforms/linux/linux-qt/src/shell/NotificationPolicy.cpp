@@ -1,6 +1,7 @@
 #include "shell/NotificationPolicy.h"
 
 #include <QRegularExpression>
+#include <QUuid>
 
 namespace xerahs::shell {
 
@@ -14,7 +15,14 @@ NotificationText presentNotification(const QString &title, const QString &body, 
   if (!privatePreview) return {title, body};
   if (ok) return {title, QStringLiteral("Completed. Open XerahS for details.")};
   const auto code = stableCodeOf(body);
-  return {title, code.isEmpty() ? QStringLiteral("Failed. Open XerahS for details.") : code + QStringLiteral(": failed. Open XerahS for details.")};
+  return {title, code.isEmpty() ? QStringLiteral("Attention required. Open XerahS for details.") : code + QStringLiteral(": attention required. Open XerahS for details.")};
+}
+
+NotificationEvent desktopNotification(const QString &operation, const QString &body, bool ok) {
+  const auto id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+  auto text = presentNotification(operation, body, ok, true);
+  text.title += QStringLiteral(" [%1]").arg(id);
+  return {id, text};
 }
 
 bool privatePreviewsEnabled(const QJsonObject &settings) {

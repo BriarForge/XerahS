@@ -1437,6 +1437,7 @@ bool EditorWindow::uploadImage() {
       result.url = action.upload->url;
       result.thumbnailUrl = action.upload->thumbnailUrl;
       result.deletionUrl = action.upload->deletionUrl;
+      result.attempts = action.upload->attempts;
       auto *dialog = new FileUploadResultDialog(QStringLiteral("Edited image"), result, this);
       dialog->show();
     }

@@ -139,7 +139,7 @@ void FileUploadController::startNext() {
 void FileUploadController::recordCompletion(const uploads::UploadOutcome &outcome, std::function<void(QString)> done) {
   if (!m_existingFile) { done({}); return; }
   auto record = m_historyRecord;
-  record.result = {outcome.url, outcome.thumbnailUrl, outcome.deletionUrl, outcome.errorMessage};
+  record.result = {outcome.url, outcome.thumbnailUrl, outcome.deletionUrl, outcome.errorMessage, outcome.attempts};
   // Response templates may echo credentials even into public receipt fields.
   for (auto *field : {&record.result.url, &record.result.thumbnailUrl, &record.result.deletionUrl, &record.result.errorMessage})
     for (const auto &secret : m_sensitiveValues) {
@@ -186,7 +186,7 @@ void FileUploadController::closeProgress() {
 }
 
 void FileUploadController::showFailure(const QString &fileName, const QString &message, bool missingDestination) {
-  uploads::UploadOutcome outcome; outcome.errorMessage = message;
+  uploads::UploadOutcome outcome; outcome.errorMessage = message; outcome.attempts = m_historyRecord.result.attempts;
   if (m_historyRecord.failureCode.isEmpty()) m_historyRecord.failureCode = "upload-failed";
   recordCompletion(outcome, [this, fileName, message, missingDestination](const QString &historyError) {
     emit fileCompleted(m_currentPath, false, message);
@@ -229,13 +229,19 @@ void FileUploadController::onFinished(const uploads::UploadOutcome &outcome) {
   if (!m_transferring) return;
   m_transferring = false;
   m_historyRecord.failureCode = outcome.code;
+  m_historyRecord.result.attempts = outcome.attempts;
   if (m_stop || outcome.code == QLatin1String("cancelled")) {
     m_historyRecord.failureCode = "cancelled";
-    showFailure(m_currentName, QStringLiteral("cancelled"));
+    showFailure(m_currentName, outcome.attempts > 0
+        ? QStringLiteral("cancelled: remote publication is unconfirmed. Review the destination before retrying.")
+        : QStringLiteral("cancelled"));
     return;
   }
   if (!outcome.code.isEmpty()) {
-    showFailure(m_currentName, outcome.errorMessage.isEmpty() ? outcome.code : outcome.errorMessage);
+    const bool uncertain = outcome.attempts > 0 && (outcome.code == "timeout" || outcome.code == "network-error");
+    showFailure(m_currentName, uncertain
+        ? outcome.code + QStringLiteral(": remote publication is unconfirmed. Review the destination before retrying.")
+        : outcome.errorMessage.isEmpty() ? outcome.code : outcome.errorMessage);
     return;
   }
   showSuccess(m_currentName, outcome);

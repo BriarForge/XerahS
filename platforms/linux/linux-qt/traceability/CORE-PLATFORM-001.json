@@ -303,7 +303,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Capture results reach the native tray and persist as plain accessible operation text in the command window. Full native policy, private-preview protection, result correlation and authority-limited actions remain Required. Reveal notifications distinguish acknowledged requests from uncertain delivery; actual visual desktop/notification qualification remains Required. Save As acknowledgement uses its actual saved artifact and task facts even when ordinary Save also succeeded; both files remain in the private result report. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Native admitted region captures now persist a separate request/execution ID before acquisition, preserve early outcomes, link the real pipeline in both private observations and namespaced reports, and expose redacted headless lookup. Unfinished observations stay unconfirmed. Native descriptor storage is shared without changing existing PCA format or authority. Full application/catalogue/retention and target/human qualification remain Required. Private previews: the new privateNotifications setting (off by default, same default as the reference app, which always shows full text) reduces every desktop notification to the operation title and the true result or stable failure code, with paths, URLs and recognised text kept in the XerahS window (NotificationPolicyTest; all tray notifications go through postTrayMessage). Stale actions: reveal and copy on a capture that was deleted or moved away fail with a stable code, make no file-manager call and leave the clipboard untouched (CaptureFileOutputTest). Not closed: tray notifications carry no actions yet, there is no per-notification correlation to the originating operation beyond its title, native notification policy (do-not-disturb, per-app permission) is not read, and no Preferences control exposes privateNotifications yet. Audit 2026-11-03: NotificationPolicyTest proves private previews carry no private content and still report the true result; CaptureFileOutputTest proves actions on deleted or moved targets fail safely. Status stays partial for the gaps named above.",
+      "note": "Audit 2026-11-04: originating operation and actual result remain in the command window; every native notification has a fresh opaque event UUID shared with that window. NotificationPolicyTest::privatePreviewKeepsOperationAndTrueResultOnly proves paths, URLs and recognized text are omitted; nonterminal warnings say attention required rather than falsely reporting failure. Native delivery always applies the private projection, regardless of the retained legacy privateNotifications preference. NativeNotificationsTest::nativeDeliveryContainsOperationResultAndCorrelationWithoutPrivatePreviewsOrActions covers the production org.freedesktop.Notifications transport, normal urgency, desktop identity, no media hints and empty actions; refusalDoesNotRetryBypassPolicyOrCreateAnAction covers policy refusal without fallback or retry. Decision: notifications carry no actions. The desktop server applies its native permission, lock-screen and do-not-disturb policy; the app sends no suppression overrides. notification-policy passes. native-notifications is sandbox-blocked before test startup because dbus-daemon cannot bind its private socket. Status remains partial until that named transport test passes outside the sandbox; no physical/human notification qualification is claimed.",
       "evidence": [
         "platforms/linux/linux-qt/app/main.cpp",
         "platforms/linux/linux-qt/app/ApplicationWindow.cpp",
@@ -322,13 +322,15 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/NotificationPolicyTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp",
-        "platforms/linux/linux-qt/src/shell/NotificationPolicy.cpp"
+        "platforms/linux/linux-qt/src/shell/NotificationPolicy.cpp",
+        "platforms/linux/linux-qt/app/NativeNotifications.cpp",
+        "platforms/linux/linux-qt/tests/NativeNotificationsTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 45,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
-        "reviewed_at_revision": "36761b71125ac3effb4c7feb33d5bd480308c60b"
+        "coverage": "Notification projection tested; native notification transport test is sandbox-blocked (socket bind denied).",
+        "reviewed_at_revision": "36761b7"
       }
     },
     "CORE-011": {
@@ -421,22 +423,26 @@
       }
     },
     "CORE-016": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Explicit delayed and bounded automatic scheduling, settings persistence, stop controls and no-overlap tests exist. Full lock/storage/permission/privacy conditions and desktop qualification remain. Screen lock and storage conditions: automatic capture now pauses while the screen is locked (the tick is skipped and counted, the run resumes after unlock and still ends at its bound) and a run is refused at start, or stopped, when free space in the capture folder drops below 512 MiB with a stable storage-low notification. Lock state comes from an injectable ScreenLockState fed by org.freedesktop.ScreenSaver and org.gnome.ScreenSaver ActiveChanged on the session bus and org.freedesktop.login1 Session Lock/Unlock signals plus LockedHint on the system bus. Rationale: the reference app has neither check and Flameshot/Greenshot have no auto capture, so lock-pauses and a 512 MiB floor are the documented Linux policy. Not closed: capture permission loss during a run and privacy conditions have no tests, and real compositor lock signals are only exercised on a private bus. Audit 2026-11-03: CaptureConditionsTest proves the lock pause/resume, storage refuse/stop, precedence and the D-Bus signal adapter on a private bus; ScheduledCaptureTest still proves the no-overlap and bound behavior. Status stays partial for permission and privacy conditions.",
+      "note": "Audit 2026-11-04: Clauses mapped to passing tests: explicit bounded schedule and target scope -> CaptureScheduleTest::unboundedScheduleIsRejected, endsByCountWithInjectedClock, endsByTimeWithInjectedClock; visible stop -> ScheduledCaptureTest::delayAndAutoRefuseEachOtherAndTheTooltipFollowsTheRun and CaptureScheduleTest::userStopWaitsForTheInFlightAttempt; documented skip-not-queue/no-overlap -> CaptureScheduleTest::busyTickIsSkippedAndNotQueued; permission loss stops future prompts and requires explicit restart -> ScheduledCaptureTest::permissionDenialStopsFutureTicksAndRequiresAnExplicitNewSchedule and unrelatedPermissionDenialDoesNotChangeAnIdleOrWaitingSchedule; privacy after admission -> lockAfterAdmissionCancelsOnlyTheOwnedAttemptAndPreventsLateSuccess and lockNeverCancelsUnrelatedManualWorkOrRestartsAWaitingRun; unresolved workflow refusal -> unresolvedWorkflowRefusesAndStopsWithoutStartingAnotherCapture. Lock pause/resume and storage refuse/stop -> CaptureConditionsTest::lockedScreenPausesTheRunAndItResumesAfterUnlock and lowStorageRefusesToStartAndStopsARunningCapture (run directly without D-Bus, 5 passed/0 failed including setup/cleanup). ShellCommandsTest::automaticCaptureChecksTheEffectiveWorkflowFolderAndRefusesAnUnresolvedDefault proves actual saved workflow/profile folder precedence through the shared capture resolver and injected free-space lookup. capture-schedule, capture-schedule-dialog, shell-commands and scheduled-capture pass. Native condition sources remain ScreenSaver/logind and QStorageInfo; capture-conditions wrapper is sandbox-blocked at private D-Bus startup, so physical desktop lock signal qualification is not accepted by this candidate classification. Existing 512 MiB floor and locked-waiting tick skip/resume policy are retained; a lock during an admitted automatic attempt requests cancellation and stops future ticks.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CaptureScheduleTest.cpp",
         "platforms/linux/linux-qt/tests/ScheduledCaptureTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureConditionsTest.cpp",
         "platforms/linux/linux-qt/src/capture/CaptureConditions.cpp",
-        "platforms/linux/linux-qt/app/ScreenLockWatcher.cpp"
+        "platforms/linux/linux-qt/app/ScreenLockWatcher.cpp",
+        "platforms/linux/linux-qt/app/ScheduledCapture.cpp",
+        "platforms/linux/linux-qt/app/features/ScheduleFeature.cpp",
+        "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 72,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
         "reviewed_at_revision": "36761b71125ac3effb4c7feb33d5bd480308c60b"
       }
     },
@@ -463,15 +469,18 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Region/screen recording supports selected system/microphone devices and GStreamer audio graphs with domain/integration tests. Complete consent/device-loss/synchronization/audio hardware and target qualification remain. Audit of clauses: explicit system and microphone selection, a missing selected device producing no audio track at all (no partial mix) and a one-or-two input mix per container are tested (RecordingTest::explicitAudioSelection, finiteVideo audio-mix cases); the always-visible indicator states Audio recording or No audio (RecordingTest::captureIndicator). Not closed: platform permission and consent for the microphone are not exercised, audio and video synchronisation is not measured, loss of a device during recording is not tested, and the finiteVideo audio-mix cases are skipped on hosts without the GStreamer audio elements. Audit 2026-11-03: RecordingTest::explicitAudioSelection and captureIndicator prove explicit selection, no-track-when-missing and the active-capture indicator. Status stays partial for permission, synchronisation and mid-recording device loss.",
+      "note": "Audit 2026-11-04: Clauses mapped: explicit system/microphone enumeration and selection plus missing input yields no audio track -> RecordingTest::explicitAudioSelection; active capture indication -> RecordingTest::captureIndicator; mixing per MP4/WebM and no GIF audio -> explicitAudioSelection (production pipeline descriptions), with RecordingIntegrationTest::finiteVideo(cropped-mp4-audio-mix,cropped-webm-audio-mix) intended to verify actual tracks. RecordingController timestamps selected inputs and PipeWire video on pipeline running time; that code is not a measured synchronization proof. recording and recording-workflow pass. recording-integration reports 2 passed, 0 failed, 7 skipped because required GStreamer encoder/muxer/test-source elements are missing, so its audio cases are not passing evidence. Remaining clauses: native microphone permission/consent enforcement and denial, measured A/V synchronization, actual mixed tracks and device loss during native recording are unproven. No approved additional degraded mode is invented. Keep partial pending these tests and native permission boundary evidence.",
       "evidence": [
         "platforms/linux/linux-qt/tests/RecordingTest.cpp",
-        "platforms/linux/linux-qt/tests/RecordingIntegrationTest.cpp"
+        "platforms/linux/linux-qt/tests/RecordingIntegrationTest.cpp",
+        "platforms/linux/linux-qt/app/RecordingController.cpp",
+        "platforms/linux/linux-qt/src/recording/Recording.cpp",
+        "platforms/linux/linux-qt/tests/RecordingWorkflowTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 79,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "coverage": "Partial tested Linux candidate behavior; the specific remaining clauses and unavailable verification are named in the note.",
         "reviewed_at_revision": "36761b71125ac3effb4c7feb33d5bd480308c60b"
       }
     },
@@ -492,20 +501,25 @@
       }
     },
     "CORE-020": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Capture/file/watch-folder uploads use validated destinations, credential references and cancellable executors; hostile response tests prevent truncated URL success. Full retry/idempotency, privacy and native qualification remain.",
+      "note": "Audit 2026-11-04: Clauses mapped to passing tests: local input/destination validation before any network path -> UploadRequestTest::methodsAndValidation and failuresAndLimits; credential references without serialized values -> DestinationCatalogTest::importStoresSecretsAndPersistsOnlyReferences and UploadRequestTest::placeholders/failuresAndLimits. Progress and cancellation -> UploadExecutorTest::lifecycle, safeRetriesKeepPreparedBytesKeyAndOneRemoteObject and cancellationDuringBackoffCannotRestartOrCompleteANewerRun. Decision: retry is bounded to 3 attempts with 250/500 ms backoff, only for idempotent GET/HEAD/PUT/DELETE or POST/PATCH carrying exactly one nonblank stable Idempotency-Key; never for unkeyed non-idempotent actions. Retries preserve the original prepared body, destination, credential values and key. safeRetriesKeepPreparedBytesKeyAndOneRemoteObject simulates lost response after publication and proves one object/one final URL across 2 attempts; exhaustedRetriesAreBoundedAndBackoffIncreases proves the limit; unsafeOrPermanentFailuresNeverRetry covers unkeyed/blank/duplicate-key requests and permanent/parse/oversized/auth/rate responses. abortObserversCannotOverwriteANewerRunOrEscapeAdmission proves cancellation/reentry ownership. Local preparation is not publication: UploadResponseTest::unresolvedPlaceholdersNeverPublishATruncatedUrl and UploadExecutorTest::attemptMetadataDoesNotInventPublicationAndLegacyReceiptsStayUnchanged prove missing/invalid result cannot create an output. Native optional upload_result.attempts is separate from the single publication URL; legacy receipts omit it. upload-executor-policy passes all socket-free production seam cases; upload-request, upload-response and destination-catalog pass. Full upload-executor loopback transfer cases are sandbox-blocked (listen denied); live provider and credential-service/human qualification are not accepted by this candidate classification. Capture upload remains non-retryable from retained action retry; editor transport uncertainty remains explicit, and file upload transport loss/cancellation after dispatch says remote publication is unconfirmed.",
       "evidence": [
         "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp",
         "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
-        "platforms/linux/linux-qt/tests/UploadResponseTest.cpp"
+        "platforms/linux/linux-qt/tests/UploadResponseTest.cpp",
+        "platforms/linux/linux-qt/src/uploads/UploadExecutor.cpp",
+        "platforms/linux/linux-qt/src/uploads/UploadRequest.cpp",
+        "platforms/linux/linux-qt/src/actions/PipelineResultJson.cpp",
+        "platforms/linux/linux-qt/tests/UploadRequestTest.cpp",
+        "platforms/linux/linux-qt/tests/DestinationCatalogTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 90,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
       }
     },

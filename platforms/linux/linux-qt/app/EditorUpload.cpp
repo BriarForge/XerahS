@@ -81,9 +81,11 @@ ActionOutcome submitEditorUpload(const EditorUploadSnapshot &snapshot, const upl
   });
   QObject::connect(&timer, &QTimer::timeout, &executor, [&] { if (stopping(control)) executor.cancel(); });
   timer.start(10); executor.start(*request.request); if (!completed) loop.exec();
-  if (response.code == "cancelled" || response.code == "timeout" || response.code == "network-error") return unknown();
-  if (!response.code.isEmpty()) return failed(response.code);
-  ActionOutcome outcome; outcome.upload = UploadResult{response.url, response.thumbnailUrl, response.deletionUrl, {}}; return outcome;
+  if (!response.code.isEmpty()) {
+    auto out = (response.code == "cancelled" || response.code == "timeout" || response.code == "network-error") ? unknown() : failed(response.code);
+    out.upload = UploadResult{{}, {}, {}, {}, response.attempts}; return out;
+  }
+  ActionOutcome outcome; outcome.upload = UploadResult{response.url, response.thumbnailUrl, response.deletionUrl, {}, response.attempts}; return outcome;
 }
 EditorUploadOutcome runEditorUpload(const QImage &source, const xerahs::editor::AnnotationDocument &document,
                                    QWidget *parent, const EditorUploadPorts &ports) {
@@ -126,13 +128,17 @@ EditorUploadOutcome runEditorUpload(const QImage &source, const xerahs::editor::
   if (transfer == EditorPreparationResult::Cancelled || (parent && !owner)) return {submitted->entered.load() ? unknown() : cancelled()};
   if (transfer != EditorPreparationResult::Ready) return {unknown()};
   auto action = submitted->action;
-  if (action.outcomeUnknown || action.state == ActionState::Skipped || action.replacementSelection || !action.artifacts.empty()) return {unknown()};
+  const auto metadata = [attempts = action.upload ? action.upload->attempts : 0](ActionOutcome result) {
+    if (attempts > 0) result.upload = UploadResult{{}, {}, {}, {}, attempts};
+    return result;
+  };
+  if (action.outcomeUnknown || action.state == ActionState::Skipped || action.replacementSelection || !action.artifacts.empty()) return {metadata(unknown())};
   if (action.state == ActionState::Succeeded) {
     if (!action.upload || !webUrl(action.upload->url) ||
         (!action.upload->thumbnailUrl.isEmpty() && !webUrl(action.upload->thumbnailUrl)) ||
-        (!action.upload->deletionUrl.isEmpty() && !webUrl(action.upload->deletionUrl))) return {unknown()};
+        (!action.upload->deletionUrl.isEmpty() && !webUrl(action.upload->deletionUrl))) return {metadata(unknown())};
     action.diagnostic.reset(); action.upload->errorMessage.clear(); return {action};
   }
-  return {action.state == ActionState::Cancelled ? cancelled() : failed(safeDiagnostic(action.diagnostic))};
+  return {metadata(action.state == ActionState::Cancelled ? cancelled() : failed(safeDiagnostic(action.diagnostic)))};
 }
 }

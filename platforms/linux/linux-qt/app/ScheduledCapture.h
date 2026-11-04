@@ -25,6 +25,7 @@ struct ScheduledCapturePorts {
   // CORE-016: screen-lock and storage conditions. Unset means Clear. ScreenLocked skips the tick
   // (the run pauses); StorageLow refuses a new run and stops a running one.
   std::function<xerahs::capture::AutoCondition()> condition;
+  std::function<void()> cancelOwnedCapture;
 };
 
 class DelayedCapture;
@@ -47,6 +48,9 @@ public:
 public slots:
   void captureBusyChanged(bool busy);
   void captureFinished(bool success);
+  // A denied scheduled attempt revokes future ticks; restarting requires explicit Start.
+  void capturePermissionDenied();
+  void screenLockedChanged(bool locked);
 
 private:
   void wire();
@@ -66,6 +70,7 @@ private:
   QAction *m_stopAction = nullptr;
   bool m_attempt = false;
   bool m_success = false;
+  bool m_revoked = false;
 };
 
 }  // namespace xerahs::app

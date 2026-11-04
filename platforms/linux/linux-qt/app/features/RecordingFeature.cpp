@@ -42,7 +42,6 @@ void installRecording(AppContext &ctx) {
   }
   QObject::connect(&ctx.recording, &RecordingController::notify, &ctx.app,
       [&ctx](const QString &title, const QString &body, bool success) {
-        if (auto *window = commandWindow(ctx)) window->showResult(title, body, success);
         postTrayMessage(ctx, title, body, success);
       });
   QObject::connect(&ctx.recording, &RecordingController::activityChanged, &ctx.app, [&ctx](const QString &text) {

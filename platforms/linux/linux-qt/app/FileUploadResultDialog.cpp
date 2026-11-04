@@ -38,6 +38,8 @@ FileUploadResultDialog::FileUploadResultDialog(const QString &fileName, const up
   setAttribute(Qt::WA_DeleteOnClose);
   auto *layout = new QVBoxLayout(this);
   layout->addWidget(line(this, QStringLiteral("uploadFileName"), fileName));
+  if (outcome.attempts > 0)
+    layout->addWidget(line(this, QStringLiteral("uploadAttempts"), QStringLiteral("Network attempts: %1. One remote upload result.").arg(outcome.attempts)));
   m_url = selectable(this, QStringLiteral("uploadUrl"), outcome.url);
   m_url->setAccessibleName(QStringLiteral("Upload URL"));
   layout->addWidget(m_url);

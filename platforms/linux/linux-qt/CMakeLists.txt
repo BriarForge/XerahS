@@ -290,6 +290,8 @@ add_library(xerahs_app OBJECT
   app/AutoCaptureDialog.cpp
   app/AutoCaptureDialog.h
   app/AppContext.cpp
+  app/NativeNotifications.cpp
+  app/NativeNotifications.h
   app/ScheduledCapture.cpp
   app/ScheduledCapture.h
   app/ScreenLockWatcher.cpp
@@ -1673,3 +1675,18 @@ target_link_libraries(region-capture-native-test PRIVATE xerahs_window_discovery
   xerahs_action_selection xerahs_pipeline_journal xerahs_editor_codecs xerahs_image_recognition Qt6::Widgets Qt6::DBus Qt6::Test)
 add_test(NAME region-capture-native COMMAND region-capture-native-test)
 set_tests_properties(region-capture-native PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
+add_executable(native-notifications-test tests/NativeNotificationsTest.cpp app/NativeNotifications.cpp app/NativeNotifications.h)
+set_target_properties(native-notifications-test PROPERTIES AUTOMOC ON)
+target_include_directories(native-notifications-test PRIVATE app)
+target_link_libraries(native-notifications-test PRIVATE xerahs_core Qt6::DBus Qt6::Test)
+add_test(NAME native-notifications COMMAND "${XERAHS_DBUS_RUN_SESSION}"
+         "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf" -- $<TARGET_FILE:native-notifications-test>)
+set_tests_properties(native-notifications PROPERTIES TIMEOUT 30)
+
+add_test(NAME upload-executor-policy COMMAND upload-executor-test lifecycle reentrantRestart
+  safeRetriesKeepPreparedBytesKeyAndOneRemoteObject exhaustedRetriesAreBoundedAndBackoffIncreases
+  unsafeOrPermanentFailuresNeverRetry cancellationDuringBackoffCannotRestartOrCompleteANewerRun
+  abortObserversCannotOverwriteANewerRunOrEscapeAdmission
+  attemptMetadataDoesNotInventPublicationAndLegacyReceiptsStayUnchanged)
+set_tests_properties(upload-executor-policy PROPERTIES TIMEOUT 45)

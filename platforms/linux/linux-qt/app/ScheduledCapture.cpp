@@ -4,6 +4,7 @@
 #include "DelayedCapture.h"
 
 #include <QAction>
+#include <QPointer>
 
 #include <utility>
 
@@ -90,7 +91,28 @@ void ScheduledCapture::captureBusyChanged(bool busy) {
 }
 
 void ScheduledCapture::captureFinished(bool success) {
-  if (m_attempt) m_success = success;
+  if (m_attempt && !m_revoked) m_success = success;
+}
+
+void ScheduledCapture::capturePermissionDenied() {
+  if (!m_attempt || m_revoked) return;
+  m_success = false;
+  m_revoked = true;
+  m_automatic->stop();
+  notify(QStringLiteral("Auto capture stopped"),
+      QStringLiteral("capture-permission-denied: automatic capture stopped. Review screen capture permission, then explicitly start a new schedule."), false, false);
+}
+
+void ScheduledCapture::screenLockedChanged(bool locked) {
+  if (!locked || !m_attempt || m_revoked) return;
+  m_success = false;
+  m_revoked = true;
+  m_automatic->stop();
+  const QPointer<ScheduledCapture> guard(this);
+  if (m_ports.cancelOwnedCapture) m_ports.cancelOwnedCapture();
+  if (!guard) return;
+  notify(QStringLiteral("Auto capture stopped"),
+      QStringLiteral("screen-locked: cancellation of the scheduled capture was requested. Unlock the screen, then explicitly start a new schedule."), false, false);
 }
 
 void ScheduledCapture::promptDelay() {
@@ -103,7 +125,12 @@ void ScheduledCapture::promptDelay() {
 }
 
 void ScheduledCapture::promptAuto() {
-  if (m_ports.condition && m_ports.condition() == xerahs::capture::AutoCondition::StorageLow) {
+  const auto condition = m_ports.condition ? m_ports.condition() : xerahs::capture::AutoCondition::Clear;
+  if (condition == xerahs::capture::AutoCondition::WorkflowUnavailable) {
+    notify(QStringLiteral("Auto capture"), QStringLiteral("workflow-unavailable: review the default capture workflow before starting automatic capture."), false, true);
+    return;
+  }
+  if (condition == xerahs::capture::AutoCondition::StorageLow) {
     notify(QStringLiteral("Auto capture"), storageLowBody(), false, true);
     return;
   }
@@ -131,6 +158,12 @@ void ScheduledCapture::onAutoRequested(xerahs::capture::CaptureSource source) {
     m_automatic->finishAttempt(xerahs::capture::AttemptDisposition::Skipped);
     return;
   }
+  if (condition == xerahs::capture::AutoCondition::WorkflowUnavailable) {
+    m_automatic->finishAttempt(xerahs::capture::AttemptDisposition::Failed);
+    m_automatic->stop();
+    notify(QStringLiteral("Auto capture stopped"), QStringLiteral("workflow-unavailable: review the default capture workflow before starting automatic capture."), false, true);
+    return;
+  }
   if (condition == xerahs::capture::AutoCondition::StorageLow) {
     m_automatic->finishAttempt(xerahs::capture::AttemptDisposition::Skipped);
     notify(QStringLiteral("Auto capture stopped"), storageLowBody(), false, true);
@@ -143,6 +176,7 @@ void ScheduledCapture::onAutoRequested(xerahs::capture::CaptureSource source) {
   }
   m_attempt = true;
   m_success = false;
+  m_revoked = false;
   const auto code = m_ports.start ? m_ports.start(source) : QStringLiteral("activation-unavailable");
   if (!m_attempt) return;
   if (code.isEmpty()) return;

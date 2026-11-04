@@ -60,6 +60,7 @@ private:
   void finishConnectionTest(const QString &code);
   void refresh(const QUuid &select = {});
   void showSelected();
+  void showCapabilities();
   void checkSecrets();
   void setBusy(bool busy);
   void updateButtons();
@@ -75,6 +76,7 @@ private:
   QListWidget *m_secrets = nullptr;
   QPushButton *m_import = nullptr, *m_default = nullptr, *m_secret = nullptr, *m_remove = nullptr;
   QPushButton *m_test = nullptr, *m_cancelTest = nullptr;
+  QPushButton *m_capabilities = nullptr;
   QLabel *m_testStatus = nullptr;
   OwnedWork m_testPreparation;
   QPointer<DestinationConnectionTest> m_connectionTest;

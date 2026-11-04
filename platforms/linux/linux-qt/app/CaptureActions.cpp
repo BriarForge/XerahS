@@ -215,13 +215,17 @@ ActionOutcome CaptureActions::upload(const ActionRequest &request) {
   QObject::connect(&executor, &UploadExecutor::finished, &loop, [&](const UploadOutcome &out) { response = out; loop.quit(); });
   QObject::connect(&cancellation, &QTimer::timeout, &executor, [&] { if (request.cancellation.requested()) executor.cancel(); });
   cancellation.start(); executor.start(*built.request); loop.exec();
-  if (response.code == "cancelled") return {ActionState::Cancelled, {}, {}};
+  if (response.code == "cancelled") {
+    ActionOutcome out{ActionState::Cancelled, {}, {}};
+    out.upload = UploadResult{{}, {}, {}, {}, response.attempts}; return out;
+  }
   if (!response.code.isEmpty()) {
     auto out = failure(response.code, response.errorMessage);
+    out.upload->attempts = response.attempts;
     out.failureClass = classifyFailure(response.code, response.httpStatus); return out;
   }
   m_uploadUrl = response.url;
-  ActionOutcome out; out.upload = UploadResult{response.url, response.thumbnailUrl, response.deletionUrl, {}}; return out;
+  ActionOutcome out; out.upload = UploadResult{response.url, response.thumbnailUrl, response.deletionUrl, {}, response.attempts}; return out;
 }
 
 // PCA-024: only the upload URL, as plain text; a clipboard failure fails this action alone.

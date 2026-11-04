@@ -48,6 +48,9 @@ struct UploadDestination {
 
 QString requestMethodString(RequestMethod method);
 QString bodyTypeString(BodyType body);
+// Value-free client capabilities. Provider constraints stay explicitly unknown;
+// a saved uploader template cannot establish a provider's external policy.
+QJsonObject destinationCapabilities(const UploadDestination &destination);
 
 // Structural read. Semantic problems are left for validateDestination.
 // Codes: invalid-json, too-large, unsupported-schema, invalid-document.
