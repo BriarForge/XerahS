@@ -25,6 +25,8 @@
 #include "PipelineHistoryDialog.h"
 #include "PresetDialog.h"
 #include "QrCodeDialog.h"
+#include "RectanglePropertiesDialog.h"
+#include "TextContentDialog.h"
 #include "UrlOpenDialog.h"
 #include "VideoConverterDialog.h"
 #include "WatchFolderService.h"
@@ -32,6 +34,7 @@
 #include "WatchFoldersDialog.h"
 #include "actions/PipelineJournal.h"
 #include "features/ToolsFeature.h"
+#include "image-editor/AnnotationDocument.h"
 #include "media/VideoConversion.h"
 #include "settings/ApplicationSettings.h"
 #include "uploads/CredentialStore.h"
@@ -499,6 +502,97 @@ private slots:
       QVERIFY(wizard.state().skipped.contains("capture-permission"));                                       // decline-everything
       QVERIFY(wizard.state().skipped.contains("uploads"));                                                  // decline-everything
     }
+  }
+
+  // Rectangle properties: initial, populated, validation, error, cancelled.
+  // empty: n/a because the dialog always opens with the object's own bounds and values.
+  // loading: n/a because the dialog does no background work of its own.
+  // denied: n/a because the dialog asks for no permission.
+  // unavailable: n/a because the only optional part is the colour picker, and declining it
+  // keeps the draft without any message to show.
+  void rectanglePropertiesDialogStates() {
+    xerahs::editor::RectangleAnnotation rectangle;
+    rectangle.start = {0, 0}; rectangle.end = {120, 80};
+    RectanglePropertiesDialog dialog(rectangle, nullptr);
+    dialog.show();
+    auto *status = dialog.findChild<QLabel *>("rectanglePropertiesStatus");
+    auto *left = dialog.findChild<QLineEdit *>("rectangleLeft");
+    auto *top = dialog.findChild<QLineEdit *>("rectangleTop");
+    auto *width = dialog.findChild<QLineEdit *>("rectangleWidth");
+    auto *height = dialog.findChild<QLineEdit *>("rectangleHeight");
+    auto *buttons = dialog.findChild<QDialogButtonBox *>();
+    QVERIFY(status && left && top && width && height && buttons);
+    auto *ok = buttons->button(QDialogButtonBox::Ok);
+    auto *cancel = buttons->button(QDialogButtonBox::Cancel);
+    QVERIFY(ok && cancel);
+    QVERIFY2(!dialog.windowTitle().trimmed().isEmpty(), "the dialog names its purpose");                     // initial
+    QVERIFY2(status->text().trimmed().isEmpty(), qPrintable(status->text()));                                // initial: nothing is complained about yet
+    QCOMPARE(left->text(), QStringLiteral("0"));                                                            // populated
+    QCOMPARE(top->text(), QStringLiteral("0"));                                                             // populated
+    QCOMPARE(width->text(), QStringLiteral("120"));                                                          // populated
+    QCOMPARE(height->text(), QStringLiteral("80"));                                                          // populated
+    QVERIFY2(cancel->text().contains("Cancel"), qPrintable(cancel->text()));                                 // cancelled: the way out is named
+    width->setText("not a number");
+    ok->click();
+    QVERIFY2(status->text().contains("Enter finite numbers using a decimal point"), qPrintable(status->text()));  // validation
+    QVERIFY(dialog.isVisible());                                                                             // validation: the dialog stays open
+    QVERIFY(!dialog.properties());                                                                           // validation: nothing is committed
+    width->setText("-5");
+    ok->click();
+    QVERIFY2(status->text().contains("Use positive finite width and height"), qPrintable(status->text()));    // error
+    QVERIFY(dialog.isVisible());                                                                             // error: the dialog stays open
+    QVERIFY(!dialog.properties());                                                                           // error: nothing is committed
+    cancel->click();
+    QVERIFY(!dialog.isVisible());                                                                           // cancelled
+    QVERIFY(!dialog.properties());                                                                           // cancelled: the document stays unchanged
+  }
+
+  // Text content: initial, empty, populated, validation, error, unavailable, cancelled.
+  // loading: n/a because the dialog does no background work of its own.
+  // denied: n/a because the dialog asks for no permission.
+  void textContentDialogStates() {
+    xerahs::editor::RectangleAnnotation shape;
+    shape.content.type = xerahs::editor::shape::text;
+    shape.content.text = QStringLiteral("Hello");
+    // The dialog releases itself when it closes, so it is watched through a guard.
+    QPointer<TextContentDialog> dialog = new TextContentDialog(shape, nullptr);
+    dialog->show();
+    auto *error = dialog->findChild<QLabel *>("balloonContentError");
+    auto *familyStatus = dialog->findChild<QLabel *>("annotationFontFamilyStatus");
+    auto *text = dialog->findChild<QPlainTextEdit *>("balloonText");
+    auto *family = dialog->findChild<QComboBox *>("annotationFontFamily");
+    auto *color = dialog->findChild<QLineEdit *>("annotationTextColor");
+    auto *buttons = dialog->findChild<QDialogButtonBox *>();
+    QVERIFY(error && familyStatus && text && family && color && buttons);
+    auto *apply = buttons->button(QDialogButtonBox::Apply);
+    auto *cancel = buttons->button(QDialogButtonBox::Cancel);
+    QVERIFY(apply && cancel);
+    QVERIFY2(!dialog->windowTitle().trimmed().isEmpty(), "the dialog names its purpose");                     // initial
+    QVERIFY2(error->text().trimmed().isEmpty(), qPrintable(error->text()));                                  // initial: nothing is complained about yet
+    QCOMPARE(text->toPlainText(), QStringLiteral("Hello"));                                                  // populated
+    QVERIFY2(familyStatus->text().contains("Native default font"), qPrintable(familyStatus->text()));         // populated: an empty family means the native default
+    family->setEditText("No Such Installed Font");
+    QVERIFY2(familyStatus->text().contains("font-family-unavailable"), qPrintable(familyStatus->text()));     // unavailable: the code is named
+    QVERIFY2(familyStatus->text().contains("This font is unavailable"), qPrintable(familyStatus->text()));     // unavailable: the sentence is named
+    family->setEditText(QString());
+    color->setText("not-a-colour");
+    apply->click();
+    QVERIFY2(error->text().contains("annotation-text-color-invalid"), qPrintable(error->text()));            // error: the code is named
+    QVERIFY2(error->text().contains("Enter #AARRGGBB"), qPrintable(error->text()));                           // error: the sentence is named
+    QVERIFY(dialog->isVisible());                                                                            // error: the dialog stays open
+    QVERIFY(!dialog->choice());                                                                              // error: nothing is committed
+    color->clear();
+    text->clear();
+    QVERIFY2(text->toPlainText().isEmpty(), "the annotation's own text was the only text there");             // empty
+    apply->click();
+    QVERIFY2(error->text().contains("annotation-style-invalid"), qPrintable(error->text()));                 // validation: the code is named
+    QVERIFY2(error->text().contains("Enter non-empty text"), qPrintable(error->text()));                      // validation: the sentence is named
+    QVERIFY(dialog->isVisible());                                                                            // validation: the dialog stays open
+    QVERIFY(!dialog->choice());                                                                              // validation: nothing is committed
+    cancel->click();
+    QVERIFY(!dialog->isVisible());                                                                           // cancelled
+    QVERIFY(!dialog->choice());                                                                              // cancelled: the annotation stays unchanged
+    QTRY_VERIFY(!dialog);                                                                                    // cancelled: the dialog is released
   }
 
   // Pipeline history: initial, loading, empty, populated, unavailable, error.
