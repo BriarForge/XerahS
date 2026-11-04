@@ -60,7 +60,10 @@ python tools/contract-linter/lint.py | tail -n 1
 
 qt=platforms/linux/linux-qt
 cmake -S "$qt" -B "$qt/build" -G Ninja -DCMAKE_BUILD_TYPE=Debug >/dev/null
-cmake --build "$qt/build" -j"$(( $(nproc) / 2 ))" >/dev/null
+if ! cmake --build "$qt/build" -j"$(( $(nproc) / 2 ))" >/tmp/gate-build.$$ 2>&1; then
+  echo "gate: build failed:" >&2; grep -E "error:|FAILED" /tmp/gate-build.$$ | head -n 20 >&2; rm -f /tmp/gate-build.$$; exit 1
+fi
+rm -f /tmp/gate-build.$$
 if ! ctest --test-dir "$qt/build" -j4 >/tmp/gate-ctest.$$ 2>&1; then
   # CTest lists failures as "<tab> NN - name (Failed)"; match any leading whitespace.
   mapfile -t failed < <(sed -nE 's/^[[:space:]]*[0-9]+ - ([^ ]+) \(.*/\1/p' /tmp/gate-ctest.$$)
