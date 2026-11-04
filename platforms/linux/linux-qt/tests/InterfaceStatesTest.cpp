@@ -21,6 +21,7 @@
 #include "ImageRecognitionDialog.h"
 #include "NativePipelineJournal.h"
 #include "NewImageDialog.h"
+#include "OnboardingWizard.h"
 #include "PipelineHistoryDialog.h"
 #include "PresetDialog.h"
 #include "QrCodeDialog.h"
@@ -62,6 +63,7 @@
 #include <QSlider>
 #include <QSpinBox>
 #include <QStandardItemModel>
+#include <QTableWidget>
 #include <QTemporaryDir>
 #include <QTreeWidget>
 #include <QTest>
@@ -182,6 +184,33 @@ public:
   void complete(const xerahs::media::ConversionResult &result) { running = false; emit finished(result); }
   xerahs::media::Request last; int starts = 0, cancels = 0; bool running = false;
 };
+
+// The onboarding pages name their widgets through accessible names, not object
+// names, so the pages are searched by the name the wizard gives them.
+QLabel *labelNamed(QWidget *page, const QString &name) {
+  for (auto *label : page->findChildren<QLabel *>()) if (label->accessibleName() == name) return label;
+  return nullptr;
+}
+QLineEdit *editNamed(QWidget *page, const QString &name) {
+  for (auto *edit : page->findChildren<QLineEdit *>()) if (edit->accessibleName() == name) return edit;
+  return nullptr;
+}
+QPushButton *buttonNamed(QWidget *page, const QString &name) {
+  for (auto *button : page->findChildren<QPushButton *>()) if (button->accessibleName() == name) return button;
+  return nullptr;
+}
+// The hotkey list of the wizard page, which carries no object name of its own.
+QTableWidget *tableOn(QWidget *page) {
+  for (auto *child : page->children()) if (auto *table = qobject_cast<QTableWidget *>(child)) return table;
+  return nullptr;
+}
+// The text a page shows right now: the labels that are on screen, not hidden.
+QString visiblePageText(QWidget *page) {
+  QStringList parts;
+  for (const auto *label : page->findChildren<QLabel *>())
+    if (!label->isHidden() && !label->text().trimmed().isEmpty()) parts << label->text();
+  return parts.join(QLatin1Char('\n'));
+}
 }
 
 class InterfaceStatesTest final : public QObject {
@@ -312,6 +341,164 @@ private slots:
     QVERIFY2(error->text().contains("cannot run"), qPrintable(error->text()));                                         // validation: the selection is refused in words
     QVERIFY2(error->text().contains("selection-action-unavailable"), qPrintable(error->text()));
     QVERIFY2(dialog.isVisible(), "the dialog stays open so the choice can be corrected");                              // validation
+  }
+
+  // Onboarding wizard: first page, initial, loading, populated, validation, error,
+  // denied, unavailable, finish-later, decline-everything.
+  // empty: n/a because the guide always opens on the welcome page with its explanation.
+  // cancelled: n/a because the guide hides the cancel button; stopping early is the
+  // Finish later state below.
+  void onboardingWizardStates() {
+    OnboardingPorts ports;
+    ports.settings = [folder = dir.path()] {
+      return QJsonObject{{"saveFolder", folder}, {"filenamePattern", QStringLiteral("%y%mo%dT%h%mi_%ra{10}")}};
+    };
+    ports.saveSettings = [](const QJsonObject &) { return QString(); };
+    // Declining everything leaves no workflow at all: nothing is saved, copied or uploaded.
+    ports.defaultWorkflow = [] { return OnboardingWorkflowInfo{}; };
+
+    // The first page: the guide opens on the welcome page and explains itself.
+    {
+      OnboardingWizard wizard(ports, OnboardingState{});
+      wizard.show();
+      QCOMPARE(wizard.currentPageName(), QStringLiteral("welcome"));                                           // first page
+      QVERIFY2(wizard.windowTitle().contains("XerahS"), qPrintable(wizard.windowTitle()));                     // initial
+      QVERIFY2(wizard.accessibleDescription().contains("finish later"), qPrintable(wizard.accessibleDescription()));
+      auto *welcome = wizard.page(0);
+      QVERIFY(welcome);
+      QCOMPARE(welcome->title(), QStringLiteral("Welcome to XerahS"));                                       // first page
+      const auto prose = visiblePageText(welcome);
+      QVERIFY2(prose.contains("XerahS already works as it is"), qPrintable(prose));                             // first page
+    }
+
+    // The permission page: with no capture port the test capture is unavailable; with a
+    // stub port the pending capture and a denial are both named.
+    {
+      OnboardingWizard wizard(ports, OnboardingState{});
+      wizard.show();
+      wizard.next();
+      QCOMPARE(wizard.currentPageName(), QStringLiteral("capture-permission"));
+      auto *permission = wizard.page(1);
+      auto *status = labelNamed(permission, "Test capture result");
+      auto *test = buttonNamed(permission, "Test capture now");
+      QVERIFY(status && test);
+      QCOMPARE(status->text(), QStringLiteral("No test capture has been run."));                              // initial
+      test->click();
+      QVERIFY2(status->text().contains("not available in this session"), qPrintable(status->text()));         // unavailable
+    }
+    {
+      OnboardingPorts denied = ports;
+      denied.testCapture = [] {};  // a stub: no capture is ever taken
+      OnboardingWizard wizard(denied, OnboardingState{});
+      wizard.show();
+      wizard.next();
+      auto *permission = wizard.page(1);
+      auto *status = labelNamed(permission, "Test capture result");
+      auto *test = buttonNamed(permission, "Test capture now");
+      QVERIFY(status && test);
+      test->click();
+      QVERIFY2(status->text().contains("Capturing the full screen"), qPrintable(status->text()));              // loading
+      wizard.reportCaptureResult(false, "The desktop denied the screen capture.");
+      QVERIFY2(status->text().contains("Capture did not succeed"), qPrintable(status->text()));                // error
+      QVERIFY2(status->text().contains("The desktop denied the screen capture"), qPrintable(status->text()));  // denied
+    }
+
+    // The save folder page: a malformed filename pattern is refused in words and the
+    // page stays open.
+    {
+      OnboardingWizard wizard(ports, OnboardingState{});
+      wizard.show();
+      wizard.next();
+      wizard.skipCurrent();
+      QCOMPARE(wizard.currentPageName(), QStringLiteral("save-location"));
+      auto *page = wizard.page(2);
+      auto *folder = editNamed(page, "Default save folder");
+      auto *pattern = editNamed(page, "Filename pattern");
+      auto *problem = labelNamed(page, "Save location problem");
+      auto *preview = labelNamed(page, "Filename preview");
+      QVERIFY(folder && pattern && problem && preview);
+      QCOMPARE(folder->text(), dir.path());                                                                 // populated
+      pattern->setText("%ra{10");  // an unterminated token
+      QVERIFY2(preview->text().contains("Pattern problem"), qPrintable(preview->text()));                       // validation
+      wizard.next();
+      QCOMPARE(wizard.currentPageName(), QStringLiteral("save-location"));                                   // validation: the page stays
+      QVERIFY2(problem->text().contains("The filename pattern is not valid"), qPrintable(problem->text()));   // validation
+    }
+
+    // The same page when the store refuses the write: the refusal is shown and the
+    // page stays open.
+    {
+      OnboardingPorts refused = ports;
+      refused.saveSettings = [](const QJsonObject &) { return QStringLiteral("settings-write-failed"); };
+      OnboardingWizard wizard(refused, OnboardingState{});
+      wizard.show();
+      wizard.next();
+      wizard.skipCurrent();
+      QCOMPARE(wizard.currentPageName(), QStringLiteral("save-location"));
+      auto *page = wizard.page(2);
+      auto *pattern = editNamed(page, "Filename pattern");
+      auto *problem = labelNamed(page, "Save location problem");
+      QVERIFY(pattern && problem);
+      pattern->setText("%y%mo%d");  // valid, but a change the store has to save
+      wizard.next();
+      QCOMPARE(wizard.currentPageName(), QStringLiteral("save-location"));                                   // error: the page stays
+      QVERIFY2(problem->text().contains("settings-write-failed"), qPrintable(problem->text()));               // error
+    }
+
+    // Finish later: the guide closes and keeps the place.
+    {
+      int persists = 0;
+      OnboardingState last;
+      OnboardingPorts later = ports;
+      later.persist = [&](const OnboardingState &state) { ++persists; last = state; };
+      OnboardingWizard wizard(later, OnboardingState{});
+      wizard.show();
+      auto *finish = wizard.button(QWizard::CustomButton2);
+      QVERIFY(finish);
+      QVERIFY2(finish->text().contains("Finish"), qPrintable(finish->text()));                               // finish-later
+      QCOMPARE(finish->accessibleName(), QStringLiteral("Finish later"));                                    // finish-later
+      QVERIFY2(finish->accessibleDescription().contains("keeps your place"), qPrintable(finish->accessibleDescription()));
+      finish->click();
+      QVERIFY(!wizard.isVisible());                                                                         // finish-later
+      QCOMPARE(wizard.result(), int(QDialog::Rejected));                                                     // finish-later
+      QVERIFY(persists > 0);                                                                                // finish-later: the place is kept
+      QCOMPARE(last.page, QStringLiteral("welcome"));
+    }
+
+    // Declining everything: every optional step is skipped and the summary says so.
+    {
+      OnboardingWizard wizard(ports, OnboardingState{});
+      wizard.show();
+      wizard.next();
+      QCOMPARE(wizard.currentPageName(), QStringLiteral("capture-permission"));
+      wizard.skipCurrent();
+      QCOMPARE(wizard.currentPageName(), QStringLiteral("save-location"));
+      wizard.skipCurrent();
+      QCOMPARE(wizard.currentPageName(), QStringLiteral("hotkeys"));
+      auto *table = tableOn(wizard.page(3));
+      QVERIFY(table);
+      QVERIFY(table->rowCount() > 0);                                                                       // populated
+      QVERIFY(!table->item(0, 0)->text().trimmed().isEmpty());                                              // populated
+      QVERIFY(!table->item(0, 1)->text().trimmed().isEmpty());                                              // populated
+      wizard.skipCurrent();
+      QCOMPARE(wizard.currentPageName(), QStringLiteral("uploads"));
+      wizard.skipCurrent();
+      QCOMPARE(wizard.currentPageName(), QStringLiteral("telemetry"));
+      wizard.next();
+      QCOMPARE(wizard.currentPageName(), QStringLiteral("summary"));
+      auto *report = wizard.page(6)->findChild<QLabel *>();
+      QVERIFY(report);
+      const auto summary = report->text();
+      QVERIFY2(summary.contains("Screen capture permission: skipped"), qPrintable(summary));                 // decline-everything
+      QVERIFY2(summary.contains("Save folder and filename: skipped"), qPrintable(summary));                 // decline-everything
+      QVERIFY2(summary.contains("Hotkeys: skipped"), qPrintable(summary));                                 // decline-everything
+      QVERIFY2(summary.contains("Uploads: skipped"), qPrintable(summary));                                 // decline-everything
+      QVERIFY2(summary.contains("Welcome: reviewed"), qPrintable(summary));                                // decline-everything
+      QVERIFY2(summary.contains("Telemetry and privacy: reviewed"), qPrintable(summary));                  // decline-everything
+      QVERIFY2(summary.contains("nothing is saved, copied or uploaded"), qPrintable(summary));              // decline-everything
+      QVERIFY(wizard.state().skipped.contains("capture-permission"));                                       // decline-everything
+      QVERIFY(wizard.state().skipped.contains("uploads"));                                                  // decline-everything
+    }
   }
 
   // Pipeline history: initial, loading, empty, populated, unavailable, error.
