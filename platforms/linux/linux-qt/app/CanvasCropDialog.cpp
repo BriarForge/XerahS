@@ -44,6 +44,9 @@ CanvasCropDialog::CanvasCropDialog(AnnotationDocument document, QImage source, C
   m_status = new QLabel(this); m_status->setObjectName("cropStatus"); m_status->setTextFormat(Qt::PlainText); m_status->setWordWrap(true); layout->addWidget(m_status);
   m_progress = new QProgressBar(this); m_progress->setRange(0, 100); m_progress->setAccessibleName("Crop preview progress"); layout->addWidget(m_progress);
   m_buttons = new QDialogButtonBox(QDialogButtonBox::Apply | QDialogButtonBox::Cancel, this); m_buttons->button(QDialogButtonBox::Apply)->setText("&Apply Crop"); layout->addWidget(m_buttons);
+  // shortcut-catalog Enter (confirm-crop-or-continue-task): Apply Crop is the default button.
+  m_buttons->button(QDialogButtonBox::Apply)->setAutoDefault(true); m_buttons->button(QDialogButtonBox::Apply)->setDefault(true);
+  m_buttons->button(QDialogButtonBox::Cancel)->setAutoDefault(false);
   connect(m_buttons->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, &CanvasCropDialog::accept); connect(m_buttons, &QDialogButtonBox::rejected, this, &CanvasCropDialog::reject);
   for (auto *field : {m_left, m_top, m_width, m_height}) connect(field, &QSpinBox::valueChanged, this, &CanvasCropDialog::request);
   m_debounce.setSingleShot(true); connect(&m_debounce, &QTimer::timeout, this, &CanvasCropDialog::start); connect(&m_poll, &QTimer::timeout, this, &CanvasCropDialog::poll); m_poll.start(20);
@@ -52,6 +55,10 @@ CanvasCropDialog::CanvasCropDialog(AnnotationDocument document, QImage source, C
 CanvasCropDialog::~CanvasCropDialog() { if (m_work) m_work->cancelled.store(true); }
 void CanvasCropDialog::request() {
   if (m_closing) return;
+  // A spin box re-emits its value when Enter re-interprets the same number, so unchanged bounds reach
+  // this slot again. The prepared preview still matches those bounds: keep it and leave Apply Crop live.
+  const xerahs::editor::CropRegion bounds{m_left->value(), m_top->value(), m_width->value(), m_height->value()};
+  if (m_prepared && m_prepared->region == bounds) return;
   const QPointer<CanvasCropDialog> owner(this); ++m_revision; m_pending = true; m_prepared.reset(); if (m_work) m_work->cancelled.store(true);
   m_width->setMaximum(m_source.width() - m_left->value()); if (!owner) return; m_height->setMaximum(m_source.height() - m_top->value()); if (!owner) return;
   m_buttons->button(QDialogButtonBox::Apply)->setEnabled(false); if (!owner) return;
