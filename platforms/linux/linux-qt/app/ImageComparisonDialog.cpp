@@ -42,9 +42,8 @@ QString describe(const QString &error) {
 
 ComparisonView::ComparisonView(QWidget *parent) : QWidget(parent) {
   setObjectName(QStringLiteral("comparisonView"));
-  setAccessibleName(QStringLiteral("Image comparison"));
-  setAccessibleDescription(QStringLiteral("First image left of the divider; second image right. Drag to move the "
-                                          "divider, or use arrow keys and Home/End."));
+  setAccessibleName(QStringLiteral("Image comparison view"));
+  setAccessibleDescription(QStringLiteral("Choose two images to compare."));
   setFocusPolicy(Qt::StrongFocus);
   setCursor(Qt::SplitHCursor);
   setMinimumSize(320, 240);
@@ -52,6 +51,8 @@ ComparisonView::ComparisonView(QWidget *parent) : QWidget(parent) {
 void ComparisonView::setImages(QImage first, QImage second, ComparisonLayout layout) {
   m_images = {std::move(first), std::move(second)};
   m_layout = layout;
+  setAccessibleDescription(m_layout ? QStringLiteral("First image left of the divider; second image right. Drag to move the divider, or use arrow keys and Home/End.")
+                                    : QStringLiteral("Choose two images to compare."));
   update();
 }
 void ComparisonView::setReveal(int percent) {

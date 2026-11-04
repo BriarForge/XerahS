@@ -431,7 +431,9 @@ private slots:
     auto *progress = dialog.findChild<QProgressBar *>("comparisonProgress");
     auto *cancel = dialog.findChild<QPushButton *>("cancelComparisonLoad");
     auto *slider = dialog.findChild<QSlider *>("comparisonDivider");
-    QVERIFY(first && second && geometry && status && progress && cancel && slider);
+    auto *view = dialog.findChild<ComparisonView *>("comparisonView");
+    QVERIFY(first && second && geometry && status && progress && cancel && slider && view);
+    QCOMPARE(view->accessibleDescription(), QString("Choose two images to compare."));                       // empty: the hint is exposed, not only painted
     QCOMPARE(first->text(), QString("No image selected"));                                                   // initial / empty
     QCOMPARE(second->text(), QString("No image selected"));
     QVERIFY2(geometry->text().contains("must be validated"), qPrintable(geometry->text()));                // empty: it explains itself
@@ -454,6 +456,7 @@ private slots:
     QTRY_VERIFY(first->text().contains("first.png"));
     QVERIFY(dialog.loadFile(1, secondPath));
     QTRY_VERIFY(slider->isEnabled());                                                                        // populated
+    QTRY_COMPARE(view->accessibleDescription(), QString("First image left of the divider; second image right. Drag to move the divider, or use arrow keys and Home/End."));          // populated: the view explains the divider
     QVERIFY2(first->text().contains("4 × 2"), qPrintable(first->text()));
     QVERIFY2(second->text().contains("2 × 4"), qPrintable(second->text()));
     QVERIFY2(status->text().contains("Move the divider"), qPrintable(status->text()));
@@ -574,12 +577,17 @@ private slots:
     auto *path = dialog.findChild<QLineEdit *>("watchPath");
     auto *filters = dialog.findChild<QLineEdit *>("watchFilters");
     auto *add = dialog.findChild<QPushButton *>("addWatchFolder");
-    QVERIFY(list && error && path && filters && add);
+    auto *remove = dialog.findChild<QPushButton *>("removeWatchFolder");
+    QVERIFY(list && error && path && filters && add && remove);
     QString description;
     for (auto *label : dialog.findChildren<QLabel *>())
       if (label->text().startsWith("New matching files are processed")) description = label->text();
     QVERIFY2(!description.isEmpty(), "the dialog explains what watching does in words");                       // initial
     QCOMPARE(list->count(), 0);                                                                              // empty
+    QVERIFY(error->text().isEmpty());
+    QVERIFY2(!remove->isEnabled(), "with no watch folder there is nothing to remove");                         // empty: Remove stays disabled
+    remove->click();                                                                                         // empty: a disabled Remove does nothing at all
+    QCOMPARE(list->count(), 0);
     QVERIFY(error->text().isEmpty());
     const auto watched = dir.filePath("watched");
     QVERIFY(QDir().mkpath(watched));
@@ -587,18 +595,18 @@ private slots:
     filters->setText("");
     lastAlert = QAccessible::InvalidEvent;
     add->click();
-    QCOMPARE(error->text(), QString("watch-filter-required"));                                               // validation: a filter is required
+    QCOMPARE(error->text(), QString("Enter at least one file pattern, for example *.png. (watch-filter-required)")); // validation: a filter is required
     QTRY_COMPARE(lastAlert, QAccessible::Alert);                                                            // validation: the error raises an accessible alert
     filters->setText("sub/*.png");
     add->click();
-    QCOMPARE(error->text(), QString("watch-filter-invalid"));                                               // validation: a filter may not cross folders
+    QCOMPARE(error->text(), QString("One of the file patterns is not valid. (watch-filter-invalid)"));          // validation: a filter may not cross folders
     filters->setText("*.png");
     path->setText(dir.filePath("missing"));
     add->click();
-    QCOMPARE(error->text(), QString("watch-directory-required"));                                           // error: the folder does not exist
+    QCOMPARE(error->text(), QString("Choose a folder to watch. (watch-directory-required)"));                    // error: the folder does not exist
     path->setText(captures);
     add->click();
-    QCOMPARE(error->text(), QString("watch-capture-loop"));                                                 // error: the captures folder may not be watched
+    QCOMPARE(error->text(), QString("That folder contains the capture folder, which would upload captures in a loop. (watch-capture-loop)")); // error: the captures folder may not be watched
     const auto denied = dir.filePath("denied");
     QVERIFY(QDir().mkpath(denied));
     QVERIFY(QFile::setPermissions(denied, QFile::ExeOwner));
@@ -607,13 +615,15 @@ private slots:
     } else {
       path->setText(denied);
       add->click();
-      QCOMPARE(error->text(), QString("watch-directory-denied"));                                           // denied: the folder may not be read
+      QCOMPARE(error->text(), QString("XerahS cannot read that folder. (watch-directory-denied)"));              // denied: the folder may not be read
     }
     QFile::setPermissions(denied, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
     path->setText(watched);
     add->click();
     QVERIFY(error->text().isEmpty());
     QCOMPARE(list->count(), 1);                                                                             // populated
+    list->setCurrentRow(0);
+    QVERIFY2(remove->isEnabled(), "a selected watch folder can be removed");                                // populated: Remove is armed
     QVERIFY2(list->item(0)->text().contains("watched"), qPrintable(list->item(0)->text()));
     QVERIFY2(list->item(0)->text().contains("Upload"), qPrintable(list->item(0)->text()));
     const auto second = dir.filePath("watched-two");

@@ -412,7 +412,7 @@ private slots:
     watch::WatchFolders enabled(dir.filePath("store"));
     QCOMPARE(enabled.rules().first().enabled, true);
     QTest::mouseClick(add, Qt::LeftButton);
-    QCOMPARE(error->text(), QString("watch-overlapping-roots"));
+    QCOMPARE(error->text(), QString("That folder overlaps a folder that is already watched. (watch-overlapping-roots)"));
     QCOMPARE(list->count(), 1);
     list->setCurrentRow(0);
     QTest::mouseClick(remove, Qt::LeftButton);
