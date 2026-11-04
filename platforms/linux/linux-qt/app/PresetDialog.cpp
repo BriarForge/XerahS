@@ -1,6 +1,7 @@
 #include "NativeAccessibility.h"
 // COMPAT-SXIE-001, EE-004..EE-008, EE-015..EE-016, ROOT-SECURITY-001.
 #include "PresetDialog.h"
+#include "EditorTemporaryFiles.h"
 #include "image-editor/effects/CensusCatalog.h"
 #include <algorithm>
 #include <QDialogButtonBox>
@@ -25,7 +26,7 @@ PreparedCanvasEdit preparePresetEdit(const editor::AnnotationDocument &document,
     if (!effect) { edit = {}; edit.result.error = "preset-effect-unavailable"; return edit; }
     EffectContext control = context; control.seed = step.seed;
     auto parameters = step.parameters;
-    QTemporaryFile assetFile;
+    QTemporaryFile assetFile(editorTemporaryTemplate());
     QString assetKey;
     for (const auto &param : effect->spec().parameters) if (param.kind == ParamKind::FilePath) {
       const auto ref = parameters.value(param.id).toString();
@@ -33,7 +34,7 @@ PreparedCanvasEdit preparePresetEdit(const editor::AnnotationDocument &document,
         edit = {}; edit.result.error = "preset-asset-missing"; return edit;
       }
       assetKey = ref.mid(6); const auto bytes = preset.assets.value(assetKey);
-      if (!assetFile.open() || assetFile.write(bytes) != bytes.size() || !assetFile.flush()) {
+      if (assetFile.fileTemplate().isEmpty() || !assetFile.open() || assetFile.write(bytes) != bytes.size() || !assetFile.flush()) {
         edit = {}; edit.result.error = "preset-asset-write-failed"; return edit;
       }
       assetFile.close(); parameters[param.id] = assetFile.fileName();

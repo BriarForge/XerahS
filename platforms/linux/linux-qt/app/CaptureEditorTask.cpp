@@ -13,6 +13,7 @@
 #include <QFileDialog>
 #include <QLabel>
 #include <QMessageBox>
+#include <QMetaMethod>
 #include <QPushButton>
 namespace xerahs::app {
 using namespace xerahs::actions;
@@ -30,6 +31,9 @@ void CaptureAnnotationDialog::enableTaskMode(const xerahs::editor::EditorConveni
 }
 void CaptureAnnotationDialog::continueTask() {
   if (m_taskState != TaskState::Editing || !editingReady() || m_taskConfirming) return;
+  if (!isSignalConnected(QMetaMethod::fromSignal(&CaptureAnnotationDialog::taskFinished))) {
+    m_status->setText("Continue unavailable: editor-task-host-unavailable. The editable document is kept."); return;
+  }
   const QPointer<CaptureAnnotationDialog> owner(this);
   const auto document = m_session.document(); const auto source = m_image;
   const auto state = m_session.stateId(), generation = m_canvas->documentGeneration();
@@ -95,6 +99,9 @@ void CaptureAnnotationDialog::cancelTask() {
     m_taskWork.cancel(); ++m_taskGeneration; m_taskState = TaskState::Editing; finishOperation(); if (!owner) return;
   }
   if (m_taskState == TaskState::Completing || m_taskConfirming || m_closing || m_operationPending || m_canvas->interactionActive()) return;
+  if (!isSignalConnected(QMetaMethod::fromSignal(&CaptureAnnotationDialog::taskFinished))) {
+    m_status->setText("Cancel unavailable: editor-task-host-unavailable. The editable document is kept."); return;
+  }
   if (m_session.dirty()) {
     m_taskConfirming = true;
     const auto confirmedState = m_session.stateId(), confirmedGeneration = m_canvas->documentGeneration();

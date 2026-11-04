@@ -1,4 +1,5 @@
 #include "CaptureActions.h"
+#include "EditorTemporaryFiles.h"
 #include "CaptureFileOutput.h"
 #include "workflows/CaptureWorkflows.h"
 #include "EditorCanvasOperations.h"
@@ -127,8 +128,10 @@ ActionOutcome CaptureActions::showNativeRecognition(ImageRecognitionKind kind, c
 
 bool CaptureActions::createTemporaryUploadFile() {
   removeTemporaryUploadFile();
-  const QDir directory(m_ports.uploadTemporaryDirectory.isEmpty() ? QDir::tempPath() : m_ports.uploadTemporaryDirectory);
-  auto file = std::make_unique<QTemporaryFile>(directory.filePath(QStringLiteral("xerahs-upload-XXXXXX.png")));
+  const auto pattern = m_ports.uploadTemporaryDirectory.isEmpty() ? editorTemporaryTemplate()
+      : QDir(m_ports.uploadTemporaryDirectory).filePath(QStringLiteral("xerahs-upload-XXXXXX.png"));
+  if (pattern.isEmpty()) return false;
+  auto file = std::make_unique<QTemporaryFile>(pattern);
   if (!file->open() || !file->setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner) ||
       !m_media.save(file.get(), "PNG") || !file->flush() || file->fileName().isEmpty()) return false;
   m_uploadFile = std::move(file);

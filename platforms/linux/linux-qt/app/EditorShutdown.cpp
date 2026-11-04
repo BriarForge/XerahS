@@ -6,6 +6,7 @@
 #include <QScopeGuard>
 #include <QVariant>
 #include <QWidget>
+#include <QSessionManager>
 namespace xerahs::app {
 namespace {
 bool shutdownBlockedByModalWork() {
@@ -37,13 +38,27 @@ QString closeEditorsForShutdown() {
 namespace {
 class EditorQuitGuard final : public QObject {
 public:
-  explicit EditorQuitGuard(QObject *parent) : QObject(parent) {}
+  explicit EditorQuitGuard(QObject *parent) : QObject(parent) {
+    connect(qApp, &QGuiApplication::commitDataRequest, this, [](QSessionManager &manager) {
+      const bool interactive = manager.allowsInteraction();
+      const auto error = commitEditorsForSession(interactive);
+      if (interactive) manager.release();
+      if (!error.isEmpty()) manager.cancel();
+    }, Qt::DirectConnection);
+  }
   bool eventFilter(QObject *, QEvent *event) override {
     if (event->type() != QEvent::Quit) return false;
     if (closeEditorsForShutdown().isEmpty()) return false;
     event->ignore(); return true;
   }
 };
+}
+QString commitEditorsForSession(bool interactionAllowed) {
+  if (interactionAllowed) return closeEditorsForShutdown();
+  for (auto *window : QApplication::topLevelWidgets())
+    if (window->property("xerahsGuardEditorClose").toBool() && window->isVisible())
+      return QStringLiteral("editor-session-interaction-required");
+  return {};
 }
 void guardEditorShutdown(QWidget &editor) {
   editor.setProperty("xerahsGuardEditorClose", true);

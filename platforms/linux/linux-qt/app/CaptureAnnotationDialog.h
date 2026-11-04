@@ -30,6 +30,13 @@ public:
   QImage renderedResult() const { return m_taskImage; }
   void abandonTask(); // explicit upstream cancellation, no automatic outputs
 signals:
+  // GUI-thread completion, at most once. The host must connect before presenting
+  // task mode and copy document()/renderedResult() by value during Continue.
+  // Cancel carries no result. Upstream cancellation abandons delivery; auto-copy
+  // exceptions/late cancellation are distinct diagnostics on a ready Continue.
+  // Reentrant Continue/Cancel cannot deliver twice. Host destruction disconnects;
+  // a missing receiver is explained without output. Throwing observers are
+  // contained and never retried; delivery is uncertain after an exception.
   void taskFinished(const QString &outcome, const QString &diagnostic);
 public slots:
   void accept() override;

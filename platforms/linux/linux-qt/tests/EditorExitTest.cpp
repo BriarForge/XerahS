@@ -2,11 +2,14 @@
 #include "EditorWindow.h"
 #include "EditorCanvas.h"
 #include "EditorSource.h"
+#include "EditorShutdown.h"
 #include "NativeEditorPreferences.h"
 #include <QAbstractButton>
 #include <QAction>
 #include <QApplication>
 #include <QEvent>
+#include <QElapsedTimer>
+#include <QFileInfo>
 #include <QColorSpace>
 #include <QFile>
 #include <QFileDialog>
@@ -33,6 +36,65 @@ QByteArray bytes(const QString &path) {
 class EditorExitTest : public QObject {
   Q_OBJECT
 private slots:
+  void fourKRectangleOpensToInteractiveWithin500ms() {
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer) || __has_feature(thread_sanitizer) || __has_feature(undefined_behavior_sanitizer)
+    QSKIP("Opening latency is not qualified under sanitizers.");
+#endif
+#endif
+#if defined(__SANITIZE_ADDRESS__) || defined(__SANITIZE_THREAD__) || defined(__SANITIZE_UNDEFINED__)
+    QSKIP("Opening latency is not qualified under sanitizers.");
+#endif
+    QFile mappings("/proc/self/maps");
+    if (mappings.open(QIODevice::ReadOnly)) {
+      const auto runtime = mappings.readAll();
+      if (runtime.contains("libasan.") || runtime.contains("libubsan.") || runtime.contains("libtsan.") || runtime.contains("/valgrind/"))
+        QSKIP("Opening latency is not qualified under valgrind/sanitizers.");
+    }
+    if (qEnvironmentVariableIsSet("ASAN_OPTIONS") || qEnvironmentVariableIsSet("TSAN_OPTIONS") ||
+        qEnvironmentVariableIsSet("UBSAN_OPTIONS") || qEnvironmentVariableIsSet("VALGRIND_OPTS") ||
+        QFileInfo("/proc/self/exe").symLinkTarget().contains("valgrind"))
+      QSKIP("Opening latency is not qualified under valgrind/sanitizers.");
+    QImage image(3840, 2160, QImage::Format_ARGB32); image.fill(Qt::blue); image.setColorSpace(QColorSpace::SRgb);
+    auto source = prepareCapturedSource(image); QVERIFY(source.document);
+    EditorSession session(*source.document); QVERIFY(session.createRectangle({10, 10}, {100, 100}));
+    QTemporaryDir dir; const auto path = dir.filePath("4k.png");
+    QVERIFY(saveEdit(path, image, session.document()).sidecarSaved);
+    QElapsedTimer timer; timer.start();
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);
+    window->setAttribute(Qt::WA_DeleteOnClose, false); window->resize(900, 600); window->show();
+    QApplication::processEvents();
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas && canvas->isEnabled());
+    const auto &document = canvas->annotationDocument(); QCOMPARE(document.annotations.size(), size_t(1));
+    const auto id = std::get<RectangleAnnotation>(document.annotations.front()).id;
+    QVERIFY(canvas->selectAnnotations({id}, canvas->annotationState(), canvas->documentGeneration()));
+    const auto state = canvas->annotationState(); canvas->setFocus(); QTest::keyClick(canvas, Qt::Key_Right);
+    QVERIFY(canvas->annotationState() != state); // Actual keyboard mutation proves interactive readiness.
+    const auto elapsed = timer.elapsed();
+    qInfo("4K source with rectangle reached interactive state in %lld ms", static_cast<long long>(elapsed));
+    QVERIFY2(elapsed <= 500, qPrintable(QString("Interactive opening took %1 ms (limit 500 ms)").arg(elapsed)));
+  }
+  void sessionManagerRetainsDirtyDocumentWithoutInteraction() {
+    std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedImage(pixels())); QVERIFY(window);
+    window->setAttribute(Qt::WA_DeleteOnClose, false); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas);
+    const auto before = serializeDocument(canvas->annotationDocument());
+    QSignalSpy saved(window.get(), &EditorWindow::saveFinished);
+    QCOMPARE(commitEditorsForSession(false), QString("editor-session-interaction-required"));
+    QVERIFY(window->isVisible()); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QCOMPARE(saved.count(), 0);
+    QVERIFY(!QApplication::activeModalWidget());
+    QTimer::singleShot(0, [] {
+      if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) box->button(QMessageBox::Cancel)->click();
+    });
+    QCOMPARE(commitEditorsForSession(true), QString("editor-close-cancelled"));
+    QVERIFY(window->isVisible()); QCOMPARE(saved.count(), 0);
+    QTimer::singleShot(0, [] {
+      if (auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) box->button(QMessageBox::Discard)->click();
+    });
+    QVERIFY(commitEditorsForSession(true).isEmpty()); QVERIFY(!window->isVisible());
+    QCOMPARE(serializeDocument(canvas->annotationDocument()), before); QCOMPARE(saved.count(), 0);
+  }
   void init() {
     initializeNativeEditorPreferences();
     QVERIFY(applyConveniencePreferences({{"ShowExitConfirmation", false}}, nativeEditorPreferenceRevision()).saved);

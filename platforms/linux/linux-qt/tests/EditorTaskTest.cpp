@@ -25,6 +25,16 @@ CapturePipelineReceipt receipt(QSignalSpy &spy) { return qvariant_cast<CapturePi
 class EditorTaskTest final : public QObject {
   Q_OBJECT
 private slots:
+  void missingTaskHostExplainsContinueAndCancelWithoutOutputs() {
+    const auto source = prepareCapturedSource(pixels()); QVERIFY(source.document);
+    CaptureAnnotationDialog editor(source); editor.enableTaskMode({}); editor.show();
+    QApplication::clipboard()->setText("KEEP");
+    editor.accept(); QVERIFY(editor.isVisible()); QVERIFY(editor.renderedResult().isNull()); QVERIFY(!editor.document());
+    QVERIFY(editor.findChild<QLabel *>("captureAnnotationStatus")->text().contains("editor-task-host-unavailable"));
+    editor.reject(); QVERIFY(editor.isVisible()); QVERIFY(editor.renderedResult().isNull()); QVERIFY(!editor.document());
+    QVERIFY(editor.findChild<QLabel *>("captureAnnotationStatus")->text().contains("editor-task-host-unavailable"));
+    QCOMPARE(QApplication::clipboard()->text(), QString("KEEP"));
+  }
   void cleanup() {
     // Deleting an editor also destroys its child popup windows, which can
     // appear later in topLevelWidgets(). Keep guarded pointers in the snapshot.

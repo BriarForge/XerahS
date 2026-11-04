@@ -1,5 +1,6 @@
 #include "EditorSave.h"
 #include "EditorSource.h"
+#include "EditorTemporaryFiles.h"
 #include <QApplication>
 #include <QImageReader>
 #include <QImageWriter>
@@ -7,6 +8,9 @@
 #include <QDir>
 #include <QFile>
 #include <QTemporaryDir>
+#include <QTemporaryFile>
+#include <QFileInfo>
+#include <QScopeGuard>
 #include <QTest>
 #include <QProgressDialog>
 #include <QTimer>
@@ -24,6 +28,40 @@ void write(const QString &path, const QByteArray &value) { QFile file(path); if 
 class EditorSaveTest final : public QObject {
   Q_OBJECT
 private slots:
+  void managedTemporaryRetentionKeepsRecentForeignAndLinkedFiles() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    QVERIFY(QFile::setPermissions(dir.path(), QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner));
+    const auto now = QDateTime::currentDateTimeUtc();
+    const auto make = [&](const QString &name, int age, bool privateFile = true) {
+      QFile file(dir.filePath(name));
+      if (!file.open(QIODevice::WriteOnly) || file.write("PRIVATE editor pixels") < 0 || !file.flush() ||
+          !file.setPermissions(privateFile ? QFileDevice::ReadOwner | QFileDevice::WriteOwner : QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ReadGroup) ||
+          !file.setFileTime(now.addSecs(-age), QFileDevice::FileModificationTime)) qFatal("retention fixture failed");
+    };
+    make("xerahs-editor-expired", 86401); make("xerahs-editor-recent", 86399);
+    make("user-image.png", 90000); make("xerahs-editor-shared", 90000, false);
+    QVERIFY(QFile::link(dir.filePath("user-image.png"), dir.filePath("xerahs-editor-link")));
+    QVERIFY(sweepEditorTemporaryFiles(dir.path(), now));
+    QVERIFY(!QFile::exists(dir.filePath("xerahs-editor-expired")));
+    for (const auto *name : {"xerahs-editor-recent", "user-image.png", "xerahs-editor-shared", "xerahs-editor-link"}) QVERIFY(QFile::exists(dir.filePath(name)));
+    make("xerahs-editor-expired", 90000);
+    QTemporaryDir outside; const auto alias = outside.filePath("linked-directory"); QVERIFY(QFile::link(dir.path(), alias));
+    QVERIFY(!sweepEditorTemporaryFiles(alias, now)); QVERIFY(QFile::exists(dir.filePath("xerahs-editor-expired")));
+    QVERIFY(QFile::setPermissions(dir.path(), QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner | QFileDevice::ReadGroup));
+    QVERIFY(!sweepEditorTemporaryFiles(dir.path(), now)); QVERIFY(QFile::exists(dir.filePath("xerahs-editor-expired")));
+  }
+  void managedPreparationTemporaryIsPrivateAndRemovedAtTaskEnd() {
+    QTemporaryDir cache; QVERIFY(cache.isValid());
+    const auto previousCache = qgetenv("XDG_CACHE_HOME"); qputenv("XDG_CACHE_HOME", cache.path().toUtf8());
+    const auto restore = qScopeGuard([previousCache] { if (previousCache.isNull()) qunsetenv("XDG_CACHE_HOME"); else qputenv("XDG_CACHE_HOME", previousCache); });
+    const auto pattern = editorTemporaryTemplate(); QVERIFY(!pattern.isEmpty()); QString path;
+    {
+      QTemporaryFile file(pattern); QVERIFY(file.open()); path = file.fileName();
+      QCOMPARE(file.permissions() & (QFileDevice::ReadGroup | QFileDevice::WriteGroup | QFileDevice::ReadOther | QFileDevice::WriteOther), QFileDevice::Permissions{});
+      QVERIFY(file.write("PRIVATE editor pixels") > 0);
+    }
+    QVERIFY(!QFile::exists(path));
+  }
   void cancellationAtEncodingBoundaryDoesNotStartAnEncoder() {
     QTemporaryDir dir; const auto path = dir.filePath("kept.jpg"); const auto source = edited(); QVERIFY(pixels().save(path, "JPEG")); const auto before = bytes(path);
     bool cancel = false; int encodes = 0; EditorSaveControl control{[&] { return cancel; }, [&](EditorSavePhase phase, int) { if (phase == EditorSavePhase::Encoding) cancel = true; }};

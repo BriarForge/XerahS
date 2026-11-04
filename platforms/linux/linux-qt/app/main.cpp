@@ -3,6 +3,7 @@
 
 #include "CaptureController.h"
 #include "EditorOpen.h"
+#include "EditorTemporaryFiles.h"
 #include "CaptureWorkflows.h"
 #include "WorkflowDiscovery.h"
 #include "NativeWorkflowExecutions.h"
@@ -186,6 +187,9 @@ int main(int argc, char *argv[]) {
     reportLaunch(request, json, {}, started.diagnostic);
     return xerahs::shell::errorExitCode(started.kind == xerahs::app::InstanceStart::Kind::Busy ? QStringLiteral("activation-busy") : started.diagnostic);
   }
+
+  const auto temporaryDirectory = xerahs::app::editorTemporaryDirectory();
+  if (!temporaryDirectory.isEmpty()) xerahs::app::sweepEditorTemporaryFiles(temporaryDirectory);
 
   // IFCAT-008: SIGINT/SIGTERM cancel cleanly. The event loop quits (closing
   // windows and cancelling owned work through the normal teardown) and the
