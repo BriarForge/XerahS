@@ -13,6 +13,8 @@
 #include "ImageRecognitionDialog.h"
 #include "NewImageDialog.h"
 #include "PresetDialog.h"
+#include "RectanglePropertiesDialog.h"
+#include "TextContentDialog.h"
 #include "UrlOpenDialog.h"
 #include "QrCodeDialog.h"
 #include "UploadDestinationsDialog.h"
@@ -150,6 +152,7 @@ private slots:
     QTest::newRow("image-insert") << 6; QTest::newRow("scan-qr") << 7; QTest::newRow("recognize-text") << 8; QTest::newRow("image-comparison") << 9;
     QTest::newRow("watch-folders") << 10; QTest::newRow("video-converter") << 11; QTest::newRow("effects") << 12; QTest::newRow("presets") << 13;
     QTest::newRow("editor-appearance") << 14; QTest::newRow("drawing-defaults") << 15;
+    QTest::newRow("rectangle-properties") << 16; QTest::newRow("text-content") << 17;
   }
   void modalDialogsTrapFocusOnlyWhileActiveIdentifyPurposeEscapeAndRestoreFocus() {
     QFETCH(int, which); Host host; QVERIFY(host.focusOnEdit());
@@ -165,6 +168,8 @@ private slots:
     QTemporaryDir dir;
     QImage sourceImage(64, 48, QImage::Format_ARGB32); sourceImage.fill(Qt::white);
     xerahs::editor::AnnotationDocument sourceDocument;
+    xerahs::editor::RectangleAnnotation rectangle; rectangle.start = {0, 0}; rectangle.end = {120, 80};
+    xerahs::editor::RectangleAnnotation textShape; textShape.content.type = xerahs::editor::shape::text;
     auto credentials = std::make_shared<xerahs::uploads::MemoryCredentialStore>();
     auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("history"));
     xerahs::watch::WatchFolders watchStore(dir.filePath("watch"));
@@ -182,6 +187,8 @@ private slots:
         : which == 10 ? static_cast<QDialog *>(new WatchFoldersDialog(watcher, &host.window))
         : which == 11 ? static_cast<QDialog *>(new VideoConverterDialog(new IdleRunner, &availability, &host.window))
         : which == 12 ? static_cast<QDialog *>(new EffectsDialog(sourceDocument, sourceImage, [](PreparedCanvasEdit) { return false; }, &host.window, dir.filePath("effects.json")))
+        : which == 16 ? static_cast<QDialog *>(new RectanglePropertiesDialog(rectangle, &host.window))
+        : which == 17 ? static_cast<QDialog *>(new TextContentDialog(textShape, &host.window))
         : static_cast<QDialog *>(new PresetDialog(sourceDocument, sourceImage, [](PreparedCanvasEdit) { return false; }, registry, &host.window));
     QVERIFY(!QApplication::activeModalWidget());  // No trap before it opens.
     dialog->setModal(true); dialog->open();
