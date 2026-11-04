@@ -31,9 +31,9 @@ QString recentLabel(const QColor &color) {
 
 ColorPickerDialog::ColorPickerDialog(QWidget *parent, ColorPickerPorts ports) : QDialog(parent), m_ports(std::move(ports)) {
   setObjectName(QStringLiteral("colorPickerDialog"));
-  new NativeAccessibility(*this, "Choose or sample a screen colour. Review canonical formats and explicitly Copy; Escape closes without copying.", true);
-  setWindowTitle(QStringLiteral("Pick colour"));
-  setAccessibleName(QStringLiteral("Pick colour"));
+  new NativeAccessibility(*this, tr("Choose or sample a screen colour. Review canonical formats and explicitly Copy; Escape closes without copying."), true);
+  setWindowTitle(tr("Pick colour"));
+  setAccessibleName(tr("Pick colour"));
   setMinimumWidth(420);
 
   auto *layout = new QVBoxLayout(this);
@@ -43,23 +43,23 @@ ColorPickerDialog::ColorPickerDialog(QWidget *parent, ColorPickerPorts ports) : 
   m_swatch->setFixedSize(48, 48);
   m_swatch->setFrameShape(QFrame::Panel);
   m_swatch->setFrameShadow(QFrame::Sunken);
-  m_swatch->setAccessibleName(QStringLiteral("Colour swatch"));
+  m_swatch->setAccessibleName(tr("Colour swatch"));
   m_swatch->setFocusPolicy(Qt::NoFocus);
   m_hex = new QLineEdit(this);
   m_hex->setObjectName(QStringLiteral("hexColour"));
-  m_hex->setAccessibleName(QStringLiteral("Hex colour"));
-  m_hex->setPlaceholderText(QStringLiteral("#RRGGBB or #RRGGBBAA"));
+  m_hex->setAccessibleName(tr("Hex colour"));
+  m_hex->setPlaceholderText(tr("#RRGGBB or #RRGGBBAA"));
   m_hex->setClearButtonEnabled(true);
   heading->addWidget(m_swatch);
   heading->addWidget(m_hex, 1);
   layout->addLayout(heading);
   m_coordinates = new QLabel(this); m_coordinates->setObjectName("pickedScreenCoordinates");
-  m_coordinates->setAccessibleName("Selected screenshot pixel coordinates"); m_coordinates->setTextFormat(Qt::PlainText);
+  m_coordinates->setAccessibleName(tr("Selected screenshot pixel coordinates")); m_coordinates->setTextFormat(Qt::PlainText);
   m_coordinates->setWordWrap(true); layout->addWidget(m_coordinates);
 
   m_hexError = new QLabel(this);
   m_hexError->setObjectName(QStringLiteral("hexColourError"));
-  m_hexError->setAccessibleName(QStringLiteral("Hex colour error"));
+  m_hexError->setAccessibleName(tr("Hex colour error"));
   m_hexError->setWordWrap(true);
   m_hexError->setTextFormat(Qt::PlainText);
   m_hexError->setFocusPolicy(Qt::NoFocus);
@@ -79,9 +79,9 @@ ColorPickerDialog::ColorPickerDialog(QWidget *parent, ColorPickerPorts ports) : 
     m_lines[index]->setTextFormat(Qt::PlainText);
     m_lines[index]->setTextInteractionFlags(Qt::TextSelectableByMouse);
     m_lines[index]->setFocusPolicy(Qt::NoFocus);
-    m_copies[index] = new QPushButton(QStringLiteral("Copy"), this);
+    m_copies[index] = new QPushButton(tr("Copy"), this);
     m_copies[index]->setObjectName(QStringLiteral("copyFormat%1").arg(index));
-    m_copies[index]->setAccessibleName(QStringLiteral("Copy %1").arg(name));
+    m_copies[index]->setAccessibleName(tr("Copy %1").arg(name));
     m_copies[index]->setAutoDefault(false);
     row->addWidget(m_lines[index], 1);
     row->addWidget(m_copies[index]);
@@ -91,9 +91,9 @@ ColorPickerDialog::ColorPickerDialog(QWidget *parent, ColorPickerPorts ports) : 
     connect(m_copies[index], &QPushButton::clicked, this, [this, index] { copyLine(index); });
   }
 
-  m_copyAll = new QPushButton(QStringLiteral("Copy all"), this);
+  m_copyAll = new QPushButton(tr("Copy all"), this);
   m_copyAll->setObjectName(QStringLiteral("copyAllColorFormats"));
-  m_copyAll->setAccessibleName(QStringLiteral("Copy all formats"));
+  m_copyAll->setAccessibleName(tr("Copy all formats"));
   m_copyAll->setAutoDefault(false);
   layout->addWidget(m_copyAll);
   connect(m_copyAll, &QPushButton::clicked, this, &ColorPickerDialog::copyAll);
@@ -104,25 +104,25 @@ ColorPickerDialog::ColorPickerDialog(QWidget *parent, ColorPickerPorts ports) : 
 
   m_status = new QLabel(this);
   m_status->setObjectName(QStringLiteral("colourPickerStatus"));
-  m_status->setAccessibleName(QStringLiteral("Colour picker status"));
+  m_status->setAccessibleName(tr("Colour picker status"));
   m_status->setWordWrap(true);
   m_status->setTextFormat(Qt::PlainText);
   m_status->setFocusPolicy(Qt::NoFocus);
   m_status->hide();
   layout->addWidget(m_status);
 
-  m_pickAgain = new QPushButton(QStringLiteral("Pick again"), this);
+  m_pickAgain = new QPushButton(tr("Pick again"), this);
   m_pickAgain->setObjectName(QStringLiteral("pickAgain"));
-  m_pickAgain->setAccessibleName(QStringLiteral("Pick again"));
+  m_pickAgain->setAccessibleName(tr("Pick again"));
   m_pickAgain->setAutoDefault(false);
   layout->addWidget(m_pickAgain);
   setTabOrder(previous, m_pickAgain);
 
-  auto *recentLabel = new QLabel(QStringLiteral("Recent"), this);
+  auto *recentLabel = new QLabel(tr("Recent"), this);
   recentLabel->setFocusPolicy(Qt::NoFocus);
   m_recent = new QListWidget(this);
   m_recent->setObjectName(QStringLiteral("recentColours"));
-  m_recent->setAccessibleName(QStringLiteral("Recent colours"));
+  m_recent->setAccessibleName(tr("Recent colours"));
   m_recent->setMinimumHeight(120);
   recentLabel->setBuddy(m_recent);
   layout->addWidget(recentLabel);
@@ -130,10 +130,10 @@ ColorPickerDialog::ColorPickerDialog(QWidget *parent, ColorPickerPorts ports) : 
   setTabOrder(m_pickAgain, m_recent);
 
   auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, this);
-  buttons->setAccessibleName(QStringLiteral("Close colour picker"));
+  buttons->setAccessibleName(tr("Close colour picker"));
   if (auto *closeButton = buttons->button(QDialogButtonBox::Close)) {
     closeButton->setAutoDefault(false);
-    closeButton->setAccessibleName(QStringLiteral("Close"));
+    closeButton->setAccessibleName(tr("Close"));
     setTabOrder(m_recent, closeButton);
   }
   layout->addWidget(buttons);
@@ -168,12 +168,12 @@ void ColorPickerDialog::pick() {
   if (m_capture || m_sampler) return;
   const auto generation = ++m_captureGeneration;
   m_pickAgain->setEnabled(false);
-  showStatus("Waiting for screenshot permission. The desktop controls capture consent; Escape in the desktop prompt cancels.");
+  showStatus(tr("Waiting for screenshot permission. The desktop controls capture consent; Escape in the desktop prompt cancels."));
   showMinimized();
   QTimer::singleShot(0, this, [this, generation] {
     if (generation != m_captureGeneration) return;
     auto *capture = m_ports.screenshot ? m_ports.screenshot(this) : new PortalScreenshot(this);
-    if (!capture) { m_pickAgain->setEnabled(true); showNormal(); showStatus("Screen capture is unavailable."); return; }
+    if (!capture) { m_pickAgain->setEnabled(true); showNormal(); showStatus(tr("Screen capture is unavailable.")); return; }
     m_capture = capture;
     connect(capture, &PortalScreenshot::finished, this,
         [this, capture, generation](PortalScreenshot::Outcome outcome, const QImage &image, const QString &) {
@@ -182,8 +182,8 @@ void ColorPickerDialog::pick() {
       if (generation != m_captureGeneration) return;
       showNormal(); raise(); m_pickAgain->setEnabled(true);
       if (outcome == PortalScreenshot::Outcome::Captured && !image.isNull()) { showCapturedSnapshot(image); return; }
-      if (outcome == PortalScreenshot::Outcome::Cancelled) { showStatus("Screen colour sampling cancelled. The previous colour was kept."); return; }
-      showStatus(outcome == PortalScreenshot::Outcome::Denied ? "The desktop refused screenshot permission. The previous colour was kept." : "Screenshot capture failed. The previous colour was kept.");
+      if (outcome == PortalScreenshot::Outcome::Cancelled) { showStatus(tr("Screen colour sampling cancelled. The previous colour was kept.")); return; }
+      showStatus(outcome == PortalScreenshot::Outcome::Denied ? tr("The desktop refused screenshot permission. The previous colour was kept.") : tr("Screenshot capture failed. The previous colour was kept."));
     });
     capture->request();
   });
@@ -196,7 +196,7 @@ void ColorPickerDialog::showCapturedSnapshot(const QImage &image) {
   connect(sampler, &ScreenColorSampler::sampled, this, [this, sampler, generation](const QColor &color, const QPoint &pixel) {
     if (m_sampler != sampler || generation != m_captureGeneration) return;
     showColor(color);
-    m_coordinates->setText(QStringLiteral("Snapshot pixel X: %1, Y: %2 (zero-based screenshot pixels)").arg(pixel.x()).arg(pixel.y()));
+    m_coordinates->setText(tr("Snapshot pixel X: %1, Y: %2 (zero-based screenshot pixels)").arg(pixel.x()).arg(pixel.y()));
     m_coordinates->setAccessibleDescription(m_coordinates->text());
   });
   connect(sampler, &QDialog::finished, this, [this, sampler] { if (m_sampler == sampler) m_sampler.clear(); });
@@ -213,8 +213,8 @@ void ColorPickerDialog::notePortalResult(PortalColorPicker::Outcome outcome, con
     return;
   }
   showStatus(outcome == PortalColorPicker::Outcome::Denied
-                 ? QStringLiteral("The desktop refused colour picking.")
-                 : QStringLiteral("The screen colour picker is unavailable."));
+                 ? tr("The desktop refused colour picking.")
+                 : tr("The screen colour picker is unavailable."));
 }
 
 void ColorPickerDialog::applyColor(const QColor &color) {
@@ -264,7 +264,7 @@ void ColorPickerDialog::commitHex() {
   if (m_applying) return;
   const auto parsed = xerahs::tools::parseHexColor(m_hex->text());
   if (!parsed || !parsed->isValid()) {
-    m_hexError->setText(QStringLiteral("Enter a hex colour: #RGB, #RRGGBB or #RRGGBBAA."));
+    m_hexError->setText(tr("Enter a hex colour: #RGB, #RRGGBB or #RRGGBBAA."));
     m_hexError->show();
     m_hex->setAccessibleDescription(m_hexError->text());
     return;
@@ -281,7 +281,7 @@ void ColorPickerDialog::copyAll() {
   if (!m_color.isValid()) return;
   // The same eight lines the dialog shows, one per line, in format order.
   QApplication::clipboard()->setText(xerahs::tools::formatAll(m_color).join(QLatin1Char('\n')));
-  showStatus(QStringLiteral("All formats copied."));
+  showStatus(tr("All formats copied."));
 }
 
 void ColorPickerDialog::setCopyEnabled(bool enabled) {

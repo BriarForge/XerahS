@@ -1,9 +1,12 @@
 // CORE-009: a pseudo-locale that lengthens every translated string by 40% neither clips controls nor
 // overflows the screen, and a string missing from the translation falls back to its source text.
+#include "ColorPickerDialog.h"
 #include "FileUploadController.h"
 #include "HashCheckerDialog.h"
 #include "IconConverterDialog.h"
+#include "ImageInsertDialog.h"
 #include "NativePipelineJournal.h"
+#include "NewImageDialog.h"
 #include "QrCodeDialog.h"
 #include "SettingsDialog.h"
 #include "UploadDestinationsDialog.h"
@@ -27,6 +30,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTranslator>
+#include <QWidget>
 
 #include <memory>
 
@@ -235,6 +239,31 @@ private slots:
       QVERIFY2(iconDialog.windowTitle().contains(QChar(0x2022)), qPrintable(iconDialog.windowTitle()));
       QVERIFY2(hashDialog.windowTitle().contains(QChar(0x2022)), qPrintable(hashDialog.windowTitle()));
       QVERIFY2(videoDialog.windowTitle().contains(QChar(0x2022)), qPrintable(videoDialog.windowTitle()));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void editorAndPickerDialogsTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      // The editor and picker dialogs the modal dialog test opens as rows 1, 4 and 6.
+      QWidget host;
+      ColorPickerDialog colourDialog(&host);
+      NewImageDialog newImageDialog(&host);
+      ImageInsertDialog insertDialog(&host);
+
+      // The eight colour format lines hold colour values and the sampled-pixel line holds
+      // coordinates: runtime data, not prose.
+      const int colourChecked = translatedTexts(colourDialog, {QStringLiteral("colorFormat"), QStringLiteral("pickedScreenCoordinates")});
+      const int newImageChecked = translatedTexts(newImageDialog, {});
+      const int insertChecked = translatedTexts(insertDialog, {});
+      QVERIFY2(colourChecked >= 3, qPrintable(QString::number(colourChecked)));
+      QVERIFY2(newImageChecked >= 3, qPrintable(QString::number(newImageChecked)));
+      QVERIFY2(insertChecked >= 3, qPrintable(QString::number(insertChecked)));
+      QVERIFY2(colourDialog.windowTitle().contains(QChar(0x2022)), qPrintable(colourDialog.windowTitle()));
+      QVERIFY2(newImageDialog.windowTitle().contains(QChar(0x2022)), qPrintable(newImageDialog.windowTitle()));
+      QVERIFY2(insertDialog.windowTitle().contains(QChar(0x2022)), qPrintable(insertDialog.windowTitle()));
     }
     QApplication::removeTranslator(&pseudo);
   }
