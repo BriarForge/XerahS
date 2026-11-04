@@ -1,10 +1,15 @@
 #include "AnnotationColorDialog.h"
 #include <QColorDialog>
+#include <QCoreApplication>
 #include <QLabel>
 #include <QLayout>
 #include <QPointer>
 #include <new>
 namespace xerahs::app {
+namespace {
+// CORE-009: the colour picker has no Q_OBJECT class, so it names its own translation context.
+QString text(const char *source) { return QCoreApplication::translate("AnnotationColorDialog", source); }
+}  // namespace
 AnnotationColorChoice chooseAnnotationColor(xerahs::editor::EditorSession::ColorTarget target,
     xerahs::editor::Argb initial, const QString &scope, QWidget *parent) {
   using Target = xerahs::editor::EditorSession::ColorTarget;
@@ -12,7 +17,7 @@ AnnotationColorChoice chooseAnnotationColor(xerahs::editor::EditorSession::Color
   QPointer<QColorDialog> dialog;
   try {
     const QPointer<QWidget> owner(parent); dialog = new QColorDialog(QColor::fromRgba(initial), parent);
-    dialog->setObjectName("annotationColorDialog"); dialog->setWindowTitle(target == Target::Stroke ? "Stroke colour" : "Fill colour");
+    dialog->setObjectName("annotationColorDialog"); dialog->setWindowTitle(target == Target::Stroke ? text("Stroke colour") : text("Fill colour"));
     dialog->setAccessibleName(dialog->windowTitle()); dialog->setAccessibleDescription(scope);
     dialog->setOptions(QColorDialog::ShowAlphaChannel | QColorDialog::DontUseNativeDialog);
     // Changing dialog backends can reset the constructor colour. Set the full

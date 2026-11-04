@@ -6,11 +6,14 @@
 #include "CapturePermissionHelp.h"
 #include "CaptureSaveAsDialog.h"
 #include "CanvasCropDialog.h"
+#include "AnnotationColorDialog.h"
+#include "AnnotationObjectNavigator.h"
 #include "CanvasRotationDialog.h"
 #include "CaptureHistoryWindow.h"
 #include "ColorPickerDialog.h"
 #include "ConveniencePreferencesDialog.h"
 #include "DrawingDefaultsDialog.h"
+#include "EditorCanvas.h"
 #include "EditorSaveDialog.h"
 #include "FileUploadController.h"
 #include "HashCheckerDialog.h"
@@ -36,6 +39,7 @@
 #include "WatchFolderService.h"
 #include "WatchFoldersDialog.h"
 #include "image-editor/AnnotationDocument.h"
+#include "image-editor/EditorSession.h"
 #include "media/VideoConversion.h"
 #include "settings/ApplicationSettings.h"
 #include "uploads/CredentialStore.h"
@@ -53,7 +57,6 @@
 #include <QLabel>
 #include <QScopedPointer>
 #include <QScreen>
-#include <QSet>
 #include <QSet>
 #include <QTemporaryDir>
 #include <QTest>
@@ -104,7 +107,8 @@ int translatedTexts(QWidget &dialog, const QStringList &runtimeData) {
     ++checked;
   }
   for (auto *label : dialog.findChildren<QLabel *>()) {
-    if (label->text().isEmpty() || skipped(label->objectName())) continue;
+    // A label that holds only whitespace is a layout spacer, not prose.
+    if (label->text().trimmed().isEmpty() || skipped(label->objectName())) continue;
     if (!label->text().contains(QChar(0x2022))) {
       QTest::qFail(qPrintable(QStringLiteral("untranslated label text: %1").arg(label->text())), __FILE__, __LINE__);
       return checked;
@@ -134,7 +138,8 @@ CollectedTexts collectDialogTexts(Open open) {
     for (auto *button : dialog->findChildren<QAbstractButton *>())
       if (!button->text().isEmpty()) collected.buttons << button->text();
     for (auto *label : dialog->findChildren<QLabel *>()) {
-      if (label->text().isEmpty()) continue;
+      // A label that holds only whitespace is a layout spacer, not prose.
+      if (label->text().trimmed().isEmpty()) continue;
       // The import report counts machine dispositions and the saved-font note names a runtime font
       // family: both are runtime data, not translatable prose.
       if (label->objectName() == QLatin1String("editorPreferenceImportReport")) continue;
@@ -449,6 +454,56 @@ private slots:
       QVERIFY2(offenders.isEmpty(), qPrintable(offenders));
       QVERIFY2(collected.buttons.size() + collected.labels.size() >= 3,
           qPrintable(QString::number(collected.buttons.size() + collected.labels.size())));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void annotationColorDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      QWidget parent;
+      // The scope sentence belongs to the caller and is already translated there, so it stays empty here.
+      const auto collected = collectDialogTexts([&] {
+        chooseAnnotationColor(xerahs::editor::EditorSession::ColorTarget::Stroke, 0xFF3E83F2, QString(), &parent);
+      });
+      QVERIFY2(collected.entered, "the annotation colour dialog did not open");
+      const auto offenders = untranslatedTexts(collected);
+      QVERIFY2(offenders.isEmpty(), qPrintable(offenders));
+      QVERIFY2(collected.buttons.size() + collected.labels.size() >= 3,
+          qPrintable(QString::number(collected.buttons.size() + collected.labels.size())));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void annotationObjectNavigatorTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      xerahs::editor::AnnotationDocument document;
+      document.canvasWidth = 800; document.canvasHeight = 600;
+      xerahs::editor::RectangleAnnotation rectangle;
+      rectangle.id = QUuid::createUuid(); rectangle.start = {0, 100}; rectangle.end = {50, 150};
+      document.annotations.push_back(rectangle);
+      QImage source(800, 600, QImage::Format_ARGB32); source.fill(Qt::white);
+      xerahs::editor::EditorSession session(document);
+      EditorCanvas canvas(session, source);
+      AnnotationObjectNavigator navigator(canvas);
+      // The navigator paints its rows through the model, so its visible text is the accessible
+      // metadata and the model rows. The object UUID and the bounds are runtime values.
+      QStringList texts{navigator.accessibleName(), navigator.accessibleDescription()};
+      const auto *model = navigator.model();
+      for (int row = 0; row < model->rowCount(); ++row) {
+        texts << model->data(model->index(row, 0), Qt::DisplayRole).toString();
+        texts << model->data(model->index(row, 0), Qt::ToolTipRole).toString();
+      }
+      int checked = 0;
+      for (const auto &value : texts) {
+        if (value.isEmpty()) continue;
+        QVERIFY2(value.contains(QChar(0x2022)), qPrintable(value));
+        ++checked;
+      }
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
     }
     QApplication::removeTranslator(&pseudo);
   }

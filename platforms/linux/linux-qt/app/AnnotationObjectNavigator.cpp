@@ -2,6 +2,7 @@
 #include "EditorCanvas.h"
 #include <QAbstractListModel>
 #include <QApplication>
+#include <QCoreApplication>
 #include <QItemSelectionModel>
 #include <QKeyEvent>
 #include <QRegularExpression>
@@ -9,6 +10,10 @@
 
 namespace xerahs::app {
 using namespace xerahs::editor;
+namespace {
+// CORE-009: the row model has no Q_OBJECT class, so it names the navigator's translation context.
+QString text(const char *source) { return QCoreApplication::translate("AnnotationObjectNavigator", source); }
+}  // namespace
 class AnnotationObjectModel final : public QAbstractListModel {
 public:
   struct Row { QUuid id; QString label, description; };
@@ -18,7 +23,7 @@ public:
     if (!index.isValid() || index.row() < 0 || index.row() >= rowCount()) return {};
     const auto &row = rows[size_t(index.row())];
     if (role == Qt::DisplayRole || role == Qt::AccessibleTextRole)
-      return (selected.contains(row.id) ? QStringLiteral("[selected] ") : QString()) + row.label;
+      return (selected.contains(row.id) ? text("[selected] ") : QString()) + row.label;
     if (role == Qt::ToolTipRole || role == Qt::AccessibleDescriptionRole) return row.description;
     if (role == Qt::UserRole) return row.id;
     return {};
@@ -35,22 +40,22 @@ public:
       const auto &extra = rectangle ? rectangle->extra : std::get<UnsupportedAnnotation>(annotation).raw;
       const bool hidden = rectangle ? !rectangle->visible : extra.value("visible") == QJsonValue(false);
       const bool unknownVisibility = !rectangle && extra.contains("visible") && !extra.value("visible").isBool();
-      QStringList state{unknownVisibility ? "visibility unknown" : hidden ? "hidden" : "visible"};
-      if (extra.value("locked") == QJsonValue(true)) state << "locked";
-      else if (extra.contains("locked") && !extra.value("locked").isBool()) state << "protection unknown";
-      state << (annotationEditable(annotation) ? "unlocked" : "protected");
-      QString type = "Rectangle";
+      QStringList state{unknownVisibility ? text("visibility unknown") : hidden ? text("hidden") : text("visible")};
+      if (extra.value("locked") == QJsonValue(true)) state << text("locked");
+      else if (extra.contains("locked") && !extra.value("locked").isBool()) state << text("protection unknown");
+      state << (annotationEditable(annotation) ? text("unlocked") : text("protected"));
+      QString type = text("Rectangle");
       if (!rectangle) {
         // Unknown type names are display hints only. Bound and neutralize
         // markup, control characters and bidi formatting before native text.
         QString name = extra.value("type").toString().left(64);
         name.replace(safeType, "_");
-        type = name.isEmpty() ? "Unsupported object" : "Unsupported: " + name;
-        state << "geometry editing unavailable";
+        type = name.isEmpty() ? text("Unsupported object") : text("Unsupported: ") + name;
+        state << text("geometry editing unavailable");
       }
       const auto id = annotationId(annotation);
-      QString description = "Object ID: " + id.toString(QUuid::WithoutBraces) + ". " + state.join(", ") + ".";
-      if (rectangle) description += QString(" Source-pixel bounds: left %1, top %2, right %3, bottom %4.")
+      QString description = text("Object ID: ") + id.toString(QUuid::WithoutBraces) + ". " + state.join(", ") + ".";
+      if (rectangle) description += text(" Source-pixel bounds: left %1, top %2, right %3, bottom %4.")
           .arg(QString::number(rectangle->left(), 'g', 17), QString::number(rectangle->top(), 'g', 17),
                QString::number(rectangle->right(), 'g', 17), QString::number(rectangle->bottom(), 'g', 17));
       prepared.push_back({id, QString::number(prepared.size() + 1) + ". " + type + " — " + state.join(", "), description});
@@ -72,9 +77,9 @@ public:
 };
 AnnotationObjectNavigator::AnnotationObjectNavigator(EditorCanvas &canvas, QWidget *parent, std::function<bool()> ready)
     : QListView(parent), m_canvas(&canvas), m_objects(new AnnotationObjectModel(this)), m_ready(std::move(ready)) {
-  setObjectName("annotationObjects"); setAccessibleName("Annotation objects");
-  setAccessibleDescription("Objects are listed from bottom to top. Up and Down select; Shift extends a range; Control+Space toggles the focused row. "
-      "Escape clears selection. Enter returns to the canvas for move, resize, rotation, order and Delete. Hidden and locked objects are protected; unsupported data stays preserved.");
+  setObjectName("annotationObjects"); setAccessibleName(tr("Annotation objects"));
+  setAccessibleDescription(tr("Objects are listed from bottom to top. Up and Down select; Shift extends a range; Control+Space toggles the focused row. "
+      "Escape clears selection. Enter returns to the canvas for move, resize, rotation, order and Delete. Hidden and locked objects are protected; unsupported data stays preserved."));
   setToolTip(accessibleDescription()); setModel(m_objects); setSelectionMode(QAbstractItemView::ExtendedSelection);
   setEditTriggers(QAbstractItemView::NoEditTriggers); setFocusPolicy(Qt::StrongFocus);
   setMinimumSize(0, 0); setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Expanding); setUniformItemSizes(true);
