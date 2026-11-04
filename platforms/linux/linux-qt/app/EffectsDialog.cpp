@@ -1,3 +1,4 @@
+#include "NativeAccessibility.h"
 // EDITOR-EFFECTS-001: EE-001..EE-006, EE-010..EE-014, EE-018.
 #include "EffectsDialog.h"
 #include "PresetDialog.h"
@@ -156,6 +157,7 @@ EffectsDialog::EffectsDialog(AnnotationDocument document, QImage source, Commit 
     : QDialog(parent), m_document(std::move(document)), m_source(std::move(source)), m_commit(std::move(commit)),
       m_registry(std::make_shared<EffectRegistry>(std::move(registry))),
       m_store(std::make_shared<EffectsStore>(storePath.isEmpty() ? defaultPath() : storePath)) {
+  new NativeAccessibility(*this, "Select an effect and review its parameters. Apply edits the image; Cancel keeps it unchanged.", true);
   setObjectName("effectsDialog"); setWindowTitle(tr("Effects")); setAccessibleName(windowTitle()); resize(840, 640);
   auto *layout = new QVBoxLayout(this);
   auto *discovery = new QHBoxLayout;
@@ -183,7 +185,7 @@ EffectsDialog::EffectsDialog(AnnotationDocument document, QImage source, Commit 
   m_list = new QListWidget(this); m_list->setObjectName("effectsList"); m_list->setAccessibleName(tr("Effects")); body->addWidget(m_list, 1);
   auto *right = new QVBoxLayout;
   m_parameters = new QWidget(this); m_form = new QFormLayout(m_parameters);
-  auto *scroll = new QScrollArea(this); scroll->setWidgetResizable(true); scroll->setWidget(m_parameters); right->addWidget(scroll, 1);
+  auto *scroll = new QScrollArea(this); scroll->setAccessibleName(tr("Effect parameters")); scroll->setFocusPolicy(Qt::NoFocus); scroll->setWidgetResizable(true); scroll->setWidget(m_parameters); right->addWidget(scroll, 1);
   m_preview = new QLabel(tr("Select an effect to preview"), this); m_preview->setObjectName("effectsPreview"); m_preview->setAlignment(Qt::AlignCenter); m_preview->setMinimumSize(240, 180);
   m_preview->setAccessibleName(tr("Non-authoritative effect preview")); right->addWidget(m_preview, 1);
   body->addLayout(right, 2); layout->addLayout(body, 1);
@@ -415,6 +417,18 @@ void EffectsDialog::buildParameters() {
     m_controls[param.id] = control; m_errors[param.id] = error;
     row->setFocusProxy(control); m_form->addRow(param.label, row);
   }
+  // Parameter rows are rebuilt after the fixed buttons. Establish their visual
+  // reading order explicitly so a row's edit proxy cannot skip its slider.
+  QWidget *previous = m_list;
+  for (int row = 0; row < m_form->rowCount(); ++row) {
+    auto *item = m_form->itemAt(row, QFormLayout::FieldRole);
+    auto *field = item ? item->widget() : nullptr; if (!field) continue;
+    auto controls = field->findChildren<QWidget *>(); controls.prepend(field);
+    for (auto *target : controls) if ((target->focusPolicy() & Qt::TabFocus) && !target->focusProxy() && target->isVisibleTo(m_parameters)) {
+      QWidget::setTabOrder(previous, target); previous = target;
+    }
+  }
+  QWidget::setTabOrder(previous, m_favorite);
 }
 bool EffectsDialog::validateParameters() {
   const auto *effect = m_registry->find(selectedId());

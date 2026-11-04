@@ -1,3 +1,4 @@
+#include "NativeAccessibility.h"
 #include "QrCodeDialog.h"
 
 #include <QApplication>
@@ -37,6 +38,7 @@ QString plainEnglish(const QString &code) {
 
 QrCodeDialog::QrCodeDialog(QWidget *parent) : QDialog(parent) {
   setObjectName(QStringLiteral("qr-code-dialog"));
+  new NativeAccessibility(*this, "Enter QR content and review the preview. Copy, Save and Upload are explicit actions; Close ends the session.", true);
   setWindowTitle(tr("QR Code"));
   m_text = new QPlainTextEdit(this);
   m_text->setObjectName(QStringLiteral("qr-text"));

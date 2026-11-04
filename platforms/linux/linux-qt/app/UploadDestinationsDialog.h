@@ -3,6 +3,7 @@
 #pragma once
 
 #include "uploads/CredentialStore.h"
+#include "OwnedWork.h"
 #include "uploads/DestinationCatalog.h"
 
 #include <QDialog>
@@ -10,17 +11,25 @@
 #include <functional>
 #include <optional>
 
+class QNetworkAccessManager;
+class QCloseEvent;
 class QLabel;
 class QListWidget;
 class QPushButton;
 
 namespace xerahs::app {
+class DestinationConnectionTest;
 
 struct UploadDestinationsPorts {
   std::function<QString(QWidget *)> chooseSxcu;
   std::function<std::optional<QString>(QWidget *, const QString &secretName)> askSecret;
   std::function<bool(QWidget *, const QString &destinationName)> confirmRemove;
   std::function<void(QWidget *, const QString &message)> report;
+  std::function<QNetworkAccessManager *(QObject *)> connectionNetwork;
+  // Production supplies these owners so retired workers outlive a closed window.
+  // Borrowed test stores must otherwise outlive their outstanding work.
+  std::shared_ptr<uploads::CredentialStore> credentialLifetime;
+  std::shared_ptr<uploads::DestinationCatalog> catalogLifetime;
 };
 UploadDestinationsPorts nativeUploadDestinationsPorts();
 
@@ -29,7 +38,11 @@ class UploadDestinationsDialog final : public QDialog {
 public:
   UploadDestinationsDialog(uploads::DestinationCatalog &catalog, uploads::CredentialStore &credentials,
                            UploadDestinationsPorts ports = nativeUploadDestinationsPorts(), QWidget *parent = nullptr);
-  bool busy() const { return m_busy; }
+  ~UploadDestinationsDialog() override;
+  bool busy() const { return m_busy || m_testing; }
+  void testConnection();
+  void cancelConnectionTest();
+  void reject() override;
 
   void importFile(const QString &path);
   void setSelectedAsDefault();
@@ -40,7 +53,10 @@ signals:
   void busyChanged(bool busy);
   void secretsChecked();
 
+protected:
+  void closeEvent(QCloseEvent *) override;
 private:
+  void finishConnectionTest(const QString &code);
   void refresh(const QUuid &select = {});
   void showSelected();
   void checkSecrets();
@@ -57,7 +73,12 @@ private:
   QLabel *m_details = nullptr, *m_importReport = nullptr;
   QListWidget *m_secrets = nullptr;
   QPushButton *m_import = nullptr, *m_default = nullptr, *m_secret = nullptr, *m_remove = nullptr;
-  bool m_busy = false;
+  QPushButton *m_test = nullptr, *m_cancelTest = nullptr;
+  QLabel *m_testStatus = nullptr;
+  OwnedWork m_testPreparation;
+  QPointer<DestinationConnectionTest> m_connectionTest;
+  quint64 m_testGeneration = 0;
+  bool m_busy = false, m_testing = false;
 };
 
 }  // namespace xerahs::app

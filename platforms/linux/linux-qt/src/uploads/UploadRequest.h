@@ -14,6 +14,7 @@ struct UploadInput {
 struct UploadRequestOptions {
   qint64 maxInputBytes = 200LL * 1024 * 1024;
   std::optional<quint32> randomSeed;
+  bool allowCredentialPrompts = true;
 };
 struct PreparedUploadRequest {
   QByteArray method;
@@ -33,6 +34,9 @@ struct UploadRequestResult {
   QString code;
   QString errorMessage;
 };
+// SETCAT-016 / IFCAT-015: local-only preparation of a content-free HEAD probe.
+// Credentials resolve only inside the destination ID's existing keyring scope.
+UploadRequestResult buildConnectionTestRequest(const UploadDestination &, const CredentialStore &);
 UploadRequestResult buildUploadRequest(const UploadDestination &, const UploadInput &, const CredentialStore &,
                                        const UploadRequestOptions & = {});
 }  // namespace xerahs::uploads

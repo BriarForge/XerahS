@@ -1,3 +1,4 @@
+#include "NativeAccessibility.h"
 #include "ImageComparisonDialog.h"
 #include <QComboBox>
 #include <QDialogButtonBox>
@@ -167,6 +168,7 @@ void ComparisonView::focusOutEvent(QFocusEvent *event) {
 ImageComparisonDialog::ImageComparisonDialog(AnnotationDocument document, QImage source, QWidget *parent, ComparisonHooks hooks)
     : QDialog(parent), m_document(std::move(document)), m_source(std::move(source)), m_hooks(std::move(hooks)) {
   setObjectName(QStringLiteral("imageComparisonDialog"));
+  new NativeAccessibility(*this, "Choose two images and compare them with the keyboard or pointer divider. Cancel loading or Close without changing inputs.", true);
   setWindowTitle(QStringLiteral("Compare Images"));
   setAccessibleName(windowTitle());
   setWindowModality(Qt::WindowModal);

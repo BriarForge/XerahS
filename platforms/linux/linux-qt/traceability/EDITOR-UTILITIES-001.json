@@ -45,7 +45,9 @@
     "platforms/linux/linux-qt/app/QrRecognition.cpp",
     "platforms/linux/linux-qt/app/OcrRecognition.cpp",
     "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
-    "platforms/linux/linux-qt/app/ImageRecognitionDialog.h"
+    "platforms/linux/linux-qt/app/ImageRecognitionDialog.h",
+    "platforms/linux/linux-qt/app/ScreenColorSampler.cpp",
+    "platforms/linux/linux-qt/app/NativeAccessibility.h"
   ],
   "evidence": [
     "platforms/linux/linux-qt/tests/ColorFormatsTest.cpp",
@@ -96,20 +98,30 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Capture permission is owned by the native desktop portal: the picker issues one xdg-desktop-portal ColorPicker request at a time and distinguishes Picked, Cancelled, Denied and Failed, with a missing portal distinct from a permission denial. The picked colour is presented in eight canonical formats (Hex, HexAlpha, Rgb, Rgba, Hsb, Hsl, Cmyk and Decimal) and a hex field is parsed and re-formatted. Copy happens only on an explicit user action: a per-line Copy, a Copy All that stays disabled until a colour is shown, and no automatic clipboard write; an invalid hex keeps the last valid colour. Keyboard cancellation uses the native QDialog reject path and a portal cancellation leaves the shown colour and message unchanged. The sampled area is not magnified and the sampled coordinates are not exposed, because the portal returns a colour alone. Magnification and coordinates remain Required.",
+      "note": "The production picker now uses the Screenshot portal, then an owned frozen-image sampler. The sampler shows a 15x nearest-pixel neighbourhood, zero-based screenshot pixel coordinates, hex/RGB/HSV (HSB), pointer and one/ten-pixel keyboard sampling, a visible focus marker, explicit Use sampled colour and Escape/Cancel. The parent presents all eight catalogue formats (Hex, HexAlpha, Rgb, Rgba, Hsb, Hsl, Cmyk, Decimal) and coordinates; only explicit Copy controls write the clipboard. Cancel/Close preserves the previous colour and disposes screenshot pixels. Coordinates explicitly refer to screenshot pixels so no desktop/DPI transform is guessed. ColorPickerDialogTest names screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly, screenshotEscapeAndParentCloseKeepPreviousColourAndDisposePixels, and screenshotPointerSamplingUsesSnapshotPixelsUnderScaledPreview pass alongside existing canonical-format/copy tests. PortalScreenshotTest adds screenshotColorPickerUsesPermissionPortalAndExplicitSampling and screenshotColorPickerCancelsPendingPermissionWithoutSampling against the existing fake Screenshot portal; those require the private D-Bus socket outside this sandbox. Keep partial until these portal integration cases pass and capture-permission review is recorded. Rationale: a frozen consented screenshot supplies actual sample pixels and coordinates that PickColor cannot return; no captured content is copied, saved or uploaded implicitly.",
       "evidence": [
         "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
         "platforms/linux/linux-qt/app/PortalColorPicker.cpp",
         "platforms/linux/linux-qt/src/tools/ColorFormats.cpp",
         "platforms/linux/linux-qt/tests/ColorFormatsTest.cpp",
         "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/PortalColorPickerTest.cpp"
+        "platforms/linux/linux-qt/tests/PortalColorPickerTest.cpp",
+        "platforms/linux/linux-qt/app/ScreenColorSampler.cpp",
+        "platforms/linux/linux-qt/app/PortalScreenshot.cpp",
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 12,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. QR scanning/OCR dependencies and background-removal model remain unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Screenshot-image sampler, canonical values, magnification, pointer/keyboard sampling, explicit copy and cancellation pass native automated tests. New fake Screenshot portal integration tests require private D-Bus execution outside the sandbox; capture-permission review remains Required.",
+        "reviewed_at_revision": "fc5d798666deced7005b85ec57897538371b5c86",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
+          "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+        ],
+        "candidate_source_sha256": "509b89a39b1877c57ba5a3239392ce1e7467b309bbaca2370ba56659cc01d79d",
+        "candidate_state": "Uncommitted implementer worktree; shared Git index is read-only in the sandbox.",
+        "validation_run": "2026-11-04 resume: Debug configure/build passed; QT_QPA_PLATFORMTHEME= focused CTest run: 100% tests passed out of 15. Progress check, contract lint and diff whitespace checks passed. Full-suite transport evidence is constrained by sandbox socket/D-Bus restrictions; staging is blocked by the read-only shared Git index. Full-suite rerun with inherited GTK theme disabled: 70% tests passed, 46 tests failed out of 152 (106 passed); failures require private D-Bus/local sockets. Editor-window tests rerun alone: editor-window-model passed; editor-window-1/2/3 blocked at private D-Bus startup."
       }
     },
     "EU-003": {
@@ -378,7 +390,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "The utility windows use native Qt controls with accessible names, visible focus and keyboard traversal: the image comparison exposes an accessible divider operable by keyboard and drag, the QR controls are named for accessibility, and the video converter's failure state carries a stable code with accessible names. Busy and error states are descriptive rather than silent, Cancel and close have defined semantics, file selection uses the native file dialog and capture uses the native desktop portal. High-contrast rendering is not exercised by a test on this platform, and the all-platforms clause is not evidenced here, so high-contrast and cross-platform accessibility qualification remain Required. Recognition adds named native File/Screen/Region/Copy/Cancel/Close controls, selectable plain-text results and distinct no-result/failure/busy states. Native input tests exercise the actual crop controls and session close; physical assistive-technology and full utility qualification remain Required.",
+      "note": "The utility windows use native Qt controls with accessible names, visible focus and keyboard traversal: the image comparison exposes an accessible divider operable by keyboard and drag, the QR controls are named for accessibility, and the video converter's failure state carries a stable code with accessible names. Busy and error states are descriptive rather than silent, Cancel and close have defined semantics, file selection uses the native file dialog and capture uses the native desktop portal. The automated high-contrast palette audit below covers current utility windows; physical high-contrast and cross-platform accessibility qualification remain Required. Recognition adds named native File/Screen/Region/Copy/Cancel/Close controls, selectable plain-text results and distinct no-result/failure/busy states. Native input tests exercise the actual crop controls and session close; physical assistive-technology and full utility qualification remain Required. NativeSurfaceAccessibilityTest::nativeSurfaces adds 20 named data rows for shell, settings, capture/pipeline/workflow history, workflows, destinations, watch folders, editor, effects, presets, colour picker/sampler, hash, icon, QR generation/scanning, OCR, comparison and video conversion under a high-contrast QPalette, 1.5x native font and disabled native UI motion effects. It checks native names, root purpose descriptions, focus state, complete Tab traversal plus native radio-group arrows, wrapped-label height, work-area recovery, palette distinction and Escape/close for idle dialogs. NativeAccessibility keeps busy/error text in accessible descriptions, retains wrapped labels at their required height and reuses adaptive scroll/focus recovery without rewriting native preferences. Effects parameter rows now have explicit reading order through sliders and edits. busyAndErrorTextUpdatesAccessibleDescriptions covers actual shell and hash states. Keep partial: physical visible-focus/screen-reader review, busy/error/cancel variants on every secondary GUI surface and complete supported-platform qualification remain Required; the 20-surface automated audit is not a blanket all-GUI approval.",
       "evidence": [
         "platforms/linux/linux-qt/app/ImageComparisonDialog.cpp",
         "platforms/linux/linux-qt/app/QrCodeDialog.cpp",
@@ -389,18 +401,20 @@
         "platforms/linux/linux-qt/tests/VideoConverterDialogTest.cpp",
         "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
         "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
-        "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeSurfaceAccessibilityTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 58,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. QR scanning/OCR dependencies and background-removal model remain unapproved; picker coordinates/magnification, every codec/input/native lifecycle and physical accessibility qualification remain incomplete. Konami decision remains blocked.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
+        "coverage": "Twenty named native surfaces pass automated names/purpose, tab/radio traversal, focus state, 1.5x font/wrapped-label, high-contrast palette and idle cancellation checks. Busy/error/cancel variants for every secondary surface and physical assistive-technology review remain incomplete.",
+        "reviewed_at_revision": "fc5d798666deced7005b85ec57897538371b5c86",
         "incremental_evidence": [
-          "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
-          "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
-          "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp"
-        ]
+          "platforms/linux/linux-qt/tests/NativeSurfaceAccessibilityTest.cpp"
+        ],
+        "candidate_source_sha256": "509b89a39b1877c57ba5a3239392ce1e7467b309bbaca2370ba56659cc01d79d",
+        "candidate_state": "Uncommitted implementer worktree; shared Git index is read-only in the sandbox.",
+        "validation_run": "2026-11-04 resume: Debug configure/build passed; QT_QPA_PLATFORMTHEME= focused CTest run: 100% tests passed out of 15. Progress check, contract lint and diff whitespace checks passed. Full-suite transport evidence is constrained by sandbox socket/D-Bus restrictions; staging is blocked by the read-only shared Git index. Full-suite rerun with inherited GTK theme disabled: 70% tests passed, 46 tests failed out of 152 (106 passed); failures require private D-Bus/local sockets. Editor-window tests rerun alone: editor-window-model passed; editor-window-1/2/3 blocked at private D-Bus startup."
       }
     },
     "EU-017": {

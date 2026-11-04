@@ -284,7 +284,7 @@ EditorPreferences loadEditorPreferences(const QJsonObject &stored, RecentPathRul
     const auto value = stored.value(pathsKey); const auto paths = value.toArray();
     bool valid = value.isArray() && paths.size() <= RecentImages::maximumMaximum;
     if (valid) for (int i = paths.size() - 1; i >= 0; --i) {
-      if (!paths.at(i).isString() || !validated.remember(paths.at(i).toString())) { valid = false; break; }
+      if (!paths.at(i).isString() || !validated.remember(paths.at(i).toString())) invalid(result, pathsKey);
     }
     if (validated.paths().size() > maximum) valid = false;
     if (!valid) { invalid(result, pathsKey); validated.clear(); }

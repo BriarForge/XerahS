@@ -14,7 +14,10 @@
     "platforms/linux/linux-qt/app/main.cpp",
     "platforms/linux/linux-qt/app/NativeWorkflowExecutions.cpp",
     "platforms/linux/linux-qt/app/WorkflowExecutionHistoryDialog.cpp",
-    "platforms/linux/linux-qt/app/features/WorkflowExecutionHistoryFeature.cpp"
+    "platforms/linux/linux-qt/app/features/WorkflowExecutionHistoryFeature.cpp",
+    "platforms/linux/linux-qt/app/NativeWindowPlacement.h",
+    "platforms/linux/linux-qt/app/DestinationConnectionTest.cpp",
+    "platforms/linux/linux-qt/src/uploads/UploadRequest.cpp"
   ],
   "requirements": {
     "SETCAT-003": {
@@ -224,10 +227,10 @@
       }
     },
     "SETCAT-013": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Editor window placement restores/clamps across injected display changes and memory opt-out tests. Complete application/window classes and native multi-display qualification remain.",
+      "note": "Only the editor currently remembers geometry (ESET-005); shell, Settings, capture history, pipeline history and workflow execution history deliberately reopen fresh and serialize no window state. NativeWindowPlacement applies the existing logical-pixel placement model on show, screen removal/addition, work-area and DPI changes, and reveals focused controls in native scroll areas. Capture history actions scroll rather than forcing an oversized window. NativeWindowPlacementTest::transientSurfaces (five named data rows) proves display removal, logical scale/work-area recovery, focus/control reachability, close, fresh reopening and no persistence writes; editorSnapshotHasOnlyPortablePlacementFields proves the snapshot allowlist excludes native handles and transient/minimized state. NativeEditorWindowStateTest covers persisted editor restore, live recovery, maximize/minimize, opt-out and write failure. No tool dialog currently persists geometry; Qt-owned file dialogs remain native desktop state. Existing ESET-005 recovery semantics are reused; no new placement or retention policy.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
@@ -235,20 +238,28 @@
         "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
         "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeEditorWindowStateTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeEditorWindowStateTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeWindowPlacementTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 59,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Native production placement and automated surface coverage; physical compositor/multi-display and human accessibility qualification remain release gates.",
+        "reviewed_at_revision": "fc5d798666deced7005b85ec57897538371b5c86",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/NativeWindowPlacementTest.cpp",
+          "platforms/linux/linux-qt/tests/NativeEditorWindowStateTest.cpp"
+        ],
+        "candidate_source_sha256": "509b89a39b1877c57ba5a3239392ce1e7467b309bbaca2370ba56659cc01d79d",
+        "candidate_state": "Uncommitted implementer worktree; shared Git index is read-only in the sandbox.",
+        "validation_run": "2026-11-04 resume: Debug configure/build passed; QT_QPA_PLATFORMTHEME= focused CTest run: 100% tests passed out of 15. Progress check, contract lint and diff whitespace checks passed. Full-suite transport evidence is constrained by sandbox socket/D-Bus restrictions; staging is blocked by the read-only shared Git index. Full-suite rerun with inherited GTK theme disabled: 70% tests passed, 46 tests failed out of 152 (106 passed); failures require private D-Bus/local sockets. Editor-window tests rerun alone: editor-window-model passed; editor-window-1/2/3 blocked at private D-Bus startup."
       }
     },
     "SETCAT-014": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native workflow/destination/watch/preset/recent stores use stable identifiers and bounded collections with tests. Complete catalogue/per-item isolation/missing-resource behavior remains.",
+      "note": "Current native settings collections are workflows, destinations, watch rules/filter globs and editor recent paths. StoreCollectionRecoveryTest covers item isolation, first-valid-ID/source-order duplicate policy, durable quarantine with no duplicate resurrection, missing default repair, missing watch-folder retention/disable/restore, stable IDs across reload/save, and bounded destination/watch collections. Strict workflow admission and its existing 64-item limit remain unchanged (CaptureWorkflowsTest); recent paths retain their normalized platform-aware identity, most-recent-first ordering, duplicate and configured maximum policies (EditorPreferencesTest, RecentImagesTest), retaining healthy paths when another item is corrupt. Watch rules now retain UUIDs (legacy paths derive a stable UUID before the first save), with 64 rules and 128 globs per rule; destinations are limited to 256 entries as well as the existing byte limits. No independently persisted accounts, preset library, external-program list or general filter list currently exists: credentials are destination-ID scoped, presets are individual bounded files rather than a collection store, and globs live inside their watch rule. Rationale: reference InstanceManager uses persistent instance identity and first-match lookup; preserve existing source order and strict authoring rejection while quarantining later duplicates to meet contract isolation. Missing resources retain metadata and expose repair/removal rather than running a substituted workflow. Effect recent/favorite collections use stable built-in effect IDs, source-order deduplication, bounded recent/unknown-ID lists and the existing 64 KiB store bound; EffectsDialogTest::unknownIdsStayInertAndRoundTripWhileRecentsAreBounded and storeRoundTripUnknownAndConflict cover inactive missing resources and round-trip isolation. Open product question for Aoife/Mike: confirm or replace the authored native count caps (256 destinations, 64 watch rules, 128 globs per rule); the reference instance lookup establishes identity/order but does not approve those numeric limits. Existing byte bounds remain unchanged. Keep partial until the caps and the blocked native integration evidence are accepted; tests establish candidate behavior, not a new normative policy.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
@@ -257,13 +268,22 @@
         "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
-        "platforms/linux/linux-qt/tests/DestinationCatalogTest.cpp"
+        "platforms/linux/linux-qt/tests/DestinationCatalogTest.cpp",
+        "platforms/linux/linux-qt/tests/StoreCollectionRecoveryTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 63,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Current native collection stores covered by passing production-path recovery and existing validation tests. native-capture-workflows and watch-folder-service::uploadsOnceThroughDefaultDestinationAcrossRestart require socket/D-Bus execution outside the workspace sandbox; supported-desktop/human qualification remains separate.",
+        "reviewed_at_revision": "fc5d798666deced7005b85ec57897538371b5c86",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/StoreCollectionRecoveryTest.cpp",
+          "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
+        ],
+        "candidate_source_sha256": "509b89a39b1877c57ba5a3239392ce1e7467b309bbaca2370ba56659cc01d79d",
+        "candidate_state": "Uncommitted implementer worktree; shared Git index is read-only in the sandbox.",
+        "validation_run": "2026-11-04 resume: Debug configure/build passed; QT_QPA_PLATFORMTHEME= focused CTest run: 100% tests passed out of 15. Progress check, contract lint and diff whitespace checks passed. Full-suite transport evidence is constrained by sandbox socket/D-Bus restrictions; staging is blocked by the read-only shared Git index. Full-suite rerun with inherited GTK theme disabled: 70% tests passed, 46 tests failed out of 152 (106 passed); failures require private D-Bus/local sockets. Editor-window tests rerun alone: editor-window-model passed; editor-window-1/2/3 blocked at private D-Bus startup."
       }
     },
     "SETCAT-015": {
@@ -294,7 +314,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "DestinationCatalog separates keyring references and validates endpoints locally; explicit upload and import tests exist. Complete provider field/auth/test schemas and human review remain.",
+      "note": "Supported native providers are versioned custom HTTP destinations. Shared configuration retains scoped keyring references; SecretServiceCredentialStore owns credentials. Ordinary catalog viewing/validation is local. The destinations UI now offers explicit Test connection and Cancel test: owned preparation resolves only the selected destination ID scope, and a content-free HEAD probe disables redirects, cookie load/save and authentication reuse. Filename-dependent endpoints are refused; success explicitly means HEAD reachability, not upload authorization. Escape/Close/cancel and owner destruction retire pending work or abort the reply, with timeout and value-free stable diagnostics. DestinationConnectionTestTest uses an injected counting network manager to prove zero requests on load/view/validation, click-only HEAD with no body, scoped credentials, invalid endpoint/refusal, success/HTTP/network/redirect/unsupported failures, cancellation before preparation and during transfer, timeout, owner teardown and redaction. No OAuth provider/authorization flow is currently supported. Rationale: reference CustomUploaderEditorViewModel.TestUploaderAsync is preview-only; the requested explicit HEAD probe supplies connection reachability without publishing sample/capture content. Human credential/security review remains Required before release. Final consent review found that viewing previously used an interactive secret lookup. Viewing now calls metadata-only availability (SearchItems, no session, Unlock, Prompt or GetSecrets), and connection preparation uses lookupWithoutPrompt so a locked keyring fails without leaving an authorization prompt. The injected credential counter proves viewing performs zero secret reads and the probe uses only non-prompting scoped reads. SecretServiceCredentialStoreTest::availabilityAndProbeReadsNeverUnlockOrPrompt adds real transport evidence, but its private D-Bus test must pass outside the sandbox before promoting these security-sensitive rows. Keep partial pending that evidence and credential/security review.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
@@ -303,13 +323,21 @@
         "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationTest.cpp",
-        "platforms/linux/linux-qt/tests/DestinationCatalogTest.cpp"
+        "platforms/linux/linux-qt/tests/DestinationCatalogTest.cpp",
+        "platforms/linux/linux-qt/tests/DestinationConnectionTestTest.cpp",
+        "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 71,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Current supported custom-HTTP provider connection behavior covered by passing injected-transport native tests. This is implementation evidence, not credential/security or physical-desktop review approval.",
+        "reviewed_at_revision": "fc5d798666deced7005b85ec57897538371b5c86",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/DestinationConnectionTestTest.cpp"
+        ],
+        "candidate_source_sha256": "509b89a39b1877c57ba5a3239392ce1e7467b309bbaca2370ba56659cc01d79d",
+        "candidate_state": "Uncommitted implementer worktree; shared Git index is read-only in the sandbox.",
+        "validation_run": "2026-11-04 resume: Debug configure/build passed; QT_QPA_PLATFORMTHEME= focused CTest run: 100% tests passed out of 15. Progress check, contract lint and diff whitespace checks passed. Full-suite transport evidence is constrained by sandbox socket/D-Bus restrictions; staging is blocked by the read-only shared Git index. Full-suite rerun with inherited GTK theme disabled: 70% tests passed, 46 tests failed out of 152 (106 passed); failures require private D-Bus/local sockets. Editor-window tests rerun alone: editor-window-model passed; editor-window-1/2/3 blocked at private D-Bus startup."
       }
     },
     "SETCAT-017": {
@@ -328,7 +356,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Editor system appearance/contrast/reduced-motion and application notification settings have tests. Complete native user-choice/accessibility and accepted platform dispositions remain.",
+      "note": "Native accessibility/notification/input choices remain desktop-owned. Settings and Editor Appearance now visibly explain the degraded reduced-contrast substitution and the native Qt palette/motion fallback when portal hints are unavailable; the note has accessible text and is not persisted as a desktop preference. EditorAppearanceTest::unavailableAndReducedContrastHintsRetainNativeChoicesWithoutPersistence covers absent/unsupported hints, high contrast and reduced motion without rewriting saved choices; ApplicationSettingsTest::nativeAccessibilityFallbackIsVisibleAndDoesNotPersistDesktopChoices covers the visible note and Cancel without writes. Existing appearance/notification tests remain. The reduced-contrast degraded disposition is authored for product-owner review, not self-approved; full native input/notification and physical desktop accessibility qualification remain Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
@@ -336,13 +364,21 @@
         "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
         "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp",
         "platforms/linux/linux-qt/tests/WatchFoldersTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeDesktopAppearanceTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeDesktopAppearanceTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorAppearanceTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 79,
         "coverage": "Partial production behavior is present; complete requirement remains unproven. Full 922-row approved ledger/default/scope coverage, import/export/migration/rollback, retention/backup, provider fields and reviewed secret boundaries remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "reviewed_at_revision": "fc5d798666deced7005b85ec57897538371b5c86",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/EditorAppearanceTest.cpp",
+          "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
+        ],
+        "candidate_source_sha256": "509b89a39b1877c57ba5a3239392ce1e7467b309bbaca2370ba56659cc01d79d",
+        "candidate_state": "Uncommitted implementer worktree; shared Git index is read-only in the sandbox.",
+        "validation_run": "2026-11-04 resume: Debug configure/build passed; QT_QPA_PLATFORMTHEME= focused CTest run: 100% tests passed out of 15. Progress check, contract lint and diff whitespace checks passed. Full-suite transport evidence is constrained by sandbox socket/D-Bus restrictions; staging is blocked by the read-only shared Git index. Full-suite rerun with inherited GTK theme disabled: 70% tests passed, 46 tests failed out of 152 (106 passed); failures require private D-Bus/local sockets. Editor-window tests rerun alone: editor-window-model passed; editor-window-1/2/3 blocked at private D-Bus startup."
       }
     },
     "SETCAT-019": {

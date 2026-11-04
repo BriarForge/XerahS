@@ -25,6 +25,22 @@ QByteArray quoted(QString s) {
 }
 QByteArray encoded(const QString &s) { return QUrl::toPercentEncoding(s); }
 }
+UploadRequestResult buildConnectionTestRequest(const UploadDestination &destination, const CredentialStore &credentials) {
+  // A connection test never substitutes a filename or reads a file/body. Keep
+  // auth in the same endpoint/query/header fields as an actual request.
+  QStringList fields{destination.requestUrl};
+  for (const auto &field : destination.query) fields.append(field.value);
+  for (const auto &field : destination.headers) fields.append(field.value);
+  for (const auto &field : fields) if (field.contains("{filename}")) return {{}, "connection-test-input-required", {}};
+  auto probe = destination; probe.body = BodyType::None;
+  probe.arguments.clear(); probe.data.clear(); probe.fileFormName.clear();
+  UploadRequestOptions options; options.allowCredentialPrompts = false;
+  auto prepared = buildUploadRequest(probe, {}, credentials, options);
+  if (prepared.request) { prepared.request->method = "HEAD"; prepared.request->body.clear(); prepared.request->contentType.clear(); }
+  // Keyring names, URLs, server text and secret values are not diagnostics.
+  prepared.errorMessage.clear();
+  return prepared;
+}
 UploadRequestResult buildUploadRequest(const UploadDestination &d, const UploadInput &input,
                                        const CredentialStore &store, const UploadRequestOptions &options) {
   // Strict QUrl rejects literal template braces. Mask recognized tokens
@@ -72,7 +88,7 @@ UploadRequestResult buildUploadRequest(const UploadDestination &d, const UploadI
       } else if (key.startsWith(QLatin1String("base64:"))) value = QString::fromLatin1(key.mid(7).toUtf8().toBase64());
       else {
         const auto name = key.mid(7);
-        const auto secret = store.lookup(d.id, name);
+        const auto secret = options.allowCredentialPrompts ? store.lookup(d.id, name) : store.lookupWithoutPrompt(d.id, name);
         if (!secret.ok() && code.isEmpty()) {
           code = secret.status == CredentialStatus::NotFound ? QStringLiteral("missing-secret") : QStringLiteral("credential-unavailable");
           message = name;

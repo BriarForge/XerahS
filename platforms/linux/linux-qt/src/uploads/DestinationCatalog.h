@@ -12,6 +12,7 @@
 namespace xerahs::uploads {
 
 inline constexpr int kCatalogVersion = 1;
+inline constexpr int maximumDestinations = 256;
 
 struct CatalogEntry {
   UploadDestination destination;

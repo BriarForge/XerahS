@@ -29,6 +29,14 @@ CredentialResult MemoryCredentialStore::lookup(const QUuid &destinationId, const
   return {CredentialStatus::Ok, *secret};
 }
 
+CredentialStatus MemoryCredentialStore::availability(const QUuid &destinationId, const QString &name) const {
+  const auto gated = gate(destinationId, name, true);
+  if (!gated.ok()) return gated.status;
+  const auto destination = m_secrets.constFind(key(destinationId));
+  return destination != m_secrets.cend() && destination->contains(name) ? CredentialStatus::Ok : CredentialStatus::NotFound;
+}
+CredentialResult MemoryCredentialStore::lookupWithoutPrompt(const QUuid &destinationId, const QString &name) const { return lookup(destinationId, name); }
+
 CredentialResult MemoryCredentialStore::remove(const QUuid &destinationId, const QString &name) {
   const auto gated = gate(destinationId, name, true);
   if (!gated.ok()) return gated;

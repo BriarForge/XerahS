@@ -1,3 +1,4 @@
+#include "NativeAccessibility.h"
 // CORE-024, CORE-025.
 #include "WatchFoldersDialog.h"
 #include "WatchFolderService.h"
@@ -5,6 +6,7 @@
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -17,6 +19,7 @@
 
 namespace xerahs::app {
 WatchFoldersDialog::WatchFoldersDialog(WatchFolderService &service, QWidget *parent) : QDialog(parent) {
+  new NativeAccessibility(*this, "Manage watched folders and actions. Missing folders remain visible. Close ends editing; saved rules remain available.", true);
   setWindowTitle("Watch folders"); resize(650, 460);
   auto *layout = new QVBoxLayout(this);
   auto *description = new QLabel("New matching files are processed after size and modification time stay unchanged for 2 seconds. Upload uses the default destination. Hidden, temporary and capture-output files are ignored. Failed files are reported and retried on the next launch.", this);
@@ -39,7 +42,7 @@ WatchFoldersDialog::WatchFoldersDialog(WatchFolderService &service, QWidget *par
   const auto refresh = [list, &service] {
     const QSignalBlocker block(list); list->clear();
     for (const auto &rule : service.rules()) {
-      auto *item = new QListWidgetItem(rule.path + " — " + rule.filters.join(' ') + (rule.recursive ? " (subfolders)" : "") +
+      auto *item = new QListWidgetItem(rule.path + (QFileInfo(rule.path).isDir() ? "" : " (folder missing; restore it or remove this rule)") + " — " + rule.filters.join(' ') + (rule.recursive ? " (subfolders)" : "") +
           (rule.action == watch::Action::Upload ? " — Upload" : rule.action == watch::Action::Copy ? " — Copy" : " — Move"), list);
       item->setFlags(item->flags() | Qt::ItemIsUserCheckable); item->setCheckState(rule.enabled ? Qt::Checked : Qt::Unchecked);
     }

@@ -1,3 +1,5 @@
+#include "NativeAccessibility.h"
+#include "NativeWindowPlacement.h"
 #include "WorkflowExecutionHistoryDialog.h"
 #include <QDialogButtonBox>
 #include <QLabel>
@@ -13,6 +15,8 @@ WorkflowHistoryPorts workflowHistoryPorts(const NativeWorkflowExecutions &store)
 }
 WorkflowExecutionHistoryDialog::WorkflowExecutionHistoryDialog(WorkflowHistoryPorts ports, std::function<bool()> captureBusy, QWidget *parent)
     : QDialog(parent), m_ports(std::move(ports)), m_captureBusy(std::move(captureBusy)) {
+  new NativeWindowPlacement(*this);
+  new NativeAccessibility(*this, "Review workflow execution metadata and unknown outcomes. Forget requires confirmation; Close keeps saved records.", false);
   setObjectName("workflowExecutionHistory"); setWindowTitle("Workflow execution history"); setAttribute(Qt::WA_DeleteOnClose); resize(800, 450);
   auto *layout = new QVBoxLayout(this);
   auto *notice = new QLabel("Execution records contain metadata, not saved media. An unconfirmed outcome is unknown, not a failed action. "

@@ -1,3 +1,5 @@
+#include "NativeAccessibility.h"
+#include "NativeWindowPlacement.h"
 #include "ApplicationWindow.h"
 #include "CommandRegistry.h"
 #include <QAccessible>
@@ -100,6 +102,8 @@ void ApplicationWindow::build(CommandRegistry &commands) {
   if (auto *cancel = commands.action(QStringLiteral("cancel-capture"))) {
     cancel->setShortcut(QKeySequence(Qt::Key_Escape)); cancel->setShortcutContext(Qt::WindowShortcut); addAction(cancel);
   }
+  new NativeWindowPlacement(*this);
+  new NativeAccessibility(*this, "XerahS commands, current operation status and cancellation. Use menus or Tab to navigate commands.", false);
   resize(640, 360);
   setAcceptDrops(true);
   adoptDropTargets();

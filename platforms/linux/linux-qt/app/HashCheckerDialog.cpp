@@ -1,3 +1,4 @@
+#include "NativeAccessibility.h"
 #include "HashCheckerDialog.h"
 
 #include <QApplication>
@@ -59,6 +60,7 @@ QString verdictFor(const QString &digest, const QString &expected) {
 
 HashCheckerDialog::HashCheckerDialog(QWidget *parent) : QDialog(parent) {
   setObjectName(QStringLiteral("hashCheckerDialog"));
+  new NativeAccessibility(*this, "Choose a file and algorithm, compute or compare its digest. Cancel stops hashing; Close ends the session.", true);
   setWindowTitle(QStringLiteral("Hash checker"));
   setAccessibleName(QStringLiteral("Hash checker"));
   setAcceptDrops(true);

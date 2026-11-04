@@ -1,5 +1,8 @@
+#include "NativeAccessibility.h"
 #include "UploadDestinationsDialog.h"
 #include "OwnedWork.h"
+#include "DestinationConnectionTest.h"
+#include <QCloseEvent>
 
 #include <QDialogButtonBox>
 #include <QFile>
@@ -66,6 +69,7 @@ UploadDestinationsPorts nativeUploadDestinationsPorts() {
 UploadDestinationsDialog::UploadDestinationsDialog(DestinationCatalog &catalog, uploads::CredentialStore &credentials,
                                                    UploadDestinationsPorts ports, QWidget *parent)
     : QDialog(parent), m_catalog(catalog), m_credentials(credentials), m_ports(std::move(ports)) {
+  new NativeAccessibility(*this, "Manage destinations and keyring references. Connection tests are explicit and cancellable. Close cancels a running connection test.", true);
   setWindowTitle(QStringLiteral("Upload destinations"));
   m_list = new QListWidget(this);
   m_list->setAccessibleName(QStringLiteral("Destinations"));
@@ -78,6 +82,15 @@ UploadDestinationsDialog::UploadDestinationsDialog(DestinationCatalog &catalog, 
   m_default = new QPushButton(QStringLiteral("Make &default"), this);
   m_secret = new QPushButton(QStringLiteral("Set &secret…"), this);
   m_remove = new QPushButton(QStringLiteral("&Remove"), this);
+  m_test = new QPushButton(QStringLiteral("&Test connection"), this);
+  m_test->setObjectName("testDestinationConnection"); m_test->setAccessibleName("Test destination connection");
+  m_test->setAccessibleDescription("Explicitly sends a HEAD request with destination credentials, without capture content. Upload permission is not verified.");
+  m_cancelTest = new QPushButton(QStringLiteral("Cancel test"), this);
+  m_cancelTest->setObjectName("cancelDestinationConnection"); m_cancelTest->setAccessibleName("Cancel connection test");
+  m_cancelTest->setEnabled(false);
+  m_testStatus = new QLabel("Connection tests send an explicit HEAD request with destination credentials. No capture content is sent; upload permission is not verified.", this);
+  m_testStatus->setObjectName("destinationConnectionStatus"); m_testStatus->setAccessibleName("Destination connection test status");
+  m_testStatus->setWordWrap(true); m_testStatus->setTextFormat(Qt::PlainText);
   auto *close = new QDialogButtonBox(QDialogButtonBox::Close, this);
 
   auto *side = new QVBoxLayout;
@@ -97,6 +110,10 @@ UploadDestinationsDialog::UploadDestinationsDialog(DestinationCatalog &catalog, 
   m_importReport->setTextFormat(Qt::PlainText); m_importReport->setWordWrap(true);
   m_importReport->setAccessibleName(QStringLiteral("Destination import report")); layout->addWidget(m_importReport);
   layout->addLayout(buttons);
+  auto *testButtons = new QHBoxLayout; testButtons->addWidget(m_test); testButtons->addWidget(m_cancelTest); testButtons->addStretch();
+  layout->addLayout(testButtons); layout->addWidget(m_testStatus);
+  connect(m_test, &QPushButton::clicked, this, &UploadDestinationsDialog::testConnection);
+  connect(m_cancelTest, &QPushButton::clicked, this, &UploadDestinationsDialog::cancelConnectionTest);
   resize(720, 420);
 
   connect(m_list, &QListWidget::currentRowChanged, this, &UploadDestinationsDialog::showSelected);
@@ -140,12 +157,17 @@ void UploadDestinationsDialog::showSelected() {
   m_secrets->clear();
   const auto destination = m_catalog.find(selectedId());
   updateButtons();
+  QStringList recovery;
+  if (!m_catalog.loadCode().isEmpty()) recovery << QStringLiteral("%1: Saved destinations are unavailable. Restore a compatible file and reopen this window; the original is kept.").arg(m_catalog.loadCode());
+  if (m_catalog.unreadableCount()) recovery << QStringLiteral("%1 unreadable or duplicate-ID entries are preserved without being used. Repair the saved file to recover them.").arg(m_catalog.unreadableCount());
+  if (!m_catalog.entries().isEmpty() && m_catalog.defaultId().isNull()) recovery << QStringLiteral("The default destination is missing. Select a destination and choose Make default.");
   if (!destination) {
+    if (!recovery.isEmpty()) { m_details->setText(recovery.join('\n')); return; }
     m_details->setText(m_catalog.entries().isEmpty() ? QStringLiteral("No destinations yet. Import a ShareX custom uploader (.sxcu) to add one.") : QString());
     return;
   }
-  QStringList lines{QStringLiteral("%1 %2").arg(uploads::requestMethodString(destination->method), destination->requestUrl),
-                    QStringLiteral("Body: %1").arg(uploads::bodyTypeString(destination->body))};
+  QStringList lines = recovery;
+  lines << QStringLiteral("%1 %2").arg(uploads::requestMethodString(destination->method), destination->requestUrl) << QStringLiteral("Body: %1").arg(uploads::bodyTypeString(destination->body));
   if (const auto problems = uploads::validateDestination(*destination); !problems.isEmpty())
     lines << QStringLiteral("Cannot upload: %1").arg(problems.join(QStringLiteral(", ")));
   m_details->setText(lines.join('\n'));
@@ -166,7 +188,7 @@ void UploadDestinationsDialog::checkSecrets() {
   runCredentialWork(
       [credentials, id, names] {
         QVariantList statuses;
-        for (const auto &name : names) statuses << int(credentials->lookup(id, name).status);
+        for (const auto &name : names) statuses << int(credentials->availability(id, name));
         return QVariant(statuses);
       },
       [this, id, names](const QVariant &result) {
@@ -243,24 +265,81 @@ void UploadDestinationsDialog::removeSelected() {
 void UploadDestinationsDialog::setBusy(bool busy) {
   if (m_busy == busy) return;
   m_busy = busy;
-  m_list->setEnabled(!busy);
+  m_list->setEnabled(!busy && !m_testing);
   updateButtons();
   emit busyChanged(busy);
 }
 
 void UploadDestinationsDialog::updateButtons() {
   const auto destination = m_catalog.find(selectedId());
-  const bool editable = m_catalog.writable() && !m_busy;
+  const bool editable = m_catalog.writable() && !m_busy && !m_testing;
   m_import->setEnabled(editable);
   m_default->setEnabled(editable && destination && destination->id != m_catalog.defaultId());
   m_remove->setEnabled(editable && destination.has_value());
-  m_secret->setEnabled(!m_busy && destination.has_value());
+  m_secret->setEnabled(!m_busy && !m_testing && destination.has_value());
+  m_test->setEnabled(!m_busy && !m_testing && destination.has_value());
+  m_cancelTest->setEnabled(m_testing);
+}
+
+UploadDestinationsDialog::~UploadDestinationsDialog() {
+  m_testPreparation.cancel();
+  if (m_connectionTest) { m_connectionTest->disconnect(this); delete m_connectionTest.data(); }
+}
+void UploadDestinationsDialog::reject() { const QPointer<UploadDestinationsDialog> owner(this); cancelConnectionTest(); if (owner) QDialog::reject(); }
+void UploadDestinationsDialog::closeEvent(QCloseEvent *event) { const QPointer<UploadDestinationsDialog> owner(this); cancelConnectionTest(); if (owner) QDialog::closeEvent(event); }
+void UploadDestinationsDialog::testConnection() {
+  if (busy()) return;
+  const auto destination = m_catalog.find(selectedId()); if (!destination) return;
+  m_testing = true; const auto generation = ++m_testGeneration;
+  m_list->setEnabled(false); updateButtons();
+  m_testStatus->setText("Preparing connection test… Cancel stops the test before any further network action.");
+  m_testStatus->setAccessibleDescription(m_testStatus->text());
+  const QPointer<UploadDestinationsDialog> owner(this); emit busyChanged(true); if (!owner) return;
+  auto *credentials = &m_credentials;
+  m_testPreparation = OwnedWork::run<uploads::UploadRequestResult>(this,
+      [destination = *destination, credentials, lifetime = m_ports.credentialLifetime](const OwnedWork::Context &work) {
+        if (work.cancelled()) return uploads::UploadRequestResult{{}, "connection-test-cancelled", {}};
+        try { return uploads::buildConnectionTestRequest(destination, *credentials); }
+        catch (...) { return uploads::UploadRequestResult{{}, "credential-unavailable", {}}; }
+      }, [this, generation](uploads::UploadRequestResult prepared) {
+        if (generation != m_testGeneration || !m_testing) return;
+        if (m_testPreparation.cancelled()) { finishConnectionTest("connection-test-cancelled"); return; }
+        if (!prepared.request) { finishConnectionTest("connection-test-configuration-failed"); return; }
+        auto *manager = m_ports.connectionNetwork ? m_ports.connectionNetwork(this) : nullptr;
+        auto *test = new DestinationConnectionTest(manager, this); m_connectionTest = test;
+        connect(test, &DestinationConnectionTest::finished, this, [this, test, generation](const QString &code) {
+          if (m_connectionTest == test) m_connectionTest.clear();
+          test->deleteLater();
+          if (generation == m_testGeneration) finishConnectionTest(code);
+        });
+        m_testStatus->setText("Testing destination connection… No capture content is being sent. Cancel is available.");
+        m_testStatus->setAccessibleDescription(m_testStatus->text());
+        test->start(*prepared.request);
+      });
+}
+void UploadDestinationsDialog::cancelConnectionTest() {
+  if (!m_testing) return;
+  ++m_testGeneration; m_testPreparation.cancel();
+  const QPointer<UploadDestinationsDialog> owner(this);
+  if (m_connectionTest) { auto *test = m_connectionTest.data(); m_connectionTest.clear(); test->cancel(); }
+  if (!owner) return;
+  finishConnectionTest("connection-test-cancelled");
+}
+void UploadDestinationsDialog::finishConnectionTest(const QString &code) {
+  m_testing = false; m_list->setEnabled(!m_busy); updateButtons();
+  const auto explanation = code == "connection-test-succeeded" ? "Endpoint accepted HEAD. Upload permission is not verified." :
+      code == "connection-test-cancelled" ? "Connection test cancelled." :
+      code == "connection-test-unsupported" ? "Endpoint does not support HEAD. No upload was attempted." :
+      code == "connection-test-redirect-refused" ? "Endpoint redirected. Credentials were not forwarded; check the configured endpoint." :
+      "Connection test failed. Check the endpoint, credentials and service availability before testing again.";
+  m_testStatus->setText(code + ": " + explanation); m_testStatus->setAccessibleDescription(m_testStatus->text());
+  emit busyChanged(m_busy);
 }
 
 void UploadDestinationsDialog::runCredentialWork(std::function<QVariant()> work, std::function<void(const QVariant &)> done) {
   setBusy(true);
   OwnedWork::run<QVariant>(this,
-      [work = std::move(work)](const OwnedWork::Context &) { return work(); },
+      [work = std::move(work), credentials = m_ports.credentialLifetime, catalog = m_ports.catalogLifetime](const OwnedWork::Context &) { return work(); },
       [this, done = std::move(done)](QVariant result) {
         setBusy(false);
         done(result);

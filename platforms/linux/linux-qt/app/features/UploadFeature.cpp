@@ -43,7 +43,9 @@ void showDestinations(AppContext &ctx, QWidget *parent) {
   auto &state = lifetime();
   if (!state.destinationsDialog) {
     state.catalog = std::make_shared<xerahs::uploads::DestinationCatalog>(ctx.uploadCatalogPath);
-    auto *dialog = new UploadDestinationsDialog(*state.catalog, *ctx.uploadCredentials, nativeUploadDestinationsPorts(), parent);
+    auto ports = nativeUploadDestinationsPorts();
+    ports.credentialLifetime = ctx.uploadCredentials; ports.catalogLifetime = state.catalog;
+    auto *dialog = new UploadDestinationsDialog(*state.catalog, *ctx.uploadCredentials, std::move(ports), parent);
     // Keep the single non-modal window and its referenced stores until shutdown.
     QObject::connect(dialog, &QObject::destroyed, [catalog = state.catalog, credentials = ctx.uploadCredentials] {});
     state.destinationsDialog = dialog;

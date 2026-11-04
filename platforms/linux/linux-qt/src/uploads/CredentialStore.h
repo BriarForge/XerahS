@@ -1,5 +1,5 @@
 // CORE-013, SETCAT-007: credential references live outside destination JSON.
-// A libsecret-backed store is a later slice; this is the seam it must implement.
+// The native Secret Service transport implements this seam.
 #pragma once
 
 #include <QHash>
@@ -23,6 +23,10 @@ public:
   virtual ~CredentialStore() = default;
   virtual CredentialResult store(const QUuid &destinationId, const QString &name, const QString &value) = 0;
   virtual CredentialResult lookup(const QUuid &destinationId, const QString &name) const = 0;
+  // Viewing settings may inspect availability, never read/unlock a secret.
+  virtual CredentialStatus availability(const QUuid &, const QString &) const { return CredentialStatus::Unavailable; }
+  // Explicit cancellable probes cannot leave an interactive unlock prompt.
+  virtual CredentialResult lookupWithoutPrompt(const QUuid &, const QString &) const { return {CredentialStatus::Unavailable, {}}; }
   virtual CredentialResult remove(const QUuid &destinationId, const QString &name) = 0;
   virtual CredentialResult removeAll(const QUuid &destinationId) = 0;
 };
@@ -33,6 +37,8 @@ class MemoryCredentialStore final : public CredentialStore {
 public:
   CredentialResult store(const QUuid &destinationId, const QString &name, const QString &value) override;
   CredentialResult lookup(const QUuid &destinationId, const QString &name) const override;
+  CredentialStatus availability(const QUuid &destinationId, const QString &name) const override;
+  CredentialResult lookupWithoutPrompt(const QUuid &destinationId, const QString &name) const override;
   CredentialResult remove(const QUuid &destinationId, const QString &name) override;
   CredentialResult removeAll(const QUuid &destinationId) override;
   void setForcedStatus(std::optional<CredentialStatus> status);

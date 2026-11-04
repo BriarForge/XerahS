@@ -90,17 +90,30 @@ WatchFolders::WatchFolders(QString directory) : m_directory(std::move(directory)
   m_error = readStoreSnapshot(QDir(m_directory).filePath("watch-folders.json"), &rules, &m_rulesSnapshot);
   if (m_error.isEmpty()) m_error = readStoreSnapshot(QDir(m_directory).filePath("watch-processed.json"), &processed, &m_processedSnapshot);
   if (!m_error.isEmpty()) return;
+  if (rules.size() > maximumWatchRules) { m_error = "watch-store-full"; return; }
+  QSet<QUuid> ids; QSet<QString> paths;
   for (const auto &value : rules) {
-    const auto o = value.toObject();
-    if (!o.value("path").isString() || !o.value("filters").isArray() || !o.value("enabled").isBool() || !o.value("recursive").isBool() || o.value("action").toInt(-1) < 0 || o.value("action").toInt() > 2) { m_error = "watch-rule-invalid"; m_rules.clear(); return; }
-    Rule rule; rule.path = o.value("path").toString(); rule.filters.clear();
-    for (const auto &filter : o.value("filters").toArray()) {
-      if (!filter.isString() || filter.toString().isEmpty()) { m_error = "watch-filter-invalid"; return; }
+    const auto o = value.toObject(); Rule rule;
+    bool valid = o.value("path").isString() && QDir::isAbsolutePath(o.value("path").toString()) &&
+        o.value("filters").isArray() && o.value("enabled").isBool() && o.value("recursive").isBool() &&
+        o.value("action").isDouble() && o.value("action").toInt(-1) >= 0 && o.value("action").toInt(-1) <= 2;
+    rule.path = o.value("path").toString();
+    rule.id = o.contains("id") ? QUuid(o.value("id").toString()) : QUuid::createUuidV5(QUuid("6ba7b811-9dad-11d1-80b4-00c04fd430c8"), rule.path);
+    valid = valid && !rule.id.isNull() && !ids.contains(rule.id) && !paths.contains(rule.path);
+    rule.filters.clear();
+    const auto filters = o.value("filters").toArray(); valid = valid && !filters.isEmpty() && filters.size() <= maximumWatchFilters;
+    for (const auto &filter : filters) {
+      if (!filter.isString() || filter.toString().trimmed().isEmpty() || filter.toString().contains('/') || rule.filters.contains(filter.toString())) valid = false;
       rule.filters.append(filter.toString());
     }
+    if (!valid) {
+      m_unreadable.append(o.contains("_unreadableWatchRule") ? value : QJsonValue(QJsonObject{{"_unreadableWatchRule", value}}));
+      m_diagnostics.append("watch-rule-unreadable"); continue;
+    }
     rule.enabled = o.value("enabled").toBool(); rule.recursive = o.value("recursive").toBool(); rule.action = Action(o.value("action").toInt());
-    m_rules.append(rule);
+    ids.insert(rule.id); paths.insert(rule.path); m_rules.append(rule);
   }
+  if (!rules.isEmpty() && m_rules.isEmpty()) { m_error = "watch-rule-invalid"; return; }
   for (const auto &value : processed) {
     if (!value.isString()) { m_error = "watch-checkpoint-invalid"; return; }
     m_processed.insert(value.toString());
@@ -108,19 +121,34 @@ WatchFolders::WatchFolders(QString directory) : m_directory(std::move(directory)
 }
 QString WatchFolders::saveRules(const QVector<Rule> &rules, const QString &captures) {
   if (!m_error.isEmpty()) return m_error;
-  QJsonArray items; QVector<Rule> normalized; QSet<QString> roots;
+  if (rules.size() + m_unreadable.size() > maximumWatchRules) return "watch-store-full";
+  QJsonArray items; QVector<Rule> normalized; QSet<QString> roots; QSet<QUuid> ids;
   for (auto rule : rules) {
+    if (rule.id.isNull()) {
+      for (const auto &saved : m_rules) if (saved.path == rule.path) { rule.id = saved.id; break; }
+      if (rule.id.isNull()) rule.id = QUuid::createUuid();
+    }
+    const auto originalPath = rule.path;
     const auto error = authorizeRoot(rule.path, captures, &rule.path);
-    if (!error.isEmpty()) return error;
+    bool retainedMissing = false;
+    if (error == "watch-directory-required") for (const auto &saved : m_rules)
+      if (saved.id == rule.id && saved.path == originalPath) { retainedMissing = true; break; }
+    if (!error.isEmpty() && !retainedMissing) return error;
     for (const auto &root : roots)
       if (within(rule.path, root) || within(root, rule.path)) return "watch-overlapping-roots";
     roots.insert(rule.path);
+    if (ids.contains(rule.id)) return "watch-duplicate-id";
+    ids.insert(rule.id);
     if (rule.filters.isEmpty()) return "watch-filter-required";
+    if (rule.filters.size() > maximumWatchFilters) return "watch-filter-limit";
+    QSet<QString> filters;
+    for (const auto &filter : rule.filters) { if (filters.contains(filter)) return "watch-filter-duplicate"; filters.insert(filter); }
     for (const auto &filter : rule.filters) if (filter.trimmed().isEmpty() || filter.contains('/')) return "watch-filter-invalid";
     if (int(rule.action) < 0 || int(rule.action) > 2) return "watch-action-invalid";
-    items.append(QJsonObject{{"path", rule.path}, {"filters", QJsonArray::fromStringList(rule.filters)}, {"recursive", rule.recursive}, {"enabled", rule.enabled}, {"action", int(rule.action)}});
+    items.append(QJsonObject{{"id", rule.id.toString(QUuid::WithoutBraces)}, {"path", rule.path}, {"filters", QJsonArray::fromStringList(rule.filters)}, {"recursive", rule.recursive}, {"enabled", rule.enabled}, {"action", int(rule.action)}});
     normalized.append(rule);
   }
+  for (const auto &raw : m_unreadable) items.append(raw);
   const auto error = writeStoreSnapshot(QDir(m_directory).filePath("watch-folders.json"), items, &m_rulesSnapshot);
   if (error.isEmpty()) m_rules = normalized;
   return error;

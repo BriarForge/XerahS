@@ -1,3 +1,5 @@
+#include "ColorPickerDialog.h"
+#include "ScreenColorSampler.h"
 // Actual native transport and capture controller on a private, non-activating
 // bus. Every image, output directory and clipboard belongs to this fixture.
 #include "PortalScreenshot.h"
@@ -204,6 +206,24 @@ private slots:
       QVERIFY(!surface.contains("PRIVATE")); QVERIFY(!surface.contains("SECRET")); QVERIFY(!surface.contains("token"));
       QVERIFY(!surface.contains(result->file->path)); QVERIFY(!surface.contains("iVBOR"));
     }
+  void screenshotColorPickerUsesPermissionPortalAndExplicitSampling() {
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QSize(40,30));
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    ColorPickerDialog dialog(nullptr, {[&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }});
+    dialog.showColor(Qt::red); dialog.show(); QApplication::clipboard()->setText("picker-sentinel");
+    dialog.pick(); dialog.pick(); QTRY_VERIFY(dialog.findChild<ScreenColorSampler *>());
+    QCOMPARE(portal.calls, 1); QVERIFY(portal.options.contains("handle_token"));
+    QCOMPARE(dialog.color(), QColor(Qt::red)); QCOMPARE(QApplication::clipboard()->text(), QString("picker-sentinel"));
+    auto *sampler = dialog.findChild<ScreenColorSampler *>();
+    sampler->findChild<QPushButton *>("acceptScreenColorSample")->click();
+    QCOMPARE(dialog.color(), QImage(path).pixelColor(20,15)); QCOMPARE(QApplication::clipboard()->text(), QString("picker-sentinel"));
+  }
+  void screenshotColorPickerCancelsPendingPermissionWithoutSampling() {
+    FakeScreenshotPortal portal(server);
+    ColorPickerDialog dialog(nullptr, {[&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }});
+    dialog.showColor(Qt::green); dialog.show(); dialog.pick(); QTRY_COMPARE(portal.calls, 1);
+    dialog.reject(); QTRY_VERIFY(portal.closed.contains(portal.handle));
+    QVERIFY(!dialog.findChild<ScreenColorSampler *>()); QCOMPARE(dialog.color(), QColor(Qt::green));
   }
   void lastRegionFailureStillReportsWhenWorkflowCannotEnterProcessing() {
     using namespace xerahs::workflows;

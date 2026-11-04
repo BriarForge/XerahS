@@ -84,6 +84,9 @@ SecretServiceCredentialStore::SecretServiceCredentialStore(QDBusConnection bus, 
 // The plain algorithm keeps the secret unencrypted only on the user's own
 // session bus, as libsecret's fallback does; nothing crosses the network.
 CredentialStatus SecretServiceCredentialStore::openSession() const {
+  // A probe and an upload can prepare on separate owned workers. Publish the
+  // shared immutable session once before either worker reads it.
+  const std::lock_guard<std::mutex> lock(m_sessionMutex);
   if (!m_session.path().isEmpty()) return CredentialStatus::Ok;
   if (!m_bus.isConnected()) return CredentialStatus::Unavailable;
   auto call = QDBusMessage::createMethodCall(m_service, kServicePath, kServiceInterface, QStringLiteral("OpenSession"));
@@ -136,13 +139,14 @@ CredentialStatus SecretServiceCredentialStore::unlock(const QList<QDBusObjectPat
   return prompt(promptPath);
 }
 
-CredentialStatus SecretServiceCredentialStore::search(const Attributes &attributes, QList<QDBusObjectPath> &items) const {
+CredentialStatus SecretServiceCredentialStore::search(const Attributes &attributes, QList<QDBusObjectPath> &items, bool allowUnlock) const {
   auto call = QDBusMessage::createMethodCall(m_service, kServicePath, kServiceInterface, QStringLiteral("SearchItems"));
   call << QVariant::fromValue(attributes);
   const auto reply = m_bus.call(call);
   if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().size() != 2) return statusFor(QDBusError(reply));
   items = qdbus_cast<QList<QDBusObjectPath>>(reply.arguments().at(0));
   const auto locked = qdbus_cast<QList<QDBusObjectPath>>(reply.arguments().at(1));
+  if (!allowUnlock) return !items.isEmpty() || locked.isEmpty() ? CredentialStatus::Ok : CredentialStatus::Denied;
   if (const auto status = unlock(locked); status != CredentialStatus::Ok) return status;
   items += locked;
   return CredentialStatus::Ok;
@@ -178,11 +182,19 @@ CredentialResult SecretServiceCredentialStore::store(const QUuid &destinationId,
   return {prompt(qdbus_cast<QDBusObjectPath>(reply.arguments().at(1))), {}};
 }
 
-CredentialResult SecretServiceCredentialStore::lookup(const QUuid &destinationId, const QString &name) const {
+CredentialStatus SecretServiceCredentialStore::availability(const QUuid &destinationId, const QString &name) const {
+  if (destinationId.isNull() || name.isEmpty()) return CredentialStatus::Denied;
+  QList<QDBusObjectPath> items;
+  const auto status = search(attributesFor(destinationId, name), items, false);
+  return status != CredentialStatus::Ok ? status : items.isEmpty() ? CredentialStatus::NotFound : CredentialStatus::Ok;
+}
+CredentialResult SecretServiceCredentialStore::lookup(const QUuid &destinationId, const QString &name) const { return readSecret(destinationId, name, true); }
+CredentialResult SecretServiceCredentialStore::lookupWithoutPrompt(const QUuid &destinationId, const QString &name) const { return readSecret(destinationId, name, false); }
+CredentialResult SecretServiceCredentialStore::readSecret(const QUuid &destinationId, const QString &name, bool allowUnlock) const {
   if (destinationId.isNull() || name.isEmpty()) return {CredentialStatus::Denied, {}};
   if (const auto status = openSession(); status != CredentialStatus::Ok) return {status, {}};
   QList<QDBusObjectPath> items;
-  if (const auto status = search(attributesFor(destinationId, name), items); status != CredentialStatus::Ok) return {status, {}};
+  if (const auto status = search(attributesFor(destinationId, name), items, allowUnlock); status != CredentialStatus::Ok) return {status, {}};
   if (items.isEmpty()) return {CredentialStatus::NotFound, {}};
   auto call = QDBusMessage::createMethodCall(m_service, kServicePath, kServiceInterface, QStringLiteral("GetSecrets"));
   call << QVariant::fromValue(QList<QDBusObjectPath>{items.first()}) << QVariant::fromValue(m_session);

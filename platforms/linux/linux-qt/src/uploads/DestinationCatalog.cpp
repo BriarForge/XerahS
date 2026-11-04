@@ -5,6 +5,7 @@
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QRegularExpression>
+#include <QSet>
 
 #include <algorithm>
 
@@ -37,9 +38,14 @@ DestinationCatalog::DestinationCatalog(QString path) : m_path(std::move(path)) {
   if (read.status != storage::StoreStatus::Ok) { m_loadCode = QStringLiteral("catalog-read-failed"); return; }
   m_snapshot = read.snapshot;
   m_envelope = read.document;
+  if (!m_envelope.value("destinations").isArray() || m_envelope.value("destinations").toArray().size() > maximumDestinations) {
+    m_loadCode = QStringLiteral("catalog-too-large-or-invalid"); return;
+  }
+  QSet<QUuid> ids;
   for (const auto &value : m_envelope.value(QStringLiteral("destinations")).toArray()) {
     const auto read = value.isObject() ? readDestination(QJsonDocument(value.toObject()).toJson(QJsonDocument::Compact)) : DestinationRead{};
-    if (read.destination && !read.destination->id.isNull()) m_destinations.append(*read.destination);
+    if (read.destination && !read.destination->id.isNull() && !ids.contains(read.destination->id)) { ids.insert(read.destination->id); m_destinations.append(*read.destination); }
+    else if (read.destination && !read.destination->id.isNull()) m_unreadable.append(QJsonObject{{"_unreadableDestination", value}});
     else m_unreadable.append(value);
   }
   m_default = QUuid::fromString(m_envelope.value(QStringLiteral("default")).toString());
@@ -101,7 +107,10 @@ QString DestinationCatalog::add(const UploadDestination &destination) {
   if (find(destination.id)) return QStringLiteral("duplicate-id");
   auto destinations = m_destinations;
   destinations.append(destination);
-  return save(destinations, m_default.isNull() ? destination.id : m_default);
+  // A missing reference in an existing catalog needs explicit Make default;
+  // adding an unrelated destination must not silently redirect future uploads.
+  const bool first = m_destinations.isEmpty() && m_unreadable.isEmpty();
+  return save(destinations, m_default.isNull() && first ? destination.id : m_default);
 }
 
 QString DestinationCatalog::remove(const QUuid &id, CredentialStore &credentials) {
@@ -122,6 +131,7 @@ QString DestinationCatalog::setDefault(const QUuid &id) {
 
 QString DestinationCatalog::save(const QVector<UploadDestination> &destinations, const QUuid &defaultId) {
   if (!writable()) return QStringLiteral("catalog-read-only");
+  if (destinations.size() + m_unreadable.size() > maximumDestinations) return QStringLiteral("catalog-too-large");
   if (!QDir().mkpath(QFileInfo(m_path).absolutePath())) return QStringLiteral("catalog-directory-failed");
   QJsonArray array;
   for (const auto &destination : destinations) array.append(destinationJson(destination));

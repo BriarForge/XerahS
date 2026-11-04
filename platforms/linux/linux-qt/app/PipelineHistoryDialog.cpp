@@ -1,3 +1,5 @@
+#include "NativeAccessibility.h"
+#include "NativeWindowPlacement.h"
 #include "PipelineHistoryDialog.h"
 #include "PipelineResultDialog.h"
 #include <QDialogButtonBox>
@@ -19,7 +21,9 @@ struct HistoryJob {
 };
 PipelineHistoryDialog::PipelineHistoryDialog(PipelineJournalStorage storage, std::function<bool()> captureBusy, QWidget *parent)
     : QDialog(parent), m_storage(std::move(storage)), m_captureBusy(std::move(captureBusy)) {
+  new NativeAccessibility(*this, "Review durable capture results and unknown outcomes. Forget requires confirmation; Close keeps records and files.", false);
   setObjectName(QStringLiteral("captureHistoryDialog")); setWindowTitle(QStringLiteral("Capture result history"));
+  new NativeWindowPlacement(*this);
   setAttribute(Qt::WA_DeleteOnClose); resize(760, 440);
   auto *layout = new QVBoxLayout(this);
   auto *notice = new QLabel(QStringLiteral("Capture result records survive restart. Interrupted actions can have unknown outcomes. "

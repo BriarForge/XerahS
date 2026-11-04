@@ -15,7 +15,10 @@
     "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
     "platforms/linux/linux-qt/src/shell/TerminationSignals.cpp",
     "platforms/linux/linux-qt/src/shell/ErrorPresentation.cpp",
-    "platforms/linux/linux-qt/app/features/ShellFeatures.cpp"
+    "platforms/linux/linux-qt/app/features/ShellFeatures.cpp",
+    "platforms/linux/linux-qt/app/DestinationConnectionTest.cpp",
+    "platforms/linux/linux-qt/src/uploads/UploadRequest.cpp",
+    "platforms/linux/linux-qt/app/NativeAccessibility.h"
   ],
   "requirements": {
     "IFCAT-001": {
@@ -86,7 +89,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Qt keyboard/accessibility tests cover current windows. Complete screen-reader, text scaling, contrast and reduced-motion qualification remains.",
+      "note": "Qt keyboard/accessibility tests cover current windows. Complete screen-reader, text scaling, contrast and reduced-motion qualification remains. NativeSurfaceAccessibilityTest::nativeSurfaces adds 20 named data rows for shell, settings, capture/pipeline/workflow history, workflows, destinations, watch folders, editor, effects, presets, colour picker/sampler, hash, icon, QR generation/scanning, OCR, comparison and video conversion under a high-contrast QPalette, 1.5x native font and disabled native UI motion effects. It checks native names, root purpose descriptions, focus state, complete Tab traversal plus native radio-group arrows, wrapped-label height, work-area recovery, palette distinction and Escape/close for idle dialogs. NativeAccessibility keeps busy/error text in accessible descriptions, retains wrapped labels at their required height and reuses adaptive scroll/focus recovery without rewriting native preferences. Effects parameter rows now have explicit reading order through sliders and edits. busyAndErrorTextUpdatesAccessibleDescriptions covers actual shell and hash states. Keep partial: physical visible-focus/screen-reader review, busy/error/cancel variants on every secondary GUI surface and complete supported-platform qualification remain Required; the 20-surface automated audit is not a blanket all-GUI approval.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
@@ -94,13 +97,20 @@
         "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/NativeSurfaceAccessibilityTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 19,
         "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "reviewed_at_revision": "fc5d798666deced7005b85ec57897538371b5c86",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/NativeSurfaceAccessibilityTest.cpp"
+        ],
+        "candidate_source_sha256": "509b89a39b1877c57ba5a3239392ce1e7467b309bbaca2370ba56659cc01d79d",
+        "candidate_state": "Uncommitted implementer worktree; shared Git index is read-only in the sandbox.",
+        "validation_run": "2026-11-04 resume: Debug configure/build passed; QT_QPA_PLATFORMTHEME= focused CTest run: 100% tests passed out of 15. Progress check, contract lint and diff whitespace checks passed. Full-suite transport evidence is constrained by sandbox socket/D-Bus restrictions; staging is blocked by the read-only shared Git index. Full-suite rerun with inherited GTK theme disabled: 70% tests passed, 46 tests failed out of 152 (106 passed); failures require private D-Bus/local sockets. Editor-window tests rerun alone: editor-window-model passed; editor-window-1/2/3 blocked at private D-Bus startup."
       }
     },
     "IFCAT-005": {
@@ -130,7 +140,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "OwnedWork and domain cancellation/progress have native lifetime tests. Real-shell tests now show unknown-size tool work reports indeterminate progress and cancels cooperatively with a visible terminal state; hiding the shell window mid-operation does not cancel it and the latest progress and terminal result are there when it is shown again; and a finished tool result survives closing and reopening its window. That test found and fixed a defect: closing the hash checker after it finished replaced the terminal status with 'Cancelling…' and disabled its progress. Remaining: only the shell window and the hash tool are covered; other operation families (editor save/print/upload, recording, conversion, OCR, capture pipeline) and a durable record for tool-window results beyond the open window are not converged. Audit 2026-11-03: OperationResultsTest::unknownSizeWorkShowsIndeterminateProgressAndCancelsCooperatively, aFinishedResultSurvivesClosingTheToolWindowAndReopeningIt (failed before the HashCheckerDialog::cancel guard), hidingTheShellWindowDoesNotCancelAndKeepsTheLatestResult; ApplicationWindowTest::preparingProgressIsAccessibleAndCancellationDoesNotReplacePublishedResults covers determinate progress. Row stays partial: other operation families are not driven.",
+      "note": "OwnedWork and domain cancellation/progress have native lifetime tests. Real-shell tests now show unknown-size tool work reports indeterminate progress and cancels cooperatively with a visible terminal state; hiding the shell window mid-operation does not cancel it and the latest progress and terminal result are there when it is shown again; and a finished tool result survives closing and reopening its window. That test found and fixed a defect: closing the hash checker after it finished replaced the terminal status with 'Cancelling\u2026' and disabled its progress. Remaining: only the shell window and the hash tool are covered; other operation families (editor save/print/upload, recording, conversion, OCR, capture pipeline) and a durable record for tool-window results beyond the open window are not converged. Audit 2026-11-03: OperationResultsTest::unknownSizeWorkShowsIndeterminateProgressAndCancelsCooperatively, aFinishedResultSurvivesClosingTheToolWindowAndReopeningIt (failed before the HashCheckerDialog::cancel guard), hidingTheShellWindowDoesNotCancelAndKeepsTheLatestResult; ApplicationWindowTest::preparingProgressIsAccessibleAndCancellationDoesNotReplacePublishedResults covers determinate progress. Row stays partial: other operation families are not driven.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
@@ -299,7 +309,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Ordinary catalog load is local; uploads require explicit action. Separate cancellable connection-test/authentication flows and full provider coverage remain.",
+      "note": "Supported native providers are versioned custom HTTP destinations. Shared configuration retains scoped keyring references; SecretServiceCredentialStore owns credentials. Ordinary catalog viewing/validation is local. The destinations UI now offers explicit Test connection and Cancel test: owned preparation resolves only the selected destination ID scope, and a content-free HEAD probe disables redirects, cookie load/save and authentication reuse. Filename-dependent endpoints are refused; success explicitly means HEAD reachability, not upload authorization. Escape/Close/cancel and owner destruction retire pending work or abort the reply, with timeout and value-free stable diagnostics. DestinationConnectionTestTest uses an injected counting network manager to prove zero requests on load/view/validation, click-only HEAD with no body, scoped credentials, invalid endpoint/refusal, success/HTTP/network/redirect/unsupported failures, cancellation before preparation and during transfer, timeout, owner teardown and redaction. No OAuth provider/authorization flow is currently supported. Rationale: reference CustomUploaderEditorViewModel.TestUploaderAsync is preview-only; the requested explicit HEAD probe supplies connection reachability without publishing sample/capture content. Human credential/security review remains Required before release. Final consent review found that viewing previously used an interactive secret lookup. Viewing now calls metadata-only availability (SearchItems, no session, Unlock, Prompt or GetSecrets), and connection preparation uses lookupWithoutPrompt so a locked keyring fails without leaving an authorization prompt. The injected credential counter proves viewing performs zero secret reads and the probe uses only non-prompting scoped reads. SecretServiceCredentialStoreTest::availabilityAndProbeReadsNeverUnlockOrPrompt adds real transport evidence, but its private D-Bus test must pass outside the sandbox before promoting these security-sensitive rows. Keep partial pending that evidence and credential/security review.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
@@ -307,13 +317,21 @@
         "platforms/linux/linux-qt/tests/ActivationProtocolTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/DestinationConnectionTestTest.cpp",
+        "platforms/linux/linux-qt/tests/SecretServiceCredentialStoreTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 60,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Complete CLI progress/cancel/signal/exit semantics, MCP schemas and human authority, provider schemas and all-surface keyboard/reader/localization/scaling and accepted unavailable dispositions remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Current supported custom-HTTP provider connection behavior covered by passing injected-transport native tests. This is implementation evidence, not credential/security or physical-desktop review approval.",
+        "reviewed_at_revision": "fc5d798666deced7005b85ec57897538371b5c86",
+        "incremental_evidence": [
+          "platforms/linux/linux-qt/tests/DestinationConnectionTestTest.cpp"
+        ],
+        "candidate_source_sha256": "509b89a39b1877c57ba5a3239392ce1e7467b309bbaca2370ba56659cc01d79d",
+        "candidate_state": "Uncommitted implementer worktree; shared Git index is read-only in the sandbox.",
+        "validation_run": "2026-11-04 resume: Debug configure/build passed; QT_QPA_PLATFORMTHEME= focused CTest run: 100% tests passed out of 15. Progress check, contract lint and diff whitespace checks passed. Full-suite transport evidence is constrained by sandbox socket/D-Bus restrictions; staging is blocked by the read-only shared Git index. Full-suite rerun with inherited GTK theme disabled: 70% tests passed, 46 tests failed out of 152 (106 passed); failures require private D-Bus/local sockets. Editor-window tests rerun alone: editor-window-model passed; editor-window-1/2/3 blocked at private D-Bus startup."
       }
     },
     "IFCAT-016": {

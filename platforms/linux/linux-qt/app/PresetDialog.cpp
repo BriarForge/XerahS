@@ -1,3 +1,4 @@
+#include "NativeAccessibility.h"
 // COMPAT-SXIE-001, EE-004..EE-008, EE-015..EE-016, ROOT-SECURITY-001.
 #include "PresetDialog.h"
 #include "image-editor/effects/CensusCatalog.h"
@@ -63,6 +64,7 @@ PresetDialog::PresetDialog(editor::AnnotationDocument document, QImage source, E
     std::shared_ptr<const EffectRegistry> registry, QWidget *parent)
     : QDialog(parent), m_document(std::move(document)), m_source(std::move(source)),
       m_commit(std::move(commit)), m_registry(std::move(registry)) {
+  new NativeAccessibility(*this, "Review ordered preset steps and unsupported items. Apply changes the image; Cancel keeps it unchanged.", true);
   setObjectName("presetDialog"); setWindowTitle(tr("Image effect preset")); resize(640, 400);
   auto *layout = new QVBoxLayout(this);
   m_list = new QListWidget(this); m_list->setObjectName("presetSteps"); m_list->setAccessibleName(tr("Ordered preset steps and support status")); layout->addWidget(m_list);

@@ -1,3 +1,4 @@
+#include "NativeAccessibility.h"
 #include "IconConverterDialog.h"
 
 #include <QCheckBox>
@@ -51,6 +52,7 @@ void acceptLocalFiles(QDropEvent *event) {
 
 IconConverterDialog::IconConverterDialog(QWidget *parent) : QDialog(parent) {
   setObjectName(QStringLiteral("iconConverterDialog"));
+  new NativeAccessibility(*this, "Choose an image, icon sizes and colour depth. Save creates the chosen icon; Close keeps the source unchanged.", true);
   setWindowTitle(QStringLiteral("Icon converter"));
   setAccessibleName(QStringLiteral("Icon converter"));
   setAcceptDrops(true);

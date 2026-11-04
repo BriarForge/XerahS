@@ -1,3 +1,5 @@
+#include "NativeAccessibility.h"
+#include "NativeWindowPlacement.h"
 #include "SettingsDialog.h"
 #include "RecordingDevices.h"
 #include "XdgAutostart.h"
@@ -49,6 +51,8 @@ void select(QComboBox *box, const QJsonValue &value) { const int index = box->fi
 SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultFolder,
     const xerahs::workflows::WorkflowShortcutPlan &plan, WorkflowShortcutActions &shortcuts,
     std::function<void()> applied, QWidget *parent) : QDialog(parent) {
+  new NativeWindowPlacement(*this);
+  new NativeAccessibility(*this, "Review settings sections and validation. Apply saves the draft; Cancel discards unapplied edits.", false);
   setWindowTitle("XerahS Settings"); setAccessibleName("XerahS Settings"); setModal(true); resize(820, 520);
   auto draft = std::make_shared<QJsonObject>(store.current().values);
   auto *layout = new QVBoxLayout(this);
@@ -59,6 +63,13 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   report->setWordWrap(true); report->setAccessibleName(QStringLiteral("Settings import report")); layout->addWidget(report);
   auto *tabs = new QTabWidget(this); tabs->setAccessibleName("Settings sections"); layout->addWidget(tabs);
   auto *general = new QWidget(tabs); auto *form = new QFormLayout(general); tabs->addTab(general, "&General");
+  auto *nativeChoices = new QLabel("Native accessibility: desktop input, font scaling, notification delivery and Do Not Disturb remain controlled by your desktop. "
+      "Editor Appearance can follow desktop theme, high contrast and reduced motion without changing saved desktop choices. "
+      "Degraded: reduced-contrast colour substitutions are unavailable; the selected native/editor theme is retained. "
+      "When desktop appearance hints are unavailable, XerahS retains Qt's native palette and existing motion settings.", general);
+  nativeChoices->setObjectName("nativeAccessibilityDisposition"); nativeChoices->setWordWrap(true);
+  nativeChoices->setTextFormat(Qt::PlainText); nativeChoices->setAccessibleName("Native accessibility preferences and degraded appearance support");
+  nativeChoices->setAccessibleDescription(nativeChoices->text()); form->addRow(nativeChoices);
   auto *folder = new QLineEdit(general); folder->setMaxLength(32768); folder->setAccessibleName("Default save folder"); form->addRow("&Default save folder", folder);
   auto *browse = new QPushButton("&Browse…", general); form->addRow(browse);
   connect(browse, &QPushButton::clicked, this, [this, folder] {
@@ -68,7 +79,7 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   auto *login = new QCheckBox("Start XerahS at &login", general); login->setAccessibleName("Start XerahS at login"); form->addRow(login);
   auto *tray = new QCheckBox("Show &tray icon", general); tray->setAccessibleName("Show tray icon"); form->addRow(tray);
   auto *capture = new QWidget(tabs); auto *captureForm = new QFormLayout(capture);
-  auto *captureScroll = new QScrollArea(tabs); captureScroll->setWidgetResizable(true); captureScroll->setFrameShape(QFrame::NoFrame);
+  auto *captureScroll = new QScrollArea(tabs); captureScroll->setFocusPolicy(Qt::NoFocus); captureScroll->setWidgetResizable(true); captureScroll->setFrameShape(QFrame::NoFrame);
   captureScroll->setWidget(capture); tabs->addTab(captureScroll, "&Capture");
   auto *sound = new QCheckBox("Play capture &sound", capture); sound->setAccessibleName("Play capture sound"); captureForm->addRow(sound);
   auto *notification = new QCheckBox("Show &notification after capture", capture); notification->setAccessibleName("Show notification after capture"); captureForm->addRow(notification);

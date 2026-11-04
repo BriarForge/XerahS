@@ -2,6 +2,7 @@
 #include "image-editor/EditorPreferenceStore.h"
 #include "naming/FilenameGenerator.h"
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QUuid>
 #include <QVector>
 
@@ -33,6 +34,7 @@ struct CaptureWorkflows {
   QVector<CaptureWorkflow> entries;
   QUuid defaultId;
   QJsonObject extra;
+  QJsonArray unreadable; // Preserved, never executable; known entries remain independently usable.
 };
 struct WorkflowRead {
   std::optional<CaptureWorkflows> catalog;

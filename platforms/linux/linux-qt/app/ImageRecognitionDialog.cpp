@@ -1,3 +1,4 @@
+#include "NativeAccessibility.h"
 #include "ImageRecognitionDialog.h"
 #include "CanvasCropDialog.h"
 #include "EditorPreparation.h"
@@ -51,6 +52,7 @@ ImageRecognitionDialog::ImageRecognitionDialog(ImageRecognitionKind kind, QWidge
   const bool suppliedRecognition = bool(m_ports.recognize);
   m_available = suppliedRecognition || (kind == ImageRecognitionKind::QrCode ? qrScanningAvailable() : textRecognitionAvailable());
   setObjectName(kind == ImageRecognitionKind::QrCode ? "qrScanDialog" : "ocrDialog");
+  new NativeAccessibility(*this, "Choose a consented file, screen or region input for local recognition. Copy is explicit; Cancel and Close stop the operation.", true);
   setWindowTitle(kind == ImageRecognitionKind::QrCode ? "Scan QR codes" : "Recognize text (OCR)");
   setModal(false); setAttribute(Qt::WA_DeleteOnClose);
   if (!m_ports.chooseFile) m_ports.chooseFile = [](QWidget *owner) {

@@ -7,6 +7,7 @@
 #include <QDBusVirtualObject>
 #include <QTest>
 #include <QThread>
+#include <thread>
 
 using namespace xerahs::app;
 using xerahs::uploads::CredentialStatus;
@@ -31,6 +32,7 @@ public:
   bool collectionLocked = false, noDefault = false;
   PromptReply promptReply = PromptReply::Accept;
   int prompts = 0, dismissCalls = 0, nextItem = 1;
+  int unlockCalls = 0, secretReads = 0, sessionCalls = 0;
   QString session;
   QStringList pendingUnlock;
 
@@ -42,6 +44,7 @@ public:
     const auto reply = [&](const QVariantList &values) { connection.send(message.createReply(values)); return true; };
     const auto error = [&](const QString &name) { connection.send(message.createErrorReply(name, QStringLiteral("fake"))); return true; };
     if (member == "OpenSession") {
+      ++sessionCalls;
       if (args.value(0).toString() != "plain") return error("org.freedesktop.DBus.Error.NotSupported");
       session = kRoot + "/session/1";
       return reply({QVariant::fromValue(QDBusVariant(QString())), QVariant::fromValue(QDBusObjectPath(session))});
@@ -58,6 +61,7 @@ public:
       return reply({QVariant::fromValue(unlocked), QVariant::fromValue(locked)});
     }
     if (member == "Unlock") {
+      ++unlockCalls;
       const auto objects = qdbus_cast<QList<QDBusObjectPath>>(args.value(0));
       bool anyLocked = false;
       for (const auto &object : objects) anyLocked = anyLocked || (object.path() == kCollection ? collectionLocked : items.value(object.path()).locked);
@@ -86,6 +90,7 @@ public:
     }
     if (member == "Dismiss") { ++dismissCalls; return reply(QVariantList{}); }
     if (member == "GetSecrets") {
+      ++secretReads;
       if (qdbus_cast<QDBusObjectPath>(args.value(1)).path() != session) return error("org.freedesktop.Secret.Error.NoSession");
       SecretMap secrets;
       for (const auto &path : qdbus_cast<QList<QDBusObjectPath>>(args.value(0))) {
@@ -186,6 +191,28 @@ private slots:
     QVERIFY(secrets.removeAll(m_destination).ok());
   }
 
+  void availabilityAndProbeReadsNeverUnlockOrPrompt() {
+    addLockedItem("token", "scoped-probe-value"); auto secrets = store();
+    QCOMPARE(secrets.availability(m_destination,"token"),CredentialStatus::Denied);
+    QCOMPARE(m_fake->unlockCalls,0); QCOMPARE(m_fake->prompts,0); QCOMPARE(m_fake->secretReads,0); QCOMPARE(m_fake->sessionCalls,0);
+    QCOMPARE(secrets.lookupWithoutPrompt(m_destination,"token").status,CredentialStatus::Denied);
+    QCOMPARE(m_fake->unlockCalls,0); QCOMPARE(m_fake->prompts,0); QCOMPARE(m_fake->secretReads,0);
+    m_fake->items.begin().value().locked=false;
+    QCOMPARE(secrets.availability(m_destination,"token"),CredentialStatus::Ok); QCOMPARE(m_fake->secretReads,0);
+    QCOMPARE(secrets.lookupWithoutPrompt(m_destination,"token").value,QString("scoped-probe-value"));
+    QCOMPARE(m_fake->secretReads,1); QCOMPARE(m_fake->unlockCalls,0); QCOMPARE(m_fake->prompts,0);
+    QCOMPARE(secrets.lookupWithoutPrompt(m_other,"token").status,CredentialStatus::NotFound);
+    QCOMPARE(m_fake->secretReads,1);
+  }
+  void concurrentProbeReadsShareOneSessionWithoutUnlocking() {
+    addLockedItem("token","scoped-probe-value"); m_fake->items.begin().value().locked=false;
+    auto secrets=store(); xerahs::uploads::CredentialResult first, second;
+    std::thread one([&] { first=secrets.lookupWithoutPrompt(m_destination,"token"); });
+    std::thread two([&] { second=secrets.lookupWithoutPrompt(m_destination,"token"); });
+    one.join(); two.join();
+    QVERIFY(first.ok()); QVERIFY(second.ok()); QCOMPARE(first.value,second.value);
+    QCOMPARE(m_fake->sessionCalls,1); QCOMPARE(m_fake->unlockCalls,0); QCOMPARE(m_fake->prompts,0);
+  }
   void unlocksLockedItemThroughAcceptedPrompt() {
     addLockedItem("token", "unlocked-value");
     auto secrets = store();

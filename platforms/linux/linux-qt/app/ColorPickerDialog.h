@@ -3,6 +3,9 @@
 #pragma once
 
 #include "PortalColorPicker.h"
+#include "PortalScreenshot.h"
+#include <QPointer>
+#include <functional>
 
 #include <QColor>
 #include <QDialog>
@@ -15,11 +18,16 @@ class QPushButton;
 
 namespace xerahs::app {
 
+class ScreenColorSampler;
+struct ColorPickerPorts { std::function<PortalScreenshot *(QObject *)> screenshot; };
 class ColorPickerDialog final : public QDialog {
   Q_OBJECT
 
 public:
-  explicit ColorPickerDialog(QWidget *parent = nullptr);
+  explicit ColorPickerDialog(QWidget *parent = nullptr, ColorPickerPorts ports = {});
+  ~ColorPickerDialog() override;
+  void reject() override;
+  void showCapturedSnapshot(const QImage &image);
 
   // Shows one colour and remembers it in this dialog's recent list.
   void showColor(const QColor &color);
@@ -43,7 +51,11 @@ private:
   QColor m_color;
   QList<QColor> m_recentColors;
   bool m_applying = false;
-  PortalColorPicker *m_picker = nullptr;
+  ColorPickerPorts m_ports;
+  QPointer<PortalScreenshot> m_capture;
+  QPointer<ScreenColorSampler> m_sampler;
+  quint64 m_captureGeneration = 0;
+  QLabel *m_coordinates = nullptr;
   QLabel *m_swatch = nullptr;
   QLineEdit *m_hex = nullptr;
   QLabel *m_hexError = nullptr;

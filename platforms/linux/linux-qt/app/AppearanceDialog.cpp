@@ -22,7 +22,7 @@ bool manageEditorAppearance(QWidget *parent) {
   QPointer<PreferenceDialog> dialog(new PreferenceDialog(parent)); dialog->setObjectName(QStringLiteral("appearanceDialog")); dialog->setWindowTitle(QStringLiteral("Editor Appearance"));
   new NativeEditorAppearance(*dialog);
   auto *layout = new QVBoxLayout(dialog);
-  auto *description = new QLabel(QStringLiteral("Applies to all editor windows. Desktop high contrast and reduced motion remain in effect. Colours may adjust on screen for contrast; the saved accent stays unchanged."), dialog);
+  auto *description = new QLabel(QStringLiteral("Applies to all editor windows. Desktop high contrast and reduced motion remain in effect. Colours may adjust on screen for contrast; the saved accent stays unchanged. Degraded: reduced-contrast substitutions are unavailable; the selected theme is retained. If desktop hints are unavailable, native Qt palette and motion choices remain in effect."), dialog);
   description->setWordWrap(true); layout->addWidget(description);
   auto *report = new QLabel(original.report.summary(), dialog);
   report->setObjectName(QStringLiteral("editorPreferenceImportReport")); report->setTextFormat(Qt::PlainText);

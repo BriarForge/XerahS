@@ -1,3 +1,6 @@
+#include "NativeAccessibility.h"
+#include "NativeWindowPlacement.h"
+#include <QScrollArea>
 #include "CaptureHistoryWindow.h"
 #include "OwnedWork.h"
 #include "PipelineResultDialog.h"
@@ -70,7 +73,9 @@ struct CaptureHistoryJob {
 CaptureHistoryWindow::CaptureHistoryWindow(PipelineJournalStorage storage, std::function<bool()> captureBusy, EditCallback edit, QWidget *parent)
     : QWidget(parent, Qt::Window), m_storage(std::move(storage)), m_captureBusy(std::move(captureBusy)), m_edit(std::move(edit)),
       m_openUrl([](const QUrl &url) { return QDesktopServices::openUrl(url); }) {
+  new NativeAccessibility(*this, "Search saved capture history and choose explicit file actions. Missing files remain recoverable; Close keeps saved records.", false);
   setObjectName(QStringLiteral("captureHistoryWindow")); setWindowTitle(QStringLiteral("Capture history"));
+  new NativeWindowPlacement(*this);
   setAttribute(Qt::WA_DeleteOnClose); resize(900, 620);
   auto *layout = new QVBoxLayout(this);
   m_search = new QLineEdit(this); m_search->setObjectName(QStringLiteral("captureHistorySearch"));
@@ -120,7 +125,19 @@ CaptureHistoryWindow::CaptureHistoryWindow(PipelineJournalStorage storage, std::
   m_refresh = button(second, "refreshCaptureHistoryWindow", QStringLiteral("&Refresh"));
   m_records = button(second, "openCaptureResultRecords", QStringLiteral("Result &records…")); m_records->hide();
   connect(m_records, &QPushButton::clicked, this, [this] { if (m_technical) m_technical(); });
-  layout->addLayout(row); layout->addLayout(second);
+  // Keep all actions reachable when the work area shrinks: focus traversal
+  // scrolls the native action panel rather than forcing a window wider than it.
+  auto *actionPanel = new QWidget(this);
+  auto *actionLayout = new QVBoxLayout(actionPanel);
+  actionLayout->setContentsMargins(0, 0, 0, 0);
+  actionLayout->addLayout(row); actionLayout->addLayout(second);
+  auto *actionScroll = new QScrollArea(this);
+  actionScroll->setFocusPolicy(Qt::NoFocus);
+  actionScroll->setWidgetResizable(true); actionScroll->setFrameShape(QFrame::NoFrame);
+  actionScroll->setAccessibleName(QStringLiteral("Capture history actions"));
+  actionScroll->setWidget(actionPanel);
+  actionScroll->setMinimumHeight(actionPanel->minimumSizeHint().height() + 24);
+  layout->addWidget(actionScroll);
   connect(m_open, &QPushButton::clicked, this, &CaptureHistoryWindow::openFile);
   connect(m_editButton, &QPushButton::clicked, this, &CaptureHistoryWindow::editFile);
   connect(m_copyImage, &QPushButton::clicked, this, &CaptureHistoryWindow::copyImage);

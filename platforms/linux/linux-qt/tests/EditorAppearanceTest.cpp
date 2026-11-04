@@ -42,6 +42,18 @@ private slots:
       QCOMPARE(bad.colorScheme, DesktopColorScheme::Unspecified); QVERIFY(!bad.highContrast && !bad.reducedMotion);
     }
   }
+  void unavailableAndReducedContrastHintsRetainNativeChoicesWithoutPersistence() {
+    AppearancePalette native; native.window = 0xFF123456; native.windowText = 0xFFFFFFFF;
+    native.highlight = 0xFFFFFF00; native.highlightedText = 0xFF000000;
+    const auto preferences = loadEditorPreferences({}); const auto saved = serializeEditorPreferences(preferences);
+    const auto normal = resolveEditorAppearance(preferences, decodeDesktopAppearance({}), native);
+    const auto unsupported = resolveEditorAppearance(preferences, decodeDesktopAppearance({{"contrast", 2}}), native);
+    QCOMPARE(unsupported.palette.window, native.window); QCOMPARE(unsupported.palette.window, normal.palette.window);
+    QVERIFY(!unsupported.highContrast); QVERIFY(!unsupported.reducedMotion);
+    const auto reduced = resolveEditorAppearance(preferences, decodeDesktopAppearance({{"reduced-motion", 1}, {"contrast", 1}}), native);
+    QVERIFY(reduced.highContrast); QVERIFY(reduced.reducedMotion);
+    QCOMPARE(serializeEditorPreferences(preferences), saved);
+  }
   void manualSystemAndDesktopPrecedenceNeverRewritePreferences() {
     AppearancePalette native; native.window = 0xFFF1F2F3; native.base = 0xFFFFFFFF;
     native.highlight = 0xFF006000; DesktopAppearance desktop; desktop.colorScheme = DesktopColorScheme::Dark; desktop.accent = 0xFFFF8800;

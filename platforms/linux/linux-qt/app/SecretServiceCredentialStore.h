@@ -10,6 +10,7 @@
 #include <QDBusConnection>
 #include <QDBusObjectPath>
 #include <QMetaType>
+#include <mutex>
 
 namespace xerahs::app {
 
@@ -31,13 +32,16 @@ public:
                                         QString service = QStringLiteral("org.freedesktop.secrets"), int promptTimeoutMs = 120000);
   uploads::CredentialResult store(const QUuid &destinationId, const QString &name, const QString &value) override;
   uploads::CredentialResult lookup(const QUuid &destinationId, const QString &name) const override;
+  uploads::CredentialStatus availability(const QUuid &destinationId, const QString &name) const override;
+  uploads::CredentialResult lookupWithoutPrompt(const QUuid &destinationId, const QString &name) const override;
   uploads::CredentialResult remove(const QUuid &destinationId, const QString &name) override;
   uploads::CredentialResult removeAll(const QUuid &destinationId) override;
 
 private:
   using Status = uploads::CredentialStatus;
   Status openSession() const;
-  Status search(const QMap<QString, QString> &attributes, QList<QDBusObjectPath> &items) const;
+  Status search(const QMap<QString, QString> &attributes, QList<QDBusObjectPath> &items, bool allowUnlock = true) const;
+  uploads::CredentialResult readSecret(const QUuid &, const QString &, bool allowUnlock) const;
   Status unlock(const QList<QDBusObjectPath> &objects) const;
   Status prompt(const QDBusObjectPath &path, QDBusVariant *result = nullptr) const;
   Status deleteItems(const QList<QDBusObjectPath> &items) const;
@@ -46,6 +50,7 @@ private:
   QString m_service;
   int m_promptTimeoutMs;
   mutable QDBusObjectPath m_session;
+  mutable std::mutex m_sessionMutex;
 };
 
 }  // namespace xerahs::app

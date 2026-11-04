@@ -66,7 +66,7 @@ QJsonObject workflowDiscoveryError(const QString &diagnostic) {
 CaptureWorkflows defaultCaptureWorkflows() {
   CaptureWorkflow initial; initial.id = QUuid("8df729a2-7d23-49c0-8566-4e4f6d282729");
   initial.name = "Save and copy image"; initial.actions = {"save", "image-clipboard"};
-  return {{initial}, initial.id, {}};
+  return {{initial}, initial.id, {}, {}};
 }
 QJsonObject workflowJson(const CaptureWorkflow &w, bool retainUnknown) {
   auto object = retainUnknown ? w.extra : QJsonObject{};
@@ -79,6 +79,7 @@ QJsonObject workflowSnapshot(const CaptureWorkflow &w) { auto result = workflowJ
 QByteArray workflowsJson(const CaptureWorkflows &c) {
   auto root = c.extra; QJsonArray entries;
   for (const auto &w : c.entries) entries.append(workflowJson(w));
+  for (const auto &raw : c.unreadable) entries.append(raw);
   root.insert("format", format); root.insert("version", 2); root.insert("defaultId", c.defaultId.toString(QUuid::WithoutBraces)); root.insert("workflows", entries);
   return QJsonDocument(root).toJson(QJsonDocument::Indented);
 }
@@ -124,7 +125,7 @@ WorkflowRead parseCaptureWorkflows(const QByteArray &bytes) {
   catalog.extra = root; return {catalog, {}, legacy ? 1 : 2, legacy};
 }
 QString workflowAvailability(const CaptureWorkflow &w, const QStringList &available) {
-  CaptureWorkflows one{{w}, w.id, {}};
+  CaptureWorkflows one{{w}, w.id, {}, {}};
   if (!parseCaptureWorkflows(workflowsJson(one)).catalog) return "workflow-invalid";
   if (!implementedCaptureSources().contains(w.capture)) return "workflow-capture-unavailable";
   const auto preview = previewCaptureOutput(w.output); if (!preview.diagnostic.isEmpty()) return preview.diagnostic;
@@ -137,22 +138,59 @@ QString workflowAvailability(const CaptureWorkflow &w, const QStringList &availa
 QStringList workflowActions(const CaptureWorkflow &w) {
   auto selected = w.actions; if (w.chooseActions) selected.prepend("after-capture-window"); return selected;
 }
+namespace {
+// Strict parsing remains the admission boundary for authored definitions. Loading
+// isolates damaged items without granting them execution authority or deleting
+// their raw data on a subsequent explicit save.
+WorkflowRead recoverStoredWorkflows(const QByteArray &bytes) {
+  const auto strict = parseCaptureWorkflows(bytes);
+  if (strict.catalog || bytes.size() > maximumPreferenceBytes) return strict;
+  auto root = QJsonDocument::fromJson(bytes).object();
+  if (root.value("format") != format || (root.value("version") != QJsonValue(1) && root.value("version") != QJsonValue(2)) ||
+      !root.value("workflows").isArray() || !root.value("defaultId").isString()) return strict;
+  const auto entries = root.value("workflows").toArray();
+  if (entries.isEmpty() || entries.size() > 64) return strict;
+  CaptureWorkflows recovered; QSet<QUuid> ids;
+  recovered.defaultId = QUuid(root.value("defaultId").toString());
+  for (const auto &raw : entries) {
+    auto single = root; single.insert("workflows", QJsonArray{raw});
+    single.insert("defaultId", raw.toObject().value("id"));
+    const auto parsed = parseCaptureWorkflows(QJsonDocument(single).toJson());
+    if (!parsed.catalog || ids.contains(parsed.catalog->defaultId)) {
+      // Keep a non-executable wrapper: deleting a conflicting healthy ID or
+      // upgrading the envelope must never activate a quarantined definition.
+      recovered.unreadable.append(raw.isObject() && raw.toObject().contains("_unreadableWorkflow") ? raw : QJsonValue(QJsonObject{{"_unreadableWorkflow", raw}})); continue;
+    }
+    ids.insert(parsed.catalog->defaultId); recovered.entries.append(parsed.catalog->entries.front());
+  }
+  for (const auto *key : {"format", "version", "defaultId", "workflows"}) root.remove(QLatin1String(key));
+  recovered.extra = root;
+  // Keep a missing default as a missing reference. Never silently run a different
+  // workflow; the existing Make default control provides explicit repair.
+  const auto diagnostic = !ids.contains(recovered.defaultId) ? QStringLiteral("workflow-default-missing") : QStringLiteral("workflow-items-unreadable");
+  return {recovered, diagnostic};
+}
+}
 void CaptureWorkflowStore::reload() {
   m_snapshot = m_storage.read(); ++m_revision;
   if (m_snapshot.kind == PreferenceRead::Kind::Missing) m_current = {defaultCaptureWorkflows(), {}};
   else if (m_snapshot.kind == PreferenceRead::Kind::Failed) m_current = {{}, m_snapshot.diagnostic};
-  else m_current = parseCaptureWorkflows(m_snapshot.bytes);
+  else m_current = recoverStoredWorkflows(m_snapshot.bytes);
 }
 PreferenceWrite CaptureWorkflowStore::save(const CaptureWorkflows &draft, quint64 expectedRevision) {
   if (!m_current.catalog) return {false, "workflow-read-only"};
   if (m_revision != expectedRevision) return {false, "workflow-changed"};
-  const auto bytes = workflowsJson(draft); const auto verified = parseCaptureWorkflows(bytes);
+  auto known = draft; known.unreadable = {};
+  const auto verified = parseCaptureWorkflows(workflowsJson(known));
   if (!verified.catalog) return {false, verified.diagnostic};
   for (const auto &workflow : draft.entries) {
     const auto preview = previewCaptureOutput(workflow.output); if (!preview.diagnostic.isEmpty()) return {false, preview.diagnostic};
   }
+  auto retained = *verified.catalog; retained.unreadable = m_current.catalog->unreadable;
+  if (retained.entries.size() + retained.unreadable.size() > 64) return {false, "workflow-too-large"};
+  const auto bytes = workflowsJson(retained);
   const auto result = m_storage.replace(m_snapshot, bytes); if (!result.saved) return result;
-  m_snapshot = {PreferenceRead::Kind::Readable, bytes, {}}; m_current = verified; ++m_revision; return {true, {}};
+  m_snapshot = {PreferenceRead::Kind::Readable, bytes, {}}; m_current = recoverStoredWorkflows(bytes); ++m_revision; return {true, {}};
 }
 QString CaptureWorkflowStore::unchanged() const {
   if (!m_current.catalog) return m_current.diagnostic.isEmpty() ? QStringLiteral("workflow-read-only") : m_current.diagnostic;

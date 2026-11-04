@@ -1,5 +1,6 @@
 // INTERFACE-CATALOG-001: the screen colour picker window, offscreen.
 #include "ColorPickerDialog.h"
+#include "ScreenColorSampler.h"
 
 #include "tools/ColorFormats.h"
 
@@ -36,6 +37,49 @@ QStringList recentTexts(const ColorPickerDialog &dialog) {
 class ColorPickerDialogTest final : public QObject {
   Q_OBJECT
 private slots:
+  void screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly() {
+    ColorPickerDialog dialog; dialog.show(); dialog.showColor(Qt::red);
+    QImage image(20,20,QImage::Format_ARGB32);
+    for (int y=0;y<20;++y) for (int x=0;x<20;++x) image.setPixelColor(x,y,QColor(x*10,y*10,30));
+    QApplication::clipboard()->setText("sentinel"); dialog.showCapturedSnapshot(image);
+    auto *sampler = dialog.findChild<ScreenColorSampler *>(); QVERIFY(sampler);
+    auto *view = sampler->findChild<QWidget *>("screenColorSampleView"); QVERIFY(view);
+    auto *coordinates = sampler->findChild<QLabel *>("screenColorCoordinates"); QVERIFY(coordinates);
+    QVERIFY(coordinates->text().contains("X: 10, Y: 10")); QVERIFY(coordinates->text().contains("HSV (HSB)"));
+    auto *zoom = sampler->findChild<QLabel *>("screenColorMagnifier"); QVERIFY(zoom);
+    const auto magnified = zoom->pixmap().toImage(); QCOMPARE(magnified.size(), QSize(165,165));
+    QCOMPARE(magnified.pixelColor(82,82), image.pixelColor(10,10));
+    QTest::keyClick(view,Qt::Key_Right); QTest::keyClick(view,Qt::Key_Down,Qt::ShiftModifier);
+    QVERIFY(coordinates->text().contains("X: 11, Y: 19")); QCOMPARE(dialog.color(), QColor(Qt::red));
+    QCOMPARE(QApplication::clipboard()->text(), QString("sentinel"));
+    sampler->findChild<QPushButton *>("acceptScreenColorSample")->click();
+    QCOMPARE(dialog.color(), image.pixelColor(11,19));
+    QVERIFY(dialog.findChild<QLabel *>("pickedScreenCoordinates")->text().contains("X: 11, Y: 19"));
+    QCOMPARE(QApplication::clipboard()->text(), QString("sentinel"));
+    dialog.findChild<QPushButton *>("copyAllColorFormats")->click();
+    QCOMPARE(QApplication::clipboard()->text(), formatAll(image.pixelColor(11,19)).join('\n'));
+  }
+  void screenshotEscapeAndParentCloseKeepPreviousColourAndDisposePixels() {
+    ColorPickerDialog dialog; dialog.showColor(Qt::green); dialog.show();
+    QImage image(10,10,QImage::Format_ARGB32); image.fill(Qt::blue);
+    QApplication::clipboard()->setText("sentinel"); dialog.showCapturedSnapshot(image);
+    QPointer<ScreenColorSampler> sampler = dialog.findChild<ScreenColorSampler *>(); QVERIFY(sampler);
+    QTest::keyClick(sampler,Qt::Key_Escape); QTRY_VERIFY(!sampler);
+    QCOMPARE(dialog.color(), QColor(Qt::green)); QCOMPARE(QApplication::clipboard()->text(), QString("sentinel"));
+    dialog.showCapturedSnapshot(image); sampler = dialog.findChild<ScreenColorSampler *>(); QVERIFY(sampler);
+    dialog.reject(); QTRY_VERIFY(!sampler); QCOMPARE(dialog.color(), QColor(Qt::green));
+  }
+  void screenshotPointerSamplingUsesSnapshotPixelsUnderScaledPreview() {
+    ColorPickerDialog dialog; dialog.show();
+    QImage image(20,10,QImage::Format_ARGB32); image.fill(QColor(12,34,56));
+    dialog.showCapturedSnapshot(image); auto *sampler = dialog.findChild<ScreenColorSampler *>(); QVERIFY(sampler);
+    auto *view = sampler->findChild<QWidget *>("screenColorSampleView"); QVERIFY(view);
+    QCoreApplication::processEvents();
+    QTest::mouseMove(view,QPoint((view->width()+1)/2,(view->height()+1)/2));
+    auto *coordinates = sampler->findChild<QLabel *>("screenColorCoordinates");
+    QVERIFY(coordinates->text().contains("X: 10, Y: 5"));
+    sampler->findChild<QPushButton *>("acceptScreenColorSample")->click(); QCOMPARE(dialog.color(), QColor(12,34,56));
+  }
   void showingAColorFillsAllEightLines() {
     ColorPickerDialog dialog;
     const QColor orange(255, 128, 0);

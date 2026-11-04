@@ -1,3 +1,4 @@
+#include "NativeAccessibility.h"
 #include "EditorWindow.h"
 #include "image-editor/ShapePainter.h"
 #include "EditorSaveDialog.h"
@@ -176,6 +177,7 @@ EditorWindow *EditorWindow::fromCapturedDocument(const AnnotationDocument &docum
 EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument document,
                            EditorSession::InitialPersistence persistence, QImage displaySource)
     : m_path(path), m_image(std::move(image)), m_session(std::make_unique<EditorSession>(std::move(document), persistence)) {
+  new NativeAccessibility(*this, "Edit the image using menus, tools and the canvas. Save is explicit. Close offers recovery for unsaved changes.", false);
   guardEditorShutdown(*this);
   applyCreationDefaults();
   m_canvas = new EditorCanvas(*m_session, m_image, nullptr, displaySource);

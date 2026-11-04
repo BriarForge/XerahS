@@ -1,3 +1,4 @@
+#include "NativeAccessibility.h"
 #include "CaptureWorkflows.h"
 #include "WorkflowStoragePath.h"
 #include "CaptureActions.h"
@@ -43,6 +44,8 @@ QString workflowMessage(const QString &code) {
   if (code == "workflow-pattern-invalid") return "Use a filename pattern of at most 4096 characters with valid Unicode text.";
   if (code.startsWith("filename-")) return "The filename pattern cannot run: " + code.mid(9) + ". Random-file tokens have no file-read permission.";
   if (code == "workflow-changed") return "Workflows changed elsewhere. Reload before saving or running.";
+  if (code == "workflow-default-missing") return "The default workflow is missing or damaged. Select a valid workflow, choose Make default, then Save changes. Unreadable entries remain in the saved file.";
+  if (code == "workflow-items-unreadable") return "Some workflow entries are unreadable or have duplicate IDs. Valid workflows remain available; unreadable entries are preserved without running them.";
   if (code == "workflow-not-found") return "The selected workflow no longer exists. Reload and select another workflow.";
   if (code == "workflow-invalid" || code == "workflow-too-large") return "Workflows are invalid or exceed limits. Use unique IDs, names of 1–128 characters and at most 64 workflows. The saved file has been kept.";
   if (code == "workflow-read-only") return "Workflows could not be loaded safely. Restore a compatible file and Reload; the current file has been kept.";
@@ -53,6 +56,7 @@ class WorkflowDialog final : public QDialog {
 public:
   WorkflowDialog(NativeCaptureWorkflows &host, QWidget *parent, std::function<bool()> canRun)
       : QDialog(parent), m_host(host), m_canRun(std::move(canRun)) {
+    new NativeAccessibility(*this, "Manage named workflows. Make default and Save are explicit; Close keeps saved workflows.");
     setObjectName("captureWorkflowsDialog"); setWindowTitle("Capture workflows"); setAccessibleName(windowTitle());
     new NativeEditorAppearance(*this);
     auto *layout = new QVBoxLayout(this);
@@ -135,7 +139,7 @@ private:
     m_host.reload(); m_catalog = m_host.store().current().catalog; m_revision = m_host.store().revision(); m_dirty = false;
     int selected = 0;
     if (m_catalog) for (int i = 0; i < m_catalog->entries.size(); ++i) if (m_catalog->entries[i].id == m_catalog->defaultId) selected = i;
-    refreshList(selected); m_status->setText(!m_catalog ? workflowMessage(m_host.store().current().diagnostic) :
+    refreshList(selected); m_status->setText(!m_host.store().current().diagnostic.isEmpty() ? workflowMessage(m_host.store().current().diagnostic) :
         m_host.store().current().migrationAvailable ? "Version 1 workflows are loaded with their original defaults. Saving changes explicitly upgrades them to version 2; Close keeps the original file." :
         "Changes affect future captures. Close keeps your last saved workflows.");
   }

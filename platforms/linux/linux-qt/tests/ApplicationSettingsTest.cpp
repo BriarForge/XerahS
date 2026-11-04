@@ -31,6 +31,15 @@ using namespace xerahs::settings;
 class ApplicationSettingsTest : public QObject {
   Q_OBJECT
 private slots:
+  void nativeAccessibilityFallbackIsVisibleAndDoesNotPersistDesktopChoices() {
+    QTemporaryDir dir; ApplicationSettingsStore store(dir.filePath("settings.json"), dir.path());
+    xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; });
+    xerahs::app::SettingsDialog dialog(store, dir.path(), {}, shortcuts, [] {}); dialog.show();
+    auto *note = dialog.findChild<QLabel *>("nativeAccessibilityDisposition"); QVERIFY(note); QVERIFY(note->isVisible());
+    QVERIFY(note->text().contains("Degraded:")); QVERIFY(note->text().contains("reduced-contrast"));
+    QVERIFY(note->text().contains("Do Not Disturb")); QCOMPARE(note->accessibleDescription(), note->text());
+    dialog.reject(); QVERIFY(!QFile::exists(dir.filePath("settings.json")));
+  }
   void regionPreferencesDefaultsRepairRoundTripAndReset() {
     QTemporaryDir dir; const auto path = dir.filePath("settings.json");
     const QStringList keys{"regionCapture.quickConfirm", "regionCapture.snapping"};

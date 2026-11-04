@@ -19,6 +19,7 @@ void WatchFolderService::start() {
   if (m_running) return;
   m_running = true;
   if (!m_store.loadError().isEmpty()) { m_blocked = true; emit notify(m_store.loadError(), false); return; }
+  for (const auto &diagnostic : m_store.diagnostics()) emit notify(diagnostic, false);
   m_timer.start(); rescan();
 }
 void WatchFolderService::stop() {

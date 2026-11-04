@@ -1,3 +1,4 @@
+#include "NativeAccessibility.h"
 #include "VideoConverterDialog.h"
 
 #include <QCheckBox>
@@ -25,6 +26,7 @@ using namespace media;
 
 VideoConverterDialog::VideoConverterDialog(ConversionRunner *runner, const ElementAvailability *availability, QWidget *parent)
     : QDialog(parent), m_runner(runner), m_availability(availability) {
+  new NativeAccessibility(*this, "Choose input, output, container and codec. Convert starts the operation; Cancel or Close stops it.", true);
   setWindowTitle(QStringLiteral("Video converter"));
   setObjectName(QStringLiteral("videoConverterDialog"));
   setAcceptDrops(true);

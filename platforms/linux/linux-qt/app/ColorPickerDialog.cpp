@@ -1,4 +1,7 @@
+#include "NativeAccessibility.h"
 #include "ColorPickerDialog.h"
+#include "ScreenColorSampler.h"
+#include <QTimer>
 
 #include "tools/ColorFormats.h"
 
@@ -26,8 +29,9 @@ QString recentLabel(const QColor &color) {
 }
 }  // namespace
 
-ColorPickerDialog::ColorPickerDialog(QWidget *parent) : QDialog(parent) {
+ColorPickerDialog::ColorPickerDialog(QWidget *parent, ColorPickerPorts ports) : QDialog(parent), m_ports(std::move(ports)) {
   setObjectName(QStringLiteral("colorPickerDialog"));
+  new NativeAccessibility(*this, "Choose or sample a screen colour. Review canonical formats and explicitly Copy; Escape closes without copying.", true);
   setWindowTitle(QStringLiteral("Pick colour"));
   setAccessibleName(QStringLiteral("Pick colour"));
   setMinimumWidth(420);
@@ -49,6 +53,9 @@ ColorPickerDialog::ColorPickerDialog(QWidget *parent) : QDialog(parent) {
   heading->addWidget(m_swatch);
   heading->addWidget(m_hex, 1);
   layout->addLayout(heading);
+  m_coordinates = new QLabel(this); m_coordinates->setObjectName("pickedScreenCoordinates");
+  m_coordinates->setAccessibleName("Selected screenshot pixel coordinates"); m_coordinates->setTextFormat(Qt::PlainText);
+  m_coordinates->setWordWrap(true); layout->addWidget(m_coordinates);
 
   m_hexError = new QLabel(this);
   m_hexError->setObjectName(QStringLiteral("hexColourError"));
@@ -147,18 +154,53 @@ void ColorPickerDialog::showColor(const QColor &color) {
   remember(color);
 }
 
+ColorPickerDialog::~ColorPickerDialog() {
+  ++m_captureGeneration;
+  if (m_capture) { auto *capture = m_capture.data(); m_capture.clear(); capture->disconnect(this); capture->cancel(); capture->retire(); }
+}
+void ColorPickerDialog::reject() {
+  ++m_captureGeneration;
+  if (m_capture) { auto *capture = m_capture.data(); m_capture.clear(); capture->cancel(); capture->retire(); }
+  if (m_sampler) { m_sampler->reject(); m_sampler.clear(); }
+  m_pickAgain->setEnabled(true); QDialog::reject();
+}
 void ColorPickerDialog::pick() {
-  if (m_picker) return;
+  if (m_capture || m_sampler) return;
+  const auto generation = ++m_captureGeneration;
   m_pickAgain->setEnabled(false);
-  auto *picker = new PortalColorPicker(this);
-  m_picker = picker;
-  connect(picker, &PortalColorPicker::finished, this,
-          [this, picker](PortalColorPicker::Outcome outcome, const QColor &color, const QString &) {
-            if (m_picker == picker) m_picker = nullptr;
-            picker->deleteLater();
-            notePortalResult(outcome, color);
-          });
-  picker->request();
+  showStatus("Waiting for screenshot permission. The desktop controls capture consent; Escape in the desktop prompt cancels.");
+  showMinimized();
+  QTimer::singleShot(0, this, [this, generation] {
+    if (generation != m_captureGeneration) return;
+    auto *capture = m_ports.screenshot ? m_ports.screenshot(this) : new PortalScreenshot(this);
+    if (!capture) { m_pickAgain->setEnabled(true); showNormal(); showStatus("Screen capture is unavailable."); return; }
+    m_capture = capture;
+    connect(capture, &PortalScreenshot::finished, this,
+        [this, capture, generation](PortalScreenshot::Outcome outcome, const QImage &image, const QString &) {
+      if (m_capture == capture) m_capture.clear();
+      capture->retire();
+      if (generation != m_captureGeneration) return;
+      showNormal(); raise(); m_pickAgain->setEnabled(true);
+      if (outcome == PortalScreenshot::Outcome::Captured && !image.isNull()) { showCapturedSnapshot(image); return; }
+      if (outcome == PortalScreenshot::Outcome::Cancelled) { showStatus("Screen colour sampling cancelled. The previous colour was kept."); return; }
+      showStatus(outcome == PortalScreenshot::Outcome::Denied ? "The desktop refused screenshot permission. The previous colour was kept." : "Screenshot capture failed. The previous colour was kept.");
+    });
+    capture->request();
+  });
+}
+void ColorPickerDialog::showCapturedSnapshot(const QImage &image) {
+  if (image.isNull() || m_sampler) return;
+  auto *sampler = new ScreenColorSampler(image, this); m_sampler = sampler;
+  sampler->setAttribute(Qt::WA_DeleteOnClose); sampler->setWindowModality(Qt::WindowModal);
+  const auto generation = m_captureGeneration;
+  connect(sampler, &ScreenColorSampler::sampled, this, [this, sampler, generation](const QColor &color, const QPoint &pixel) {
+    if (m_sampler != sampler || generation != m_captureGeneration) return;
+    showColor(color);
+    m_coordinates->setText(QStringLiteral("Snapshot pixel X: %1, Y: %2 (zero-based screenshot pixels)").arg(pixel.x()).arg(pixel.y()));
+    m_coordinates->setAccessibleDescription(m_coordinates->text());
+  });
+  connect(sampler, &QDialog::finished, this, [this, sampler] { if (m_sampler == sampler) m_sampler.clear(); });
+  sampler->open();
 }
 
 void ColorPickerDialog::notePortalResult(PortalColorPicker::Outcome outcome, const QColor &color) {
@@ -176,6 +218,7 @@ void ColorPickerDialog::notePortalResult(PortalColorPicker::Outcome outcome, con
 }
 
 void ColorPickerDialog::applyColor(const QColor &color) {
+  m_coordinates->clear(); m_coordinates->setAccessibleDescription({});
   if (!color.isValid()) return;
   m_applying = true;
   m_color = color;
