@@ -1,0 +1,11 @@
+# Contract: close core platform rows (CORE-PLATFORM-001)
+
+Worktree: /home/mike/Work/BriarForge/XerahS/worktrees/codex-stores (detached at origin/main). Shared files get minimal, localized edits. Work these rows one at a time: CORE-010, CORE-016, CORE-018, CORE-020, CORE-021, CORE-023, CORE-024, CORE-027, CORE-009 (another agent is making the Preferences dialog translatable in parallel — do not edit app/SettingsDialog.cpp or tests/LocalizationExpansionTest.cpp). For each: read the full requirement bullet in product-contract/capabilities/CORE-PLATFORM-001/SPEC.md and the current note, list clauses, map each to a named passing test (read the test body), close real gaps, and promote when every clause is proven ("Audit 2026-11-04: ..." naming tests; audit.classification implemented; coverage "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.").
+
+Do NOT work on rows that need human sign-off or a platform disposition: CORE-001 (capability ledger), CORE-003/004/005/007/019/030/033-037 (platform/edition dispositions), CORE-011/022/026/028 (release trust, plugins, MCP/assistant authority), CORE-013 (Secret Service security review), CORE-002 (migration; partial pending formats), CORE-029 (n/a).
+
+Decisions for unspecified semantics (Aoife under Mike's similar-apps rule; one line in the note):
+- CORE-020 / WFCAT-015 retry: bounded 3 attempts with backoff, only for idempotent or keyed operations (uploads with a stable request key, reads); never for non-idempotent actions without a key.
+- CORE-027 diagnostics export: an explicit "Export diagnostics…" action that writes a redacted, versioned bundle (app version, Qt/OS versions, settings field states without values, recent stable error codes with timestamps) after a preview the user confirms; never automatic, never includes captures, clipboard, recognized text, paths or secrets.
+- CORE-010 notification actions: if notifications offer actions, a stale action (target deleted/moved) returns a safe result; otherwise state that notifications carry no actions.
+Unspecified otherwise: follow the reference XerahS app (read-only /home/mike/Work/ShareX/XerahS), else ShareX/Flameshot/Greenshot majority. List sandbox-blocked tests by exact name.
