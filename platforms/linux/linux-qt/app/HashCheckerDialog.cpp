@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QComboBox>
+#include <QCoreApplication>
 #include <QDialogButtonBox>
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
@@ -42,8 +43,9 @@ void acceptLocalFiles(QDropEvent *event) {
 }
 
 // EU-006: shown whenever a weak algorithm is chosen and with its results.
+// This helper sits outside the class, so it names the translation context itself.
 QString weakWarning() {
-  return QStringLiteral("CRC32, MD5 and SHA-1 are not suitable for security verification; use SHA-256 or stronger to check authenticity.");
+  return QCoreApplication::translate("HashCheckerDialog", "CRC32, MD5 and SHA-1 are not suitable for security verification; use SHA-256 or stronger to check authenticity.");
 }
 
 int percentOf(qint64 hashed, qint64 total) {
@@ -53,46 +55,48 @@ int percentOf(qint64 hashed, qint64 total) {
 
 QString verdictFor(const QString &digest, const QString &expected) {
   if (digest.isEmpty() || expected.trimmed().isEmpty()) return {};
-  return tools::digestMatches(digest, expected) ? QStringLiteral("Match") : QStringLiteral("No match");
+  return tools::digestMatches(digest, expected) ? QCoreApplication::translate("HashCheckerDialog", "Match")
+                                               : QCoreApplication::translate("HashCheckerDialog", "No match");
 }
 
 }  // namespace
 
 HashCheckerDialog::HashCheckerDialog(QWidget *parent) : QDialog(parent) {
   setObjectName(QStringLiteral("hashCheckerDialog"));
-  new NativeAccessibility(*this, "Choose a file and algorithm, compute or compare its digest. Cancel stops hashing; Close ends the session.", true);
-  setWindowTitle(QStringLiteral("Hash checker"));
-  setAccessibleName(QStringLiteral("Hash checker"));
+  new NativeAccessibility(*this, tr("Choose a file and algorithm, compute or compare its digest. Cancel stops hashing; Close ends the session."), true);
+  setWindowTitle(tr("Hash checker"));
+  setAccessibleName(tr("Hash checker"));
   setAcceptDrops(true);
 
   m_file = new QLineEdit(this);
   m_file->setObjectName(QStringLiteral("hashFile"));
   m_file->setReadOnly(true);
-  m_file->setAccessibleName(QStringLiteral("File"));
-  m_choose = new QPushButton(QStringLiteral("Choose &file…"), this);
+  m_file->setAccessibleName(tr("File"));
+  m_choose = new QPushButton(tr("Choose &file…"), this);
   m_choose->setObjectName(QStringLiteral("chooseHashFile"));
   m_algorithm = new QComboBox(this);
   m_algorithm->setObjectName(QStringLiteral("hashAlgorithm"));
-  m_algorithm->setAccessibleName(QStringLiteral("Algorithm"));
+  m_algorithm->setAccessibleName(tr("Algorithm"));
+  // The algorithm names are identifiers, not prose: they stay as they are.
   for (const auto &name : tools::hashAlgorithmNames()) m_algorithm->addItem(name);
   m_algorithm->setCurrentIndex(int(HashAlgorithm::Sha256));  // EU-005: SHA-256 is the default.
-  m_compute = new QPushButton(QStringLiteral("&Compute"), this);
+  m_compute = new QPushButton(tr("&Compute"), this);
   m_compute->setObjectName(QStringLiteral("computeHash"));
-  m_cancel = new QPushButton(QStringLiteral("&Cancel hashing"), this);
+  m_cancel = new QPushButton(tr("&Cancel hashing"), this);
   m_cancel->setObjectName(QStringLiteral("cancelHash"));
   m_digest = new QLineEdit(this);
   m_digest->setObjectName(QStringLiteral("hashDigest"));
   m_digest->setReadOnly(true);
-  m_digest->setAccessibleName(QStringLiteral("Digest"));
-  m_copy = new QPushButton(QStringLiteral("&Copy"), this);
+  m_digest->setAccessibleName(tr("Digest"));
+  m_copy = new QPushButton(tr("&Copy"), this);
   m_copy->setObjectName(QStringLiteral("copyHash"));
   m_compare = new QLineEdit(this);
   m_compare->setObjectName(QStringLiteral("hashCompare"));
-  m_compare->setAccessibleName(QStringLiteral("Compare with"));
-  m_compare->setPlaceholderText(QStringLiteral("Paste an expected hash"));
+  m_compare->setAccessibleName(tr("Compare with"));
+  m_compare->setPlaceholderText(tr("Paste an expected hash"));
   m_verdict = new QLabel(this);
   m_verdict->setObjectName(QStringLiteral("hashVerdict"));
-  m_verdict->setAccessibleName(QStringLiteral("Comparison result"));
+  m_verdict->setAccessibleName(tr("Comparison result"));
   m_status = new QLabel(this);
   m_status->setObjectName(QStringLiteral("hashStatus"));
   m_status->setTextFormat(Qt::PlainText);
@@ -100,7 +104,7 @@ HashCheckerDialog::HashCheckerDialog(QWidget *parent) : QDialog(parent) {
   m_progress = new QProgressBar(this);
   m_progress->setObjectName(QStringLiteral("hashProgress"));
   m_progress->setRange(0, 100);
-  m_progress->setAccessibleName(QStringLiteral("Hash progress"));
+  m_progress->setAccessibleName(tr("Hash progress"));
   m_weak = new QLabel(weakWarning(), this);
   m_weak->setObjectName(QStringLiteral("hashWeakWarning"));
   m_weak->setWordWrap(true);
@@ -112,14 +116,14 @@ HashCheckerDialog::HashCheckerDialog(QWidget *parent) : QDialog(parent) {
   fileRow->addWidget(m_file, 1);
   fileRow->addWidget(m_choose);
   auto *form = new QFormLayout;
-  form->addRow(QStringLiteral("File:"), fileRow);
-  form->addRow(QStringLiteral("Algorithm:"), m_algorithm);
+  form->addRow(tr("File:"), fileRow);
+  form->addRow(tr("Algorithm:"), m_algorithm);
   form->addRow(QString(), m_weak);
-  form->addRow(QStringLiteral("Compare with:"), m_compare);
+  form->addRow(tr("Compare with:"), m_compare);
   auto *digestRow = new QHBoxLayout;
   digestRow->addWidget(m_digest, 1);
   digestRow->addWidget(m_copy);
-  form->addRow(QStringLiteral("Hash:"), digestRow);
+  form->addRow(tr("Hash:"), digestRow);
   auto *run = new QHBoxLayout;
   run->addWidget(m_compute);
   run->addWidget(m_cancel);
@@ -133,7 +137,7 @@ HashCheckerDialog::HashCheckerDialog(QWidget *parent) : QDialog(parent) {
   layout->addWidget(m_status);
   resize(620, 240);
 
-  m_status->setText(QStringLiteral("Choose or drop a file, then compute its hash."));
+  m_status->setText(tr("Choose or drop a file, then compute its hash."));
   m_cancel->setEnabled(false);
   m_copy->setEnabled(false);
 
@@ -168,7 +172,7 @@ void HashCheckerDialog::setFile(const QString &path) {
 
 void HashCheckerDialog::chooseFile() {
   if (busy()) return;
-  const auto path = QFileDialog::getOpenFileName(this, QStringLiteral("Choose a file to hash"));
+  const auto path = QFileDialog::getOpenFileName(this, tr("Choose a file to hash"));
   if (!path.isEmpty()) setFile(path);
 }
 
@@ -176,7 +180,7 @@ void HashCheckerDialog::compute() {
   if (busy()) return;
   const auto path = m_file->text();
   if (path.isEmpty()) {
-    m_status->setText(QStringLiteral("Choose a file before computing a hash."));
+    m_status->setText(tr("Choose a file before computing a hash."));
     return;
   }
   runHashWork(path, static_cast<HashAlgorithm>(m_algorithm->currentIndex()));
@@ -188,13 +192,13 @@ void HashCheckerDialog::cancel() {
   m_work.cancel();
   m_cancelled->store(true);
   m_progress->setEnabled(false);
-  m_status->setText(QStringLiteral("Cancelling…"));
+  m_status->setText(tr("Cancelling…"));
 }
 
 void HashCheckerDialog::copyDigest() {
   if (m_digest->text().isEmpty()) return;
   QApplication::clipboard()->setText(m_digest->text());
-  m_status->setText(QStringLiteral("Hash copied to the clipboard."));
+  m_status->setText(tr("Hash copied to the clipboard."));
 }
 
 void HashCheckerDialog::setBusy(bool busy) {
@@ -214,7 +218,7 @@ void HashCheckerDialog::runHashWork(const QString &path, HashAlgorithm algorithm
   m_verdict->clear();
   m_progress->setValue(0);
   m_progress->setEnabled(true);
-  m_status->setText(QStringLiteral("Hashing %1 with %2…")
+  m_status->setText(tr("Hashing %1 with %2…")
                         .arg(QFileInfo(path).fileName(), tools::hashAlgorithmName(algorithm)));
   setBusy(true);
 
@@ -246,17 +250,17 @@ void HashCheckerDialog::showResult(const tools::HashResult &result, const QStrin
   if (!result.ok) {
     m_progress->setValue(0);
     m_status->setText(result.error == QStringLiteral("cancelled")
-                          ? QStringLiteral("Hashing was cancelled.")
-                          : QStringLiteral("The file could not be read, so no hash was computed."));
+                          ? tr("Hashing was cancelled.")
+                          : tr("The file could not be read, so no hash was computed."));
     return;
   }
   m_progress->setValue(100);
   m_digest->setText(result.hex);
-  m_digest->setToolTip(QStringLiteral("%1 of %2")
+  m_digest->setToolTip(tr("%1 of %2")
                            .arg(tools::hashAlgorithmName(algorithm), QFileInfo(path).fileName()));
   m_copy->setEnabled(true);
   updateComparison();
-  m_status->setText(QStringLiteral("%1 hashed with %2.%3")
+  m_status->setText(tr("%1 hashed with %2.%3")
                         .arg(QFileInfo(path).fileName(), tools::hashAlgorithmName(algorithm),
                              tools::hashAlgorithmIsWeak(algorithm) ? QStringLiteral(" ") + weakWarning() : QString()));
 }

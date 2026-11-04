@@ -52,27 +52,28 @@ void acceptLocalFiles(QDropEvent *event) {
 
 IconConverterDialog::IconConverterDialog(QWidget *parent) : QDialog(parent) {
   setObjectName(QStringLiteral("iconConverterDialog"));
-  new NativeAccessibility(*this, "Choose an image, icon sizes and colour depth. Save creates the chosen icon; Close keeps the source unchanged.", true);
-  setWindowTitle(QStringLiteral("Icon converter"));
-  setAccessibleName(QStringLiteral("Icon converter"));
+  new NativeAccessibility(*this, tr("Choose an image, icon sizes and colour depth. Save creates the chosen icon; Close keeps the source unchanged."), true);
+  setWindowTitle(tr("Icon converter"));
+  setAccessibleName(tr("Icon converter"));
   setAcceptDrops(true);
 
   m_path = new QLineEdit(this);
   m_path->setObjectName(QStringLiteral("iconImagePath"));
   m_path->setReadOnly(true);
-  m_path->setAccessibleName(QStringLiteral("Image"));
-  m_choose = new QPushButton(QStringLiteral("Choose &image…"), this);
+  m_path->setAccessibleName(tr("Image"));
+  m_choose = new QPushButton(tr("Choose &image…"), this);
   m_choose->setObjectName(QStringLiteral("chooseIconImage"));
-  m_choose->setAccessibleName(QStringLiteral("Choose image"));
+  m_choose->setAccessibleName(tr("Choose image"));
 
-  auto *sizeGroup = new QGroupBox(QStringLiteral("Sizes"), this);
+  auto *sizeGroup = new QGroupBox(tr("Sizes"), this);
   sizeGroup->setObjectName(QStringLiteral("iconSizeGroup"));
   auto *sizeLayout = new QVBoxLayout(sizeGroup);
   // EU-007: the contract offers these six sizes.
   for (const int size : iconSizes()) {
+    // The size itself is a value, not prose: it stays the bare number.
     auto *box = new QCheckBox(QString::number(size), sizeGroup);
     box->setObjectName(QStringLiteral("iconSize%1").arg(size));
-    box->setAccessibleName(QStringLiteral("%1 pixels").arg(size));
+    box->setAccessibleName(tr("%1 pixels").arg(size));
     box->setProperty("iconEntrySize", size);
     // EU-007: 16, 32, 48 and 256 are offered by default.
     box->setChecked(size == 16 || size == 32 || size == 48 || size == 256);
@@ -80,37 +81,37 @@ IconConverterDialog::IconConverterDialog(QWidget *parent) : QDialog(parent) {
     m_sizes.append(box);
   }
 
-  auto *modeGroup = new QGroupBox(QStringLiteral("Mode"), this);
+  auto *modeGroup = new QGroupBox(tr("Mode"), this);
   modeGroup->setObjectName(QStringLiteral("iconModeGroup"));
   auto *modeLayout = new QVBoxLayout(modeGroup);
-  m_trueColor = new QRadioButton(QStringLiteral("True colour (32-bit)"), modeGroup);
+  m_trueColor = new QRadioButton(tr("True colour (32-bit)"), modeGroup);
   m_trueColor->setObjectName(QStringLiteral("iconModeTrueColor32"));
-  m_trueColor->setAccessibleName(QStringLiteral("True colour 32-bit"));
-  m_palette = new QRadioButton(QStringLiteral("Palette (8-bit)"), modeGroup);
+  m_trueColor->setAccessibleName(tr("True colour 32-bit"));
+  m_palette = new QRadioButton(tr("Palette (8-bit)"), modeGroup);
   m_palette->setObjectName(QStringLiteral("iconModePalette8"));
-  m_palette->setAccessibleName(QStringLiteral("Palette 8-bit"));
+  m_palette->setAccessibleName(tr("Palette 8-bit"));
   m_trueColor->setChecked(true);
   modeLayout->addWidget(m_trueColor);
   modeLayout->addWidget(m_palette);
 
   m_preview = new QLabel(this);
   m_preview->setObjectName(QStringLiteral("iconPreview"));
-  m_preview->setAccessibleName(QStringLiteral("32 pixel preview"));
+  m_preview->setAccessibleName(tr("32 pixel preview"));
   m_preview->setAlignment(Qt::AlignCenter);
   m_preview->setFrameShape(QFrame::Box);
   m_preview->setFixedSize(kPreviewPixels, kPreviewPixels);
 
-  m_save = new QPushButton(QStringLiteral("&Save…"), this);
+  m_save = new QPushButton(tr("&Save…"), this);
   m_save->setObjectName(QStringLiteral("saveIcon"));
-  m_save->setAccessibleName(QStringLiteral("Save icon"));
+  m_save->setAccessibleName(tr("Save icon"));
   m_error = new QLabel(this);
   m_error->setObjectName(QStringLiteral("iconError"));
-  m_error->setAccessibleName(QStringLiteral("Error"));
+  m_error->setAccessibleName(tr("Error"));
   m_error->setTextFormat(Qt::PlainText);
   m_error->setWordWrap(true);
   m_status = new QLabel(this);
   m_status->setObjectName(QStringLiteral("iconStatus"));
-  m_status->setAccessibleName(QStringLiteral("Status"));
+  m_status->setAccessibleName(tr("Status"));
   m_status->setWordWrap(true);
   auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, this);
   buttons->setObjectName(QStringLiteral("iconButtons"));
@@ -135,7 +136,7 @@ IconConverterDialog::IconConverterDialog(QWidget *parent) : QDialog(parent) {
   layout->addWidget(m_error);
   resize(560, 320);
 
-  m_status->setText(QStringLiteral("Choose or drop an image, then select the sizes to write."));
+  m_status->setText(tr("Choose or drop an image, then select the sizes to write."));
   m_error->clear();
 
   connect(m_choose, &QPushButton::clicked, this, &IconConverterDialog::chooseImage);
@@ -163,7 +164,7 @@ void IconConverterDialog::setImage(const QString &path) {
   QImageReader reader(path);
   const QSize declared = reader.size();
   if (declared.isValid() && (declared.width() > kMaxSide || declared.height() > kMaxSide)) {
-    showError(QStringLiteral("The image is %1 by %2 pixels, which is over the %3 pixel limit.")
+    showError(tr("The image is %1 by %2 pixels, which is over the %3 pixel limit.")
                   .arg(declared.width())
                   .arg(declared.height())
                   .arg(kMaxSide));
@@ -173,13 +174,13 @@ void IconConverterDialog::setImage(const QString &path) {
   }
   const QImage image = reader.read();
   if (image.isNull()) {
-    showError(QStringLiteral("The image could not be read."));
+    showError(tr("The image could not be read."));
     updatePreview();
     updateSaveState();
     return;
   }
   if (image.width() > kMaxSide || image.height() > kMaxSide) {
-    showError(QStringLiteral("The image is %1 by %2 pixels, which is over the %3 pixel limit.")
+    showError(tr("The image is %1 by %2 pixels, which is over the %3 pixel limit.")
                   .arg(image.width())
                   .arg(image.height())
                   .arg(kMaxSide));
@@ -189,7 +190,7 @@ void IconConverterDialog::setImage(const QString &path) {
   }
   m_source = image;
   clearError();
-  m_status->setText(QStringLiteral("%1 by %2 pixels.").arg(image.width()).arg(image.height()));
+  m_status->setText(tr("%1 by %2 pixels.").arg(image.width()).arg(image.height()));
   updatePreview();
   updateSaveState();
 }
@@ -215,8 +216,9 @@ QList<int> IconConverterDialog::selectedSizes() const {
 }
 
 void IconConverterDialog::chooseImage() {
+  // The filter lists file patterns, not prose: it stays as it is.
   const QString path = QFileDialog::getOpenFileName(
-      this, QStringLiteral("Choose an image"), m_path->text(),
+      this, tr("Choose an image"), m_path->text(),
       QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp *.gif *.webp *.tif *.tiff);;All files (*)"));
   if (!path.isEmpty()) setImage(path);
 }
@@ -224,17 +226,17 @@ void IconConverterDialog::chooseImage() {
 void IconConverterDialog::save() {
   const QList<int> sizes = selectedSizes();
   if (sizes.isEmpty()) {
-    showError(QStringLiteral("Choose at least one size before saving."));
+    showError(tr("Choose at least one size before saving."));
     return;
   }
   if (m_source.isNull()) {
-    showError(QStringLiteral("Choose an image before saving."));
+    showError(tr("Choose an image before saving."));
     return;
   }
   const QString suggested = suggestedPath();
   const QString target = m_chooser ? m_chooser(suggested)
                                    : QFileDialog::getSaveFileName(
-                                         this, QStringLiteral("Save icon"), suggested,
+                                         this, tr("Save icon"), suggested,
                                          QStringLiteral("Windows icons (*.ico)"));
   if (target.isEmpty()) return;  // A cancel writes nothing.
 
@@ -246,29 +248,29 @@ void IconConverterDialog::save() {
   QString error;
   const QByteArray bytes = encodeIcon(m_source, options, &error);
   if (bytes.isEmpty()) {
-    showError(QStringLiteral("The icon could not be written (%1).").arg(error.isEmpty() ? QStringLiteral("write-failed") : error));
+    showError(tr("The icon could not be written (%1).").arg(error.isEmpty() ? QStringLiteral("write-failed") : error));
     return;
   }
   QSaveFile file(target);
   file.setDirectWriteFallback(false);
   if (!file.open(QIODevice::WriteOnly) || file.write(bytes) != bytes.size() || !file.commit()) {
-    showError(QStringLiteral("The icon could not be written (write-failed)."));
+    showError(tr("The icon could not be written (%1).").arg(QStringLiteral("write-failed")));
     return;
   }
   clearError();
-  m_status->setText(QStringLiteral("Icon saved to %1.").arg(QFileInfo(target).fileName()));
+  m_status->setText(tr("Icon saved to %1.").arg(QFileInfo(target).fileName()));
 }
 
 void IconConverterDialog::updatePreview() {
   if (m_source.isNull()) {
     m_preview->setPixmap(QPixmap());
-    m_preview->setText(QStringLiteral("No image"));
+    m_preview->setText(tr("No image"));
     return;
   }
   const QImage entry = iconEntryImage(m_source, kPreviewSize, mode());
   if (entry.isNull()) {
     m_preview->setPixmap(QPixmap());
-    m_preview->setText(QStringLiteral("No preview"));
+    m_preview->setText(tr("No preview"));
     return;
   }
   m_preview->setText(QString());

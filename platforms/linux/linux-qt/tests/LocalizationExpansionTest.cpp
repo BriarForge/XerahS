@@ -1,14 +1,25 @@
 // CORE-009: a pseudo-locale that lengthens every translated string by 40% neither clips controls nor
 // overflows the screen, and a string missing from the translation falls back to its source text.
+#include "FileUploadController.h"
+#include "HashCheckerDialog.h"
+#include "IconConverterDialog.h"
+#include "NativePipelineJournal.h"
 #include "QrCodeDialog.h"
 #include "SettingsDialog.h"
 #include "UploadDestinationsDialog.h"
+#include "VideoConverterDialog.h"
+#include "WatchFolderService.h"
+#include "WatchFoldersDialog.h"
+#include "media/VideoConversion.h"
 #include "settings/ApplicationSettings.h"
+#include "uploads/CredentialStore.h"
+#include "watch/WatchFolders.h"
 #include "workflows/WorkflowShortcuts.h"
 
 #include <QAbstractButton>
 #include <QApplication>
 #include <QCheckBox>
+#include <QDialog>
 #include <QFontMetrics>
 #include <QLabel>
 #include <QScreen>
@@ -16,6 +27,8 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTranslator>
+
+#include <memory>
 
 using namespace xerahs::app;
 
@@ -31,6 +44,42 @@ public:
   bool isEmpty() const override { return false; }
 };
 QString visible(QString text) { return text.remove(QLatin1Char('&')); }
+
+// A runner that never converts: the dialog's text must not depend on an encoder.
+class IdleRunner final : public xerahs::media::ConversionRunner {
+public:
+  void start(const xerahs::media::Request &) override {}
+  void cancel() override {}
+  bool busy() const override { return false; }
+};
+
+// Counts the button and label texts that carry the pseudo-locale marker, and reports the first one that
+// does not. Skipped object names hold runtime data (a size in pixels), not prose.
+int translatedTexts(QDialog &dialog, const QStringList &runtimeData) {
+  const auto skipped = [&runtimeData](const QString &name) {
+    for (const auto &prefix : runtimeData)
+      if (name.startsWith(prefix)) return true;
+    return false;
+  };
+  int checked = 0;
+  for (auto *button : dialog.findChildren<QAbstractButton *>()) {
+    if (button->text().isEmpty() || skipped(button->objectName())) continue;
+    if (!button->text().contains(QChar(0x2022))) {
+      QTest::qFail(qPrintable(QStringLiteral("untranslated button text: %1").arg(button->text())), __FILE__, __LINE__);
+      return checked;
+    }
+    ++checked;
+  }
+  for (auto *label : dialog.findChildren<QLabel *>()) {
+    if (label->text().isEmpty() || skipped(label->objectName())) continue;
+    if (!label->text().contains(QChar(0x2022))) {
+      QTest::qFail(qPrintable(QStringLiteral("untranslated label text: %1").arg(label->text())), __FILE__, __LINE__);
+      return checked;
+    }
+    ++checked;
+  }
+  return checked;
+}
 }  // namespace
 
 class LocalizationExpansionTest : public QObject {
@@ -148,6 +197,44 @@ private slots:
       }
       QVERIFY(checked >= 5);
       QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void toolDialogsTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      QTemporaryDir dir;
+      QVERIFY(dir.isValid());
+      // The watch-folder dialog needs a service, as the modal dialog test builds it.
+      auto credentials = std::make_shared<xerahs::uploads::MemoryCredentialStore>();
+      auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("history"));
+      xerahs::watch::WatchFolders watchStore(dir.filePath("watch"));
+      FileUploadPorts uploadPorts; uploadPorts.catalogPath = dir.filePath("destinations.json");
+      uploadPorts.credentials = credentials; uploadPorts.history = journal;
+      FileUploadController uploads(uploadPorts);
+      WatchFolderService watcher(watchStore, uploads, [&] { return dir.filePath("captures"); });
+      xerahs::media::NoElements availability;
+
+      WatchFoldersDialog watchDialog(watcher);
+      IconConverterDialog iconDialog;
+      HashCheckerDialog hashDialog;
+      VideoConverterDialog videoDialog(new IdleRunner, &availability);
+
+      // The icon size boxes show the bare pixel count: runtime data, not prose.
+      const int watchChecked = translatedTexts(watchDialog, {});
+      const int iconChecked = translatedTexts(iconDialog, {QStringLiteral("iconSize")});
+      const int hashChecked = translatedTexts(hashDialog, {});
+      const int videoChecked = translatedTexts(videoDialog, {});
+      QVERIFY2(watchChecked >= 3, qPrintable(QString::number(watchChecked)));
+      QVERIFY2(iconChecked >= 3, qPrintable(QString::number(iconChecked)));
+      QVERIFY2(hashChecked >= 3, qPrintable(QString::number(hashChecked)));
+      QVERIFY2(videoChecked >= 3, qPrintable(QString::number(videoChecked)));
+      QVERIFY2(watchDialog.windowTitle().contains(QChar(0x2022)), qPrintable(watchDialog.windowTitle()));
+      QVERIFY2(iconDialog.windowTitle().contains(QChar(0x2022)), qPrintable(iconDialog.windowTitle()));
+      QVERIFY2(hashDialog.windowTitle().contains(QChar(0x2022)), qPrintable(hashDialog.windowTitle()));
+      QVERIFY2(videoDialog.windowTitle().contains(QChar(0x2022)), qPrintable(videoDialog.windowTitle()));
     }
     QApplication::removeTranslator(&pseudo);
   }

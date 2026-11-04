@@ -26,33 +26,33 @@ using namespace media;
 
 VideoConverterDialog::VideoConverterDialog(ConversionRunner *runner, const ElementAvailability *availability, QWidget *parent)
     : QDialog(parent), m_runner(runner), m_availability(availability) {
-  new NativeAccessibility(*this, "Choose input, output, container and codec. Convert starts the operation; Cancel or Close stops it.", true);
-  setWindowTitle(QStringLiteral("Video converter"));
+  new NativeAccessibility(*this, tr("Choose input, output, container and codec. Convert starts the operation; Cancel or Close stops it."), true);
+  setWindowTitle(tr("Video converter"));
   setObjectName(QStringLiteral("videoConverterDialog"));
   setAcceptDrops(true);
   m_runner->setParent(this);
   m_openFolder = [](const QString &folder) { return QDesktopServices::openUrl(QUrl::fromLocalFile(folder)); };
 
   auto make = [this](auto *w, const char *name, const QString &accessible) { w->setObjectName(name); w->setAccessibleName(accessible); return w; };
-  m_input = make(new QLineEdit(this), "vcInput", "Input video");
-  m_output = make(new QLineEdit(this), "vcOutput", "Output file");
-  m_container = make(new QComboBox(this), "vcContainer", "Container");
-  m_codec = make(new QComboBox(this), "vcCodec", "Codec");
-  m_bitrate = make(new QSpinBox(this), "vcBitrate", "Bitrate in kilobits per second");
-  m_bitrate->setRange(0, 200000); m_bitrate->setSuffix(QStringLiteral(" kbit/s")); m_bitrate->setSpecialValueText(QStringLiteral("Encoder default"));
-  m_audio = make(new QCheckBox(QStringLiteral("Keep &audio"), this), "vcAudio", "Keep audio"); m_audio->setChecked(true);
-  m_overwrite = make(new QCheckBox(QStringLiteral("&Replace the output if it exists"), this), "vcOverwrite", "Replace existing output");
-  m_chooseInput = make(new QPushButton(QStringLiteral("&Browse…"), this), "vcChooseInput", "Browse for input video");
-  m_chooseOutput = make(new QPushButton(QStringLiteral("B&rowse…"), this), "vcChooseOutput", "Browse for output file");
-  m_convert = make(new QPushButton(QStringLiteral("&Convert"), this), "vcConvert", "Convert");
-  m_cancel = make(new QPushButton(QStringLiteral("Ca&ncel conversion"), this), "vcCancel", "Cancel conversion");
-  m_show = make(new QPushButton(QStringLiteral("&Show in folder"), this), "vcShow", "Show in folder");
-  m_close = make(new QPushButton(QStringLiteral("C&lose"), this), "vcClose", "Close");
-  m_progress = make(new QProgressBar(this), "vcProgress", "Conversion progress"); m_progress->setRange(0, 100);
-  m_status = make(new QLabel(QStringLiteral("Choose or drop a video, then pick a container and codec."), this), "vcStatus", "Conversion status");
+  m_input = make(new QLineEdit(this), "vcInput", tr("Input video"));
+  m_output = make(new QLineEdit(this), "vcOutput", tr("Output file"));
+  m_container = make(new QComboBox(this), "vcContainer", tr("Container"));
+  m_codec = make(new QComboBox(this), "vcCodec", tr("Codec"));
+  m_bitrate = make(new QSpinBox(this), "vcBitrate", tr("Bitrate in kilobits per second"));
+  m_bitrate->setRange(0, 200000); m_bitrate->setSuffix(tr(" kbit/s")); m_bitrate->setSpecialValueText(tr("Encoder default"));
+  m_audio = make(new QCheckBox(tr("Keep &audio"), this), "vcAudio", tr("Keep audio")); m_audio->setChecked(true);
+  m_overwrite = make(new QCheckBox(tr("&Replace the output if it exists"), this), "vcOverwrite", tr("Replace existing output"));
+  m_chooseInput = make(new QPushButton(tr("&Browse…"), this), "vcChooseInput", tr("Browse for input video"));
+  m_chooseOutput = make(new QPushButton(tr("B&rowse…"), this), "vcChooseOutput", tr("Browse for output file"));
+  m_convert = make(new QPushButton(tr("&Convert"), this), "vcConvert", tr("Convert"));
+  m_cancel = make(new QPushButton(tr("Ca&ncel conversion"), this), "vcCancel", tr("Cancel conversion"));
+  m_show = make(new QPushButton(tr("&Show in folder"), this), "vcShow", tr("Show in folder"));
+  m_close = make(new QPushButton(tr("C&lose"), this), "vcClose", tr("Close"));
+  m_progress = make(new QProgressBar(this), "vcProgress", tr("Conversion progress")); m_progress->setRange(0, 100);
+  m_status = make(new QLabel(tr("Choose or drop a video, then pick a container and codec."), this), "vcStatus", tr("Conversion status"));
   m_status->setTextFormat(Qt::PlainText); m_status->setWordWrap(true);
-  m_status->setAccessibleDescription(QStringLiteral("Describes the current conversion state or error"));
-  m_input->setPlaceholderText(QStringLiteral("Drop a video file here")); m_show->setVisible(false);
+  m_status->setAccessibleDescription(tr("Describes the current conversion state or error"));
+  m_input->setPlaceholderText(tr("Drop a video file here")); m_show->setVisible(false);
 
   for (auto c : containers()) {
     bool any = false;
@@ -62,9 +62,9 @@ VideoConverterDialog::VideoConverterDialog(ConversionRunner *runner, const Eleme
   auto *inputRow = new QHBoxLayout; inputRow->addWidget(m_input, 1); inputRow->addWidget(m_chooseInput);
   auto *outputRow = new QHBoxLayout; outputRow->addWidget(m_output, 1); outputRow->addWidget(m_chooseOutput);
   auto *form = new QFormLayout;
-  form->addRow(QStringLiteral("&Input:"), inputRow); form->addRow(QStringLiteral("Co&ntainer:"), m_container);
-  form->addRow(QStringLiteral("C&odec:"), m_codec); form->addRow(QStringLiteral("&Bitrate:"), m_bitrate);
-  form->addRow(QString(), m_audio); form->addRow(QStringLiteral("&Output:"), outputRow); form->addRow(QString(), m_overwrite);
+  form->addRow(tr("&Input:"), inputRow); form->addRow(tr("Co&ntainer:"), m_container);
+  form->addRow(tr("C&odec:"), m_codec); form->addRow(tr("&Bitrate:"), m_bitrate);
+  form->addRow(QString(), m_audio); form->addRow(tr("&Output:"), outputRow); form->addRow(QString(), m_overwrite);
   auto *buttons = new QHBoxLayout; buttons->addWidget(m_convert); buttons->addWidget(m_cancel); buttons->addWidget(m_show); buttons->addStretch(); buttons->addWidget(m_close);
   auto *layout = new QVBoxLayout(this); layout->addLayout(form); layout->addLayout(buttons); layout->addWidget(m_progress); layout->addWidget(m_status);
   setTabOrder(m_input, m_chooseInput); setTabOrder(m_chooseInput, m_container); setTabOrder(m_container, m_codec);
@@ -107,7 +107,8 @@ void VideoConverterDialog::fillCodecs() {
   for (const auto &codec : codecs()) {
     if (!codec.containers.contains(container)) continue;
     const auto availability = codecAvailability(codec, container, *m_availability);
-    m_codec->addItem(availability.usable ? codec.label : codec.label + QStringLiteral(" (unavailable)"), codec.id);
+    // The codec label comes from the catalog; only the availability suffix is prose.
+    m_codec->addItem(availability.usable ? codec.label : codec.label + tr(" (unavailable)"), codec.id);
     const int row = m_codec->count() - 1;
     if (!availability.usable) {
       m_codec->setItemData(row, availability.reason, Qt::ToolTipRole);
@@ -138,18 +139,19 @@ void VideoConverterDialog::setInput(const QString &path) {
   if (busy() || path.trimmed().isEmpty()) return;
   m_input->setText(path); m_show->setVisible(false); m_progress->setValue(0);
   if (!m_outputEdited) { Container c; if (containerFromId(m_container->currentData().toString(), &c)) m_output->setText(suggestOutputPath(path, c)); }
-  m_status->setText(QStringLiteral("Ready to convert %1.").arg(QFileInfo(path).fileName()));
+  m_status->setText(tr("Ready to convert %1.").arg(QFileInfo(path).fileName()));
 }
 
 void VideoConverterDialog::chooseInput() {
   if (busy()) return;
-  const auto path = QFileDialog::getOpenFileName(this, QStringLiteral("Choose a video to convert"), {}, QStringLiteral("Video files (*.mp4 *.mkv *.webm *.avi *.mov *.gif *.m4v *.mpg *.mpeg *.wmv *.flv *.ogv);;All files (*)"));
+  // The filter lists file patterns, not prose: it stays as it is.
+  const auto path = QFileDialog::getOpenFileName(this, tr("Choose a video to convert"), {}, QStringLiteral("Video files (*.mp4 *.mkv *.webm *.avi *.mov *.gif *.m4v *.mpg *.mpeg *.wmv *.flv *.ogv);;All files (*)"));
   if (!path.isEmpty()) setInput(path);
 }
 
 void VideoConverterDialog::chooseOutput() {
   if (busy()) return;
-  const auto path = QFileDialog::getSaveFileName(this, QStringLiteral("Choose the output file"), m_output->text());
+  const auto path = QFileDialog::getSaveFileName(this, tr("Choose the output file"), m_output->text());
   if (!path.isEmpty()) { m_output->setText(path); m_outputEdited = true; }
 }
 
@@ -161,25 +163,25 @@ void VideoConverterDialog::convert() {
   request.includeAudio = m_audio->isEnabled() && m_audio->isChecked(); request.overwrite = m_overwrite->isChecked();
   // The runner re-validates with the probed input; this catches everything knowable up front.
   const auto plan = planConversion(request, {}, *m_availability);
-  if (!plan.ok()) { m_status->setText(QStringLiteral("%1 (%2)").arg(plan.message, errorCodeId(plan.error))); return; }
+  if (!plan.ok()) { m_status->setText(tr("%1 (%2)").arg(plan.message, errorCodeId(plan.error))); return; }
   m_show->setVisible(false); m_progress->setValue(0); m_lastOutput.clear();
-  m_status->setText(QStringLiteral("Converting…"));
+  m_status->setText(tr("Converting…"));
   m_runner->start(request);
   updateControls();
 }
 
 void VideoConverterDialog::cancel() {
   if (!busy()) return;
-  m_status->setText(QStringLiteral("Cancelling…"));
+  m_status->setText(tr("Cancelling…"));
   m_runner->cancel();
 }
 
 void VideoConverterDialog::onFinished(const ConversionResult &result) {
   QString text;
   switch (result.outcome) {
-    case Outcome::Success: text = QStringLiteral("Saved %1.").arg(QFileInfo(result.outputPath).fileName()); m_progress->setValue(100); m_lastOutput = result.outputPath; break;
-    case Outcome::Cancelled: text = QStringLiteral("Cancelled. No output was kept."); m_progress->setValue(0); break;
-    case Outcome::Failed: text = QStringLiteral("Conversion failed (%1): %2").arg(errorCodeId(result.error), result.message); break;
+    case Outcome::Success: text = tr("Saved %1.").arg(QFileInfo(result.outputPath).fileName()); m_progress->setValue(100); m_lastOutput = result.outputPath; break;
+    case Outcome::Cancelled: text = tr("Cancelled. No output was kept."); m_progress->setValue(0); break;
+    case Outcome::Failed: text = tr("Conversion failed (%1): %2").arg(errorCodeId(result.error), result.message); break;
   }
   for (const auto &d : result.diagnostics) text += '\n' + d;
   m_status->setText(text);
@@ -189,7 +191,7 @@ void VideoConverterDialog::onFinished(const ConversionResult &result) {
 
 void VideoConverterDialog::showInFolder() {
   if (m_lastOutput.isEmpty()) return;
-  if (!m_openFolder(QFileInfo(m_lastOutput).absolutePath())) m_status->setText(QStringLiteral("No file manager could show this folder."));
+  if (!m_openFolder(QFileInfo(m_lastOutput).absolutePath())) m_status->setText(tr("No file manager could show this folder."));
 }
 
 void VideoConverterDialog::dragEnterEvent(QDragEnterEvent *event) {
