@@ -1,6 +1,7 @@
 #include "NativeAccessibility.h"
 #include "ImageComparisonDialog.h"
 #include <QComboBox>
+#include <QCoreApplication>
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -26,24 +27,25 @@ using namespace xerahs::editor;
 namespace {
 QString describe(const QString &error) {
   if (error == diagnostic::sourceUnsupported)
-    return QStringLiteral("The selected file is not a supported image.");
+    return QCoreApplication::translate("ImageComparisonDialog", "The selected file is not a supported image.");
   if (error == diagnostic::sourceCorrupt || error == diagnostic::documentInvalid)
-    return QStringLiteral("The image or annotation data is damaged or invalid.");
+    return QCoreApplication::translate("ImageComparisonDialog", "The image or annotation data is damaged or invalid.");
   if (error == diagnostic::sourceEmpty)
-    return QStringLiteral("The selected file is empty.");
+    return QCoreApplication::translate("ImageComparisonDialog", "The selected file is empty.");
   if (error == diagnostic::sourceTooLarge || error == diagnostic::documentTooLarge)
-    return QStringLiteral("The image or combined comparison canvas exceeds the size or memory limits.");
+    return QCoreApplication::translate("ImageComparisonDialog", "The image or combined comparison canvas exceeds the size or memory limits.");
   if (error == u"comparison-annotation-unsupported")
-    return QStringLiteral(
+    return QCoreApplication::translate(
+        "ImageComparisonDialog",
         "The current image contains visible annotation types this editor cannot render. Choose a raster file instead.");
-  return QStringLiteral("The image could not be prepared for comparison.");
+  return QCoreApplication::translate("ImageComparisonDialog", "The image could not be prepared for comparison.");
 }
 } // namespace
 
 ComparisonView::ComparisonView(QWidget *parent) : QWidget(parent) {
   setObjectName(QStringLiteral("comparisonView"));
-  setAccessibleName(QStringLiteral("Image comparison view"));
-  setAccessibleDescription(QStringLiteral("Choose two images to compare."));
+  setAccessibleName(tr("Image comparison view"));
+  setAccessibleDescription(tr("Choose two images to compare."));
   setFocusPolicy(Qt::StrongFocus);
   setCursor(Qt::SplitHCursor);
   setMinimumSize(320, 240);
@@ -51,8 +53,8 @@ ComparisonView::ComparisonView(QWidget *parent) : QWidget(parent) {
 void ComparisonView::setImages(QImage first, QImage second, ComparisonLayout layout) {
   m_images = {std::move(first), std::move(second)};
   m_layout = layout;
-  setAccessibleDescription(m_layout ? QStringLiteral("First image left of the divider; second image right. Drag to move the divider, or use arrow keys and Home/End.")
-                                    : QStringLiteral("Choose two images to compare."));
+  setAccessibleDescription(m_layout ? tr("First image left of the divider; second image right. Drag to move the divider, or use arrow keys and Home/End.")
+                                    : tr("Choose two images to compare."));
   update();
 }
 void ComparisonView::setReveal(int percent) {
@@ -82,7 +84,7 @@ void ComparisonView::paintEvent(QPaintEvent *) {
   const QRectF target = imageRect();
   if (!m_layout || target.isEmpty()) {
     painter.setPen(palette().text().color());
-    painter.drawText(rect(), Qt::AlignCenter, QStringLiteral("Choose two images to compare."));
+    painter.drawText(rect(), Qt::AlignCenter, tr("Choose two images to compare."));
     return;
   }
   QPixmap tile(16, 16);
@@ -169,40 +171,40 @@ void ComparisonView::focusOutEvent(QFocusEvent *event) {
 ImageComparisonDialog::ImageComparisonDialog(AnnotationDocument document, QImage source, QWidget *parent, ComparisonHooks hooks)
     : QDialog(parent), m_document(std::move(document)), m_source(std::move(source)), m_hooks(std::move(hooks)) {
   setObjectName(QStringLiteral("imageComparisonDialog"));
-  new NativeAccessibility(*this, "Choose two images and compare them with the keyboard or pointer divider. Cancel loading or Close without changing inputs.", true);
-  setWindowTitle(QStringLiteral("Compare Images"));
+  new NativeAccessibility(*this, tr("Choose two images and compare them with the keyboard or pointer divider. Cancel loading or Close without changing inputs."), true);
+  setWindowTitle(tr("Compare Images"));
   setAccessibleName(windowTitle());
   setWindowModality(Qt::WindowModal);
   auto *layout = new QVBoxLayout(this);
   auto *form = new QFormLayout;
   for (int input = 0; input < 2; ++input) {
     auto *row = new QHBoxLayout;
-    m_inputLabels[input] = new QLabel(QStringLiteral("No image selected"), this);
+    m_inputLabels[input] = new QLabel(tr("No image selected"), this);
     m_inputLabels[input]->setObjectName(QStringLiteral("comparisonInput%1").arg(input));
     m_inputLabels[input]->setWordWrap(true);
     m_inputLabels[input]->setTextFormat(Qt::PlainText);
     row->addWidget(m_inputLabels[input], 1);
-    m_inputButtons[input] = new QPushButton(QStringLiteral("Choose image…"), this);
+    m_inputButtons[input] = new QPushButton(tr("Choose image…"), this);
     m_inputButtons[input]->setObjectName(QStringLiteral("chooseComparisonInput%1").arg(input));
-    m_inputButtons[input]->setAccessibleName(input == 0 ? QStringLiteral("Choose first raster image")
-                                                        : QStringLiteral("Choose second raster image"));
+    m_inputButtons[input]->setAccessibleName(input == 0 ? tr("Choose first raster image")
+                                                        : tr("Choose second raster image"));
     connect(m_inputButtons[input], &QPushButton::clicked, this, [this, input] { chooseFile(input); });
     row->addWidget(m_inputButtons[input]);
-    form->addRow(input == 0 ? QStringLiteral("First (left)") : QStringLiteral("Second (right)"), row);
+    form->addRow(input == 0 ? tr("First (left)") : tr("Second (right)"), row);
   }
-  m_inputButtons[2] = new QPushButton(QStringLiteral("Use Current Rendered Image"), this);
+  m_inputButtons[2] = new QPushButton(tr("Use Current Rendered Image"), this);
   m_inputButtons[2]->setObjectName(QStringLiteral("useCurrentComparisonImage"));
   connect(m_inputButtons[2], &QPushButton::clicked, this, [this] { useCurrentImage(); });
   form->addRow(m_inputButtons[2]);
   m_alignment = new QComboBox(this);
   m_alignment->setObjectName(QStringLiteral("comparisonAlignment"));
   m_alignment->addItems(
-      {QStringLiteral("Top left, native pixel sizes"), QStringLiteral("Centered, native pixel sizes")});
-  form->addRow(QStringLiteral("&Align images"), m_alignment);
+      {tr("Top left, native pixel sizes"), tr("Centered, native pixel sizes")});
+  form->addRow(tr("&Align images"), m_alignment);
   layout->addLayout(form);
-  auto *rules = new QLabel(QStringLiteral("Compare raster files or a snapshot of the current rendered image. "
-                                          "Pixel sizes stay unchanged; unmatched areas are transparent. Display copies "
-                                          "use sRGB (untagged images are treated as sRGB)."),
+  auto *rules = new QLabel(tr("Compare raster files or a snapshot of the current rendered image. "
+                              "Pixel sizes stay unchanged; unmatched areas are transparent. Display copies "
+                              "use sRGB (untagged images are treated as sRGB)."),
                            this);
   rules->setWordWrap(true);
   layout->addWidget(rules);
@@ -214,9 +216,9 @@ ImageComparisonDialog::ImageComparisonDialog(AnnotationDocument document, QImage
   m_reveal->setValue(50);
   m_reveal->setSingleStep(1);
   m_reveal->setPageStep(10);
-  m_reveal->setAccessibleName(QStringLiteral("First image percentage"));
-  m_reveal->setAccessibleDescription(QStringLiteral("First image left of the divider. Arrow keys change percentage; "
-                                                    "Home shows the second image, End shows the first."));
+  m_reveal->setAccessibleName(tr("First image percentage"));
+  m_reveal->setAccessibleDescription(tr("First image left of the divider. Arrow keys change percentage; "
+                                         "Home shows the second image, End shows the first."));
   m_percent = new QLabel(this);
   m_percent->setBuddy(m_reveal);
   m_percent->setObjectName(QStringLiteral("comparisonPercent"));
@@ -236,8 +238,8 @@ ImageComparisonDialog::ImageComparisonDialog(AnnotationDocument document, QImage
   m_progress = new QProgressBar(this);
   m_progress->setRange(0, 100);
   m_progress->setObjectName(QStringLiteral("comparisonProgress"));
-  m_progress->setAccessibleName(QStringLiteral("Comparison image loading progress"));
-  m_cancelLoad = new QPushButton(QStringLiteral("Cancel Loading"), this);
+  m_progress->setAccessibleName(tr("Comparison image loading progress"));
+  m_cancelLoad = new QPushButton(tr("Cancel Loading"), this);
   m_cancelLoad->setObjectName(QStringLiteral("cancelComparisonLoad"));
   auto *progressRow = new QHBoxLayout;
   progressRow->addWidget(m_progress, 1);
@@ -252,11 +254,11 @@ ImageComparisonDialog::ImageComparisonDialog(AnnotationDocument document, QImage
     const QPointer<ImageComparisonDialog> owner(this);
     m_view->setReveal(p);
     if (!owner) return;
-    m_percent->setText(QStringLiteral("&First image: %1%").arg(p));
+    m_percent->setText(tr("&First image: %1%").arg(p));
   });
   connect(m_view, &ComparisonView::revealRequested, m_reveal, &QSlider::setValue);
   m_view->setReveal(50);
-  m_percent->setText(QStringLiteral("&First image: 50%"));
+  m_percent->setText(tr("&First image: 50%"));
   connect(&m_poll, &QTimer::timeout, this, &ImageComparisonDialog::pollLoad);
   m_poll.setInterval(20);
   setBusy(false);
@@ -278,7 +280,7 @@ void ImageComparisonDialog::chooseFile(int input) {
     for (const auto &format : QImageReader::supportedImageFormats())
       patterns.append(QStringLiteral("*.%1").arg(QString::fromLatin1(format)));
     QPointer<QFileDialog> picker(new QFileDialog(this,
-        input == 0 ? QStringLiteral("Compare first raster image") : QStringLiteral("Compare second raster image"),
+        input == 0 ? tr("Compare first raster image") : tr("Compare second raster image"),
         {}, QStringLiteral("Images (%1);;All files (*)").arg(patterns.join(QLatin1Char(' ')))));
     m_picker = picker;
     picker->setObjectName(QStringLiteral("comparisonFilePicker"));
@@ -310,7 +312,7 @@ bool ImageComparisonDialog::startLoad(int input, const QString &path, bool curre
   const auto hooks = m_hooks;
   const auto work = std::make_shared<Work>();
   work->input = input;
-  work->label = current ? QStringLiteral("Current rendered image") : QFileInfo(path).fileName();
+  work->label = current ? tr("Current rendered image") : QFileInfo(path).fileName();
   m_work = work;
   try {
     QThreadPool::globalInstance()->start([source, annotations, hooks, path, current, work] {
@@ -331,10 +333,10 @@ bool ImageComparisonDialog::startLoad(int input, const QString &path, bool curre
   } catch (...) {
     work->cancelled.store(true);
     m_work.reset();
-    m_status->setText(QStringLiteral("Image loading could not be started. The previous comparison is kept."));
+    m_status->setText(tr("Image loading could not be started. The previous comparison is kept."));
     return false;
   }
-  m_status->setText(QStringLiteral("Preparing %1…").arg(work->label));
+  m_status->setText(tr("Preparing %1…").arg(work->label));
   if (!owner || m_closing || m_work != work) return false;
   m_progress->setValue(0);
   if (!owner || m_closing || m_work != work) return false;
@@ -370,7 +372,7 @@ void ImageComparisonDialog::cancelLoad() {
   m_work->cancelled.store(true);
   m_work.reset();
   m_poll.stop();
-  m_status->setText(QStringLiteral("Load cancelled. The previous comparison is kept."));
+  m_status->setText(tr("Load cancelled. The previous comparison is kept."));
   if (owner && !m_closing) setBusy(false);
 }
 void ImageComparisonDialog::pollLoad() {
@@ -392,7 +394,7 @@ void ImageComparisonDialog::pollLoad() {
   // until the complete pair, geometry, status and enabled controls are published.
   QString status;
   if (work->cancelled.load() || prepared.diagnostic == u"canvas-cancelled") {
-    status = QStringLiteral("Load cancelled. The previous comparison is kept.");
+    status = tr("Load cancelled. The previous comparison is kept.");
   } else if (!prepared.diagnostic.isEmpty()) {
     status = describe(prepared.diagnostic);
   } else {
@@ -409,8 +411,8 @@ void ImageComparisonDialog::pollLoad() {
     if (status.isEmpty()) {
       m_inputs = std::move(candidate);
       status = m_inputs[0].image.isNull() || m_inputs[1].image.isNull()
-                   ? QStringLiteral("Choose the other image to compare.")
-                   : QStringLiteral("Move the divider or use arrow keys, Home and End.");
+                   ? tr("Choose the other image to compare.")
+                   : tr("Move the divider or use arrow keys, Home and End.");
       updateView();
       if (!owner || m_closing) return;
     }
@@ -423,7 +425,7 @@ void ImageComparisonDialog::updateView() {
   const QPointer<ImageComparisonDialog> owner(this);
   for (int input = 0; input < 2; ++input) {
     if (!m_inputs[input].image.isNull())
-      m_inputLabels[input]->setText(QStringLiteral("%1 · %2 × %3")
+      m_inputLabels[input]->setText(tr("%1 · %2 × %3")
                                         .arg(m_inputs[input].label)
                                         .arg(m_inputs[input].image.width())
                                         .arg(m_inputs[input].image.height()));
@@ -431,7 +433,7 @@ void ImageComparisonDialog::updateView() {
   }
   const bool ready = !m_inputs[0].image.isNull() && !m_inputs[1].image.isNull();
   if (!ready) {
-    m_geometry->setText(QStringLiteral("Both images must be validated before comparison."));
+    m_geometry->setText(tr("Both images must be validated before comparison."));
     return;
   }
   const auto geometry = comparisonLayout({m_inputs[0].image.width(), m_inputs[0].image.height()},
@@ -443,7 +445,7 @@ void ImageComparisonDialog::updateView() {
   }
   m_view->setImages(m_inputs[0].image, m_inputs[1].image, *geometry.layout);
   if (!owner || m_closing) return;
-  m_geometry->setText(QStringLiteral("Comparison canvas: %1 × %2 pixels. No image resizing.")
+  m_geometry->setText(tr("Comparison canvas: %1 × %2 pixels. No image resizing.")
                           .arg(geometry.layout->canvas.width)
                           .arg(geometry.layout->canvas.height));
 }

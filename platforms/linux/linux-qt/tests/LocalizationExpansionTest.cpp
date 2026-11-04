@@ -4,15 +4,19 @@
 #include "FileUploadController.h"
 #include "HashCheckerDialog.h"
 #include "IconConverterDialog.h"
+#include "ImageComparisonDialog.h"
 #include "ImageInsertDialog.h"
+#include "ImageRecognitionDialog.h"
 #include "NativePipelineJournal.h"
 #include "NewImageDialog.h"
 #include "QrCodeDialog.h"
 #include "SettingsDialog.h"
 #include "UploadDestinationsDialog.h"
+#include "UrlOpenDialog.h"
 #include "VideoConverterDialog.h"
 #include "WatchFolderService.h"
 #include "WatchFoldersDialog.h"
+#include "image-editor/AnnotationDocument.h"
 #include "media/VideoConversion.h"
 #include "settings/ApplicationSettings.h"
 #include "uploads/CredentialStore.h"
@@ -24,6 +28,7 @@
 #include <QCheckBox>
 #include <QDialog>
 #include <QFontMetrics>
+#include <QImage>
 #include <QLabel>
 #include <QScreen>
 #include <QSet>
@@ -264,6 +269,36 @@ private slots:
       QVERIFY2(colourDialog.windowTitle().contains(QChar(0x2022)), qPrintable(colourDialog.windowTitle()));
       QVERIFY2(newImageDialog.windowTitle().contains(QChar(0x2022)), qPrintable(newImageDialog.windowTitle()));
       QVERIFY2(insertDialog.windowTitle().contains(QChar(0x2022)), qPrintable(insertDialog.windowTitle()));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void comparisonUrlAndRecognitionDialogsTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      // The comparison, URL and recognition dialogs the modal dialog test opens as rows 9, 5 and 7.
+      QWidget host;
+      QImage comparisonImage(64, 48, QImage::Format_ARGB32); comparisonImage.fill(Qt::white);
+      ImageComparisonDialog comparisonDialog(xerahs::editor::AnnotationDocument{}, comparisonImage, &host);
+      UrlOpenDialog urlDialog(&host);
+      ImageRecognitionDialog recognitionDialog(ImageRecognitionKind::QrCode, &host);
+
+      // The comparison input, divider percentage, canvas and status labels hold a chosen file
+      // name, a live percentage, a canvas size and a live load sentence: runtime data, not prose.
+      // The URL status label holds a live transfer sentence for the same reason.
+      const int comparisonChecked = translatedTexts(comparisonDialog, {QStringLiteral("comparisonInput"),
+                                                                        QStringLiteral("comparisonPercent"),
+                                                                        QStringLiteral("comparisonGeometry"),
+                                                                        QStringLiteral("comparisonStatus")});
+      const int urlChecked = translatedTexts(urlDialog, {QStringLiteral("openImageUrlStatus")});
+      const int recognitionChecked = translatedTexts(recognitionDialog, {});
+      QVERIFY2(comparisonChecked >= 3, qPrintable(QString::number(comparisonChecked)));
+      QVERIFY2(urlChecked >= 3, qPrintable(QString::number(urlChecked)));
+      QVERIFY2(recognitionChecked >= 3, qPrintable(QString::number(recognitionChecked)));
+      QVERIFY2(comparisonDialog.windowTitle().contains(QChar(0x2022)), qPrintable(comparisonDialog.windowTitle()));
+      QVERIFY2(urlDialog.windowTitle().contains(QChar(0x2022)), qPrintable(urlDialog.windowTitle()));
+      QVERIFY2(recognitionDialog.windowTitle().contains(QChar(0x2022)), qPrintable(recognitionDialog.windowTitle()));
     }
     QApplication::removeTranslator(&pseudo);
   }
