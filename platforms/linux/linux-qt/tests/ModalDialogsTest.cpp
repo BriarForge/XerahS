@@ -9,6 +9,7 @@
 #include "CanvasRotationDialog.h"
 #include "CaptureSaveAsDialog.h"
 #include "EditorSaveDialog.h"
+#include "PipelineHistoryDialog.h"
 #include "PipelineResultDialog.h"
 #include "ColorPickerDialog.h"
 #include "DrawingDefaultsDialog.h"
@@ -29,6 +30,7 @@
 #include "UploadDestinationsDialog.h"
 #include "VideoConverterDialog.h"
 #include "WatchFolderService.h"
+#include "WorkflowExecutionHistoryDialog.h"
 #include "WatchFoldersDialog.h"
 #include "image-editor/AnnotationDocument.h"
 #include "media/VideoConversion.h"
@@ -169,6 +171,7 @@ private slots:
     QTest::newRow("canvas-crop") << 18; QTest::newRow("canvas-rotation") << 19; QTest::newRow("selection-rotation") << 20;
     QTest::newRow("auto-capture") << 21; QTest::newRow("action-selection") << 22; QTest::newRow("convenience-preferences") << 23;
     QTest::newRow("capture-save-as") << 24; QTest::newRow("editor-save") << 25; QTest::newRow("pipeline-result") << 26;
+    QTest::newRow("workflow-history") << 27; QTest::newRow("pipeline-history") << 28;
   }
   void modalDialogsTrapFocusOnlyWhileActiveIdentifyPurposeEscapeAndRestoreFocus() {
     QFETCH(int, which); Host host; QVERIFY(host.focusOnEdit());
@@ -191,6 +194,7 @@ private slots:
     rotated.start = {10, 10}; rotated.end = {60, 40};
     xerahs::editor::AnnotationDocument rotationDocument; rotationDocument.annotations = {rotated};
     xerahs::editor::CropRegion cropRegion{0, 0, 64, 48};
+    WorkflowHistoryPorts workflowPorts; workflowPorts.list = [] { return WorkflowExecutionListing{}; };
     auto credentials = std::make_shared<xerahs::uploads::MemoryCredentialStore>();
     auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("history"));
     xerahs::watch::WatchFolders watchStore(dir.filePath("watch"));
@@ -218,6 +222,8 @@ private slots:
         : which == 24 ? static_cast<QDialog *>(new CaptureSaveAsDialog(dir.path(), &host.window))
         : which == 25 ? static_cast<QDialog *>(new EditorSaveDialog(dir.filePath("capture.png"), &host.window))
         : which == 26 ? makePipelineResultDialog(QJsonObject{}, &host.window)
+        : which == 27 ? static_cast<QDialog *>(new WorkflowExecutionHistoryDialog(workflowPorts, [] { return false; }, &host.window))
+        : which == 28 ? static_cast<QDialog *>(new PipelineHistoryDialog(journal, [] { return false; }, &host.window))
         : static_cast<QDialog *>(new PresetDialog(sourceDocument, sourceImage, [](PreparedCanvasEdit) { return false; }, registry, &host.window));
     QVERIFY(!QApplication::activeModalWidget());  // No trap before it opens.
     dialog->setModal(true); dialog->open();

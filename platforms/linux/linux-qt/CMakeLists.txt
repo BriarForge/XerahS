@@ -1013,6 +1013,8 @@ add_executable(modal-dialogs-test tests/ModalDialogsTest.cpp app/NewImageDialog.
                app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h
                app/CapturePipeline.cpp app/CapturePipeline.h
                app/PipelineResultDialog.cpp app/PipelineResultDialog.h
+               app/PipelineHistoryDialog.cpp app/PipelineHistoryDialog.h
+               app/WorkflowExecutionHistoryDialog.cpp app/WorkflowExecutionHistoryDialog.h
                app/NativeEditorAppearance.cpp app/NativeEditorAppearance.h
                app/NativeDesktopAppearance.cpp app/NativeDesktopAppearance.h
                app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h)
