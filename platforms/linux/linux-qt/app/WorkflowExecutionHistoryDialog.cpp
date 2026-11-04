@@ -16,19 +16,19 @@ WorkflowHistoryPorts workflowHistoryPorts(const NativeWorkflowExecutions &store)
 WorkflowExecutionHistoryDialog::WorkflowExecutionHistoryDialog(WorkflowHistoryPorts ports, std::function<bool()> captureBusy, QWidget *parent)
     : QDialog(parent), m_ports(std::move(ports)), m_captureBusy(std::move(captureBusy)) {
   new NativeWindowPlacement(*this);
-  new NativeAccessibility(*this, "Review workflow execution metadata and unknown outcomes. Forget requires confirmation; Close keeps saved records.", false);
-  setObjectName("workflowExecutionHistory"); setWindowTitle("Workflow execution history"); setAttribute(Qt::WA_DeleteOnClose); resize(800, 450);
+  new NativeAccessibility(*this, tr("Review workflow execution metadata and unknown outcomes. Forget requires confirmation; Close keeps saved records."), false);
+  setObjectName("workflowExecutionHistory"); setWindowTitle(tr("Workflow execution history")); setAttribute(Qt::WA_DeleteOnClose); resize(800, 450);
   auto *layout = new QVBoxLayout(this);
-  auto *notice = new QLabel("Execution records contain metadata, not saved media. An unconfirmed outcome is unknown, not a failed action. "
-      "Forgetting removes recovery evidence only; it never retries work or removes images, pipeline results, credentials or clipboard contents.", this);
+  auto *notice = new QLabel(tr("Execution records contain metadata, not saved media. An unconfirmed outcome is unknown, not a failed action. "
+      "Forgetting removes recovery evidence only; it never retries work or removes images, pipeline results, credentials or clipboard contents."), this);
   notice->setTextFormat(Qt::PlainText); notice->setWordWrap(true); layout->addWidget(notice);
-  m_table = new QTreeWidget(this); m_table->setObjectName("workflowExecutionRecords"); m_table->setAccessibleName("Workflow execution metadata");
+  m_table = new QTreeWidget(this); m_table->setObjectName("workflowExecutionRecords"); m_table->setAccessibleName(tr("Workflow execution metadata"));
   m_table->setRootIsDecorated(false); m_table->setSelectionMode(QAbstractItemView::SingleSelection);
-  m_table->setHeaderLabels({"Started", "State", "Execution ID", "Origin", "Diagnostic"}); layout->addWidget(m_table);
+  m_table->setHeaderLabels({tr("Started"), tr("State"), tr("Execution ID"), tr("Origin"), tr("Diagnostic")}); layout->addWidget(m_table);
   m_status = new QLabel(this); m_status->setObjectName("workflowExecutionHistoryStatus"); m_status->setTextFormat(Qt::PlainText); m_status->setWordWrap(true); layout->addWidget(m_status);
   auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, this); layout->addWidget(buttons);
-  m_refresh = buttons->addButton("Refresh", QDialogButtonBox::ActionRole); m_refresh->setObjectName("refreshWorkflowExecutions");
-  m_forget = buttons->addButton("Forget record…", QDialogButtonBox::ActionRole); m_forget->setObjectName("forgetWorkflowExecution");
+  m_refresh = buttons->addButton(tr("Refresh"), QDialogButtonBox::ActionRole); m_refresh->setObjectName("refreshWorkflowExecutions");
+  m_forget = buttons->addButton(tr("Forget record…"), QDialogButtonBox::ActionRole); m_forget->setObjectName("forgetWorkflowExecution");
   connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
   connect(m_refresh, &QPushButton::clicked, this, &WorkflowExecutionHistoryDialog::refresh);
   connect(m_forget, &QPushButton::clicked, this, &WorkflowExecutionHistoryDialog::forget);
@@ -60,8 +60,8 @@ void WorkflowExecutionHistoryDialog::refresh() {
   if (m_busy || m_confirming || !m_ports.list) return;
   const QPointer<WorkflowExecutionHistoryDialog> guard(this);
   const auto busy = m_captureBusy; const bool capture = busy && busy(); if (!guard) return;
-  if (capture) { m_reload = true; m_status->setText("Capture is running. Execution records will refresh when it finishes."); if (guard) updateAvailability(); return; }
-  m_reload = false; m_busy = true; m_status->setText("Reading workflow execution metadata…"); if (!guard) return;
+  if (capture) { m_reload = true; m_status->setText(tr("Capture is running. Execution records will refresh when it finishes.")); if (guard) updateAvailability(); return; }
+  m_reload = false; m_busy = true; m_status->setText(tr("Reading workflow execution metadata…")); if (!guard) return;
   updateAvailability(); if (!guard) return;
   const auto list = m_ports.list;
   m_work = OwnedWork::run<WorkflowExecutionListing>(this, [list](const OwnedWork::Context &context) {
@@ -79,15 +79,15 @@ void WorkflowExecutionHistoryDialog::publish(WorkflowExecutionListing listing) {
   m_table->clear(); if (!guard) return;
   for (const auto &entry : m_listing.entries) {
     auto *item = new QTreeWidgetItem({entry.result.value("startedAt").toString(),
-        entry.diagnostic.isEmpty() ? entry.result.value("state").toString() : QString("Unavailable"), entry.id,
+        entry.diagnostic.isEmpty() ? entry.result.value("state").toString() : tr("Unavailable"), entry.id,
         entry.result.value("origin").toString(), entry.diagnostic});
     item->setData(0, Qt::UserRole, entry.id); m_table->addTopLevelItem(item); if (!guard) return;
     if (previous && previous->id == entry.id) { m_table->setCurrentItem(item); if (!guard) return; }
   }
   if (!m_table->currentItem() && m_table->topLevelItemCount()) { m_table->setCurrentItem(m_table->topLevelItem(0)); if (!guard) return; }
   m_populating = false;
-  m_status->setText(m_listing.diagnostic.isEmpty() ? QString("%1 execution records. Select one to forget its metadata; output files are kept.").arg(m_listing.entries.size()) :
-      "Some execution records could not be read (workflow-storage-unavailable). Existing files are preserved.");
+  m_status->setText(m_listing.diagnostic.isEmpty() ? tr("%1 execution records. Select one to forget its metadata; output files are kept.").arg(m_listing.entries.size()) :
+      tr("Some execution records could not be read (%1). Existing files are preserved.").arg(QStringLiteral("workflow-storage-unavailable")));
   if (guard) updateAvailability();
 }
 void WorkflowExecutionHistoryDialog::forget() {
@@ -96,15 +96,15 @@ void WorkflowExecutionHistoryDialog::forget() {
   const auto busy = m_captureBusy; const bool capture = busy && busy(); if (!guard || capture) return;
   const auto entry = selected(); if (!entry || !entry->diagnostic.isEmpty() || !entry->result.value("ok").toBool() || !m_ports.erase) return;
   m_confirming = true; updateAvailability(); if (!guard) return;
-  auto *box = new QMessageBox(QMessageBox::Question, "Forget workflow execution?",
-      "Remove only the selected execution metadata? This removes its recovery evidence, including any unconfirmed outcome. "
-      "Saved images, pipeline results, credentials, clipboard contents and current work are kept. No action is retried.", QMessageBox::Discard | QMessageBox::Cancel, this);
+  auto *box = new QMessageBox(QMessageBox::Question, tr("Forget workflow execution?"),
+      tr("Remove only the selected execution metadata? This removes its recovery evidence, including any unconfirmed outcome. "
+      "Saved images, pipeline results, credentials, clipboard contents and current work are kept. No action is retried."), QMessageBox::Discard | QMessageBox::Cancel, this);
   box->setObjectName("forgetWorkflowExecutionDialog"); box->setDefaultButton(QMessageBox::Cancel); box->setEscapeButton(QMessageBox::Cancel); box->setAttribute(Qt::WA_DeleteOnClose);
   connect(box, &QMessageBox::finished, this, [this, snapshot = *entry](int choice) {
     m_confirming = false;
     if (choice != QMessageBox::Discard || (m_captureBusy && m_captureBusy())) { updateAvailability(); return; }
     const QPointer<WorkflowExecutionHistoryDialog> live(this); m_busy = true;
-    m_status->setText("Forgetting selected execution metadata…"); if (!live) return;
+    m_status->setText(tr("Forgetting selected execution metadata…")); if (!live) return;
     updateAvailability(); if (!live) return;
     const auto erase = m_ports.erase;
     m_work = OwnedWork::run<RecordWrite>(this, [erase, snapshot](const OwnedWork::Context &context) {
@@ -114,8 +114,8 @@ void WorkflowExecutionHistoryDialog::forget() {
       m_busy = false;
       if (result.stored) { refresh(); return; }
       m_status->setText(result.diagnostic == "workflow-record-changed" ?
-          "The record changed (workflow-record-changed). Refresh and review it before another attempt." :
-          "Could not confirm removal (workflow-storage-unavailable). Refresh and review the record before another attempt.");
+          tr("The record changed (%1). Refresh and review it before another attempt.").arg(result.diagnostic) :
+          tr("Could not confirm removal (%1). Refresh and review the record before another attempt.").arg(QStringLiteral("workflow-storage-unavailable")));
       updateAvailability();
     });
   });

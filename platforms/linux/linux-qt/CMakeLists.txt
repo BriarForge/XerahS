@@ -1321,6 +1321,7 @@ add_executable(localization-expansion-test tests/LocalizationExpansionTest.cpp
   app/CapturePermissionHelp.cpp app/CapturePermissionHelp.h
   app/PipelineHistoryDialog.cpp app/PipelineHistoryDialog.h
   app/PipelineResultDialog.cpp app/PipelineResultDialog.h
+  app/WorkflowExecutionHistoryDialog.cpp app/WorkflowExecutionHistoryDialog.h
   app/CanvasRotationDialog.cpp app/CanvasRotationDialog.h
   app/NativeEditorAppearance.cpp app/NativeEditorAppearance.h
   app/NativeDesktopAppearance.cpp app/NativeDesktopAppearance.h

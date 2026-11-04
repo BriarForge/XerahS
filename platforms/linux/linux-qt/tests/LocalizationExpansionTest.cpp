@@ -29,6 +29,7 @@
 #include "UploadDestinationsDialog.h"
 #include "UrlOpenDialog.h"
 #include "VideoConverterDialog.h"
+#include "WorkflowExecutionHistoryDialog.h"
 #include "WatchFolderService.h"
 #include "WatchFoldersDialog.h"
 #include "image-editor/AnnotationDocument.h"
@@ -445,6 +446,21 @@ private slots:
       QVERIFY2(offenders.isEmpty(), qPrintable(offenders));
       QVERIFY2(collected.buttons.size() + collected.labels.size() >= 3,
           qPrintable(QString::number(collected.buttons.size() + collected.labels.size())));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void workflowExecutionHistoryDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      WorkflowHistoryPorts ports;
+      ports.list = [] { return WorkflowExecutionListing{}; };
+      WorkflowExecutionHistoryDialog dialog(ports, [] { return false; });
+      // The execution rows and their diagnostics hold runtime values; the notice and buttons are prose.
+      const int checked = translatedTexts(dialog, {});
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+      QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
     }
     QApplication::removeTranslator(&pseudo);
   }
