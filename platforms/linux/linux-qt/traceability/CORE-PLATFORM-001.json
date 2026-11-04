@@ -300,10 +300,10 @@
       }
     },
     "CORE-010": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Audit 2026-11-04: originating operation and actual result remain in the command window; every native notification has a fresh opaque event UUID shared with that window. NotificationPolicyTest::privatePreviewKeepsOperationAndTrueResultOnly proves paths, URLs and recognized text are omitted; nonterminal warnings say attention required rather than falsely reporting failure. Native delivery always applies the private projection, regardless of the retained legacy privateNotifications preference. NativeNotificationsTest::nativeDeliveryContainsOperationResultAndCorrelationWithoutPrivatePreviewsOrActions covers the production org.freedesktop.Notifications transport, normal urgency, desktop identity, no media hints and empty actions; refusalDoesNotRetryBypassPolicyOrCreateAnAction covers policy refusal without fallback or retry. Decision: notifications carry no actions. The desktop server applies its native permission, lock-screen and do-not-disturb policy; the app sends no suppression overrides. notification-policy passes. native-notifications is sandbox-blocked before test startup because dbus-daemon cannot bind its private socket. Status remains partial until that named transport test passes outside the sandbox; no physical/human notification qualification is claimed.",
+      "note": "Audit 2026-11-05: C04 clause closure for the tested Linux candidate. Originating operation and true result: OperationResultsTest::nativeNotificationEntryKeepsCorrelatedTrueDetailsInTheShell exercises the production postTrayMessage entry used by main for success, failure and nonterminal warning; the full unmodified detail and accessible description remain in the shell across hide/reopen, with a fresh opaque event UUID for each result. NativeNotificationsTest::nativeDeliveryContainsOperationResultAndCorrelationWithoutPrivatePreviewsOrActions proves operation/correlation on the actual org.freedesktop.Notifications wire and the true completed projection; refusalDoesNotRetryBypassPolicyOrCreateAnAction proves the warning projection stays attention-required, never falsely completed. Privacy: NotificationPolicyTest::privatePreviewKeepsOperationAndTrueResultOnly covers saved paths, upload URLs, recognized text and coded/uncoded failures; nativeDeliveryContainsOperationResultAndCorrelationWithoutPrivatePreviewsOrActions proves no private desktop body, image hints or sound override. The native door always applies this private projection, including when the retained legacy preference is false. Native policy: normal urgency/default identity without suppression overrides and no alternate delivery or retry after server denial are tested through the private D-Bus server. Decision retained from queue: notifications carry no actions; no action callback or stale target authority exists. notification-policy, native-notifications and operation-results pass; the earlier private-bus sandbox blocker is superseded. Desktop/assistive-technology policy qualification and human security/privacy/accessibility acceptance are not claimed by this candidate classification.",
       "evidence": [
         "platforms/linux/linux-qt/app/main.cpp",
         "platforms/linux/linux-qt/app/ApplicationWindow.cpp",
@@ -324,13 +324,15 @@
         "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp",
         "platforms/linux/linux-qt/src/shell/NotificationPolicy.cpp",
         "platforms/linux/linux-qt/app/NativeNotifications.cpp",
-        "platforms/linux/linux-qt/tests/NativeNotificationsTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeNotificationsTest.cpp",
+        "platforms/linux/linux-qt/tests/OperationResultsTest.cpp",
+        "platforms/linux/linux-qt/app/AppContext.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 45,
-        "coverage": "Notification projection tested; native notification transport test is sandbox-blocked (socket bind denied).",
-        "reviewed_at_revision": "36761b7"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "7bb928a"
       }
     },
     "CORE-011": {
