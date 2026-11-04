@@ -36,14 +36,14 @@ QJsonObject previousFor(const EditorPreferences &previous, const EditorPreferenc
   return values;
 }
 }  // namespace
-PreferenceRead FilePreferenceStorage::read() {
-  const QFileInfo info(m_path), directory(info.absolutePath());
+PreferenceRead FilePreferenceStorage::readPath(const QString &path) const {
+  const QFileInfo info(path), directory(info.absolutePath());
   if (!info.isAbsolute() || info.isSymLink() || directory.isSymLink()) return failure(QStringLiteral("settings-unsafe-path"));
   if (!info.exists()) return {};
   if (!info.isFile() || !owned(info) || !owned(directory) || (info.permissions() & sharedPermissions) || (directory.permissions() & sharedPermissions))
     return failure(QStringLiteral("settings-private-storage-required"));
   if (info.size() > maximumPreferenceBytes) return failure(QStringLiteral("settings-too-large"));
-  QFile file(m_path); if (!file.open(QIODevice::ReadOnly)) return failure(QStringLiteral("settings-read-failed"));
+  QFile file(path); if (!file.open(QIODevice::ReadOnly)) return failure(QStringLiteral("settings-read-failed"));
   QByteArray bytes;
   while (!file.atEnd()) {
     const auto chunk = file.read(65536);
@@ -53,6 +53,8 @@ PreferenceRead FilePreferenceStorage::read() {
   }
   return {PreferenceRead::Kind::Readable, bytes, {}};
 }
+PreferenceRead FilePreferenceStorage::read() { return readPath(m_path); }
+PreferenceRead FilePreferenceStorage::readBackup() { return readPath(m_path + QStringLiteral(".bak")); }
 PreferenceWrite FilePreferenceStorage::replace(const PreferenceRead &expected, const QByteArray &bytes) {
   if (bytes.size() > maximumPreferenceBytes) return {false, QStringLiteral("settings-too-large")};
   const QFileInfo info(m_path); const QString directoryPath = info.absolutePath();
@@ -69,17 +71,40 @@ PreferenceWrite FilePreferenceStorage::replace(const PreferenceRead &expected, c
   QSaveFile file(m_path); file.setDirectWriteFallback(false);
   if (!file.open(QIODevice::WriteOnly) || !file.setPermissions(privateFile) || file.write(bytes) != bytes.size() || !file.commit())
     return {false, QStringLiteral("settings-write-failed")};
+  // ESET-003: an independent owner-only copy of the bytes just saved, for recovery if the file is destroyed.
+  QSaveFile backup(m_path + QStringLiteral(".bak")); backup.setDirectWriteFallback(false);
+  if (!backup.open(QIODevice::WriteOnly) || !backup.setPermissions(privateFile) || backup.write(bytes) != bytes.size() || !backup.commit())
+    return {true, QStringLiteral("settings-backup-failed")};
   return {true, {}};
+}
+// ESET-003: a destroyed preference file falls back to the last saved backup, read-only, with a diagnostic.
+bool EditorPreferenceStore::recoverFromBackup(const QString &diagnostic) {
+  const auto backup = m_storage.readBackup();
+  if (backup.kind != PreferenceRead::Kind::Readable) return false;
+  const auto parsed = compatibility::readJson(backup.bytes);
+  if (!parsed.ok() || !parsed.document.isObject()) return false;
+  const auto envelope = parsed.document.object();
+  if (envelope.value(u"format") != format || envelope.value(u"version") != QJsonValue(1) || !envelope.value(u"current").isObject()) return false;
+  auto recovered = loadEditorPreferences(envelope.value(u"current").toObject());
+  if (recovered.readOnly) return false;
+  m_preferences = recovered; m_preferences.readOnly = true;
+  m_preferences.report = {}; m_preferences.report.add(compatibility::ImportDisposition::Transformed);
+  m_diagnostics.append(diagnostic); m_diagnostics.append(QStringLiteral("settings-recovered-from-backup"));
+  return true;
 }
 void EditorPreferenceStore::reload() {
   m_snapshot = m_storage.read(); m_envelope = {}; m_diagnostics.clear(); m_preferences = loadEditorPreferences({});
   if (m_snapshot.kind == PreferenceRead::Kind::Missing) return;
-  if (m_snapshot.kind == PreferenceRead::Kind::Failed) { m_preferences.report.add(compatibility::ImportDisposition::Rejected); m_preferences.readOnly = true; m_diagnostics.append(m_snapshot.diagnostic); return; }
+  if (m_snapshot.kind == PreferenceRead::Kind::Failed) {
+    if (recoverFromBackup(m_snapshot.diagnostic)) return;
+    m_preferences.report.add(compatibility::ImportDisposition::Rejected); m_preferences.readOnly = true; m_diagnostics.append(m_snapshot.diagnostic); return;
+  }
   if (m_snapshot.bytes.size() > maximumPreferenceBytes) {
     m_preferences.report.add(compatibility::ImportDisposition::Rejected); m_preferences.readOnly = true; m_diagnostics.append(QStringLiteral("settings-too-large")); return;
   }
   const auto parsed = compatibility::readJson(m_snapshot.bytes);
   if (!parsed.ok() || !parsed.document.isObject()) {
+    if (recoverFromBackup(QStringLiteral("settings-") + (parsed.code.isEmpty() ? QStringLiteral("invalid-json") : parsed.code))) return;
     m_preferences.readOnly = true;
     m_preferences.report = {}; m_preferences.report.add(compatibility::ImportDisposition::Rejected);
     m_diagnostics.append(QStringLiteral("settings-") + (parsed.code.isEmpty() ? QStringLiteral("invalid-json") : parsed.code)); return;

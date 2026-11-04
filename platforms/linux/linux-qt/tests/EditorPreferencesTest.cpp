@@ -777,6 +777,39 @@ private slots:
     QVERIFY(QFile::setPermissions(target, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ReadOther));
     QCOMPARE(oversized.read().diagnostic, QStringLiteral("settings-private-storage-required"));
   }
+  // ESET-003: a destroyed preference file falls back to the last saved backup. The recovered
+  // values are read-only, the destroyed file is never rewritten and nothing is written automatically.
+  void destroyedPreferenceFileRecoversReadOnlyFromBackup() {
+    QTemporaryDir directory; QVERIFY(directory.isValid());
+    const QString path = directory.filePath("prefs.json");
+    FilePreferenceStorage storage(path);
+    EditorPreferenceStore store(storage);
+    const auto changed = changeEditorPreferences(store.preferences(), {{"Thickness", 8}});
+    QVERIFY(changed.preferences);
+    const auto saved = store.save(*changed.preferences); QVERIFY(saved.saved);
+    QVERIFY(QFile::exists(path + QStringLiteral(".bak")));
+    const auto backupPermissions = QFileInfo(path + QStringLiteral(".bak")).permissions();
+    QCOMPARE(backupPermissions & (QFileDevice::ReadGroup | QFileDevice::WriteGroup | QFileDevice::ExeGroup |
+        QFileDevice::ReadOther | QFileDevice::WriteOther | QFileDevice::ExeOther), QFileDevice::Permissions{});
+    QVERIFY(backupPermissions.testFlag(QFileDevice::ReadOwner));
+    QVERIFY(backupPermissions.testFlag(QFileDevice::WriteOwner));
+    // The stored file is destroyed; the backup still holds the bytes of the last save.
+    QVERIFY(privateWrite(path, QByteArray("not json")));
+    EditorPreferenceStore reopened(storage);
+    QVERIFY(reopened.preferences().readOnly);
+    QVERIFY(reopened.diagnostics().contains(QStringLiteral("settings-recovered-from-backup")));
+    QCOMPARE(reopened.preferences().values.value("Thickness"), QJsonValue(8));
+    // The destroyed file is left exactly as it was, and the recovered preferences are not writable.
+    QFile destroyed(path); QVERIFY(destroyed.open(QIODevice::ReadOnly));
+    QCOMPARE(destroyed.readAll(), QByteArray("not json")); destroyed.close();
+    QVERIFY(!reopened.save(reopened.preferences()).saved);
+    // Without the backup there is nothing to recover: defaults, read-only and no recovery diagnostic.
+    QVERIFY(QFile::remove(path + QStringLiteral(".bak")));
+    EditorPreferenceStore withoutBackup(storage);
+    QVERIFY(withoutBackup.preferences().readOnly);
+    QVERIFY(!withoutBackup.diagnostics().contains(QStringLiteral("settings-recovered-from-backup")));
+    QCOMPARE(withoutBackup.preferences().values.value("Thickness"), loadEditorPreferences({}).values.value("Thickness"));
+  }
 };
 QTEST_GUILESS_MAIN(EditorPreferencesTest)
 #include "EditorPreferencesTest.moc"

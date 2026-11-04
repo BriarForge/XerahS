@@ -17,13 +17,17 @@ public:
   virtual ~PreferenceStorage() = default;
   virtual PreferenceRead read() = 0;
   virtual PreferenceWrite replace(const PreferenceRead &expected, const QByteArray &bytes) = 0;
+  // ESET-003: an independent copy of the last saved bytes; storages without one return Missing.
+  virtual PreferenceRead readBackup() { return {}; }
 };
 class FilePreferenceStorage final : public PreferenceStorage {
 public:
   explicit FilePreferenceStorage(QString path) : m_path(std::move(path)) {}
   PreferenceRead read() override;
   PreferenceWrite replace(const PreferenceRead &expected, const QByteArray &bytes) override;
+  PreferenceRead readBackup() override;
 private:
+  PreferenceRead readPath(const QString &path) const;
   QString m_path;
 };
 class EditorPreferenceStore {
@@ -40,5 +44,6 @@ private:
   EditorPreferences m_preferences;
   QJsonObject m_envelope;
   QStringList m_diagnostics;
+  bool recoverFromBackup(const QString &diagnostic);
 };
 }  // namespace xerahs::editor
