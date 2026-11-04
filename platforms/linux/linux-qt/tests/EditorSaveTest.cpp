@@ -74,6 +74,23 @@ private slots:
     const auto invalid = saveEdit(path, source.image, *source.document, {}, fail, options); QVERIFY(!invalid.rasterSaved); QCOMPARE(encoded, 0); QCOMPARE(bytes(path), high);
     QCOMPARE(bytes(path + ".xann"), companion); QVERIFY(QDir(dir.path()).entryList({".xerahs-editor-*"}, QDir::Files | QDir::Hidden).isEmpty());
   }
+  // EO-013: a lossy host encoder that acknowledges success but writes different pixels must not
+  // replace the destination; a genuine re-encode at another quality is still accepted.
+  void lossyHostEncoderMustWriteTheRasterContent_data() {
+    QTest::addColumn<QString>("format"); QTest::newRow("jpeg") << QString("jpeg"); QTest::newRow("webp") << QString("webp");
+  }
+  void lossyHostEncoderMustWriteTheRasterContent() {
+    QFETCH(QString, format); QTemporaryDir dir; auto source = edited(); RasterSaveOptions options;
+    options.format = format == "jpeg" ? RasterFormat::Jpeg : RasterFormat::WebP; if (format == "jpeg") options.jpegMatte = 0xFFFFFFFF; options.quality = 90;
+    const QByteArray id = format == "jpeg" ? "JPEG" : "WEBP";
+    const auto path = dir.filePath(format == "jpeg" ? "image.jpg" : "image.webp");
+    QVERIFY(saveEdit(path, source.image, *source.document, {}, {}, options).sidecarSaved); const auto previous = bytes(path);
+    EditorSaveHooks wrong; wrong.encode = [id](const QImage &image, QIODevice *device) { QImage other(image.size(), image.format()); other.fill(Qt::green); return other.save(device, id.constData()); };
+    const auto refused = saveEdit(path, source.image, *source.document, {}, wrong, options);
+    QVERIFY(!refused.rasterSaved); QCOMPARE(refused.rasterError, QString("raster-save-failed")); QCOMPARE(bytes(path), previous);
+    EditorSaveHooks genuine; genuine.encode = [id](const QImage &image, QIODevice *device) { return image.save(device, id.constData(), 60); };
+    QVERIFY(saveEdit(path, source.image, *source.document, {}, genuine, options).rasterSaved);
+  }
   void workerSnapshotSurvivesConcurrentCallerChanges() {
     QTemporaryDir dir; auto source = edited(); const auto path = dir.filePath("image.png");
     std::atomic<bool> entered{false}, released{false}; EditorSaveHooks hooks;

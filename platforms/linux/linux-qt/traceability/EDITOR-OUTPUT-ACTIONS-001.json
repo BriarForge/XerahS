@@ -325,7 +325,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Standalone close retains Save/Discard/Cancel and now also routes application Quit through editor close policies. Cancelled picker, encode failure, empty true-return and wrong-content PNG callback keep the dirty editor open and previous destination intact; successful Save requires artifact persistence and the current session clean checkpoint. Optional clean-close confirmation cannot suppress dirty confirmation. EditorExitTest covers the native close/save matrix; JPEG/WebP callback-content equivalence and desktop session-manager forced termination remain unverified.",
+      "note": "Standalone close retains Save/Discard/Cancel and now also routes application Quit through editor close policies. Cancelled picker, encode failure, empty true-return and wrong-content PNG callback keep the dirty editor open and previous destination intact; successful Save requires artifact persistence and the current session clean checkpoint. Optional clean-close confirmation cannot suppress dirty confirmation. EditorExitTest covers the native close/save matrix; desktop session-manager forced termination remain unverified. Update 2026-11-04: a lossy (JPEG/WebP) host encoder that acknowledges success but writes different pixels is now refused before the destination is replaced (decoded pixels must stay within this build's own encoder error plus a 3/255 mean allowance; EditorSaveTest::lossyHostEncoderMustWriteTheRasterContent). Found by MiniMax Code while extending the exit matrix.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",

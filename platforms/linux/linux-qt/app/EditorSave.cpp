@@ -6,6 +6,8 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QImageWriter>
+#include <cmath>
+#include <QBuffer>
 #include <QImageReader>
 #include <QColorSpace>
 #include <QPainter>
@@ -24,6 +26,29 @@ bool EditorFileIdentity::operator==(const EditorFileIdentity &o) const {
       modifiedNanos == o.modifiedNanos && changedSeconds == o.changedSeconds && changedNanos == o.changedNanos && owner == o.owner && mode == o.mode;
 }
 namespace {
+// EO-013: a lossy host encoder's acknowledgement is only accepted when the decoded
+// pixels stay as close to the raster as this build's own encoder at the same
+// options gets, plus a small allowance for a different encoder implementation.
+double meanChannelDifference(const QImage &a, const QImage &b) {
+  const QImage x = a.convertToFormat(QImage::Format_ARGB32), y = b.convertToFormat(QImage::Format_ARGB32);
+  if (x.size() != y.size() || x.isNull()) return 255;
+  double total = 0;
+  for (int row = 0; row < x.height(); ++row) {
+    const auto *p = reinterpret_cast<const QRgb *>(x.constScanLine(row)); const auto *q = reinterpret_cast<const QRgb *>(y.constScanLine(row));
+    for (int col = 0; col < x.width(); ++col)
+      total += std::abs(qRed(p[col]) - qRed(q[col])) + std::abs(qGreen(p[col]) - qGreen(q[col])) + std::abs(qBlue(p[col]) - qBlue(q[col])) + std::abs(qAlpha(p[col]) - qAlpha(q[col]));
+  }
+  return total / (4.0 * double(x.width()) * double(x.height()));
+}
+bool lossyContentMatches(const QImage &raster, const QImage &decoded, const xerahs::editor::RasterSaveOptions &encoding) {
+  QByteArray bytes; QBuffer buffer(&bytes); if (!buffer.open(QIODevice::WriteOnly)) return false;
+  QImageWriter reference(&buffer, rasterFormatId(encoding.format).toLatin1()); if (encoding.quality >= 0) reference.setQuality(encoding.quality);
+  if (!reference.write(raster)) return false;
+  const QImage expected = QImage::fromData(bytes);
+  if (expected.isNull()) return false;
+  constexpr double allowance = 3.0;  // mean per-channel difference on a 0..255 scale
+  return meanChannelDifference(raster, decoded) <= meanChannelDifference(raster, expected) + allowance;
+}
 constexpr qint64 maximumBytes = 1073741824;
 bool cancelled(const EditorSaveControl &control) { return control.cancelled && control.cancelled(); }
 void progress(const EditorSaveControl &control, EditorSavePhase phase, int percent) { if (control.progress) control.progress(phase, percent); }
@@ -229,7 +254,8 @@ SaveOutcome saveEdit(const QString &requested, const QImage &source, const Annot
       const auto actualFormat = reader.format().toLower();
       const auto decoded = reader.read();
       if (actualFormat != rasterFormatId(encoding.format).toLatin1() || decoded.isNull() || decoded.size() != raster.size() ||
-          (encoding.format == RasterFormat::Png && decoded.convertToFormat(QImage::Format_ARGB32) != raster.convertToFormat(QImage::Format_ARGB32))) { outcome.rasterError = diagnostic::rasterSaveFailed; return outcome; }
+          (encoding.format == RasterFormat::Png && decoded.convertToFormat(QImage::Format_ARGB32) != raster.convertToFormat(QImage::Format_ARGB32)) ||
+          (encoding.format != RasterFormat::Png && !lossyContentMatches(raster, decoded, encoding))) { outcome.rasterError = diagnostic::rasterSaveFailed; return outcome; }
     }
     receipt->rasterHash = hashDescriptor(temporary.fd.value, control);
     if (receipt->rasterHash.isEmpty() || cancelled(control)) { outcome.cancelled = cancelled(control); if (!outcome.cancelled) outcome.rasterError = diagnostic::rasterSaveFailed; return outcome; }
