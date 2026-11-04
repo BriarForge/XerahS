@@ -36,6 +36,7 @@ namespace {
 void adoptLegacy(CommandRegistry &registry, const QMap<QString, QAction *> &actions) {
   const struct Row { const char *id; CommandGroup group; CommandSurfaces surfaces; } rows[] = {
     {"capture-region", CommandGroup::Capture, CommandSurface::Window | CommandSurface::CaptureMenu},
+    {"capture-last-region", CommandGroup::Capture, CommandSurface::Window | CommandSurface::CaptureMenu},
     {"capture-full-screen", CommandGroup::Capture, CommandSurface::Window | CommandSurface::CaptureMenu},
     {"capture-monitor", CommandGroup::Capture, CommandSurface::Window | CommandSurface::CaptureMenu},
     {"capture-active-window", CommandGroup::Capture, CommandSurface::Window | CommandSurface::CaptureMenu},

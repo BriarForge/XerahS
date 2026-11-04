@@ -1,56 +1,69 @@
-# Native capture source authority still to qualify
+# Qt snapshot authority and remaining qualification
 
-RC-003/004/012/014/015/017/022/027 remain Required. The existing Screenshot
-controller infers a single desktop scale from one raster and Qt logical
-bounds. That does not establish per-monitor native physical mapping, stable
-identity, rotation, colour or complete mixed-scale capture. Published mapping
-vectors prove the domain transform for supplied topology, not this native
-topology inference. No contract, expected result or supported target is changed
-by this implementation note.
+Decision from Aoife/Mike, 2026-11-04: Qt's screen list is the authoritative
+pre-acquisition Linux topology, following toolkit enumeration in Flameshot and
+reference XerahS. `screenTopology()` samples QScreen name/manufacturer/model/
+serialNumber, logical geometry, devicePixelRatio, orientation and screen depth
+before the Screenshot request. `snapshotScreenTopology()` in the Qt Core
+library derives a SHA-256 identity from a versioned, length-delimited tuple;
+list order never supplies identity. Duplicate tuples fail closed. Depth is the
+available colour characteristic; primaries, transfer function and HDR are
+explicitly unavailable, so RC-003's full colour description remains partial.
+All listed Qt screens are candidates; authorization and actual raster size
+must succeed before an overlay is shown.
 
-## Evidence that prevents guessing
+The brief directs unspecified layout semantics to reference XerahS. Read-only
+behavioral reference (no source copied):
+`/home/mike/Work/ShareX/XerahS/src/desktop/app/XerahS.RegionCapture/Services/WaylandMonitorLayoutNormalizer.cs`,
+`NormalizeCumulative` / `BuildCumulativeOrigins`, inspected 2026-11-04. Physical
+origins pack logical columns and rows cumulatively, using each column/row's
+maximum physical extent, and normalize the top-left to zero. Each display's
+width and height use only its own DPR, with the contract's binary64/floor
+rounding. Logical coordinates remain unchanged for reporting-display mapping.
+Published vectors continue to define their own independent physical topology.
 
-The [ScreenCast API](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.ScreenCast.html)
-describes optional stream position/size in compositor coordinates, which can
-differ from pixel coordinates and the negotiated stream size. Its optional
-stream ID is session-local and remains across restored sessions, not a general
-stable display identifier. Pixel dimensions alone therefore cannot establish
-the required desktop physical origins or persisted display identity.
+A returned bitmap must match the snapshot physical bounding box exactly.
+Disagreement fails `capture-topology-mismatch`, without guessing, resampling,
+overlay, last-region write or post-capture actions. This is the explicitly
+accepted degraded outcome when Qt and the compositor disagree. Screen add/
+remove, geometry, orientation and DPI signals cancel selection with
+`display-topology-changed`. Qt 6.4 lacks a QScreen DPR-change signal: a 25 ms
+comparison plus checks at bitmap delivery, confirmation and worker publication
+cover DPR changes and stale-source races. Once pixels complete, later monitor
+events cannot alter the terminal session.
 
-[Qt's QScreen API](https://doc.qt.io/qt-6/qscreen.html) warns that screen names
-are not unique native identities. Its screen pixel ratio can differ from a
-window's ratio on Wayland with fractional scaling. [Qt's high-DPI guidance](https://doc.qt.io/qt-6/highdpi.html)
-also distinguishes device-independent UI geometry from device pixel buffers.
-Applying one raster-width ratio to every Qt screen does not resolve these
-authority differences.
+The compositor reads only the one decoded in-memory portal image. Desktop
+physical coordinates are translated to bitmap offsets using the snapshot's
+physical bounding-box origin. It copies per-display source pixels without
+resampling and clears uncovered space to transparent black. Overlays paint
+that frozen image and never enter the result. Live mode is not offered.
 
-## Required next source evidence
+`Capture last region` and the saved `last-region` workflow source reload the
+version-1 private geometry record and check display IDs/bounds against CURRENT
+Qt topology before constructing/requesting a screenshot client. Missing or
+changed displays fail `last-region-invalid` with no acquisition. Successful
+recapture uses the same worker compositor and output pipeline without overlays.
 
-1. Acquire authorized per-display native buffers and their actual pixel
-   dimensions without resampling; bind each to an authoritative physical
-   origin, logical reporting surface, stable display identity, rotation,
-   colour description and capture availability. Prove those bindings through
-   native protocol/API evidence; do not infer an accepted identity from a
-   display name or session-only token.
-2. If a backend provides only compositor coordinates, establish how its
-   native topology satisfies the contract's desktop physical coordinate
-   model. Missing deciding semantics require ROOT-ESCALATE-001 clarification
-   through the product/conformance owners, rather than inventing expected
-   mixed-scale results or accepting a guessed mosaic.
-3. Define a frozen multi-stream snapshot consistently with RC-014. Preserve
-   observed source timing and avoid unreviewed synchronization tolerances or
-   presenting frames sampled at different stages as an atomic native snapshot.
-4. Qualify cursor authority, HDR/wide-gamut conversion, source revocation and
-   cleanup, selected-source availability, topology changes, screen locking,
-   failed or partial acquisitions, permission rejection and cancellation.
-   Permission/privacy reviews remain human gates.
-5. Run all published mapping/state vectors plus independent native pixel
-   fixtures and physical tests on the supported GNOME/Plasma/wlroots,
-   Wayland/X11 and distribution matrix. Include different scales and heights,
-   fractional scales, negative origins, rotation, gaps and hotplug. Core vector
-   success or the new cancellable compositor does not substitute for this.
+Candidate evidence: `RegionCaptureTest` topology builder/geometry cases,
+`RegionCaptureNativeTest` two fake display descriptions through real native
+controller/overlays and exact saved pixels, `SnapshotCompositionTest` gaps and
+negative origins, and `LastRegionStoreTest` atomic private persistence.
+`PortalScreenshotTest::frozenConfirmationNeverReopensThePortalFile` covers file
+removal after decode; that private-bus suite must run outside the restricted
+socket sandbox. Fake displays share an offscreen QScreen surface; these tests
+do not claim physical multi-monitor placement or compositor qualification.
 
-The current worker composition improvement is independent of these unresolved
-source bindings: it uses the existing frozen input, preserves exact source
-pixels and colour metadata, and keeps cancellation responsive. It does not
-claim that the uniform-scale acquisition path now meets mixed-display scope.
+## Cursor, colour and privacy dispositions still required
+
+The [Screenshot portal API](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.Screenshot.html)
+(checked 2026-11-04, version 3 documentation) returns an image URI. It exposes
+modal/interactive controls and, in version 3, target choices; it provides no
+cursor inclusion/hotspot metadata or HDR/tone-mapping negotiation. The current
+client uses handle_token, interactive=false and modal=false. It preserves the
+decoded image's colour metadata without asserting a qualified conversion.
+RC-013 and RC-015 remain partial pending explicit platform dispositions; no
+cursor or HDR feature is added here. RC-018 remains partial because the final
+configured retention/privacy policy and portal-owned file lifecycle remain
+unresolved. Physical GNOME/Plasma/wlroots, Wayland/X11, fractional-scale,
+rotation/hotplug, Orca and human permission/privacy/security qualification are
+separate Required gates, not accepted by candidate implementation status.

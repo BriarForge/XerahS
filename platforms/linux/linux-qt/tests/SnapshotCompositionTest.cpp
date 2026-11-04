@@ -17,6 +17,14 @@ private slots:
     QCOMPARE(desktop, before); desktop = QImage();
     QCOMPARE(result.image.pixel(2, 2), qRgb(4, 2, 2));
   }
+  void negativeDesktopOriginUsesNormalizedBitmapOffsetsWithoutResampling() {
+    QImage desktop(8, 4, QImage::Format_ARGB32);
+    for (int y = 0; y < 4; ++y) for (int x = 0; x < 8; ++x) desktop.setPixel(x, y, qRgb(x, y, 9));
+    const Topology displays{{"a", {-8, -4, -4, 0}, {-8, -4, -4, 0}, 1},
+                            {"b", {-4, -4, 0, 0}, {-4, -4, -2, -2}, 2}};
+    const auto result = composeSnapshot(desktop, {-6, -3, -2, 0}, displays);
+    QVERIFY(result.diagnostic.isEmpty()); QCOMPARE(result.image, desktop.copy(2, 1, 4, 3));
+  }
   void missingOutOfBoundsAndCancelledSourcesReturnNoPixels() {
     const Topology topology{{"a", {0, 0, 8, 6}, {0, 0, 8, 6}, 1}};
     const auto missing = composeSnapshot({}, {0, 0, 8, 6}, topology);

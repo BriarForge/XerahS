@@ -92,9 +92,11 @@ clipboard/assets, target/resource/privacy/security/a11y/human gates remain Requi
    transport/controller evidence. Confirmed pixel composition now runs on a worker with responsive cancellation, bounded pixels and accessible progress; native PNG encoding/publication and save/clipboard pipeline dispatch now also run on a worker with reachable cancellation and retained receipts; shared recovery controls now edit retained pixels and explicitly discard the current receipt; native multi-record restart result review now uses private write-ahead journals with explicit unchanged-record forgetting; explicit native retry now reuses failed save/clipboard context with append-only lineage, actual file provenance and cancellation; full media/artifact recovery, catalogue/prerequisite retry, retention/pagination, crash cleanup and complete pipeline qualification remain unfinished. Core startup now also has lifetime ownership,
    authenticated activation/failure recovery and a real command window. Native
    candidate code still requires shared/profile/physical/human qualification.
-2. Remove the controller's uniform-scale source assumption through a specified
-   physical-source backend and verify per-display mapping/topology/colour, then
-   complete last-region storage, cursor/settings and overlay interactions.
+2. Qt pre-acquisition topology, per-display DPR mapping, exact frozen composition,
+   validated last-region recapture and keyboard/focus/contrast now have tested
+   candidate seams (2026-11-04). Complete per-monitor color characteristics,
+   cursor/HDR and privacy-policy dispositions, performance and physical/native/
+   human qualification; see [region closure evidence](REGION-CAPTURE-CLOSURE.md).
 3. Continue configurable native workflows and the complete post-capture action
    catalogue alongside recording, uploads/credentials/history/integrations and
    the remaining editor tools/effects/canvas/output/settings/utility features.

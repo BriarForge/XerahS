@@ -5,6 +5,7 @@
 #include "PortalScreenshot.h"
 #include "CaptureController.h"
 #include "WindowDiscovery.h"
+#include "RegionOverlay.h"
 #include "NativeWorkflowExecutions.h"
 #include "CaptureActions.h"
 #include "shell/ActivationDispatcher.h"
@@ -332,6 +333,15 @@ private slots:
     const xerahs::capture::PhysicalRect physical{logical.left * scale, logical.top * scale, logical.right * scale, logical.bottom * scale};
     FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
     CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    controller.setTopologyReader([scale] {
+      auto screens = screenTopology();
+      for (auto &entry : screens) {
+        entry.mapping.scale = scale;
+        entry.mapping.physical.right = entry.mapping.physical.left + qint64((entry.mapping.logical.right - entry.mapping.logical.left) * scale);
+        entry.mapping.physical.bottom = entry.mapping.physical.top + qint64((entry.mapping.logical.bottom - entry.mapping.logical.top) * scale);
+      }
+      return screens;
+    });
     controller.setRegionSettingsResolver([] { return xerahs::capture::SessionSettings{false, false}; });
     controller.captureRegion(); QTRY_VERIFY(overlayExists()); auto *overlay = overlayWidget(); QVERIFY(overlay);
     QTest::mousePress(overlay, Qt::LeftButton, {}, QPoint(10, 10)); QTest::mouseRelease(overlay, Qt::LeftButton, {}, QPoint(80, 60));
@@ -1062,6 +1072,19 @@ private slots:
     controller.selectRecordingRegion([&](QRectF) { ++selected; }); QTRY_VERIFY(overlayExists());
     QTest::keyClick(overlayWidget(), Qt::Key_Escape); QTRY_VERIFY(!controller.busy()); QCOMPARE(selected, 1);
     controller.captureRegion(); QTRY_VERIFY(overlayExists()); controller.cancel(); QTRY_VERIFY(!controller.busy()); QCOMPARE(selected, 1);
+  }
+  void frozenConfirmationNeverReopensThePortalFile() {
+    QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
+    const QImage original(path);
+    FakeScreenshotPortal portal(server); portal.early = true; portal.uri = QUrl::fromLocalFile(path).toString();
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    controller.setRegionSettingsResolver([] { return xerahs::capture::SessionSettings{false, false}; });
+    controller.captureRegion(); QTRY_VERIFY(overlayExists());
+    QVERIFY(QFile::remove(path)); // URI authority is gone after the one decode
+    controller.pointerDown({10, 10}); controller.pointerUp({40, 35});
+    QTest::keyClick(overlayWidget(), Qt::Key_Return); QTRY_VERIFY(!controller.busy());
+    const auto result = controller.lastPipelineResult(); QVERIFY(result && result->file);
+    QCOMPARE(QImage(result->file->path), original.copy(10, 10, 30, 25)); QCOMPARE(portal.calls, 1);
   }
   void actualFrozenOverlayEscapeLeavesFilesAndClipboardUntouched() {
     QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size()); const auto before = bytes(path);

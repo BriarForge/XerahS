@@ -50,8 +50,9 @@ CaptureOutputPreview previewCaptureOutput(const CaptureOutput &output, xerahs::n
   if (!expanded.ok()) return {{}, "filename-" + xerahs::naming::errorCodeName(expanded.error().code), expanded.error()};
   return {expanded.value(), {}, {}};
 }
-QStringList implementedCaptureSources() { return {"region", "full-screen", "monitor", "active-window"}; }
+QStringList implementedCaptureSources() { return {"region", "full-screen", "monitor", "active-window", "last-region"}; }
 QString captureSourceLabel(const QString &source) {
+  if (source == "last-region") return QStringLiteral("Last region");
   if (source == "region") return QStringLiteral("Region");
   if (source == "full-screen") return QStringLiteral("Full screen");
   if (source == "monitor") return QStringLiteral("Monitor under pointer");

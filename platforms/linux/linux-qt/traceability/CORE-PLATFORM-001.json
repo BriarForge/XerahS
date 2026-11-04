@@ -386,11 +386,12 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Region/full-screen/monitor/active-window commands now use shared capture admission and frozen output. Window discovery and portal/controller tests exist. Native per-monitor mixed-scale/HDR/cursor target qualification remains.",
+      "note": "Region/full-screen/monitor/active-window commands now use shared capture admission and frozen output. Window discovery and portal/controller tests exist. Native per-monitor mixed-scale/HDR/cursor target qualification remains. Audit 2026-11-04: Shared screenshot paths now freeze the approved Qt topology before acquisition and reject bitmap dimension mismatch with capture-topology-mismatch. RegionCaptureNativeTest proves fake mixed-scale region and validated last-region capture through native production workers/outputs; full-screen/monitor/active-window retain their existing ports. CORE-014 stays partial for its remaining complete source/platform scope. Decision 2026-11-04 (Aoife/Mike): Qt screen enumeration is the pre-acquisition authority, as in Flameshot/reference XerahS; identity hashes name/manufacturer/model/serial, each extent uses its own DPR, rotation uses orientation. Unspecified origins follow reference XerahS NormalizeCumulative (provenance in app/SOURCE-TOPOLOGY-REVIEW.md). Exact portal bitmap-size disagreement fails capture-topology-mismatch without guessing/resampling; this is the accepted degraded Qt/compositor disagreement outcome.",
       "evidence": [
         "platforms/linux/linux-qt/app/CaptureController.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeWindowDiscoveryTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeWindowDiscoveryTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp"
       ],
       "audit": {
         "classification": "partial",

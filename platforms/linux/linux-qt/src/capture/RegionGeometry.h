@@ -46,6 +46,9 @@ struct Display {
   PhysicalRect physical;
   LogicalRect logical;
   double scale = 1.0;
+  int rotation = 0;
+  QString colorDescription{}; // explicit unknown when Qt provides no colour profile
+  bool captureAvailable = true;
 };
 
 using Topology = std::vector<Display>;
@@ -138,6 +141,7 @@ namespace diagnostic {
 inline const QString capturePermissionDenied = QStringLiteral("capture-permission-denied");
 inline const QString displayTopologyChanged = QStringLiteral("display-topology-changed");
 inline const QString captureSourceFailed = QStringLiteral("capture-source-failed");
+inline const QString captureTopologyMismatch = QStringLiteral("capture-topology-mismatch");
 inline const QString lastRegionInvalid = QStringLiteral("last-region-invalid");
 }  // namespace diagnostic
 

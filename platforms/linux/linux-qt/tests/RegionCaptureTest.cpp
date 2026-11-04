@@ -4,9 +4,11 @@
 
 #include "capture/RegionGeometry.h"
 #include "capture/RegionSession.h"
+#include "capture/ScreenTopology.h"
 
 #include <QTest>
 #include <limits>
+#include <algorithm>
 #include <stdexcept>
 
 using namespace xerahs::capture;
@@ -39,6 +41,39 @@ class RegionCaptureTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void toolkitTopologyPacksEachDisplayAtItsOwnScaleAndSurvivesReordering() {
+    std::vector<ScreenDescription> screens{
+      {"a", "manufacturer", "model", "serial-a", {-1920, 0, 0, 1080}, 1},
+      {"b", "manufacturer", "model", "serial-b", {0, 0, 1280, 720}, 2}};
+    const auto topology = snapshotScreenTopology(screens);
+    QCOMPARE(topology.size(), size_t(2));
+    QCOMPARE(topology[0].physical, PhysicalRect({0, 0, 1920, 1080}));
+    QCOMPARE(topology[1].physical, PhysicalRect({1920, 0, 4480, 1440}));
+    QCOMPARE(mapToPhysical(topology[1], 200, 500).x, qint64(2320));
+    std::reverse(screens.begin(), screens.end());
+    const auto reordered = snapshotScreenTopology(screens);
+    QCOMPARE(reordered[0].id, topology[1].id); QCOMPARE(reordered[0].physical, topology[1].physical);
+    QCOMPARE(reordered[1].id, topology[0].id); QCOMPARE(reordered[1].physical, topology[0].physical);
+    screens[0].scale = 1.25; screens[0].rotation = 90; screens[0].colorDescription = "profile unavailable";
+    const auto fractional = snapshotScreenTopology(screens);
+    QCOMPARE(fractional[0].physical, PhysicalRect({1920, 0, 3520, 900}));
+    QCOMPARE(fractional[0].rotation, 90); QCOMPARE(fractional[0].colorDescription, QString("profile unavailable"));
+    const auto mapped = mapToPhysical(fractional[0], 121.3, 100.5);
+    QCOMPARE(mapped.x, qint64(2071)); QCOMPARE(mapped.y, qint64(125));
+    screens[1].captureAvailable = false;
+    const auto available = snapshotScreenTopology(screens); QCOMPARE(available.size(), size_t(1));
+    QCOMPARE(available[0].physical, PhysicalRect({0, 0, 1600, 900}));
+  }
+  void toolkitTopologyRejectsInvalidScaleExtentsAndDuplicateIdentity() {
+    const ScreenDescription screen{"a", "", "", "", {0, 0, 1920, 1080}, 1};
+    QVERIFY(snapshotScreenTopology({screen, screen}).empty());
+    for (double scale : {0.0, -1.0, std::numeric_limits<double>::infinity(), std::numeric_limits<double>::quiet_NaN(), 1e20}) {
+      auto invalid = screen; invalid.scale = scale; QVERIFY(snapshotScreenTopology({invalid}).empty());
+    }
+    auto invalid = screen; invalid.logical.right = invalid.logical.left;
+    QVERIFY(snapshotScreenTopology({invalid}).empty());
+  }
+
   // RC-012: pixels land at their physical offset, once, in desktop order.
   void compositePlacesPixelsByPhysicalPosition() {
     const CompositeResult result = composite({2, 0, 6, 3}, twoDisplays(), labelled);

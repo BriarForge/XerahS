@@ -57,6 +57,7 @@ add_library(xerahs_core STATIC
   src/capture/CaptureConditions.cpp
   src/capture/CaptureConditions.h
   src/capture/LastRegionStore.cpp src/capture/LastRegionStore.h
+  src/capture/ScreenTopology.cpp src/capture/ScreenTopology.h
   src/capture/RegionGeometry.cpp
   src/capture/RegionGeometry.h
   src/capture/WindowSnapTargets.cpp
@@ -149,8 +150,8 @@ target_link_libraries(xerahs-conformance-adapter PRIVATE xerahs_core xerahs_edit
 target_compile_options(xerahs-conformance-adapter PRIVATE -Wall -Wextra -Wpedantic)
 
 # Optional compositor transport stays outside the Qt Core production library.
-add_library(xerahs_window_discovery STATIC app/WindowDiscovery.cpp app/WindowDiscovery.h)
-target_link_libraries(xerahs_window_discovery PUBLIC xerahs_core Qt6::Network)
+add_library(xerahs_window_discovery STATIC app/WindowDiscovery.cpp app/WindowDiscovery.h app/ScreenTopology.cpp app/ScreenTopology.h)
+target_link_libraries(xerahs_window_discovery PUBLIC xerahs_core Qt6::Network Qt6::Gui)
 
 # CORE-013: desktop Secret Service transport for upload credentials.
 add_library(xerahs_secret_service STATIC app/SecretServiceCredentialStore.cpp app/SecretServiceCredentialStore.h)
@@ -1619,3 +1620,17 @@ target_link_libraries(reference-migration-test PRIVATE xerahs_core Qt6::Test)
 target_compile_definitions(reference-migration-test PRIVATE REFERENCE_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/reference-settings")
 add_test(NAME reference-migration COMMAND reference-migration-test)
 set_tests_properties(reference-migration PROPERTIES TIMEOUT 30)
+
+# RC closure fixtures use decoded-result/topology ports; private-bus transport
+# remains independently exercised by portal-screenshot.
+add_executable(region-capture-native-test tests/RegionCaptureNativeTest.cpp
+  app/PortalScreenshot.cpp app/PortalScreenshot.h app/CaptureController.cpp app/CaptureController.h
+  app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h
+  app/CapturePipeline.cpp app/CapturePipeline.h app/SnapshotComposition.cpp app/SnapshotComposition.h
+  app/RegionOverlay.cpp app/RegionOverlay.h)
+set_target_properties(region-capture-native-test PROPERTIES AUTOMOC ON)
+target_include_directories(region-capture-native-test PRIVATE app)
+target_link_libraries(region-capture-native-test PRIVATE xerahs_window_discovery xerahs_file_output
+  xerahs_action_selection xerahs_pipeline_journal xerahs_editor_codecs xerahs_image_recognition Qt6::Widgets Qt6::DBus Qt6::Test)
+add_test(NAME region-capture-native COMMAND region-capture-native-test)
+set_tests_properties(region-capture-native PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)

@@ -47,9 +47,17 @@ CaptureController::CaptureController(QString saveDirectory, QObject *parent, Scr
     : QObject(parent), m_saveDirectory(std::move(saveDirectory)), m_screenshotFactory(std::move(factory)), m_composer(std::move(composer)), m_actionPorts(std::move(actionPorts)), m_journal(std::move(journal)) {
   m_compositionTimer = new QTimer(this); m_compositionTimer->setInterval(10);
   connect(m_compositionTimer, &QTimer::timeout, this, &CaptureController::pollComposition);
+  // QScreen has no devicePixelRatioChanged signal on the Qt 6.4 baseline.
+  // Compare the approved topology while consent/selection/composition is active.
+  m_topologyTimer = new QTimer(this); m_topologyTimer->setInterval(25);
+  connect(m_topologyTimer, &QTimer::timeout, this, [this] {
+    if (!m_busy || m_pipeline || (m_session && isTerminal(m_session->state()))) return;
+    if (!topologyMatches()) topologyChanged();
+  });
 }
 
 CaptureController::~CaptureController() {
+  m_topologyTimer->stop();
   m_compositionTimer->stop();
   if (m_pipeline) { disconnect(m_pipeline, nullptr, this, nullptr); m_pipeline->cancel(); }
   if (m_composition) { m_composition->cancelled.store(true); m_composition.reset(); }
@@ -62,8 +70,8 @@ CaptureController::~CaptureController() {
 
 QString CaptureController::instructions() {
   return QStringLiteral(
-      "Region capture. Drag with the pointer, or press Space to start and finish a selection at the keyboard "
-      "cursor. Arrow keys move by 1 pixel, Shift+Arrow by 10. With a selection, Alt+Arrow resizes. Enter "
+      "Frozen region capture. Drag with the pointer, or press Space to start and finish a selection at the keyboard "
+      "cursor. Arrow keys move by 1 physical pixel, Shift+Arrow by 10. With a selection, Alt+Arrow resizes. Enter "
       "captures. Drag a selected corner handle to resize. Escape cancels.");
 }
 
@@ -73,6 +81,16 @@ void CaptureController::captureRegion() {
   m_workflowSnapshot = {};
   m_captureOutput = {};
   m_source = QStringLiteral("region");
+  beginCapture(kDefaultActions);
+}
+void CaptureController::captureLastRegion() {
+  if (m_busy) return;
+  if (m_workflowResolver) {
+    auto choice = m_workflowResolver();
+    if (!choice.workflow) { emit notify("Capture workflow unavailable", choice.diagnostic, false); return; }
+    choice.workflow->capture = QStringLiteral("last-region"); captureWorkflow(*choice.workflow); return;
+  }
+  m_workflowSnapshot = {}; m_captureOutput = {}; m_source = QStringLiteral("last-region");
   beginCapture(kDefaultActions);
 }
 void CaptureController::captureRegionWithActions() {
@@ -137,6 +155,27 @@ void CaptureController::beginCapture(QStringList selected) {
   ++m_generation;
   m_pendingPipelineCancellation = false;
   m_busy = true;
+  // Freeze identity, bounds, per-screen DPR and rotation BEFORE any screenshot.
+  m_displays = m_topologyReader ? m_topologyReader() : screenTopology();
+  m_topology = displayMappings(m_displays);
+  m_lastRectangle.reset();
+  if (m_source == QStringLiteral("last-region")) {
+    const auto previous = m_lastRegionReader ? m_lastRegionReader() : std::nullopt;
+    if (previous) m_lastRectangle = validateLastRegion(*previous, m_topology);
+    if (!m_lastRectangle) { failCapture(diagnostic::lastRegionInvalid); return; }
+  }
+  if (m_topology.empty()) { failCapture(diagnostic::captureTopologyMismatch); return; }
+  // Watch before consent, so a late portal image cannot bless a changed layout.
+  const auto changed = [this] { topologyChanged(); };
+  m_screenConnections.push_back(connect(qGuiApp, &QGuiApplication::screenAdded, this, changed));
+  m_screenConnections.push_back(connect(qGuiApp, &QGuiApplication::screenRemoved, this, changed));
+  for (const auto &entry : m_displays) if (auto *screen = entry.screen.data()) {
+    m_screenConnections.push_back(connect(screen, &QScreen::geometryChanged, this, changed));
+    m_screenConnections.push_back(connect(screen, &QScreen::orientationChanged, this, changed));
+    m_screenConnections.push_back(connect(screen, &QScreen::physicalDotsPerInchChanged, this, changed));
+    m_screenConnections.push_back(connect(screen, &QScreen::logicalDotsPerInchChanged, this, changed));
+  }
+  m_topologyTimer->start();
   m_portal = m_screenshotFactory ? m_screenshotFactory(this) : new PortalScreenshot(this);
   if (!m_portal) {
     const QPointer<CaptureController> guard(this);
@@ -172,26 +211,16 @@ void CaptureController::onSnapshot(int outcome, const QImage &image, const QStri
     return;
   }
 
-  // RC-003: snapshot the topology for this session. The portal image covers
-  // the whole layout; its pixels define desktop physical space.
-  Topology topology;
-  const QList<QScreen *> screens = QGuiApplication::screens();
-  QRect bounds;
-  for (QScreen *screen : screens) bounds = bounds.united(screen->geometry());
-  const double scale = image.isNull() || bounds.width() <= 0 ? 1.0 : double(image.width()) / bounds.width();
-  for (QScreen *screen : screens) {
-    const QRect g = screen->geometry();
-    const auto physical = [&](int logical, int origin) {
-      return static_cast<qint64>(std::llround((logical - origin) * scale));
-    };
-    topology.push_back(Display{screen->name(),
-                               {physical(g.left(), bounds.left()), physical(g.top(), bounds.top()),
-                                physical(g.left() + g.width(), bounds.left()), physical(g.top() + g.height(), bounds.top())},
-                               {double(g.left()), double(g.top()), double(g.left() + g.width()), double(g.top() + g.height())},
-                               scale});
+  if (result == PortalScreenshot::Outcome::Captured && !topologyMatches()) { topologyChanged(); return; }
+  const auto &topology = m_topology;
+  if (result != PortalScreenshot::Outcome::Denied) {
+    const auto bounds = boundingBox(topology);
+    if (image.isNull() || image.width() != bounds.width() || image.height() != bounds.height()) {
+      failCapture(diagnostic::captureTopologyMismatch); return;
+    }
   }
 
-  if (m_source != QStringLiteral("region")) {
+  if (m_source != QStringLiteral("region") && m_source != QStringLiteral("last-region")) {
     if (result == PortalScreenshot::Outcome::Denied) {
       recordCaptureOutcome("permission-denied", diagnostic::capturePermissionDenied); if (!guard) return;
       emit notify(sourceTitle("capture denied"), diagnostic::capturePermissionDenied, false);
@@ -214,43 +243,23 @@ void CaptureController::onSnapshot(int outcome, const QImage &image, const QStri
     m_session->permission(Permission::Denied);  // RC-002: no overlay, no re-prompt
     return;
   }
-  // Pending clarification (ROOT-ESCALATE-001): with one portal image for the
-  // whole layout, the engine assumes one uniform scale. A snapshot that does
-  // not match the layout is a capture-source failure, not a guess.
-  if (std::abs(image.height() - bounds.height() * scale) > 2.0) {
-    m_session.reset();
-    recordCaptureOutcome("failed", diagnostic::captureSourceFailed);
-    if (!guard) return;
-    emit notify(sourceTitle("capture failed"),
-                QStringLiteral("%1: snapshot does not match the display layout").arg(diagnostic::captureSourceFailed),
-                false);
-    if (guard) finish();
+  m_desktop = image; // single immutable decoded session snapshot
+  m_session->permission(Permission::Authorized);
+  if (m_lastRectangle) {
+    const auto rect = *m_lastRectangle;
+    m_session->ready();
+    m_session->pointerDown({rect.left, rect.top});
+    m_session->pointerUp({rect.right, rect.bottom});
+    m_session->confirm();
+    afterInput();
     return;
   }
-  m_desktop = image; // immutable source; pixel preparation happens on the worker
-  m_session->permission(Permission::Authorized);
-
-  for (QScreen *screen : screens) {
-    const Display *display = findDisplay(topology, screen->name());
-    const PhysicalRect &p = display->physical;
-    const QRect source(int(p.left), int(p.top), int(p.width()), int(p.height()));
-    m_overlays.push_back(std::make_unique<RegionOverlay>(*this, screen, *display, m_desktop, source));
-  }
-  // RC-003: a topology change during selection cancels.
-  const auto changed = [this] {
-    if (m_session) {
-      if (m_composition) m_composition->cancelled.store(true);
-      m_session->topologyChanged();
-      afterInput();
-    }
-  };
-  m_screenConnections.push_back(connect(qGuiApp, &QGuiApplication::screenAdded, this, changed));
-  m_screenConnections.push_back(connect(qGuiApp, &QGuiApplication::screenRemoved, this, changed));
-  for (QScreen *screen : screens) {
-    m_screenConnections.push_back(connect(screen, &QScreen::geometryChanged, this, changed));
-    m_screenConnections.push_back(connect(screen, &QScreen::orientationChanged, this, changed));
-    m_screenConnections.push_back(connect(screen, &QScreen::physicalDotsPerInchChanged, this, changed));
-    m_screenConnections.push_back(connect(screen, &QScreen::logicalDotsPerInchChanged, this, changed));
+  const auto bounds = boundingBox(topology);
+  for (const auto &entry : m_displays) {
+    const auto &display = entry.mapping;
+    const auto &p = display.physical;
+    const QRect source(int(p.left - bounds.left), int(p.top - bounds.top), int(p.width()), int(p.height()));
+    m_overlays.push_back(std::make_unique<RegionOverlay>(*this, entry.screen, display, m_desktop, source));
   }
 
   for (auto &overlay : m_overlays) overlay->showFullScreen();
@@ -259,6 +268,39 @@ void CaptureController::onSnapshot(int outcome, const QImage &image, const QStri
     m_overlays.front()->activateWindow();
     m_overlays.front()->setFocus();
   }
+}
+
+void CaptureController::failCapture(const QString &code) {
+  const QPointer<CaptureController> guard(this);
+  recordCaptureOutcome("failed", code);
+  if (!guard) return;
+  emit notify(sourceTitle("capture failed"), code, false);
+  if (guard) finish();
+}
+
+bool CaptureController::topologyMatches() const {
+  const auto current = displayMappings(m_topologyReader ? m_topologyReader() : screenTopology());
+  if (current.size() != m_topology.size()) return false;
+  for (const auto &display : m_topology) {
+    const auto *now = findDisplay(current, display.id);
+    if (!now || now->physical != display.physical || now->scale != display.scale || now->rotation != display.rotation ||
+        now->logical.left != display.logical.left || now->logical.top != display.logical.top ||
+        now->logical.right != display.logical.right || now->logical.bottom != display.logical.bottom ||
+        now->colorDescription != display.colorDescription || now->captureAvailable != display.captureAvailable) return false;
+  }
+  return true;
+}
+
+void CaptureController::topologyChanged() {
+  if (!m_busy || m_pipeline || (m_session && isTerminal(m_session->state()))) return;
+  if (m_composition) m_composition->cancelled.store(true);
+  if (m_session) { m_session->topologyChanged(); afterInput(); return; }
+  // Pending consent: detach before cancelling to ignore its terminal callback.
+  if (m_portal) {
+    auto *portal = m_portal.data(); disconnect(portal, nullptr, this, nullptr);
+    m_portal = nullptr; portal->setParent(nullptr); portal->cancel(); portal->retire();
+  }
+  failCapture(diagnostic::displayTopologyChanged);
 }
 
 QString CaptureController::sourceTitle(const QString &suffix) const {
@@ -288,15 +330,15 @@ void CaptureController::captureWholeSource(const Topology &topology) {
   if (m_source == QStringLiteral("monitor")) {
     QScreen *screen = QGuiApplication::screenAt(QCursor::pos());
     if (!screen) screen = QGuiApplication::primaryScreen();
-    const Display *display = screen ? findDisplay(topology, screen->name()) : nullptr;
+    const Display *display = screen ? findDisplay(topology, screenIdentity(screen->name(), screen->manufacturer(), screen->model(), screen->serialNumber())) : nullptr;
     if (!display) { fail(diagnostic::captureSourceFailed); return; }
     const PhysicalRect &p = display->physical;
-    source = QRect(int(p.left), int(p.top), int(p.width()), int(p.height())).intersected(m_desktop.rect());
+    source = QRect(int(p.left - boundingBox(topology).left), int(p.top - boundingBox(topology).top), int(p.width()), int(p.height())).intersected(m_desktop.rect());
   } else if (m_source == QStringLiteral("active-window")) {
     const auto window = windowDiscovery()->activeWindow(topology, QCoreApplication::applicationPid());
     if (!window) { fail(QStringLiteral("No active window to capture")); return; }
     const PhysicalRect &p = window->physical;
-    source = QRect(int(p.left), int(p.top), int(p.width()), int(p.height())).intersected(m_desktop.rect());
+    source = QRect(int(p.left - boundingBox(topology).left), int(p.top - boundingBox(topology).top), int(p.width()), int(p.height())).intersected(m_desktop.rect());
     if (source.isEmpty()) { fail(QStringLiteral("No active window to capture")); return; }
   }
   if (m_desktop.isNull() || source.isEmpty()) { fail(diagnostic::captureSourceFailed); return; }
@@ -502,6 +544,7 @@ void CaptureController::repaint() {
 }
 
 void CaptureController::acquire() {
+  if (!topologyMatches()) { topologyChanged(); return; }
   if (m_composition) return; // repeated input never starts another acquisition
   const std::optional<PhysicalRect> rect = m_session->selection();
   if (!rect) {
@@ -551,6 +594,7 @@ void CaptureController::pollComposition() {
     result = std::move(job->result);
   }
   m_compositionTimer->stop(); m_composition.reset();
+  if (!topologyMatches()) { topologyChanged(); return; }
   if (job->cancelled.load() || result.cancelled) m_session->cancel();
   else if (!result.diagnostic.isEmpty() || result.image.isNull()) m_session->captureFailed();
   else { m_captured = std::move(result.image); m_session->captureSucceeded(); }
@@ -695,6 +739,8 @@ void CaptureController::finish() {
   m_pipelineActivity.clear();
   for (const auto &connection : m_screenConnections) disconnect(connection);
   m_screenConnections.clear();
+  m_topologyTimer->stop();
+  m_displays.clear(); m_topology.clear(); m_lastRectangle.reset();
   m_session.reset();
   m_regionSelected = {};
   m_hoverPoint.reset();

@@ -24,7 +24,11 @@
     "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
     "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
     "platforms/linux/linux-qt/src/capture/LastRegionStore.h",
-    "platforms/linux/linux-qt/src/capture/LastRegionStore.cpp"
+    "platforms/linux/linux-qt/src/capture/LastRegionStore.cpp",
+    "platforms/linux/linux-qt/src/capture/ScreenTopology.h",
+    "platforms/linux/linux-qt/src/capture/ScreenTopology.cpp",
+    "platforms/linux/linux-qt/app/ScreenTopology.h",
+    "platforms/linux/linux-qt/app/ScreenTopology.cpp"
   ],
   "requirements": {
     "RC-001": {
@@ -71,7 +75,7 @@
       "vectors": [
         "topology-change-cancels"
       ],
-      "note": "Selection and confirming composition cancel on native screen add/remove, geometry, orientation and DPI signals. Core topology vectors pass. Native uniform-scale inference still lacks authoritative stable identity, per-display physical mapping, rotation and colour descriptions; see app/SOURCE-TOPOLOGY-REVIEW.md. Complete native topology qualification remains Required.",
+      "note": "Audit 2026-11-04: RegionCaptureTest::toolkitTopologyPacksEachDisplayAtItsOwnScaleAndSurvivesReordering and toolkitTopologyRejectsInvalidScaleExtentsAndDuplicateIdentity prove pre-acquisition mapping/stable identity. RegionCaptureNativeTest::qtSnapshotUsesStableIdentityAndPerScreenMetadata and topologyChangeCancelsWithoutPublishing (add/remove/geometry/scale/rotation/identity) prove native metadata and cancellation. Native signals plus a Qt 6.4-compatible DPR poll and delivery/confirmation/publication checks prevent stale topology use. Screen depth and explicitly unavailable primaries/transfer/HDR are recorded; full per-monitor color characteristics remain unresolved, so this row stays partial. Decision 2026-11-04 (Aoife/Mike): Qt screen enumeration is the pre-acquisition authority, as in Flameshot/reference XerahS; identity hashes name/manufacturer/model/serial, each extent uses its own DPR, rotation uses orientation. Unspecified origins follow reference XerahS NormalizeCumulative (provenance in app/SOURCE-TOPOLOGY-REVIEW.md). Exact portal bitmap-size disagreement fails capture-topology-mismatch without guessing/resampling; this is the accepted degraded Qt/compositor disagreement outcome.",
       "disposition": "Required",
       "audit": {
         "classification": "partial",
@@ -79,22 +83,27 @@
         "published_vectors": [
           "topology-change-cancels"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Audit 2026-11-04: RegionCaptureTest::toolkitTopologyPacksEachDisplayAtItsOwnScaleAndSurvivesReordering and toolkitTopologyRejectsInvalidScaleExtentsAndDuplicateIdentity prove pre-acquisition mapping/stable identity. RegionCaptureNativeTest::qtSnapshotUsesStableIdentityAndPerScreenMetadata and topologyChangeCancelsWithoutPublishing (add/remove/geometry/scale/rotation/identity) prove native metadata and cancellation. Native signals plus a Qt 6.4-compatible DPR poll and delivery/confirmation/publication checks prevent stale topology use. Screen depth and explicitly unavailable primaries/transfer/HDR are recorded; full per-monitor color characteristics remain unresolved, so this row stays partial. Decision 2026-11-04 (Aoife/Mike): Qt screen enumeration is the pre-acquisition authority, as in Flameshot/reference XerahS; identity hashes name/manufacturer/model/serial, each extent uses its own DPR, rotation uses orientation. Unspecified origins follow reference XerahS NormalizeCumulative (provenance in app/SOURCE-TOPOLOGY-REVIEW.md). Exact portal bitmap-size disagreement fails capture-topology-mismatch without guessing/resampling; this is the accepted degraded Qt/compositor disagreement outcome.",
+        "reviewed_at_revision": "e241fddeb3094dc523b65198e5807f4e0661e8cb"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md"
+      ]
     },
     "RC-004": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "negative-origin-monitor",
         "mixed-scale-cross-monitor",
         "fractional-scale-floors",
         "negative-origin-scaled"
       ],
-      "note": "Qt Core mapping passes every published per-monitor vector. The current native frozen-source controller still assumes uniform desktop scale; a qualified per-monitor physical source backend remains Required. Core vector success does not prove mixed-scale native capture.",
+      "note": "Audit 2026-11-04: all published mapping vectors pass shared conformance. RegionCaptureTest::toolkitTopologyPacksEachDisplayAtItsOwnScaleAndSurvivesReordering proves per-display extents, normalized negative logical origins, fractional floors and order-independent identities. RegionCaptureNativeTest::mixedScaleOverlaysAndFrozenCompositionPreserveEverySourcePixel sends native pointer press/release through distinct fake 1x/2x reporting-display overlays and checks the physical rectangle and every saved output pixel; no bitmap-derived global scale remains. Decision 2026-11-04 (Aoife/Mike): Qt screen enumeration is the pre-acquisition authority, as in Flameshot/reference XerahS; identity hashes name/manufacturer/model/serial, each extent uses its own DPR, rotation uses orientation. Unspecified origins follow reference XerahS NormalizeCumulative (provenance in app/SOURCE-TOPOLOGY-REVIEW.md). Exact portal bitmap-size disagreement fails capture-topology-mismatch without guessing/resampling; this is the accepted degraded Qt/compositor disagreement outcome.",
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 40,
         "published_vectors": [
           "negative-origin-monitor",
@@ -102,21 +111,31 @@
           "fractional-scale-floors",
           "negative-origin-scaled"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e241fddeb3094dc523b65198e5807f4e0661e8cb"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md"
+      ]
     },
     "RC-005": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "One frameless fullscreen overlay per screen shows the frozen snapshot. Verified on a single Hyprland display; multi-display layouts are unverified.",
+      "note": "Audit 2026-11-04: RegionCaptureNativeTest::mixedScaleOverlaysAndFrozenCompositionPreserveEverySourcePixel creates two real RegionOverlay widgets from two fake capturable screen descriptions, renders their chrome and asserts exact saved source pixels. Both overlays show the same frozen image; only immutable portal pixels reach composition, so no selection/focus/handle UI enters output. topologyMismatchFailsWithoutOverlayMetadataOrOutputs proves no misleading overlay on bitmap mismatch. Fake descriptions share an offscreen QScreen surface; physical monitor placement remains qualification.",
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 43,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e241fddeb3094dc523b65198e5807f4e0661e8cb"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md"
+      ]
     },
     "RC-006": {
       "status": "implemented",
@@ -207,25 +226,27 @@
       }
     },
     "RC-010": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "keyboard-move-stops-at-edge"
       ],
-      "note": "Native selected-region corner handles are interactive. Four corners hit-test in logical overlay coordinates and route through Core positive-size/desktop-bound resizing; the opposite corner and grab offset stay fixed. Drag release remains selected until Enter. Tests cover all corners at 1x/2x scale, actual output dimensions, no premature actions, cancel, free replacement selection, negative origins, desktop gaps and terminal idempotence. Arrow/Shift/Alt controls remain available. Optional size presets and physical cross-monitor/compositor/accessibility qualification remain unfinished.",
+      "note": "Audit 2026-11-04: RegionCaptureNativeTest::nativeHandlesClampAtEveryCornerWithEachDisplaysScale (all four corners at 1x/2x) proves real handle input, bounds, opposite corner and explicit confirmation. keyboardInstructionsClampingFocusAndNonColorStateCues (confirm/cancel) proves one/ten physical-pixel keyboard selection, move clamp, one-pixel resize minimum and advertised Shift+Arrow steps. RegionCaptureTest::cornerResizeClampsAllFourHandlesAndPreservesOppositeCorner and cornerResizeAllowsDesktopGapAndCancelPublishesNoRegion prove negative/gapped desktop bounds. Conformance keyboard-move-stops-at-edge passes. UI instructions now explicitly call the unit a physical pixel; optional presets are not offered.",
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 58,
         "published_vectors": [
           "keyboard-move-stops-at-edge"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e241fddeb3094dc523b65198e5807f4e0661e8cb"
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp"
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
+        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md"
       ]
     },
     "RC-011": {
@@ -257,28 +278,33 @@
       }
     },
     "RC-012": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "mixed-scale-cross-monitor",
         "uncovered-area-is-transparent"
       ],
-      "note": "The same Qt Core compositor serves conformance and native worker composition: exact source pixels, transparent gaps, bounded output, no resampling, cooperative cancellation and discarded partial output. SnapshotCompositionTest independently checks native pixel placement, image ownership and retained colour metadata. The frozen-source controller still assumes uniform desktop scale; authoritative per-monitor acquisition and complete mixed-scale/native qualification remain Required.",
+      "note": "Audit 2026-11-04: RegionCaptureNativeTest::mixedScaleOverlaysAndFrozenCompositionPreserveEverySourcePixel drives production topology builder, per-display pointer mapping, controller, worker compositor and actual PNG save for 1920x1080@1 beside 2560x1440@2. Its 520x900 rectangle is compared pixel-for-pixel with independently labelled source pixels across the boundary. SnapshotCompositionTest::nativePixelsPreservePlacementGapsColourMetadataAndOwnership and negativeDesktopOriginUsesNormalizedBitmapOffsetsWithoutResampling prove exact source placement, transparent gaps, ownership and negative source offsets. All shared composition/mapping vectors pass. Decision 2026-11-04 (Aoife/Mike): Qt screen enumeration is the pre-acquisition authority, as in Flameshot/reference XerahS; identity hashes name/manufacturer/model/serial, each extent uses its own DPR, rotation uses orientation. Unspecified origins follow reference XerahS NormalizeCumulative (provenance in app/SOURCE-TOPOLOGY-REVIEW.md). Exact portal bitmap-size disagreement fails capture-topology-mismatch without guessing/resampling; this is the accepted degraded Qt/compositor disagreement outcome.",
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 64,
         "published_vectors": [
           "mixed-scale-cross-monitor",
           "uncovered-area-is-transparent"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e241fddeb3094dc523b65198e5807f4e0661e8cb"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md"
+      ]
     },
     "RC-013": {
       "status": "not-started",
       "vectors": [],
-      "note": "Cursor inclusion.",
+      "note": "Cursor inclusion. Audit 2026-11-04: Screenshot portal API (version 3 documentation checked) returns an image URI and provides no cursor inclusion/hotspot metadata or HDR/tone-mapping negotiation. Current client uses handle_token, interactive=false and modal=false, retaining decoded color metadata. Platform disposition still required; no cursor/HDR implementation or promotion in this slice. See app/SOURCE-TOPOLOGY-REVIEW.md.",
       "disposition": "Required",
       "audit": {
         "classification": "not-started",
@@ -288,21 +314,26 @@
       }
     },
     "RC-014": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "Frozen mode from one portal snapshot is implemented. Live mode is not offered.",
+      "note": "Audit 2026-11-04: RegionCaptureNativeTest::mixedScaleOverlaysAndFrozenCompositionPreserveEverySourcePixel changes the source image after both overlays open, then confirms and compares every output pixel with the original session snapshot. Production confirmation receives only the owned immutable decoded QImage and never a pathname. PortalScreenshotTest::frozenConfirmationNeverReopensThePortalFile additionally removes the fixture portal file after overlay creation; its private-bus execution is sandbox-blocked and is supplemental, not the basis for promotion. Frozen mode is identified in accessible instructions; live mode is not offered.",
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 71,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e241fddeb3094dc523b65198e5807f4e0661e8cb"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md"
+      ]
     },
     "RC-015": {
       "status": "not-started",
       "vectors": [],
-      "note": "HDR and wide-gamut conversion.",
+      "note": "HDR and wide-gamut conversion. Audit 2026-11-04: Screenshot portal API (version 3 documentation checked) returns an image URI and provides no cursor inclusion/hotspot metadata or HDR/tone-mapping negotiation. Current client uses handle_token, interactive=false and modal=false, retaining decoded color metadata. Platform disposition still required; no cursor/HDR implementation or promotion in this slice. See app/SOURCE-TOPOLOGY-REVIEW.md.",
       "disposition": "Required",
       "audit": {
         "classification": "not-started",
@@ -329,28 +360,31 @@
       }
     },
     "RC-017": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "quick-confirm-completes",
         "capture-failure-keeps-last-region",
         "last-region-invalid-after-topology-change"
       ],
-      "note": "Successful native region screenshot acquisition now sends only geometry to an OwnedWork worker before post-capture actions. LastRegionStore uses PrivateJsonFile atomic owner-only version-1 writes with snapshot fencing. Valid prior records and compatible unknown fields round-trip; corrupt/newer/stale/unsafe records are preserved. Cancellation/denial/failed composition and recording-region picking never invoke this writer. Metadata failure retains normal successful output and appears in the final notification, including workflow-processing admission failure. Native single-display payload ordering, worker liveness/teardown and storage tests are candidate evidence; physical display identity/mapping, crash/power-loss and full target qualification remain Required.",
+      "note": "Audit 2026-11-04: RegionCaptureNativeTest::mixedScaleOverlaysAndFrozenCompositionPreserveEverySourcePixel acquires mixed-display pixels, runs the real OwnedWork metadata writer, persists/reloads the actual LastRegionStore version-1 record, and checks exact rectangle and hashed display identities. topologyChangeCancelsWithoutPublishing and topologyMismatchFailsWithoutOverlayMetadataOrOutputs prove no writes on cancellation/source mismatch. RegionCaptureTest::completionPublishesOnceWithLastRegion and conformance capture-failure-keeps-last-region prove success-only publication. LastRegionStoreTest::versionOneRoundTripKeepsUnknownFieldsAndExactNegativeCoordinates, missingAndStaleSnapshotsNeverLoseAnotherWrite, malformedAndNewerRecordsAreReadOnly and invalidNewGeometryAndUnsafePathsDoNotPublish prove atomic private compatible storage, write fencing and preserved invalid/newer records. Candidate status excludes physical power-loss qualification.",
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 80,
         "published_vectors": [
           "quick-confirm-completes",
           "capture-failure-keeps-last-region",
           "last-region-invalid-after-topology-change"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e241fddeb3094dc523b65198e5807f4e0661e8cb"
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/LastRegionStoreTest.cpp",
-        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md"
       ]
     },
     "RC-018": {
@@ -358,7 +392,7 @@
       "vectors": [
         "capture-failure-keeps-last-region"
       ],
-      "note": "Native failures expose stable capture-source-failed or capture-permission-denied without raw portal errors/URIs. Shared decode and composition resource bounds reject excess output before unsafe arithmetic. Worker cancellation discards pixels and source-result metadata; source/progress exceptions return value-free diagnostics. Borrowed files remain unmodified and no owned screenshot cache precedes confirmation. Core/native/private-bus tests cover corrupt/oversized input, exact pixels, cancellation and unchanged files. Complete capture retention/diagnostic policy, portal-owned revocation and human security/privacy review remain Required.",
+      "note": "Audit 2026-11-04: RegionCaptureNativeTest::topologyMismatchFailsWithoutOverlayMetadataOrOutputs and topologyFailuresRemainStableInDurableWorkflowResults prove value-free capture-topology-mismatch/last-region-invalid with no output and durable diagnostics. RegionCaptureTest::sourceAndProgressExceptionsBecomeValueFreeFailure plus SnapshotCompositionTest::missingOutOfBoundsAndCancelledSourcesReturnNoPixels prove discarded failed/cancelled pixels. Existing private-bus transport fixtures cover permission/portal/source failures but cannot run in this socket sandbox. The configured capture retention/privacy policy and portal-owned file lifecycle remain unresolved; no policy is invented, so the row stays partial.",
       "disposition": "Required",
       "audit": {
         "classification": "partial",
@@ -366,24 +400,31 @@
         "published_vectors": [
           "capture-failure-keeps-last-region"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Audit 2026-11-04: RegionCaptureNativeTest::topologyMismatchFailsWithoutOverlayMetadataOrOutputs and topologyFailuresRemainStableInDurableWorkflowResults prove value-free capture-topology-mismatch/last-region-invalid with no output and durable diagnostics. RegionCaptureTest::sourceAndProgressExceptionsBecomeValueFreeFailure plus SnapshotCompositionTest::missingOutOfBoundsAndCancelledSourcesReturnNoPixels prove discarded failed/cancelled pixels. Existing private-bus transport fixtures cover permission/portal/source failures but cannot run in this socket sandbox. The configured capture retention/privacy policy and portal-owned file lifecycle remain unresolved; no policy is invented, so the row stays partial.",
+        "reviewed_at_revision": "e241fddeb3094dc523b65198e5807f4e0661e8cb"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md"
+      ]
     },
     "RC-019": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "Native keyboard selection, accessible bounds/instructions and actual progress in overlay descriptions and a command-window QProgressBar have fixture evidence. Cancelled progress returns to a terminal command-window status without an alert; successful/error results remain visible. Full physical keyboard/compositor and Orca qualification remain Required. The overlay announces resized physical bounds and documents corner dragging; existing keyboard-only selection and resize remain available. Mouse-path tests check non-color resize cursor feedback including during the entire drag. Physical accessibility review remains required.",
+      "note": "Audit 2026-11-04: RegionCaptureNativeTest::keyboardInstructionsClampingFocusAndNonColorStateCues (confirm/cancel) uses native keyboard-only selection and proves screen-reader name/instructions, announced physical bounds, Enter confirmation and Escape cancellation. overlayBoundariesAndFocusRemainVisibleOnLightAndDarkDesktops asserts rendered white selection lines with black halo, settled corner handles and dashed high-contrast visible keyboard focus on light and dark sources. mixedScaleOverlaysAndFrozenCompositionPreserveEverySourcePixel checks initial accessible Shift/Escape instructions on every overlay. Shape, text, dimensions and handles expose state without relying on color; physical Orca/compositor acceptance is a separate qualification gate.",
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 87,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e241fddeb3094dc523b65198e5807f4e0661e8cb"
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
-        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
+        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md"
       ]
     },
     "RC-020": {
@@ -412,7 +453,7 @@
       }
     },
     "RC-022": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "reverse-drag",
         "negative-origin-monitor",
@@ -421,10 +462,10 @@
         "fractional-logical-edge-reaches-physical-edge",
         "negative-origin-scaled"
       ],
-      "note": "Qt Core mapping follows the specified binary64/floor arithmetic and reporting-display rules, with all published vectors passing. Actual native per-monitor source/topology integration remains Required because the current controller assumes uniform scale.",
+      "note": "Audit 2026-11-04: all six published binary64/floor mapping vectors pass conformance. RegionCaptureTest::toolkitTopologyPacksEachDisplayAtItsOwnScaleAndSurvivesReordering independently checks per-monitor DPR and fractional floor results. RegionCaptureNativeTest::mixedScaleOverlaysAndFrozenCompositionPreserveEverySourcePixel dispatches pointer input to the two native reporting-display overlays, verifies exclusive normalized endpoints and checks every saved source pixel. nativeHandlesClampAtEveryCornerWithEachDisplaysScale covers actual overlay mapping at both DPRs. Decision 2026-11-04 (Aoife/Mike): Qt screen enumeration is the pre-acquisition authority, as in Flameshot/reference XerahS; identity hashes name/manufacturer/model/serial, each extent uses its own DPR, rotation uses orientation. Unspecified origins follow reference XerahS NormalizeCumulative (provenance in app/SOURCE-TOPOLOGY-REVIEW.md). Exact portal bitmap-size disagreement fails capture-topology-mismatch without guessing/resampling; this is the accepted degraded Qt/compositor disagreement outcome.",
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 96,
         "published_vectors": [
           "reverse-drag",
@@ -434,9 +475,14 @@
           "fractional-logical-edge-reaches-physical-edge",
           "negative-origin-scaled"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e241fddeb3094dc523b65198e5807f4e0661e8cb"
+      },
+      "evidence": [
+        "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md"
+      ]
     },
     "RC-023": {
       "status": "implemented",
@@ -540,24 +586,28 @@
       }
     },
     "RC-027": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "last-region-invalid-after-topology-change"
       ],
       "disposition": "Required",
-      "note": "Durable version-1 geometry records contain the normalized physical rectangle and every intersecting display ID/bounds. LastRegionStore reloads them; tests validate matching topology and refuse moved/missing displays through the existing Core validator. Invalid, duplicate, inexact or newer representations are read-only. Native recapture is deliberately absent: the existing portal path derives physical scale after image acquisition, while this requirement demands invalidation before capturing. Pre-acquisition physical topology authority/disposition is blocked on Mike; no mapping policy or contract was changed.",
+      "note": "Audit 2026-11-04: RegionCaptureNativeTest::lastRegionValidatesBeforeAcquisitionAndUsesTheStoredRectangle persists/reloads a real version-1 two-display record, rejects missing display/changed physical bounds/no record with last-region-invalid and zero screenshot-factory calls, and proves valid recapture saves the exact stored rectangle without overlays. topologyFailuresRemainStableInDurableWorkflowResults proves the actual admitted last-region workflow preserves that stable failure code. The shared last-region-invalid-after-topology-change vector and LastRegionStoreTest verify representation/validation; Capture last region is available in the native shell and saved workflow source choices. Decision 2026-11-04 (Aoife/Mike): Qt screen enumeration is the pre-acquisition authority, as in Flameshot/reference XerahS; identity hashes name/manufacturer/model/serial, each extent uses its own DPR, rotation uses orientation. Unspecified origins follow reference XerahS NormalizeCumulative (provenance in app/SOURCE-TOPOLOGY-REVIEW.md). Exact portal bitmap-size disagreement fails capture-topology-mismatch without guessing/resampling; this is the accepted degraded Qt/compositor disagreement outcome. ShellCommandsTest::lastRegionCommandIsSharedAndRefusesStaleGeometryBeforeAcquisition proves the actual shared window/tray command, modal/busy guards and stale refusal through durable admission.",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 126,
         "published_vectors": [
           "last-region-invalid-after-topology-change"
         ],
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
+        "reviewed_at_revision": "e241fddeb3094dc523b65198e5807f4e0661e8cb"
       },
       "evidence": [
         "platforms/linux/linux-qt/tests/LastRegionStoreTest.cpp",
-        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
+        "platforms/linux/linux-qt/tests/RegionCaptureTest.cpp",
+        "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md",
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
       ]
     }
   },
@@ -569,12 +619,13 @@
     "platforms/linux/linux-qt/tests/SnapshotCompositionTest.cpp",
     "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
     "platforms/linux/linux-qt/app/SOURCE-TOPOLOGY-REVIEW.md",
-    "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp"
+    "platforms/linux/linux-qt/tests/CapturePipelineTest.cpp",
+    "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp"
   ],
   "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
   "audit": {
-    "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
-    "checked_at": "2026-10-28T16:55:54.347787+00:00",
+    "source_revision": "e241fddeb3094dc523b65198e5807f4e0661e8cb",
+    "checked_at": "2026-11-04",
     "specification": "product-contract/capabilities/REGION-CAPTURE-001/SPEC.md",
     "specification_sha256": "44c0bedd89ebf555ef6035794a05fcfef921eaccc1fca00d48e941d921629867",
     "method": "Read normative requirement text, inspect production call paths and automated test bodies/fixtures; graph navigation is not compliance evidence. Test surfaces listed here are context, not proof that each test covers every row. Implemented means tested Linux candidate behavior, never human/release or other-platform acceptance.",
@@ -705,21 +756,32 @@
         "mixedScaleMappingAndClamping",
         "malformedJson",
         "disabledSnappingAndDragOverride"
+      ],
+      "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp": [
+        "qtSnapshotUsesStableIdentityAndPerScreenMetadata",
+        "mixedScaleOverlaysAndFrozenCompositionPreserveEverySourcePixel",
+        "nativeHandlesClampAtEveryCornerWithEachDisplaysScale",
+        "topologyMismatchFailsWithoutOverlayMetadataOrOutputs",
+        "topologyFailuresRemainStableInDurableWorkflowResults",
+        "topologyChangeCancelsWithoutPublishing",
+        "lastRegionValidatesBeforeAcquisitionAndUsesTheStoredRectangle",
+        "overlayBoundariesAndFocusRemainVisibleOnLightAndDarkDesktops",
+        "keyboardInstructionsClampingFocusAndNonColorStateCues"
       ]
     },
-    "remaining_scope": "CaptureController still derives one global scale from the acquired portal bitmap and uses QScreen names. Authoritative mixed-scale/rotation/stable identity and pre-acquisition last-region validation, cursor/HDR/privacy/performance and physical accessibility remain incomplete.",
+    "remaining_scope": "RC-003 full per-monitor color characteristics; RC-013 cursor and RC-015 HDR platform dispositions; RC-018 configured capture privacy/retention policy; RC-020 performance measurements; physical/native/human qualification. Private-bus/socket tests require the orchestrator outside the sandbox.",
     "reviewed_requirement_count": 27,
-    "finding": "RegionSession implements physical geometry/state vectors; native settings freeze quick-confirm/snapping before acquisition, handles resize, and LastRegionStore atomically saves geometry after acquired pixels through OwnedWork.",
+    "finding": "Qt pre-acquisition topology, per-monitor mapping, exact frozen composition, keyboard/focus/contrast and native validated last-region recapture have automated candidate evidence. Color-characteristic and privacy-policy clauses remain partial.",
     "review_anchor": {
       "production": {
         "path": "platforms/linux/linux-qt/src/capture/RegionSession.cpp",
         "sha256": "9c14d6b9240a08649f5e92ef9359f27b16517815655b3f7e8ce0d2cff57239ef"
       },
       "test": {
-        "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "method": "regionOptionsFreezeBeforeAcquisitionAndAllowKeyboardAdjustment",
-        "line": 298,
-        "sha256": "a4e4bd34f4dc36397d523cb7ea257c3c75b8733fff7a4474b726a2a76b1197d3"
+        "path": "platforms/linux/linux-qt/tests/RegionCaptureNativeTest.cpp",
+        "method": "mixedScaleOverlaysAndFrozenCompositionPreserveEverySourcePixel",
+        "line": 81,
+        "sha256": "9c479da0b99e2af054f71cb40cc3cdcf4a386a0214e7705f703532aa92a73307"
       },
       "interpretation": "EXTRACTED source/test anchors establish the described candidate seam only. They do not prove every requirement or remaining field; classifications follow the complete normative row."
     }

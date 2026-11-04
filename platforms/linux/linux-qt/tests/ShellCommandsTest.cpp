@@ -15,6 +15,7 @@
 #include <QPointer>
 #include <QSystemTrayIcon>
 #include <QTemporaryDir>
+#include <QSignalSpy>
 #include <QTest>
 #include <QToolButton>
 #include <memory>
@@ -48,6 +49,20 @@ private slots:
       QVERIFY2(!action->toolTip().trimmed().isEmpty() && action->toolTip() != action->text() && !shell.commands.spec(id)->accessibleDescription.isEmpty(), qPrintable(id + " is inert without an explanation"));
     }
     QVERIFY2(explained <= 2, qPrintable(QString::number(explained)));  // Only genuinely unavailable integrations.
+  }
+  void lastRegionCommandIsSharedAndRefusesStaleGeometryBeforeAcquisition() {
+    Shell shell(root.path()); shell.attach();
+    auto *action = shell.commands.action("capture-last-region"); QVERIFY(action);
+    auto *button = shell.window().findChild<QToolButton *>("capture-last-region"); QVERIFY(button);
+    QCOMPARE(button->defaultAction(), action); QVERIFY(shell.menu.actions().contains(action));
+    QSignalSpy notices(&shell.capture, &CaptureController::notify);
+    QDialog modal; modal.setWindowModality(Qt::ApplicationModal); modal.show();
+    QTRY_COMPARE(QApplication::activeModalWidget(), &modal);
+    action->trigger(); QVERIFY(!shell.capture.busy()); QVERIFY(notices.isEmpty()); modal.hide();
+    QVERIFY(shell.capture.acquireExternal([] {})); QVERIFY(!action->isEnabled());
+    shell.capture.releaseExternal(); QVERIFY(action->isEnabled());
+    action->trigger(); QVERIFY(!shell.capture.busy()); QCOMPARE(notices.size(), 1);
+    QCOMPARE(notices[0][1].toString(), QString("last-region-invalid")); QVERIFY(!shell.capture.lastPipelineResult());
   }
   void applicationControlsRespectModalWorkAndHeadlessAuthority() {
     Shell shell(root.path()); shell.attach();

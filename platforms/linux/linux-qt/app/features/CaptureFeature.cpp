@@ -154,6 +154,16 @@ void installCapture(AppContext &ctx) {
       [&ctx] { ctx.invoke(ActivationAction::CaptureMonitor, {}, false, {}, QStringLiteral("native-shell")); });
   addCapture(ctx, QStringLiteral("capture-active-window"), QStringLiteral("Capture active window"),
       [&ctx] { ctx.invoke(ActivationAction::CaptureActiveWindow, {}, false, {}, QStringLiteral("native-shell")); });
+  addCapture(ctx, QStringLiteral("capture-last-region"), QStringLiteral("Capture last region"), [&ctx] {
+    if (ctx.capture.busy() || ctx.recording.busy() || QApplication::activeModalWidget() || (ctx.shortcuts && ctx.shortcuts->pending())) return;
+    auto choice = effectiveWorkflow(ctx);
+    if (!choice.workflow) { emit ctx.capture.notify("Capture workflow unavailable", choice.diagnostic, false); return; }
+    choice.workflow->capture = QStringLiteral("last-region");
+    static NativeWorkflowExecutions executions(NativeWorkflowExecutions::defaultDirectory());
+    auto run = ctx.capture.prepareWorkflowCapture(*choice.workflow, QUuid::createUuid().toString(QUuid::WithoutBraces),
+        QStringLiteral("native-shell"), executions.writer());
+    if (run) run();
+  });
   installScrollingCapture(ctx);
   addCapture(ctx, QStringLiteral("capture-region-choose-actions"), QStringLiteral("Capture region and choose actions…"),
       [&ctx] { ctx.invoke(ActivationAction::CaptureRegion, {}, true, {}, QStringLiteral("native-shell")); });
@@ -164,6 +174,7 @@ void installCapture(AppContext &ctx) {
   const auto settingsDirectory = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
   const auto lastRegionPath = settingsDirectory.isEmpty() ? QString{} : QDir(settingsDirectory)
       .filePath(QStringLiteral("com.xerahs.app/linux-qt/last-region.json"));
+  ctx.capture.setLastRegionReader([lastRegionPath] { return capture::LastRegionStore(lastRegionPath).read().region; });
   ctx.capture.setLastRegionWriter([lastRegionPath](const capture::LastRegion &region) {
     const capture::LastRegionStore store(lastRegionPath);
     const auto previous = store.read();
@@ -187,7 +198,7 @@ void installCapture(AppContext &ctx) {
   refreshRegion();
 
   const QStringList captures = {QStringLiteral("capture-region"), QStringLiteral("capture-full-screen"),
-      QStringLiteral("capture-monitor"), QStringLiteral("capture-active-window"), QStringLiteral("capture-scrolling"), QStringLiteral("capture-region-choose-actions")};
+      QStringLiteral("capture-monitor"), QStringLiteral("capture-active-window"), QStringLiteral("capture-last-region"), QStringLiteral("capture-scrolling"), QStringLiteral("capture-region-choose-actions")};
   QObject::connect(&ctx.capture, &CaptureController::busyChanged, &ctx.app, [&ctx, captures, cancel](bool) {
     const bool busy = ctx.capture.busy();
     for (const auto &id : captures)

@@ -14,7 +14,7 @@ bool terminal(const QString &state) {
   return QStringList{"succeeded", "partial", "cancelled", "permission-denied", "failed", "not-started", "interrupted", "skipped", "validation-failure", "unavailable-dependency", "transient-failure", "permanent-failure"}.contains(state);
 }
 bool safeDiagnostic(const QString &code) {
-  return QStringList{"", "capture-source-failed", "capture-permission-denied", "capture-cancelled", "display-topology-changed",
+  return QStringList{"", "capture-source-failed", "capture-permission-denied", "capture-cancelled", "display-topology-changed", "capture-topology-mismatch", "last-region-invalid",
       "workflow-not-started", "workflow-interrupted", "workflow-storage-unavailable", "action-failed",
       "encoder-unavailable", "encoder-start-failed", "encoder-failed", "request-invalid", "portal-unavailable", "portal-timeout", "portal-invalid-response", "target-lost", "finalize-timeout", "output-create-failed", "output-publish-failed", "region-outside-stream", "region-mapping-unavailable"}.contains(code);
 }

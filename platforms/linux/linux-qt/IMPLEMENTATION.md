@@ -99,8 +99,10 @@ cancel from permission denial, closes pending/late legacy requests and decodes
 borrowed images on a bounded worker. A native Cancel Capture command reaches
 the pending portal, overlay and confirming-composition phases; private-bus production tests cover
 failure/cancellation and no output/clipboard side effects. Human permission
-and privacy review remain Required, as do per-monitor sources, capture settings,
-last-region persistence and complete overlay behavior. Native save/clipboard
+and privacy review remain Required. Qt per-monitor topology, region settings,
+last-region persistence/validated recapture and overlay keyboard/focus/contrast
+now have tested candidate seams; full color characteristics, cursor/HDR
+dispositions, privacy policy and native/physical qualification remain open. Native save/clipboard
 pipelines now execute the Core engine on a worker, publish private PNG files
 without replacing existing destinations, expose activity and cancellation,
 retain true results/artifacts/media and dispatch the clipboard on the GUI.

@@ -7,6 +7,7 @@
 
 #include "capture/RegionSession.h"
 #include "SnapshotComposition.h"
+#include "ScreenTopology.h"
 #include "CapturePipeline.h"
 #include "workflows/CaptureWorkflows.h"
 #include "workflows/WorkflowExecution.h"
@@ -38,6 +39,12 @@ public:
   // The writer must own its storage arguments and never touch the controller.
   using LastRegionWriter = std::function<QString(const xerahs::capture::LastRegion &)>;
   void setLastRegionWriter(LastRegionWriter writer) { m_lastRegionWriter = std::move(writer); }
+  using LastRegionReader = std::function<std::optional<xerahs::capture::LastRegion>()>;
+  void setLastRegionReader(LastRegionReader reader) { m_lastRegionReader = std::move(reader); }
+  // Injection uses the same immutable display/overlay mapping as native Qt.
+  using TopologyReader = std::function<CaptureDisplays()>;
+  void setTopologyReader(TopologyReader reader) { m_topologyReader = std::move(reader); }
+  void captureLastRegion();
   using ScreenshotFactory = std::function<PortalScreenshot *(QObject *)>;
   explicit CaptureController(QString saveDirectory, QObject *parent = nullptr, ScreenshotFactory factory = {}, SnapshotComposer composer = {}, CaptureActionPorts actionPorts = {}, PipelineJournalStorage journal = {});
   ~CaptureController() override;
@@ -105,6 +112,9 @@ signals:
 
 private:
   void beginCapture(QStringList selected);
+  void topologyChanged();
+  bool topologyMatches() const;
+  void failCapture(const QString &diagnostic);
   void beginConfiguredCapture(bool chooseActions);
   void onSnapshot(int outcome, const QImage &image, const QString &detail);
   void onOutcome(const xerahs::capture::SessionOutcome &outcome);
@@ -128,6 +138,12 @@ private:
   QString m_saveDirectory;
   LastRegionWriter m_lastRegionWriter, m_captureLastRegionWriter;
   QString m_lastRegionDiagnostic;
+  LastRegionReader m_lastRegionReader;
+  TopologyReader m_topologyReader;
+  CaptureDisplays m_displays;
+  xerahs::capture::Topology m_topology;
+  std::optional<xerahs::capture::PhysicalRect> m_lastRectangle;
+  QTimer *m_topologyTimer = nullptr;
   ScreenshotFactory m_screenshotFactory;
   SnapshotComposer m_composer;
   std::shared_ptr<CaptureComposition> m_composition;

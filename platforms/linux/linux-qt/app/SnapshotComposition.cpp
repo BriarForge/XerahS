@@ -8,9 +8,11 @@ ComposedSnapshot composeSnapshot(const QImage &desktop, const PhysicalRect &rect
   const auto cancelled = [&] { return control.cancelled && control.cancelled(); };
   if (cancelled()) return {{}, {}, true};
   if (desktop.isNull()) return {{}, diagnostic::captureSourceFailed, false};
+  const auto bounds = boundingBox(topology);
   const auto result = composite(rectangle, topology, [&](const Display &, const PhysicalRect &source) -> std::optional<RgbaImage> {
-    if (cancelled() || source.left < 0 || source.top < 0 || source.right > desktop.width() || source.bottom > desktop.height()) return {};
-    auto region = desktop.copy(QRect(int(source.left), int(source.top), int(source.width()), int(source.height())));
+    const auto left = source.left - bounds.left, top = source.top - bounds.top;
+    if (cancelled() || left < 0 || top < 0 || left + source.width() > desktop.width() || top + source.height() > desktop.height()) return {};
+    auto region = desktop.copy(QRect(int(left), int(top), int(source.width()), int(source.height())));
     if (cancelled()) return {};
     region = region.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
     if (cancelled() || region.width() != source.width() || region.height() != source.height()) return {};

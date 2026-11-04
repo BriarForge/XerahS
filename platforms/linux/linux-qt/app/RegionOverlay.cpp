@@ -32,7 +32,7 @@ RegionOverlay::RegionOverlay(CaptureController &controller, QScreen *screen, Dis
       m_display(std::move(display)),
       m_snapshot(std::move(snapshot)),
       m_source(source.isNull() ? m_snapshot.rect() : source),
-      m_screenOrigin(screen->geometry().topLeft()) {
+      m_screenOrigin(m_display.logical.left, m_display.logical.top) {
   setAttribute(Qt::WA_DeleteOnClose, false);
   setAttribute(Qt::WA_OpaquePaintEvent);
   setWindowTitle(QStringLiteral("XerahS region capture"));
@@ -42,8 +42,9 @@ RegionOverlay::RegionOverlay(CaptureController &controller, QScreen *screen, Dis
   setFocusPolicy(Qt::StrongFocus);
   setMouseTracking(true);
   setCursor(Qt::CrossCursor);
-  setScreen(screen);
-  setGeometry(screen->geometry());
+  if (screen) setScreen(screen);
+  setGeometry(QRectF(m_display.logical.left, m_display.logical.top,
+      m_display.logical.right - m_display.logical.left, m_display.logical.bottom - m_display.logical.top).toRect());
 }
 
 PhysicalPoint RegionOverlay::toPhysical(const QPointF &widgetPoint) const {
@@ -166,6 +167,13 @@ void RegionOverlay::paintEvent(QPaintEvent *) {
     }
   }
 
+  if (hasFocus()) {
+    // Visible keyboard focus on both light and dark desktops, without colour.
+    painter.setRenderHint(QPainter::Antialiasing, false);
+    painter.setBrush(Qt::NoBrush);
+    painter.setPen(QPen(Qt::black, 5)); painter.drawRect(rect().adjusted(2, 2, -3, -3));
+    painter.setPen(QPen(Qt::white, 1, Qt::DashLine)); painter.drawRect(rect().adjusted(2, 2, -3, -3));
+  }
   if (m_controller.hintScreen() == screen()) paintHint(painter);
 }
 
