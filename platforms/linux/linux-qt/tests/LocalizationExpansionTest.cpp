@@ -4,6 +4,7 @@
 #include "CanvasCropDialog.h"
 #include "CanvasRotationDialog.h"
 #include "ColorPickerDialog.h"
+#include "ConveniencePreferencesDialog.h"
 #include "DrawingDefaultsDialog.h"
 #include "FileUploadController.h"
 #include "HashCheckerDialog.h"
@@ -419,6 +420,21 @@ private slots:
       QVERIFY2(balloonChecked >= 3, qPrintable(QString::number(balloonChecked)));
       QVERIFY2(textDialog.windowTitle().contains(QChar(0x2022)), qPrintable(textDialog.windowTitle()));
       QVERIFY2(balloonDialog.windowTitle().contains(QChar(0x2022)), qPrintable(balloonDialog.windowTitle()));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void conveniencePreferencesDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      QWidget parent;
+      const auto collected = collectDialogTexts([&] { manageConveniencePreferences(&parent); });
+      QVERIFY2(collected.entered, "the convenience preferences dialog did not open");
+      const auto offenders = untranslatedTexts(collected);
+      QVERIFY2(offenders.isEmpty(), qPrintable(offenders));
+      QVERIFY2(collected.buttons.size() + collected.labels.size() >= 3,
+          qPrintable(QString::number(collected.buttons.size() + collected.labels.size())));
     }
     QApplication::removeTranslator(&pseudo);
   }
