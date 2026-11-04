@@ -82,7 +82,7 @@ CaptureHistoryWindow::CaptureHistoryWindow(PipelineJournalStorage storage, std::
   setAttribute(Qt::WA_DeleteOnClose); resize(900, 620);
   auto *layout = new QVBoxLayout(this);
   m_search = new QLineEdit(this); m_search->setObjectName(QStringLiteral("captureHistorySearch"));
-  m_search->setPlaceholderText(text("Search by file name, folder, workflow, origin, destination or date (yyyy-MM-dd)"));
+  m_search->setPlaceholderText(text("Search by result ID, outcome, file name, folder, workflow, origin, destination or date (yyyy-MM-dd)"));
   m_search->setAccessibleName(text("Search capture history")); m_search->setClearButtonEnabled(true);
   layout->addWidget(m_search);
   m_list = new QListWidget(this); m_list->setObjectName(QStringLiteral("captureHistoryItems"));
@@ -153,7 +153,10 @@ CaptureHistoryWindow::CaptureHistoryWindow(PipelineJournalStorage storage, std::
   connect(m_more, &QPushButton::clicked, this, [this] { ++m_pages; rebuild(); });
   connect(m_search, &QLineEdit::textChanged, this, [this] { m_pages = 1; rebuild(); });
   connect(m_list, &QListWidget::itemSelectionChanged, this, &CaptureHistoryWindow::updateAvailability);
-  connect(m_list, &QListWidget::itemActivated, this, [this] { (m_edit && selectedItem() && !selectedItem()->uploadOnly()) ? editFile() : openFile(); });
+  connect(m_list, &QListWidget::itemActivated, this, [this] {
+    if (selectedItem() && selectedItem()->files.empty()) { details(); return; }
+    (m_edit && selectedItem() && !selectedItem()->uploadOnly()) ? editFile() : openFile();
+  });
   m_timer = new QTimer(this); m_timer->setInterval(20); connect(m_timer, &QTimer::timeout, this, &CaptureHistoryWindow::poll);
   m_timer->start(); refresh(); m_search->setFocus();
 }
@@ -168,7 +171,7 @@ const xerahs::history::CaptureHistoryItem *CaptureHistoryWindow::selectedItem() 
   return nullptr;
 }
 QString CaptureHistoryWindow::selectedPath() const {
-  const auto *item = selectedItem(); return item ? item->files.front().path : QString{};
+  const auto *item = selectedItem(); return item && !item->files.empty() ? item->files.front().path : QString{};
 }
 QString CaptureHistoryWindow::selectedUploadField(const char *key) const {
   const auto *item = selectedItem(); if (!item) return {};
@@ -187,8 +190,8 @@ void CaptureHistoryWindow::updateAvailability() {
   m_copyDeletionUrl->setEnabled(!deletion.isEmpty());
   m_open->setEnabled(present); m_editButton->setEnabled(image && bool(m_edit)); m_copyImage->setEnabled(image);
   m_copyPath->setEnabled(!path.isEmpty()); m_reveal->setEnabled(present);
-  m_details->setEnabled(!path.isEmpty()); m_trash->setEnabled(captured && present && idle);
-  m_forget->setEnabled(!path.isEmpty() && idle && !busy); m_refresh->setEnabled(idle && !busy);
+  m_details->setEnabled(selectedItem() != nullptr); m_trash->setEnabled(captured && present && idle);
+  m_forget->setEnabled(selectedItem() && idle && !busy); m_refresh->setEnabled(idle && !busy);
 }
 
 void CaptureHistoryWindow::refresh() {
@@ -227,21 +230,28 @@ void CaptureHistoryWindow::poll() {
   // not a finished capture; read again once it completes.
   if (m_captureBusy && m_captureBusy()) { m_reloadWhenIdle = true; updateAvailability(); return; }
   std::vector<xerahs::actions::RecoveredPipelineJournal> records; m_entries.clear();
+  int unreadable = 0;
   for (const auto &entry : job->listing.entries) {
-    if (!entry.parsed.record) continue;
+    if (!entry.parsed.record) { ++unreadable; continue; }
     records.push_back(*entry.parsed.record); m_entries.insert(entry.taskId, entry);
   }
   m_items = xerahs::history::captureHistoryItems(records);
   // Files may have been moved or restored since the last read.
   m_thumbnails.clear(); m_missing.clear();
-  if (!job->listing.diagnostic.isEmpty()) m_status->setText(text("Some records could not be read (%1). Readable captures are shown.").arg(job->listing.diagnostic));
+  m_listingWarning.clear();
+  if (!job->listing.diagnostic.isEmpty())
+    m_listingWarning = QStringLiteral("history-read-incomplete: ") + text("History could not be fully read. Retry Refresh or review Result records.");
+  if (unreadable) {
+    if (!m_listingWarning.isEmpty()) m_listingWarning += '\n';
+    m_listingWarning += QStringLiteral("history-records-unreadable: ") + text("%1 unreadable records were preserved. Review Result records for recovery.").arg(unreadable);
+  }
   rebuild();
 }
 
 void CaptureHistoryWindow::loadThumbnails() {
   if (m_job) return;
   QStringList wanted;
-  for (const auto &item : m_page) if (!m_thumbnails.contains(item.files.front().path) && !m_missing.contains(item.files.front().path)) wanted << item.files.front().path;
+  for (const auto &item : m_page) if (!item.files.empty() && !m_thumbnails.contains(item.files.front().path) && !m_missing.contains(item.files.front().path)) wanted << item.files.front().path;
   if (wanted.isEmpty()) return;
   m_job = std::make_shared<CaptureHistoryJob>(); m_job->kind = CaptureHistoryJob::Thumbnails; m_job->paths = wanted;
   const auto job = m_job;
@@ -266,8 +276,8 @@ void CaptureHistoryWindow::rebuild() {
   const QIcon missing = placeholder(text("File missing"), palette());
   const QIcon unreadable = placeholder(text("No preview"), palette());
   for (const auto &entry : m_page) {
-    const auto &file = entry.files.front();
-    QStringList lines{QFileInfo(file.path).fileName(), entry.createdAt.toLocalTime().toString(QStringLiteral("yyyy-MM-dd HH:mm"))};
+    const auto file = entry.files.empty() ? xerahs::history::CaptureHistoryFile{} : entry.files.front();
+    QStringList lines{file.path.isEmpty() ? text("No confirmed file") : QFileInfo(file.path).fileName(), entry.createdAt.toLocalTime().toString(QStringLiteral("yyyy-MM-dd HH:mm"))};
     QStringList detail;
     if (entry.uploadOnly()) {
       detail << entry.origin;
@@ -289,8 +299,10 @@ void CaptureHistoryWindow::rebuild() {
       item->setText(item->text() + '\n' + entry.failureMessage);
     }
     if (!entry.workflowName.isEmpty()) tip += text("\nWorkflow: ") + entry.workflowName;
-    if (entry.state != "completed") tip += text("\nResult: ") + entry.state;
-    if (m_missing.contains(file.path)) { item->setIcon(missing); tip += text("\nThe file is no longer at this path."); item->setText(item->text() + text("\nFile missing")); }
+    const auto result = text("Result: %1").arg(entry.outcome.isEmpty() ? entry.state : entry.outcome);
+    tip += '\n' + result; item->setText(item->text() + '\n' + result);
+    if (file.path.isEmpty()) item->setIcon(unreadable);
+    else if (m_missing.contains(file.path)) { item->setIcon(missing); tip += text("\nThe file is no longer at this path."); item->setText(item->text() + text("\nFile missing")); }
     else if (!m_thumbnails.contains(file.path)) item->setIcon(loading);
     else if (m_thumbnails.value(file.path).isNull()) item->setIcon(unreadable);
     else item->setIcon(QIcon(QPixmap::fromImage(m_thumbnails.value(file.path))));
@@ -299,10 +311,11 @@ void CaptureHistoryWindow::rebuild() {
   }
   m_more->setVisible(int(m_page.size()) < matches);
   if (!m_job || m_job->kind != CaptureHistoryJob::List) {
-    if (m_items.empty()) m_status->setText(text("No saved captures or file uploads yet."));
+    if (m_items.empty()) m_status->setText(text("No capture results or file uploads yet."));
     else if (matches == 0) m_status->setText(text("No history items match the search."));
     else m_status->setText(matches == int(m_items.size()) ? text("%1 history items.").arg(matches)
         : text("%1 of %2 history items match.").arg(matches).arg(m_items.size()));
+    if (!m_listingWarning.isEmpty()) m_status->setText(m_status->text() + '\n' + m_listingWarning);
   }
   updateAvailability(); loadThumbnails();
 }
@@ -379,7 +392,8 @@ void CaptureHistoryWindow::forget() {
   const auto *item = selectedItem(); if (!item || !m_entries.contains(item->taskId)) return;
   const auto entry = m_entries.value(item->taskId); m_confirming = true; updateAvailability();
   auto *box = new QMessageBox(QMessageBox::Question, text("Forget capture?"),
-      text("Remove this capture from history? The saved file is kept."),
+      item->files.empty() ? text("Remove this operation result from history? Files and remote uploads are kept. Interrupted operations may have unconfirmed outputs; forgetting does not undo them.")
+                          : text("Remove this capture from history? The saved file is kept."),
       QMessageBox::Discard | QMessageBox::Cancel, this);
   box->setObjectName(QStringLiteral("forgetHistoryCaptureDialog")); box->setDefaultButton(QMessageBox::Cancel);
   box->setEscapeButton(QMessageBox::Cancel); box->setAttribute(Qt::WA_DeleteOnClose);

@@ -56,6 +56,7 @@ private:
   QHash<QString, JournalEntry> m_entries;    // task ID to the exact journal record
   QHash<QString, QImage> m_thumbnails;       // path to scaled preview, null when unreadable
   QSet<QString> m_missing;                   // paths found absent on the last read
+  QString m_listingWarning;                 // retained across search and thumbnail rebuilds
   std::shared_ptr<CaptureHistoryJob> m_job;
   int m_pages = 1;
   bool m_reloadWhenIdle = false;

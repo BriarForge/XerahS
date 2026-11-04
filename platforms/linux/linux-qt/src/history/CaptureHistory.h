@@ -22,6 +22,7 @@ struct CaptureHistoryItem {
   QString taskId;
   QDateTime createdAt;
   QString state;          // pipeline_state, or "interrupted" for unfinished records
+  QString outcome;        // validated terminal observation; completed does not imply success
   QString workflowName;   // empty for captures without a saved workflow
   QString captureSource;  // region, full-screen, monitor or empty
   QString origin;  // empty for captures; file-upload or watch-folder for existing files
@@ -31,11 +32,11 @@ struct CaptureHistoryItem {
   std::vector<CaptureHistoryFile> files;  // capture-created files (PNG first), or one uploaded source file
 };
 
-// Newest first. Captures without created files are omitted; upload-only items
-// retain a reference to the existing source file.
+// Newest first, including results with no acknowledged file. Upload-only items
+// retain a reference to the existing source file. No output is reconstructed.
 std::vector<CaptureHistoryItem> captureHistoryItems(const std::vector<xerahs::actions::RecoveredPipelineJournal> &records);
 
-// Case-insensitive match on file name, folder, workflow name, source, upload origin/destination and the
+// Case-insensitive match on stable task ID, state/outcome, file name, folder, workflow name, source, upload origin/destination and the
 // local date (yyyy-MM-dd). An empty query matches everything.
 bool matchesHistoryQuery(const CaptureHistoryItem &item, const QString &query);
 
