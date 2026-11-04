@@ -6,13 +6,17 @@
 #include "ApplicationWindow.h"
 #include "ColorPickerDialog.h"
 #include "CommandRegistry.h"
+#include "EditorSource.h"
+#include "EffectsDialog.h"
 #include "FileUploadController.h"
 #include "HashCheckerDialog.h"
 #include "IconConverterDialog.h"
 #include "ImageComparisonDialog.h"
+#include "ImageInsertDialog.h"
 #include "ImageRecognitionDialog.h"
 #include "NativePipelineJournal.h"
 #include "NewImageDialog.h"
+#include "PresetDialog.h"
 #include "QrCodeDialog.h"
 #include "UrlOpenDialog.h"
 #include "VideoConverterDialog.h"
@@ -23,8 +27,10 @@
 #include "uploads/CredentialStore.h"
 #include "watch/WatchFolders.h"
 #include <QAccessible>
+#include <QApplication>
 #include <QBuffer>
 #include <QCheckBox>
+#include <QClipboard>
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QDir>
@@ -37,6 +43,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QPlainTextEdit>
+#include <QPointer>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QSlider>
@@ -634,6 +641,198 @@ private slots:
     QVERIFY(error->text().isEmpty());
     QCOMPARE(list->count(), 2);
     QVERIFY2(list->item(0)->text().contains("folder missing"), qPrintable(list->item(0)->text()));            // error: a missing folder stays visible
+  }
+  // Effects: initial, empty, populated, loading, validation, failure, unavailable.
+  // denied: n/a because the dialog asks for no permission; it edits an image already held in memory.
+  // cancelled: n/a because the only cancel action closes the dialog, and a cancelled preview is
+  // discarded without a message (the worker reports effect-cancelled, the dialog drops that result).
+  // The recent/favorite store lives in the temporary directory, so no user setting is touched.
+  void effectsDialogStates() {
+    QImage pixels(64, 48, QImage::Format_ARGB32); pixels.fill(Qt::white);
+    const auto loaded = prepareCapturedSource(pixels);
+    QVERIFY(loaded.document);
+    EffectsDialog dialog(*loaded.document, loaded.image, [](PreparedCanvasEdit) { return false; },
+                          nullptr, dir.filePath("effects-store.json"));
+    dialog.show();
+    auto *status = dialog.findChild<QLabel *>("effectsStatus");
+    auto *preview = dialog.findChild<QLabel *>("effectsPreview");
+    auto *list = dialog.findChild<QListWidget *>("effectsList");
+    auto *notice = dialog.findChild<QLabel *>("effectsUnavailableNotice");
+    auto *unavailable = dialog.findChild<QListWidget *>("effectsUnavailableList");
+    auto *progress = dialog.findChild<QProgressBar *>();
+    auto *buttons = dialog.findChild<QDialogButtonBox *>();
+    auto *search = dialog.findChild<QLineEdit *>("effectsSearch");
+    QVERIFY(status && preview && list && notice && unavailable && progress && buttons && search);
+    auto *apply = buttons->button(QDialogButtonBox::Apply);
+    QVERIFY(apply);
+    QVERIFY2(preview->text().isEmpty(), "no effect is previewed until the store has loaded");                  // initial
+    QVERIFY2(status->text().isEmpty(), qPrintable(status->text()));                                        // initial: nothing has been reported yet
+    QVERIFY2(!apply->isEnabled(), "the recent and favorite store is still loading");                        // initial
+    QTRY_VERIFY(apply->isEnabled());                                                                      // populated: a valid effect is selected once the store has loaded
+    QVERIFY(!dialog.selectedId().isEmpty());
+    QTRY_VERIFY(!dialog.previewImage().isNull());                                                         // populated: the selected effect is previewed
+    QVERIFY2(status->text().contains("Preview only"), qPrintable(status->text()));                          // populated
+    QVERIFY2(notice->text().contains("unavailable"), qPrintable(notice->text()));                            // unavailable
+    bool reasonNamed = false, stillListed = false;
+    for (int row = 0; row < unavailable->count(); ++row) reasonNamed |= unavailable->item(row)->text().contains("effect-unavailable");
+    for (int row = 0; row < list->count(); ++row) stillListed |= list->item(row)->text().contains("effect-unavailable");
+    QVERIFY2(reasonNamed, "every unavailable effect names the reason it is unavailable");                    // unavailable
+    QVERIFY2(stillListed, "an unavailable effect stays listed, disabled, with its reason");                   // unavailable
+    search->setText("no effect in the catalog answers to this");
+    QTRY_VERIFY(list->count() == 0);                                                                      // empty: nothing matches the search
+    QVERIFY2(!apply->isEnabled(), "with no effect to apply, Apply stays disabled");                          // empty
+    QVERIFY2(!status->text().isEmpty(), "the empty result is reported in words, not by a silent empty list");  // empty
+    search->setText("auto_contrast");
+    QTRY_VERIFY(dialog.selectedId() == QString("auto_contrast"));                                          // populated
+    QTRY_VERIFY(!dialog.previewImage().isNull());                                                         // populated
+    auto *clip = dialog.findChild<QLineEdit *>("param:clip_percent");
+    auto *clipError = dialog.findChild<QLabel *>("error:clip_percent");
+    QVERIFY(clip && clipError);
+    clip->setText("999");
+    QVERIFY2(clipError->text().contains("Enter a valid value"), qPrintable(clipError->text()));               // validation
+    QVERIFY2(status->text().contains("effect-invalid-parameter"), qPrintable(status->text()));                // validation
+    QVERIFY2(!apply->isEnabled(), "an out-of-range parameter keeps Apply disabled");                          // validation
+    clip->setText("0.5");
+    QTRY_VERIFY(apply->isEnabled());                                                                      // populated: a valid parameter enables Apply again
+    apply->click();
+    QVERIFY2(status->text().contains("Applying"), qPrintable(status->text()));                               // loading
+    QVERIFY(progress->isVisible());                                                                       // loading
+    QTRY_VERIFY(status->text().contains("effect-commit-stale"));                                           // failure
+    QVERIFY2(status->accessibleDescription().contains("effect-commit-stale"), "the failure carries an accessible cue");  // failure
+  }
+  // Presets: initial, empty, loading, populated, validation, unavailable, error, failure.
+  // denied: n/a because the dialog asks for no permission; it reads a preset the user chose.
+  // cancelled: n/a because the only cancel action closes the dialog and abandons the run without a message.
+  void presetDialogStates() {
+    QImage pixels(64, 48, QImage::Format_ARGB32); pixels.fill(Qt::white);
+    const auto loaded = prepareCapturedSource(pixels);
+    QVERIFY(loaded.document);
+    auto registry = std::make_shared<xerahs::effects::EffectRegistry>(xerahs::effects::builtinEffects());
+    PresetDialog dialog(*loaded.document, loaded.image, [](PreparedCanvasEdit) { return false; }, registry);
+    dialog.show();
+    auto *status = dialog.findChild<QLabel *>("presetStatus");
+    auto *steps = dialog.findChild<QListWidget *>("presetSteps");
+    auto *exportButton = dialog.findChild<QPushButton *>("presetExport");
+    auto *buttons = dialog.findChild<QDialogButtonBox *>();
+    QVERIFY(status && steps && exportButton && buttons);
+    auto *apply = buttons->button(QDialogButtonBox::Apply);
+    QVERIFY(apply);
+    QVERIFY2(status->text().isEmpty(), qPrintable(status->text()));                                        // initial: no preset has been read yet
+    QVERIFY2(!apply->isEnabled(), "there is nothing to apply until a preset is read");                        // initial
+    QVERIFY2(!exportButton->isEnabled(), "there is nothing to export until a preset is read");                 // initial
+    QCOMPARE(steps->count(), 0);                                                                           // empty
+    xerahs::effects::EffectPreset nothing;
+    dialog.setPreset(nothing);
+    QCOMPARE(steps->count(), 0);                                                                           // empty: the preset carries no steps
+    QVERIFY2(!apply->isEnabled(), "a preset without steps cannot be applied");                               // empty
+    dialog.loadFile(dir.filePath("missing-preset.xsie"));
+    QVERIFY2(status->text().contains("Reading preset"), qPrintable(status->text()));                          // loading
+    QVERIFY(!apply->isEnabled());
+    QTRY_VERIFY(status->text().contains("preset-read-failed"));                                             // error
+    QVERIFY2(status->text().contains("could not be read"), qPrintable(status->text()));                        // error
+    xerahs::effects::EffectPreset preset;
+    preset.name = "Fixture preset";
+    xerahs::effects::PresetStep step;
+    step.id = "brightness"; step.supported = true; step.enabled = true;
+    step.parameters.insert("amount", QVariant(0.0));
+    preset.steps.append(step);
+    dialog.setPreset(preset);
+    QCOMPARE(steps->count(), 1);                                                                           // populated
+    QVERIFY2(steps->item(0)->text().contains("Supported"), qPrintable(steps->item(0)->text()));               // populated
+    QVERIFY2(status->text().contains("Apply runs supported"), qPrintable(status->text()));                    // populated
+    QVERIFY(apply->isEnabled());                                                                           // populated
+    QVERIFY(exportButton->isEnabled());                                                                    // populated
+    apply->click();
+    QVERIFY2(status->text().contains("Applying preset"), qPrintable(status->text()));                         // loading
+    QTRY_VERIFY(status->text().contains("preset-commit-stale"));                                            // failure
+    QVERIFY2(status->text().contains("document changed"), qPrintable(status->text()));                         // failure
+    xerahs::effects::EffectPreset unsupported;
+    xerahs::effects::PresetStep unknown;
+    unknown.id = "legacy_unknown_step"; unknown.supported = false; unknown.enabled = true;
+    unsupported.steps.append(unknown);
+    dialog.setPreset(unsupported);
+    QCOMPARE(steps->count(), 1);
+    QVERIFY2(steps->item(0)->text().contains("Unsupported"), qPrintable(steps->item(0)->text()));              // validation
+    QVERIFY2(!apply->isEnabled(), "a preset with no supported step cannot be applied");                        // validation
+    xerahs::effects::EffectPreset absent;
+    xerahs::effects::PresetStep missing;
+    missing.id = "remove_background"; missing.supported = false; missing.enabled = true;
+    absent.steps.append(missing);
+    dialog.setPreset(absent);
+    QVERIFY2(steps->item(0)->text().contains("effect-unavailable"), qPrintable(steps->item(0)->text()));       // unavailable
+    QVERIFY2(steps->item(0)->text().contains("remove_background"), qPrintable(steps->item(0)->text()));         // unavailable
+    QVERIFY2(!apply->isEnabled(), "an unavailable effect keeps Apply disabled");                               // unavailable
+  }
+  // Insert image: initial, empty, loading, validation, error, failure, populated.
+  // denied: n/a because the dialog asks for no permission; it reads a file or the clipboard the user offered.
+  // unavailable: n/a because the dialog has no optional dependency; its decoder is always built in.
+  // cancelled: n/a because the only cancel action closes the dialog and abandons the insertion.
+  // The file picker is never opened: every load goes through the public loadFile() entry point.
+  void imageInsertDialogStates() {
+    QImage asset(4, 2, QImage::Format_ARGB32); asset.fill(Qt::green);
+    QVERIFY(asset.save(dir.filePath("insert.png")));
+    {
+      QPointer<ImageInsertDialog> dialog(new ImageInsertDialog);
+      dialog->show();
+      auto *status = dialog->findChild<QLabel *>("insertImageStatus");
+      auto *file = dialog->findChild<QPushButton *>("insertImageFile");
+      auto *clipboardButton = dialog->findChild<QPushButton *>("insertImageClipboard");
+      auto *progress = dialog->findChild<QProgressBar *>("insertImageProgress");
+      QVERIFY(status && file && clipboardButton && progress);
+      QVERIFY2(status->text().contains("Choose a source"), qPrintable(status->text()));                        // initial
+      QVERIFY(file->isEnabled() && clipboardButton->isEnabled());
+      QApplication::clipboard()->setText("no image on the clipboard");
+      dialog->useClipboard();
+      QVERIFY2(status->text().contains("no image"), qPrintable(status->text()));                              // empty
+      QVERIFY(file->isEnabled());
+      QImage oversized(16385, 1, QImage::Format_ARGB32); oversized.fill(Qt::red);
+      QApplication::clipboard()->setImage(oversized);
+      dialog->useClipboard();
+      QVERIFY2(status->text().contains("exceeds"), qPrintable(status->text()));                               // validation
+      QVERIFY(file->isEnabled());
+      if (dialog) delete dialog.data();
+    }
+    {
+      QPointer<ImageInsertDialog> dialog(new ImageInsertDialog);
+      dialog->show();
+      QFile bad(dir.filePath("broken.png")); QVERIFY(bad.open(QIODevice::WriteOnly)); bad.write("not an image"); bad.close();
+      QVERIFY(dialog->loadFile(bad.fileName()));
+      QTRY_VERIFY_WITH_TIMEOUT(dialog->findChild<QLabel *>("insertImageStatus")->text().contains("source-unsupported"), 5000);  // error
+      QVERIFY(!dialog->busy());
+      if (dialog) delete dialog.data();
+    }
+    {
+      QPointer<ImageInsertDialog> dialog(new ImageInsertDialog(nullptr, {[] { throw std::runtime_error("private insertion detail"); }}));
+      dialog->show();
+      QVERIFY(dialog->loadFile(dir.filePath("insert.png")));
+      QTRY_VERIFY_WITH_TIMEOUT(dialog->findChild<QLabel *>("insertImageStatus")->text().contains("image-insert-failed"), 5000);  // failure
+      QVERIFY(!dialog->findChild<QLabel *>("insertImageStatus")->text().contains("private"));                  // failure: the internal detail stays private
+      if (dialog) delete dialog.data();
+    }
+    {
+      const auto gate = std::make_shared<WorkGate>();
+      QPointer<ImageInsertDialog> dialog(new ImageInsertDialog(nullptr, {[gate] {
+        gate->entered.store(true);
+        while (!gate->released.load()) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }}));
+      dialog->show();
+      QVERIFY(dialog->loadFile(dir.filePath("insert.png")));
+      auto *status = dialog->findChild<QLabel *>("insertImageStatus");
+      QVERIFY2(status->text().contains("Validating"), qPrintable(status->text()));                             // loading
+      QVERIFY(!dialog->findChild<QPushButton *>("insertImageFile")->isEnabled());                              // loading: the sources are locked while the image is prepared
+      QTRY_VERIFY(gate->entered.load());
+      gate->released.store(true);
+      QVERIFY(QThreadPool::globalInstance()->waitForDone(5000));
+    }
+    {
+      QPointer<ImageInsertDialog> dialog(new ImageInsertDialog);
+      dialog->show();
+      bool accepted = false, prepared = false;
+      QObject::connect(dialog.data(), &QDialog::accepted, dialog.data(), [&] { accepted = true; prepared = dialog->choice().valid(); });
+      QVERIFY(dialog->loadFile(dir.filePath("insert.png")));
+      QTRY_VERIFY(accepted);
+      QVERIFY2(prepared, "a valid image is prepared and handed over");                                        // populated
+    }
   }
 };
 QTEST_MAIN(InterfaceStatesTest)
