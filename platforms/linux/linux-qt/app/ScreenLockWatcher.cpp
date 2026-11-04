@@ -27,13 +27,20 @@ ScreenLockWatcher::ScreenLockWatcher(xerahs::capture::ScreenLockState &state, co
   auto *watcher = new QDBusPendingCallWatcher(systemBus.asyncCall(message, 2000), this);
   connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *call) {
     QDBusPendingReply<QDBusVariant> reply = *call;
-    if (!reply.isError() && reply.value().variant().typeId() == QMetaType::Bool) m_state.setLocked(reply.value().variant().toBool());
     call->deleteLater();
+    // A live signal is newer than this startup read. Never let its delayed
+    // snapshot undo a lock or unlock already observed by the scheduler.
+    // Retire the call before notifying observers that may destroy this owner.
+    if (!m_initialSnapshotSuperseded && !reply.isError() && reply.value().variant().typeId() == QMetaType::Bool)
+      m_state.setLocked(reply.value().variant().toBool());
   });
 }
 
-void ScreenLockWatcher::screenSaverActiveChanged(bool active) { m_state.setLocked(active); }
-void ScreenLockWatcher::sessionLocked() { m_state.setLocked(true); }
-void ScreenLockWatcher::sessionUnlocked() { m_state.setLocked(false); }
+void ScreenLockWatcher::screenSaverActiveChanged(bool active) {
+  m_initialSnapshotSuperseded = true;
+  m_state.setLocked(active);
+}
+void ScreenLockWatcher::sessionLocked() { screenSaverActiveChanged(true); }
+void ScreenLockWatcher::sessionUnlocked() { screenSaverActiveChanged(false); }
 
 }  // namespace xerahs::app

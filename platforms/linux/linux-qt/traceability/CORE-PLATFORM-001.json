@@ -425,10 +425,10 @@
       }
     },
     "CORE-016": {
-      "status": "implemented",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Audit 2026-11-04: Clauses mapped to passing tests: explicit bounded schedule and target scope -> CaptureScheduleTest::unboundedScheduleIsRejected, endsByCountWithInjectedClock, endsByTimeWithInjectedClock; visible stop -> ScheduledCaptureTest::delayAndAutoRefuseEachOtherAndTheTooltipFollowsTheRun and CaptureScheduleTest::userStopWaitsForTheInFlightAttempt; documented skip-not-queue/no-overlap -> CaptureScheduleTest::busyTickIsSkippedAndNotQueued; permission loss stops future prompts and requires explicit restart -> ScheduledCaptureTest::permissionDenialStopsFutureTicksAndRequiresAnExplicitNewSchedule and unrelatedPermissionDenialDoesNotChangeAnIdleOrWaitingSchedule; privacy after admission -> lockAfterAdmissionCancelsOnlyTheOwnedAttemptAndPreventsLateSuccess and lockNeverCancelsUnrelatedManualWorkOrRestartsAWaitingRun; unresolved workflow refusal -> unresolvedWorkflowRefusesAndStopsWithoutStartingAnotherCapture. Lock pause/resume and storage refuse/stop -> CaptureConditionsTest::lockedScreenPausesTheRunAndItResumesAfterUnlock and lowStorageRefusesToStartAndStopsARunningCapture (run directly without D-Bus, 5 passed/0 failed including setup/cleanup). ShellCommandsTest::automaticCaptureChecksTheEffectiveWorkflowFolderAndRefusesAnUnresolvedDefault proves actual saved workflow/profile folder precedence through the shared capture resolver and injected free-space lookup. capture-schedule, capture-schedule-dialog, shell-commands and scheduled-capture pass. Native condition sources remain ScreenSaver/logind and QStorageInfo; capture-conditions wrapper is sandbox-blocked at private D-Bus startup, so physical desktop lock signal qualification is not accepted by this candidate classification. Existing 512 MiB floor and locked-waiting tick skip/resume policy are retained; a lock during an admitted automatic attempt requests cancellation and stops future ticks.",
+      "note": "Audit 2026-11-05: C05 fixes a reproduced native startup privacy race: CaptureConditionsTest::lateInitialSnapshotCannotUndoANewerNativeLockSignal fails before the fix and passes after it, proving a delayed initial LockedHint reply cannot replace a newer lock signal and normal subsequent unlock remains effective. Existing candidate clauses are proven by CaptureScheduleTest::unboundedScheduleIsRejected/endsByCountWithInjectedClock/endsByTimeWithInjectedClock and CaptureScheduleDialogTest::dialogRequiresABoundAndRejectsAnEndBeyondADay (explicit bounded schedule/target); userStopWaitsForTheInFlightAttempt and ScheduledCaptureTest::delayAndAutoRefuseEachOtherAndTheTooltipFollowsTheRun (visible stop and status); busyTickIsSkippedAndNotQueued (documented skip/no-overlap); ScheduledCaptureTest::permissionDenialStopsFutureTicksAndRequiresAnExplicitNewSchedule/unrelatedPermissionDenialDoesNotChangeAnIdleOrWaitingSchedule (permission revocation); lockAfterAdmissionCancelsOnlyTheOwnedAttemptAndPreventsLateSuccess/lockNeverCancelsUnrelatedManualWorkOrRestartsAWaitingRun (in-flight privacy revocation); CaptureConditionsTest::lockedScreenPausesTheRunAndItResumesAfterUnlock/lowStorageRefusesToStartAndStopsARunningCapture/desktopSignalsDriveTheLockState (lock and storage sources); ShellCommandsTest::automaticCaptureChecksTheEffectiveWorkflowFolderAndRefusesAnUnresolvedDefault plus unresolvedWorkflowRefusesAndStopsWithoutStartingAnotherCapture (real-shell workflow storage/admission). All five affected native suites pass with the private bus. Remaining source-grounded native boundary: ScreenLockWatcher currently subscribes logind Lock/Unlock across all session object paths and ScreenSaver signals without service/path scoping; current-session signal ownership and unknown-at-start lock-state privacy are not established by those tests. The earlier implemented classification overstates that full clause and is corrected to partial until native service scoping and supported-desktop permission/privacy qualification are proven. Existing 512 MiB floor, unknown-source handling and skip/resume policy are retained; no platform disposition or human approval is invented.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CaptureScheduleTest.cpp",
         "platforms/linux/linux-qt/tests/ScheduledCaptureTest.cpp",
@@ -442,10 +442,10 @@
         "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
       ],
       "audit": {
-        "classification": "implemented",
+        "classification": "partial",
         "spec_line": 72,
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "36761b71125ac3effb4c7feb33d5bd480308c60b"
+        "coverage": "Partial scheduling and native condition behavior is tested; current-session service scoping, startup lock-state availability and native/physical/human qualification remain unaccepted.",
+        "reviewed_at_revision": "c8f1c0a"
       }
     },
     "CORE-017": {
