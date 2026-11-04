@@ -1,4 +1,5 @@
 #include "CanvasCropDialog.h"
+#include <QCoreApplication>
 #include <QDialogButtonBox>
 #include <QColorSpace>
 #include <QFormLayout>
@@ -15,7 +16,7 @@ namespace xerahs::app {
 using namespace xerahs::editor;
 class CropPreview final : public QWidget {
 public:
-  explicit CropPreview(QWidget *parent) : QWidget(parent) { setObjectName("cropPreview"); setAccessibleName("Retained crop preview"); setMinimumSize(320, 180); }
+  explicit CropPreview(QWidget *parent) : QWidget(parent) { setObjectName("cropPreview"); setAccessibleName(QCoreApplication::translate("CanvasCropDialog", "Retained crop preview")); setMinimumSize(320, 180); }
   void setImage(QImage image) { m_image = std::move(image); update(); }
 protected:
   void paintEvent(QPaintEvent *) override {
@@ -29,21 +30,21 @@ private:
 };
 CanvasCropDialog::CanvasCropDialog(AnnotationDocument document, QImage source, CropRegion region, QWidget *parent, CanvasCropHooks hooks)
     : QDialog(parent), m_document(std::move(document)), m_source(std::move(source)), m_hooks(std::move(hooks)) {
-  setObjectName("canvasCropDialog"); setWindowTitle("Crop Image"); setAccessibleName(windowTitle()); setWindowModality(Qt::WindowModal);
+  setObjectName("canvasCropDialog"); setWindowTitle(tr("Crop Image")); setAccessibleName(windowTitle()); setWindowModality(Qt::WindowModal);
   auto *layout = new QVBoxLayout(this); auto *form = new QFormLayout; layout->addLayout(form);
   const auto number = [&](const char *name, const QString &label, int minimum, int maximum, int value) {
     auto *field = new QSpinBox(this); field->setObjectName(name); auto accessible = label; accessible.remove('&'); field->setAccessibleName(accessible); field->setRange(minimum, maximum); field->setValue(value); form->addRow(label, field); return field;
   };
-  m_left = number("cropLeft", "&Left (pixels)", 0, m_source.width() - 1, int(region.left));
-  m_top = number("cropTop", "&Top (pixels)", 0, m_source.height() - 1, int(region.top));
-  m_width = number("cropWidth", "&Width (pixels)", 1, m_source.width() - m_left->value(), int(region.width));
-  m_height = number("cropHeight", "&Height (pixels)", 1, m_source.height() - m_top->value(), int(region.height));
-  auto *rules = new QLabel("Keep only the declared rectangle of source pixels. Known annotations are translated; objects wholly outside are removed, and intersecting objects retain their geometry and are clipped at export. "
-      "Unsupported annotation geometry blocks cropping. Apply Crop adds one undo step; Cancel keeps the canvas unchanged. Undo history and embedded image assets can retain earlier pixels.", this); rules->setWordWrap(true); rules->setTextFormat(Qt::PlainText); layout->addWidget(rules);
+  m_left = number("cropLeft", tr("&Left (pixels)"), 0, m_source.width() - 1, int(region.left));
+  m_top = number("cropTop", tr("&Top (pixels)"), 0, m_source.height() - 1, int(region.top));
+  m_width = number("cropWidth", tr("&Width (pixels)"), 1, m_source.width() - m_left->value(), int(region.width));
+  m_height = number("cropHeight", tr("&Height (pixels)"), 1, m_source.height() - m_top->value(), int(region.height));
+  auto *rules = new QLabel(tr("Keep only the declared rectangle of source pixels. Known annotations are translated; objects wholly outside are removed, and intersecting objects retain their geometry and are clipped at export. "
+      "Unsupported annotation geometry blocks cropping. Apply Crop adds one undo step; Cancel keeps the canvas unchanged. Undo history and embedded image assets can retain earlier pixels."), this); rules->setWordWrap(true); rules->setTextFormat(Qt::PlainText); layout->addWidget(rules);
   m_preview = new CropPreview(this); layout->addWidget(m_preview, 1);
   m_status = new QLabel(this); m_status->setObjectName("cropStatus"); m_status->setTextFormat(Qt::PlainText); m_status->setWordWrap(true); layout->addWidget(m_status);
-  m_progress = new QProgressBar(this); m_progress->setRange(0, 100); m_progress->setAccessibleName("Crop preview progress"); layout->addWidget(m_progress);
-  m_buttons = new QDialogButtonBox(QDialogButtonBox::Apply | QDialogButtonBox::Cancel, this); m_buttons->button(QDialogButtonBox::Apply)->setText("&Apply Crop"); layout->addWidget(m_buttons);
+  m_progress = new QProgressBar(this); m_progress->setRange(0, 100); m_progress->setAccessibleName(tr("Crop preview progress")); layout->addWidget(m_progress);
+  m_buttons = new QDialogButtonBox(QDialogButtonBox::Apply | QDialogButtonBox::Cancel, this); m_buttons->button(QDialogButtonBox::Apply)->setText(tr("&Apply Crop")); layout->addWidget(m_buttons);
   // shortcut-catalog Enter (confirm-crop-or-continue-task): Apply Crop is the default button.
   m_buttons->button(QDialogButtonBox::Apply)->setAutoDefault(true); m_buttons->button(QDialogButtonBox::Apply)->setDefault(true);
   m_buttons->button(QDialogButtonBox::Cancel)->setAutoDefault(false);
@@ -62,7 +63,7 @@ void CanvasCropDialog::request() {
   const QPointer<CanvasCropDialog> owner(this); ++m_revision; m_pending = true; m_prepared.reset(); if (m_work) m_work->cancelled.store(true);
   m_width->setMaximum(m_source.width() - m_left->value()); if (!owner) return; m_height->setMaximum(m_source.height() - m_top->value()); if (!owner) return;
   m_buttons->button(QDialogButtonBox::Apply)->setEnabled(false); if (!owner) return;
-  m_status->setText("Preparing retained crop…"); m_progress->setValue(0); m_debounce.start(100);
+  m_status->setText(tr("Preparing retained crop…")); m_progress->setValue(0); m_debounce.start(100);
 }
 void CanvasCropDialog::start() {
   if (m_closing || m_work || !m_pending) return;
@@ -85,7 +86,7 @@ void CanvasCropDialog::start() {
       work->done.store(true, std::memory_order_release);
     });
     m_work = std::move(work);
-  } catch (...) { m_status->setText("The crop preview could not be started. Change the bounds to retry. The canvas was kept."); }
+  } catch (...) { m_status->setText(tr("The crop preview could not be started. Change the bounds to retry. The canvas was kept.")); }
 }
 void CanvasCropDialog::poll() {
   if (!m_work || m_closing) return;
@@ -95,11 +96,11 @@ void CanvasCropDialog::poll() {
   if (work->revision == m_revision && !work->cancelled.load()) {
     if (work->preview.edit.result.error) {
       const auto error = *work->preview.edit.result.error;
-      m_status->setText(error == "canvas-annotation-transform-unsupported" ? "Crop cannot transform unsupported annotation geometry. The canvas was kept." : "Crop preview failed (" + error + "). The canvas was kept."); if (!owner) return;
+      m_status->setText(error == "canvas-annotation-transform-unsupported" ? tr("Crop cannot transform unsupported annotation geometry. The canvas was kept.") : tr("Crop preview failed (%1). The canvas was kept.").arg(error)); if (!owner) return;
     } else {
       m_preview->setImage(std::move(work->preview.composite));
       m_prepared = PreparedCropEdit{std::move(work->preview.edit), work->region, std::move(work->displaySource)};
-      m_status->setText(QString("Retain %1 × %2 pixels at %3, %4. Apply Crop to commit; Cancel keeps the canvas.").arg(work->region.width).arg(work->region.height).arg(work->region.left).arg(work->region.top)); if (!owner) return;
+      m_status->setText(tr("Retain %1 × %2 pixels at %3, %4. Apply Crop to commit; Cancel keeps the canvas.").arg(work->region.width).arg(work->region.height).arg(work->region.left).arg(work->region.top)); if (!owner) return;
       m_buttons->button(QDialogButtonBox::Apply)->setEnabled(true); if (!owner) return;
     }
   }

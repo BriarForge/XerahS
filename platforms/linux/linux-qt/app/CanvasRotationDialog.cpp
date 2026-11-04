@@ -2,6 +2,7 @@
 
 #include <QCheckBox>
 #include <QColorSpace>
+#include <QCoreApplication>
 #include <QPointer>
 #include <QThreadPool>
 #include <QColorDialog>
@@ -24,7 +25,7 @@ class CanvasRotationPreview final : public QWidget {
 public:
   explicit CanvasRotationPreview(QWidget *parent) : QWidget(parent) {
     setObjectName(QStringLiteral("rotationPreview"));
-    setAccessibleName(QStringLiteral("Rotation preview"));
+    setAccessibleName(QCoreApplication::translate("CanvasRotationDialog", "Rotation preview"));
     setMinimumSize(320, 240);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   }
@@ -48,25 +49,25 @@ private:
 CanvasRotationDialog::CanvasRotationDialog(AnnotationDocument document, QImage source, QWidget *parent, EditorCanvasHooks hooks)
     : QDialog(parent), m_document(std::move(document)), m_source(std::move(source)), m_hooks(std::move(hooks)) {
   setObjectName(QStringLiteral("customRotationDialog"));
-  setWindowTitle(QStringLiteral("Rotate Image")); setAccessibleName(windowTitle()); setWindowModality(Qt::WindowModal);
+  setWindowTitle(tr("Rotate Image")); setAccessibleName(windowTitle()); setWindowModality(Qt::WindowModal);
   auto *layout = new QVBoxLayout(this);
   auto *form = new QFormLayout;
   m_angle = new QDoubleSpinBox(this);
   m_angle->setObjectName(QStringLiteral("rotationAngle"));
   m_angle->setRange(-360, 360); m_angle->setDecimals(2); m_angle->setSuffix(QStringLiteral("°"));
-  form->addRow(QStringLiteral("&Angle (clockwise)"), m_angle);
+  form->addRow(tr("&Angle (clockwise)"), m_angle);
   m_interpolation = new QComboBox(this);
   m_interpolation->setObjectName(QStringLiteral("rotationInterpolation"));
-  m_interpolation->addItems({QStringLiteral("Nearest neighbour"), QStringLiteral("Bilinear")});
-  form->addRow(QStringLiteral("&Interpolation"), m_interpolation);
-  m_expand = new QCheckBox(QStringLiteral("Expand canvas to contain the rotated image"), this);
+  m_interpolation->addItems({tr("Nearest neighbour"), tr("Bilinear")});
+  form->addRow(tr("&Interpolation"), m_interpolation);
+  m_expand = new QCheckBox(tr("Expand canvas to contain the rotated image"), this);
   m_expand->setObjectName(QStringLiteral("rotationExpand")); m_expand->setChecked(true);
   form->addRow(m_expand);
-  auto *color = new QPushButton(QStringLiteral("Transparent"), this);
-  form->addRow(QStringLiteral("&Uncovered pixels"), color);
+  auto *color = new QPushButton(tr("Transparent"), this);
+  form->addRow(tr("&Uncovered pixels"), color);
   connect(color, &QPushButton::clicked, this, [this, color] {
     const QPointer<CanvasRotationDialog> owner(this); QPointer<QColorDialog> picker(new QColorDialog(QColor::fromRgba(m_fill), this));
-    picker->setWindowTitle("Uncovered pixels"); picker->setOption(QColorDialog::ShowAlphaChannel);
+    picker->setWindowTitle(tr("Uncovered pixels")); picker->setOption(QColorDialog::ShowAlphaChannel);
     const auto answer = picker->exec(); const auto chosen = picker && answer == QDialog::Accepted ? picker->selectedColor() : QColor{};
     if (picker) picker->hide();
     if (picker) picker->setParent(nullptr);
@@ -74,12 +75,12 @@ CanvasRotationDialog::CanvasRotationDialog(AnnotationDocument document, QImage s
     if (owner && chosen.isValid()) { m_fill = chosen.rgba(); color->setText(chosen.name(QColor::HexArgb)); if (owner) requestPreview(); }
   });
   layout->addLayout(form);
-  auto *rules = new QLabel(QStringLiteral("Rotate about the image centre. Without expansion, keep the current dimensions "
+  auto *rules = new QLabel(tr("Rotate about the image centre. Without expansion, keep the current dimensions "
       "and crop at the edges. Background colour fills samples outside the source; source transparency is preserved."), this);
   rules->setWordWrap(true); layout->addWidget(rules);
   m_preview = new CanvasRotationPreview(this); layout->addWidget(m_preview, 1);
   m_status = new QLabel(this); m_status->setObjectName(QStringLiteral("rotationStatus")); m_status->setWordWrap(true); layout->addWidget(m_status);
-  m_progress = new QProgressBar(this); m_progress->setRange(0, 100); m_progress->setAccessibleName(QStringLiteral("Rotation preview progress")); layout->addWidget(m_progress);
+  m_progress = new QProgressBar(this); m_progress->setRange(0, 100); m_progress->setAccessibleName(tr("Rotation preview progress")); layout->addWidget(m_progress);
   m_buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this); layout->addWidget(m_buttons);
   connect(m_buttons, &QDialogButtonBox::accepted, this, &CanvasRotationDialog::accept);
   connect(m_buttons, &QDialogButtonBox::rejected, this, &CanvasRotationDialog::reject);
@@ -102,7 +103,7 @@ void CanvasRotationDialog::requestPreview() {
   if (m_work) m_work->cancelled.store(true);
   m_prepared.reset(); m_pending = true;
   m_buttons->button(QDialogButtonBox::Ok)->setEnabled(false); if (!owner) return;
-  m_status->setText("Preparing preview…"); if (!owner) return;
+  m_status->setText(tr("Preparing preview…")); if (!owner) return;
   m_progress->setValue(0); if (!owner) return; m_debounce.start(150);
 }
 void CanvasRotationDialog::startPreview() {
@@ -127,7 +128,7 @@ void CanvasRotationDialog::startPreview() {
       work->ready.store(true, std::memory_order_release);
     });
     m_work = std::move(work);
-  } catch (...) { m_status->setText("A preview worker could not be started. Change the angle to retry. The document was kept."); }
+  } catch (...) { m_status->setText(tr("A preview worker could not be started. Change the angle to retry. The document was kept.")); }
 }
 void CanvasRotationDialog::pollPreview() {
   if (!m_work || m_closing) return;
@@ -139,15 +140,15 @@ void CanvasRotationDialog::pollPreview() {
     auto &preview = work->preview;
     if (preview.edit.result.error) {
       QString message = *preview.edit.result.error;
-      if (message == diagnostic::documentTooLarge) message = "The expanded image exceeds the editor's dimensions or memory limits.";
-      else if (message == "canvas-annotation-transform-unsupported") message = "This document contains annotation types this editor cannot rotate yet.";
-      else if (message == diagnostic::documentInvalid) message = "The document contains invalid image or annotation data.";
-      else if (message == "canvas-encoding-failed") message = "The rotated image could not be encoded.";
-      else if (message == "canvas-preparation-failed") message = "The rotation preview could not be prepared. Change the angle to retry. The document was kept.";
+      if (message == diagnostic::documentTooLarge) message = tr("The expanded image exceeds the editor's dimensions or memory limits.");
+      else if (message == "canvas-annotation-transform-unsupported") message = tr("This document contains annotation types this editor cannot rotate yet.");
+      else if (message == diagnostic::documentInvalid) message = tr("The document contains invalid image or annotation data.");
+      else if (message == "canvas-encoding-failed") message = tr("The rotated image could not be encoded.");
+      else if (message == "canvas-preparation-failed") message = tr("The rotation preview could not be prepared. Change the angle to retry. The document was kept.");
       m_status->setText(message); if (!owner) return; m_preview->setImage({});
     } else {
-      m_status->setText(QString("Preview: %1 × %2 pixels. %3").arg(preview.composite.width()).arg(preview.composite.height())
-          .arg(preview.edit.result.changed ? "OK applies one undoable edit." : "No change to the document.")); if (!owner) return;
+      m_status->setText(tr("Preview: %1 × %2 pixels. %3").arg(preview.composite.width()).arg(preview.composite.height())
+          .arg(preview.edit.result.changed ? tr("OK applies one undoable edit.") : tr("No change to the document."))); if (!owner) return;
       m_preview->setImage(std::move(preview.composite)); m_prepared = std::move(preview.edit);
       m_progress->setValue(100); if (!owner) return; m_buttons->button(QDialogButtonBox::Ok)->setEnabled(true); if (!owner) return;
     }

@@ -1,6 +1,8 @@
 // CORE-009: a pseudo-locale that lengthens every translated string by 40% neither clips controls nor
 // overflows the screen, and a string missing from the translation falls back to its source text.
 #include "AppearanceDialog.h"
+#include "CanvasCropDialog.h"
+#include "CanvasRotationDialog.h"
 #include "ColorPickerDialog.h"
 #include "DrawingDefaultsDialog.h"
 #include "FileUploadController.h"
@@ -14,6 +16,7 @@
 #include "QrCodeDialog.h"
 #include "RectanglePropertiesDialog.h"
 #include "SettingsDialog.h"
+#include "SelectionRotationDialog.h"
 #include "TextContentDialog.h"
 #include "UploadDestinationsDialog.h"
 #include "UrlOpenDialog.h"
@@ -35,6 +38,7 @@
 #include <QImage>
 #include <QLabel>
 #include <QScreen>
+#include <QSet>
 #include <QSet>
 #include <QTemporaryDir>
 #include <QTest>
@@ -415,6 +419,55 @@ private slots:
       QVERIFY2(balloonChecked >= 3, qPrintable(QString::number(balloonChecked)));
       QVERIFY2(textDialog.windowTitle().contains(QChar(0x2022)), qPrintable(textDialog.windowTitle()));
       QVERIFY2(balloonDialog.windowTitle().contains(QChar(0x2022)), qPrintable(balloonDialog.windowTitle()));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void canvasCropDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      QImage source(64, 48, QImage::Format_ARGB32); source.fill(Qt::white);
+      xerahs::editor::CropRegion region{0, 0, 64, 48};
+      CanvasCropDialog dialog(xerahs::editor::AnnotationDocument{}, source, region);
+      // The crop bounds and the preview status hold runtime values; only the prose is translated.
+      const int checked = translatedTexts(dialog, {});
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+      QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void canvasRotationDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      QImage source(64, 48, QImage::Format_ARGB32); source.fill(Qt::white);
+      CanvasRotationDialog dialog(xerahs::editor::AnnotationDocument{}, source);
+      // The angle, the preview status and the chosen fill colour hold runtime values.
+      const int checked = translatedTexts(dialog, {});
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+      QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void selectionRotationDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      // One selected rectangle, so the dialog shows its own rotation summary rather than the
+      // unsupported-selection message that the shared annotation helper produces.
+      xerahs::editor::RectangleAnnotation rectangle;
+      rectangle.id = QUuid::createUuid();
+      rectangle.start = {10, 10}; rectangle.end = {60, 40};
+      xerahs::editor::AnnotationDocument document;
+      document.annotations = {rectangle};
+      SelectionRotationDialog dialog(document, QSet<QUuid>{rectangle.id});
+      // The preview lists object UUIDs and angles: runtime values. Only the prose is translated.
+      const int checked = translatedTexts(dialog, {});
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+      QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
     }
     QApplication::removeTranslator(&pseudo);
   }
