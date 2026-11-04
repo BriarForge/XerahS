@@ -92,6 +92,16 @@ private slots:
     if (mode >= 2) { QVERIFY(!canvas); QVERIFY(view && !view->isEnabled()); } else QVERIFY(!view);
     QCOMPARE(session.undoCount(), 1);
   }
+  void refreshWithoutASelectionModelDoesNotCrash() {
+    const QImage source = image(); EditorSession session(document()); EditorCanvas canvas(session, source); AnnotationObjectNavigator navigator(canvas);
+    navigator.setModel(nullptr);
+    // Qt 6 keeps a live selection model for a null model, so drop it to
+    // reproduce the teardown state: the view outlived its selection model.
+    delete navigator.selectionModel();
+    QVERIFY(!navigator.selectionModel());
+    emit canvas.changed();
+    QVERIFY(true);  // reaching here without a crash is the assertion
+  }
 };
 QTEST_MAIN(AnnotationObjectNavigatorTest)
 #include "AnnotationObjectNavigatorTest.moc"

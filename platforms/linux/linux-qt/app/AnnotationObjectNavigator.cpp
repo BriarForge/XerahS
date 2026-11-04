@@ -88,6 +88,7 @@ AnnotationObjectNavigator::AnnotationObjectNavigator(EditorCanvas &canvas, QWidg
 void AnnotationObjectNavigator::refresh() {
   if (m_refreshing || !m_canvas) return;
   const QPointer<AnnotationObjectNavigator> owner(this); const QPointer<QItemSelectionModel> selectionOwner(selectionModel());
+  if (!selectionOwner) return;  // teardown: the view's selection model is already gone
   const bool blocked = selectionOwner->blockSignals(true); m_refreshing = true;
   const auto restore = qScopeGuard([owner, selectionOwner, blocked] {
     if (selectionOwner) selectionOwner->blockSignals(blocked); if (owner) owner->m_refreshing = false;
