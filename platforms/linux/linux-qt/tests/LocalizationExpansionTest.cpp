@@ -19,6 +19,8 @@
 #include "ImageRecognitionDialog.h"
 #include "NativePipelineJournal.h"
 #include "NewImageDialog.h"
+#include "PipelineHistoryDialog.h"
+#include "PipelineResultDialog.h"
 #include "QrCodeDialog.h"
 #include "RectanglePropertiesDialog.h"
 #include "SettingsDialog.h"
@@ -43,6 +45,7 @@
 #include <QFile>
 #include <QFontMetrics>
 #include <QImage>
+#include <QJsonObject>
 #include <QLabel>
 #include <QScopedPointer>
 #include <QScreen>
@@ -442,6 +445,36 @@ private slots:
       QVERIFY2(offenders.isEmpty(), qPrintable(offenders));
       QVERIFY2(collected.buttons.size() + collected.labels.size() >= 3,
           qPrintable(QString::number(collected.buttons.size() + collected.labels.size())));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void pipelineHistoryDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      QTemporaryDir dir;
+      QVERIFY(dir.isValid());
+      auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("history"));
+      PipelineHistoryDialog dialog(journal, [] { return false; });
+      // The record rows and their diagnostics hold runtime values; the notice and buttons are prose.
+      const int checked = translatedTexts(dialog, {});
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+      QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void pipelineResultDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      QScopedPointer<QDialog> dialog(makePipelineResultDialog(QJsonObject{}, nullptr));
+      QVERIFY(dialog);
+      // The action rows and the report JSON hold runtime values; the summary and privacy text are prose.
+      const int checked = translatedTexts(*dialog, {});
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+      QVERIFY2(dialog->windowTitle().contains(QChar(0x2022)), qPrintable(dialog->windowTitle()));
     }
     QApplication::removeTranslator(&pseudo);
   }

@@ -1,4 +1,5 @@
 #include "PipelineResultDialog.h"
+#include <QCoreApplication>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QJsonArray>
@@ -10,30 +11,34 @@
 #include <QTreeWidget>
 #include <QVBoxLayout>
 namespace xerahs::app {
+namespace {
+// CORE-009: the result dialog has no Q_OBJECT class, so it names its own translation context.
+QString text(const char *source) { return QCoreApplication::translate("PipelineResultDialog", source); }
+}  // namespace
 QDialog *makePipelineResultDialog(const QJsonObject &report, QWidget *parent, const QStringList &selected, const QString &unknownAction) {
   auto *dialog = new QDialog(parent);
   dialog->setObjectName(QStringLiteral("retainedCaptureResultDialog"));
-  dialog->setWindowTitle(QStringLiteral("Capture result")); dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setWindowTitle(text("Capture result")); dialog->setAttribute(Qt::WA_DeleteOnClose);
   dialog->resize(680, 420);
   auto *layout = new QVBoxLayout(dialog);
   const auto state = report.value("pipeline_state").toString();
   const auto observation = report.value("extensions").toObject().value("com.xerahs.app").toObject().value("terminal_observation").toObject();
   auto *summary = new QLabel(state == "interrupted" ?
-      QStringLiteral("Pipeline: interrupted. An action with an unknown outcome may have completed. Check its output before retrying; recovery does not repeat actions.") :
-      observation.isEmpty() ? QStringLiteral("Pipeline: %1. Completed describes a finished run; individual actions can still fail.").arg(state) :
-      QStringLiteral("Workflow: %1. Output references: %2").arg(observation.value("state").toString(), QString::fromUtf8(QJsonDocument(observation.value("outputs").toArray()).toJson(QJsonDocument::Compact))), dialog);
+      text("Pipeline: interrupted. An action with an unknown outcome may have completed. Check its output before retrying; recovery does not repeat actions.") :
+      observation.isEmpty() ? text("Pipeline: %1. Completed describes a finished run; individual actions can still fail.").arg(state) :
+      text("Workflow: %1. Output references: %2").arg(observation.value("state").toString(), QString::fromUtf8(QJsonDocument(observation.value("outputs").toArray()).toJson(QJsonDocument::Compact))), dialog);
   summary->setTextFormat(Qt::PlainText); summary->setWordWrap(true); layout->addWidget(summary);
   const auto retry = report.value("extensions").toObject().value("com.xerahs.app").toObject().value("retry").toObject();
   if (!retry.isEmpty()) {
     QStringList preserved;
     for (const auto &id : retry.value("preserved_successful_actions").toArray()) preserved.append(id.toString());
-    auto *lineage = new QLabel(QStringLiteral("Linked retry %1. Earlier successful actions kept: %2. Saved-file facts may refer to an earlier attempt.")
-        .arg(retry.value("attempt").toInt()).arg(preserved.isEmpty() ? QStringLiteral("none") : preserved.join(QStringLiteral(", "))), dialog);
+    auto *lineage = new QLabel(text("Linked retry %1. Earlier successful actions kept: %2. Saved-file facts may refer to an earlier attempt.")
+        .arg(retry.value("attempt").toInt()).arg(preserved.isEmpty() ? text("none") : preserved.join(QStringLiteral(", "))), dialog);
     lineage->setObjectName(QStringLiteral("captureRetryLineage")); lineage->setTextFormat(Qt::PlainText); lineage->setWordWrap(true); layout->addWidget(lineage);
   }
   auto *table = new QTreeWidget(dialog); table->setObjectName(QStringLiteral("captureActionResults"));
-  table->setAccessibleName(QStringLiteral("Capture action outcomes")); table->setRootIsDecorated(false);
-  table->setHeaderLabels({QStringLiteral("Action"), QStringLiteral("State"), QStringLiteral("Diagnostic"), QStringLiteral("Input artifact")});
+  table->setAccessibleName(text("Capture action outcomes")); table->setRootIsDecorated(false);
+  table->setHeaderLabels({text("Action"), text("State"), text("Diagnostic"), text("Input artifact")});
   QSet<QString> known;
   for (const auto &value : report.value("ordered_results").toArray()) {
     const auto action = value.toObject(); known.insert(action.value("action").toString());
@@ -41,13 +46,13 @@ QDialog *makePipelineResultDialog(const QJsonObject &report, QWidget *parent, co
         action.value("diagnostic").toString(), action.value("input_artifact").toString()});
   }
   for (const auto &id : selected) if (!known.contains(id))
-    new QTreeWidgetItem(table, {id, id == unknownAction ? QStringLiteral("Outcome unknown") : QStringLiteral("Not started"), {}, {}});
+    new QTreeWidgetItem(table, {id, id == unknownAction ? text("Outcome unknown") : text("Not started"), {}, {}});
   for (int column = 0; column < 4; ++column) table->resizeColumnToContents(column);
   layout->addWidget(table);
   const auto native = report.value("extensions").toObject().value("com.xerahs.app").toObject();
   const auto deletionRecovery = native.value("recovery").toObject().value("deletion_recovery").toObject();
   if (!deletionRecovery.isEmpty() && (deletionRecovery.value("state") == "pending" || deletionRecovery.value("state") == "retained")) {
-    auto *recovery = new QLabel(QStringLiteral("Deletion recovery needs review. The staging path may contain a displaced file. "
+    auto *recovery = new QLabel(text("Deletion recovery needs review. The staging path may contain a displaced file. "
         "Nothing here is retried or deleted automatically. Recover it to a safe location, or remove it only after explicit inspection.\n"
         "Original path: %1\nPrivate staging path: %2")
         .arg(deletionRecovery.value("original_path").toString(), deletionRecovery.value("staging_path").toString()), dialog);
@@ -56,10 +61,10 @@ QDialog *makePipelineResultDialog(const QJsonObject &report, QWidget *parent, co
   }
   const auto upload = native.value("upload_result").toObject();
   for (const auto *key : {"url", "thumbnail_url", "deletion_url", "error_message"}) {
-    const auto text = upload.value(QLatin1String(key)).toString(); if (text.isEmpty()) continue;
-    const QString title = QByteArray(key) == "url" ? "URL" : QByteArray(key) == "thumbnail_url" ? "Thumbnail URL" :
-        QByteArray(key) == "deletion_url" ? "Deletion URL" : "Upload error";
-    auto *line = new QLabel(title + ": " + text, dialog);
+    const auto value = upload.value(QLatin1String(key)).toString(); if (value.isEmpty()) continue;
+    const QString title = QByteArray(key) == "url" ? text("URL") : QByteArray(key) == "thumbnail_url" ? text("Thumbnail URL") :
+        QByteArray(key) == "deletion_url" ? text("Deletion URL") : text("Upload error");
+    auto *line = new QLabel(title + ": " + value, dialog);
     line->setObjectName(QStringLiteral("captureUpload_") + QLatin1String(key));
     line->setTextFormat(Qt::PlainText); line->setWordWrap(true); line->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
     layout->addWidget(line);
@@ -77,28 +82,28 @@ QDialog *makePipelineResultDialog(const QJsonObject &report, QWidget *parent, co
   if (!unknownArtifact.isEmpty()) artifacts.append(QJsonObject{{"action", unknownArtifact.section('.', 0, 0)}, {"artifact", unknownArtifact}, {"state", "Outcome unknown"}});
   if (!artifacts.isEmpty()) {
     auto *files = new QTreeWidget(dialog); files->setObjectName("captureArtifactResults"); files->setRootIsDecorated(false);
-    files->setAccessibleName("Capture artifact outcomes"); files->setHeaderLabels({"Action", "Artifact", "State", "Diagnostic"});
+    files->setAccessibleName(text("Capture artifact outcomes")); files->setHeaderLabels({text("Action"), text("Artifact"), text("State"), text("Diagnostic")});
     for (const auto &value : artifacts) {
       const auto fact = value.toObject();
       const auto id = fact.value("artifact").toString(); const auto action = fact.value("action").toString();
-      const auto artifactLabel = id == "save.file" || id == "save-as.file" ? QString("PNG file") :
-          id == "save.sidecar" || id == "save-as.sidecar" ? QString("Editable annotations (.xann)") : id;
-      auto *item = new QTreeWidgetItem(files, {action == "save" ? QString("Save") : action == "save-as" ? QString("Save As") : action, artifactLabel,
-          fact.value("absent").toBool() ? "succeeded (no companion needed)" : fact.value("state").toString(), fact.value("diagnostic").toString()});
+      const auto artifactLabel = id == "save.file" || id == "save-as.file" ? text("PNG file") :
+          id == "save.sidecar" || id == "save-as.sidecar" ? text("Editable annotations (.xann)") : id;
+      auto *item = new QTreeWidgetItem(files, {action == "save" ? text("Save") : action == "save-as" ? text("Save As") : action, artifactLabel,
+          fact.value("absent").toBool() ? text("succeeded (no companion needed)") : fact.value("state").toString(), fact.value("diagnostic").toString()});
       item->setData(1, Qt::UserRole, id);
     }
     for (int column = 0; column < 4; ++column) files->resizeColumnToContents(column);
     layout->addWidget(files);
   }
-  auto *privacy = new QLabel(QStringLiteral("Report details contain private saved-file paths and naming settings. Image pixels, clipboard contents and recognized text are excluded. "
+  auto *privacy = new QLabel(text("Report details contain private saved-file paths and naming settings. Image pixels, clipboard contents and recognized text are excluded. "
                                            "Reviewing does not retry actions, modify files or change the clipboard."), dialog);
   privacy->setTextFormat(Qt::PlainText); privacy->setWordWrap(true); layout->addWidget(privacy);
   auto *details = new QPlainTextEdit(dialog); details->setObjectName(QStringLiteral("captureResultJson"));
-  details->setAccessibleName(QStringLiteral("Capture result report JSON")); details->setReadOnly(true);
+  details->setAccessibleName(text("Capture result report JSON")); details->setReadOnly(true);
   details->setPlainText(QString::fromUtf8(QJsonDocument(report).toJson(QJsonDocument::Indented))); details->hide();
-  auto *toggle = new QPushButton(QStringLiteral("Show report details"), dialog); toggle->setCheckable(true);
+  auto *toggle = new QPushButton(text("Show report details"), dialog); toggle->setCheckable(true);
   QObject::connect(toggle, &QPushButton::toggled, details, &QWidget::setVisible);
-  QObject::connect(toggle, &QPushButton::toggled, toggle, [toggle](bool visible) { toggle->setText(visible ? QStringLiteral("Hide report details") : QStringLiteral("Show report details")); });
+  QObject::connect(toggle, &QPushButton::toggled, toggle, [toggle](bool visible) { toggle->setText(visible ? text("Hide report details") : text("Show report details")); });
   layout->addWidget(toggle); layout->addWidget(details);
   auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, dialog); layout->addWidget(buttons);
   QObject::connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);

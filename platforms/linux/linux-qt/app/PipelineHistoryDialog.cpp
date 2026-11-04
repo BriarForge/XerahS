@@ -2,6 +2,7 @@
 #include "NativeWindowPlacement.h"
 #include "PipelineHistoryDialog.h"
 #include "PipelineResultDialog.h"
+#include <QCoreApplication>
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QMessageBox>
@@ -13,6 +14,10 @@
 #include <QVBoxLayout>
 #include <mutex>
 namespace xerahs::app {
+namespace {
+// CORE-009: the history dialog has no Q_OBJECT class, so it names its own translation context.
+QString text(const char *source) { return QCoreApplication::translate("PipelineHistoryDialog", source); }
+}  // namespace
 struct HistoryJob {
   std::mutex mutex;
   bool ready = false, erasing = false;
@@ -21,24 +26,24 @@ struct HistoryJob {
 };
 PipelineHistoryDialog::PipelineHistoryDialog(PipelineJournalStorage storage, std::function<bool()> captureBusy, QWidget *parent)
     : QDialog(parent), m_storage(std::move(storage)), m_captureBusy(std::move(captureBusy)) {
-  new NativeAccessibility(*this, "Review durable capture results and unknown outcomes. Forget requires confirmation; Close keeps records and files.", false);
-  setObjectName(QStringLiteral("captureHistoryDialog")); setWindowTitle(QStringLiteral("Capture result history"));
+  new NativeAccessibility(*this, text("Review durable capture results and unknown outcomes. Forget requires confirmation; Close keeps records and files."), false);
+  setObjectName(QStringLiteral("captureHistoryDialog")); setWindowTitle(text("Capture result history"));
   new NativeWindowPlacement(*this);
   setAttribute(Qt::WA_DeleteOnClose); resize(760, 440);
   auto *layout = new QVBoxLayout(this);
-  auto *notice = new QLabel(QStringLiteral("Capture result records survive restart. Interrupted actions can have unknown outcomes. "
+  auto *notice = new QLabel(text("Capture result records survive restart. Interrupted actions can have unknown outcomes. "
       "Recovery does not retry actions. Image pixels are not stored here; saved images remain in their files."), this);
   notice->setTextFormat(Qt::PlainText); notice->setWordWrap(true); layout->addWidget(notice);
   m_table = new QTreeWidget(this); m_table->setObjectName(QStringLiteral("captureHistoryRecords"));
-  m_table->setAccessibleName(QStringLiteral("Durable capture results")); m_table->setRootIsDecorated(false);
-  m_table->setHeaderLabels({QStringLiteral("Started"), QStringLiteral("Pipeline"), QStringLiteral("Task"), QStringLiteral("Diagnostic")});
+  m_table->setAccessibleName(text("Durable capture results")); m_table->setRootIsDecorated(false);
+  m_table->setHeaderLabels({text("Started"), text("Pipeline"), text("Task"), text("Diagnostic")});
   layout->addWidget(m_table);
   m_status = new QLabel(this); m_status->setObjectName(QStringLiteral("captureHistoryStatus"));
   m_status->setTextFormat(Qt::PlainText); m_status->setWordWrap(true); layout->addWidget(m_status);
   auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, this); layout->addWidget(buttons);
-  m_refresh = buttons->addButton(QStringLiteral("Refresh"), QDialogButtonBox::ActionRole); m_refresh->setObjectName(QStringLiteral("refreshCaptureHistory"));
-  m_review = buttons->addButton(QStringLiteral("Review result…"), QDialogButtonBox::ActionRole); m_review->setObjectName(QStringLiteral("reviewCaptureHistory"));
-  m_forget = buttons->addButton(QStringLiteral("Forget record…"), QDialogButtonBox::ActionRole); m_forget->setObjectName(QStringLiteral("forgetCaptureHistory"));
+  m_refresh = buttons->addButton(text("Refresh"), QDialogButtonBox::ActionRole); m_refresh->setObjectName(QStringLiteral("refreshCaptureHistory"));
+  m_review = buttons->addButton(text("Review result…"), QDialogButtonBox::ActionRole); m_review->setObjectName(QStringLiteral("reviewCaptureHistory"));
+  m_forget = buttons->addButton(text("Forget record…"), QDialogButtonBox::ActionRole); m_forget->setObjectName(QStringLiteral("forgetCaptureHistory"));
   connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
   connect(m_refresh, &QPushButton::clicked, this, &PipelineHistoryDialog::refresh);
   connect(m_review, &QPushButton::clicked, this, &PipelineHistoryDialog::review);
@@ -61,16 +66,16 @@ void PipelineHistoryDialog::updateAvailability() {
   const auto recovery = entry && entry->parsed.record ? entry->parsed.record->deletionRecovery : std::nullopt;
   const bool recoveryPending = recovery && (recovery->state == "pending" || recovery->state == "retained");
   m_forget->setEnabled(idle && entry && bool(entry->parsed.record) && !busy && !recoveryPending);
-  m_forget->setToolTip(recoveryPending ? QStringLiteral("Keep this recovery record: review the private staging path and recover or remove its contents explicitly.") : QString{});
+  m_forget->setToolTip(recoveryPending ? text("Keep this recovery record: review the private staging path and recover or remove its contents explicitly.") : QString{});
 }
 void PipelineHistoryDialog::refresh() {
   if (m_job || m_confirming || !m_storage) return;
   if (m_captureBusy && m_captureBusy()) {
-    m_reloadWhenIdle = true; m_status->setText(QStringLiteral("Capture is running. Results will refresh when it finishes.")); updateAvailability(); return;
+    m_reloadWhenIdle = true; m_status->setText(text("Capture is running. Results will refresh when it finishes.")); updateAvailability(); return;
   }
   m_reloadWhenIdle = false;
   m_job = std::make_shared<HistoryJob>(); const auto job = m_job; const auto storage = m_storage;
-  m_status->setText(QStringLiteral("Reading capture results…")); updateAvailability();
+  m_status->setText(text("Reading capture results…")); updateAvailability();
   auto *worker = QThread::create([job, storage] {
     auto listing = storage->list(); std::lock_guard<std::mutex> lock(job->mutex);
     job->listing = std::move(listing); job->ready = true;
@@ -87,7 +92,7 @@ void PipelineHistoryDialog::poll() {
   { std::lock_guard<std::mutex> lock(job->mutex); if (!job->ready) return; }
   m_job.reset();
   if (job->erasing) {
-    if (!job->erased.stored) { m_status->setText(QStringLiteral("Could not forget the record (%1). Refresh and review the current result.").arg(job->erased.diagnostic)); updateAvailability(); return; }
+    if (!job->erased.stored) { m_status->setText(text("Could not forget the record (%1). Refresh and review the current result.").arg(job->erased.diagnostic)); updateAvailability(); return; }
     refresh(); return;
   }
   // A capture may have started during the worker read. Never present its live
@@ -99,14 +104,14 @@ void PipelineHistoryDialog::poll() {
     const auto &record = entry.parsed.record;
     const auto observation = record ? record->report.value("extensions").toObject().value("com.xerahs.app").toObject().value("terminal_observation").toObject() : QJsonObject{};
     auto *item = new QTreeWidgetItem(m_table, {record ? record->createdAt.toLocalTime().toString(Qt::ISODateWithMs) : QString{},
-        record ? (observation.isEmpty() ? record->report.value("pipeline_state").toString() : observation.value("state").toString()) : QStringLiteral("Unavailable"), entry.taskId, entry.parsed.diagnostic});
+        record ? (observation.isEmpty() ? record->report.value("pipeline_state").toString() : observation.value("state").toString()) : text("Unavailable"), entry.taskId, entry.parsed.diagnostic});
     item->setData(1, Qt::UserRole, observation);
     item->setData(0, Qt::UserRole, entry.taskId); if (entry.taskId == selected) m_table->setCurrentItem(item);
   }
   if (!m_table->currentItem() && m_table->topLevelItemCount()) m_table->setCurrentItem(m_table->topLevelItem(0));
   for (int column = 0; column < 4; ++column) m_table->resizeColumnToContents(column);
-  m_status->setText(m_listing.diagnostic.isEmpty() ? QStringLiteral("%1 result records. Forgetting removes only the selected metadata record; saved files and current retained pixels are kept.").arg(m_listing.entries.size()) :
-      QStringLiteral("Some results could not be read (%1). Existing records are preserved.").arg(m_listing.diagnostic));
+  m_status->setText(m_listing.diagnostic.isEmpty() ? text("%1 result records. Forgetting removes only the selected metadata record; saved files and current retained pixels are kept.").arg(m_listing.entries.size()) :
+      text("Some results could not be read (%1). Existing records are preserved.").arg(m_listing.diagnostic));
   updateAvailability();
 }
 void PipelineHistoryDialog::review() {
@@ -122,8 +127,8 @@ void PipelineHistoryDialog::forget() {
   if (entry->parsed.record->deletionRecovery && (entry->parsed.record->deletionRecovery->state == "pending" ||
       entry->parsed.record->deletionRecovery->state == "retained")) return;
   const auto snapshot = *entry; m_confirming = true; updateAvailability();
-  auto *box = new QMessageBox(QMessageBox::Question, QStringLiteral("Forget capture result?"),
-      QStringLiteral("Remove this result record from history? This removes its recovery evidence. Saved files, clipboard contents, editor documents and current retained pixels are kept."),
+  auto *box = new QMessageBox(QMessageBox::Question, text("Forget capture result?"),
+      text("Remove this result record from history? This removes its recovery evidence. Saved files, clipboard contents, editor documents and current retained pixels are kept."),
       QMessageBox::Discard | QMessageBox::Cancel, this);
   box->setObjectName(QStringLiteral("forgetCaptureHistoryDialog")); box->setDefaultButton(QMessageBox::Cancel);
   box->setEscapeButton(QMessageBox::Cancel); box->setAttribute(Qt::WA_DeleteOnClose);
@@ -131,7 +136,7 @@ void PipelineHistoryDialog::forget() {
     m_confirming = false;
     if (choice != QMessageBox::Discard || (m_captureBusy && m_captureBusy())) { updateAvailability(); return; }
     m_job = std::make_shared<HistoryJob>(); const auto job = m_job; job->erasing = true; const auto storage = m_storage;
-    m_status->setText(QStringLiteral("Forgetting selected result…")); updateAvailability();
+    m_status->setText(text("Forgetting selected result…")); updateAvailability();
     auto *worker = QThread::create([job, storage, snapshot] {
       const auto erased = storage->erase(snapshot.taskId, snapshot.bytes); std::lock_guard<std::mutex> lock(job->mutex);
       job->erased = erased; job->ready = true;
