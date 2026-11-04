@@ -810,6 +810,33 @@ private slots:
     QVERIFY(!withoutBackup.diagnostics().contains(QStringLiteral("settings-recovered-from-backup")));
     QCOMPARE(withoutBackup.preferences().values.value("Thickness"), loadEditorPreferences({}).values.value("Thickness"));
   }
+  // SETCAT-012: no saved or imported editor preference can pre-grant portal consent,
+  // confirmation bypass or credential authority. Authority-shaped defaults do not exist and
+  // forged authority-shaped fields are refused read-only, without echoing the secret.
+  void savedEditorPreferencesCannotGrantConsentConfirmationOrCredentialAuthority() {
+    const QRegularExpression authority("consent|permission|credential|secret|token|password|apikey|api-key|authori[sz]|cookie|bypass|skipconfirm|autoconfirm|trust|grant", QRegularExpression::CaseInsensitiveOption);
+    const auto defaults = loadEditorPreferences({});
+    for (const auto &key : defaults.values.keys())
+      QVERIFY2(!authority.match(key).hasMatch(), qPrintable(key));
+    const QStringList forged{"portalConsent", "captureConsentGranted", "skipConfirmation", "autoConfirm",
+        "confirmDestructive", "uploadAuthorized", "credentials", "oauthToken", "apiKey", "password", "cookies",
+        "trustedExecutables", "consent"};
+    QJsonObject current{{"Thickness", 8}};
+    for (const auto &key : forged)
+      current.insert(key, key == QStringLiteral("credentials")
+          ? QJsonValue(QJsonObject{{"token", "secret-forged-ZZZZ"}})
+          : QJsonValue(true));
+    MemoryStorage storage; storage.artifact = {PreferenceRead::Kind::Readable, envelope(current), {}};
+    EditorPreferenceStore store(storage);
+    QVERIFY(store.preferences().readOnly);
+    QVERIFY(store.diagnostics().contains("settings-unsafe-unknown"));
+    for (const auto &key : forged)
+      QVERIFY2(!store.preferences().values.contains(key), qPrintable(key));
+    // Nothing is written back: the forged artifact stays byte-for-byte as it was read.
+    QVERIFY(!store.save(store.preferences()).saved);
+    QCOMPARE(storage.artifact.bytes, envelope(current));
+    for (const auto &diagnostic : store.diagnostics()) QVERIFY(!diagnostic.contains("ZZZZ"));
+  }
 };
 QTEST_GUILESS_MAIN(EditorPreferencesTest)
 #include "EditorPreferencesTest.moc"
