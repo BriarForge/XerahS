@@ -676,10 +676,10 @@ private slots:
     // CLI: --run-workflow carries only a workflow UUID; the primary resolves it with the same function as every UI capture.
     auto read = [](const QString &name) { QFile file(QStringLiteral(XERAHS_APP_DIR) + "/" + name); if (!file.open(QIODevice::ReadOnly)) return QString(); return QString::fromUtf8(file.readAll()); };
     const auto capture = read("features/CaptureFeature.cpp");
-    QCOMPARE(capture.count("workflows->resolve("), 1); // only inside effectiveWorkflow()
+    QCOMPARE(capture.count("workflows->resolve("), 1); // only inside resolveShellWorkflow()
     QVERIFY(capture.contains("choice.workflow = xerahs::settings::withApplicationDefaults(*choice.workflow,"));
-    QVERIFY(capture.contains("incoming.action == ActivationAction::RunWorkflow ? effectiveWorkflow(ctx, QUuid(incoming.workflowId)) : effectiveWorkflow(ctx)"));
-    QVERIFY(capture.contains("setDefaultWorkflowResolver([&ctx] { return effectiveWorkflow(ctx); })"));
+    QVERIFY(capture.contains("incoming.action == ActivationAction::RunWorkflow ? resolveShellWorkflow(ctx, QUuid(incoming.workflowId)) : resolveShellWorkflow(ctx)"));
+    QVERIFY(capture.contains("setDefaultWorkflowResolver([&ctx] { return resolveShellWorkflow(ctx); })"));
     const auto main = read("main.cpp"); const auto cliPart = main.left(main.indexOf("xerahs::settings::ApplicationSettingsStore settings("));
     QVERIFY(main.contains("ApplicationSettingsStore settings(") && cliPart.contains("run-workflow"));
     for (const char *forbidden : {"withApplicationDefaults", "repairSettings", "settings::", "output.directory", "output.pattern"}) QVERIFY2(!cliPart.contains(forbidden), forbidden);
