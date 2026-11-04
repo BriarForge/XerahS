@@ -456,11 +456,14 @@ bool EffectsDialog::validateParameters() {
   return m_parametersValid;
 }
 void EffectsDialog::changed() {
-  m_work.cancel(); ++m_revision; m_debounce.stop(); m_previewImage = {}; m_preview->clear();
+  m_work.cancel(); ++m_revision; m_debounce.stop(); m_previewImage = {}; m_preview->setText(QStringLiteral("Select an effect to preview"));
   validateParameters(); updateFavorite(); m_progress->hide();
   const auto *effect = m_registry->find(selectedId());
   if (!effect && !selectedId().isEmpty()) {
     m_status->setText("effect-unavailable: " + effectUnavailableReason(selectedId()));
+    m_status->setAccessibleDescription(m_status->text());
+  } else if (selectedId().isEmpty()) {
+    m_status->setText(QStringLiteral("No effect matches the search. Change the search or choose a category."));
     m_status->setAccessibleDescription(m_status->text());
   } else if (!m_parametersValid) showError("effect-invalid-parameter");
   else if (m_seedValid && effect && effect->spec().mode == Mode::Previewable) m_debounce.start();

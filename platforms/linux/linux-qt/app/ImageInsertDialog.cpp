@@ -94,6 +94,8 @@ void ImageInsertDialog::complete(quint64 generation, PreparedImageAsset result) 
     m_status->setText(QString("The image could not be inserted (%1). Choose a valid image file or clipboard image, or Cancel to keep the document unchanged.").arg(result.diagnostic));
     return;
   }
-  m_prepared = std::move(result); accept();
+  m_prepared = std::move(result);
+  m_status->setText(QStringLiteral("Image inserted."));
+  accept();
 }
 } // namespace xerahs::app

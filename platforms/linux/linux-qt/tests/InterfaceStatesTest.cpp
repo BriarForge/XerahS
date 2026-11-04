@@ -665,7 +665,7 @@ private slots:
     QVERIFY(status && preview && list && notice && unavailable && progress && buttons && search);
     auto *apply = buttons->button(QDialogButtonBox::Apply);
     QVERIFY(apply);
-    QVERIFY2(preview->text().isEmpty(), "no effect is previewed until the store has loaded");                  // initial
+    QVERIFY2(preview->text() == QStringLiteral("Select an effect to preview"), qPrintable(preview->text()));   // initial: the hint stays while there is no preview
     QVERIFY2(status->text().isEmpty(), qPrintable(status->text()));                                        // initial: nothing has been reported yet
     QVERIFY2(!apply->isEnabled(), "the recent and favorite store is still loading");                        // initial
     QTRY_VERIFY(apply->isEnabled());                                                                      // populated: a valid effect is selected once the store has loaded
@@ -681,7 +681,8 @@ private slots:
     search->setText("no effect in the catalog answers to this");
     QTRY_VERIFY(list->count() == 0);                                                                      // empty: nothing matches the search
     QVERIFY2(!apply->isEnabled(), "with no effect to apply, Apply stays disabled");                          // empty
-    QVERIFY2(!status->text().isEmpty(), "the empty result is reported in words, not by a silent empty list");  // empty
+    QVERIFY2(status->text() == QStringLiteral("No effect matches the search. Change the search or choose a category."), qPrintable(status->text()));  // empty: an empty search is guidance, not an effect failure
+    QVERIFY2(preview->text() == QStringLiteral("Select an effect to preview"), qPrintable(preview->text()));   // empty: the hint returns when the preview is cleared
     search->setText("auto_contrast");
     QTRY_VERIFY(dialog.selectedId() == QString("auto_contrast"));                                          // populated
     QTRY_VERIFY(!dialog.previewImage().isNull());                                                         // populated
@@ -725,6 +726,7 @@ private slots:
     dialog.setPreset(nothing);
     QCOMPARE(steps->count(), 0);                                                                           // empty: the preset carries no steps
     QVERIFY2(!apply->isEnabled(), "a preset without steps cannot be applied");                               // empty
+    QVERIFY2(status->text().contains("This preset has no steps, so there is nothing to apply."), qPrintable(status->text()));  // empty: an empty preset says there is nothing to apply
     dialog.loadFile(dir.filePath("missing-preset.xsie"));
     QVERIFY2(status->text().contains("Reading preset"), qPrintable(status->text()));                          // loading
     QVERIFY(!apply->isEnabled());
@@ -827,10 +829,11 @@ private slots:
     {
       QPointer<ImageInsertDialog> dialog(new ImageInsertDialog);
       dialog->show();
-      bool accepted = false, prepared = false;
-      QObject::connect(dialog.data(), &QDialog::accepted, dialog.data(), [&] { accepted = true; prepared = dialog->choice().valid(); });
+      bool accepted = false, prepared = false; QString inserted;
+      QObject::connect(dialog.data(), &QDialog::accepted, dialog.data(), [&] { accepted = true; prepared = dialog->choice().valid(); inserted = dialog->findChild<QLabel *>("insertImageStatus")->text(); });
       QVERIFY(dialog->loadFile(dir.filePath("insert.png")));
       QTRY_VERIFY(accepted);
+      QVERIFY2(inserted == QStringLiteral("Image inserted."), qPrintable(inserted));                           // populated: the insertion is reported in words
       QVERIFY2(prepared, "a valid image is prepared and handed over");                                        // populated
     }
   }
