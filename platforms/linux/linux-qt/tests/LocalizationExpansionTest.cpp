@@ -1,5 +1,6 @@
 // CORE-009: a pseudo-locale that lengthens every translated string by 40% neither clips controls nor
 // overflows the screen, and a string missing from the translation falls back to its source text.
+#include "AppearanceDialog.h"
 #include "ColorPickerDialog.h"
 #include "FileUploadController.h"
 #include "HashCheckerDialog.h"
@@ -34,6 +35,7 @@
 #include <QSet>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QTimer>
 #include <QTranslator>
 #include <QWidget>
 
@@ -299,6 +301,52 @@ private slots:
       QVERIFY2(comparisonDialog.windowTitle().contains(QChar(0x2022)), qPrintable(comparisonDialog.windowTitle()));
       QVERIFY2(urlDialog.windowTitle().contains(QChar(0x2022)), qPrintable(urlDialog.windowTitle()));
       QVERIFY2(recognitionDialog.windowTitle().contains(QChar(0x2022)), qPrintable(recognitionDialog.windowTitle()));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void appearanceDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      // The appearance dialog is opened by its own entry point, so the probe closes it as soon as it appears.
+      QWidget parent;
+      QStringList buttonTexts, labelTexts;
+      QString title;
+      bool entered = false;
+      QTimer probe;
+      probe.setInterval(5);
+      connect(&probe, &QTimer::timeout, &probe, [&] {
+        auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget());
+        if (!dialog) return;
+        entered = true;
+        title = dialog->windowTitle();
+        for (auto *button : dialog->findChildren<QAbstractButton *>())
+          if (!button->text().isEmpty()) buttonTexts << button->text();
+        for (auto *label : dialog->findChildren<QLabel *>()) {
+          if (label->text().isEmpty()) continue;
+          // The import report counts machine dispositions; it is a diagnostic, not translatable prose.
+          if (label->objectName() == QLatin1String("editorPreferenceImportReport")) continue;
+          labelTexts << label->text();
+        }
+        probe.stop();
+        dialog->reject();
+      });
+      probe.start();
+      manageEditorAppearance(&parent);
+      probe.stop();
+      QVERIFY2(entered, "the appearance dialog did not open");
+      int checked = 0;
+      for (const auto &button : buttonTexts) {
+        QVERIFY2(button.contains(QChar(0x2022)), qPrintable(button));
+        ++checked;
+      }
+      for (const auto &label : labelTexts) {
+        QVERIFY2(label.contains(QChar(0x2022)), qPrintable(label));
+        ++checked;
+      }
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+      QVERIFY2(title.contains(QChar(0x2022)), qPrintable(title));
     }
     QApplication::removeTranslator(&pseudo);
   }

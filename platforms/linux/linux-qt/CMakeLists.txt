@@ -1312,9 +1312,13 @@ set_tests_properties(qr-code-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offs
 # CORE-009: pseudo-locale text expansion and missing-translation fallback on a translated window.
 add_executable(localization-expansion-test tests/LocalizationExpansionTest.cpp
   app/XdgAutostart.cpp app/SettingsDialog.cpp app/NewImageDialog.cpp app/NewImageDialog.h
-  app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h)
+  app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h
+  app/AppearanceDialog.cpp app/AppearanceDialog.h
+  app/NativeEditorAppearance.cpp app/NativeEditorAppearance.h
+  app/NativeDesktopAppearance.cpp app/NativeDesktopAppearance.h
+  app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h)
 set_target_properties(localization-expansion-test PROPERTIES AUTOMOC ON)
-target_link_libraries(localization-expansion-test PRIVATE xerahs_qr_code xerahs_workflow_shortcuts xerahs_recording_devices xerahs_upload_destinations xerahs_hash_checker xerahs_icon_converter xerahs_watch_folders xerahs_video_converter_ui xerahs_color_picker xerahs_editor_canvas xerahs_editor_codecs xerahs_url_open xerahs_image_recognition Qt6::Test)
+target_link_libraries(localization-expansion-test PRIVATE xerahs_qr_code xerahs_workflow_shortcuts xerahs_recording_devices xerahs_upload_destinations xerahs_hash_checker xerahs_icon_converter xerahs_watch_folders xerahs_video_converter_ui xerahs_color_picker xerahs_editor_canvas xerahs_editor_codecs xerahs_url_open xerahs_image_recognition xerahs_core Qt6::Widgets Qt6::DBus Qt6::Test)
 add_test(NAME localization-expansion COMMAND localization-expansion-test)
 set_tests_properties(localization-expansion PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 

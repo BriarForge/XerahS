@@ -6,6 +6,7 @@
 #include <QCheckBox>
 #include <QColorDialog>
 #include <QComboBox>
+#include <QCoreApplication>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QFormLayout>
@@ -17,30 +18,34 @@
 
 namespace xerahs::app {
 using namespace xerahs::editor;
+namespace {
+// CORE-009: every user-visible appearance string goes through the translator under one context.
+QString text(const char *source) { return QCoreApplication::translate("AppearanceDialog", source); }
+}  // namespace
 bool manageEditorAppearance(QWidget *parent) {
   const auto original = nativeEditorPreferences(); const auto revision = nativeEditorPreferenceRevision();
-  QPointer<PreferenceDialog> dialog(new PreferenceDialog(parent)); dialog->setObjectName(QStringLiteral("appearanceDialog")); dialog->setWindowTitle(QStringLiteral("Editor Appearance"));
+  QPointer<PreferenceDialog> dialog(new PreferenceDialog(parent)); dialog->setObjectName(QStringLiteral("appearanceDialog")); dialog->setWindowTitle(text("Editor Appearance"));
   new NativeEditorAppearance(*dialog);
   auto *layout = new QVBoxLayout(dialog);
-  auto *description = new QLabel(QStringLiteral("Applies to all editor windows. Desktop high contrast and reduced motion remain in effect. Colours may adjust on screen for contrast; the saved accent stays unchanged. Degraded: reduced-contrast substitutions are unavailable; the selected theme is retained. If desktop hints are unavailable, native Qt palette and motion choices remain in effect."), dialog);
+  auto *description = new QLabel(text("Applies to all editor windows. Desktop high contrast and reduced motion remain in effect. Colours may adjust on screen for contrast; the saved accent stays unchanged. Degraded: reduced-contrast substitutions are unavailable; the selected theme is retained. If desktop hints are unavailable, native Qt palette and motion choices remain in effect."), dialog);
   description->setWordWrap(true); layout->addWidget(description);
   auto *report = new QLabel(original.report.summary(), dialog);
   report->setObjectName(QStringLiteral("editorPreferenceImportReport")); report->setTextFormat(Qt::PlainText);
-  report->setWordWrap(true); report->setAccessibleName(QStringLiteral("Preference import report")); layout->addWidget(report);
-  auto *systemTheme = new QCheckBox(QStringLiteral("Use desktop theme"), dialog);
+  report->setWordWrap(true); report->setAccessibleName(text("Preference import report")); layout->addWidget(report);
+  auto *systemTheme = new QCheckBox(text("Use desktop theme"), dialog);
   systemTheme->setObjectName(QStringLiteral("useSystemTheme")); layout->addWidget(systemTheme);
   auto *form = new QFormLayout; layout->addLayout(form);
-  auto *theme = new QComboBox(dialog); theme->setObjectName(QStringLiteral("manualTheme")); theme->setAccessibleName(QStringLiteral("Manual editor theme"));
-  theme->addItem(QStringLiteral("Dark"), QStringLiteral("Dark")); theme->addItem(QStringLiteral("Light"), QStringLiteral("Light"));
-  form->addRow(QStringLiteral("Manual theme"), theme);
-  auto *systemAccent = new QCheckBox(QStringLiteral("Use desktop accent colour"), dialog);
+  auto *theme = new QComboBox(dialog); theme->setObjectName(QStringLiteral("manualTheme")); theme->setAccessibleName(text("Manual editor theme"));
+  theme->addItem(text("Dark"), QStringLiteral("Dark")); theme->addItem(text("Light"), QStringLiteral("Light"));
+  form->addRow(text("Manual theme"), theme);
+  auto *systemAccent = new QCheckBox(text("Use desktop accent colour"), dialog);
   systemAccent->setObjectName(QStringLiteral("useSystemAccent")); layout->addWidget(systemAccent);
   auto *colourRow = new QHBoxLayout;
-  auto *accent = new QLineEdit(dialog); accent->setObjectName(QStringLiteral("manualAccent")); accent->setAccessibleName(QStringLiteral("Manual accent colour"));
-  accent->setAccessibleDescription(QStringLiteral("Hexadecimal #RRGGBB or #AARRGGBB. The first pair in eight digits is alpha."));
-  auto *picker = new QPushButton(QStringLiteral("Choose…"), dialog); picker->setObjectName(QStringLiteral("manualAccentPicker"));
-  picker->setAccessibleName(QStringLiteral("Choose manual accent colour")); colourRow->addWidget(accent); colourRow->addWidget(picker);
-  auto *accentForm = new QFormLayout; accentForm->addRow(QStringLiteral("Manual accent colour"), colourRow); layout->addLayout(accentForm);
+  auto *accent = new QLineEdit(dialog); accent->setObjectName(QStringLiteral("manualAccent")); accent->setAccessibleName(text("Manual accent colour"));
+  accent->setAccessibleDescription(text("Hexadecimal #RRGGBB or #AARRGGBB. The first pair in eight digits is alpha."));
+  auto *picker = new QPushButton(text("Choose…"), dialog); picker->setObjectName(QStringLiteral("manualAccentPicker"));
+  picker->setAccessibleName(text("Choose manual accent colour")); colourRow->addWidget(accent); colourRow->addWidget(picker);
+  auto *accentForm = new QFormLayout; accentForm->addRow(text("Manual accent colour"), colourRow); layout->addLayout(accentForm);
   auto *error = new QLabel(dialog); error->setObjectName(QStringLiteral("appearanceError")); error->setWordWrap(true); layout->addWidget(error);
   const auto setDraft = [=](const EditorPreferences &preferences) {
     const auto &v = preferences.values;
@@ -60,11 +65,11 @@ bool manageEditorAppearance(QWidget *parent) {
     if (!dialog || !dialog->ready()) return;
     const auto candidate = changeEditorPreferences(original, {{QStringLiteral("AccentColorHex"), accent->text()}});
     const auto color = parseColor(candidate.preferences.value_or(original).values.value(u"AccentColorHex").toString()).value_or(0xFF3E83F2);
-    const auto chosen = dialog->chooseColor(QColor::fromRgba(color), QStringLiteral("Accent colour"), "appearanceAccentDialog");
+    const auto chosen = dialog->chooseColor(QColor::fromRgba(color), text("Accent colour"), "appearanceAccentDialog");
     if (dialog && chosen) accent->setText(formatColor(chosen->rgba()));
   });
   auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::RestoreDefaults, dialog);
-  buttons->button(QDialogButtonBox::Ok)->setText(QStringLiteral("Apply")); buttons->button(QDialogButtonBox::Ok)->setObjectName(QStringLiteral("applyAppearance"));
+  buttons->button(QDialogButtonBox::Ok)->setText(text("Apply")); buttons->button(QDialogButtonBox::Ok)->setObjectName(QStringLiteral("applyAppearance"));
   buttons->button(QDialogButtonBox::RestoreDefaults)->setObjectName(QStringLiteral("resetAppearance")); buttons->button(QDialogButtonBox::Cancel)->setDefault(true); layout->addWidget(buttons);
   QObject::connect(buttons->button(QDialogButtonBox::RestoreDefaults), &QPushButton::clicked, dialog, [=] { if (!dialog || !dialog->ready()) return; setDraft(loadEditorPreferences({})); if (dialog) error->clear(); });
   QObject::connect(buttons, &QDialogButtonBox::accepted, dialog, [=] {
@@ -73,7 +78,7 @@ bool manageEditorAppearance(QWidget *parent) {
         {QStringLiteral("UseSystemTheme"), systemTheme->isChecked()}, {QStringLiteral("UseSystemAccentColor"), systemAccent->isChecked()},
         {QStringLiteral("AccentColorHex"), accent->text()}};
     dialog->commit([changes, revision] { return applyAppearancePreferences(changes, revision); }, [=](const PreferenceWrite &written) {
-      error->setText(written.diagnostic == u"invalid-AccentColorHex" ? QStringLiteral("Enter the accent as #RRGGBB or #AARRGGBB.") : editorPreferenceDiagnosticMessage(written.diagnostic));
+      error->setText(written.diagnostic == u"invalid-AccentColorHex" ? text("Enter the accent as #RRGGBB or #AARRGGBB.") : editorPreferenceDiagnosticMessage(written.diagnostic));
       if (!dialog) return;
       if (written.diagnostic == u"invalid-AccentColorHex") accent->setFocus();
       if (!dialog) return;
