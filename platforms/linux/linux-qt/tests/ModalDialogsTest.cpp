@@ -7,6 +7,9 @@
 #include "ConveniencePreferencesDialog.h"
 #include "CanvasCropDialog.h"
 #include "CanvasRotationDialog.h"
+#include "CaptureSaveAsDialog.h"
+#include "EditorSaveDialog.h"
+#include "PipelineResultDialog.h"
 #include "ColorPickerDialog.h"
 #include "DrawingDefaultsDialog.h"
 #include "EffectsDialog.h"
@@ -36,6 +39,7 @@
 #include <QDirIterator>
 #include <QFile>
 #include <QImage>
+#include <QJsonObject>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
@@ -164,6 +168,7 @@ private slots:
     QTest::newRow("rectangle-properties") << 16; QTest::newRow("text-content") << 17;
     QTest::newRow("canvas-crop") << 18; QTest::newRow("canvas-rotation") << 19; QTest::newRow("selection-rotation") << 20;
     QTest::newRow("auto-capture") << 21; QTest::newRow("action-selection") << 22; QTest::newRow("convenience-preferences") << 23;
+    QTest::newRow("capture-save-as") << 24; QTest::newRow("editor-save") << 25; QTest::newRow("pipeline-result") << 26;
   }
   void modalDialogsTrapFocusOnlyWhileActiveIdentifyPurposeEscapeAndRestoreFocus() {
     QFETCH(int, which); Host host; QVERIFY(host.focusOnEdit());
@@ -210,6 +215,9 @@ private slots:
         : which == 20 ? static_cast<QDialog *>(new SelectionRotationDialog(rotationDocument, QSet<QUuid>{rotated.id}, &host.window))
         : which == 21 ? static_cast<QDialog *>(new AutoCaptureDialog([] { return QDateTime::currentMSecsSinceEpoch(); }, false, &host.window))
         : which == 22 ? static_cast<QDialog *>(new ActionSelectionDialog({}, QSize(640, 480), &host.window))
+        : which == 24 ? static_cast<QDialog *>(new CaptureSaveAsDialog(dir.path(), &host.window))
+        : which == 25 ? static_cast<QDialog *>(new EditorSaveDialog(dir.filePath("capture.png"), &host.window))
+        : which == 26 ? makePipelineResultDialog(QJsonObject{}, &host.window)
         : static_cast<QDialog *>(new PresetDialog(sourceDocument, sourceImage, [](PreparedCanvasEdit) { return false; }, registry, &host.window));
     QVERIFY(!QApplication::activeModalWidget());  // No trap before it opens.
     dialog->setModal(true); dialog->open();
