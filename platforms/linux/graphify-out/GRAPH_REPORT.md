@@ -1,7 +1,7 @@
 # Graph Report - linux  (2026-11-04)
 
 ## Corpus Check
-- 693 files · ~753,236 words
+- 693 files · ~753,352 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 9 file(s) not represented in the graph (top: .sxcu 5, (none) 1, .desktop 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `057011c8`
+- Built from commit: `387b9433`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -2431,9 +2431,9 @@ _Questions this graph is uniquely positioned to answer:_
   _4084 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `ParamValues` be split into smaller, more focused modules?**
   _Cohesion score 0.12571428571428572 - nodes in this community are weakly interconnected._
-- **Why does `Native editor save and companion repair` connect `Native capture result journal and recovery` to `xerahs_core`, `Linux contract scope audit`?**
-  _High betweenness centrality (0.058) - this node is a cross-community bridge._
+- **Why does `QApplication` connect `QApplication` to `xerahs`, `serializeDocument`, `EditorOpen.cpp`, `ActionOutcome`, `PinWindow::PinWindow`, `RectangleAnnotation`, `.result`, `AnnotationToolMatrixTest`, `AutoCaptureDialog`, `initializeNativeEditorPreferences`, `runEditorCopy`, `QrCodeDialog`, `ActionSelectionTest`, `annotationId`, `parseAnnotationList`, `RectanglePropertiesDialog`, `ImageInsertDialog`, `ApplicationWindow`, `applyToolbarPreferences`, `EditorViewport`, `HttpFixture`, `formatAll`, `Fixture`, `EditorSession`, `EffectsDialogTest`, `ShapeStyleTest`, `workflows/CaptureWorkflows.cpp`, `saveCapture`, `LastRegionStore.cpp`, `WorkflowShortcutsTest`, `NativeCaptureWorkflowsTest`, `CaptureHistoryWindow.cpp`, `EditorPrintChoice`, `EditorUrlOpenTest`, `runEditorPrint`, `EditorUploadTest`, `textRecognitionAvailable`, `CaptureHistoryTest`, `CaptureRecoveryActions`, `ImageComparisonDialogTest`, `MemoryCredentialStore`, `PipelineHistoryDialog`, `AppContext`, `CaptureHistoryWindowTest`, `button`, `NewImageDialogTest`, `NativeEditorToolbar`, `HotkeyBindings.cpp`, `publishWorkflowClipboard`, `CapturePinPrintTest`, `readSxiePreset`, `CaptureSaveAsTest`, `QrCodeDialogTest`, `.fromCapturedImage`, `.keyPressEvent`, `HttpFixture`, `FakeRunner`, `AppearancePalette`, `ImageRecognitionPorts`, `createShellDispatcher`, `OperationResultsTest`, `FakePortal`, `UploadDestinationsPorts`, `.private`, `defaultCaptureWorkflows`, `.pipelinePrivacySweepRedactsAllOrdinaryResultSurfaces`, `EditorTaskTest`, `ApplicationWindowTest`, `acceptAuto`, `NativeDesktopAppearance`, `EditorExitTest`, `installShellFeatures`, `main`, `FakeConversionRunner`, `Request`, `.applyColor`, `.private`, `HashCheckerDialog.cpp`, `viewPointInPixel`, `pixels`, `installWorkflows`, `NativeWindowPlacementTest`, `installPreferences`?**
+  _High betweenness centrality (0.042) - this node is a cross-community bridge._
 - **Should `QApplication` be split into smaller, more focused modules?**
   _Cohesion score 0.04045374494975655 - nodes in this community are weakly interconnected._
-- **Why does `Linux contract scope audit` connect `Linux contract scope audit` to `Native editor Copy Image`, `Linux ImageEditor`, `Native screenshot transport and capture qualification`, `Guarded native keyboard transforms`, `Guarded native selection rotation`, `Native editor Print Image`, `Native saved-file outputs`, `Native capture Crop and verified source handoff`, `Linux ImageEditor`, `Native capture result journal and recovery`, `Owned native preference dialogs`?**
-  _High betweenness centrality (0.053) - this node is a cross-community bridge._
+- **Why does `Native editor save and companion repair` connect `Native capture result journal and recovery` to `xerahs_core`, `Linux contract scope audit`?**
+  _High betweenness centrality (0.039) - this node is a cross-community bridge._
