@@ -9,6 +9,7 @@
 #include "AnnotationColorDialog.h"
 #include "AnnotationObjectNavigator.h"
 #include "CanvasRotationDialog.h"
+#include "CaptureController.h"
 #include "CaptureHistoryWindow.h"
 #include "ColorPickerDialog.h"
 #include "ConveniencePreferencesDialog.h"
@@ -28,7 +29,9 @@
 #include "PipelineHistoryDialog.h"
 #include "PipelineResultDialog.h"
 #include "QrCodeDialog.h"
+#include "PinWindow.h"
 #include "RectanglePropertiesDialog.h"
+#include "RegionOverlay.h"
 #include "SettingsDialog.h"
 #include "SelectionRotationDialog.h"
 #include "TextContentDialog.h"
@@ -47,14 +50,19 @@
 #include "workflows/WorkflowShortcuts.h"
 
 #include <QAbstractButton>
+#include <QAction>
 #include <QApplication>
 #include <QCheckBox>
+#include <QContextMenuEvent>
 #include <QDialog>
 #include <QFile>
 #include <QFontMetrics>
+#include <QGuiApplication>
 #include <QImage>
 #include <QJsonObject>
 #include <QLabel>
+#include <QMenu>
+#include <QPixmap>
 #include <QScopedPointer>
 #include <QScreen>
 #include <QSet>
@@ -64,6 +72,7 @@
 #include <QTranslator>
 #include <QWidget>
 
+#include <cstring>
 #include <memory>
 
 using namespace xerahs::app;
@@ -721,6 +730,76 @@ private slots:
       const int checked = translatedTexts(dialog, {});
       QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
       QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void pinWindowTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      PinWindow window(QImage(32, 32, QImage::Format_ARGB32));
+      // The pin window paints the image and holds no button or label, so its visible text is the
+      // window title, the screen-reader name and the context-menu actions.
+      QContextMenuEvent event(QContextMenuEvent::Mouse, window.rect().center(), window.rect().center());
+      QApplication::sendEvent(&window, &event);
+      auto *menu = window.findChild<QMenu *>();
+      QVERIFY(menu);
+      QStringList texts{window.windowTitle(), window.accessibleName()};
+      for (const auto *action : menu->actions())
+        if (!action->text().isEmpty()) texts << action->text();
+      menu->close();
+      int checked = 0;
+      for (const auto &value : texts) {
+        if (value.isEmpty()) continue;
+        QVERIFY2(value.contains(QChar(0x2022)), qPrintable(value));
+        ++checked;
+      }
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void regionOverlayTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      QTemporaryDir dir;
+      QVERIFY(dir.isValid());
+      CaptureController controller(dir.path(), nullptr);
+      xerahs::capture::Display display;
+      display.id = QStringLiteral("localization-overlay");
+      display.physical = {0, 0, 800, 600};
+      display.logical = {0, 0, 800, 600};
+      QImage snapshot(800, 600, QImage::Format_ARGB32); snapshot.fill(Qt::white);
+      RegionOverlay overlay(controller, QGuiApplication::primaryScreen(), display, snapshot);
+      overlay.show();
+      QVERIFY(QTest::qWaitForWindowExposed(&overlay));
+      // The instruction bar is only painted on the screen the controller points at.
+      QVERIFY(overlay.screen() == QGuiApplication::primaryScreen());
+      const QString title = overlay.windowTitle();
+      const QString name = overlay.accessibleName();
+      // The overlay paints its text, so the locale has to change the painted pixels.
+      QPixmap translated(overlay.size());
+      overlay.render(&translated);
+      QApplication::removeTranslator(&pseudo);
+      QPixmap plain(overlay.size());
+      overlay.render(&plain);
+      QVERIFY2(title.contains(QChar(0x2022)), qPrintable(title));
+      QVERIFY2(name.contains(QChar(0x2022)), qPrintable(name));
+      // The painted change has to come from the instruction bar at the bottom of the overlay.
+      const auto plainImage = plain.toImage();
+      const auto translatedImage = translated.toImage();
+      QCOMPARE(plainImage.size(), translatedImage.size());
+      int changedRows = 0, top = plainImage.height(), bottom = -1;
+      for (int y = 0; y < plainImage.height(); ++y) {
+        if (std::memcmp(plainImage.constScanLine(y), translatedImage.constScanLine(y), plainImage.bytesPerLine()) == 0) continue;
+        ++changedRows;
+        if (y < top) top = y;
+        if (y > bottom) bottom = y;
+      }
+      QVERIFY2(changedRows > 0, "the overlay's painted instruction text did not change with the locale");
+      QVERIFY2(top > plainImage.height() / 2, "the painted change did not come from the instruction bar");
     }
     QApplication::removeTranslator(&pseudo);
   }

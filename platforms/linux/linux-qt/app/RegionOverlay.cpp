@@ -35,9 +35,9 @@ RegionOverlay::RegionOverlay(CaptureController &controller, QScreen *screen, Dis
       m_screenOrigin(m_display.logical.left, m_display.logical.top) {
   setAttribute(Qt::WA_DeleteOnClose, false);
   setAttribute(Qt::WA_OpaquePaintEvent);
-  setWindowTitle(QStringLiteral("XerahS region capture"));
+  setWindowTitle(tr("XerahS region capture"));
   // RC-019: screen-reader name and instructions.
-  setAccessibleName(QStringLiteral("XerahS region capture"));
+  setAccessibleName(tr("XerahS region capture"));
   setAccessibleDescription(CaptureController::instructions());
   setFocusPolicy(Qt::StrongFocus);
   setMouseTracking(true);
@@ -218,20 +218,21 @@ void RegionOverlay::paintHint(QPainter &painter) {
     painter.fillRect(box, kPanel); painter.setPen(kPanelText); painter.drawText(box, Qt::AlignCenter, text); return;
   }
   if (const auto progress = m_controller.compositionProgress()) {
-    const auto text = QStringLiteral("Preparing capture pixels · %1% · Escape cancels").arg(*progress);
+    const auto text = tr("Preparing capture pixels · %1% · Escape cancels").arg(*progress);
     const auto metrics = painter.fontMetrics(); const auto width = metrics.horizontalAdvance(text) + 32;
     const QRectF box(std::max(4.0, (this->width() - width) / 2.0), this->height() - metrics.height() - 42,
         std::min(width, this->width() - 8), metrics.height() + 16);
     painter.fillRect(box, kPanel); painter.setPen(kPanelText); painter.drawText(box, Qt::AlignCenter, text); return;
   }
-  // RC-010: the precision modifier is documented in the UI.
+  // RC-010: the precision modifier is documented in the UI. A key names a
+  // physical key and stays literal; the label beside it is prose.
   struct Item {
     const char *key;
-    const char *label;
+    QString label;
   };
-  static const Item items[] = {
-      {"Drag / Space", "select"}, {"Enter", "capture"},      {"Esc", "cancel"},
-      {"Arrows", "move"},         {"Shift", "×10 step"},     {"Alt+Arrows", "resize"},
+  const Item items[] = {
+      {"Drag / Space", tr("select")}, {"Enter", tr("capture")},      {"Esc", tr("cancel")},
+      {"Arrows", tr("move")},         {"Shift", tr("×10 step")},     {"Alt+Arrows", tr("resize")},
   };
   QFont font = painter.font();
   font.setPixelSize(12);
@@ -242,7 +243,7 @@ void RegionOverlay::paintHint(QPainter &painter) {
   double width = 16;
   for (const Item &item : items) {
     width += strong.horizontalAdvance(QString::fromUtf8(item.key)) + 5 +
-             regular.horizontalAdvance(QString::fromUtf8(item.label)) + 16;
+             regular.horizontalAdvance(item.label) + 16;
   }
   const double height = regular.height() + 12;
   const QRectF box((this->width() - width) / 2, this->height() - height - 24, width, height);
@@ -253,7 +254,7 @@ void RegionOverlay::paintHint(QPainter &painter) {
   double x = box.left() + 16;
   for (const Item &item : items) {
     const QString key = QString::fromUtf8(item.key);
-    const QString label = QString::fromUtf8(item.label);
+    const QString label = item.label;
     painter.setFont(bold);
     painter.setPen(kPanelText);
     painter.drawText(QRectF(x, box.top(), strong.horizontalAdvance(key) + 1, box.height()), Qt::AlignVCenter, key);

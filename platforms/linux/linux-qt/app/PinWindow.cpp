@@ -21,8 +21,8 @@
 namespace xerahs::app {
 
 PinWindow::PinWindow(const QImage &image, QScreen *screen) : QWidget(nullptr, Qt::Window | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint), m_image(image) {
-  setObjectName(QStringLiteral("pinWindow")); setWindowTitle(QStringLiteral("Pinned image"));
-  setAccessibleName(QStringLiteral("Pinned image. Mouse wheel zooms, Control and wheel changes opacity, Escape or double-click closes."));
+  setObjectName(QStringLiteral("pinWindow")); setWindowTitle(tr("Pinned image"));
+  setAccessibleName(tr("Pinned image. Mouse wheel zooms, Control and wheel changes opacity, Escape or double-click closes."));
   setAttribute(Qt::WA_DeleteOnClose); setAttribute(Qt::WA_QuitOnClose, false); setFocusPolicy(Qt::StrongFocus);
   if (!screen) screen = QGuiApplication::screenAt(QCursor::pos());
   if (!screen) screen = QGuiApplication::primaryScreen();
@@ -58,13 +58,13 @@ void PinWindow::saveTo(const QString &path) {
     QSaveFile file(path);
     return file.open(QIODevice::WriteOnly) && image.save(&file, "PNG") && file.commit();
   }, [this, path](bool ok) {
-    if (!ok) QToolTip::showText(mapToGlobal(QPoint(8, 8)), QStringLiteral("Could not save the pinned image."), this);
+    if (!ok) QToolTip::showText(mapToGlobal(QPoint(8, 8)), tr("Could not save the pinned image."), this);
     emit saveFinished(ok, path);
   });
 }
 
 void PinWindow::chooseSavePath() {
-  auto *dialog = new QFileDialog(this, QStringLiteral("Save pinned image"), QString(), QStringLiteral("PNG image (*.png)"));
+  auto *dialog = new QFileDialog(this, tr("Save pinned image"), QString(), QStringLiteral("PNG image (*.png)"));
   dialog->setObjectName(QStringLiteral("pinSaveDialog")); dialog->setAcceptMode(QFileDialog::AcceptSave);
   dialog->setDefaultSuffix(QStringLiteral("png")); dialog->setAttribute(Qt::WA_DeleteOnClose);
   connect(dialog, &QFileDialog::fileSelected, this, [this](const QString &path) { if (!path.isEmpty()) saveTo(path); });
@@ -103,10 +103,10 @@ void PinWindow::keyPressEvent(QKeyEvent *event) {
 void PinWindow::contextMenuEvent(QContextMenuEvent *event) {
   m_dragging = false;
   auto *menu = new QMenu(this); menu->setObjectName(QStringLiteral("pinMenu")); menu->setAttribute(Qt::WA_DeleteOnClose);
-  connect(menu->addAction(QStringLiteral("&Copy")), &QAction::triggered, this, [this] { copyToClipboard(); });
-  connect(menu->addAction(QStringLiteral("&Save as…")), &QAction::triggered, this, [this] { chooseSavePath(); });
+  connect(menu->addAction(tr("&Copy")), &QAction::triggered, this, [this] { copyToClipboard(); });
+  connect(menu->addAction(tr("&Save as…")), &QAction::triggered, this, [this] { chooseSavePath(); });
   menu->addSeparator();
-  connect(menu->addAction(QStringLiteral("C&lose")), &QAction::triggered, this, &QWidget::close);
+  connect(menu->addAction(tr("C&lose")), &QAction::triggered, this, &QWidget::close);
   menu->popup(event->globalPos());
 }
 
