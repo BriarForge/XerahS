@@ -25,6 +25,23 @@ private slots:
     const auto result = composeSnapshot(desktop, {-6, -3, -2, 0}, displays);
     QVERIFY(result.diagnostic.isEmpty()); QCOMPARE(result.image, desktop.copy(2, 1, 4, 3));
   }
+  void semiTransparentSourceChannelsSurviveCompositionExactly() {
+    QImage desktop(8, 4, QImage::Format_ARGB32); desktop.setColorSpace(QColorSpace::DisplayP3);
+    const int alphas[] = {0, 1, 17, 155, 254, 255, 93, 128};
+    for (int y = 0; y < desktop.height(); ++y) for (int x = 0; x < desktop.width(); ++x)
+      desktop.setPixel(x, y, qRgba(37 + x, 83 + y, 179 - x - y, alphas[x]));
+    const auto before = desktop.copy();
+    const Topology displays{{"a", {0, 0, 4, 4}, {0, 0, 4, 4}, 1},
+                            {"b", {4, 0, 8, 4}, {4, 0, 6, 2}, 2}};
+    auto result = composeSnapshot(desktop, {0, 1, 8, 4}, displays);
+    QVERIFY(result.diagnostic.isEmpty()); QVERIFY(!result.cancelled);
+    QCOMPARE(result.image.size(), QSize(8, 3));
+    QCOMPARE(result.image.colorSpace(), desktop.colorSpace());
+    QCOMPARE(desktop, before); desktop = QImage(); // result owns its copied pixels
+    for (int y = 0; y < result.image.height(); ++y) for (int x = 0; x < result.image.width(); ++x)
+      QCOMPARE(result.image.pixel(x, y), before.pixel(x, y + 1));
+    QCOMPARE(result.image, before.copy(0, 1, 8, 3));
+  }
   void missingOutOfBoundsAndCancelledSourcesReturnNoPixels() {
     const Topology topology{{"a", {0, 0, 8, 6}, {0, 0, 8, 6}, 1}};
     const auto missing = composeSnapshot({}, {0, 0, 8, 6}, topology);

@@ -86,7 +86,7 @@ constexpr qint64 kKeyboardStep = 1;
 constexpr qint64 kPrecisionStep = 10;
 PhysicalRect applyKeyboardStep(const PhysicalRect &rect, const KeyboardStep &step, const PhysicalRect &bounds);
 
-// RC-012, RC-023: premultiplied RGBA8 pixels, row-major, no padding.
+// RC-012, RC-023: RGBA8 pixels, row-major, no padding; composition copies channels verbatim.
 struct RgbaImage {
   qint64 width = 0;
   qint64 height = 0;

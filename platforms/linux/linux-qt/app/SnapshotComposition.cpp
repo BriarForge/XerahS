@@ -14,7 +14,9 @@ ComposedSnapshot composeSnapshot(const QImage &desktop, const PhysicalRect &rect
     if (cancelled() || left < 0 || top < 0 || left + source.width() > desktop.width() || top + source.height() > desktop.height()) return {};
     auto region = desktop.copy(QRect(int(left), int(top), int(source.width()), int(source.height())));
     if (cancelled()) return {};
-    region = region.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
+    // Straight RGBA preserves every channel, including RGB under zero alpha.
+    // Premultiplication would round source values before the byte-only composition.
+    region = region.convertToFormat(QImage::Format_RGBA8888);
     if (cancelled() || region.width() != source.width() || region.height() != source.height()) return {};
     RgbaImage pixels{source.width(), source.height(), {}}; pixels.pixels.resize(qsizetype(source.width() * source.height() * 4));
     for (int row = 0; row < region.height(); ++row) {
@@ -26,7 +28,7 @@ ComposedSnapshot composeSnapshot(const QImage &desktop, const PhysicalRect &rect
   if (result.cancelled || cancelled()) return {{}, {}, true};
   if (!result.image) return {{}, result.diagnostic.value_or(diagnostic::captureSourceFailed), false};
   QImage image(reinterpret_cast<const uchar *>(result.image->pixels.constData()), int(result.image->width), int(result.image->height),
-      int(result.image->width * 4), QImage::Format_RGBA8888_Premultiplied);
+      int(result.image->width * 4), QImage::Format_RGBA8888);
   image = image.convertToFormat(QImage::Format_ARGB32);
   if (cancelled()) return {{}, {}, true};
   if (image.isNull()) return {{}, diagnostic::captureSourceFailed, false};

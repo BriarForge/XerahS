@@ -4,6 +4,7 @@
 // bus. Every image, output directory and clipboard belongs to this fixture.
 #include "PortalScreenshot.h"
 #include "CaptureController.h"
+#include "ScreenTopology.h"
 #include "WindowDiscovery.h"
 #include "RegionOverlay.h"
 #include "NativeWorkflowExecutions.h"
@@ -269,7 +270,8 @@ private slots:
     controller.captureRegion(); QTRY_VERIFY(overlayExists()); QCOMPARE(gate->calls.load(), 0);
     controller.pointerDown({10, 10}); controller.pointerUp({40, 35}); QTRY_VERIFY(gate->entered.load());
     QVERIFY(onWorker.load()); QCOMPARE(recorded.version, 1); QCOMPARE(recorded.rectangle, (PhysicalRect{10, 10, 40, 35}));
-    QCOMPARE(recorded.displays.size(), size_t(1)); QCOMPARE(recorded.displays[0].id, QApplication::primaryScreen()->name());
+    QCOMPARE(recorded.displays.size(), size_t(1)); QCOMPARE(recorded.displays[0].id, screenIdentity(QApplication::primaryScreen()->name(),
+        QApplication::primaryScreen()->manufacturer(), QApplication::primaryScreen()->model(), QApplication::primaryScreen()->serialNumber()));
     QCOMPARE(recorded.displays[0].physical, (PhysicalRect{0, 0, QApplication::primaryScreen()->geometry().width(), QApplication::primaryScreen()->geometry().height()}));
     QVERIFY(controller.busy()); QVERIFY(!controller.lastPipelineResult()); QVERIFY(!QFileInfo::exists(dir.filePath("outputs")));
     bool heartbeat = false; QTimer::singleShot(0, &controller, [&] { heartbeat = true; }); QTRY_VERIFY(heartbeat);
@@ -1062,16 +1064,29 @@ private slots:
   }
   void recordingSelectionReusesOverlayWithoutCaptureActions() {
     QTemporaryDir dir; FakeScreenshotPortal portal(server);
-    portal.uri = QUrl::fromLocalFile(fixtureImage(dir, QApplication::primaryScreen()->geometry().size() * 2)).toString(); portal.early = true;
+    portal.uri = QUrl::fromLocalFile(fixtureImage(dir, QApplication::primaryScreen()->geometry().size())).toString(); portal.early = true;
     CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
     int selected = 0; QRectF rectangle;
     controller.selectRecordingRegion([&](QRectF r) { ++selected; rectangle = r; QVERIFY(!controller.busy()); QVERIFY(!overlayExists()); });
     QTRY_VERIFY(overlayExists()); controller.pointerDown({20, 40}); controller.pointerUp({222, 142});
-    QTRY_VERIFY(!controller.busy()); QCOMPARE(selected, 1); QCOMPARE(rectangle.size(), QSizeF(101, 51));
+    QTRY_VERIFY(!controller.busy()); QCOMPARE(selected, 1); QCOMPARE(rectangle.size(), QSizeF(202, 102));
     QVERIFY(!QFileInfo::exists(controller.saveDirectory())); QVERIFY(!controller.lastPipelineResult());
     controller.selectRecordingRegion([&](QRectF) { ++selected; }); QTRY_VERIFY(overlayExists());
     QTest::keyClick(overlayWidget(), Qt::Key_Escape); QTRY_VERIFY(!controller.busy()); QCOMPARE(selected, 1);
     controller.captureRegion(); QTRY_VERIFY(overlayExists()); controller.cancel(); QTRY_VERIFY(!controller.busy()); QCOMPARE(selected, 1);
+  }
+  void recordingSelectionRejectsBitmapThatDisagreesWithTopology() {
+    QTemporaryDir dir; FakeScreenshotPortal portal(server);
+    portal.uri = QUrl::fromLocalFile(fixtureImage(dir, QApplication::primaryScreen()->geometry().size() * 2)).toString(); portal.early = true;
+    CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); });
+    QSignalSpy notices(&controller, &CaptureController::notify);
+    bool selected = false, showedOverlay = false;
+    connect(&controller, &CaptureController::busyChanged, &controller, [&] { showedOverlay |= overlayExists(); });
+    controller.selectRecordingRegion([&](QRectF) { selected = true; });
+    QTRY_VERIFY(!controller.busy()); QCOMPARE(portal.calls, 1);
+    QVERIFY(!selected); QVERIFY(!showedOverlay); QVERIFY(!overlayExists());
+    QCOMPARE(notices.size(), 1); QCOMPARE(notices.front().at(1).toString(), xerahs::capture::diagnostic::captureTopologyMismatch);
+    QVERIFY(!QFileInfo::exists(controller.saveDirectory())); QVERIFY(!controller.lastPipelineResult());
   }
   void frozenConfirmationNeverReopensThePortalFile() {
     QTemporaryDir dir; const auto path = fixtureImage(dir, QApplication::primaryScreen()->geometry().size());
