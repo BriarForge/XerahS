@@ -201,6 +201,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     m_pointerPixel = pixel;
     updatePointerStatus();
   });
+  connect(m_canvas, &EditorCanvas::closeRequested, this, [this] { close(); });
   connect(m_canvas, &EditorCanvas::editRejected, this, [this](const QString &diagnostic) {
     m_annotationMessage = annotationEditMessage(diagnostic); m_annotationMessageState = m_session->stateId();
   });

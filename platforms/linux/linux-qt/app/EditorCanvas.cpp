@@ -1131,6 +1131,11 @@ void EditorCanvas::keyPressEvent(QKeyEvent *event) {
   if (modifiers == Qt::NoModifier && event->key() == Qt::Key_Escape && !m_session->selection().isEmpty()) {
     event->accept(); selectAnnotations({}, m_session->stateId(), m_documentGeneration); return;
   }
+  // shortcut-catalog Escape, last step: nothing pending. Let the event propagate (dialog hosts still
+  // treat Escape as Cancel) and tell a standalone host it may close the session.
+  if (modifiers == Qt::NoModifier && event->key() == Qt::Key_Escape && !event->isAutoRepeat()) {
+    emit closeRequested(); event->ignore(); return;
+  }
   if (modifiers == Qt::NoModifier && (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace)) {
     event->accept(); if (!event->isAutoRepeat()) deleteSelection(); return;
   }

@@ -86,6 +86,8 @@ signals:
   void cutOutRequested(QPointF start, QPointF end, bool columns);
   void toolChanged();
   void editRejected(QString diagnostic);
+  // shortcut-catalog Escape, last step: nothing pending, so the host may close the session.
+  void closeRequested();
   // EDITOR-UTILITIES-001: the document pixel under the pointer, or none
   // outside the image.
   void pointerPixelChanged(std::optional<QPoint> pixel);

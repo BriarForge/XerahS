@@ -497,6 +497,39 @@ private slots:
     QTest::keyClick(&modal, Qt::Key_Escape); QVERIFY(!modal.isVisible());  // Escape closes the modal before touching the selection.
     QVERIFY(!canvas->annotationSelection().isEmpty()); QCOMPARE(serializeDocument(canvas->annotationDocument()), edited);
   }
+  // ESET-016: Escape is the last step of the shortcut catalogue. With nothing selected and no live
+  // gesture it reaches the close policy instead of stopping at the selection.
+  void escapeWithNothingPendingClosesTheSessionThroughTheClosePolicy() {
+    QTemporaryDir dir; const auto path = dir.filePath("escape.png"), prefs = dir.filePath("prefs.json"); QVERIFY(fixture().save(path));
+    QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty());
+    // A clean session has nothing pending, so Escape closes the editor without a confirmation.
+    std::unique_ptr<EditorWindow> clean(EditorWindow::open(path)); QVERIFY(clean); clean->setAttribute(Qt::WA_DeleteOnClose, false);
+    clean->show(); clean->activateWindow(); auto *cleanCanvas = clean->findChild<EditorCanvas *>(); QVERIFY(cleanCanvas); cleanCanvas->setFocus(); QTRY_VERIFY(clean->isActiveWindow());
+    QTest::keyClick(cleanCanvas, Qt::Key_Escape); QTRY_VERIFY(!clean->isVisible());
+    // A dirty session adds the annotation as the catalogue test adds it, then moves it the same way
+    // that test does, so the document is unsaved and the close policy has to ask.
+    auto doc = *loadSource(path).document; RectangleAnnotation r; r.id = QUuid::createUuid(); r.start = {5, 5}; r.end = {20, 20}; r.style = {0xFFFF0000, 0, 1, 0, 1}; doc.annotations.push_back(r);
+    QVERIFY(saveEdit(path, fixture(), doc).sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->setAttribute(Qt::WA_DeleteOnClose, false);
+    window->show(); window->activateWindow(); auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas); canvas->setFocus(); QTRY_VERIFY(window->isActiveWindow());
+    QVERIFY(canvas->selectAnnotations({r.id}, canvas->annotationState(), canvas->documentGeneration()));
+    QTest::keyClick(canvas, Qt::Key_Right); QVERIFY(window->windowTitle().contains(QChar(0x2022)));
+    // The selection clears first, so the first Escape asks for nothing; the next one asks to close.
+    bool asked = false; QTimer cancel;
+    connect(&cancel, &QTimer::timeout, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return;
+      asked = true; QCOMPARE(box->windowTitle(), QString("Unsaved changes")); box->done(QMessageBox::Cancel);
+    }); cancel.start(1);
+    QTest::keyClick(canvas, Qt::Key_Escape); QVERIFY(canvas->annotationSelection().isEmpty()); QVERIFY(window->isVisible());
+    QTest::keyClick(canvas, Qt::Key_Escape); QTRY_VERIFY(asked); QVERIFY(window->isVisible()); cancel.stop();
+    // Discarding the unsaved changes closes the session.
+    bool discarded = false; QTimer discard;
+    connect(&discard, &QTimer::timeout, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return;
+      discarded = true; box->done(QMessageBox::Discard);
+    }); discard.start(1);
+    QTest::keyClick(canvas, Qt::Key_Escape); QTRY_VERIFY(!window->isVisible()); discard.stop(); QVERIFY(discarded);
+  }
   void nativeOrderingCommandsPersistArrayOrderAndRenderedPixels() {
     QFETCH(QString, name); QFETCH(QString, indices); QFETCH(bool, hotkey); QFETCH(bool, blue); QTemporaryDir dir; const auto path = dir.filePath("order.png"), prefs = dir.filePath("prefs.json"); QVERIFY(fixture().save(path));
     QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty()); const QMap<QString, QString> ids{{"bringForward", "bring-forward"}, {"sendBackward", "send-backward"}, {"bringToFront", "bring-to-front"}, {"sendToBack", "send-to-back"}};
