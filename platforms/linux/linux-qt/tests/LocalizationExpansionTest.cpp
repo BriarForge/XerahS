@@ -2,6 +2,7 @@
 // overflows the screen, and a string missing from the translation falls back to its source text.
 #include "AppearanceDialog.h"
 #include "ColorPickerDialog.h"
+#include "DrawingDefaultsDialog.h"
 #include "FileUploadController.h"
 #include "HashCheckerDialog.h"
 #include "IconConverterDialog.h"
@@ -90,6 +91,51 @@ int translatedTexts(QDialog &dialog, const QStringList &runtimeData) {
     ++checked;
   }
   return checked;
+}
+
+// The preference dialogs are opened by their own entry points, which run a modal event loop. A timer
+// reaches the dialog once it appears, so its texts are collected there and the dialog is closed again.
+struct CollectedTexts {
+  bool entered = false;
+  QString title;
+  QStringList buttons, labels;
+};
+template <typename Open>
+CollectedTexts collectDialogTexts(Open open) {
+  CollectedTexts collected;
+  QTimer probe;
+  probe.setInterval(5);
+  QObject::connect(&probe, &QTimer::timeout, &probe, [&] {
+    auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget());
+    if (!dialog) return;
+    collected.entered = true;
+    collected.title = dialog->windowTitle();
+    for (auto *button : dialog->findChildren<QAbstractButton *>())
+      if (!button->text().isEmpty()) collected.buttons << button->text();
+    for (auto *label : dialog->findChildren<QLabel *>()) {
+      if (label->text().isEmpty()) continue;
+      // The import report counts machine dispositions and the saved-font note names a runtime font
+      // family: both are runtime data, not translatable prose.
+      if (label->objectName() == QLatin1String("editorPreferenceImportReport")) continue;
+      if (label->objectName().endsWith(QLatin1String("FontUnavailable"))) continue;
+      collected.labels << label->text();
+    }
+    probe.stop();
+    dialog->reject();
+  });
+  probe.start();
+  open();
+  probe.stop();
+  return collected;
+}
+
+// Returns the collected texts that the pseudo-locale did not translate.
+QString untranslatedTexts(const CollectedTexts &collected) {
+  QStringList offenders;
+  for (const auto &button : collected.buttons) if (!button.contains(QChar(0x2022))) offenders << button;
+  for (const auto &label : collected.labels) if (!label.contains(QChar(0x2022))) offenders << label;
+  if (!collected.title.contains(QChar(0x2022))) offenders << collected.title;
+  return offenders.join(QStringLiteral(" | "));
 }
 }  // namespace
 
@@ -309,44 +355,28 @@ private slots:
     PseudoLocale pseudo;
     QVERIFY(QApplication::installTranslator(&pseudo));
     {
-      // The appearance dialog is opened by its own entry point, so the probe closes it as soon as it appears.
       QWidget parent;
-      QStringList buttonTexts, labelTexts;
-      QString title;
-      bool entered = false;
-      QTimer probe;
-      probe.setInterval(5);
-      connect(&probe, &QTimer::timeout, &probe, [&] {
-        auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget());
-        if (!dialog) return;
-        entered = true;
-        title = dialog->windowTitle();
-        for (auto *button : dialog->findChildren<QAbstractButton *>())
-          if (!button->text().isEmpty()) buttonTexts << button->text();
-        for (auto *label : dialog->findChildren<QLabel *>()) {
-          if (label->text().isEmpty()) continue;
-          // The import report counts machine dispositions; it is a diagnostic, not translatable prose.
-          if (label->objectName() == QLatin1String("editorPreferenceImportReport")) continue;
-          labelTexts << label->text();
-        }
-        probe.stop();
-        dialog->reject();
-      });
-      probe.start();
-      manageEditorAppearance(&parent);
-      probe.stop();
-      QVERIFY2(entered, "the appearance dialog did not open");
-      int checked = 0;
-      for (const auto &button : buttonTexts) {
-        QVERIFY2(button.contains(QChar(0x2022)), qPrintable(button));
-        ++checked;
-      }
-      for (const auto &label : labelTexts) {
-        QVERIFY2(label.contains(QChar(0x2022)), qPrintable(label));
-        ++checked;
-      }
-      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
-      QVERIFY2(title.contains(QChar(0x2022)), qPrintable(title));
+      const auto collected = collectDialogTexts([&] { manageEditorAppearance(&parent); });
+      QVERIFY2(collected.entered, "the appearance dialog did not open");
+      const auto offenders = untranslatedTexts(collected);
+      QVERIFY2(offenders.isEmpty(), qPrintable(offenders));
+      QVERIFY2(collected.buttons.size() + collected.labels.size() >= 3,
+          qPrintable(QString::number(collected.buttons.size() + collected.labels.size())));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void drawingDefaultsDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      QWidget parent;
+      const auto collected = collectDialogTexts([&] { manageDrawingDefaults(&parent); });
+      QVERIFY2(collected.entered, "the drawing defaults dialog did not open");
+      const auto offenders = untranslatedTexts(collected);
+      QVERIFY2(offenders.isEmpty(), qPrintable(offenders));
+      QVERIFY2(collected.buttons.size() + collected.labels.size() >= 3,
+          qPrintable(QString::number(collected.buttons.size() + collected.labels.size())));
     }
     QApplication::removeTranslator(&pseudo);
   }
