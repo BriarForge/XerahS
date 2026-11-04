@@ -44,6 +44,7 @@ QString RecordingController::indicator() const {
 void RecordingController::start(Request request, const QString &origin) {
   if (busy()) return;
   teardown(); m_request = std::move(request); m_elapsed = 0; m_clock.invalidate();
+  m_observation.reset();
   m_session = std::make_unique<Session>();
   if (!m_session->observe(m_request, origin, m_writer)) {
     m_session.reset();
@@ -51,17 +52,11 @@ void RecordingController::start(Request request, const QString &origin) {
     return;
   }
   connect(m_session.get(), &Session::changed, this, &RecordingController::changed);
-  connect(m_session.get(), &Session::finished, this, [this](State s, const QString &code) {
-    const auto path = m_session->result().output;
-    stopEncoder();
-    const auto recovery = m_session->result().recoverableOutput;
-    teardown();
-    if (!m_session->executionConfirmed()) emit notify("Recording outcome unconfirmed", "Workflow storage could not confirm the outcome. Check recording output before retrying.", false);
-    else if (s == State::Completed) emit notify("Screen recording completed", path, true);
-    else emit notify("Screen recording " + stateName(s),
-                     (code.isEmpty() ? stateName(s) : code + ". Retry recording after checking the source and output folder.") +
-                     (recovery.isEmpty() ? QString{} : " Partial media retained for recovery (may require repair): " + recovery), false);
-  });
+  connect(m_session.get(), &Session::finished, this, [this] { stopEncoder(); teardown(); });
+  m_observation = std::make_unique<RecordingObservation>(*m_session);
+  connect(m_observation.get(), &RecordingObservation::activityChanged, this, &RecordingController::activityChanged);
+  connect(m_observation.get(), &RecordingObservation::terminalObserved, this, &RecordingController::terminalObserved);
+  connect(m_observation.get(), &RecordingObservation::notify, this, &RecordingController::notify);
   m_session->send(Event::Request);
   if (!validate(m_request).isEmpty()) { fail("request-invalid"); return; }
   if (!unavailable(m_request.format).isEmpty()) { fail("encoder-unavailable"); return; }

@@ -31,6 +31,19 @@ QString Session::makeId() { return QUuid::createUuid().toString(QUuid::WithoutBr
 ControlResult Session::result() const {
   return {false, false, m_id, m_state, m_output, m_recoverable, m_diagnostic, !m_recoverable.isEmpty()};
 }
+QJsonObject Session::terminalObservation() const {
+  QString state = m_state == State::Completed ? "succeeded" : m_state == State::Cancelled ? "cancelled" :
+      m_state == State::PermissionDenied ? "permission-denied" : xerahs::actions::failureClassName(xerahs::actions::classifyFailure(m_diagnostic));
+  if (m_execution) state = m_executionConfirmed ? m_execution->record().state : QString("outcome-unconfirmed");
+  QStringList outputs;
+  // A failed history write cannot publish references absent from durable
+  // history. The live private result still retains the actual output paths.
+  if (!m_execution || m_executionConfirmed) {
+    if (!m_output.isEmpty()) outputs << m_id + "/recording.file";
+    else if (!m_recoverable.isEmpty()) outputs << m_id + "/recording.partial";
+  }
+  return {{"task_id", m_id}, {"state", state}, {"outputs", QJsonArray::fromStringList(outputs)}};
+}
 void Session::outputs(const QString &published, const QString &recoverable) {
   m_output = published; m_recoverable = recoverable;
 }
@@ -87,7 +100,8 @@ bool Session::send(Event e, const QString &diagnostic) {
       const auto result = next == State::Completed ? QString("succeeded") : next == State::Cancelled ? QString("cancelled") :
           next == State::PermissionDenied ? QString("permission-denied") : QString("failed");
       const auto state = next == State::Failed ? xerahs::actions::failureClassName(xerahs::actions::classifyFailure(diagnostic)) : result;
-      m_executionConfirmed = m_execution->step(action, result, diagnostic) && m_execution->finish(state, diagnostic);
+      m_executionConfirmed = m_execution->step(action, result, diagnostic) && m_execution->finish(state, diagnostic, !m_output.isEmpty() ? QStringList{m_id + "/recording.file"} :
+          !m_recoverable.isEmpty() ? QStringList{m_id + "/recording.partial"} : QStringList{});
     }
   }
   emit changed();

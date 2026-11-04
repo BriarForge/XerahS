@@ -2,7 +2,9 @@
 #include "features/UploadFeature.h"
 
 #include "AppContext.h"
+#include "ApplicationControl.h"
 #include "ApplicationWindow.h"
+#include "CaptureController.h"
 #include "FileUploadController.h"
 #include "UploadDestinationsDialog.h"
 #include "WatchFolderService.h"
@@ -66,7 +68,8 @@ void installUpload(AppContext &ctx) {
   state.watch = ctx.commands.add(CommandSpec{QStringLiteral("watch-folders"), QStringLiteral("Watch folders…"),
       CommandGroup::Upload, CommandSurface::Tray});
   QObject::connect(state.destinations, &QAction::triggered, &ctx.app, [&ctx] {
-    showDestinations(ctx, ctx.dialogParent ? ctx.dialogParent() : nullptr);
+    if (applicationControlAvailability(ctx.capture.busy()).isEmpty())
+      showDestinations(ctx, ctx.dialogParent ? ctx.dialogParent() : nullptr);
   });
 }
 

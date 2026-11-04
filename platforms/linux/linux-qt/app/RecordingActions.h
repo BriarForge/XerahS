@@ -6,7 +6,9 @@
 #include <functional>
 #include <QJsonObject>
 class QSystemTrayIcon;
+class QDialog;
 namespace xerahs::app {
+QDialog *makeRecordingResultDialog(const recording::ControlResult &result);
 class RecordingActions : public QObject {
   Q_OBJECT
 public:

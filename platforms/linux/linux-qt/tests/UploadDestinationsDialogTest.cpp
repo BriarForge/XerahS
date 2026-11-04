@@ -4,6 +4,8 @@
 #include <QApplication>
 #include <QFile>
 #include <QLabel>
+#include <QMessageBox>
+#include <QTimer>
 #include <QListWidget>
 #include <QPushButton>
 #include <QSignalSpy>
@@ -141,6 +143,29 @@ private slots:
     QVERIFY(rows(dialog, "Destinations").isEmpty());
   }
 
+  void changingDefaultRequiresExplicitConfirmationAndDefaultsToNo() {
+    DestinationCatalog catalog(m_dir.filePath("destinations.json")); MemoryCredentialStore credentials;
+    UploadDestination first; first.id = QUuid::createUuid(); first.name = "First"; first.requestUrl = "https://example.test/first";
+    auto second = first; second.id = QUuid::createUuid(); second.name = "Second"; second.requestUrl = "https://example.test/second";
+    QVERIFY(catalog.add(first).isEmpty()); QVERIFY(catalog.add(second).isEmpty()); QCOMPARE(catalog.defaultId(), first.id);
+    auto injected = ports(); injected.confirmDefault = nativeUploadDestinationsPorts().confirmDefault;
+    UploadDestinationsDialog dialog(catalog, credentials, injected);
+    auto *list = dialog.findChild<QListWidget *>(); QVERIFY(list); list->setCurrentRow(1); settle(dialog);
+    bool asked = false; bool allow = false; QTimer answer;
+    connect(&answer, &QTimer::timeout, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return;
+      asked = true; QCOMPARE(box->windowTitle(), QString("Change upload destination"));
+      QCOMPARE(box->defaultButton(), box->button(QMessageBox::No));
+      box->button(allow ? QMessageBox::Yes : QMessageBox::No)->click();
+    });
+    answer.start(1); dialog.setSelectedAsDefault(); answer.stop(); QVERIFY(asked); QCOMPARE(catalog.defaultId(), first.id);
+    allow = true; asked = false; answer.start(1); dialog.setSelectedAsDefault(); answer.stop(); QVERIFY(asked); QCOMPARE(catalog.defaultId(), second.id);
+    DestinationCatalog reopened(m_dir.filePath("destinations.json")); QCOMPARE(reopened.defaultId(), second.id);
+    // A missing presentation/confirmation port cannot expand authority.
+    auto absent = ports(); UploadDestinationsDialog noPresentation(catalog, credentials, absent);
+    noPresentation.findChild<QListWidget *>()->setCurrentRow(0); settle(noPresentation); noPresentation.setSelectedAsDefault();
+    QCOMPARE(catalog.defaultId(), second.id);
+  }
   void closingWhileBusyDoesNotTouchTheDialog() {
     DestinationCatalog catalog(m_dir.filePath(QStringLiteral("destinations.json")));
     MemoryCredentialStore credentials;

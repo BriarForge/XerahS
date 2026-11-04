@@ -197,6 +197,19 @@ private slots:
     actions.enableAction()->trigger(); QTRY_VERIFY(actions.enableAction()->text().startsWith("Configure")); QCOMPARE(desktop.creates, 2); actions.disableAction()->trigger(); QVERIFY(!actions.disableAction()->isEnabled());
     QVERIFY(window.findChild<QLabel *>("operationStatus")->text().contains("disabled"));
   }
+  void enablingGlobalHotkeysRequiresDesktopConfirmationBeforeAuthority() {
+    FakePortal desktop(server); desktop.holdBind = true;
+    WorkflowShortcutActions actions([this] { return plan(); }, [] { return true; }, client, config());
+    QSignalSpy invoked(&actions, &WorkflowShortcutActions::workflowRequested);
+    actions.enableAction()->trigger(); QTRY_COMPARE(desktop.binds, 1); QVERIFY(actions.pending());
+    desktop.press(plan().entries.first().id); QTest::qWait(20); QCOMPARE(invoked.size(), 0);
+    // A dismissed permission presentation cannot turn the offered shortcut plan into authority.
+    desktop.respond(1, {}); QTRY_VERIFY(!actions.pending()); QVERIFY(!actions.disableAction()->isEnabled());
+    desktop.press(plan().entries.first().id); QTest::qWait(20); QCOMPARE(invoked.size(), 0);
+    actions.enableAction()->trigger(); QTRY_COMPARE(desktop.binds, 2); QVERIFY(actions.pending());
+    desktop.respond(0, desktop.pendingResults); QTRY_VERIFY(actions.enableAction()->text().startsWith("Configure"));
+    desktop.release(plan().entries.first().id); desktop.press(plan().entries.first().id); QTRY_COMPARE(invoked.size(), 1);
+  }
   void acceptedHotkeyUsesSavedWorkflowAndRealControllerOutput() {
     using namespace xerahs::shell; QTemporaryDir dir; FakePortal desktop(server);
     desktop.imagePath = dir.filePath("synthetic.png"); QImage image(QApplication::primaryScreen()->geometry().size(), QImage::Format_ARGB32); image.fill(QColor(40, 80, 120)); QVERIFY(image.save(desktop.imagePath));

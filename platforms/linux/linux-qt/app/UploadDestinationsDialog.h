@@ -24,6 +24,7 @@ struct UploadDestinationsPorts {
   std::function<QString(QWidget *)> chooseSxcu;
   std::function<std::optional<QString>(QWidget *, const QString &secretName)> askSecret;
   std::function<bool(QWidget *, const QString &destinationName)> confirmRemove;
+  std::function<bool(QWidget *, const QString &destinationName)> confirmDefault;
   std::function<void(QWidget *, const QString &message)> report;
   std::function<QNetworkAccessManager *(QObject *)> connectionNetwork;
   // Production supplies these owners so retired workers outlive a closed window.

@@ -1,6 +1,7 @@
 #pragma once
 #include "recording/Recording.h"
 #include "RecordingDevices.h"
+#include "RecordingObservation.h"
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusUnixFileDescriptor>
@@ -19,6 +20,7 @@ public:
   QString unavailable(recording::Format format) const;
   bool busy() const;
   recording::State state() const;
+  recording::ControlResult result() const { return m_session ? m_session->result() : recording::ControlResult{}; }
   QString sessionId() const { return m_session ? m_session->id() : QString{}; }
   recording::ControlResult control(const QString &sessionId, recording::Event event);
   QString indicator() const;
@@ -28,6 +30,8 @@ public:
   void abort();
 signals:
   void changed();
+  void activityChanged(const QString &text);
+  void terminalObserved(const QJsonObject &observation);
   void notify(const QString &title, const QString &body, bool success);
 private slots:
   void response(uint code, const QVariantMap &results, const QDBusMessage &message);
@@ -46,6 +50,7 @@ private:
   bool m_audioActive = false;
   recording::Request m_request;
   std::unique_ptr<recording::Session> m_session;
+  std::unique_ptr<RecordingObservation> m_observation;
   recording::Output m_output;
   recording::Encoder m_encoder;
   QSet<QString> m_elements;

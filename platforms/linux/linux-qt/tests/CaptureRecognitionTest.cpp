@@ -1,6 +1,17 @@
 #include "CapturePipeline.h"
 #include "ImageRecognitionDialog.h"
 #include "QrRender.h"
+#include "NativeWorkflowExecutions.h"
+#include "PipelineResultDialog.h"
+#include "uploads/DestinationCatalog.h"
+#include <QDialog>
+#include <QFile>
+#include <QLabel>
+#include <QMutex>
+#include <QRegularExpression>
+#include <QPlainTextEdit>
+#include <QTreeWidget>
+#include <stdexcept>
 #include <QApplication>
 #include <QClipboard>
 #include <QFont>
@@ -14,6 +25,16 @@
 using namespace xerahs::app;
 using namespace xerahs::actions;
 namespace {
+QMutex logMutex;
+QStringList capturedLogs;
+void collectLog(QtMsgType, const QMessageLogContext &, const QString &message) {
+  QMutexLocker lock(&logMutex); capturedLogs.append(message);
+}
+struct LogCapture {
+  QtMessageHandler previous;
+  LogCapture() { capturedLogs.clear(); previous = qInstallMessageHandler(collectLog); }
+  ~LogCapture() { qInstallMessageHandler(previous); }
+};
 QImage qr() { return renderQr(xerahs::tools::encodeQr(QStringLiteral("private QR fixture"), xerahs::tools::QrEcc::M).matrix, 300).image; }
 QImage text() {
   QImage image(1200, 240, QImage::Format_ARGB32); image.fill(Qt::white);
@@ -84,6 +105,60 @@ private slots:
     const auto r=receipt(done); QVERIFY(gui); QCOMPARE(copied.simplified(),QString("LOCAL OCR TEST 123"));
     QCOMPARE(r->pipeline.orderedResults[0].action,QString("ocr")); QCOMPARE(action(r,"ocr-clipboard").state,ActionState::Succeeded);
     QVERIFY(!QJsonDocument(r->canonicalResult()).toJson().contains("LOCAL OCR TEST"));
+  }
+  void pipelinePrivacySweepRedactsAllOrdinaryResultSurfaces() {
+    if (!textRecognitionAvailable()) QSKIP("OCR engine absent; full privacy sweep requires recognized text.");
+    using namespace xerahs::uploads;
+    using namespace xerahs::workflows;
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    const QString clipboardSecret = "CLIPBOARD_SENTINEL_8317", credentialSecret = "CREDENTIAL_SENTINEL_6193";
+    const QString recognized = "LOCAL OCR TEST 123";
+    UploadDestination destination; destination.id = QUuid::createUuid(); destination.name = "Fixture";
+    destination.requestUrl = "https://example.test/upload"; destination.body = BodyType::MultipartFormData; destination.fileFormName = "file";
+    // Consume a real credential, then fail request preparation before any network side effect.
+    destination.headers = {{"Authorization", "{secret:token}"}, {"X-Required", "{secret:missing}"}};
+    DestinationCatalog catalog(dir.filePath("destinations.json")); QVERIFY(catalog.add(destination).isEmpty());
+    auto credentials = std::make_shared<MemoryCredentialStore>(); QVERIFY(credentials->store(destination.id, "token", credentialSecret).ok());
+    CaptureActionPorts ports; ports.uploadCatalogPath = dir.filePath("destinations.json"); ports.uploadCredentials = credentials;
+    bool recognizedSeen = false, textCopied = false;
+    ports.clipboard = [&](const auto &, const auto &) -> ActionOutcome { throw std::runtime_error(clipboardSecret.toStdString()); };
+    ports.recognitionResult = [&](auto, const QStringList &values, const auto &) {
+      recognizedSeen = values.join(' ').simplified() == recognized; return ActionOutcome{};
+    };
+    ports.textClipboard = [&](const QString &value, const auto &) -> ActionOutcome {
+      textCopied = value.simplified() == recognized; throw std::runtime_error(value.toStdString());
+    };
+    auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("journal"));
+    NativeWorkflowExecutions executions(dir.filePath("executions"));
+    auto definition = defaultCaptureWorkflows().entries.first(); definition.actions = {"save", "image-clipboard", "upload", "ocr", "ocr-clipboard"};
+    const auto executionId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    WorkflowExecution execution(executionId, "native-shell", definition, executions.writer()); QVERIFY(execution.admit()); QVERIFY(execution.start());
+    CapturePipeline pipeline(text(), dir.filePath("captures"), "privacy", definition.actions, nullptr, ports, journal);
+    QVERIFY(execution.processing(pipeline.taskId()));
+    QStringList progress; QJsonObject notification;
+    connect(&pipeline, &CapturePipeline::activityChanged, this, [&](const QString &value) { progress.append(value); });
+    connect(&pipeline, &CapturePipeline::terminalObserved, this, [&](const QJsonObject &value) { notification = value; });
+    QSignalSpy done(&pipeline, &CapturePipeline::finished);
+    LogCapture logs; pipeline.start(); QTRY_COMPARE_WITH_TIMEOUT(done.count(), 1, 7000);
+    const auto result = receipt(done); QVERIFY(recognizedSeen); QVERIFY(textCopied); QVERIFY(execution.complete(result->pipeline));
+    QCOMPARE(action(result, "image-clipboard").diagnostic, std::optional<QString>("action-failed"));
+    QCOMPARE(action(result, "ocr-clipboard").diagnostic, std::optional<QString>("action-failed"));
+    QCOMPARE(action(result, "upload").state, ActionState::Failed); QVERIFY(action(result, "upload").diagnostic);
+    for (const auto &step : result->pipeline.orderedResults)
+      if (step.state == ActionState::Failed) { QVERIFY(step.diagnostic); QVERIFY(QRegularExpression("^[a-z][a-z0-9-]+$").match(*step.diagnostic).hasMatch()); }
+    QByteArray surfaces = QJsonDocument(result->canonicalResult()).toJson() + QJsonDocument(notification).toJson() + progress.join('\n').toUtf8();
+    const auto records = journal->list(); QCOMPARE(records.entries.size(), size_t(1)); surfaces += records.entries.front().bytes;
+    QFile history(dir.filePath("executions/" + executionId + ".json")); QVERIFY(history.open(QIODevice::ReadOnly)); surfaces += history.readAll();
+    surfaces += QJsonDocument(executions.result(executionId)).toJson();
+    std::unique_ptr<QDialog> dialog(makePipelineResultDialog(result->canonicalResult(), nullptr));
+    for (auto *label : dialog->findChildren<QLabel *>()) surfaces += label->text().toUtf8();
+    for (auto *details : dialog->findChildren<QPlainTextEdit *>()) surfaces += details->toPlainText().toUtf8();
+    for (auto *table : dialog->findChildren<QTreeWidget *>())
+      for (int row = 0; row < table->topLevelItemCount(); ++row)
+        for (int column = 0; column < table->columnCount(); ++column) surfaces += table->topLevelItem(row)->text(column).toUtf8();
+    { QMutexLocker lock(&logMutex); surfaces += capturedLogs.join('\n').toUtf8(); }
+    for (const auto &secret : {clipboardSecret, credentialSecret, recognized}) QVERIFY2(!surfaces.contains(secret.toUtf8()), qPrintable(secret));
+    QVERIFY(!notification.isEmpty()); QCOMPARE(notification.value("state"), QJsonValue("partial"));
   }
   void emptyOcrPreservesTheClipboard() {
     if (!textRecognitionAvailable()) QSKIP("OCR engine absent.");

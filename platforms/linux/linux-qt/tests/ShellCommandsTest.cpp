@@ -2,6 +2,11 @@
 // feature installers (installShellFeatures), then every command is checked for
 // a handler or an explicit unavailable explanation. Offscreen, temp profile.
 #include "ShellFixture.h"
+#include "ApplicationControl.h"
+#include "RecordingActions.h"
+#include <QLabel>
+#include "UploadDestinationsDialog.h"
+#include <QJsonDocument>
 #include <QAbstractButton>
 #include <QApplication>
 #include <QDialog>
@@ -43,6 +48,37 @@ private slots:
       QVERIFY2(!action->toolTip().trimmed().isEmpty() && action->toolTip() != action->text() && !shell.commands.spec(id)->accessibleDescription.isEmpty(), qPrintable(id + " is inert without an explanation"));
     }
     QVERIFY2(explained <= 2, qPrintable(QString::number(explained)));  // Only genuinely unavailable integrations.
+  }
+  void applicationControlsRespectModalWorkAndHeadlessAuthority() {
+    Shell shell(root.path()); shell.attach();
+    QDialog modal; modal.setWindowModality(Qt::ApplicationModal); modal.show();
+    QTRY_COMPARE(QApplication::activeModalWidget(), &modal);
+    for (const auto *id : {"enable-workflow-shortcuts", "upload-destinations", "quit"}) {
+      auto *action = shell.commands.action(id); QVERIFY(action); action->trigger();
+      QCOMPARE(applicationControlAvailability(), QString("application-busy"));
+      QCOMPARE(applicationControlAvailability(false, false), QString("presentation-required"));
+      // External/agent activation has no direct permission-changing or quit command.
+      auto request = QJsonDocument::fromJson(xerahs::shell::serializeActivation(xerahs::shell::makeActivationRequest(xerahs::shell::ActivationAction::Activate))).object();
+      request.insert("action", id);
+      QVERIFY(!xerahs::shell::parseActivation(QJsonDocument(request).toJson()).request);
+    }
+    for (auto *window : QApplication::topLevelWidgets()) QVERIFY(!qobject_cast<UploadDestinationsDialog *>(window));
+    QCOMPARE(applicationControlAvailability(true), QString("application-busy")); // Running work refuses Quit, never discards it.
+    modal.hide();
+  }
+  void recordingPrivateOutputPathsRemainAvailableOnlyInExplicitReview() {
+    Shell shell(root.path()); shell.attach();
+    auto *review = shell.commands.action("review-recording"); QVERIFY(review); QVERIFY(!review->isEnabled());
+    xerahs::recording::Request request; request.frameRate = 0;
+    shell.recording.start(request); QVERIFY(review->isEnabled()); review->trigger();
+    QDialog *opened = nullptr;
+    for (auto *widget : QApplication::topLevelWidgets()) if (widget->objectName() == "recordingResultDialog") opened = qobject_cast<QDialog *>(widget);
+    QVERIFY(opened); QVERIFY(opened->isVisible()); delete opened;
+    xerahs::recording::ControlResult result; result.state = xerahs::recording::State::Failed;
+    result.sessionId = "task"; result.recoverableOutput = root.filePath("PRIVATE-partial.webm"); result.diagnostic = "encoder-failed";
+    std::unique_ptr<QDialog> detail(makeRecordingResultDialog(result));
+    QStringList labels; for (auto *label : detail->findChildren<QLabel *>()) labels << label->text();
+    QVERIFY(labels.contains(result.recoverableOutput)); QVERIFY(labels.contains("encoder-failed"));
   }
   void windowButtonsAndTrayEntriesAreTheSharedWiredActions() {
     Shell shell(root.path()); shell.attach();

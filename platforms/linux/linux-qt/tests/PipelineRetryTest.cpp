@@ -81,6 +81,25 @@ private slots:
     skipped.orderedResults[1].diagnostic = diagnostic::uploadDeclined;
     QCOMPARE(planRetainedCaptureRetry(skipped, true, false).selected, QStringList{"save"});
   }
+  void successfulUploadIsPreservedWhenOnlyRevealNeedsRetry() {
+    auto source = result(ActionState::Succeeded, ActionState::Succeeded);
+    source.orderedResults.push_back(ActionResult{"upload", ActionState::Succeeded});
+    source.orderedResults.push_back(ActionResult{"reveal", ActionState::Failed});
+    const auto plan = planRetainedCaptureRetry(source, true, true);
+    QVERIFY(plan.available()); QCOMPARE(plan.selected, QStringList{"reveal"});
+    QCOMPARE(plan.link->preservedSuccessfulActions, (QStringList{"save", "image-clipboard", "upload"}));
+    QCOMPARE(plan.link->originalTaskId, source.taskId); QCOMPARE(plan.link->previousTaskId, source.taskId);
+    QCOMPARE(plan.link->attempt, 1);
+    PipelineResult retry; retry.taskId = id(); retry.retry = plan.link;
+    retry.orderedResults = {ActionResult{"reveal", ActionState::Succeeded}};
+    PipelineJournalSnapshot snapshot; snapshot.result = retry; snapshot.selected = plan.selected;
+    snapshot.createdAt = QDateTime::currentDateTimeUtc(); snapshot.terminal = true;
+    const auto recovered = parsePipelineJournal(serializePipelineJournal(snapshot), retry.taskId);
+    QVERIFY(recovered.record);
+    const auto link = recovered.record->report.value("extensions").toObject().value("com.xerahs.app").toObject().value("retry").toObject();
+    QCOMPARE(link.value("original_task_id"), QJsonValue(source.taskId));
+    QVERIFY(link.value("preserved_successful_actions").toArray().contains("upload"));
+  }
   void interruptedUnknownCancelledSuccessfulAndUnsupportedActionsDoNotRunAgain() {
     auto value = result(ActionState::Succeeded, ActionState::Failed); value.state = PipelineState::Interrupted;
     QCOMPARE(planRetainedCaptureRetry(value, true, true).diagnostic, QString("retry-outcome-unknown"));

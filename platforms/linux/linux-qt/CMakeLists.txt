@@ -943,7 +943,7 @@ if(XERAHS_RECORDING AND GSTREAMER_FOUND)
   target_compile_definitions(xerahs_recording_devices PUBLIC XERAHS_GSTREAMER=1)
 endif()
 target_link_libraries(application-settings-test PRIVATE xerahs_recording_devices)
-add_library(xerahs_recording STATIC app/RecordingController.cpp app/RecordingController.h app/RecordingActions.cpp app/RecordingActions.h)
+add_library(xerahs_recording STATIC app/RecordingController.cpp app/RecordingController.h app/RecordingObservation.cpp app/RecordingObservation.h app/RecordingActions.cpp app/RecordingActions.h)
 set_target_properties(xerahs_recording PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_recording PUBLIC app)
 target_link_libraries(xerahs_recording PUBLIC xerahs_recording_core xerahs_recording_devices xerahs_pipeline_journal Qt6::DBus Qt6::Widgets)
@@ -1487,7 +1487,7 @@ foreach(recognition_test qr-recognition ocr-recognition image-recognition-dialog
 endforeach()
 
 # Capture recognition uses the same local service as the utility windows.
-add_executable(capture-recognition-test tests/CaptureRecognitionTest.cpp
+add_executable(capture-recognition-test tests/CaptureRecognitionTest.cpp app/PipelineResultDialog.cpp
   app/CapturePipeline.cpp app/CapturePipeline.h app/CaptureActions.cpp app/CaptureActions.h
   app/CaptureSave.cpp app/CaptureSave.h)
 set_target_properties(capture-recognition-test PROPERTIES AUTOMOC ON)

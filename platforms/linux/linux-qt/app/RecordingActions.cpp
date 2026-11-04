@@ -1,4 +1,5 @@
 #include "RecordingActions.h"
+#include "ApplicationControl.h"
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialog>
@@ -13,10 +14,22 @@
 #include <QSystemTrayIcon>
 namespace xerahs::app {
 using namespace recording;
+QDialog *makeRecordingResultDialog(const ControlResult &result) {
+  auto *dialog = new QDialog; dialog->setAttribute(Qt::WA_DeleteOnClose); dialog->setObjectName("recordingResultDialog");
+  dialog->setWindowTitle("Recording result"); auto *layout = new QFormLayout(dialog);
+  for (const auto &entry : QList<QPair<QString, QString>>{{"Session", result.sessionId}, {"State", stateName(result.state)},
+      {"Diagnostic", result.diagnostic}, {"Completed output", result.output}, {"Recoverable partial (may need repair)", result.recoverableOutput}}) {
+    if (entry.second.isEmpty()) continue;
+    auto *label = new QLabel(entry.second, dialog); label->setTextFormat(Qt::PlainText);
+    label->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard); layout->addRow(entry.first, label);
+  }
+  auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, dialog); layout->addRow(buttons);
+  QObject::connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject); return dialog;
+}
 RecordingActions::RecordingActions(RecordingController &controller, QSystemTrayIcon &tray,
                                  std::function<QString()> folder, QObject *parent)
     : QObject(parent), m_controller(controller), m_tray(tray), m_folder(std::move(folder)), m_icon(tray.icon()) {
-  for (const auto &entry : QList<QPair<QString, QString>>{{"start-region-recording", "Record region…"}, {"start-recording", "Start screen recording…"}, {"start-gif-recording", "Start GIF recording…"}, {"pause-recording", "Pause recording"}, {"stop-recording", "Stop recording"}, {"abort-recording", "Abort recording"}}) {
+  for (const auto &entry : QList<QPair<QString, QString>>{{"start-region-recording", "Record region…"}, {"start-recording", "Start screen recording…"}, {"start-gif-recording", "Start GIF recording…"}, {"pause-recording", "Pause recording"}, {"stop-recording", "Stop recording"}, {"abort-recording", "Abort recording"}, {"review-recording", "Review recording result…"}}) {
     auto *action = new QAction(entry.second, this); action->setObjectName(entry.first); m_actions.insert(entry.first, action); m_ordered.append(action);
   }
   connect(m_actions["start-region-recording"], &QAction::triggered, this, [this] { start(Format::Mp4, true); });
@@ -25,6 +38,10 @@ RecordingActions::RecordingActions(RecordingController &controller, QSystemTrayI
   connect(m_actions["pause-recording"], &QAction::triggered, &controller, &RecordingController::pauseResume);
   connect(m_actions["stop-recording"], &QAction::triggered, &controller, &RecordingController::stop);
   connect(m_actions["abort-recording"], &QAction::triggered, &controller, &RecordingController::abort);
+  connect(m_actions["review-recording"], &QAction::triggered, this, [this] {
+    if (!terminal(m_controller.state()) || !applicationControlAvailability().isEmpty()) return;
+    makeRecordingResultDialog(m_controller.result())->show();
+  });
   connect(&controller, &RecordingController::changed, this, &RecordingActions::refresh); refresh();
 }
 void RecordingActions::refresh() {
@@ -39,6 +56,7 @@ void RecordingActions::refresh() {
   m_actions["pause-recording"]->setText(state == State::Paused ? "Resume recording" : "Pause recording");
   m_actions["stop-recording"]->setEnabled(state == State::Recording || state == State::Paused);
   m_actions["abort-recording"]->setEnabled(m_controller.busy());
+  m_actions["review-recording"]->setEnabled(terminal(state));
   m_tray.setToolTip(m_controller.busy() ? m_controller.indicator() : QStringLiteral("XerahS"));
   if (m_controller.busy()) {
     QPixmap pixmap = m_icon.pixmap(32, 32); QPainter painter(&pixmap); painter.setPen(Qt::white); painter.setBrush(Qt::red); painter.drawEllipse(20, 20, 11, 11); painter.end(); m_tray.setIcon(QIcon(pixmap));

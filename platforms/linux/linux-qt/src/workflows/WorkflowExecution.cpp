@@ -59,9 +59,11 @@ bool validSnapshot(const QJsonObject &snapshot) {
 }
 QString date(const QDateTime &value) { return value.toUTC().toString(Qt::ISODateWithMs); }
 QJsonObject object(const WorkflowExecutionRecord &r, int version = 2) {
-  return {{"format", "com.xerahs.app/linux-qt/workflow-execution"}, {"version", version}, {"id", r.id}, {"origin", r.origin},
+  QJsonObject result{{"format", "com.xerahs.app/linux-qt/workflow-execution"}, {"version", version}, {"id", r.id}, {"origin", r.origin},
       {"state", r.state}, {"startedAt", date(r.startedAt)}, {"finishedAt", r.finishedAt.isValid() ? date(r.finishedAt) : QString{}},
       {"settings", r.settings}, {"pipelineId", r.pipelineId}, {"diagnostic", r.diagnostic}, {"steps", r.steps}};
+  if (!r.outputs.isEmpty()) result.insert("outputs", QJsonArray::fromStringList(r.outputs));
+  return result;
 }
 }
 QByteArray serializeWorkflowExecution(const WorkflowExecutionRecord &r) { return QJsonDocument(object(r)).toJson(QJsonDocument::Compact); }
@@ -92,6 +94,13 @@ std::optional<WorkflowExecutionRecord> parseWorkflowExecution(const QByteArray &
          !(recordingSnapshot(r.settings) && QStringList{"capture-recording", "start-recording", "pause-recording", "resume-recording", "stop-recording", "abort-recording"}.contains(entry.value("action").toString()))) ||
         !QStringList{"succeeded", "failed", "cancelled", "skipped", "permission-denied"}.contains(entry.value("state").toString())) return {};
   }
+  if (o.contains("outputs")) {
+    if (o.value("version") != 2 || !recordingSnapshot(r.settings) || !terminal(r.state) || !o.value("outputs").isArray() || o.value("outputs").toArray().size() != 1) return {};
+    const auto output = o.value("outputs").toArray().first();
+    if (!output.isString() || !((r.state == "succeeded" && output == r.id + "/recording.file") ||
+        (r.state != "succeeded" && r.state != "cancelled" && output == r.id + "/recording.partial"))) return {};
+    r.outputs = {output.toString()};
+  }
   if (object(r, o.value("version").toInt()) != o) return {}; // Unknown fields cannot enter a query/report.
   return r;
 }
@@ -106,6 +115,7 @@ QJsonObject workflowExecutionResult(const WorkflowExecutionRecord &r) {
       {"origin", r.origin}, {"startedAt", date(r.startedAt)}, {"terminal", ended}, {"runtimeStatus", "not-queried"},
       {"state", ended ? r.state : QStringLiteral("outcome-unconfirmed")}, {"lastRecordedState", r.state}, {"steps", r.steps}};
   if (ended) result.insert("finishedAt", date(r.finishedAt));
+  if (recordingSnapshot(r.settings)) result.insert("outputs", QJsonArray::fromStringList(r.outputs));
   if (!r.pipelineId.isEmpty()) result.insert("pipelineTaskId", r.pipelineId);
   if (!r.diagnostic.isEmpty()) result.insert("diagnostic", r.diagnostic);
   return result;
@@ -146,10 +156,11 @@ bool WorkflowExecution::processing(const QString &pipelineId) {
   m_record.pipelineId = pipelineId; m_record.state = "processing";
   m_record.steps.append(QJsonObject{{"action", captureStep()}, {"state", "succeeded"}}); return persist();
 }
-bool WorkflowExecution::finish(const QString &state, const QString &diagnostic) {
+bool WorkflowExecution::finish(const QString &state, const QString &diagnostic, const QStringList &outputs) {
   if (!m_expected || terminal(m_record.state) || !terminal(state)) return false;
   if (m_record.steps.isEmpty() && state != "not-started") m_record.steps.append(QJsonObject{{"action", captureStep()},
       {"state", state == "permission-denied" || state == "cancelled" ? state : QStringLiteral("failed")}});
+  m_record.outputs = outputs;
   m_record.state = state; m_record.diagnostic = safeDiagnostic(diagnostic) ? diagnostic : QStringLiteral("action-failed");
   m_record.finishedAt = std::max(m_record.startedAt, QDateTime::currentDateTimeUtc()); return persist();
 }

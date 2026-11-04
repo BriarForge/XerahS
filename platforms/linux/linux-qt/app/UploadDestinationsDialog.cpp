@@ -57,6 +57,11 @@ UploadDestinationsPorts nativeUploadDestinationsPorts() {
     if (!ok) return std::nullopt;
     return value;
   };
+  ports.confirmDefault = [](QWidget *parent, const QString &name) {
+    return QMessageBox::question(parent, QStringLiteral("Change upload destination"),
+        QStringLiteral("Use \"%1\" for future uploads? Only explicitly requested uploads will be sent.").arg(name),
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes;
+  };
   ports.confirmRemove = [](QWidget *parent, const QString &name) {
     return QMessageBox::question(parent, QStringLiteral("Remove destination"),
                                  QStringLiteral("Remove \"%1\" and delete its secrets from the keyring?").arg(name),
@@ -228,9 +233,14 @@ void UploadDestinationsDialog::importFile(const QString &path) {
 }
 
 void UploadDestinationsDialog::setSelectedAsDefault() {
-  if (m_busy) return;
-  if (const auto code = m_catalog.setDefault(selectedId()); !code.isEmpty()) m_ports.report(this, codeText(code));
-  refresh();
+  const auto id = selectedId();
+  if (busy() || id.isNull() || id == m_catalog.defaultId() || !m_ports.confirmDefault) return;
+  const auto destination = m_catalog.find(id); if (!destination) return;
+  QPointer<UploadDestinationsDialog> self(this);
+  const bool confirmed = m_ports.confirmDefault(this, destination->name);
+  if (!self || !confirmed || busy() || selectedId() != id) return;
+  if (const auto code = m_catalog.setDefault(id); !code.isEmpty()) m_ports.report(this, codeText(code));
+  refresh(id);
 }
 
 void UploadDestinationsDialog::setSecret(const QString &name) {

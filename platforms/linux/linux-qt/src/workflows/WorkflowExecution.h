@@ -10,6 +10,7 @@ struct WorkflowExecutionRecord {
   QDateTime startedAt, finishedAt;
   QJsonObject settings;
   QJsonArray steps;
+  QStringList outputs; // Opaque task-scoped recording references, never paths.
 };
 QByteArray serializeWorkflowExecution(const WorkflowExecutionRecord &record);
 std::optional<WorkflowExecutionRecord> parseWorkflowExecution(const QByteArray &bytes, const QString &id);
@@ -27,7 +28,7 @@ public:
   bool start();
   bool step(const QString &action, const QString &state, const QString &diagnostic = {});
   bool processing(const QString &pipelineId);
-  bool finish(const QString &state, const QString &diagnostic = {});
+  bool finish(const QString &state, const QString &diagnostic = {}, const QStringList &outputs = {});
   bool complete(const xerahs::actions::PipelineResult &pipeline);
   const WorkflowExecutionRecord &record() const { return m_record; }
 private:

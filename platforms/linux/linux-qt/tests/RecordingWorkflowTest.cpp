@@ -1,4 +1,6 @@
 #include "RecordingController.h"
+#include "RecordingObservation.h"
+#include "actions/PipelineResultJson.h"
 #include "NativeWorkflowExecutions.h"
 #include <QFile>
 #include <QJsonDocument>
@@ -9,6 +11,13 @@ using namespace xerahs::app;
 using namespace xerahs::recording;
 using namespace xerahs::workflows;
 namespace {
+QStringList terminalLogs;
+void collectTerminalLog(QtMsgType, const QMessageLogContext &, const QString &message) { terminalLogs.append(message); }
+struct LogCapture {
+  QtMessageHandler previous;
+  LogCapture() { terminalLogs.clear(); previous = qInstallMessageHandler(collectTerminalLog); }
+  ~LogCapture() { qInstallMessageHandler(previous); }
+};
 Request request(const QString &folder) {
   Request r; r.folder = folder; r.filename = "PRIVATE-recording.mp4"; r.frameRate = 24; r.quality = 83; r.cursor = false;
   r.systemAudioDevice = "PRIVATE-monitor"; r.microphoneDevice = "PRIVATE-microphone"; r.region = QRectF(3, 4, 100, 60); return r;
@@ -76,11 +85,68 @@ private slots:
     if (mode == "encoder-failed") { QVERIFY(!session.result().recoverableOutput.isEmpty()); QVERIFY(QFile::exists(session.result().recoverableOutput)); }
     if (mode == "abort") { QVERIFY(session.result().recoverableOutput.isEmpty()); QVERIFY(!QFile::exists(output.destination())); }
   }
+  void recordingAllFourTerminalSurfacesShareStateAndOpaqueOutputs_data() {
+    QTest::addColumn<QString>("mode");
+    for (const auto *mode : {"stop", "abort", "partial-encoder-failure", "denied", "unconfirmed-stop"}) QTest::newRow(mode) << QString(mode);
+  }
+  void recordingAllFourTerminalSurfacesShareStateAndOpaqueOutputs() {
+    QFETCH(QString, mode); QTemporaryDir dir; NativeWorkflowExecutions store(dir.filePath("records")); Session session;
+    const auto writer = store.writer();
+    QVERIFY(session.observe(request(dir.path()), "native-shell", [writer, mode](const QString &id, const std::optional<QByteArray> &expected, const QByteArray &data) {
+      if (mode == "unconfirmed-stop" && !QJsonDocument::fromJson(data).object().value("finishedAt").toString().isEmpty())
+        return xerahs::actions::JournalWrite{false, "pipeline-journal-write-failed"};
+      return writer(id, expected, data);
+    }));
+    RecordingObservation presentation(session);
+    QSignalSpy progress(&presentation, &RecordingObservation::activityChanged), notification(&presentation, &RecordingObservation::notify);
+    QSignalSpy observed(&presentation, &RecordingObservation::terminalObserved);
+    Output output; LogCapture logs;
+    QVERIFY(session.send(Event::Request));
+    if (mode == "denied") QVERIFY(session.send(Event::Denied));
+    else {
+      QVERIFY(output.reserve(request(dir.path())).isEmpty()); partial(output);
+      QVERIFY(session.send(Event::Granted)); QVERIFY(session.send(Event::Started));
+      if (mode == "stop" || mode == "unconfirmed-stop") { QVERIFY(session.control(session.id(), Event::Stop).accepted); QVERIFY(session.finalize(output)); }
+      else if (mode == "abort") { QVERIFY(session.control(session.id(), Event::Abort).accepted); output.abort(); }
+      else QVERIFY(session.fail(output, "encoder-failed"));
+    }
+    QCOMPARE(progress.size(), 1); QCOMPARE(notification.size(), 1); QCOMPARE(observed.size(), 1);
+    const auto observation = observed.first().first().toJsonObject();
+    const auto text = xerahs::actions::pipelineObservationText(observation);
+    const auto history = NativeWorkflowExecutions(dir.filePath("records")).result(session.id());
+    QCOMPARE(observation.value("state"), history.value("state")); QCOMPARE(observation.value("outputs"), history.value("outputs"));
+    QCOMPARE(progress.first().first().toString(), text); QCOMPARE(notification.first()[1].toString(), text);
+    QVERIFY(terminalLogs.contains("Workflow terminal " + text));
+    const bool success = mode == "stop"; QCOMPARE(notification.first()[2].toBool(), success);
+    if (!success) { QVERIFY(!notification.first().first().toString().contains("completed")); QVERIFY(!text.contains("succeeded")); }
+    const auto outputs = observation.value("outputs").toArray();
+    if (mode == "stop" || mode == "partial-encoder-failure") {
+      QCOMPARE(outputs.size(), 1); QCOMPARE(outputs.first(), QJsonValue(session.id() + (success ? "/recording.file" : "/recording.partial")));
+    } else QVERIFY(outputs.isEmpty());
+    if (mode == "unconfirmed-stop") { QCOMPARE(observation.value("state"), QJsonValue("outcome-unconfirmed")); QVERIFY(QFile::exists(session.result().output)); }
+    const auto surfaces = QJsonDocument(history).toJson() + QJsonDocument(observation).toJson() + text.toUtf8() + terminalLogs.join('\n').toUtf8();
+    QVERIFY(!surfaces.contains("PRIVATE")); QVERIFY(!surfaces.contains("private-media")); QVERIFY(!surfaces.contains(dir.path().toUtf8()));
+    // History cannot be coerced into exposing an arbitrary path or a completed file after failure.
+    auto bad = QJsonDocument::fromJson(bytes(dir.filePath("records/" + session.id() + ".json"))).object();
+    bad.insert("outputs", QJsonArray{dir.filePath("PRIVATE-recording.mp4")});
+    QVERIFY(!parseWorkflowExecution(QJsonDocument(bad).toJson(), session.id()));
+    QVERIFY(!session.send(Event::Error, "PRIVATE")); QCOMPARE(notification.size(), 1);
+  }
+  void deletingTerminalPresentationDuringProgressCannotNotifyALaterOwner() {
+    Session session; auto presentation = std::make_unique<RecordingObservation>(session); int notifications = 0;
+    connect(presentation.get(), &RecordingObservation::notify, this, [&](const auto &, const auto &, bool) { ++notifications; });
+    connect(presentation.get(), &RecordingObservation::activityChanged, this, [&](const auto &) { presentation.reset(); });
+    QVERIFY(session.send(Event::Request)); QVERIFY(session.send(Event::Denied)); QVERIFY(!presentation); QCOMPARE(notifications, 0);
+  }
   void nativeControllerValidationUsesRecorderAndStorageRefusalPreventsStart() {
     QTemporaryDir dir; NativeWorkflowExecutions store(dir.filePath("records")); RecordingController controller(nullptr, store.writer());
+    QSignalSpy terminal(&controller, &RecordingController::terminalObserved), progress(&controller, &RecordingController::activityChanged);
     QSignalSpy notification(&controller, &RecordingController::notify); auto r = request(dir.path()); r.frameRate = 0;
     controller.start(r, "command-line"); QCOMPARE(controller.state(), State::Failed); QVERIFY(!controller.busy());
     const auto result = store.result(controller.sessionId()); QCOMPARE(result.value("state"), QJsonValue("validation-failure"));
+    QCOMPARE(terminal.size(), 1); QCOMPARE(progress.size(), 1);
+    QCOMPARE(notification.first()[1].toString(), progress.first().first().toString());
+    QCOMPARE(terminal.first().first().toJsonObject().value("state"), result.value("state"));
     QCOMPARE(result.value("origin"), QJsonValue("command-line")); QVERIFY(result.value("terminal").toBool()); QCOMPARE(notification.size(), 1); QVERIFY(!notification[0][2].toBool());
     int writes = 0; RecordingController refused(nullptr, [&](const QString &, const std::optional<QByteArray> &, const QByteArray &) {
       ++writes; return xerahs::actions::JournalWrite{false, "pipeline-journal-write-failed"};

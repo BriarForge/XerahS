@@ -33,6 +33,7 @@ public:
   bool observe(const Request &request, const QString &origin, workflows::WorkflowExecution::Writer writer);
   bool executionConfirmed() const { return m_executionConfirmed; }
   ControlResult result() const;
+  QJsonObject terminalObservation() const;
   // Native and headless controls must freeze the intended session at admission.
   ControlResult control(const QString &sessionId, Event event);
   void outputs(const QString &published, const QString &recoverable = {});

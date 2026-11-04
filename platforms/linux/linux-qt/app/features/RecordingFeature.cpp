@@ -45,6 +45,9 @@ void installRecording(AppContext &ctx) {
         if (auto *window = commandWindow(ctx)) window->showResult(title, body, success);
         postTrayMessage(ctx, title, body, success);
       });
+  QObject::connect(&ctx.recording, &RecordingController::activityChanged, &ctx.app, [&ctx](const QString &text) {
+    if (auto *window = commandWindow(ctx)) window->showProgress(text, -1);
+  });
   QObject::connect(&ctx.recording, &RecordingController::changed, &ctx.app, [&ctx] {
     if (auto *window = commandWindow(ctx))
       window->setWindowTitle(ctx.recording.busy() ? ctx.recording.indicator() : QStringLiteral("XerahS"));

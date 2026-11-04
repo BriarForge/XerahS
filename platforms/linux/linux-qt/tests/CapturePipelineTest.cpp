@@ -1,4 +1,5 @@
 #include "CapturePipeline.h"
+#include "naming/CounterStore.h"
 #include <QClipboard>
 #include <QDir>
 #include <QElapsedTimer>
@@ -253,6 +254,89 @@ private slots:
     QVERIFY(stopped->pipeline.taskId != completed->pipeline.taskId); QVERIFY(stopped->file->path != completed->file->path);
     QCOMPARE(QImage(stopped->file->path), red); QCOMPARE(QImage(completed->file->path), blue);
     QCOMPARE(stopped->workingMedia, red); QCOMPARE(completed->workingMedia, blue); QCOMPARE(redCopies, 0); QCOMPARE(blueCopies, 1);
+  }
+  void interleavedPipelinesIsolateSnapshotsCountersTemporaryFilesAndTaskResults_data() {
+    QTest::addColumn<bool>("saved");
+    QTest::newRow("managed-temporary-files") << false;
+    QTest::newRow("persisted-profile-counters") << true;
+  }
+  void interleavedPipelinesIsolateSnapshotsCountersTemporaryFilesAndTaskResults() {
+    QFETCH(bool, saved);
+    QTemporaryDir dir, temporary; QVERIFY(dir.isValid()); QVERIFY(temporary.isValid());
+    auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("journal"));
+    auto aGate = std::make_shared<SaveGate>(), bGate = std::make_shared<SaveGate>();
+    ReleaseGate releaseA{aGate}, releaseB{bGate};
+    auto red = pixels(), blue = pixels(); red.fill(Qt::red); blue.fill(Qt::blue);
+    int aPins = 0, bPins = 0; QImage pinned;
+    CaptureActionPorts a, b;
+    a.uploadTemporaryDirectory = b.uploadTemporaryDirectory = temporary.path();
+    a.uploadCatalogPath = b.uploadCatalogPath = dir.filePath("absent-destinations.json");
+    a.save.counterPath = b.save.counterPath = dir.filePath("counters/state.json");
+    a.save.counterProfile = "red-profile"; b.save.counterProfile = "blue-profile";
+    a.actionStarted = [aGate](const QString &id) { if (id == "upload") waitAtSave(aGate); };
+    b.actionStarted = [bGate](const QString &id) { if (id == "upload") waitAtSave(bGate); };
+    a.pin = [&](const QImage &, const CancellationToken &) { ++aPins; return ActionOutcome{}; };
+    b.pin = [&](const QImage &image, const CancellationToken &) { ++bPins; pinned = image; return ActionOutcome{}; };
+    QString directoryA = dir.filePath("red"), directoryB = dir.filePath("blue");
+    QString patternA = "red-%i{3}", patternB = "blue-%i{3}";
+    QStringList selected = saved ? QStringList{"save", "upload", "pin"} : QStringList{"upload", "pin"};
+    CapturePipeline first(red, directoryA, patternA, selected, nullptr, a, journal);
+    CapturePipeline second(blue, directoryB, patternB, selected, nullptr, b, journal);
+    const auto aId = first.taskId(), bId = second.taskId(); QVERIFY(aId != bId);
+    // Mutate every caller-owned value after construction; admitted snapshots stay frozen.
+    directoryA = directoryB = dir.filePath("changed"); patternA = patternB = "changed";
+    selected.clear(); a.save.counterProfile = b.save.counterProfile = "changed";
+    a.uploadTemporaryDirectory = b.uploadTemporaryDirectory = dir.filePath("changed-temp");
+    red.fill(Qt::black); blue.fill(Qt::white);
+    QSignalSpy one(&first, &CapturePipeline::finished), two(&second, &CapturePipeline::finished);
+    first.start(); QTRY_VERIFY(aGate->entered.load());
+    const auto firstTemps = QDir(temporary.path()).entryList(QDir::Files);
+    QCOMPARE(firstTemps.size(), saved ? 0 : 1);
+    second.start(); QTRY_VERIFY(bGate->entered.load());
+    const auto bothTemps = QDir(temporary.path()).entryList(QDir::Files);
+    QCOMPARE(bothTemps.size(), saved ? 0 : 2);
+    QString secondTemp;
+    if (!saved) {
+      for (const auto &name : bothTemps) if (!firstTemps.contains(name)) secondTemp = temporary.filePath(name);
+      QVERIFY(!secondTemp.isEmpty()); QCOMPARE(QImage(secondTemp).pixelColor(0, 0), QColor(Qt::blue));
+      QCOMPARE(QImage(temporary.filePath(firstTemps.first())).pixelColor(0, 0), QColor(Qt::red));
+    }
+    first.cancel(); aGate->released.store(true); QTRY_COMPARE(one.count(), 1);
+    QCOMPARE(two.count(), 0); QCOMPARE(aPins, 0); QCOMPARE(bPins, 0);
+    if (!saved) { QVERIFY(QFileInfo::exists(secondTemp)); QCOMPARE(QDir(temporary.path()).entryList(QDir::Files).size(), 1); }
+    bGate->released.store(true); QTRY_COMPARE(two.count(), 1);
+    const auto stopped = receipt(one), completed = receipt(two);
+    QCOMPARE(stopped->pipeline.taskId, aId); QCOMPARE(completed->pipeline.taskId, bId);
+    QCOMPARE(stopped->pipeline.state, PipelineState::Cancelled); QCOMPARE(completed->pipeline.state, PipelineState::Completed);
+    QCOMPARE(stopped->pipeline.orderedResults.back().state, ActionState::Cancelled);
+    QCOMPARE(completed->pipeline.orderedResults.back().state, ActionState::Succeeded);
+    QCOMPARE(aPins, 0); QCOMPARE(bPins, 1); QCOMPARE(pinned.pixelColor(0, 0), QColor(Qt::blue));
+    QCOMPARE(stopped->workingMedia.pixelColor(0, 0), QColor(Qt::red)); QCOMPARE(completed->workingMedia, pinned);
+    QCOMPARE(stopped->saveDirectory, dir.filePath("red")); QCOMPARE(completed->filenamePattern, QString("blue-%i{3}"));
+    QVERIFY(QDir(temporary.path()).entryList(QDir::Files).isEmpty());
+    if (saved) {
+      QVERIFY(stopped->file); QVERIFY(completed->file);
+      QCOMPARE(stopped->file->path, dir.filePath("red/red-001.png")); QCOMPARE(completed->file->path, dir.filePath("blue/blue-001.png"));
+      QCOMPARE(stopped->file->creatorTaskId, aId); QCOMPARE(completed->file->creatorTaskId, bId);
+      QCOMPARE(QImage(stopped->file->path), stopped->workingMedia); QCOMPARE(QImage(completed->file->path), pinned);
+      xerahs::naming::CounterStore counters(dir.filePath("counters/state.json"));
+      QCOMPARE(counters.peek("red-profile").value, qint64(1)); QCOMPARE(counters.peek("blue-profile").value, qint64(1));
+      QCOMPARE(counters.peek("changed").value, qint64(0));
+    }
+    const auto records = journal->list(); QCOMPARE(records.entries.size(), size_t(2));
+    QSet<QString> ids;
+    for (const auto &entry : records.entries) {
+      ids.insert(entry.taskId); QVERIFY(entry.parsed.record); QVERIFY(entry.parsed.record->terminal);
+      const auto expected = entry.taskId == aId ? stopped->canonicalResult() : completed->canonicalResult();
+      const auto report = entry.parsed.record->report;
+      QCOMPARE(report.value("ordered_results"), expected.value("ordered_results"));
+      QCOMPARE(report.value("pipeline_state"), expected.value("pipeline_state"));
+      const auto native = report.value("extensions").toObject().value("com.xerahs.app").toObject();
+      QCOMPARE(native.value("task_id"), QJsonValue(entry.taskId));
+      QCOMPARE(native.value("file_artifacts"), expected.value("extensions").toObject().value("com.xerahs.app").toObject().value("file_artifacts"));
+      QCOMPARE(report.value("working_media_retained"), QJsonValue(false));
+    }
+    QCOMPARE(ids, (QSet<QString>{aId, bId}));
   }
   void actualNativeClipboardPublishesPixelsAndReportsOwnershipHonestly() {
     QTemporaryDir dir; CapturePipeline pipeline(pixels(), dir.path(), "capture", {"image-clipboard"});
