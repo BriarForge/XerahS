@@ -4,14 +4,19 @@
 #include "ColorPickerDialog.h"
 #include "HashCheckerDialog.h"
 #include "IconConverterDialog.h"
+#include "ImageComparisonDialog.h"
+#include "ImageInsertDialog.h"
+#include "ImageRecognitionDialog.h"
 #include "NewImageDialog.h"
 #include "UrlOpenDialog.h"
 #include "QrCodeDialog.h"
 #include "UploadDestinationsDialog.h"
+#include "image-editor/AnnotationDocument.h"
 #include <QApplication>
 #include <QDialogButtonBox>
 #include <QDirIterator>
 #include <QFile>
+#include <QImage>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
@@ -85,12 +90,16 @@ private slots:
   void modalDialogsTrapFocusOnlyWhileActiveIdentifyPurposeEscapeAndRestoreFocus_data() {
     QTest::addColumn<int>("which");
     QTest::newRow("qr-code") << 0; QTest::newRow("color-picker") << 1; QTest::newRow("hash-checker") << 2; QTest::newRow("icon-converter") << 3; QTest::newRow("new-image") << 4; QTest::newRow("url-open") << 5;
+    QTest::newRow("image-insert") << 6; QTest::newRow("scan-qr") << 7; QTest::newRow("recognize-text") << 8; QTest::newRow("image-comparison") << 9;
   }
   void modalDialogsTrapFocusOnlyWhileActiveIdentifyPurposeEscapeAndRestoreFocus() {
     QFETCH(int, which); Host host; QVERIFY(host.focusOnEdit());
+    QImage comparisonImage(64, 48, QImage::Format_ARGB32); comparisonImage.fill(Qt::white);
     QDialog *dialog = which == 0 ? static_cast<QDialog *>(new QrCodeDialog(&host.window)) : which == 1 ? static_cast<QDialog *>(new ColorPickerDialog(&host.window))
         : which == 2 ? static_cast<QDialog *>(new HashCheckerDialog(&host.window)) : which == 3 ? static_cast<QDialog *>(new IconConverterDialog(&host.window))
-        : which == 4 ? static_cast<QDialog *>(new NewImageDialog(&host.window)) : static_cast<QDialog *>(new UrlOpenDialog(&host.window));
+        : which == 4 ? static_cast<QDialog *>(new NewImageDialog(&host.window)) : which == 5 ? static_cast<QDialog *>(new UrlOpenDialog(&host.window))
+        : which == 6 ? static_cast<QDialog *>(new ImageInsertDialog(&host.window)) : which == 7 ? static_cast<QDialog *>(new ImageRecognitionDialog(ImageRecognitionKind::QrCode, &host.window))
+        : which == 8 ? static_cast<QDialog *>(new ImageRecognitionDialog(ImageRecognitionKind::Text, &host.window)) : static_cast<QDialog *>(new ImageComparisonDialog(xerahs::editor::AnnotationDocument{}, comparisonImage, &host.window));
     QVERIFY(!QApplication::activeModalWidget());  // No trap before it opens.
     dialog->setModal(true); dialog->open();
     QTRY_VERIFY(dialog->isVisible()); QCOMPARE(QApplication::activeModalWidget(), dialog);
