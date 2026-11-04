@@ -3,9 +3,11 @@
 // and watch-folders dialogs. Every state is reached through the real widget and
 // must be visible as text (never colour alone) with an accessible cue.
 // States that a surface cannot be in are declared "n/a" with the reason.
+#include "AppearanceDialog.h"
 #include "ApplicationWindow.h"
 #include "ColorPickerDialog.h"
 #include "CommandRegistry.h"
+#include "DrawingDefaultsDialog.h"
 #include "EditorSource.h"
 #include "EffectsDialog.h"
 #include "FileUploadController.h"
@@ -32,9 +34,11 @@
 #include <QCheckBox>
 #include <QClipboard>
 #include <QComboBox>
+#include <QDialog>
 #include <QDialogButtonBox>
 #include <QDir>
 #include <QFile>
+#include <QHash>
 #include <QImage>
 #include <QLabel>
 #include <QLineEdit>
@@ -172,8 +176,96 @@ public:
 class InterfaceStatesTest final : public QObject {
   Q_OBJECT
   QTemporaryDir dir;
+  // The preference dialogs have no public constructor: their entry point opens the dialog and runs
+  // its own modal loop, so a probe reaches the dialog once it is up and drives it from there.
+  struct PreferenceStates {
+    bool entered = false, cancelled = false;
+    QString title, text, error;
+    QHash<QString, QString> fields;
+  };
+  template <typename Open, typename Drive>
+  PreferenceStates probePreferenceDialog(Open open, Drive drive) {
+    PreferenceStates states;
+    int stage = 0;
+    QTimer probe; probe.setInterval(5);
+    connect(&probe, &QTimer::timeout, &probe, [&] {
+      auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget());
+      if (!dialog || stage != 0) return;
+      stage = 1;
+      states.entered = true;
+      states.title = dialog->windowTitle();
+      QStringList labels;
+      for (auto *label : dialog->findChildren<QLabel *>()) {
+        if (!label->objectName().isEmpty()) states.fields[label->objectName()] = label->text();
+        if (!label->text().trimmed().isEmpty()) labels << label->text();
+      }
+      for (auto *edit : dialog->findChildren<QLineEdit *>()) if (!edit->objectName().isEmpty()) states.fields[edit->objectName()] = edit->text();
+      for (auto *button : dialog->findChildren<QPushButton *>()) if (!button->objectName().isEmpty()) states.fields[button->objectName()] = button->text();
+      for (auto *combo : dialog->findChildren<QComboBox *>()) if (!combo->objectName().isEmpty()) states.fields[combo->objectName()] = combo->currentText();
+      for (auto *box : dialog->findChildren<QCheckBox *>()) if (!box->objectName().isEmpty()) states.fields[box->objectName()] = box->text();
+      states.text = labels.join(QStringLiteral(" | "));
+      states.error = drive(dialog);
+      for (auto *buttons : dialog->findChildren<QDialogButtonBox *>())
+        if (auto *cancel = buttons->button(QDialogButtonBox::Cancel)) { cancel->click(); states.cancelled = !dialog->isVisible(); break; }
+    });
+    probe.start();
+    open();
+    probe.stop();
+    return states;
+  }
 private slots:
   void initTestCase() { QVERIFY(dir.isValid()); QAccessible::installUpdateHandler(record); }
+
+  // Appearance: initial, populated, validation.
+  // empty: n/a because the dialog opens with the saved preferences already loaded.
+  // loading: n/a because the dialog applies its changes synchronously.
+  // error: n/a because the only refusal the dialog can produce is the invalid value, which it reports as the validation message.
+  // cancelled: n/a because cancelling closes the dialog without a message.
+  // denied: n/a because the dialog asks for no permission.
+  // unavailable: n/a because the dialog has no optional dependency.
+  void appearanceDialogStates() {
+    const auto states = probePreferenceDialog([&] { manageEditorAppearance(nullptr); }, [](QDialog *dialog) {
+      auto *accent = dialog->findChild<QLineEdit *>("manualAccent");
+      auto *apply = dialog->findChild<QPushButton *>("applyAppearance");
+      auto *error = dialog->findChild<QLabel *>("appearanceError");
+      if (!accent || !apply || !error) return QString();
+      accent->setText("not-a-colour");
+      apply->click();
+      return error->text();
+    });
+    QVERIFY(states.entered);
+    QVERIFY2(!states.title.trimmed().isEmpty(), "the dialog names its purpose");                                 // initial
+    QVERIFY2(!states.text.trimmed().isEmpty(), "the dialog explains what it does in words");                      // initial
+    const auto theme = states.fields.value("manualTheme");
+    QVERIFY2(theme == "Dark" || theme == "Light", qPrintable(theme));                                           // populated: the saved theme is shown
+    QVERIFY2(states.error.contains("Enter the accent"), qPrintable(states.error));                                // validation: the bad colour is refused in words
+    QVERIFY2(states.cancelled, "cancelling closes the dialog");                                                 // cancelled
+  }
+
+  // Drawing defaults: initial, populated, validation.
+  // empty: n/a because the dialog opens with the saved defaults already loaded.
+  // loading: n/a because the dialog applies its changes synchronously.
+  // error: n/a because the only refusal the dialog can produce is the invalid value, which it reports as the validation message.
+  // cancelled: n/a because cancelling closes the dialog without a message.
+  // denied: n/a because the dialog asks for no permission.
+  // unavailable: n/a because the dialog has no optional dependency.
+  void drawingDefaultsDialogStates() {
+    const auto states = probePreferenceDialog([&] { manageDrawingDefaults(nullptr); }, [](QDialog *dialog) {
+      auto *stroke = dialog->findChild<QLineEdit *>("defaultStrokeColour");
+      auto *apply = dialog->findChild<QPushButton *>("applyDrawingDefaults");
+      auto *error = dialog->findChild<QLabel *>("drawingDefaultsError");
+      if (!stroke || !apply || !error) return QString();
+      stroke->setText("not-a-colour");
+      apply->click();
+      return error->text();
+    });
+    QVERIFY(states.entered);
+    QVERIFY2(!states.title.trimmed().isEmpty(), "the dialog names its purpose");                                 // initial
+    QVERIFY2(!states.text.trimmed().isEmpty(), "the dialog explains what it does in words");                      // initial
+    QVERIFY2(states.fields.value("defaultStrokeColour").startsWith("#"), qPrintable(states.fields.value("defaultStrokeColour")));  // populated: the saved stroke colour is shown
+    QVERIFY2(states.error.contains("Enter stroke, fill and shadow colours"), qPrintable(states.error));           // validation: the bad colour is refused in words
+    QVERIFY2(states.cancelled, "cancelling closes the dialog");                                                 // cancelled
+  }
 
   // Shell window: initial, loading (determinate/indeterminate), populated, terminal failure,
   // permission denied, dependency unavailable. empty/validation/partial: n/a (it only reports results;
