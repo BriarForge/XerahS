@@ -1,6 +1,7 @@
 // CORE-009: a pseudo-locale that lengthens every translated string by 40% neither clips controls nor
 // overflows the screen, and a string missing from the translation falls back to its source text.
 #include "AppearanceDialog.h"
+#include "AutoCaptureDialog.h"
 #include "CanvasCropDialog.h"
 #include "CanvasRotationDialog.h"
 #include "ColorPickerDialog.h"
@@ -435,6 +436,19 @@ private slots:
       QVERIFY2(offenders.isEmpty(), qPrintable(offenders));
       QVERIFY2(collected.buttons.size() + collected.labels.size() >= 3,
           qPrintable(QString::number(collected.buttons.size() + collected.labels.size())));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void autoCaptureDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      AutoCaptureDialog dialog([] { return qint64(1700000000000); }, false);
+      // The interval, count and end time hold runtime values; only the prose is translated.
+      const int checked = translatedTexts(dialog, {});
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+      QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
     }
     QApplication::removeTranslator(&pseudo);
   }

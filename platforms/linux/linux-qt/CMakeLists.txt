@@ -1316,6 +1316,7 @@ add_executable(localization-expansion-test tests/LocalizationExpansionTest.cpp
   app/AppearanceDialog.cpp app/AppearanceDialog.h
   app/DrawingDefaultsDialog.cpp app/DrawingDefaultsDialog.h
   app/ConveniencePreferencesDialog.cpp app/ConveniencePreferencesDialog.h
+  app/AutoCaptureDialog.cpp app/AutoCaptureDialog.h
   app/CanvasRotationDialog.cpp app/CanvasRotationDialog.h
   app/NativeEditorAppearance.cpp app/NativeEditorAppearance.h
   app/NativeDesktopAppearance.cpp app/NativeDesktopAppearance.h
