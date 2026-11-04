@@ -9,6 +9,7 @@
 #include "AnnotationColorDialog.h"
 #include "AnnotationObjectNavigator.h"
 #include "CanvasRotationDialog.h"
+#include "CaptureAnnotationDialog.h"
 #include "CaptureController.h"
 #include "CaptureHistoryWindow.h"
 #include "ColorPickerDialog.h"
@@ -16,6 +17,7 @@
 #include "DrawingDefaultsDialog.h"
 #include "EditorCanvas.h"
 #include "EditorSaveDialog.h"
+#include "EditorSource.h"
 #include "FileUploadController.h"
 #include "HashCheckerDialog.h"
 #include "IconConverterDialog.h"
@@ -53,6 +55,7 @@
 #include <QAction>
 #include <QApplication>
 #include <QCheckBox>
+#include <QColorSpace>
 #include <QContextMenuEvent>
 #include <QDialog>
 #include <QFile>
@@ -69,6 +72,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTimer>
+#include <QToolButton>
 #include <QTranslator>
 #include <QWidget>
 
@@ -99,16 +103,26 @@ public:
 };
 
 // Counts the button and label texts that carry the pseudo-locale marker, and reports the first one that
-// does not. Skipped object names hold runtime data (a size in pixels), not prose.
-int translatedTexts(QWidget &dialog, const QStringList &runtimeData) {
-  const auto skipped = [&runtimeData](const QString &name) {
-    for (const auto &prefix : runtimeData)
+// does not. A skipped object name holds runtime data (a size in pixels) or a label that another file owns,
+// not prose in this window. A foreign action names a toolbar action whose text lives in another file, so
+// its button is skipped as well.
+int translatedTexts(QWidget &dialog, const QStringList &skippedNames, const QStringList &foreignActions = {}) {
+  const auto skipped = [&skippedNames](const QString &name) {
+    for (const auto &prefix : skippedNames)
       if (name.startsWith(prefix)) return true;
+    return false;
+  };
+  const auto foreign = [&foreignActions](const QString &name) {
+    for (const auto &id : foreignActions)
+      if (name == id || name.endsWith(id)) return true;
     return false;
   };
   int checked = 0;
   for (auto *button : dialog.findChildren<QAbstractButton *>()) {
     if (button->text().isEmpty() || skipped(button->objectName())) continue;
+    const auto *tool = qobject_cast<const QToolButton *>(button);
+    const auto *action = tool ? tool->defaultAction() : nullptr;
+    if (action && foreign(action->objectName())) continue;
     if (!button->text().contains(QChar(0x2022))) {
       QTest::qFail(qPrintable(QStringLiteral("untranslated button text: %1").arg(button->text())), __FILE__, __LINE__);
       return checked;
@@ -800,6 +814,27 @@ private slots:
       }
       QVERIFY2(changedRows > 0, "the overlay's painted instruction text did not change with the locale");
       QVERIFY2(top > plainImage.height() / 2, "the painted change did not come from the instruction bar");
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void captureAnnotationDialogTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      QImage image(80, 60, QImage::Format_ARGB32); image.fill(Qt::blue); image.setColorSpace(QColorSpace::SRgb);
+      const auto loaded = prepareCapturedSource(image);
+      QVERIFY(loaded.document);
+      CaptureAnnotationDialog dialog(loaded);
+      dialog.show();
+      // The annotation tool, delete and order actions are built in app/NativeAnnotationTools.cpp, and the
+      // instruction label beside them comes from the same file. This slice may not touch it, so its
+      // buttons and that one label stay untranslated.
+      const int checked = translatedTexts(dialog, {QStringLiteral("annotationToolInstructions")},
+          {QStringLiteral("Tool"), QStringLiteral("deleteSelection"), QStringLiteral("bringForward"),
+              QStringLiteral("sendBackward"), QStringLiteral("bringToFront"), QStringLiteral("sendToBack")});
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
+      QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
     }
     QApplication::removeTranslator(&pseudo);
   }
