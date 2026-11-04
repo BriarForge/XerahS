@@ -5,6 +5,7 @@
 // States that a surface cannot be in are declared "n/a" with the reason.
 #include "AppearanceDialog.h"
 #include "ApplicationWindow.h"
+#include "CaptureHistoryWindow.h"
 #include "ColorPickerDialog.h"
 #include "CommandRegistry.h"
 #include "DrawingDefaultsDialog.h"
@@ -57,6 +58,7 @@
 #include <QTest>
 #include <QThreadPool>
 #include <QTimer>
+#include <QUuid>
 #include <QToolButton>
 #include <atomic>
 #include <chrono>
@@ -215,6 +217,40 @@ class InterfaceStatesTest final : public QObject {
   }
 private slots:
   void initTestCase() { QVERIFY(dir.isValid()); QAccessible::installUpdateHandler(record); }
+
+  // Capture history: initial, loading, empty, populated, validation, error.
+  // cancelled: n/a because the history read is the only background work and it cannot be cancelled.
+  // denied: n/a because the window asks for no permission.
+  // unavailable: n/a because the window has no optional dependency.
+  void captureHistoryWindowStates() {
+    auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("history-states"));
+    CaptureHistoryWindow window(storage, [] { return false; }, [](const QString &, QWidget *) {});
+    window.show();
+    auto *status = window.findChild<QLabel *>("captureHistoryWindowStatus");
+    auto *list = window.findChild<QListWidget *>("captureHistoryItems");
+    auto *search = window.findChild<QLineEdit *>("captureHistorySearch");
+    QVERIFY(status && list && search);
+    QVERIFY2(!window.windowTitle().trimmed().isEmpty(), "the window names its purpose");                                // initial
+    QVERIFY2(!search->placeholderText().trimmed().isEmpty(), "the search explains itself in words");                   // initial
+    QVERIFY2(status->text().contains("Reading capture history"), qPrintable(status->text()));                           // loading
+    QTRY_VERIFY(status->text().contains("No saved captures"));                                                         // empty
+    QCOMPARE(list->count(), 0);
+    QVERIFY2(!window.findChild<QPushButton *>("openHistoryCapture")->isEnabled(), "with no capture there is nothing to open");  // empty
+    FileUploadHistoryRecord upload;
+    upload.taskId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    upload.path = dir.filePath("gone.png");
+    upload.origin = "file-upload";
+    upload.destinationName = "Destination fixture";
+    upload.createdAt = QDateTime::currentDateTimeUtc();
+    upload.result = {"https://example.test/upload", "https://example.test/thumb", "https://example.test/delete", {}};
+    QVERIFY(storage->recordFileUpload(upload).stored);
+    window.refresh();
+    QTRY_COMPARE(list->count(), 1);
+    QVERIFY2(status->text().contains("history items"), qPrintable(status->text()));                                    // populated
+    QTRY_VERIFY(list->count() > 0 && list->item(0)->text().contains("File missing"));                                // error: the gone file stays visible
+    search->setText("no item carries this text");
+    QTRY_VERIFY(status->text().contains("No history items match"));                                                   // validation
+  }
 
   // Appearance: initial, populated, validation.
   // empty: n/a because the dialog opens with the saved preferences already loaded.
