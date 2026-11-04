@@ -1,7 +1,9 @@
 // IFCAT-005: modal dialogs trap focus only while active, identify their purpose,
 // expose a safe default and a cancel action, restore focus on close, and never
 // hide a destructive consequence behind generic confirmation text.
+#include "AppearanceDialog.h"
 #include "ColorPickerDialog.h"
+#include "DrawingDefaultsDialog.h"
 #include "EffectsDialog.h"
 #include "FileUploadController.h"
 #include "HashCheckerDialog.h"
@@ -62,6 +64,43 @@ class ModalDialogsTest final : public QObject {
     // Logical focus of the host window: independent of when the platform grants activation under load.
     bool focusOnEdit() const { return window.focusWidget() == edit; }
   };
+  // The preference dialogs have no public constructor: their entry point opens the dialog and
+  // runs its own modal loop, so the probe reaches the dialog once it is up and checks it there.
+  template <typename Open>
+  void verifyOwnModalLoop(Open open, Host &host) {
+    bool entered = false, trapped = false, titled = false, cancelAction = false, closed = false, rejected = false;
+    QString destructiveDefault;
+    QTimer probe; probe.setInterval(5);
+    connect(&probe, &QTimer::timeout, &probe, [&] {
+      auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget());
+      if (!dialog || entered) return;
+      entered = true;
+      trapped = QApplication::activeModalWidget() == dialog;
+      titled = !dialog->windowTitle().trimmed().isEmpty();  // Identifies its purpose.
+      for (auto *button : dialog->findChildren<QPushButton *>()) {
+        if (!button->isVisibleTo(dialog)) continue;
+        const auto label = button->text().remove('&');
+        cancelAction |= label.contains("Close", Qt::CaseInsensitive) || label.contains("Cancel", Qt::CaseInsensitive);
+        if (button->isDefault() && !safeLabel(label)) destructiveDefault = label;
+      }
+      for (auto *box : dialog->findChildren<QDialogButtonBox *>()) cancelAction |= box->button(QDialogButtonBox::Cancel) || box->button(QDialogButtonBox::Close);
+      QTest::keyClick(dialog, Qt::Key_Escape);
+      closed = !dialog->isVisible();
+      rejected = dialog->result() == int(QDialog::Rejected);
+    });
+    probe.start();
+    open();
+    probe.stop();
+    QVERIFY(entered);
+    QVERIFY(trapped);
+    QVERIFY(titled);
+    QVERIFY(cancelAction);
+    QVERIFY2(destructiveDefault.isEmpty(), qPrintable(destructiveDefault));
+    QVERIFY(closed);
+    QVERIFY(rejected);
+    QVERIFY(!QApplication::activeModalWidget());  // Trap released on close.
+    QTRY_VERIFY(host.focusOnEdit());  // Focus restored.
+  }
 private slots:
   void everyChoiceConfirmationDefaultsToASafeButtonAndHasAPurposefulTitle() {
     QDirIterator files(XERAHS_APP_DIR, {"*.cpp"}, QDir::Files, QDirIterator::Subdirectories);
@@ -110,9 +149,17 @@ private slots:
     QTest::newRow("qr-code") << 0; QTest::newRow("color-picker") << 1; QTest::newRow("hash-checker") << 2; QTest::newRow("icon-converter") << 3; QTest::newRow("new-image") << 4; QTest::newRow("url-open") << 5;
     QTest::newRow("image-insert") << 6; QTest::newRow("scan-qr") << 7; QTest::newRow("recognize-text") << 8; QTest::newRow("image-comparison") << 9;
     QTest::newRow("watch-folders") << 10; QTest::newRow("video-converter") << 11; QTest::newRow("effects") << 12; QTest::newRow("presets") << 13;
+    QTest::newRow("editor-appearance") << 14; QTest::newRow("drawing-defaults") << 15;
   }
   void modalDialogsTrapFocusOnlyWhileActiveIdentifyPurposeEscapeAndRestoreFocus() {
     QFETCH(int, which); Host host; QVERIFY(host.focusOnEdit());
+    if (which == 14 || which == 15) {
+      // These preference dialogs are opened by their own entry point, which runs the modal loop.
+      QVERIFY(!QApplication::activeModalWidget());  // No trap before it opens.
+      if (which == 14) verifyOwnModalLoop([&] { manageEditorAppearance(&host.window); }, host);
+      else verifyOwnModalLoop([&] { manageDrawingDefaults(&host.window); }, host);
+      return;
+    }
     QImage comparisonImage(64, 48, QImage::Format_ARGB32); comparisonImage.fill(Qt::white);
     // Rows 10..13 take injected ports. These helpers must outlive the dialog.
     QTemporaryDir dir;
