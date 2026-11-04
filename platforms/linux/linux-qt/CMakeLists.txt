@@ -1332,6 +1332,7 @@ add_executable(localization-expansion-test tests/LocalizationExpansionTest.cpp
   app/CaptureController.cpp app/CaptureController.h
   app/SnapshotComposition.cpp app/SnapshotComposition.h
   app/RegionOverlay.cpp app/RegionOverlay.h
+  app/ApplicationWindow.cpp app/ApplicationWindow.h
   app/NativeEditorAppearance.cpp app/NativeEditorAppearance.h
   app/NativeDesktopAppearance.cpp app/NativeDesktopAppearance.h
   app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h)

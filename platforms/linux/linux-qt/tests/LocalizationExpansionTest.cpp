@@ -8,6 +8,7 @@
 #include "CanvasCropDialog.h"
 #include "AnnotationColorDialog.h"
 #include "AnnotationObjectNavigator.h"
+#include "ApplicationWindow.h"
 #include "CanvasRotationDialog.h"
 #include "CaptureAnnotationDialog.h"
 #include "CaptureController.h"
@@ -65,7 +66,9 @@
 #include <QJsonObject>
 #include <QLabel>
 #include <QMenu>
+#include <QMenuBar>
 #include <QPixmap>
+#include <QProgressBar>
 #include <QScopedPointer>
 #include <QScreen>
 #include <QSet>
@@ -835,6 +838,32 @@ private slots:
               QStringLiteral("sendBackward"), QStringLiteral("bringToFront"), QStringLiteral("sendToBack")});
       QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
       QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
+    }
+    QApplication::removeTranslator(&pseudo);
+  }
+
+  void applicationWindowTextIsTranslatable() {
+    PseudoLocale pseudo;
+    QVERIFY(QApplication::installTranslator(&pseudo));
+    {
+      // An empty command map: the grid buttons carry the caller's own labels, so only the
+      // window's own prose is checked here.
+      ApplicationWindow window({});
+      // The window title and the accessible name are the product name, so they stay literal.
+      QCOMPARE(window.windowTitle(), QStringLiteral("XerahS"));
+      QCOMPARE(window.accessibleName(), QStringLiteral("XerahS"));
+      QStringList texts{window.accessibleDescription()};
+      for (const auto *menu : window.menuBar()->findChildren<QMenu *>())
+        if (!menu->title().isEmpty()) texts << menu->title();
+      texts << window.findChild<QLabel *>("operationStatus")->accessibleName();
+      texts << window.findChild<QProgressBar *>("operationProgress")->accessibleName();
+      int checked = translatedTexts(window, {});
+      for (const auto &value : texts) {
+        if (value.isEmpty()) continue;
+        QVERIFY2(value.contains(QChar(0x2022)), qPrintable(value));
+        ++checked;
+      }
+      QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
     }
     QApplication::removeTranslator(&pseudo);
   }

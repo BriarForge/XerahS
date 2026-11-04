@@ -77,9 +77,9 @@ ApplicationWindow::ApplicationWindow(const QMap<QString, QAction *> &actions, QW
 
 void ApplicationWindow::build(CommandRegistry &commands) {
   setObjectName(QStringLiteral("applicationWindow")); setWindowTitle(QStringLiteral("XerahS"));
-  setAccessibleName(QStringLiteral("XerahS")); setAccessibleDescription(QStringLiteral("Screen capture and image editor commands"));
+  setAccessibleName(QStringLiteral("XerahS")); setAccessibleDescription(tr("Screen capture and image editor commands"));
   auto *central = new QWidget(this); auto *layout = new QVBoxLayout(central);
-  auto *intro = new QLabel(QStringLiteral("Capture your screen or open an image to edit."), central); intro->setWordWrap(true); layout->addWidget(intro);
+  auto *intro = new QLabel(tr("Capture your screen or open an image to edit."), central); intro->setWordWrap(true); layout->addWidget(intro);
   auto *grid = new QGridLayout; layout->addLayout(grid);
   int index = 0;
   for (const auto &id : commands.ids(CommandSurface::Window)) {
@@ -89,22 +89,22 @@ void ApplicationWindow::build(CommandRegistry &commands) {
     button->setToolButtonStyle(Qt::ToolButtonTextOnly); button->setFocusPolicy(Qt::StrongFocus);
     button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred); grid->addWidget(button, index / 2, index % 2); ++index;
   }
-  layout->addStretch(); m_status = new QLabel(QStringLiteral("Ready"), central);
+  layout->addStretch(); m_status = new QLabel(tr("Ready"), central);
   m_status->setObjectName(QStringLiteral("operationStatus")); m_status->setWordWrap(true);
-  m_status->setTextFormat(Qt::PlainText); m_status->setAccessibleName(QStringLiteral("Most recent operation result")); layout->addWidget(m_status);
+  m_status->setTextFormat(Qt::PlainText); m_status->setAccessibleName(tr("Most recent operation result")); layout->addWidget(m_status);
   m_progress = new QProgressBar(central); m_progress->setObjectName(QStringLiteral("operationProgress"));
-  m_progress->setAccessibleName(QStringLiteral("Operation progress")); m_progress->setRange(0, 100);
+  m_progress->setAccessibleName(tr("Operation progress")); m_progress->setRange(0, 100);
   m_progress->hide(); layout->addWidget(m_progress);
   setCentralWidget(central);
-  commands.populate(menuBar()->addMenu(QStringLiteral("&File")), CommandSurface::FileMenu);
-  commands.populate(menuBar()->addMenu(QStringLiteral("&Capture")), CommandSurface::CaptureMenu);
-  commands.populate(menuBar()->addMenu(QStringLiteral("&Tools")), CommandSurface::ToolsMenu);
-  commands.populate(menuBar()->addMenu(QStringLiteral("&Preferences")), CommandSurface::PreferencesMenu);
+  commands.populate(menuBar()->addMenu(tr("&File")), CommandSurface::FileMenu);
+  commands.populate(menuBar()->addMenu(tr("&Capture")), CommandSurface::CaptureMenu);
+  commands.populate(menuBar()->addMenu(tr("&Tools")), CommandSurface::ToolsMenu);
+  commands.populate(menuBar()->addMenu(tr("&Preferences")), CommandSurface::PreferencesMenu);
   if (auto *cancel = commands.action(QStringLiteral("cancel-capture"))) {
     cancel->setShortcut(QKeySequence(Qt::Key_Escape)); cancel->setShortcutContext(Qt::WindowShortcut); addAction(cancel);
   }
   new NativeWindowPlacement(*this);
-  new NativeAccessibility(*this, "XerahS commands, current operation status and cancellation. Use menus or Tab to navigate commands.", false);
+  new NativeAccessibility(*this, tr("XerahS commands, current operation status and cancellation. Use menus or Tab to navigate commands."), false);
   resize(640, 360);
   setAcceptDrops(true);
   adoptDropTargets();
@@ -126,7 +126,7 @@ void ApplicationWindow::showProgress(const QString &title, int percent) {
   m_progressTitle = title;
   m_progress->setRange(0, 100);
   m_progress->setValue(qBound(0, percent, 100)); m_progress->show();
-  const auto text = title + QStringLiteral(": Preparing pixels · %1% · Cancel Capture or Escape stops this operation.").arg(m_progress->value());
+  const auto text = title + tr(": Preparing pixels · %1% · Cancel Capture or Escape stops this operation.").arg(m_progress->value());
   m_status->setText(text); m_status->setAccessibleDescription(text);
   QAccessibleEvent event(m_status, QAccessible::DescriptionChanged); QAccessible::updateAccessibility(&event);
 }
@@ -139,7 +139,7 @@ void ApplicationWindow::showActivity(const QString &title, const QString &body) 
 void ApplicationWindow::cancelPendingProgress() {
   if (m_progress->isHidden()) return;
   const auto title = m_progressTitle;
-  showResult(title, QStringLiteral("Cancelled"), true);
+  showResult(title, tr("Cancelled"), true);
 }
 void ApplicationWindow::addCaptureRecoveryActions(QAction *edit, QAction *discard, QAction *review, QAction *retry) {
   auto *layout = qobject_cast<QVBoxLayout *>(centralWidget()->layout());
@@ -155,7 +155,7 @@ void ApplicationWindow::addCaptureRecoveryActions(QAction *edit, QAction *discar
     commands->addWidget(button, index / 2, index % 2); ++index;
   }
   layout->insertLayout(2, commands);
-  auto *menu = menuBar()->addMenu(QStringLiteral("&Retained Capture"));
+  auto *menu = menuBar()->addMenu(tr("&Retained Capture"));
   if (edit) menu->addAction(edit);
   if (review) menu->addAction(review);
   if (retry) menu->addAction(retry);
