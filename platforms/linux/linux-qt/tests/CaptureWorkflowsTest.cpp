@@ -90,7 +90,9 @@ private slots:
     auto known = draft.entries[0]; known.actions = QStringList{"save", "image-effects"};
     QCOMPARE(workflowAvailability(known, implementedCaptureActions()), QString("workflow-action-unavailable"));
   }
-  void invalidUnselectedDefinitionsRefuseAdmissionBeforeAnyPlanIsReturned() {
+  // SETCAT-014 per-item isolation: a damaged unselected definition is quarantined as non-executable data
+  // and reported; it no longer blocks the healthy selected workflow, and storage is never rewritten on load.
+  void invalidUnselectedDefinitionsAreIsolatedWithoutBlockingTheSelectedWorkflow() {
     QTemporaryDir dir; const auto path = dir.filePath("workflows.json");
     auto draft = defaultCaptureWorkflows(); auto second = draft.entries[0]; second.id = QUuid::createUuid(); second.name = "Other"; draft.entries.append(second);
     auto root = QJsonDocument::fromJson(workflowsJson(draft)).object(); auto entries = root.value("workflows").toArray();
@@ -99,8 +101,11 @@ private slots:
     QVERIFY(file.setPermissions(QFile::ReadOwner | QFile::WriteOwner)); QCOMPARE(file.write(original), original.size()); file.close();
     FilePreferenceStorage storage(path); CaptureWorkflowStore store(storage);
     const auto choice = store.resolve(draft.defaultId, implementedCaptureActions());
-    QVERIFY(!choice.workflow); QCOMPARE(choice.diagnostic, QString("workflow-invalid"));
-    QVERIFY(!store.current().catalog); QCOMPARE(storage.read().bytes, original);
+    QVERIFY(choice.workflow); QCOMPARE(choice.workflow->id, draft.defaultId);
+    QVERIFY(store.current().catalog); QCOMPARE(store.current().diagnostic, QString("workflow-items-unreadable"));
+    QCOMPARE(store.current().catalog->entries.size(), qsizetype(1)); QCOMPARE(store.current().catalog->unreadable.size(), qsizetype(1));
+    QVERIFY(!store.resolve(second.id, implementedCaptureActions()).workflow);  // the quarantined item never runs
+    QCOMPARE(storage.read().bytes, original);
   }
   void invalidDefinitionsAreRejected_data() {
     QTest::addColumn<QString>("mode");
