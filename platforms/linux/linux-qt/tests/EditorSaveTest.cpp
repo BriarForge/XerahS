@@ -12,6 +12,8 @@
 #include <QFileInfo>
 #include <QScopeGuard>
 #include <QTest>
+#include <cerrno>
+#include <unistd.h>
 #include <QProgressDialog>
 #include <QTimer>
 #include <atomic>
@@ -28,6 +30,33 @@ void write(const QString &path, const QByteArray &value) { QFile file(path); if 
 class EditorSaveTest final : public QObject {
   Q_OBJECT
 private slots:
+  void nativeEncoderDiskFullPreservesThePreviousPair() {
+    QTemporaryDir dir; const auto path = dir.filePath("image.png"); const auto source = edited();
+    const auto initial = saveEdit(path, source.image, *source.document); QVERIFY(initial.rasterSaved && initial.sidecarSaved);
+    const auto raster = bytes(path), sidecar = bytes(path + ".xann");
+    const auto document = serializeDocument(*source.document);
+    std::atomic<bool> attempted{false}, enospc{false};
+    EditorSaveHooks hooks;
+    hooks.encode = [&](const QImage &pixels, QIODevice *) {
+      QFile full(QStringLiteral("/dev/full"));
+      if (!full.open(QIODevice::WriteOnly | QIODevice::Unbuffered)) return false;
+      attempted.store(true);
+      const bool encoded = pixels.save(&full, "PNG");
+      const char byte = 0; errno = 0;
+      const auto written = ::write(int(full.handle()), &byte, 1);
+      enospc.store(!encoded && written == -1 && errno == ENOSPC);
+      return encoded;
+    };
+    QWidget owner;
+    const auto failed = runEditorSave(path, source.image, *source.document, &owner, hooks);
+    QVERIFY(attempted.load()); QVERIFY(enospc.load());
+    QVERIFY(!failed.rasterSaved && !failed.sidecarSaved && !failed.receipt && !failed.cancelled);
+    QCOMPARE(failed.rasterError, QString("raster-save-failed"));
+    QCOMPARE(bytes(path), raster); QCOMPARE(bytes(path + ".xann"), sidecar);
+    QCOMPARE(serializeDocument(*source.document), document);
+    QVERIFY(QDir(dir.path()).entryList({".xerahs-editor-*"}, QDir::Files | QDir::Hidden).isEmpty());
+  }
+
   void managedTemporaryRetentionKeepsRecentForeignAndLinkedFiles() {
     QTemporaryDir dir; QVERIFY(dir.isValid());
     QVERIFY(QFile::setPermissions(dir.path(), QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner));

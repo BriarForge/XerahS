@@ -134,7 +134,11 @@ private slots:
     QCOMPARE(window->windowTitle(), title); QCOMPARE(saved.count(), 0); QCOMPARE(serializeDocument(canvas->annotationDocument()), document);
     QCOMPARE(canvas->annotationState(), state); QVERIFY(window->findChild<QAction *>("redo")->isEnabled()); QVERIFY(action->isEnabled());
   }
+  void nativeDialogShowsChoiceAndPathAndAppliesLockscreen_data() {
+    QTest::addColumn<bool>("shortcut"); QTest::newRow("menu") << false; QTest::newRow("shortcut") << true;
+  }
   void nativeDialogShowsChoiceAndPathAndAppliesLockscreen() {
+    QFETCH(bool, shortcut);
     QTemporaryDir dir; FakeWallpaperPortal portal(server);
     std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedImage(fixture().image)); QVERIFY(window); window->show();
     EditorWallpaperPorts ports; ports.directory = dir.path(); window->setWallpaperPorts(ports);
@@ -149,7 +153,13 @@ private slots:
       auto *buttons = dialog->findChild<QDialogButtonBox *>(); QCOMPARE(buttons->button(QDialogButtonBox::Cancel)->isDefault(), true);
       buttons->button(QDialogButtonBox::Ok)->click();
     });
-    QSignalSpy finished(window.get(), &EditorWindow::wallpaperFinished); timer.start(2); window->findChild<QAction *>("setWallpaper")->trigger(); timer.stop();
+    QSignalSpy finished(window.get(), &EditorWindow::wallpaperFinished);
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas);
+    if (shortcut) { window->activateWindow(); canvas->setFocus(); QTRY_VERIFY(window->isActiveWindow()); }
+    timer.start(2);
+    if (shortcut) QTest::keyClick(canvas, Qt::Key_W, Qt::ControlModifier | Qt::AltModifier);
+    else window->findChild<QAction *>("setWallpaper")->trigger();
+    timer.stop();
     QCOMPARE(choices, 3); QVERIFY(sawPath); QVERIFY(note.contains("all displays")); QVERIFY(note.contains("no per-display"));
     QCOMPARE(portal.calls, 1); QCOMPARE(portal.options.value("set-on").toString(), QString("lockscreen")); QCOMPARE(portal.options.value("show-preview").toBool(), false);
     QCOMPARE(finished.count(), 1); QCOMPARE(finished[0][0].toString(), QString("succeeded")); QVERIFY(text.contains(finished[0][2].toString()));
