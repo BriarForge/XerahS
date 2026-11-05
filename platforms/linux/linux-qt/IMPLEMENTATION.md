@@ -1,5 +1,16 @@
 # Linux implementation plan
 
+Current source/test audit: 2026-11-04 at `5b5b70d4fac6f09ebdf096b8044e5403004d7e11`. Follow [PRODUCTION-BACKLOG.md](PRODUCTION-BACKLOG.md); per-row evidence is in [traceability/](traceability/). The 325 desktop rows classify 162 tested candidate implementations, 118 partial, 10 not started, 34 blocked and 1 mobile-scope-only row; all 20 mobile-only rows remain outside Linux scope. Partial or blocked breadth is not completion or accepted release disposition.
+
+Build in dependency order. Fix ES-029 error precedence on the existing document import path, then move watch-folder copy/move into owned worker execution and connect file-upload/watch-folder results to the common workflow lifecycle. Preserve already-working capture/save/copy/upload, selection/consent/delete, recording/scheduling, editor insertion/output, annotation and utility paths. Do not add furniture before its working frame/services, and do not recreate features from stale backlog text.
+
+Native readers, settings, effects and workflow code have meaningful tests; complete ledger/format/target coverage and explicit product decisions remain in the measured backlog. The scheduler still retains model/dependency/threshold/security/release gates even where upstream code or dependency records exist. This is implementation sequencing, not activation approval.
+
+## Historical implementation notes
+
+The earlier plan below records previous checkpoints and scope. Its old next-step wording and counts are historical; the current ranked backlog above governs new work.
+
+
 Implement the approved English Product Contract in the `linux-qt` reference
 edition. Keep shared expected results independent of Linux, and record partial
 requirements honestly until native behavior and evidence cover their full scope.

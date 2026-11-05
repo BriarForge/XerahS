@@ -21,7 +21,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native document/current JSON, SXCU and SXIE slices exist. Full compatibility-ledger formats/versions and approved policies remain.",
+      "note": "Native format identities/readers and candidate policies exist; complete compatibility-ledger import/export/migration/platform policy acceptance is absent.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -29,20 +29,65 @@
         "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 9,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Native format identities/readers and candidate policies exist; complete compatibility-ledger import/export/migration/platform policy acceptance is absent.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "reportsEachDispositionWithoutValues",
+            "line": 34
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+            "sha256": "47316f8663341024e8146c6de74c2c0dbf77e3156f9179477bb84a9925a32af1",
+            "method": "safeExtensionsRoundTripThroughBothStores",
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
+            "method": "criticalMetadataCannotBeAccepted",
+            "line": 33
+          }
+        ]
+      },
+      "previous_note": "Native document/current JSON, SXCU and SXIE slices exist. Full compatibility-ledger formats/versions and approved policies remain."
     },
     "COMPCAT-002": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Representative uploader/preset and document fixtures exist. Accepted runtime observations and every supported legacy version remain.",
+      "note": "Production readers and adversarial/local fixtures exist with some read-only reference observations. Representative runtime observations and accepted fixtures for every claimed legacy format/version are incomplete.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -50,20 +95,65 @@
         "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 13,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Production readers and adversarial/local fixtures exist with some read-only reference observations. Representative runtime observations and accepted fixtures for every claimed legacy format/version are incomplete.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "reportsEachDispositionWithoutValues",
+            "line": 34
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+            "sha256": "47316f8663341024e8146c6de74c2c0dbf77e3156f9179477bb84a9925a32af1",
+            "method": "safeExtensionsRoundTripThroughBothStores",
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
+            "method": "criticalMetadataCannotBeAccepted",
+            "line": 33
+          }
+        ]
+      },
+      "previous_note": "Representative uploader/preset and document fixtures exist. Accepted runtime observations and every supported legacy version remain."
     },
     "COMPCAT-003": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native profile imports parse into an isolated candidate, preview every affected store and publish only after confirmation under exact-byte fences. Second-store prepare/publish failures restore the first store byte-for-byte; process-interrupted publication recovers at startup. Reference conversion uses the same coordinator and preserves unrelated native records. Unsupported reference history, provider-plugin and credential migrations remain excluded and reported; broader compatibility-format acceptance remains Required. Rationale: source named-enum behavior is followed only where equivalent; unsupported records stay in the source instead of acquiring partial execution behavior.",
+      "note": "Supported native readers parse into isolated candidates and failures preserve live state. XANN annotation parse failures currently return a global document error plus aggregate ImportReport counts, without identifying the affected record; complete per-record failure identification and full importer catalogue remain incomplete.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -78,20 +168,58 @@
         "platforms/linux/linux-qt/tests/ReferenceMigrationTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-        "platforms/linux/linux-qt/src/settings/ReferenceMigration.h"
+        "platforms/linux/linux-qt/src/settings/ReferenceMigration.h",
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 16,
-        "coverage": "Current worktree: application-settings, configuration-transfer, reference-migration and native-surface-accessibility pass (100% tests passed out of 4). Final full suite: 71% tests passed, 47 tests failed out of 162; failures are 40 private-D-Bus startup failures and 7 socket-dependent suites blocked by the sandbox. editor-window-1/2/3 were rerun serially and fail before test startup because the bus cannot bind. Contract lint and generated-progress check pass. Runtime-observed legacy fixtures, supported-target/cross-platform qualification and human privacy/parity review remain Required; no waiver is claimed.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Supported native readers parse into isolated candidates and failures preserve live state. XANN annotation parse failures currently return a global document error plus aggregate ImportReport counts, without identifying the affected record; complete per-record failure identification and full importer catalogue remain incomplete.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "reportsEachDispositionWithoutValues",
+            "line": 34
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "unsafeUnknownsRejectWithoutEcho",
+            "line": 70
+          }
+        ]
+      },
+      "previous_note": "Native profile imports parse into an isolated candidate, preview every affected store and publish only after confirmation under exact-byte fences. Second-store prepare/publish failures restore the first store byte-for-byte; process-interrupted publication recovers at startup. Reference conversion uses the same coordinator and preserves unrelated native records. Unsupported reference history, provider-plugin and credential migrations remain excluded and reported; broader compatibility-format acceptance remains Required. Rationale: source named-enum behavior is followed only where equivalent; unsupported records stay in the source instead of acquiring partial execution behavior."
     },
     "COMPCAT-004": {
-      "status": "implemented",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Audit 2026-11-04 (Viktor, at 65e4394; started from Codex's uncommitted run): Every importer that exists (XANN, SXCU, SXIE/XSIE, editor preferences, application settings) returns a typed retained/transformed/defaulted/quarantined/rejected/ignored report with counts only, never keys or values, and shows it in the native window that performs the import. Unsupported SXCU behavior blocks catalog admission; unknown annotations and preset steps stay inert and are counted quarantined. Tests: XannCompatibilityTest::reportsEachDispositionWithoutValues; SettingsCompatibilityTest::preferencesReportEveryDispositionWithoutValues and settingsReportRepairsAndTransforms; SxcuImportTest::reportsAndCanonicalRoundTrip and criticalMetadataCannotBeAccepted; SxiePresetTest::extensionsAndReportsAreInertAndValueFree and exportDialogWritesPrivateNativeJson; EditorWindowTest::xannImportReportAppearsOnOpenAndReplacement; ApplicationSettingsTest::regionPreferencesDialogApplyCancelAndReset; NativeEditorAppearanceTest::applyCancelAndResetAreAtomicAcrossNativeWindowsAndRestart; UploadDestinationsDialogTest::importsShowsSecretStatusAndKeepsValuesOutOfTheWindow. Legacy history/XML/SQLite/plugin importers are COMPCAT-009/010/012 and not part of this row's seam. Native, physical and human qualification remain with the owner.",
+      "note": "Typed six-category import reports are implemented for supported XANN/SXCU/SXIE/settings readers and surfaced value-free. Complete compatibility format/record inventory, unsupported critical behavior classification and human review remain incomplete.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -109,17 +237,60 @@
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp"
       ],
       "audit": {
-        "classification": "implemented",
+        "classification": "partial",
         "spec_line": 20,
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "65e4394fde8e95cb4cb76940f034abd7dc157401"
-      }
+        "coverage": "Typed six-category import reports are implemented for supported XANN/SXCU/SXIE/settings readers and surfaced value-free. Complete compatibility format/record inventory, unsupported critical behavior classification and human review remain incomplete.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "reportsEachDispositionWithoutValues",
+            "line": 34
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+            "sha256": "47316f8663341024e8146c6de74c2c0dbf77e3156f9179477bb84a9925a32af1",
+            "method": "safeExtensionsRoundTripThroughBothStores",
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
+            "method": "criticalMetadataCannotBeAccepted",
+            "line": 33
+          }
+        ]
+      },
+      "previous_note": "Audit 2026-11-04 (Viktor, at 65e4394; started from Codex's uncommitted run): Every importer that exists (XANN, SXCU, SXIE/XSIE, editor preferences, application settings) returns a typed retained/transformed/defaulted/quarantined/rejected/ignored report with counts only, never keys or values, and shows it in the native window that performs the import. Unsupported SXCU behavior blocks catalog admission; unknown annotations and preset steps stay inert and are counted quarantined. Tests: XannCompatibilityTest::reportsEachDispositionWithoutValues; SettingsCompatibilityTest::preferencesReportEveryDispositionWithoutValues and settingsReportRepairsAndTransforms; SxcuImportTest::reportsAndCanonicalRoundTrip and criticalMetadataCannotBeAccepted; SxiePresetTest::extensionsAndReportsAreInertAndValueFree and exportDialogWritesPrivateNativeJson; EditorWindowTest::xannImportReportAppearsOnOpenAndReplacement; ApplicationSettingsTest::regionPreferencesDialogApplyCancelAndReset; NativeEditorAppearanceTest::applyCancelAndResetAreAtomicAcrossNativeWindowsAndRestart; UploadDestinationsDialogTest::importsShowsSecretStatusAndKeepsValuesOutOfTheWindow. Legacy history/XML/SQLite/plugin importers are COMPCAT-009/010/012 and not part of this row's seam. Native, physical and human qualification remain with the owner."
     },
     "COMPCAT-005": {
-      "status": "implemented",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Audit 2026-11-04 (Viktor, at 65e4394; started from Codex's uncommitted run): Compatible unknown fields round-trip through XANN, preferences, application settings and SXIE/XSIE (XannCompatibilityTest::portableExportReportsBasenameAndPreservesSafeFields; SettingsCompatibilityTest::safeExtensionsRoundTripThroughBothStores; SxiePresetTest::extensionsAndReportsAreInertAndValueFree). Unknown executable, authority, credential, consent, native-handle, $ref/$type or required-feature content is rejected (XANN, preferences, settings, presets: XannCompatibilityTest::unsafeUnknownsRejectWithoutEcho; SettingsCompatibilityTest::unsafeExtensionsBlockBothStoresWithoutMutatingOrReportingValues and structurallyInvalidRecoverySnapshotsAreNotSilentlyDiscarded; SxiePresetTest::extensionsAndReportsAreInertAndValueFree) or placed in candidate-only SXCU quarantine that is inert, never persisted and blocks admission (SxcuImportTest::criticalMetadataCannotBeAccepted). Existing native preset receipt type tags stay inert (XannCompatibilityTest::nativePresetReceiptsRemainInertWithoutAllowingArbitraryTypeTags). Quarantine representation: XANN UnsupportedAnnotation.raw, unsupported preset steps, SxcuImportResult.quarantine. The name-based classifier is conservative and needs human security review before qualification.",
+      "note": "Compatible opaque fields round-trip and unsafe named fields are refused/quarantined inertly. The conservative name classifier is not a general secret/authority detector and its human security qualification remains open.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -133,17 +304,60 @@
         "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp"
       ],
       "audit": {
-        "classification": "implemented",
+        "classification": "partial",
         "spec_line": 23,
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "65e4394fde8e95cb4cb76940f034abd7dc157401"
-      }
+        "coverage": "Compatible opaque fields round-trip and unsafe named fields are refused/quarantined inertly. The conservative name classifier is not a general secret/authority detector and its human security qualification remains open.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "reportsEachDispositionWithoutValues",
+            "line": 34
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+            "sha256": "47316f8663341024e8146c6de74c2c0dbf77e3156f9179477bb84a9925a32af1",
+            "method": "safeExtensionsRoundTripThroughBothStores",
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
+            "method": "criticalMetadataCannotBeAccepted",
+            "line": 33
+          }
+        ]
+      },
+      "previous_note": "Audit 2026-11-04 (Viktor, at 65e4394; started from Codex's uncommitted run): Compatible unknown fields round-trip through XANN, preferences, application settings and SXIE/XSIE (XannCompatibilityTest::portableExportReportsBasenameAndPreservesSafeFields; SettingsCompatibilityTest::safeExtensionsRoundTripThroughBothStores; SxiePresetTest::extensionsAndReportsAreInertAndValueFree). Unknown executable, authority, credential, consent, native-handle, $ref/$type or required-feature content is rejected (XANN, preferences, settings, presets: XannCompatibilityTest::unsafeUnknownsRejectWithoutEcho; SettingsCompatibilityTest::unsafeExtensionsBlockBothStoresWithoutMutatingOrReportingValues and structurallyInvalidRecoverySnapshotsAreNotSilentlyDiscarded; SxiePresetTest::extensionsAndReportsAreInertAndValueFree) or placed in candidate-only SXCU quarantine that is inert, never persisted and blocks admission (SxcuImportTest::criticalMetadataCannotBeAccepted). Existing native preset receipt type tags stay inert (XannCompatibilityTest::nativePresetReceiptsRemainInertWithoutAllowingArbitraryTypeTags). Quarantine representation: XANN UnsupportedAnnotation.raw, unsupported preset steps, SxcuImportResult.quarantine. The name-based classifier is conservative and needs human security review before qualification."
     },
     "COMPCAT-006": {
-      "status": "implemented",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Audit 2026-11-04 (Viktor, at 65e4394; started from Codex's uncommitted run): XANN save reports target xann, version 1 and nonportable-image-path while writing a portable NFC basename atomically through the sidecar store (XannCompatibilityTest::portableExportReportsBasenameAndPreservesSafeFields; EditorSaveTest and CapturePairedSaveTest::actualCanvasExplicitIntentSavesBothCompatiblePairs assert the basename). XSIE export reports target/version and external-asset-not-embedded (SxiePresetTest::exportReportsUnresolvedExternalAssetAsNonPortable, exportDialogWritesPrivateNativeJson). Editor preference and application settings saves report format/version and profile-local-* omissions (SettingsCompatibilityTest::editorPreferenceSaveReportsProfileLocalOmissions, safeExtensionsRoundTripThroughBothStores). Unsafe content, secrets and native handles cannot be exported (unsafe-unknown export refusals in XannCompatibilityTest::unsafeUnknownsRejectWithoutEcho and SxiePresetTest). No SXCU/destination export UI exists and none was added; writeDestination is internal versioned catalog serialization with secrets held as references. Native, physical and human qualification remain with the owner.",
+      "note": "Native XANN/XSIE and profile saves report targets/versions/non-portable omissions and use atomic stores. Portable export of the complete compatibility catalogue, all native handles and secret classifications remains incomplete; no SXCU export UI exists.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -159,17 +373,60 @@
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp"
       ],
       "audit": {
-        "classification": "implemented",
+        "classification": "partial",
         "spec_line": 26,
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "65e4394fde8e95cb4cb76940f034abd7dc157401"
-      }
+        "coverage": "Native XANN/XSIE and profile saves report targets/versions/non-portable omissions and use atomic stores. Portable export of the complete compatibility catalogue, all native handles and secret classifications remains incomplete; no SXCU export UI exists.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "reportsEachDispositionWithoutValues",
+            "line": 34
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+            "sha256": "47316f8663341024e8146c6de74c2c0dbf77e3156f9179477bb84a9925a32af1",
+            "method": "safeExtensionsRoundTripThroughBothStores",
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
+            "method": "criticalMetadataCannotBeAccepted",
+            "line": 33
+          }
+        ]
+      },
+      "previous_note": "Audit 2026-11-04 (Viktor, at 65e4394; started from Codex's uncommitted run): XANN save reports target xann, version 1 and nonportable-image-path while writing a portable NFC basename atomically through the sidecar store (XannCompatibilityTest::portableExportReportsBasenameAndPreservesSafeFields; EditorSaveTest and CapturePairedSaveTest::actualCanvasExplicitIntentSavesBothCompatiblePairs assert the basename). XSIE export reports target/version and external-asset-not-embedded (SxiePresetTest::exportReportsUnresolvedExternalAssetAsNonPortable, exportDialogWritesPrivateNativeJson). Editor preference and application settings saves report format/version and profile-local-* omissions (SettingsCompatibilityTest::editorPreferenceSaveReportsProfileLocalOmissions, safeExtensionsRoundTripThroughBothStores). Unsafe content, secrets and native handles cannot be exported (unsafe-unknown export refusals in XannCompatibilityTest::unsafeUnknownsRejectWithoutEcho and SxiePresetTest). No SXCU/destination export UI exists and none was added; writeDestination is internal versioned catalog serialization with secrets held as references. Native, physical and human qualification remain with the owner."
     },
     "COMPCAT-007": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native profile transfer now explicitly validates semantic UUID/action IDs, uploader method/body enums, references, paths, colours, geometry and bounded/duplicate collections, with named family tests. Workflow v1 upgrades explicitly to v2 without granting authority to an old output extension; unsupported bundle/store versions are rejected. Reference named-enum workflows and legacy custom uploaders convert into stable UUIDv5 identities. Native value-family tests pass; full reference-format, runtime-observed and cross-platform fixture qualification remains Required. Rationale: source named-enum behavior is followed only where equivalent; unsupported records stay in the source instead of acquiring partial execution behavior.",
+      "note": "Current application/uploader/workflow readers use stable IDs and explicit versions, validation and read-only future behavior. Complete upgrade/downgrade/path/enum/collection policies independent of platform serializers remain partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -184,59 +441,249 @@
         "platforms/linux/linux-qt/tests/ReferenceMigrationTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-        "platforms/linux/linux-qt/src/settings/ReferenceMigration.h"
+        "platforms/linux/linux-qt/src/settings/ReferenceMigration.h",
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 29,
-        "coverage": "Current worktree: application-settings, configuration-transfer, reference-migration and native-surface-accessibility pass (100% tests passed out of 4). Final full suite: 71% tests passed, 47 tests failed out of 162; failures are 40 private-D-Bus startup failures and 7 socket-dependent suites blocked by the sandbox. editor-window-1/2/3 were rerun serially and fail before test startup because the bus cannot bind. Contract lint and generated-progress check pass. Runtime-observed legacy fixtures, supported-target/cross-platform qualification and human privacy/parity review remain Required; no waiver is claimed.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Current application/uploader/workflow readers use stable IDs and explicit versions, validation and read-only future behavior. Complete upgrade/downgrade/path/enum/collection policies independent of platform serializers remain partial.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "reportsEachDispositionWithoutValues",
+            "line": 34
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+            "sha256": "47316f8663341024e8146c6de74c2c0dbf77e3156f9179477bb84a9925a32af1",
+            "method": "safeExtensionsRoundTripThroughBothStores",
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
+            "method": "criticalMetadataCannotBeAccepted",
+            "line": 33
+          }
+        ]
+      },
+      "previous_note": "Native profile transfer now explicitly validates semantic UUID/action IDs, uploader method/body enums, references, paths, colours, geometry and bounded/duplicate collections, with named family tests. Workflow v1 upgrades explicitly to v2 without granting authority to an old output extension; unsupported bundle/store versions are rejected. Reference named-enum workflows and legacy custom uploaders convert into stable UUIDv5 identities. Native value-family tests pass; full reference-format, runtime-observed and cross-platform fixture qualification remains Required. Rationale: source named-enum behavior is followed only where equivalent; unsupported records stay in the source instead of acquiring partial execution behavior."
     },
     "COMPCAT-008": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "No explicit verified legacy plaintext-secret migration is implemented. Secret Service storage exists; human security review is pending.",
+      "note": "Complete explicit auditable legacy-secret migration, approved secure storage, verification and redacted removal is missing and depends on human credential/security approval.",
       "waiting_on": [
         "Mike: review credential security and explicit sensitive migration policy."
       ],
       "audit": {
-        "classification": "not-started",
+        "classification": "blocked",
         "spec_line": 33,
-        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Complete explicit auditable legacy-secret migration, approved secure storage, verification and redacted removal is missing and depends on human credential/security approval.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "reportsEachDispositionWithoutValues",
+            "line": 34
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+            "sha256": "47316f8663341024e8146c6de74c2c0dbf77e3156f9179477bb84a9925a32af1",
+            "method": "safeExtensionsRoundTripThroughBothStores",
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
+            "method": "criticalMetadataCannotBeAccepted",
+            "line": 33
+          }
+        ]
+      },
+      "previous_note": "No explicit verified legacy plaintext-secret migration is implemented. Secret Service storage exists; human security review is pending.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp"
+      ],
+      "blocked_reason": "Complete explicit auditable legacy-secret migration, approved secure storage, verification and redacted removal is missing and depends on human credential/security approval."
     },
     "COMPCAT-009": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native capture history exists; legacy JSON/XML/SQLite history migration with neighboring-record quarantine is absent.",
+      "note": "No native legacy history JSON/XML/SQLite importer preserves identity/state/URLs or isolates corrupt neighbor records. Existing native execution journal storage is not legacy-history import.",
       "audit": {
         "classification": "not-started",
         "spec_line": 37,
-        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "No native legacy history JSON/XML/SQLite importer preserves identity/state/URLs or isolates corrupt neighbor records. Existing native execution journal storage is not legacy-history import.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "reportsEachDispositionWithoutValues",
+            "line": 34
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+            "sha256": "47316f8663341024e8146c6de74c2c0dbf77e3156f9179477bb84a9925a32af1",
+            "method": "safeExtensionsRoundTripThroughBothStores",
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
+            "method": "criticalMetadataCannotBeAccepted",
+            "line": 33
+          }
+        ]
+      },
+      "previous_note": "Native capture history exists; legacy JSON/XML/SQLite history migration with neighboring-record quarantine is absent.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp"
+      ]
     },
     "COMPCAT-010": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "No untrusted legacy SQLite snapshot/schema/integrity import is implemented.",
+      "note": "No supported SQLite compatibility snapshot/schema/integrity importer exists; native JSON journals do not exercise untrusted SQLite triggers/extensions or transactions.",
       "audit": {
         "classification": "not-started",
         "spec_line": 41,
-        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "No supported SQLite compatibility snapshot/schema/integrity importer exists; native JSON journals do not exercise untrusted SQLite triggers/extensions or transactions.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "reportsEachDispositionWithoutValues",
+            "line": 34
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+            "sha256": "47316f8663341024e8146c6de74c2c0dbf77e3156f9179477bb84a9925a32af1",
+            "method": "safeExtensionsRoundTripThroughBothStores",
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
+            "method": "criticalMetadataCannotBeAccepted",
+            "line": 33
+          }
+        ]
+      },
+      "previous_note": "No untrusted legacy SQLite snapshot/schema/integrity import is implemented.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp"
+      ]
     },
     "COMPCAT-011": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "SXCU imports are parsed as data, validated, secrets separated, and popular-provider/adversarial fixtures exist. Full executable/network authority and human security qualification remain.",
+      "note": "SXCU candidate parsing separates credentials, validates destination syntax and requires native review before catalog mutation. Full legacy templates/regex/body/script/target authority and security qualification remain incomplete.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -244,35 +691,129 @@
         "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 44,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "SXCU candidate parsing separates credentials, validates destination syntax and requires native review before catalog mutation. Full legacy templates/regex/body/script/target authority and security qualification remain incomplete.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "reportsEachDispositionWithoutValues",
+            "line": 34
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+            "sha256": "47316f8663341024e8146c6de74c2c0dbf77e3156f9179477bb84a9925a32af1",
+            "method": "safeExtensionsRoundTripThroughBothStores",
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
+            "method": "criticalMetadataCannotBeAccepted",
+            "line": 33
+          }
+        ]
+      },
+      "previous_note": "SXCU imports are parsed as data, validated, secrets separated, and popular-provider/adversarial fixtures exist. Full executable/network authority and human security qualification remain."
     },
     "COMPCAT-012": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "No approved isolated plugin package inspection/installation/host is implemented.",
+      "note": "Isolated plugin package host, provenance/signature manifest authority and installation consent are pending product-owner security policy.",
       "waiting_on": [
         "Mike: approved isolated plugin-host/security model is required."
       ],
       "audit": {
-        "classification": "not-started",
+        "classification": "blocked",
         "spec_line": 48,
-        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Isolated plugin package host, provenance/signature manifest authority and installation consent are pending product-owner security policy.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "reportsEachDispositionWithoutValues",
+            "line": 34
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+            "sha256": "47316f8663341024e8146c6de74c2c0dbf77e3156f9179477bb84a9925a32af1",
+            "method": "safeExtensionsRoundTripThroughBothStores",
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
+            "method": "criticalMetadataCannotBeAccepted",
+            "line": 33
+          }
+        ]
+      },
+      "previous_note": "No approved isolated plugin package inspection/installation/host is implemented.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp"
+      ],
+      "blocked_reason": "Isolated plugin package host, provenance/signature manifest authority and installation consent are pending product-owner security policy."
     },
     "COMPCAT-013": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "XANN shapes/assets and SXIE/preset import have native fixtures and unknown preservation. Complete field compatibility, resources, all selected legacy effects and accepted observations remain.",
+      "note": "Native XANN and preset inert preservation exists, but full legacy document/effect parity plus the scheduler-mandated human SXIE import security review remain pending.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -280,36 +821,131 @@
         "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp"
       ],
       "waiting_on": [
         "Mike: human security review of SXIE import; legacy compatibility observations."
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "blocked",
         "spec_line": 52,
         "remaining_human_decision": "SXIE import security review and accepted legacy/cross-platform format fixtures remain pending.",
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Native XANN and preset inert preservation exists, but full legacy document/effect parity plus the scheduler-mandated human SXIE import security review remain pending.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "reportsEachDispositionWithoutValues",
+            "line": 34
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+            "sha256": "47316f8663341024e8146c6de74c2c0dbf77e3156f9179477bb84a9925a32af1",
+            "method": "safeExtensionsRoundTripThroughBothStores",
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
+            "method": "criticalMetadataCannotBeAccepted",
+            "line": 33
+          }
+        ]
+      },
+      "previous_note": "XANN shapes/assets and SXIE/preset import have native fixtures and unknown preservation. Complete field compatibility, resources, all selected legacy effects and accepted observations remain.",
+      "blocked_reason": "Native XANN and preset inert preservation exists, but full legacy document/effect parity plus the scheduler-mandated human SXIE import security review remain pending."
     },
     "COMPCAT-014": {
       "status": "not-started",
       "disposition": "Required",
       "vectors": [],
-      "note": "No MCP automation JSON import/schema/consent boundary is implemented.",
+      "note": "MCP operation schema/policy and automation authority are not approved; no imported text may grant human consent or tool execution authority.",
       "audit": {
-        "classification": "not-started",
+        "classification": "blocked",
         "spec_line": 57,
-        "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "MCP operation schema/policy and automation authority are not approved; no imported text may grant human consent or tool execution authority.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "reportsEachDispositionWithoutValues",
+            "line": 34
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+            "sha256": "47316f8663341024e8146c6de74c2c0dbf77e3156f9179477bb84a9925a32af1",
+            "method": "safeExtensionsRoundTripThroughBothStores",
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
+            "method": "criticalMetadataCannotBeAccepted",
+            "line": 33
+          }
+        ]
+      },
+      "previous_note": "No MCP automation JSON import/schema/consent boundary is implemented.",
+      "evidence": [
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp"
+      ],
+      "blocked_reason": "MCP operation schema/policy and automation authority are not approved; no imported text may grant human consent or tool execution authority."
     },
     "COMPCAT-015": {
-      "status": "implemented",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Audit 2026-11-04 (Viktor, at 65e4394; started from Codex's uncommitted run): Shared JsonBoundary preflight (strict UTF-8 incl. surrogates, decoded duplicate keys, depth, bytes, lexical elements) fronts XANN, SXCU, SXIE Config.json/XSIE, editor preferences, application settings, PrivateJsonFile and the workflow, destination and journal readers. Tests: JsonBoundaryTest::adversarial and lexicalStringsAndBounds; XannCompatibilityTest::adversarialJsonIsRejected, boundedGzipRejectsTruncationTrailingMembersExpansionAndSize, lexicalElementBudgetIsEnforcedBeforeDocumentConstruction and pathTraversalAndCyclicReferencesReject; SxcuImportTest::boundaryMatrix and criticalMetadataCannotBeAccepted; SxiePresetTest::jsonBoundaryMatrix plus the existing bounded ZIP tests and path-traversal rows; SettingsCompatibilityTest::readerAdversarialMatrix, embeddedPathsAreRefusedWithoutOpeningThem and nativeStoreReadersShareTheLexicalBoundary. Rejections use stable value-free codes, no reader touches the network, and imported references are never followed ($ref is refused as unsafe data, so cycles cannot be dereferenced). The editor recent-image list is exempt from the '..' rule by design (absolute opened-file identities keep kernel meaning through symlinks and are never read when parsed). Native, physical and human qualification remain with the owner.",
+      "note": "Strict duplicate-key/UTF-8/depth/size/element boundaries and bounded gzip/ZIP plus traversal tests protect current readers. Entire format/reader catalogue and complete resource/security/platform matrix remain unqualified.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -324,17 +960,60 @@
         "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp"
       ],
       "audit": {
-        "classification": "implemented",
+        "classification": "partial",
         "spec_line": 61,
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "65e4394fde8e95cb4cb76940f034abd7dc157401"
-      }
+        "coverage": "Strict duplicate-key/UTF-8/depth/size/element boundaries and bounded gzip/ZIP plus traversal tests protect current readers. Entire format/reader catalogue and complete resource/security/platform matrix remain unqualified.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "adversarialJsonIsRejected",
+            "line": 87
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "boundedGzipRejectsTruncationTrailingMembersExpansionAndSize",
+            "line": 91
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "pathTraversalAndCyclicReferencesReject",
+            "line": 106
+          }
+        ]
+      },
+      "previous_note": "Audit 2026-11-04 (Viktor, at 65e4394; started from Codex's uncommitted run): Shared JsonBoundary preflight (strict UTF-8 incl. surrogates, decoded duplicate keys, depth, bytes, lexical elements) fronts XANN, SXCU, SXIE Config.json/XSIE, editor preferences, application settings, PrivateJsonFile and the workflow, destination and journal readers. Tests: JsonBoundaryTest::adversarial and lexicalStringsAndBounds; XannCompatibilityTest::adversarialJsonIsRejected, boundedGzipRejectsTruncationTrailingMembersExpansionAndSize, lexicalElementBudgetIsEnforcedBeforeDocumentConstruction and pathTraversalAndCyclicReferencesReject; SxcuImportTest::boundaryMatrix and criticalMetadataCannotBeAccepted; SxiePresetTest::jsonBoundaryMatrix plus the existing bounded ZIP tests and path-traversal rows; SettingsCompatibilityTest::readerAdversarialMatrix, embeddedPathsAreRefusedWithoutOpeningThem and nativeStoreReadersShareTheLexicalBoundary. Rejections use stable value-free codes, no reader touches the network, and imported references are never followed ($ref is refused as unsafe data, so cycles cannot be dereferenced). The editor recent-image list is exempt from the '..' rule by design (absolute opened-file identities keep kernel meaning through symlinks and are never read when parsed). Native, physical and human qualification remain with the owner."
     },
     "COMPCAT-016": {
-      "status": "implemented",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Audit 2026-11-04 (Viktor, at 65e4394; started from Codex's uncommitted run): src/storage/COMPATIBILITY.md fixes the canonical rules: UTC ISO-8601 with milliseconds and Z on write, '.' decimals, case-sensitive native IDs/enums with documented case-insensitive legacy aliases, portable basenames, LF output (CRLF input accepted) and NFC for display names and font families. Fixtures load identically under German/Arabic/Turkish locales, LF/CRLF and composed/decomposed Unicode (JsonBoundaryTest::localeAndNewlineVariants; XannCompatibilityTest::localesNewlinesAndUnicodeVariantsKeepTheSameMeaning; SettingsCompatibilityTest::localeNewlineAndFontNormalizationFixtures; SxcuImportTest::reportsAndCanonicalRoundTrip; SxiePresetTest::canonicalPresetLocaleNewlineAndUnicode); non-portable data is dispositioned by export omission codes (COMPCAT-006 tests). Decision (Mike's rule: follow the reference app): timezone-less legacy XANN timestamps keep local interpretation, as .NET does for an unspecified-kind DateTime, and are rewritten as UTC on the next save. Windows and macOS runtime fixtures are not run here; they and human qualification remain with the owner.",
+      "note": "Native canonical-rules document and local locale/newline/NFC fixtures exist. Windows/macOS cross-platform and legacy runtime fixtures required by the clause are missing; timezone-less timestamps still depend on local interpretation.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -349,22 +1028,95 @@
         "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp"
       ],
       "audit": {
-        "classification": "implemented",
+        "classification": "partial",
         "spec_line": 65,
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "65e4394fde8e95cb4cb76940f034abd7dc157401"
-      }
+        "coverage": "Native canonical-rules document and local locale/newline/NFC fixtures exist. Windows/macOS cross-platform and legacy runtime fixtures required by the clause are missing; timezone-less timestamps still depend on local interpretation.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "localesNewlinesAndUnicodeVariantsKeepTheSameMeaning",
+            "line": 123
+          }
+        ]
+      },
+      "previous_note": "Audit 2026-11-04 (Viktor, at 65e4394; started from Codex's uncommitted run): src/storage/COMPATIBILITY.md fixes the canonical rules: UTC ISO-8601 with milliseconds and Z on write, '.' decimals, case-sensitive native IDs/enums with documented case-insensitive legacy aliases, portable basenames, LF output (CRLF input accepted) and NFC for display names and font families. Fixtures load identically under German/Arabic/Turkish locales, LF/CRLF and composed/decomposed Unicode (JsonBoundaryTest::localeAndNewlineVariants; XannCompatibilityTest::localesNewlinesAndUnicodeVariantsKeepTheSameMeaning; SettingsCompatibilityTest::localeNewlineAndFontNormalizationFixtures; SxcuImportTest::reportsAndCanonicalRoundTrip; SxiePresetTest::canonicalPresetLocaleNewlineAndUnicode); non-portable data is dispositioned by export omission codes (COMPCAT-006 tests). Decision (Mike's rule: follow the reference app): timezone-less legacy XANN timestamps keep local interpretation, as .NET does for an unspecified-kind DateTime, and are rewritten as UTC on the next save. Windows and macOS runtime fixtures are not run here; they and human qualification remain with the owner."
     },
     "COMPCAT-017": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Explicit previous-app migration now writes a private recoverable native backup before publication, records source/target/converter versions, a SHA-256 source fingerprint and value-free outcome, detects completed retries, merges stable UUIDv5 workflow/destination IDs, and offers confirmed restore/dismiss controls. Tests cover dry run, confirmation, middle failure, stale source/native snapshots, retry without duplicates, exact restore and backup dismissal. Reference history/provider-plugin/credential conversion remains unsupported and reported; no such records are imported or duplicated. Runtime-observed legacy/cross-platform qualification and human review remain Required. Rationale: source named-enum behavior is followed only where equivalent; unsupported records stay in the source instead of acquiring partial execution behavior.",
+      "note": "Explicit reference-settings migration backs up/reviews/preserves source and native retry tests exist. Complete idempotent migration/rollback across accounts/workflows/history/annotations/uploads remains incomplete.",
       "audit": {
         "classification": "partial",
         "spec_line": 69,
-        "coverage": "Current worktree: application-settings, configuration-transfer, reference-migration and native-surface-accessibility pass (100% tests passed out of 4). Final full suite: 71% tests passed, 47 tests failed out of 162; failures are 40 private-D-Bus startup failures and 7 socket-dependent suites blocked by the sandbox. editor-window-1/2/3 were rerun serially and fail before test startup because the bus cannot bind. Contract lint and generated-progress check pass. Runtime-observed legacy fixtures, supported-target/cross-platform qualification and human privacy/parity review remain Required; no waiver is claimed.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
+        "coverage": "Explicit reference-settings migration backs up/reviews/preserves source and native retry tests exist. Complete idempotent migration/rollback across accounts/workflows/history/annotations/uploads remains incomplete.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "reportsEachDispositionWithoutValues",
+            "line": 34
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+            "sha256": "47316f8663341024e8146c6de74c2c0dbf77e3156f9179477bb84a9925a32af1",
+            "method": "safeExtensionsRoundTripThroughBothStores",
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
+            "method": "criticalMetadataCannotBeAccepted",
+            "line": 33
+          }
+        ]
       },
       "evidence": [
         "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
@@ -373,14 +1125,18 @@
         "platforms/linux/linux-qt/tests/ReferenceMigrationTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/app/SettingsDialog.cpp",
-        "platforms/linux/linux-qt/src/settings/ReferenceMigration.h"
-      ]
+        "platforms/linux/linux-qt/src/settings/ReferenceMigration.h",
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp"
+      ],
+      "previous_note": "Explicit previous-app migration now writes a private recoverable native backup before publication, records source/target/converter versions, a SHA-256 source fingerprint and value-free outcome, detects completed retries, merges stable UUIDv5 workflow/destination IDs, and offers confirmed restore/dismiss controls. Tests cover dry run, confirmation, middle failure, stale source/native snapshots, retry without duplicates, exact restore and backup dismissal. Reference history/provider-plugin/credential conversion remains unsupported and reported; no such records are imported or duplicated. Runtime-observed legacy/cross-platform qualification and human review remain Required. Rationale: source named-enum behavior is followed only where equivalent; unsupported records stay in the source instead of acquiring partial execution behavior."
     },
     "COMPCAT-018": {
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Local representative fixtures exist for implemented subsets. Complete approved legacy golden/runtime/cross-platform migration evidence remains.",
+      "note": "Local malformed/unknown/native round-trip fixtures exist. Every supported legacy format/version, golden runtime observations, cross-platform round-trip and migration activation evidence remain incomplete.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -388,18 +1144,109 @@
         "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
         "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 73,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Explicit Avalonia configuration/history/secret migration, XML/SQLite consistent snapshots, rollback/idempotency, plugin/MCP compatibility and accepted runtime/cross-platform legacy fixtures remain incomplete.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Local malformed/unknown/native round-trip fixtures exist. Every supported legacy format/version, golden runtime observations, cross-platform round-trip and migration activation evidence remain incomplete.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+            "sha256": "d4b811b9c1cc3d14cf23bff37856b04fd9aba889a957378a96bfd3b9e495c0f6"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
+            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
+            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "method": "reportsEachDispositionWithoutValues",
+            "line": 34
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+            "sha256": "47316f8663341024e8146c6de74c2c0dbf77e3156f9179477bb84a9925a32af1",
+            "method": "safeExtensionsRoundTripThroughBothStores",
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
+            "method": "criticalMetadataCannotBeAccepted",
+            "line": 33
+          }
+        ]
+      },
+      "previous_note": "Local representative fixtures exist for implemented subsets. Complete approved legacy golden/runtime/cross-platform migration evidence remains."
     }
   },
-  "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
+  "audit_scope": "All normative Linux-applicable clauses reviewed against current production and automated test bodies; candidate implementation is separate from physical, cross-platform and human acceptance.",
   "audit": {
+    "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+    "checked_at": "2026-11-04T14:04:38.855452+00:00",
+    "specification": "product-contract/capabilities/COMPATIBILITY-CATALOG-001/SPEC.md",
+    "specification_sha256": "69b281b1066aebb4fefe3c6f51da1e1d848e2185332a6a71c67ab00da48571fc",
+    "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+    "production_surfaces": [
+      "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+      "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
+      "platforms/linux/linux-qt/src/storage/Compatibility.h",
+      "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
+      "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp"
+    ],
+    "automated_test_surfaces": {
+      "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp": [
+        "safeExtensionsRoundTripThroughBothStores"
+      ],
+      "platforms/linux/linux-qt/tests/SxcuImportTest.cpp": [
+        "criticalMetadataCannotBeAccepted"
+      ],
+      "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp": [
+        "adversarialJsonIsRejected",
+        "boundedGzipRejectsTruncationTrailingMembersExpansionAndSize",
+        "localesNewlinesAndUnicodeVariantsKeepTheSameMeaning",
+        "pathTraversalAndCyclicReferencesReject",
+        "reportsEachDispositionWithoutValues",
+        "unsafeUnknownsRejectWithoutEcho"
+      ]
+    },
+    "remaining_scope": "COMPCAT-001; COMPCAT-002; COMPCAT-003; COMPCAT-004; COMPCAT-005; COMPCAT-006; COMPCAT-007; COMPCAT-008; COMPCAT-009; COMPCAT-010; COMPCAT-011; COMPCAT-012; COMPCAT-013; COMPCAT-014; COMPCAT-015; COMPCAT-016; COMPCAT-017; COMPCAT-018",
+    "reviewed_requirement_count": 18,
+    "finding": "Current source review: {'partial': 12, 'blocked': 4, 'not-started': 2}. Per-row reasons and exact hashed anchors record scope and limitations.",
+    "review_anchor": {
+      "production": {
+        "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
+        "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+      },
+      "test": {
+        "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+        "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+        "method": "reportsEachDispositionWithoutValues",
+        "line": 34
+      },
+      "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
+    }
+  },
+  "previous_audit": {
     "source_revision": "65e4394fde8e95cb4cb76940f034abd7dc157401",
     "checked_at": "2026-11-03",
     "specification": "product-contract/capabilities/COMPATIBILITY-CATALOG-001/SPEC.md",

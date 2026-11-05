@@ -19,7 +19,7 @@ Recorded implementation coverage as of 2026-11-04, from the
 
 | OS | Implementation coverage | Current status |
 |---|---:|---|
-| [Linux](platforms/linux/PROGRESS.md) | **61.7%** — 200 / 324 desktop requirements | Native Qt application in development; 102 requirements partial and 22 not started. |
+| [Linux](platforms/linux/PROGRESS.md) | **50.0%** — 162 / 324 desktop requirements | Native Qt application in development; 138 requirements partial and 24 not started; explicit blockers are recorded in the Linux audit. |
 | [Windows](platforms/windows/PROGRESS.md) | **0.0%** — 0 / 324 desktop requirements | Native application not started; requirement implementation unassessed. |
 | [macOS](platforms/macos/PROGRESS.md) | **0.0%** — 0 / 324 desktop requirements | Native application not started; requirement implementation unassessed. |
 | [Android](platforms/android/README.md) | Not yet assessed | Native application not started; mobile scope tracked separately. |

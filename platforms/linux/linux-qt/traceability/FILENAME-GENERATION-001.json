@@ -12,7 +12,8 @@
     "platforms/linux/linux-qt/app/CaptureWorkflows.cpp",
     "platforms/linux/linux-qt/app/CaptureController.cpp",
     "platforms/linux/linux-qt/app/CaptureSave.cpp",
-    "platforms/linux/linux-qt/app/main.cpp"
+    "platforms/linux/linux-qt/app/main.cpp",
+    "platforms/linux/linux-qt/src/naming/CounterStore.cpp"
   ],
   "requirements": {
     "FN-001": {
@@ -20,21 +21,37 @@
       "vectors": [
         "all"
       ],
-      "note": "expand() takes the context by const reference and reads each value once per parse. Native profile output freezes folder/pattern before acquisition; Save continues to capture one time/locale/size context per expansion. Actual controller snapshots and later-profile output are verified.",
+      "note": "Expansion uses a single supplied value context; native contexts are captured before expansion.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
       ],
       "disposition": "Required",
       "audit": {
         "classification": "implemented",
         "spec_line": 34,
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Expansion uses a single supplied value context; native contexts are captured before expansion.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "expand() takes the context by const reference and reads each value once per parse. Native profile output freezes folder/pattern before acquisition; Save continues to capture one time/locale/size context per expansion. Actual controller snapshots and later-profile output are verified."
     },
     "FN-002": {
       "status": "implemented",
@@ -54,9 +71,28 @@
           "calendar-names-and-week",
           "unix-seconds"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Date/time token branches implement ASCII padding and locale names; deterministic contract vectors exercise output.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "Date/time token branches implement ASCII padding and locale names; deterministic contract vectors exercise output.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-003": {
       "status": "implemented",
@@ -74,9 +110,28 @@
           "twelve-hour-midnight-and-milliseconds",
           "twelve-hour-noon"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Presence of %pm determines twelve-hour mode before token expansion; boundary clock vectors cover AM/PM.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "Presence of %pm determines twelve-hour mode before token expansion; boundary clock vectors cover AM/PM.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-004": {
       "status": "implemented",
@@ -92,9 +147,28 @@
           "date-counter",
           "empty-result"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Dimensions expand only when positive; unknown dimensions are empty.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "Dimensions expand only when positive; unknown dimensions are empty.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-005": {
       "status": "implemented",
@@ -112,9 +186,28 @@
           "window-title-trim-space-and-sanitize",
           "url-mode-percent-encoding"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Window/process metadata is trimmed, spaces changed and mode sanitization applied before insertion.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "Window/process metadata is trimmed, spaces changed and mode sanitization applied before insertion.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-006": {
       "status": "implemented",
@@ -128,9 +221,28 @@
         "published_vectors": [
           "text-mode-environment-unchanged"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "User/domain/host values are supplied in the immutable context; token expansion does not reread the environment.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "User/domain/host values are supplied in the immutable context; token expansion does not reread the environment.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-007": {
       "status": "implemented",
@@ -154,9 +266,28 @@
           "counter-width-never-truncates",
           "blank-pattern-does-not-advance-counter"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "One pre-scan advances a non-negative counter once; every token uses the same result and padding/base rules.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "One pre-scan advances a non-negative counter once; every token uses the same result and padding/base rules.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-008": {
       "status": "implemented",
@@ -187,38 +318,92 @@
           "guid-lower-and-upper",
           "invalid-repeat-does-not-consume-counter"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "System CSPRNG and injected byte sources feed bounded random-token counts and UUID/word/emoji branches.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "sha256": "efdfa6075024c44719888139bf07ad5dde230a614cdba4c7e234069fe3b6c8e7",
+            "method": "defaultCapturePatternUsesSystemRandom",
+            "line": 43
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "System CSPRNG and injected byte sources feed bounded random-token counts and UUID/word/emoji branches.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+        "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp"
+      ]
     },
     "FN-009": {
-      "status": "implemented",
+      "status": "partial",
       "vectors": [
         "random-file-line",
         "random-file-permission-denied",
         "random-file-empty"
       ],
-      "note": "Expansion honours the caller's grant through RandomFileAccess. The production grant prompt arrives with the pattern editor UI. The native pattern editor now visibly denies random-file tokens without a read grant, before saving/running. Full grant UI/authority qualification remains Required. Audit 2026-11-03: FilenameGeneratorTest::randomFileReadsOneTrimmedLineWhenGranted (granted read of one trimmed line from LF/CRLF content), randomFileFailuresAreTypedAndExposeNothing (denied -> file-permission-denied; missing, non-UTF-8, truncated UTF-8, NUL content, empty and blank-only files -> file-unavailable, each with token %rf and offset, counter unchanged) and randomFileWithoutAGrantIsDeniedAndReadsNothing prove the clause; the shared random-file-line, random-file-permission-denied and random-file-empty vectors run through the conformance adapter, and CaptureWorkflowsTest/NativeCaptureWorkflowsTest cover the native denial. A truncated trailing UTF-8 sequence was previously accepted and now fails as non-text. The native app never offers a grant (the clause is MAY), so every production %rf is denied.",
+      "note": "Granted/denied/missing/non-text/empty file behavior has direct tests, but randomFileLine silently restricts files above 256 nonempty lines to their first 256 entries.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
-        "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp"
+        "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
       ],
       "disposition": "Required",
       "audit": {
-        "classification": "implemented",
+        "classification": "partial",
         "spec_line": 60,
         "published_vectors": [
           "random-file-line",
           "random-file-permission-denied",
           "random-file-empty"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "8390132afb6e0af51e58733900651c537d1c63a8"
-      }
+        "coverage": "Granted/denied/missing/non-text/empty file behavior has direct tests, but randomFileLine silently restricts files above 256 nonempty lines to their first 256 entries.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "sha256": "efdfa6075024c44719888139bf07ad5dde230a614cdba4c7e234069fe3b6c8e7",
+            "method": "randomFileReadsOneTrimmedLineWhenGranted",
+            "line": 66
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "sha256": "efdfa6075024c44719888139bf07ad5dde230a614cdba4c7e234069fe3b6c8e7",
+            "method": "randomFileFailuresAreTypedAndExposeNothing",
+            "line": 89
+          }
+        ]
+      },
+      "previous_note": "Expansion honours the caller's grant through RandomFileAccess. The production grant prompt arrives with the pattern editor UI. The native pattern editor now visibly denies random-file tokens without a read grant, before saving/running. Full grant UI/authority qualification remains Required. Audit 2026-11-03: FilenameGeneratorTest::randomFileReadsOneTrimmedLineWhenGranted (granted read of one trimmed line from LF/CRLF content), randomFileFailuresAreTypedAndExposeNothing (denied -> file-permission-denied; missing, non-UTF-8, truncated UTF-8, NUL content, empty and blank-only files -> file-unavailable, each with token %rf and offset, counter unchanged) and randomFileWithoutAGrantIsDeniedAndReadsNothing prove the clause; the shared random-file-line, random-file-permission-denied and random-file-empty vectors run through the conformance adapter, and CaptureWorkflowsTest/NativeCaptureWorkflowsTest cover the native denial. A truncated trailing UTF-8 sequence was previously accepted and now fails as non-text. The native app never offers a grant (the clause is MAY), so every production %rf is denied."
     },
     "FN-010": {
       "status": "implemented",
@@ -234,9 +419,28 @@
           "case-sensitive-unknown-token",
           "unknown-and-literal-percent"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Unknown/case-mismatched tokens survive and %% emits a literal percent through left-to-right tokenization.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "Unknown/case-mismatched tokens survive and %% emits a literal percent through left-to-right tokenization.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-011": {
       "status": "implemented",
@@ -258,9 +462,28 @@
           "reserved-device-name",
           "reserved-device-name-with-extension"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Portable replacement, collapsed replacements, trailing removal and reserved device names are implemented by shared finalization.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "Portable replacement, collapsed replacements, trailing removal and reserved device names are implemented by shared finalization.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-012": {
       "status": "implemented",
@@ -280,9 +503,28 @@
           "path-mode-rejects-absolute",
           "path-mode-rejects-drive"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Path mode rejects rooted/drive paths and parent components and uses portable per-component finalization.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "Path mode rejects rooted/drive paths and parent components and uses portable per-component finalization.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-013": {
       "status": "implemented",
@@ -304,9 +546,28 @@
           "blank-pattern-does-not-advance-counter",
           "blank-pattern-text-mode"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Blank/empty/dot components become underscore; extension is appended after token expansion.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "Blank/empty/dot components become underscore; extension is appended after token expansion.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-014": {
       "status": "implemented",
@@ -322,22 +583,43 @@
           "max-length-preserves-extension",
           "max-length-counts-scalar-values"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "UTF-32 scalar storage is truncated before the separately preserved extension; vectors exercise scalar/extension limits.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "UTF-32 scalar storage is truncated before the separately preserved extension; vectors exercise scalar/extension limits.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-015": {
       "status": "implemented",
       "vectors": [
         "preview-does-not-commit"
       ],
-      "note": " Native workflow editing now calls production deterministic preview, presents a read-only PNG example and typed token/scalar-offset errors, and creates no directories or persistent counters.",
+      "note": "Preview calls the same expansion with a separate deterministic byte source and never persists a counter.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+        "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp"
       ],
       "disposition": "Required",
       "audit": {
@@ -346,16 +628,37 @@
         "published_vectors": [
           "preview-does-not-commit"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Preview calls the same expansion with a separate deterministic byte source and never persists a counter.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "sha256": "efdfa6075024c44719888139bf07ad5dde230a614cdba4c7e234069fe3b6c8e7",
+            "method": "previewNeverNeedsInjectedRandomness",
+            "line": 107
+          }
+        ]
+      },
+      "previous_note": " Native workflow editing now calls production deterministic preview, presents a read-only PNG example and typed token/scalar-offset errors, and creates no directories or persistent counters."
     },
     "FN-016": {
       "status": "implemented",
       "vectors": [
         "invalid-repeat-does-not-consume-counter"
       ],
-      "note": "The native Save path validates and privately encodes before committing the per-profile counter through the existing owner-private atomic CounterStore. This durable name reservation precedes publication; failed counter writes publish nothing with stable counter diagnostics, while rename failure and process exit before publication leave the counter consumed. Collision retries acquire and commit a fresh counter. CaptureSaveTest proves real write failure, changed/newer/corrupt storage, publication failure, collision/reopen and a forked process exiting without destructors at the pre-publication boundary; NativeCaptureWorkflowsTest proves pre-action cancellation/invalid-pattern byte preservation and later-action failure consumption. Reservation-before-publication follows FN-016 explicitly; no extra product policy is introduced. Verification: CaptureSaveTest 16 passed; direct NativeCaptureWorkflowsTest cancellation/validation and later-failure cases 7 passed; direct CapturePipelineTest failed-reservation cases 4 passed. Registered D-Bus-wrapped ctests require an outside-sandbox rerun.",
+      "note": "Native save commits a locked private counter reservation before final publication; failure, collision, reopen and aborted-publication tests cover consumed/nonconsumed boundaries.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
@@ -372,9 +675,44 @@
         "published_vectors": [
           "invalid-repeat-does-not-consume-counter"
         ],
-        "coverage": "All FN-016 clauses have native production-path automated coverage, including restart after process exit between durable reservation and publication.",
-        "reviewed_at_revision": "d5ba4c7793272c989a9f66cd3319a35521c5a182"
-      }
+        "coverage": "Native save commits a locked private counter reservation before final publication; failure, collision, reopen and aborted-publication tests cover consumed/nonconsumed boundaries.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/naming/CounterStore.cpp",
+            "sha256": "d3dbf8cebb03733fb0ec912f02e9f4da94c5478c9a04a797087eea63092ceb2a"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/CaptureSave.cpp",
+            "sha256": "b30d9e08a0d94e5d368d711a44f3250e568ead9235c77dd543698ff7ba57f903"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
+            "sha256": "df44176a84cd051ed96b2029981ef579df0845ab70fb28fe985497cacea009b8",
+            "method": "nativeCounterPublicationSurvivesReopenAndCollisionContextMatchesTheName",
+            "line": 21
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
+            "sha256": "df44176a84cd051ed96b2029981ef579df0845ab70fb28fe985497cacea009b8",
+            "method": "publicationFailureConsumesTheDurableReservation",
+            "line": 71
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
+            "sha256": "df44176a84cd051ed96b2029981ef579df0845ab70fb28fe985497cacea009b8",
+            "method": "restartAfterAbortedPublicationDoesNotReuseReservedName",
+            "line": 87
+          }
+        ]
+      },
+      "previous_note": "The native Save path validates and privately encodes before committing the per-profile counter through the existing owner-private atomic CounterStore. This durable name reservation precedes publication; failed counter writes publish nothing with stable counter diagnostics, while rename failure and process exit before publication leave the counter consumed. Collision retries acquire and commit a fresh counter. CaptureSaveTest proves real write failure, changed/newer/corrupt storage, publication failure, collision/reopen and a forked process exiting without destructors at the pre-publication boundary; NativeCaptureWorkflowsTest proves pre-action cancellation/invalid-pattern byte preservation and later-action failure consumption. Reservation-before-publication follows FN-016 explicitly; no extra product policy is introduced. Verification: CaptureSaveTest 16 passed; direct NativeCaptureWorkflowsTest cancellation/validation and later-failure cases 7 passed; direct CapturePipelineTest failed-reservation cases 4 passed. Registered D-Bus-wrapped ctests require an outside-sandbox rerun."
     },
     "FN-017": {
       "status": "implemented",
@@ -385,9 +723,28 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 87,
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Conformance adapter invokes the same production expand/preview functions for every published filename vector.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "Conformance adapter invokes the same production expand/preview functions for every published filename vector.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-018": {
       "status": "implemented",
@@ -407,9 +764,28 @@
           "case-sensitive-unknown-token",
           "random-non-ambiguous"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Token table is longest-first and case-sensitive; tokenizer resumes after unknown percent signs.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "Token table is longest-first and case-sensitive; tokenizer resumes after unknown percent signs.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-019": {
       "status": "implemented",
@@ -431,9 +807,28 @@
           "non-numeric-repeat",
           "unterminated-argument"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Only eligible tokens accept arguments; ASCII 1..256 validation and missing-brace errors precede expansion.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "Only eligible tokens accept arguments; ASCII 1..256 validation and missing-brace errors precede expansion.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-020": {
       "status": "implemented",
@@ -455,12 +850,31 @@
           "calendar-names-and-week",
           "unix-seconds"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Adapter preserves supplied wall-clock fields and unix value; production expands padded clock/week and localized/English names.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "Adapter preserves supplied wall-clock fields and unix value; production expands padded clock/week and localized/English names.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-021": {
-      "status": "implemented",
+      "status": "partial",
       "vectors": [
         "random-alphanumeric-with-rejection",
         "random-digits-with-rejection",
@@ -473,13 +887,13 @@
         "random-source-exhausted",
         "random-file-line"
       ],
-      "note": "Files with more than 256 non-empty lines: only the first 256 are selectable, pending a contract clarification.",
+      "note": "Rejection sampling and UUID bit layout are implemented, but the one-byte random-file selector silently truncates files with more than 256 candidate lines; the contract supplies no accepted wider sampling rule.",
       "tests": [
         "filename-generator-test"
       ],
       "disposition": "Required",
       "audit": {
-        "classification": "implemented",
+        "classification": "partial",
         "spec_line": 111,
         "published_vectors": [
           "random-alphanumeric-with-rejection",
@@ -493,9 +907,34 @@
           "random-source-exhausted",
           "random-file-line"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Rejection sampling and UUID bit layout are implemented, but the one-byte random-file selector silently truncates files with more than 256 candidate lines; the contract supplies no accepted wider sampling rule.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "sha256": "efdfa6075024c44719888139bf07ad5dde230a614cdba4c7e234069fe3b6c8e7",
+            "method": "defaultCapturePatternUsesSystemRandom",
+            "line": 43
+          }
+        ]
+      },
+      "previous_note": "Files with more than 256 non-empty lines: only the first 256 are selectable, pending a contract clarification.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+        "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp"
+      ]
     },
     "FN-022": {
       "status": "implemented",
@@ -517,9 +956,28 @@
           "text-mode-environment-unchanged",
           "path-mode-components"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Metadata insertion trims Unicode White_Space and applies filename sanitization or UTF-8 percent encoding according to mode.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "Metadata insertion trims Unicode White_Space and applies filename sanitization or UTF-8 percent encoding according to mode.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-023": {
       "status": "implemented",
@@ -545,9 +1003,28 @@
           "max-length-preserves-extension",
           "extension-exceeds-max-length"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Shared finalization applies the mandated expansion/sanitize/empty/extension/scalar truncation/reserved-name sequence.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "Shared finalization applies the mandated expansion/sanitize/empty/extension/scalar truncation/reserved-name sequence.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-024": {
       "status": "implemented",
@@ -567,9 +1044,28 @@
           "path-mode-rejects-absolute",
           "path-mode-rejects-drive"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Literal slash and backslash delimit components; canonical output uses slash; relative/traversal checks occur before publication.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "Literal slash and backslash delimit components; canonical output uses slash; relative/traversal checks occur before publication.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-025": {
       "status": "implemented",
@@ -585,12 +1081,31 @@
           "counter-base36",
           "counter-overflow"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Signed 64-bit counter bound and exact decimal/base36/hex expansion are checked before increment.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          }
+        ]
+      },
+      "previous_note": "",
+      "note": "Signed 64-bit counter bound and exact decimal/base36/hex expansion are checked before increment.",
+      "evidence": [
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp"
+      ]
     },
     "FN-026": {
-      "status": "implemented",
+      "status": "partial",
       "vectors": [
         "counter-overflow",
         "extension-exceeds-max-length",
@@ -605,17 +1120,19 @@
         "random-file-permission-denied",
         "random-file-empty"
       ],
-      "note": " Malformed native Save patterns now fail before directory creation or encoding. Profile preview exposes production error token/Unicode-scalar offset; invalid folders/patterns preserve saved settings.",
+      "note": "Typed error code/token/scalar-offset behavior is covered for supported contexts; %rf still omits eligible lines after the first 256, contrary to selecting among all nonempty lines.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+        "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp"
       ],
       "disposition": "Required",
       "audit": {
-        "classification": "implemented",
+        "classification": "partial",
         "spec_line": 152,
         "published_vectors": [
           "counter-overflow",
@@ -631,9 +1148,36 @@
           "random-file-permission-denied",
           "random-file-empty"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "Typed error code/token/scalar-offset behavior is covered for supported contexts; %rf still omits eligible lines after the first 256, contrary to selecting among all nonempty lines.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "sha256": "efdfa6075024c44719888139bf07ad5dde230a614cdba4c7e234069fe3b6c8e7",
+            "method": "randomFileReadsOneTrimmedLineWhenGranted",
+            "line": 66
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "sha256": "efdfa6075024c44719888139bf07ad5dde230a614cdba4c7e234069fe3b6c8e7",
+            "method": "randomFileFailuresAreTypedAndExposeNothing",
+            "line": 89
+          }
+        ]
+      },
+      "previous_note": " Malformed native Save patterns now fail before directory creation or encoding. Profile preview exposes production error token/Unicode-scalar offset; invalid folders/patterns preserve saved settings."
     },
     "FN-027": {
       "status": "implemented",
@@ -643,13 +1187,15 @@
       "tests": [
         "filename-generator-test"
       ],
-      "note": " Native profile previews repeat fixed sample context and the existing 0..255 wrapping preview source without committing anything.",
+      "note": "PreviewRandomSource emits ordered wrapping bytes and preview reports uncommitted nextCounter.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
-        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp",
+        "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+        "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp"
       ],
       "disposition": "Required",
       "audit": {
@@ -658,13 +1204,78 @@
         "published_vectors": [
           "preview-does-not-commit"
         ],
-        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
-        "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
-      }
+        "coverage": "PreviewRandomSource emits ordered wrapping bytes and preview reports uncommitted nextCounter.",
+        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "production_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp",
+            "sha256": "f77c322157d87bd709c6fe7faefad30adb64cb4337f027a1a68811736ef8a805"
+          }
+        ],
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+            "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+            "method": "runFilenameGeneration",
+            "line": 97
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp",
+            "sha256": "efdfa6075024c44719888139bf07ad5dde230a614cdba4c7e234069fe3b6c8e7",
+            "method": "previewNeverNeedsInjectedRandomness",
+            "line": 107
+          }
+        ]
+      },
+      "previous_note": " Native profile previews repeat fixed sample context and the existing 0..255 wrapping preview source without committing anything."
     }
   },
-  "audit_scope": "Linux candidate implementation and existing automated fixtures; supported-target and human acceptance remain separate.",
+  "audit_scope": "All normative Linux-applicable clauses reviewed against current production and automated test bodies; candidate implementation is separate from physical, cross-platform and human acceptance.",
   "audit": {
+    "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+    "checked_at": "2026-11-04T14:04:38.855452+00:00",
+    "specification": "product-contract/capabilities/FILENAME-GENERATION-001/SPEC.md",
+    "specification_sha256": "fa57017ec8237ab136799f4e3d2234e5a290b210af9215315c4cf0c208c0e6ff",
+    "method": "Read every requirement clause and inspect the current production call path plus named automated test bodies/fixtures; trace text and graph links were navigation only. Requirement-level source/test hashes are EXTRACTED evidence for the reviewed seam, not blanket proof of every capability. Human gates stay explicit.",
+    "production_surfaces": [
+      "platforms/linux/linux-qt/app/CaptureSave.cpp",
+      "platforms/linux/linux-qt/src/naming/CounterStore.cpp",
+      "platforms/linux/linux-qt/src/naming/FilenameGenerator.cpp"
+    ],
+    "automated_test_surfaces": {
+      "platforms/linux/linux-qt/conformance-adapter/main.cpp": [
+        "runFilenameGeneration"
+      ],
+      "platforms/linux/linux-qt/tests/CaptureSaveTest.cpp": [
+        "nativeCounterPublicationSurvivesReopenAndCollisionContextMatchesTheName",
+        "publicationFailureConsumesTheDurableReservation",
+        "restartAfterAbortedPublicationDoesNotReuseReservedName"
+      ],
+      "platforms/linux/linux-qt/tests/FilenameGeneratorTest.cpp": [
+        "defaultCapturePatternUsesSystemRandom",
+        "previewNeverNeedsInjectedRandomness",
+        "randomFileFailuresAreTypedAndExposeNothing",
+        "randomFileReadsOneTrimmedLineWhenGranted"
+      ]
+    },
+    "remaining_scope": "FN-009; FN-021; FN-026",
+    "reviewed_requirement_count": 27,
+    "finding": "Current source review: {'implemented': 24, 'partial': 3}. Per-row reasons and exact hashed anchors record scope and limitations.",
+    "review_anchor": {
+      "production": {
+        "path": "platforms/linux/linux-qt/app/CaptureSave.cpp",
+        "sha256": "b30d9e08a0d94e5d368d711a44f3250e568ead9235c77dd543698ff7ba57f903"
+      },
+      "test": {
+        "path": "platforms/linux/linux-qt/conformance-adapter/main.cpp",
+        "sha256": "e975ff89f9fccf9d1998d8662e35a0cb60d08fd30999eb9bfe312d024ecaf1a8",
+        "method": "runFilenameGeneration",
+        "line": 97
+      },
+      "interpretation": "EXTRACTED current source/test locations; not parity or release approval."
+    }
+  },
+  "previous_audit": {
     "source_revision": "e7528f29a44236ddbb153e1ab28039697573e376",
     "checked_at": "2026-10-28T16:55:54.347787+00:00",
     "specification": "product-contract/capabilities/FILENAME-GENERATION-001/SPEC.md",

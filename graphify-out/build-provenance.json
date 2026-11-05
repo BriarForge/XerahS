@@ -32,5 +32,17 @@
     "implementation_coverage_overall_desktop": "9.2%",
     "token_usage_status": "unavailable_host_agent",
     "ast_preserved": true
+  },
+  "semantic_refresh": {
+    "source_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+    "files": [
+      "README.md"
+    ],
+    "coverage_lines": {
+      "README.md": 85
+    },
+    "all_unaffected_node_ids_preserved": true,
+    "retained_hyperedges": 0,
+    "external_model_labeling_used": false
   }
 }

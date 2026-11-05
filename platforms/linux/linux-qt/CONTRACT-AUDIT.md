@@ -1,23 +1,12 @@
 # Linux contract scope audit
 
-Evidence refreshed 2026-10-28 at `e7528f29a44236ddbb153e1ab28039697573e376`. Product Contract 0.3.1 remains the
-source of truth. The current source/test audit is [PRODUCTION-BACKLOG.md](PRODUCTION-BACKLOG.md),
-with per-row evidence and classifications in [traceability/](traceability/) and counts
-in [PRODUCTION-BACKLOG.json](PRODUCTION-BACKLOG.json).
+Evidence refreshed 2026-11-04 at `5b5b70d4fac6f09ebdf096b8044e5403004d7e11`. Product Contract 0.3.1 remains the source of truth. [PRODUCTION-BACKLOG.md](PRODUCTION-BACKLOG.md) and its [machine inventory](PRODUCTION-BACKLOG.json) are the current source/test audit; [traceability/](traceability/) contains every reviewed clause, classification, source hash and named automated test method.
 
-All 16 manifest capabilities were reviewed. Of 325 desktop requirements, 90 are
-tested candidate implementations, 200 partial, 27 not started, 7 blocked, and one
-belongs to mobile scope. The separate 20 MOB requirements are not Linux obligations.
-Only RC-007 was promoted in this refresh, based on existing native confirmation and
-frozen-preference tests. Recent feature work does not establish complete field,
-algorithm, catalogue, privacy, target or cross-platform qualification.
+All 16 manifest capabilities / 345 IDs were assessed. The 325 desktop rows classify 162 tested candidate implementations, 118 partial, 10 not started, 34 blocked and 1 mobile-scope-only row; all 20 MOB requirements are outside Linux desktop scope. Current code and test bodies were reviewed; old trace text, graph links and test presence were not accepted as full requirement evidence. Existing vector IDs and platform dispositions were preserved.
 
-The native Linux application remains unfinished. This audit is not acceptance,
-waiver, release approval or a weaker completion condition. Approved shared vectors,
-physical accessibility, security/privacy/licensing and target/parity review remain
-required. Follow the current ranked backlog and exact human questions there; retain
-all existing tested native features. The earlier checkpoints below are historical
-verification records, not the current backlog or implementation counts.
+The highest-value findings are ES-029 diagnostic precedence, synchronous watch-folder file work and separate file-upload/watch workflow records, followed by approved capture/output gaps. Preserve finished native journeys and follow build dependency order. Exact human questions and all 34 blocked rows stay explicit. No native feature, contract, expected test result, dependency or human approval changed in this audit.
+
+Full local 163-test verification passed 162 initially; the 4K 500ms open check failed at 799ms under parallel load and passed isolated rerun. Full native/physical cross-platform qualification and human security/privacy/accessibility/licensing/parity/release acceptance remain separate. This audit is not a platform waiver or a completion percentage. The checkpoints below are historical evidence, not current counts or instructions to redo features.
 
 ## Historical checkpoints
 
