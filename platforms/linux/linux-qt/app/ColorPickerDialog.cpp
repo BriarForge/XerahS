@@ -155,6 +155,9 @@ void ColorPickerDialog::showColor(const QColor &color) {
 }
 
 ColorPickerDialog::~ColorPickerDialog() {
+  // Child focus-out can emit editingFinished while QWidget destroys its children.
+  // Disconnect before the derived object ceases to exist.
+  disconnect(m_hex, nullptr, this, nullptr);
   ++m_captureGeneration;
   if (m_capture) { auto *capture = m_capture.data(); m_capture.clear(); capture->disconnect(this); capture->cancel(); capture->retire(); }
 }
@@ -172,8 +175,14 @@ void ColorPickerDialog::pick() {
   showMinimized();
   QTimer::singleShot(0, this, [this, generation] {
     if (generation != m_captureGeneration) return;
-    auto *capture = m_ports.screenshot ? m_ports.screenshot(this) : new PortalScreenshot(this);
-    if (!capture) { m_pickAgain->setEnabled(true); showNormal(); showStatus(tr("Screen capture is unavailable.")); return; }
+    const QPointer<ColorPickerDialog> owner(this);
+    const auto factory = m_ports.screenshot; // Keep the callback alive if it destroys the dialog.
+    PortalScreenshot *capture = nullptr;
+    try { capture = factory ? factory(this) : new PortalScreenshot(this); }
+    catch (...) { /* Host exceptions never expose private payloads or escape the event loop. */ }
+    if (!owner) { if (capture) capture->retire(); return; }
+    if (generation != m_captureGeneration) { if (capture) capture->retire(); return; }
+    if (!capture) { m_pickAgain->setEnabled(true); showNormal(); showStatus(QStringLiteral("capture-unavailable: ") + tr("Screen capture is unavailable. The previous colour was kept. Try again.")); return; }
     m_capture = capture;
     connect(capture, &PortalScreenshot::finished, this,
         [this, capture, generation](PortalScreenshot::Outcome outcome, const QImage &image, const QString &) {
@@ -293,6 +302,7 @@ void ColorPickerDialog::setCopyEnabled(bool enabled) {
 
 void ColorPickerDialog::showStatus(const QString &message) {
   m_status->setText(message);
+  m_status->setAccessibleDescription(message);
   m_status->setVisible(!message.isEmpty());
 }
 
