@@ -392,7 +392,7 @@
       "vectors": [
         "capture-failure-keeps-last-region"
       ],
-      "note": "Audit 2026-11-04: RegionCaptureNativeTest::topologyMismatchFailsWithoutOverlayMetadataOrOutputs and topologyFailuresRemainStableInDurableWorkflowResults prove value-free capture-topology-mismatch/last-region-invalid with no output and durable diagnostics. RegionCaptureTest::sourceAndProgressExceptionsBecomeValueFreeFailure plus SnapshotCompositionTest::missingOutOfBoundsAndCancelledSourcesReturnNoPixels prove discarded failed/cancelled pixels. Existing private-bus transport fixtures cover permission/portal/source failures but cannot run in this socket sandbox. The configured capture retention/privacy policy and portal-owned file lifecycle remain unresolved; no policy is invented, so the row stays partial.",
+      "note": "Audit 2026-11-05: RegionCaptureNativeTest::topologyMismatchFailsWithoutOverlayMetadataOrOutputs, topologyFailuresRemainStableInDurableWorkflowResults and topologyChangeCancelsWithoutPublishing prove stable capture-topology-mismatch/last-region-invalid/display-topology-changed, durable workflow failure, no overlay/output and no stale last-region write for bitmap/scale/bounds/identity/rotation changes. PortalScreenshotTest::actualControllerDenialShowsNoOverlayAndNoPostCaptureActions proves capture-permission-denied, no overlay or output and unchanged clipboard over a real private D-Bus portal. cancellationDuringActualCompositionNeverPublishesPixelsOrRunsActions proves frozen source bytes preserved and no late result after before/partial/final-row cancellation. Those fixtures now pass; earlier sandbox-blocked note is obsolete. Remains partial: configured capture retention/privacy policy and portal-owned file lifecycle remain unresolved; conservative controller cleanup does not approve that policy.",
       "disposition": "Required",
       "audit": {
         "classification": "partial",
@@ -428,12 +428,12 @@
       ]
     },
     "RC-020": {
-      "status": "not-started",
+      "status": "partial",
       "vectors": [],
-      "note": "A worker removes source copying/format preparation/composition from the GUI; private-bus tests prove event-loop responsiveness and non-blocking cancellation/destruction. Required physical overlay frame-rate, acquisition/composition latency and resource measurements on the supported native matrix have not been established.",
+      "note": "Audit 2026-11-05: PortalScreenshotTest::cancellationDuringActualCompositionNeverPublishesPixelsOrRunsActions drives actual native overlay input and composeSnapshot with gates before work, at partial rows and final row. It now explicitly proves the composer runs off the QApplication thread, all emitted progress is on the GUI thread, a GUI heartbeat executes while blocked, Escape returns within the existing 500ms harness budget before worker release, and no output/clipboard/publication occurs. destructionReleasesTheUiWithoutWaitingForACompositionWorker proves owner teardown returns before worker release; aLateCancelledWorkerCannotFinishANewerPendingCapture proves stale completion isolation. This is native worker/ownership evidence, not latency qualification. Remains partial: measured display-refresh pointer feedback, 50ms p95 selection response and 250ms 1920x1080 confirmation-to-result on the supported physical matrix are unproven.",
       "disposition": "Required",
       "audit": {
-        "classification": "not-started",
+        "classification": "partial",
         "spec_line": 90,
         "coverage": "No completed native user flow for this requirement was found; related helpers are not counted.",
         "reviewed_at_revision": "e7528f29a44236ddbb153e1ab28039697573e376"
