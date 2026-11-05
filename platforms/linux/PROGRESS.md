@@ -19,7 +19,7 @@ Requirement labels are unweighted: a catalogue requirement can cover hundreds of
 
 ## Current position
 
-- **Linux:** 202 implemented, 100 partial, 22 not started, 0 without a recorded implementation status. [Native platform evidence](README.md).
+- **Linux:** 202 implemented, 101 partial, 21 not started, 0 without a recorded implementation status. [Native platform evidence](README.md).
 
 Linux figures cover the `linux-qt` reference edition. Candidate editions and supported desktop-environment qualification remain separate. Existing maps retain their recorded audit dates and versions; regenerating this report does not constitute a new implementation audit.
 
@@ -31,7 +31,7 @@ Next work follows the [implementation plan](linux-qt/IMPLEMENTATION.md) and [mea
 |---|---:|---:|---:|---:|---:|---|
 | [FILENAME-GENERATION-001](../../product-contract/capabilities/FILENAME-GENERATION-001/SPEC.md) | 100.0% | 27 | 0 | 0 | 0 | [Linux map](linux-qt/traceability/FILENAME-GENERATION-001.json) |
 | [POST-CAPTURE-ACTIONS-001](../../product-contract/capabilities/POST-CAPTURE-ACTIONS-001/SPEC.md) | 100.0% | 24 | 0 | 0 | 0 | [Linux map](linux-qt/traceability/POST-CAPTURE-ACTIONS-001.json) |
-| [REGION-CAPTURE-001](../../product-contract/capabilities/REGION-CAPTURE-001/SPEC.md) | 81.5% | 22 | 2 | 3 | 0 | [Linux map](linux-qt/traceability/REGION-CAPTURE-001.json) |
+| [REGION-CAPTURE-001](../../product-contract/capabilities/REGION-CAPTURE-001/SPEC.md) | 81.5% | 22 | 3 | 2 | 0 | [Linux map](linux-qt/traceability/REGION-CAPTURE-001.json) |
 | [EDITOR-SESSION-001](../../product-contract/capabilities/EDITOR-SESSION-001/SPEC.md) | 83.3% | 25 | 4 | 1 | 0 | [Linux map](linux-qt/traceability/EDITOR-SESSION-001.json) |
 | [EDITOR-ANNOTATIONS-001](../../product-contract/capabilities/EDITOR-ANNOTATIONS-001/SPEC.md) | 100.0% | 20 | 0 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-ANNOTATIONS-001.json) |
 | [EDITOR-EFFECTS-001](../../product-contract/capabilities/EDITOR-EFFECTS-001/SPEC.md) | 61.1% | 11 | 7 | 0 | 0 | [Linux map](linux-qt/traceability/EDITOR-EFFECTS-001.json) |
