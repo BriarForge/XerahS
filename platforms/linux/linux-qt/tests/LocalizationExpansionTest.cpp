@@ -18,6 +18,7 @@
 #include "FileUploadResultDialog.h"
 #include "NativeAnnotationTools.h"
 #include "NativeEditorPreferences.h"
+#include "NativeTranslations.h"
 #include "RecentImageMenu.h"
 #include "ScheduledCapture.h"
 #include "shell/NotificationPolicy.h"
@@ -66,6 +67,8 @@
 #include <QAction>
 #include <QApplication>
 #include <QCheckBox>
+#include <QComboBox>
+#include <QRadioButton>
 #include <QColorSpace>
 #include <QContextMenuEvent>
 #include <QDialog>
@@ -83,6 +86,7 @@
 #include <QPushButton>
 #include <QMessageBox>
 #include <QScopeGuard>
+#include <QSpinBox>
 #include <QScopedPointer>
 #include <QScreen>
 #include <QSet>
@@ -94,6 +98,7 @@
 #include <QWidget>
 
 #include <cstring>
+#include <algorithm>
 #include <memory>
 
 using namespace xerahs::app;
@@ -101,6 +106,9 @@ using namespace xerahs::app;
 namespace {
 class PseudoLocale final : public QTranslator {
 public:
+  inline static PseudoLocale *current = nullptr;
+  PseudoLocale() { current = this; }
+  ~PseudoLocale() override { if (current == this) current = nullptr; }
   QSet<QString> missing;
   QString translate(const char *, const char *source, const char *, int) const override {
     const QString text = QString::fromUtf8(source);
@@ -110,6 +118,38 @@ public:
   bool isEmpty() const override { return false; }
 };
 QString visible(QString text) { return text.remove(QLatin1Char('&')); }
+
+void liveTextKeepsDraftAndReturnsToSource(QWidget &dialog) {
+  auto *pseudo = PseudoLocale::current; if (!pseudo) return;
+  struct Text { QPointer<QObject> object; QByteArray property; };
+  QList<Text> texts;
+  for (auto *object : dialog.findChildren<QObject *>()) {
+    if (!qobject_cast<QAbstractButton *>(object) && !qobject_cast<QLabel *>(object) && !qobject_cast<QAction *>(object)) continue;
+    if (object->property("text").toString().contains(QChar(0x2022))) texts.append({object, "text"});
+  }
+  if (dialog.windowTitle().contains(QChar(0x2022))) texts.append({&dialog, "windowTitle"});
+  QList<QPair<QPointer<QLineEdit>, QString>> inputs;
+  for (auto *input : dialog.findChildren<QLineEdit *>()) inputs.append({input, input->text()});
+  QList<QPair<QPointer<QAbstractButton>, bool>> choices;
+  for (auto *button : dialog.findChildren<QAbstractButton *>()) if (button->isCheckable()) choices.append({button, button->isChecked()});
+  QApplication::removeTranslator(pseudo);
+  bool restored = false;
+  const auto restore = qScopeGuard([&] { if (!restored) QApplication::installTranslator(pseudo); });
+  QString pending;
+  const auto complete = [&] {
+    pending.clear();
+    for (const auto &text : texts) if (text.object && text.object->property(text.property).toString().contains(QChar(0x2022)))
+      pending += text.object->metaObject()->className() + QString(": ") + text.object->property(text.property).toString() + " | ";
+    return pending.isEmpty();
+  };
+  QTRY_VERIFY2_WITH_TIMEOUT(complete(), qPrintable(pending), 1000);
+  for (const auto &[input, value] : inputs) if (input) QCOMPARE(input->text(), value);
+  for (const auto &[button, checked] : choices) if (button) QCOMPARE(button->isChecked(), checked);
+  QVERIFY(QApplication::installTranslator(pseudo)); restored = true;
+  QTRY_VERIFY(std::all_of(texts.begin(), texts.end(), [](const Text &text) {
+    return !text.object || text.object->property(text.property).toString().contains(QChar(0x2022));
+  }));
+}
 
 // A runner that never converts: the dialog's text must not depend on an encoder.
 class IdleRunner final : public xerahs::media::ConversionRunner {
@@ -208,6 +248,79 @@ QString untranslatedTexts(const CollectedTexts &collected) {
 class LocalizationExpansionTest : public QObject {
   Q_OBJECT
 private slots:
+  void captureChooserAndAutomaticDraftRetranslateWhileOpen() {
+    QTemporaryDir dir; xerahs::settings::ApplicationSettingsStore store(dir.filePath("settings.json"), dir.path());
+    const auto savedValues = store.current().values; QVERIFY(store.save(savedValues).isEmpty());
+    QFile saved(store.path()); QVERIFY(saved.open(QIODevice::ReadOnly)); const auto before = saved.readAll(); saved.close();
+    int saves = 0;
+    xerahs::settings::CapturePreferencesPort preferences{[&] { return store.current().values; }, [&](const QJsonObject &values) { ++saves; return store.save(values); }};
+    ActionSelectionDialog chooser({"save"}, QSize(40, 30));
+    AutoCaptureDialog automatic([] { return qint64(1700000000000); }, false, preferences);
+    auto *save = chooser.findChild<QCheckBox *>("capture-action-save"); QVERIFY(save); save->setChecked(true);
+    auto *bound = automatic.findChild<QRadioButton *>("autoCaptureCountBound"); QVERIFY(bound); bound->setChecked(true);
+    auto *count = automatic.findChild<QSpinBox *>("autoCaptureCount"); count->setValue(23);
+    auto *interval = automatic.findChild<QSpinBox *>("autoCaptureInterval"); interval->setValue(17);
+    auto *source = automatic.findChild<QComboBox *>("autoCaptureSource"); source->setCurrentIndex(2);
+    const auto data = source->currentData();
+    PseudoLocale pseudo; QVERIFY(QApplication::installTranslator(&pseudo));
+    const auto restore = qScopeGuard([&] { QApplication::removeTranslator(&pseudo); });
+    QTRY_VERIFY(chooser.windowTitle().contains(QChar(0x2022))); QTRY_VERIFY(automatic.windowTitle().contains(QChar(0x2022)));
+    liveTextKeepsDraftAndReturnsToSource(chooser); liveTextKeepsDraftAndReturnsToSource(automatic);
+    QVERIFY(save->isChecked()); QVERIFY(bound->isChecked()); QCOMPARE(count->value(), 23); QCOMPARE(interval->value(), 17);
+    QCOMPARE(source->currentData(), data); QVERIFY(!automatic.takeRequest());
+    QCOMPARE(saves, 0); QCOMPARE(store.current().values, savedValues);
+    QVERIFY(saved.open(QIODevice::ReadOnly)); QCOMPARE(saved.readAll(), before);
+  }
+  void liveBindingsPreserveValuesAndFollowReparentingAndTranslationFallback() {
+    QWidget one, two; QLineEdit input(&one); input.setText("SYNTHETIC-unchanged");
+    auto *label = new QLabel(&one); QAction action(&one);
+    bindNativeText(*label, "text", nativeText("NativeTranslationTest", "Selected: %1").arg(3));
+    bindNativeText(action, "text", nativeText("NativeTranslationTest", "Run operation"));
+    const auto initial = label->text(); QCOMPARE(initial, QString("Selected: 3"));
+    label->setParent(&two);
+    PseudoLocale pseudo; QVERIFY(QApplication::installTranslator(&pseudo));
+    const auto restore = qScopeGuard([&] { QApplication::removeTranslator(&pseudo); });
+    QTRY_VERIFY(label->text().contains(QChar(0x2022))); QTRY_VERIFY(action.text().contains(QChar(0x2022)));
+    QCOMPARE(input.text(), QString("SYNTHETIC-unchanged"));
+    QApplication::removeTranslator(&pseudo); QTRY_COMPARE(label->text(), initial); QTRY_COMPARE(action.text(), QString("Run operation"));
+    pseudo.missing = {"Run operation"}; QVERIFY(QApplication::installTranslator(&pseudo));
+    QTRY_VERIFY(label->text().contains(QChar(0x2022))); QCOMPARE(action.text(), QString("Run operation"));
+    QCOMPARE(input.text(), QString("SYNTHETIC-unchanged"));
+  }
+
+  void liveTextNeverReplaysAnOlderStatusAndOwnsItsFormatArguments() {
+    QWidget window; QLabel status(&window), retained(&window), id(&window);
+    bindNativeText(id, "text", NativeText::literal("SYNTHETIC-stable-id"));
+    bindNativeText(status, "text", nativeText("NativeTranslationTest", "Earlier status"));
+    status.setText("SYNTHETIC-newer-truth");
+    auto message = nativeText("NativeTranslationTest", "Snapshot: %1 / %2");
+    {
+      QByteArray transient("SYNTHETIC-byte-value"); QString temporary("SYNTHETIC-view-value");
+      message = message.arg(transient.constData(), QStringView(temporary));
+    }
+    bindNativeText(retained, "text", message);
+    PseudoLocale pseudo; QVERIFY(QApplication::installTranslator(&pseudo));
+    const auto restore = qScopeGuard([&] { QApplication::removeTranslator(&pseudo); });
+    QTRY_VERIFY(retained.text().contains(QChar(0x2022)));
+    QCOMPARE(status.text(), QString("SYNTHETIC-newer-truth"));
+    QCOMPARE(id.text(), QString("SYNTHETIC-stable-id"));
+    QVERIFY(retained.text().contains("SYNTHETIC-byte-value / SYNTHETIC-view-value"));
+  }
+
+  void queuedLanguageUpdatesSurviveOwnerDestructionAndPreserveComboMeaning() {
+    QWidget parent; QComboBox combo(&parent);
+    addTranslatedItem(combo, nativeText("NativeTranslationTest", "First choice"), "first");
+    addTranslatedItem(combo, nativeText("NativeTranslationTest", "Second choice"), "second"); combo.setCurrentIndex(1);
+    int changes = 0; connect(&combo, &QComboBox::currentTextChanged, this, [&] { ++changes; });
+    QPointer<QWidget> doomed = new QWidget;
+    bindNativeText(*doomed, "windowTitle", nativeText("NativeTranslationTest", "Owned window"));
+    connect(doomed, &QWidget::windowTitleChanged, this, [&] { if (doomed && doomed->windowTitle().contains(QChar(0x2022))) delete doomed.data(); });
+    PseudoLocale pseudo; QVERIFY(QApplication::installTranslator(&pseudo));
+    const auto restore = qScopeGuard([&] { QApplication::removeTranslator(&pseudo); });
+    QTRY_VERIFY(!doomed); QTRY_VERIFY(combo.currentText().contains(QChar(0x2022)));
+    QCOMPARE(combo.currentData().toString(), QString("second")); QCOMPARE(combo.currentIndex(), 1); QCOMPARE(changes, 0);
+  }
+
   void expandedTextIsNotClippedAndFitsTheScreen() {
     PseudoLocale pseudo;
     QVERIFY(QApplication::installTranslator(&pseudo));

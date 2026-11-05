@@ -1,3 +1,4 @@
+#include "NativeTranslations.h"
 #include "AutoCaptureDialog.h"
 
 #include <QComboBox>
@@ -19,15 +20,15 @@ namespace xerahs::app {
 namespace {
 
 // The stable diagnostic code stays literal; the sentence that explains it is translated.
-QString diagnosticText(const xerahs::capture::ScheduleDiagnostic &diagnostic) {
+NativeText diagnosticText(const xerahs::capture::ScheduleDiagnostic &diagnostic) {
   const auto &code = diagnostic.code;
-  if (code == QLatin1String("bound-required")) return QCoreApplication::translate("AutoCaptureDialog", "Choose a bound: a number of captures or an end time.");
-  if (code == QLatin1String("source-unavailable")) return QCoreApplication::translate("AutoCaptureDialog", "Automatic capture cannot use a region.");
-  if (code == QLatin1String("interval-out-of-range")) return QCoreApplication::translate("AutoCaptureDialog", "Interval must be from 1 second to 24 hours.");
-  if (code == QLatin1String("count-out-of-range")) return QCoreApplication::translate("AutoCaptureDialog", "Capture count must be from 1 to 10000.");
-  if (code == QLatin1String("end-not-after-start")) return QCoreApplication::translate("AutoCaptureDialog", "End time must be after the current time.");
-  if (code == QLatin1String("end-beyond-limit")) return QCoreApplication::translate("AutoCaptureDialog", "End time must be within 24 hours.");
-  return code;
+  if (code == QLatin1String("bound-required")) return nativeText("AutoCaptureDialog", QT_TRANSLATE_NOOP("AutoCaptureDialog", "Choose a bound: a number of captures or an end time."));
+  if (code == QLatin1String("source-unavailable")) return nativeText("AutoCaptureDialog", QT_TRANSLATE_NOOP("AutoCaptureDialog", "Automatic capture cannot use a region."));
+  if (code == QLatin1String("interval-out-of-range")) return nativeText("AutoCaptureDialog", QT_TRANSLATE_NOOP("AutoCaptureDialog", "Interval must be from 1 second to 24 hours."));
+  if (code == QLatin1String("count-out-of-range")) return nativeText("AutoCaptureDialog", QT_TRANSLATE_NOOP("AutoCaptureDialog", "Capture count must be from 1 to 10000."));
+  if (code == QLatin1String("end-not-after-start")) return nativeText("AutoCaptureDialog", QT_TRANSLATE_NOOP("AutoCaptureDialog", "End time must be after the current time."));
+  if (code == QLatin1String("end-beyond-limit")) return nativeText("AutoCaptureDialog", QT_TRANSLATE_NOOP("AutoCaptureDialog", "End time must be within 24 hours."));
+  return NativeText::literal(code);
 }
 
 }  // namespace
@@ -37,42 +38,42 @@ AutoCaptureDialog::AutoCaptureDialog(std::function<qint64()> nowMs, bool running
 
 AutoCaptureDialog::AutoCaptureDialog(std::function<qint64()> nowMs, bool running, xerahs::settings::CapturePreferencesPort preferences, QWidget *parent)
     : QDialog(parent), m_nowMs(std::move(nowMs)), m_running(running), m_preferences(std::move(preferences)) {
-  setWindowTitle(tr("Auto capture"));
+  bindNativeText(*this, "windowTitle", nativeText<AutoCaptureDialog>(QT_TR_NOOP("Auto capture")));
   setObjectName(QStringLiteral("autoCaptureDialog"));
   auto *form = new QFormLayout;
   m_source = new QComboBox(this);
   m_source->setObjectName(QStringLiteral("autoCaptureSource"));
-  m_source->setAccessibleName(tr("Automatic capture source"));
+  bindNativeText(*m_source, "accessibleName", nativeText<AutoCaptureDialog>(QT_TR_NOOP("Automatic capture source")));
   // The item data is the stored capture source id, so it stays literal.
-  m_source->addItem(tr("Full screen"), QStringLiteral("full-screen"));
-  m_source->addItem(tr("Monitor under pointer"), QStringLiteral("monitor"));
-  m_source->addItem(tr("Active window"), QStringLiteral("active-window"));
-  form->addRow(tr("Source"), m_source);
+  addTranslatedItem(*m_source, nativeText<AutoCaptureDialog>(QT_TR_NOOP("Full screen")), QStringLiteral("full-screen"));
+  addTranslatedItem(*m_source, nativeText<AutoCaptureDialog>(QT_TR_NOOP("Monitor under pointer")), QStringLiteral("monitor"));
+  addTranslatedItem(*m_source, nativeText<AutoCaptureDialog>(QT_TR_NOOP("Active window")), QStringLiteral("active-window"));
+  addTranslatedRow(*form, nativeText<AutoCaptureDialog>(QT_TR_NOOP("Source")), m_source);
   m_interval = new QSpinBox(this);
   m_interval->setObjectName(QStringLiteral("autoCaptureInterval"));
   m_interval->setRange(1, 24 * 60 * 60);
   m_interval->setValue(5);
   m_interval->setSuffix(QStringLiteral(" s"));
-  m_interval->setAccessibleName(tr("Interval in seconds"));
-  form->addRow(tr("Interval"), m_interval);
-  m_countBound = new QRadioButton(tr("Number of captures"), this);
+  bindNativeText(*m_interval, "accessibleName", nativeText<AutoCaptureDialog>(QT_TR_NOOP("Interval in seconds")));
+  addTranslatedRow(*form, nativeText<AutoCaptureDialog>(QT_TR_NOOP("Interval")), m_interval);
+  m_countBound = translatedWidget(new QRadioButton(QString{}, this), "text", nativeText<AutoCaptureDialog>(QT_TR_NOOP("Number of captures")));
   m_countBound->setObjectName(QStringLiteral("autoCaptureCountBound"));
   m_count = new QSpinBox(this);
   m_count->setObjectName(QStringLiteral("autoCaptureCount"));
   m_count->setRange(xerahs::capture::kMinCaptureCount, xerahs::capture::kMaxCaptureCount);
   m_count->setValue(10);
-  m_count->setAccessibleName(tr("Number of captures"));
+  bindNativeText(*m_count, "accessibleName", nativeText<AutoCaptureDialog>(QT_TR_NOOP("Number of captures")));
   auto *countRow = new QHBoxLayout;
   countRow->addWidget(m_countBound);
   countRow->addWidget(m_count);
-  form->addRow(tr("Bound"), countRow);
-  m_timeBound = new QRadioButton(tr("End time"), this);
+  addTranslatedRow(*form, nativeText<AutoCaptureDialog>(QT_TR_NOOP("Bound")), countRow);
+  m_timeBound = translatedWidget(new QRadioButton(QString{}, this), "text", nativeText<AutoCaptureDialog>(QT_TR_NOOP("End time")));
   m_timeBound->setObjectName(QStringLiteral("autoCaptureTimeBound"));
   m_end = new QDateTimeEdit(QDateTime::fromMSecsSinceEpoch(m_nowMs() + 10 * 60 * 1000), this);
   m_end->setObjectName(QStringLiteral("autoCaptureEnd"));
   m_end->setDisplayFormat(QStringLiteral("yyyy-MM-dd HH:mm:ss"));
   m_end->setCalendarPopup(true);
-  m_end->setAccessibleName(tr("End time"));
+  bindNativeText(*m_end, "accessibleName", nativeText<AutoCaptureDialog>(QT_TR_NOOP("End time")));
   auto *timeRow = new QHBoxLayout;
   timeRow->addWidget(m_timeBound);
   timeRow->addWidget(m_end);
@@ -81,9 +82,9 @@ AutoCaptureDialog::AutoCaptureDialog(std::function<qint64()> nowMs, bool running
   m_status->setObjectName(QStringLiteral("autoCaptureStatus"));
   m_status->setWordWrap(true);
   auto *buttons = new QHBoxLayout;
-  m_start = new QPushButton(tr("Start"), this);
-  m_stop = new QPushButton(tr("Stop"), this);
-  auto *cancel = new QPushButton(tr("Cancel"), this);
+  m_start = translatedWidget(new QPushButton(QString{}, this), "text", nativeText<AutoCaptureDialog>(QT_TR_NOOP("Start")));
+  m_stop = translatedWidget(new QPushButton(QString{}, this), "text", nativeText<AutoCaptureDialog>(QT_TR_NOOP("Stop")));
+  auto *cancel = translatedWidget(new QPushButton(QString{}, this), "text", nativeText<AutoCaptureDialog>(QT_TR_NOOP("Cancel")));
   m_start->setObjectName(QStringLiteral("autoCaptureStart"));
   m_stop->setObjectName(QStringLiteral("autoCaptureStop"));
   m_start->setDefault(true);
@@ -138,13 +139,13 @@ void AutoCaptureDialog::refresh() {
   m_end->setEnabled(fields && m_timeBound->isChecked());
   m_stop->setEnabled(m_running);
   if (m_running) {
-    m_status->setText(tr("Automatic capture is running."));
+    bindNativeText(*m_status, "text", nativeText<AutoCaptureDialog>(QT_TR_NOOP("Automatic capture is running.")));
     m_start->setEnabled(false);
     return;
   }
   const auto diagnostic = xerahs::capture::validateAuto(source(), m_interval->value() * 1000, bound(), m_nowMs());
   m_start->setEnabled(!diagnostic);
-  m_status->setText(diagnostic ? diagnosticText(*diagnostic) : tr("Ready."));
+  bindNativeText(*m_status, "text", diagnostic ? diagnosticText(*diagnostic) : nativeText<AutoCaptureDialog>(QT_TR_NOOP("Ready.")));
 }
 
 void AutoCaptureDialog::accept() {
