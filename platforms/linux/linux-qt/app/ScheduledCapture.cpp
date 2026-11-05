@@ -14,18 +14,18 @@ namespace {
 
 QString failureBody(const QString &code) {
   const auto stable = code == QLatin1String("busy") ? QStringLiteral("activation-busy") : code;
-  QString message = QStringLiteral("XerahS could not start the capture.");
+  QString message = ScheduledCapture::tr("XerahS could not start the capture.");
   if (stable == QLatin1String("activation-busy"))
-    message = QStringLiteral("XerahS is busy. Try again after the current capture or dialog finishes.");
+    message = ScheduledCapture::tr("XerahS is busy. Try again after the current capture or dialog finishes.");
   else if (stable == QLatin1String("activation-unavailable"))
-    message = QStringLiteral("The operation is unavailable. Review the saved workflow and private execution storage ownership, permissions and capacity before retrying.");
+    message = ScheduledCapture::tr("The operation is unavailable. Review the saved workflow and private execution storage ownership, permissions and capacity before retrying.");
   else if (stable == QLatin1String("capture-not-started"))
-    message = QStringLiteral("The capture did not start.");
+    message = ScheduledCapture::tr("The capture did not start.");
   return stable + QStringLiteral(": ") + message;
 }
 
 QString storageLowBody() {
-  return QStringLiteral("storage-low: free space in the captures folder is below %1 MiB. Free some space, then start auto capture again.")
+  return QStringLiteral("storage-low: ") + ScheduledCapture::tr("free space in the captures folder is below %1 MiB. Free some space, then start auto capture again.")
       .arg(xerahs::capture::kMinFreeStorageBytes / (1024 * 1024));
 }
 
@@ -53,9 +53,9 @@ void ScheduledCapture::setPreferences(xerahs::settings::CapturePreferencesPort p
 }
 
 void ScheduledCapture::wire() {
-  m_delayAction = new QAction(QStringLiteral("Capture after delay…"), this);
-  m_autoAction = new QAction(QStringLiteral("Auto capture…"), this);
-  m_stopAction = new QAction(QStringLiteral("Stop auto capture"), this);
+  m_delayAction = new QAction(ScheduledCapture::tr("Capture after delay…"), this);
+  m_autoAction = new QAction(ScheduledCapture::tr("Auto capture…"), this);
+  m_stopAction = new QAction(ScheduledCapture::tr("Stop auto capture"), this);
   m_stopAction->setEnabled(false);
   connect(m_delayAction, &QAction::triggered, this, &ScheduledCapture::promptDelay);
   connect(m_autoAction, &QAction::triggered, this, &ScheduledCapture::promptAuto);
@@ -67,10 +67,10 @@ void ScheduledCapture::wire() {
     notify(xerahs::capture::autoCaptureFinishedTitle(summary), xerahs::capture::autoCaptureSummaryText(summary), summary.failed == 0, false);
   });
   const auto notSaved = [this](const QString &title, const QString &code) {
-    notify(title, QStringLiteral("Your choice could not be remembered (%1). The capture was still started.").arg(code), false, false);
+    notify(title, ScheduledCapture::tr("Your choice could not be remembered (%1). The capture was still started.").arg(code), false, false);
   };
-  connect(m_delay, &DelayedCapture::preferencesSaveFailed, this, [notSaved](const QString &code) { notSaved(QStringLiteral("Capture after delay"), code); });
-  connect(m_automatic, &AutoCaptureSession::preferencesSaveFailed, this, [notSaved](const QString &code) { notSaved(QStringLiteral("Auto capture"), code); });
+  connect(m_delay, &DelayedCapture::preferencesSaveFailed, this, [notSaved](const QString &code) { notSaved(ScheduledCapture::tr("Capture after delay"), code); });
+  connect(m_automatic, &AutoCaptureSession::preferencesSaveFailed, this, [notSaved](const QString &code) { notSaved(ScheduledCapture::tr("Auto capture"), code); });
   connect(m_delay, &DelayedCapture::statusTextChanged, this, [this](const QString &) { refreshTooltip(); });
   connect(m_automatic, &AutoCaptureSession::statusTextChanged, this, [this](const QString &) { refreshTooltip(); });
   refreshTooltip();
@@ -99,8 +99,8 @@ void ScheduledCapture::capturePermissionDenied() {
   m_success = false;
   m_revoked = true;
   m_automatic->stop();
-  notify(QStringLiteral("Auto capture stopped"),
-      QStringLiteral("capture-permission-denied: automatic capture stopped. Review screen capture permission, then explicitly start a new schedule."), false, false);
+  notify(ScheduledCapture::tr("Auto capture stopped"),
+      QStringLiteral("capture-permission-denied: ") + ScheduledCapture::tr("automatic capture stopped. Review screen capture permission, then explicitly start a new schedule."), false, false);
 }
 
 void ScheduledCapture::screenLockedChanged(bool locked) {
@@ -111,13 +111,13 @@ void ScheduledCapture::screenLockedChanged(bool locked) {
   const QPointer<ScheduledCapture> guard(this);
   if (m_ports.cancelOwnedCapture) m_ports.cancelOwnedCapture();
   if (!guard) return;
-  notify(QStringLiteral("Auto capture stopped"),
-      QStringLiteral("screen-locked: cancellation of the scheduled capture was requested. Unlock the screen, then explicitly start a new schedule."), false, false);
+  notify(ScheduledCapture::tr("Auto capture stopped"),
+      QStringLiteral("screen-locked: ") + ScheduledCapture::tr("cancellation of the scheduled capture was requested. Unlock the screen, then explicitly start a new schedule."), false, false);
 }
 
 void ScheduledCapture::promptDelay() {
   if (m_automatic->active()) {
-    notify(QStringLiteral("Capture after delay"), QStringLiteral("Stop automatic capture before starting a delayed capture."), false, true);
+    notify(ScheduledCapture::tr("Capture after delay"), ScheduledCapture::tr("Stop automatic capture before starting a delayed capture."), false, true);
     return;
   }
   if (m_delay->delayActive()) { m_delay->raiseCountdown(); return; }
@@ -127,15 +127,15 @@ void ScheduledCapture::promptDelay() {
 void ScheduledCapture::promptAuto() {
   const auto condition = m_ports.condition ? m_ports.condition() : xerahs::capture::AutoCondition::Clear;
   if (condition == xerahs::capture::AutoCondition::WorkflowUnavailable) {
-    notify(QStringLiteral("Auto capture"), QStringLiteral("workflow-unavailable: review the default capture workflow before starting automatic capture."), false, true);
+    notify(ScheduledCapture::tr("Auto capture"), QStringLiteral("workflow-unavailable: ") + ScheduledCapture::tr("review the default capture workflow before starting automatic capture."), false, true);
     return;
   }
   if (condition == xerahs::capture::AutoCondition::StorageLow) {
-    notify(QStringLiteral("Auto capture"), storageLowBody(), false, true);
+    notify(ScheduledCapture::tr("Auto capture"), storageLowBody(), false, true);
     return;
   }
   if (m_delay->delayActive()) {
-    notify(QStringLiteral("Auto capture"), QStringLiteral("Cancel the delayed capture before starting automatic capture."), false, false);
+    notify(ScheduledCapture::tr("Auto capture"), ScheduledCapture::tr("Cancel the delayed capture before starting automatic capture."), false, false);
     return;
   }
   m_automatic->prompt(m_dialogs);
@@ -161,12 +161,12 @@ void ScheduledCapture::onAutoRequested(xerahs::capture::CaptureSource source) {
   if (condition == xerahs::capture::AutoCondition::WorkflowUnavailable) {
     m_automatic->finishAttempt(xerahs::capture::AttemptDisposition::Failed);
     m_automatic->stop();
-    notify(QStringLiteral("Auto capture stopped"), QStringLiteral("workflow-unavailable: review the default capture workflow before starting automatic capture."), false, true);
+    notify(ScheduledCapture::tr("Auto capture stopped"), QStringLiteral("workflow-unavailable: ") + ScheduledCapture::tr("review the default capture workflow before starting automatic capture."), false, true);
     return;
   }
   if (condition == xerahs::capture::AutoCondition::StorageLow) {
     m_automatic->finishAttempt(xerahs::capture::AttemptDisposition::Skipped);
-    notify(QStringLiteral("Auto capture stopped"), storageLowBody(), false, true);
+    notify(ScheduledCapture::tr("Auto capture stopped"), storageLowBody(), false, true);
     m_automatic->stop();
     return;
   }
@@ -186,7 +186,7 @@ void ScheduledCapture::onAutoRequested(xerahs::capture::CaptureSource source) {
 
 void ScheduledCapture::onDelayRequested(xerahs::capture::CaptureSource source) {
   const auto code = m_ports.start ? m_ports.start(source) : QStringLiteral("activation-unavailable");
-  if (!code.isEmpty()) notify(QStringLiteral("Capture after delay"), failureBody(code), false, true);
+  if (!code.isEmpty()) notify(ScheduledCapture::tr("Capture after delay"), failureBody(code), false, true);
 }
 
 }  // namespace xerahs::app

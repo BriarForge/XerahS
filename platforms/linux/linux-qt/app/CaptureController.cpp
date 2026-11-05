@@ -69,8 +69,7 @@ CaptureController::~CaptureController() {
 }
 
 QString CaptureController::instructions() {
-  return QStringLiteral(
-      "Frozen region capture. Drag with the pointer, or press Space to start and finish a selection at the keyboard "
+  return tr("Frozen region capture. Drag with the pointer, or press Space to start and finish a selection at the keyboard "
       "cursor. Arrow keys move by 1 physical pixel, Shift+Arrow by 10. With a selection, Alt+Arrow resizes. Enter "
       "captures. Drag a selected corner handle to resize. Escape cancels.");
 }

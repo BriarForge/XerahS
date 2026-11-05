@@ -1332,34 +1332,9 @@ add_test(NAME qr-code-dialog COMMAND qr-code-dialog-test)
 set_tests_properties(qr-code-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 
 # CORE-009: pseudo-locale text expansion and missing-translation fallback on a translated window.
-add_executable(localization-expansion-test tests/LocalizationExpansionTest.cpp
-  app/XdgAutostart.cpp app/SettingsDialog.cpp app/NewImageDialog.cpp app/NewImageDialog.h
-  app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h
-  app/AppearanceDialog.cpp app/AppearanceDialog.h
-  app/DrawingDefaultsDialog.cpp app/DrawingDefaultsDialog.h
-  app/ConveniencePreferencesDialog.cpp app/ConveniencePreferencesDialog.h
-  app/AutoCaptureDialog.cpp app/AutoCaptureDialog.h
-  app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h
-  app/CapturePermissionHelp.cpp app/CapturePermissionHelp.h
-  app/PipelineHistoryDialog.cpp app/PipelineHistoryDialog.h
-  app/PipelineResultDialog.cpp app/PipelineResultDialog.h
-  app/WorkflowExecutionHistoryDialog.cpp app/WorkflowExecutionHistoryDialog.h
-  app/CaptureHistoryWindow.cpp app/CaptureHistoryWindow.h
-  app/OnboardingProgress.cpp app/OnboardingProgress.h
-  app/OnboardingWizard.cpp app/OnboardingWizard.h
-  app/CommandRegistry.cpp app/CommandRegistry.h
-  app/CapturePipeline.cpp app/CapturePipeline.h
-  app/CanvasRotationDialog.cpp app/CanvasRotationDialog.h
-  app/PortalScreenshot.cpp app/PortalScreenshot.h
-  app/CaptureController.cpp app/CaptureController.h
-  app/SnapshotComposition.cpp app/SnapshotComposition.h
-  app/RegionOverlay.cpp app/RegionOverlay.h
-  app/ApplicationWindow.cpp app/ApplicationWindow.h
-  app/NativeEditorAppearance.cpp app/NativeEditorAppearance.h
-  app/NativeDesktopAppearance.cpp app/NativeDesktopAppearance.h
-  app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h)
+add_executable(localization-expansion-test tests/LocalizationExpansionTest.cpp)
 set_target_properties(localization-expansion-test PROPERTIES AUTOMOC ON)
-target_link_libraries(localization-expansion-test PRIVATE xerahs_action_selection xerahs_file_output xerahs_pipeline_journal xerahs_qr_code xerahs_workflow_shortcuts xerahs_recording_devices xerahs_upload_destinations xerahs_hash_checker xerahs_icon_converter xerahs_watch_folders xerahs_video_converter_ui xerahs_color_picker xerahs_editor_canvas xerahs_editor_codecs xerahs_url_open xerahs_image_recognition xerahs_pin_window xerahs_window_discovery xerahs_core Qt6::Widgets Qt6::DBus Qt6::Test)
+target_link_libraries(localization-expansion-test PRIVATE xerahs_app Qt6::Test)
 add_test(NAME localization-expansion COMMAND localization-expansion-test)
 set_tests_properties(localization-expansion PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 

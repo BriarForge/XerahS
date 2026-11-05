@@ -1,5 +1,6 @@
 #include "ActionSelectionDialog.h"
 #include "CaptureActions.h"
+#include "CaptureActionLabels.h"
 #include "actions/ActionSelection.h"
 #include <QCheckBox>
 #include <QCoreApplication>
@@ -11,23 +12,6 @@
 #include <QVBoxLayout>
 namespace xerahs::app {
 namespace {
-// The action ids stay literal; only the prose that names an action is translated.
-const char *labelSource(const QString &id) {
-  static const QMap<QString, const char *> sources{
-    {"after-capture-window", "Choose capture actions again"},
-    {"image-effects", "Apply image effects"}, {"annotation", "Annotate image"}, {"save", "Save image"},
-    {"save-as", "Save image as new PNG…"}, {"save-thumbnail", "Save thumbnail"}, {"image-clipboard", "Copy image to clipboard"},
-    {"before-upload-window", "Confirm before upload"}, {"upload", "Upload image"}, {"url-clipboard", "Copy URL to clipboard"}, {"ocr", "Recognize text (OCR)"},
-    {"ocr-clipboard", "Copy recognized text"}, {"qr-scan", "Scan QR code"}, {"pin", "Pin image on screen"},
-    {"print", "Print image"}, {"custom-actions", "Run custom actions"}, {"file-clipboard", "Copy image file"},
-    {"path-clipboard", "Copy file path"}, {"reveal", "Show saved file in folder"}, {"analyze", "Analyze image"},
-    {"delete", "Delete saved file"}};
-  return sources.value(id, nullptr);
-}
-QString label(const QString &id) {
-  const auto *source = labelSource(id);
-  return source ? QCoreApplication::translate("ActionSelectionDialog", source) : id;
-}
 QStringList availableActions() {
   auto available = CaptureActions::selectableActions();
   available.append("after-capture-window");
@@ -50,7 +34,7 @@ ActionSelectionDialog::ActionSelectionDialog(const QStringList &configured, cons
   auto *scroll = new QScrollArea(this); scroll->setWidgetResizable(true);
   auto *choices = new QWidget(scroll); auto *rows = new QVBoxLayout(choices);
   for (const auto &choice : xerahs::actions::actionSelectionChoices(m_selector, configured, availableActions())) {
-    auto *box = new QCheckBox(label(choice.action) + (choice.available ? QString{} : tr(" — unavailable in this build")), choices);
+    auto *box = new QCheckBox(captureActionLabel(choice.action) + (choice.available ? QString{} : tr(" — unavailable in this build")), choices);
     box->setObjectName(QStringLiteral("capture-action-") + choice.action); box->setChecked(choice.selected);
     box->setEnabled(choice.available); box->setAccessibleName(box->text());
     if (!choice.available) box->setAccessibleDescription(tr("This action is unavailable in this version of XerahS."));

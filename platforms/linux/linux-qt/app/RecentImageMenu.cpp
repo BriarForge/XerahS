@@ -1,4 +1,5 @@
 #include "RecentImageMenu.h"
+#include <QCoreApplication>
 #include <QAction>
 #include <QCheckBox>
 #include <QDialog>
@@ -18,27 +19,27 @@ using xerahs::editor::RecentImages;
 bool manageRecentImages(QWidget *parent) {
   RecentImages draft = recentImageHistory(); const auto originalRevision = draft.revision();
   QDialog dialog(parent); dialog.setObjectName(QStringLiteral("recentImagesDialog"));
-  dialog.setWindowTitle(QStringLiteral("Recent Images")); dialog.resize(620, 350);
+  dialog.setWindowTitle(QCoreApplication::translate("RecentImageMenu", "Recent Images")); dialog.resize(620, 350);
   auto *layout = new QVBoxLayout(&dialog);
-  auto *enabled = new QCheckBox(QStringLiteral("Remember recently opened images"), &dialog);
+  auto *enabled = new QCheckBox(QCoreApplication::translate("RecentImageMenu", "Remember recently opened images"), &dialog);
   enabled->setObjectName(QStringLiteral("rememberRecentImages")); enabled->setChecked(draft.enabled()); layout->addWidget(enabled);
   auto *privacy = new QLabel(nativeEditorPreferencePersistence() ?
-      QStringLiteral("Image paths are saved privately on this computer until you remove them or turn this option off.") :
-      QStringLiteral("Image paths are kept for this session."), &dialog);
+      QCoreApplication::translate("RecentImageMenu", "Image paths are saved privately on this computer until you remove them or turn this option off.") :
+      QCoreApplication::translate("RecentImageMenu", "Image paths are kept for this session."), &dialog);
   privacy->setObjectName(QStringLiteral("recentImagesPrivacy"));
   privacy->setWordWrap(true); layout->addWidget(privacy);
   auto *form = new QFormLayout; auto *maximum = new QSpinBox(&dialog);
-  maximum->setObjectName(QStringLiteral("maximumRecentImages")); maximum->setAccessibleName(QStringLiteral("Maximum recent images"));
+  maximum->setObjectName(QStringLiteral("maximumRecentImages")); maximum->setAccessibleName(QCoreApplication::translate("RecentImageMenu", "Maximum recent images"));
   maximum->setRange(RecentImages::minimumMaximum, RecentImages::maximumMaximum); maximum->setValue(draft.maximum());
-  form->addRow(QStringLiteral("Maximum recent images:"), maximum); layout->addLayout(form);
+  form->addRow(QCoreApplication::translate("RecentImageMenu", "Maximum recent images:"), maximum); layout->addLayout(form);
   auto *paths = new QListWidget(&dialog); paths->setObjectName(QStringLiteral("recentImagePaths"));
-  paths->setAccessibleName(QStringLiteral("Recent image paths")); paths->setSelectionMode(QAbstractItemView::SingleSelection); layout->addWidget(paths);
-  auto *row = new QHBoxLayout; auto *remove = new QPushButton(QStringLiteral("Remove Selected"), &dialog);
-  auto *clear = new QPushButton(QStringLiteral("Clear All"), &dialog);
+  paths->setAccessibleName(QCoreApplication::translate("RecentImageMenu", "Recent image paths")); paths->setSelectionMode(QAbstractItemView::SingleSelection); layout->addWidget(paths);
+  auto *row = new QHBoxLayout; auto *remove = new QPushButton(QCoreApplication::translate("RecentImageMenu", "Remove Selected"), &dialog);
+  auto *clear = new QPushButton(QCoreApplication::translate("RecentImageMenu", "Clear All"), &dialog);
   remove->setObjectName(QStringLiteral("removeRecentImage")); clear->setObjectName(QStringLiteral("clearRecentImages"));
   row->addWidget(remove); row->addWidget(clear); row->addStretch(); layout->addLayout(row);
   auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
-  buttons->button(QDialogButtonBox::Ok)->setText(QStringLiteral("Apply"));
+  buttons->button(QDialogButtonBox::Ok)->setText(QCoreApplication::translate("RecentImageMenu", "Apply"));
   buttons->button(QDialogButtonBox::Ok)->setObjectName(QStringLiteral("applyRecentImages"));
   buttons->button(QDialogButtonBox::Cancel)->setDefault(true); layout->addWidget(buttons);
   auto refresh = [&] {
@@ -60,19 +61,19 @@ bool manageRecentImages(QWidget *parent) {
   // An incoming instance request can open a file while this modal loop runs.
   // Do not replace a newer list with the stale customization snapshot.
   if (recentImageHistory().revision() != originalRevision) {
-    QMessageBox::information(parent, QStringLiteral("Recent images changed"),
-        QStringLiteral("Recent images changed while this window was open. Reopen it to apply your changes."));
+    QMessageBox::information(parent, QCoreApplication::translate("RecentImageMenu", "Recent images changed"),
+        QCoreApplication::translate("RecentImageMenu", "Recent images changed while this window was open. Reopen it to apply your changes."));
     return false;
   }
   const auto written = applyRecentImagePreferences(draft, originalRevision);
   if (!written.saved) {
-    QMessageBox::warning(parent, QStringLiteral("Preferences not saved"), editorPreferenceDiagnosticMessage(written.diagnostic));
+    QMessageBox::warning(parent, QCoreApplication::translate("RecentImageMenu", "Preferences not saved"), editorPreferenceDiagnosticMessage(written.diagnostic));
     return false;
   }
   return true;
 }
 QMenu *addRecentImagesMenu(QMenu *parent, std::function<void(const QString &)> open, std::function<void()> manage) {
-  auto *menu = parent->addMenu(QStringLiteral("Recent Images")); menu->setObjectName(QStringLiteral("recentImagesMenu"));
+  auto *menu = parent->addMenu(QCoreApplication::translate("RecentImageMenu", "Recent Images")); menu->setObjectName(QStringLiteral("recentImagesMenu"));
   QObject::connect(menu, &QMenu::aboutToShow, menu, [menu, open = std::move(open), manage = std::move(manage)] {
     menu->clear(); const auto &history = recentImageHistory(); int index = 0;
     for (const auto &path : history.paths()) {
@@ -82,9 +83,9 @@ QMenu *addRecentImagesMenu(QMenu *parent, std::function<void(const QString &)> o
       QObject::connect(action, &QAction::triggered, menu, [open, path] { open(path); });
     }
     if (history.paths().isEmpty()) {
-      auto *empty = menu->addAction(history.enabled() ? QStringLiteral("No recent images") : QStringLiteral("Recent images are off")); empty->setEnabled(false);
+      auto *empty = menu->addAction(history.enabled() ? QCoreApplication::translate("RecentImageMenu", "No recent images") : QCoreApplication::translate("RecentImageMenu", "Recent images are off")); empty->setEnabled(false);
     }
-    menu->addSeparator(); auto *preferences = menu->addAction(QStringLiteral("Manage Recent Images…"));
+    menu->addSeparator(); auto *preferences = menu->addAction(QCoreApplication::translate("RecentImageMenu", "Manage Recent Images…"));
     preferences->setObjectName(QStringLiteral("manageRecentImages"));
     QObject::connect(preferences, &QAction::triggered, menu, manage);
   });

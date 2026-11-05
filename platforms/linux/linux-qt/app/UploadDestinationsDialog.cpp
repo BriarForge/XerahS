@@ -202,14 +202,14 @@ void UploadDestinationsDialog::showCapabilities() {
   const auto capabilities = uploads::destinationCapabilities(*destination);
   auto *dialog = new QDialog(this);
   dialog->setObjectName("destinationCapabilitiesDialog");
-  dialog->setWindowTitle("Destination capabilities");
+  dialog->setWindowTitle(tr("Destination capabilities"));
   dialog->setAttribute(Qt::WA_DeleteOnClose);
   auto *layout = new QVBoxLayout(dialog);
-  auto *notice = new QLabel("Review the client limits and behavior below before uploading. Provider size, content and rate limits are unknown; "
-      "check the provider's published terms. A deletion URL is only a returned link and is never opened automatically.", dialog);
+  auto *notice = new QLabel(tr("Review the client limits and behavior below before uploading. Provider size, content and rate limits are unknown; "
+      "check the provider's published terms. A deletion URL is only a returned link and is never opened automatically."), dialog);
   notice->setWordWrap(true); notice->setTextFormat(Qt::PlainText); layout->addWidget(notice);
   auto *text = new QPlainTextEdit(dialog); text->setObjectName("destinationCapabilities");
-  text->setAccessibleName("Destination capabilities and constraints"); text->setReadOnly(true);
+  text->setAccessibleName(tr("Destination capabilities and constraints")); text->setReadOnly(true);
   text->setPlainText(QString::fromUtf8(QJsonDocument(capabilities).toJson(QJsonDocument::Indented)));
   layout->addWidget(text);
   auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, dialog);

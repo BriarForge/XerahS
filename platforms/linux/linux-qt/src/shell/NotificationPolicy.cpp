@@ -1,6 +1,7 @@
 #include "shell/NotificationPolicy.h"
 
 #include <QRegularExpression>
+#include <QCoreApplication>
 #include <QUuid>
 
 namespace xerahs::shell {
@@ -13,9 +14,9 @@ QString stableCodeOf(const QString &body) {
 
 NotificationText presentNotification(const QString &title, const QString &body, bool ok, bool privatePreview) {
   if (!privatePreview) return {title, body};
-  if (ok) return {title, QStringLiteral("Completed. Open XerahS for details.")};
+  if (ok) return {title, QCoreApplication::translate("NativeNotifications", "Completed. Open XerahS for details.")};
   const auto code = stableCodeOf(body);
-  return {title, code.isEmpty() ? QStringLiteral("Attention required. Open XerahS for details.") : code + QStringLiteral(": attention required. Open XerahS for details.")};
+  return {title, code.isEmpty() ? QCoreApplication::translate("NativeNotifications", "Attention required. Open XerahS for details.") : code + QStringLiteral(": ") + QCoreApplication::translate("NativeNotifications", "attention required. Open XerahS for details.")};
 }
 
 NotificationEvent desktopNotification(const QString &operation, const QString &body, bool ok) {

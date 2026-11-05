@@ -12,6 +12,16 @@
 #include "CanvasRotationDialog.h"
 #include "CaptureAnnotationDialog.h"
 #include "CaptureController.h"
+#include "CaptureActions.h"
+#include "EditorWindow.h"
+#include "EditorUpload.h"
+#include "FileUploadResultDialog.h"
+#include "NativeAnnotationTools.h"
+#include "NativeEditorPreferences.h"
+#include "RecentImageMenu.h"
+#include "ScheduledCapture.h"
+#include "shell/NotificationPolicy.h"
+#include "uploads/DestinationCatalog.h"
 #include "CaptureHistoryWindow.h"
 #include "ColorPickerDialog.h"
 #include "ConveniencePreferencesDialog.h"
@@ -65,10 +75,14 @@
 #include <QImage>
 #include <QJsonObject>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMenu>
 #include <QMenuBar>
 #include <QPixmap>
 #include <QProgressBar>
+#include <QPushButton>
+#include <QMessageBox>
+#include <QScopeGuard>
 #include <QScopedPointer>
 #include <QScreen>
 #include <QSet>
@@ -830,16 +844,117 @@ private slots:
       QVERIFY(loaded.document);
       CaptureAnnotationDialog dialog(loaded);
       dialog.show();
-      // The annotation tool, delete and order actions are built in app/NativeAnnotationTools.cpp, and the
-      // instruction label beside them comes from the same file. This slice may not touch it, so its
-      // buttons and that one label stay untranslated.
-      const int checked = translatedTexts(dialog, {QStringLiteral("annotationToolInstructions")},
-          {QStringLiteral("Tool"), QStringLiteral("deleteSelection"), QStringLiteral("bringForward"),
-              QStringLiteral("sendBackward"), QStringLiteral("bringToFront"), QStringLiteral("sendToBack")});
+      // Shared annotation controls and their instructions now carry translation contexts too.
+      const int checked = translatedTexts(dialog, {});
       QVERIFY2(checked >= 3, qPrintable(QString::number(checked)));
       QVERIFY2(dialog.windowTitle().contains(QChar(0x2022)), qPrintable(dialog.windowTitle()));
     }
     QApplication::removeTranslator(&pseudo);
+  }
+
+  void sharedAnnotationLabelsInstructionsAndErrorsTranslateWithoutChangingIds() {
+    PseudoLocale pseudo; QVERIFY(QApplication::installTranslator(&pseudo));
+    const auto restore = qScopeGuard([&] { QApplication::removeTranslator(&pseudo); });
+    QImage image(40, 30, QImage::Format_ARGB32); image.fill(Qt::blue);
+    auto source = prepareCapturedSource(image); QVERIFY(source.document);
+    xerahs::editor::EditorSession session(*source.document); EditorCanvas canvas(session, image); QWidget owner;
+    const auto tools = annotationToolActions(canvas, &owner); QCOMPARE(tools.size(), 20);
+    auto *instructions = annotationToolInstructions(canvas, &owner);
+    for (auto it = tools.cbegin(); it != tools.cend(); ++it) {
+      QVERIFY2(it.value()->text().contains(QChar(0x2022)), qPrintable(it.key()));
+      QVERIFY(!it.value()->property("annotationToolId").toString().contains(QChar(0x2022)));
+      it.value()->setChecked(true);
+      QVERIFY(it.value()->statusTip().contains(QChar(0x2022))); QVERIFY(instructions->text().contains(QChar(0x2022)));
+      QVERIFY(canvas.toolInstructions().contains(QChar(0x2022)));
+    }
+    auto *remove = annotationDeleteAction(canvas, &owner); QVERIFY(remove->text().contains(QChar(0x2022)));
+    QCOMPARE(remove->objectName(), QString("deleteSelection")); QVERIFY(remove->statusTip().contains(QChar(0x2022)));
+    const auto order = annotationOrderActions(canvas, &owner); QCOMPARE(order.size(), 4);
+    for (auto *action : order) { QVERIFY(action->text().contains(QChar(0x2022))); QVERIFY(action->statusTip().contains(QChar(0x2022))); }
+    for (const auto *code : {"annotation-order-invalid", "annotation-edit-stale", "annotation-style-invalid", "annotation-geometry-invalid", "annotation-selection-protected", "annotation-asset-invalid", "annotation-type-unsupported", "SYNTHETIC-unknown"})
+      QVERIFY2(annotationEditMessage(code).contains(QChar(0x2022)), code);
+    QVERIFY(CaptureController::instructions().contains(QChar(0x2022)));
+  }
+
+  void captureProgressAndChooserShareLabelsTranslatedAtUseTime() {
+    const auto plain = CaptureActions::actionLabel("save"); QCOMPARE(plain, QString("Save image"));
+    PseudoLocale pseudo; QVERIFY(QApplication::installTranslator(&pseudo));
+    const auto restore = qScopeGuard([&] { QApplication::removeTranslator(&pseudo); });
+    ActionSelectionDialog dialog({}, QSize(40, 30));
+    for (auto *choice : dialog.findChildren<QCheckBox *>()) {
+      const auto id = choice->objectName().mid(QString("capture-action-").size());
+      QVERIFY2(choice->text().startsWith(CaptureActions::actionLabel(id)), qPrintable(id));
+      QVERIFY2(CaptureActions::actionLabel(id).contains(QChar(0x2022)), qPrintable(id));
+    }
+    QCOMPARE(CaptureActions::actionLabel("SYNTHETIC-unknown"), QString("SYNTHETIC-unknown"));
+  }
+
+  void editorMenusAndNativeUploadResultsTranslate() {
+    QTemporaryDir dir; QVERIFY(initializeNativeEditorPreferences(dir.filePath("editor.json")).isEmpty());
+    PseudoLocale pseudo; QVERIFY(QApplication::installTranslator(&pseudo));
+    const auto restore = qScopeGuard([&] { QApplication::removeTranslator(&pseudo); });
+    QImage image(40, 30, QImage::Format_ARGB32); image.fill(Qt::blue);
+    auto source = prepareCapturedSource(image); QVERIFY(source.document);
+    std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedDocument(*source.document)); QVERIFY(window);
+    for (const auto *id : {"newImage", "openImage", "saveImage", "saveAsImage", "undo", "redo", "deleteSelection", "flattenImage", "customizeToolbar", "manageAppearance", "cropImage", "copyImage", "printImage", "uploadImage", "stepStartNumber"}) {
+      auto *action = window->findChild<QAction *>(id); QVERIFY2(action, id); QVERIFY2(action->text().contains(QChar(0x2022)), id);
+    }
+    for (auto *menu : window->menuBar()->findChildren<QMenu *>()) if (!menu->title().isEmpty()) QVERIFY2(menu->title().contains(QChar(0x2022)), qPrintable(menu->title()));
+    auto *recent = window->findChild<QMenu *>("recentImagesMenu"); QVERIFY(recent);
+    QVERIFY(QMetaObject::invokeMethod(recent, "aboutToShow"));
+    for (auto *action : recent->actions()) if (!action->isSeparator()) QVERIFY2(action->text().contains(QChar(0x2022)), qPrintable(action->text()));
+    const auto recentDialog = collectDialogTexts([&] { manageRecentImages(window.get()); });
+    QVERIFY(recentDialog.entered); QVERIFY2(untranslatedTexts(recentDialog).isEmpty(), qPrintable(untranslatedTexts(recentDialog)));
+    xerahs::uploads::UploadOutcome outcome; outcome.url = "https://example.test/result"; outcome.deletionUrl = "https://example.test/delete"; outcome.attempts = 2;
+    FileUploadResultDialog success("SYNTHETIC-file", outcome); QVERIFY(success.windowTitle().contains(QChar(0x2022)));
+    QVERIFY(translatedTexts(success, {"uploadFileName"}) >= 4);
+    QCOMPARE(success.findChild<QLineEdit *>("uploadUrl")->text(), outcome.url);
+    FileUploadResultDialog failure("SYNTHETIC-file", "http-error", [] {});
+    QVERIFY(failure.windowTitle().contains(QChar(0x2022))); QVERIFY(translatedTexts(failure, {"uploadFileName", "uploadMessage"}) >= 1);
+  }
+
+  void schedulingAndNotificationProseTranslateWhileCodesAndCorrelationsStayLiteral() {
+    PseudoLocale pseudo; QVERIFY(QApplication::installTranslator(&pseudo));
+    const auto restore = qScopeGuard([&] { QApplication::removeTranslator(&pseudo); });
+    QString body; ScheduledCapturePorts ports;
+    ports.condition = [] { return xerahs::capture::AutoCondition::StorageLow; };
+    ports.notify = [&](const QString &title, const QString &message, bool, bool) { QVERIFY(title.contains(QChar(0x2022))); body = message; };
+    ScheduledCapture schedule(ports);
+    for (auto *action : {schedule.delayAction(), schedule.autoAction(), schedule.stopAction()}) QVERIFY(action->text().contains(QChar(0x2022)));
+    schedule.autoAction()->trigger(); QVERIFY(body.startsWith("storage-low: ")); QVERIFY(body.contains(QChar(0x2022)));
+    QCOMPARE(xerahs::shell::stableCodeOf(body), QString("storage-low"));
+    const auto event = xerahs::shell::desktopNotification("SYNTHETIC-operation", "audio-device-missing: SYNTHETIC_PRIVATE", false);
+    QVERIFY(event.desktop.body.startsWith("audio-device-missing: ")); QVERIFY(event.desktop.body.contains(QChar(0x2022)));
+    QVERIFY(!event.desktop.body.contains("SYNTHETIC_PRIVATE")); QVERIFY(!QUuid(event.id).isNull());
+    QVERIFY(xerahs::shell::desktopNotification("SYNTHETIC-operation", {}, true).desktop.body.contains(QChar(0x2022)));
+  }
+
+  void nativeCapabilityReviewAndEditorUploadConsentTranslate() {
+    QTemporaryDir dir; xerahs::uploads::DestinationCatalog catalog(dir.filePath("destinations.json"));
+    xerahs::uploads::UploadDestination destination; destination.id = QUuid::createUuid(); destination.name = "SYNTHETIC-destination";
+    destination.requestUrl = "http://example.test/upload"; destination.body = xerahs::uploads::BodyType::MultipartFormData;
+    destination.fileFormName = "file"; destination.resultUrl = "{json:url}"; QVERIFY(catalog.add(destination).isEmpty());
+    xerahs::uploads::MemoryCredentialStore credentials;
+    PseudoLocale pseudo; QVERIFY(QApplication::installTranslator(&pseudo));
+    const auto restore = qScopeGuard([&] { QApplication::removeTranslator(&pseudo); });
+    UploadDestinationsPorts ports; ports.report = [](QWidget *, const QString &) {};
+    UploadDestinationsDialog destinations(catalog, credentials, ports);
+    destinations.findChild<QPushButton *>("viewDestinationCapabilities")->click();
+    auto *capabilities = destinations.findChild<QDialog *>("destinationCapabilitiesDialog"); QVERIFY(capabilities);
+    QVERIFY(capabilities->windowTitle().contains(QChar(0x2022))); QVERIFY(translatedTexts(*capabilities, {}) >= 2);
+    capabilities->reject();
+    bool seen = false; QString title, text, informative, upload; bool defaultCancel = false;
+    QTimer probe; connect(&probe, &QTimer::timeout, this, [&] {
+      auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
+      if (!box || box->objectName() != "confirmEditorUpload") return;
+      seen = true; title = box->windowTitle(); text = box->text(); informative = box->informativeText();
+      upload = box->button(QMessageBox::Ok)->text(); defaultCancel = box->defaultButton() == box->button(QMessageBox::Cancel);
+      box->button(QMessageBox::Cancel)->click();
+    });
+    probe.start(1);
+    const auto result = chooseEditorUpload({}, nullptr, dir.filePath("destinations.json")); probe.stop();
+    QVERIFY(seen); QVERIFY(defaultCancel); QCOMPARE(result.action.state, xerahs::actions::ActionState::Cancelled);
+    for (const auto &value : {title, text, informative, upload}) QVERIFY2(value.contains(QChar(0x2022)), qPrintable(value));
   }
 
   void applicationWindowTextIsTranslatable() {
@@ -869,5 +984,11 @@ private slots:
   }
 };
 
-QTEST_MAIN(LocalizationExpansionTest)
+int main(int argc, char **argv) {
+  QTemporaryDir profile;
+  for (const auto *key : {"XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME"}) qputenv(key, profile.filePath(key).toUtf8());
+  qputenv("DBUS_SESSION_BUS_ADDRESS", ("unix:path=" + profile.filePath("no-bus")).toUtf8());
+  qputenv("DBUS_SYSTEM_BUS_ADDRESS", ("unix:path=" + profile.filePath("no-system-bus")).toUtf8());
+  QApplication app(argc, argv); LocalizationExpansionTest test; return QTest::qExec(&test, argc, argv);
+}
 #include "LocalizationExpansionTest.moc"

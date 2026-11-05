@@ -32,27 +32,27 @@ QLineEdit *selectable(QWidget *parent, const QString &name, const QString &text)
 FileUploadResultDialog::FileUploadResultDialog(const QString &fileName, const uploads::UploadOutcome &outcome, QWidget *parent)
     : QDialog(parent) {
   setObjectName(QStringLiteral("fileUploadResultDialog"));
-  setWindowTitle(QStringLiteral("File uploaded"));
+  setWindowTitle(tr("File uploaded"));
   setModal(false);
   setWindowModality(Qt::NonModal);
   setAttribute(Qt::WA_DeleteOnClose);
   auto *layout = new QVBoxLayout(this);
   layout->addWidget(line(this, QStringLiteral("uploadFileName"), fileName));
   if (outcome.attempts > 0)
-    layout->addWidget(line(this, QStringLiteral("uploadAttempts"), QStringLiteral("Network attempts: %1. One remote upload result.").arg(outcome.attempts)));
+    layout->addWidget(line(this, QStringLiteral("uploadAttempts"), tr("Network attempts: %1. One remote upload result.").arg(outcome.attempts)));
   m_url = selectable(this, QStringLiteral("uploadUrl"), outcome.url);
-  m_url->setAccessibleName(QStringLiteral("Upload URL"));
+  m_url->setAccessibleName(tr("Upload URL"));
   layout->addWidget(m_url);
-  auto *copy = new QPushButton(QStringLiteral("Copy URL"), this);
+  auto *copy = new QPushButton(tr("Copy URL"), this);
   copy->setObjectName(QStringLiteral("copyUploadUrl"));
-  auto *open = new QPushButton(QStringLiteral("Open in browser"), this);
+  auto *open = new QPushButton(tr("Open in browser"), this);
   open->setObjectName(QStringLiteral("openUploadUrl"));
   layout->addWidget(copy);
   layout->addWidget(open);
   if (!outcome.deletionUrl.isEmpty()) {
-    layout->addWidget(line(this, QStringLiteral("deletionUrlLabel"), QStringLiteral("Deletion URL")));
+    layout->addWidget(line(this, QStringLiteral("deletionUrlLabel"), tr("Deletion URL")));
     auto *deletion = selectable(this, QStringLiteral("deletionUrl"), outcome.deletionUrl);
-    deletion->setAccessibleName(QStringLiteral("Deletion URL"));
+    deletion->setAccessibleName(tr("Deletion URL"));
     layout->addWidget(deletion);
   }
   connect(copy, &QPushButton::clicked, this, &FileUploadResultDialog::copyUrl);
@@ -64,7 +64,7 @@ FileUploadResultDialog::FileUploadResultDialog(const QString &fileName, const QS
                                                QWidget *parent, const QString &detail)
     : QDialog(parent) {
   setObjectName(QStringLiteral("fileUploadResultDialog"));
-  setWindowTitle(QStringLiteral("File upload"));
+  setWindowTitle(tr("File upload"));
   setModal(false);
   setWindowModality(Qt::NonModal);
   setAttribute(Qt::WA_DeleteOnClose);
@@ -73,7 +73,7 @@ FileUploadResultDialog::FileUploadResultDialog(const QString &fileName, const QS
   layout->addWidget(line(this, QStringLiteral("uploadMessage"), message));
   if (!detail.isEmpty()) layout->addWidget(line(this, QStringLiteral("uploadPublicationStatus"), detail));
   if (openDestinations) {
-    auto *button = new QPushButton(QStringLiteral("Upload destinations…"), this);
+    auto *button = new QPushButton(tr("Upload destinations…"), this);
     button->setObjectName(QStringLiteral("openUploadDestinations"));
     layout->addWidget(button);
     connect(button, &QPushButton::clicked, this, [openDestinations] { openDestinations(); });

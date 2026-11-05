@@ -286,16 +286,27 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native editor preference and desktop appearance tests exist. Full application theming, localization, runtime expansion, high contrast and reduced-motion qualification remain Required. Application-level text expansion and fallback are now tested on the translatable QR window: a pseudo-locale that lengthens every tr() string by 40% neither clips buttons or labels nor exceeds the screen, and a string missing from the translation falls back to its source text (LocalizationExpansionTest). Remaining gaps, not closed: most application windows (command window, preferences, capture/recording dialogs) use QStringLiteral and are not translatable yet, no UI-language preference exists to prove the stored preference survives a fallback, and high contrast, reduced motion and full theming qualification remain Required. Audit 2026-11-03: LocalizationExpansionTest proves 40% expansion without clipping and missing-translation fallback for the QR window only; status stays partial because most windows are not yet translatable. Update 2026-11-04: the Preferences dialog's user-visible text, tooltips and accessible names now go through QCoreApplication::translate (context SettingsDialog); LocalizationExpansionTest::preferencesDialogTextIsTranslatable proves pseudo-locale coverage. Other windows still use untranslated literals.",
+      "note": "Audit 2026-11-05: LocalizationExpansionTest retains the existing 40% QR expansion/no-clipping and missing-translation fallback tests plus existing native dialog coverage. sharedAnnotationLabelsInstructionsAndErrorsTranslateWithoutChangingIds proves all twenty real tool actions, Delete/order labels/tips, mode guidance, edit messages and frozen-capture instructions translate while IDs remain literal. captureAnnotationDialogTextIsTranslatable now includes the formerly excluded shared controls. captureProgressAndChooserShareLabelsTranslatedAtUseTime proves the chooser and CaptureActions use one source-text table and translate at use time, including after earlier English lookup; unknown IDs remain literal. editorMenusAndNativeUploadResultsTranslate drives the actual editor menus, recent menu and settings dialog, and actual success/failure file upload result widgets, preserving literal returned URLs. schedulingAndNotificationProseTranslateWhileCodesAndCorrelationsStayLiteral proves native schedule action labels and storage refusal, and private notification completion/attention text, while codes/UUIDs remain literal and private payloads stay out. nativeCapabilityReviewAndEditorUploadConsentTranslate opens the real capability review and native editor upload consent with local preparation, translates titles/guidance/action labels and preserves default Cancel. English action labels deliberately converge on the existing chooser source table. The expanded fixture now links the production xerahs_app object target instead of duplicating its native source list, and uses isolated temporary XDG paths/disconnected test buses. NativeNotifications itself contains only literal application/protocol identifiers; its privacy-safe prose is translated in NotificationPolicy at event creation. Remaining CORE-009 clauses: runtime retranslation of already open windows, stored UI-language preference/fallback, complete application theming and high-contrast/reduced-motion/native/human qualification; no complete requirement classification is claimed.",
       "evidence": [
         "platforms/linux/linux-qt/tests/NativeEditorAppearanceTest.cpp",
         "platforms/linux/linux-qt/tests/NativeDesktopAppearanceTest.cpp",
-        "platforms/linux/linux-qt/tests/LocalizationExpansionTest.cpp"
+        "platforms/linux/linux-qt/tests/LocalizationExpansionTest.cpp",
+        "platforms/linux/linux-qt/app/CaptureActionLabels.h",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.cpp",
+        "platforms/linux/linux-qt/app/CaptureController.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+        "platforms/linux/linux-qt/app/RecentImageMenu.cpp",
+        "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
+        "platforms/linux/linux-qt/app/FileUploadResultDialog.cpp",
+        "platforms/linux/linux-qt/app/ScheduledCapture.cpp",
+        "platforms/linux/linux-qt/src/shell/NotificationPolicy.cpp",
+        "platforms/linux/linux-qt/app/EditorUpload.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 42,
-        "coverage": "Partial production behavior is present; complete requirement remains unproven. Full ledger dispositions, explicit migration/recovery/diagnostic export, signed distribution/update/plugin trust, NuGet governance evidence, target matrix and human security/privacy/a11y/licensing/parity acceptance remain incomplete.",
+        "coverage": "Partial tested Linux candidate: named native translation gaps and pseudo-locale coverage are closed; runtime language preference/retranslation and complete appearance/desktop/human qualification remain unproven.",
         "reviewed_at_revision": "36761b71125ac3effb4c7feb33d5bd480308c60b"
       }
     },
