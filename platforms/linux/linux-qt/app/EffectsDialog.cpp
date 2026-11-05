@@ -334,13 +334,18 @@ void EffectsDialog::buildParameters() {
     auto *seed = new QLineEdit(QString::number(m_seed), row); seed->setObjectName("effectsSeed"); seed->setAccessibleName(tr("Effect seed"));
     seed->setValidator(new QRegularExpressionValidator(QRegularExpression("[0-9]{1,20}"), seed));
     auto *next = new QPushButton(tr("New seed"), row); next->setObjectName("effectsNewSeed"); next->setAutoDefault(false);
-    connect(seed, &QLineEdit::textChanged, this, [this](const QString &text) {
+    auto *error = new QLabel(row); error->setObjectName("effectsSeedError"); error->setTextFormat(Qt::PlainText); error->setWordWrap(true);
+    seed->setAccessibleDescription(tr("Unsigned integer from 0 to 18446744073709551615"));
+    connect(seed, &QLineEdit::textChanged, this, [this, seed, error](const QString &text) {
       const auto value = text.toULongLong(&m_seedValid);
       if (m_seedValid) { m_seed = value; m_draftSeeds[selectedId()] = value; }
+      const auto message = m_seedValid ? QString() : QStringLiteral("effect-seed-invalid: ") + tr("Enter an unsigned integer from 0 to 18446744073709551615.");
+      error->setText(message); error->setAccessibleName(message);
+      seed->setAccessibleDescription(tr("Unsigned integer from 0 to 18446744073709551615") + (message.isEmpty() ? QString() : ". " + message));
       changed(); if (!m_seedValid) showError("effect-seed-invalid");
     });
     connect(next, &QPushButton::clicked, seed, [seed] { seed->setText(QString::number(QRandomGenerator::global()->generate64())); });
-    box->addWidget(seed); box->addWidget(next); m_form->addRow(tr("Seed"), row);
+    box->addWidget(seed); box->addWidget(next); box->addWidget(error); m_form->addRow(tr("Seed"), row);
   }
   for (const auto &param : effect->spec().parameters) {
     m_values.insert(param.id, param.defaultValue);
