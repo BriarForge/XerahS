@@ -13,6 +13,7 @@ find_package(ZLIB REQUIRED)
 set(XERAHS_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." CACHE PATH "BriarForge/XerahS repository root")
 
 add_library(xerahs_core STATIC
+  src/diagnostics/DiagnosticBundle.cpp src/diagnostics/DiagnosticBundle.h
   src/image-editor/RasterSaveOptions.cpp src/image-editor/RasterSaveOptions.h
   src/watch/WatchFolders.cpp
   src/watch/WatchFolders.h
@@ -232,6 +233,8 @@ target_compile_options(xerahs_workflow_shortcuts PRIVATE -Wall -Wextra -Wpedanti
 # xerahs_core; app/ only wires it to Qt and the desktop.
 # The application's shell wiring lives in an object library so tests can build the real command registry.
 add_library(xerahs_app OBJECT
+  app/DiagnosticsDialog.cpp app/DiagnosticsDialog.h
+  app/features/DiagnosticsFeature.cpp app/features/DiagnosticsFeature.h
   app/CaptureWorkflows.cpp
   app/CaptureWorkflows.h
   app/ApplicationWindow.cpp
@@ -1690,3 +1693,13 @@ add_test(NAME upload-executor-policy COMMAND upload-executor-test lifecycle reen
   abortObserversCannotOverwriteANewerRunOrEscapeAdmission
   attemptMetadataDoesNotInventPublicationAndLegacyReceiptsStayUnchanged)
 set_tests_properties(upload-executor-policy PROPERTIES TIMEOUT 45)
+
+add_executable(diagnostic-bundle-test tests/DiagnosticBundleTest.cpp)
+set_target_properties(diagnostic-bundle-test PROPERTIES AUTOMOC ON)
+target_link_libraries(diagnostic-bundle-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME diagnostic-bundle COMMAND diagnostic-bundle-test)
+add_executable(diagnostics-dialog-test tests/DiagnosticsDialogTest.cpp)
+set_target_properties(diagnostics-dialog-test PROPERTIES AUTOMOC ON)
+target_link_libraries(diagnostics-dialog-test PRIVATE xerahs_app Qt6::Test)
+add_test(NAME diagnostics-dialog COMMAND diagnostics-dialog-test)
+set_tests_properties(diagnostics-dialog PROPERTIES TIMEOUT 30)

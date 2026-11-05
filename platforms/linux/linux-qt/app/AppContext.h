@@ -23,6 +23,7 @@ class ApplicationSettingsStore;
 namespace xerahs::shell {
 class ActivationDispatcher;
 }
+namespace xerahs::diagnostics { class DiagnosticLog; }
 
 namespace xerahs::app {
 
@@ -58,6 +59,7 @@ struct AppContext {
   // Set by the upload feature; tools read it when they hand a file to upload.
   std::function<void(const QStringList &paths)> uploadFiles = {};
   PipelineJournalStorage journal = {};
+  std::shared_ptr<diagnostics::DiagnosticLog> diagnosticLog = {};
   QString defaultCaptureFolder = {};
   QString invocationOrigin = QStringLiteral("command-line");
   std::function<void(shell::ActivationAction action, const QString &path, bool chooseActions, const QString &workflowId, const QString &source)> invoke = {};
