@@ -86,16 +86,21 @@ EditorCanvas::EditorCanvas(EditorSession &session, const QImage &image, QWidget 
 
 void EditorCanvas::syncViewport() {
   const QPointF lo = m_view.minimumOffset(), hi = m_view.maximumOffset();
-  const QSignalBlocker horizontal(horizontalScrollBar()), vertical(verticalScrollBar());
-  horizontalScrollBar()->setRange(int(std::floor(-hi.x())), int(std::ceil(-lo.x())));
-  verticalScrollBar()->setRange(int(std::floor(-hi.y())), int(std::ceil(-lo.y())));
-  horizontalScrollBar()->setPageStep(viewport()->width());
-  verticalScrollBar()->setPageStep(viewport()->height());
-  horizontalScrollBar()->setValue(int(std::round(-m_view.offset().x())));
-  verticalScrollBar()->setValue(int(std::round(-m_view.offset().y())));
+  {
+    // An observer may close the editor synchronously. Restore the scrollbars'
+    // prior signal state before publishing anything that can destroy them.
+    const QSignalBlocker horizontal(horizontalScrollBar()), vertical(verticalScrollBar());
+    horizontalScrollBar()->setRange(int(std::floor(-hi.x())), int(std::ceil(-lo.x())));
+    verticalScrollBar()->setRange(int(std::floor(-hi.y())), int(std::ceil(-lo.y())));
+    horizontalScrollBar()->setPageStep(viewport()->width());
+    verticalScrollBar()->setPageStep(viewport()->height());
+    horizontalScrollBar()->setValue(int(std::round(-m_view.offset().x())));
+    verticalScrollBar()->setValue(int(std::round(-m_view.offset().y())));
+  }
   viewport()->update();
+  const QPointer<EditorCanvas> owner(this);
   emit viewportChanged(m_view.zoom());
-  if (m_pointerView) publishPointerPixel(*m_pointerView);
+  if (owner && m_pointerView) publishPointerPixel(*m_pointerView);
 }
 
 void EditorCanvas::publishPointerPixel(QPointF viewPosition) {
@@ -429,8 +434,9 @@ void EditorCanvas::resetDocument(EditorSession &session, const QImage &displaySo
   m_view = EditorViewport(m_image.size());
   m_view.setViewSize(viewport()->size());
   m_view.fit();
+  const QPointer<EditorCanvas> owner(this);
   syncViewport();
-  emit toolChanged();
+  if (owner) emit toolChanged();
 }
 
 void EditorCanvas::sourceChanged(const QImage &preparedDisplay) {

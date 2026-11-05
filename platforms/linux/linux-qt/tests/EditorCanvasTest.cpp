@@ -85,6 +85,30 @@ class EditorCanvasTest : public QObject {
   Q_OBJECT
   QTemporaryDir dialogPreferences;
 private slots:
+  void viewportObserversCanDestroyCanvasSafely_data() {
+    QTest::addColumn<QString>("operation");
+    for (const auto *operation : {"source-change", "document-reset", "zoom-in", "zoom-out", "reset-zoom", "fit"})
+      QTest::newRow(operation) << QString(operation);
+  }
+  void viewportObserversCanDestroyCanvasSafely() {
+    QFETCH(QString, operation); auto source = image(); EditorSession session(document()), replacement(document());
+    auto canvas = std::make_unique<EditorCanvas>(session, source); canvas->show();
+    QVERIFY(QTest::qWaitForWindowExposed(canvas.get()));
+    const QPointer<EditorCanvas> guard(canvas.get()); int notifications = 0; bool restored = false;
+    connect(canvas.get(), &EditorCanvas::viewportChanged, this, [&] {
+      ++notifications;
+      restored = !canvas->horizontalScrollBar()->signalsBlocked() && !canvas->verticalScrollBar()->signalsBlocked();
+      canvas.reset();
+    });
+    if (operation == "source-change") canvas->sourceChanged(source);
+    else if (operation == "document-reset") canvas->resetDocument(replacement, source);
+    else if (operation == "zoom-in") canvas->zoomIn();
+    else if (operation == "zoom-out") canvas->zoomOut();
+    else if (operation == "reset-zoom") canvas->resetZoom();
+    else canvas->zoomToFit();
+    QVERIFY(!guard); QCOMPARE(notifications, 1); QVERIFY(restored);
+  }
+
   void unchangedStrengthDialogPreservesFractionAndDefault_data() {
     QTest::addColumn<QString>("type"); QTest::addColumn<double>("strength");
     for (const auto &type : {shape::blur, shape::pixelate, shape::magnify, shape::spotlight}) {
