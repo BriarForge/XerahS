@@ -471,18 +471,24 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Audit 2026-11-04: Clauses mapped: explicit system/microphone enumeration and selection plus missing input yields no audio track -> RecordingTest::explicitAudioSelection; active capture indication -> RecordingTest::captureIndicator; mixing per MP4/WebM and no GIF audio -> explicitAudioSelection (production pipeline descriptions), with RecordingIntegrationTest::finiteVideo(cropped-mp4-audio-mix,cropped-webm-audio-mix) intended to verify actual tracks. RecordingController timestamps selected inputs and PipeWire video on pipeline running time; that code is not a measured synchronization proof. recording and recording-workflow pass. recording-integration reports 2 passed, 0 failed, 7 skipped because required GStreamer encoder/muxer/test-source elements are missing, so its audio cases are not passing evidence. Remaining clauses: native microphone permission/consent enforcement and denial, measured A/V synchronization, actual mixed tracks and device loss during native recording are unproven. No approved additional degraded mode is invented. Keep partial pending these tests and native permission boundary evidence.",
+      "note": "Audit 2026-11-05: RecordingTest::explicitAudioSelection proves exact selected device enumeration, deduplication, missing input refusal and MP4/WebM mixing descriptions with no GIF audio. consentCannotAuthorizeAChangedInputAndGifNeverOpensAudio proves no monitor access without consent for every exact selected input. RecordingAudioTest::nativeChoicesRequireFreshExplicitConsentForExactFrozenInputs drives the production recording consent widget with keyboard input: unchecked per-run choices, independent system/microphone consent, exact frozen IDs, missing-device disabled controls and fresh choice after GIF. RecordingWorkflowTest::nativeControllerRejectsUnconsentedInputsBeforePlatformOrOutputAccess proves the real controller terminates unconsented requests before portal/device/output access with a stable value-free code and no file. The controller no longer silently re-encodes video-only when selected audio fails: absent selected devices and creation failures stop the session, and audio backend errors terminate with audio-input-unavailable. RecordingAudioTest::nativeAudioErrorKeepsPrivatePayloadOutOfFailureAndRetainsPartial(recording,paused) passes a real synthetic GStreamer bus error from an input descendant through the production classifier and actual Session/Output failure path, preserving private partial bytes, one failed terminal outcome, no completed file, no restart and actionable native result text; nonAudioBackendErrorsRemainEncoderFailures preserves generic encoding failure. This is a bus/classifier/session seam, not physical hot-unplug or a full native controller recording. RecordingTest::captureIndicator proves state/time/encoder/audio indication. Production sources use pipeline running-time timestamps, but measured A/V synchronization is not proven. RecordingIntegrationTest audio track cases still skip because required GStreamer elements are missing; they are not passing track evidence. Platform microphone/system permission enforcement and denial, measured synchronization, actual mixed output tracks and native physical device-loss qualification remain Required. Decision: queue-required fresh per-run explicit input consent; no approved degraded mode is invented and selected-audio failure stops rather than silently changing the requested recording. Codec policy remains unchanged.",
       "evidence": [
         "platforms/linux/linux-qt/tests/RecordingTest.cpp",
         "platforms/linux/linux-qt/tests/RecordingIntegrationTest.cpp",
         "platforms/linux/linux-qt/app/RecordingController.cpp",
         "platforms/linux/linux-qt/src/recording/Recording.cpp",
-        "platforms/linux/linux-qt/tests/RecordingWorkflowTest.cpp"
+        "platforms/linux/linux-qt/tests/RecordingWorkflowTest.cpp",
+        "platforms/linux/linux-qt/app/RecordingAudioConsent.h",
+        "platforms/linux/linux-qt/app/RecordingAudioConsent.cpp",
+        "platforms/linux/linux-qt/app/RecordingActions.cpp",
+        "platforms/linux/linux-qt/app/RecordingErrors.h",
+        "platforms/linux/linux-qt/app/RecordingErrors.cpp",
+        "platforms/linux/linux-qt/tests/RecordingAudioTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 79,
-        "coverage": "Partial tested Linux candidate behavior; the specific remaining clauses and unavailable verification are named in the note.",
+        "coverage": "Partial tested Linux candidate behavior: exact-input per-run consent, native error classification and recoverable failure are covered; platform permission, measured synchronization, actual mixed tracks and physical device-loss qualification remain unproven.",
         "reviewed_at_revision": "36761b71125ac3effb4c7feb33d5bd480308c60b"
       }
     },

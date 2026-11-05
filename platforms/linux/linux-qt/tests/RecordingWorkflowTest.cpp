@@ -155,6 +155,16 @@ private slots:
     QCOMPARE(writes, 1); QCOMPARE(refused.state(), State::Idle); QVERIFY(refused.sessionId().isEmpty()); QCOMPARE(failure.size(), 1); QVERIFY(!failure[0][2].toBool());
     QVERIFY(!QFile::exists(dir.filePath("PRIVATE-recording.mp4")));
   }
+  void nativeControllerRejectsUnconsentedInputsBeforePlatformOrOutputAccess() {
+    QTemporaryDir dir; NativeWorkflowExecutions store(dir.filePath("records")); RecordingController controller(nullptr, store.writer());
+    QSignalSpy observed(&controller, &RecordingController::terminalObserved);
+    auto r = request(dir.path()); controller.start(r);
+    QCOMPARE(controller.state(), State::Failed); QCOMPARE(controller.result().diagnostic, QString("audio-consent-required"));
+    QCOMPARE(observed.size(), 1); QVERIFY(controller.result().output.isEmpty()); QVERIFY(controller.result().recoverableOutput.isEmpty());
+    QVERIFY(!QFile::exists(dir.filePath(r.filename)));
+    const auto result = store.result(controller.sessionId()); QVERIFY(result.value("terminal").toBool());
+    const auto raw = QJsonDocument(result).toJson(); QVERIFY(!raw.contains("PRIVATE")); QVERIFY(!raw.contains(dir.path().toUtf8()));
+  }
 };
 QTEST_GUILESS_MAIN(RecordingWorkflowTest)
 #include "RecordingWorkflowTest.moc"

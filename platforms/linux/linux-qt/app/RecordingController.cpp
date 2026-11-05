@@ -1,5 +1,6 @@
 #include "RecordingController.h"
 #include "NativeWorkflowExecutions.h"
+#include "RecordingErrors.h"
 #include <QDBusArgument>
 #include <QDBusConnectionInterface>
 #include <QDBusPendingCallWatcher>
@@ -59,6 +60,8 @@ void RecordingController::start(Request request, const QString &origin) {
   connect(m_observation.get(), &RecordingObservation::notify, this, &RecordingController::notify);
   m_session->send(Event::Request);
   if (!validate(m_request).isEmpty()) { fail("request-invalid"); return; }
+  const auto consent = audioConsentDiagnostic(m_request);
+  if (!consent.isEmpty()) { fail(consent); return; }
   if (!unavailable(m_request.format).isEmpty()) { fail("encoder-unavailable"); return; }
   m_encoder = selectEncoder(m_request.format, m_elements);
   // Resolve a unique owner before subscribing; never accept another service's responses.
@@ -148,11 +151,11 @@ void RecordingController::response(uint code, const QVariantMap &results, const 
 void RecordingController::closed() { if (busy()) fail("target-lost"); }
 void RecordingController::encode(uint node) {
 #ifdef XERAHS_GSTREAMER
-  m_deadline.stop(); m_node = node;
+  m_deadline.stop();
   const auto error = m_output.reserve(m_request); if (!error.isEmpty()) { fail(error); return; }
   if (m_request.region && !m_elements.contains("videocrop")) { fail("encoder-unavailable"); return; }
   const auto audio = selectAudio(m_request, [this] { return m_devices.list(); });
-  for (const auto &diagnostic : audio.diagnostics) emit notify("Recording without audio", diagnostic, false);
+  if (!audio.diagnostics.isEmpty()) { fail("audio-device-missing"); return; }
   // Live-source timestamps use pipeline running time, preserved across PAUSED/PLAYING.
   const QString source = QStringLiteral("pipewiresrc fd=%1 path=%2 do-timestamp=true").arg(m_fd.fileDescriptor()).arg(node);
   GError *errorInfo = nullptr;
@@ -160,9 +163,8 @@ void RecordingController::encode(uint node) {
   for (int i = 0; i < audio.devices.size(); ++i) {
     auto *input = m_devices.create(audio.devices[i].id, qPrintable(QString("audioinput%1").arg(i)));
     if (!input) {
-      emit notify("Recording without audio", "audio-device-missing: " + audio.devices[i].label + " (" + audio.devices[i].id + ')', false);
       for (auto *created : inputs) gst_object_unref(created);
-      inputs.clear(); break;
+      fail("audio-device-missing"); return;
     }
     if (g_object_class_find_property(G_OBJECT_GET_CLASS(input), "do-timestamp")) g_object_set(input, "do-timestamp", true, nullptr);
     inputs << input;
@@ -221,19 +223,10 @@ void RecordingController::encode(uint node) {
   }
   auto *sink = gst_bin_get_by_name(GST_BIN(m_pipeline), "output");
   g_object_set(sink, "location", m_output.temporary().toUtf8().constData(), nullptr); gst_object_unref(sink);
-  if (gst_element_set_state(m_pipeline, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) { if (m_audioActive) withoutAudio(); else fail("encoder-start-failed"); return; }
+  if (gst_element_set_state(m_pipeline, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) { fail(m_audioActive ? "audio-input-unavailable" : "encoder-start-failed"); return; }
   m_poll.start(); m_deadline.start(30000);
 #else
   Q_UNUSED(node); fail("encoder-unavailable");
-#endif
-}
-void RecordingController::withoutAudio() {
-#ifdef XERAHS_GSTREAMER
-  const QString inputs = "system audio (" + m_request.systemAudioDevice + "), microphone (" + m_request.microphoneDevice + ')';
-  if (m_pipeline) { gst_element_set_state(m_pipeline, GST_STATE_NULL); gst_object_unref(m_pipeline); m_pipeline = nullptr; }
-  m_audioActive = false; m_request.systemAudioDevice.clear(); m_request.microphoneDevice.clear();
-  emit notify("Recording without audio", "audio-input-unavailable: " + inputs, false);
-  encode(m_node);
 #endif
 }
 void RecordingController::poll() {
@@ -243,8 +236,9 @@ void RecordingController::poll() {
   while (auto *message = gst_bus_pop(bus)) {
     const auto type = GST_MESSAGE_TYPE(message);
     if (type == GST_MESSAGE_ERROR) {
+      const auto code = recordingErrorCode(message);
       gst_message_unref(message); gst_object_unref(bus);
-      if (state() == State::Starting && m_audioActive) withoutAudio(); else fail("encoder-failed");
+      fail(code);
       return;
     }
     if (type == GST_MESSAGE_EOS) {

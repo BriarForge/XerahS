@@ -46,6 +46,9 @@ private slots:
     DeviceMonitor monitor = [&] { ++calls; return devices; };
     auto r = request(); QVERIFY(selectAudio(r, monitor).devices.isEmpty()); QCOMPARE(calls, 0);
     r.systemAudioDevice = system.id; r.microphoneDevice = mic.id;
+    auto unconsented = selectAudio(r, monitor); QVERIFY(unconsented.devices.isEmpty());
+    QCOMPARE(unconsented.diagnostics, QStringList{"audio-consent-required"}); QCOMPARE(calls, 0);
+    r.consentedAudioDevices = {system.id, mic.id};
     auto selected = selectAudio(r, monitor); QCOMPARE(selected.devices.size(), 2); QVERIFY(selected.diagnostics.isEmpty());
     devices.removeLast(); selected = selectAudio(r, monitor); QVERIFY(selected.devices.isEmpty()); QCOMPARE(selected.diagnostics.size(), 1);
     QVERIFY(!pipeline(r, selectEncoder(r.format, elements()), "videotestsrc", selected.devices.size(), "voaacenc").contains("audiomixer"));
@@ -59,6 +62,16 @@ private slots:
       QCOMPARE(description.contains("audiomixer"), format != Format::Gif);
       QCOMPARE(description.contains("audioqueue1"), format != Format::Gif);
     }
+  }
+  void consentCannotAuthorizeAChangedInputAndGifNeverOpensAudio() {
+    auto r = request(); r.systemAudioDevice = "SYNTHETIC-monitor"; r.microphoneDevice = "SYNTHETIC-mic";
+    int calls = 0; const DeviceMonitor monitor = [&] { ++calls; return QVector<AudioDevice>{{r.systemAudioDevice, "System", true}, {r.microphoneDevice, "Mic", false}}; };
+    r.consentedAudioDevices = {r.systemAudioDevice};
+    QCOMPARE(audioConsentDiagnostic(r), QString("audio-consent-required")); QVERIFY(selectAudio(r, monitor).devices.isEmpty()); QCOMPARE(calls, 0);
+    r.consentedAudioDevices << r.microphoneDevice; QCOMPARE(selectAudio(r, monitor).devices.size(), 2); QCOMPARE(calls, 1);
+    r.microphoneDevice = "SYNTHETIC-other";
+    QCOMPARE(audioConsentDiagnostic(r), QString("audio-consent-required")); QVERIFY(selectAudio(r, monitor).devices.isEmpty()); QCOMPARE(calls, 1);
+    r.format = Format::Gif; QVERIFY(audioConsentDiagnostic(r).isEmpty()); QVERIFY(selectAudio(r, monitor).devices.isEmpty()); QCOMPARE(calls, 1);
   }
   // CORE-017: cursor, target, frame timing and quality reach the portal/encoder boundary deterministically.
   void cursorTargetTimingAndQuality() {

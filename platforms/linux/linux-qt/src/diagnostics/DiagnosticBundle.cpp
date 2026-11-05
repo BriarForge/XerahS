@@ -29,6 +29,7 @@ bool recognizedCode(const QString &code) {
     editor::diagnostic::sourceTooLarge, editor::diagnostic::documentVersionUnsupported, editor::diagnostic::documentInvalid,
     editor::diagnostic::documentTooLarge, editor::diagnostic::rasterSaveFailed, editor::diagnostic::sidecarSaveFailed,
     QStringLiteral("audio-device-missing"),
+    QStringLiteral("audio-consent-required"), QStringLiteral("audio-input-unavailable"),
     actions::failureClassName(actions::FailureClass::PermissionDenied), actions::failureClassName(actions::FailureClass::ValidationFailure),
     actions::failureClassName(actions::FailureClass::UnavailableDependency), actions::failureClassName(actions::FailureClass::TransientFailure),
     actions::failureClassName(actions::FailureClass::PermanentFailure)
