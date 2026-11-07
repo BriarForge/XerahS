@@ -265,7 +265,7 @@ private slots:
         const bool mirroredX = std::abs(world(moved, {1, 0}).x - target.x) < 1e-9 && std::abs(world(moved, {1, 0}).y - target.y) < 1e-9;
         const bool mirroredY = std::abs(world(moved, {0, 1}).x - target.x) < 1e-9 && std::abs(world(moved, {0, 1}).y - target.y) < 1e-9;
         QVERIFY(mirroredX != mirroredY);
-        QCOMPARE(decoded(png), origin.flipped(Qt::Orientations((mirroredX ? Qt::Horizontal : Qt::Orientation()) | (mirroredY ? Qt::Vertical : Qt::Orientation()))));
+        QCOMPARE(decoded(png), origin.mirrored(mirroredX, mirroredY));
         QCOMPARE(png == assetPng(), false);
       }
     }
@@ -279,7 +279,7 @@ private slots:
     d.embeddedImages.push_back({QStringLiteral("unused"), assetPng()});
     const auto r = applyCanvasOperation(d, solidImage(kW, kH, 0), action(CanvasAction::FlipHorizontal));
     QVERIFY(r.document);
-    QCOMPARE(decoded(r.document->embeddedImages[0].second), decoded(assetPng()).flipped(Qt::Horizontal));
+    QCOMPARE(decoded(r.document->embeddedImages[0].second), decoded(assetPng()).mirrored(true, false));
     QCOMPARE(r.document->embeddedImages[1].second, assetPng());  // unreferenced entries untouched
     QCOMPARE(r.document->embeddedImages.size(), std::size_t(2));
     QCOMPARE(std::get<RectangleAnnotation>(r.document->annotations[2]).content.imageKey, QStringLiteral("absent"));

@@ -3027,7 +3027,7 @@ private slots:
     QCOMPARE(shapeAt(0).style.rotationDegrees, 60.0);  // 120 deg is nearer the y axis' reflection (60) than the x axis' (240)
     QCOMPARE(shapeAt(0).content.points[0], (PointF{0, .5})); QCOMPARE(shapeAt(0).content.points[1], (PointF{1, .75}));
     QImage assetAfter = QImage::fromData(canvas->annotationDocument().embeddedImages.front().second, "PNG").convertToFormat(QImage::Format_ARGB32);
-    QCOMPARE(assetAfter, assetPixels.flipped(Qt::Vertical));  // the cursor was turned 90 degrees, so the reflection lands on its local y
+    QCOMPARE(assetAfter, assetPixels.mirrored(false, true));  // the cursor was turned 90 degrees, so the reflection lands on its local y
     QCOMPARE(shapeAt(2).style.rotationDegrees, 90.0);
     QVERIFY(window->windowTitle().contains(QChar(0x2022)));
     // Each operation is exactly one history entry.
