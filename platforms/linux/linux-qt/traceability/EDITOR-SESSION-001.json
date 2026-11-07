@@ -2333,6 +2333,12 @@
             "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
             "method": "pathTraversalAndCyclicReferencesReject",
             "line": 106
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "90b72f3d696e25d7e60d1ddb13c6b84f4f57a8f9b6237f69e5aec128daa32b60",
+            "method": "oversizedCanvasOutranksUnsafeContentAndTraversal",
+            "line": 113
           }
         ]
       },
