@@ -44,4 +44,24 @@ constexpr int kHistoryPageSize = 200;
 std::vector<CaptureHistoryItem> historyPage(const std::vector<CaptureHistoryItem> &items, const QString &query, int pages,
                                             int *totalMatches = nullptr);
 
+// Search text beyond this many characters is ignored so a pasted blob cannot make every match expensive.
+constexpr int kHistoryMaxQueryLength = 256;
+
+// Keyset pagination: the position after the last item a viewer has seen. It is independent of how many
+// records were added since, so a new capture never shifts, repeats or skips an item on later pages.
+struct HistoryCursor {
+  QDateTime createdAt;
+  QString taskId;
+  bool valid() const { return createdAt.isValid(); }
+};
+struct HistoryPageResult {
+  std::vector<CaptureHistoryItem> items;
+  HistoryCursor next;   // valid only when more matches follow
+  int totalMatches = 0;
+};
+// Items strictly after `after` (all items when `after` is invalid) in the deterministic order newest first,
+// ties by task ID; at most min(limit, kHistoryPageSize) items.
+HistoryPageResult historyPageAfter(const std::vector<CaptureHistoryItem> &items, const QString &query,
+                                   const HistoryCursor &after = {}, int limit = kHistoryPageSize);
+
 }  // namespace xerahs::history

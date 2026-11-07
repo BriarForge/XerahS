@@ -49,6 +49,52 @@ private slots:
     input.insert("consentGranted", true); const auto rejected = load(input);
     QVERIFY(!rejected.document); QCOMPARE(rejected.error.value_or(""), QString("document-unsafe-content")); QVERIFY(rejected.report.count(ImportDisposition::Rejected) > 0);
   }
+  void failingAnnotationIsIdentifiedByIndexAndIdWithoutPayload() {
+    const QString badId = "11111111-1111-4111-8111-111111111111";
+    for (const auto &c : std::vector<std::pair<QString, QJsonObject>>{
+             {"invalid-record", {{"id", badId}, {"type", "rectangle"}, {"opacity", 7}, {"label", "secret-payload-value"}}},
+             {"unsafe-content", {{"id", badId}, {"type", "future-brush"}, {"consentGranted", "secret-payload-value"}}},
+             {"path-traversal", {{"id", badId}, {"type", "future-brush"}, {"imagePath", "../secret-payload-value"}}}}) {
+      auto input = fixture();
+      auto annotations = input.value("annotations").toArray();
+      annotations.append(c.second);
+      input.insert("annotations", annotations);
+      const auto parsed = load(input);
+      QVERIFY(!parsed.document);
+      QVERIFY(parsed.report.blocksAcceptance());
+      qsizetype rejected = 0;
+      for (const auto &r : parsed.report.records) {
+        if (r.disposition != ImportDisposition::Rejected) continue;
+        ++rejected;
+        QCOMPARE(r.index, qsizetype(1)); QCOMPARE(r.kind, QString("annotation")); QCOMPARE(r.reason, c.first);
+        QCOMPARE(r.id, badId);  // identifies the failing record; the good neighbour (index 0) is never listed
+      }
+      QCOMPARE(rejected, qsizetype(1));
+      QVERIFY(!parsed.report.detailedSummary().contains("secret-payload-value"));
+      QVERIFY(parsed.report.detailedSummary().contains("record 1"));
+    }
+    auto input = fixture(); auto annotations = input.value("annotations").toArray();
+    annotations.append(QJsonObject{{"id", "not-a-uuid-secret-payload-value"}, {"type", "rectangle"}});
+    input.insert("annotations", annotations);
+    const auto parsed = load(input);
+    QVERIFY(!parsed.document); QCOMPARE(parsed.report.records.size(), size_t(1));
+    QCOMPARE(parsed.report.records[0].index, qsizetype(1)); QVERIFY(parsed.report.records[0].id.isEmpty());
+    QVERIFY(!parsed.report.detailedSummary().contains("secret-payload-value"));
+  }
+  void duplicateAndUnsupportedRecordsAreLocated() {
+    auto input = fixture(); auto annotations = input.value("annotations").toArray();
+    annotations.append(QJsonObject{{"id", "64b5a6e5-ad9a-4abe-8bf2-975d86fdc458"}, {"type", "future-brush"}});
+    annotations.append(annotations[0]);
+    input.insert("annotations", annotations);
+    const auto parsed = load(input);
+    QVERIFY(!parsed.document);
+    bool quarantined = false, duplicate = false;
+    for (const auto &r : parsed.report.records) {
+      if (r.disposition == ImportDisposition::Quarantined) { quarantined = r.index == 1 && r.reason == "unsupported-type"; }
+      if (r.disposition == ImportDisposition::Rejected) { duplicate = r.index == 2 && r.reason == "duplicate-id"; }
+    }
+    QVERIFY(quarantined); QVERIFY(duplicate);
+  }
   void nativePresetReceiptsRemainInertWithoutAllowingArbitraryTypeTags() {
     const QJsonObject tag{{"$type", "ShareX.ImageEffectsLib.Contrast"}};
     QJsonObject receipt{{"format", "com.xerahs.app/effect-preset"}, {"version", 1},
@@ -109,6 +155,22 @@ private slots:
       payload = fixture(); payload.insert("extensions", QJsonObject{{"assetPath", path}}); QCOMPARE(load(payload).error.value_or(""), QString("document-path-traversal"));
     }
     auto payload = fixture(); payload.insert("extensions", QJsonObject{{"$ref", "#"}}); QCOMPARE(load(payload).error.value_or(""), QString("document-unsafe-content"));
+  }
+  void oversizedCanvasOutranksUnsafeContentAndTraversal() {
+    // ES-029: document-too-large precedes every other document failure; no pixel buffer is allocated.
+    auto base = fixture(); base.insert("canvasWidth", 100000); base.insert("canvasHeight", 100000);
+    QCOMPARE(load(base).error.value_or(""), QString("document-too-large"));
+    auto unsafe = base; unsafe.insert("extensions", QJsonObject{{"$ref", "#"}});
+    QCOMPARE(load(unsafe).error.value_or(""), QString("document-too-large"));
+    auto traversal = base; traversal.insert("imagePath", "../private/image.png");
+    QCOMPARE(load(traversal).error.value_or(""), QString("document-too-large"));
+    auto both = unsafe; both.insert("imagePath", "../private/image.png"); both.insert("embeddedImages", QJsonObject{{"../x.png", "bad"}});
+    const auto result = load(both); QVERIFY(!result.document);
+    QCOMPARE(result.error.value_or(""), QString("document-too-large")); QVERIFY(result.report.count(ImportDisposition::Rejected) > 0);
+    auto version = both; version.insert("version", 2);
+    QCOMPARE(load(version).error.value_or(""), QString("document-version-unsupported"));
+    auto traversalOnly = fixture(); traversalOnly.insert("imagePath", "../private/image.png");
+    QCOMPARE(load(traversalOnly).error.value_or(""), QString("document-path-traversal"));
   }
   void portableExportReportsBasenameAndPreservesSafeFields() {
     auto input = fixture(); input.insert("imagePath", "C:\\private\\images\\cafe\u0301.png"); input.insert("vendor", QJsonObject{{"label", "opaque\u0301"}});

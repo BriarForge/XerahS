@@ -1,3 +1,4 @@
+#include <QRegularExpression>
 #include "ConfigurationTransfer.h"
 #include "ApplicationSettings.h"
 #include "image-editor/EditorPreferences.h"
@@ -45,6 +46,12 @@ bool validSnapshot(int i, const QByteArray &bytes) {
 }
 void entry(ConfigurationPlan &p, const QString &path, D d) {
   p.report.add(d);
+  if (d == D::Rejected || d == D::Quarantined) {  // COMPCAT-003: paths are structural (known keys, destination ordinals), never values
+    static const QRegularExpression ordinal(QStringLiteral("^destinations\\[(\\d+)\\]$"));
+    const auto m = ordinal.match(path);
+    p.report.addRecord(m.hasMatch() ? m.captured(1).toLongLong() : -1, QStringLiteral("configuration-field"), path, d,
+                       d == D::Rejected ? QStringLiteral("rejected-before-apply") : QStringLiteral("quarantined"));
+  }
   p.fields.append(path + ": " + QStringList{"retained", "transformed", "defaulted", "quarantined", "rejected", "ignored"}.at(static_cast<int>(d)));
 }
 void omit(ConfigurationPlan &p, const QString &code) {

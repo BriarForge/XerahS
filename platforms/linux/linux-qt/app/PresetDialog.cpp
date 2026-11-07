@@ -107,7 +107,7 @@ void PresetDialog::setPreset(EffectPreset preset) {
     any |= step.supported && step.enabled && !unavailable;
   }
   m_canApply = m_preset.ok() && any; m_apply->setEnabled(m_canApply); m_export->setEnabled(m_preset.ok());
-  status(m_preset.error, (m_preset.ok() ? (m_list->count() == 0 ? tr("This preset has no steps, so there is nothing to apply.") : tr("Apply runs supported, enabled steps in order as one undo step. Unsupported data is retained for export.")) : tr("The preset could not be read. The document is unchanged.")) + "\n" + m_preset.report.summary());
+  status(m_preset.error, (m_preset.ok() ? (m_list->count() == 0 ? tr("This preset has no steps, so there is nothing to apply.") : tr("Apply runs supported, enabled steps in order as one undo step. Unsupported data is retained for export.")) : tr("The preset could not be read. The document is unchanged.")) + "\n" + m_preset.report.detailedSummary());
 }
 void PresetDialog::accept() {
   if (m_busy || !m_apply->isEnabled()) return;

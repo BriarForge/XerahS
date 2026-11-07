@@ -110,6 +110,19 @@ private slots:
       QVERIFY(!bad.report.summary().contains("private-value"));
     }
   }
+  void failingStepIsLocatedByIndexWithoutPayload() {
+    const QJsonObject good{{"$type", "Future.Brush"}};
+    const QJsonObject bad{{"$type", "Future.Brush"}, {"ImageLocation", "../private-value"}};
+    const auto failed = readSxiePreset(configZip({{"Effects", QJsonArray{good, good, bad}}}));
+    QVERIFY(!failed.ok()); QCOMPARE(failed.error, QString("preset-unsafe-content"));
+    QCOMPARE(failed.report.records.size(), size_t(1));
+    QCOMPARE(failed.report.records[0].index, qsizetype(2)); QCOMPARE(failed.report.records[0].kind, QString("effect-step"));
+    QCOMPARE(failed.report.records[0].reason, QString("preset-unsafe-content"));
+    QVERIFY(failed.steps.isEmpty());
+    QVERIFY(!failed.report.detailedSummary().contains("private-value"));
+    const auto ok = readSxiePreset(configZip({{"Effects", QJsonArray{good, good}}}));
+    QVERIFY(ok.ok()); QCOMPARE(ok.report.records.size(), size_t(2)); QCOMPARE(ok.report.records[1].index, qsizetype(1));
+  }
   void canonicalPresetLocaleNewlineAndUnicode() {
     using D = xerahs::compatibility::ImportDisposition;
     struct Restore { QLocale locale; ~Restore() { QLocale::setDefault(locale); } } restore;

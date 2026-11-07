@@ -22,6 +22,8 @@ add_library(xerahs_core STATIC
   src/settings/ApplicationSettings.cpp
   src/workflows/WorkflowExecution.cpp
   src/workflows/WorkflowExecution.h
+  src/workflows/FileOperationExecution.cpp
+  src/workflows/FileOperationExecution.h
   src/workflows/CaptureWorkflows.cpp
   src/workflows/CaptureWorkflows.h
   src/workflows/WorkflowShortcuts.cpp
@@ -106,6 +108,8 @@ add_library(xerahs_core STATIC
   src/image-editor/EditorAppearance.h
   src/image-editor/EditorPreferenceStore.cpp
   src/image-editor/EditorPreferenceStore.h
+  src/image-editor/EditorRecovery.cpp
+  src/image-editor/EditorRecovery.h
   src/image-editor/EditorWindowPlacement.cpp
   src/image-editor/EditorWindowPlacement.h
   src/naming/FilenameGenerator.cpp
@@ -668,6 +672,12 @@ add_executable(editor-session-test tests/EditorSessionTest.cpp)
 set_target_properties(editor-session-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-session-test PRIVATE xerahs_core ZLIB::ZLIB Qt6::Test)
 add_test(NAME editor-session COMMAND editor-session-test)
+# ES-018: separate editor recovery documents.
+add_executable(editor-recovery-test tests/EditorRecoveryTest.cpp)
+set_target_properties(editor-recovery-test PROPERTIES AUTOMOC ON)
+target_link_libraries(editor-recovery-test PRIVATE xerahs_core ZLIB::ZLIB Qt6::Test)
+add_test(NAME editor-recovery COMMAND editor-recovery-test)
+set_tests_properties(editor-recovery PROPERTIES TIMEOUT 30)
 
 add_executable(editor-source-test tests/EditorSourceTest.cpp)
 set_target_properties(editor-source-test PROPERTIES AUTOMOC ON)
@@ -1673,4 +1683,14 @@ target_link_libraries(region-capture-native-test PRIVATE xerahs_window_discovery
   xerahs_action_selection xerahs_pipeline_journal xerahs_editor_codecs xerahs_image_recognition Qt6::Widgets Qt6::DBus Qt6::Test)
 add_test(NAME region-capture-native COMMAND region-capture-native-test)
 set_tests_properties(region-capture-native PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
+# CORE-034: linux-editions.json profile completeness and linux-qt mechanism agreement.
+add_executable(edition-profiles-test tests/EditionProfilesTest.cpp)
+set_target_properties(edition-profiles-test PROPERTIES AUTOMOC ON)
+target_compile_definitions(edition-profiles-test PRIVATE
+  XERAHS_EDITIONS_JSON="${CMAKE_CURRENT_SOURCE_DIR}/../../../product-contract/capabilities/CORE-PLATFORM-001/linux-editions.json"
+  XERAHS_LINUX_QT_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(edition-profiles-test PRIVATE Qt6::Core Qt6::Test)
+add_test(NAME edition-profiles COMMAND edition-profiles-test)
+
 include(packaging/Packaging.cmake)

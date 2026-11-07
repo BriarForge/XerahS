@@ -50,6 +50,21 @@ private slots:
     const auto toolbar = store.preferences().values.value("ToolbarItems").toArray();
     QCOMPARE(toolbar.first().toObject().value("Hotkey"), QJsonValue("opaque-inactive"));
   }
+  void invalidSettingIsLocatedByKeyWithoutItsValue() {
+    auto values = settings::defaultSettings("/tmp");
+    values.insert("playCaptureSound", "private-invalid");
+    auto hotkeys = values.value("hotkeys").toObject(); hotkeys.insert("private-unknown-hotkey", "Bogus+Nope"); values.insert("hotkeys", hotkeys);
+    const auto read = settings::repairSettings(values, "/tmp", {});
+    bool found = false;
+    for (const auto &r : read.report.records) {
+      if (r.id == "playCaptureSound") { found = r.disposition == D::Rejected && r.reason == "invalid-value" && r.kind == "setting"; }
+      QVERIFY(!r.id.contains("private"));
+      QVERIFY(r.disposition != D::Retained);
+    }
+    QVERIFY(found);
+    QVERIFY(!read.report.detailedSummary().contains("private"));
+    QCOMPARE(read.values.value("playCaptureSound"), settings::defaultSettings("/tmp").value("playCaptureSound"));
+  }
   void settingsReportRepairsAndTransforms() {
     auto values = settings::defaultSettings("/tmp"); values.remove("showTrayIcon");
     values.insert("playCaptureSound", "private-invalid"); values.insert("legacy.option", 9);

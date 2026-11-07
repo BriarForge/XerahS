@@ -46,6 +46,18 @@ private slots:
       QVERIFY(catalog.entries().isEmpty());
     }
   }
+  void failuresAreLocatedWithoutPayload() {
+    using D = xerahs::compatibility::ImportDisposition;
+    const auto critical = importSxcu(QJsonDocument(QJsonObject{{"RequestURL", "https://example.com/up"}, {"Script", "secret-payload-value"}}).toJson());
+    QVERIFY(critical.acceptanceBlocked); QVERIFY(!critical.report.records.empty());
+    QCOMPARE(critical.report.records[0].index, qsizetype(0)); QCOMPARE(critical.report.records[0].kind, QString("upload-destination"));
+    QCOMPARE(critical.report.records[0].disposition, D::Quarantined);
+    QVERIFY(!critical.report.detailedSummary().contains("secret-payload-value"));
+    const auto broken = importSxcu("{\"secret-payload-value\":");
+    QVERIFY(!broken.ok); QCOMPARE(broken.report.records.size(), size_t(1));
+    QCOMPARE(broken.report.records[0].reason, broken.code);
+    QVERIFY(!broken.report.detailedSummary().contains("secret-payload-value"));
+  }
   void boundaryMatrix_data() {
     QTest::addColumn<QByteArray>("bytes"); QTest::addColumn<QString>("code");
     QTest::newRow("malformed") << QByteArray("{broken") << QString("invalid-json");
