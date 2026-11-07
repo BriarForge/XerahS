@@ -35,6 +35,11 @@ struct Mapping {
 EffectPreset fail(const QString &code) {
   EffectPreset p; p.error = code; p.report.add(compatibility::ImportDisposition::Rejected); return p;
 }
+EffectPreset failAt(const QString &code, qsizetype index) {
+  auto p = fail(code);
+  p.report.addRecord(index, QStringLiteral("effect-step"), QString(), compatibility::ImportDisposition::Rejected, code);
+  return p;
+}
 bool traversal(const QString &path) {
   QString portable = path; portable.replace('\\', '/');
   for (const auto &part : portable.split('/')) if (part == ".." || part == ".") return true;
@@ -308,13 +313,15 @@ EffectPreset readSxiePreset(const QByteArray &bytes, const EffectRegistry &regis
   if (preset.name != preset.legacy.value("Name").toString()) preset.report.add(ImportDisposition::Transformed);
   const auto steps = preset.legacy.value("Effects").toArray();
   if (steps.size() > 256) return fail("preset-step-limit");
+  qsizetype index = -1;
   for (const auto &value : steps) {
-    if (!value.isObject()) return fail("sxie-effect-invalid");
+    ++index;
+    if (!value.isObject()) return failAt("sxie-effect-invalid", index);
     PresetStep step; step.legacy = value.toObject();
-    if (unsafeLegacyStep(step.legacy)) return fail("preset-unsafe-content");
-    if (step.legacy.value("ImageLocation").isString() && traversal(step.legacy.value("ImageLocation").toString())) return fail("preset-path-traversal");
+    if (unsafeLegacyStep(step.legacy)) return failAt("preset-unsafe-content", index);
+    if (step.legacy.value("ImageLocation").isString() && traversal(step.legacy.value("ImageLocation").toString())) return failAt("preset-path-traversal", index);
     if (!step.legacy.contains("Enabled")) preset.report.add(ImportDisposition::Defaulted);
-    if (step.legacy.contains("Enabled") && !step.legacy.value("Enabled").isBool()) return fail("sxie-effect-invalid");
+    if (step.legacy.contains("Enabled") && !step.legacy.value("Enabled").isBool()) return failAt("sxie-effect-invalid", index);
     step.enabled = step.legacy.value("Enabled").toBool(true);
     const auto type = step.legacy.value("$type").toString().section(',', 0, 0).trimmed();
     const Mapping *mapping = nullptr;
@@ -326,6 +333,7 @@ EffectPreset readSxiePreset(const QByteArray &bytes, const EffectRegistry &regis
         if (!step.legacy.contains(QLatin1String(property.property))) preset.report.add(ImportDisposition::Defaulted);
     }
     preset.report.add(step.supported ? ImportDisposition::Transformed : ImportDisposition::Quarantined);
+    if (!step.supported) preset.report.addRecord(index, QStringLiteral("effect-step"), QString(), ImportDisposition::Quarantined, QStringLiteral("unsupported-effect"));
     if (!step.enabled) preset.report.add(ImportDisposition::Ignored);
     preset.steps.append(step);
   }
@@ -379,7 +387,8 @@ EffectPreset readXsiePreset(const QByteArray &bytes, const EffectRegistry &regis
   p.report.add(ImportDisposition::Retained, root.size());
   if (p.name != root.value("name").toString()) p.report.add(ImportDisposition::Transformed);
   if (unsafeExtras(p.legacy, {"Name", "Effects"})) return fail("preset-unsafe-content");
-  for (const auto &v : p.legacy.value("Effects").toArray()) if (unsafeLegacyStep(v.toObject())) return fail("preset-unsafe-content");
+  { qsizetype legacyIndex = -1;
+    for (const auto &v : p.legacy.value("Effects").toArray()) { ++legacyIndex; if (unsafeLegacyStep(v.toObject())) return failAt("preset-unsafe-content", legacyIndex); } }
   p.extra = root;
   for (const auto &key : {"format", "version", "name", "steps", "assets", "legacy"}) p.extra.remove(key);
   if (compatibility::containsUnsafeUnknown(p.extra) || compatibility::containsTraversal(p.extra)) return fail("preset-unsafe-content");
@@ -393,17 +402,19 @@ EffectPreset readXsiePreset(const QByteArray &bytes, const EffectRegistry &regis
     if (!it.value().isString() || !decoded || decoded.decoded.size() > 32 * 1024 * 1024 || total > 128 * 1024 * 1024 || !validateAsset(decoded.decoded)) return fail("preset-asset-invalid");
     p.assets.insert(it.key(), decoded.decoded);
   }
+  qsizetype index = -1;
   for (const auto &value : root.value("steps").toArray()) {
+    ++index;
     const auto o = value.toObject(); PresetStep s; bool seedOk = false;
-    if (!value.isObject() || !o.value("id").isString() || !o.value("parameters").isObject() || !o.value("enabled").isBool() || !o.value("supported").isBool() || !o.value("legacy").isObject()) return fail("preset-step-invalid");
+    if (!value.isObject() || !o.value("id").isString() || !o.value("parameters").isObject() || !o.value("enabled").isBool() || !o.value("supported").isBool() || !o.value("legacy").isObject()) return failAt("preset-step-invalid", index);
     s.id = o.value("id").toString(); s.seed = o.value("seed").toString().toULongLong(&seedOk);
-    if (!seedOk || QString::number(s.seed) != o.value("seed").toString()) return fail("preset-seed-invalid");
+    if (!seedOk || QString::number(s.seed) != o.value("seed").toString()) return failAt("preset-seed-invalid", index);
     s.extra = o;
     for (const auto &key : {"id", "parameters", "seed", "enabled", "supported", "legacy", "diagnostics"}) s.extra.remove(key);
-    if (compatibility::containsUnsafeUnknown(s.extra) || compatibility::containsTraversal(s.extra)) return fail("preset-unsafe-content");
+    if (compatibility::containsUnsafeUnknown(s.extra) || compatibility::containsTraversal(s.extra)) return failAt("preset-unsafe-content", index);
     s.enabled = o.value("enabled").toBool(); s.legacy = o.value("legacy").toObject();
-    if (unsafeLegacyStep(s.legacy)) return fail("preset-unsafe-content");
-    if (traversal(s.legacy.value("ImageLocation").toString())) return fail("preset-path-traversal");
+    if (unsafeLegacyStep(s.legacy)) return failAt("preset-unsafe-content", index);
+    if (traversal(s.legacy.value("ImageLocation").toString())) return failAt("preset-path-traversal", index);
     for (const auto &d : o.value("diagnostics").toArray()) s.diagnostics.append(d.toString());
     const auto params = o.value("parameters").toObject();
     s.parameters = params.toVariantMap();
@@ -412,8 +423,8 @@ EffectPreset readXsiePreset(const QByteArray &bytes, const EffectRegistry &regis
       knownParams.append(param.id);
       if (!params.contains(param.id)) p.report.add(ImportDisposition::Defaulted);
     }
-    if (unsafeExtras(params, knownParams)) return fail("preset-unsafe-content");
-    if (schema) for (const auto &param : schema->spec().parameters) if (param.kind == ParamKind::FilePath && traversal(params.value(param.id).toString())) return fail("preset-path-traversal");
+    if (unsafeExtras(params, knownParams)) return failAt("preset-unsafe-content", index);
+    if (schema) for (const auto &param : schema->spec().parameters) if (param.kind == ParamKind::FilePath && traversal(params.value(param.id).toString())) return failAt("preset-path-traversal", index);
     if (o.value("supported").toBool()) {
       const auto *effect = registry.find(s.id);
       if (effect) {
@@ -425,6 +436,7 @@ EffectPreset readXsiePreset(const QByteArray &bytes, const EffectRegistry &regis
       } else s.diagnostics.append("preset-effect-unsupported");
     }
     p.report.add(s.supported ? ImportDisposition::Retained : ImportDisposition::Quarantined);
+    if (!s.supported) p.report.addRecord(index, QStringLiteral("effect-step"), QString(), ImportDisposition::Quarantined, QStringLiteral("unsupported-effect"));
     if (!s.enabled) p.report.add(ImportDisposition::Ignored);
     p.steps.append(s);
   }

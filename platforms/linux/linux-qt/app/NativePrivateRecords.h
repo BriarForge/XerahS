@@ -14,6 +14,8 @@ public:
   RecordWrite replace(const QString &id, const std::optional<QByteArray> &expected, const QByteArray &bytes) const;
   RecordListing list() const;
   RecordWrite erase(const QString &id, const QByteArray &expected) const;
+  // Renames an unreadable record to <id>.json.corrupt[.N] (never deletes it) when the bytes still match.
+  RecordWrite quarantine(const QString &id, const QByteArray &expected) const;
 private:
   QString m_directory;
   Validator m_validate;

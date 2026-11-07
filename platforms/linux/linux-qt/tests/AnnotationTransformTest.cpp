@@ -13,6 +13,12 @@
 
 #include <cmath>
 
+// QImage::flipped arrived in Qt 6.9; the 6.4.2 baseline (LINUX-TOOLCHAIN-001) only has mirrored().
+[[maybe_unused]] static QImage flippedImage(const QImage &image, Qt::Orientations axes) {
+  return image.mirrored(axes.testFlag(Qt::Horizontal), axes.testFlag(Qt::Vertical));
+}
+
+
 using namespace xerahs::editor;
 
 namespace {
@@ -399,3 +405,4 @@ private slots:
 
 QTEST_APPLESS_MAIN(AnnotationTransformTest)
 #include "AnnotationTransformTest.moc"
+

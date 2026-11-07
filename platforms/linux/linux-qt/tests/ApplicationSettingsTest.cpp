@@ -360,6 +360,46 @@ private slots:
     const auto reverse = bindings.assign("capture-region", "F1"); QVERIFY(!reverse.ok); QCOMPARE(reverse.conflictingAction, id);
     QCOMPARE(bindings.entries.value("capture-region"), "Print");
   }
+  // SETCAT-011: documented reserved desktop gestures are refused with the owning feature named.
+  void reservedDesktopGesturesAreRefusedAndNamed() {
+    for (const auto &g : {"Alt+Tab", "Alt+Shift+Tab", "Alt+F4", "Alt+F2", "Ctrl+Alt+Delete", "Ctrl+Alt+T", "Ctrl+Alt+L", "Meta+L", "Meta+D", "Meta+Tab", "Meta+A",
+        "Meta+Up", "Meta+Down", "Meta+Left", "Meta+Right", "Ctrl+Alt+Left", "Ctrl+Alt+Right", "Ctrl+Alt+Up", "Ctrl+Alt+Down", "Ctrl+Alt+F1", "Ctrl+Alt+F12"}) {
+      auto bindings = HotkeyBindings::defaults(); const auto result = bindings.assign("capture-active-window", g);
+      QVERIFY2(!result.ok, g); QCOMPARE(result.diagnostic, "hotkey-reserved-use-desktop-settings"); QVERIFY2(!result.reservedBy.isEmpty(), g);
+      QVERIFY(bindings.entries.value("capture-active-window").isEmpty());
+    }
+    // Print-based capture keys stay assignable (handled through the shortcuts portal), as do ordinary combinations.
+    for (const auto &ok : {"Print", "Ctrl+Print", "Ctrl+Alt+F13", "Ctrl+Shift+S", "Meta+Space"}) QVERIFY2(reservedGestureOwner(normalizeTrigger(ok)).isEmpty(), ok);
+  }
+  void conflictNamesOwnerAndNeverReplacesUnlessExplicit() {
+    auto bindings = HotkeyBindings::defaults();
+    const auto conflict = bindings.assign("capture-scrolling", "Print"); QVERIFY(!conflict.ok);
+    QCOMPARE(conflict.conflictingAction, "capture-region"); QCOMPARE(bindings.entries.value("capture-region"), "Print");
+    QVERIFY(bindings.entries.value("capture-scrolling").isEmpty());
+    const auto moved = bindings.reassign("capture-scrolling", "Print"); QVERIFY(moved.ok);
+    QCOMPARE(moved.conflictingAction, "capture-region"); QCOMPARE(bindings.entries.value("capture-scrolling"), "Print"); QVERIFY(bindings.entries.value("capture-region").isEmpty());
+    // Reserved gestures cannot be forced through replacement and a failed replacement changes nothing.
+    const auto before = bindings.entries; QVERIFY(!bindings.reassign("capture-region", "Alt+Tab").ok); QCOMPARE(bindings.entries, before);
+  }
+  void replaceButtonIsKeyboardReachableAndOnlyActsOnRequest() {
+    QTemporaryDir dir; ApplicationSettingsStore store(dir.filePath("settings.json"), dir.path());
+    xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; });
+    const auto plan = xerahs::workflows::captureShortcutPlan(xerahs::workflows::defaultCaptureWorkflows(), xerahs::workflows::implementedCaptureActions(), HotkeyBindings::defaults());
+    xerahs::app::SettingsDialog dialog(store, dir.path(), plan, shortcuts, [] {});
+    auto *table = dialog.findChild<QTableWidget *>(); QPushButton *replace = nullptr, *set = nullptr; QLineEdit *trig = nullptr;
+    for (auto *b : dialog.findChildren<QPushButton *>()) { if (b->text().contains("Replace conflicting")) replace = b; if (b->text().startsWith("Set &preferred")) set = b; }
+    for (auto *f : dialog.findChildren<QLineEdit *>()) if (f->accessibleName() == "Preferred trigger for selected action") trig = f;
+    QVERIFY(replace && set && trig); QVERIFY(!replace->isEnabled()); QVERIFY(replace->focusPolicy() != Qt::NoFocus); QVERIFY(!replace->text().isEmpty());
+    int scrolling = -1, region = -1;
+    for (int r = 0; r < table->rowCount(); ++r) { const auto id = table->item(r, 0)->data(Qt::UserRole).toString(); if (id == "capture-scrolling") scrolling = r; if (id == "capture-region") region = r; }
+    QVERIFY(scrolling >= 0 && region >= 0);
+    table->selectRow(scrolling); trig->setText("Print"); set->click();
+    QCOMPARE(table->item(region, 1)->text(), "Print"); QVERIFY(table->item(scrolling, 1)->text().isEmpty()); QVERIFY(replace->isEnabled());
+    table->selectRow(scrolling); trig->setText("Alt+Tab"); set->click(); QVERIFY(!replace->isEnabled());
+    QVERIFY(table->item(scrolling, 1)->text().isEmpty());
+    trig->setText("Print"); set->click(); QVERIFY(replace->isEnabled()); replace->click();
+    QCOMPARE(table->item(scrolling, 1)->text(), "Print"); QVERIFY(table->item(region, 1)->text().isEmpty());
+  }
   void repairsAreFieldSpecific() {
     auto input = defaultSettings("/tmp/captures");
     input.insert("saveFolder", "../bad"); input.insert("filenamePattern", "%rf{private}"); input.insert("showTrayIcon", "false");

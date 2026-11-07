@@ -15,11 +15,40 @@ bool terminal(const QString &state) {
 }
 bool safeDiagnostic(const QString &code) {
   return QStringList{"", "capture-source-failed", "capture-permission-denied", "capture-cancelled", "display-topology-changed", "capture-topology-mismatch", "last-region-invalid",
+      "input-missing", "input-not-file", "input-unreadable", "input-too-large", "destination-catalog-unreadable", "destination-missing",
+      "missing-secret", "credential-unavailable", "http-error", "parse-failed", "invalid-result-url", "timeout", "network-error", "response-too-large",
+      "cancelled", "upload-failed", "watch-capture-directory-failed", "watch-copy-open-failed", "watch-copy-failed", "watch-file-changed",
+      "watch-copy-commit-failed", "watch-move-remove-failed",
       "workflow-not-started", "workflow-interrupted", "workflow-storage-unavailable", "action-failed",
       "encoder-unavailable", "encoder-start-failed", "encoder-failed", "request-invalid", "portal-unavailable", "portal-timeout", "portal-invalid-response", "target-lost", "finalize-timeout", "output-create-failed", "output-publish-failed", "region-outside-stream", "region-mapping-unavailable"}.contains(code);
 }
 bool recordingSnapshot(const QJsonObject &snapshot) { return snapshot.value("capture") == "recording"; }
+bool fileOperationSnapshot(const QJsonObject &snapshot) { return snapshot.value("capture") == "file-operation"; }
+bool fileOperationStep(const QString &action) { return QStringList{"read-file", "upload-file", "copy-file", "remove-source"}.contains(action); }
+// WFCAT-002: frozen, redacted file-operation settings. Destination id/name and
+// rule fields only; never paths, URLs, headers or credentials.
+bool validFileOperation(const QJsonObject &snapshot) {
+  const QStringList keys{"definitionVersion", "id", "capture", "operation", "destination", "rule"};
+  if (snapshot.size() != keys.size() || snapshot.value("definitionVersion") != 1) return false;
+  const auto operation = snapshot.value("operation").toString();
+  if (!QStringList{"upload", "copy", "move"}.contains(operation) || snapshot.value("id") != operation) return false;
+  const auto destination = snapshot.value("destination");
+  if (!destination.isNull()) {
+    const auto o = destination.toObject();
+    if (!destination.isObject() || o.size() != 2 || !o.value("id").isString() || !o.value("name").isString() ||
+        o.value("id").toString().size() > 256 || o.value("name").toString().size() > 1024) return false;
+  }
+  const auto rule = snapshot.value("rule");
+  if (!rule.isNull()) {
+    const auto o = rule.toObject();
+    if (!rule.isObject() || o.size() != 3 || !o.value("action").isString() || !o.value("recursive").isBool() || !o.value("filters").isArray() ||
+        o.value("filters").toArray().size() > 128) return false;
+    for (const auto &filter : o.value("filters").toArray()) if (!filter.isString() || filter.toString().size() > 1024) return false;
+  }
+  return true;
+}
 bool validSnapshot(const QJsonObject &snapshot) {
+  if (fileOperationSnapshot(snapshot)) return validFileOperation(snapshot);
   if (recordingSnapshot(snapshot)) {
     // Full request is frozen privately; projection never exposes paths, device
     // IDs, names or region coordinates. Version 1 was the earlier small record.
@@ -79,25 +108,33 @@ std::optional<WorkflowExecutionRecord> parseWorkflowExecution(const QByteArray &
   r.startedAt = QDateTime::fromString(o.value("startedAt").toString(), Qt::ISODateWithMs);
   r.finishedAt = QDateTime::fromString(o.value("finishedAt").toString(), Qt::ISODateWithMs);
   r.settings = o.value("settings").toObject(); r.steps = o.value("steps").toArray();
-  if (!QStringList{"native-shell", "global-shortcut", "external-activation", "command-line"}.contains(r.origin) ||
+  if (!QStringList{"native-shell", "global-shortcut", "external-activation", "command-line", "file-upload", "watch-folder"}.contains(r.origin) ||
       (!terminal(r.state) && !QStringList{"admitted", "capturing", "processing"}.contains(r.state)) || !r.startedAt.isValid() ||
       terminal(r.state) != r.finishedAt.isValid() || (r.finishedAt.isValid() && r.finishedAt < r.startedAt) ||
       !safeDiagnostic(r.diagnostic) || !validSnapshot(r.settings) || !o.value("steps").isArray() || r.steps.size() > 64 ||
       (!r.pipelineId.isEmpty() && !xerahs::actions::validJournalTaskId(r.pipelineId)) ||
-      ((r.state == "processing" || r.state == "succeeded" || r.state == "partial") && r.pipelineId.isEmpty() && !recordingSnapshot(r.settings))) return {};
+      ((r.state == "processing" || r.state == "succeeded" || r.state == "partial") && r.pipelineId.isEmpty() && !recordingSnapshot(r.settings) && !fileOperationSnapshot(r.settings)) ||
+      (fileOperationSnapshot(r.settings) != (r.origin == "file-upload" || r.origin == "watch-folder")) ||
+      (fileOperationSnapshot(r.settings) && !r.pipelineId.isEmpty())) return {};
   for (const auto &step : r.steps) {
     const auto entry = step.toObject();
     const auto failure = entry.value("failure_class");
     if ((entry.size() != 2 && entry.size() != 3) ||
         (entry.size() == 3 && (o.value("version") != 2 || !xerahs::actions::parseFailureClass(failure.toString()) || entry.value("state") != "failed")) || !entry.value("action").isString() || !entry.value("state").isString() ||
         (!captureStepActions().contains(entry.value("action").toString()) && !xerahs::actions::catalogueIndex(entry.value("action").toString()) &&
+         !(fileOperationSnapshot(r.settings) && fileOperationStep(entry.value("action").toString())) &&
          !(recordingSnapshot(r.settings) && QStringList{"capture-recording", "start-recording", "pause-recording", "resume-recording", "stop-recording", "abort-recording"}.contains(entry.value("action").toString()))) ||
         !QStringList{"succeeded", "failed", "cancelled", "skipped", "permission-denied"}.contains(entry.value("state").toString())) return {};
   }
   if (o.contains("outputs")) {
-    if (o.value("version") != 2 || !recordingSnapshot(r.settings) || !terminal(r.state) || !o.value("outputs").isArray() || o.value("outputs").toArray().size() != 1) return {};
+    if (o.value("version") != 2 || !(recordingSnapshot(r.settings) || fileOperationSnapshot(r.settings)) || !terminal(r.state) || !o.value("outputs").isArray() || o.value("outputs").toArray().size() != 1) return {};
     const auto output = o.value("outputs").toArray().first();
-    if (!output.isString() || !((r.state == "succeeded" && output == r.id + "/recording.file") ||
+    if (fileOperationSnapshot(r.settings)) {
+      // Opaque task-scoped references to a durable side effect, never paths or URLs.
+      const auto upload = r.settings.value("operation") == "upload";
+      if (!output.isString() || !(r.state == "succeeded" || (r.state == "partial" && !upload)) ||
+          output != r.id + (upload ? "/upload.receipt" : "/watch.copy")) return {};
+    } else if (!output.isString() || !((r.state == "succeeded" && output == r.id + "/recording.file") ||
         (r.state != "succeeded" && r.state != "cancelled" && output == r.id + "/recording.partial"))) return {};
     r.outputs = {output.toString()};
   }
@@ -115,7 +152,7 @@ QJsonObject workflowExecutionResult(const WorkflowExecutionRecord &r) {
       {"origin", r.origin}, {"startedAt", date(r.startedAt)}, {"terminal", ended}, {"runtimeStatus", "not-queried"},
       {"state", ended ? r.state : QStringLiteral("outcome-unconfirmed")}, {"lastRecordedState", r.state}, {"steps", r.steps}};
   if (ended) result.insert("finishedAt", date(r.finishedAt));
-  if (recordingSnapshot(r.settings)) result.insert("outputs", QJsonArray::fromStringList(r.outputs));
+  if (recordingSnapshot(r.settings) || fileOperationSnapshot(r.settings)) result.insert("outputs", QJsonArray::fromStringList(r.outputs));
   if (!r.pipelineId.isEmpty()) result.insert("pipelineTaskId", r.pipelineId);
   if (!r.diagnostic.isEmpty()) result.insert("diagnostic", r.diagnostic);
   return result;
@@ -128,10 +165,10 @@ WorkflowExecution::WorkflowExecution(QString id, QString origin, QJsonObject eff
   m_record.id = std::move(id); m_record.origin = std::move(origin); m_record.startedAt = QDateTime::currentDateTimeUtc();
   m_record.settings = std::move(effectiveSettings);
 }
-bool WorkflowExecution::step(const QString &action, const QString &state, const QString &diagnostic) {
-  if (!m_expected || terminal(m_record.state) || !recordingSnapshot(m_record.settings)) return false;
+bool WorkflowExecution::step(const QString &action, const QString &state, const QString &diagnostic, std::optional<xerahs::actions::FailureClass> failure) {
+  if (!m_expected || terminal(m_record.state) || !(recordingSnapshot(m_record.settings) || fileOperationSnapshot(m_record.settings))) return false;
   QJsonObject fact{{"action", action}, {"state", state}};
-  if (state == "failed") fact.insert("failure_class", xerahs::actions::failureClassName(xerahs::actions::classifyFailure(diagnostic)));
+  if (state == "failed") fact.insert("failure_class", xerahs::actions::failureClassName(failure.value_or(xerahs::actions::classifyFailure(diagnostic))));
   m_record.steps.append(fact); return persist();
 }
 WorkflowExecution::~WorkflowExecution() {
@@ -158,7 +195,7 @@ bool WorkflowExecution::processing(const QString &pipelineId) {
 }
 bool WorkflowExecution::finish(const QString &state, const QString &diagnostic, const QStringList &outputs) {
   if (!m_expected || terminal(m_record.state) || !terminal(state)) return false;
-  if (m_record.steps.isEmpty() && state != "not-started") m_record.steps.append(QJsonObject{{"action", captureStep()},
+  if (m_record.steps.isEmpty() && state != "not-started") m_record.steps.append(QJsonObject{{"action", fileOperationSnapshot(m_record.settings) ? QStringLiteral("read-file") : captureStep()},
       {"state", state == "permission-denied" || state == "cancelled" ? state : QStringLiteral("failed")}});
   m_record.outputs = outputs;
   m_record.state = state; m_record.diagnostic = safeDiagnostic(diagnostic) ? diagnostic : QStringLiteral("action-failed");

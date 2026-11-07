@@ -159,7 +159,15 @@ SettingsRead repairSettings(const QJsonObject &input, const QString &saveFolder,
   }
   result.values.insert("hotkeys", bindings);
   using D = compatibility::ImportDisposition;
+  qsizetype fieldIndex = -1;
   for (auto it = result.fields.begin(); it != result.fields.end(); ++it) {
+    ++fieldIndex;
+    const bool hotkey = it.key().startsWith("hotkeys.");
+    const QString locator = hotkey && !defaultBindings.contains(it.key().mid(8)) ? QString() : it.key();
+    // COMPCAT-003: locate non-retained schema fields by key; Unknown keys come from the payload and are never echoed.
+    if (it.value() == FieldState::Invalid) result.report.addRecord(fieldIndex, QStringLiteral("setting"), locator, D::Rejected, QStringLiteral("invalid-value"));
+    else if (it.value() == FieldState::NewerVersion) result.report.addRecord(fieldIndex, QStringLiteral("setting"), locator, D::Rejected, QStringLiteral("newer-version"));
+    else if (it.value() == FieldState::Deprecated) result.report.addRecord(fieldIndex, QStringLiteral("setting"), locator, D::Quarantined, QStringLiteral("deprecated"));
     switch (it.value()) {
       case FieldState::Missing: result.report.add(D::Defaulted); break;
       case FieldState::Invalid: result.report.add(D::Rejected); result.report.add(D::Defaulted); break;

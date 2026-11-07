@@ -98,6 +98,56 @@ private slots:
     QVector<watch::Rule> full(watch::maximumWatchRules + 1);
     QCOMPARE(missing.saveRules(full, dir.filePath("captures")), QString("watch-store-full"));
   }
+  // SETCAT-014: a malformed *object* item (not only a non-object) is isolated, order is preserved,
+  // the corrupt bytes are kept for repair, and no diagnostic carries the item's values.
+  void corruptObjectItemsAreSetAsideValueFreeAndNeighboursKeepOrder() {
+    const QString secret = "SECRET-MARKER-9f3a";
+    {
+      QTemporaryDir dir; const auto path = dir.filePath("workflows.json");
+      auto source = workflows::defaultCaptureWorkflows();
+      auto b = source.entries.front(); b.id = QUuid::createUuid(); b.name = "B"; auto c = b; c.id = QUuid::createUuid(); c.name = "C";
+      source.entries.append(b); source.entries.append(c);
+      auto root = QJsonDocument::fromJson(workflows::workflowsJson(source)).object();
+      auto entries = root.value("workflows").toArray();
+      entries.insert(1, QJsonObject{{"id", QUuid::createUuid().toString()}, {"name", secret}, {"actions", 7}, {"folder", secret}});
+      root.insert("workflows", entries); QVERIFY(write(path, root));
+      editor::FilePreferenceStorage storage(path); workflows::CaptureWorkflowStore store(storage);
+      QVERIFY(store.current().catalog); const auto cat = *store.current().catalog;
+      QCOMPARE(cat.entries.size(), 3); QCOMPARE(cat.entries[1].id, b.id); QCOMPARE(cat.entries[2].id, c.id);
+      QCOMPARE(cat.unreadable.size(), 1); QVERIFY(!store.current().diagnostic.contains(secret));
+      auto draft = cat; draft.entries[2].name = "C2"; QVERIFY(store.save(draft, store.revision()).saved);
+      QVERIFY(QJsonDocument(read(path)).toJson().contains(secret.toUtf8()));
+    }
+    {
+      QTemporaryDir dir; const auto path = dir.filePath("destinations.json");
+      const auto first = destination("First"), second = destination("Second");
+      QJsonObject bad{{"id", QUuid::createUuid().toString(QUuid::WithoutBraces)}, {"name", secret}, {"requestUrl", 5}, {"body", secret}};
+      QJsonObject root{{"format", "com.xerahs.app/linux-qt/upload-destinations"}, {"version", 1}, {"default", first.id.toString()},
+          {"destinations", QJsonArray{QJsonDocument::fromJson(uploads::writeDestination(first)).object(), bad, QJsonDocument::fromJson(uploads::writeDestination(second)).object()}}};
+      QVERIFY(write(path, root)); uploads::DestinationCatalog catalog(path);
+      QCOMPARE(catalog.entries().size(), 2); QCOMPARE(catalog.unreadableCount(), 1);
+      QCOMPARE(catalog.entries()[0].destination.id, first.id); QCOMPARE(catalog.entries()[1].destination.id, second.id);
+      QVERIFY(catalog.setDefault(second.id).isEmpty());
+      QVERIFY(QJsonDocument(read(path)).toJson().contains(secret.toUtf8()));
+    }
+    {
+      QTemporaryDir dir; const auto a = dir.filePath("a"), c = dir.filePath("c"); QVERIFY(QDir().mkpath(a)); QVERIFY(QDir().mkpath(c));
+      const auto path = dir.filePath("watch-folders.json");
+      auto rule = [](const QString &p) { return QJsonObject{{"path", p}, {"filters", QJsonArray{"*.png"}}, {"enabled", true}, {"recursive", false}, {"action", 0}}; };
+      QJsonObject bad{{"path", "/" + secret}, {"filters", 9}, {"enabled", secret}, {"action", secret}};
+      QJsonObject root{{"format", "com.xerahs.app/watch-folders"}, {"version", 1}, {"items", QJsonArray{rule(a), bad, rule(c)}}};
+      QVERIFY(write(path, root)); watch::WatchFolders store(dir.path());
+      QCOMPARE(store.rules().size(), 2); QCOMPARE(store.rules()[0].path, a); QCOMPARE(store.rules()[1].path, c);
+      QCOMPARE(store.diagnostics().size(), 1); QVERIFY(!store.diagnostics().join(' ').contains(secret));
+      QVERIFY(store.saveRules(store.rules(), dir.filePath("captures")).isEmpty());
+      QVERIFY(QJsonDocument(read(path)).toJson().contains(secret.toUtf8()));
+    }
+    {
+      const QJsonObject input{{"RememberRecentImagePaths", true}, {"RecentImageFiles", QJsonArray{"/m/one.png", QJsonObject{{"p", secret}}, "/m/two.png"}}};
+      const auto prefs = editor::loadEditorPreferences(input);
+      QCOMPARE(prefs.recent.paths(), QStringList({"/m/one.png", "/m/two.png"})); QVERIFY(!prefs.diagnostics.join(' ').contains(secret));
+    }
+  }
   void recentItemsKeepHealthyPathsAndDeterministicIdentity() {
     const QJsonObject input{{"RememberRecentImagePaths", true}, {"RecentImageFiles", QJsonArray{"/missing/new.png", 42, "/missing/old.png", "relative", "/missing/new.png"}}};
     const auto prefs = editor::loadEditorPreferences(input);

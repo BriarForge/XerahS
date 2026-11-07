@@ -184,3 +184,16 @@ longer grants file availability. A verified original restored after failed
 unlink receives its updated live identity. Foreign entries never receive one.
 `CaptureDeleteTest` and its killed-process fixture exercise these paths. This
 bounded policy does not resolve general temporary-media retention or release review.
+
+## History search, paging and corrupt-record set-aside (CORE-023)
+
+`historyPageAfter` (Qt Core) pages the filtered history with a keyset cursor
+(created time, task ID), newest first with task-ID tie-break, at most 200 items
+per page, so records added between loads never repeat or skip items. Search text
+is capped at 256 characters. `NativePipelineJournal::listRecovering` renames
+records that fail parsing (truncated, malformed) to `<id>.json.corrupt[.N]`
+under the descriptor lock only while the bytes are unchanged; it never deletes,
+never overwrites an earlier backup, and leaves newer-version, symlink, FIFO and
+unreadable files alone. The history window shows a value-free count. Open
+product questions: retention limits and pruning of `.corrupt` backups, and
+whether the window should offer an explicit restore action.
