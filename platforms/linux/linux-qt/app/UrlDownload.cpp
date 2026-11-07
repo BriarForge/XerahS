@@ -94,7 +94,11 @@ void UrlDownload::onFinished() {
   if (!m_abortReason.isEmpty()) { complete(m_abortReason); return; }
   if (error == QNetworkReply::TimeoutError) { complete(text(urlDiagnostic::timeout)); return; }
   if (error == QNetworkReply::SslHandshakeFailedError) { complete(text(urlDiagnostic::tlsFailed)); return; }
-  if (error == QNetworkReply::OperationCanceledError) { complete(text(urlDiagnostic::cancelled)); return; }
+  // Our own cancel() always sets m_abortReason first, so an unexplained cancellation here is Qt's transfer
+  // timeout: Qt before 6.7 reports setTransferTimeout() expiry as OperationCanceledError, not TimeoutError.
+  if (error == QNetworkReply::OperationCanceledError) {
+    complete(text(m_limits.timeoutMs > 0 ? urlDiagnostic::timeout : urlDiagnostic::cancelled)); return;
+  }
   if (isRedirect(status) && error == QNetworkReply::NoError) {
     const auto decision = decideRedirect(m_current, rawLocation, m_result.redirects, m_allowPlainHttp, m_limits.maxRedirects);
     if (!decision.target) { complete(decision.error); return; }

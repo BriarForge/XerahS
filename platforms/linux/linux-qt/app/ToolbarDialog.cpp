@@ -1,4 +1,5 @@
 #include "PreferenceDialog.h"
+#include "AccessibleCue.h"
 #include "NativeEditorToolbar.h"
 #include "NativeEditorAppearance.h"
 #include "NativeEditorPreferences.h"
@@ -104,7 +105,7 @@ bool manageEditorToolbar(QWidget *parent, const ToolbarActionRegistry &actions) 
     dialog->commit([draft, revision] { return applyToolbarPreferences(draft, revision); }, [=](const PreferenceWrite &written) {
       error->setText(editorPreferenceDiagnosticMessage(written.diagnostic)); if (!dialog) return;
       table->setFocus(); if (!dialog) return;
-      QAccessibleEvent alert(error, QAccessible::Alert); QAccessible::updateAccessibility(&alert);
+      raiseAccessibleCue(error, QAccessible::Alert);
     });
   });
   QObject::connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
