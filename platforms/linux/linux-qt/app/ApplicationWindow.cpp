@@ -1,4 +1,5 @@
 #include "NativeAccessibility.h"
+#include "AccessibleCue.h"
 #include "NativeWindowPlacement.h"
 #include "ApplicationWindow.h"
 #include "CommandRegistry.h"
@@ -119,8 +120,7 @@ void ApplicationWindow::showResult(const QString &title, const QString &body, bo
   m_progress->hide(); m_progressTitle.clear();
   const auto text = body.isEmpty() ? title : title + QStringLiteral(": ") + body;
   m_status->setText(text); m_status->setAccessibleDescription(text);
-  QAccessibleEvent event(m_status, success ? QAccessible::DescriptionChanged : QAccessible::Alert);
-  QAccessible::updateAccessibility(&event);
+  raiseAccessibleCue(m_status, success ? QAccessible::DescriptionChanged : QAccessible::Alert);
 }
 void ApplicationWindow::showProgress(const QString &title, int percent) {
   m_progressTitle = title;

@@ -91,9 +91,14 @@ static LoadedSource loadSourceImpl(const QString &path, const RenderControl &con
   const QByteArray &bytes = raster.fileBytes;
   const QImage &image = raster.image;
 
+  // The normalized PNG is the bare-raster session's source, or the "current raster" side of a mismatch
+  // choice. A sidecar whose hash matches never reads it, so encode it only when one of those needs it:
+  // a 4K encode is most of the opening latency budget.
   QByteArray normalizedPng;
-  QBuffer normalized(&normalizedPng);
-  if (!normalized.open(QIODevice::WriteOnly) || !image.save(&normalized, "PNG")) return fail(diagnostic::sourceCorrupt);
+  const auto encodeNormalized = [&] {
+    QBuffer normalized(&normalizedPng);
+    return normalized.open(QIODevice::WriteOnly) && image.save(&normalized, "PNG");
+  };
   progress(control, 50);
   if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
 
@@ -140,6 +145,8 @@ static LoadedSource loadSourceImpl(const QString &path, const RenderControl &con
     const QImage embeddedDisplay = displayCopy(embedded);
     if (embeddedDisplay.isNull()) return fail(diagnostic::documentTooLarge);
     if (binding.choiceRequired) {
+      if (!encodeNormalized()) return fail(diagnostic::sourceCorrupt);
+      if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
       const QImage currentDisplay = displayCopy(image);
       if (currentDisplay.isNull()) return fail(diagnostic::documentTooLarge);
       progress(control, 100);
@@ -159,6 +166,8 @@ static LoadedSource loadSourceImpl(const QString &path, const RenderControl &con
     return result;
   }
 
+  if (!encodeNormalized()) return fail(diagnostic::sourceCorrupt);
+  if (cancelled(control)) return fail(QStringLiteral("canvas-cancelled"));
   AnnotationDocument document;
   document.imagePath = path;
   document.imageHash = hash;
