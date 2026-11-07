@@ -125,13 +125,13 @@ EditorWindow *EditorWindow::open(const QString &path, QWidget *parent) {
     if ((parent && !owner) || source.diagnostic == u"canvas-cancelled") return false;
     if (!source.document) {
       QString detail = describe(source.diagnostic);
-      if (source.importReport) detail += QStringLiteral("\n\n") + source.importReport->summary();
+      if (source.importReport) detail += QStringLiteral("\n\n") + source.importReport->detailedSummary();
       editorWarning(owner, "Cannot open image", QStringLiteral("%1\n\n%2").arg(QFileInfo(path).fileName(), detail)); return false;
     }
     try { window = new EditorWindow(target, std::move(source.image), std::move(*source.document), EditorSession::InitialPersistence::Saved, std::move(source.displayImage)); }
     catch (const std::bad_alloc &) { editorWarning(owner, "Cannot open image", describe(diagnostic::documentTooLarge)); return false; }
     window->setAttribute(Qt::WA_DeleteOnClose);
-    if (source.importReport) { window->m_importMessage = QStringLiteral("Annotation import: ") + source.importReport->summary(); window->refresh(); }
+    if (source.importReport) { window->m_importMessage = QStringLiteral("Annotation import: ") + source.importReport->detailedSummary(); window->refresh(); }
     if (!source.warnings.isEmpty()) {
       QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Information, "Annotations", source.warnings.join(QLatin1Char('\n')), QMessageBox::Ok, window)); box->setTextFormat(Qt::PlainText); box->exec(); disposeCanvasDialog(box.data());
     }
@@ -915,7 +915,7 @@ bool EditorWindow::openImage(const QString &path) {
     if (source.diagnostic == u"canvas-cancelled") return false;
     if (source.document) return true;
     withOutputBusy([guard, target, diagnostic = source.diagnostic, report = source.importReport] {
-      if (guard) editorWarning(guard, "Cannot open image", QStringLiteral("%1\n\n%2").arg(QFileInfo(target).fileName(), describe(diagnostic) + (report ? "\n\n" + report->summary() : QString())));
+      if (guard) editorWarning(guard, "Cannot open image", QStringLiteral("%1\n\n%2").arg(QFileInfo(target).fileName(), describe(diagnostic) + (report ? "\n\n" + report->detailedSummary() : QString())));
       return false; });
     return false;
   };
@@ -938,7 +938,7 @@ bool EditorWindow::openImage(const QString &path) {
     guard->adoptSession(std::move(next), target, std::move(source.image), source.displayImage); return bool(guard);
   });
   if (!guard || !adopted) return false;
-  if (source.importReport) m_importMessage = QStringLiteral("Annotation import: ") + source.importReport->summary();
+  if (source.importReport) m_importMessage = QStringLiteral("Annotation import: ") + source.importReport->detailedSummary();
   recordRecentImage(target); return bool(guard);
 }
 

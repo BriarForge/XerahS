@@ -628,24 +628,33 @@ QJsonObject serializeDocument(const AnnotationDocument &document) {
 AnnotationListResult parseAnnotationList(const QJsonArray &items) {
   Findings findings; std::vector<Annotation> result; QSet<QUuid> ids;
   compatibility::ImportReport report;
+  qsizetype index = -1;
+  const auto locate = [&](const QJsonValue &item, ImportDisposition d, const char *reason) {
+    // Only a syntactically valid UUID is echoed; never any other payload text.
+    const QString raw = item.isObject() ? item.toObject().value(u"id").toString() : QString();
+    report.addRecord(index, QStringLiteral("annotation"), isUuid(raw) ? raw : QString(), d, QLatin1String(reason));
+  };
   for (const auto &item : items) {
+    ++index;
     auto annotation = parseAnnotation(item, findings);
-    if (!annotation) { report.add(ImportDisposition::Rejected); continue; }
+    if (!annotation) { report.add(ImportDisposition::Rejected); locate(item, ImportDisposition::Rejected, "invalid-record"); continue; }
     const QUuid id = annotationId(*annotation);
-    if (ids.contains(id)) { findings.invalid = true; report.add(ImportDisposition::Rejected); continue; }
+    if (ids.contains(id)) { findings.invalid = true; report.add(ImportDisposition::Rejected); locate(item, ImportDisposition::Rejected, "duplicate-id"); continue; }
     ids.insert(id);
     const auto raw = item.toObject();
     const auto *known = std::get_if<RectangleAnnotation>(&*annotation);
     const QJsonObject extra = known ? known->extra : raw;
     if (unsafePathContent(extra) || (known && traversal(known->content.imageKey))) {
       report.add(ImportDisposition::Rejected);
+      locate(item, ImportDisposition::Rejected, "path-traversal");
       return {std::nullopt, QStringLiteral("document-path-traversal"), report};
     }
     if (compatibility::containsUnsafeUnknown(extra)) {
       report.add(ImportDisposition::Rejected);
+      locate(item, ImportDisposition::Rejected, "unsafe-content");
       return {std::nullopt, QStringLiteral("document-unsafe-content"), report};
     }
-    if (!known) report.add(ImportDisposition::Quarantined); // inert UnsupportedAnnotation, never rendered/executed
+    if (!known) { locate(item, ImportDisposition::Quarantined, "unsupported-type"); report.add(ImportDisposition::Quarantined); } // inert UnsupportedAnnotation, never rendered/executed
     else {
       const auto canonical = serializeAnnotationList({*annotation}).at(0).toObject();
       for (auto it = raw.begin(); it != raw.end(); ++it) {

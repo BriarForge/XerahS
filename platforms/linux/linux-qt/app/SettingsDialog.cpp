@@ -296,11 +296,11 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
     status->setText(text("Settings imported or restored. Credentials were not imported. Preferred hotkeys need desktop confirmation."));
   };
   auto previewTransfer = [=](const ConfigurationPlan &plan, const QString &title, const QString &description, std::function<QString()> commit) {
-    report->setText(plan.report.summary() + "\n" + plan.code);
+    report->setText(plan.report.detailedSummary() + "\n" + plan.code);
     if (!plan.valid()) { status->setText(plan.code); return; }
     auto *confirm = new QMessageBox(QMessageBox::Question, title,
         description + text("\nUnapplied preferences will be discarded. History, credentials and user files are kept. "
-        "Secrets must be authorized separately.\n") + plan.report.summary(), QMessageBox::Apply | QMessageBox::Cancel, this);
+        "Secrets must be authorized separately.\n") + plan.report.detailedSummary(), QMessageBox::Apply | QMessageBox::Cancel, this);
     confirm->setTextFormat(Qt::PlainText); confirm->setDetailedText(plan.preview()); confirm->setDefaultButton(QMessageBox::Cancel);
     confirm->setObjectName("configurationImportPreview"); confirm->setAttribute(Qt::WA_DeleteOnClose);
     connect(confirm, &QMessageBox::finished, this, [=](int result) {

@@ -267,7 +267,8 @@ SxcuImportResult importSxcu(const QByteArray &bytes) {
   const auto parsed = compatibility::readJson(bytes, {kMaxDestinationBytes, kMaxDepth, 100000});
   if (!parsed.ok() || !parsed.document.isObject()) {
     SxcuImportResult failed; failed.code = parsed.ok() ? QStringLiteral("invalid-json") : parsed.code;
-    failed.report.add(ImportDisposition::Rejected); return failed;
+    failed.report.add(ImportDisposition::Rejected);
+    failed.report.addRecord(0, QStringLiteral("upload-destination"), QString(), ImportDisposition::Rejected, failed.code); return failed;
   }
   auto root = parsed.document.object();
   const auto original = root;
@@ -353,11 +354,14 @@ SxcuImportResult importSxcu(const QByteArray &bytes) {
   if (original.value("Name").toString().trimmed().isEmpty()) result.report.add(ImportDisposition::Defaulted);
   result.report.add(ImportDisposition::Quarantined, result.quarantine.size());
   result.acceptanceBlocked = !result.quarantine.isEmpty();
+  if (!result.quarantine.isEmpty())
+    result.report.addRecord(0, QStringLiteral("upload-destination"), QString(), ImportDisposition::Quarantined, QStringLiteral("critical-metadata-quarantined"));
   for (const auto &warning : result.warnings) {
     if (warning.code == "secret-extracted" || warning.code == "split-query" || warning.code == "inferred-body")
       result.report.add(ImportDisposition::Transformed);
     else {
       result.report.add(ImportDisposition::Rejected);
+      result.report.addRecord(0, QStringLiteral("upload-destination"), QString(), ImportDisposition::Rejected, warning.code);
       result.acceptanceBlocked = true;
     }
   }
