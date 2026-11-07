@@ -67,6 +67,8 @@ These rules apply everywhere and cannot be weakened by a child file.
 
 Architecture decisions: [BXIP001](docs/proposals/BXIP001-contract-first-agent-native-platform-architecture/README.md).
 
+Agent skills: `.codex/skills/` holds graphify and a vendored subset of pstack (also reachable from `.claude/skills/`). Before following a pstack skill, read [the pstack notes](.codex/pstack/README.md). This file wins over any skill text.
+
 ## Build order: build it like a house (mandatory)
 
 Work toward a usable product in dependency order: foundation, then frame, then services, then furniture. Guardrails exist to protect the product. They are not the product.
