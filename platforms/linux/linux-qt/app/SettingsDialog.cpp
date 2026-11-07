@@ -155,6 +155,9 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch); hotkeyLayout->addWidget(table);
   auto *trigger = new QLineEdit(hotkeyPage); trigger->setAccessibleName(text("Preferred trigger for selected action")); trigger->setPlaceholderText(text("Ctrl+Print, Shift+F1, or blank to clear; modifiers Ctrl, Alt, Shift, Meta")); hotkeyLayout->addWidget(trigger);
   auto *assign = new QPushButton(text("Set &preferred trigger"), hotkeyPage); hotkeyLayout->addWidget(assign);
+  auto *replace = new QPushButton(text("&Replace conflicting binding"), hotkeyPage); replace->setEnabled(false);
+  replace->setToolTip(text("Moves the trigger to the selected action and clears the action that held it."));
+  hotkeyLayout->addWidget(replace);
   auto *desktop = new QPushButton(text("Change in &desktop settings… (closes unapplied draft)"), hotkeyPage); hotkeyLayout->addWidget(desktop);
   auto *status = new QLabel(this); status->setTextFormat(Qt::PlainText); status->setWordWrap(true); status->setAccessibleName(text("Settings validation and conflicts"));
   status->setText((store.current().diagnostics + (plan.diagnostic.isEmpty() ? QStringList{} : QStringList{plan.diagnostic + text(": reload Capture workflows before enabling shortcuts")})).join('\n')); layout->addWidget(status);
@@ -205,9 +208,24 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
     const int row = table->currentRow(); if (row < 0) return;
     auto bindings = hotkeys(*draft); const auto id = table->item(row, 0)->data(Qt::UserRole).toString();
     const auto result = bindings.assign(id, trigger->text());
-    if (!result.ok) { status->setText(result.diagnostic + (result.conflictingAction.isEmpty() ? "" : ": " + result.conflictingAction) + text(". Change or clear the conflicting binding, then retry.")); return; }
+    replace->setEnabled(false);
+    if (!result.ok) {
+      if (!result.reservedBy.isEmpty()) { status->setText(result.diagnostic + ": " + result.reservedBy + text(". Choose another trigger or change the desktop shortcut.")); return; }
+      replace->setEnabled(!result.conflictingAction.isEmpty());
+      status->setText(result.diagnostic + (result.conflictingAction.isEmpty() ? "" : ": " + result.conflictingAction) + text(". Change or clear the conflicting binding, then retry; or press Replace to move the trigger here (keep: choose another trigger; cancel: Escape)."));
+      return;
+    }
     auto object = draft->value("hotkeys").toObject(); object.insert(id, bindings.entries.value(id)); draft->insert("hotkeys", object);
     table->item(row, 1)->setText(bindings.entries.value(id)); status->setText(text("Preference updated in draft. Apply to save; change in desktop settings to request binding."));
+  });
+  connect(replace, &QPushButton::clicked, this, [=] {
+    const int row = table->currentRow(); if (row < 0) return;
+    auto bindings = hotkeys(*draft); const auto id = table->item(row, 0)->data(Qt::UserRole).toString();
+    const auto result = bindings.reassign(id, trigger->text()); replace->setEnabled(false);
+    if (!result.ok) { status->setText(result.diagnostic); return; }
+    draft->insert("hotkeys", [&] { QJsonObject o; for (auto it = bindings.entries.cbegin(); it != bindings.entries.cend(); ++it) o.insert(it.key(), it.value()); return o; }());
+    for (int r = 0; r < table->rowCount(); ++r) if (auto *cell = table->item(r, 1)) cell->setText(bindings.entries.value(table->item(r, 0)->data(Qt::UserRole).toString()));
+    status->setText(text("Trigger moved from %1 to the selected action in draft. Apply to save.").arg(result.conflictingAction));
   });
   // Enter on an action moves to its trigger; Enter on the trigger assigns it; Escape on an
   // edited trigger cancels the edit (a second Escape closes the dialog and discards the draft).
