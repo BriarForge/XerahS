@@ -3,6 +3,7 @@
 #pragma once
 #include "NativeWindowPlacement.h"
 #include <QAccessible>
+#include "AccessibleCue.h"
 #include <QLabel>
 namespace xerahs::app {
 class NativeAccessibility final : public QObject {
@@ -36,8 +37,7 @@ public:
       label->setAccessibleDescription(label->text());
       if (!owner) return;
       if (!current) continue;
-      QAccessibleEvent update(label, identity.contains("error") && !label->text().isEmpty() ? QAccessible::Alert : QAccessible::DescriptionChanged);
-      QAccessible::updateAccessibility(&update);
+      raiseAccessibleCue(label, identity.contains("error") && !label->text().isEmpty() ? QAccessible::Alert : QAccessible::DescriptionChanged);
       if (!owner) return;
     }
   }

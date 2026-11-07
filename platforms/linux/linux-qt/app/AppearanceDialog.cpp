@@ -1,4 +1,5 @@
 #include "PreferenceDialog.h"
+#include "AccessibleCue.h"
 #include "AppearanceDialog.h"
 #include "NativeEditorAppearance.h"
 #include "NativeEditorPreferences.h"
@@ -82,7 +83,7 @@ bool manageEditorAppearance(QWidget *parent) {
       if (!dialog) return;
       if (written.diagnostic == u"invalid-AccentColorHex") accent->setFocus();
       if (!dialog) return;
-      QAccessibleEvent alert(error, QAccessible::Alert); QAccessible::updateAccessibility(&alert);
+      raiseAccessibleCue(error, QAccessible::Alert);
     });
   });
   QObject::connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);

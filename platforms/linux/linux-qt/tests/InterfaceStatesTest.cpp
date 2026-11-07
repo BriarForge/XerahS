@@ -3,6 +3,7 @@
 // and watch-folders dialogs. Every state is reached through the real widget and
 // must be visible as text (never colour alone) with an accessible cue.
 // States that a surface cannot be in are declared "n/a" with the reason.
+#include "AccessibleCue.h"
 #include "ActionSelectionDialog.h"
 #include "AppearanceDialog.h"
 #include "AutoCaptureDialog.h"
@@ -257,7 +258,12 @@ class InterfaceStatesTest final : public QObject {
     return states;
   }
 private slots:
-  void initTestCase() { QVERIFY(dir.isValid()); QAccessible::installUpdateHandler(record); }
+  // Qt drops accessibility updates while no assistive client is active (always, on Qt 6.4 offscreen), so observe
+  // the cue the production code raises as well as anything Qt delivers.
+  void initTestCase() {
+    QVERIFY(dir.isValid()); QAccessible::installUpdateHandler(record);
+    accessibleCueObserver() = [](QObject *, QAccessible::Event type) { if (type == QAccessible::Alert) lastAlert = QAccessible::Alert; };
+  }
 
   // Auto capture: initial, populated, validation, running, error.
   // empty: n/a because the dialog always opens with its default source, interval and count.
