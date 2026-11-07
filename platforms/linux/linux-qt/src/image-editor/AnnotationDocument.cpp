@@ -517,6 +517,10 @@ ParseResult parseDocument(const QJsonObject &payload) {
   }
 
   Findings findings;
+  // Unsafe-content / traversal rejections are remembered (first encountered wins) and reported
+  // after the ES-029 priority 2 size failure, so a too-large document is never masked by them.
+  QString security;
+  const auto flagSecurity = [&security](const QString &code) { if (security.isEmpty()) security = code; };
   if (!isInteger(version) || version.toDouble() != 1) findings.invalid = true;
 
   AnnotationDocument document;
@@ -528,9 +532,7 @@ ParseResult parseDocument(const QJsonObject &payload) {
     findings.invalid = true;
   }
   document.imagePath = payload.value(u"imagePath").toString();
-  if (traversal(document.imagePath)) {
-    result.error = QStringLiteral("document-path-traversal"); result.report.add(ImportDisposition::Rejected); return result;
-  }
+  if (traversal(document.imagePath)) flagSecurity(QStringLiteral("document-path-traversal"));
   document.imageHash = payload.value(u"imageHash").toString();
   static const QRegularExpression hashPattern(QStringLiteral("^(|sha256:[0-9a-f]{64})$"));
   if (!hashPattern.match(document.imageHash).hasMatch()) findings.invalid = true;
@@ -560,7 +562,7 @@ ParseResult parseDocument(const QJsonObject &payload) {
   } else {
     const QJsonObject images = embedded.toObject();
     for (auto it = images.begin(); it != images.end(); ++it) {
-      if (traversal(it.key())) { result.error = QStringLiteral("document-path-traversal"); result.report.add(ImportDisposition::Rejected); return result; }
+      if (traversal(it.key())) flagSecurity(QStringLiteral("document-path-traversal"));
       if (auto png = decodePng(it.value(), findings)) document.embeddedImages.emplace_back(it.key(), *png);
     }
   }
@@ -574,17 +576,15 @@ ParseResult parseDocument(const QJsonObject &payload) {
     auto parsed = parseAnnotationList(annotations.toArray());
     result.report = parsed.report;
     if (parsed.annotations) document.annotations = std::move(*parsed.annotations);
-    else if (parsed.diagnostic != diagnostic::documentInvalid) { result.error = parsed.diagnostic; return result; }
+    else if (parsed.diagnostic != diagnostic::documentInvalid) flagSecurity(parsed.diagnostic);
     else findings.invalid = true;
   }
 
   for (auto it = payload.begin(); it != payload.end(); ++it) {
     if (!kKnownDocumentKeys.contains(it.key()) || it.key() == QStringLiteral("extensions")) {
-      if (unsafePathContent(QJsonObject{{it.key(), it.value()}})) {
-        result.error = QStringLiteral("document-path-traversal"); result.report.add(ImportDisposition::Rejected); return result;
-      }
+      if (unsafePathContent(QJsonObject{{it.key(), it.value()}})) { flagSecurity(QStringLiteral("document-path-traversal")); continue; }
       if (compatibility::unsafeUnknown(it.key()) || unsafeDocumentExtra(QJsonObject{{it.key(), it.value()}})) {
-        result.error = QStringLiteral("document-unsafe-content"); result.report.add(ImportDisposition::Rejected); return result;
+        flagSecurity(QStringLiteral("document-unsafe-content")); continue;
       }
       document.extra.insert(it.key(), it.value());
     }
@@ -592,6 +592,7 @@ ParseResult parseDocument(const QJsonObject &payload) {
 
   // ES-029 priority 2 and 3.
   if (findings.tooLarge) result.error = diagnostic::documentTooLarge;
+  else if (!security.isEmpty()) result.error = security;
   else if (findings.invalid) result.error = diagnostic::documentInvalid;
   else result.document = std::move(document);
   if (result.error) result.report.add(ImportDisposition::Rejected);

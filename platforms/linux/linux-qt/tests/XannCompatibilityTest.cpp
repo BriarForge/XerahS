@@ -110,6 +110,22 @@ private slots:
     }
     auto payload = fixture(); payload.insert("extensions", QJsonObject{{"$ref", "#"}}); QCOMPARE(load(payload).error.value_or(""), QString("document-unsafe-content"));
   }
+  void oversizedCanvasOutranksUnsafeContentAndTraversal() {
+    // ES-029: document-too-large precedes every other document failure; no pixel buffer is allocated.
+    auto base = fixture(); base.insert("canvasWidth", 100000); base.insert("canvasHeight", 100000);
+    QCOMPARE(load(base).error.value_or(""), QString("document-too-large"));
+    auto unsafe = base; unsafe.insert("extensions", QJsonObject{{"$ref", "#"}});
+    QCOMPARE(load(unsafe).error.value_or(""), QString("document-too-large"));
+    auto traversal = base; traversal.insert("imagePath", "../private/image.png");
+    QCOMPARE(load(traversal).error.value_or(""), QString("document-too-large"));
+    auto both = unsafe; both.insert("imagePath", "../private/image.png"); both.insert("embeddedImages", QJsonObject{{"../x.png", "bad"}});
+    const auto result = load(both); QVERIFY(!result.document);
+    QCOMPARE(result.error.value_or(""), QString("document-too-large")); QVERIFY(result.report.count(ImportDisposition::Rejected) > 0);
+    auto version = both; version.insert("version", 2);
+    QCOMPARE(load(version).error.value_or(""), QString("document-version-unsupported"));
+    auto traversalOnly = fixture(); traversalOnly.insert("imagePath", "../private/image.png");
+    QCOMPARE(load(traversalOnly).error.value_or(""), QString("document-path-traversal"));
+  }
   void portableExportReportsBasenameAndPreservesSafeFields() {
     auto input = fixture(); input.insert("imagePath", "C:\\private\\images\\cafe\u0301.png"); input.insert("vendor", QJsonObject{{"label", "opaque\u0301"}});
     const auto parsed = load(input); QVERIFY(parsed.document);

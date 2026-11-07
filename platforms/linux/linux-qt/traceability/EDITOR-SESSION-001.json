@@ -2261,13 +2261,13 @@
       "previous_note": "Canvas and embedded-image limits are checked from JSON and PNG headers; readXann stops inflating at the JSON byte limit (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. The annotation-transfer checkpoint brought toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required."
     },
     "ES-029": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "newer-version-read-only-failure",
         "duplicate-annotation-ids-rejected",
         "oversized-canvas-rejected-before-allocation"
       ],
-      "note": "Reproduced through current production conformance adapter: oversized canvas alone returns document-too-large, but adding unsafe extensions or traversal returns document-unsafe-content/document-path-traversal before accumulated size failure; required ES-029 priority is incomplete.",
+      "note": "Document diagnostics follow the ES-029 order version-unsupported, too-large, then (path-traversal/unsafe-content, which have no contract rank and keep outranking document-invalid), then invalid, even when an oversized canvas is combined with unsafe extensions, traversal in imagePath/embeddedImages/extensions, or an unsafe annotation record (XannCompatibilityTest::oversizedCanvasOutranksUnsafeContentAndTraversal, no pixel allocation). Open product question: the contract does not rank document-unsafe-content/document-path-traversal against document-invalid; current behaviour keeps them above invalid.",
       "evidence": [
         "platforms/linux/linux-qt/app/NEW-OPEN-WORKERS.md",
         "platforms/linux/linux-qt/app/NEW-OPEN-WORKERS-EVIDENCE.json",
@@ -2280,14 +2280,14 @@
       ],
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 143,
         "published_vectors": [
           "newer-version-read-only-failure",
           "duplicate-annotation-ids-rejected",
           "oversized-canvas-rejected-before-allocation"
         ],
-        "coverage": "Reproduced through current production conformance adapter: oversized canvas alone returns document-too-large, but adding unsafe extensions or traversal returns document-unsafe-content/document-path-traversal before accumulated size failure; required ES-029 priority is incomplete.",
+        "coverage": "Document diagnostics follow the ES-029 order version-unsupported, too-large, then (path-traversal/unsafe-content, which have no contract rank and keep outranking document-invalid), then invalid, even when an oversized canvas is combined with unsafe extensions, traversal in imagePath/embeddedImages/extensions, or an unsafe annotation record (XannCompatibilityTest::oversizedCanvasOutranksUnsafeContentAndTraversal, no pixel allocation). Open product question: the contract does not rank document-unsafe-content/document-path-traversal against document-invalid; current behaviour keeps them above invalid.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -2296,7 +2296,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "1423bb9d5dd0718b88b29925fbac463435b180b74d7484da3cfa964efd9da982"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
