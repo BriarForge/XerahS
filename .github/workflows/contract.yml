@@ -41,7 +41,7 @@ jobs:
           apt-get update
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             ca-certificates git cmake ninja-build g++ qt6-base-dev zlib1g-dev python3 dbus-daemon \
-            dpkg-dev file rpm desktop-file-utils appstream
+            poppler-utils dpkg-dev file rpm desktop-file-utils appstream
       - uses: actions/checkout@v4
       - name: Validate desktop entry and AppStream metadata
         run: |

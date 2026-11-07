@@ -10,7 +10,7 @@ arch=('x86_64' 'aarch64')
 url="https://github.com/BriarForge/XerahS"
 license=('GPL-3.0-or-later')
 depends=('qt6-base' 'zlib' 'xdg-desktop-portal')
-makedepends=('git' 'cmake' 'ninja' 'python' 'dbus')
+makedepends=('git' 'cmake' 'ninja' 'python' 'dbus' 'poppler')
 optdepends=(
   'qt6-imageformats: additional image formats'
   'tesseract-data-eng: text recognition (OCR)'
