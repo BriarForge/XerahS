@@ -292,6 +292,9 @@ The Product Contract workflow also builds this edition in Ubuntu 24.04 and
 runs the native tests and implemented conformance capabilities on every push
 and pull request.
 
+To build `.tar.gz`, `.deb` and `.rpm` packages, use the AUR recipe, or install
+from the build tree, see [INSTALL.md](INSTALL.md).
+
 
 **Quick task menu:** Saved capture workflows can show a per-capture action
 chooser before any output. It shares the existing action engine and receipts.

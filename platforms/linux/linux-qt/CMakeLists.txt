@@ -1692,3 +1692,5 @@ target_compile_definitions(edition-profiles-test PRIVATE
   XERAHS_LINUX_QT_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(edition-profiles-test PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME edition-profiles COMMAND edition-profiles-test)
+
+include(packaging/Packaging.cmake)

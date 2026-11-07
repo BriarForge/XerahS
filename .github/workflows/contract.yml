@@ -29,6 +29,54 @@ jobs:
       - name: Verify native tests and implemented contract vectors
         run: runuser -u xerahs-ci -- ctest --test-dir platforms/linux/linux-qt/build --output-on-failure
 
+  # CORE-028 / CORE-033: build the linux-qt edition's .tar.gz, .deb and .rpm,
+  # install the .deb into a clean system and launch the installed binary.
+  # Packages are unsigned build artifacts, not releases.
+  linux-qt-packages:
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    steps:
+      - name: Install the Linux packaging toolchain
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates git cmake ninja-build g++ qt6-base-dev zlib1g-dev python3 dbus-daemon \
+            poppler-utils dpkg-dev file rpm desktop-file-utils appstream
+      - uses: actions/checkout@v4
+      - name: Validate desktop entry and AppStream metadata
+        run: |
+          desktop-file-validate platforms/linux/linux-qt/packaging/com.xerahs.app.desktop
+          appstreamcli validate --no-net platforms/linux/linux-qt/packaging/com.xerahs.app.metainfo.xml
+      - name: Configure a release build
+        run: |
+          cmake -S platforms/linux/linux-qt -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
+            -DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=ON \
+            -DXERAHS_PACKAGE_VERSION="0.0.0~ci${GITHUB_RUN_NUMBER}"
+      - name: Build the application
+        run: cmake --build build --target xerahs --parallel 2
+      - name: Build .tar.gz, .deb and .rpm
+        run: cpack --config build/CPackConfig.cmake -B build/packages
+      - name: Install the .deb and launch the installed application
+        run: |
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ./build/packages/*.deb
+          test -x /usr/bin/xerahs
+          test -f /usr/share/applications/com.xerahs.app.desktop
+          test -f /usr/share/metainfo/com.xerahs.app.metainfo.xml
+          QT_QPA_PLATFORM=offscreen xerahs --help
+          DEBIAN_FRONTEND=noninteractive apt-get remove -y xerahs
+          test ! -e /usr/bin/xerahs
+      - name: Inspect the .rpm
+        run: rpm -qpil build/packages/*.rpm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xerahs-linux-qt-packages
+          path: |
+            build/packages/*.tar.gz
+            build/packages/*.deb
+            build/packages/*.rpm
+          if-no-files-found: error
+
   lint:
     runs-on: ubuntu-latest
     steps:
