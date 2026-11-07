@@ -204,7 +204,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "OwnedWork capture/editor/upload/recording paths expose progress and cancellation, but watch-folder copy/move still does synchronous file work and all operation families are not covered.",
+      "note": "OwnedWork capture/editor/upload/recording paths and watch-folder copy/move expose progress and cancellation (copy/move runs on an owned worker with atomic temp output, cancel on stop/destruction, no double-processing), but all operation families are not covered.",
       "evidence": [
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
@@ -237,12 +237,13 @@
         "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
         "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
         "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 22,
-        "coverage": "OwnedWork capture/editor/upload/recording paths expose progress and cancellation, but watch-folder copy/move still does synchronous file work and all operation families are not covered.",
+        "coverage": "OwnedWork capture/editor/upload/recording paths and watch-folder copy/move expose progress and cancellation (copy/move runs on an owned worker with atomic temp output, cancel on stop/destruction, no double-processing), but all operation families are not covered.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -256,6 +257,10 @@
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
             "sha256": "8b50976b14beccfde7aaab17e3a16bf1caff157ad6761395728a476784ac28ba"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+            "sha256": "3dcfa5e8d6f7463ca1ec658639df0896385ce25eeda5f1b2f2d6c1a22a4646e0"
           }
         ],
         "test_anchors": [
@@ -264,6 +269,12 @@
             "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
             "line": 36
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "sha256": "900e68829f3ede7e2c86745729faf057b5ae4521ab19cfa8e1102b26fca75b48",
+            "method": "slowCopyDoesNotBlockGuiAndIsNotDoubleProcessed",
+            "line": 383
           }
         ]
       },

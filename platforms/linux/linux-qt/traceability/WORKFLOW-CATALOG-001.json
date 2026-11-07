@@ -330,16 +330,17 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Owned worker paths cancel safely and retain completed outputs; watch-folder copy/move runs directly in scan loop and does not establish cooperative progress/cancellation for all workflows.",
+      "note": "Owned worker paths cancel safely and retain completed outputs; watch-folder copy/move now runs on an owned cancellable worker with progress and durable processed checkpoint, but cooperative cancellation is not established for all workflows.",
       "evidence": [
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md",
-        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 26,
-        "coverage": "Owned worker paths cancel safely and retain completed outputs; watch-folder copy/move runs directly in scan loop and does not establish cooperative progress/cancellation for all workflows.",
+        "coverage": "Owned worker paths cancel safely and retain completed outputs; watch-folder copy/move now runs on an owned cancellable worker with progress and durable processed checkpoint, but cooperative cancellation is not established for all workflows.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -357,6 +358,10 @@
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
             "sha256": "11b659e016688ee428f96a237b764567ac7ac8ab8b27235e00580b1796d75226"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+            "sha256": "3dcfa5e8d6f7463ca1ec658639df0896385ce25eeda5f1b2f2d6c1a22a4646e0"
           }
         ],
         "test_anchors": [
@@ -365,6 +370,12 @@
             "sha256": "d4ea69eac0e9cbc8b65864b04c463bfb366d20dafd2cbda39436c4831a91a89b",
             "method": "actualPipelineStatesAndRedactedOrderedSteps",
             "line": 64
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "sha256": "900e68829f3ede7e2c86745729faf057b5ae4521ab19cfa8e1102b26fca75b48",
+            "method": "destroyingServiceMidCopyIsSafe",
+            "line": 476
           }
         ]
       },

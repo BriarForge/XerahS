@@ -1,6 +1,7 @@
 // CORE-024, CORE-025: native watcher with reconciliation and bounded actions.
 #pragma once
 #include "watch/WatchFolders.h"
+#include "OwnedWork.h"
 #include <QFileSystemWatcher>
 #include <QTimer>
 #include <QObject>
@@ -13,6 +14,9 @@ class WatchFolderService final : public QObject {
 public:
   WatchFolderService(watch::WatchFolders &store, FileUploadController &uploads,
       std::function<QString()> captures, watch::StabilityTracker::Clock clock = {}, QObject *parent = nullptr);
+  ~WatchFolderService() override;
+  // Test seam: called on the worker thread before each copied chunk.
+  void setFileOperationHook(std::function<void(const QString &)> hook);
   void start();
   void stop();
   void rescan();
@@ -22,7 +26,9 @@ public:
 signals:
   void notify(const QString &message, bool success);
   void processed(const QString &path, bool success);
+  void progress(const QString &path, qint64 done, qint64 total);
 private:
+  void startFileWork(const QString &path, const QString &key, bool move);
   void complete(const QString &path, bool success, const QString &error);
   watch::WatchFolders &m_store;
   FileUploadController &m_uploads;
@@ -32,6 +38,8 @@ private:
   QTimer m_timer;
   QSet<QString> m_attempted, m_reported;
   QString m_pendingPath, m_pendingKey;
+  OwnedWork m_work;
+  std::function<void(const QString &)> m_fileHook;
   bool m_running = false;
   bool m_blocked = false;
 };

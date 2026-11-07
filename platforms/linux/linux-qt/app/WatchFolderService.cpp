@@ -1,6 +1,7 @@
 // CORE-024, CORE-025.
 #include "WatchFolderService.h"
 #include "FileUploadController.h"
+#include "OwnedWork.h"
 #include <QDir>
 #include <QFileInfo>
 #include <QSaveFile>
@@ -23,7 +24,7 @@ void WatchFolderService::start() {
   m_timer.start(); rescan();
 }
 void WatchFolderService::stop() {
-  m_running = false; m_timer.stop();
+  m_running = false; m_timer.stop(); m_work.cancel();
   if (!m_watcher.directories().isEmpty()) m_watcher.removePaths(m_watcher.directories());
   m_uploads.cancel();
 }
@@ -31,6 +32,37 @@ QString WatchFolderService::setRules(const QVector<watch::Rule> &rules) {
   const auto error = m_store.saveRules(rules, m_captures());
   if (error.isEmpty()) { m_reported.clear(); rescan(); }
   return error;
+}
+WatchFolderService::~WatchFolderService() { m_work.cancel(); }
+void WatchFolderService::setFileOperationHook(std::function<void(const QString &)> hook) { m_fileHook = std::move(hook); }
+// Copy/move runs on an owned worker; the GUI thread only snapshots inputs and receives the verdict.
+void WatchFolderService::startFileWork(const QString &sourcePath, const QString &key, bool move) {
+  const auto directory = m_captures();
+  const auto hook = m_fileHook;
+  const auto path = sourcePath;
+  m_work = OwnedWork::run<QString>(this, std::function<QString(const OwnedWork::Context &)>(
+      [directory, hook, path, key, move](const OwnedWork::Context &ctx) -> QString {
+    if (!QDir().mkpath(directory)) return QStringLiteral("watch-capture-directory-failed");
+    const auto target = QDir(directory).filePath(QUuid::createUuid().toString(QUuid::WithoutBraces) + '-' + QFileInfo(path).fileName());
+    QFile source(path); QSaveFile output(target); output.setDirectWriteFallback(false);
+    if (!source.open(QIODevice::ReadOnly) || !output.open(QIODevice::WriteOnly) || !output.setPermissions(QFile::ReadOwner | QFile::WriteOwner))
+      return QStringLiteral("watch-copy-open-failed");
+    const auto total = source.size(); qint64 copied = 0;
+    while (!source.atEnd()) {
+      if (ctx.cancelled()) { output.cancelWriting(); return QStringLiteral("cancelled"); }
+      if (hook) hook(path);
+      const auto chunk = source.read(1024 * 1024);
+      if (chunk.isEmpty() || output.write(chunk) != chunk.size()) { output.cancelWriting(); return QStringLiteral("watch-copy-failed"); }
+      copied += chunk.size(); ctx.progress(copied, total);
+    }
+    if (ctx.cancelled()) { output.cancelWriting(); return QStringLiteral("cancelled"); }
+    if (watch::fingerprint(path) != key) { output.cancelWriting(); return QStringLiteral("watch-file-changed"); }
+    if (!output.commit()) return QStringLiteral("watch-copy-commit-failed");
+    source.close();
+    if (move && !QFile::remove(path)) return QStringLiteral("watch-move-remove-failed; copy retained");
+    return {};
+  }), std::function<void(QString)>([this, path](const QString &error) { complete(path, error.isEmpty(), error); }),
+  std::function<void(qint64, qint64)>([this, path](qint64 done, qint64 total) { emit progress(path, done, total); }));
 }
 void WatchFolderService::complete(const QString &path, bool success, const QString &error) {
   if (path != m_pendingPath || path.isEmpty()) return;
@@ -93,21 +125,7 @@ void WatchFolderService::rescan() {
     if (key.isEmpty() || m_store.processed(key) || m_attempted.contains(key)) continue;
     m_pendingPath = candidate.path; m_pendingKey = key; m_attempted.insert(key);
     if (candidate.action == watch::Action::Upload) { m_uploads.uploadFromWatchFolder(candidate.path); return; }
-    const auto targetDirectory = m_captures();
-    QString error;
-    if (!QDir().mkpath(targetDirectory)) error = "watch-capture-directory-failed";
-    const auto target = QDir(targetDirectory).filePath(QUuid::createUuid().toString(QUuid::WithoutBraces) + '-' + QFileInfo(candidate.path).fileName());
-    QFile source(candidate.path); QSaveFile output(target); output.setDirectWriteFallback(false);
-    if (error.isEmpty() && (!source.open(QIODevice::ReadOnly) || !output.open(QIODevice::WriteOnly) || !output.setPermissions(QFile::ReadOwner | QFile::WriteOwner))) error = "watch-copy-open-failed";
-    while (error.isEmpty() && !source.atEnd()) {
-      const auto chunk = source.read(1024 * 1024);
-      if (chunk.isEmpty() || output.write(chunk) != chunk.size()) error = "watch-copy-failed";
-    }
-    if (error.isEmpty() && watch::fingerprint(candidate.path) != key) error = "watch-file-changed";
-    if (error.isEmpty() && !output.commit()) error = "watch-copy-commit-failed";
-    source.close();
-    if (error.isEmpty() && candidate.action == watch::Action::Move && !QFile::remove(candidate.path)) error = "watch-move-remove-failed; copy retained";
-    complete(candidate.path, error.isEmpty(), error);
+    startFileWork(candidate.path, key, candidate.action == watch::Action::Move);
     return;
   }
 }

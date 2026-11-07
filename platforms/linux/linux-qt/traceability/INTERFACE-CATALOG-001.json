@@ -278,7 +278,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native worker progress/cancellation and retained results are tested for capture/editor/media/upload; synchronous watch-folder copy/move and every long-running surface remain outside complete coverage.",
+      "note": "Native worker progress/cancellation and retained results are tested for capture/editor/media/upload and watch-folder copy/move (owned worker, cancel on stop, partial output removed); every other long-running surface remains outside complete coverage.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
@@ -290,12 +290,13 @@
         "platforms/linux/linux-qt/tests/OperationResultsTest.cpp",
         "platforms/linux/linux-qt/tests/ShellFixture.h",
         "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 27,
-        "coverage": "Native worker progress/cancellation and retained results are tested for capture/editor/media/upload; synchronous watch-folder copy/move and every long-running surface remain outside complete coverage.",
+        "coverage": "Native worker progress/cancellation and retained results are tested for capture/editor/media/upload and watch-folder copy/move (owned worker, cancel on stop, partial output removed); every other long-running surface remains outside complete coverage.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -313,6 +314,10 @@
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
             "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+            "sha256": "3dcfa5e8d6f7463ca1ec658639df0896385ce25eeda5f1b2f2d6c1a22a4646e0"
           }
         ],
         "test_anchors": [
@@ -321,6 +326,12 @@
             "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
             "line": 36
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "sha256": "900e68829f3ede7e2c86745729faf057b5ae4521ab19cfa8e1102b26fca75b48",
+            "method": "stopCancelsCopyWithoutPartialOutput",
+            "line": 432
           }
         ]
       },

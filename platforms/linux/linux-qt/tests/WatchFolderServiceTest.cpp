@@ -18,7 +18,12 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QTemporaryDir>
+#include <QElapsedTimer>
 #include <QTest>
+#include <QThread>
+#include <QTimer>
+#include <atomic>
+#include <memory>
 
 using namespace xerahs;
 using namespace xerahs::app;
@@ -113,7 +118,7 @@ private slots:
     const auto key = watch::fingerprint(source);
     ++now;
     service.rescan();
-    QCOMPARE(processed.count(), 1);
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
     QCOMPARE(processed.first().at(0).toString(), source);
     QCOMPARE(processed.first().at(1).toBool(), true);
     QCOMPARE(QFileInfo::exists(source), !move);
@@ -164,15 +169,15 @@ private slots:
     service.rescan();
     now = 2000;
     service.rescan();
-    QCOMPARE(processed.count(), 1);
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
     QCOMPARE(processed.at(0).at(0).toString(), bad);
     QCOMPARE(processed.at(0).at(1).toBool(), false);
     now += 500;
     service.rescan();
-    QCOMPARE(processed.count(), 2);
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 2, 7000);
     QCOMPARE(processed.at(1).at(0).toString(), good);
     QCOMPARE(processed.at(1).at(1).toBool(), true);
-    for (int i = 0; i < 3; ++i) { now += 500; service.rescan(); }
+    for (int i = 0; i < 3; ++i) { now += 500; service.rescan(); QTest::qWait(30); }
     QCOMPARE(processed.count(), 2);
     QVERIFY(!store.processed(watch::fingerprint(bad)));
     QVERIFY(store.processed(watch::fingerprint(good)));
@@ -347,12 +352,13 @@ private slots:
     service.start();
     now = 2000;
     service.rescan();
-    QCOMPARE(processed.count(), 1);
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
     QCOMPARE(processed.first().at(0).toString(), source);
     now += 3000;
     service.rescan();
     now += 3000;
     service.rescan();
+    QTest::qWait(50);
     QCOMPARE(processed.count(), 1);
     QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 2);
     service.stop();
@@ -363,8 +369,145 @@ private slots:
     service.start();
     now += 2000;
     service.rescan();
-    QCOMPARE(processed.count(), 2);
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 2, 7000);
     service.stop();
+  }
+
+  // CORE-004: copy/move runs on an owned worker; the GUI thread keeps spinning while a slow copy is in flight,
+  // repeated rescans never double-process the source, and the result is delivered afterwards.
+  void slowCopyDoesNotBlockGuiAndIsNotDoubleProcessed_data() {
+    QTest::addColumn<bool>("move");
+    QTest::newRow("copy") << false;
+    QTest::newRow("move") << true;
+  }
+  void slowCopyDoesNotBlockGuiAndIsNotDoubleProcessed() {
+    QFETCH(bool, move);
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures");
+    const auto source = dir.filePath("input/big.png");
+    QVERIFY(writeFile(source, QByteArray(3 * 1024 * 1024 + 7, 'x')));
+    qint64 now = 0;
+    QWidget owner;
+    FileUploadController uploads(portsFor(dir), &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    std::atomic_bool release{false};
+    std::atomic_int hookCalls{0};
+    service.setFileOperationHook([&](const QString &) { ++hookCalls; while (!release.load()) QThread::msleep(5); });
+    watch::Rule rule;
+    rule.path = dir.filePath("input");
+    rule.action = move ? watch::Action::Move : watch::Action::Copy;
+    QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy processed(&service, &WatchFolderService::processed);
+    QSignalSpy progress(&service, &WatchFolderService::progress);
+    service.start();
+    service.rescan();
+    now = 2000;
+    QElapsedTimer timer; timer.start();
+    service.rescan();
+    QVERIFY2(timer.elapsed() < 1000, "rescan must only enqueue work");
+    QTRY_VERIFY_WITH_TIMEOUT(hookCalls.load() >= 1, 7000);
+    int ticks = 0;
+    QTimer ticker; QObject::connect(&ticker, &QTimer::timeout, [&] { ++ticks; });
+    ticker.start(5);
+    for (int i = 0; i < 5; ++i) { now += 500; service.rescan(); QTest::qWait(20); }
+    QVERIFY(ticks >= 3);
+    QCOMPARE(processed.count(), 0);
+    QVERIFY(QFileInfo::exists(source));
+    release = true;
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 10000);
+    QCOMPARE(processed.first().at(1).toBool(), true);
+    QVERIFY(progress.count() >= 1);
+    QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 1);
+    QCOMPARE(QFileInfo::exists(source), !move);
+    for (int i = 0; i < 3; ++i) { now += 3000; service.rescan(); QTest::qWait(30); }
+    QCOMPARE(processed.count(), 1);
+    QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 1);
+    service.stop();
+  }
+
+  // CORE-004: stopping cancels the in-flight copy, leaves no partial output, keeps the source, and a restart retries it.
+  void stopCancelsCopyWithoutPartialOutput() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures");
+    const auto source = dir.filePath("input/big.png");
+    QVERIFY(writeFile(source, QByteArray(3 * 1024 * 1024, 'y')));
+    qint64 now = 0;
+    QWidget owner;
+    FileUploadController uploads(portsFor(dir), &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    std::atomic_bool slow{true};
+    std::atomic_int hookCalls{0};
+    service.setFileOperationHook([&](const QString &) { ++hookCalls; if (slow.load()) QThread::msleep(100); });
+    watch::Rule rule;
+    rule.path = dir.filePath("input");
+    rule.action = watch::Action::Move;
+    QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy processed(&service, &WatchFolderService::processed);
+    service.start();
+    service.rescan();
+    now = 2000;
+    service.rescan();
+    QTRY_VERIFY_WITH_TIMEOUT(hookCalls.load() >= 1, 7000);
+    service.stop();
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
+    QCOMPARE(processed.first().at(1).toBool(), false);
+    QVERIFY(QFileInfo::exists(source));
+    QCOMPARE(QFileInfo(source).size(), qint64(3 * 1024 * 1024));
+    QVERIFY(QDir(captures).entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden).isEmpty());
+    QVERIFY(!store.processed(watch::fingerprint(source)));
+    slow = false;
+    service.start();
+    now += 3000;
+    service.rescan();
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 2, 10000);
+    QCOMPARE(processed.at(1).at(1).toBool(), true);
+    QVERIFY(!QFileInfo::exists(source));
+    QCOMPARE(QDir(captures).entryList(QDir::Files).size(), 1);
+    service.stop();
+  }
+
+  // CORE-004: destroying the service mid-copy abandons the result safely and leaves no partial output.
+  void destroyingServiceMidCopyIsSafe() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures");
+    const auto source = dir.filePath("input/big.png");
+    QVERIFY(writeFile(source, QByteArray(3 * 1024 * 1024, 'z')));
+    qint64 now = 0;
+    QWidget owner;
+    FileUploadController uploads(portsFor(dir), &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    std::atomic_int hookCalls{0};
+    QSignalSpy *spy = nullptr;
+    {
+      auto service = std::make_unique<WatchFolderService>(store, uploads, [&] { return captures; }, [&] { return now; });
+      service->setFileOperationHook([&](const QString &) { ++hookCalls; QThread::msleep(100); });
+      watch::Rule rule;
+      rule.path = dir.filePath("input");
+      rule.action = watch::Action::Move;
+      QCOMPARE(service->setRules({rule}), QString());
+      QSignalSpy processed(service.get(), &WatchFolderService::processed);
+      spy = &processed;
+      service->start();
+      service->rescan();
+      now = 2000;
+      service->rescan();
+      QTRY_VERIFY_WITH_TIMEOUT(hookCalls.load() >= 1, 7000);
+      service.reset();
+      QCOMPARE(processed.count(), 0);
+    }
+    Q_UNUSED(spy);
+    QTest::qWait(500);
+    QVERIFY(QFileInfo::exists(source));
+    QVERIFY(QDir(captures).entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden).isEmpty());
+    QVERIFY(!store.processed(watch::fingerprint(source)));
   }
 
   void dialogAddsRemovesAndPersistsEnabledConsent() {
