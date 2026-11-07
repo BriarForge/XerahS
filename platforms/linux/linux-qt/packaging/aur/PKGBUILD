@@ -1,0 +1,41 @@
+# AUR recipe for the linux-qt reference edition (CORE-PLATFORM-001 linux-editions.json).
+# Builds the current main branch from source with the CMake install rules in
+# packaging/Packaging.cmake. A release recipe pins pkgver/source to an approved
+# signed tag; publishing to the AUR is a release-owner step (CORE-028).
+pkgname=xerahs-git
+pkgver=0.0.0
+pkgrel=1
+pkgdesc="Capture, annotate, and share screenshots (Qt 6 reference edition)"
+arch=('x86_64' 'aarch64')
+url="https://github.com/BriarForge/XerahS"
+license=('GPL-3.0-or-later')
+depends=('qt6-base' 'zlib' 'xdg-desktop-portal')
+makedepends=('git' 'cmake' 'ninja' 'python' 'dbus')
+optdepends=(
+  'qt6-imageformats: additional image formats'
+  'tesseract-data-eng: text recognition (OCR)'
+  'zxing-cpp: QR code scanning'
+  'gst-plugins-good: screen recording'
+  'gnome-keyring: Secret Service credential storage'
+)
+provides=('xerahs')
+conflicts=('xerahs')
+source=("xerahs::git+https://github.com/BriarForge/XerahS.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd xerahs
+  printf "0.0.0.r%s.g%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+  cmake -S xerahs/platforms/linux/linux-qt -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr
+  cmake --build build --target xerahs
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+  install -Dm644 xerahs/LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.xerahs.app</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>XerahS</name>
+  <summary>Capture, annotate, and share screenshots</summary>
+  <description>
+    <p>
+      XerahS captures a region of the screen through the desktop portal,
+      lets you annotate it in a native image editor, and then saves, copies
+      or uploads the result through saved capture workflows.
+    </p>
+    <p>
+      This is the Qt 6 reference edition for Linux. It is Wayland first and
+      asks for screenshot consent through xdg-desktop-portal.
+    </p>
+  </description>
+  <launchable type="desktop-id">com.xerahs.app.desktop</launchable>
+  <url type="homepage">https://github.com/BriarForge/XerahS</url>
+  <url type="bugtracker">https://github.com/BriarForge/XerahS/issues</url>
+  <developer id="com.xerahs">
+    <name>ShareX Team</name>
+  </developer>
+  <provides>
+    <binary>xerahs</binary>
+  </provides>
+  <categories>
+    <category>Graphics</category>
+    <category>Utility</category>
+  </categories>
+  <keywords>
+    <keyword>screenshot</keyword>
+    <keyword>capture</keyword>
+    <keyword>annotate</keyword>
+  </keywords>
+  <content_rating type="oars-1.1"/>
+</component>
