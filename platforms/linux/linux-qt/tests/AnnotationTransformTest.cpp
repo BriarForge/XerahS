@@ -16,6 +16,14 @@
 using namespace xerahs::editor;
 
 namespace {
+QImage flippedImage(const QImage &image, Qt::Orientations axes) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+  return image.flipped(axes);
+#else
+  return image.mirrored(axes.testFlag(Qt::Horizontal), axes.testFlag(Qt::Vertical));
+#endif
+}
+
 
 const QString kAsset = QStringLiteral("asset");
 constexpr qint64 kW = 40, kH = 30;
@@ -265,7 +273,7 @@ private slots:
         const bool mirroredX = std::abs(world(moved, {1, 0}).x - target.x) < 1e-9 && std::abs(world(moved, {1, 0}).y - target.y) < 1e-9;
         const bool mirroredY = std::abs(world(moved, {0, 1}).x - target.x) < 1e-9 && std::abs(world(moved, {0, 1}).y - target.y) < 1e-9;
         QVERIFY(mirroredX != mirroredY);
-        QCOMPARE(decoded(png), origin.flipped(Qt::Orientations((mirroredX ? Qt::Horizontal : Qt::Orientation()) | (mirroredY ? Qt::Vertical : Qt::Orientation()))));
+        QCOMPARE(decoded(png), flippedImage(origin, Qt::Orientations((mirroredX ? Qt::Horizontal : Qt::Orientation()) | (mirroredY ? Qt::Vertical : Qt::Orientation()))));
         QCOMPARE(png == assetPng(), false);
       }
     }
@@ -279,7 +287,7 @@ private slots:
     d.embeddedImages.push_back({QStringLiteral("unused"), assetPng()});
     const auto r = applyCanvasOperation(d, solidImage(kW, kH, 0), action(CanvasAction::FlipHorizontal));
     QVERIFY(r.document);
-    QCOMPARE(decoded(r.document->embeddedImages[0].second), decoded(assetPng()).flipped(Qt::Horizontal));
+    QCOMPARE(decoded(r.document->embeddedImages[0].second), flippedImage(decoded(assetPng()), Qt::Horizontal));
     QCOMPARE(r.document->embeddedImages[1].second, assetPng());  // unreferenced entries untouched
     QCOMPARE(r.document->embeddedImages.size(), std::size_t(2));
     QCOMPARE(std::get<RectangleAnnotation>(r.document->annotations[2]).content.imageKey, QStringLiteral("absent"));
