@@ -295,7 +295,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Stable built-in/workflow keyboard bindings, collision checks and native controls exist. Complete reserved gesture/platform collision behavior and all gesture settings are not proved.",
+      "note": "Stable action IDs, documented reserved-desktop-gesture set (src/settings/HotkeyBindings.cpp, each entry cites its GNOME/Plasma/VT source) refused with the owning feature named, cross-binding collision results that name the conflicting action and never replace silently, an explicit keyboard-reachable Replace action (HotkeyBindings::reassign) and keyboard-only Hotkeys page exist and are tested. Kept partial: gesture settings other than keyboard triggers do not exist in this candidate, and the reserved set is the common stock defaults, not a per-desktop live query. Open product question: confirm the reserved set (Wayland compositors other than GNOME/Plasma, e.g. sway, have user-defined bindings only).",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
@@ -303,7 +303,7 @@
       "audit": {
         "classification": "partial",
         "spec_line": 52,
-        "coverage": "Stable built-in/workflow keyboard bindings, collision checks and native controls exist. Complete reserved gesture/platform collision behavior and all gesture settings are not proved.",
+        "coverage": "Stable action IDs, documented reserved-desktop-gesture set (src/settings/HotkeyBindings.cpp, each entry cites its GNOME/Plasma/VT source) refused with the owning feature named, cross-binding collision results that name the conflicting action and never replace silently, an explicit keyboard-reachable Replace action (HotkeyBindings::reassign) and keyboard-only Hotkeys page exist and are tested. Kept partial: gesture settings other than keyboard triggers do not exist in this candidate, and the reserved set is the common stock defaults, not a per-desktop live query. Open product question: confirm the reserved set (Wayland compositors other than GNOME/Plasma, e.g. sway, have user-defined bindings only).",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -322,15 +322,33 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "e9f3c9976b5ee1a7fa564ecd50314a301d517f337731920721f510050c7a1a2e",
+            "sha256": "8e5b107d4a215ff2e5cb23c50eb197d459152dda8eb72759584b5e49c1607d72",
             "method": "fieldStatesDistinguishAbsentValidInvalidUnknownDeprecatedAndNewer",
             "line": 415
           },
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "e9f3c9976b5ee1a7fa564ecd50314a301d517f337731920721f510050c7a1a2e",
+            "sha256": "8e5b107d4a215ff2e5cb23c50eb197d459152dda8eb72759584b5e49c1607d72",
             "method": "atomicStoreUnknownAndFailures",
             "line": 398
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+            "sha256": "8e5b107d4a215ff2e5cb23c50eb197d459152dda8eb72759584b5e49c1607d72",
+            "method": "reservedDesktopGesturesAreRefusedAndNamed",
+            "line": 364
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+            "sha256": "8e5b107d4a215ff2e5cb23c50eb197d459152dda8eb72759584b5e49c1607d72",
+            "method": "conflictNamesOwnerAndNeverReplacesUnlessExplicit",
+            "line": 374
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
+            "sha256": "8e5b107d4a215ff2e5cb23c50eb197d459152dda8eb72759584b5e49c1607d72",
+            "method": "replaceButtonIsKeyboardReachableAndOnlyActsOnRequest",
+            "line": 384
           }
         ]
       },
@@ -637,7 +655,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Workflow/destination/recent/preset stores have stable IDs, limits/order and unknown-field behavior; complete accounts/watch-folder/program/filter per-item corruption/resource reference matrix is missing.",
+      "note": "Workflow/destination/recent/preset stores have stable IDs, limits/order and unknown-field behavior; complete accounts/watch-folder/program/filter per-item corruption/resource reference matrix is missing. Added corruptObjectItemsAreSetAsideValueFreeAndNeighboursKeepOrder: malformed object items in workflows, destinations, watch rules and recent paths are set aside (bytes preserved on save), neighbours keep order, diagnostics carry no item values. No account list, external-program list, preset collection or general filter list store exists on Linux (recorded absent); numeric caps remain an open product question; stays partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureScheduleDialogTest.cpp",
@@ -653,7 +671,7 @@
       "audit": {
         "classification": "partial",
         "spec_line": 63,
-        "coverage": "Workflow/destination/recent/preset stores have stable IDs, limits/order and unknown-field behavior; complete accounts/watch-folder/program/filter per-item corruption/resource reference matrix is missing.",
+        "coverage": "Workflow/destination/recent/preset stores have stable IDs, limits/order and unknown-field behavior; complete accounts/watch-folder/program/filter per-item corruption/resource reference matrix is missing. Added corruptObjectItemsAreSetAsideValueFreeAndNeighboursKeepOrder: malformed object items in workflows, destinations, watch rules and recent paths are set aside (bytes preserved on save), neighbours keep order, diagnostics carry no item values. No account list, external-program list, preset collection or general filter list store exists on Linux (recorded absent); numeric caps remain an open product question; stays partial.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/StoreCollectionRecoveryTest.cpp",
@@ -679,15 +697,21 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "e9f3c9976b5ee1a7fa564ecd50314a301d517f337731920721f510050c7a1a2e",
+            "sha256": "8e5b107d4a215ff2e5cb23c50eb197d459152dda8eb72759584b5e49c1607d72",
             "method": "fieldStatesDistinguishAbsentValidInvalidUnknownDeprecatedAndNewer",
             "line": 415
           },
           {
             "path": "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-            "sha256": "e9f3c9976b5ee1a7fa564ecd50314a301d517f337731920721f510050c7a1a2e",
+            "sha256": "8e5b107d4a215ff2e5cb23c50eb197d459152dda8eb72759584b5e49c1607d72",
             "method": "atomicStoreUnknownAndFailures",
             "line": 398
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/StoreCollectionRecoveryTest.cpp",
+            "sha256": "81e5e1d6aeade148272077c4246bf0585017388feee9ee5d67064e9c49fad160",
+            "method": "corruptObjectItemsAreSetAsideValueFreeAndNeighboursKeepOrder",
+            "line": 103
           }
         ]
       },
