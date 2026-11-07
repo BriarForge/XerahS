@@ -367,7 +367,14 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   saveAction->setShortcut(QKeySequence::Save);
   QAction *saveAs = bar->addAction(QStringLiteral("Save As…"));
   saveAs->setObjectName(QStringLiteral("saveAsImage"));
-  saveAs->setShortcut(QKeySequence::SaveAs);
+  // QKeySequence::SaveAs is empty on platform themes without a Save As binding (offscreen, plain X11/wlroots),
+  // so keep the contracted Ctrl+Shift+S explicitly alongside any theme binding.
+  {
+    QList<QKeySequence> saveAsKeys = QKeySequence::keyBindings(QKeySequence::SaveAs);
+    const QKeySequence contracted(QStringLiteral("Ctrl+Shift+S"));
+    if (!saveAsKeys.contains(contracted)) saveAsKeys.prepend(contracted);
+    saveAs->setShortcuts(saveAsKeys);
+  }
   bar->addSeparator();
   m_undo = bar->addAction(QStringLiteral("Undo"));
   m_undo->setObjectName(QStringLiteral("undo"));
