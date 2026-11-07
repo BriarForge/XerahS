@@ -12,9 +12,20 @@ using namespace xerahs::actions;
 class CaptureWorkflowsTest final : public QObject {
   Q_OBJECT
 private slots:
+  void olderUnknownEffectFieldNeverGainsExecutionAuthority() {
+    auto root = QJsonDocument::fromJson(workflowsJson(defaultCaptureWorkflows())).object();
+    auto entries = root.value("workflows").toArray(); auto entry = entries[0].toObject();
+    entry["imageEffects"] = QJsonObject{{"format", "com.xerahs.app/effect-preset"}, {"version", 1}, {"steps", QJsonArray{}}};
+    entries[0] = entry; root["workflows"] = entries;
+    const auto refused = parseCaptureWorkflows(QJsonDocument(root).toJson());
+    QVERIFY(!refused.catalog); QCOMPARE(refused.diagnostic, QString("workflow-upgrade-conflict"));
+    root["version"] = 3; const auto explicitVersion = parseCaptureWorkflows(QJsonDocument(root).toJson());
+    QVERIFY(explicitVersion.catalog); QCOMPARE(explicitVersion.sourceVersion, 3);
+    QCOMPARE(explicitVersion.catalog->entries[0].imageEffects, entry.value("imageEffects").toObject());
+  }
   void currentNativeOutputDefinitionsAreDiscoverable_data() {
     QTest::addColumn<QString>("action");
-    for (const auto *id : {"quick-task-menu", "before-upload-window", "upload", "url-clipboard", "ocr", "ocr-clipboard", "qr-scan", "pin", "print"}) QTest::newRow(id) << QString::fromLatin1(id);
+    for (const auto *id : {"quick-task-menu", "image-effects", "before-upload-window", "upload", "url-clipboard", "ocr", "ocr-clipboard", "qr-scan", "pin", "print"}) QTest::newRow(id) << QString::fromLatin1(id);
   }
   void currentNativeOutputDefinitionsAreDiscoverable() {
     QFETCH(QString, action); QTemporaryDir dir; FilePreferenceStorage storage(dir.filePath("workflows.json")); CaptureWorkflowStore store(storage);
@@ -87,7 +98,7 @@ private slots:
     QCOMPARE(storage.read().bytes, saved);
     CaptureWorkflowStore reopened(storage); QCOMPARE(reopened.current().catalog->entries[0].actions, draft.entries[0].actions);
     // Known catalogue actions can instead be unavailable in this build.
-    auto known = draft.entries[0]; known.actions = QStringList{"save", "image-effects"};
+    auto known = draft.entries[0]; known.actions = QStringList{"save", "save-thumbnail"};
     QCOMPARE(workflowAvailability(known, implementedCaptureActions()), QString("workflow-action-unavailable"));
   }
   // SETCAT-014 per-item isolation: a damaged unselected definition is quarantined as non-executable data
@@ -114,7 +125,7 @@ private slots:
   void invalidDefinitionsAreRejected() {
     QFETCH(QString, mode); auto root = QJsonDocument::fromJson(workflowsJson(defaultCaptureWorkflows())).object(); auto array = root.value("workflows").toArray(); auto w = array[0].toObject();
     if (mode == "json") { QVERIFY(!parseCaptureWorkflows("broken").catalog); return; }
-    if (mode == "future-version") root.insert("version", 3);
+    if (mode == "future-version") root.insert("version", 4);
     if (mode == "duplicate-id") array.append(w);
     if (mode == "duplicate-action") w.insert("actions", QJsonArray{"save", "save"});
     if (mode == "empty-name") w.insert("name", " ");

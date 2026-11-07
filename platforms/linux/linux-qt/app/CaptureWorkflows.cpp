@@ -2,6 +2,9 @@
 #include "CaptureWorkflows.h"
 #include "WorkflowStoragePath.h"
 #include "CaptureActions.h"
+#include "PresetDialog.h"
+#include <QFile>
+#include <QJsonDocument>
 #include "naming/CounterStore.h"
 #include "NativeEditorAppearance.h"
 #include "NativeEditorPreferences.h"
@@ -82,6 +85,15 @@ public:
     m_patternHelp = new QLabel(this); m_patternHelp->setObjectName("captureWorkflowPatternHelp"); m_patternHelp->setTextFormat(Qt::PlainText); m_patternHelp->setWordWrap(true); layout->addWidget(m_patternHelp);
     m_actions = new QListWidget(this); m_actions->setObjectName("captureWorkflowActions"); m_actions->setAccessibleName("Actions after capture"); layout->addWidget(m_actions);
     m_choose = new QCheckBox("Ask which actions to run after each capture", this); m_choose->setObjectName("captureWorkflowChooseActions"); layout->addWidget(m_choose);
+    auto *effectRow = new QHBoxLayout; layout->addLayout(effectRow);
+    m_effectLabel = new QLabel(this); m_effectLabel->setObjectName("captureWorkflowEffects"); m_effectLabel->setTextFormat(Qt::PlainText); m_effectLabel->setWordWrap(true); effectRow->addWidget(m_effectLabel, 1);
+    m_effects = new QPushButton(tr("Choose effects preset…"), this); m_effects->setObjectName("chooseWorkflowEffects"); m_effects->setAutoDefault(false); effectRow->addWidget(m_effects);
+    m_clearEffects = new QPushButton(tr("Clear effects"), this); m_clearEffects->setObjectName("clearWorkflowEffects"); m_clearEffects->setAutoDefault(false); effectRow->addWidget(m_clearEffects);
+    connect(m_effects, &QPushButton::clicked, this, [this] { chooseEffects(); });
+    connect(m_clearEffects, &QPushButton::clicked, this, [this] {
+      const int index = m_list->currentRow(); if (!m_catalog || index < 0) return;
+      m_catalog->entries[index].imageEffects = {}; m_dirty = true; showEntry(index);
+    });
     auto *dependencies = new QLabel("Save uses the folder and filename pattern above; blank folder uses the standard capture folder. Save As asks for a new PNG path. Existing files are kept; a fixed name can report a collision. File/path clipboard and Show in folder need a successful Save or Save As.", this);
     dependencies->setWordWrap(true); layout->addWidget(dependencies);
     m_status = new QLabel(this); m_status->setObjectName("captureWorkflowStatus"); m_status->setTextFormat(Qt::PlainText); m_status->setWordWrap(true); layout->addWidget(m_status);
@@ -143,6 +155,52 @@ private:
         m_host.store().current().migrationAvailable ? "Version 1 workflows are loaded with their original defaults. Saving changes explicitly upgrades them to version 2; Close keeps the original file." :
         "Changes affect future captures. Close keeps your last saved workflows.");
   }
+  void chooseEffects() {
+    const int index = m_list->currentRow(); if (!m_catalog || index < 0 || m_effectLoad.running()) return;
+    const auto id = m_catalog->entries[index].id; const auto previousRevision = m_revision;
+    const auto previous = m_catalog->entries[index].imageEffects;
+    auto *picker = new QFileDialog(this, tr("Choose native image effects preset"));
+    picker->setFileMode(QFileDialog::ExistingFile); picker->setNameFilter(tr("Native effects preset (*.xsie)")); picker->setAttribute(Qt::WA_DeleteOnClose);
+    connect(picker, &QFileDialog::fileSelected, this, [this, id, previousRevision, previous](const QString &path) {
+      m_status->setText(tr("Reading effects preset…"));
+      m_effectLoad = OwnedWork::run<xerahs::effects::EffectPreset>(this, [path](const OwnedWork::Context &context) {
+        QFile file(path); xerahs::effects::EffectPreset preset;
+        if (context.cancelled() || !QFileInfo(path).isFile() || !file.open(QIODevice::ReadOnly) || file.size() > xerahs::editor::maximumPreferenceBytes) { preset.error = "effect-preset-invalid"; return preset; }
+        const auto bytes = file.read(xerahs::editor::maximumPreferenceBytes + 1);
+        if (context.cancelled() || bytes.size() > xerahs::editor::maximumPreferenceBytes) { preset.error = "effect-preset-invalid"; return preset; }
+        return xerahs::effects::readXsiePreset(bytes);
+      }, [this, id, previousRevision, previous](xerahs::effects::EffectPreset preset) {
+        if (!m_catalog || previousRevision != m_revision) return;
+        int index = -1; for (int i = 0; i < m_catalog->entries.size(); ++i) if (m_catalog->entries[i].id == id) index = i;
+        if (index < 0 || m_catalog->entries[index].imageEffects != previous) return;
+        if (!preset.ok()) { m_status->setText(tr("effect-preset-invalid: The preset could not be loaded. The previous effects were kept.")); return; }
+        for (const auto &step : preset.steps) if (step.enabled && !step.supported) { m_status->setText(tr("preset-effect-unavailable: The preset contains unsupported enabled steps. The previous effects were kept.")); return; }
+        // Existing native preset dialog provides an explicit preview and Apply/Cancel.
+        QImage preview(128, 96, QImage::Format_ARGB32); preview.fill(QColor(40, 80, 120, 180));
+        const QPointer<WorkflowDialog> owner(this);
+        OwnedWork::run<LoadedSource>(this, [preview](const OwnedWork::Context &) { return prepareCapturedSource(preview); },
+            [this, owner, id, previousRevision, previous, preset](LoadedSource source) {
+          if (!source.document || !m_catalog || previousRevision != m_revision) return;
+          auto *review = new PresetDialog(*source.document, source.image,
+              [this, owner, id, previousRevision, previous, preset](PreparedCanvasEdit) {
+            if (!owner || !m_catalog || previousRevision != m_revision) return false;
+            for (auto &entry : m_catalog->entries) if (entry.id == id && entry.imageEffects == previous) {
+              entry.imageEffects = QJsonDocument::fromJson(xerahs::effects::writeXsiePreset(preset)).object();
+              m_dirty = true; showEntry(m_list->currentRow()); return true;
+            }
+            return false;
+          }, std::make_shared<xerahs::effects::EffectRegistry>(xerahs::effects::builtinEffects()), this);
+          review->setWindowTitle(tr("Preview workflow effects on a sample image")); review->setAccessibleName(review->windowTitle());
+          auto *notice = new QLabel(tr("Sample image only. Apply selects this preset for future workflow runs; Save changes persists the selection. Cancel keeps the previous preset."), review);
+          notice->setWordWrap(true); notice->setTextFormat(Qt::PlainText);
+          if (auto *layout = qobject_cast<QVBoxLayout *>(review->layout())) layout->insertWidget(0, notice);
+          review->setAccessibleDescription(notice->text());
+          review->setAttribute(Qt::WA_DeleteOnClose); review->setPreset(preset); review->open();
+        });
+      });
+    });
+    picker->open();
+  }
   void refreshList(int index) {
     m_loading = true; m_list->clear();
     if (m_catalog) for (const auto &w : m_catalog->entries) m_list->addItem(w.name + (w.id == m_catalog->defaultId ? " (default)" : ""));
@@ -153,6 +211,8 @@ private:
     m_loading = true; m_actions->clear(); const bool exists = m_catalog && index >= 0 && index < m_catalog->entries.size();
     m_name->setEnabled(exists); m_capture->setEnabled(exists); m_actions->setEnabled(exists); m_choose->setEnabled(exists);
     m_directory->setEnabled(exists); m_pattern->setEnabled(exists); m_browse->setEnabled(exists);
+    m_effects->setEnabled(exists); m_clearEffects->setEnabled(exists && !m_catalog->entries[index].imageEffects.isEmpty());
+    m_effectLabel->setText(exists && !m_catalog->entries[index].imageEffects.isEmpty() ? tr("Effects preset: %1. Runs when Apply image effects is checked.").arg(m_catalog->entries[index].imageEffects.value("name").toString()) : tr("No effects preset. Apply image effects keeps pixels unchanged until a preset is chosen."));
     if (exists) {
       const auto &w = m_catalog->entries[index]; m_name->setText(w.name); m_choose->setChecked(w.chooseActions);
       m_capture->clear(); for (const auto &source : implementedCaptureSources()) m_capture->addItem(captureSourceLabel(source), source);
@@ -217,6 +277,9 @@ private:
     if (wasDefault) m_catalog->defaultId = m_catalog->entries.first().id;
     m_dirty = true; refreshList(qMin(index, m_catalog->entries.size() - 1));
   }
+  OwnedWork m_effectLoad;
+  QLabel *m_effectLabel = nullptr;
+  QPushButton *m_effects = nullptr, *m_clearEffects = nullptr;
   NativeCaptureWorkflows &m_host;
   std::function<bool()> m_canRun;
   std::optional<CaptureWorkflows> m_catalog;

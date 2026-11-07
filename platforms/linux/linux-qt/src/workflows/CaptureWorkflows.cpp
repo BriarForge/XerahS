@@ -60,7 +60,7 @@ QString captureSourceLabel(const QString &source) {
   if (source == "active-window") return QStringLiteral("Active window");
   return {};
 }
-QStringList implementedCaptureActions() { return {"quick-task-menu", "annotation", "save", "save-as", "image-clipboard", "file-clipboard", "path-clipboard", "reveal", "before-upload-window", "upload", "url-clipboard", "ocr", "ocr-clipboard", "qr-scan", "pin", "print", "delete"}; }
+QStringList implementedCaptureActions() { return {"quick-task-menu", "image-effects", "annotation", "save", "save-as", "image-clipboard", "file-clipboard", "path-clipboard", "reveal", "before-upload-window", "upload", "url-clipboard", "ocr", "ocr-clipboard", "qr-scan", "pin", "print", "delete"}; }
 QJsonObject workflowDiscoveryError(const QString &diagnostic) {
   return {{"schemaVersion", 1}, {"ok", false}, {"error", QJsonObject{{"code", xerahs::shell::isStableErrorCode(diagnostic, xerahs::shell::DiscoverySurface) ? diagnostic : QStringLiteral("workflow-storage-unavailable")}}}};
 }
@@ -74,14 +74,16 @@ QJsonObject workflowJson(const CaptureWorkflow &w, bool retainUnknown) {
   object.insert("id", w.id.toString(QUuid::WithoutBraces)); object.insert("name", w.name);
   object.insert("capture", w.capture); object.insert("actions", QJsonArray::fromStringList(w.actions)); object.insert("chooseActions", w.chooseActions);
   object.insert("output", outputJson(w.output, retainUnknown));
+  if (!w.imageEffects.isEmpty()) object.insert("imageEffects", w.imageEffects);
   return object;
 }
-QJsonObject workflowSnapshot(const CaptureWorkflow &w) { auto result = workflowJson(w, false); result.insert("definitionVersion", 2); return result; }
+QJsonObject workflowSnapshot(const CaptureWorkflow &w) { auto result = workflowJson(w, false); result.insert("definitionVersion", w.imageEffects.isEmpty() ? 2 : 3); return result; }
 QByteArray workflowsJson(const CaptureWorkflows &c) {
   auto root = c.extra; QJsonArray entries;
   for (const auto &w : c.entries) entries.append(workflowJson(w));
   for (const auto &raw : c.unreadable) entries.append(raw);
-  root.insert("format", format); root.insert("version", 2); root.insert("defaultId", c.defaultId.toString(QUuid::WithoutBraces)); root.insert("workflows", entries);
+  bool effects = false; for (const auto &w : c.entries) effects |= !w.imageEffects.isEmpty();
+  root.insert("format", format); root.insert("version", effects ? 3 : 2); root.insert("defaultId", c.defaultId.toString(QUuid::WithoutBraces)); root.insert("workflows", entries);
   return QJsonDocument(root).toJson(QJsonDocument::Indented);
 }
 WorkflowRead parseCaptureWorkflows(const QByteArray &bytes) {
@@ -89,8 +91,8 @@ WorkflowRead parseCaptureWorkflows(const QByteArray &bytes) {
   const auto parsed = compatibility::readJson(bytes, {maximumPreferenceBytes, 64, 100000});
   if (!parsed.ok() || !parsed.document.isObject()) return invalid();
   auto root = parsed.document.object();
-  if (root.value("version").toDouble() > 2) return invalid("workflow-newer-version");
-  if (root.value("format") != format || (root.value("version") != QJsonValue(1) && root.value("version") != QJsonValue(2)) || !root.value("workflows").isArray() || !root.value("defaultId").isString()) return invalid();
+  if (root.value("version").toDouble() > 3) return invalid("workflow-newer-version");
+  if (root.value("format") != format || (root.value("version") != QJsonValue(1) && root.value("version") != QJsonValue(2) && root.value("version") != QJsonValue(3)) || !root.value("workflows").isArray() || !root.value("defaultId").isString()) return invalid();
   const bool legacy = root.value("version") == QJsonValue(1);
   CaptureWorkflows catalog; catalog.defaultId = QUuid(root.value("defaultId").toString());
   const auto entries = root.value("workflows").toArray(); if (entries.isEmpty() || entries.size() > 64) return invalid();
@@ -111,6 +113,14 @@ WorkflowRead parseCaptureWorkflows(const QByteArray &bytes) {
       if (!captureDirectoryDiagnostic(w.output.directory).isEmpty() || w.output.pattern.size() > 4096 || !validText(w.output.pattern)) return invalid();
       output.remove("directory"); output.remove("pattern"); w.output.extra = output; raw.remove("output");
     }
+    if (raw.contains("imageEffects")) {
+      // Older compatible unknown fields must never gain execution authority.
+      if (root.value("version") != 3) return invalid("workflow-upgrade-conflict");
+      if (!raw.value("imageEffects").isObject()) return invalid();
+      w.imageEffects = raw.take("imageEffects").toObject();
+      if (w.imageEffects.value("format") != "com.xerahs.app/effect-preset" || w.imageEffects.value("version") != 1 ||
+          !w.imageEffects.value("steps").isArray()) return invalid();
+    }
     ids.insert(w.id); const auto actions = raw.value("actions").toArray(); if (actions.size() > 128) return invalid();
     QSet<QString> unique; static const QRegularExpression actionId("^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$");
     for (const auto &action : actions) {
@@ -122,8 +132,9 @@ WorkflowRead parseCaptureWorkflows(const QByteArray &bytes) {
     w.extra = raw; catalog.entries.append(std::move(w));
   }
   if (!ids.contains(catalog.defaultId)) return invalid();
+  const int version = root.value("version").toInt();
   for (const auto *key : {"format", "version", "defaultId", "workflows"}) root.remove(QLatin1String(key));
-  catalog.extra = root; return {catalog, {}, legacy ? 1 : 2, legacy};
+  catalog.extra = root; return {catalog, {}, version, legacy};
 }
 QString workflowAvailability(const CaptureWorkflow &w, const QStringList &available) {
   CaptureWorkflows one{{w}, w.id, {}, {}};
@@ -147,7 +158,7 @@ WorkflowRead recoverStoredWorkflows(const QByteArray &bytes) {
   const auto strict = parseCaptureWorkflows(bytes);
   if (strict.catalog || bytes.size() > maximumPreferenceBytes) return strict;
   auto root = QJsonDocument::fromJson(bytes).object();
-  if (root.value("format") != format || (root.value("version") != QJsonValue(1) && root.value("version") != QJsonValue(2)) ||
+  if (root.value("format") != format || (root.value("version") != QJsonValue(1) && root.value("version") != QJsonValue(2) && root.value("version") != QJsonValue(3)) ||
       !root.value("workflows").isArray() || !root.value("defaultId").isString()) return strict;
   const auto entries = root.value("workflows").toArray();
   if (entries.isEmpty() || entries.size() > 64) return strict;
@@ -169,7 +180,7 @@ WorkflowRead recoverStoredWorkflows(const QByteArray &bytes) {
   // Keep a missing default as a missing reference. Never silently run a different
   // workflow; the existing Make default control provides explicit repair.
   const auto diagnostic = !ids.contains(recovered.defaultId) ? QStringLiteral("workflow-default-missing") : QStringLiteral("workflow-items-unreadable");
-  return {recovered, diagnostic};
+  return {recovered, diagnostic, QJsonDocument::fromJson(bytes).object().value("version").toInt(2), false};
 }
 }
 void CaptureWorkflowStore::reload() {

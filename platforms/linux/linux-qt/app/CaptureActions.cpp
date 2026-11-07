@@ -6,6 +6,8 @@
 #include "EditorCanvasOperations.h"
 #include "EditorPrint.h"
 #include "PinWindow.h"
+#include "PresetDialog.h"
+#include <QJsonDocument>
 #include "ImageRecognitionDialog.h"
 #include "SecretServiceCredentialStore.h"
 #include "uploads/CatalogPath.h"
@@ -67,6 +69,7 @@ ActionOutcome CaptureActions::run(const ActionRequest &request) {
     if (request.spec.id == "before-upload-window") return beforeUpload(request.cancellation);
     if (request.spec.id == "upload") return upload(request);
     if (request.spec.id == "url-clipboard") return copyUrl(request.cancellation);
+    if (request.spec.id == "image-effects") return applyImageEffects(request.cancellation);
     if (request.spec.id == "annotation") return annotate(request.cancellation);
     if (request.spec.id == "ocr") return recognize(ImageRecognitionKind::Text, request.cancellation);
     if (request.spec.id == "qr-scan") return recognize(ImageRecognitionKind::QrCode, request.cancellation);
@@ -80,6 +83,25 @@ ActionOutcome CaptureActions::run(const ActionRequest &request) {
     if (request.spec.id == "file-clipboard" || request.spec.id == "path-clipboard" || request.spec.id == "reveal") return outputFile(request);
     return failed(kActionUnavailable);
   } catch (...) { return failed(diagnostic::actionFailed); }
+}
+
+ActionOutcome CaptureActions::applyImageEffects(const CancellationToken &cancellation) {
+  if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
+  if (m_ports.imageEffects.isEmpty()) return {}; // Reference: no configured preset is an unchanged image.
+  if (QCoreApplication::instance() && QThread::currentThread() == QCoreApplication::instance()->thread())
+    return failed("effect-worker-required");
+  const auto preset = xerahs::effects::readXsiePreset(QJsonDocument(m_ports.imageEffects).toJson(QJsonDocument::Compact));
+  if (!preset.ok()) return failed("effect-preset-invalid");
+  for (const auto &step : preset.steps) if (step.enabled && !step.supported) return failed("preset-effect-unavailable");
+  const auto source = prepareCapturedSource(m_media);
+  if (!source.document) return failed("effect-invalid-input");
+  const auto prepared = preparePresetEdit(*source.document, m_media, preset, xerahs::effects::builtinEffects(),
+      {[&] { return cancellation.requested(); }, [](int) {}});
+  if (cancellation.requested()) return {ActionState::Cancelled, {}, {}};
+  if (prepared.result.error) return failed(*prepared.result.error);
+  if (!prepared.result.document || prepared.source.isNull()) return failed("effect-failed");
+  m_media = prepared.source; // Adopt only the complete, validated worker result.
+  return {};
 }
 
 ActionOutcome CaptureActions::recognize(ImageRecognitionKind kind, const CancellationToken &cancellation) {

@@ -28,6 +28,7 @@ struct CaptureWorkflow {
   bool chooseActions = false;
   QJsonObject extra;
   CaptureOutput output;
+  QJsonObject imageEffects; // Version 3: embedded native preset, never a host path.
 };
 struct WorkflowChoice { std::optional<CaptureWorkflow> workflow; QString diagnostic; };
 struct CaptureWorkflows {

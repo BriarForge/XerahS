@@ -78,7 +78,7 @@ bool validSnapshot(const QJsonObject &snapshot) {
     return true;
   }
   auto definition = snapshot; definition.remove("definitionVersion");
-  QJsonObject root{{"format", "com.xerahs.app/linux-qt/capture-workflows"}, {"version", 2},
+  QJsonObject root{{"format", "com.xerahs.app/linux-qt/capture-workflows"}, {"version", snapshot.value("definitionVersion") == 3 ? 3 : 2},
       {"defaultId", snapshot.value("id")}, {"workflows", QJsonArray{definition}}};
   const auto parsed = parseCaptureWorkflows(QJsonDocument(root).toJson(QJsonDocument::Compact));
   // Records describe past settings, not permission to execute them now. Keep

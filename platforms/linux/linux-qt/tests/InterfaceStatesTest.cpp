@@ -324,12 +324,12 @@ private slots:
   // cancelled: n/a because cancelling closes the dialog without a message.
   // denied: n/a because the dialog asks for no permission.
   void actionSelectionDialogStates() {
-    // "image-effects" is a catalogue action this build does not implement, so it is listed but cannot run.
-    ActionSelectionDialog dialog({"save", "image-effects"}, QSize(640, 480));
+    // "save-thumbnail" is a catalogue action this build does not implement, so it is listed but cannot run.
+    ActionSelectionDialog dialog({"save", "save-thumbnail"}, QSize(640, 480));
     dialog.show();
     auto *error = dialog.findChild<QLabel *>("captureSelectionError");
     auto *save = dialog.findChild<QCheckBox *>("capture-action-save");
-    auto *effects = dialog.findChild<QCheckBox *>("capture-action-image-effects");
+    auto *effects = dialog.findChild<QCheckBox *>("capture-action-save-thumbnail");
     QVERIFY(error && save && effects);
     QVERIFY2(!dialog.windowTitle().trimmed().isEmpty(), "the dialog names its purpose");                                // initial
     bool introVisible = false;

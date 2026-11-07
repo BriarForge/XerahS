@@ -247,6 +247,7 @@ void CapturePipeline::start() {
   auto *worker = QThread::create([state, ports, media = m_media, directory = m_directory,
                                   pattern = m_pattern, selected = m_selected, storage = m_journal,
                                   retryRequested = m_retryRequested, source = m_retrySource, workflow = m_workflowSnapshot, id = m_taskId, executionId = m_workflowExecutionId]() mutable {
+    ports.imageEffects = workflow.value("imageEffects").toObject();
     state->result->workingMedia = media;
     state->result->pipeline.workflowSnapshot = workflow; state->result->pipeline.workflowExecutionId = executionId;
     if (ports.save.counterProfile.isEmpty()) ports.save.counterProfile = workflow.value("id").toString(); // FN-016

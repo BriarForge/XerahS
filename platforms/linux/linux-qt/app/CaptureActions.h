@@ -43,6 +43,7 @@ struct CaptureActionPorts {
   // its GUI thread. Its selection bridge waits on the worker for asynchronous
   // GUI completion. External observers must respect those native boundaries.
   CaptureSaveHooks save;
+  QJsonObject imageEffects; // Frozen embedded preset; parameters never enter public receipts.
   // Empty path uses the application's settings directory. Lookups and request
   // preparation run on the pipeline worker; tests may supply an in-memory store.
   QString uploadCatalogPath;
@@ -114,6 +115,7 @@ private:
   xerahs::actions::ActionOutcome save(const xerahs::actions::CancellationToken &cancellation);
   xerahs::actions::ActionOutcome finishSave(const QString &action, const CaptureFile &raster, const xerahs::actions::CancellationToken &cancellation);
   xerahs::actions::ActionOutcome failedSave(const QString &action, const QString &diagnostic) const;
+  xerahs::actions::ActionOutcome applyImageEffects(const xerahs::actions::CancellationToken &);
   xerahs::actions::ActionOutcome annotate(const xerahs::actions::CancellationToken &cancellation);
   xerahs::actions::ActionOutcome saveAs(const xerahs::actions::CancellationToken &cancellation);
   xerahs::actions::ActionOutcome copyImage(const xerahs::actions::CancellationToken &cancellation);

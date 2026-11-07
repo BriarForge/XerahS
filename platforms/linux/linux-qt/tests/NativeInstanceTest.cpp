@@ -259,7 +259,7 @@ private slots:
     auto catalog = defaultCaptureWorkflows(); auto &profile = catalog.entries[0]; profile.name = QString::fromUtf8("CLI \"λ\" profile"); profile.output.directory = "/private/destination"; profile.output.pattern = "private-pattern"; profile.extra = {{"secret", "private-token"}};
     if (mode == "unavailable") profile.actions = QStringList{"future-action"};
     auto object = QJsonDocument::fromJson(workflowsJson(catalog)).object();
-    if (mode == "newer") object.insert("version", 3);
+    if (mode == "newer") object.insert("version", 4);
     if (mode == "legacy") { object.insert("version", 1); auto entries = object.value("workflows").toArray(); auto entry = entries[0].toObject(); entry.remove("output"); entries[0] = entry; object.insert("workflows", entries); }
     const QByteArray original = mode == "corrupt" ? QByteArray("private-token malformed") : QJsonDocument(object).toJson();
     if (mode != "missing") {

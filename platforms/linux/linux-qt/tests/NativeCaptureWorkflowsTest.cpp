@@ -1,6 +1,12 @@
 #include "CaptureWorkflows.h"
 #include "CapturePipeline.h"
 #include "ActionSelectionDialog.h"
+#include "PresetDialog.h"
+#include <QColorSpace>
+#include <QDialogButtonBox>
+#include <QThread>
+#include <QElapsedTimer>
+#include <atomic>
 #include <QApplication>
 #include <QCheckBox>
 #include <QDialog>
@@ -40,6 +46,75 @@ class NativeCaptureWorkflowsTest final : public QObject {
   Q_OBJECT
   QTemporaryDir privateSettings;
 private slots:
+  void savedEffectsRunBeforeOutputsWithFrozenPresetAndPrivateMetadata_data() {
+    QTest::addColumn<bool>("invalid"); QTest::newRow("invert") << false; QTest::newRow("invalid-parameter") << true;
+  }
+  void savedEffectsRunBeforeOutputsWithFrozenPresetAndPrivateMetadata() {
+    QFETCH(bool, invalid); QTemporaryDir dir;
+    xerahs::effects::EffectPreset preset; preset.name = "PRIVATE preset sentinel";
+    xerahs::effects::PresetStep step; step.id = invalid ? "brightness" : "invert"; step.supported = true;
+    if (invalid) step.parameters = {{"amount", 999}};
+    preset.steps.append(step);
+    const auto json = QJsonDocument::fromJson(xerahs::effects::writeXsiePreset(preset)).object();
+    NativeCaptureWorkflows host(dir.filePath("workflows.json")); auto catalog = *host.store().current().catalog;
+    catalog.entries[0].actions = QStringList{"save", "image-clipboard", "image-effects"}; catalog.entries[0].imageEffects = json;
+    QVERIFY(host.save(catalog, host.store().revision()).saved); host.reload(); const auto choice = host.resolve(); QVERIFY(choice.workflow);
+    QCOMPARE(host.store().current().sourceVersion, 3); QCOMPARE(choice.workflow->imageEffects, json);
+    QImage image(12, 8, QImage::Format_ARGB32); image.fill(qRgba(10,20,30,100)); image.setColorSpace(QColorSpace::DisplayP3);
+    const auto before = image.copy(); QImage copied; bool gui = false;
+    CaptureActionPorts ports; ports.clipboard = [&](const QImage &pixels, const auto &) { copied = pixels; gui = QThread::currentThread() == qApp->thread(); return ActionOutcome{}; };
+    const auto journal = std::make_shared<NativePipelineJournal>(dir.filePath("journal"));
+    CapturePipeline pipeline(image, dir.filePath("captures"), "effects", workflowActions(*choice.workflow), nullptr, ports, journal, nullptr, workflowSnapshot(*choice.workflow));
+    // A later configuration change cannot replace the admitted preset.
+    catalog.entries[0].imageEffects = {}; QVERIFY(host.save(catalog, host.store().revision()).saved);
+    QSignalSpy done(&pipeline, &CapturePipeline::finished); pipeline.start(); QTRY_COMPARE(done.count(), 1);
+    const auto result = receipt(done); QVERIFY(result->file); QVERIFY(gui);
+    QCOMPARE(result->pipeline.orderedResults[0].action, QString("image-effects"));
+    QCOMPARE(result->pipeline.orderedResults[0].state, invalid ? ActionState::Failed : ActionState::Succeeded);
+    if (invalid) QCOMPARE(result->pipeline.orderedResults[0].diagnostic, std::optional<QString>{"preset-effect-unavailable"});
+    QCOMPARE(copied.pixel(0,0), invalid ? before.pixel(0,0) : qRgba(245,235,225,100));
+    QCOMPARE(copied.colorSpace(), before.colorSpace()); QCOMPARE(QImage(result->file->path), copied);
+    QCOMPARE(result->workingMedia, copied); QCOMPARE(image, before);
+    QCOMPARE(result->pipeline.workflowSnapshot.value("imageEffects"), QJsonValue(json));
+    QVERIFY(!QJsonDocument(result->canonicalResult()).toJson().contains("PRIVATE preset sentinel"));
+    const auto records = journal->list(); QCOMPARE(records.entries.size(), size_t(1)); QVERIFY(records.entries[0].parsed.record);
+    QVERIFY(!QJsonDocument(records.entries[0].parsed.record->report).toJson().contains("PRIVATE preset sentinel"));
+  }
+  void workflowEffectsSelectionRequiresPreviewApplyAndExplicitSave_data() {
+    QTest::addColumn<bool>("apply"); QTest::newRow("apply") << true; QTest::newRow("cancel") << false;
+  }
+  void workflowEffectsSelectionRequiresPreviewApplyAndExplicitSave() {
+    QFETCH(bool, apply); QTemporaryDir dir; const auto path = dir.filePath("preset.xsie");
+    xerahs::effects::EffectPreset preset; preset.name = "Invert fixture";
+    xerahs::effects::PresetStep step; step.id = "invert"; step.supported = true; preset.steps.append(step);
+    QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); const auto data = xerahs::effects::writeXsiePreset(preset); QCOMPARE(file.write(data), data.size()); file.close();
+    NativeCaptureWorkflows host(dir.filePath("workflows.json")); const auto before = bytes(dir.filePath("workflows.json"));
+    QString lastStatus; QTimer driver; QElapsedTimer deadline; deadline.start(); bool clicked = false, picked = false, reviewed = false, saved = false;
+    connect(&driver, &QTimer::timeout, this, [&] {
+      auto *active = qobject_cast<QDialog *>(QApplication::activeModalWidget()); if (!active) return;
+      if (auto *label = active->findChild<QLabel *>("captureWorkflowStatus")) lastStatus = label->text();
+      if (deadline.elapsed() > 10000) { active->reject(); return; }
+      if (auto *picker = qobject_cast<QFileDialog *>(active)) {
+        if (!picked) { picked = true; QMetaObject::invokeMethod(picker, "fileSelected", Qt::DirectConnection, Q_ARG(QString, path)); picker->reject(); } return;
+      }
+      if (auto *review = qobject_cast<PresetDialog *>(active)) {
+        if (!reviewed) { reviewed = true; QCOMPARE(bytes(dir.filePath("workflows.json")), before); if (apply) review->accept(); else review->reject(); } return;
+      }
+      if (active->objectName() != "captureWorkflowsDialog") return;
+      if (!clicked) { clicked = true; active->findChild<QPushButton *>("chooseWorkflowEffects")->click(); return; }
+      if (!reviewed) return;
+      if (apply && !saved) {
+        if (!active->findChild<QLabel *>("captureWorkflowEffects")->text().contains("Invert fixture")) return;
+        active->findChild<QPushButton *>("saveCaptureWorkflows")->click(); saved = true;
+      }
+      active->reject();
+    });
+    driver.start(5); manageCaptureWorkflows(host, nullptr, [] { return true; }); driver.stop();
+    QVERIFY(clicked); QVERIFY(picked); QVERIFY2(reviewed, qPrintable(lastStatus)); QCOMPARE(saved, apply); host.reload(); const auto choice = host.resolve(); QVERIFY(choice.workflow);
+    QCOMPARE(choice.workflow->imageEffects.isEmpty(), !apply);
+    if (!apply) QCOMPARE(bytes(dir.filePath("workflows.json")), before);
+  }
+
   void initTestCase() {
     QApplication::setAttribute(Qt::AA_DontUseNativeDialogs); QVERIFY(privateSettings.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, privateSettings.path()); QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, privateSettings.path());
   }
