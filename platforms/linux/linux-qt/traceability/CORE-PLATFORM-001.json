@@ -1095,7 +1095,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native capture/file-upload history records and workflow metadata deletion exist; bounded search/pagination/retention and corrupt-store recovery are not complete.",
+      "note": "Native capture/file-upload history has stable task IDs, missing-file tolerance, workflow metadata deletion, bounded search (case-insensitive, query capped at 256 chars, 200-item pages, search field and Load more in the history window) and deterministic keyset pagination (newest first, ties by task ID, stable while records are added). Unparseable/truncated records are renamed to <id>.json.corrupt (backup preserved, never overwritten), good neighbours and newer-version records are untouched, and the window shows a value-free count. Retention limits (the 1024-record admission cap is back-pressure, not an approved policy), private-preview policy, shared persisted compatibility, quarantine-file pruning and supported-target/human qualification remain Required product decisions; status stays partial.",
       "evidence": [
         "platforms/linux/linux-qt/app/JOURNAL-RECOVERY.md",
         "platforms/linux/linux-qt/app/PipelineHistoryDialog.cpp",
@@ -1107,12 +1107,15 @@
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/src/history/CaptureHistory.cpp",
+        "platforms/linux/linux-qt/app/NativePrivateRecords.cpp",
+        "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 105,
-        "coverage": "Native capture/file-upload history records and workflow metadata deletion exist; bounded search/pagination/retention and corrupt-store recovery are not complete.",
+        "coverage": "Native capture/file-upload history has stable task IDs, missing-file tolerance, workflow metadata deletion, bounded search (case-insensitive, query capped at 256 chars, 200-item pages, search field and Load more in the history window) and deterministic keyset pagination (newest first, ties by task ID, stable while records are added). Unparseable/truncated records are renamed to <id>.json.corrupt (backup preserved, never overwritten), good neighbours and newer-version records are untouched, and the window shows a value-free count. Retention limits (the 1024-record admission cap is back-pressure, not an approved policy), private-preview policy, shared persisted compatibility, quarantine-file pruning and supported-target/human qualification remain Required product decisions; status stays partial.",
         "incremental_evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
@@ -1135,6 +1138,12 @@
             "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
             "line": 36
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
+            "sha256": "e9b2a096d977c534c036d20e5448973ce9feae8be65ba711b3d77fbdd2483768",
+            "method": "corruptAndTruncatedRecordsAreSetAsideWithBackupAndGoodRecordsSurvive",
+            "line": 174
           }
         ]
       },

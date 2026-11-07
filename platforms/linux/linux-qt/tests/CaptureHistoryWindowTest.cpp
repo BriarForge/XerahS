@@ -2,6 +2,9 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
@@ -134,6 +137,89 @@ private slots:
     QCOMPARE(int(historyPage(items, "shot-20", 1).size()), 6);  // shot-20 and shot-200 to shot-204
     QVERIFY(matchesHistoryQuery(items[0], items[0].createdAt.toLocalTime().toString("yyyy-MM-dd")));
     QVERIFY(!matchesHistoryQuery(items[0], "nothing-like-this"));
+  }
+  void keysetPaginationIsStableWhileRecordsAreAdded() {
+    std::vector<CaptureHistoryItem> items;
+    const auto base = QDateTime::fromString("2026-10-21T10:00:00Z", Qt::ISODate);
+    for (int i = 0; i < 25; ++i) {
+      CaptureHistoryItem item; item.taskId = QStringLiteral("t%1").arg(i, 2, 10, QLatin1Char('0'));
+      item.createdAt = base.addSecs(-(i / 2) * 10);  // pairs share a timestamp: tie-break by task ID
+      item.files.push_back({QStringLiteral("/p/shot-%1.png").arg(i)});
+      items.push_back(item);
+    }
+    auto first = historyPageAfter(items, {}, {}, 10);
+    QCOMPARE(int(first.items.size()), 10); QCOMPARE(first.totalMatches, 25); QVERIFY(first.next.valid());
+    // A newer capture arrives between page loads.
+    CaptureHistoryItem fresh; fresh.taskId = "zz-new"; fresh.createdAt = base.addSecs(100); fresh.files.push_back({"/p/new.png"});
+    items.insert(items.begin(), fresh);
+    QStringList seen; for (const auto &i : first.items) seen << i.taskId;
+    auto second = historyPageAfter(items, {}, first.next, 10);
+    auto third = historyPageAfter(items, {}, second.next, 10);
+    for (const auto &i : second.items) seen << i.taskId;
+    for (const auto &i : third.items) seen << i.taskId;
+    QVERIFY(!third.next.valid()); QCOMPARE(seen.size(), 25); QCOMPARE(QSet<QString>(seen.begin(), seen.end()).size(), 25);  // no repeat, none skipped
+    QVERIFY(!seen.contains("zz-new"));
+    QCOMPARE(first.items[0].taskId, QString("t00")); QCOMPARE(first.items[1].taskId, QString("t01"));
+    // Bounded: an oversized limit is clamped; a filter applies before paging.
+    std::vector<CaptureHistoryItem> many(kHistoryPageSize + 50, fresh);
+    QCOMPARE(int(historyPageAfter(many, {}, {}, 100000).items.size()), kHistoryPageSize);
+    QCOMPARE(historyPageAfter(items, "shot-2", {}, 3).totalMatches, 6);  // shot-2, shot-20 to shot-24
+  }
+  void overlongQueriesAreTruncatedNotUnbounded() {
+    CaptureHistoryItem item; item.workflowName = "Docs"; item.files.push_back({"/p/a.png"});
+    QVERIFY(matchesHistoryQuery(item, QString("docs") + QString(5000, ' ')));
+    QVERIFY(!matchesHistoryQuery(item, QString(kHistoryMaxQueryLength, 'x') + "docs"));
+    QVERIFY(matchesHistoryQuery(item, QString("docs") + QString(kHistoryMaxQueryLength, ' ') + "tail") == false);
+  }
+  void corruptAndTruncatedRecordsAreSetAsideWithBackupAndGoodRecordsSurvive() {
+    QTemporaryDir dir; const auto state = dir.filePath("state"); auto storage = std::make_shared<NativePipelineJournal>(state);
+    const auto good = newId(), bad1 = newId(), bad2 = newId(), future = newId();
+    const auto file = writePng(dir.filePath("good.png"), Qt::green);
+    const auto encoded = serializePipelineJournal(record(good, QDateTime::currentDateTimeUtc(), {png(file, good)}, "region"));
+    QVERIFY(storage->replace(good, {}, encoded).stored);
+    const auto put = [&](const QString &id, const QByteArray &bytes) {
+      QFile f(state + "/" + id + ".json"); QVERIFY(f.open(QIODevice::WriteOnly)); f.write(bytes); f.close();
+      QVERIFY(f.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner)); };
+    const auto truncated = encoded.left(encoded.size() / 2);
+    put(bad1, truncated); put(bad2, "not json at all \x01");
+    auto value = QJsonDocument::fromJson(encoded).object(); value.insert("version", 999); const auto futureBytes = QJsonDocument(value).toJson();
+    put(future, futureBytes);
+    const auto listing = storage->listRecovering();
+    QCOMPARE(listing.quarantined, 2); QCOMPARE(listing.entries.size(), size_t(2));  // good + future-version kept
+    QVERIFY(QFile::exists(state + "/" + bad1 + ".json.corrupt")); QVERIFY(QFile::exists(state + "/" + bad2 + ".json.corrupt"));
+    QVERIFY(!QFile::exists(state + "/" + bad1 + ".json"));
+    QFile backup(state + "/" + bad1 + ".json.corrupt"); QVERIFY(backup.open(QIODevice::ReadOnly)); QCOMPARE(backup.readAll(), truncated);
+    QVERIFY(QFile::exists(state + "/" + future + ".json"));  // newer-version record untouched
+    QCOMPARE(storage->list().entries.size(), size_t(2)); QCOMPARE(storage->listRecovering().quarantined, 0);
+    // The same ID can be written again; an earlier backup is never overwritten.
+    QVERIFY(storage->replace(bad1, {}, serializePipelineJournal(record(bad1, QDateTime::currentDateTimeUtc(), {png(file, bad1)}))).stored); put(bad1, QByteArray());
+    const auto again = storage->listRecovering(); QCOMPARE(again.quarantined, 1);
+    QVERIFY(QFile::exists(state + "/" + bad1 + ".json.corrupt.1"));
+  }
+  void windowRecoversCorruptStoreAndReportsAValueFreeCount() {
+    QTemporaryDir dir; const auto state = dir.filePath("state"); auto storage = std::make_shared<NativePipelineJournal>(state);
+    const auto good = newId(), bad = newId(); const auto file = writePng(dir.filePath("ok.png"), Qt::green);
+    QVERIFY(storage->replace(good, {}, serializePipelineJournal(record(good, QDateTime::currentDateTimeUtc(), {png(file, good)}))).stored);
+    { QFile f(state + "/" + bad + ".json"); QVERIFY(f.open(QIODevice::WriteOnly)); f.write("{\"secret-value\": "); f.close(); QFile::setPermissions(f.fileName(), QFileDevice::ReadOwner | QFileDevice::WriteOwner); }
+    QWidget owner; auto *window = new CaptureHistoryWindow(storage, [] { return false; }, {}, &owner); window->show();
+    auto *list = window->findChild<QListWidget *>("captureHistoryItems"); QTRY_COMPARE(list->count(), 1);
+    QVERIFY(QFile::exists(state + "/" + bad + ".json.corrupt"));
+    bool reported = false;
+    for (auto *label : window->findChildren<QLabel *>()) if (label->text().contains("1 unreadable history record")) { reported = true; QVERIFY(!label->text().contains("secret-value")); }
+    QVERIFY(reported);
+  }
+  void windowSearchFieldIsBoundedAndLoadMorePages() {
+    QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    const auto file = writePng(dir.filePath("p.png"), Qt::green); const auto now = QDateTime::currentDateTimeUtc();
+    for (int i = 0; i < kHistoryPageSize + 3; ++i) { const auto id = newId();
+      QVERIFY(storage->replace(id, {}, serializePipelineJournal(record(id, now.addSecs(-i), {png(file, id)}))).stored); }
+    QWidget owner; auto *window = new CaptureHistoryWindow(storage, [] { return false; }, {}, &owner); window->show();
+    auto *list = window->findChild<QListWidget *>("captureHistoryItems"); QTRY_COMPARE(list->count(), kHistoryPageSize);
+    auto *search = window->findChild<QLineEdit *>("captureHistorySearch");
+    QCOMPARE(search->maxLength(), kHistoryMaxQueryLength); QVERIFY(!search->accessibleName().isEmpty());
+    auto *more = window->findChild<QPushButton *>("moreCaptureHistory"); QVERIFY(more->isVisible()); QVERIFY(!more->accessibleName().isEmpty() || !more->text().isEmpty());
+    more->click(); QCOMPARE(list->count(), kHistoryPageSize + 3); QVERIFY(!more->isVisible());
+    search->setText("no-such-thing"); QCOMPARE(list->count(), 0);
   }
   void windowShowsThumbnailsMissingFilesAndFileActions() {
     QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));

@@ -16,7 +16,7 @@ struct FileUploadHistoryRecord {
   QDateTime createdAt;
   xerahs::actions::UploadResult result;
 };
-struct JournalListing { std::vector<JournalEntry> entries; QString diagnostic; };
+struct JournalListing { std::vector<JournalEntry> entries; QString diagnostic; int quarantined = 0; };
 // Linux I/O boundary. Independent descriptor locks serialize writers; snapshots
 // compare exact bytes. No method reads, retries or deletes a capture artifact.
 class NativePipelineJournal final : public xerahs::actions::PipelineJournalStoragePort {
@@ -25,6 +25,10 @@ public:
   static QString defaultDirectory();
   JournalWrite replace(const QString &id, const std::optional<QByteArray> &expected, const QByteArray &bytes) const override;
   JournalListing list() const;
+  // CORE-023: like list(), but unparseable (corrupt/truncated) records are renamed to <id>.json.corrupt so
+  // they stop occupying history slots and are preserved for manual recovery. Unsupported-version, unsafe
+  // and unreadable files are left untouched. `quarantined` counts the files set aside.
+  JournalListing listRecovering() const;
   JournalWrite recordFileUpload(const FileUploadHistoryRecord &upload) const;
   JournalWrite erase(const QString &id, const QByteArray &expected) const;
 private:

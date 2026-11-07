@@ -52,4 +52,16 @@ JournalListing NativePipelineJournal::list() const {
   });
   return result;
 }
+JournalListing NativePipelineJournal::listRecovering() const {
+  auto listing = list(); int quarantined = 0;
+  std::vector<JournalEntry> kept;
+  for (auto &entry : listing.entries) {
+    if (!entry.parsed.record && entry.parsed.diagnostic == QLatin1String("pipeline-journal-invalid") &&
+        records(m_directory).quarantine(entry.taskId, entry.bytes).stored) { ++quarantined; continue; }
+    kept.push_back(std::move(entry));
+  }
+  listing.entries = std::move(kept); listing.quarantined = quarantined;
+  if (quarantined > 0 && listing.diagnostic == QLatin1String("pipeline-journal-capacity")) listing = [&] { auto again = list(); again.quarantined = quarantined; return again; }();
+  return listing;
+}
 } // namespace xerahs::app
