@@ -22,6 +22,14 @@
 using namespace xerahs::editor;
 
 namespace {
+QImage flippedImage(const QImage &image, Qt::Orientations axes) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+  return image.flipped(axes);
+#else
+  return image.mirrored(axes.testFlag(Qt::Horizontal), axes.testFlag(Qt::Vertical));
+#endif
+}
+
 
 const QString kAsset = QStringLiteral("asset");
 constexpr qint64 kW = 40, kH = 30;

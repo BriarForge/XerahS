@@ -83,6 +83,14 @@ using namespace xerahs::app;
 using namespace xerahs::editor;
 
 namespace {
+QImage flippedImage(const QImage &image, Qt::Orientations axes) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+  return image.flipped(axes);
+#else
+  return image.mirrored(axes.testFlag(Qt::Horizontal), axes.testFlag(Qt::Vertical));
+#endif
+}
+
 QImage fixture() {
   QImage image(60, 40, QImage::Format_ARGB32);
   image.setColorSpace(QColorSpace::SRgb);
