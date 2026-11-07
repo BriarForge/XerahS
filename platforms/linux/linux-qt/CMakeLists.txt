@@ -106,6 +106,8 @@ add_library(xerahs_core STATIC
   src/image-editor/EditorAppearance.h
   src/image-editor/EditorPreferenceStore.cpp
   src/image-editor/EditorPreferenceStore.h
+  src/image-editor/EditorRecovery.cpp
+  src/image-editor/EditorRecovery.h
   src/image-editor/EditorWindowPlacement.cpp
   src/image-editor/EditorWindowPlacement.h
   src/naming/FilenameGenerator.cpp
@@ -668,6 +670,12 @@ add_executable(editor-session-test tests/EditorSessionTest.cpp)
 set_target_properties(editor-session-test PROPERTIES AUTOMOC ON)
 target_link_libraries(editor-session-test PRIVATE xerahs_core ZLIB::ZLIB Qt6::Test)
 add_test(NAME editor-session COMMAND editor-session-test)
+# ES-018: separate editor recovery documents.
+add_executable(editor-recovery-test tests/EditorRecoveryTest.cpp)
+set_target_properties(editor-recovery-test PROPERTIES AUTOMOC ON)
+target_link_libraries(editor-recovery-test PRIVATE xerahs_core ZLIB::ZLIB Qt6::Test)
+add_test(NAME editor-recovery COMMAND editor-recovery-test)
+set_tests_properties(editor-recovery PROPERTIES TIMEOUT 30)
 
 add_executable(editor-source-test tests/EditorSourceTest.cpp)
 set_target_properties(editor-source-test PROPERTIES AUTOMOC ON)

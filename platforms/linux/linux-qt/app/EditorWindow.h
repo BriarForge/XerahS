@@ -3,6 +3,7 @@
 #pragma once
 
 #include "image-editor/EditorSession.h"
+#include "image-editor/EditorRecovery.h"
 #include "image-editor/CanvasOperations.h"
 #include "EditorSave.h"
 #include "EditorCopy.h"
@@ -28,6 +29,7 @@
 class QAction;
 class QDockWidget;
 class QLabel;
+class QTimer;
 
 namespace xerahs::app {
 
@@ -66,6 +68,15 @@ public:
   void setUploadPorts(EditorUploadPorts ports);
   void setWallpaperPorts(EditorWallpaperPorts ports);
   void setAnnotationClipboardPorts(AnnotationClipboardPorts ports);
+  // ES-018: restart notice for separate recovery documents. Each is disclosed
+  // with its age and source and offered Restore / Discard / Decide later (the
+  // default, which keeps it). Restoring opens an unsaved editor and never writes
+  // the explicit save. Returns the number of editors restored.
+  static int offerRecovery(QWidget *parent = nullptr);
+  // Test seam: delay before a dirty change is written to its recovery document.
+  static void setRecoveryDelay(int milliseconds);
+  // Writes the recovery document now when the session is dirty; returns its diagnostic.
+  QString writeRecoveryNow();
 signals:
   // GUI-thread acknowledgement after checkpoint/partial receipt recording;
   // emitted while Save is busy. Reentrant Save is ignored; owner deletion is safe.
@@ -121,6 +132,8 @@ private:
   void rememberAnnotationTool();
   void persistDrawingDefaults(quint64 expectedRevision);
   void refresh();
+  void scheduleRecovery();
+  void discardRecovery();
   void updatePointerStatus();
   void restoreHistory(bool redo);
   void cropImage();
@@ -136,6 +149,11 @@ private:
   bool commitCanvas(PreparedCanvasEdit prepared, quint64 state, const QSet<QUuid> &selection, quint64 generation);
 
   QString m_path;
+  QTimer *m_recoveryTimer = nullptr;
+  QString m_recoveryId;
+  QString m_recoverySource;  // origin of a restored session while it has no path of its own
+  QString m_recoveryDiagnostic;
+  std::optional<quint64> m_recoveredState;
   QString m_preferenceDiagnostic;
   QString m_drawingPreferenceDiagnostic;
   QImage m_image;

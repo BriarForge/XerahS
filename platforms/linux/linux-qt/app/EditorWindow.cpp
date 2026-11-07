@@ -54,10 +54,21 @@
 #include <QStatusBar>
 #include <QToolBar>
 #include <QTimer>
+#include <QCoreApplication>
+#include <QSet>
+#include <csignal>
+#include <cerrno>
 #include <QVBoxLayout>
 
 #include <array>
 #include <cmath>
+
+// ES-018 process-wide recovery state.
+namespace {
+int g_recoveryDelayMs = 3000;
+QSet<QString> &liveRecoveryIds() { static QSet<QString> ids; return ids; }
+bool processAlive(qint64 pid) { return pid > 0 && (::kill(static_cast<pid_t>(pid), 0) == 0 || errno == EPERM); }
+}
 
 namespace xerahs::app {
 
@@ -90,6 +101,7 @@ QString describe(const QString &diagnostic) {
 }  // namespace
 
 EditorWindow::~EditorWindow() {
+  liveRecoveryIds().remove(m_recoveryId);
   for (auto *dialog : findChildren<EffectsDialog *>(QString(), Qt::FindDirectChildrenOnly)) {
     dialog->disconnect(this);
     delete dialog;
@@ -179,6 +191,8 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     : m_path(path), m_image(std::move(image)), m_session(std::make_unique<EditorSession>(std::move(document), persistence)) {
   new NativeAccessibility(*this, "Edit the image using menus, tools and the canvas. Save is explicit. Close offers recovery for unsaved changes.", false);
   guardEditorShutdown(*this);
+  m_recoveryTimer = new QTimer(this); m_recoveryTimer->setSingleShot(true);
+  connect(m_recoveryTimer, &QTimer::timeout, this, [this] { writeRecoveryNow(); });
   applyCreationDefaults();
   m_canvas = new EditorCanvas(*m_session, m_image, nullptr, displaySource);
   // ESET-006: the saved last tool selects the first tool of this window only; it never edits objects.
@@ -690,6 +704,7 @@ void EditorWindow::persistDrawingDefaults(quint64 expectedRevision) {
 }
 
 void EditorWindow::refresh() {
+  scheduleRecovery();
   const bool ready = !m_outputPending && !m_canvas->interactionActive();
   const QPointer<EditorWindow> owner(this);
   for (auto *action : m_orderActions) {
@@ -860,6 +875,7 @@ void EditorWindow::adoptSession(std::unique_ptr<EditorSession> next, const QStri
   // Keep the old session alive until the canvas has cancelled its gesture and
   // switched its session pointer. Retaining the widget preserves action bindings.
   auto previous = std::move(m_session);
+  discardRecovery(); m_recoverySource.clear();
   m_session = std::move(next);
   applyCreationDefaults();
   m_image = std::move(source);
@@ -1637,9 +1653,70 @@ void EditorWindow::closeEvent(QCloseEvent *event) {
     }
   }
   if (!guard) { event->ignore(); return; }
+  discardRecovery();  // ES-018: clean close or explicit Discard removes the recovery document
   const auto diagnostic = m_windowState->remember();
   if (!diagnostic.isEmpty()) QMessageBox::warning(this, QStringLiteral("Window preferences not saved"), editorPreferenceDiagnosticMessage(diagnostic));
   event->accept();
+}
+
+// ES-018: recovery documents live apart from the user's files (EditorRecovery.h).
+void EditorWindow::setRecoveryDelay(int milliseconds) { g_recoveryDelayMs = std::max(0, milliseconds); }
+
+void EditorWindow::scheduleRecovery() {
+  if (!m_recoveryTimer || !m_session) return;
+  if (!m_session->dirty()) { discardRecovery(); return; }
+  if (m_recoveredState == m_session->stateId() || m_recoveryTimer->isActive()) return;
+  m_recoveryTimer->start(g_recoveryDelayMs);
+}
+
+void EditorWindow::discardRecovery() {
+  if (m_recoveryTimer) m_recoveryTimer->stop();
+  m_recoveredState.reset();
+  if (m_recoveryId.isEmpty()) return;
+  liveRecoveryIds().remove(m_recoveryId);
+  m_recoveryDiagnostic = EditorRecoveryStore(EditorRecoveryStore::defaultDirectory()).remove(m_recoveryId);
+  m_recoveryId.clear();
+}
+
+QString EditorWindow::writeRecoveryNow() {
+  if (!m_session || !m_session->dirty()) return {};
+  if (m_recoveryTimer) m_recoveryTimer->stop();
+  if (m_recoveryId.isEmpty()) m_recoveryId = EditorRecoveryStore::newId();
+  liveRecoveryIds().insert(m_recoveryId);
+  const QString source = m_path.isEmpty() ? m_recoverySource : absoluteImagePath(m_path);
+  m_recoveryDiagnostic = EditorRecoveryStore(EditorRecoveryStore::defaultDirectory())
+      .write(m_recoveryId, source, m_session->document(), QCoreApplication::applicationPid());
+  if (m_recoveryDiagnostic.isEmpty()) m_recoveredState = m_session->stateId();
+  return m_recoveryDiagnostic;
+}
+
+int EditorWindow::offerRecovery(QWidget *parent) {
+  EditorRecoveryStore store(EditorRecoveryStore::defaultDirectory());
+  const auto listing = store.list();
+  int restored = 0;
+  for (const auto &record : listing.records) {
+    // A document held by an editor that is still running is not a crash leftover.
+    if (liveRecoveryIds().contains(record.id)) continue;
+    if (record.ownerPid != QCoreApplication::applicationPid() && processAlive(record.ownerPid)) continue;
+    QMessageBox box(QMessageBox::Question, QStringLiteral("Recover unsaved editor session"), recoveryDisclosure(record, QDateTime::currentDateTimeUtc()), QMessageBox::NoButton, parent);
+    box.setObjectName(QStringLiteral("editorRecoveryNotice")); box.setTextFormat(Qt::PlainText);
+    box.setInformativeText(QStringLiteral("Restore opens the recovered work as an unsaved editor. Discard permanently deletes the recovery copy. Decide later keeps it."));
+    auto *restore = box.addButton(QStringLiteral("Restore"), QMessageBox::AcceptRole);
+    auto *discard = box.addButton(QStringLiteral("Discard"), QMessageBox::DestructiveRole);
+    auto *later = box.addButton(QStringLiteral("Decide later"), QMessageBox::RejectRole);
+    box.setDefaultButton(later); box.setEscapeButton(later);
+    box.exec();
+    if (box.clickedButton() == discard) { store.remove(record.id); continue; }
+    if (box.clickedButton() != restore) continue;
+    auto *window = fromCapturedDocument(record.document, parent);
+    if (!window) continue;  // the recovery document is kept
+    window->m_recoverySource = record.sourcePath;
+    window->m_importMessage = recoveryDisclosure(record, QDateTime::currentDateTimeUtc());
+    window->show(); window->refresh();
+    window->writeRecoveryNow();  // the restored editor owns its own recovery copy before the old one goes
+    store.remove(record.id); ++restored;
+  }
+  return restored;
 }
 
 }  // namespace xerahs::app
