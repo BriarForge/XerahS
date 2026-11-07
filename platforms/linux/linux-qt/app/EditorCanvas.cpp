@@ -49,6 +49,14 @@ QTransform rotation(const RectangleAnnotation &r) {
   return transform;
 }
 
+// EA-018: the dash and focus cues must read without colour on any palette. Keep the theme's highlight hue but pin
+// its luminance to a mid-dark level, so it always contrasts with the white outline base and with the canvas frame.
+QColor luminanceCue(QColor highlight) {
+  QColor cue = highlight.toHsl();
+  for (int i = 0; i < 64 && qGray(cue.rgb()) > 95; ++i) cue = cue.darker(105);
+  for (int i = 0; i < 64 && qGray(cue.rgb()) < 80; ++i) cue = cue.lighter(105);
+  return cue;
+}
 QPen outlinePen(QColor color, Qt::PenStyle style = Qt::SolidLine) {
   QPen pen(color, 2, style);
   pen.setCosmetic(true);  // ES-019: fixed-width selection at every zoom
@@ -491,7 +499,7 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
       p.setBrush(Qt::NoBrush);
       p.setPen(outlinePen(Qt::white));
       p.drawRect(outline);
-      p.setPen(outlinePen(palette().highlight().color(), Qt::DashLine));
+      p.setPen(outlinePen(luminanceCue(palette().highlight().color()), Qt::DashLine));
       p.drawRect(outline);
       p.restore();
       if (!canvasTool() && canEditRectangle() && rectanglePropertiesDiagnostic({r->start, r->end, r->style}).isEmpty()) {
@@ -540,7 +548,7 @@ void EditorCanvas::paintEvent(QPaintEvent *) {
   if (hasFocus()) {
     p.resetTransform();
     p.setRenderHint(QPainter::Antialiasing, false);
-    p.setPen(outlinePen(palette().highlight().color()));
+    p.setPen(outlinePen(luminanceCue(palette().highlight().color())));
     p.setBrush(Qt::NoBrush);
     p.drawRect(viewport()->rect().adjusted(1, 1, -1, -1));
   }
