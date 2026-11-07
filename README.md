@@ -14,12 +14,12 @@ Application identity: `com.xerahs.app` / "XerahS". The native application replac
 
 ## Progress
 
-Recorded implementation coverage as of 2026-11-04, from the
+Recorded implementation coverage as of 2026-11-08, from the
 [platform progress reports](platforms/PROGRESS.md):
 
 | OS | Implementation coverage | Current status |
 |---|---:|---|
-| [Linux](platforms/linux/PROGRESS.md) | **50.0%** — 162 / 324 desktop requirements | Native Qt application in development; 138 requirements partial and 24 not started; explicit blockers are recorded in the Linux audit. |
+| [Linux](platforms/linux/PROGRESS.md) | **53.1%** — 172 / 324 desktop requirements | Native Qt application in development; 130 requirements partial and 22 not started; explicit blockers are recorded in the Linux audit. |
 | [Windows](platforms/windows/PROGRESS.md) | **0.0%** — 0 / 324 desktop requirements | Native application not started; requirement implementation unassessed. |
 | [macOS](platforms/macos/PROGRESS.md) | **0.0%** — 0 / 324 desktop requirements | Native application not started; requirement implementation unassessed. |
 | [Android](platforms/android/README.md) | Not yet assessed | Native application not started; mobile scope tracked separately. |
