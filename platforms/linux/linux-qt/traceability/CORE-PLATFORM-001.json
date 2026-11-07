@@ -204,7 +204,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "OwnedWork capture/editor/upload/recording paths expose progress and cancellation, but watch-folder copy/move still does synchronous file work and all operation families are not covered.",
+      "note": "OwnedWork capture/editor/upload/recording paths and watch-folder copy/move expose progress and cancellation (copy/move runs on an owned worker with atomic temp output, cancel on stop/destruction, no double-processing), but all operation families are not covered.",
       "evidence": [
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
@@ -237,12 +237,13 @@
         "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
         "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
         "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 22,
-        "coverage": "OwnedWork capture/editor/upload/recording paths expose progress and cancellation, but watch-folder copy/move still does synchronous file work and all operation families are not covered.",
+        "coverage": "OwnedWork capture/editor/upload/recording paths and watch-folder copy/move expose progress and cancellation (copy/move runs on an owned worker with atomic temp output, cancel on stop/destruction, no double-processing), but all operation families are not covered.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -256,6 +257,10 @@
           {
             "path": "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
             "sha256": "8b50976b14beccfde7aaab17e3a16bf1caff157ad6761395728a476784ac28ba"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
           }
         ],
         "test_anchors": [
@@ -264,6 +269,12 @@
             "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
             "line": 36
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "sha256": "a03777aa45f43e0f19970a45a9865233bbe0b8ee81f423d23139a047ae2572cf",
+            "method": "slowCopyDoesNotBlockGuiAndIsNotDoubleProcessed",
+            "line": 507
           }
         ]
       },
@@ -1084,7 +1095,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native capture/file-upload history records and workflow metadata deletion exist; bounded search/pagination/retention and corrupt-store recovery are not complete.",
+      "note": "Native capture/file-upload history has stable task IDs, missing-file tolerance, workflow metadata deletion, bounded search (case-insensitive, query capped at 256 chars, 200-item pages, search field and Load more in the history window) and deterministic keyset pagination (newest first, ties by task ID, stable while records are added). Unparseable/truncated records are renamed to <id>.json.corrupt (backup preserved, never overwritten), good neighbours and newer-version records are untouched, and the window shows a value-free count. Retention limits (the 1024-record admission cap is back-pressure, not an approved policy), private-preview policy, shared persisted compatibility, quarantine-file pruning and supported-target/human qualification remain Required product decisions; status stays partial.",
       "evidence": [
         "platforms/linux/linux-qt/app/JOURNAL-RECOVERY.md",
         "platforms/linux/linux-qt/app/PipelineHistoryDialog.cpp",
@@ -1096,12 +1107,15 @@
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/PostCapturePipelineTest.cpp",
         "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/src/history/CaptureHistory.cpp",
+        "platforms/linux/linux-qt/app/NativePrivateRecords.cpp",
+        "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 105,
-        "coverage": "Native capture/file-upload history records and workflow metadata deletion exist; bounded search/pagination/retention and corrupt-store recovery are not complete.",
+        "coverage": "Native capture/file-upload history has stable task IDs, missing-file tolerance, workflow metadata deletion, bounded search (case-insensitive, query capped at 256 chars, 200-item pages, search field and Load more in the history window) and deterministic keyset pagination (newest first, ties by task ID, stable while records are added). Unparseable/truncated records are renamed to <id>.json.corrupt (backup preserved, never overwritten), good neighbours and newer-version records are untouched, and the window shows a value-free count. Retention limits (the 1024-record admission cap is back-pressure, not an approved policy), private-preview policy, shared persisted compatibility, quarantine-file pruning and supported-target/human qualification remain Required product decisions; status stays partial.",
         "incremental_evidence": "platforms/linux/linux-qt/tests/WorkflowExecutionHistoryTest.cpp",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
@@ -1124,6 +1138,12 @@
             "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
             "line": 36
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
+            "sha256": "e9b2a096d977c534c036d20e5448973ce9feae8be65ba711b3d77fbdd2483768",
+            "method": "corruptAndTruncatedRecordsAreSetAsideWithBackupAndGoodRecordsSurvive",
+            "line": 174
           }
         ]
       },
@@ -1211,9 +1231,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-            "sha256": "21b59d044d0f4eafc92ba640d50d25aa21070d1961e783c8b0cde766c9956524",
+            "sha256": "a03777aa45f43e0f19970a45a9865233bbe0b8ee81f423d23139a047ae2572cf",
             "method": "uploadsOnceThroughDefaultDestinationAcrossRestart",
-            "line": 243
+            "line": 372
           }
         ]
       },
@@ -1564,17 +1584,18 @@
       "previous_note": "linux-qt is implemented as the supported reference candidate application. Every applicable requirement on every declared target remains Required; no scope reduction or edition promotion is claimed."
     },
     "CORE-034": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Approved linux-editions.json declares profiles/targets/toolkit/mechanisms/packaging, but no automated test was found validating all CORE-034 profile fields against that requirement; metadata presence alone is not tested completion.",
+      "note": "EditionProfilesTest loads the approved linux-editions.json and asserts every edition profile declares a unique id, a valid status, non-empty targets (distribution and versions), desktops, display server, toolkit value with a D-LIN decision record, all five mechanisms (capture, global shortcuts, notifications, tray, credentials) and non-empty packaging formats; it also checks the linux-qt profile against the native app (Qt 6 Widgets and C++17 build, QApplication, Screenshot and ScreenCast portal, GlobalShortcuts portal, Secret Service client, QSystemTrayIcon tray and notification door). Tray/notification protocol names are the profile's declaration realised through Qt's QSystemTrayIcon, which cannot be proven at protocol level headlessly.",
       "evidence": [
-        "product-contract/capabilities/CORE-PLATFORM-001/linux-editions.json"
+        "product-contract/capabilities/CORE-PLATFORM-001/linux-editions.json",
+        "platforms/linux/linux-qt/tests/EditionProfilesTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 164,
-        "coverage": "Approved linux-editions.json declares profiles/targets/toolkit/mechanisms/packaging, but no automated test was found validating all CORE-034 profile fields against that requirement; metadata presence alone is not tested completion.",
+        "coverage": "EditionProfilesTest loads the approved linux-editions.json and asserts every edition profile declares a unique id, a valid status, non-empty targets (distribution and versions), desktops, display server, toolkit value with a D-LIN decision record, all five mechanisms (capture, global shortcuts, notifications, tray, credentials) and non-empty packaging formats; it also checks the linux-qt profile against the native app (Qt 6 Widgets and C++17 build, QApplication, Screenshot and ScreenCast portal, GlobalShortcuts portal, Secret Service client, QSystemTrayIcon tray and notification door). Tray/notification protocol names are the profile's declaration realised through Qt's QSystemTrayIcon, which cannot be proven at protocol level headlessly.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -1582,7 +1603,20 @@
             "sha256": "e5ac155a034ad1374ea054b33412697da0da21df4b6a04e396332b2513aad742"
           }
         ],
-        "test_anchors": []
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/EditionProfilesTest.cpp",
+            "sha256": "128e27b07e3daa4105854f1b425bd0e8e83a46a029095bedaa8a3ce419831938",
+            "method": "everyEditionDeclaresEveryRequiredField",
+            "line": 30
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditionProfilesTest.cpp",
+            "sha256": "128e27b07e3daa4105854f1b425bd0e8e83a46a029095bedaa8a3ce419831938",
+            "method": "linuxQtMechanismsMatchTheNativeApplication",
+            "line": 60
+          }
+        ]
       },
       "previous_note": "The approved linux-editions.json declares supported linux-qt and candidate editions. Actual qualification of all declared mechanisms and targets remains Required."
     },

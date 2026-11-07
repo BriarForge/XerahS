@@ -43,13 +43,13 @@ std::vector<CaptureHistoryItem> captureHistoryItems(const std::vector<xerahs::ac
     if (!item.files.empty()) items.push_back(std::move(item));
   }
   std::stable_sort(items.begin(), items.end(), [](const CaptureHistoryItem &a, const CaptureHistoryItem &b) {
-    return a.createdAt > b.createdAt;
+    return a.createdAt == b.createdAt ? a.taskId < b.taskId : a.createdAt > b.createdAt;
   });
   return items;
 }
 
 bool matchesHistoryQuery(const CaptureHistoryItem &item, const QString &query) {
-  const QString needle = query.trimmed();
+  const QString needle = query.trimmed().left(kHistoryMaxQueryLength);
   if (needle.isEmpty()) return true;
   const auto has = [&](const QString &text) { return text.contains(needle, Qt::CaseInsensitive); };
   if (has(item.origin) || has(item.destinationName) || has(item.workflowName) || has(item.captureSource) || has(item.createdAt.toLocalTime().toString(QStringLiteral("yyyy-MM-dd"))))
@@ -69,6 +69,28 @@ std::vector<CaptureHistoryItem> historyPage(const std::vector<CaptureHistoryItem
   }
   if (totalMatches) *totalMatches = matches;
   return page;
+}
+
+namespace {
+bool afterCursor(const CaptureHistoryItem &item, const HistoryCursor &cursor) {
+  if (!cursor.valid()) return true;
+  return item.createdAt == cursor.createdAt ? item.taskId > cursor.taskId : item.createdAt < cursor.createdAt;
+}
+}  // namespace
+
+HistoryPageResult historyPageAfter(const std::vector<CaptureHistoryItem> &items, const QString &query, const HistoryCursor &after,
+                                   int limit) {
+  HistoryPageResult result;
+  const std::size_t cap = std::size_t(std::clamp(limit, 1, kHistoryPageSize));
+  bool more = false;
+  for (const auto &item : items) {
+    if (!matchesHistoryQuery(item, query)) continue;
+    ++result.totalMatches;
+    if (!afterCursor(item, after)) continue;
+    if (result.items.size() < cap) result.items.push_back(item); else more = true;
+  }
+  if (more) result.next = {result.items.back().createdAt, result.items.back().taskId};
+  return result;
 }
 
 }  // namespace xerahs::history

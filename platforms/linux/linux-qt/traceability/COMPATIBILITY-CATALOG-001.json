@@ -150,10 +150,10 @@
       "previous_note": "Representative uploader/preset and document fixtures exist. Accepted runtime observations and every supported legacy version remain."
     },
     "COMPCAT-003": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Supported native readers parse into isolated candidates and failures preserve live state. XANN annotation parse failures currently return a global document error plus aggregate ImportReport counts, without identifying the affected record; complete per-record failure identification and full importer catalogue remain incomplete.",
+      "note": "Supported native readers (XANN, SXCU, SXIE, application/editor settings, configuration transfer) parse into isolated candidates and failures preserve live state. Failures now identify the affected record through ImportReport.records (index, stable kind, validated id or setting key, disposition, stable reason code; never payload, paths or secrets), surfaced value-free in the editor/preset/settings import summaries. Scope is the readers that exist; a future importer for another compatibility-ledger format must populate the same locators.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -169,12 +169,13 @@
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/app/SettingsDialog.cpp",
         "platforms/linux/linux-qt/src/settings/ReferenceMigration.h",
-        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp"
+        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 16,
-        "coverage": "Supported native readers parse into isolated candidates and failures preserve live state. XANN annotation parse failures currently return a global document error plus aggregate ImportReport counts, without identifying the affected record; complete per-record failure identification and full importer catalogue remain incomplete.",
+        "coverage": "Supported native readers (XANN, SXCU, SXIE, application/editor settings, configuration transfer) parse into isolated candidates and failures preserve live state. Failures now identify the affected record through ImportReport.records (index, stable kind, validated id or setting key, disposition, stable reason code; never payload, paths or secrets), surfaced value-free in the editor/preset/settings import summaries. Scope is the readers that exist; a future importer for another compatibility-ledger format must populate the same locators.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -183,33 +184,65 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
-            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+            "sha256": "7c4147f10eec487ef145cbd2481a602a069bb9ca229556ab2238309ee0214226"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
-            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+            "sha256": "7d84fa3ed40a844b97b9d5d087c5a953f93597c0ec8b63e622f19e9410549470"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
-            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+            "sha256": "b5e2abdc2a632e8defaf358b028d253d474f90ec81ba61b84154b7f8dcbc1896"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
+            "sha256": "cad554e1934099360c63728c0ee54edc11479cabfe1831ed16fc0b2f9f584c95"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
+            "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
-            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "sha256": "32f2ddcb5ff3a4c39b0d31d4d4d12b02a58028d840454059f1127e1a851e6faf",
             "method": "reportsEachDispositionWithoutValues",
             "line": 34
           },
           {
             "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
-            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "sha256": "32f2ddcb5ff3a4c39b0d31d4d4d12b02a58028d840454059f1127e1a851e6faf",
             "method": "unsafeUnknownsRejectWithoutEcho",
-            "line": 70
+            "line": 116
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "32f2ddcb5ff3a4c39b0d31d4d4d12b02a58028d840454059f1127e1a851e6faf",
+            "method": "failingAnnotationIsIdentifiedByIndexAndIdWithoutPayload",
+            "line": 52
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+            "sha256": "627e179818960f8acdf4ff5bf9d233f3b0e319665dac6c5c114c1c1bb8bd0d42",
+            "method": "failuresAreLocatedWithoutPayload",
+            "line": 49
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SxiePresetTest.cpp",
+            "sha256": "7a3ab0242b18cce00eab1c87c27bc64d703804c38f2b8767e36ccc00bd89de52",
+            "method": "failingStepIsLocatedByIndexWithoutPayload",
+            "line": 113
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+            "sha256": "3dd7e2375586c7aa7c253b999545b656fd830c32f6212a6a3504bfaf82472db4",
+            "method": "invalidSettingIsLocatedByKeyWithoutItsValue",
+            "line": 53
           }
         ]
       },
@@ -219,7 +252,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Typed six-category import reports are implemented for supported XANN/SXCU/SXIE/settings readers and surfaced value-free. Complete compatibility format/record inventory, unsupported critical behavior classification and human review remain incomplete.",
+      "note": "Typed six-category import reports are implemented for supported XANN/SXCU/SXIE/settings readers and surfaced value-free. Complete compatibility format/record inventory, unsupported critical behavior classification and human review remain incomplete. Record locators (COMPCAT-003) now also give reject/quarantine reasons per record; per-reader critical blocking exists (SXCU acceptanceBlocked, unsafe XANN/SXIE content rejected) but no catalogue-wide critical-behavior classification or human review, so this row stays partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -239,7 +272,7 @@
       "audit": {
         "classification": "partial",
         "spec_line": 20,
-        "coverage": "Typed six-category import reports are implemented for supported XANN/SXCU/SXIE/settings readers and surfaced value-free. Complete compatibility format/record inventory, unsupported critical behavior classification and human review remain incomplete.",
+        "coverage": "Typed six-category import reports are implemented for supported XANN/SXCU/SXIE/settings readers and surfaced value-free. Complete compatibility format/record inventory, unsupported critical behavior classification and human review remain incomplete. Record locators (COMPCAT-003) now also give reject/quarantine reasons per record; per-reader critical blocking exists (SXCU acceptanceBlocked, unsafe XANN/SXIE content rejected) but no catalogue-wide critical-behavior classification or human review, so this row stays partial.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -248,37 +281,37 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/storage/Compatibility.h",
-            "sha256": "5fde4ef8f56cb68282cb189af9598ae6d3962fb404e4caae95b1b94bbbb3fcfe"
+            "sha256": "7c4147f10eec487ef145cbd2481a602a069bb9ca229556ab2238309ee0214226"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "e350327181c07b9b65785e8ef8cb08b4588a7b395a87896a66ffda95f45dfbbe"
           },
           {
             "path": "platforms/linux/linux-qt/src/uploads/SxcuImport.cpp",
-            "sha256": "6a3167da751f7937a6c32d9d2d9543997a4dddac02ce30b0dd7e1b6de891fd9c"
+            "sha256": "7d84fa3ed40a844b97b9d5d087c5a953f93597c0ec8b63e622f19e9410549470"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
-            "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+            "sha256": "b5e2abdc2a632e8defaf358b028d253d474f90ec81ba61b84154b7f8dcbc1896"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
-            "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
+            "sha256": "32f2ddcb5ff3a4c39b0d31d4d4d12b02a58028d840454059f1127e1a851e6faf",
             "method": "reportsEachDispositionWithoutValues",
             "line": 34
           },
           {
             "path": "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
-            "sha256": "47316f8663341024e8146c6de74c2c0dbf77e3156f9179477bb84a9925a32af1",
+            "sha256": "3dd7e2375586c7aa7c253b999545b656fd830c32f6212a6a3504bfaf82472db4",
             "method": "safeExtensionsRoundTripThroughBothStores",
-            "line": 63
+            "line": 78
           },
           {
             "path": "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
-            "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
+            "sha256": "627e179818960f8acdf4ff5bf9d233f3b0e319665dac6c5c114c1c1bb8bd0d42",
             "method": "criticalMetadataCannotBeAccepted",
             "line": 33
           }

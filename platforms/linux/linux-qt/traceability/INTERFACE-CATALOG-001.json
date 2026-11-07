@@ -278,7 +278,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native worker progress/cancellation and retained results are tested for capture/editor/media/upload; synchronous watch-folder copy/move and every long-running surface remain outside complete coverage.",
+      "note": "Native worker progress/cancellation and retained results are tested for capture/editor/media/upload and watch-folder copy/move (owned worker, cancel on stop, partial output removed); every other long-running surface remains outside complete coverage.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationWindowTest.cpp",
@@ -290,12 +290,13 @@
         "platforms/linux/linux-qt/tests/OperationResultsTest.cpp",
         "platforms/linux/linux-qt/tests/ShellFixture.h",
         "platforms/linux/linux-qt/app/HashCheckerDialog.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 27,
-        "coverage": "Native worker progress/cancellation and retained results are tested for capture/editor/media/upload; synchronous watch-folder copy/move and every long-running surface remain outside complete coverage.",
+        "coverage": "Native worker progress/cancellation and retained results are tested for capture/editor/media/upload and watch-folder copy/move (owned worker, cancel on stop, partial output removed); every other long-running surface remains outside complete coverage.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -313,6 +314,10 @@
           {
             "path": "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
             "sha256": "cfc624c54361c8befa59063451c4797d8ca2e475b6e80fbc23609cd38abbade2"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
           }
         ],
         "test_anchors": [
@@ -321,10 +326,16 @@
             "sha256": "166a491d5637346a4e1603413ee6d56ef25bce22d3088bd713dbac593882fe44",
             "method": "everyRegisteredCommandHasAHandlerOrAnExplicitUnavailableExplanation",
             "line": 36
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+            "sha256": "a03777aa45f43e0f19970a45a9865233bbe0b8ee81f423d23139a047ae2572cf",
+            "method": "stopCancelsCopyWithoutPartialOutput",
+            "line": 556
           }
         ]
       },
-      "previous_note": "OwnedWork and domain cancellation/progress have native lifetime tests. Real-shell tests now show unknown-size tool work reports indeterminate progress and cancels cooperatively with a visible terminal state; hiding the shell window mid-operation does not cancel it and the latest progress and terminal result are there when it is shown again; and a finished tool result survives closing and reopening its window. That test found and fixed a defect: closing the hash checker after it finished replaced the terminal status with 'Cancelling\u2026' and disabled its progress. Remaining: only the shell window and the hash tool are covered; other operation families (editor save/print/upload, recording, conversion, OCR, capture pipeline) and a durable record for tool-window results beyond the open window are not converged. Audit 2026-11-03: OperationResultsTest::unknownSizeWorkShowsIndeterminateProgressAndCancelsCooperatively, aFinishedResultSurvivesClosingTheToolWindowAndReopeningIt (failed before the HashCheckerDialog::cancel guard), hidingTheShellWindowDoesNotCancelAndKeepsTheLatestResult; ApplicationWindowTest::preparingProgressIsAccessibleAndCancellationDoesNotReplacePublishedResults covers determinate progress. Row stays partial: other operation families are not driven."
+      "previous_note": "OwnedWork and domain cancellation/progress have native lifetime tests. Real-shell tests now show unknown-size tool work reports indeterminate progress and cancels cooperatively with a visible terminal state; hiding the shell window mid-operation does not cancel it and the latest progress and terminal result are there when it is shown again; and a finished tool result survives closing and reopening its window. That test found and fixed a defect: closing the hash checker after it finished replaced the terminal status with 'Cancelling…' and disabled its progress. Remaining: only the shell window and the hash tool are covered; other operation families (editor save/print/upload, recording, conversion, OCR, capture pipeline) and a durable record for tool-window results beyond the open window are not converged. Audit 2026-11-03: OperationResultsTest::unknownSizeWorkShowsIndeterminateProgressAndCancelsCooperatively, aFinishedResultSurvivesClosingTheToolWindowAndReopeningIt (failed before the HashCheckerDialog::cancel guard), hidingTheShellWindowDoesNotCancelAndKeepsTheLatestResult; ApplicationWindowTest::preparingProgressIsAccessibleAndCancellationDoesNotReplacePublishedResults covers determinate progress. Row stays partial: other operation families are not driven."
     },
     "IFCAT-007": {
       "status": "partial",

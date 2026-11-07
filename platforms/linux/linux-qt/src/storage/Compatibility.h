@@ -4,11 +4,37 @@
 #include <QJsonObject>
 #include <QStringList>
 #include <array>
+#include <vector>
 
 namespace xerahs::compatibility {
 enum class ImportDisposition { Retained, Transformed, Defaulted, Quarantined, Rejected, Ignored };
+// COMPCAT-003: value-free locator for one affected record. `kind` and `reason`
+// are stable ASCII tokens chosen by the reader (never taken from the payload);
+// `id` is only a validated identifier (UUID) or empty. No payload, path or secret.
+struct RecordFinding {
+  qsizetype index = -1;
+  QString kind;
+  QString id;
+  ImportDisposition disposition = ImportDisposition::Retained;
+  QString reason;
+};
 struct ImportReport {
   std::array<qsizetype, 6> counts{};
+  std::vector<RecordFinding> records;  // only non-retained records are located
+  void addRecord(qsizetype index, const QString &kind, const QString &id, ImportDisposition disposition, const QString &reason) {
+    records.push_back({index, kind, id, disposition, reason});
+  }
+  // Value-free multi-line summary, e.g. "rejected record 3 (annotation, id): duplicate-id".
+  QString recordSummary() const {
+    static const char *names[] = {"retained", "transformed", "defaulted", "quarantined", "rejected", "ignored"};
+    QStringList lines;
+    for (const auto &r : records)
+      lines << QStringLiteral("%1 record %2 (%3%4): %5").arg(QLatin1String(names[static_cast<size_t>(r.disposition)])).arg(r.index)
+                   .arg(r.kind, r.id.isEmpty() ? QString() : QStringLiteral(", ") + r.id, r.reason);
+    return lines.join('\n');
+  }
+  QString detailedSummary() const { return records.empty() ? summary() : summary() + QLatin1Char('\n') + recordSummary(); }
+  bool blocksAcceptance() const { return count(ImportDisposition::Rejected) > 0; }
   void add(ImportDisposition disposition, qsizetype amount = 1) {
     if (amount > 0) counts.at(static_cast<size_t>(disposition)) += amount;
   }

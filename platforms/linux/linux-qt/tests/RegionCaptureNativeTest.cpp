@@ -11,10 +11,13 @@
 #include <QFile>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QElapsedTimer>
+#include <QFileInfo>
 #include <QTest>
 #include <atomic>
 #include <algorithm>
 #include <cmath>
+#include <vector>
 using namespace xerahs::app;
 using namespace xerahs::capture;
 namespace {
@@ -245,6 +248,60 @@ private slots:
     QTest::keyClick(overlay, confirm ? Qt::Key_Return : Qt::Key_Escape); QTRY_VERIFY(!f.controller.busy());
     if (confirm) { const auto result = f.controller.lastPipelineResult(); QVERIFY(result && result->file); QCOMPARE(QImage(result->file->path).size(), QSize(1, 10)); }
     else QVERIFY(!f.controller.lastPipelineResult());
+  }
+  // RC-020: selection changes reach the painted overlay within 50 ms (p95) and confirmation to the saved
+  // pixel result for a 1920x1080 region completes within 250 ms. Drives the real RegionOverlay input and
+  // paint path and the real controller/composition worker/pipeline from an injected frozen 1920x1080
+  // snapshot (no portal chooser). Pointer feedback is one real mouse move plus the synchronous overlay
+  // repaint; each measurement is retried up to three times so transient CPU contention from parallel CI
+  // does not fail it, while a genuine regression exceeds the budget on every attempt.
+  void pointerFeedbackAndConfirmationMeetTheRc020Budgets() {
+#if defined(__SANITIZE_ADDRESS__) || defined(__SANITIZE_THREAD__) || defined(__SANITIZE_UNDEFINED__)
+    QSKIP("Latency is not qualified under sanitizers.");
+#endif
+    QFile mappings("/proc/self/maps");
+    if (mappings.open(QIODevice::ReadOnly)) {
+      const auto runtime = mappings.readAll();
+      if (runtime.contains("libasan.") || runtime.contains("libubsan.") || runtime.contains("libtsan.") || runtime.contains("/valgrind/"))
+        QSKIP("Latency is not qualified under valgrind/sanitizers.");
+    }
+    constexpr double feedbackBudgetMs = 50.0, confirmBudgetMs = 250.0; constexpr int updates = 120;
+    double bestP95 = 1e9, bestConfirm = 1e9;
+    for (int attempt = 0; attempt < 3 && (bestP95 > 1000.0 / 60.0 || bestConfirm > confirmBudgetMs); ++attempt) {
+      Fixture f;
+      f.screens = {{QApplication::primaryScreen(), snapshotScreenTopology({{"A", "Maker", "Model", "1", {0, 0, 1920, 1080}, 1}})[0]}};
+      f.image = pixels({1920, 1080});
+      f.controller.captureRegion(); QTRY_COMPARE(overlays().size(), 1);
+      auto *overlay = overlays().front(); overlay->activateWindow(); overlay->setFocus(); QTRY_VERIFY(overlay->hasFocus());
+      overlay->repaint();
+      const QPoint origin(20, 20); QTest::mousePress(overlay, Qt::LeftButton, Qt::NoModifier, origin);
+      std::vector<double> samples; samples.reserve(updates); QElapsedTimer timer; std::optional<PhysicalRect> previous = f.controller.selection();
+      int changes = 0;
+      for (int i = 1; i <= updates; ++i) {
+        timer.start(); QTest::mouseMove(overlay, origin + QPoint(i * 4, i * 3)); overlay->repaint();
+        samples.push_back(timer.nsecsElapsed() / 1.0e6);
+        const auto now = f.controller.selection(); if (now != previous) ++changes; previous = now;
+      }
+      QCOMPARE(changes, updates); // every pointer move was a visible selection change
+      std::sort(samples.begin(), samples.end()); const double p95 = samples[static_cast<size_t>(0.95 * (samples.size() - 1) + 0.5)];
+      QTest::mouseRelease(overlay, Qt::LeftButton, Qt::NoModifier, origin + QPoint(updates * 4, updates * 3));
+      QVERIFY(f.controller.selectionSettled());
+      // Replace the dragged rectangle with the full 1920x1080 snapshot region; confirmation excludes any chooser.
+      f.controller.pointerDown({0, 0}); f.controller.pointerUp({1920, 1080});
+      QVERIFY(f.controller.selectionSettled()); QCOMPARE(f.controller.selection()->width(), qint64(1920)); QCOMPARE(f.controller.selection()->height(), qint64(1080));
+      QTest::qWait(50); // let the selection repaint settle before timing the confirmation
+      timer.start(); QTest::keyClick(overlay, Qt::Key_Return);
+      while (f.controller.busy() && timer.elapsed() < 5000) QCoreApplication::processEvents(QEventLoop::AllEvents, 1);
+      const double confirm = timer.nsecsElapsed() / 1.0e6;
+      const auto result = f.controller.lastPipelineResult(); QVERIFY(result && result->file);
+      QCOMPARE(QImage(result->file->path).size(), QSize(1920, 1080));
+      bestP95 = std::min(bestP95, p95); bestConfirm = std::min(bestConfirm, confirm);
+      qInfo("RC-020 attempt %d: selection feedback p95 %.2f ms (budget %.0f), confirmation to saved pixels %.1f ms (budget %.0f)", attempt + 1, p95, feedbackBudgetMs, confirm, confirmBudgetMs);
+    }
+    QVERIFY2(bestP95 <= feedbackBudgetMs, qPrintable(QString("selection feedback p95 %1 ms exceeds 50 ms").arg(bestP95)));
+    // "Display refresh rate": the pointer feedback also fits a 60 Hz frame at the 95th percentile.
+    QVERIFY2(bestP95 <= 1000.0 / 60.0, qPrintable(QString("selection feedback p95 %1 ms exceeds one 60 Hz frame").arg(bestP95)));
+    QVERIFY2(bestConfirm <= confirmBudgetMs, qPrintable(QString("confirmation to pixels %1 ms exceeds 250 ms").arg(bestConfirm)));
   }
 };
 QTEST_MAIN(RegionCaptureNativeTest)

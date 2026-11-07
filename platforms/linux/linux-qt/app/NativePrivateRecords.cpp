@@ -157,4 +157,22 @@ RecordWrite NativePrivateRecords::erase(const QString &id, const QByteArray &exp
   if (::fsync(directory.value) != 0) return failure("pipeline-journal-durability-unknown");
   return {true, {}};
 }
+RecordWrite NativePrivateRecords::quarantine(const QString &id, const QByteArray &expected) const {
+  if (!validJournalTaskId(id) || (m_validate && m_validate(expected, id))) return failure("pipeline-journal-invalid");
+  auto directory = root(m_directory, false);
+  if (directory.value < 0) return failure("pipeline-journal-private-storage-required");
+  if (::flock(directory.value, LOCK_EX | LOCK_NB) != 0) return failure("pipeline-journal-busy");
+  const auto target = filename(id); const auto actual = read(directory.value, target);
+  if (!actual.diagnostic.isEmpty()) return {false, actual.diagnostic};
+  if (!actual.bytes || *actual.bytes != expected) return failure("pipeline-journal-changed");
+  for (int n = 0; n < 16; ++n) {
+    const QByteArray backup = target + ".corrupt" + (n == 0 ? QByteArray{} : '.' + QByteArray::number(n));
+    struct stat info{};
+    if (::fstatat(directory.value, backup.constData(), &info, AT_SYMLINK_NOFOLLOW) == 0) continue;
+    if (::renameat(directory.value, target.constData(), directory.value, backup.constData()) != 0) return failure("pipeline-journal-write-failed");
+    if (::fsync(directory.value) != 0) return failure("pipeline-journal-durability-unknown");
+    return {true, {}};
+  }
+  return failure("pipeline-journal-capacity");
+}
 } // namespace xerahs::app

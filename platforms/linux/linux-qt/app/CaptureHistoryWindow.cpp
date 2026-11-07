@@ -83,7 +83,7 @@ CaptureHistoryWindow::CaptureHistoryWindow(PipelineJournalStorage storage, std::
   auto *layout = new QVBoxLayout(this);
   m_search = new QLineEdit(this); m_search->setObjectName(QStringLiteral("captureHistorySearch"));
   m_search->setPlaceholderText(text("Search by file name, folder, workflow, origin, destination or date (yyyy-MM-dd)"));
-  m_search->setAccessibleName(text("Search capture history")); m_search->setClearButtonEnabled(true);
+  m_search->setAccessibleName(text("Search capture history")); m_search->setClearButtonEnabled(true); m_search->setMaxLength(xerahs::history::kHistoryMaxQueryLength);
   layout->addWidget(m_search);
   m_list = new QListWidget(this); m_list->setObjectName(QStringLiteral("captureHistoryItems"));
   m_list->setAccessibleName(text("Captures")); m_list->setViewMode(QListView::IconMode);
@@ -199,7 +199,7 @@ void CaptureHistoryWindow::refresh() {
   m_reloadWhenIdle = false;
   m_job = std::make_shared<CaptureHistoryJob>(); const auto job = m_job; const auto storage = m_storage;
   m_status->setText(text("Reading capture history…")); updateAvailability();
-  OwnedWork::run<JournalListing>(this, [storage](const OwnedWork::Context &) { return storage->list(); },
+  OwnedWork::run<JournalListing>(this, [storage](const OwnedWork::Context &) { return storage->listRecovering(); },
       [this, job](JournalListing listing) {
     job->listing = std::move(listing); job->ready = true; poll();
   });
@@ -234,7 +234,9 @@ void CaptureHistoryWindow::poll() {
   m_items = xerahs::history::captureHistoryItems(records);
   // Files may have been moved or restored since the last read.
   m_thumbnails.clear(); m_missing.clear();
-  if (!job->listing.diagnostic.isEmpty()) m_status->setText(text("Some records could not be read (%1). Readable captures are shown.").arg(job->listing.diagnostic));
+  m_recoveryNote = job->listing.quarantined > 0
+      ? text("%1 unreadable history record(s) were set aside as .json.corrupt files in the history folder; readable captures are shown.").arg(job->listing.quarantined)
+      : job->listing.diagnostic.isEmpty() ? QString{} : text("Some records could not be read (%1). Readable captures are shown.").arg(job->listing.diagnostic);
   rebuild();
 }
 
@@ -303,6 +305,7 @@ void CaptureHistoryWindow::rebuild() {
     else if (matches == 0) m_status->setText(text("No history items match the search."));
     else m_status->setText(matches == int(m_items.size()) ? text("%1 history items.").arg(matches)
         : text("%1 of %2 history items match.").arg(matches).arg(m_items.size()));
+    if (!m_recoveryNote.isEmpty()) m_status->setText(m_recoveryNote + QLatin1Char(' ') + m_status->text());
   }
   updateAvailability(); loadThumbnails();
 }

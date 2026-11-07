@@ -1462,42 +1462,59 @@
       "previous_note": "Strict base64, PNG signature and IHDR limits, duplicate IDs, and finite numbers are checked before decode (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. The annotation-transfer checkpoint brought toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required."
     },
     "ES-018": {
-      "status": "not-started",
+      "status": "implemented",
       "vectors": [],
-      "note": "No separate native editor autosave/recovery document or restart-age/source presentation exists; the option is MAY, while capture pipeline recovery is a different feature.",
+      "note": "Optional (MAY) editor recovery is implemented as a separate private recovery document per editor under $XDG_STATE_HOME/com.xerahs.app/editor-recovery (EditorRecoveryStore, PrivateJsonFile envelope, atomic 0600 write, canonical annotation document, source path or unsaved-capture marker, UTC timestamp, owner pid). A dirty editor writes it after a short debounce on every state change; it is removed on explicit save, clean close/Discard, and when the session is replaced. It is never the save target or its sidecar (byte-identity asserted). On application start a native notice discloses recovery age and source with Restore / Discard / Decide later (default keeps the file); Restore opens a dirty editor with no path, so the explicit save can only change through a new explicit Save. Count is bounded (8), size bounded (192 MiB), corrupt or invalid files are renamed to *.corrupt (max 4) with value-free diagnostics. Limits: the write delay is a fixed 3 s with a test seam, not a user preference; a record owned by a still-running other process is skipped, so a recycled pid could defer an offer until that process exits; capture-pipeline recovery remains a separate feature. Human/accessibility qualification of the notice remains Required.",
       "disposition": "Required",
       "audit": {
-        "classification": "not-started",
+        "classification": "implemented",
         "spec_line": 89,
-        "coverage": "No separate native editor autosave/recovery document or restart-age/source presentation exists; the option is MAY, while capture pipeline recovery is a different feature.",
+        "coverage": "Optional (MAY) editor recovery is implemented as a separate private recovery document per editor under $XDG_STATE_HOME/com.xerahs.app/editor-recovery (EditorRecoveryStore, PrivateJsonFile envelope, atomic 0600 write, canonical annotation document, source path or unsaved-capture marker, UTC timestamp, owner pid). A dirty editor writes it after a short debounce on every state change; it is removed on explicit save, clean close/Discard, and when the session is replaced. It is never the save target or its sidecar (byte-identity asserted). On application start a native notice discloses recovery age and source with Restore / Discard / Decide later (default keeps the file); Restore opens a dirty editor with no path, so the explicit save can only change through a new explicit Save. Count is bounded (8), size bounded (192 MiB), corrupt or invalid files are renamed to *.corrupt (max 4) with value-free diagnostics. Limits: the write delay is a fixed 3 s with a test seam, not a user preference; a record owned by a still-running other process is skipped, so a recycled pid could defer an offer until that process exits; capture-pipeline recovery remains a separate feature. Human/accessibility qualification of the notice remains Required.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/src/image-editor/EditorSession.cpp",
-            "sha256": "7caf6652a97933500c3c2b668bcaceecaf52bc2c86e20494983c9f00227bbbe3"
+            "path": "platforms/linux/linux-qt/src/image-editor/EditorRecovery.cpp",
+            "sha256": "6efa09181587a96703c9fe8e615e2dd40a1950b1d0a1f133259a2001ae38e1c7"
           },
           {
-            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
-          },
-          {
-            "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
-            "sha256": "9d1c482b02100067d113c1c8aec20ccf10e5d29620ffae8b5323a2c090ee0e0a"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/EditorSource.cpp",
-            "sha256": "bb7759512ad37f207366731d8c3338f54de87a89279ec0f934e632328546b624"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/EditorSave.cpp",
-            "sha256": "7df7843b5085789dc78112cd03d83f79c37fc92a8cd7a38d3fe33e18cf437c2b"
+            "path": "platforms/linux/linux-qt/src/image-editor/EditorRecovery.h",
+            "sha256": "5062d5e55f08858b0975ec81555b3cbcdd13429029a819ff02a394a10767066d"
           },
           {
             "path": "platforms/linux/linux-qt/app/EditorWindow.cpp",
-            "sha256": "4ffa4fad080c19a8da80b57fc847f31e2d105eb5f517289ed873f4261fc913d7"
+            "sha256": "fbff7501c24ee1a5e02119d2846f0e511fe062c4474b69f161d7d6584aa3a405"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/storage/PrivateJsonFile.cpp",
+            "sha256": "e4a448a59df4d43efc1514ec465e71db172de4a0d4a6cf583fda23fbf1c29f06"
           }
         ],
-        "test_anchors": []
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorRecoveryTest.cpp",
+            "sha256": "0cb02578f3feb3523f280aef4c00a9fad1799fe04f193ab305fc6424aa0de609",
+            "method": "neverTouchesTheUsersSaveTargetOrSidecar",
+            "line": 53
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorRecoveryTest.cpp",
+            "sha256": "0cb02578f3feb3523f280aef4c00a9fad1799fe04f193ab305fc6424aa0de609",
+            "method": "corruptRecoveryIsSetAsideNotFatal",
+            "line": 71
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorRecoveryTest.cpp",
+            "sha256": "0cb02578f3feb3523f280aef4c00a9fad1799fe04f193ab305fc6424aa0de609",
+            "method": "ageAndSourceDisclosure",
+            "line": 95
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+            "sha256": "1d40c4e1e72d9d7d48a9dc3397a38704aa7bf3b4d5925136864acae50a6eabb5",
+            "method": "recoveryDocumentLifecycleAndRestartNotice",
+            "line": 283
+          }
+        ]
       },
       "previous_note": "Recovery documents."
     },
@@ -1681,14 +1698,14 @@
       "blocked_reason": "Explicit output authority and private temporary storage exist; approved configured editor temp/recovery retention and secure-delete limits are still an unanswered policy gate."
     },
     "ES-021": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "Actual 4K interactive-open latency is tested against 500ms, but no 60Hz manipulation-preview performance qualification was found.",
+      "note": "EditorExitTest::fourKRectangleOpensToInteractiveWithin500ms times a 3840x2160 source with one rectangle to a real keyboard mutation within 500 ms. EditorExitTest::fourKRectangleManipulationPreviewsHold60Hz drives real move, resize and creation pointer gestures through the real EditorCanvas on that source, timing each pointer update plus the synchronous viewport repaint over 120 updates per gesture and asserting p95 <= 16.7 ms (best of three attempts for CI load; about 2 ms measured). Export progress and cancellation are covered by EditorWindowTest::saveRunsOnWorkerWithResponsiveCancellationAndNoReentrantActions and EditorSaveTest::cancellationAtEncodingBoundaryDoesNotStartAnEncoder. The preview test runs on the offscreen platform, not physical display hardware.",
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 98,
-        "coverage": "Actual 4K interactive-open latency is tested against 500ms, but no 60Hz manipulation-preview performance qualification was found.",
+        "coverage": "EditorExitTest::fourKRectangleOpensToInteractiveWithin500ms times a 3840x2160 source with one rectangle to a real keyboard mutation within 500 ms. EditorExitTest::fourKRectangleManipulationPreviewsHold60Hz drives real move, resize and creation pointer gestures through the real EditorCanvas on that source, timing each pointer update plus the synchronous viewport repaint over 120 updates per gesture and asserting p95 <= 16.7 ms (best of three attempts for CI load; about 2 ms measured). Export progress and cancellation are covered by EditorWindowTest::saveRunsOnWorkerWithResponsiveCancellationAndNoReentrantActions and EditorSaveTest::cancellationAtEncodingBoundaryDoesNotStartAnEncoder. The preview test runs on the offscreen platform, not physical display hardware.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -1719,9 +1736,27 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EditorExitTest.cpp",
-            "sha256": "445290f0d1559fcaba406f337e93b10ff5e54515e786d865662f96f07d7cf6d2",
+            "sha256": "3fd2c52c35323520d2b46c4aaac0a39ed11785824491d49fece8789c5ed40f5b",
             "method": "fourKRectangleOpensToInteractiveWithin500ms",
-            "line": 39
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorExitTest.cpp",
+            "sha256": "3fd2c52c35323520d2b46c4aaac0a39ed11785824491d49fece8789c5ed40f5b",
+            "method": "fourKRectangleManipulationPreviewsHold60Hz",
+            "line": 107
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
+            "sha256": "76041b5018b8a1953ff65673a0953fe8f3c01d16ad37950a42bcbe4ec29f48dd",
+            "method": "saveRunsOnWorkerWithResponsiveCancellationAndNoReentrantActions",
+            "line": 1312
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
+            "sha256": "4b8a4fb70136348e72f90facd00eb89faece4482401295c868e436a9426ddba9",
+            "method": "cancellationAtEncodingBoundaryDoesNotStartAnEncoder",
+            "line": 65
           }
         ]
       },
@@ -2261,13 +2296,13 @@
       "previous_note": "Canvas and embedded-image limits are checked from JSON and PNG headers; readXann stops inflating at the JSON byte limit (platforms/linux/linux-qt/tests/EditorSessionTest.cpp). Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. The annotation-transfer checkpoint brought toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required."
     },
     "ES-029": {
-      "status": "partial",
+      "status": "implemented",
       "vectors": [
         "newer-version-read-only-failure",
         "duplicate-annotation-ids-rejected",
         "oversized-canvas-rejected-before-allocation"
       ],
-      "note": "Reproduced through current production conformance adapter: oversized canvas alone returns document-too-large, but adding unsafe extensions or traversal returns document-unsafe-content/document-path-traversal before accumulated size failure; required ES-029 priority is incomplete.",
+      "note": "Document diagnostics follow the ES-029 order version-unsupported, too-large, then (path-traversal/unsafe-content, which have no contract rank and keep outranking document-invalid), then invalid, even when an oversized canvas is combined with unsafe extensions, traversal in imagePath/embeddedImages/extensions, or an unsafe annotation record (XannCompatibilityTest::oversizedCanvasOutranksUnsafeContentAndTraversal, no pixel allocation). Open product question: the contract does not rank document-unsafe-content/document-path-traversal against document-invalid; current behaviour keeps them above invalid.",
       "evidence": [
         "platforms/linux/linux-qt/app/NEW-OPEN-WORKERS.md",
         "platforms/linux/linux-qt/app/NEW-OPEN-WORKERS-EVIDENCE.json",
@@ -2280,14 +2315,14 @@
       ],
       "disposition": "Required",
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 143,
         "published_vectors": [
           "newer-version-read-only-failure",
           "duplicate-annotation-ids-rejected",
           "oversized-canvas-rejected-before-allocation"
         ],
-        "coverage": "Reproduced through current production conformance adapter: oversized canvas alone returns document-too-large, but adding unsafe extensions or traversal returns document-unsafe-content/document-path-traversal before accumulated size failure; required ES-029 priority is incomplete.",
+        "coverage": "Document diagnostics follow the ES-029 order version-unsupported, too-large, then (path-traversal/unsafe-content, which have no contract rank and keep outranking document-invalid), then invalid, even when an oversized canvas is combined with unsafe extensions, traversal in imagePath/embeddedImages/extensions, or an unsafe annotation record (XannCompatibilityTest::oversizedCanvasOutranksUnsafeContentAndTraversal, no pixel allocation). Open product question: the contract does not rank document-unsafe-content/document-path-traversal against document-invalid; current behaviour keeps them above invalid.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -2296,7 +2331,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationDocument.cpp",
-            "sha256": "68dd9d9a9795437eade3a9969f1bd0ef82b02a61344307b8183ded1513f5ab89"
+            "sha256": "1423bb9d5dd0718b88b29925fbac463435b180b74d7484da3cfa964efd9da982"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/AnnotationRenderer.cpp",
@@ -2333,6 +2368,12 @@
             "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
             "method": "pathTraversalAndCyclicReferencesReject",
             "line": 106
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
+            "sha256": "90b72f3d696e25d7e60d1ddb13c6b84f4f57a8f9b6237f69e5aec128daa32b60",
+            "method": "oversizedCanvasOutranksUnsafeContentAndTraversal",
+            "line": 113
           }
         ]
       },

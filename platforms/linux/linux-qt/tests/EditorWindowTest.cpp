@@ -73,6 +73,12 @@
 #include <stdexcept>
 #include <cmath>
 
+// QImage::flipped arrived in Qt 6.9; the 6.4.2 baseline (LINUX-TOOLCHAIN-001) only has mirrored().
+[[maybe_unused]] static QImage flippedImage(const QImage &image, Qt::Orientations axes) {
+  return image.mirrored(axes.testFlag(Qt::Horizontal), axes.testFlag(Qt::Vertical));
+}
+
+
 using namespace xerahs::app;
 using namespace xerahs::editor;
 
@@ -273,9 +279,62 @@ private slots:
     QVERIFY(dialogPreferences.isValid()); QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, dialogPreferences.path());
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dialogPreferences.path());
     qputenv("CUPS_SERVER", dialogPreferences.filePath("unavailable-cups.sock").toLocal8Bit());
+    // ES-018: editors write recovery documents; keep them out of the real state directory.
+    static QTemporaryDir recoveryState; QVERIFY(recoveryState.isValid()); qputenv("XDG_STATE_HOME", recoveryState.path().toLocal8Bit());
+    EditorWindow::setRecoveryDelay(0);
   }
   void init() { initializeNativeEditorPreferences(); }
   void cleanup() { initializeNativeEditorPreferences(); }
+  // ES-018: separate recovery document, never the explicit save; disclosed and restorable.
+  void recoveryDocumentLifecycleAndRestartNotice() {
+    QTemporaryDir dir; QVERIFY(dir.isValid()); const auto path = dir.filePath("recover.png"), prefs = dir.filePath("prefs.json");
+    QVERIFY(fixture().save(path)); QVERIFY(initializeNativeEditorPreferences(prefs).isEmpty());
+    QTemporaryDir state; QVERIFY(state.isValid()); qputenv("XDG_STATE_HOME", state.path().toLocal8Bit());
+    EditorRecoveryStore store(EditorRecoveryStore::defaultDirectory()); QVERIFY(store.directory().startsWith(state.path()));
+    auto rectangles = [&] { int n = 0; const auto listed = store.list(); for (const auto &a : listed.records.at(0).document.annotations) n += std::holds_alternative<RectangleAnnotation>(a); return n; };
+    const auto pngBefore = storedBytes(path);
+    QPointer<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window); window->show();
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas);
+    QVERIFY(store.list().records.empty());  // clean: nothing to recover
+    drawRectangle(*canvas); QVERIFY(window->windowTitle().contains(" •"));
+    QTRY_COMPARE(store.list().records.size(), size_t(1));
+    QCOMPARE(store.list().records.at(0).sourcePath, QFileInfo(path).absoluteFilePath()); QTRY_COMPARE(rectangles(), 1);
+    QCOMPARE(storedBytes(path), pngBefore); QVERIFY(!QFile::exists(path + ".xann")); QVERIFY(!QFile::exists(path + ".json"));  // autosave never touches the save target
+    // Explicit save removes the recovery document.
+    trigger(*window, "saveImage"); QVERIFY(!window->windowTitle().contains(" •")); QTRY_VERIFY(store.list().records.empty());
+    const auto savedPng = storedBytes(path), savedXann = storedBytes(path + ".xann"); QVERIFY(!savedXann.isEmpty());
+    // Another edit recovers again; a clean close with Discard removes it and leaves the save intact.
+    trigger(*window, "undo"); QVERIFY(window->windowTitle().contains(" •")); QTRY_COMPARE(store.list().records.size(), size_t(1));
+    QCOMPARE(storedBytes(path), savedPng); QCOMPARE(storedBytes(path + ".xann"), savedXann);
+    QTimer discard; connect(&discard, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return; for (auto *b : box->buttons()) if (box->buttonRole(b) == QMessageBox::DestructiveRole) { b->click(); return; } });
+    discard.start(5); window->close(); discard.stop(); QVERIFY(store.list().records.empty());
+    QCOMPARE(storedBytes(path), savedPng); QCOMPARE(storedBytes(path + ".xann"), savedXann);
+    // Simulated crash: the window is destroyed without closing, leaving its recovery document.
+    window = EditorWindow::open(path); QVERIFY(window); window->show(); canvas = window->findChild<EditorCanvas *>();
+    trigger(*window, "redo"); drawRectangle(*canvas); QTRY_COMPARE(store.list().records.size(), size_t(1));
+    const auto original = serializeDocument(canvas->annotationDocument()).value("annotations");
+    delete window.data();
+    QCOMPARE(store.list().records.size(), size_t(1));
+    // The restart notice discloses age and source; the default keeps the document untouched.
+    bool shown = false; QString text;
+    QTimer later; connect(&later, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return; shown = true; text = box->text(); QVERIFY(box->defaultButton()); QCOMPARE(box->defaultButton()->text(), QString("Decide later")); box->defaultButton()->click(); });
+    later.start(5); QCOMPARE(EditorWindow::offerRecovery(), 0); later.stop();
+    QVERIFY(shown); QVERIFY(text.contains("less than a minute ago") || text.contains("minute")); QVERIFY(text.contains(QFileInfo(path).absoluteFilePath())); QVERIFY(text.contains("last explicit save was not changed"));
+    QCOMPARE(store.list().records.size(), size_t(1));
+    // Restore opens the same annotations as an unsaved editor; the explicit save stays byte-identical.
+    QTimer restore; connect(&restore, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return; for (auto *b : box->buttons()) if (b->text() == "Restore") { b->click(); return; } });
+    restore.start(5); QCOMPARE(EditorWindow::offerRecovery(), 1); restore.stop();
+    EditorWindow *restored = nullptr; for (auto *top : QApplication::topLevelWidgets()) if (auto *e = qobject_cast<EditorWindow *>(top)) restored = e;
+    QVERIFY(restored); QVERIFY(restored->windowTitle().contains(" •")); QVERIFY(restored->statusBar()->currentMessage().contains("Source:"));
+    QCOMPARE(serializeDocument(restored->findChild<EditorCanvas *>()->annotationDocument()).value("annotations"), original);
+    QCOMPARE(storedBytes(path), savedPng); QCOMPARE(storedBytes(path + ".xann"), savedXann);
+    QTRY_COMPARE(store.list().records.size(), size_t(1));  // the restored editor owns the only recovery copy
+    QCOMPARE(store.list().records.at(0).sourcePath, QFileInfo(path).absoluteFilePath());
+    // Discard deletes it.
+    delete restored;
+    QTimer drop; connect(&drop, &QTimer::timeout, [&] { auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget()); if (!box) return; for (auto *b : box->buttons()) if (b->text() == "Discard") { b->click(); return; } });
+    drop.start(5); QCOMPARE(EditorWindow::offerRecovery(), 0); drop.stop(); QVERIFY(store.list().records.empty());
+  }
   void applicationQuitUsesDirtyEditorClosePolicyAndBlocksModalWork() {
     QTemporaryDir folder; QVERIFY(folder.isValid());
     QVERIFY(initializeNativeEditorPreferences(folder.filePath("preferences.json")).isEmpty());
@@ -3027,7 +3086,7 @@ private slots:
     QCOMPARE(shapeAt(0).style.rotationDegrees, 60.0);  // 120 deg is nearer the y axis' reflection (60) than the x axis' (240)
     QCOMPARE(shapeAt(0).content.points[0], (PointF{0, .5})); QCOMPARE(shapeAt(0).content.points[1], (PointF{1, .75}));
     QImage assetAfter = QImage::fromData(canvas->annotationDocument().embeddedImages.front().second, "PNG").convertToFormat(QImage::Format_ARGB32);
-    QCOMPARE(assetAfter, assetPixels.flipped(Qt::Vertical));  // the cursor was turned 90 degrees, so the reflection lands on its local y
+    QCOMPARE(assetAfter, flippedImage(assetPixels, Qt::Vertical));  // the cursor was turned 90 degrees, so the reflection lands on its local y
     QCOMPARE(shapeAt(2).style.rotationDegrees, 90.0);
     QVERIFY(window->windowTitle().contains(QChar(0x2022)));
     // Each operation is exactly one history entry.
@@ -3434,3 +3493,4 @@ int main(int argc, char **argv) {
   return QTest::qExec(&test, arguments);
 }
 #include "EditorWindowTest.moc"
+

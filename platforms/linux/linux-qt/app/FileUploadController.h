@@ -4,7 +4,9 @@
 
 #include "uploads/CredentialStore.h"
 #include "NativePipelineJournal.h"
+#include "workflows/FileOperationExecution.h"
 
+#include <QJsonObject>
 #include <QObject>
 #include <QStringList>
 
@@ -32,6 +34,8 @@ struct FileUploadPorts {
   // Empty uses the upload engine's maxInputBytes.
   std::optional<qint64> maxInputBytes;
   PipelineJournalStorage history = {};  // empty uses the shared default journal directory
+  // WFCAT-002: execution records; empty uses the shared workflow-execution directory.
+  workflows::WorkflowExecution::Writer executions = {};
 };
 
 class FileUploadController final : public QObject {
@@ -43,7 +47,8 @@ public:
 
   // Paths upload one after another. Further calls wait behind the current file.
   void upload(const QStringList &paths);
-  void uploadFromWatchFolder(const QString &path);
+  // rule is the redacted watch-rule snapshot (action, recursive, filters), if any.
+  void uploadFromWatchFolder(const QString &path, const QJsonObject &rule = {});
   void chooseAndUpload();
   void cancel();
 
@@ -52,13 +57,16 @@ signals:
   // Emitted when the queue has drained or been cancelled.
   void finished();
   void fileCompleted(const QString &path, bool success, const QString &error);
+  // WFCAT-017: the terminal projection shared by dialog, notification and history.
+  void executionFinished(const QString &path, const QString &executionId, const QString &state, const QStringList &outputs);
 
 private:
-  void enqueue(const QStringList &paths, const QString &origin);
+  void enqueue(const QStringList &paths, const QString &origin, const QJsonObject &rule = {});
   void startNext();
   void recordCompletion(const uploads::UploadOutcome &outcome, std::function<void(QString)> done);
   void showProgress(const QString &fileName);
   void closeProgress();
+  workflows::FileOperationNotice settle(bool uploaded);
   void showFailure(const QString &fileName, const QString &message, bool missingDestination = false);
   void showSuccess(const QString &fileName, const uploads::UploadOutcome &outcome);
   void scheduleNext();
@@ -68,11 +76,17 @@ private:
   FileUploadPorts m_ports;
   QWidget *m_dialogParent = nullptr;
   qint64 m_cap = 0;
-  struct QueuedFile { QString path, origin; };
+  struct QueuedFile { QString path, origin; QJsonObject rule; };
   QList<QueuedFile> m_queue;
   FileUploadHistoryRecord m_historyRecord;
   bool m_existingFile = false;
   QStringList m_sensitiveValues;
+  std::unique_ptr<workflows::WorkflowExecution> m_execution;
+  QJsonObject m_rule;
+  QString m_destinationId;
+  bool m_requestBuilt = false, m_executionStored = true;
+  int m_httpStatus = 0;
+  QStringList m_executionOutputs;
   QString m_currentName;
   QString m_currentPath;
   bool m_busy = false;
