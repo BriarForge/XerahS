@@ -59,6 +59,8 @@ struct Request {
   QSize streamSize;
   std::optional<QRectF> region; // desktop logical bounds from the shared overlay
   QString systemAudioDevice, microphoneDevice;
+  // Ephemeral consent binds this run to exact selected IDs, never defaults.
+  QStringList consentedAudioDevices;
   int frameRate = 30;
   bool cursor = true;
   Format format = Format::Mp4;
@@ -73,6 +75,7 @@ using DeviceMonitor = std::function<QVector<AudioDevice>()>;
 AudioDevice audioDevice(const QVariantMap &properties, const QString &label);
 struct AudioSelection { QVector<AudioDevice> devices; QStringList diagnostics; };
 AudioSelection selectAudio(const Request &request, const DeviceMonitor &monitor);
+QString audioConsentDiagnostic(const Request &request);
 QString extension(Format format);
 // ScreenCast portal SelectSources values (1 monitor, 2 window; cursor_mode 2 embedded, 1 hidden).
 unsigned portalSourceType(Target target);

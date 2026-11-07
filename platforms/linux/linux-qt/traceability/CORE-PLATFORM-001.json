@@ -204,7 +204,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "OwnedWork capture/editor/upload/recording paths and watch-folder copy/move expose progress and cancellation (copy/move runs on an owned worker with atomic temp output, cancel on stop/destruction, no double-processing), but all operation families are not covered.",
+      "note": "OwnedWork capture/editor/upload/recording paths and watch-folder copy/move expose progress and cancellation (copy/move runs on an owned worker with atomic temp output, cancel on stop/destruction, no double-processing), but all operation families are not covered. Codex queue evidence (2026-11-05): Audit 2026-11-05: EditorCanvasTest::viewportObserversCanDestroyCanvasSafely(source-change,document-reset,zoom-in,zoom-out,reset-zoom,fit) drives real native viewport notifications and synchronous canvas destruction, proving scrollbar signal state is restored before notification and no later canvas/tool notification dereferences the destroyed owner. The pre-fix regression produces an AddressSanitizer heap-use-after-free after viewportChanged; the six fixed cases pass under AddressSanitizer. This fixes the diagnosed editor-window-2 operation-finish-destroy crash: QSignalBlocker objects previously outlived deleted scrollbars and syncViewport read m_pointerView after deletion. Existing EditorWindowTest::ownedCanvasPreparationRejectsStaleAndReleasesOwners still checks actual workers, cancelled/stale/failed operations, owner/child/cleanup/finish teardown, document/selection/history recovery and unchanged raster/sidecar/preferences. No retries, skips or existing assertion changes were introduced. This candidate ownership fix does not accept complete platform/long-operation qualification; CORE-004 remains partial. Native Screenshot acquisition, worker pixel composition, post-capture PNG saving/action dispatch and editor loading have cancellation/failure evidence. Known composition progress is determinate; codec/action stages expose accessible indeterminate activity. Cancellation during an uninterruptible action retains its real outcome and prevents later actions; unclaimed obsolete requests cannot mutate the clipboard. Native receipts retain working media and completed files in memory. Full action/workflow/recording/upload/utility coverage, durable recovery, configured privacy policy and physical accessibility/performance qualification remain Required. Native recovery can edit retained confirmed pixels after failed output and independently discard the current receipt by explicit confirmation without removing completed outputs. Native per-run selection has a responsive GUI with a cancellable worker wait; cancelled/empty choices keep pixels without outputs, and accepted work uses the same pipeline. Native file output includes responsive asynchronous D-Bus acknowledgement, bounded unknown-delivery interruption and cancellation evidence. Native Save As has an asynchronous cancellable Qt picker and worker PNG encoding with cancellation checks at safe publication boundaries; independent actions continue after picker-only cancellation, and true files/pixels remain retained. Native capture annotation now uses a shared rectangle session/canvas and worker renderer before save. Successful edits retain rendered pixels plus the unannotated source document; Cancel skips annotation, global cancellation prevents later work. Shared recovery opens that document unsaved for explicit compatible PNG/.xann persistence. Failed-save retry preserves annotated pixels/document and working-media identity without another annotation execution; journals preserve acknowledged transformation metadata before unknown pending save, never private source bytes. Native/private-bus/editor and process-kill evidence is indexed in ANNOTATION-HANDOFF.md. Workflow-wide pairing/default policy, remaining tools/workflows and full native/human qualification remain Required. Explicit capture companion intent now freezes with Apply. Both Save aliases publish compatible full-name PNG/.xann pairs, report raster/sidecar outcomes separately, preserve a successful PNG and editable document on sidecar failure, and repair only the companion without re-encoding PNG, reopening Save As or repeating successful consumers. Core typed partial acknowledgement satisfies file consumers without delete authority; preserved raster provenance is distinct from full-action success. Write-ahead PNG acknowledgement precedes typed companion intent; restart review distinguishes known PNG from unknown companion without reconstructing media/bindings. Actual native/private-bus and killed-process evidence is indexed in PAIRED-SAVE.md. Shared default/removal/format/schema policy, complete catalogue and native/human gates remain Required. Native editor Save/Save As now render an immutable owned snapshot on a worker with named phase progress and cooperative Cancel; pre-publication cancellation preserves files, post-PNG cancellation retains partial facts, and owner destruction releases without joining or late GUI access. Actual worker/GUI/source fixtures are indexed in EDITOR-SAVE.md. Full resource/shutdown/durable recovery/target/human qualification remains Required. Native editor Copy now prepares an immutable owned image/PNG on a worker and publishes only on the GUI with responsive cancellation and busy admission shared with Save. Cancellation/owner loss before publication cannot change the clipboard; late cancellation retains actual facts. Worker/native GUI and teardown fixtures are indexed in EDITOR-COPY.md; full resource/shutdown/physical/human qualification remains Required. Native Print Image now uses owned worker snapshots, explicit page/scale/orientation/colour preview and native printer confirmation, cancellable worker submission and honest submitted/unknown outcomes. Confirmed known-failure retry preserves document/history/Redo/files/preferences/clipboard; missing services and owner/reentrant boundaries are tested. Candidate EO-001/008/014/015/016 evidence is indexed in EDITOR-PRINT.md and EDITOR-PRINT-EVIDENCE.json. Full physical printer/target/colour/shutdown/a11y/privacy/security and human qualification remain Required. Native represented-rectangle duplication and object Cut/Copy/Paste now share Core field validation, owned private MIME projection, bounded whole-batch admission, fresh IDs, exact selection/history/checkpoint/Redo preservation and acknowledgement before Cut. Source/files/assets/defaults remain intact; direct hidden/locked selections are protected. Native commands bring current toolbar registration to 43 with unchanged default placement. Candidate evidence and pending shared asset/clipboard/offset/lock policy are indexed in ANNOTATION-TRANSFER.md. Full tools/assets/native target/privacy/security/a11y/parity/human qualification remains Required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
@@ -238,7 +238,9 @@
         "platforms/linux/linux-qt/app/ANNOTATION-TRANSFER.md",
         "platforms/linux/linux-qt/tests/AnnotationTransferTest.cpp",
         "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
-        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp"
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+        "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp"
       ],
       "audit": {
         "classification": "partial",
@@ -493,12 +495,26 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native theme/accent/reduced-motion and translatable layouts have tests; complete runtime localization/text expansion/contrast coverage across supported desktops remains unqualified.",
+      "note": "Native theme/accent/reduced-motion and translatable layouts have tests; complete runtime localization/text expansion/contrast coverage across supported desktops remains unqualified. Codex queue evidence (2026-11-05): Audit 2026-11-05: LocalizationExpansionTest retains the existing 40% QR expansion/no-clipping and missing-translation fallback tests plus existing native dialog coverage. sharedAnnotationLabelsInstructionsAndErrorsTranslateWithoutChangingIds proves all twenty real tool actions, Delete/order labels/tips, mode guidance, edit messages and frozen-capture instructions translate while IDs remain literal. captureAnnotationDialogTextIsTranslatable now includes the formerly excluded shared controls. captureProgressAndChooserShareLabelsTranslatedAtUseTime proves the chooser and CaptureActions use one source-text table and translate at use time, including after earlier English lookup; unknown IDs remain literal. editorMenusAndNativeUploadResultsTranslate drives the actual editor menus, recent menu and settings dialog, and actual success/failure file upload result widgets, preserving literal returned URLs. schedulingAndNotificationProseTranslateWhileCodesAndCorrelationsStayLiteral proves native schedule action labels and storage refusal, and private notification completion/attention text, while codes/UUIDs remain literal and private payloads stay out. nativeCapabilityReviewAndEditorUploadConsentTranslate opens the real capability review and native editor upload consent with local preparation, translates titles/guidance/action labels and preserves default Cancel. English action labels deliberately converge on the existing chooser source table. The expanded fixture now links the production xerahs_app object target instead of duplicating its native source list, and uses isolated temporary XDG paths/disconnected test buses. NativeNotifications itself contains only literal application/protocol identifiers; its privacy-safe prose is translated in NotificationPolicy at event creation. Remaining CORE-009 clauses: runtime retranslation of already open windows, stored UI-language preference/fallback, complete application theming and high-contrast/reduced-motion/native/human qualification; no complete requirement classification is claimed. C11 Audit 2026-11-05: LocalizationExpansionTest::captureChooserAndAutomaticDraftRetranslateWhileOpen proves the actual capture-action chooser and automatic-capture dialog follow translator installation/removal while open, including unavailable-action suffixes and validation text, preserving selected actions, capture-source IDs, bound/count/interval drafts, unchanged private settings bytes and zero persistence calls. liveBindingsPreserveValuesAndFollowReparentingAndTranslationFallback proves native widget/action reparenting and missing-translation fallback; liveTextNeverReplaysAnOlderStatusAndOwnsItsFormatArguments proves a language change cannot replay an older status, literal IDs stay literal and transient formatting arguments are owned; queuedLanguageUpdatesSurviveOwnerDestructionAndPreserveComboMeaning proves queued owner teardown is safe and combo text updates neither change selection/data nor emit a user value change. NativeDesktopAppearanceTest::readOnlyPortalSnapshotAndSignalsUpdateNativeWidgetsWithoutSaving proves native portal scheme/accent/high contrast signals (including text/base contrast >=7), exact settings-byte/revision preservation and unchanged application palette. reducedMotionDisablesAndRestoresFrameworkEffectsWithoutSaving proves all six supported Qt motion effects disable/restore without preference writes; unsupportedMissingAndDisconnectedPortalsKeepNativeFallback, newerSignalWinsOverDelayedStartupSnapshot and ownerLossRejectsLateRepliesAndRestartReadsFreshHints prove fallback and stale-owner/snapshot rejection. NativeEditorAppearanceTest::nativePaletteChangesUpdateSystemWindowsWithoutPreferenceWritesOrFocusChanges proves system/manual fallback preserves stored choice, font, focus and native accessibility. CORE-009 remains partial: after two broad conversion attempts, only the verified chooser/automatic-dialog runtime slice is accepted. Complete open-window retranslation (composed tool/history/output labels, preference builders, and wizard/file-dialog cached labels), an approved stored UI-language preference/ledger, complete application appearance and physical/human qualification remain Required. The broad unfinished conversion was discarded; no existing localization assertion was weakened and no language/storage policy was invented.",
       "evidence": [
         "platforms/linux/linux-qt/tests/NativeEditorAppearanceTest.cpp",
         "platforms/linux/linux-qt/tests/NativeDesktopAppearanceTest.cpp",
         "platforms/linux/linux-qt/tests/LocalizationExpansionTest.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/app/CaptureActionLabels.h",
+        "platforms/linux/linux-qt/app/NativeAnnotationTools.cpp",
+        "platforms/linux/linux-qt/app/CaptureController.cpp",
+        "platforms/linux/linux-qt/app/EditorWindow.cpp",
+        "platforms/linux/linux-qt/app/EditorCanvas.cpp",
+        "platforms/linux/linux-qt/app/RecentImageMenu.cpp",
+        "platforms/linux/linux-qt/app/UploadDestinationsDialog.cpp",
+        "platforms/linux/linux-qt/app/FileUploadResultDialog.cpp",
+        "platforms/linux/linux-qt/app/ScheduledCapture.cpp",
+        "platforms/linux/linux-qt/src/shell/NotificationPolicy.cpp",
+        "platforms/linux/linux-qt/app/EditorUpload.cpp",
+        "platforms/linux/linux-qt/app/NativeTranslations.h",
+        "platforms/linux/linux-qt/app/ActionSelectionDialog.cpp",
+        "platforms/linux/linux-qt/app/AutoCaptureDialog.cpp"
       ],
       "audit": {
         "classification": "partial",
@@ -531,10 +547,10 @@
       "previous_note": "Native editor preference and desktop appearance tests exist. Full application theming, localization, runtime expansion, high contrast and reduced-motion qualification remain Required. Application-level text expansion and fallback are now tested on the translatable QR window: a pseudo-locale that lengthens every tr() string by 40% neither clips buttons or labels nor exceeds the screen, and a string missing from the translation falls back to its source text (LocalizationExpansionTest). Remaining gaps, not closed: most application windows (command window, preferences, capture/recording dialogs) use QStringLiteral and are not translatable yet, no UI-language preference exists to prove the stored preference survives a fallback, and high contrast, reduced motion and full theming qualification remain Required. Audit 2026-11-03: LocalizationExpansionTest proves 40% expansion without clipping and missing-translation fallback for the QR window only; status stays partial because most windows are not yet translatable. Update 2026-11-04: the Preferences dialog's user-visible text, tooltips and accessible names now go through QCoreApplication::translate (context SettingsDialog); LocalizationExpansionTest::preferencesDialogTextIsTranslatable proves pseudo-locale coverage. Other windows still use untranslated literals."
     },
     "CORE-010": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native notification privacy policy and operation/result text exist; complete native notification policy/actions authority lifetime matrix is not established.",
+      "note": "Audit 2026-11-05: C04 clause closure for the tested Linux candidate. Originating operation and true result: OperationResultsTest::nativeNotificationEntryKeepsCorrelatedTrueDetailsInTheShell exercises the production postTrayMessage entry used by main for success, failure and nonterminal warning; the full unmodified detail and accessible description remain in the shell across hide/reopen, with a fresh opaque event UUID for each result. NativeNotificationsTest::nativeDeliveryContainsOperationResultAndCorrelationWithoutPrivatePreviewsOrActions proves operation/correlation on the actual org.freedesktop.Notifications wire and the true completed projection; refusalDoesNotRetryBypassPolicyOrCreateAnAction proves the warning projection stays attention-required, never falsely completed. Privacy: NotificationPolicyTest::privatePreviewKeepsOperationAndTrueResultOnly covers saved paths, upload URLs, recognized text and coded/uncoded failures; nativeDeliveryContainsOperationResultAndCorrelationWithoutPrivatePreviewsOrActions proves no private desktop body, image hints or sound override. The native door always applies this private projection, including when the retained legacy preference is false. Native policy: normal urgency/default identity without suppression overrides and no alternate delivery or retry after server denial are tested through the private D-Bus server. Decision retained from queue: notifications carry no actions; no action callback or stale target authority exists. notification-policy, native-notifications and operation-results pass; the earlier private-bus sandbox blocker is superseded. Desktop/assistive-technology policy qualification and human security/privacy/accessibility acceptance are not claimed by this candidate classification.",
       "evidence": [
         "platforms/linux/linux-qt/app/main.cpp",
         "platforms/linux/linux-qt/app/ApplicationWindow.cpp",
@@ -554,12 +570,16 @@
         "platforms/linux/linux-qt/tests/NotificationPolicyTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureFileOutputTest.cpp",
         "platforms/linux/linux-qt/src/shell/NotificationPolicy.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/app/NativeNotifications.cpp",
+        "platforms/linux/linux-qt/tests/NativeNotificationsTest.cpp",
+        "platforms/linux/linux-qt/tests/OperationResultsTest.cpp",
+        "platforms/linux/linux-qt/app/AppContext.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 45,
-        "coverage": "Native notification privacy policy and operation/result text exist; complete native notification policy/actions authority lifetime matrix is not established.",
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -804,7 +824,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Bounded automatic/delayed capture, skipped overlapping ticks, screen-lock/storage checks and stop controls exist; complete native permission/privacy-condition target matrix is not established.",
+      "note": "Bounded automatic/delayed capture, skipped overlapping ticks, screen-lock/storage checks and stop controls exist; complete native permission/privacy-condition target matrix is not established. Codex queue evidence (2026-11-05): Audit 2026-11-05: C05 fixes a reproduced native startup privacy race: CaptureConditionsTest::lateInitialSnapshotCannotUndoANewerNativeLockSignal fails before the fix and passes after it, proving a delayed initial LockedHint reply cannot replace a newer lock signal and normal subsequent unlock remains effective. Existing candidate clauses are proven by CaptureScheduleTest::unboundedScheduleIsRejected/endsByCountWithInjectedClock/endsByTimeWithInjectedClock and CaptureScheduleDialogTest::dialogRequiresABoundAndRejectsAnEndBeyondADay (explicit bounded schedule/target); userStopWaitsForTheInFlightAttempt and ScheduledCaptureTest::delayAndAutoRefuseEachOtherAndTheTooltipFollowsTheRun (visible stop and status); busyTickIsSkippedAndNotQueued (documented skip/no-overlap); ScheduledCaptureTest::permissionDenialStopsFutureTicksAndRequiresAnExplicitNewSchedule/unrelatedPermissionDenialDoesNotChangeAnIdleOrWaitingSchedule (permission revocation); lockAfterAdmissionCancelsOnlyTheOwnedAttemptAndPreventsLateSuccess/lockNeverCancelsUnrelatedManualWorkOrRestartsAWaitingRun (in-flight privacy revocation); CaptureConditionsTest::lockedScreenPausesTheRunAndItResumesAfterUnlock/lowStorageRefusesToStartAndStopsARunningCapture/desktopSignalsDriveTheLockState (lock and storage sources); ShellCommandsTest::automaticCaptureChecksTheEffectiveWorkflowFolderAndRefusesAnUnresolvedDefault plus unresolvedWorkflowRefusesAndStopsWithoutStartingAnotherCapture (real-shell workflow storage/admission). All five affected native suites pass with the private bus. Remaining source-grounded native boundary: ScreenLockWatcher currently subscribes logind Lock/Unlock across all session object paths and ScreenSaver signals without service/path scoping; current-session signal ownership and unknown-at-start lock-state privacy are not established by those tests. The earlier implemented classification overstates that full clause and is corrected to partial until native service scoping and supported-desktop permission/privacy qualification are proven. Existing 512 MiB floor, unknown-source handling and skip/resume policy are retained; no platform disposition or human approval is invented.",
       "evidence": [
         "platforms/linux/linux-qt/tests/CaptureScheduleTest.cpp",
         "platforms/linux/linux-qt/tests/ScheduledCaptureTest.cpp",
@@ -812,7 +832,10 @@
         "platforms/linux/linux-qt/tests/CaptureConditionsTest.cpp",
         "platforms/linux/linux-qt/src/capture/CaptureConditions.cpp",
         "platforms/linux/linux-qt/app/ScreenLockWatcher.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/app/ScheduledCapture.cpp",
+        "platforms/linux/linux-qt/app/features/ScheduleFeature.cpp",
+        "platforms/linux/linux-qt/app/features/CaptureFeature.cpp"
       ],
       "audit": {
         "classification": "partial",
@@ -890,10 +913,19 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Explicit system/microphone selection, no-audio fallback and generated mixing/tracks are tested; physical platform audio permission/mixing/synchronization qualification is incomplete.",
+      "note": "Explicit system/microphone selection, no-audio fallback and generated mixing/tracks are tested; physical platform audio permission/mixing/synchronization qualification is incomplete. Codex queue evidence (2026-11-05): Audit 2026-11-05: RecordingTest::explicitAudioSelection proves exact selected device enumeration, deduplication, missing input refusal and MP4/WebM mixing descriptions with no GIF audio. consentCannotAuthorizeAChangedInputAndGifNeverOpensAudio proves no monitor access without consent for every exact selected input. RecordingAudioTest::nativeChoicesRequireFreshExplicitConsentForExactFrozenInputs drives the production recording consent widget with keyboard input: unchecked per-run choices, independent system/microphone consent, exact frozen IDs, missing-device disabled controls and fresh choice after GIF. RecordingWorkflowTest::nativeControllerRejectsUnconsentedInputsBeforePlatformOrOutputAccess proves the real controller terminates unconsented requests before portal/device/output access with a stable value-free code and no file. The controller no longer silently re-encodes video-only when selected audio fails: absent selected devices and creation failures stop the session, and audio backend errors terminate with audio-input-unavailable. RecordingAudioTest::nativeAudioErrorKeepsPrivatePayloadOutOfFailureAndRetainsPartial(recording,paused) passes a real synthetic GStreamer bus error from an input descendant through the production classifier and actual Session/Output failure path, preserving private partial bytes, one failed terminal outcome, no completed file, no restart and actionable native result text; nonAudioBackendErrorsRemainEncoderFailures preserves generic encoding failure. This is a bus/classifier/session seam, not physical hot-unplug or a full native controller recording. RecordingTest::captureIndicator proves state/time/encoder/audio indication. Production sources use pipeline running-time timestamps, but measured A/V synchronization is not proven. RecordingIntegrationTest audio track cases still skip because required GStreamer elements are missing; they are not passing track evidence. Platform microphone/system permission enforcement and denial, measured synchronization, actual mixed output tracks and native physical device-loss qualification remain Required. Decision: queue-required fresh per-run explicit input consent; no approved degraded mode is invented and selected-audio failure stops rather than silently changing the requested recording. Codec policy remains unchanged.",
       "evidence": [
         "platforms/linux/linux-qt/tests/RecordingTest.cpp",
-        "platforms/linux/linux-qt/tests/RecordingIntegrationTest.cpp"
+        "platforms/linux/linux-qt/tests/RecordingIntegrationTest.cpp",
+        "platforms/linux/linux-qt/app/RecordingController.cpp",
+        "platforms/linux/linux-qt/src/recording/Recording.cpp",
+        "platforms/linux/linux-qt/tests/RecordingWorkflowTest.cpp",
+        "platforms/linux/linux-qt/app/RecordingAudioConsent.h",
+        "platforms/linux/linux-qt/app/RecordingAudioConsent.cpp",
+        "platforms/linux/linux-qt/app/RecordingActions.cpp",
+        "platforms/linux/linux-qt/app/RecordingErrors.h",
+        "platforms/linux/linux-qt/app/RecordingErrors.cpp",
+        "platforms/linux/linux-qt/tests/RecordingAudioTest.cpp"
       ],
       "audit": {
         "classification": "partial",
@@ -966,21 +998,28 @@
       "previous_note": "Video conversion, hashing, icon conversion and image utilities have real native pipelines and tests. Full video-editing/media catalogue, codecs/metadata/recovery and target qualification remain."
     },
     "CORE-020": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Input/destination validation, secret references, progress/cancel and remote success distinction are tested; full transport retry/idempotency and supported-destination qualification remain incomplete.",
+      "note": "Audit 2026-11-05: C02 clause audit of the existing production engine after C01. Input and destination validation before transfer: UploadRequestTest::methodsAndValidation/failuresAndLimits and FileUploadTest::directoryIsRejected/oversizeUsesTheEngineCap/noDefaultDestinationOffersUploadDestinations. Secure credential references: DestinationCatalogTest::importStoresSecretsAndPersistsOnlyReferences and UploadRequestTest::placeholders/failuresAndLimits, using the CredentialStore boundary without granting human security acceptance. Progress and cancellation: UploadExecutorTest::lifecycle/transfers, unchanged CaptureUploadTest::transfer(cancel), FileUploadTest::cancelStopsTheQueue/cancelledTransferKeepsPublicationWarningSeparateFromStatusAndHistory, and WatchFolderServiceTest::stoppingMidUploadLeavesTheFileDiscoverable. Watch-folder transport, private history and restart deduplication: uploadsOnceThroughDefaultDestinationAcrossRestart; file receipt persistence: FileUploadTest::existingFileReceiptsSurviveRestart. Bounded retry/idempotency: UploadExecutorTest::safeRetriesKeepPreparedBytesKeyAndOneRemoteObject freezes bytes, target, credentials and key across lost responses; exhaustedRetriesAreBoundedAndBackoffIncreases proves three attempts with 250/500 ms backoff; unsafeOrPermanentFailuresNeverRetry refuses unkeyed POST/PATCH, blank/duplicate keys, permanent/auth/rate/parse/oversized failures. cancellationDuringBackoffCannotRestartOrCompleteANewerRun and abortObserversCannotOverwriteANewerRunOrEscapeAdmission protect cancellation and reentry. Preparation is not publication: CaptureUploadTest::uploadCannotSucceedBeforeRemoteResponseCompletes, UploadResponseTest::unresolvedPlaceholdersNeverPublishATruncatedUrl/jsonTemplates/xmlTemplates/xmlEntityIsNotExpanded/combinedTemplates and UploadExecutorTest::attemptMetadataDoesNotInventPublicationAndLegacyReceiptsStayUnchanged prove pending or hostile responses do not invent a publication. Decision retained: retry only idempotent reads/PUT/DELETE or POST/PATCH with exactly one stable nonblank Idempotency-Key, at most three attempts; attempts are separate from the single acknowledged remote URL. Cancellation returns no capture upload result and file cancellation exposes uncertainty separately from its stable status. Full native loopback and private-bus tests now run outside the socket-restricted sandbox; prior socket-blocked evidence is superseded. Live providers, approved Secret Service review and native/physical/human qualification remain outside this candidate classification.",
       "evidence": [
         "platforms/linux/linux-qt/tests/UploadExecutorTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureUploadTest.cpp",
         "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
         "platforms/linux/linux-qt/tests/UploadResponseTest.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/src/uploads/UploadExecutor.cpp",
+        "platforms/linux/linux-qt/src/uploads/UploadRequest.cpp",
+        "platforms/linux/linux-qt/src/actions/PipelineResultJson.cpp",
+        "platforms/linux/linux-qt/tests/UploadRequestTest.cpp",
+        "platforms/linux/linux-qt/tests/DestinationCatalogTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+        "platforms/linux/linux-qt/app/FileUploadController.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 90,
-        "coverage": "Input/destination validation, secret references, progress/cancel and remote success distinction are tested; full transport retry/idempotency and supported-destination qualification remain incomplete.",
+        "coverage": "Tested Linux candidate seam; native/physical/human qualification is not accepted by this classification.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -1011,12 +1050,16 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Versioned custom destination schemas and static template/response validation exist; complete first-party capabilities/authentication/size/rate/deletion inventories remain incomplete.",
+      "note": "Versioned custom destination schemas and static template/response validation exist; complete first-party capabilities/authentication/size/rate/deletion inventories remain incomplete. Codex queue evidence (2026-11-05): Audit 2026-11-05: C03 verifies the existing custom-HTTP candidate clauses without claiming a first-party catalogue. Versioned capabilities, configuration field names, authentication references, result schema, URL/deletion behavior, client size/content bounds, retry/rate handling and stable errors are published by destinationCapabilities; UploadDestinationTest::capabilitiesPublishClientPolicyWithoutPrivateConfigurationOrProviderPromises proves value-free metadata, explicit unknown provider limits, data-only configuration and returned-link-only deletion semantics. UploadDestinationsDialogTest::selectedDestinationPublishesValueFreeCapabilitiesWithoutNetworkOrCredentialLookup exercises the real selected-destination review window, changed selection, disabled empty catalogue, and no credential reads/network. UploadDestinationTest::roundTripRetainsUnknownFields/unsupportedMethodRoundTrips and SxcuImportTest::reportsAndCanonicalRoundTrip/importsCurrentUploaderAndExtractsSecrets/flagsUnsupportedSyntaxAndKeepsSecretsOut prove versioning, field retention and explicit import dispositions; criticalMetadataCannotBeAccepted rejects authority-like fields rather than executing configuration. UploadResponseTest::json/templates/errors and FileUploadTest::successShowsTheUrlAndCopyPutsItOnTheClipboard prove valid URL/thumbnail/deletion results and explicit clipboard use. All seven affected native suites pass with real private-bus/loopback fixtures. Remaining: complete first-party provider catalogue and provider-specific authentication, content/size/rate/deletion policies and validation are unimplemented; generic client metadata explicitly does not establish those policies. Secret Service, import-quarantine/word-list, connection-test and legacy-secret human reviews remain pending and are not agent-approved. Status remains partial.",
       "evidence": [
         "platforms/linux/linux-qt/tests/UploadDestinationTest.cpp",
         "platforms/linux/linux-qt/tests/SxcuFixturesTest.cpp",
         "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/src/uploads/UploadDestination.cpp",
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+        "platforms/linux/linux-qt/tests/UploadResponseTest.cpp",
+        "platforms/linux/linux-qt/tests/FileUploadTest.cpp"
       ],
       "audit": {
         "classification": "partial",
@@ -1095,7 +1138,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native capture/file-upload history has stable task IDs, missing-file tolerance, workflow metadata deletion, bounded search (case-insensitive, query capped at 256 chars, 200-item pages, search field and Load more in the history window) and deterministic keyset pagination (newest first, ties by task ID, stable while records are added). Unparseable/truncated records are renamed to <id>.json.corrupt (backup preserved, never overwritten), good neighbours and newer-version records are untouched, and the window shows a value-free count. Retention limits (the 1024-record admission cap is back-pressure, not an approved policy), private-preview policy, shared persisted compatibility, quarantine-file pruning and supported-target/human qualification remain Required product decisions; status stays partial.",
+      "note": "Native capture/file-upload history has stable task IDs, missing-file tolerance, workflow metadata deletion, bounded search (case-insensitive, query capped at 256 chars, 200-item pages, search field and Load more in the history window) and deterministic keyset pagination (newest first, ties by task ID, stable while records are added). Unparseable/truncated records are renamed to <id>.json.corrupt (backup preserved, never overwritten), good neighbours and newer-version records are untouched, and the window shows a value-free count. Retention limits (the 1024-record admission cap is back-pressure, not an approved policy), private-preview policy, shared persisted compatibility, quarantine-file pruning and supported-target/human qualification remain Required product decisions; status stays partial. Codex queue evidence (2026-11-05): Audit 2026-11-05: C06 keeps the existing private journal format and makes every parsed operation visible, including failed saves, cancelled transfers, interrupted/unknown actions and successful uploads without a saved file. Validated terminal_observation supplies the true outcome independently of pipeline completion; no media, file binding or retry authority is reconstructed. CaptureHistoryWindowTest::resultsWithoutFilesRemainVisibleInspectableAndForgettable covers actual stored UUID/outcome search, result-only rows, disabled file actions, upload-only URL copying, Details, default-Cancel removal, unchanged bytes on Cancel and explicit metadata-only forgetting for all four outcome rows. nativePagingAndSearchBoundResultOnlyRowsAndKeepSelection proves real Load More, newest-first UUIDs, the existing 200-row page bound, selection retention and search resetting the page. searchAndPagingAreBounded covers date/path/source filtering. itemsKeepOnlyFilesTheirRunCreatedNewestFirst preserves exact per-run file provenance while now retaining the additional fileless result. windowShowsThumbnailsMissingFilesAndFileActions/uploadOnlyRowsRetainUrlsAndProtectSourceFiles prove previews, missing-file tolerance and separate upload source protection; forgetRemovesTheRecordAndKeepsTheFile and PipelineHistoryDialogTest::forgetRequiresConfirmationAndExactUnchangedSnapshotWhileKeepingTheFile prove explicit/stale-safe metadata removal without deleting outputs. unreadableRecordsStayPreservedAndVisibleAcrossSearchAndPreviewUpdates proves malformed neighbouring records are preserved byte-for-byte, a stable value-free recovery warning survives preview/search rebuilds, and the technical Result records route stays reachable. PipelineHistoryDialogTest::interruptedRecordShowsUnknownActionAndDoesNotInventFailedUpload/reviewIsKeyboardReachableAndImmutableWithPrivateDetailsHidden cover unknown outcomes and guarded details. FileUploadTest::existingFileReceiptsSurviveRestart and WatchFolderServiceTest::uploadsOnceThroughDefaultDestinationAcrossRestart retain real native upload history. Remaining: approved configurable retention limits/policy and full corrupt-store rebuild/quarantine recovery, complete private-preview qualification and supported-target/human privacy/security/accessibility acceptance. Existing manual retention and storage admission limits are unchanged; no automatic cleanup, new limit, journal migration or destructive recovery is invented. Status remains partial.",
       "evidence": [
         "platforms/linux/linux-qt/app/JOURNAL-RECOVERY.md",
         "platforms/linux/linux-qt/app/PipelineHistoryDialog.cpp",
@@ -1110,7 +1153,11 @@
         "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
         "platforms/linux/linux-qt/src/history/CaptureHistory.cpp",
         "platforms/linux/linux-qt/app/NativePrivateRecords.cpp",
-        "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp"
+        "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
+        "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
+        "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
+        "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
+        "platforms/linux/linux-qt/tests/InterfaceStatesTest.cpp"
       ],
       "audit": {
         "classification": "partial",
@@ -1153,7 +1200,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "GUI/CLI/hotkeys and watch folders have shared seams; MCP/assistant authority and complete cross-entry result/correlation/concurrency scope remain incomplete.",
+      "note": "GUI/CLI/hotkeys and watch folders have shared seams; MCP/assistant authority and complete cross-entry result/correlation/concurrency scope remain incomplete. Codex queue evidence (2026-11-05): Audit 2026-11-05: C07 closes the unambiguous internal launch-protocol audit without approving shared CLI/MCP/assistant authority. Versioning and operation round-trip: ActivationProtocolTest::validRequestsRetainExactPathsAndIndependentOperationNames now includes region recording; futureVersionsAreDistinctAndTheByteBoundaryIsInclusive/malformedDataCannotManufactureAuthority reject unsupported versions, duplicate keys, unknown authority fields, invalid IDs and oversized/ambiguous requests. repliesRequireCorrelationAndOnlyPublishStableErrors/authenticationRequiresAnActualMatchingKernelUser prove correlated allowlisted errors and peer identity. NativeInstanceTest::simultaneousProcessesElectOnlyOneOwner/forwardsToOneRealProcessWithoutReplacingItsSocket prove real-process single-instance behavior; intakeDeadlineFreesCapacityWithoutAcceptingIncompleteWork/partialMalformedOversizedAndMultipleFramesNeverDispatch prove bounded intake and client capacity; maximumRequestBoundaryAndDuplicateReceiptsUseProductionValidation/busyRetryDoesNotCacheAnOperationThatNeverStarted prove bounded idempotent receipt handling without treating busy as execution. peerAuthenticationPrecedesSendingPrivatePayload/deniedIncomingCredentialsCannotReachAdmission exercise kernel-identity boundaries; actualApplicationForwardsBeforeOpeningPreferencesOrDesktopServices and missingOrUntrustedAcknowledgementsNeverElectOrResend prove no second instance or blind resend after uncertain delivery. ActivationProtocolTest::workflowAdmissionFreezesSettingsAndReservesBeforePreparation preserves the frozen definition and modal/busy boundary. CliContractTest::environmentCannotSelectOperationOrOutputMode/redactionHoldsInEveryCliModeEvenWithDiagnosticSettings and ErrorPresentationTest::producersAcceptExactlyTheTableCodesAndLaunchResultsKeepTheCorrelationId prove real CLI stable errors, stream redaction, consent refusal and no environment-selected capture. Internal --list-workflows and --workflow-result are versioned read-only definition/observation queries; launch acknowledgements do not claim completed outputs. Four affected suites pass with real isolated process/socket fixtures. Remaining: approved shared operations and authority across MCP/assistant/shell/watch-folder surfaces, full progress/wait/cancel protocol and associated human consent/security review. Those boundaries are Never decide items and remain partial; this audit adds no operation, permission bypass or public protocol approval.",
       "evidence": [
         "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
         "platforms/linux/linux-qt/app/NativeInstance.cpp",
@@ -1167,7 +1214,9 @@
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-DISCOVERY.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/tests/CliContractTest.cpp",
+        "platforms/linux/linux-qt/tests/ErrorPresentationTest.cpp"
       ],
       "audit": {
         "classification": "partial",
@@ -1281,7 +1330,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Stable correlated/redacted reports and explicit recovery windows exist; approved retention and reviewed diagnostic export for all stores/outputs remain incomplete.",
+      "note": "Stable correlated/redacted reports and explicit recovery windows exist; approved retention and reviewed diagnostic export for all stores/outputs remain incomplete. Codex queue evidence (2026-11-05): Audit 2026-11-05: DiagnosticBundleTest::declaredStatesAndStableErrorsExcludeValuesAndUnknownNames proves the versioned bundle contains runtime versions, declared settings-field states without values, and stable allowlisted severity/timestamp/correlation metadata; unknown names/messages become one fixed code. latestPerCodeIsBoundedAndInvalidCorrelationsAreRejected proves a finite code catalogue bounds RAM retention to the latest occurrence per code in the current session; no new numeric retention policy or persistent log is introduced. actualPipelineFailuresKeepOnlyStableCodeSeverityAndTaskCorrelation runs the real pipeline and records failed outcomes using stable code/class and task UUID, excluding cancelled outcomes and raw diagnostic text. DiagnosticsDialogTest::registryRequiresReviewAndExportsExactlyTheFrozenPrivateSnapshot drives the real shell command, notification collection, preview, explicit file consent and owned worker; file bytes match the frozen review and settings/history remain unchanged. cancellationAndForcedPickerOrOwnerDestructionWriteNothing proves no publication before consent. existingTargetIsPreservedAndANewTargetCanBeChosenWithoutChangingThePreview and DiagnosticBundleTest::reviewedSnapshotWritesPrivatelyWithoutOverwritingAnyExistingTarget prove new-file-only atomic 0600 publication, retry after refusal and preservation of existing/invalid/changed/locked/symlink targets. The development build has no assigned application version: unassignedApplicationVersionIsExplicitlyUnknown proves an explicit null/unversioned marker rather than invented release data. C06 native history evidence retains fileless outcomes and unreadable neighbours with explicit review and without deleting records/media; complete index rebuild/quarantine policy is not implemented. Broader all-domain structured diagnostic coverage, full corrupt configuration/store recovery and retention/removal policy, target qualification and human privacy/security review remain Required; this row remains partial. Decision: explicit frozen preview followed by user-confirmed new-file export only, no automatic export; latest recognized code metadata in RAM only, no captures/clipboard/recognized text/paths/credentials.",
       "evidence": [
         "platforms/linux/linux-qt/app/NativeInstance.cpp",
         "platforms/linux/linux-qt/app/main.cpp",
@@ -1311,7 +1360,16 @@
         "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-DISCOVERY.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/src/diagnostics/DiagnosticBundle.h",
+        "platforms/linux/linux-qt/src/diagnostics/DiagnosticBundle.cpp",
+        "platforms/linux/linux-qt/app/DiagnosticsDialog.h",
+        "platforms/linux/linux-qt/app/DiagnosticsDialog.cpp",
+        "platforms/linux/linux-qt/app/features/DiagnosticsFeature.cpp",
+        "platforms/linux/linux-qt/app/AppContext.cpp",
+        "platforms/linux/linux-qt/tests/DiagnosticBundleTest.cpp",
+        "platforms/linux/linux-qt/tests/DiagnosticsDialogTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp"
       ],
       "audit": {
         "classification": "partial",

@@ -12,6 +12,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QTest>
+#include <stdexcept>
 
 using namespace xerahs::app;
 using namespace xerahs::tools;
@@ -37,6 +38,48 @@ QStringList recentTexts(const ColorPickerDialog &dialog) {
 class ColorPickerDialogTest final : public QObject {
   Q_OBJECT
 private slots:
+  void unavailableOrThrowingCaptureHostKeepsColourAndCanRetry_data() {
+    QTest::addColumn<bool>("throws"); QTest::newRow("missing") << false; QTest::newRow("exception") << true;
+  }
+  void unavailableOrThrowingCaptureHostKeepsColourAndCanRetry() {
+    QFETCH(bool, throws); int calls = 0;
+    ColorPickerDialog dialog(nullptr, {[&](QObject *) -> PortalScreenshot * {
+      ++calls; if (throws) throw std::runtime_error("PRIVATE host exception"); return nullptr;
+    }});
+    dialog.showColor(Qt::green); dialog.show(); QApplication::clipboard()->setText("sentinel");
+    auto *pick = dialog.findChild<QPushButton *>("pickAgain"); QVERIFY(pick);
+    pick->click(); QTRY_COMPARE(calls, 1); QTRY_VERIFY(pick->isEnabled());
+    auto *status = dialog.findChild<QLabel *>("colourPickerStatus"); QVERIFY(status);
+    QVERIFY(status->text().contains("capture-unavailable")); QVERIFY(!status->text().contains("PRIVATE"));
+    QCOMPARE(status->accessibleDescription(), status->text());
+    QCOMPARE(dialog.color(), QColor(Qt::green)); QCOMPARE(QApplication::clipboard()->text(), QString("sentinel"));
+    QVERIFY(!dialog.findChild<ScreenColorSampler *>()); QVERIFY(!dialog.isMinimized());
+    pick->click(); QTRY_COMPARE(calls, 2); QTRY_VERIFY(pick->isEnabled());
+    dialog.reject(); QVERIFY(!dialog.isVisible());
+  }
+  void captureHostCanCloseOrDestroyItsOwner_data() {
+    QTest::addColumn<bool>("destroy"); QTest::newRow("close") << false; QTest::newRow("destroy") << true;
+  }
+  void captureHostCanCloseOrDestroyItsOwner() {
+    QFETCH(bool, destroy); QPointer<ColorPickerDialog> dialog; bool called = false;
+    dialog = new ColorPickerDialog(nullptr, {[&](QObject *) -> PortalScreenshot * {
+      called = true; if (destroy) delete dialog.data(); else dialog->reject(); return nullptr;
+    }});
+    dialog->show(); dialog->pick(); QTRY_VERIFY(called);
+    if (destroy) QVERIFY(!dialog);
+    else { QVERIFY(dialog); QVERIFY(!dialog->isVisible()); delete dialog.data(); }
+  }
+  void destroyingFocusedModifiedHexInputDisconnectsLateFocusOut() {
+    QPointer<ColorPickerDialog> dialog = new ColorPickerDialog;
+    dialog->showColor(Qt::green); dialog->show(); dialog->activateWindow();
+    auto *hex = dialog->findChild<QLineEdit *>("hexColour"); QVERIFY(hex); hex->setFocus();
+    QTRY_COMPARE(QApplication::focusWidget(), hex);
+    hex->selectAll(); QTest::keyClicks(hex, "#123456");
+    QVERIFY(hex->isModified());
+    QApplication::clipboard()->setText("sentinel");
+    delete dialog.data(); QVERIFY(!dialog);
+    QCOMPARE(QApplication::clipboard()->text(), QString("sentinel"));
+  }
   void screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly() {
     ColorPickerDialog dialog; dialog.show(); dialog.showColor(Qt::red);
     QImage image(20,20,QImage::Format_ARGB32);

@@ -824,7 +824,7 @@
       "vectors": [
         "render-stroke-coverage"
       ],
-      "note": "Immutable export and exact rectangle composition exist, but all-format/background/color-profile and cross-platform identical pixel qualification remain unproven.",
+      "note": "Immutable export and exact rectangle composition exist, but all-format/background/color-profile and cross-platform identical pixel qualification remain unproven. Codex queue evidence (2026-11-05): Audit 2026-11-05: Clauses: immutable source plus visible annotations, ordering, actual raster formats and source profile retention have native evidence: EditorSaveTest::encodedFormatsKeepEditableSourceHashAndChosenAlphaPolicy and workerSnapshotSurvivesConcurrentCallerChanges, EditorSourceTest::rasterDecodePreservesAlphaProfileAndOriginalBytes, EditorSessionTest::quarterTurnSwapsExtents, diamondHasExactPolygonCoverage and rotatedFillAndStrokeApplyOpacityOnce. PNG/JPEG/WebP encoder paths are exercised. Complete requested colour-profile conversion and identical decoded output across the supported platform implementations are not proven by these Linux-only fixtures; broad native QPainter shape rendering also lacks approved shared cross-platform goldens. Remains partial for these clause gaps, not physical qualification or the deferred format metadata decision.",
       "evidence": [
         "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",

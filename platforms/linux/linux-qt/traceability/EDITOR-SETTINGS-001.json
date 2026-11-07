@@ -206,7 +206,7 @@
       "vectors": [
         "unknown-round-trip"
       ],
-      "note": "Atomic current/previous storage, unknown fields and nonpersistent alias exclusion are tested; complete approved configuration/recovery policy remains open.",
+      "note": "Atomic current/previous storage, unknown fields and nonpersistent alias exclusion are tested; complete approved configuration/recovery policy remains open. Codex queue evidence (2026-11-05): Audit 2026-11-05: EditorPreferencesTest::failedAtomicReplacePreservesBothVersionsAndPublishedState proves one atomic current/previous artifact, failed write preservation and compatible unknown retention. colorsPreserveAlphaNormalizeAndExcludeComputedAliases proves convenience aliases excluded; disablingWindowMemoryPrunesBothVersionsAndRecoveryCannotReenableIt and removedPrivatePathsNeverReappearThroughRecovery prove private data cannot return through previous values. destroyedPreferenceFileRecoversReadOnlyFromBackup proves owner-private .bak recovery without rewriting damaged input or granting write authority. NativeEditorPreferencesTest::convenienceApplyPersistsAndRejectsStaleInvalidAndFailedWrites exercises actual private store restart, locks and stale writes. Existing implementation retained; no duplicate persistence layer added. Remains partial: every non-persistent/computed field depends on the reserved ESET-001/015 ledger; complete exclusions and approved configuration policy are not inferred from the current subset.",
       "evidence": [
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS.md",
         "platforms/linux/linux-qt/app/PREFERENCE-DIALOGS-EVIDENCE.json",
@@ -383,7 +383,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Creation defaults snapshot for all implemented tools is tested; complete background/default ledger and unapproved Step-style semantics prevent all-field completion.",
+      "note": "Creation defaults snapshot for all implemented tools is tested; complete background/default ledger and unapproved Step-style semantics prevent all-field completion. Codex queue evidence (2026-11-05): Audit 2026-11-05: EditorWindowTest::drawingDefaultsDialogPersistsDecorationShadowCursorAndEmphasisForNewObjectsOnlyAcrossWindowsAndRestart proves Apply/Cancel/failed persistence, existing objects unchanged, new objects updated in both open windows and restart. lastToolIsRememberedForCreationToolsOnlyAndSeedsOnlyLaterWindows proves tool preference seeds future windows without editing objects or live tool changes. EditorCanvasTest::emphasisAndRedactionDefaultsSeedOnlyObjectsCreatedAfterThem proves pointer-down frozen defaults, prior objects unchanged and invalid defaults refused. NativeEditorPreferencesTest::creationDefaultsPublishOnlyAfterSuccessfulPersistenceAndTheLastToolDoesNotFenceDrafts proves whole-change rejection and publication only after private storage. Remains partial: per-tool text, balloon, step/highlight colour/thickness/tail fields and their full downstream semantics remain incomplete; reserved per-field ledger and Step style choices are not decided by this audit.",
       "evidence": [
         "platforms/linux/linux-qt/app/ANNOTATION-HANDOFF.md",
         "platforms/linux/linux-qt/tests/CaptureAnnotationTest.cpp",
@@ -584,7 +584,7 @@
       "vectors": [
         "invalid-field-isolation"
       ],
-      "note": "Shared UI/config numeric validation covers implemented drawing fields; absent background composition and incomplete automation/approved range ledger leave broader numeric coverage partial.",
+      "note": "Shared UI/config numeric validation covers implemented drawing fields; absent background composition and incomplete automation/approved range ledger leave broader numeric coverage partial. Codex queue evidence (2026-11-05): Audit 2026-11-05: EditorPreferencesTest::everyNumericCreationPreferenceEnforcesItsInclusiveRangeOnLoadAndChange exhaustively tests currently declared numeric creation fields at min/max, below/above, wrong types, null, NaN/infinity and fractions; validates per-field load recovery and atomic whole-change rejection. NativeEditorPreferencesTest::everyNumericDrawingControlUsesTheSharedInclusiveRange checks actual native control bounds against preferenceNumericRange; creationDefaultsPublishOnlyAfterSuccessfulPersistenceAndTheLastToolDoesNotFenceDrafts proves no partial publication. EditorCanvasTest::emphasisAndRedactionDefaultsSeedOnlyObjectsCreatedAfterThem proves session refusal too. Existing range table retained. Remains partial: background geometry and missing per-tool thickness fields, plus complete import/automation parity for those fields, depend on reserved field/background policies.",
       "evidence": [
         "platforms/linux/linux-qt/app/ANNOTATION-THICKNESS.md",
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
@@ -901,7 +901,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Convenience UI/preferences and tested task/dirty behavior exist; every consent/permission/validation boundary across all convenience features is not yet qualified.",
+      "note": "Convenience UI/preferences and tested task/dirty behavior exist; every consent/permission/validation boundary across all convenience features is not yet qualified. Codex queue evidence (2026-11-05): Audit 2026-11-05: NativeEditorPreferencesTest::convenienceApplyPersistsAndRejectsStaleInvalidAndFailedWrites and convenienceDialogApplyCancelAndFailedPersistence prove four strict boolean fields with atomic Apply, Cancel, unknown retention and stale/locked write refusal. EditorPreferencesTest::savedEditorPreferencesCannotGrantConsentConfirmationOrCredentialAuthority rejects forged authority fields read-only. EditorTaskTest::continueOnceOwnsPixelsAndRunsLaterActions and cancelAndDirtyCloseLeaveClipboardFilesAndUploadUntouched prove auto-copy/close partial outcomes and dirty Save/Discard/Cancel regardless of ShowExitConfirmation; cancellation never starts later outputs. Current ZoomToFitOnOpen is viewport-only. Existing defaults retained. Remains partial: quick-crop, insert-dialog and editor notification toggles are not implemented; their safety semantics and per-field ledger cannot be inferred or preapproved. No optional setting bypasses native permission/validation by this audit.",
       "audit": {
         "classification": "partial",
         "spec_line": 53,

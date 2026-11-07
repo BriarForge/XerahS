@@ -3,6 +3,7 @@
 #include "EditorCanvasOperations.h"
 
 #include <QBuffer>
+#include <QColorSpace>
 #include <QTest>
 
 #include <cmath>
@@ -435,19 +436,38 @@ private slots:
     QVERIFY(!unsupported.document && !unsupported.image);
   }
 
+  void nativeFlattenRestoresSourceAssetsSelectionAndCheckpointWithUndo_data() {
+    QTest::addColumn<QColorSpace>("profile");
+    QTest::newRow("untagged") << QColorSpace{};
+    QTest::newRow("srgb") << QColorSpace(QColorSpace::SRgb);
+    QTest::newRow("linear-srgb") << QColorSpace(QColorSpace::SRgbLinear);
+    QTest::newRow("display-p3") << QColorSpace(QColorSpace::DisplayP3);
+  }
   void nativeFlattenRestoresSourceAssetsSelectionAndCheckpointWithUndo() {
+    QFETCH(QColorSpace, profile);
     QImage source(4, 4, QImage::Format_ARGB32); source.fill(0x800000FF);
+    source.setColorSpace(profile);
     auto d = withSource(source); auto shown = rectangle({1, 1}, {3, 3}); shown.style.strokeColor = 0; shown.style.fillColor = 0x80FF0000;
     auto hidden = rectangle({0, 0}, {1, 1}); hidden.visible = false; d.annotations = {shown, hidden};
+    d.embeddedImages = {{QStringLiteral("kept-asset"), d.sourceImagePng}};
+    const auto original = serializeDocument(d); const auto originalSource = source;
     EditorSession session(d); session.select({shown.id, hidden.id});
     CanvasOperation op; op.action = CanvasAction::Flatten;
     const auto prepared = xerahs::app::prepareCanvasEdit(d, source, op); QVERIFY(prepared.result.document);
     QCOMPARE(prepared.source.pixel(1, 1), QRgb(0xC0AA0055));
+    QCOMPARE(prepared.source.pixel(0, 0), QRgb(0x800000FF)); QCOMPARE(prepared.source.colorSpace(), profile);
+    const auto encoded = QImage::fromData(prepared.result.document->sourceImagePng, "PNG");
+    QCOMPARE(encoded.colorSpace(), profile); QCOMPARE(encoded.pixel(1, 1), QRgb(0xC0AA0055));
+    QCOMPARE(prepared.result.document->embeddedImages, d.embeddedImages);
+    QCOMPARE(serializeDocument(d), original); QCOMPARE(source, originalSource);
     QVERIFY(session.commitCanvas(*prepared.result.document, session.stateId()));
+    const auto flattened = serializeDocument(session.document());
     QCOMPARE(session.undoCount(), 1); QCOMPARE(session.selection(), QSet<QUuid>{hidden.id}); QVERIFY(session.dirty());
     QVERIFY(session.undo()); QCOMPARE(session.document().sourceImagePng, d.sourceImagePng);
+    QCOMPARE(serializeDocument(session.document()), original);
     QCOMPARE(session.selection(), (QSet<QUuid>{shown.id, hidden.id})); QVERIFY(!session.dirty());
     QVERIFY(session.redo()); QCOMPARE(session.document().annotations.size(), std::size_t(1));
+    QCOMPARE(serializeDocument(session.document()), flattened); QCOMPARE(session.selection(), QSet<QUuid>{hidden.id});
   }
 
   void clearCommandsAreDistinctAtomicAndRepeatAsNoOps() {

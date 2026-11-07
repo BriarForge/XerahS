@@ -67,9 +67,17 @@ private slots:
   void initTestCase(){QVERIFY(settings.isValid());QSettings::setPath(QSettings::NativeFormat,QSettings::UserScope,settings.path());QSettings::setPath(QSettings::IniFormat,QSettings::UserScope,settings.path());}
   void init(){QVERIFY(initializeNativeEditorPreferences(settings.filePath("editor.json")).isEmpty());}
   void cleanup(){QThreadPool::globalInstance()->waitForDone();}
-  void nativeUpload_data(){QTest::addColumn<QString>("mode");for(const auto *mode:{"success","http-error","cancel-confirm","cancel-transfer"})QTest::newRow(mode)<<QString(mode);}
+  void nativeUpload_data(){
+    QTest::addColumn<QString>("mode"); QTest::addColumn<bool>("shortcut");
+    for(const auto *mode:{"success","http-error","cancel-confirm","cancel-transfer"}) {
+      const bool originalShortcut = QString(mode) == "success";
+      QTest::newRow(mode) << QString(mode) << originalShortcut;
+      const auto other = QString(mode) + (originalShortcut ? "-menu" : "-shortcut");
+      QTest::newRow(other.toUtf8().constData()) << QString(mode) << !originalShortcut;
+    }
+  }
   void nativeUpload(){
-    QFETCH(QString,mode);QTemporaryDir dir;HttpFixture http;QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    QFETCH(QString,mode); QFETCH(bool,shortcut); QTemporaryDir dir;HttpFixture http;QVERIFY(http.server.listen(QHostAddress::LocalHost));
     http.status=mode=="http-error"?500:200;http.hold=mode=="cancel-transfer";
     const auto destination=http.destination();DestinationCatalog catalog(dir.filePath("destinations.json"));QVERIFY(catalog.add(destination).isEmpty());
     auto credentials=std::make_shared<MemoryCredentialStore>();auto source=fixture();
@@ -92,9 +100,9 @@ private slots:
       }
     });
     QSignalSpy done(window.get(),&EditorWindow::uploadFinished),saved(window.get(),&EditorWindow::saveFinished);
-    if(mode=="success"){window->activateWindow();canvas->setFocus();QTRY_VERIFY(window->isActiveWindow());}
+    if(shortcut){window->activateWindow();canvas->setFocus();QTRY_VERIFY(window->isActiveWindow());}
     timer.start(2);
-    if(mode=="success")QTest::keyClick(canvas,Qt::Key_U,Qt::ControlModifier);else action->trigger();
+    if(shortcut)QTest::keyClick(canvas,Qt::Key_U,Qt::ControlModifier);else action->trigger();
     timer.stop();
     QCOMPARE(done.count(),1);QVERIFY(confirmed);QVERIFY(window->isVisible());QCOMPARE(window->windowTitle(),title);QCOMPARE(saved.count(),0);
     QCOMPARE(serializeDocument(canvas->annotationDocument()),document);QCOMPARE(canvas->annotationState(),state);QVERIFY(action->isEnabled());

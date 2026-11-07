@@ -147,7 +147,13 @@ private slots:
     d.findChild<QPushButton *>("effectsNewSeed")->click(); const auto selectedSeed = seed->text().toULongLong();
     QTRY_VERIFY(!d.previewImage().isNull()); QVERIFY(d.previewImage() != first); const auto preview = d.previewImage();
     seed->setText("18446744073709551616"); QVERIFY(!d.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply)->isEnabled());
+    auto *seedError = d.findChild<QLabel *>("effectsSeedError"); QVERIFY(seedError);
+    QVERIFY(seedError->text().contains("effect-seed-invalid"));
+    auto *accessibleSeed = QAccessible::queryAccessibleInterface(seed); QVERIFY(accessibleSeed);
+    QVERIFY(accessibleSeed->text(QAccessible::Description).contains("effect-seed-invalid"));
+    QVERIFY(accessibleSeed->text(QAccessible::Description).contains("18446744073709551615"));
     seed->setText(QString::number(selectedSeed)); QTRY_VERIFY(!d.previewImage().isNull()); QCOMPARE(d.previewImage(), preview);
+    QVERIFY(seedError->text().isEmpty()); QVERIFY(!accessibleSeed->text(QAccessible::Description).contains("effect-seed-invalid"));
     d.accept(); QTRY_COMPARE(d.result(), int(QDialog::Accepted)); QCOMPARE(session.undoCount(), 1);
     const auto applied = serializeDocument(session.document());
     QCOMPARE(session.document().extra.value("effectOperations").toArray().last().toObject().value("seed").toString(), QString::number(selectedSeed));

@@ -4,9 +4,11 @@
 #include "ShellFixture.h"
 #include "ApplicationControl.h"
 #include "RecordingActions.h"
+#include "features/ScheduleFeature.h"
 #include <QLabel>
 #include "UploadDestinationsDialog.h"
 #include <QJsonDocument>
+#include <QFile>
 #include <QAbstractButton>
 #include <QApplication>
 #include <QDialog>
@@ -64,6 +66,40 @@ private slots:
     action->trigger(); QVERIFY(!shell.capture.busy()); QCOMPARE(notices.size(), 1);
     QCOMPARE(notices[0][1].toString(), QString("last-region-invalid")); QVERIFY(!shell.capture.lastPipelineResult());
   }
+  void automaticCaptureChecksTheEffectiveWorkflowFolderAndRefusesAnUnresolvedDefault() {
+    QTemporaryDir profile;
+    Shell shell(profile.path());
+    QString checked;
+    const auto freeSpace = [&](const QString &folder) {
+      checked = folder;
+      return xerahs::capture::kMinFreeStorageBytes - 1;
+    };
+    auto draft = *shell.workflows.store().current().catalog;
+    draft.entries.front().output.directory = profile.filePath("workflow-output");
+    QVERIFY(shell.workflows.save(draft, shell.workflows.store().revision()).saved);
+    QCOMPARE(automaticCaptureCondition(shell.ctx, false, freeSpace), xerahs::capture::AutoCondition::StorageLow);
+    QCOMPARE(checked, draft.entries.front().output.directory);
+
+    draft.entries.front().output.directory.clear();
+    QVERIFY(shell.workflows.save(draft, shell.workflows.store().revision()).saved);
+    QCOMPARE(automaticCaptureCondition(shell.ctx, false, freeSpace), xerahs::capture::AutoCondition::StorageLow);
+    QCOMPARE(checked, shell.settings.current().values.value("saveFolder").toString());
+    QCOMPARE(automaticCaptureCondition(shell.ctx, true, [](const QString &) { return xerahs::capture::kMinFreeStorageBytes; }),
+        xerahs::capture::AutoCondition::ScreenLocked);
+
+    auto corrupt = QJsonDocument::fromJson(xerahs::workflows::workflowsJson(draft)).object();
+    corrupt.insert("defaultId", QUuid::createUuid().toString(QUuid::WithoutBraces));
+    QFile file(profile.filePath("capture-workflows.json"));
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    const auto bytes = QJsonDocument(corrupt).toJson();
+    QCOMPARE(file.write(bytes), bytes.size());
+    file.close();
+    shell.workflows.reload();
+    checked.clear();
+    QCOMPARE(automaticCaptureCondition(shell.ctx, false, freeSpace), xerahs::capture::AutoCondition::WorkflowUnavailable);
+    QVERIFY(checked.isEmpty());
+  }
+
   void applicationControlsRespectModalWorkAndHeadlessAuthority() {
     Shell shell(root.path()); shell.attach();
     QDialog modal; modal.setWindowModality(Qt::ApplicationModal); modal.show();

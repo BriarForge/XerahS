@@ -89,6 +89,7 @@ QJsonObject pipelineResultJson(const PipelineResult &result,
     if (!result.upload->thumbnailUrl.isEmpty()) upload.insert("thumbnail_url", result.upload->thumbnailUrl);
     if (!result.upload->deletionUrl.isEmpty()) upload.insert("deletion_url", result.upload->deletionUrl);
     if (!result.upload->errorMessage.isEmpty()) upload.insert("error_message", result.upload->errorMessage);
+    if (result.upload->attempts > 0) upload.insert("attempts", result.upload->attempts);
     if (!upload.isEmpty()) native.insert("upload_result", upload);
   }
   if (!result.workflowExecutionId.isEmpty()) native.insert("workflow_execution_id", result.workflowExecutionId);

@@ -27,6 +27,14 @@
 #include <QUuid>
 
 namespace xerahs::app {
+
+xerahs::workflows::WorkflowChoice resolveShellWorkflow(AppContext &ctx, const QUuid &id) {
+  auto choice = ctx.workflows->resolve(id);
+  if (choice.workflow) choice.workflow = xerahs::settings::withApplicationDefaults(*choice.workflow,
+      ctx.settings.current().values, ctx.workflows->store().hasSavedDefinitions());
+  return choice;
+}
+
 namespace {
 
 using xerahs::shell::ActivationAction;
@@ -44,12 +52,6 @@ QAction *addCapture(AppContext &ctx, const QString &id, const QString &label, co
   return action;
 }
 
-xerahs::workflows::WorkflowChoice effectiveWorkflow(AppContext &ctx, const QUuid &id = {}) {
-  auto choice = ctx.workflows->resolve(id);
-  if (choice.workflow) choice.workflow = xerahs::settings::withApplicationDefaults(*choice.workflow,
-      ctx.settings.current().values, ctx.workflows->store().hasSavedDefinitions());
-  return choice;
-}
 
 ApplicationWindow *commandWindow(AppContext &ctx) {
   return qobject_cast<ApplicationWindow *>(ctx.dialogParent ? ctx.dialogParent() : nullptr);
@@ -64,7 +66,6 @@ void installScrollingCapture(AppContext &ctx) {
   ports.release = [&ctx] { ctx.capture.releaseExternal(); };
   ports.submit = [&ctx](const QImage &image) { return ctx.capture.submitExternalImage(image, QStringLiteral("scrolling")); };
   ports.notify = [&ctx](const QString &title, const QString &body, bool success) {
-    if (auto *window = commandWindow(ctx)) window->showResult(title, body, success);
     postTrayMessage(ctx, title, body, success, 5000);
   };
   auto *scrolling = new ScrollCapture(std::move(ports), {}, &ctx.app);
@@ -83,7 +84,7 @@ void installScrollingCapture(AppContext &ctx) {
 QString activationFailureMessage(const QString &diagnostic) { return xerahs::shell::errorMessage(diagnostic); }
 
 std::function<void()> prepareShellCapture(AppContext &ctx, const ActivationRequest &incoming) {
-  auto choice = incoming.action == ActivationAction::RunWorkflow ? effectiveWorkflow(ctx, QUuid(incoming.workflowId)) : effectiveWorkflow(ctx);
+  auto choice = incoming.action == ActivationAction::RunWorkflow ? resolveShellWorkflow(ctx, QUuid(incoming.workflowId)) : resolveShellWorkflow(ctx);
   if (!choice.workflow) return {};
   choice.workflow->chooseActions |= incoming.action == ActivationAction::CaptureRegionChooseActions;
   // CORE-014: source commands reuse the default workflow's actions and output.
@@ -156,7 +157,7 @@ void installCapture(AppContext &ctx) {
       [&ctx] { ctx.invoke(ActivationAction::CaptureActiveWindow, {}, false, {}, QStringLiteral("native-shell")); });
   addCapture(ctx, QStringLiteral("capture-last-region"), QStringLiteral("Capture last region"), [&ctx] {
     if (ctx.capture.busy() || ctx.recording.busy() || QApplication::activeModalWidget() || (ctx.shortcuts && ctx.shortcuts->pending())) return;
-    auto choice = effectiveWorkflow(ctx);
+    auto choice = resolveShellWorkflow(ctx);
     if (!choice.workflow) { emit ctx.capture.notify("Capture workflow unavailable", choice.diagnostic, false); return; }
     choice.workflow->capture = QStringLiteral("last-region");
     static NativeWorkflowExecutions executions(NativeWorkflowExecutions::defaultDirectory());
@@ -181,7 +182,7 @@ void installCapture(AppContext &ctx) {
     return capture::lastRegionStorageDiagnostic(store.save(region, previous));
   });
   ctx.capture.setRegionSettingsResolver([&ctx] { return settings::regionSessionSettings(ctx.settings.current().values); });
-  ctx.capture.setDefaultWorkflowResolver([&ctx] { return effectiveWorkflow(ctx); });
+  ctx.capture.setDefaultWorkflowResolver([&ctx] { return resolveShellWorkflow(ctx); });
   const auto refreshRegion = [&ctx, region] {
     const auto &catalog = ctx.workflows->store().current().catalog;
     QString label;
@@ -208,11 +209,8 @@ void installCapture(AppContext &ctx) {
   QObject::connect(&ctx.capture, &CaptureController::notify, &ctx.tray, [&ctx](const QString &title, const QString &body, bool success) {
     if (success && ctx.settings.current().values.value(QStringLiteral("playCaptureSound")).toBool()) QApplication::beep();
     // Failures are always reported; the setting only quiets successes.
-    if (success && !ctx.settings.current().values.value(QStringLiteral("showNotification")).toBool()) return;
-    postTrayMessage(ctx, title, body, success, 5000);
-  });
-  QObject::connect(&ctx.capture, &CaptureController::notify, &ctx.app, [&ctx](const QString &title, const QString &body, bool success) {
-    if (auto *window = commandWindow(ctx)) window->showResult(title, body, success);
+    const bool desktop = !success || ctx.settings.current().values.value(QStringLiteral("showNotification")).toBool();
+    postTrayMessage(ctx, title, body, success, 5000, desktop);
   });
   QObject::connect(&ctx.capture, &CaptureController::capturePermissionDenied, &ctx.app, [&ctx] {
     showCapturePermissionHelp(ctx.dialogParent ? ctx.dialogParent() : nullptr);

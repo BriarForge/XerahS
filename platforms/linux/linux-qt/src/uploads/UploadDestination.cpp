@@ -1,4 +1,5 @@
 #include "UploadDestination.h"
+#include "UploadPolicy.h"
 #include "storage/JsonBoundary.h"
 
 #include <QJsonArray>
@@ -100,6 +101,38 @@ QString bodyTypeString(BodyType body) {
     case BodyType::Unknown: return {};
   }
   return {};
+}
+
+QJsonObject destinationCapabilities(const UploadDestination &destination) {
+  QJsonArray backoff;
+  for (int attempt = 1; attempt < kMaximumUploadAttempts; ++attempt)
+    backoff.append(kInitialUploadBackoffMs * (1 << (attempt - 1)));
+  return {
+    {"capabilityVersion", 1}, {"configurationSchemaVersion", kDestinationSchemaVersion},
+    {"engine", "data-only-http"},
+    {"configurationFields", QJsonArray{"schemaVersion", "id", "name", "method", "url", "query", "headers", "body",
+        "arguments", "data", "fileFormName", "resultUrl", "thumbnailUrl", "deletionUrl", "errorMessage"}},
+    {"request", QJsonObject{{"method", requestMethodString(destination.method)}, {"body", bodyTypeString(destination.body)},
+        {"executesConfigurationCode", false}}},
+    {"authentication", QJsonObject{{"credentialStorage", "OS-credential-service"}, {"referenceSyntax", "{secret:name}"},
+        {"providerAuthentication", "configured-template; not independently verified"}}},
+    {"result", QJsonObject{{"schemaVersion", 1}, {"success", "HTTP-2xx-and-valid-result-URL"},
+        {"fields", QJsonArray{"url", "thumbnail_url", "deletion_url", "error_message", "attempts"}},
+        {"URLSchemes", QJsonArray{"http", "https"}}, {"thumbnailOptional", true}, {"deletionOptional", true},
+        {"deletionConfigured", !destination.deletionUrl.isEmpty()}, {"deletionSemantics", "returned-link-only; never automatically executed"}}},
+    {"constraints", QJsonObject{{"defaultClientMaximumInputBytes", kDefaultMaximumUploadInputBytes},
+        {"clientMaximumResponseBytes", kMaximumUploadResponseBytes}, {"contentType", "caller-supplied MIME; no provider validation"},
+        {"providerMaximumInputBytes", QJsonValue::Null}, {"providerContentTypes", QJsonValue::Null}}},
+    {"rate", QJsonObject{{"activeTransfersPerExecutor", 1}, {"maximumAttempts", kMaximumUploadAttempts}, {"backoffMs", backoff},
+        {"retryEligibility", "transient failure; idempotent method or keyed POST/PATCH"},
+        {"idempotentMethods", QJsonArray{"GET", "HEAD", "PUT", "DELETE"}},
+        {"keyedMethods", QJsonArray{"POST", "PATCH"}}, {"keyRequirement", "exactly one stable nonblank Idempotency-Key"},
+        {"HTTP429", "terminal; explicit review before another operation"}, {"providerRateLimits", QJsonValue::Null}}},
+    {"stableErrors", QJsonArray{"invalid-json", "too-large", "unsupported-schema", "invalid-document", "empty-id", "empty-name", "unsupported-method", "empty-url", "invalid-url", "non-http-scheme",
+        "url-userinfo", "unsupported-body", "missing-file-form-name", "missing-secret", "credential-unavailable", "input-too-large",
+        "input-unreadable", "invalid-header", "invalid-content-type", "network-error", "timeout", "cancelled", "response-too-large",
+        "http-error", "parse-failed", "invalid-result-url"}}
+  };
 }
 
 DestinationRead readDestination(const QByteArray &bytes) {

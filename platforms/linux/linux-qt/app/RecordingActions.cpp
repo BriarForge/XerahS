@@ -1,4 +1,6 @@
 #include "RecordingActions.h"
+#include "RecordingAudioConsent.h"
+#include "RecordingErrors.h"
 #include "ApplicationControl.h"
 #include <QCheckBox>
 #include <QComboBox>
@@ -17,6 +19,11 @@ using namespace recording;
 QDialog *makeRecordingResultDialog(const ControlResult &result) {
   auto *dialog = new QDialog; dialog->setAttribute(Qt::WA_DeleteOnClose); dialog->setObjectName("recordingResultDialog");
   dialog->setWindowTitle("Recording result"); auto *layout = new QFormLayout(dialog);
+  const auto explanation = recordingAudioErrorMessage(result.diagnostic);
+  if (!explanation.isEmpty()) {
+    auto *message = new QLabel(explanation, dialog); message->setObjectName("recordingAudioFailure");
+    message->setWordWrap(true); message->setTextFormat(Qt::PlainText); layout->addRow(message);
+  }
   for (const auto &entry : QList<QPair<QString, QString>>{{"Session", result.sessionId}, {"State", stateName(result.state)},
       {"Diagnostic", result.diagnostic}, {"Completed output", result.output}, {"Recoverable partial (may need repair)", result.recoverableOutput}}) {
     if (entry.second.isEmpty()) continue;
@@ -76,16 +83,17 @@ void RecordingActions::start(Format format, bool region, QString origin) {
   QLineEdit folder(m_folder()); layout.addRow("Output folder", &folder);
   QLineEdit filename(generatedFilename(Format(formats.currentData().toInt()))); layout.addRow("Filename", &filename);
   connect(&formats, &QComboBox::currentIndexChanged, &dialog, [&] { filename.setText(generatedFilename(Format(formats.currentData().toInt()))); });
-  QLabel note("Audio inputs are selected in Settings → Recording (none by default). GIF has no audio. For a region, confirm the rectangle, then choose its monitor in the portal. Pause excludes paused time. Stop finalizes the file; Abort removes partial output."); note.setWordWrap(true); layout.addRow(&note);
+  const auto settings = m_settings ? m_settings() : QJsonObject{};
+  RecordingAudioConsent audio(settings.value("systemAudioDevice").toString(), settings.value("microphoneDevice").toString());
+  layout.addRow(&audio); audio.setFormat(Format(formats.currentData().toInt()));
+  connect(&formats, &QComboBox::currentIndexChanged, &dialog, [&] { audio.setFormat(Format(formats.currentData().toInt())); });
+  QLabel note(tr("GIF has no audio. For a region, confirm the rectangle, then choose its monitor in the portal. Pause excludes paused time. Stop finalizes the file; Abort removes partial output.")); note.setWordWrap(true); layout.addRow(&note);
   QDialogButtonBox buttons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel); layout.addRow(&buttons);
   connect(&buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept); connect(&buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
   if (dialog.exec() != QDialog::Accepted) return;
   Request request; request.target = target.currentIndex() ? Target::Window : Target::Monitor; request.format = Format(formats.currentData().toInt());
   request.frameRate = fps.value(); request.quality = quality.value(); request.cursor = cursor.isChecked(); request.folder = folder.text(); request.filename = filename.text();
-  if (m_settings) {
-    const auto settings = m_settings();
-    request.systemAudioDevice = settings.value("systemAudioDevice").toString(); request.microphoneDevice = settings.value("microphoneDevice").toString();
-  }
+  audio.apply(request);
   if (region) {
     if (!m_selectRegion) return;
     m_selectRegion([guard = QPointer<RecordingActions>(this), request, origin](QRectF rectangle) mutable {

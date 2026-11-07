@@ -11,10 +11,12 @@
 #include <QHBoxLayout>
 #include <QInputDialog>
 #include <QLabel>
+#include <QJsonDocument>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QPlainTextEdit>
 #include <QVBoxLayout>
 
 namespace xerahs::app {
@@ -83,6 +85,7 @@ UploadDestinationsDialog::UploadDestinationsDialog(DestinationCatalog &catalog, 
   m_list = new QListWidget(this);
   m_list->setAccessibleName(tr("Destinations"));
   m_details = new QLabel(this);
+  m_details->setTextFormat(Qt::PlainText);
   m_details->setWordWrap(true);
   m_details->setTextInteractionFlags(Qt::TextSelectableByMouse);
   m_secrets = new QListWidget(this);
@@ -91,6 +94,9 @@ UploadDestinationsDialog::UploadDestinationsDialog(DestinationCatalog &catalog, 
   m_default = new QPushButton(tr("Make &default"), this);
   m_secret = new QPushButton(tr("Set &secret…"), this);
   m_remove = new QPushButton(tr("&Remove"), this);
+  m_capabilities = new QPushButton(tr("View capabilities…"), this);
+  m_capabilities->setObjectName("viewDestinationCapabilities");
+  m_capabilities->setAccessibleDescription(tr("Review client limits, authentication, result and deletion behavior. Provider limits are explicitly unknown."));
   m_test = new QPushButton(tr("&Test connection"), this);
   m_test->setObjectName("testDestinationConnection"); m_test->setAccessibleName(tr("Test destination connection"));
   m_test->setAccessibleDescription(tr("Explicitly sends a HEAD request with destination credentials, without capture content. Upload permission is not verified."));
@@ -104,6 +110,7 @@ UploadDestinationsDialog::UploadDestinationsDialog(DestinationCatalog &catalog, 
 
   auto *side = new QVBoxLayout;
   side->addWidget(m_details);
+  side->addWidget(m_capabilities);
   side->addWidget(new QLabel(tr("Secrets:"), this));
   side->addWidget(m_secrets);
   auto *columns = new QHBoxLayout;
@@ -123,6 +130,7 @@ UploadDestinationsDialog::UploadDestinationsDialog(DestinationCatalog &catalog, 
   layout->addLayout(testButtons); layout->addWidget(m_testStatus);
   connect(m_test, &QPushButton::clicked, this, &UploadDestinationsDialog::testConnection);
   connect(m_cancelTest, &QPushButton::clicked, this, &UploadDestinationsDialog::cancelConnectionTest);
+  connect(m_capabilities, &QPushButton::clicked, this, &UploadDestinationsDialog::showCapabilities);
   resize(720, 420);
 
   connect(m_list, &QListWidget::currentRowChanged, this, &UploadDestinationsDialog::showSelected);
@@ -186,6 +194,27 @@ void UploadDestinationsDialog::showSelected() {
   }
   if (m_secrets->count() > 0) m_secrets->setCurrentRow(0);
   checkSecrets();
+}
+
+void UploadDestinationsDialog::showCapabilities() {
+  const auto destination = m_catalog.find(selectedId());
+  if (!destination) return;
+  const auto capabilities = uploads::destinationCapabilities(*destination);
+  auto *dialog = new QDialog(this);
+  dialog->setObjectName("destinationCapabilitiesDialog");
+  dialog->setWindowTitle(tr("Destination capabilities"));
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  auto *layout = new QVBoxLayout(dialog);
+  auto *notice = new QLabel(tr("Review the client limits and behavior below before uploading. Provider size, content and rate limits are unknown; "
+      "check the provider's published terms. A deletion URL is only a returned link and is never opened automatically."), dialog);
+  notice->setWordWrap(true); notice->setTextFormat(Qt::PlainText); layout->addWidget(notice);
+  auto *text = new QPlainTextEdit(dialog); text->setObjectName("destinationCapabilities");
+  text->setAccessibleName(tr("Destination capabilities and constraints")); text->setReadOnly(true);
+  text->setPlainText(QString::fromUtf8(QJsonDocument(capabilities).toJson(QJsonDocument::Indented)));
+  layout->addWidget(text);
+  auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, dialog);
+  connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject); layout->addWidget(buttons);
+  dialog->resize(680, 520); dialog->open();
 }
 
 void UploadDestinationsDialog::checkSecrets() {
@@ -288,6 +317,7 @@ void UploadDestinationsDialog::updateButtons() {
   const auto destination = m_catalog.find(selectedId());
   const bool editable = m_catalog.writable() && !m_busy && !m_testing;
   m_import->setEnabled(editable);
+  m_capabilities->setEnabled(destination.has_value());
   m_default->setEnabled(editable && destination && destination->id != m_catalog.defaultId());
   m_remove->setEnabled(editable && destination.has_value());
   m_secret->setEnabled(!m_busy && !m_testing && destination.has_value());

@@ -1,8 +1,5 @@
-// CORE-010: what a desktop notification may show. A notification body can carry private content (file
-// paths, URLs, recognised text, device names). With private previews on, the notification keeps the
-// operation title and the true result (success, or the stable failure code) and nothing else; the full
-// text stays in the XerahS window. Rationale: the reference app (ShareX/XerahS) always shows the full
-// text; Flameshot/Greenshot never hide it. Hiding it behind an off-by-default setting preserves that default.
+// CORE-010: payload-free desktop projection and legacy preview preference parsing.
+// Native notifications always use desktopNotification; detailed bodies remain in XerahS.
 #pragma once
 
 #include <QJsonObject>
@@ -13,6 +10,10 @@ namespace xerahs::shell {
 inline constexpr auto kPrivateNotificationsKey = "privateNotifications";
 
 struct NotificationText { QString title, body; };
+
+// One opaque event ID is shared by the desktop notification and the local result.
+struct NotificationEvent { QString id; NotificationText desktop; };
+NotificationEvent desktopNotification(const QString &operation, const QString &body, bool ok);
 
 // Leading stable code of a failure body such as "activation-busy: ..." (lowercase words joined by '-').
 QString stableCodeOf(const QString &body);

@@ -15,7 +15,7 @@ namespace xerahs::capture {
 
 inline constexpr qint64 kMinFreeStorageBytes = 512LL * 1024 * 1024;
 
-enum class AutoCondition { Clear, ScreenLocked, StorageLow };
+enum class AutoCondition { Clear, ScreenLocked, StorageLow, WorkflowUnavailable };
 
 struct ConditionSources {
   std::function<bool()> screenLocked;   // unset means unlocked

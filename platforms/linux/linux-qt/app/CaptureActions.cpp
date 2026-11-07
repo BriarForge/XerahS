@@ -1,4 +1,5 @@
 #include "CaptureActions.h"
+#include "CaptureActionLabels.h"
 #include "EditorTemporaryFiles.h"
 #include "CaptureFileOutput.h"
 #include "workflows/CaptureWorkflows.h"
@@ -39,22 +40,7 @@ ActionOutcome failed(const QString &diagnostic) {
 
 const QString CaptureActions::kActionUnavailable = QStringLiteral("action-unavailable");
 QStringList CaptureActions::selectableActions() { return xerahs::workflows::implementedCaptureActions(); }
-QString CaptureActions::actionLabel(const QString &id) {
-  static const QMap<QString, QString> names{{"save", "Save image"}, {"save-as", "Save image as new PNG…"}, {"image-clipboard", "Copy image to clipboard"},
-      {"file-clipboard", "Copy image file"}, {"path-clipboard", "Copy file path"}, {"reveal", "Show saved file in folder"},
-      {"after-capture-window", "Choose capture actions"}, {"quick-task-menu", "Show quick task menu"}};
-  if (id == "upload") return "Upload capture";
-  if (id == "before-upload-window") return "Confirm before uploading";
-  if (id == "pin") return "Pin image on screen";
-  if (id == "print") return "Print image";
-  if (id == "url-clipboard") return "Copy URL to clipboard";
-  if (id == "annotation") return "Annotate capture";
-  if (id == "ocr") return "Recognize text (OCR)";
-  if (id == "ocr-clipboard") return "Copy recognized text";
-  if (id == "qr-scan") return "Scan QR codes";
-  if (id == "delete") return "Delete saved capture after successful file actions";
-  return names.value(id, id);
-}
+QString CaptureActions::actionLabel(const QString &id) { return captureActionLabel(id); }
 
 CaptureActions::CaptureActions(QImage media, QString directory, QString pattern, CaptureActionPorts ports, std::optional<CaptureFile> inheritedFile, std::vector<CaptureFile> inheritedFiles, std::optional<xerahs::editor::AnnotationDocument> inheritedDocument, bool sidecarIntent)
     : m_media(std::move(media)), m_directory(std::move(directory)), m_pattern(std::move(pattern)),
@@ -215,13 +201,18 @@ ActionOutcome CaptureActions::upload(const ActionRequest &request) {
   QObject::connect(&executor, &UploadExecutor::finished, &loop, [&](const UploadOutcome &out) { response = out; loop.quit(); });
   QObject::connect(&cancellation, &QTimer::timeout, &executor, [&] { if (request.cancellation.requested()) executor.cancel(); });
   cancellation.start(); executor.start(*built.request); loop.exec();
-  if (response.code == "cancelled") return {ActionState::Cancelled, {}, {}};
+  if (response.code == "cancelled") {
+    // Attempts do not acknowledge publication. Cancelled transfers have no
+    // upload result for receipts or dependent URL consumers.
+    return {ActionState::Cancelled, {}, {}};
+  }
   if (!response.code.isEmpty()) {
     auto out = failure(response.code, response.errorMessage);
+    out.upload->attempts = response.attempts;
     out.failureClass = classifyFailure(response.code, response.httpStatus); return out;
   }
   m_uploadUrl = response.url;
-  ActionOutcome out; out.upload = UploadResult{response.url, response.thumbnailUrl, response.deletionUrl, {}}; return out;
+  ActionOutcome out; out.upload = UploadResult{response.url, response.thumbnailUrl, response.deletionUrl, {}, response.attempts}; return out;
 }
 
 // PCA-024: only the upload URL, as plain text; a clipboard failure fails this action alone.

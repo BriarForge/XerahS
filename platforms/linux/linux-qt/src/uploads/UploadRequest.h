@@ -2,6 +2,7 @@
 #pragma once
 #include "CredentialStore.h"
 #include "UploadDestination.h"
+#include "UploadPolicy.h"
 #include <QUrl>
 
 namespace xerahs::uploads {
@@ -12,7 +13,7 @@ struct UploadInput {
   QString mimeType;
 };
 struct UploadRequestOptions {
-  qint64 maxInputBytes = 200LL * 1024 * 1024;
+  qint64 maxInputBytes = kDefaultMaximumUploadInputBytes;
   std::optional<quint32> randomSeed;
   bool allowCredentialPrompts = true;
 };

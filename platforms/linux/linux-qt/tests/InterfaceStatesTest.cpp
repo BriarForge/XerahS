@@ -709,7 +709,7 @@ private slots:
     QVERIFY2(!window.windowTitle().trimmed().isEmpty(), "the window names its purpose");                                // initial
     QVERIFY2(!search->placeholderText().trimmed().isEmpty(), "the search explains itself in words");                   // initial
     QVERIFY2(status->text().contains("Reading capture history"), qPrintable(status->text()));                           // loading
-    QTRY_VERIFY(status->text().contains("No saved captures"));                                                         // empty
+    QTRY_VERIFY(status->text().contains("No capture results"));                                                         // empty
     QCOMPARE(list->count(), 0);
     QVERIFY2(!window.findChild<QPushButton *>("openHistoryCapture")->isEnabled(), "with no capture there is nothing to open");  // empty
     FileUploadHistoryRecord upload;

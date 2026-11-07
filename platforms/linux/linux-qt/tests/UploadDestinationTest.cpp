@@ -1,7 +1,9 @@
 #include "uploads/CredentialStore.h"
 #include "uploads/UploadDestination.h"
+#include "uploads/UploadRequest.h"
 
 #include <QJsonDocument>
+#include <QJsonArray>
 #include <QTest>
 
 using namespace xerahs::uploads;
@@ -34,6 +36,40 @@ class UploadDestinationTest : public QObject {
   Q_OBJECT
 
 private slots:
+  void capabilitiesPublishClientPolicyWithoutPrivateConfigurationOrProviderPromises() {
+    auto destination = sample();
+    destination.name = "PRIVATE-name"; destination.requestUrl = "https://PRIVATE.example/token";
+    destination.headers = {{"PRIVATE-header", "PRIVATE-secret"}};
+    destination.query = {{"PRIVATE-query", "PRIVATE-query-value"}};
+    destination.data = "PRIVATE-body"; destination.extra = {{"PRIVATE-extra", "PRIVATE-value"}};
+    const auto description = destinationCapabilities(destination);
+    const auto encoded = QJsonDocument(description).toJson();
+    QVERIFY(!encoded.contains("PRIVATE"));
+    QCOMPARE(description.value("capabilityVersion").toInt(), 1);
+    QCOMPARE(description.value("configurationSchemaVersion").toInt(), kDestinationSchemaVersion);
+    QVERIFY(description.value("configurationFields").toArray().contains("headers"));
+    QCOMPARE(description.value("request").toObject().value("method").toString(), QString("PUT"));
+    QVERIFY(!description.value("request").toObject().value("executesConfigurationCode").toBool());
+    QCOMPARE(description.value("authentication").toObject().value("referenceSyntax").toString(), QString("{secret:name}"));
+    const auto constraints = description.value("constraints").toObject();
+    QCOMPARE(constraints.value("defaultClientMaximumInputBytes").toInteger(), UploadRequestOptions{}.maxInputBytes);
+    QCOMPARE(constraints.value("clientMaximumResponseBytes").toInteger(), kMaximumUploadResponseBytes);
+    QVERIFY(constraints.value("providerMaximumInputBytes").isNull()); QVERIFY(constraints.value("providerContentTypes").isNull());
+    const auto rate = description.value("rate").toObject();
+    QCOMPARE(rate.value("maximumAttempts").toInt(), kMaximumUploadAttempts);
+    QCOMPARE(rate.value("backoffMs").toArray(), QJsonArray({250, 500}));
+    QVERIFY(rate.value("providerRateLimits").isNull());
+    QVERIFY(rate.value("HTTP429").toString().startsWith("terminal"));
+    const auto result = description.value("result").toObject();
+    QVERIFY(result.value("deletionConfigured").toBool());
+    QVERIFY(result.value("deletionSemantics").toString().contains("never automatically"));
+    QVERIFY(description.value("stableErrors").toArray().contains("invalid-result-url"));
+    destination.deletionUrl.clear(); destination.method = RequestMethod::Unknown; destination.rawMethod = "PRIVATE-raw";
+    const auto unsupported = destinationCapabilities(destination);
+    QVERIFY(!unsupported.value("result").toObject().value("deletionConfigured").toBool());
+    QVERIFY(!QJsonDocument(unsupported).toJson().contains("PRIVATE"));
+  }
+
   void roundTripRetainsUnknownFields() {
     const auto destination = sample();
     const auto bytes = writeDestination(destination);

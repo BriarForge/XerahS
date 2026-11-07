@@ -21,7 +21,7 @@ public:
   // Failure shows the engine message as plain text. A callback adds the button
   // that opens Upload destinations; the dialog does not know how that window is built.
   FileUploadResultDialog(const QString &fileName, const QString &message, std::function<void()> openDestinations = {},
-                         QWidget *parent = nullptr, const QString &terminalState = {});
+                         QWidget *parent = nullptr, const QString &terminalState = {}, const QString &detail = {});
 
 private:
   void copyUrl();

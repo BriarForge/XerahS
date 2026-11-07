@@ -40,7 +40,7 @@ EditorUploadChoice chooseEditorUpload(const EditorUploadSnapshot &, QWidget *par
   struct Loaded { std::optional<uploads::UploadDestination> destination; QString error; };
   const auto loaded = std::make_shared<Loaded>();
   const auto ready = runEditorPreparation(parent,
-      {"uploadDestinationProgress", "Upload Image", "Reading the configured upload destination…", "Upload destination progress"},
+      {"uploadDestinationProgress", QCoreApplication::translate("EditorUpload", "Upload Image"), QCoreApplication::translate("EditorUpload", "Reading the configured upload destination…"), QCoreApplication::translate("EditorUpload", "Upload destination progress")},
       [loaded, catalogPath](const auto &control) {
         if (stopping(control)) return;
         uploads::DestinationCatalog catalog(uploads::defaultCatalogPath(catalogPath));
@@ -52,15 +52,15 @@ EditorUploadChoice chooseEditorUpload(const EditorUploadSnapshot &, QWidget *par
   if (!loaded->destination) return {failed(loaded->error), {}};
   const auto destination = *loaded->destination;
   const QUrl target(destination.requestUrl);
-  const QString host = target.host().isEmpty() ? QStringLiteral("configured HTTP destination")
+  const QString host = target.host().isEmpty() ? QCoreApplication::translate("EditorUpload", "configured HTTP destination")
       : target.adjusted(QUrl::RemoveUserInfo | QUrl::RemovePath | QUrl::RemoveQuery | QUrl::RemoveFragment).toDisplayString();
-  QPointer<QMessageBox> dialog(new QMessageBox(QMessageBox::Question, "Upload Image?",
-      QStringLiteral("Upload the rendered image to %1 (%2)?\n\nThe PNG includes source pixels and visible supported annotations, converted to sRGB with alpha. The host may make the image public and retain it even if you cancel after transmission. The editable document stays open and unchanged.").arg(destination.name, host),
+  QPointer<QMessageBox> dialog(new QMessageBox(QMessageBox::Question, QCoreApplication::translate("EditorUpload", "Upload Image?"),
+      QCoreApplication::translate("EditorUpload", "Upload the rendered image to %1 (%2)?\n\nThe PNG includes source pixels and visible supported annotations, converted to sRGB with alpha. The host may make the image public and retain it even if you cancel after transmission. The editable document stays open and unchanged.").arg(destination.name, host),
       QMessageBox::Ok | QMessageBox::Cancel, parent));
-  if (target.scheme() == "http") dialog->setInformativeText("This destination uses unencrypted HTTP.");
+  if (target.scheme() == "http") dialog->setInformativeText(QCoreApplication::translate("EditorUpload", "This destination uses unencrypted HTTP."));
   dialog->setObjectName("confirmEditorUpload"); dialog->setTextFormat(Qt::PlainText);
   dialog->setDefaultButton(QMessageBox::Cancel); dialog->setEscapeButton(QMessageBox::Cancel);
-  dialog->button(QMessageBox::Ok)->setText("Upload");
+  dialog->button(QMessageBox::Ok)->setText(QCoreApplication::translate("EditorUpload", "Upload"));
   const auto answer = dialog->exec(); delete dialog.data();
   return answer == QMessageBox::Ok ? EditorUploadChoice{ActionOutcome{}, destination} : EditorUploadChoice{};
 }
@@ -81,9 +81,11 @@ ActionOutcome submitEditorUpload(const EditorUploadSnapshot &snapshot, const upl
   });
   QObject::connect(&timer, &QTimer::timeout, &executor, [&] { if (stopping(control)) executor.cancel(); });
   timer.start(10); executor.start(*request.request); if (!completed) loop.exec();
-  if (response.code == "cancelled" || response.code == "timeout" || response.code == "network-error") return unknown();
-  if (!response.code.isEmpty()) return failed(response.code);
-  ActionOutcome outcome; outcome.upload = UploadResult{response.url, response.thumbnailUrl, response.deletionUrl, {}}; return outcome;
+  if (!response.code.isEmpty()) {
+    auto out = (response.code == "cancelled" || response.code == "timeout" || response.code == "network-error") ? unknown() : failed(response.code);
+    out.upload = UploadResult{{}, {}, {}, {}, response.attempts}; return out;
+  }
+  ActionOutcome outcome; outcome.upload = UploadResult{response.url, response.thumbnailUrl, response.deletionUrl, {}, response.attempts}; return outcome;
 }
 EditorUploadOutcome runEditorUpload(const QImage &source, const xerahs::editor::AnnotationDocument &document,
                                    QWidget *parent, const EditorUploadPorts &ports) {
@@ -93,7 +95,7 @@ EditorUploadOutcome runEditorUpload(const QImage &source, const xerahs::editor::
   struct Prepared { EditorUploadSnapshot snapshot; QString diagnostic; };
   const auto prepared = std::make_shared<Prepared>();
   const auto ready = runEditorPreparation(parent,
-      {"uploadImageProgress", "Upload Image", "Rendering source and visible annotations as sRGB with alpha…", "Upload image progress"},
+      {"uploadImageProgress", QCoreApplication::translate("EditorUpload", "Upload Image"), QCoreApplication::translate("EditorUpload", "Rendering source and visible annotations as sRGB with alpha…"), QCoreApplication::translate("EditorUpload", "Upload image progress")},
       [source, document, prepared, beforeRender = ports.beforeRender](const auto &control) {
         if (beforeRender) beforeRender();
         if (stopping(control)) return;
@@ -117,7 +119,7 @@ EditorUploadOutcome runEditorUpload(const QImage &source, const xerahs::editor::
   struct Submitted { ActionOutcome action; std::atomic<bool> entered{false}; };
   const auto submitted = std::make_shared<Submitted>();
   const auto transfer = runEditorPreparation(parent,
-      {"uploadTransferProgress", "Upload Image", "Uploading the confirmed image. Cancellation cannot remove an image already received by the host…", "Upload transfer progress"},
+      {"uploadTransferProgress", QCoreApplication::translate("EditorUpload", "Upload Image"), QCoreApplication::translate("EditorUpload", "Uploading the confirmed image. Cancellation cannot remove an image already received by the host…"), QCoreApplication::translate("EditorUpload", "Upload transfer progress")},
       [submitted, snapshot = prepared->snapshot, destination = *choice.destination, submit = ports.submit](const auto &control) {
         if (stopping(control)) { submitted->action = cancelled(); return; }
         submitted->entered.store(true);
@@ -126,13 +128,17 @@ EditorUploadOutcome runEditorUpload(const QImage &source, const xerahs::editor::
   if (transfer == EditorPreparationResult::Cancelled || (parent && !owner)) return {submitted->entered.load() ? unknown() : cancelled()};
   if (transfer != EditorPreparationResult::Ready) return {unknown()};
   auto action = submitted->action;
-  if (action.outcomeUnknown || action.state == ActionState::Skipped || action.replacementSelection || !action.artifacts.empty()) return {unknown()};
+  const auto metadata = [attempts = action.upload ? action.upload->attempts : 0](ActionOutcome result) {
+    if (attempts > 0) result.upload = UploadResult{{}, {}, {}, {}, attempts};
+    return result;
+  };
+  if (action.outcomeUnknown || action.state == ActionState::Skipped || action.replacementSelection || !action.artifacts.empty()) return {metadata(unknown())};
   if (action.state == ActionState::Succeeded) {
     if (!action.upload || !webUrl(action.upload->url) ||
         (!action.upload->thumbnailUrl.isEmpty() && !webUrl(action.upload->thumbnailUrl)) ||
-        (!action.upload->deletionUrl.isEmpty() && !webUrl(action.upload->deletionUrl))) return {unknown()};
+        (!action.upload->deletionUrl.isEmpty() && !webUrl(action.upload->deletionUrl))) return {metadata(unknown())};
     action.diagnostic.reset(); action.upload->errorMessage.clear(); return {action};
   }
-  return {action.state == ActionState::Cancelled ? cancelled() : failed(safeDiagnostic(action.diagnostic))};
+  return {metadata(action.state == ActionState::Cancelled ? cancelled() : failed(safeDiagnostic(action.diagnostic)))};
 }
 }

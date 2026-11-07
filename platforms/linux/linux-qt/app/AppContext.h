@@ -23,6 +23,7 @@ class ApplicationSettingsStore;
 namespace xerahs::shell {
 class ActivationDispatcher;
 }
+namespace xerahs::diagnostics { class DiagnosticLog; }
 
 namespace xerahs::app {
 
@@ -58,13 +59,14 @@ struct AppContext {
   // Set by the upload feature; tools read it when they hand a file to upload.
   std::function<void(const QStringList &paths)> uploadFiles = {};
   PipelineJournalStorage journal = {};
+  std::shared_ptr<diagnostics::DiagnosticLog> diagnosticLog = {};
   QString defaultCaptureFolder = {};
   QString invocationOrigin = QStringLiteral("command-line");
   std::function<void(shell::ActivationAction action, const QString &path, bool chooseActions, const QString &workflowId, const QString &source)> invoke = {};
 };
 
-// CORE-010: the single door to the desktop notification. Private previews reduce the body to the
-// operation title and the true result; the command window keeps the full text.
-void postTrayMessage(AppContext &ctx, const QString &title, const QString &body, bool ok, int millisecondsVisible = 10000);
+// CORE-010: a correlated local result and optional native notification. Desktop bodies always
+// omit private payloads; the command window keeps the full text. Notifications carry no actions.
+void postTrayMessage(AppContext &ctx, const QString &title, const QString &body, bool ok, int millisecondsVisible = 10000, bool desktop = true);
 
 }  // namespace xerahs::app

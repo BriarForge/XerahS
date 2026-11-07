@@ -106,7 +106,7 @@ bool Session::send(Event e, const QString &diagnostic) {
   }
   emit changed();
   if (terminal(next)) {
-    static const QSet<QString> codes{"portal-unavailable", "portal-timeout", "portal-invalid-response", "target-lost", "encoder-unavailable", "encoder-start-failed", "encoder-failed", "finalize-timeout", "output-create-failed", "output-publish-failed", "request-invalid", "region-outside-stream", "region-mapping-unavailable"};
+    static const QSet<QString> codes{"portal-unavailable", "portal-timeout", "portal-invalid-response", "target-lost", "encoder-unavailable", "encoder-start-failed", "encoder-failed", "finalize-timeout", "output-create-failed", "output-publish-failed", "request-invalid", "region-outside-stream", "region-mapping-unavailable", "audio-consent-required", "audio-device-missing", "audio-input-unavailable"};
     m_diagnostic = next == State::Failed ? (codes.contains(diagnostic) ? diagnostic : QStringLiteral("encoder-failed")) : QString{};
     emit finished(next, m_diagnostic);
   }
@@ -132,9 +132,17 @@ AudioDevice audioDevice(const QVariantMap &properties, const QString &label) {
   if (id.isEmpty()) return {};
   return {backend + ':' + id, label, id.endsWith(".monitor") || properties.value("device.class").toString() == "monitor"};
 }
+QString audioConsentDiagnostic(const Request &r) {
+  if (r.format == Format::Gif) return {};
+  for (const auto &id : {r.systemAudioDevice, r.microphoneDevice})
+    if (!id.isEmpty() && !r.consentedAudioDevices.contains(id)) return "audio-consent-required";
+  return {};
+}
 AudioSelection selectAudio(const Request &r, const DeviceMonitor &monitor) {
   AudioSelection result;
   if (r.format == Format::Gif || (r.systemAudioDevice.isEmpty() && r.microphoneDevice.isEmpty())) return result;
+  const auto consent = audioConsentDiagnostic(r);
+  if (!consent.isEmpty()) { result.diagnostics << consent; return result; }
   const auto devices = monitor ? monitor() : QVector<AudioDevice>{};
   for (const auto &input : {qMakePair(QString("system audio"), r.systemAudioDevice), qMakePair(QString("microphone"), r.microphoneDevice)}) {
     if (input.second.isEmpty()) continue;

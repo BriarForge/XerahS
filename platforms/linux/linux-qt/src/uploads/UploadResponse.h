@@ -11,6 +11,7 @@ struct UploadOutcome {
   QString errorMessage;
   QString code;
   int httpStatus = 0;
+  int attempts = 0; // actual network attempts, not published objects
 };
 // XML supports absolute element paths, first matching sibling, no predicates,
 // attributes, namespace resolution, external entities or general XPath evaluation.

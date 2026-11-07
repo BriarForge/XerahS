@@ -5,6 +5,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLabel>
+#include <QPointer>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
@@ -109,17 +110,100 @@ private slots:
     QVERIFY(!window->findChild<QPushButton *>("copyHistoryUrl")->isEnabled());
   }
 
+  void resultsWithoutFilesRemainVisibleInspectableAndForgettable_data() {
+    QTest::addColumn<QString>("state");
+    for (const auto *state : {"failed", "cancelled", "interrupted", "uploaded"}) QTest::newRow(state) << QString(state);
+  }
+  void resultsWithoutFilesRemainVisibleInspectableAndForgettable() {
+    QFETCH(QString, state);
+    QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    const auto id = newId();
+    auto snapshot = record(id, QDateTime::currentDateTimeUtc(), {}, "region");
+    QString outcome = "transient-failure";
+    snapshot.result.orderedResults.front().failureClass = FailureClass::TransientFailure;
+    if (state == "cancelled") {
+      snapshot.result.state = PipelineState::Cancelled;
+      snapshot.result.orderedResults.front().state = ActionState::Cancelled;
+      snapshot.result.orderedResults.front().failureClass.reset();
+      snapshot.result.orderedResults.front().diagnostic.reset(); outcome = "cancelled";
+    } else if (state == "uploaded") {
+      snapshot.selected = {"upload"};
+      snapshot.result.orderedResults.front().action = "upload";
+      snapshot.result.orderedResults.front().state = ActionState::Succeeded;
+      snapshot.result.orderedResults.front().failureClass.reset();
+      snapshot.result.orderedResults.front().diagnostic.reset();
+      snapshot.result.upload = UploadResult{"https://example.test/history-result", {}, {}, {}};
+      outcome = "succeeded";
+    } else if (state == "interrupted") {
+      snapshot.terminal = false; snapshot.pendingAction = "save";
+      snapshot.result.orderedResults.clear(); outcome = "interrupted";
+    }
+    const auto bytes = serializePipelineJournal(snapshot);
+    QVERIFY(storage->replace(id, {}, bytes).stored);
+    QWidget owner; auto *window = new CaptureHistoryWindow(storage, [] { return false; }, {}, &owner); window->show();
+    auto *list = window->findChild<QListWidget *>("captureHistoryItems"); QTRY_COMPARE(list->count(), 1);
+    QCOMPARE(list->item(0)->data(Qt::UserRole).toString(), id);
+    QVERIFY(list->item(0)->text().contains("No confirmed file"));
+    QVERIFY(list->item(0)->text().contains(outcome));
+    auto *search = window->findChild<QLineEdit *>("captureHistorySearch");
+    search->setText(id); QCOMPARE(list->count(), 1);
+    search->setText(outcome); QCOMPARE(list->count(), 1);
+    list->setCurrentItem(list->item(0));
+    for (const auto *name : {"openHistoryCapture", "editHistoryCapture", "copyHistoryImage", "copyHistoryPath", "revealHistoryCapture", "trashHistoryCapture"})
+      QVERIFY2(!window->findChild<QPushButton *>(name)->isEnabled(), name);
+    auto *copyUrl = window->findChild<QPushButton *>("copyHistoryUrl");
+    QCOMPARE(copyUrl->isEnabled(), state == "uploaded");
+    if (state == "uploaded") { copyUrl->click(); QCOMPARE(QApplication::clipboard()->text(), QString("https://example.test/history-result")); }
+    auto *details = window->findChild<QPushButton *>("historyCaptureDetails"); QVERIFY(details->isEnabled()); details->click();
+    auto *review = window->findChild<QDialog *>("retainedCaptureResultDialog"); QVERIFY(review); QVERIFY(review->isVisible()); review->reject();
+    auto *forget = window->findChild<QPushButton *>("forgetHistoryCapture"); QTRY_VERIFY(forget->isEnabled()); forget->click();
+    QPointer<QMessageBox> confirmation = window->findChild<QMessageBox *>("forgetHistoryCaptureDialog"); QVERIFY(confirmation);
+    QCOMPARE(confirmation->defaultButton(), confirmation->button(QMessageBox::Cancel));
+    confirmation->button(QMessageBox::Cancel)->click(); QTRY_VERIFY(!confirmation);
+    QCOMPARE(list->count(), 1); QCOMPARE(storage->list().entries.front().bytes, bytes);
+    forget->click(); confirmation = window->findChild<QMessageBox *>("forgetHistoryCaptureDialog"); QVERIFY(confirmation);
+    confirmation->button(QMessageBox::Discard)->click(); QTRY_COMPARE(list->count(), 0);
+    QVERIFY(storage->list().entries.empty());
+  }
+
+  void unreadableRecordsStayPreservedAndVisibleAcrossSearchAndPreviewUpdates() {
+    QTemporaryDir dir; const auto directory = dir.filePath("state");
+    auto storage = std::make_shared<NativePipelineJournal>(directory);
+    const auto id = newId(), brokenId = newId();
+    const auto path = writePng(dir.filePath("kept.png"), Qt::blue);
+    QVERIFY(storage->replace(id, {}, serializePipelineJournal(record(id, QDateTime::currentDateTimeUtc(), {png(path, id)}))).stored);
+    QVERIFY(storage->replace(brokenId, {}, serializePipelineJournal(record(brokenId, QDateTime::currentDateTimeUtc(), {}))).stored);
+    const auto corruptPath = directory + '/' + brokenId + ".json";
+    const QByteArray corrupt("{broken history fixture");
+    { QFile file(corruptPath); QVERIFY(file.open(QIODevice::WriteOnly)); QCOMPARE(file.write(corrupt), qint64(corrupt.size())); }
+    QWidget owner; auto *window = new CaptureHistoryWindow(storage, [] { return false; }, {}, &owner);
+    int reviews = 0; window->setRecordsOpener([&] { ++reviews; }); window->show();
+    auto *list = window->findChild<QListWidget *>("captureHistoryItems"); QTRY_COMPARE(list->count(), 1);
+    list->setCurrentItem(list->item(0));
+    QTRY_VERIFY(window->findChild<QPushButton *>("openHistoryCapture")->isEnabled());
+    auto *status = window->findChild<QLabel *>("captureHistoryWindowStatus");
+    QVERIFY(status->text().contains("unreadable"));
+    window->findChild<QLineEdit *>("captureHistorySearch")->setText("kept");
+    QCOMPARE(list->count(), 1); QVERIFY(status->text().contains("unreadable"));
+    window->findChild<QPushButton *>("openCaptureResultRecords")->click(); QCOMPARE(reviews, 1);
+    // Corrupt records are set aside byte for byte instead of staying in the journal.
+    QVERIFY(!QFile::exists(corruptPath));
+    QFile file(corruptPath + ".corrupt"); QVERIFY(file.open(QIODevice::ReadOnly)); QCOMPARE(file.readAll(), corrupt);
+    QVERIFY(QFile::exists(path)); QCOMPARE(storage->list().entries.size(), size_t(1));
+  }
+
   void itemsKeepOnlyFilesTheirRunCreatedNewestFirst() {
     QTemporaryDir dir; const auto a = newId(), b = newId(), c = newId();
     const auto first = writePng(dir.filePath("first.png"), Qt::red), second = writePng(dir.filePath("second.png"), Qt::blue);
     const auto at = QDateTime::fromString("2026-10-20T08:00:00Z", Qt::ISODate);
     auto retry = record(b, at.addSecs(60), {png(first, a), png(second, b)}, "monitor");
     const auto items = captureHistoryItems(recovered({record(a, at, {png(first, a)}, "region"), retry, record(c, at.addSecs(120), {})}));
-    QCOMPARE(items.size(), std::size_t(2));
-    QCOMPARE(items[0].taskId, b); QCOMPARE(items[0].files.size(), std::size_t(1)); QCOMPARE(items[0].files[0].path, second);
-    QCOMPARE(items[0].captureSource, QString("monitor")); QCOMPARE(items[0].workflowName, QString("Docs"));
-    QCOMPARE(items[0].files[0].width, qint64(40));
-    QCOMPARE(items[1].taskId, a); QCOMPARE(items[1].state, QString("completed"));
+    QCOMPARE(items.size(), std::size_t(3));
+    QCOMPARE(items[0].taskId, c); QVERIFY(items[0].files.empty());
+    QCOMPARE(items[1].taskId, b); QCOMPARE(items[1].files.size(), std::size_t(1)); QCOMPARE(items[1].files[0].path, second);
+    QCOMPARE(items[1].captureSource, QString("monitor")); QCOMPARE(items[1].workflowName, QString("Docs"));
+    QCOMPARE(items[1].files[0].width, qint64(40));
+    QCOMPARE(items[2].taskId, a); QCOMPARE(items[2].state, QString("completed"));
   }
   void searchAndPagingAreBounded() {
     std::vector<CaptureHistoryItem> items;
@@ -221,6 +305,25 @@ private slots:
     more->click(); QCOMPARE(list->count(), kHistoryPageSize + 3); QVERIFY(!more->isVisible());
     search->setText("no-such-thing"); QCOMPARE(list->count(), 0);
   }
+  void nativePagingAndSearchBoundResultOnlyRowsAndKeepSelection() {
+    QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
+    const auto at = QDateTime::currentDateTimeUtc(); QString newest;
+    for (int i = 0; i < kHistoryPageSize + 1; ++i) {
+      newest = newId();
+      QVERIFY(storage->replace(newest, {}, serializePipelineJournal(record(newest, at.addSecs(i), {}, "region"))).stored);
+    }
+    QWidget owner; auto *window = new CaptureHistoryWindow(storage, [] { return false; }, {}, &owner); window->show();
+    auto *list = window->findChild<QListWidget *>("captureHistoryItems"); QTRY_COMPARE(list->count(), kHistoryPageSize);
+    QCOMPARE(list->item(0)->data(Qt::UserRole).toString(), newest); list->setCurrentItem(list->item(0));
+    auto *more = window->findChild<QPushButton *>("moreCaptureHistory"); QVERIFY(more->isVisible()); more->click();
+    QCOMPARE(list->count(), kHistoryPageSize + 1); QVERIFY(!more->isVisible());
+    QCOMPARE(list->currentItem()->data(Qt::UserRole).toString(), newest);
+    auto *search = window->findChild<QLineEdit *>("captureHistorySearch"); search->setText(newest);
+    QCOMPARE(list->count(), 1); QCOMPARE(list->item(0)->data(Qt::UserRole).toString(), newest);
+    search->clear(); QCOMPARE(list->count(), kHistoryPageSize); QVERIFY(more->isVisible());
+    QCOMPARE(storage->list().entries.size(), size_t(kHistoryPageSize + 1));
+  }
+
   void windowShowsThumbnailsMissingFilesAndFileActions() {
     QTemporaryDir dir; auto storage = std::make_shared<NativePipelineJournal>(dir.filePath("state"));
     const auto kept = writePng(dir.filePath("kept.png"), Qt::green), gone = writePng(dir.filePath("gone.png"), Qt::yellow);

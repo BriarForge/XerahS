@@ -89,8 +89,6 @@ void attachUploadWindow(AppContext &ctx, ApplicationWindow &window) {
     return ctx.settings.current().values.value(QStringLiteral("saveFolder")).toString();
   }, {}, &ctx.app);
   QObject::connect(state.service, &WatchFolderService::notify, &window, [&ctx](const QString &message, bool success) {
-    if (auto *home = qobject_cast<ApplicationWindow *>(ctx.dialogParent ? ctx.dialogParent() : nullptr))
-      home->showResult(QStringLiteral("Watch folders"), message, success);
     postTrayMessage(ctx, QStringLiteral("Watch folders"), message, success);
   });
   QObject::connect(state.watch, &QAction::triggered, &window, [&ctx, &window] {

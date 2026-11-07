@@ -15,6 +15,7 @@ QString conditionCode(AutoCondition condition) {
   switch (condition) {
   case AutoCondition::ScreenLocked: return QStringLiteral("screen-locked");
   case AutoCondition::StorageLow: return QStringLiteral("storage-low");
+  case AutoCondition::WorkflowUnavailable: return QStringLiteral("workflow-unavailable");
   case AutoCondition::Clear: break;
   }
   return {};

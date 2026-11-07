@@ -9,6 +9,7 @@
 #include <QSpinBox>
 #include <QTest>
 #include <QTimer>
+#include <memory>
 
 using namespace xerahs::app;
 using namespace xerahs::capture;
@@ -30,6 +31,8 @@ struct Fixture {
   bool blocked = false;
   QString startCode;
   int starts = 0;
+  int cancels = 0;
+  AutoCondition condition = AutoCondition::Clear;
   QList<Note> notes;
   QStringList tips;
   ScheduledCapture schedule;
@@ -40,6 +43,8 @@ struct Fixture {
       [this](CaptureSource) { ++starts; return startCode; },
       [this](const QString &title, const QString &body, bool ok, bool raise) { notes.append({title, body, ok, raise}); },
       [this](const QString &tooltip) { tips.append(tooltip); },
+      [this] { return condition; },
+      [this] { ++cancels; },
     };
   }
 };
@@ -64,6 +69,24 @@ QWidget *countdown() {
 class ScheduledCaptureTest : public QObject {
   Q_OBJECT
 private slots:
+  void lockCancellationCanDestroyTheScheduleWithoutPublishingALateNotice() {
+    ManualClock clock{1000};
+    ManualTimer timer;
+    int notices = 0;
+    std::unique_ptr<ScheduledCapture> schedule;
+    ScheduledCapturePorts ports;
+    ports.start = [](CaptureSource) { return QString(); };
+    ports.notify = [&](const QString &, const QString &, bool, bool) { ++notices; };
+    ports.cancelOwnedCapture = [&] { schedule.reset(); };
+    schedule = std::make_unique<ScheduledCapture>(ports, clock, timer);
+    QTimer::singleShot(0, [] { acceptAuto(3); });
+    schedule->autoAction()->trigger();
+    schedule->captureBusyChanged(true);
+    schedule->screenLockedChanged(true);
+    QVERIFY(!schedule);
+    QCOMPARE(notices, 0);
+  }
+
   void blockedTickIsSkippedWithoutStarting() {
     Fixture fixture;
     fixture.blocked = true;
@@ -119,6 +142,129 @@ private slots:
     failed.schedule.captureBusyChanged(false);
     QCOMPARE(failed.notes.first().body, QStringLiteral("Captured 0, skipped 0, failed 1."));
     QVERIFY(!failed.notes.first().ok);
+  }
+
+  void permissionDenialStopsFutureTicksAndRequiresAnExplicitNewSchedule() {
+    Fixture fixture;
+    QTimer::singleShot(0, [] { acceptAuto(5); });
+    fixture.schedule.autoAction()->trigger();
+    QCOMPARE(fixture.starts, 1);
+    fixture.schedule.captureBusyChanged(true);
+    fixture.schedule.captureFinished(false);
+    fixture.schedule.capturePermissionDenied();
+    QVERIFY(!fixture.timer.armed);
+    QCOMPARE(fixture.notes.size(), 1);
+    QVERIFY(fixture.notes.first().body.startsWith(QStringLiteral("capture-permission-denied:")));
+    QVERIFY(!fixture.notes.first().ok);
+    fixture.schedule.captureBusyChanged(false);
+    QVERIFY(!fixture.schedule.stopAction()->isEnabled());
+    QCOMPARE(fixture.notes.size(), 2);
+    QCOMPARE(fixture.notes.last().body, QStringLiteral("Captured 0, skipped 0, failed 1."));
+    QVERIFY(!fixture.notes.last().ok);
+    fixture.clock.advance(100000);
+    fixture.schedule.onTimer();
+    QCOMPARE(fixture.starts, 1);
+    QCOMPARE(fixture.tips.last(), QStringLiteral("XerahS"));
+
+    QTimer::singleShot(0, [] { acceptAuto(1); });
+    fixture.schedule.autoAction()->trigger();
+    QCOMPARE(fixture.starts, 2);
+    fixture.schedule.captureBusyChanged(true);
+    fixture.schedule.captureFinished(true);
+    fixture.schedule.captureBusyChanged(false);
+    QCOMPARE(fixture.notes.last().body, QStringLiteral("Captured 1, skipped 0, failed 0."));
+    QVERIFY(fixture.notes.last().ok);
+  }
+
+  void unrelatedPermissionDenialDoesNotChangeAnIdleOrWaitingSchedule() {
+    Fixture fixture;
+    fixture.schedule.capturePermissionDenied();
+    QVERIFY(fixture.notes.isEmpty());
+    fixture.blocked = true;
+    QTimer::singleShot(0, [] { acceptAuto(3); });
+    fixture.schedule.autoAction()->trigger();
+    QCOMPARE(fixture.starts, 0);
+    QVERIFY(fixture.schedule.stopAction()->isEnabled());
+    fixture.schedule.capturePermissionDenied();
+    QVERIFY(fixture.notes.isEmpty());
+    QVERIFY(fixture.schedule.stopAction()->isEnabled());
+    fixture.blocked = false;
+    fixture.clock.advance(1000);
+    fixture.schedule.onTimer();
+    QCOMPARE(fixture.starts, 1);
+    fixture.schedule.captureBusyChanged(true);
+    fixture.schedule.captureFinished(true);
+    fixture.schedule.captureBusyChanged(false);
+    fixture.schedule.stopAction()->trigger();
+    QVERIFY(!fixture.schedule.stopAction()->isEnabled());
+    QCOMPARE(fixture.notes.last().body, QStringLiteral("Captured 1, skipped 1, failed 0."));
+  }
+
+  void lockAfterAdmissionCancelsOnlyTheOwnedAttemptAndPreventsLateSuccess() {
+    Fixture fixture;
+    QTimer::singleShot(0, [] { acceptAuto(5); });
+    fixture.schedule.autoAction()->trigger();
+    QCOMPARE(fixture.starts, 1);
+    fixture.schedule.captureBusyChanged(true);
+    fixture.schedule.screenLockedChanged(true);
+    QCOMPARE(fixture.cancels, 1);
+    QVERIFY(!fixture.timer.armed);
+    QVERIFY(fixture.notes.first().body.startsWith(QStringLiteral("screen-locked:")));
+    fixture.schedule.captureFinished(true);  // Completion racing with cancellation cannot undo revocation.
+    fixture.schedule.captureBusyChanged(false);
+    QCOMPARE(fixture.notes.last().body, QStringLiteral("Captured 0, skipped 0, failed 1."));
+    QVERIFY(!fixture.notes.last().ok);
+    fixture.schedule.screenLockedChanged(false);
+    fixture.clock.advance(100000);
+    fixture.schedule.onTimer();
+    QCOMPARE(fixture.starts, 1);
+    QVERIFY(!fixture.schedule.stopAction()->isEnabled());
+  }
+
+  void lockNeverCancelsUnrelatedManualWorkOrRestartsAWaitingRun() {
+    Fixture fixture;
+    fixture.schedule.captureBusyChanged(true);
+    fixture.schedule.screenLockedChanged(true);
+    QCOMPARE(fixture.cancels, 0);
+    QVERIFY(fixture.notes.isEmpty());
+    fixture.schedule.captureBusyChanged(false);
+    fixture.condition = AutoCondition::ScreenLocked;
+    QTimer::singleShot(0, [] { acceptAuto(3); });
+    fixture.schedule.autoAction()->trigger();
+    fixture.schedule.screenLockedChanged(true);
+    QCOMPARE(fixture.starts, 0);
+    QCOMPARE(fixture.cancels, 0);
+    QVERIFY(fixture.timer.armed);
+    fixture.condition = AutoCondition::Clear;
+    fixture.schedule.screenLockedChanged(false);
+    fixture.clock.advance(1000);
+    fixture.schedule.onTimer();
+    QCOMPARE(fixture.starts, 1);
+    fixture.schedule.stopAction()->trigger();
+    fixture.schedule.captureBusyChanged(false);
+  }
+
+  void unresolvedWorkflowRefusesAndStopsWithoutStartingAnotherCapture() {
+    Fixture refused;
+    refused.condition = AutoCondition::WorkflowUnavailable;
+    refused.schedule.autoAction()->trigger();
+    QCOMPARE(refused.starts, 0);
+    QVERIFY(!QApplication::activeModalWidget());
+    QVERIFY(refused.notes.first().body.startsWith(QStringLiteral("workflow-unavailable:")));
+
+    Fixture running;
+    QTimer::singleShot(0, [] { acceptAuto(5); });
+    running.schedule.autoAction()->trigger();
+    running.schedule.captureBusyChanged(true);
+    running.schedule.captureFinished(true);
+    running.schedule.captureBusyChanged(false);
+    running.condition = AutoCondition::WorkflowUnavailable;
+    running.clock.advance(1000);
+    running.schedule.onTimer();
+    QCOMPARE(running.starts, 1);
+    QVERIFY(!running.schedule.stopAction()->isEnabled());
+    QVERIFY(!running.timer.armed);
+    QVERIFY(running.notes.last().body.startsWith(QStringLiteral("workflow-unavailable:")));
   }
 
   void delayAndAutoRefuseEachOtherAndTheTooltipFollowsTheRun() {

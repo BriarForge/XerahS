@@ -8,6 +8,8 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QProgressBar>
+#include <QRegularExpression>
+#include <QUuid>
 #include <QPushButton>
 #include <QTemporaryDir>
 #include <QTest>
@@ -23,6 +25,33 @@ class OperationResultsTest final : public QObject {
   }
 private slots:
   void initTestCase() { QVERIFY(root.isValid()); }
+  void nativeNotificationEntryKeepsCorrelatedTrueDetailsInTheShell_data() {
+    QTest::addColumn<bool>("ok"); QTest::addColumn<QString>("detail");
+    QTest::newRow("success") << true << QString("Synthetic output is saved.");
+    QTest::newRow("failure") << false << QString("upload-failed: synthetic server refused the operation.");
+    QTest::newRow("warning") << false << QString("audio-device-missing: video continues without an audio device.");
+  }
+  void nativeNotificationEntryKeepsCorrelatedTrueDetailsInTheShell() {
+    QFETCH(bool, ok); QFETCH(QString, detail);
+    Shell shell(root.path()); shell.attach();
+    auto &window = shell.window(); window.hide();
+    auto *status = window.findChild<QLabel *>("operationStatus"); QVERIFY(status);
+    // The same production entry called by main; native wire policy is covered
+    // separately by NativeNotificationsTest on a private D-Bus server.
+    postTrayMessage(shell.ctx, "Operation", detail, ok, 5000, false);
+    const QRegularExpression prefix("^Operation \\[([0-9a-f-]{36})\\]: ");
+    const auto first = prefix.match(status->text()); QVERIFY(first.hasMatch());
+    QVERIFY(!QUuid(first.captured(1)).isNull());
+    QCOMPARE(status->text().mid(first.capturedLength()), detail);
+    QCOMPARE(status->accessibleDescription(), status->text());
+    QVERIFY(!window.isVisible()); window.activate();
+    const auto retained = status->text(); window.hide(); window.activate(); QCOMPARE(status->text(), retained);
+    postTrayMessage(shell.ctx, "Operation", detail, ok, 5000, false);
+    const auto second = prefix.match(status->text()); QVERIFY(second.hasMatch());
+    QVERIFY(second.captured(1) != first.captured(1));
+    QCOMPARE(status->text().mid(second.capturedLength()), detail);
+  }
+
   // Progress is indeterminate when the size is unknowable, the read can be cancelled, and cancelling
   // is a visible terminal state with no digest.
   void unknownSizeWorkShowsIndeterminateProgressAndCancelsCooperatively() {

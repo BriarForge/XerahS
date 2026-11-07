@@ -252,7 +252,6 @@ int main(int argc, char *argv[]) {
   ctx.dialogParent = [&home]() -> QWidget * { return home.data(); };
   ctx.notify = [&ctx](const QString &title, const QString &body, bool ok, bool raiseWindow) {
     if (auto *window = qobject_cast<xerahs::app::ApplicationWindow *>(ctx.dialogParent ? ctx.dialogParent() : nullptr)) {
-      window->showResult(title, body, ok);
       if (raiseWindow) window->activate();
     }
     xerahs::app::postTrayMessage(ctx, title, body, ok, 5000);

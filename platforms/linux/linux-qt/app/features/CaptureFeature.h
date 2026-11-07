@@ -2,6 +2,7 @@
 #pragma once
 
 #include "shell/ActivationDispatcher.h"
+#include "workflows/CaptureWorkflows.h"
 
 #include <QString>
 
@@ -15,6 +16,7 @@ namespace xerahs::app {
 class ApplicationWindow;
 struct AppContext;
 
+xerahs::workflows::WorkflowChoice resolveShellWorkflow(AppContext &ctx, const QUuid &id = {});
 QString activationFailureMessage(const QString &diagnostic);
 std::unique_ptr<xerahs::shell::ActivationDispatcher> createShellDispatcher(AppContext &ctx);
 std::function<void()> prepareShellCapture(AppContext &ctx, const xerahs::shell::ActivationRequest &incoming);

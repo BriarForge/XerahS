@@ -86,16 +86,21 @@ EditorCanvas::EditorCanvas(EditorSession &session, const QImage &image, QWidget 
 
 void EditorCanvas::syncViewport() {
   const QPointF lo = m_view.minimumOffset(), hi = m_view.maximumOffset();
-  const QSignalBlocker horizontal(horizontalScrollBar()), vertical(verticalScrollBar());
-  horizontalScrollBar()->setRange(int(std::floor(-hi.x())), int(std::ceil(-lo.x())));
-  verticalScrollBar()->setRange(int(std::floor(-hi.y())), int(std::ceil(-lo.y())));
-  horizontalScrollBar()->setPageStep(viewport()->width());
-  verticalScrollBar()->setPageStep(viewport()->height());
-  horizontalScrollBar()->setValue(int(std::round(-m_view.offset().x())));
-  verticalScrollBar()->setValue(int(std::round(-m_view.offset().y())));
+  {
+    // An observer may close the editor synchronously. Restore the scrollbars'
+    // prior signal state before publishing anything that can destroy them.
+    const QSignalBlocker horizontal(horizontalScrollBar()), vertical(verticalScrollBar());
+    horizontalScrollBar()->setRange(int(std::floor(-hi.x())), int(std::ceil(-lo.x())));
+    verticalScrollBar()->setRange(int(std::floor(-hi.y())), int(std::ceil(-lo.y())));
+    horizontalScrollBar()->setPageStep(viewport()->width());
+    verticalScrollBar()->setPageStep(viewport()->height());
+    horizontalScrollBar()->setValue(int(std::round(-m_view.offset().x())));
+    verticalScrollBar()->setValue(int(std::round(-m_view.offset().y())));
+  }
   viewport()->update();
+  const QPointer<EditorCanvas> owner(this);
   emit viewportChanged(m_view.zoom());
-  if (m_pointerView) publishPointerPixel(*m_pointerView);
+  if (owner && m_pointerView) publishPointerPixel(*m_pointerView);
 }
 
 void EditorCanvas::publishPointerPixel(QPointF viewPosition) {
@@ -195,26 +200,26 @@ QString EditorCanvas::shapeType(Tool tool) {
 
 QString EditorCanvas::toolOptions(Tool tool) {
   switch (tool) {
-    case Tool::Select: return "Options: none for the tool itself; colour, thickness, rotation, ordering and Properties act on the selected objects.";
-    case Tool::Rectangle: return "Options: stroke and fill colour, thickness, opacity, border style, corner radius and drop shadow.";
-    case Tool::Ellipse: return "Options: stroke and fill colour, thickness, opacity, border style and drop shadow.";
-    case Tool::Line: return "Options: stroke colour, thickness, opacity, border style, optional curve and drop shadow.";
-    case Tool::Arrow: return "Options: stroke colour, thickness, opacity, border style, arrow style, optional curve and drop shadow.";
-    case Tool::Freehand: return "Options: stroke colour, thickness and opacity; the stroke is simplified once when you release.";
-    case Tool::Text: return "Options: font family and size, bold, italic, alignment, text colour, fill colour and letter outline, set in the text dialog.";
-    case Tool::SpeechBalloon: return "Options: font family and size, bold, italic, alignment, text colour, fill colour, border colour and tail, set in the text dialog.";
-    case Tool::Step: return "Options: step number and font size; the next number follows the highest existing step.";
-    case Tool::Highlight: return "Options: tint (fill) colour and a rectangular or elliptical region.";
-    case Tool::Blur: return "Options: blur radius and a rectangular or elliptical region.";
-    case Tool::Pixelate: return "Options: pixel cell size and a rectangular or elliptical region.";
-    case Tool::Magnify: return "Options: zoom factor and a rectangular or elliptical region.";
-    case Tool::Spotlight: return "Options: dim percentage, a rectangular or elliptical region and blur of the dimmed area.";
-    case Tool::SmartEraser: return "Options: none; the area is filled with the mean colour of the pixels just outside it (not content-aware removal).";
-    case Tool::Image: return "Options: the image file or clipboard image, chosen after you place it; its aspect ratio and transparency are kept.";
-    case Tool::Emoji: return "Options: the emoji, chosen after you place it.";
-    case Tool::Cursor: return "Options: none; places a mouse pointer image.";
-    case Tool::Crop: return "Options: none; the dragged region is kept, and Crop Image offers numeric bounds.";
-    case Tool::CutOut: return "Options: none; a wider than tall drag removes columns, otherwise rows.";
+    case Tool::Select: return tr("Options: none for the tool itself; colour, thickness, rotation, ordering and Properties act on the selected objects.");
+    case Tool::Rectangle: return tr("Options: stroke and fill colour, thickness, opacity, border style, corner radius and drop shadow.");
+    case Tool::Ellipse: return tr("Options: stroke and fill colour, thickness, opacity, border style and drop shadow.");
+    case Tool::Line: return tr("Options: stroke colour, thickness, opacity, border style, optional curve and drop shadow.");
+    case Tool::Arrow: return tr("Options: stroke colour, thickness, opacity, border style, arrow style, optional curve and drop shadow.");
+    case Tool::Freehand: return tr("Options: stroke colour, thickness and opacity; the stroke is simplified once when you release.");
+    case Tool::Text: return tr("Options: font family and size, bold, italic, alignment, text colour, fill colour and letter outline, set in the text dialog.");
+    case Tool::SpeechBalloon: return tr("Options: font family and size, bold, italic, alignment, text colour, fill colour, border colour and tail, set in the text dialog.");
+    case Tool::Step: return tr("Options: step number and font size; the next number follows the highest existing step.");
+    case Tool::Highlight: return tr("Options: tint (fill) colour and a rectangular or elliptical region.");
+    case Tool::Blur: return tr("Options: blur radius and a rectangular or elliptical region.");
+    case Tool::Pixelate: return tr("Options: pixel cell size and a rectangular or elliptical region.");
+    case Tool::Magnify: return tr("Options: zoom factor and a rectangular or elliptical region.");
+    case Tool::Spotlight: return tr("Options: dim percentage, a rectangular or elliptical region and blur of the dimmed area.");
+    case Tool::SmartEraser: return tr("Options: none; the area is filled with the mean colour of the pixels just outside it (not content-aware removal).");
+    case Tool::Image: return tr("Options: the image file or clipboard image, chosen after you place it; its aspect ratio and transparency are kept.");
+    case Tool::Emoji: return tr("Options: the emoji, chosen after you place it.");
+    case Tool::Cursor: return tr("Options: none; places a mouse pointer image.");
+    case Tool::Crop: return tr("Options: none; the dragged region is kept, and Crop Image offers numeric bounds.");
+    case Tool::CutOut: return tr("Options: none; a wider than tall drag removes columns, otherwise rows.");
   }
   return {};
 }
@@ -222,33 +227,33 @@ QString EditorCanvas::toolOptions(Tool tool) {
 QString EditorCanvas::toolInstructions() const {
   QString text;
   switch (m_tool) {
-    case Tool::Ellipse: text = "Ellipse stays active: drag on blank canvas to draw."; break;
-    case Tool::Line: text = "Line stays active: drag from the start point to the end point."; break;
-    case Tool::Arrow: text = "Arrow stays active: drag from the tail to the arrow head."; break;
-    case Tool::Freehand: text = "Freehand stays active: drag to draw a stroke."; break;
-    case Tool::Text: text = "Text stays active: click or drag a text box, then type the text."; break;
-    case Tool::Step: text = "Step stays active: click to place the next numbered step."; break;
-    case Tool::Highlight: text = "Highlight stays active: drag over the area to highlight."; break;
-    case Tool::Blur: text = "Blur stays active: drag over the area to blur."; break;
-    case Tool::Pixelate: text = "Pixelate stays active: drag over the area to pixelate."; break;
-    case Tool::SpeechBalloon: text = "Speech balloon stays active: click or drag the balloon, then type the text."; break;
-    case Tool::Magnify: text = "Magnify stays active: drag the area to show enlarged."; break;
-    case Tool::Spotlight: text = "Spotlight stays active: drag the area to keep bright; the rest is dimmed."; break;
-    case Tool::SmartEraser: text = "Smart eraser stays active: drag over the area to fill with its surrounding colour."; break;
-    case Tool::Image: text = "Image stays active: click or drag where the image goes, then choose an image file."; break;
-    case Tool::Emoji: text = "Emoji stays active: click or drag where the emoji goes, then choose an emoji."; break;
-    case Tool::Cursor: text = "Cursor stays active: click to place a mouse pointer."; break;
+    case Tool::Ellipse: text = tr("Ellipse stays active: drag on blank canvas to draw."); break;
+    case Tool::Line: text = tr("Line stays active: drag from the start point to the end point."); break;
+    case Tool::Arrow: text = tr("Arrow stays active: drag from the tail to the arrow head."); break;
+    case Tool::Freehand: text = tr("Freehand stays active: drag to draw a stroke."); break;
+    case Tool::Text: text = tr("Text stays active: click or drag a text box, then type the text."); break;
+    case Tool::Step: text = tr("Step stays active: click to place the next numbered step."); break;
+    case Tool::Highlight: text = tr("Highlight stays active: drag over the area to highlight."); break;
+    case Tool::Blur: text = tr("Blur stays active: drag over the area to blur."); break;
+    case Tool::Pixelate: text = tr("Pixelate stays active: drag over the area to pixelate."); break;
+    case Tool::SpeechBalloon: text = tr("Speech balloon stays active: click or drag the balloon, then type the text."); break;
+    case Tool::Magnify: text = tr("Magnify stays active: drag the area to show enlarged."); break;
+    case Tool::Spotlight: text = tr("Spotlight stays active: drag the area to keep bright; the rest is dimmed."); break;
+    case Tool::SmartEraser: text = tr("Smart eraser stays active: drag over the area to fill with its surrounding colour."); break;
+    case Tool::Image: text = tr("Image stays active: click or drag where the image goes, then choose an image file."); break;
+    case Tool::Emoji: text = tr("Emoji stays active: click or drag where the emoji goes, then choose an emoji."); break;
+    case Tool::Cursor: text = tr("Cursor stays active: click to place a mouse pointer."); break;
     case Tool::Select:
-      text = "Select: click an object; Control-click adds or removes it. Drag selected objects to move. Blank canvas clears selection."; break;
+      text = tr("Select: click an object; Control-click adds or removes it. Drag selected objects to move. Blank canvas clears selection."); break;
     case Tool::Rectangle:
-      text = "Rectangle stays active: drag on blank canvas to draw. Click an existing object to select or move it. Out-of-canvas bounds are allowed; export clips to the image."; break;
+      text = tr("Rectangle stays active: drag on blank canvas to draw. Click an existing object to select or move it. Out-of-canvas bounds are allowed; export clips to the image."); break;
     case Tool::CutOut:
-      text = "Cut out stays active: drag across the strip to remove. A wider than tall drag removes columns; otherwise rows. The rest closes the gap."; break;
+      text = tr("Cut out stays active: drag across the strip to remove. A wider than tall drag removes columns; otherwise rows. The rest closes the gap."); break;
     case Tool::Crop:
-      text = "Crop stays active: drag to choose the retained image region."; break;
+      text = tr("Crop stays active: drag to choose the retained image region."); break;
   }
-  return text + " " + toolOptions(m_tool) + " Create Rectangle offers keyboard entry of bounds with captured creation defaults. Drag a selected rectangle's square handles to resize; the opposite handle stays fixed. Rectangle Properties offers numeric bounds and style controls. "
-      "Double-click or F2 edits the selected text, step number, blur radius or pixel size. Escape cancels a gesture. Arrows move one image pixel; Shift+arrows move ten. Alt+arrows move the bottom-right corner one pixel; Alt+Shift+arrows move it ten. R rotates clockwise 90 degrees; Shift+R rotates counterclockwise. Held transform keys repeat. Delete removes selected objects. Home/End bring to front/send to back; Page Up/Down bring forward/send backward. Control+wheel zooms; Space+drag pans.";
+  return text + " " + toolOptions(m_tool) + tr(" Create Rectangle offers keyboard entry of bounds with captured creation defaults. Drag a selected rectangle's square handles to resize; the opposite handle stays fixed. Rectangle Properties offers numeric bounds and style controls. "
+      "Double-click or F2 edits the selected text, step number, blur radius or pixel size. Escape cancels a gesture. Arrows move one image pixel; Shift+arrows move ten. Alt+arrows move the bottom-right corner one pixel; Alt+Shift+arrows move it ten. R rotates clockwise 90 degrees; Shift+R rotates counterclockwise. Held transform keys repeat. Delete removes selected objects. Home/End bring to front/send to back; Page Up/Down bring forward/send backward. Control+wheel zooms; Space+drag pans.");
 }
 
 void EditorCanvas::setTool(Tool tool) {
@@ -429,8 +434,9 @@ void EditorCanvas::resetDocument(EditorSession &session, const QImage &displaySo
   m_view = EditorViewport(m_image.size());
   m_view.setViewSize(viewport()->size());
   m_view.fit();
+  const QPointer<EditorCanvas> owner(this);
   syncViewport();
-  emit toolChanged();
+  if (owner) emit toolChanged();
 }
 
 void EditorCanvas::sourceChanged(const QImage &preparedDisplay) {

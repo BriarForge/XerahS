@@ -150,7 +150,7 @@ void FileUploadController::startNext() {
 void FileUploadController::recordCompletion(const uploads::UploadOutcome &outcome, std::function<void(QString)> done) {
   if (!m_existingFile) { done({}); return; }
   auto record = m_historyRecord;
-  record.result = {outcome.url, outcome.thumbnailUrl, outcome.deletionUrl, outcome.errorMessage};
+  record.result = {outcome.url, outcome.thumbnailUrl, outcome.deletionUrl, outcome.errorMessage, outcome.attempts};
   // Response templates may echo credentials even into public receipt fields.
   for (auto *field : {&record.result.url, &record.result.thumbnailUrl, &record.result.deletionUrl, &record.result.errorMessage})
     for (const auto &secret : m_sensitiveValues) {
@@ -217,17 +217,18 @@ workflows::FileOperationNotice FileUploadController::settle(bool uploaded) {
   return workflows::fileOperationNotice(QStringLiteral("upload"), state, m_currentName);
 }
 
-void FileUploadController::showFailure(const QString &fileName, const QString &message, bool missingDestination) {
-  uploads::UploadOutcome outcome; outcome.errorMessage = message;
+void FileUploadController::showFailure(const QString &fileName, const QString &message, bool missingDestination, const QString &detail) {
+  uploads::UploadOutcome outcome; outcome.errorMessage = detail.isEmpty() ? message : message + ": " + detail;
+  outcome.attempts = m_historyRecord.result.attempts;
   if (m_historyRecord.failureCode.isEmpty()) m_historyRecord.failureCode = "upload-failed";
   const auto notice = settle(false);
   const auto storage = m_executionStored ? QString{} : QStringLiteral("workflow-storage-unavailable: Could not save the upload execution record.");
-  recordCompletion(outcome, [this, fileName, message, missingDestination, notice, storage](const QString &historyError) {
+  recordCompletion(outcome, [this, fileName, message, missingDestination, detail, notice, storage](const QString &historyError) {
     emit fileCompleted(m_currentPath, false, message);
     closeProgress();
     QStringList text{message}; if (!historyError.isEmpty()) text.append(historyError); if (!storage.isEmpty()) text.append(storage);
     auto *dialog = new FileUploadResultDialog(fileName, text.join('\n'),
-        missingDestination ? m_ports.openDestinations : std::function<void()>{}, m_dialogParent, notice.headline);
+        missingDestination ? m_ports.openDestinations : std::function<void()>{}, m_dialogParent, notice.headline, detail);
     dialog->show(); scheduleNext();
   });
 }
@@ -267,13 +268,18 @@ void FileUploadController::onFinished(const uploads::UploadOutcome &outcome) {
   m_transferring = false;
   m_historyRecord.failureCode = outcome.code;
   m_httpStatus = outcome.httpStatus;
+  m_historyRecord.result.attempts = outcome.attempts;
   if (m_stop || outcome.code == QLatin1String("cancelled")) {
     m_historyRecord.failureCode = "cancelled";
-    showFailure(m_currentName, QStringLiteral("cancelled"));
+    showFailure(m_currentName, QStringLiteral("cancelled"), false, outcome.attempts > 0
+        ? tr("Remote publication is unconfirmed. Review the destination before retrying.") : QString{});
     return;
   }
   if (!outcome.code.isEmpty()) {
-    showFailure(m_currentName, outcome.errorMessage.isEmpty() ? outcome.code : outcome.errorMessage);
+    const bool uncertain = outcome.attempts > 0 && (outcome.code == "timeout" || outcome.code == "network-error");
+    showFailure(m_currentName, uncertain
+        ? outcome.code + QStringLiteral(": remote publication is unconfirmed. Review the destination before retrying.")
+        : outcome.errorMessage.isEmpty() ? outcome.code : outcome.errorMessage);
     return;
   }
   showSuccess(m_currentName, outcome);

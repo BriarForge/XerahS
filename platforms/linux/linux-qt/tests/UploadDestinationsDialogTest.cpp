@@ -4,6 +4,9 @@
 #include <QApplication>
 #include <QFile>
 #include <QLabel>
+#include <QJsonDocument>
+#include <QPlainTextEdit>
+#include <QPointer>
 #include <QMessageBox>
 #include <QTimer>
 #include <QListWidget>
@@ -11,11 +14,21 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
+#include <atomic>
 
 using namespace xerahs::app;
 using namespace xerahs::uploads;
 
 namespace {
+class ReadCountingCredentials final : public CredentialStore {
+public:
+  mutable std::atomic<int> reads{0};
+  CredentialResult store(const QUuid &, const QString &, const QString &) override { return {}; }
+  CredentialResult lookup(const QUuid &, const QString &) const override { ++reads; return {}; }
+  CredentialResult lookupWithoutPrompt(const QUuid &, const QString &) const override { ++reads; return {}; }
+  CredentialResult remove(const QUuid &, const QString &) override { return {}; }
+  CredentialResult removeAll(const QUuid &) override { return {}; }
+};
 const QByteArray kSxcu =
     "{\"Version\":\"17.0.0\",\"Name\":\"Example\",\"RequestMethod\":\"POST\","
     "\"RequestURL\":\"https://example.com/upload.php\","
@@ -58,6 +71,38 @@ class UploadDestinationsDialogTest : public QObject {
   }
 
 private slots:
+  void selectedDestinationPublishesValueFreeCapabilitiesWithoutNetworkOrCredentialLookup() {
+    DestinationCatalog catalog(m_dir.filePath("destinations.json"));
+    UploadDestination first; first.id = QUuid::createUuid(); first.name = "PRIVATE-name";
+    first.requestUrl = "https://PRIVATE.example/upload?token=PRIVATE-token";
+    first.headers = {{"Authorization", "{secret:PRIVATE-secret}"}}; first.deletionUrl = "https://PRIVATE.example/delete";
+    auto second = first; second.id = QUuid::createUuid(); second.method = RequestMethod::Put; second.deletionUrl.clear();
+    QVERIFY(catalog.add(first).isEmpty()); QVERIFY(catalog.add(second).isEmpty());
+    ReadCountingCredentials credentials; int networks = 0;
+    auto p = ports(); p.connectionNetwork = [&](QObject *) -> QNetworkAccessManager * { ++networks; return nullptr; };
+    UploadDestinationsDialog dialog(catalog, credentials, p);
+    settle(dialog);
+    dialog.show();
+    auto *button = dialog.findChild<QPushButton *>("viewDestinationCapabilities"); QVERIFY(button); QVERIFY(button->isEnabled());
+    button->click();
+    QPointer<QDialog> review = dialog.findChild<QDialog *>("destinationCapabilitiesDialog"); QVERIFY(review); QVERIFY(review->isVisible());
+    auto *text = review->findChild<QPlainTextEdit *>("destinationCapabilities"); QVERIFY(text); QVERIFY(text->isReadOnly());
+    const auto value = QJsonDocument::fromJson(text->toPlainText().toUtf8()).object();
+    QCOMPARE(value, destinationCapabilities(first));
+    QVERIFY(!text->toPlainText().contains("PRIVATE")); QCOMPARE(networks, 0); QCOMPARE(credentials.reads.load(), 0); QVERIFY(m_reports.isEmpty());
+    review->reject(); QTRY_VERIFY(!review);
+    QListWidget *destinations = nullptr;
+    for (auto *list : dialog.findChildren<QListWidget *>()) if (list->accessibleName() == "Destinations") destinations = list;
+    QVERIFY(destinations); destinations->setCurrentRow(1); settle(dialog); button->click();
+    review = dialog.findChild<QDialog *>("destinationCapabilitiesDialog"); QVERIFY(review);
+    const auto changed = QJsonDocument::fromJson(review->findChild<QPlainTextEdit *>("destinationCapabilities")->toPlainText().toUtf8()).object();
+    QCOMPARE(changed, destinationCapabilities(second)); QCOMPARE(networks, 0); QCOMPARE(credentials.reads.load(), 0);
+    review->reject(); QTRY_VERIFY(!review);
+    DestinationCatalog empty(m_dir.filePath("empty-destinations.json"));
+    UploadDestinationsDialog emptyDialog(empty, credentials, p);
+    QVERIFY(!emptyDialog.findChild<QPushButton *>("viewDestinationCapabilities")->isEnabled());
+  }
+
   void init() {
     m_reports.clear(); m_secretAnswer.reset(); m_confirm = true;
     QFile::remove(m_dir.filePath(QStringLiteral("destinations.json")));

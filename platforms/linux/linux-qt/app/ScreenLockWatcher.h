@@ -23,6 +23,7 @@ private slots:
 private:
   xerahs::capture::ScreenLockState &m_state;
   bool m_connected = false;
+  bool m_initialSnapshotSuperseded = false;
 };
 
 }  // namespace xerahs::app

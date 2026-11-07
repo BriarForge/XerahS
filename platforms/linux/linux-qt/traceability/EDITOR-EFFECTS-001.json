@@ -145,7 +145,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Typed parameter IDs/defaults/ranges/enum serialization and failures exist; the complete 963-control approved parameter ledger and boundary/accessibility mapping across every selected ID are not established.",
+      "note": "Typed parameter IDs/defaults/ranges/enum serialization and failures exist; the complete 963-control approved parameter ledger and boundary/accessibility mapping across every selected ID are not established. Codex queue evidence (2026-11-05): Audit 2026-11-05: EffectFrameworkTest::defaultsAndNumericNormalization, invalidValues, unknownAndInvalidDefault and jsonRoundTripAndInvalidJson prove declared defaults, stable typed values, finite/range validation, unknown/null/wrong-type failure without clamping and JSON round-trip. EffectsDialogTest::controlsResetAndAccessibility, invalidTypedValueAndRecovery and unitsAndRuntimeUnavailable drive native controls, reset, retained invalid input, accessible ranges, units and errors. Remains partial: parameter metadata and per-ID boundary evidence for the entire approved 232-effect catalogue are incomplete; unavailable effects are disclosed rather than silently omitted.",
       "evidence": [
         "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
         "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.h",
@@ -336,7 +336,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Available image effects bound/validate assets and diagnose missing files; externally referenced asset/font reproducibility and approved model resources across all selected effects remain incomplete.",
+      "note": "Available image effects bound/validate assets and diagnose missing files; externally referenced asset/font reproducibility and approved model resources across all selected effects remain incomplete. Codex queue evidence (2026-11-05): Audit 2026-11-05: DrawingEffectsTest::backgroundImageCoversTilesAndRejectsBadFiles and drawImageRejectsBadFiles prove real file type/size/missing/malformed refusal before mutation for implemented image effects. SxiePresetTest::invalidValuesAndAssets and embeddedDrawImageAndPathRefusal prove malformed/oversize import refusal, embedded asset bytes retained in the document, inert host/URL/traversal paths and reproducible native composition. Remains partial: all font/map/model/asset-bearing approved effects and strict pre-decode resource proof for formats without header dimensions are not covered. Human preset import review remains reserved.",
       "evidence": [
         "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.cpp",
         "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
@@ -436,7 +436,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Framework states ARGB32/colour-space preservation and algorithms have alpha/edge tests, but complete per-family orientation/premultiplication/sampling rules and conformance remain incomplete.",
+      "note": "Framework states ARGB32/colour-space preservation and algorithms have alpha/edge tests, but complete per-family orientation/premultiplication/sampling rules and conformance remain incomplete. Codex queue evidence (2026-11-05): Audit 2026-11-05: EffectFrameworkTest::runnerNormalizesAndResolves and runnerRejectsViolationsAndExceptions prove ARGB32 normalization with source colour space retained and reject opaque/wrong-format/wrong-size/wrong-profile results. EffectSupport defines straight-alpha centred Clamp convolution and premultiplied blur/unpremultiply behavior; DrawingEffectsTest::backgroundImageCoversTilesAndRejectsBadFiles proves tiled/covered/clipped image composition. Existing orientation is resolved during source preparation. Remains partial: whole-catalogue alpha, clipping, edge-sampling and colour-space definitions and cross-platform decoded-pixel equivalence are not exhaustively proven.",
       "evidence": [
         "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
         "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.h",
@@ -623,7 +623,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Native category/search keyboard and accessible parameter controls/reset/error/range tests exist; all declared selected parameter controls and screen-reader target behavior remain incomplete.",
+      "note": "Native category/search keyboard and accessible parameter controls/reset/error/range tests exist; all declared selected parameter controls and screen-reader target behavior remain incomplete. Codex queue evidence (2026-11-05): Audit 2026-11-05: EffectsDialogTest::browser proves category/search discovery, native list accessibility and keyboard navigation; controlsResetAndAccessibility covers all parameter control kinds and reset. invalidTypedValueAndRecovery and unitsAndRuntimeUnavailable prove per-control native accessible errors, ranges, explicit px/%/degree/scale units and dynamic units. seedsPreviewHistoryAndRecents now also proves overflow seed errors are attached inline and to the native accessible seed description with the unsigned range, and removed after correction; Apply stays disabled while invalid. Earlier claim that per-control errors/units are absent was stale. Remains partial: complete every-parameter native accessibility value/range/unit and keyboard focus audit across all approved effects is not established by representative fixtures.",
       "evidence": [
         "platforms/linux/linux-qt/app/EffectsDialog.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",

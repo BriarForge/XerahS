@@ -1,4 +1,4 @@
-// CORE-020, CORE-021: one asynchronous bounded transfer per start.
+// CORE-020, CORE-021: one bounded logical upload per start.
 #pragma once
 #include "UploadRequest.h"
 #include "UploadResponse.h"
@@ -20,14 +20,20 @@ public:
 signals:
   void progress(qint64 sent, qint64 total);
   void finished(xerahs::uploads::UploadOutcome outcome);
+  void retryScheduled(int nextAttempt, int delayMs);
 private:
+  void sendAttempt();
   void drain();
+  void attemptFinished(UploadOutcome, bool transient);
+  void releaseReply();
+  bool retrySafe() const;
   void complete(UploadOutcome);
   QPointer<QNetworkAccessManager> m_manager;
   QPointer<QNetworkReply> m_reply;
-  QTimer m_timer;
+  QTimer m_timer, m_retryTimer;
+  int m_attempts = 0;
   int m_timeoutMs;
-  bool m_active = false;
+  bool m_active = false, m_finishing = false;
   quint64 m_generation = 0;
   QByteArray m_body;
   PreparedUploadRequest m_request;

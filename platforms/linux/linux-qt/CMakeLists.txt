@@ -13,6 +13,7 @@ find_package(ZLIB REQUIRED)
 set(XERAHS_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." CACHE PATH "BriarForge/XerahS repository root")
 
 add_library(xerahs_core STATIC
+  src/diagnostics/DiagnosticBundle.cpp src/diagnostics/DiagnosticBundle.h
   src/image-editor/RasterSaveOptions.cpp src/image-editor/RasterSaveOptions.h
   src/watch/WatchFolders.cpp
   src/watch/WatchFolders.h
@@ -236,6 +237,8 @@ target_compile_options(xerahs_workflow_shortcuts PRIVATE -Wall -Wextra -Wpedanti
 # xerahs_core; app/ only wires it to Qt and the desktop.
 # The application's shell wiring lives in an object library so tests can build the real command registry.
 add_library(xerahs_app OBJECT
+  app/DiagnosticsDialog.cpp app/DiagnosticsDialog.h
+  app/features/DiagnosticsFeature.cpp app/features/DiagnosticsFeature.h
   app/CaptureWorkflows.cpp
   app/CaptureWorkflows.h
   app/ApplicationWindow.cpp
@@ -294,6 +297,8 @@ add_library(xerahs_app OBJECT
   app/AutoCaptureDialog.cpp
   app/AutoCaptureDialog.h
   app/AppContext.cpp
+  app/NativeNotifications.cpp
+  app/NativeNotifications.h
   app/ScheduledCapture.cpp
   app/ScheduledCapture.h
   app/ScreenLockWatcher.cpp
@@ -954,7 +959,7 @@ if(XERAHS_RECORDING AND GSTREAMER_FOUND)
   target_compile_definitions(xerahs_recording_devices PUBLIC XERAHS_GSTREAMER=1)
 endif()
 target_link_libraries(application-settings-test PRIVATE xerahs_recording_devices)
-add_library(xerahs_recording STATIC app/RecordingController.cpp app/RecordingController.h app/RecordingObservation.cpp app/RecordingObservation.h app/RecordingActions.cpp app/RecordingActions.h)
+add_library(xerahs_recording STATIC app/RecordingController.cpp app/RecordingController.h app/RecordingObservation.cpp app/RecordingObservation.h app/RecordingActions.cpp app/RecordingActions.h app/RecordingAudioConsent.cpp app/RecordingAudioConsent.h app/RecordingErrors.cpp app/RecordingErrors.h)
 set_target_properties(xerahs_recording PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_recording PUBLIC app)
 target_link_libraries(xerahs_recording PUBLIC xerahs_recording_core xerahs_recording_devices xerahs_pipeline_journal Qt6::DBus Qt6::Widgets)
@@ -972,6 +977,10 @@ add_executable(recording-workflow-test tests/RecordingWorkflowTest.cpp)
 set_target_properties(recording-workflow-test PROPERTIES AUTOMOC ON)
 target_link_libraries(recording-workflow-test PRIVATE xerahs_recording Qt6::Test)
 add_test(NAME recording-workflow COMMAND recording-workflow-test)
+add_executable(recording-audio-test tests/RecordingAudioTest.cpp)
+set_target_properties(recording-audio-test PROPERTIES AUTOMOC ON)
+target_link_libraries(recording-audio-test PRIVATE xerahs_app Qt6::Test)
+add_test(NAME recording-audio COMMAND recording-audio-test)
 if(XERAHS_RECORDING AND GSTREAMER_FOUND)
   add_executable(recording-integration-test tests/RecordingIntegrationTest.cpp)
   set_target_properties(recording-integration-test PROPERTIES AUTOMOC ON)
@@ -1333,34 +1342,9 @@ add_test(NAME qr-code-dialog COMMAND qr-code-dialog-test)
 set_tests_properties(qr-code-dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 
 # CORE-009: pseudo-locale text expansion and missing-translation fallback on a translated window.
-add_executable(localization-expansion-test tests/LocalizationExpansionTest.cpp
-  app/XdgAutostart.cpp app/SettingsDialog.cpp app/NewImageDialog.cpp app/NewImageDialog.h
-  app/ImageComparisonDialog.cpp app/ImageComparisonDialog.h
-  app/AppearanceDialog.cpp app/AppearanceDialog.h
-  app/DrawingDefaultsDialog.cpp app/DrawingDefaultsDialog.h
-  app/ConveniencePreferencesDialog.cpp app/ConveniencePreferencesDialog.h
-  app/AutoCaptureDialog.cpp app/AutoCaptureDialog.h
-  app/CaptureActions.cpp app/CaptureActions.h app/CaptureSave.cpp app/CaptureSave.h
-  app/CapturePermissionHelp.cpp app/CapturePermissionHelp.h
-  app/PipelineHistoryDialog.cpp app/PipelineHistoryDialog.h
-  app/PipelineResultDialog.cpp app/PipelineResultDialog.h
-  app/WorkflowExecutionHistoryDialog.cpp app/WorkflowExecutionHistoryDialog.h
-  app/CaptureHistoryWindow.cpp app/CaptureHistoryWindow.h
-  app/OnboardingProgress.cpp app/OnboardingProgress.h
-  app/OnboardingWizard.cpp app/OnboardingWizard.h
-  app/CommandRegistry.cpp app/CommandRegistry.h
-  app/CapturePipeline.cpp app/CapturePipeline.h
-  app/CanvasRotationDialog.cpp app/CanvasRotationDialog.h
-  app/PortalScreenshot.cpp app/PortalScreenshot.h
-  app/CaptureController.cpp app/CaptureController.h
-  app/SnapshotComposition.cpp app/SnapshotComposition.h
-  app/RegionOverlay.cpp app/RegionOverlay.h
-  app/ApplicationWindow.cpp app/ApplicationWindow.h
-  app/NativeEditorAppearance.cpp app/NativeEditorAppearance.h
-  app/NativeDesktopAppearance.cpp app/NativeDesktopAppearance.h
-  app/NativeEditorPreferences.cpp app/NativeEditorPreferences.h)
+add_executable(localization-expansion-test tests/LocalizationExpansionTest.cpp)
 set_target_properties(localization-expansion-test PROPERTIES AUTOMOC ON)
-target_link_libraries(localization-expansion-test PRIVATE xerahs_action_selection xerahs_file_output xerahs_pipeline_journal xerahs_qr_code xerahs_workflow_shortcuts xerahs_recording_devices xerahs_upload_destinations xerahs_hash_checker xerahs_icon_converter xerahs_watch_folders xerahs_video_converter_ui xerahs_color_picker xerahs_editor_canvas xerahs_editor_codecs xerahs_url_open xerahs_image_recognition xerahs_pin_window xerahs_window_discovery xerahs_core Qt6::Widgets Qt6::DBus Qt6::Test)
+target_link_libraries(localization-expansion-test PRIVATE xerahs_app Qt6::Test)
 add_test(NAME localization-expansion COMMAND localization-expansion-test)
 set_tests_properties(localization-expansion PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 
@@ -1692,5 +1676,30 @@ target_compile_definitions(edition-profiles-test PRIVATE
   XERAHS_LINUX_QT_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(edition-profiles-test PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME edition-profiles COMMAND edition-profiles-test)
+
+add_executable(native-notifications-test tests/NativeNotificationsTest.cpp app/NativeNotifications.cpp app/NativeNotifications.h)
+set_target_properties(native-notifications-test PROPERTIES AUTOMOC ON)
+target_include_directories(native-notifications-test PRIVATE app)
+target_link_libraries(native-notifications-test PRIVATE xerahs_core Qt6::DBus Qt6::Test)
+add_test(NAME native-notifications COMMAND "${XERAHS_DBUS_RUN_SESSION}"
+         "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf" -- $<TARGET_FILE:native-notifications-test>)
+set_tests_properties(native-notifications PROPERTIES TIMEOUT 30)
+
+add_test(NAME upload-executor-policy COMMAND upload-executor-test lifecycle reentrantRestart
+  safeRetriesKeepPreparedBytesKeyAndOneRemoteObject exhaustedRetriesAreBoundedAndBackoffIncreases
+  unsafeOrPermanentFailuresNeverRetry cancellationDuringBackoffCannotRestartOrCompleteANewerRun
+  abortObserversCannotOverwriteANewerRunOrEscapeAdmission
+  attemptMetadataDoesNotInventPublicationAndLegacyReceiptsStayUnchanged)
+set_tests_properties(upload-executor-policy PROPERTIES TIMEOUT 45)
+
+add_executable(diagnostic-bundle-test tests/DiagnosticBundleTest.cpp)
+set_target_properties(diagnostic-bundle-test PROPERTIES AUTOMOC ON)
+target_link_libraries(diagnostic-bundle-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME diagnostic-bundle COMMAND diagnostic-bundle-test)
+add_executable(diagnostics-dialog-test tests/DiagnosticsDialogTest.cpp)
+set_target_properties(diagnostics-dialog-test PROPERTIES AUTOMOC ON)
+target_link_libraries(diagnostics-dialog-test PRIVATE xerahs_app Qt6::Test)
+add_test(NAME diagnostics-dialog COMMAND diagnostics-dialog-test)
+set_tests_properties(diagnostics-dialog PROPERTIES TIMEOUT 30)
 
 include(packaging/Packaging.cmake)

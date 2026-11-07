@@ -88,13 +88,13 @@ void editorWarning(QWidget *parent, const QString &title, const QString &text) {
 }
 
 QString describe(const QString &diagnostic) {
-  if (diagnostic == diagnostic::sourceUnsupported) return QStringLiteral("This file is not a supported image.");
-  if (diagnostic == diagnostic::sourceCorrupt) return QStringLiteral("This image is damaged and cannot be read.");
-  if (diagnostic == diagnostic::sourceEmpty) return QStringLiteral("This image is empty.");
-  if (diagnostic == diagnostic::sourceTooLarge) return QStringLiteral("This image is too large to edit.");
-  if (diagnostic == diagnostic::documentVersionUnsupported) return QStringLiteral("The annotation file was created by a newer editor version and cannot be opened safely.");
-  if (diagnostic == diagnostic::documentInvalid) return QStringLiteral("The annotation file or its embedded source is damaged and cannot be opened safely.");
-  if (diagnostic == diagnostic::documentTooLarge) return QStringLiteral("The annotation document exceeds the editor's resource limits.");
+  if (diagnostic == diagnostic::sourceUnsupported) return EditorWindow::tr("This file is not a supported image.");
+  if (diagnostic == diagnostic::sourceCorrupt) return EditorWindow::tr("This image is damaged and cannot be read.");
+  if (diagnostic == diagnostic::sourceEmpty) return EditorWindow::tr("This image is empty.");
+  if (diagnostic == diagnostic::sourceTooLarge) return EditorWindow::tr("This image is too large to edit.");
+  if (diagnostic == diagnostic::documentVersionUnsupported) return EditorWindow::tr("The annotation file was created by a newer editor version and cannot be opened safely.");
+  if (diagnostic == diagnostic::documentInvalid) return EditorWindow::tr("The annotation file or its embedded source is damaged and cannot be opened safely.");
+  if (diagnostic == diagnostic::documentTooLarge) return EditorWindow::tr("The annotation document exceeds the editor's resource limits.");
   return diagnostic;
 }
 
@@ -126,14 +126,14 @@ EditorWindow *EditorWindow::open(const QString &path, QWidget *parent) {
     if (!source.document) {
       QString detail = describe(source.diagnostic);
       if (source.importReport) detail += QStringLiteral("\n\n") + source.importReport->detailedSummary();
-      editorWarning(owner, "Cannot open image", QStringLiteral("%1\n\n%2").arg(QFileInfo(path).fileName(), detail)); return false;
+      editorWarning(owner, EditorWindow::tr("Cannot open image"), QStringLiteral("%1\n\n%2").arg(QFileInfo(path).fileName(), detail)); return false;
     }
     try { window = new EditorWindow(target, std::move(source.image), std::move(*source.document), EditorSession::InitialPersistence::Saved, std::move(source.displayImage)); }
-    catch (const std::bad_alloc &) { editorWarning(owner, "Cannot open image", describe(diagnostic::documentTooLarge)); return false; }
+    catch (const std::bad_alloc &) { editorWarning(owner, EditorWindow::tr("Cannot open image"), describe(diagnostic::documentTooLarge)); return false; }
     window->setAttribute(Qt::WA_DeleteOnClose);
-    if (source.importReport) { window->m_importMessage = QStringLiteral("Annotation import: ") + source.importReport->detailedSummary(); window->refresh(); }
+    if (source.importReport) { window->m_importMessage = EditorWindow::tr("Annotation import: ") + source.importReport->detailedSummary(); window->refresh(); }
     if (!source.warnings.isEmpty()) {
-      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Information, "Annotations", source.warnings.join(QLatin1Char('\n')), QMessageBox::Ok, window)); box->setTextFormat(Qt::PlainText); box->exec(); disposeCanvasDialog(box.data());
+      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Information, EditorWindow::tr("Annotations"), source.warnings.join(QLatin1Char('\n')), QMessageBox::Ok, window)); box->setTextFormat(Qt::PlainText); box->exec(); disposeCanvasDialog(box.data());
     }
     if (parent && !owner) { delete window.data(); return false; }
     if (window) window->recordRecentImage(target);
@@ -153,7 +153,7 @@ EditorWindow *EditorWindow::createNew(QWidget *parent) {
     auto prepared = dialog && answer == QDialog::Accepted ? dialog->takeImage() : std::optional<PreparedNewImage>{};
     disposeCanvasDialog(dialog.data()); if ((parent && !owner) || !prepared) return false;
     try { window = new EditorWindow({}, std::move(prepared->source), std::move(*prepared->document), EditorSession::InitialPersistence::Unsaved, std::move(prepared->displaySource)); window->setAttribute(Qt::WA_DeleteOnClose); }
-    catch (const std::bad_alloc &) { editorWarning(owner, "Cannot create image", "There is not enough memory to open the new image."); }
+    catch (const std::bad_alloc &) { editorWarning(owner, EditorWindow::tr("Cannot create image"), EditorWindow::tr("There is not enough memory to open the new image.")); }
     return bool(window);
   };
   if (editor) editor->withOutputBusy(operation); else operation();
@@ -165,14 +165,14 @@ EditorWindow *EditorWindow::fromCapturedImage(const QImage &image, QWidget *pare
   if (parent && !owner) return nullptr;
   if (source.diagnostic == u"canvas-cancelled") return nullptr;
   if (!source.document) {
-    QMessageBox::warning(parent, QStringLiteral("Cannot edit retained capture"), describe(source.diagnostic)); return nullptr;
+    QMessageBox::warning(parent, EditorWindow::tr("Cannot edit retained capture"), describe(source.diagnostic)); return nullptr;
   }
   try {
     auto *window = new EditorWindow({}, std::move(source.image), std::move(*source.document),
         EditorSession::InitialPersistence::Unsaved, std::move(source.displayImage));
     window->setAttribute(Qt::WA_DeleteOnClose); return window;
   } catch (const std::bad_alloc &) {
-    QMessageBox::warning(parent, QStringLiteral("Cannot edit retained capture"), describe(diagnostic::documentTooLarge)); return nullptr;
+    QMessageBox::warning(parent, EditorWindow::tr("Cannot edit retained capture"), describe(diagnostic::documentTooLarge)); return nullptr;
   }
 }
 
@@ -180,16 +180,16 @@ EditorWindow *EditorWindow::fromCapturedDocument(const AnnotationDocument &docum
   const QPointer<QWidget> owner(parent); auto source = openCapturedDocument(document, parent);
   if (parent && !owner) return nullptr;
   if (source.diagnostic == "canvas-cancelled") return nullptr;
-  if (!source.document) { QMessageBox::warning(parent, "Cannot edit retained annotations", describe(source.diagnostic)); return nullptr; }
+  if (!source.document) { QMessageBox::warning(parent, EditorWindow::tr("Cannot edit retained annotations"), describe(source.diagnostic)); return nullptr; }
   try {
     auto *window = new EditorWindow({}, std::move(source.image), std::move(*source.document), EditorSession::InitialPersistence::Unsaved, std::move(source.displayImage));
     window->setAttribute(Qt::WA_DeleteOnClose); return window;
-  } catch (const std::bad_alloc &) { QMessageBox::warning(parent, "Cannot edit retained annotations", describe(diagnostic::documentTooLarge)); return nullptr; }
+  } catch (const std::bad_alloc &) { QMessageBox::warning(parent, EditorWindow::tr("Cannot edit retained annotations"), describe(diagnostic::documentTooLarge)); return nullptr; }
 }
 EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument document,
                            EditorSession::InitialPersistence persistence, QImage displaySource)
     : m_path(path), m_image(std::move(image)), m_session(std::make_unique<EditorSession>(std::move(document), persistence)) {
-  new NativeAccessibility(*this, "Edit the image using menus, tools and the canvas. Save is explicit. Close offers recovery for unsaved changes.", false);
+  new NativeAccessibility(*this, EditorWindow::tr("Edit the image using menus, tools and the canvas. Save is explicit. Close offers recovery for unsaved changes."), false);
   guardEditorShutdown(*this);
   m_recoveryTimer = new QTimer(this); m_recoveryTimer->setSingleShot(true);
   connect(m_recoveryTimer, &QTimer::timeout, this, [this] { writeRecoveryNow(); });
@@ -209,8 +209,8 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   // the image size.
   m_pointerStatus = new QLabel(this);
   m_pointerStatus->setObjectName(QStringLiteral("editorPointerStatus"));
-  m_pointerStatus->setAccessibleName(QStringLiteral("Pointer pixel"));
-  m_pointerStatus->setAccessibleDescription(QStringLiteral("Document position, source pixel colour and image size."));
+  m_pointerStatus->setAccessibleName(EditorWindow::tr("Pointer pixel"));
+  m_pointerStatus->setAccessibleDescription(EditorWindow::tr("Document position, source pixel colour and image size."));
   statusBar()->addPermanentWidget(m_pointerStatus);
   connect(m_canvas, &EditorCanvas::pointerPixelChanged, this, [this](std::optional<QPoint> pixel) {
     if (pixel == m_pointerPixel) return;
@@ -223,7 +223,7 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   });
   m_sourceBytes = m_session->document().sourceImagePng;
   setCentralWidget(m_canvas);
-  m_annotationsDock = new QDockWidget("Annotation objects", this);
+  m_annotationsDock = new QDockWidget(EditorWindow::tr("Annotation objects"), this);
   m_annotationsDock->setObjectName("annotationObjectsDock");
   m_annotationsDock->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetClosable);
   m_annotationsDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
@@ -232,15 +232,15 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   m_annotationsDock->setVisible(std::any_of(m_session->document().annotations.begin(), m_session->document().annotations.end(),
       [](const Annotation &a) { return std::holds_alternative<UnsupportedAnnotation>(a); }));
 
-  auto *fileMenu = menuBar()->addMenu(QStringLiteral("&File"));
-  auto *create = fileMenu->addAction(QStringLiteral("New Image…"));
+  auto *fileMenu = menuBar()->addMenu(EditorWindow::tr("&File"));
+  auto *create = fileMenu->addAction(EditorWindow::tr("New Image…"));
   create->setObjectName(QStringLiteral("newImage"));
   create->setShortcut(QKeySequence::New);
   connect(create, &QAction::triggered, this, &EditorWindow::newImage);
-  auto *open = fileMenu->addAction(QStringLiteral("Open Image…"));
+  auto *open = fileMenu->addAction(EditorWindow::tr("Open Image…"));
   open->setObjectName(QStringLiteral("openImage")); open->setShortcut(QKeySequence::Open);
   connect(open, &QAction::triggered, this, [this] { openImage(); });
-  auto *openUrl = fileMenu->addAction(QStringLiteral("Open Image from URL…"));  // no default shortcut: URL access stays deliberate
+  auto *openUrl = fileMenu->addAction(EditorWindow::tr("Open Image from URL…"));  // no default shortcut: URL access stays deliberate
   openUrl->setObjectName(QStringLiteral("openImageFromUrl"));
   connect(openUrl, &QAction::triggered, this, [this] { openImageFromUrl(); });
   addRecentImagesMenu(fileMenu, [this](const QString &path) { openImage(path); }, [this] {
@@ -248,16 +248,16 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     const QScopedValueRollback<bool> pending(m_canvasOperationPending, true);
     if (manageRecentImages(this)) { m_preferenceDiagnostic.clear(); refresh(); }
   });
-  auto *preferences = menuBar()->addMenu(QStringLiteral("&Preferences"));
-  auto *customizeToolbar = preferences->addAction(QStringLiteral("Toolbar…"));
+  auto *preferences = menuBar()->addMenu(EditorWindow::tr("&Preferences"));
+  auto *customizeToolbar = preferences->addAction(EditorWindow::tr("Toolbar…"));
   customizeToolbar->setObjectName(QStringLiteral("customizeToolbar"));
   connect(customizeToolbar, &QAction::triggered, this, [this] {
     configurePreferences([this] { return manageEditorToolbar(this, m_toolbarActions); });
   });
-  auto *convenience = preferences->addAction(QStringLiteral("Task and convenience preferences…"));
+  auto *convenience = preferences->addAction(EditorWindow::tr("Task and convenience preferences…"));
   convenience->setObjectName("conveniencePreferences");
   connect(convenience, &QAction::triggered, this, [this] { configurePreferences([this] { return manageConveniencePreferences(this); }); });
-  auto *drawingDefaults = preferences->addAction(QStringLiteral("Drawing Defaults…"));
+  auto *drawingDefaults = preferences->addAction(EditorWindow::tr("Drawing Defaults…"));
   drawingDefaults->setObjectName(QStringLiteral("drawingDefaults"));
   connect(drawingDefaults, &QAction::triggered, this, [this] {
     const QPointer<EditorWindow> owner(this);
@@ -267,8 +267,8 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(&nativeEditorPreferenceEvents(), &NativeEditorPreferenceEvents::drawingDefaultsChanged, this, [this] {
     applyCreationDefaults(); m_drawingPreferenceDiagnostic.clear(); refresh();
   });
-  auto *rememberWindow = preferences->addAction(QStringLiteral("Remember Window Size and Maximized State"));
-  auto *appearance = preferences->addAction(QStringLiteral("Appearance…")); appearance->setObjectName(QStringLiteral("manageAppearance"));
+  auto *rememberWindow = preferences->addAction(EditorWindow::tr("Remember Window Size and Maximized State"));
+  auto *appearance = preferences->addAction(EditorWindow::tr("Appearance…")); appearance->setObjectName(QStringLiteral("manageAppearance"));
   connect(appearance, &QAction::triggered, this, [this] {
     configurePreferences([this] { return manageEditorAppearance(this); });
   });
@@ -286,23 +286,23 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     if (!written.saved) {
       const QSignalBlocker blocker(rememberWindow);
       rememberWindow->setChecked(windowPreferencesFromPreferences(nativeEditorPreferences()).remember);
-      QMessageBox::warning(this, QStringLiteral("Preferences not saved"), editorPreferenceDiagnosticMessage(written.diagnostic));
+      QMessageBox::warning(this, EditorWindow::tr("Preferences not saved"), editorPreferenceDiagnosticMessage(written.diagnostic));
     }
   });
   connect(&nativeEditorPreferenceEvents(), &NativeEditorPreferenceEvents::windowMemoryChanged, rememberWindow,
       [rememberWindow](bool enabled) { const QSignalBlocker blocker(rememberWindow); rememberWindow->setChecked(enabled); });
 
-  auto *imageMenu = menuBar()->addMenu(QStringLiteral("&Image"));
-  auto *toolMenu = imageMenu->addMenu(QStringLiteral("Annotation Tools"));
+  auto *imageMenu = menuBar()->addMenu(EditorWindow::tr("&Image"));
+  auto *toolMenu = imageMenu->addMenu(EditorWindow::tr("Annotation Tools"));
   for (const auto &id : {"select-tool", "rectangle-tool", "ellipse-tool", "line-tool", "arrow-tool", "freehand-tool", "text-tool",
                          "step-tool", "highlight-tool", "blur-tool", "pixelate-tool", "speechballoon-tool", "magnify-tool", "spotlight-tool",
                          "smarteraser-tool", "image-tool", "emoji-tool", "cursor-tool", "cutout-tool", "crop-tool"}) toolMenu->addAction(tools.value(id));
-  QAction *crop = imageMenu->addAction(QStringLiteral("Crop Image…"));
+  QAction *crop = imageMenu->addAction(EditorWindow::tr("Crop Image…"));
   crop->setObjectName(QStringLiteral("cropImage"));
   QAction *cropTool = tools.value("crop-tool");
   imageMenu->addAction(cropTool);
   connect(crop, &QAction::triggered, this, [this] { cropImage(); });
-  QAction *autoCrop = imageMenu->addAction(QStringLiteral("Auto Crop…"));
+  QAction *autoCrop = imageMenu->addAction(EditorWindow::tr("Auto Crop…"));
   autoCrop->setObjectName(QStringLiteral("autoCrop"));
   connect(autoCrop, &QAction::triggered, this, &EditorWindow::autoCropImage);
   connect(m_canvas, &EditorCanvas::cropRequested, this, [this](QPointF start, QPointF end) {
@@ -314,23 +314,23 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     operation.start = {start.x(), start.y()}; operation.end = {end.x(), end.y()}; operation.cutColumns = columns;
     applyCanvas(operation);
   });
-  QAction *resizePixels = imageMenu->addAction(QStringLiteral("Resize Image…"));
+  QAction *resizePixels = imageMenu->addAction(EditorWindow::tr("Resize Image…"));
   resizePixels->setObjectName(QStringLiteral("resizeImage"));
   connect(resizePixels, &QAction::triggered, this, [this] { resizeImage(false); });
-  QAction *resizeCanvas = imageMenu->addAction(QStringLiteral("Resize Canvas…"));
+  QAction *resizeCanvas = imageMenu->addAction(EditorWindow::tr("Resize Canvas…"));
   resizeCanvas->setObjectName(QStringLiteral("resizeCanvas"));
   connect(resizeCanvas, &QAction::triggered, this, [this] { resizeImage(true); });
   imageMenu->addSeparator();
-  QAction *customRotation = imageMenu->addAction(QStringLiteral("Rotate Image…"));
+  QAction *customRotation = imageMenu->addAction(EditorWindow::tr("Rotate Image…"));
   customRotation->setObjectName(QStringLiteral("rotateImage"));
   connect(customRotation, &QAction::triggered, this, &EditorWindow::rotateImage);
   QMap<CanvasAction, QAction *> canvasActions;
   for (const auto &entry : std::array<std::pair<QString, CanvasAction>, 5>{{
-      {QStringLiteral("Rotate Image 90° Clockwise"), CanvasAction::RotateClockwise},
-      {QStringLiteral("Rotate Image 90° Counter-clockwise"), CanvasAction::RotateCounterClockwise},
-      {QStringLiteral("Rotate Image 180°"), CanvasAction::Rotate180},
-      {QStringLiteral("Flip Image Horizontally"), CanvasAction::FlipHorizontal},
-      {QStringLiteral("Flip Image Vertically"), CanvasAction::FlipVertical}}}) {
+      {EditorWindow::tr("Rotate Image 90° Clockwise"), CanvasAction::RotateClockwise},
+      {EditorWindow::tr("Rotate Image 90° Counter-clockwise"), CanvasAction::RotateCounterClockwise},
+      {EditorWindow::tr("Rotate Image 180°"), CanvasAction::Rotate180},
+      {EditorWindow::tr("Flip Image Horizontally"), CanvasAction::FlipHorizontal},
+      {EditorWindow::tr("Flip Image Vertically"), CanvasAction::FlipVertical}}}) {
     QAction *action = imageMenu->addAction(entry.first);
     action->setObjectName(QStringLiteral("canvasAction%1").arg(int(entry.second)));
     canvasActions.insert(entry.second, action);
@@ -339,18 +339,18 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     });
   }
   imageMenu->addSeparator();
-  QAction *flatten = imageMenu->addAction(QStringLiteral("Flatten"));
+  QAction *flatten = imageMenu->addAction(EditorWindow::tr("Flatten"));
   flatten->setObjectName(QStringLiteral("flattenImage"));
   connect(flatten, &QAction::triggered, this, [this] { CanvasOperation op; op.action = CanvasAction::Flatten; applyCanvas(op); });
   flatten->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_F));
-  m_clearAnnotations = imageMenu->addAction(QStringLiteral("Clear Annotations"));
+  m_clearAnnotations = imageMenu->addAction(EditorWindow::tr("Clear Annotations"));
   m_clearAnnotations->setObjectName(QStringLiteral("clearAnnotations"));
   m_clearAnnotations->setShortcut(QKeySequence(Qt::SHIFT | Qt::Key_Delete));
   connect(m_clearAnnotations, &QAction::triggered, this, [this] { CanvasOperation op; op.action = CanvasAction::ClearAnnotations; applyCanvas(op); });
-  QAction *clear = imageMenu->addAction(QStringLiteral("Clear Image and Annotations…"));
+  QAction *clear = imageMenu->addAction(EditorWindow::tr("Clear Image and Annotations…"));
   clear->setObjectName(QStringLiteral("clearImage"));
   connect(clear, &QAction::triggered, this, &EditorWindow::clearImage);
-  QAction *compare = imageMenu->addAction(QStringLiteral("Compare Images…"));
+  QAction *compare = imageMenu->addAction(EditorWindow::tr("Compare Images…"));
   compare->setObjectName(QStringLiteral("compareImages"));
   connect(compare, &QAction::triggered, this, &EditorWindow::compareImages);
 
@@ -359,13 +359,13 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   effects->setAutoRepeat(false);
   connect(effects, &QAction::triggered, this, &EditorWindow::effectsImage);
 
-  auto *bar = addToolBar(QStringLiteral("Edit"));
+  auto *bar = addToolBar(EditorWindow::tr("Edit"));
   bar->setObjectName(QStringLiteral("editorToolbar"));
   bar->setMovable(false);
-  QAction *saveAction = bar->addAction(QStringLiteral("Save"));
+  QAction *saveAction = bar->addAction(EditorWindow::tr("Save"));
   saveAction->setObjectName(QStringLiteral("saveImage"));
   saveAction->setShortcut(QKeySequence::Save);
-  QAction *saveAs = bar->addAction(QStringLiteral("Save As…"));
+  QAction *saveAs = bar->addAction(EditorWindow::tr("Save As…"));
   saveAs->setObjectName(QStringLiteral("saveAsImage"));
   // QKeySequence::SaveAs is empty on platform themes without a Save As binding (offscreen, plain X11/wlroots),
   // so keep the contracted Ctrl+Shift+S explicitly alongside any theme binding.
@@ -376,10 +376,10 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     saveAs->setShortcuts(saveAsKeys);
   }
   bar->addSeparator();
-  m_undo = bar->addAction(QStringLiteral("Undo"));
+  m_undo = bar->addAction(EditorWindow::tr("Undo"));
   m_undo->setObjectName(QStringLiteral("undo"));
   m_undo->setShortcut(QKeySequence::Undo);
-  m_redo = bar->addAction(QStringLiteral("Redo"));
+  m_redo = bar->addAction(EditorWindow::tr("Redo"));
   m_redo->setObjectName(QStringLiteral("redo"));
   m_redo->setShortcuts({QKeySequence(Qt::CTRL | Qt::Key_Y), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Z)});
   m_delete = annotationDeleteAction(*m_canvas, this, [this] { deleteSelected(); }, [this] {
@@ -387,13 +387,13 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   });
   bar->addAction(m_delete);
   m_delete->setShortcut(QKeySequence(Qt::Key_Delete));
-  m_rotate = bar->addAction(QStringLiteral("Rotate selection…"));
+  m_rotate = bar->addAction(EditorWindow::tr("Rotate selection…"));
   m_rotate->setObjectName(QStringLiteral("rotateSelection"));
   bar->addSeparator();
-  QAction *stroke = bar->addAction(QStringLiteral("Stroke colour…"));
-  QAction *fill = bar->addAction(QStringLiteral("Fill colour…"));
-  QAction *width = bar->addAction(QStringLiteral("Stroke +"));
-  QAction *thin = bar->addAction(QStringLiteral("Stroke −"));
+  QAction *stroke = bar->addAction(EditorWindow::tr("Stroke colour…"));
+  QAction *fill = bar->addAction(EditorWindow::tr("Fill colour…"));
+  QAction *width = bar->addAction(EditorWindow::tr("Stroke +"));
+  QAction *thin = bar->addAction(EditorWindow::tr("Stroke −"));
   stroke->setObjectName(QStringLiteral("strokeColour")); fill->setObjectName(QStringLiteral("fillColour"));
   width->setObjectName(QStringLiteral("increaseStroke")); thin->setObjectName(QStringLiteral("decreaseStroke"));
 
@@ -404,89 +404,89 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(m_rotate, &QAction::triggered, this, [this] { rotateSelected(); });
   connect(stroke, &QAction::triggered, this, [this] { editColor(EditorSession::ColorTarget::Stroke); });
   connect(fill, &QAction::triggered, this, [this] { editColor(EditorSession::ColorTarget::Fill); });
-  for (auto *action : {width, thin}) action->setToolTip("Change selected rectangles in one undo step and save the default for new rectangles in editor windows.");
+  for (auto *action : {width, thin}) action->setToolTip(EditorWindow::tr("Change selected rectangles in one undo step and save the default for new rectangles in editor windows."));
   connect(width, &QAction::triggered, this, [this] { changeStrokeWidth(true); });
   connect(thin, &QAction::triggered, this, [this] { changeStrokeWidth(false); });
   // Fixed command menus remain available even with an empty custom toolbar.
   fileMenu->addSeparator(); fileMenu->addAction(saveAction); fileMenu->addAction(saveAs);
-  m_retrySave = fileMenu->addAction("Retry &annotation save…"); m_retrySave->setObjectName("retryEditorSidecar");
-  m_retrySave->setStatusTip("Retry only the incomplete annotation companion. Keep the already saved image.");
+  m_retrySave = fileMenu->addAction(EditorWindow::tr("Retry &annotation save…")); m_retrySave->setObjectName("retryEditorSidecar");
+  m_retrySave->setStatusTip(EditorWindow::tr("Retry only the incomplete annotation companion. Keep the already saved image."));
   addAction(m_retrySave); connect(m_retrySave, &QAction::triggered, this, [this] { retrySave(); });
-  m_printAction = fileMenu->addAction("&Print Image…"); m_printAction->setObjectName("printImage");
+  m_printAction = fileMenu->addAction(EditorWindow::tr("&Print Image…")); m_printAction->setObjectName("printImage");
   m_printAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_P)); m_printAction->setAutoRepeat(false);
-  m_printAction->setStatusTip("Print one snapshot of the source and visible supported annotations on white paper using sRGB. Preview and native printer settings precede submission; the document stays unsaved.");
+  m_printAction->setStatusTip(EditorWindow::tr("Print one snapshot of the source and visible supported annotations on white paper using sRGB. Preview and native printer settings precede submission; the document stays unsaved."));
   connect(m_printAction, &QAction::triggered, this, [this] { printImage(); });
-  m_retryPrint = fileMenu->addAction("Retry image &print…"); m_retryPrint->setObjectName("retryImagePrint");
-  m_retryPrint->setStatusTip("Retry a known failed print with the unchanged prepared snapshot and fresh native printer confirmation.");
+  m_retryPrint = fileMenu->addAction(EditorWindow::tr("Retry image &print…")); m_retryPrint->setObjectName("retryImagePrint");
+  m_retryPrint->setStatusTip(EditorWindow::tr("Retry a known failed print with the unchanged prepared snapshot and fresh native printer confirmation."));
   addAction(m_retryPrint); connect(m_retryPrint, &QAction::triggered, this, [this] { retryPrint(); });
-  m_pinAction = fileMenu->addAction("&Pin to Screen"); m_pinAction->setObjectName("pinImage");
+  m_pinAction = fileMenu->addAction(EditorWindow::tr("&Pin to Screen")); m_pinAction->setObjectName("pinImage");
   m_pinAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_P)); m_pinAction->setAutoRepeat(false);
-  m_pinAction->setStatusTip("Pin one snapshot of the source and visible supported annotations as sRGB with alpha. Moving, scaling or closing the pin leaves the document unchanged.");
+  m_pinAction->setStatusTip(EditorWindow::tr("Pin one snapshot of the source and visible supported annotations as sRGB with alpha. Moving, scaling or closing the pin leaves the document unchanged."));
   connect(m_pinAction, &QAction::triggered, this, [this] { pinImage(); });
-  m_uploadAction = fileMenu->addAction("&Upload Image…"); m_uploadAction->setObjectName("uploadImage");
+  m_uploadAction = fileMenu->addAction(EditorWindow::tr("&Upload Image…")); m_uploadAction->setObjectName("uploadImage");
   m_uploadAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_U)); m_uploadAction->setAutoRepeat(false);
-  m_uploadAction->setStatusTip("Upload one source and visible-annotation snapshot as sRGB PNG with alpha. Confirm the destination and publication before transmission.");
+  m_uploadAction->setStatusTip(EditorWindow::tr("Upload one source and visible-annotation snapshot as sRGB PNG with alpha. Confirm the destination and publication before transmission."));
   connect(m_uploadAction, &QAction::triggered, this, [this] { uploadImage(); });
-  m_wallpaperAction = fileMenu->addAction("Set as &Wallpaper…"); m_wallpaperAction->setObjectName("setWallpaper");
+  m_wallpaperAction = fileMenu->addAction(EditorWindow::tr("Set as &Wallpaper…")); m_wallpaperAction->setObjectName("setWallpaper");
   m_wallpaperAction->setShortcut(QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_W)); m_wallpaperAction->setAutoRepeat(false);
-  m_wallpaperAction->setStatusTip("Set one source and visible-annotation snapshot as the desktop wallpaper through the desktop portal. Choose the target and confirm first; the desktop applies it to all displays.");
+  m_wallpaperAction->setStatusTip(EditorWindow::tr("Set one source and visible-annotation snapshot as the desktop wallpaper through the desktop portal. Choose the target and confirm first; the desktop applies it to all displays."));
   connect(m_wallpaperAction, &QAction::triggered, this, [this] { setWallpaper(); });
-  auto *closeEditor = fileMenu->addAction(QStringLiteral("Close Editor"));
+  auto *closeEditor = fileMenu->addAction(EditorWindow::tr("Close Editor"));
   closeEditor->setObjectName(QStringLiteral("closeEditor")); closeEditor->setShortcut(QKeySequence::Close);
   connect(closeEditor, &QAction::triggered, this, [this] { close(); });
-  auto *edit = menuBar()->addMenu(QStringLiteral("&Edit"));
-  m_createRectangle = edit->addAction("Create &Rectangle…"); m_createRectangle->setObjectName("createRectangle");
-  m_createRectangle->setAutoRepeat(false); m_createRectangle->setStatusTip("Enter numeric bounds and create one rectangle with captured Drawing Defaults. The active tool stays unchanged.");
+  auto *edit = menuBar()->addMenu(EditorWindow::tr("&Edit"));
+  m_createRectangle = edit->addAction(EditorWindow::tr("Create &Rectangle…")); m_createRectangle->setObjectName("createRectangle");
+  m_createRectangle->setAutoRepeat(false); m_createRectangle->setStatusTip(EditorWindow::tr("Enter numeric bounds and create one rectangle with captured Drawing Defaults. The active tool stays unchanged."));
   connect(m_createRectangle, &QAction::triggered, this, [this] { rectangleDialog(true); });
-  m_rectangleProperties = edit->addAction("Rectangle &Properties…"); m_rectangleProperties->setObjectName("rectangleProperties");
-  m_rectangleProperties->setAutoRepeat(false); m_rectangleProperties->setStatusTip("Edit the selected rectangle's bounds, stroke, fill, opacity and rotation. Creation defaults stay unchanged.");
+  m_rectangleProperties = edit->addAction(EditorWindow::tr("Rectangle &Properties…")); m_rectangleProperties->setObjectName("rectangleProperties");
+  m_rectangleProperties->setAutoRepeat(false); m_rectangleProperties->setStatusTip(EditorWindow::tr("Edit the selected rectangle's bounds, stroke, fill, opacity and rotation. Creation defaults stay unchanged."));
   connect(m_rectangleProperties, &QAction::triggered, this, [this] { rectangleDialog(false); });
-  m_shapeStyleDefaults = edit->addAction("Shape &Style Defaults…"); m_shapeStyleDefaults->setObjectName("shapeStyleDefaults");
-  m_shapeStyleDefaults->setAutoRepeat(false); m_shapeStyleDefaults->setStatusTip("Set the border style, rectangle corner radius and shadow used by new rectangles and ellipses. Existing objects stay unchanged.");
+  m_shapeStyleDefaults = edit->addAction(EditorWindow::tr("Shape &Style Defaults…")); m_shapeStyleDefaults->setObjectName("shapeStyleDefaults");
+  m_shapeStyleDefaults->setAutoRepeat(false); m_shapeStyleDefaults->setStatusTip(EditorWindow::tr("Set the border style, rectangle corner radius and shadow used by new rectangles and ellipses. Existing objects stay unchanged."));
   connect(m_shapeStyleDefaults, &QAction::triggered, this, [this] { shapeStyleDefaultsDialog(); });
   // EA-009: Step numbering is editing-session state; neither action touches the document or history.
-  auto *stepStart = edit->addAction("Step Start &Number…"); stepStart->setObjectName("stepStartNumber"); stepStart->setAutoRepeat(false);
-  stepStart->setStatusTip("Choose the number (1 to 10) the next Step starts from. Existing Steps keep their values.");
+  auto *stepStart = edit->addAction(EditorWindow::tr("Step Start &Number…")); stepStart->setObjectName("stepStartNumber"); stepStart->setAutoRepeat(false);
+  stepStart->setStatusTip(EditorWindow::tr("Choose the number (1 to 10) the next Step starts from. Existing Steps keep their values."));
   connect(stepStart, &QAction::triggered, this, [this] {
     if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive()) return;
     auto *dialog = new QInputDialog(this);
-    dialog->setObjectName("stepStartNumberDialog"); dialog->setWindowTitle("Step Start Number"); dialog->setAccessibleName("Step start number");
+    dialog->setObjectName("stepStartNumberDialog"); dialog->setWindowTitle(EditorWindow::tr("Step Start Number")); dialog->setAccessibleName(EditorWindow::tr("Step start number"));
     dialog->setWindowModality(Qt::WindowModal); dialog->setAttribute(Qt::WA_DeleteOnClose);
-    dialog->setInputMode(QInputDialog::IntInput); dialog->setLabelText("Start Steps from:");
+    dialog->setInputMode(QInputDialog::IntInput); dialog->setLabelText(EditorWindow::tr("Start Steps from:"));
     dialog->setIntRange(int(kMinStepStart), int(kMaxStepStart)); dialog->setIntValue(m_canvas->stepStartNumber());
-    dialog->setOkButtonText("Apply"); dialog->setCancelButtonText("Cancel");
+    dialog->setOkButtonText(EditorWindow::tr("Apply")); dialog->setCancelButtonText(EditorWindow::tr("Cancel"));
     const QPointer<EditorWindow> owner(this);
     connect(dialog, &QDialog::finished, this, [owner, dialog](int result) {
       if (owner && result == QDialog::Accepted) owner->m_canvas->setStepStartNumber(dialog->intValue());
     });
     dialog->open();
   });
-  auto *stepReset = edit->addAction("&Reset Step Numbering"); stepReset->setObjectName("resetStepNumbering"); stepReset->setAutoRepeat(false);
-  stepReset->setStatusTip("The next Step takes the start number. Existing Steps keep their values.");
+  auto *stepReset = edit->addAction(EditorWindow::tr("&Reset Step Numbering")); stepReset->setObjectName("resetStepNumbering"); stepReset->setAutoRepeat(false);
+  stepReset->setStatusTip(EditorWindow::tr("The next Step takes the start number. Existing Steps keep their values."));
   connect(stepReset, &QAction::triggered, this, [this] {
     if (m_outputPending || m_canvasOperationPending || m_closePending || m_canvas->interactionActive()) return;
     m_canvas->resetStepNumbering();
   });
-  m_copyAction = edit->addAction("&Copy Image"); m_copyAction->setObjectName("copyImage");
+  m_copyAction = edit->addAction(EditorWindow::tr("&Copy Image")); m_copyAction->setObjectName("copyImage");
   m_copyAction->setShortcut(QKeySequence::Copy);
   m_copyAction->setAutoRepeat(false);
-  m_copyAction->setStatusTip("Copy visible annotations as sRGB pixels with alpha and PNG. The source and editing data stay in the editor.");
+  m_copyAction->setStatusTip(EditorWindow::tr("Copy visible annotations as sRGB pixels with alpha and PNG. The source and editing data stay in the editor."));
   connect(m_copyAction, &QAction::triggered, this, [this] { copyImage(); });
-  m_retryCopy = edit->addAction("Retry image &copy…"); m_retryCopy->setObjectName("retryImageCopy");
-  m_retryCopy->setStatusTip("Retry only a known failed clipboard publication of the unchanged rendered snapshot.");
+  m_retryCopy = edit->addAction(EditorWindow::tr("Retry image &copy…")); m_retryCopy->setObjectName("retryImageCopy");
+  m_retryCopy->setStatusTip(EditorWindow::tr("Retry only a known failed clipboard publication of the unchanged rendered snapshot."));
   addAction(m_retryCopy); connect(m_retryCopy, &QAction::triggered, this, [this] { retryCopy(); });
   edit->addSeparator();
   const auto annotationCommand = [&](const QString &id, const QString &name, const QString &label, const QKeySequence &key) {
     auto *action = edit->addAction(label); action->setObjectName(name); action->setShortcut(key); action->setAutoRepeat(false);
-    action->setStatusTip(id == "paste" ? "Paste supported annotations with fresh identities and an offset; source pixels stay unchanged."
-        : id == "duplicate-selection" ? "Duplicate supported visible, unlocked annotations as one undoable operation; source pixels and embedded assets stay unchanged."
-        : "Copy selected supported annotations and their compatible fields. Source pixels and document paths are excluded; the embedded images of selected Image, Emoji and Cursor objects travel with them.");
+    action->setStatusTip(id == "paste" ? EditorWindow::tr("Paste supported annotations with fresh identities and an offset; source pixels stay unchanged.")
+        : id == "duplicate-selection" ? EditorWindow::tr("Duplicate supported visible, unlocked annotations as one undoable operation; source pixels and embedded assets stay unchanged.")
+        : EditorWindow::tr("Copy selected supported annotations and their compatible fields. Source pixels and document paths are excluded; the embedded images of selected Image, Emoji and Cursor objects travel with them."));
     m_annotationActions.insert(id, action); connect(action, &QAction::triggered, this, [this, id] { transferAnnotations(id); });
   };
-  annotationCommand("cut-annotation", "cutAnnotations", "Cu&t Annotations", QKeySequence::Cut);
-  annotationCommand("copy-annotation", "copyAnnotations", "Copy &Annotations", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C));
-  annotationCommand("paste", "pasteAnnotations", "&Paste Annotations", QKeySequence::Paste);
-  annotationCommand("duplicate-selection", "duplicateAnnotations", "&Duplicate Annotations", QKeySequence(Qt::CTRL | Qt::Key_D));
+  annotationCommand("cut-annotation", "cutAnnotations", EditorWindow::tr("Cu&t Annotations"), QKeySequence::Cut);
+  annotationCommand("copy-annotation", "copyAnnotations", EditorWindow::tr("Copy &Annotations"), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C));
+  annotationCommand("paste", "pasteAnnotations", EditorWindow::tr("&Paste Annotations"), QKeySequence::Paste);
+  annotationCommand("duplicate-selection", "duplicateAnnotations", EditorWindow::tr("&Duplicate Annotations"), QKeySequence(Qt::CTRL | Qt::Key_D));
   edit->addSeparator();
   for (auto *action : {m_undo, m_redo, m_delete, m_rotate, stroke, fill, width, thin}) edit->addAction(action);
   edit->addSeparator();
@@ -494,17 +494,17 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
     return !m_outputPending && !m_canvasOperationPending && !m_closePending;
   });
   for (const auto *id : {"bring-forward", "send-backward", "bring-to-front", "send-to-back"}) edit->addAction(m_orderActions.value(id));
-  auto *view = menuBar()->addMenu(QStringLiteral("&View"));
-  QAction *zoomIn = view->addAction(QStringLiteral("Zoom In"));
+  auto *view = menuBar()->addMenu(EditorWindow::tr("&View"));
+  QAction *zoomIn = view->addAction(EditorWindow::tr("Zoom In"));
   zoomIn->setObjectName(QStringLiteral("zoomIn"));
   zoomIn->setShortcuts(QList<QKeySequence>{QKeySequence(Qt::CTRL | Qt::Key_Plus), QKeySequence(Qt::CTRL | Qt::Key_Equal)});
-  QAction *zoomOut = view->addAction(QStringLiteral("Zoom Out"));
+  QAction *zoomOut = view->addAction(EditorWindow::tr("Zoom Out"));
   zoomOut->setObjectName(QStringLiteral("zoomOut"));
   zoomOut->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Minus));
-  QAction *resetZoom = view->addAction(QStringLiteral("100%"));
+  QAction *resetZoom = view->addAction(EditorWindow::tr("100%"));
   resetZoom->setObjectName(QStringLiteral("resetZoom"));
   resetZoom->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_0));
-  QAction *fit = view->addAction(QStringLiteral("Fit"));
+  QAction *fit = view->addAction(EditorWindow::tr("Fit"));
   fit->setObjectName(QStringLiteral("fitImage"));
   fit->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_9));
   connect(zoomIn, &QAction::triggered, m_canvas, &EditorCanvas::zoomIn);
@@ -514,11 +514,11 @@ EditorWindow::EditorWindow(const QString &path, QImage image, AnnotationDocument
   connect(m_canvas, &EditorCanvas::viewportChanged, this, &EditorWindow::refresh);
   connect(m_canvas, &EditorCanvas::changed, this, &EditorWindow::refresh);
   connect(m_canvas, &EditorCanvas::toolChanged, this, &EditorWindow::refresh);
-  auto *toggleToolbar = bar->toggleViewAction(); toggleToolbar->setText(QStringLiteral("Show Toolbar"));
+  auto *toggleToolbar = bar->toggleViewAction(); toggleToolbar->setText(EditorWindow::tr("Show Toolbar"));
   toggleToolbar->setObjectName(QStringLiteral("toggleToolbars")); toggleToolbar->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_H));
   view->addSeparator(); view->addAction(toggleToolbar);
-  auto *objects = view->addAction("Select &Annotations…"); objects->setObjectName("focusAnnotationObjects"); objects->setAutoRepeat(false);
-  objects->setStatusTip("Focus the object list for keyboard selection. Enter returns to the canvas; Escape clears selection.");
+  auto *objects = view->addAction(EditorWindow::tr("Select &Annotations…")); objects->setObjectName("focusAnnotationObjects"); objects->setAutoRepeat(false);
+  objects->setStatusTip(EditorWindow::tr("Focus the object list for keyboard selection. Enter returns to the canvas; Escape clears selection."));
   connect(objects, &QAction::triggered, this, [this] {
     if (m_canvasOperationPending || m_closePending || m_outputPending || m_canvas->interactionActive()) return;
     const QPointer<EditorWindow> owner(this);
@@ -635,8 +635,8 @@ bool EditorWindow::editColor(EditorSession::ColorTarget target) {
   const auto state = m_session->stateId(), generation = m_canvas->documentGeneration(), revision = nativeEditorPreferenceRevision();
   const auto selection = m_session->selection(); const auto defaults = m_session->toolStyle(); const QPointer<EditorWindow> owner(this);
   const auto initial = target == EditorSession::ColorTarget::Stroke ? defaults.strokeColor : defaults.fillColor;
-  const QString scope = selection.isEmpty() ? "This colour changes only the default for new rectangles in editor windows. Current objects and history stay unchanged."
-      : "Selected rectangles change in one undo step. This colour also becomes the default for new rectangles in editor windows. Unsupported objects stay unchanged.";
+  const QString scope = selection.isEmpty() ? EditorWindow::tr("This colour changes only the default for new rectangles in editor windows. Current objects and history stay unchanged.")
+      : EditorWindow::tr("Selected rectangles change in one undo step. This colour also becomes the default for new rectangles in editor windows. Unsupported objects stay unchanged.");
   return withOutputBusy([owner, target, state, generation, revision, selection, defaults, initial, scope] {
     const auto choice = chooseAnnotationColor(target, initial, scope, owner); if (!owner) return false;
     QString diagnostic = choice.diagnostic; bool changed = false;
@@ -724,13 +724,13 @@ void EditorWindow::refresh() {
   for (const auto *id : {"stroke-colour", "fill-colour"}) { m_toolbarActions.value(id)->setEnabled(ready && m_session->canEditColor()); if (!owner) return; }
   m_createRectangle->setEnabled(!m_outputPending && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive()); if (!owner) return;
   m_rectangleProperties->setEnabled(!m_outputPending && !m_canvasOperationPending && !m_closePending && !m_canvas->interactionActive() && m_canvas->canEditRectangle()); if (!owner) return;
-  m_rectangleProperties->setToolTip(m_canvas->canEditRectangle() ? m_rectangleProperties->statusTip() : "Select one visible, unlocked rectangle to edit its properties.");
+  m_rectangleProperties->setToolTip(m_canvas->canEditRectangle() ? m_rectangleProperties->statusTip() : EditorWindow::tr("Select one visible, unlocked rectangle to edit its properties."));
   if (!owner) return;
   if (m_annotationMessageState != m_session->stateId()) { m_annotationMessage.clear(); m_annotationMessageState.reset(); }
   for (auto it = m_annotationActions.cbegin(); it != m_annotationActions.cend(); ++it) {
     const bool available = it.key() == "duplicate-selection" || (it.key() == "paste" ? bool(m_annotationClipboard.read) : bool(m_annotationClipboard.publish));
     it.value()->setEnabled(ready && available && (it.key() == "paste" || !m_session->selection().isEmpty())); if (!owner) return;
-    it.value()->setToolTip(available ? it.value()->statusTip() : "Annotation clipboard service is unavailable.");
+    it.value()->setToolTip(available ? it.value()->statusTip() : EditorWindow::tr("Annotation clipboard service is unavailable."));
     if (!owner) return;
   }
   if (m_printMessageState != m_session->stateId()) { m_printMessage.clear(); m_printMessageState.reset(); }
@@ -752,53 +752,53 @@ void EditorWindow::refresh() {
   m_redo->setEnabled(ready && m_session->redoCount() > 0); if (!owner) return;
   m_delete->setEnabled(ready && m_session->canDeleteSelection()); if (!owner) return;
   m_rotate->setEnabled(ready && m_session->canRotateSelection()); if (!owner) return;
-  m_delete->setToolTip(m_session->canDeleteSelection() ? m_delete->statusTip() : m_session->selection().isEmpty() ? "Select annotations to delete." : "Hidden or locked selections are protected from editing.");
+  m_delete->setToolTip(m_session->canDeleteSelection() ? m_delete->statusTip() : m_session->selection().isEmpty() ? EditorWindow::tr("Select annotations to delete.") : EditorWindow::tr("Hidden or locked selections are protected from editing."));
   if (!owner) return;
-  m_rotate->setToolTip(m_session->canRotateSelection() ? "Rotate selected rectangles about their own bounds centres" : "Select visible, unlocked rectangles. Hidden, locked and unsupported objects cannot rotate.");
+  m_rotate->setToolTip(m_session->canRotateSelection() ? EditorWindow::tr("Rotate selected rectangles about their own bounds centres") : EditorWindow::tr("Select visible, unlocked rectangles. Hidden, locked and unsupported objects cannot rotate."));
   if (!owner) return;
   m_clearAnnotations->setEnabled(ready && !m_session->document().annotations.empty()); if (!owner) return;
   m_retrySave->setEnabled(ready && m_partialSave && m_partialSaveState == m_session->stateId()); if (!owner) return;
   m_retrySave->setToolTip(m_partialSave && m_partialSaveState != m_session->stateId()
-      ? "The document changed since this image was saved. Undo to that state before retrying its annotations, or save a new snapshot."
+      ? EditorWindow::tr("The document changed since this image was saved. Undo to that state before retrying its annotations, or save a new snapshot.")
       : m_retrySave->statusTip());
   if (!owner) return;
   m_copyAction->setEnabled(ready && bool(m_copyPorts.publish)); if (!owner) return;
-  m_copyAction->setToolTip(m_copyPorts.publish ? m_copyAction->statusTip() : "Copy Image is unavailable: no clipboard service was provided.");
+  m_copyAction->setToolTip(m_copyPorts.publish ? m_copyAction->statusTip() : EditorWindow::tr("Copy Image is unavailable: no clipboard service was provided."));
   if (!owner) return;
   m_retryCopy->setEnabled(ready && m_copyPorts.publish && m_failedCopy && m_failedCopyState == m_session->stateId()); if (!owner) return;
   m_retryCopy->setToolTip(m_failedCopy && m_failedCopyState != m_session->stateId()
-      ? "The document changed. Undo to the failed snapshot before retrying it, or use Copy Image for a new snapshot." : m_retryCopy->statusTip());
+      ? EditorWindow::tr("The document changed. Undo to the failed snapshot before retrying it, or use Copy Image for a new snapshot.") : m_retryCopy->statusTip());
   if (!owner) return;
   const bool printAvailable = m_printPorts.configure && m_printPorts.submit;
   m_printAction->setEnabled(ready && printAvailable); if (!owner) return;
-  m_printAction->setToolTip(printAvailable ? m_printAction->statusTip() : "Print Image is unavailable: no print service was provided.");
+  m_printAction->setToolTip(printAvailable ? m_printAction->statusTip() : EditorWindow::tr("Print Image is unavailable: no print service was provided."));
   if (!owner) return;
   m_retryPrint->setEnabled(ready && printAvailable && m_failedPrint && m_failedPrintState == m_session->stateId()); if (!owner) return;
   m_retryPrint->setToolTip(m_failedPrint && m_failedPrintState != m_session->stateId()
-      ? "The document changed. Undo to the failed snapshot before retrying it, or use Print Image for a new snapshot." : m_retryPrint->statusTip());
+      ? EditorWindow::tr("The document changed. Undo to the failed snapshot before retrying it, or use Print Image for a new snapshot.") : m_retryPrint->statusTip());
   if (!owner) return;
   m_pinAction->setEnabled(ready && !m_canvasOperationPending && !m_closePending && bool(m_pinPorts.publish)); if (!owner) return;
-  m_pinAction->setToolTip(m_pinPorts.publish ? m_pinAction->statusTip() : "Pin to Screen is unavailable: no pin service was provided.");
+  m_pinAction->setToolTip(m_pinPorts.publish ? m_pinAction->statusTip() : EditorWindow::tr("Pin to Screen is unavailable: no pin service was provided."));
   if (!owner) return;
   const bool uploadAvailable = m_uploadPorts.confirm && m_uploadPorts.submit;
   m_uploadAction->setEnabled(ready && !m_canvasOperationPending && !m_closePending && uploadAvailable); if (!owner) return;
-  m_uploadAction->setToolTip(uploadAvailable ? m_uploadAction->statusTip() : "Upload Image is unavailable: no upload service was provided.");
+  m_uploadAction->setToolTip(uploadAvailable ? m_uploadAction->statusTip() : EditorWindow::tr("Upload Image is unavailable: no upload service was provided."));
   if (!owner) return;
   const bool wallpaperAvailable = bool(m_wallpaperPorts.confirm);
   m_wallpaperAction->setEnabled(ready && !m_canvasOperationPending && !m_closePending && wallpaperAvailable); if (!owner) return;
-  m_wallpaperAction->setToolTip(wallpaperAvailable ? m_wallpaperAction->statusTip() : "Set as Wallpaper is unavailable: no wallpaper confirmation service was provided.");
+  m_wallpaperAction->setToolTip(wallpaperAvailable ? m_wallpaperAction->statusTip() : EditorWindow::tr("Set as Wallpaper is unavailable: no wallpaper confirmation service was provided."));
   if (!owner) return;
-  setWindowTitle(QStringLiteral("%1%2 — XerahS").arg(!m_path.isEmpty() ? QFileInfo(m_path).fileName() : m_sourceLabel.isEmpty() ? QStringLiteral("Untitled image") : QStringLiteral("Untitled image (from %1)").arg(m_sourceLabel),
+  setWindowTitle(EditorWindow::tr("%1%2 — XerahS").arg(!m_path.isEmpty() ? QFileInfo(m_path).fileName() : m_sourceLabel.isEmpty() ? EditorWindow::tr("Untitled image") : EditorWindow::tr("Untitled image (from %1)").arg(m_sourceLabel),
                                                     m_session->dirty() ? QStringLiteral(" •") : QString()));
   if (!owner) return;
   updatePointerStatus();
-  QString status = QStringLiteral("%1 × %2 · %3 annotation(s) · %4 selected · %5%")
+  QString status = EditorWindow::tr("%1 × %2 · %3 annotation(s) · %4 selected · %5%")
                                .arg(m_image.width()).arg(m_image.height())
                                .arg(m_session->document().annotations.size()).arg(m_session->selection().size())
                                .arg(m_canvas->viewState().zoom() * 100, 0, 'f', 1);
-  if (!m_preferenceDiagnostic.isEmpty()) status += QStringLiteral(" · Recent images could not be saved: %1")
+  if (!m_preferenceDiagnostic.isEmpty()) status += EditorWindow::tr(" · Recent images could not be saved: %1")
       .arg(editorPreferenceDiagnosticMessage(m_preferenceDiagnostic));
-  if (!m_drawingPreferenceDiagnostic.isEmpty()) status += QStringLiteral(" · Drawing defaults could not be saved: %1")
+  if (!m_drawingPreferenceDiagnostic.isEmpty()) status += EditorWindow::tr(" · Drawing defaults could not be saved: %1")
       .arg(editorPreferenceDiagnosticMessage(m_drawingPreferenceDiagnostic));
   if (!m_saveMessage.isEmpty()) status += " · " + m_saveMessage;
   if (!m_copyMessage.isEmpty()) status += " · " + m_copyMessage;
@@ -824,7 +824,7 @@ void EditorWindow::updatePointerStatus() {
   // The colour is the source pixel of the image the editor already holds; the
   // annotated document is never rendered for a pointer move.
   if (m_pointerPixel && QRect(QPoint(0, 0), size).contains(*m_pointerPixel))
-    text = QStringLiteral("X: %1  Y: %2   %3   ")
+    text = EditorWindow::tr("X: %1  Y: %2   %3   ")
                .arg(m_pointerPixel->x()).arg(m_pointerPixel->y())
                .arg(xerahs::tools::formatColor(m_image.pixelColor(*m_pointerPixel), xerahs::tools::ColorFormat::Hex));
   m_pointerStatus->setText(text + QStringLiteral("%1 × %2").arg(size.width()).arg(size.height()));
@@ -847,8 +847,8 @@ void EditorWindow::newImage() {
   if (!current()) return;
   std::unique_ptr<EditorSession> next;
   try { next = std::make_unique<EditorSession>(std::move(*prepared->document), EditorSession::InitialPersistence::Unsaved); }
-  catch (const std::bad_alloc &) { editorWarning(this, "Cannot create image", "There is not enough memory for a new session. The current document is unchanged."); return; }
-  if (confirmReplacement(QStringLiteral("the new image")) == QMessageBox::Cancel || !guard) return;
+  catch (const std::bad_alloc &) { editorWarning(this, EditorWindow::tr("Cannot create image"), EditorWindow::tr("There is not enough memory for a new session. The current document is unchanged.")); return; }
+  if (confirmReplacement(EditorWindow::tr("the new image")) == QMessageBox::Cancel || !guard) return;
   if (!current()) return;
   withOutputBusy([guard, &current, &next, &prepared] {
     if (!guard || !current()) return false;
@@ -858,11 +858,11 @@ void EditorWindow::newImage() {
 
 int EditorWindow::confirmReplacement(const QString &replacement) {
   const QPointer<EditorWindow> guard(this); if (!m_session->dirty()) return QMessageBox::Discard;
-  const auto name = m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName(); int choice = QMessageBox::Cancel;
+  const auto name = m_path.isEmpty() ? EditorWindow::tr("Untitled image") : QFileInfo(m_path).fileName(); int choice = QMessageBox::Cancel;
   withOutputBusy([guard, replacement, name, &choice] {
     if (!guard) return false;
-    QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, "Replace current image",
-        QStringLiteral("Save changes to %1 before replacing it with %2?").arg(name, replacement), QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, guard));
+    QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, EditorWindow::tr("Replace current image"),
+        EditorWindow::tr("Save changes to %1 before replacing it with %2?").arg(name, replacement), QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, guard));
     box->setObjectName("replaceImageConfirmation"); box->setTextFormat(Qt::PlainText); box->setDefaultButton(QMessageBox::Cancel);
     choice = box->exec(); disposeCanvasDialog(box.data()); return false;
   });
@@ -874,7 +874,7 @@ int EditorWindow::confirmReplacement(const QString &replacement) {
 
 bool EditorWindow::replacementCurrent(quint64 state, quint64 generation, const QSet<QUuid> &selection) {
   if (state == m_session->stateId() && generation == m_canvas->documentGeneration() && selection == m_session->selection()) return true;
-  m_annotationMessage = "The document or selection changed. The image was not replaced. Try again."; m_annotationMessageState = m_session->stateId(); refresh(); return false;
+  m_annotationMessage = EditorWindow::tr("The document or selection changed. The image was not replaced. Try again."); m_annotationMessageState = m_session->stateId(); refresh(); return false;
 }
 
 void EditorWindow::adoptSession(std::unique_ptr<EditorSession> next, const QString &path, QImage source, const QImage &display, const QString &sourceLabel) {
@@ -909,7 +909,7 @@ bool EditorWindow::openImage(const QString &path) {
   withOutputBusy([guard, hooks, oldPath, &target, &source] {
     if (!guard) return false;
     if (target.isEmpty()) {
-      QPointer<QFileDialog> picker(new QFileDialog(guard, "Open image", oldPath, imageFileFilter())); picker->setObjectName("openImagePicker"); picker->setFileMode(QFileDialog::ExistingFile);
+      QPointer<QFileDialog> picker(new QFileDialog(guard, EditorWindow::tr("Open image"), oldPath, imageFileFilter())); picker->setObjectName("openImagePicker"); picker->setFileMode(QFileDialog::ExistingFile);
       const auto answer = picker->exec(); if (picker && answer == QDialog::Accepted && !picker->selectedFiles().isEmpty()) target = picker->selectedFiles().first();
       disposeCanvasDialog(picker.data()); if (!guard || target.isEmpty()) return false;
     }
@@ -922,14 +922,14 @@ bool EditorWindow::openImage(const QString &path) {
     if (source.diagnostic == u"canvas-cancelled") return false;
     if (source.document) return true;
     withOutputBusy([guard, target, diagnostic = source.diagnostic, report = source.importReport] {
-      if (guard) editorWarning(guard, "Cannot open image", QStringLiteral("%1\n\n%2").arg(QFileInfo(target).fileName(), describe(diagnostic) + (report ? "\n\n" + report->detailedSummary() : QString())));
+      if (guard) editorWarning(guard, EditorWindow::tr("Cannot open image"), QStringLiteral("%1\n\n%2").arg(QFileInfo(target).fileName(), describe(diagnostic) + (report ? "\n\n" + report->detailedSummary() : QString())));
       return false; });
     return false;
   };
   if (!usable() || !guard) return false;
   const auto prepareSession = [&]() -> std::unique_ptr<EditorSession> {
     try { return std::make_unique<EditorSession>(*source.document); }
-    catch (const std::bad_alloc &) { editorWarning(guard, "Cannot open image", describe(diagnostic::documentTooLarge)); return {}; }
+    catch (const std::bad_alloc &) { editorWarning(guard, EditorWindow::tr("Cannot open image"), describe(diagnostic::documentTooLarge)); return {}; }
   };
   auto next = prepareSession(); if (!guard || !next) return false;
   const int choice = confirmReplacement(QFileInfo(target).fileName());
@@ -945,7 +945,7 @@ bool EditorWindow::openImage(const QString &path) {
     guard->adoptSession(std::move(next), target, std::move(source.image), source.displayImage); return bool(guard);
   });
   if (!guard || !adopted) return false;
-  if (source.importReport) m_importMessage = QStringLiteral("Annotation import: ") + source.importReport->detailedSummary();
+  if (source.importReport) m_importMessage = EditorWindow::tr("Annotation import: ") + source.importReport->detailedSummary();
   recordRecentImage(target); return bool(guard);
 }
 
@@ -971,23 +971,23 @@ bool EditorWindow::openImageFromUrl() {
   if (!current()) return false;
   if (!source.document) {
     withOutputBusy([guard, label = downloaded->label, diagnostic = source.diagnostic] {
-      if (guard) editorWarning(guard, "Cannot open image from URL", QStringLiteral("The file from %1 is not a usable image.\n\n%2\n\nThe current image was not changed. Nothing was kept.").arg(label, describe(diagnostic)));
+      if (guard) editorWarning(guard, EditorWindow::tr("Cannot open image from URL"), EditorWindow::tr("The file from %1 is not a usable image.\n\n%2\n\nThe current image was not changed. Nothing was kept.").arg(label, describe(diagnostic)));
       return false; });
     return false;
   }
   std::unique_ptr<EditorSession> next;
   try { next = std::make_unique<EditorSession>(std::move(*source.document), EditorSession::InitialPersistence::Unsaved); }
-  catch (const std::bad_alloc &) { editorWarning(guard, "Cannot open image from URL", describe(diagnostic::documentTooLarge)); return false; }
+  catch (const std::bad_alloc &) { editorWarning(guard, EditorWindow::tr("Cannot open image from URL"), describe(diagnostic::documentTooLarge)); return false; }
   if (!guard) return false;
   const QString label = downloaded->label;
-  const int choice = confirmReplacement(QStringLiteral("the image from %1").arg(label));
+  const int choice = confirmReplacement(EditorWindow::tr("the image from %1").arg(label));
   if (!guard || choice == QMessageBox::Cancel || !current()) return false;
   const bool adopted = withOutputBusy([guard, &current, &next, &source, label] {
     if (!guard || !current()) return false;
     guard->adoptSession(std::move(next), {}, std::move(source.image), source.displayImage, label); return bool(guard);
   });
   if (!guard || !adopted) return false;
-  m_annotationMessage = QStringLiteral("Opened from %1 · downloaded to memory only, no local copy kept · Save to keep one").arg(label);
+  m_annotationMessage = EditorWindow::tr("Opened from %1 · downloaded to memory only, no local copy kept · Save to keep one").arg(label);
   m_annotationMessageState = m_session->stateId(); refresh();
   return bool(guard);
 }
@@ -1001,7 +1001,7 @@ void EditorWindow::restoreHistory(bool redo) {
   // first; only value-owned preparation crosses the worker boundary.
   AnnotationDocument document;
   try { if (sourceChanged) document = *target; }
-  catch (...) { m_annotationMessage = "Canvas history could not be prepared. History was kept."; m_annotationMessageState = state; refresh(); return; }
+  catch (...) { m_annotationMessage = EditorWindow::tr("Canvas history could not be prepared. History was kept."); m_annotationMessageState = state; refresh(); return; }
   const auto hooks = m_historyHooks; const QPointer<EditorWindow> owner(this);
   withOutputBusy([owner, redo, state, generation, selection, targetId, document, sourceChanged, hooks] {
     if (!owner) return false;
@@ -1024,7 +1024,7 @@ void EditorWindow::restoreHistory(bool redo) {
       }
     }
     owner->m_annotationMessage = diagnostic.isEmpty() ? QString() : diagnostic == "annotation-edit-stale" ? annotationEditMessage(diagnostic)
-        : QString("Canvas history could not be restored (%1). History was kept.").arg(diagnostic);
+        : EditorWindow::tr("Canvas history could not be restored (%1). History was kept.").arg(diagnostic);
     owner->m_annotationMessageState = owner->m_session->stateId();
     return changed;
   });
@@ -1073,31 +1073,31 @@ void EditorWindow::cropImage(CropRegion region) {
 void EditorWindow::autoCropImage() {
   editCanvas([](const QImage &, QWidget *parent) -> std::optional<CanvasOperation> {
   QPointer<QDialog> dialog(new QDialog(parent));
-  dialog->setWindowTitle(QStringLiteral("Auto Crop"));
+  dialog->setWindowTitle(EditorWindow::tr("Auto Crop"));
   auto *form = new QFormLayout(dialog.data());
   auto *border = new QComboBox(dialog.data());
   border->setObjectName(QStringLiteral("cropBorder"));
-  border->addItems({QStringLiteral("Transparent pixels"), QStringLiteral("Match top-left pixel"), QStringLiteral("Match chosen colour")});
-  form->addRow(QStringLiteral("Border rule"), border);
+  border->addItems({EditorWindow::tr("Transparent pixels"), EditorWindow::tr("Match top-left pixel"), EditorWindow::tr("Match chosen colour")});
+  form->addRow(EditorWindow::tr("Border rule"), border);
   auto *alpha = new QSpinBox(dialog.data()), *tolerance = new QSpinBox(dialog.data());
   alpha->setObjectName(QStringLiteral("cropAlpha")); tolerance->setObjectName(QStringLiteral("cropTolerance"));
   alpha->setRange(0, 255); tolerance->setRange(0, 255); tolerance->setEnabled(false);
-  form->addRow(QStringLiteral("Ignore alpha at or below"), alpha);
-  form->addRow(QStringLiteral("RGBA channel tolerance"), tolerance);
+  form->addRow(EditorWindow::tr("Ignore alpha at or below"), alpha);
+  form->addRow(EditorWindow::tr("RGBA channel tolerance"), tolerance);
   Argb selectedColor = 0xFFFFFFFF;
   auto *color = new QPushButton(QStringLiteral("#FFFFFFFF"), dialog.data()); color->setEnabled(false);
-  form->addRow(QStringLiteral("Border colour"), color);
+  form->addRow(EditorWindow::tr("Border colour"), color);
   connect(color, &QPushButton::clicked, dialog.data(), [&] {
-    QPointer<QColorDialog> picker(new QColorDialog(QColor::fromRgba(selectedColor), dialog)); picker->setOption(QColorDialog::ShowAlphaChannel); picker->setWindowTitle("Border colour");
+    QPointer<QColorDialog> picker(new QColorDialog(QColor::fromRgba(selectedColor), dialog)); picker->setOption(QColorDialog::ShowAlphaChannel); picker->setWindowTitle(EditorWindow::tr("Border colour"));
     const auto accepted = picker->exec(); const auto chosen = picker && accepted == QDialog::Accepted ? picker->selectedColor() : QColor{};
     disposeCanvasDialog(picker.data()); if (dialog && chosen.isValid()) { selectedColor = chosen.rgba(); color->setText(chosen.name(QColor::HexArgb)); }
   });
   connect(border, &QComboBox::currentIndexChanged, dialog.data(), [&](int index) {
     tolerance->setEnabled(index != 0); color->setEnabled(index == 2);
   });
-  auto *annotations = new QCheckBox(QStringLiteral("Include visible annotations when finding bounds"), dialog.data());
+  auto *annotations = new QCheckBox(EditorWindow::tr("Include visible annotations when finding bounds"), dialog.data());
   annotations->setObjectName(QStringLiteral("cropAnnotations")); annotations->setChecked(true); form->addRow(annotations);
-  auto *rules = new QLabel(QStringLiteral("Trim complete background rows and columns from the four edges. "
+  auto *rules = new QLabel(EditorWindow::tr("Trim complete background rows and columns from the four edges. "
       "Colour matching allows the stated difference in every RGBA channel. "
       "An empty image or unchanged bounds leave the document unchanged."), dialog.data());
   rules->setWordWrap(true); form->addRow(rules);
@@ -1115,32 +1115,32 @@ void EditorWindow::autoCropImage() {
 void EditorWindow::resizeImage(bool canvasOnly) {
   editCanvas([canvasOnly](const QImage &source, QWidget *parent) -> std::optional<CanvasOperation> {
   QPointer<QDialog> dialog(new QDialog(parent));
-  dialog->setWindowTitle(canvasOnly ? QStringLiteral("Resize Canvas") : QStringLiteral("Resize Image"));
+  dialog->setWindowTitle(canvasOnly ? EditorWindow::tr("Resize Canvas") : EditorWindow::tr("Resize Image"));
   auto *form = new QFormLayout(dialog.data());
   auto *width = new QSpinBox(dialog.data()), *height = new QSpinBox(dialog.data());
   width->setObjectName(QStringLiteral("canvasWidth")); height->setObjectName(QStringLiteral("canvasHeight"));
   width->setRange(1, int(kMaxDimension)); height->setRange(1, int(kMaxDimension));
   width->setValue(source.width()); height->setValue(source.height());
-  width->setAccessibleName(QStringLiteral("Width in pixels")); height->setAccessibleName(QStringLiteral("Height in pixels"));
-  form->addRow(QStringLiteral("Width (pixels)"), width); form->addRow(QStringLiteral("Height (pixels)"), height);
+  width->setAccessibleName(EditorWindow::tr("Width in pixels")); height->setAccessibleName(EditorWindow::tr("Height in pixels"));
+  form->addRow(EditorWindow::tr("Width (pixels)"), width); form->addRow(EditorWindow::tr("Height (pixels)"), height);
   auto *choice = new QComboBox(dialog.data());
-  auto *lock = new QCheckBox(QStringLiteral("Lock aspect ratio"), dialog.data()); lock->setChecked(true);
-  auto *color = new QPushButton(QStringLiteral("Transparent"), dialog.data());
+  auto *lock = new QCheckBox(EditorWindow::tr("Lock aspect ratio"), dialog.data()); lock->setChecked(true);
+  auto *color = new QPushButton(EditorWindow::tr("Transparent"), dialog.data());
   Argb fill = 0;
   if (canvasOnly) {
-    choice->addItems({QStringLiteral("Top left"), QStringLiteral("Top"), QStringLiteral("Top right"),
-                     QStringLiteral("Left"), QStringLiteral("Center"), QStringLiteral("Right"),
-                     QStringLiteral("Bottom left"), QStringLiteral("Bottom"), QStringLiteral("Bottom right")});
+    choice->addItems({EditorWindow::tr("Top left"), EditorWindow::tr("Top"), EditorWindow::tr("Top right"),
+                     EditorWindow::tr("Left"), EditorWindow::tr("Center"), EditorWindow::tr("Right"),
+                     EditorWindow::tr("Bottom left"), EditorWindow::tr("Bottom"), EditorWindow::tr("Bottom right")});
     choice->setCurrentIndex(4);
-    form->addRow(QStringLiteral("Anchor"), choice); form->addRow(QStringLiteral("Added area"), color);
+    form->addRow(EditorWindow::tr("Anchor"), choice); form->addRow(EditorWindow::tr("Added area"), color);
     connect(color, &QPushButton::clicked, dialog.data(), [&] {
-      QPointer<QColorDialog> picker(new QColorDialog(QColor::fromRgba(fill), dialog)); picker->setOption(QColorDialog::ShowAlphaChannel); picker->setWindowTitle("Added area colour");
+      QPointer<QColorDialog> picker(new QColorDialog(QColor::fromRgba(fill), dialog)); picker->setOption(QColorDialog::ShowAlphaChannel); picker->setWindowTitle(EditorWindow::tr("Added area colour"));
       const auto accepted = picker->exec(); const auto selected = picker && accepted == QDialog::Accepted ? picker->selectedColor() : QColor{};
       disposeCanvasDialog(picker.data()); if (dialog && selected.isValid()) { fill = selected.rgba(); color->setText(selected.name(QColor::HexArgb)); }
     });
   } else {
-    choice->addItems({QStringLiteral("Nearest neighbour"), QStringLiteral("Bilinear")});
-    form->addRow(lock); form->addRow(QStringLiteral("Interpolation"), choice);
+    choice->addItems({EditorWindow::tr("Nearest neighbour"), EditorWindow::tr("Bilinear")});
+    form->addRow(lock); form->addRow(EditorWindow::tr("Interpolation"), choice);
     connect(width, &QSpinBox::valueChanged, dialog.data(), [&](int value) {
       if (lock->isChecked()) { const QSignalBlocker block(height); height->setValue(int(std::floor(double(value) * source.height() / source.width() + .5))); }
     });
@@ -1214,13 +1214,13 @@ void EditorWindow::clearImage() {
   const bool dirty = m_session->dirty(); const QPointer<EditorWindow> owner(this); int answer = QMessageBox::Cancel;
   withOutputBusy([owner, dirty, &answer] {
     if (!owner) return false;
-    QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, "Clear Image and Annotations",
-        "Remove all pixels and annotation objects from this canvas, keeping its dimensions and colour profile? You can restore the current document with Undo.",
+    QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, EditorWindow::tr("Clear Image and Annotations"),
+        EditorWindow::tr("Remove all pixels and annotation objects from this canvas, keeping its dimensions and colour profile? You can restore the current document with Undo."),
         dirty ? QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel : QMessageBox::Ok | QMessageBox::Cancel, owner));
     box->setObjectName("clearImageConfirmation"); box->setTextFormat(Qt::PlainText); box->setDefaultButton(QMessageBox::Cancel);
     if (dirty) {
-      box->setInformativeText("Save the current changes before clearing?"); box->button(QMessageBox::Save)->setText("Save, then Clear"); box->button(QMessageBox::Discard)->setText("Clear without Saving");
-    } else box->button(QMessageBox::Ok)->setText("Clear");
+      box->setInformativeText(EditorWindow::tr("Save the current changes before clearing?")); box->button(QMessageBox::Save)->setText(EditorWindow::tr("Save, then Clear")); box->button(QMessageBox::Discard)->setText(EditorWindow::tr("Clear without Saving"));
+    } else box->button(QMessageBox::Ok)->setText(EditorWindow::tr("Clear"));
     answer = box->exec(); disposeCanvasDialog(box.data()); return false;
   });
   if (!owner || (answer != QMessageBox::Save && answer != QMessageBox::Discard && answer != QMessageBox::Ok)) return;
@@ -1270,15 +1270,15 @@ bool EditorWindow::commitCanvas(PreparedCanvasEdit prepared, quint64 state, cons
       !m_session->commitCanvas(*prepared.result.document, state, selection))) prepared.result.error = m_session->editDiagnostic().isEmpty() ? "document-invalid" : m_session->editDiagnostic();
   if (prepared.result.error) {
     QString message = *prepared.result.error;
-    if (message == u"canvas-annotation-shear-unsupported") message = QStringLiteral("An annotation cannot be transformed by this operation. The document has been kept unchanged.");
-    else if (message == u"canvas-annotation-render-unsupported") message = QStringLiteral("This document contains visible annotation types this editor cannot flatten yet. The document has been kept unchanged.");
-    else if (message == u"canvas-annotation-transform-unsupported") message = QStringLiteral("This document contains annotation types this editor cannot transform yet.");
-    else if (message == diagnostic::documentTooLarge) message = QStringLiteral("The requested image exceeds the editor's dimensions or memory limits.");
-    else if (message == diagnostic::documentInvalid) message = QStringLiteral("The image or annotation data is invalid.");
-    else if (message == u"canvas-encoding-failed") message = QStringLiteral("The edited source could not be encoded.");
-    else if (message == u"canvas-preparation-failed") message = QStringLiteral("The image could not be prepared. The document has been kept unchanged. Try again.");
+    if (message == u"canvas-annotation-shear-unsupported") message = EditorWindow::tr("An annotation cannot be transformed by this operation. The document has been kept unchanged.");
+    else if (message == u"canvas-annotation-render-unsupported") message = EditorWindow::tr("This document contains visible annotation types this editor cannot flatten yet. The document has been kept unchanged.");
+    else if (message == u"canvas-annotation-transform-unsupported") message = EditorWindow::tr("This document contains annotation types this editor cannot transform yet.");
+    else if (message == diagnostic::documentTooLarge) message = EditorWindow::tr("The requested image exceeds the editor's dimensions or memory limits.");
+    else if (message == diagnostic::documentInvalid) message = EditorWindow::tr("The image or annotation data is invalid.");
+    else if (message == u"canvas-encoding-failed") message = EditorWindow::tr("The edited source could not be encoded.");
+    else if (message == u"canvas-preparation-failed") message = EditorWindow::tr("The image could not be prepared. The document has been kept unchanged. Try again.");
     m_annotationMessage = message; m_annotationMessageState = m_session->stateId();
-    QPointer<QMessageBox> warning(new QMessageBox(QMessageBox::Warning, "Cannot edit image", message, QMessageBox::Ok, this));
+    QPointer<QMessageBox> warning(new QMessageBox(QMessageBox::Warning, EditorWindow::tr("Cannot edit image"), message, QMessageBox::Ok, this));
     warning->setObjectName("canvasOperationError"); warning->setTextFormat(Qt::PlainText); warning->exec(); disposeCanvasDialog(warning.data()); return false;
   }
   if (!prepared.result.changed) return false;
@@ -1295,7 +1295,7 @@ bool EditorWindow::save(bool chooseFile) {
   QString target = m_path; auto encoding = m_saveEncoding;
   const auto currentFormat = rasterFormatFromSuffix(QFileInfo(target).suffix());
   if (chooseFile || m_path.isEmpty() || !currentFormat || *currentFormat != encoding.format) {
-    QPointer<EditorSaveDialog> picker(new EditorSaveDialog(m_path.isEmpty() ? "Untitled.png" : m_path, this));
+    QPointer<EditorSaveDialog> picker(new EditorSaveDialog(m_path.isEmpty() ? QStringLiteral("Untitled.png") : m_path, this));
     const auto accepted = picker->exec();
     target = picker && accepted == QDialog::Accepted ? picker->selectedFiles().value(0) : QString{};
     if (picker) encoding = picker->encodingOptions();
@@ -1309,8 +1309,8 @@ bool EditorWindow::save(bool chooseFile) {
 bool EditorWindow::retrySave() {
   if (m_outputPending || !m_partialSave || m_partialSaveState != m_session->stateId() || m_canvas->interactionActive()) return false;
   const QPointer<EditorWindow> guard(this); const auto expected = m_partialSave; const auto state = m_partialSaveState;
-  QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, "Retry annotation save?",
-      QString("Retry the editable annotations for %1? The already saved %2 will be kept without rewriting it.").arg(QFileInfo(expected->path).fileName(), rasterFormatName(expected->encoding.format)),
+  QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, EditorWindow::tr("Retry annotation save?"),
+      EditorWindow::tr("Retry the editable annotations for %1? The already saved %2 will be kept without rewriting it.").arg(QFileInfo(expected->path).fileName(), rasterFormatName(expected->encoding.format)),
       QMessageBox::Retry | QMessageBox::Cancel, this));
   box->setTextFormat(Qt::PlainText);
   box->setObjectName("retryEditorSidecarDialog"); box->setDefaultButton(QMessageBox::Cancel); box->setEscapeButton(QMessageBox::Cancel);
@@ -1366,17 +1366,17 @@ bool EditorWindow::performSave(const QString &target, const EditorSaveReceiptPtr
     if (outcome.rasterSaved && !outcome.sidecarSaved && outcome.receipt) { m_partialSave = outcome.receipt; m_partialSaveState = state; }
     if (!failed.isEmpty()) {
       refresh(); emit saveFinished(outcome.rasterSaved, outcome.sidecarSaved, outcome.cancelled); if (!guard) return false;
-      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, "Save incomplete",
-          outcome.rasterSaved ? QString("%1 saved; editable annotation persistence failed. The document remains unsaved. Retry annotation save keeps the %1.").arg(format)
-                              : QString("%1 was not saved. The previous destination and editable document have been kept.").arg(format), QMessageBox::Ok, this));
+      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, EditorWindow::tr("Save incomplete"),
+          outcome.rasterSaved ? EditorWindow::tr("%1 saved; editable annotation persistence failed. The document remains unsaved. Retry annotation save keeps the %1.").arg(format)
+                              : EditorWindow::tr("%1 was not saved. The previous destination and editable document have been kept.").arg(format), QMessageBox::Ok, this));
       box->setTextFormat(Qt::PlainText);
-      box->setInformativeText(QString("Destination: %1\nFormat: %2\n%3").arg(target, format, failed.join(", "))); box->exec(); delete box.data();
+      box->setInformativeText(EditorWindow::tr("Destination: %1\nFormat: %2\n%3").arg(target, format, failed.join(", "))); box->exec(); delete box.data();
       return false;
     }
     m_partialSave.reset(); m_partialSaveState.reset();
-    m_saveMessage = outcome.sidecarPath ? QString("Saved %1 and editable annotations").arg(format) : QString("Saved %1; no annotation companion needed").arg(format);
-    if (outcome.sidecarPath) m_saveMessage += QStringLiteral("; %1 version %2; non-portable omissions: %3").arg(outcome.annotationExport.target).arg(outcome.annotationExport.version).arg(outcome.annotationExport.omissions.size());
-    if (outcome.cancelled) m_saveMessage += " (completed despite cancellation)";
+    m_saveMessage = outcome.sidecarPath ? EditorWindow::tr("Saved %1 and editable annotations").arg(format) : EditorWindow::tr("Saved %1; no annotation companion needed").arg(format);
+    if (outcome.sidecarPath) m_saveMessage += EditorWindow::tr("; %1 version %2; non-portable omissions: %3").arg(outcome.annotationExport.target).arg(outcome.annotationExport.version).arg(outcome.annotationExport.omissions.size());
+    if (outcome.cancelled) m_saveMessage += EditorWindow::tr(" (completed despite cancellation)");
     m_saveMessageState = state;
     m_path = target; m_saveEncoding = encoding;
     recordRecentImage(absoluteImagePath(target));
@@ -1396,27 +1396,27 @@ bool EditorWindow::copyImage(const EditorCopyPayloadPtr &retry) {
     if (!guard) return false;
     const auto &action = copied.action;
     const bool success = !action.outcomeUnknown && action.state == xerahs::actions::ActionState::Succeeded;
-    if (success) { m_failedCopy.reset(); m_failedCopyState.reset(); m_copyMessage = "Image copied with alpha and PNG; clipboard uses sRGB"; }
+    if (success) { m_failedCopy.reset(); m_failedCopyState.reset(); m_copyMessage = EditorWindow::tr("Image copied with alpha and PNG; clipboard uses sRGB"); }
     else if (action.outcomeUnknown) {
       m_failedCopy.reset(); m_failedCopyState.reset();
-      m_copyMessage = "Image copy delivery is unknown; the clipboard may have changed. Check the destination before copying again";
+      m_copyMessage = EditorWindow::tr("Image copy delivery is unknown; the clipboard may have changed. Check the destination before copying again");
     } else if (action.state == xerahs::actions::ActionState::Failed) {
       m_failedCopy = copied.payload; m_failedCopyState = copied.payload ? std::optional<quint64>{state} : std::nullopt;
-      m_copyMessage = "Image copy failed; the document is unchanged";
-    } else m_copyMessage = "Image copy cancelled; the clipboard was kept";
-    if (copied.payload && copied.payload->disclosures.contains("clipboard-colour-converted-to-srgb")) m_copyMessage += " (source colours converted to sRGB)";
-    if (copied.payload && copied.payload->disclosures.contains("clipboard-untagged-assumed-srgb")) m_copyMessage += " (untagged source interpreted as sRGB)";
-    if (copied.cancellationArrivedDuring) m_copyMessage += " (cancellation arrived during publication)";
+      m_copyMessage = EditorWindow::tr("Image copy failed; the document is unchanged");
+    } else m_copyMessage = EditorWindow::tr("Image copy cancelled; the clipboard was kept");
+    if (copied.payload && copied.payload->disclosures.contains("clipboard-colour-converted-to-srgb")) m_copyMessage += EditorWindow::tr(" (source colours converted to sRGB)");
+    if (copied.payload && copied.payload->disclosures.contains("clipboard-untagged-assumed-srgb")) m_copyMessage += EditorWindow::tr(" (untagged source interpreted as sRGB)");
+    if (copied.cancellationArrivedDuring) m_copyMessage += EditorWindow::tr(" (cancellation arrived during publication)");
     m_copyMessageState = state;
     const auto diagnostic = action.diagnostic.value_or(QString{});
     emit copyFinished(action.outcomeUnknown ? "unknown" : xerahs::actions::actionStateName(action.state), diagnostic, copied.cancellationArrivedDuring);
     if (!guard) return false;
     if (action.state == xerahs::actions::ActionState::Failed || action.outcomeUnknown) {
-      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, "Image copy incomplete",
-          action.outcomeUnknown ? "Clipboard delivery could not be confirmed. Its contents may have changed; check the destination before a new Copy Image action. The editable document is kept."
-                               : diagnostic == "clipboard-annotation-unsupported" ? "A visible unsupported annotation cannot be copied without losing it. The editable document and clipboard contents are kept."
-                               : copied.payload ? "The image was not copied. The editable document and previous clipboard contents are kept. Retry image copy can publish a prepared snapshot without rendering it again."
-                                                : "The image could not be prepared. The editable document and clipboard contents are kept. Use Copy Image to try again.", QMessageBox::Ok, this));
+      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, EditorWindow::tr("Image copy incomplete"),
+          action.outcomeUnknown ? EditorWindow::tr("Clipboard delivery could not be confirmed. Its contents may have changed; check the destination before a new Copy Image action. The editable document is kept.")
+                               : diagnostic == "clipboard-annotation-unsupported" ? EditorWindow::tr("A visible unsupported annotation cannot be copied without losing it. The editable document and clipboard contents are kept.")
+                               : copied.payload ? EditorWindow::tr("The image was not copied. The editable document and previous clipboard contents are kept. Retry image copy can publish a prepared snapshot without rendering it again.")
+                                                : EditorWindow::tr("The image could not be prepared. The editable document and clipboard contents are kept. Use Copy Image to try again."), QMessageBox::Ok, this));
       box->setTextFormat(Qt::PlainText); box->setInformativeText(diagnostic); box->exec(); delete box.data();
     }
     return success && bool(guard);
@@ -1425,8 +1425,8 @@ bool EditorWindow::copyImage(const EditorCopyPayloadPtr &retry) {
 bool EditorWindow::retryCopy() {
   if (m_outputPending || m_canvasOperationPending || m_closePending || !m_copyPorts.publish || !m_failedCopy || m_failedCopyState != m_session->stateId() || m_canvas->interactionActive()) return false;
   const QPointer<EditorWindow> guard(this); const auto expected = m_failedCopy; const auto state = m_failedCopyState;
-  QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, "Retry image copy?",
-      "Publish the unchanged rendered snapshot to the clipboard? No pixels will be rendered again. This replaces current clipboard contents.", QMessageBox::Retry | QMessageBox::Cancel, this));
+  QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, EditorWindow::tr("Retry image copy?"),
+      EditorWindow::tr("Publish the unchanged rendered snapshot to the clipboard? No pixels will be rendered again. This replaces current clipboard contents."), QMessageBox::Retry | QMessageBox::Cancel, this));
   box->setObjectName("retryImageCopyDialog"); box->setDefaultButton(QMessageBox::Cancel); box->setEscapeButton(QMessageBox::Cancel);
   const auto choice = box->exec(); delete box.data();
   if (!guard || choice != QMessageBox::Retry || m_outputPending || m_failedCopy != expected || m_failedCopyState != state || state != m_session->stateId()) return false;
@@ -1444,23 +1444,24 @@ bool EditorWindow::uploadImage() {
     const auto &action = uploaded.action;
     const bool success = action.state == xerahs::actions::ActionState::Succeeded && !action.outcomeUnknown;
     const auto code = action.diagnostic.value_or(QString{});
-    m_uploadMessage = success ? "Image uploaded; the editable document is unchanged"
-        : action.outcomeUnknown ? "Upload delivery is unknown. Check the destination before another upload"
-        : action.state == xerahs::actions::ActionState::Cancelled ? "Upload cancelled before transmission; the editable document is unchanged"
-        : code == "upload-destination-missing" ? "No upload destination is configured. Add one in Upload destinations; the document is kept"
-        : code == "upload-annotation-unsupported" ? "A visible unsupported annotation cannot be uploaded without losing it. The document is kept"
-        : "Upload failed; the document is kept. Use Upload Image to try again with fresh confirmation";
+    m_uploadMessage = success ? EditorWindow::tr("Image uploaded; the editable document is unchanged")
+        : action.outcomeUnknown ? EditorWindow::tr("Upload delivery is unknown. Check the destination before another upload")
+        : action.state == xerahs::actions::ActionState::Cancelled ? EditorWindow::tr("Upload cancelled before transmission; the editable document is unchanged")
+        : code == "upload-destination-missing" ? EditorWindow::tr("No upload destination is configured. Add one in Upload destinations; the document is kept")
+        : code == "upload-annotation-unsupported" ? EditorWindow::tr("A visible unsupported annotation cannot be uploaded without losing it. The document is kept")
+        : EditorWindow::tr("Upload failed; the document is kept. Use Upload Image to try again with fresh confirmation");
     if (!code.isEmpty()) m_uploadMessage += " (" + code + ")";
     const auto url = success && action.upload ? action.upload->url : QString{};
     try { emit uploadFinished(action.outcomeUnknown ? "unknown" : xerahs::actions::actionStateName(action.state), code, url); }
-    catch (...) { if (owner) m_uploadMessage += " (completion observer failed)"; }
+    catch (...) { if (owner) m_uploadMessage += EditorWindow::tr(" (completion observer failed)"); }
     if (!owner) return false;
     if (success) {
       xerahs::uploads::UploadOutcome result;
       result.url = action.upload->url;
       result.thumbnailUrl = action.upload->thumbnailUrl;
       result.deletionUrl = action.upload->deletionUrl;
-      auto *dialog = new FileUploadResultDialog(QStringLiteral("Edited image"), result, this);
+      result.attempts = action.upload->attempts;
+      auto *dialog = new FileUploadResultDialog(EditorWindow::tr("Edited image"), result, this);
       dialog->show();
     }
     return success && bool(owner);
@@ -1476,17 +1477,17 @@ bool EditorWindow::setWallpaper() {
     const auto &action = result.action;
     const bool success = action.state == xerahs::actions::ActionState::Succeeded && !action.outcomeUnknown;
     const auto code = action.diagnostic.value_or(QString{});
-    const QString kept = result.fileRetained ? " The wallpaper image is kept at " + result.filePath + "." : QString{};
-    m_wallpaperMessage = success ? "Wallpaper set on all displays (" + result.target + "); the editable document is unchanged." + kept
-        : code == "wallpaper-cancel-requested" ? "Wallpaper request cancelled; the desktop may already have applied it. The document is unchanged." + kept
-        : action.state == xerahs::actions::ActionState::Cancelled ? "Wallpaper not set (cancelled); the editable document is unchanged"
-        : code == "wallpaper-annotation-unsupported" ? "A visible unsupported annotation cannot be set as wallpaper without losing it. The document is kept"
-        : code == "wallpaper-permission-denied" ? "The desktop denied setting the wallpaper; the document is kept"
-        : code == "wallpaper-service-unavailable" ? "This desktop has no wallpaper portal; the document is kept"
-        : "Wallpaper failed; the document is kept. Use Set as Wallpaper to try again with fresh confirmation";
+    const QString kept = result.fileRetained ? EditorWindow::tr(" The wallpaper image is kept at ") + result.filePath + "." : QString{};
+    m_wallpaperMessage = success ? EditorWindow::tr("Wallpaper set on all displays (") + result.target + EditorWindow::tr("); the editable document is unchanged.") + kept
+        : code == "wallpaper-cancel-requested" ? EditorWindow::tr("Wallpaper request cancelled; the desktop may already have applied it. The document is unchanged.") + kept
+        : action.state == xerahs::actions::ActionState::Cancelled ? EditorWindow::tr("Wallpaper not set (cancelled); the editable document is unchanged")
+        : code == "wallpaper-annotation-unsupported" ? EditorWindow::tr("A visible unsupported annotation cannot be set as wallpaper without losing it. The document is kept")
+        : code == "wallpaper-permission-denied" ? EditorWindow::tr("The desktop denied setting the wallpaper; the document is kept")
+        : code == "wallpaper-service-unavailable" ? EditorWindow::tr("This desktop has no wallpaper portal; the document is kept")
+        : EditorWindow::tr("Wallpaper failed; the document is kept. Use Set as Wallpaper to try again with fresh confirmation");
     if (!code.isEmpty() && code != "wallpaper-cancel-requested") m_wallpaperMessage += " (" + code + ")";
     try { emit wallpaperFinished(xerahs::actions::actionStateName(action.state), code, result.fileRetained ? result.filePath : QString{}); }
-    catch (...) { if (owner) m_wallpaperMessage += " (completion observer failed)"; }
+    catch (...) { if (owner) m_wallpaperMessage += EditorWindow::tr(" (completion observer failed)"); }
     return success && bool(owner);
   });
 }
@@ -1500,14 +1501,14 @@ bool EditorWindow::pinImage() {
     const auto &action = pinned.action;
     const bool success = action.state == xerahs::actions::ActionState::Succeeded && !action.outcomeUnknown;
     const auto diagnostic = action.diagnostic.value_or(QString{});
-    m_pinMessage = success ? "Image pinned; the editable document is unchanged"
-        : action.outcomeUnknown ? "Pin delivery is unknown. Check the screen before another Pin to Screen action"
-        : action.state == xerahs::actions::ActionState::Cancelled ? "Pin cancelled; the editable document is unchanged"
-        : diagnostic == "pin-annotation-unsupported" ? "A visible unsupported annotation cannot be pinned without losing it. The document is kept"
-        : "Pin failed; the editable document is kept. Use Pin to Screen to try again";
+    m_pinMessage = success ? EditorWindow::tr("Image pinned; the editable document is unchanged")
+        : action.outcomeUnknown ? EditorWindow::tr("Pin delivery is unknown. Check the screen before another Pin to Screen action")
+        : action.state == xerahs::actions::ActionState::Cancelled ? EditorWindow::tr("Pin cancelled; the editable document is unchanged")
+        : diagnostic == "pin-annotation-unsupported" ? EditorWindow::tr("A visible unsupported annotation cannot be pinned without losing it. The document is kept")
+        : EditorWindow::tr("Pin failed; the editable document is kept. Use Pin to Screen to try again");
     if (!diagnostic.isEmpty()) m_pinMessage += " (" + diagnostic + ")";
     try { emit pinFinished(action.outcomeUnknown ? "unknown" : xerahs::actions::actionStateName(action.state), diagnostic); }
-    catch (...) { if (owner) m_pinMessage += " (completion observer failed)"; }
+    catch (...) { if (owner) m_pinMessage += EditorWindow::tr(" (completion observer failed)"); }
     return success && bool(owner);
   });
 }
@@ -1519,24 +1520,24 @@ bool EditorWindow::printImage(const EditorPrintSnapshotPtr &retry) {
     const auto printed = runEditorPrint(source, document, this, ports, retry); if (!guard) return false;
     const auto &action = printed.action; const bool success = action.state == xerahs::actions::ActionState::Succeeded && !action.outcomeUnknown;
     m_failedPrint.reset(); m_failedPrintState.reset();
-    if (success) m_printMessage = "Image submitted to the printer; physical delivery is not confirmed";
-    else if (action.outcomeUnknown) m_printMessage = "Print delivery is unknown. Check the printer queue before starting another print";
+    if (success) m_printMessage = EditorWindow::tr("Image submitted to the printer; physical delivery is not confirmed");
+    else if (action.outcomeUnknown) m_printMessage = EditorWindow::tr("Print delivery is unknown. Check the printer queue before starting another print");
     else if (action.state == xerahs::actions::ActionState::Failed) {
       m_failedPrint = printed.snapshot; m_failedPrintState = printed.snapshot ? std::optional<quint64>{state} : std::nullopt;
-      m_printMessage = "Print failed before a confirmed submission; the document is unchanged";
-    } else m_printMessage = "Print cancelled before submission; the document is unchanged";
-    if (printed.cancellationArrivedDuring) m_printMessage += " (cancellation requested during submission)";
+      m_printMessage = EditorWindow::tr("Print failed before a confirmed submission; the document is unchanged");
+    } else m_printMessage = EditorWindow::tr("Print cancelled before submission; the document is unchanged");
+    if (printed.cancellationArrivedDuring) m_printMessage += EditorWindow::tr(" (cancellation requested during submission)");
     m_printMessageState = state;
     const auto diagnostic = action.diagnostic.value_or(QString{});
     try { emit printFinished(action.outcomeUnknown ? "unknown" : xerahs::actions::actionStateName(action.state), diagnostic, printed.cancellationArrivedDuring); }
-    catch (...) { if (guard) m_printMessage += " (completion observer failed)"; }
+    catch (...) { if (guard) m_printMessage += EditorWindow::tr(" (completion observer failed)"); }
     if (!guard) return false;
     if (action.state == xerahs::actions::ActionState::Failed || action.outcomeUnknown) {
-      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, "Image print incomplete",
-          action.outcomeUnknown ? "The printer may have received the job. Check its queue before a new Print Image action. Automatic retry is unavailable; the editable document is kept."
-                               : diagnostic == "print-annotation-unsupported" ? "A visible unsupported annotation cannot be printed without losing it. The editable document is kept."
-                               : printed.snapshot ? "The image was not submitted. Retry image print can reuse this snapshot with fresh printer confirmation. The editable document is kept."
-                                                  : "The image could not be prepared. Use Print Image to try again. The editable document is kept.", QMessageBox::Ok, this));
+      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, EditorWindow::tr("Image print incomplete"),
+          action.outcomeUnknown ? EditorWindow::tr("The printer may have received the job. Check its queue before a new Print Image action. Automatic retry is unavailable; the editable document is kept.")
+                               : diagnostic == "print-annotation-unsupported" ? EditorWindow::tr("A visible unsupported annotation cannot be printed without losing it. The editable document is kept.")
+                               : printed.snapshot ? EditorWindow::tr("The image was not submitted. Retry image print can reuse this snapshot with fresh printer confirmation. The editable document is kept.")
+                                                  : EditorWindow::tr("The image could not be prepared. Use Print Image to try again. The editable document is kept."), QMessageBox::Ok, this));
       box->setTextFormat(Qt::PlainText); box->setInformativeText(diagnostic); box->exec(); delete box.data();
     }
     return success && bool(guard);
@@ -1545,8 +1546,8 @@ bool EditorWindow::printImage(const EditorPrintSnapshotPtr &retry) {
 bool EditorWindow::retryPrint() {
   if (m_outputPending || m_canvasOperationPending || m_closePending || !m_printPorts.configure || !m_printPorts.submit || !m_failedPrint || m_failedPrintState != m_session->stateId() || m_canvas->interactionActive()) return false;
   const QPointer<EditorWindow> guard(this); const auto expected = m_failedPrint; const auto state = m_failedPrintState;
-  QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, "Retry image print?",
-      "Prepare the unchanged snapshot for a new native printer confirmation? No pixels will be rendered again. A print is submitted only after confirmation.", QMessageBox::Retry | QMessageBox::Cancel, this));
+  QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, EditorWindow::tr("Retry image print?"),
+      EditorWindow::tr("Prepare the unchanged snapshot for a new native printer confirmation? No pixels will be rendered again. A print is submitted only after confirmation."), QMessageBox::Retry | QMessageBox::Cancel, this));
   box->setObjectName("retryImagePrintDialog"); box->setDefaultButton(QMessageBox::Cancel); box->setEscapeButton(QMessageBox::Cancel);
   const auto choice = box->exec(); delete box.data();
   if (!guard || choice != QMessageBox::Retry || m_outputPending || m_failedPrint != expected || m_failedPrintState != state || state != m_session->stateId()) return false;
@@ -1598,27 +1599,27 @@ bool EditorWindow::transferAnnotations(const QString &command) {
     }
     const bool partial = published && command == "cut-annotation" && !changed;
     const bool success = action.state == ActionState::Succeeded && !action.outcomeUnknown;
-    if (action.outcomeUnknown) m_annotationMessage = "Clipboard delivery is unknown; selected annotations are kept. Check the clipboard before copying again";
-    else if (partial) m_annotationMessage = "Annotations were copied, but Cut did not complete; the selection is kept";
-    else if (success) m_annotationMessage = command == "copy-annotation" ? "Annotations copied; the document is unchanged" : command == "cut-annotation" ? "Annotations cut; Undo restores them" : command == "paste" ? "Annotations pasted as one undoable operation" : "Annotations duplicated as one undoable operation";
-    else if (action.state == ActionState::Cancelled) m_annotationMessage = "Annotation transfer cancelled; the document is unchanged";
-    else m_annotationMessage = "Annotation action failed; the document is unchanged";
+    if (action.outcomeUnknown) m_annotationMessage = EditorWindow::tr("Clipboard delivery is unknown; selected annotations are kept. Check the clipboard before copying again");
+    else if (partial) m_annotationMessage = EditorWindow::tr("Annotations were copied, but Cut did not complete; the selection is kept");
+    else if (success) m_annotationMessage = command == "copy-annotation" ? EditorWindow::tr("Annotations copied; the document is unchanged") : command == "cut-annotation" ? EditorWindow::tr("Annotations cut; Undo restores them") : command == "paste" ? EditorWindow::tr("Annotations pasted as one undoable operation") : EditorWindow::tr("Annotations duplicated as one undoable operation");
+    else if (action.state == ActionState::Cancelled) m_annotationMessage = EditorWindow::tr("Annotation transfer cancelled; the document is unchanged");
+    else m_annotationMessage = EditorWindow::tr("Annotation action failed; the document is unchanged");
     m_annotationMessageState = m_session->stateId();
     const auto diagnostic = action.diagnostic.value_or(QString{});
     try { emit annotationTransferFinished(command, partial ? "partial" : action.outcomeUnknown ? "unknown" : actionStateName(action.state), diagnostic, changed); }
-    catch (...) { if (guard) m_annotationMessage += " (completion observer failed)"; }
+    catch (...) { if (guard) m_annotationMessage += EditorWindow::tr(" (completion observer failed)"); }
     if (!guard) return false;
     if (!success && action.state != ActionState::Cancelled) {
-      const auto explanation = action.outcomeUnknown ? "The clipboard may have changed, so Cut kept the selected objects. Check the clipboard before copying again."
-          : partial ? "The clipboard contains the selected annotations, but they could not be removed. The editable document is kept."
-          : diagnostic == "annotation-clipboard-assets-unavailable" ? "A selected or pasted image annotation has no embedded pixels to carry. No annotations or assets were dropped; the document and clipboard are kept."
-          : diagnostic == "annotation-clipboard-asset-invalid" ? "A copied image is not a valid, safely sized PNG. No annotations or assets were added; the document and clipboard are kept."
-          : diagnostic == "annotation-type-unsupported" ? "This selection contains an unsupported annotation. The whole selection is kept; no supported subset is transferred."
-          : diagnostic == "annotation-selection-protected" ? "Hidden or locked annotations cannot be transferred by this command. The selection is kept."
-          : diagnostic == "annotation-clipboard-format-unavailable" ? "The clipboard has no supported annotation payload. Image and text clipboard contents are kept."
-          : diagnostic == "annotation-transfer-too-large" ? "The selection or clipboard data exceeds the transfer limit. Use fewer annotations or smaller annotation metadata. The document is kept."
-          : "The annotation transfer could not complete. The document is kept. Check the selection or copy supported annotations again.";
-      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, "Annotation action incomplete", explanation, QMessageBox::Ok, this));
+      const auto explanation = action.outcomeUnknown ? EditorWindow::tr("The clipboard may have changed, so Cut kept the selected objects. Check the clipboard before copying again.")
+          : partial ? EditorWindow::tr("The clipboard contains the selected annotations, but they could not be removed. The editable document is kept.")
+          : diagnostic == "annotation-clipboard-assets-unavailable" ? EditorWindow::tr("A selected or pasted image annotation has no embedded pixels to carry. No annotations or assets were dropped; the document and clipboard are kept.")
+          : diagnostic == "annotation-clipboard-asset-invalid" ? EditorWindow::tr("A copied image is not a valid, safely sized PNG. No annotations or assets were added; the document and clipboard are kept.")
+          : diagnostic == "annotation-type-unsupported" ? EditorWindow::tr("This selection contains an unsupported annotation. The whole selection is kept; no supported subset is transferred.")
+          : diagnostic == "annotation-selection-protected" ? EditorWindow::tr("Hidden or locked annotations cannot be transferred by this command. The selection is kept.")
+          : diagnostic == "annotation-clipboard-format-unavailable" ? EditorWindow::tr("The clipboard has no supported annotation payload. Image and text clipboard contents are kept.")
+          : diagnostic == "annotation-transfer-too-large" ? EditorWindow::tr("The selection or clipboard data exceeds the transfer limit. Use fewer annotations or smaller annotation metadata. The document is kept.")
+          : EditorWindow::tr("The annotation transfer could not complete. The document is kept. Check the selection or copy supported annotations again.");
+      QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Warning, EditorWindow::tr("Annotation action incomplete"), explanation, QMessageBox::Ok, this));
       box->setTextFormat(Qt::PlainText); box->setInformativeText(diagnostic); box->exec(); delete box.data();
     }
     return success && bool(guard);
@@ -1640,7 +1641,7 @@ void EditorWindow::closeEvent(QCloseEvent *event) {
   const QPointer<EditorWindow> guard(this); m_closePending = true;
   const auto closing = qScopeGuard([guard] { if (guard) guard->m_closePending = false; });
   if (!m_session->dirty() && conveniencePreferencesFromPreferences(nativeEditorPreferences()).exitConfirmation) {
-    QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, "Close editor", "Close this editor?", QMessageBox::Close | QMessageBox::Cancel, this));
+    QPointer<QMessageBox> box(new QMessageBox(QMessageBox::Question, EditorWindow::tr("Close editor"), EditorWindow::tr("Close this editor?"), QMessageBox::Close | QMessageBox::Cancel, this));
     box->setDefaultButton(QMessageBox::Cancel); const int answer = box->exec();
     if (box) box->setParent(nullptr);
     delete box.data();
@@ -1648,8 +1649,8 @@ void EditorWindow::closeEvent(QCloseEvent *event) {
   }
   if (m_session->dirty()) {
     // ES-008: Save, Discard, Cancel.
-    QMessageBox box(QMessageBox::Question, QStringLiteral("Unsaved changes"),
-                    QStringLiteral("Save changes to %1?").arg(m_path.isEmpty() ? QStringLiteral("Untitled image") : QFileInfo(m_path).fileName()),
+    QMessageBox box(QMessageBox::Question, EditorWindow::tr("Unsaved changes"),
+                    EditorWindow::tr("Save changes to %1?").arg(m_path.isEmpty() ? EditorWindow::tr("Untitled image") : QFileInfo(m_path).fileName()),
                     QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, this);
     box.setDefaultButton(QMessageBox::Save);
     const auto choice = box.exec(); box.setParent(nullptr);
@@ -1662,7 +1663,7 @@ void EditorWindow::closeEvent(QCloseEvent *event) {
   if (!guard) { event->ignore(); return; }
   discardRecovery();  // ES-018: clean close or explicit Discard removes the recovery document
   const auto diagnostic = m_windowState->remember();
-  if (!diagnostic.isEmpty()) QMessageBox::warning(this, QStringLiteral("Window preferences not saved"), editorPreferenceDiagnosticMessage(diagnostic));
+  if (!diagnostic.isEmpty()) QMessageBox::warning(this, EditorWindow::tr("Window preferences not saved"), editorPreferenceDiagnosticMessage(diagnostic));
   event->accept();
 }
 

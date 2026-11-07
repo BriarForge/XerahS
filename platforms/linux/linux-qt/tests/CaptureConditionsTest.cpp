@@ -6,6 +6,10 @@
 #include <QApplication>
 #include <QDBusConnection>
 #include <QDBusMessage>
+#include <QDBusPendingCallWatcher>
+#include <QDBusVirtualObject>
+#include <QDBusVariant>
+#include <QScopeGuard>
 #include <QDialog>
 #include <QRadioButton>
 #include <QSignalSpy>
@@ -17,6 +21,17 @@ using namespace xerahs::app;
 using namespace xerahs::capture;
 
 namespace {
+
+class DelayedLockSnapshot final : public QDBusVirtualObject {
+public:
+  QDBusMessage pending;
+  QString introspect(const QString &) const override { return {}; }
+  bool handleMessage(const QDBusMessage &message, const QDBusConnection &) override {
+    if (message.interface() != "org.freedesktop.DBus.Properties" || message.member() != "Get") return false;
+    pending = message;
+    return true;
+  }
+};
 
 class ManualTimer final : public Timer {
 public:
@@ -124,6 +139,33 @@ private slots:
     running.condition = AutoCondition::Clear;
     running.tick();
     QCOMPARE(running.starts, 1);
+  }
+
+  void lateInitialSnapshotCannotUndoANewerNativeLockSignal() {
+    auto server = QDBusConnection::connectToBus(QDBusConnection::SessionBus, "lock-snapshot-server");
+    auto client = QDBusConnection::connectToBus(QDBusConnection::SessionBus, "lock-snapshot-client");
+    QVERIFY(server.isConnected() && client.isConnected());
+    DelayedLockSnapshot endpoint;
+    const auto cleanup = qScopeGuard([&] {
+      server.unregisterObject("/org/freedesktop/login1/session/auto");
+      server.unregisterService("org.freedesktop.login1");
+      QDBusConnection::disconnectFromBus("lock-snapshot-server");
+      QDBusConnection::disconnectFromBus("lock-snapshot-client");
+    });
+    QVERIFY(server.registerService("org.freedesktop.login1"));
+    QVERIFY(server.registerVirtualObject("/org/freedesktop/login1/session/auto", &endpoint));
+    ScreenLockState state;
+    ScreenLockWatcher watcher(state, client, client);
+    QTRY_COMPARE(endpoint.pending.type(), QDBusMessage::MethodCallMessage);
+    QCOMPARE(endpoint.pending.arguments(), QVariantList({QString("org.freedesktop.login1.Session"), QString("LockedHint")}));
+    const auto signal = QDBusMessage::createSignal("/org/freedesktop/login1/session/_1", "org.freedesktop.login1.Session", "Lock");
+    QVERIFY(server.send(signal)); QTRY_VERIFY(state.locked());
+    // This read began before the lock signal. It may not re-enable capture.
+    QVERIFY(server.send(endpoint.pending.createReply(QVariant::fromValue(QDBusVariant(false)))));
+    QTRY_VERIFY(watcher.findChildren<QDBusPendingCallWatcher *>().isEmpty());
+    QVERIFY(state.locked());
+    QVERIFY(server.send(QDBusMessage::createSignal("/org/freedesktop/login1/session/_1", "org.freedesktop.login1.Session", "Unlock")));
+    QTRY_VERIFY(!state.locked());
   }
 
   void desktopSignalsDriveTheLockState() {

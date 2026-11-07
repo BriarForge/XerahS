@@ -33,7 +33,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Individual outputs freeze document snapshots and refuse unsupported loss; complete background inclusion and all-output matrix remain incomplete.",
+      "note": "Individual outputs freeze document snapshots and refuse unsupported loss; complete background inclusion and all-output matrix remain incomplete. Codex queue evidence (2026-11-05): Audit 2026-11-05: Clauses: immutable source/document snapshot and no mixed concurrent edits are proven by EditorSaveTest::workerSnapshotSurvivesConcurrentCallerChanges, EditorCopyTest::workerUsesOneSnapshotAndPublishesOnlyOnTheGuiWithOwnedAlphaAndPng, EditorPrintTest::frozenPreparationAndNativePdfOutputHaveIndependentPixelsAndGeometry, and EditorPinTest::nativeActionPinsRenderedAlphaWithoutChangingDocumentOrHistory. Output declarations name visible annotations and source, including alpha/colour conversions. Background inclusion is still unproven because background composition depends on deferred EC-013. Remains partial for that dependency; physical qualification is not the blocker.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
@@ -42,7 +42,9 @@
         "platforms/linux/linux-qt/tests/CapturePinPrintTest.cpp",
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorPinTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorUploadTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorUploadTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWallpaperTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorTaskTest.cpp"
       ],
       "audit": {
         "classification": "partial",
@@ -350,7 +352,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Paired raster/sidecar split/mismatch/dirty handling is tested, but ES-014/030 legacy fallback policy and runtime observation remain blocked.",
+      "note": "Paired raster/sidecar split/mismatch/dirty handling is tested, but ES-014/030 legacy fallback policy and runtime observation remain blocked. Codex queue evidence (2026-11-05): Audit 2026-11-05: Clauses: paired persistence, artifact-specific partial failure, dirty state and repair are proven by EditorSaveTest::realPairReopensWithoutCompoundingAndUsesTheEncodedRasterHash and incompletePairRepairsOnlyItsBoundCompanionAndRejectsChangedPng, EditorWindowTest::incompleteSaveOffersDefaultCancelCompanionOnlyRepairAndKeepsRedo and partialSaveAsKeepsTheCurrentPathUntilItsCompanionRepairCompletes. Mismatch refusal and explicit source choice remain covered by EditorSourceTest::changedRasterRequiresChoiceAndKeepsValidatedSnapshots. Empty companion/legacy fallback policy depends on deferred ES-014/ES-030; the conservative refusal is not full closure. EO-004 format metadata is not approved by this audit.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
@@ -360,7 +362,10 @@
         "platforms/linux/linux-qt/tests/CapturePairedSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSaveDialogTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorUploadTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorWallpaperTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorTaskTest.cpp"
       ],
       "audit": {
         "classification": "partial",
@@ -926,7 +931,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native actions expose names/shortcuts/busy/result and selected retries; complete all-output accessibility and confirmation/security parity remains unqualified.",
+      "note": "Native actions expose names/shortcuts/busy/result and selected retries; complete all-output accessibility and confirmation/security parity remains unqualified. Codex queue evidence (2026-11-05): Audit 2026-11-05: NativeSurfaceAccessibilityTest::nativeSurfaces(editor) proves named native controls. EditorWindowTest::copyMenuAndShortcutPublishOneSnapshotWithoutSavingOrClearingHistory, printMenuAndShortcutSubmitWithoutSavingOrChangingHistoryFilesPreferencesOrClipboard, saveRunsOnWorkerWithResponsiveCancellationAndNoReentrantActions, knownCopyFailureOffersDefaultCancelRetryWithoutRenderingOrChangingRedo and knownPrintFailureRetryUsesFrozenSnapshotAndFreshConfirmationWithDefaultCancel prove shared actions, busy refusal, cancellable workers and guarded frozen retries. EditorUploadTest::nativeUpload now runs success, HTTP error, confirmation cancellation and transfer cancellation through both menu and Ctrl+U, with identical default-Cancel consent and unchanged editor state. EditorWallpaperTest::nativeDialogShowsChoiceAndPathAndAppliesLockscreen proves menu and Ctrl+Alt+W use the same explicit choice and default-Cancel confirmation, real private portal and retained file. EditorTaskTest::enterContinuesTheTaskWhenNothingIsSelected and cancelAndDirtyCloseLeaveClipboardFilesAndUploadUntouched prove task keyboard continuation and exactly-once Cancel without later outputs. Private-bus/loopback tests pass; previous sandbox-blocked claim is obsolete. Remains partial: full output catalogue shortcut/focus/error/retry accessibility matrix is not exhaustively proven by these representative routes.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
@@ -941,7 +946,8 @@
         "platforms/linux/linux-qt/tests/NativeSurfaceAccessibilityTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCanvasTest.cpp",
         "platforms/linux/linux-qt/tests/EditorWallpaperTest.cpp",
-        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp"
+        "platforms/linux/linux-qt/tests/NativeEditorToolbarTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorTaskTest.cpp"
       ],
       "audit": {
         "classification": "partial",
@@ -998,7 +1004,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Many injected/native failures and split outcomes are covered; real disk-full/permission and every-supported-platform output conformance matrix is not complete.",
+      "note": "Many injected/native failures and split outcomes are covered; real disk-full/permission and every-supported-platform output conformance matrix is not complete. Codex queue evidence (2026-11-05): Audit 2026-11-05: EditorSaveTest::realPairReopensWithoutCompoundingAndUsesTheEncodedRasterHash, cancelledBeforePublicationPreservesFilesAndAfterRasterRetainsPartialFacts, encodeExceptionAndRacingReplacementPreserveThePreviousDestination and incompletePairRepairsOnlyItsBoundCompanionAndRejectsChangedPng prove success, cancellation, encoder/callback failure and split recovery. nativeEncoderDiskFullPreservesThePreviousPair drives runEditorSave with an injected real PNG encoder writing unbuffered to Linux /dev/full: actual ENOSPC preserves the previous raster, companion and document and removes staging files. This proves encoder I/O failure, not exhaustion of the staging/publication filesystem. EditorUploadTest::nativeUpload proves real local transport/error/cancel on menu and shortcut; EditorWallpaperTest::deniedAndUnsupportedServicesHaveStableCodes and portalCancelAndFailureAreTypedRemoveTheFileAndKeepDocument prove private-portal permission/unsupported/failure outcomes. No tests are sandbox-blocked. Remains partial: publication/commit ENOSPC, complete overwrite/legacy companion rules under deferred ES-014/ES-030, all-platform fault proof and published EO vectors remain open.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSaveTest.cpp",
         "platforms/linux/linux-qt/tests/EditorCopyTest.cpp",
@@ -1010,7 +1016,8 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/EditorUploadTest.cpp",
         "platforms/linux/linux-qt/tests/EditorPinTest.cpp",
-        "platforms/linux/linux-qt/tests/EditorWallpaperTest.cpp"
+        "platforms/linux/linux-qt/tests/EditorWallpaperTest.cpp",
+        "platforms/linux/linux-qt/tests/EditorTaskTest.cpp"
       ],
       "audit": {
         "classification": "partial",

@@ -78,12 +78,12 @@ private slots:
     // Credentials: Secret Service API.
     QVERIFY(mechanisms.value("credentials").toString().contains("Secret Service"));
     QVERIFY(source("app/SecretServiceCredentialStore.h").contains("org.freedesktop.secrets") && source("app/SecretServiceCredentialStore.cpp").contains("org.freedesktop.Secret"));
-    // Tray and notifications: QSystemTrayIcon, which Qt 6 implements over StatusNotifierItem and
-    // org.freedesktop.Notifications on Linux; the profile names those protocols.
+    // Tray: QSystemTrayIcon, which Qt 6 implements over StatusNotifierItem. Notifications: the
+    // native client speaks org.freedesktop.Notifications directly; the profile names both protocols.
     QVERIFY(mechanisms.value("tray").toString().contains("StatusNotifierItem"));
     QVERIFY(mechanisms.value("notifications").toString().contains("org.freedesktop.Notifications"));
-    const auto context = source("app/AppContext.cpp");
-    QVERIFY(context.contains("QSystemTrayIcon") && context.contains("showMessage"));
+    QVERIFY(source("app/main.cpp").contains("QSystemTrayIcon"));
+    QVERIFY(source("app/NativeNotifications.cpp").contains("org.freedesktop.Notifications"));
     // Declared packaging formats for the reference edition.
     QStringList packaging; for (const auto &p : qt.value("packaging").toArray()) packaging << p.toString();
     QVERIFY(packaging.contains(".deb") && packaging.contains(".rpm") && packaging.contains("AUR") && packaging.contains(".tar.gz"));

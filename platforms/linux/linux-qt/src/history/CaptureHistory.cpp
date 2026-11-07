@@ -15,6 +15,7 @@ std::vector<CaptureHistoryItem> captureHistoryItems(const std::vector<xerahs::ac
     item.taskId = record.taskId;
     item.createdAt = record.createdAt;
     item.state = record.terminal ? record.report.value("pipeline_state").toString() : QStringLiteral("interrupted");
+    item.outcome = native.value("terminal_observation").toObject().value("state").toString();
     const auto upload = native.value("file_upload").toObject();
     const auto origin = upload.value("origin").toString();
     const auto path = upload.value("path").toString();
@@ -40,7 +41,7 @@ std::vector<CaptureHistoryItem> captureHistoryItems(const std::vector<xerahs::ac
     }
     std::stable_partition(item.files.begin(), item.files.end(),
                           [](const CaptureHistoryFile &f) { return f.path.endsWith(QStringLiteral(".png"), Qt::CaseInsensitive); });
-    if (!item.files.empty()) items.push_back(std::move(item));
+    items.push_back(std::move(item));
   }
   std::stable_sort(items.begin(), items.end(), [](const CaptureHistoryItem &a, const CaptureHistoryItem &b) {
     return a.createdAt == b.createdAt ? a.taskId < b.taskId : a.createdAt > b.createdAt;
@@ -52,7 +53,7 @@ bool matchesHistoryQuery(const CaptureHistoryItem &item, const QString &query) {
   const QString needle = query.trimmed().left(kHistoryMaxQueryLength);
   if (needle.isEmpty()) return true;
   const auto has = [&](const QString &text) { return text.contains(needle, Qt::CaseInsensitive); };
-  if (has(item.origin) || has(item.destinationName) || has(item.workflowName) || has(item.captureSource) || has(item.createdAt.toLocalTime().toString(QStringLiteral("yyyy-MM-dd"))))
+  if (has(item.taskId) || has(item.state) || has(item.outcome) || has(item.origin) || has(item.destinationName) || has(item.workflowName) || has(item.captureSource) || has(item.createdAt.toLocalTime().toString(QStringLiteral("yyyy-MM-dd"))))
     return true;
   return std::any_of(item.files.begin(), item.files.end(), [&](const CaptureHistoryFile &file) { return has(file.path); });
 }

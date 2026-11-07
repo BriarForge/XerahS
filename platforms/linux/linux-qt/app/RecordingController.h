@@ -40,7 +40,6 @@ private:
   void call(const QString &method, QVariantList arguments, QVariantMap options);
   void encode(uint node);
   void poll();
-  void withoutAudio();
   void fail(const QString &code);
   void stopEncoder();
   void teardown();
@@ -61,7 +60,6 @@ private:
   QElapsedTimer m_clock;
   qint64 m_elapsed = 0;
   int m_generation = 0;
-  uint m_node = 0;
 #ifdef XERAHS_GSTREAMER
   GstElement *m_pipeline = nullptr;
 #endif

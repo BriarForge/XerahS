@@ -95,7 +95,7 @@ QWidget *overlayWidget() {
   return nullptr;
 }
 struct CompositionGate {
-  std::atomic<bool> entered{false}, released{false}, done{false};
+  std::atomic<bool> entered{false}, released{false}, done{false}, workerThread{false};
   std::atomic<int> calls{0}; int threshold = 50;
 };
 struct ReleaseGate {
@@ -105,6 +105,7 @@ struct ReleaseGate {
 SnapshotComposer gatedComposition(const std::shared_ptr<CompositionGate> &gate) {
   return [gate](const QImage &image, const xerahs::capture::PhysicalRect &rectangle, const xerahs::capture::Topology &topology,
                 const xerahs::capture::CompositeControl &control) {
+    gate->workerThread.store(QThread::currentThread() != QApplication::instance()->thread());
     ++gate->calls; auto observed = control;
     observed.progress = [gate, control](int percent) {
       if (control.progress) control.progress(percent);
@@ -1123,6 +1124,10 @@ private slots:
     auto gate = std::make_shared<CompositionGate>(); gate->threshold = cancelAt; ReleaseGate release{gate};
     CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, gatedComposition(gate));
     QSignalSpy progress(&controller, &CaptureController::compositionProgressChanged), notified(&controller, &CaptureController::notify);
+    std::atomic<bool> guiProgress{true};
+    connect(&controller, &CaptureController::compositionProgressChanged, &controller, [&](int) {
+      if (QThread::currentThread() != QApplication::instance()->thread()) guiProgress.store(false);
+    }, Qt::DirectConnection);
     if (cancelAt == 0) connect(&controller, &CaptureController::compositionProgressChanged, &controller, [&](int percent) { if (percent == 0) controller.cancel(); });
     QApplication::clipboard()->setText("composition fixture clipboard"); controller.captureRegion(); QTRY_VERIFY(overlayExists());
     auto *overlay = overlayWidget(); QVERIFY(overlay);
@@ -1131,8 +1136,12 @@ private slots:
     if (cancelAt != 0) {
       QTRY_VERIFY(gate->entered.load()); QTRY_VERIFY(controller.compositionProgress().value_or(-1) >= cancelAt);
       bool heartbeat = false; QTimer::singleShot(0, &controller, [&] { heartbeat = true; }); QTRY_VERIFY(heartbeat);
-      QVERIFY(!gate->done.load()); QTest::keyClick(overlay, Qt::Key_Escape);
+      QVERIFY(gate->workerThread.load());
+      QVERIFY(!gate->done.load()); QElapsedTimer cancelTime; cancelTime.start();
+      QTest::keyClick(overlay, Qt::Key_Escape);
+      QVERIFY(cancelTime.elapsed() < 500);
     }
+    QVERIFY(guiProgress.load());
     QTRY_VERIFY(!controller.busy()); QVERIFY(!overlayExists()); QCOMPARE(notified.count(), 0); QVERIFY(!progress.isEmpty());
     QVERIFY(!QFileInfo::exists(controller.saveDirectory())); QCOMPARE(QApplication::clipboard()->text(), QString("composition fixture clipboard"));
     if (cancelAt == 0) QCOMPARE(gate->calls.load(), 0);

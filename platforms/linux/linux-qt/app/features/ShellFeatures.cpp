@@ -4,6 +4,7 @@
 #include "features/ApplicationFeature.h"
 #include "features/CaptureFeature.h"
 #include "features/FilesFeature.h"
+#include "features/DiagnosticsFeature.h"
 #include "features/OnboardingFeature.h"
 #include "features/PreferencesFeature.h"
 #include "features/RecordingFeature.h"
@@ -25,6 +26,7 @@ std::unique_ptr<xerahs::shell::ActivationDispatcher> installShellFeatures(AppCon
   installUpload(ctx);
   installPreferences(ctx);
   installOnboarding(ctx, showOnboarding);
+  installDiagnostics(ctx);
   installApplication(ctx);
   return dispatcher;
 }
