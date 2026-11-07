@@ -1584,17 +1584,18 @@
       "previous_note": "linux-qt is implemented as the supported reference candidate application. Every applicable requirement on every declared target remains Required; no scope reduction or edition promotion is claimed."
     },
     "CORE-034": {
-      "status": "partial",
+      "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Approved linux-editions.json declares profiles/targets/toolkit/mechanisms/packaging, but no automated test was found validating all CORE-034 profile fields against that requirement; metadata presence alone is not tested completion.",
+      "note": "EditionProfilesTest loads the approved linux-editions.json and asserts every edition profile declares a unique id, a valid status, non-empty targets (distribution and versions), desktops, display server, toolkit value with a D-LIN decision record, all five mechanisms (capture, global shortcuts, notifications, tray, credentials) and non-empty packaging formats; it also checks the linux-qt profile against the native app (Qt 6 Widgets and C++17 build, QApplication, Screenshot and ScreenCast portal, GlobalShortcuts portal, Secret Service client, QSystemTrayIcon tray and notification door). Tray/notification protocol names are the profile's declaration realised through Qt's QSystemTrayIcon, which cannot be proven at protocol level headlessly.",
       "evidence": [
-        "product-contract/capabilities/CORE-PLATFORM-001/linux-editions.json"
+        "product-contract/capabilities/CORE-PLATFORM-001/linux-editions.json",
+        "platforms/linux/linux-qt/tests/EditionProfilesTest.cpp"
       ],
       "audit": {
-        "classification": "partial",
+        "classification": "implemented",
         "spec_line": 164,
-        "coverage": "Approved linux-editions.json declares profiles/targets/toolkit/mechanisms/packaging, but no automated test was found validating all CORE-034 profile fields against that requirement; metadata presence alone is not tested completion.",
+        "coverage": "EditionProfilesTest loads the approved linux-editions.json and asserts every edition profile declares a unique id, a valid status, non-empty targets (distribution and versions), desktops, display server, toolkit value with a D-LIN decision record, all five mechanisms (capture, global shortcuts, notifications, tray, credentials) and non-empty packaging formats; it also checks the linux-qt profile against the native app (Qt 6 Widgets and C++17 build, QApplication, Screenshot and ScreenCast portal, GlobalShortcuts portal, Secret Service client, QSystemTrayIcon tray and notification door). Tray/notification protocol names are the profile's declaration realised through Qt's QSystemTrayIcon, which cannot be proven at protocol level headlessly.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -1602,7 +1603,20 @@
             "sha256": "e5ac155a034ad1374ea054b33412697da0da21df4b6a04e396332b2513aad742"
           }
         ],
-        "test_anchors": []
+        "test_anchors": [
+          {
+            "path": "platforms/linux/linux-qt/tests/EditionProfilesTest.cpp",
+            "sha256": "128e27b07e3daa4105854f1b425bd0e8e83a46a029095bedaa8a3ce419831938",
+            "method": "everyEditionDeclaresEveryRequiredField",
+            "line": 30
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EditionProfilesTest.cpp",
+            "sha256": "128e27b07e3daa4105854f1b425bd0e8e83a46a029095bedaa8a3ce419831938",
+            "method": "linuxQtMechanismsMatchTheNativeApplication",
+            "line": 60
+          }
+        ]
       },
       "previous_note": "The approved linux-editions.json declares supported linux-qt and candidate editions. Actual qualification of all declared mechanisms and targets remains Required."
     },

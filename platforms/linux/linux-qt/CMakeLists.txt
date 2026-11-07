@@ -1673,3 +1673,12 @@ target_link_libraries(region-capture-native-test PRIVATE xerahs_window_discovery
   xerahs_action_selection xerahs_pipeline_journal xerahs_editor_codecs xerahs_image_recognition Qt6::Widgets Qt6::DBus Qt6::Test)
 add_test(NAME region-capture-native COMMAND region-capture-native-test)
 set_tests_properties(region-capture-native PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
+
+# CORE-034: linux-editions.json profile completeness and linux-qt mechanism agreement.
+add_executable(edition-profiles-test tests/EditionProfilesTest.cpp)
+set_target_properties(edition-profiles-test PROPERTIES AUTOMOC ON)
+target_compile_definitions(edition-profiles-test PRIVATE
+  XERAHS_EDITIONS_JSON="${CMAKE_CURRENT_SOURCE_DIR}/../../../product-contract/capabilities/CORE-PLATFORM-001/linux-editions.json"
+  XERAHS_LINUX_QT_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(edition-profiles-test PRIVATE Qt6::Core Qt6::Test)
+add_test(NAME edition-profiles COMMAND edition-profiles-test)

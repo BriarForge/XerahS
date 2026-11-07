@@ -18,7 +18,9 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTimer>
+#include <algorithm>
 #include <memory>
+#include <vector>
 
 using namespace xerahs::app;
 using namespace xerahs::editor;
@@ -27,6 +29,28 @@ namespace {
 QImage pixels() {
   QImage image(60, 40, QImage::Format_ARGB32); image.fill(Qt::blue);
   image.setColorSpace(QColorSpace::SRgb); return image;
+}
+// Latency budgets are not qualified under sanitizers or valgrind.
+bool latencyQualifiable(QString *reason) {
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer) || __has_feature(thread_sanitizer) || __has_feature(undefined_behavior_sanitizer)
+  *reason = "Latency is not qualified under sanitizers."; return false;
+#endif
+#endif
+#if defined(__SANITIZE_ADDRESS__) || defined(__SANITIZE_THREAD__) || defined(__SANITIZE_UNDEFINED__)
+  *reason = "Latency is not qualified under sanitizers."; return false;
+#endif
+  QFile mappings("/proc/self/maps");
+  if (mappings.open(QIODevice::ReadOnly)) {
+    const auto runtime = mappings.readAll();
+    if (runtime.contains("libasan.") || runtime.contains("libubsan.") || runtime.contains("libtsan.") || runtime.contains("/valgrind/")) { *reason = "Latency is not qualified under valgrind/sanitizers."; return false; }
+  }
+  if (qEnvironmentVariableIsSet("ASAN_OPTIONS") || qEnvironmentVariableIsSet("TSAN_OPTIONS") || qEnvironmentVariableIsSet("UBSAN_OPTIONS") ||
+      qEnvironmentVariableIsSet("VALGRIND_OPTS") || QFileInfo("/proc/self/exe").symLinkTarget().contains("valgrind")) { *reason = "Latency is not qualified under valgrind/sanitizers."; return false; }
+  return true;
+}
+double percentile95(std::vector<double> values) {
+  std::sort(values.begin(), values.end()); return values.at(static_cast<size_t>(0.95 * (values.size() - 1) + 0.5));
 }
 QByteArray bytes(const QString &path) {
   QFile file(path); return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray{};
@@ -73,6 +97,57 @@ private slots:
     const auto elapsed = timer.elapsed();
     qInfo("4K source with rectangle reached interactive state in %lld ms", static_cast<long long>(elapsed));
     QVERIFY2(elapsed <= 500, qPrintable(QString("Interactive opening took %1 ms (limit 500 ms)").arg(elapsed)));
+  }
+  // ES-021: 60 Hz manipulation previews on a 3840x2160 source. Each update is a real pointer move delivered
+  // to the real canvas followed by the real synchronous viewport repaint (the preview frame). The budget is
+  // one 60 Hz frame (16.7 ms) at the 95th percentile of 120 updates per gesture: a median would hide the
+  // dropped frames that make a preview feel janky. Wall-clock under CPU contention from parallel CI is
+  // handled by taking the best of three attempts per gesture; a genuine regression exceeds the budget
+  // in every attempt.
+  void fourKRectangleManipulationPreviewsHold60Hz() {
+    QString reason; if (!latencyQualifiable(&reason)) QSKIP(qPrintable(reason));
+    QImage image(3840, 2160, QImage::Format_ARGB32); image.fill(Qt::blue); image.setColorSpace(QColorSpace::SRgb);
+    auto source = prepareCapturedSource(image); QVERIFY(source.document);
+    EditorSession session(*source.document); QVERIFY(session.createRectangle({400, 400}, {1400, 1200}));
+    QTemporaryDir dir; const auto path = dir.filePath("4k.png"); QVERIFY(saveEdit(path, image, session.document()).sidecarSaved);
+    std::unique_ptr<EditorWindow> window(EditorWindow::open(path)); QVERIFY(window);
+    window->setAttribute(Qt::WA_DeleteOnClose, false); window->resize(900, 600); window->show(); QApplication::processEvents();
+    auto *canvas = window->findChild<EditorCanvas *>(); QVERIFY(canvas && canvas->isEnabled());
+    const auto id = std::get<RectangleAnnotation>(canvas->annotationDocument().annotations.front()).id;
+    QVERIFY(canvas->selectAnnotations({id}, canvas->annotationState(), canvas->documentGeneration()));
+    QWidget *viewport = canvas->viewport(); QCoreApplication::processEvents(); viewport->repaint();
+    constexpr int updates = 120; constexpr double budgetMs = 1000.0 / 60.0;
+    enum class Gesture { Move, Resize, Create };
+    const auto run = [&](Gesture gesture) {
+      std::vector<double> best; double bestP95 = 1e9;
+      for (int attempt = 0; attempt < 3; ++attempt) {
+        const auto toView = [&](QPointF p) { return canvas->viewState().toView(p).toPoint(); };
+        QPoint from, delta;
+        if (gesture == Gesture::Move) { from = toView({900, 800}); delta = {1, 1}; }
+        else if (gesture == Gesture::Resize) { from = toView({1400, 1200}); delta = {1, 1}; }
+        else { from = toView({1800, 300}); delta = {1, 1}; }
+        QTest::mousePress(viewport, Qt::LeftButton, {}, from);
+        const auto before = canvas->annotationState();
+        std::vector<double> samples; samples.reserve(updates); QElapsedTimer timer;
+        for (int i = 1; i <= updates; ++i) {
+          const QPoint to = from + QPoint(delta.x() * i, delta.y() * i); timer.start();
+          QTest::mouseMove(viewport, to); viewport->repaint();
+          samples.push_back(timer.nsecsElapsed() / 1.0e6);
+        }
+        QTest::mouseRelease(viewport, Qt::LeftButton, {}, from + QPoint(updates, updates));
+        QApplication::processEvents();
+        if (canvas->annotationState() == before) { QTest::qFail("gesture did not commit a real edit", __FILE__, __LINE__); return std::make_pair(1e9, 1e9); }
+        const auto p95 = percentile95(samples); if (p95 < bestP95) { bestP95 = p95; best = samples; }
+        if (p95 <= budgetMs) break;
+      }
+      return std::make_pair(bestP95, *std::max_element(best.begin(), best.end()));
+    };
+    const std::pair<const char *, Gesture> gestures[] = {{"move", Gesture::Move}, {"resize", Gesture::Resize}, {"create", Gesture::Create}};
+    for (const auto &[name, gesture] : gestures) {
+      const auto [p95, worst] = run(gesture);
+      qInfo("4K %s preview: p95 %.2f ms, worst %.2f ms (budget %.1f ms)", name, p95, worst, budgetMs);
+      QVERIFY2(p95 <= budgetMs, qPrintable(QString("%1 preview p95 %2 ms exceeds the 60 Hz budget %3 ms").arg(name).arg(p95).arg(budgetMs)));
+    }
   }
   void sessionManagerRetainsDirtyDocumentWithoutInteraction() {
     std::unique_ptr<EditorWindow> window(EditorWindow::fromCapturedImage(pixels())); QVERIFY(window);
