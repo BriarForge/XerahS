@@ -29,7 +29,8 @@ QLineEdit *selectable(QWidget *parent, const QString &name, const QString &text)
 }
 }  // namespace
 
-FileUploadResultDialog::FileUploadResultDialog(const QString &fileName, const uploads::UploadOutcome &outcome, QWidget *parent)
+FileUploadResultDialog::FileUploadResultDialog(const QString &fileName, const uploads::UploadOutcome &outcome, QWidget *parent,
+                                               const QString &terminalState)
     : QDialog(parent) {
   setObjectName(QStringLiteral("fileUploadResultDialog"));
   setWindowTitle(QStringLiteral("File uploaded"));
@@ -38,6 +39,7 @@ FileUploadResultDialog::FileUploadResultDialog(const QString &fileName, const up
   setAttribute(Qt::WA_DeleteOnClose);
   auto *layout = new QVBoxLayout(this);
   layout->addWidget(line(this, QStringLiteral("uploadFileName"), fileName));
+  if (!terminalState.isEmpty()) layout->addWidget(line(this, QStringLiteral("uploadTerminalState"), terminalState));
   m_url = selectable(this, QStringLiteral("uploadUrl"), outcome.url);
   m_url->setAccessibleName(QStringLiteral("Upload URL"));
   layout->addWidget(m_url);
@@ -59,7 +61,7 @@ FileUploadResultDialog::FileUploadResultDialog(const QString &fileName, const up
 }
 
 FileUploadResultDialog::FileUploadResultDialog(const QString &fileName, const QString &message, std::function<void()> openDestinations,
-                                               QWidget *parent)
+                                               QWidget *parent, const QString &terminalState)
     : QDialog(parent) {
   setObjectName(QStringLiteral("fileUploadResultDialog"));
   setWindowTitle(QStringLiteral("File upload"));
@@ -69,6 +71,7 @@ FileUploadResultDialog::FileUploadResultDialog(const QString &fileName, const QS
   auto *layout = new QVBoxLayout(this);
   layout->addWidget(line(this, QStringLiteral("uploadFileName"), fileName));
   layout->addWidget(line(this, QStringLiteral("uploadMessage"), message));
+  if (!terminalState.isEmpty()) layout->addWidget(line(this, QStringLiteral("uploadTerminalState"), terminalState));
   if (openDestinations) {
     auto *button = new QPushButton(QStringLiteral("Upload destinations…"), this);
     button->setObjectName(QStringLiteral("openUploadDestinations"));

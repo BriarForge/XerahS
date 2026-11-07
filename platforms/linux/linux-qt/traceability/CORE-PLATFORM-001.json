@@ -260,7 +260,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "3dcfa5e8d6f7463ca1ec658639df0896385ce25eeda5f1b2f2d6c1a22a4646e0"
+            "sha256": "6fe2d697f0111053e2995b2725c3421bf9999dd0603c558ce6faf1a0c6defc10"
           }
         ],
         "test_anchors": [
@@ -272,9 +272,9 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-            "sha256": "900e68829f3ede7e2c86745729faf057b5ae4521ab19cfa8e1102b26fca75b48",
+            "sha256": "a03777aa45f43e0f19970a45a9865233bbe0b8ee81f423d23139a047ae2572cf",
             "method": "slowCopyDoesNotBlockGuiAndIsNotDoubleProcessed",
-            "line": 383
+            "line": 507
           }
         ]
       },
@@ -1231,9 +1231,9 @@
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-            "sha256": "21b59d044d0f4eafc92ba640d50d25aa21070d1961e783c8b0cde766c9956524",
+            "sha256": "a03777aa45f43e0f19970a45a9865233bbe0b8ee81f423d23139a047ae2572cf",
             "method": "uploadsOnceThroughDefaultDestinationAcrossRestart",
-            "line": 243
+            "line": 372
           }
         ]
       },

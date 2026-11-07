@@ -22,6 +22,8 @@ add_library(xerahs_core STATIC
   src/settings/ApplicationSettings.cpp
   src/workflows/WorkflowExecution.cpp
   src/workflows/WorkflowExecution.h
+  src/workflows/FileOperationExecution.cpp
+  src/workflows/FileOperationExecution.h
   src/workflows/CaptureWorkflows.cpp
   src/workflows/CaptureWorkflows.h
   src/workflows/WorkflowShortcuts.cpp

@@ -5,7 +5,10 @@
 #include <QFileSystemWatcher>
 #include <QTimer>
 #include <QObject>
+#include "workflows/FileOperationExecution.h"
+#include <QJsonObject>
 #include <functional>
+#include <memory>
 
 namespace xerahs::app {
 class FileUploadController;
@@ -17,6 +20,10 @@ public:
   ~WatchFolderService() override;
   // Test seam: called on the worker thread before each copied chunk.
   void setFileOperationHook(std::function<void(const QString &)> hook);
+  // WFCAT-002: execution records for copy/move; empty uses the shared directory.
+  // Test seam: called on the worker thread after the copy committed, before the source is removed.
+  void setBeforeRemoveHook(std::function<void(const QString &)> hook);
+  void setExecutionWriter(workflows::WorkflowExecution::Writer writer);
   void start();
   void stop();
   void rescan();
@@ -28,7 +35,9 @@ signals:
   void processed(const QString &path, bool success);
   void progress(const QString &path, qint64 done, qint64 total);
 private:
-  void startFileWork(const QString &path, const QString &key, bool move);
+  void startFileWork(const QString &path, const QString &key, const watch::Rule &rule);
+  struct FileResult { QString error; bool read = false, copied = false; };
+  void finishFileWork(const QString &path, const FileResult &result);
   void complete(const QString &path, bool success, const QString &error);
   watch::WatchFolders &m_store;
   FileUploadController &m_uploads;
@@ -38,8 +47,11 @@ private:
   QTimer m_timer;
   QSet<QString> m_attempted, m_reported;
   QString m_pendingPath, m_pendingKey;
+  std::unique_ptr<workflows::WorkflowExecution> m_execution;
+  workflows::WorkflowExecution::Writer m_executionWriter;
+  QString m_terminalState;  // shared terminal projection of the pending operation
   OwnedWork m_work;
-  std::function<void(const QString &)> m_fileHook;
+  std::function<void(const QString &)> m_fileHook, m_removeHook;
   bool m_running = false;
   bool m_blocked = false;
 };

@@ -26,7 +26,8 @@ public:
   WorkflowExecution &operator=(const WorkflowExecution &) = delete;
   bool admit();
   bool start();
-  bool step(const QString &action, const QString &state, const QString &diagnostic = {});
+  bool step(const QString &action, const QString &state, const QString &diagnostic = {},
+      std::optional<xerahs::actions::FailureClass> failure = std::nullopt);
   bool processing(const QString &pipelineId);
   bool finish(const QString &state, const QString &diagnostic = {}, const QStringList &outputs = {});
   bool complete(const xerahs::actions::PipelineResult &pipeline);

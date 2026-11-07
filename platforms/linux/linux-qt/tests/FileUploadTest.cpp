@@ -6,6 +6,7 @@
 #include "uploads/CatalogPath.h"
 #include "uploads/DestinationCatalog.h"
 
+#include "NativeWorkflowExecutions.h"
 #include <QApplication>
 #include <QClipboard>
 #include <QDragEnterEvent>
@@ -127,6 +128,8 @@ FileUploadPorts portsFor(const QString &catalogPath, const std::shared_ptr<Crede
   FileUploadPorts ports;
   ports.catalogPath = catalogPath;
   ports.history = std::make_shared<NativePipelineJournal>(QFileInfo(catalogPath).absolutePath() + "/history");
+  static QTemporaryDir executionRoot;
+  ports.executions = NativeWorkflowExecutions(executionRoot.filePath(QUuid::createUuid().toString(QUuid::WithoutBraces))).writer();
   ports.credentials = credentials;
   return ports;
 }
@@ -328,6 +331,122 @@ private slots:
     QVERIFY(message.contains(QStringLiteral("HTTP 500")));
     QVERIFY(message.contains(QStringLiteral("[redacted]")));
     QVERIFY(!message.contains(QStringLiteral("fixture-secret")));
+  }
+
+  // WFCAT-002/004/017: one execution per upload, projected identically by record, history and dialog.
+  void uploadWritesAnExecutionThatAgreesWithHistoryAndDialog() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    HttpFixture http; QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    const auto destination = http.destination();
+    DestinationCatalog catalog(dir.filePath("destinations.json")); QVERIFY(catalog.add(destination).isEmpty());
+    auto credentials = std::make_shared<MemoryCredentialStore>();
+    QVERIFY(credentials->store(destination.id, "token", "fixture-secret").ok());
+    const auto path = writeFile(dir, "note.txt", "hello upload"); QVERIFY(!path.isEmpty());
+    NativeWorkflowExecutions store(dir.filePath("executions"));
+    auto ports = portsFor(dir.filePath("destinations.json"), credentials); ports.executions = store.writer();
+    QWidget parent; parent.show();
+    FileUploadController controller(ports, &parent);
+    QSignalSpy terminal(&controller, &FileUploadController::executionFinished);
+    QSignalSpy idle(&controller, &FileUploadController::finished);
+    controller.upload({path});
+    QTRY_COMPARE_WITH_TIMEOUT(idle.count(), 1, 7000);
+    const auto listing = store.list(); QCOMPARE(listing.entries.size(), size_t(1));
+    const auto &entry = listing.entries.front();
+    const auto record = xerahs::workflows::parseWorkflowExecution(entry.snapshot, entry.id); QVERIFY(record);
+    QCOMPARE(record->origin, QString("file-upload")); QCOMPARE(record->state, QString("succeeded"));
+    QVERIFY(record->startedAt.isValid() && record->finishedAt.isValid()); QVERIFY(record->diagnostic.isEmpty());
+    QCOMPARE(record->steps.size(), 2);
+    QCOMPARE(record->steps.at(0).toObject().value("action").toString(), QString("read-file"));
+    QCOMPARE(record->steps.at(1).toObject().value("action").toString(), QString("upload-file"));
+    QCOMPARE(record->steps.at(1).toObject().value("state").toString(), QString("succeeded"));
+    QCOMPARE(record->settings.value("operation").toString(), QString("upload"));
+    QCOMPARE(record->settings.value("destination").toObject().value("name").toString(), QString("Fixture"));
+    QCOMPARE(record->settings.value("destination").toObject().value("id").toString(), destination.id.toString(QUuid::WithoutBraces));
+    QCOMPARE(record->outputs, QStringList{entry.id + "/upload.receipt"});
+    // The history record shares the execution's stable ID and carries no failure.
+    const auto history = NativePipelineJournal(dir.filePath("history")).list();
+    QCOMPARE(history.entries.size(), size_t(1)); QCOMPARE(history.entries.front().taskId, entry.id);
+    QVERIFY(history.entries.front().parsed.record);
+    QVERIFY(history.entries.front().parsed.record->terminal);
+    // Dialog and signal expose the same terminal state.
+    QCOMPARE(terminal.count(), 1);
+    QCOMPARE(terminal.first().at(1).toString(), entry.id); QCOMPARE(terminal.first().at(2).toString(), record->state);
+    QCOMPARE(terminal.first().at(3).toStringList(), record->outputs);
+    QCOMPARE(dialogs().size(), 1);
+    QCOMPARE(dialogs().first()->findChild<QLabel *>("uploadTerminalState")->text(), xerahs::workflows::fileOperationNotice(*record, "note.txt").headline);
+    // Secrets, URLs and paths never enter the record.
+    for (const auto &needle : {QByteArray("fixture-secret"), QByteArray("example.test"), dir.path().toUtf8(), QByteArray("hello upload")})
+      QVERIFY2(!entry.snapshot.contains(needle), needle.constData());
+  }
+
+  void failuresMapToTheSharedTaxonomyAndNeverReadAsCompleted_data() {
+    QTest::addColumn<int>("status"); QTest::addColumn<QString>("kind"); QTest::addColumn<QString>("state"); QTest::addColumn<QString>("diagnostic");
+    QTest::newRow("http-5xx-transient") << 500 << "http" << "transient-failure" << "http-error";
+    QTest::newRow("http-4xx-permanent") << 404 << "http" << "permanent-failure" << "http-error";
+    QTest::newRow("missing-file") << 200 << "missing" << "permanent-failure" << "input-missing";
+    QTest::newRow("not-a-file") << 200 << "directory" << "validation-failure" << "input-not-file";
+    QTest::newRow("no-destination") << 200 << "nodestination" << "unavailable-dependency" << "destination-missing";
+  }
+  void failuresMapToTheSharedTaxonomyAndNeverReadAsCompleted() {
+    QFETCH(int, status); QFETCH(QString, kind); QFETCH(QString, state); QFETCH(QString, diagnostic);
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    HttpFixture http; http.status = status; QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    auto credentials = std::make_shared<MemoryCredentialStore>();
+    const auto destination = http.destination();
+    if (kind != "nodestination") {
+      DestinationCatalog catalog(dir.filePath("destinations.json")); QVERIFY(catalog.add(destination).isEmpty());
+      QVERIFY(credentials->store(destination.id, "token", "fixture-secret").ok());
+    }
+    QString path = writeFile(dir, "note.txt", "hello");
+    if (kind == "missing") path = dir.filePath("absent.txt");
+    if (kind == "directory") path = dir.path();
+    NativeWorkflowExecutions store(dir.filePath("executions"));
+    auto ports = portsFor(dir.filePath("destinations.json"), credentials); ports.executions = store.writer();
+    QWidget parent; parent.show();
+    FileUploadController controller(ports, &parent);
+    QSignalSpy terminal(&controller, &FileUploadController::executionFinished);
+    QSignalSpy completed(&controller, &FileUploadController::fileCompleted);
+    QSignalSpy idle(&controller, &FileUploadController::finished);
+    controller.upload({path});
+    QTRY_COMPARE_WITH_TIMEOUT(idle.count(), 1, 7000);
+    const auto listing = store.list(); QCOMPARE(listing.entries.size(), size_t(1));
+    const auto record = xerahs::workflows::parseWorkflowExecution(listing.entries.front().snapshot, listing.entries.front().id); QVERIFY(record);
+    QCOMPARE(record->state, state); QCOMPARE(record->diagnostic, diagnostic); QVERIFY(record->outputs.isEmpty());
+    const auto last = record->steps.last().toObject();
+    QCOMPARE(last.value("state").toString(), QString("failed"));
+    QCOMPARE(last.value("action").toString(), http.received ? QString("upload-file") : QString("read-file"));
+    QVERIFY(last.contains("failure_class"));
+    QCOMPARE(terminal.first().at(2).toString(), state);
+    QCOMPARE(completed.first().at(1).toBool(), false);
+    QCOMPARE(dialogs().size(), 1);
+    const auto label = dialogs().first()->findChild<QLabel *>("uploadTerminalState")->text();
+    QVERIFY(label.contains(state)); QVERIFY(!label.startsWith("Uploaded"));
+    QVERIFY(!listing.entries.front().snapshot.contains("fixture-secret"));
+    QVERIFY(!dialogs().first()->findChild<QLineEdit *>("uploadUrl"));
+  }
+
+  void cancellationIsTerminalCancelledWithoutOutputs() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    HttpFixture http; http.holdFirst = true; QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    const auto destination = http.destination();
+    DestinationCatalog catalog(dir.filePath("destinations.json")); QVERIFY(catalog.add(destination).isEmpty());
+    auto credentials = std::make_shared<MemoryCredentialStore>();
+    QVERIFY(credentials->store(destination.id, "token", "fixture-secret").ok());
+    const auto path = writeFile(dir, "one.txt", "one");
+    NativeWorkflowExecutions store(dir.filePath("executions"));
+    auto ports = portsFor(dir.filePath("destinations.json"), credentials); ports.executions = store.writer();
+    QWidget parent; parent.show();
+    FileUploadController controller(ports, &parent);
+    QSignalSpy idle(&controller, &FileUploadController::finished);
+    controller.upload({path});
+    QTRY_COMPARE_WITH_TIMEOUT(http.received, 1, 7000);
+    controller.cancel();
+    QTRY_COMPARE_WITH_TIMEOUT(idle.count(), 1, 7000);
+    const auto listing = store.list(); QCOMPARE(listing.entries.size(), size_t(1));
+    const auto record = xerahs::workflows::parseWorkflowExecution(listing.entries.front().snapshot, listing.entries.front().id); QVERIFY(record);
+    QCOMPARE(record->state, QString("cancelled")); QVERIFY(record->outputs.isEmpty());
+    QCOMPARE(record->steps.last().toObject().value("state").toString(), QString("cancelled"));
+    QVERIFY(dialogs().first()->findChild<QLabel *>("uploadTerminalState")->text().contains("cancelled"));
   }
 
   void cancelStopsTheQueue() {
