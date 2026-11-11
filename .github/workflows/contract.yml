@@ -24,10 +24,23 @@ jobs:
           chown -R xerahs-ci:xerahs-ci "$GITHUB_WORKSPACE"
       - name: Configure native Linux
         run: runuser -u xerahs-ci -- cmake -S platforms/linux/linux-qt -B platforms/linux/linux-qt/build -G Ninja
+      - name: Verify effect regressions before the full build
+        run: |
+          runuser -u xerahs-ci -- cmake --build platforms/linux/linux-qt/build --target EffectGoldenHash-test --parallel 2
+          runuser -u xerahs-ci -- env QT_QPA_PLATFORM=offscreen \
+            XERAHS_EFFECT_DIAGNOSTICS="$GITHUB_WORKSPACE/platforms/linux/linux-qt/build/effect-diagnostics" \
+            "$GITHUB_WORKSPACE/platforms/linux/linux-qt/build/EffectGoldenHash-test"
       - name: Build native Linux
         run: runuser -u xerahs-ci -- cmake --build platforms/linux/linux-qt/build --parallel 2
       - name: Verify native tests and implemented contract vectors
         run: runuser -u xerahs-ci -- ctest --test-dir platforms/linux/linux-qt/build --output-on-failure
+      - name: Retain effect failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-effect-failure-diagnostics
+          path: platforms/linux/linux-qt/build/effect-diagnostics
+          if-no-files-found: ignore
 
   # CORE-028 / CORE-033: build the linux-qt edition's .tar.gz, .deb and .rpm,
   # install the .deb into a clean system and launch the installed binary.

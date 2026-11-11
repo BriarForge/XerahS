@@ -12,6 +12,7 @@
 #include <QJsonArray>
 #include <QPainter>
 #include <QPainterPath>
+#include <QSysInfo>
 #include <QTest>
 using namespace xerahs::effects;
 namespace {
@@ -180,6 +181,13 @@ private slots:
     QVERIFY(result.image.isNull());
   }
   void everyRegisteredEffect() {
+    QFile file(EFFECT_GOLDEN_FIXTURE);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    QJsonParseError error;
+    const auto document = QJsonDocument::fromJson(file.readAll(), &error);
+    QCOMPARE(error.error, QJsonParseError::NoError);
+    const auto expected = document.object().value("effects").toObject();
+    const auto diagnostics = qEnvironmentVariable("XERAHS_EFFECT_DIAGNOSTICS");
     QFile nativeFile(QFileInfo(EFFECT_GOLDEN_FIXTURE).dir().filePath("ascii-art-native-glyphs.json"));
     QVERIFY(nativeFile.open(QIODevice::ReadOnly));
     QJsonParseError nativeError;
@@ -205,17 +213,29 @@ private slots:
           native.append(QJsonObject{{"error", ""}, {"sha256", hash(reference)}});
         }
         const auto result = runEffect(*builtinEffects().find(spec->id), fixture(i), {}, context);
-        outputs.append(QJsonObject{{"error", result.error}, {"sha256", hash(result.image)}});
+        const QJsonObject observed{{"error", result.error}, {"sha256", hash(result.image)}};
+        outputs.append(observed);
+        const auto locked = expected.value(spec->id).toArray();
+        const QJsonValue oracle = reference.isNull() ? (i < locked.size() ? locked.at(i) : QJsonValue{}) : native.last();
+        if (!diagnostics.isEmpty() && i < locked.size() && QJsonValue(observed) != oracle && QDir().mkpath(diagnostics)) {
+          const auto prefix = QDir(diagnostics).filePath(spec->id + '-' + QString::number(i));
+          result.image.save(prefix + ".png");
+          QFile raw(prefix + ".rgba");
+          if (raw.open(QIODevice::WriteOnly)) {
+            QByteArray pixels;
+            for (int y = 0; y < result.image.height(); ++y) for (int x = 0; x < result.image.width(); ++x) {
+              const auto pixel = result.image.pixel(x, y);
+              pixels.append(char(qRed(pixel))); pixels.append(char(qGreen(pixel)));
+              pixels.append(char(qBlue(pixel))); pixels.append(char(qAlpha(pixel)));
+            }
+            raw.write(pixels);
+          }
+          qWarning() << spec->id << i << result.image.size() << result.image.format() << "observed" << observed << "expected" << oracle;
+        }
       }
       actual.insert(spec->id, outputs);
       if (!native.isEmpty()) nativeOutputs.insert(spec->id, native);
     }
-    QFile file(EFFECT_GOLDEN_FIXTURE);
-    QVERIFY(file.open(QIODevice::ReadOnly));
-    QJsonParseError error;
-    const auto document = QJsonDocument::fromJson(file.readAll(), &error);
-    QCOMPARE(error.error, QJsonParseError::NoError);
-    const auto expected = document.object().value("effects").toObject();
     const auto nativeOracles = document.object().value("native_font_oracles").toObject();
     QCOMPARE(nativeOracles.keys(), QStringList({"ascii_art", "draw_text", "text_watermark"}));
     QCOMPARE(nativeOutputs.keys(), nativeOracles.keys());
@@ -226,6 +246,15 @@ private slots:
       if (!actual.contains(it.key())) { mismatches.append(QStringLiteral("locked effect missing: ") + it.key()); continue; }
       const QJsonValue oracle = nativeOutputs.contains(it.key()) ? nativeOutputs.value(it.key()) : it.value();
       if (actual.value(it.key()) != oracle) mismatches.append(it.key());
+    }
+    if (!diagnostics.isEmpty() && !mismatches.isEmpty() && QDir().mkpath(diagnostics)) {
+      QFile cpu("/proc/cpuinfo"); QByteArray flags;
+      if (cpu.open(QIODevice::ReadOnly)) for (const auto &line : cpu.readAll().split('\n'))
+        if (line.startsWith("flags")) { flags = line; break; }
+      QFile details(QDir(diagnostics).filePath("observed.json"));
+      if (details.open(QIODevice::WriteOnly)) details.write(QJsonDocument(QJsonObject{
+          {"qt", qVersion()}, {"compiler", __VERSION__}, {"architecture", QSysInfo::currentCpuArchitecture()},
+          {"cpu_flags", QString::fromLatin1(flags)}, {"effects", actual}, {"native_oracles", nativeOutputs}}).toJson());
     }
     QVERIFY2(mismatches.isEmpty(), qPrintable(mismatches.join(", ")));
   }
