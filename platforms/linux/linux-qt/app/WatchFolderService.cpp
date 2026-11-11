@@ -54,7 +54,13 @@ void WatchFolderService::startFileWork(const QString &sourcePath, const QString 
   m_execution = std::make_unique<workflows::WorkflowExecution>(QUuid::createUuid().toString(QUuid::WithoutBraces), QStringLiteral("watch-folder"),
       workflows::fileOperationSnapshot(move ? "move" : "copy", {}, {}, ruleSnapshot(rule)),
       m_executionWriter ? m_executionWriter : NativeWorkflowExecutions(NativeWorkflowExecutions::defaultDirectory()).writer());
-  if (!m_execution->admit() || !m_execution->start()) m_execution.reset();  // storage failure never blocks the file action
+  if (!m_execution->admit() || !m_execution->start()) {
+    m_execution.reset();
+    m_blocked = true;
+    m_terminalState = QStringLiteral("permanent-failure");
+    complete(sourcePath, false, QStringLiteral("workflow-storage-unavailable: Watching stopped before file work; could not save the execution record."));
+    return;
+  }
   const auto directory = m_captures();
   const auto hook = m_fileHook, removeHook = m_removeHook;
   const auto path = sourcePath;
@@ -93,22 +99,30 @@ void WatchFolderService::finishFileWork(const QString &path, const FileResult &r
   const auto operation = m_execution ? m_execution->record().settings.value("operation").toString() : QStringLiteral("copy");
   const auto code = fileOperationDiagnostic(result.error);
   const bool cancelled = code == QLatin1String("cancelled");
+  bool stored = true;
   const auto stepFailed = [&](const QString &action) {
     if (!m_execution) return;
-    if (cancelled) m_execution->step(action, QStringLiteral("cancelled"));
-    else m_execution->step(action, QStringLiteral("failed"), code, classifyFileOperationFailure(code));
+    if (cancelled) stored = m_execution->step(action, QStringLiteral("cancelled")) && stored;
+    else stored = m_execution->step(action, QStringLiteral("failed"), code, classifyFileOperationFailure(code)) && stored;
   };
   if (m_execution) {
-    if (result.read) m_execution->step(QStringLiteral("read-file"), QStringLiteral("succeeded"));
-    if (result.copied) m_execution->step(QStringLiteral("copy-file"), QStringLiteral("succeeded"));
-    if (result.error.isEmpty() && operation == QLatin1String("move")) m_execution->step(QStringLiteral("remove-source"), QStringLiteral("succeeded"));
+    if (result.read) stored = m_execution->step(QStringLiteral("read-file"), QStringLiteral("succeeded")) && stored;
+    if (result.copied) stored = m_execution->step(QStringLiteral("copy-file"), QStringLiteral("succeeded")) && stored;
+    if (result.error.isEmpty() && operation == QLatin1String("move")) stored = m_execution->step(QStringLiteral("remove-source"), QStringLiteral("succeeded")) && stored;
     else if (!result.error.isEmpty()) stepFailed(!result.read ? (code == QLatin1String("watch-copy-open-failed") ? "read-file" : "copy-file") : !result.copied ? "copy-file" : "remove-source");
   }
   const auto steps = m_execution ? m_execution->record().steps : QJsonArray{};
   const auto terminal = fileOperationTerminal(m_execution ? m_execution->record().id : QString{}, operation, steps, result.error.isEmpty() ? QString{} : code);
   m_terminalState = m_execution ? terminal.state : (result.error.isEmpty() ? QStringLiteral("succeeded") : (result.copied ? QStringLiteral("partial") : cancelled ? QStringLiteral("cancelled") : QStringLiteral("permanent-failure")));
-  if (m_execution) { m_execution->finish(terminal.state, terminal.diagnostic, terminal.outputs); m_execution.reset(); }
-  complete(path, result.error.isEmpty(), result.error);
+  if (m_execution) { stored = m_execution->finish(terminal.state, terminal.diagnostic, terminal.outputs) && stored; m_execution.reset(); }
+  QString error = result.error;
+  if (!stored) {
+    m_blocked = true;
+    if (result.copied) m_terminalState = QStringLiteral("partial");
+    if (!error.isEmpty()) error += QLatin1Char('\n');
+    error += QStringLiteral("workflow-storage-unavailable: Watching stopped; could not save the execution record. Completed file work was retained.");
+  }
+  complete(path, result.error.isEmpty(), error);
 }
 void WatchFolderService::complete(const QString &path, bool success, const QString &error) {
   if (path != m_pendingPath || path.isEmpty()) return;
@@ -118,7 +132,7 @@ void WatchFolderService::complete(const QString &path, bool success, const QStri
   }
   // A cancelled action (stop mid-processing) is not a verdict on the file: forget the attempt so it is discovered again.
   if (!success && (!m_running || error == QLatin1String("cancelled"))) m_attempted.remove(m_pendingKey);
-  emit processed(path, success);
+  emit processed(path, success && (m_terminalState.isEmpty() || m_terminalState == QLatin1String("succeeded")));
   // WFCAT-017: the notification reads the terminal state, so a partial or failed
   // outcome can never be announced as processed.
   const auto notice = workflows::fileOperationNotice(QStringLiteral("watch"), m_terminalState.isEmpty() ? (success ? QStringLiteral("succeeded") : QStringLiteral("permanent-failure")) : m_terminalState, QFileInfo(path).fileName());

@@ -149,6 +149,59 @@ private slots:
     service.stop();
   }
 
+  void storageFailuresNeverSilentlyCompleteFileWork_data() {
+    QTest::addColumn<bool>("move"); QTest::addColumn<int>("failedWrite");
+    for (bool move : {false, true}) {
+      const auto prefix = move ? QByteArray("move-") : QByteArray("copy-");
+      QTest::newRow((prefix + "admission").constData()) << move << 1;
+      QTest::newRow((prefix + "start").constData()) << move << 2;
+      QTest::newRow((prefix + "step").constData()) << move << 3;
+      QTest::newRow((prefix + "terminal").constData()) << move << (move ? 6 : 5);
+    }
+  }
+  void storageFailuresNeverSilentlyCompleteFileWork() {
+    QFETCH(bool, move); QFETCH(int, failedWrite);
+    QTemporaryDir dir; QVERIFY(dir.isValid()); QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto captures = dir.filePath("captures"), source = dir.filePath("input/new.png");
+    qint64 now = 0; QWidget owner;
+    FileUploadController uploads(portsFor(dir), &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    NativeWorkflowExecutions executions(dir.filePath("executions"));
+    const auto writer = executions.writer();
+    int writes = 0;
+    service.setExecutionWriter([&](const QString &id, const std::optional<QByteArray> &expected, const QByteArray &bytes) {
+      if (++writes == failedWrite) return actions::JournalWrite{false, "fixture-storage-unavailable"};
+      return writer(id, expected, bytes);
+    });
+    watch::Rule rule; rule.path = dir.filePath("input"); rule.action = move ? watch::Action::Move : watch::Action::Copy;
+    QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy notified(&service, &WatchFolderService::notify), processed(&service, &WatchFolderService::processed);
+    service.start(); QVERIFY(writeFile(source, "retain actual file contents"));
+    const auto key = watch::fingerprint(source);
+    service.rescan(); now = 2000; service.rescan(); now += 2000; service.rescan();
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
+    QVERIFY(!processed.first().at(1).toBool());
+    QCOMPARE(notified.count(), 1); QVERIFY(!notified.first().at(1).toBool());
+    const auto message = notified.first().at(0).toString();
+    QVERIFY(message.contains("workflow-storage-unavailable")); QVERIFY(!message.startsWith("Processed"));
+    const auto outputs = QDir(captures).entryList(QDir::Files);
+    const bool dispatched = failedWrite > 2;
+    QCOMPARE(outputs.size(), dispatched ? 1 : 0);
+    QCOMPARE(QFileInfo::exists(source), !dispatched || !move);
+    if (QFileInfo::exists(source)) QCOMPARE(readFile(source), QByteArray("retain actual file contents"));
+    if (dispatched) {
+      QCOMPARE(readFile(QDir(captures).filePath(outputs.first())), QByteArray("retain actual file contents"));
+      QVERIFY(message.contains("partial"));
+      QVERIFY(store.processed(key)); // completed side effects must not be replayed after restart
+    } else QVERIFY(!store.processed(key));
+    const auto writesAfterAttempt = writes;
+    QVERIFY(writeFile(dir.filePath("input/second.png")));
+    for (int scan = 0; scan < 4; ++scan) { now += 2000; service.rescan(); QTest::qWait(20); }
+    QCOMPARE(processed.count(), 1); QCOMPARE(writes, writesAfterAttempt);
+    service.stop();
+  }
+
   void copyFailureIsAFailedExecutionNeverSucceeded() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); QVERIFY(QDir(dir.path()).mkpath("input"));
     const auto captures = dir.filePath("captures"); const auto source = dir.filePath("input/new.png");

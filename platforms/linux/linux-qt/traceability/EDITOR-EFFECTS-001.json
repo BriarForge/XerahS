@@ -387,7 +387,7 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Persisted effect operation seeds and seed-only execution have local repeatability tests. Identical decoded pixels across all supported platforms, fonts/renderers and profiles have no shared accepted fixtures. Native premultiplied painting now uses public integer unpremultiplication at repaired drawing/frame/blur boundaries, removing the reproduced CPU rounding discrepancy. Eight default effects have independent frozen exact-pixel references that match Qt 6.4.2 and Qt 6.12 locally. All 200 historical hash entries remain preserved. AMD CI and broader cross-platform/parameter/profile qualification remain required.",
+      "note": "Persisted effect operation seeds and seed-only execution have local repeatability tests. Identical decoded pixels across all supported platforms, fonts/renderers and profiles have no shared accepted fixtures. Native premultiplied painting now uses public integer unpremultiplication at repaired drawing/frame/blur boundaries, removing the reproduced CPU rounding discrepancy. Eight default effects have independent frozen exact-pixel references that match Qt 6.4.2 and Qt 6.12 locally. All 200 historical hash entries remain preserved. GitHub Actions run 42937449820 at 7791da3 passes the exact effect suite and full native tests on the Ubuntu baseline after the reproduced AMD failure. Broader cross-platform/parameter/profile qualification remains required.",
       "evidence": [
         "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.h",
         "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
@@ -406,7 +406,7 @@
       "audit": {
         "classification": "partial",
         "spec_line": 39,
-        "coverage": "Persisted effect operation seeds and seed-only execution have local repeatability tests. Identical decoded pixels across all supported platforms, fonts/renderers and profiles have no shared accepted fixtures. Native premultiplied painting now uses public integer unpremultiplication at repaired drawing/frame/blur boundaries, removing the reproduced CPU rounding discrepancy. Eight default effects have independent frozen exact-pixel references that match Qt 6.4.2 and Qt 6.12 locally. All 200 historical hash entries remain preserved. AMD CI and broader cross-platform/parameter/profile qualification remain required.",
+        "coverage": "Persisted effect operation seeds and seed-only execution have local repeatability tests. Identical decoded pixels across all supported platforms, fonts/renderers and profiles have no shared accepted fixtures. Native premultiplied painting now uses public integer unpremultiplication at repaired drawing/frame/blur boundaries, removing the reproduced CPU rounding discrepancy. Eight default effects have independent frozen exact-pixel references that match Qt 6.4.2 and Qt 6.12 locally. All 200 historical hash entries remain preserved. GitHub Actions run 42937449820 at 7791da3 passes the exact effect suite and full native tests on the Ubuntu baseline after the reproduced AMD failure. Broader cross-platform/parameter/profile qualification remains required.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
