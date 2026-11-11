@@ -20,7 +20,7 @@ Requirement labels are unweighted: a catalogue requirement can cover hundreds of
 ## Current position
 
 - **macOS:** 0 implemented, 0 partial, 0 not started, 324 without a recorded implementation status. [Native platform evidence](macos/README.md).
-- **Linux:** 172 implemented, 130 partial, 22 not started, 0 without a recorded implementation status. [Native platform evidence](linux/README.md).
+- **Linux:** 172 implemented, 131 partial, 21 not started, 0 without a recorded implementation status. [Native platform evidence](linux/README.md).
 - **Windows:** 0 implemented, 0 partial, 0 not started, 324 without a recorded implementation status. [Native platform evidence](windows/README.md).
 
 ## Contract coverage
@@ -41,7 +41,7 @@ Requirement labels are unweighted: a catalogue requirement can cover hundreds of
 | [WORKFLOW-CATALOG-001](../product-contract/capabilities/WORKFLOW-CATALOG-001/SPEC.md) | 11.1% | 6 | 11 | 1 | 36 | [Linux map](linux/linux-qt/traceability/WORKFLOW-CATALOG-001.json) |
 | [INTERFACE-CATALOG-001](../product-contract/capabilities/INTERFACE-CATALOG-001/SPEC.md) | 5.6% | 3 | 11 | 4 | 36 | [Linux map](linux/linux-qt/traceability/INTERFACE-CATALOG-001.json) |
 | [CORE-PLATFORM-001](../product-contract/capabilities/CORE-PLATFORM-001/SPEC.md) | 8.3% | 9 | 23 | 4 | 72 | [Linux map](linux/linux-qt/traceability/CORE-PLATFORM-001.json) |
-| [COMPATIBILITY-CATALOG-001](../product-contract/capabilities/COMPATIBILITY-CATALOG-001/SPEC.md) | 1.9% | 1 | 12 | 5 | 36 | [Linux map](linux/linux-qt/traceability/COMPATIBILITY-CATALOG-001.json) |
+| [COMPATIBILITY-CATALOG-001](../product-contract/capabilities/COMPATIBILITY-CATALOG-001/SPEC.md) | 1.9% | 1 | 13 | 4 | 36 | [Linux map](linux/linux-qt/traceability/COMPATIBILITY-CATALOG-001.json) |
 
 ## Next milestones and acceptance gates
 

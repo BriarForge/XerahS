@@ -2,6 +2,7 @@
 #include "NativeWindowPlacement.h"
 #include <QScrollArea>
 #include "CaptureHistoryWindow.h"
+#include "LegacyHistoryWindow.h"
 #include "OwnedWork.h"
 #include "PipelineResultDialog.h"
 #include <QApplication>
@@ -127,6 +128,8 @@ CaptureHistoryWindow::CaptureHistoryWindow(PipelineJournalStorage storage, std::
   m_more = button(second, "moreCaptureHistory", text("Load &more"));
   m_refresh = button(second, "refreshCaptureHistoryWindow", text("&Refresh"));
   m_records = button(second, "openCaptureResultRecords", text("Result &records…")); m_records->hide();
+  auto *legacy = button(second, "previewLegacyHistory", text("Legacy &history…"));
+  connect(legacy, &QPushButton::clicked, this, [this] { (new LegacyHistoryWindow(this))->show(); });
   connect(m_records, &QPushButton::clicked, this, [this] { if (m_technical) m_technical(); });
   // Keep all actions reachable when the work area shrinks: focus traversal
   // scrolls the native action panel rather than forcing a window wider than it.

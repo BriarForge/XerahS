@@ -19,7 +19,7 @@ Requirement labels are unweighted: a catalogue requirement can cover hundreds of
 
 ## Current position
 
-- **Linux:** 172 implemented, 130 partial, 22 not started, 0 without a recorded implementation status. [Native platform evidence](README.md).
+- **Linux:** 172 implemented, 131 partial, 21 not started, 0 without a recorded implementation status. [Native platform evidence](README.md).
 
 Linux figures cover the `linux-qt` reference edition. Candidate editions and supported desktop-environment qualification remain separate. Existing maps retain their recorded audit dates and versions; regenerating this report does not constitute a new implementation audit.
 
@@ -43,7 +43,7 @@ Next work follows the [implementation plan](linux-qt/IMPLEMENTATION.md) and [mea
 | [WORKFLOW-CATALOG-001](../../product-contract/capabilities/WORKFLOW-CATALOG-001/SPEC.md) | 33.3% | 6 | 11 | 1 | 0 | [Linux map](linux-qt/traceability/WORKFLOW-CATALOG-001.json) |
 | [INTERFACE-CATALOG-001](../../product-contract/capabilities/INTERFACE-CATALOG-001/SPEC.md) | 16.7% | 3 | 11 | 4 | 0 | [Linux map](linux-qt/traceability/INTERFACE-CATALOG-001.json) |
 | [CORE-PLATFORM-001](../../product-contract/capabilities/CORE-PLATFORM-001/SPEC.md) | 25.0% | 9 | 23 | 4 | 0 | [Linux map](linux-qt/traceability/CORE-PLATFORM-001.json) |
-| [COMPATIBILITY-CATALOG-001](../../product-contract/capabilities/COMPATIBILITY-CATALOG-001/SPEC.md) | 5.6% | 1 | 12 | 5 | 0 | [Linux map](linux-qt/traceability/COMPATIBILITY-CATALOG-001.json) |
+| [COMPATIBILITY-CATALOG-001](../../product-contract/capabilities/COMPATIBILITY-CATALOG-001/SPEC.md) | 5.6% | 1 | 13 | 4 | 0 | [Linux map](linux-qt/traceability/COMPATIBILITY-CATALOG-001.json) |
 
 ## Next milestones and acceptance gates
 

@@ -53,6 +53,7 @@ add_library(xerahs_core STATIC
   src/actions/PipelineJournal.h
   src/history/CaptureHistory.cpp
   src/history/CaptureHistory.h
+  src/history/LegacyHistory.cpp src/history/LegacyHistory.h
   src/capture/ScrollStitch.cpp
   src/capture/ScrollStitch.h
   src/capture/CaptureSchedule.cpp
@@ -283,6 +284,7 @@ add_library(xerahs_app OBJECT
   app/PipelineHistoryDialog.cpp
   app/PipelineHistoryDialog.h
   app/CaptureHistoryWindow.cpp
+  app/LegacyHistoryWindow.cpp app/LegacyHistoryWindow.h
   app/CaptureHistoryWindow.h
   app/PipelineResultDialog.cpp
   app/PipelineResultDialog.h
@@ -398,12 +400,19 @@ add_test(NAME pipeline-journal COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:pipeline-journal-test>)
 set_tests_properties(pipeline-journal PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 add_executable(capture-history-window-test tests/CaptureHistoryWindowTest.cpp app/CaptureHistoryWindow.cpp app/CaptureHistoryWindow.h
+  app/LegacyHistoryWindow.cpp app/LegacyHistoryWindow.h
   app/PipelineResultDialog.cpp app/PipelineResultDialog.h)
 set_target_properties(capture-history-window-test PROPERTIES AUTOMOC ON)
 target_link_libraries(capture-history-window-test PRIVATE xerahs_pipeline_journal Qt6::Widgets Qt6::DBus Qt6::Test)
 add_test(NAME capture-history-window COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-history-window-test>)
 set_tests_properties(capture-history-window PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+add_executable(legacy-history-test tests/LegacyHistoryTest.cpp app/LegacyHistoryWindow.cpp app/LegacyHistoryWindow.h)
+set_target_properties(legacy-history-test PROPERTIES AUTOMOC ON)
+target_link_libraries(legacy-history-test PRIVATE xerahs_pipeline_journal Qt6::Widgets Qt6::Test)
+target_compile_definitions(legacy-history-test PRIVATE LEGACY_HISTORY_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/legacy-history/History.json")
+add_test(NAME legacy-history COMMAND legacy-history-test)
+set_tests_properties(legacy-history PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 add_executable(pipeline-history-dialog-test tests/PipelineHistoryDialogTest.cpp app/PipelineHistoryDialog.cpp app/PipelineHistoryDialog.h
   app/PipelineResultDialog.cpp app/PipelineResultDialog.h)
 set_target_properties(pipeline-history-dialog-test PROPERTIES AUTOMOC ON)

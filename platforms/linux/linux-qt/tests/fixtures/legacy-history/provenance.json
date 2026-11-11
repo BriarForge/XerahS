@@ -1,0 +1,22 @@
+{
+  "baseline": "kova-0.29.0",
+  "commit": "5c7e36dea77ab131fe0f5e2101e5d578ccde0306",
+  "classification": "sanitized-source-shaped-fixture-not-runtime-golden",
+  "fixture": "History.json",
+  "sha256": "02a536c86313db6e86ac6202fe5a6171bc7f44fde01ff2555b1f5e23dd0e169d",
+  "source_evidence": [
+    {
+      "path": "src/desktop/core/XerahS.History/HistoryManagerJSON.cs",
+      "git_blob": "14ea30e067d32b24e6a9a663ee49f75174413773",
+      "relationship": "EXTRACTED",
+      "url": "https://github.com/KovaForge/XerahS/blob/5c7e36dea77ab131fe0f5e2101e5d578ccde0306/src/desktop/core/XerahS.History/HistoryManagerJSON.cs"
+    },
+    {
+      "path": "src/desktop/core/XerahS.History/HistoryItem.cs",
+      "git_blob": "baff7a8d37478a7f1c6a3dd534f998e449f8d9f1",
+      "relationship": "EXTRACTED",
+      "url": "https://github.com/KovaForge/XerahS/blob/5c7e36dea77ab131fe0f5e2101e5d578ccde0306/src/desktop/core/XerahS.History/HistoryItem.cs"
+    }
+  ],
+  "limits": "Source observations only; no full baseline runtime or cross-platform acceptance."
+}

@@ -1,0 +1,20 @@
+{
+  "FileName": "Example.png",
+  "FilePath": "C:\\ShareX\\Screenshots\\Example.png",
+  "DateTime": "2026-08-30T12:34:56+10:00",
+  "Type": "Image",
+  "Host": "Example host",
+  "URL": "https://example.invalid/Example.png",
+  "ThumbnailURL": "https://example.invalid/thumb.png",
+  "DeletionURL": "https://example.invalid/delete/example-private-value",
+  "ShortenedURL": "https://example.invalid/s/1",
+  "Tags": {"Favorite": null, "WindowTitle": "Example window", "ProcessName": "reference", "AnnotationSidecarPath": "C:\\ShareX\\Screenshots\\Example.xann"}
+},
+{
+  "FileName": "Missing.png",
+  "FilePath": "/missing/legacy/Missing.png",
+  "DateTime": "2026-08-29T01:02:03",
+  "Type": "Image",
+  "Tags": {"Errors": "Example upload failure"},
+  "FutureMetadata": {"label": "retained inertly"}
+}

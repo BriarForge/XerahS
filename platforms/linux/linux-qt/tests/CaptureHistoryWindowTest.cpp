@@ -51,6 +51,18 @@ QListWidgetItem *find(QListWidget *list, const QString &fileName) {
 class CaptureHistoryWindowTest final : public QObject {
   Q_OBJECT
 private slots:
+  void legacyHistoryPreviewIsReachableAndClosesWithHistory() {
+    QTemporaryDir dir;
+    QPointer<CaptureHistoryWindow> window = new CaptureHistoryWindow(
+        std::make_shared<NativePipelineJournal>(dir.filePath("state")), [] { return false; }, {});
+    window->show();
+    auto *open = window->findChild<QPushButton *>("previewLegacyHistory"); QVERIFY(open && open->isEnabled());
+    QTest::mouseClick(open, Qt::LeftButton);
+    QPointer<QWidget> preview = window->findChild<QWidget *>("legacyHistoryWindow");
+    QVERIFY(preview && preview->isVisible());
+    QVERIFY(preview->findChild<QPushButton *>("chooseLegacyHistory")->isEnabled());
+    window->close(); QTRY_VERIFY(window.isNull()); QVERIFY(preview.isNull());
+  }
   void uploadOnlyRowsRetainUrlsAndProtectSourceFiles_data() {
     QTest::addColumn<bool>("image");
     QTest::newRow("existing-image") << true;

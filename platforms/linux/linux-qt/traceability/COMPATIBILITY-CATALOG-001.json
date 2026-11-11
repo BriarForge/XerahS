@@ -14,7 +14,12 @@
     "platforms/linux/linux-qt/app/SecretServiceCredentialStore.cpp",
     "platforms/linux/linux-qt/src/storage/Compatibility.h",
     "platforms/linux/linux-qt/src/storage/JsonBoundary.h",
-    "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp"
+    "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
+    "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
+    "platforms/linux/linux-qt/src/history/LegacyHistory.h",
+    "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
+    "platforms/linux/linux-qt/app/LegacyHistoryWindow.h",
+    "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp"
   ],
   "requirements": {
     "COMPCAT-001": {
@@ -87,7 +92,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Production readers and adversarial/local fixtures exist with some read-only reference observations. Representative runtime observations and accepted fixtures for every claimed legacy format/version are incomplete.",
+      "note": "Production readers and adversarial/local fixtures exist with some read-only reference observations. Representative runtime observations and accepted fixtures for every claimed legacy format/version are incomplete. Native Capture History now opens an isolated read-only legacy JSON preview. Pinned source establishes comma-separated object framing and absent JSON task IDs; sanitized source-shaped fixtures are explicitly not runtime goldens. Real-file/native tests prove 200-record paging, unchanged source/live history, preserved timestamp/metadata/reference text, semantic-record quarantine with valid neighbors, fixed value-free reports, bounded JSON failures and owner lifetime. No referenced media paths or URLs are opened and no live migration occurs. XML/SQLite, persistent idempotent migration/rollback, full identity/state/privacy mappings, baseline runtime observation and cross-platform acceptance remain required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -97,12 +102,19 @@
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
-        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp"
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
+        "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
+        "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
+        "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
+        "platforms/linux/linux-qt/app/LEGACY-HISTORY.md",
+        "platforms/linux/linux-qt/tests/fixtures/legacy-history/provenance.json"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 13,
-        "coverage": "Production readers and adversarial/local fixtures exist with some read-only reference observations. Representative runtime observations and accepted fixtures for every claimed legacy format/version are incomplete.",
+        "coverage": "Production readers and adversarial/local fixtures exist with some read-only reference observations. Representative runtime observations and accepted fixtures for every claimed legacy format/version are incomplete. Native Capture History now opens an isolated read-only legacy JSON preview. Pinned source establishes comma-separated object framing and absent JSON task IDs; sanitized source-shaped fixtures are explicitly not runtime goldens. Real-file/native tests prove 200-record paging, unchanged source/live history, preserved timestamp/metadata/reference text, semantic-record quarantine with valid neighbors, fixed value-free reports, bounded JSON failures and owner lifetime. No referenced media paths or URLs are opened and no live migration occurs. XML/SQLite, persistent idempotent migration/rollback, full identity/state/privacy mappings, baseline runtime observation and cross-platform acceptance remain required.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -124,6 +136,18 @@
           {
             "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
             "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
+            "sha256": "b9064d8dfd6ee43dd0cbdc25e1f71a11b111480a25d333ca29fe0830b3b44b5a"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
+            "sha256": "604de58dba5f67496217ed34ef879b2be4addb9e8018438d73bcbda973a77b6d"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
+            "sha256": "6fb67b5fcd2f0c831084668370bd20e2392e6ce59e4078008c560c26d583bc18"
           }
         ],
         "test_anchors": [
@@ -144,6 +168,18 @@
             "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
             "method": "criticalMetadataCannotBeAccepted",
             "line": 33
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
+            "sha256": "db46f638f06d0c2448d91f7092027499438b8f2795a26304afd897f6a2e02475",
+            "method": "pinnedSourceFixtureKeepsAllFieldsAndMissingReferences",
+            "line": 30
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
+            "sha256": "04cb8c982be7a4f96f2bbcfc1824593f8fad02f48a6a5f52ff59c64fdbf73b5e",
+            "method": "legacyHistoryPreviewIsReachableAndClosesWithHistory",
+            "line": 54
           }
         ]
       },
@@ -153,7 +189,7 @@
       "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Supported native readers (XANN, SXCU, SXIE, application/editor settings, configuration transfer) parse into isolated candidates and failures preserve live state. Failures now identify the affected record through ImportReport.records (index, stable kind, validated id or setting key, disposition, stable reason code; never payload, paths or secrets), surfaced value-free in the editor/preset/settings import summaries. Scope is the readers that exist; a future importer for another compatibility-ledger format must populate the same locators.",
+      "note": "Supported native readers (XANN, SXCU, SXIE, application/editor settings, configuration transfer) parse into isolated candidates and failures preserve live state. Failures now identify the affected record through ImportReport.records (index, stable kind, validated id or setting key, disposition, stable reason code; never payload, paths or secrets), surfaced value-free in the editor/preset/settings import summaries. Scope is the readers that exist; a future importer for another compatibility-ledger format must populate the same locators. Native Capture History now opens an isolated read-only legacy JSON preview. Pinned source establishes comma-separated object framing and absent JSON task IDs; sanitized source-shaped fixtures are explicitly not runtime goldens. Real-file/native tests prove 200-record paging, unchanged source/live history, preserved timestamp/metadata/reference text, semantic-record quarantine with valid neighbors, fixed value-free reports, bounded JSON failures and owner lifetime. No referenced media paths or URLs are opened and no live migration occurs. XML/SQLite, persistent idempotent migration/rollback, full identity/state/privacy mappings, baseline runtime observation and cross-platform acceptance remain required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -170,12 +206,19 @@
         "platforms/linux/linux-qt/app/SettingsDialog.cpp",
         "platforms/linux/linux-qt/src/settings/ReferenceMigration.h",
         "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
-        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp"
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
+        "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
+        "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
+        "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
+        "platforms/linux/linux-qt/app/LEGACY-HISTORY.md",
+        "platforms/linux/linux-qt/tests/fixtures/legacy-history/provenance.json"
       ],
       "audit": {
         "classification": "implemented",
         "spec_line": 16,
-        "coverage": "Supported native readers (XANN, SXCU, SXIE, application/editor settings, configuration transfer) parse into isolated candidates and failures preserve live state. Failures now identify the affected record through ImportReport.records (index, stable kind, validated id or setting key, disposition, stable reason code; never payload, paths or secrets), surfaced value-free in the editor/preset/settings import summaries. Scope is the readers that exist; a future importer for another compatibility-ledger format must populate the same locators.",
+        "coverage": "Supported native readers (XANN, SXCU, SXIE, application/editor settings, configuration transfer) parse into isolated candidates and failures preserve live state. Failures now identify the affected record through ImportReport.records (index, stable kind, validated id or setting key, disposition, stable reason code; never payload, paths or secrets), surfaced value-free in the editor/preset/settings import summaries. Scope is the readers that exist; a future importer for another compatibility-ledger format must populate the same locators. Native Capture History now opens an isolated read-only legacy JSON preview. Pinned source establishes comma-separated object framing and absent JSON task IDs; sanitized source-shaped fixtures are explicitly not runtime goldens. Real-file/native tests prove 200-record paging, unchanged source/live history, preserved timestamp/metadata/reference text, semantic-record quarantine with valid neighbors, fixed value-free reports, bounded JSON failures and owner lifetime. No referenced media paths or URLs are opened and no live migration occurs. XML/SQLite, persistent idempotent migration/rollback, full identity/state/privacy mappings, baseline runtime observation and cross-platform acceptance remain required.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -205,6 +248,18 @@
           {
             "path": "platforms/linux/linux-qt/src/settings/ConfigurationTransfer.cpp",
             "sha256": "56b5634f3675c83c564b5f4a797f52fcb89d8193818adbc16e51bfd02a21b9b5"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
+            "sha256": "b9064d8dfd6ee43dd0cbdc25e1f71a11b111480a25d333ca29fe0830b3b44b5a"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
+            "sha256": "604de58dba5f67496217ed34ef879b2be4addb9e8018438d73bcbda973a77b6d"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
+            "sha256": "6fb67b5fcd2f0c831084668370bd20e2392e6ce59e4078008c560c26d583bc18"
           }
         ],
         "test_anchors": [
@@ -243,6 +298,18 @@
             "sha256": "3dd7e2375586c7aa7c253b999545b656fd830c32f6212a6a3504bfaf82472db4",
             "method": "invalidSettingIsLocatedByKeyWithoutItsValue",
             "line": 53
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
+            "sha256": "db46f638f06d0c2448d91f7092027499438b8f2795a26304afd897f6a2e02475",
+            "method": "nativeChoosePagesRealRecordsAndNeverChangesFilesOrOpensReferences",
+            "line": 67
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
+            "sha256": "04cb8c982be7a4f96f2bbcfc1824593f8fad02f48a6a5f52ff59c64fdbf73b5e",
+            "method": "legacyHistoryPreviewIsReachableAndClosesWithHistory",
+            "line": 54
           }
         ]
       },
@@ -252,7 +319,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Typed six-category import reports are implemented for supported XANN/SXCU/SXIE/settings readers and surfaced value-free. Complete compatibility format/record inventory, unsupported critical behavior classification and human review remain incomplete. Record locators (COMPCAT-003) now also give reject/quarantine reasons per record; per-reader critical blocking exists (SXCU acceptanceBlocked, unsafe XANN/SXIE content rejected) but no catalogue-wide critical-behavior classification or human review, so this row stays partial.",
+      "note": "Typed six-category import reports are implemented for supported XANN/SXCU/SXIE/settings readers and surfaced value-free. Complete compatibility format/record inventory, unsupported critical behavior classification and human review remain incomplete. Record locators (COMPCAT-003) now also give reject/quarantine reasons per record; per-reader critical blocking exists (SXCU acceptanceBlocked, unsafe XANN/SXIE content rejected) but no catalogue-wide critical-behavior classification or human review, so this row stays partial. Native Capture History now opens an isolated read-only legacy JSON preview. Pinned source establishes comma-separated object framing and absent JSON task IDs; sanitized source-shaped fixtures are explicitly not runtime goldens. Real-file/native tests prove 200-record paging, unchanged source/live history, preserved timestamp/metadata/reference text, semantic-record quarantine with valid neighbors, fixed value-free reports, bounded JSON failures and owner lifetime. No referenced media paths or URLs are opened and no live migration occurs. XML/SQLite, persistent idempotent migration/rollback, full identity/state/privacy mappings, baseline runtime observation and cross-platform acceptance remain required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -267,12 +334,19 @@
         "platforms/linux/linux-qt/tests/EditorWindowTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/NativeEditorAppearanceTest.cpp",
-        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/UploadDestinationsDialogTest.cpp",
+        "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
+        "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
+        "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
+        "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
+        "platforms/linux/linux-qt/app/LEGACY-HISTORY.md",
+        "platforms/linux/linux-qt/tests/fixtures/legacy-history/provenance.json"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 20,
-        "coverage": "Typed six-category import reports are implemented for supported XANN/SXCU/SXIE/settings readers and surfaced value-free. Complete compatibility format/record inventory, unsupported critical behavior classification and human review remain incomplete. Record locators (COMPCAT-003) now also give reject/quarantine reasons per record; per-reader critical blocking exists (SXCU acceptanceBlocked, unsafe XANN/SXIE content rejected) but no catalogue-wide critical-behavior classification or human review, so this row stays partial.",
+        "coverage": "Typed six-category import reports are implemented for supported XANN/SXCU/SXIE/settings readers and surfaced value-free. Complete compatibility format/record inventory, unsupported critical behavior classification and human review remain incomplete. Record locators (COMPCAT-003) now also give reject/quarantine reasons per record; per-reader critical blocking exists (SXCU acceptanceBlocked, unsafe XANN/SXIE content rejected) but no catalogue-wide critical-behavior classification or human review, so this row stays partial. Native Capture History now opens an isolated read-only legacy JSON preview. Pinned source establishes comma-separated object framing and absent JSON task IDs; sanitized source-shaped fixtures are explicitly not runtime goldens. Real-file/native tests prove 200-record paging, unchanged source/live history, preserved timestamp/metadata/reference text, semantic-record quarantine with valid neighbors, fixed value-free reports, bounded JSON failures and owner lifetime. No referenced media paths or URLs are opened and no live migration occurs. XML/SQLite, persistent idempotent migration/rollback, full identity/state/privacy mappings, baseline runtime observation and cross-platform acceptance remain required.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -294,6 +368,18 @@
           {
             "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
             "sha256": "b5e2abdc2a632e8defaf358b028d253d474f90ec81ba61b84154b7f8dcbc1896"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
+            "sha256": "b9064d8dfd6ee43dd0cbdc25e1f71a11b111480a25d333ca29fe0830b3b44b5a"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
+            "sha256": "604de58dba5f67496217ed34ef879b2be4addb9e8018438d73bcbda973a77b6d"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
+            "sha256": "6fb67b5fcd2f0c831084668370bd20e2392e6ce59e4078008c560c26d583bc18"
           }
         ],
         "test_anchors": [
@@ -314,6 +400,18 @@
             "sha256": "627e179818960f8acdf4ff5bf9d233f3b0e319665dac6c5c114c1c1bb8bd0d42",
             "method": "criticalMetadataCannotBeAccepted",
             "line": 33
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
+            "sha256": "db46f638f06d0c2448d91f7092027499438b8f2795a26304afd897f6a2e02475",
+            "method": "corruptAndAuthorityRecordsStayQuarantinedWithoutLosingNeighbours",
+            "line": 40
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
+            "sha256": "04cb8c982be7a4f96f2bbcfc1824593f8fad02f48a6a5f52ff59c64fdbf73b5e",
+            "method": "legacyHistoryPreviewIsReachableAndClosesWithHistory",
+            "line": 54
           }
         ]
       },
@@ -593,14 +691,14 @@
       "blocked_reason": "Complete explicit auditable legacy-secret migration, approved secure storage, verification and redacted removal is missing and depends on human credential/security approval."
     },
     "COMPCAT-009": {
-      "status": "not-started",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "No native legacy history JSON/XML/SQLite importer preserves identity/state/URLs or isolates corrupt neighbor records. Existing native execution journal storage is not legacy-history import.",
+      "note": "Native Capture History now opens an isolated read-only legacy JSON preview. Pinned source establishes comma-separated object framing and absent JSON task IDs; sanitized source-shaped fixtures are explicitly not runtime goldens. Real-file/native tests prove 200-record paging, unchanged source/live history, preserved timestamp/metadata/reference text, semantic-record quarantine with valid neighbors, fixed value-free reports, bounded JSON failures and owner lifetime. No referenced media paths or URLs are opened and no live migration occurs. XML/SQLite, persistent idempotent migration/rollback, full identity/state/privacy mappings, baseline runtime observation and cross-platform acceptance remain required.",
       "audit": {
-        "classification": "not-started",
+        "classification": "partial",
         "spec_line": 37,
-        "coverage": "No native legacy history JSON/XML/SQLite importer preserves identity/state/URLs or isolates corrupt neighbor records. Existing native execution journal storage is not legacy-history import.",
+        "coverage": "Native Capture History now opens an isolated read-only legacy JSON preview. Pinned source establishes comma-separated object framing and absent JSON task IDs; sanitized source-shaped fixtures are explicitly not runtime goldens. Real-file/native tests prove 200-record paging, unchanged source/live history, preserved timestamp/metadata/reference text, semantic-record quarantine with valid neighbors, fixed value-free reports, bounded JSON failures and owner lifetime. No referenced media paths or URLs are opened and no live migration occurs. XML/SQLite, persistent idempotent migration/rollback, full identity/state/privacy mappings, baseline runtime observation and cross-platform acceptance remain required.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -622,6 +720,18 @@
           {
             "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
             "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
+            "sha256": "b9064d8dfd6ee43dd0cbdc25e1f71a11b111480a25d333ca29fe0830b3b44b5a"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
+            "sha256": "604de58dba5f67496217ed34ef879b2be4addb9e8018438d73bcbda973a77b6d"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
+            "sha256": "6fb67b5fcd2f0c831084668370bd20e2392e6ce59e4078008c560c26d583bc18"
           }
         ],
         "test_anchors": [
@@ -642,6 +752,18 @@
             "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
             "method": "criticalMetadataCannotBeAccepted",
             "line": 33
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
+            "sha256": "db46f638f06d0c2448d91f7092027499438b8f2795a26304afd897f6a2e02475",
+            "method": "nativeChoosePagesRealRecordsAndNeverChangesFilesOrOpensReferences",
+            "line": 67
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
+            "sha256": "04cb8c982be7a4f96f2bbcfc1824593f8fad02f48a6a5f52ff59c64fdbf73b5e",
+            "method": "legacyHistoryPreviewIsReachableAndClosesWithHistory",
+            "line": 54
           }
         ]
       },
@@ -649,7 +771,14 @@
       "evidence": [
         "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
         "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
-        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp"
+        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp",
+        "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
+        "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
+        "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
+        "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
+        "platforms/linux/linux-qt/app/LEGACY-HISTORY.md",
+        "platforms/linux/linux-qt/tests/fixtures/legacy-history/provenance.json"
       ]
     },
     "COMPCAT-010": {
@@ -978,7 +1107,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Strict duplicate-key/UTF-8/depth/size/element boundaries and bounded gzip/ZIP plus traversal tests protect current readers. Entire format/reader catalogue and complete resource/security/platform matrix remain unqualified.",
+      "note": "Strict duplicate-key/UTF-8/depth/size/element boundaries and bounded gzip/ZIP plus traversal tests protect current readers. Entire format/reader catalogue and complete resource/security/platform matrix remain unqualified. Native Capture History now opens an isolated read-only legacy JSON preview. Pinned source establishes comma-separated object framing and absent JSON task IDs; sanitized source-shaped fixtures are explicitly not runtime goldens. Real-file/native tests prove 200-record paging, unchanged source/live history, preserved timestamp/metadata/reference text, semantic-record quarantine with valid neighbors, fixed value-free reports, bounded JSON failures and owner lifetime. No referenced media paths or URLs are opened and no live migration occurs. XML/SQLite, persistent idempotent migration/rollback, full identity/state/privacy mappings, baseline runtime observation and cross-platform acceptance remain required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -990,12 +1119,19 @@
         "platforms/linux/linux-qt/src/storage/COMPATIBILITY.md",
         "platforms/linux/linux-qt/tests/JsonBoundaryTest.cpp",
         "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
-        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp"
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
+        "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
+        "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
+        "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
+        "platforms/linux/linux-qt/app/LEGACY-HISTORY.md",
+        "platforms/linux/linux-qt/tests/fixtures/legacy-history/provenance.json"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 61,
-        "coverage": "Strict duplicate-key/UTF-8/depth/size/element boundaries and bounded gzip/ZIP plus traversal tests protect current readers. Entire format/reader catalogue and complete resource/security/platform matrix remain unqualified.",
+        "coverage": "Strict duplicate-key/UTF-8/depth/size/element boundaries and bounded gzip/ZIP plus traversal tests protect current readers. Entire format/reader catalogue and complete resource/security/platform matrix remain unqualified. Native Capture History now opens an isolated read-only legacy JSON preview. Pinned source establishes comma-separated object framing and absent JSON task IDs; sanitized source-shaped fixtures are explicitly not runtime goldens. Real-file/native tests prove 200-record paging, unchanged source/live history, preserved timestamp/metadata/reference text, semantic-record quarantine with valid neighbors, fixed value-free reports, bounded JSON failures and owner lifetime. No referenced media paths or URLs are opened and no live migration occurs. XML/SQLite, persistent idempotent migration/rollback, full identity/state/privacy mappings, baseline runtime observation and cross-platform acceptance remain required.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -1017,6 +1153,18 @@
           {
             "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
             "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
+            "sha256": "b9064d8dfd6ee43dd0cbdc25e1f71a11b111480a25d333ca29fe0830b3b44b5a"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
+            "sha256": "604de58dba5f67496217ed34ef879b2be4addb9e8018438d73bcbda973a77b6d"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
+            "sha256": "6fb67b5fcd2f0c831084668370bd20e2392e6ce59e4078008c560c26d583bc18"
           }
         ],
         "test_anchors": [
@@ -1037,6 +1185,18 @@
             "sha256": "516d4741fbb2a54a199821fb1e7fd6f57411fd6f91d741fe9c728648c9637f90",
             "method": "pathTraversalAndCyclicReferencesReject",
             "line": 106
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
+            "sha256": "db46f638f06d0c2448d91f7092027499438b8f2795a26304afd897f6a2e02475",
+            "method": "malformedAndBoundedInputsFailWithoutPreviewingRecords",
+            "line": 62
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
+            "sha256": "04cb8c982be7a4f96f2bbcfc1824593f8fad02f48a6a5f52ff59c64fdbf73b5e",
+            "method": "legacyHistoryPreviewIsReachableAndClosesWithHistory",
+            "line": 54
           }
         ]
       },
@@ -1169,7 +1329,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Local malformed/unknown/native round-trip fixtures exist. Every supported legacy format/version, golden runtime observations, cross-platform round-trip and migration activation evidence remain incomplete.",
+      "note": "Local malformed/unknown/native round-trip fixtures exist. Every supported legacy format/version, golden runtime observations, cross-platform round-trip and migration activation evidence remain incomplete. Native Capture History now opens an isolated read-only legacy JSON preview. Pinned source establishes comma-separated object framing and absent JSON task IDs; sanitized source-shaped fixtures are explicitly not runtime goldens. Real-file/native tests prove 200-record paging, unchanged source/live history, preserved timestamp/metadata/reference text, semantic-record quarantine with valid neighbors, fixed value-free reports, bounded JSON failures and owner lifetime. No referenced media paths or URLs are opened and no live migration occurs. XML/SQLite, persistent idempotent migration/rollback, full identity/state/privacy mappings, baseline runtime observation and cross-platform acceptance remain required.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -1179,12 +1339,19 @@
         "platforms/linux/linux-qt/tests/PrivateJsonFileTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
-        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp"
+        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
+        "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
+        "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
+        "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
+        "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
+        "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
+        "platforms/linux/linux-qt/app/LEGACY-HISTORY.md",
+        "platforms/linux/linux-qt/tests/fixtures/legacy-history/provenance.json"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 73,
-        "coverage": "Local malformed/unknown/native round-trip fixtures exist. Every supported legacy format/version, golden runtime observations, cross-platform round-trip and migration activation evidence remain incomplete.",
+        "coverage": "Local malformed/unknown/native round-trip fixtures exist. Every supported legacy format/version, golden runtime observations, cross-platform round-trip and migration activation evidence remain incomplete. Native Capture History now opens an isolated read-only legacy JSON preview. Pinned source establishes comma-separated object framing and absent JSON task IDs; sanitized source-shaped fixtures are explicitly not runtime goldens. Real-file/native tests prove 200-record paging, unchanged source/live history, preserved timestamp/metadata/reference text, semantic-record quarantine with valid neighbors, fixed value-free reports, bounded JSON failures and owner lifetime. No referenced media paths or URLs are opened and no live migration occurs. XML/SQLite, persistent idempotent migration/rollback, full identity/state/privacy mappings, baseline runtime observation and cross-platform acceptance remain required.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -1206,6 +1373,18 @@
           {
             "path": "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
             "sha256": "20086591c9207b26a9c6663a42eb7e2ef3e56fc6f3048f987c684697888dcb28"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
+            "sha256": "b9064d8dfd6ee43dd0cbdc25e1f71a11b111480a25d333ca29fe0830b3b44b5a"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
+            "sha256": "604de58dba5f67496217ed34ef879b2be4addb9e8018438d73bcbda973a77b6d"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
+            "sha256": "6fb67b5fcd2f0c831084668370bd20e2392e6ce59e4078008c560c26d583bc18"
           }
         ],
         "test_anchors": [
@@ -1226,6 +1405,18 @@
             "sha256": "297e3555ec157402a990c4ecf1d586b7f034de8585b1dfcf0b6a7be3f328735d",
             "method": "criticalMetadataCannotBeAccepted",
             "line": 33
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
+            "sha256": "db46f638f06d0c2448d91f7092027499438b8f2795a26304afd897f6a2e02475",
+            "method": "nativeChoosePagesRealRecordsAndNeverChangesFilesOrOpensReferences",
+            "line": 67
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
+            "sha256": "04cb8c982be7a4f96f2bbcfc1824593f8fad02f48a6a5f52ff59c64fdbf73b5e",
+            "method": "legacyHistoryPreviewIsReachableAndClosesWithHistory",
+            "line": 54
           }
         ]
       },
@@ -1734,5 +1925,12 @@
       "open_product_question": "Timezone-less legacy XANN timestamp interpretation/rejection needs Mike; native local interpretation is retained.",
       "qualification": "All five rows remain partial. Human security review, remaining catalog formats and cross-platform runtime acceptance are not claimed."
     }
-  }
+  },
+  "evidence": [
+    "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
+    "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
+    "platforms/linux/linux-qt/app/LEGACY-HISTORY.md",
+    "platforms/linux/linux-qt/tests/fixtures/legacy-history/History.json",
+    "platforms/linux/linux-qt/tests/fixtures/legacy-history/provenance.json"
+  ]
 }
