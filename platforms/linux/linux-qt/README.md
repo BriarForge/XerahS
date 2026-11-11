@@ -319,3 +319,10 @@ at the private recovery path shown in Capture History. Mike approved keeping
 such files until explicit recovery/removal. Recovery paths never authorize
 automatic cleanup or retry; pending/retained records cannot be forgotten.
 `CaptureDeleteTest` covers real filesystem/HTTP, restart and native history flows.
+
+**Stopping a watch-folder Move:** If Stop arrives after the destination copy has
+committed, XerahS preserves that copy and the original source. History records
+the completed copy and cancelled source removal as a partial result; the
+notification also reports partial completion. `WatchFolderServiceTest` covers
+this worker boundary with actual files. Broader retry/restart qualification
+remains under the workflow contract.

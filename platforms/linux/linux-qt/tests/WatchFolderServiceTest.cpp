@@ -206,6 +206,39 @@ private slots:
     service.stop();
   }
 
+  void stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial() {
+    QTemporaryDir dir;
+    QVERIFY(QDir(dir.path()).mkpath("input"));
+    const auto source = dir.filePath("input/new.png"), captures = dir.filePath("captures");
+    qint64 now = 0;
+    QWidget owner;
+    FileUploadController uploads(portsFor(dir), &owner);
+    watch::WatchFolders store(dir.filePath("store"));
+    WatchFolderService service(store, uploads, [&] { return captures; }, [&] { return now; });
+    NativeWorkflowExecutions executions(dir.filePath("executions"));
+    service.setExecutionWriter(executions.writer());
+    service.setBeforeRemoveHook([&](const QString &) {
+      QMetaObject::invokeMethod(&service, [&] { service.stop(); }, Qt::BlockingQueuedConnection);
+    });
+    watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Move;
+    QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy processed(&service, &WatchFolderService::processed), notified(&service, &WatchFolderService::notify);
+    service.start();
+    const QByteArray contents("completed copy must survive cancellation");
+    QVERIFY(writeFile(source, contents)); service.rescan(); now = 2000; service.rescan(); now += 2000; service.rescan();
+    QTRY_COMPARE_WITH_TIMEOUT(processed.count(), 1, 7000);
+    QCOMPARE(readFile(source), contents);
+    const auto outputs = QDir(captures).entryList(QDir::Files); QCOMPARE(outputs.size(), 1);
+    QCOMPARE(readFile(QDir(captures).filePath(outputs.first())), contents);
+    QVERIFY(!processed.first().at(1).toBool());
+    QVERIFY(!notified.last().at(1).toBool());
+    const auto listing = executions.list(); QCOMPARE(listing.entries.size(), size_t(1));
+    const auto record = workflows::parseWorkflowExecution(listing.entries.front().snapshot, listing.entries.front().id);
+    QVERIFY(record); QCOMPARE(record->state, QString("partial")); QVERIFY(!record->outputs.isEmpty());
+    QCOMPARE(record->steps.last().toObject().value("action").toString(), QString("remove-source"));
+    QCOMPARE(record->steps.last().toObject().value("state").toString(), QString("cancelled"));
+  }
+
   void stableNewFileCopiesOrMoves_data() {
     QTest::addColumn<bool>("move");
     QTest::newRow("copy") << false;

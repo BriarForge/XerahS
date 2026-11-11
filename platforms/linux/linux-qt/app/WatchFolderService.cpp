@@ -82,6 +82,7 @@ void WatchFolderService::startFileWork(const QString &sourcePath, const QString 
     r.copied = true;  // durable: the copy exists before the source is touched
     source.close();
     if (move && removeHook) removeHook(path);
+    if (move && ctx.cancelled()) return fail(QStringLiteral("cancelled"));
     if (move && !QFile::remove(path)) return fail(QStringLiteral("watch-move-remove-failed; copy retained"));
     return r;
   }), std::function<void(FileResult)>([this, path](const FileResult &result) { finishFileWork(path, result); }),
