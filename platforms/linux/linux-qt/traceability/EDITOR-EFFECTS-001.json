@@ -387,24 +387,31 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Persisted effect operation seeds and seed-only execution have local repeatability tests. Identical decoded pixels across all supported platforms, fonts/renderers and profiles have no shared accepted fixtures.",
+      "note": "Persisted effect operation seeds and seed-only execution have local repeatability tests. Identical decoded pixels across all supported platforms, fonts/renderers and profiles have no shared accepted fixtures. Native premultiplied painting now uses public integer unpremultiplication at repaired drawing/frame/blur boundaries, removing the reproduced CPU rounding discrepancy. Eight default effects have independent frozen exact-pixel references that match Qt 6.4.2 and Qt 6.12 locally. All 200 historical hash entries remain preserved. AMD CI and broader cross-platform/parameter/profile qualification remain required.",
       "evidence": [
         "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.h",
         "platforms/linux/linux-qt/src/image-editor/effects/SxiePreset.cpp",
         "platforms/linux/linux-qt/app/EffectsDialog.cpp",
         "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/EffectGoldenHashTest.cpp"
+        "platforms/linux/linux-qt/tests/EffectGoldenHashTest.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/DrawingEffects.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/FilterEffects3.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/FilterEffects5.cpp",
+        "platforms/linux/linux-qt/tests/EffectPrecisionReference.h",
+        "platforms/linux/linux-qt/tests/fixtures/effects/generate-precision-reference.cpp",
+        "platforms/linux/linux-qt/tests/fixtures/effects/golden-hashes.json"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 39,
-        "coverage": "Persisted effect operation seeds and seed-only execution have local repeatability tests. Identical decoded pixels across all supported platforms, fonts/renderers and profiles have no shared accepted fixtures.",
+        "coverage": "Persisted effect operation seeds and seed-only execution have local repeatability tests. Identical decoded pixels across all supported platforms, fonts/renderers and profiles have no shared accepted fixtures. Native premultiplied painting now uses public integer unpremultiplication at repaired drawing/frame/blur boundaries, removing the reproduced CPU rounding discrepancy. Eight default effects have independent frozen exact-pixel references that match Qt 6.4.2 and Qt 6.12 locally. All 200 historical hash entries remain preserved. AMD CI and broader cross-platform/parameter/profile qualification remain required.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EffectsDialog.cpp",
-            "sha256": "e35a9873c52d5530182ee311a6695a4c1e5f8975b184a9580fb0e86a99554424"
+            "sha256": "3c8876a0338a555c778ccf34060c98fdf539067ab1e0f3f8874fc01246571a4c"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
@@ -413,12 +420,28 @@
           {
             "path": "platforms/linux/linux-qt/src/image-editor/effects/Effect.h",
             "sha256": "4d310c42cf54c287affd6594d00f796ab97628b9ed8739c9b64923674cdfccf4"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.cpp",
+            "sha256": "88eeed0b8a12b11afc614aced2c5c847c0e6b61b694f444766fad7c33b4c480b"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/DrawingEffects.cpp",
+            "sha256": "ebaa6872ec68e8f6e1d5dafb91777c80553bbc4ef1d5144c76f3e8a67284d55b"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/FilterEffects3.cpp",
+            "sha256": "24aaf1621f22a92edc4f4f674b00ca5e2de914c2e46222f755d199d10b3ae9f9"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/FilterEffects5.cpp",
+            "sha256": "b9ac2b4a893c0211aeef8fa96222318c255f83fe2391f3056e4cad2816a41d46"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
-            "sha256": "d750c44dcae9c595ffb092efbd8615268ccf3e4ed5f012aed85e6eebcbe411c5",
+            "sha256": "0158bf6666c6e822a79f7e6c7e692dddb20a800fcbc7c288bc3d854648377028",
             "method": "browser",
             "line": 167
           },
@@ -427,6 +450,22 @@
             "sha256": "cfe02a706b65f44563fca7904863fe392449de26a2c07a72401dc074b8bfd260",
             "method": "runnerNormalizesAndResolves",
             "line": 146
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EffectGoldenHashTest.cpp",
+            "sha256": "ca97463956e2d29875b8496741880cd45b5c480f57020d336aea13c39b97a95d"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EffectPrecisionReference.h",
+            "sha256": "67087d69a04dc5202213517f8f4507d7eef1296e72e46d3bf314d27c41657540"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/fixtures/effects/generate-precision-reference.cpp",
+            "sha256": "e5fa67d5295bbf30084c104af2f2939585331e57357dacb8f6a418f02cf00472"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/fixtures/effects/golden-hashes.json",
+            "sha256": "21dbddc5f68b91a6c9b02aa1952645372eff05cd9fe880278f9d4fdedc911306"
           }
         ]
       },
@@ -436,23 +475,30 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Framework states ARGB32/colour-space preservation and algorithms have alpha/edge tests, but complete per-family orientation/premultiplication/sampling rules and conformance remain incomplete. Codex queue evidence (2026-11-05): Audit 2026-11-05: EffectFrameworkTest::runnerNormalizesAndResolves and runnerRejectsViolationsAndExceptions prove ARGB32 normalization with source colour space retained and reject opaque/wrong-format/wrong-size/wrong-profile results. EffectSupport defines straight-alpha centred Clamp convolution and premultiplied blur/unpremultiply behavior; DrawingEffectsTest::backgroundImageCoversTilesAndRejectsBadFiles proves tiled/covered/clipped image composition. Existing orientation is resolved during source preparation. Remains partial: whole-catalogue alpha, clipping, edge-sampling and colour-space definitions and cross-platform decoded-pixel equivalence are not exhaustively proven.",
+      "note": "Framework states ARGB32/colour-space preservation and algorithms have alpha/edge tests, but complete per-family orientation/premultiplication/sampling rules and conformance remain incomplete. Codex queue evidence (2026-11-05): Audit 2026-11-05: EffectFrameworkTest::runnerNormalizesAndResolves and runnerRejectsViolationsAndExceptions prove ARGB32 normalization with source colour space retained and reject opaque/wrong-format/wrong-size/wrong-profile results. EffectSupport defines straight-alpha centred Clamp convolution and premultiplied blur/unpremultiply behavior; DrawingEffectsTest::backgroundImageCoversTilesAndRejectsBadFiles proves tiled/covered/clipped image composition. Existing orientation is resolved during source preparation. Remains partial: whole-catalogue alpha, clipping, edge-sampling and colour-space definitions and cross-platform decoded-pixel equivalence are not exhaustively proven. Canonical scalar export preserves alpha, image metadata and untouched source RGB, including hidden RGB under zero alpha; cancellation is checked before copy and per row. EffectGoldenHashTest::canonicalPremultipliedExport covers the literal 53/106 half-tie, valid gray/alpha pairs, cancellation and unchanged source pixels. Whole-catalogue sampling/profile qualification remains partial.",
       "evidence": [
         "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
         "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.h",
         "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.cpp",
         "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp",
-        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp"
+        "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/DrawingEffects.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/FilterEffects3.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/FilterEffects5.cpp",
+        "platforms/linux/linux-qt/tests/EffectGoldenHashTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectPrecisionReference.h",
+        "platforms/linux/linux-qt/tests/fixtures/effects/generate-precision-reference.cpp",
+        "platforms/linux/linux-qt/tests/fixtures/effects/golden-hashes.json"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 42,
-        "coverage": "Framework states ARGB32/colour-space preservation and algorithms have alpha/edge tests, but complete per-family orientation/premultiplication/sampling rules and conformance remain incomplete.",
+        "coverage": "Framework states ARGB32/colour-space preservation and algorithms have alpha/edge tests, but complete per-family orientation/premultiplication/sampling rules and conformance remain incomplete. Canonical scalar export preserves alpha, image metadata and untouched source RGB, including hidden RGB under zero alpha; cancellation is checked before copy and per row. EffectGoldenHashTest::canonicalPremultipliedExport covers the literal 53/106 half-tie, valid gray/alpha pairs, cancellation and unchanged source pixels. Whole-catalogue sampling/profile qualification remains partial.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EffectsDialog.cpp",
-            "sha256": "e35a9873c52d5530182ee311a6695a4c1e5f8975b184a9580fb0e86a99554424"
+            "sha256": "3c8876a0338a555c778ccf34060c98fdf539067ab1e0f3f8874fc01246571a4c"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
@@ -461,12 +507,28 @@
           {
             "path": "platforms/linux/linux-qt/src/image-editor/effects/Effect.h",
             "sha256": "4d310c42cf54c287affd6594d00f796ab97628b9ed8739c9b64923674cdfccf4"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.cpp",
+            "sha256": "88eeed0b8a12b11afc614aced2c5c847c0e6b61b694f444766fad7c33b4c480b"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/DrawingEffects.cpp",
+            "sha256": "ebaa6872ec68e8f6e1d5dafb91777c80553bbc4ef1d5144c76f3e8a67284d55b"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/FilterEffects3.cpp",
+            "sha256": "24aaf1621f22a92edc4f4f674b00ca5e2de914c2e46222f755d199d10b3ae9f9"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/FilterEffects5.cpp",
+            "sha256": "b9ac2b4a893c0211aeef8fa96222318c255f83fe2391f3056e4cad2816a41d46"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
-            "sha256": "d750c44dcae9c595ffb092efbd8615268ccf3e4ed5f012aed85e6eebcbe411c5",
+            "sha256": "0158bf6666c6e822a79f7e6c7e692dddb20a800fcbc7c288bc3d854648377028",
             "method": "browser",
             "line": 167
           },
@@ -475,6 +537,22 @@
             "sha256": "cfe02a706b65f44563fca7904863fe392449de26a2c07a72401dc074b8bfd260",
             "method": "runnerNormalizesAndResolves",
             "line": 146
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EffectGoldenHashTest.cpp",
+            "sha256": "ca97463956e2d29875b8496741880cd45b5c480f57020d336aea13c39b97a95d"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EffectPrecisionReference.h",
+            "sha256": "67087d69a04dc5202213517f8f4507d7eef1296e72e46d3bf314d27c41657540"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/fixtures/effects/generate-precision-reference.cpp",
+            "sha256": "e5fa67d5295bbf30084c104af2f2939585331e57357dacb8f6a418f02cf00472"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/fixtures/effects/golden-hashes.json",
+            "sha256": "21dbddc5f68b91a6c9b02aa1952645372eff05cd9fe880278f9d4fdedc911306"
           }
         ]
       },
@@ -816,22 +894,30 @@
       "disposition": "Required",
       "status": "partial",
       "vectors": [],
-      "note": "Registry/framework tests and regression hashes cover registered effects, but remove_background is unconstructible and regression locks are not independent golden correctness evidence for all selected algorithms/boundaries.",
+      "note": "Registry/framework tests and regression hashes cover registered effects, but remove_background is unconstructible and regression locks are not independent golden correctness evidence for all selected algorithms/boundaries. Eight default effects now have frozen canonical SHA-256 values generated by standalone independent Qt drawing plans without product renderer/math helpers. Both the independent images and product images must match those exact values; historical 200-effect locks are preserved. This is bounded default-fixture evidence, not full selected-algorithm/parameter-boundary qualification.",
       "evidence": [
         "platforms/linux/linux-qt/src/image-editor/effects/CensusCatalog.cpp",
         "platforms/linux/linux-qt/tests/CensusCatalogTest.cpp",
         "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp"
+        "platforms/linux/linux-qt/tests/EffectFrameworkTest.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/DrawingEffects.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/FilterEffects3.cpp",
+        "platforms/linux/linux-qt/src/image-editor/effects/FilterEffects5.cpp",
+        "platforms/linux/linux-qt/tests/EffectGoldenHashTest.cpp",
+        "platforms/linux/linux-qt/tests/EffectPrecisionReference.h",
+        "platforms/linux/linux-qt/tests/fixtures/effects/generate-precision-reference.cpp",
+        "platforms/linux/linux-qt/tests/fixtures/effects/golden-hashes.json"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 66,
-        "coverage": "Registry/framework tests and regression hashes cover registered effects, but remove_background is unconstructible and regression locks are not independent golden correctness evidence for all selected algorithms/boundaries.",
+        "coverage": "Registry/framework tests and regression hashes cover registered effects, but remove_background is unconstructible and regression locks are not independent golden correctness evidence for all selected algorithms/boundaries. Eight default effects now have frozen canonical SHA-256 values generated by standalone independent Qt drawing plans without product renderer/math helpers. Both the independent images and product images must match those exact values; historical 200-effect locks are preserved. This is bounded default-fixture evidence, not full selected-algorithm/parameter-boundary qualification.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/app/EffectsDialog.cpp",
-            "sha256": "e35a9873c52d5530182ee311a6695a4c1e5f8975b184a9580fb0e86a99554424"
+            "sha256": "3c8876a0338a555c778ccf34060c98fdf539067ab1e0f3f8874fc01246571a4c"
           },
           {
             "path": "platforms/linux/linux-qt/src/image-editor/effects/Effect.cpp",
@@ -840,12 +926,28 @@
           {
             "path": "platforms/linux/linux-qt/src/image-editor/effects/Effect.h",
             "sha256": "4d310c42cf54c287affd6594d00f796ab97628b9ed8739c9b64923674cdfccf4"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/EffectSupport.cpp",
+            "sha256": "88eeed0b8a12b11afc614aced2c5c847c0e6b61b694f444766fad7c33b4c480b"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/DrawingEffects.cpp",
+            "sha256": "ebaa6872ec68e8f6e1d5dafb91777c80553bbc4ef1d5144c76f3e8a67284d55b"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/FilterEffects3.cpp",
+            "sha256": "24aaf1621f22a92edc4f4f674b00ca5e2de914c2e46222f755d199d10b3ae9f9"
+          },
+          {
+            "path": "platforms/linux/linux-qt/src/image-editor/effects/FilterEffects5.cpp",
+            "sha256": "b9ac2b4a893c0211aeef8fa96222318c255f83fe2391f3056e4cad2816a41d46"
           }
         ],
         "test_anchors": [
           {
             "path": "platforms/linux/linux-qt/tests/EffectsDialogTest.cpp",
-            "sha256": "d750c44dcae9c595ffb092efbd8615268ccf3e4ed5f012aed85e6eebcbe411c5",
+            "sha256": "0158bf6666c6e822a79f7e6c7e692dddb20a800fcbc7c288bc3d854648377028",
             "method": "browser",
             "line": 167
           },
@@ -854,6 +956,22 @@
             "sha256": "cfe02a706b65f44563fca7904863fe392449de26a2c07a72401dc074b8bfd260",
             "method": "runnerNormalizesAndResolves",
             "line": 146
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EffectGoldenHashTest.cpp",
+            "sha256": "ca97463956e2d29875b8496741880cd45b5c480f57020d336aea13c39b97a95d"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/EffectPrecisionReference.h",
+            "sha256": "67087d69a04dc5202213517f8f4507d7eef1296e72e46d3bf314d27c41657540"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/fixtures/effects/generate-precision-reference.cpp",
+            "sha256": "e5fa67d5295bbf30084c104af2f2939585331e57357dacb8f6a418f02cf00472"
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/fixtures/effects/golden-hashes.json",
+            "sha256": "21dbddc5f68b91a6c9b02aa1952645372eff05cd9fe880278f9d4fdedc911306"
           }
         ]
       },

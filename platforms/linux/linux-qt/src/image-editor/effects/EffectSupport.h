@@ -26,6 +26,12 @@ inline const QString kUnavailable = QStringLiteral("effect-unavailable");
 // Exact reflection on the Qt 6.4 baseline and newer API generations.
 QImage flipAxisImage(const QImage &source, Qt::Orientation axis);
 
+// Native painting stays premultiplied; the scalar export has one integer
+// rounding rule on every CPU. An untouched source keeps its original RGB,
+// including RGB beneath zero alpha.
+QImage straightFromPremultiplied(const QImage &image, const EffectContext &context,
+                                const QImage *preserveUnpaintedSource = nullptr);
+
 // ---- parameter builders and accessors ---------------------------------------
 inline ParamSpec floatParam(const QString &id, const QString &label, double initial, double minimum, double maximum) {
   return {id, label, ParamKind::Float, initial, minimum, maximum, {}};
@@ -253,6 +259,7 @@ EffectResult paintBorder(const QImage &source, int border, const EffectContext &
   if (!done || context.cancelled()) return {{}, kCancelled};
   if (post) post(out);
   if (context.cancelled()) return {{}, kCancelled};
+  if (out.isNull()) return {{}, kFailed};
   copyInterior(source, out, border);
   return {out, {}};
 }

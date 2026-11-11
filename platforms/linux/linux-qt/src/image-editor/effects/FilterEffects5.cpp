@@ -91,7 +91,8 @@ bool drawBlurredCircle(QPainter &painter, QPointF centre, double radius, const Q
     pp.setBrush(color);
     pp.drawEllipse(QPointF(centre.x() - ox, centre.y() - oy), radius, radius);
   }
-  const QImage straight = patch.convertToFormat(QImage::Format_ARGB32);
+  const QImage straight = straightFromPremultiplied(patch, context);
+  if (straight.isNull()) return false;
   FloatImage f = toPremul(straight);
   if (!gaussianBlur255(f, sigma, false, context)) return false;
   painter.drawImage(ox, oy, fromPremul(f, straight));
@@ -1393,7 +1394,7 @@ EffectResult starfieldBorder(const QImage &source, const ParamValues &params, co
         }
         painter.end();
         const QColorSpace space = out.colorSpace();
-        out = surface.convertToFormat(QImage::Format_ARGB32);
+        out = straightFromPremultiplied(surface, context);
         out.setColorSpace(space);
       });
 }

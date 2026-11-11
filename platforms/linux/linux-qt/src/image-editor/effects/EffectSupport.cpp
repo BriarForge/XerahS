@@ -25,6 +25,25 @@ QImage flipAxisImage(const QImage &source, Qt::Orientation axis) {
 #endif
 }
 
+QImage straightFromPremultiplied(const QImage &image, const EffectContext &context,
+                                const QImage *preserveUnpaintedSource) {
+  Q_ASSERT(image.format() == QImage::Format_ARGB32_Premultiplied);
+  Q_ASSERT(!preserveUnpaintedSource || preserveUnpaintedSource->size() == image.size());
+  if (context.cancelled()) return {};
+  QImage result = image.copy();
+  if (result.isNull()) return {};
+  result.reinterpretAsFormat(QImage::Format_ARGB32);
+  for (int y = 0; y < result.height(); ++y) {
+    if (context.cancelled()) return {};
+    auto *pixels = reinterpret_cast<QRgb *>(result.scanLine(y));
+    const auto *original = preserveUnpaintedSource
+        ? reinterpret_cast<const QRgb *>(preserveUnpaintedSource->constScanLine(y)) : nullptr;
+    for (int x = 0; x < result.width(); ++x)
+      pixels[x] = original && pixels[x] == qPremultiply(original[x]) ? original[x] : qUnpremultiply(pixels[x]);
+  }
+  return result;
+}
+
 // Skia clamps a filtered channel to the byte gamut and rounds it to the nearest byte.
 int filteredByte(float value) { return int(std::floor(std::clamp(value, 0.f, 255.f) + 0.5f)); }
 

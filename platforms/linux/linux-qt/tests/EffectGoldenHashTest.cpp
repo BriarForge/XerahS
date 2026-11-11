@@ -1,5 +1,6 @@
 // EDITOR-EFFECTS-001, EE-008..EE-010: regression lock, not a correctness oracle.
 #include "image-editor/effects/EffectSupport.h"
+#include "EffectPrecisionReference.h"
 #include <QCryptographicHash>
 #include <QFile>
 #include <QFileInfo>
@@ -172,6 +173,22 @@ private slots:
       }
     }
   }
+  void canonicalPremultipliedExport() {
+    QImage input(256, 256, QImage::Format_ARGB32_Premultiplied);
+    for (int a = 0; a < 256; ++a) for (int c = 0; c < 256; ++c)
+      input.setPixel(c, a, qRgba(std::min(c, a), std::min(c, a), std::min(c, a), a));
+    const auto output = support::straightFromPremultiplied(input, {});
+    QCOMPARE(output.pixel(53, 106), qRgba(128, 128, 128, 106));
+    for (int a = 0; a < 256; ++a) for (int c = 0; c <= a; ++c)
+      QCOMPARE(output.pixel(c, a), qUnpremultiply(qRgba(c, c, c, a)));
+    EffectContext cancelled;
+    int cancellationChecks = 0;
+    cancelled.cancelled = [&] { return ++cancellationChecks == 3; };
+    QVERIFY(support::straightFromPremultiplied(input, cancelled).isNull());
+    const auto original = fixture(0);
+    const auto premul = original.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    QCOMPARE(support::straightFromPremultiplied(premul, {}, &original), original);
+  }
   void allocationFailureStaysTyped() {
     support::FunctionEffect effect({}, [](const QImage &, const ParamValues &, const EffectContext &) -> EffectResult {
       throw std::bad_alloc();
@@ -186,7 +203,15 @@ private slots:
     QJsonParseError error;
     const auto document = QJsonDocument::fromJson(file.readAll(), &error);
     QCOMPARE(error.error, QJsonParseError::NoError);
-    const auto expected = document.object().value("effects").toObject();
+    const auto historical = document.object().value("effects").toObject();
+    const auto canonical = document.object().value("canonical_precision_oracles").toObject();
+    const auto corrected = canonical.value("effects").toObject();
+    QCOMPARE(corrected.keys(), precision_reference::ids());
+    QJsonObject expected = historical;
+    for (auto it = corrected.begin(); it != corrected.end(); ++it) {
+      QVERIFY(historical.contains(it.key()));
+      expected.insert(it.key(), it.value());
+    }
     const auto diagnostics = qEnvironmentVariable("XERAHS_EFFECT_DIAGNOSTICS");
     QFile nativeFile(QFileInfo(EFFECT_GOLDEN_FIXTURE).dir().filePath("ascii-art-native-glyphs.json"));
     QVERIFY(nativeFile.open(QIODevice::ReadOnly));
@@ -211,6 +236,14 @@ private slots:
         if (spec->id == "ascii_art" || spec->id == "draw_text" || spec->id == "text_watermark") {
           QVERIFY(!reference.isNull()); QCOMPARE(reference.size(), fixture(i).size());
           native.append(QJsonObject{{"error", ""}, {"sha256", hash(reference)}});
+        }
+        if (corrected.contains(spec->id)) {
+          const auto independent = precision_reference::render(spec->id, fixture(i));
+          QVERIFY(!independent.isNull());
+          const QJsonObject independentlyExpected{{"error", ""}, {"sha256", hash(independent)}};
+          const auto frozen = corrected.value(spec->id).toArray();
+          QCOMPARE(frozen.size(), 3);
+          QVERIFY2(QJsonValue(independentlyExpected) == frozen.at(i), qPrintable(spec->id + " independent reference " + QString::number(i)));
         }
         const auto result = runEffect(*builtinEffects().find(spec->id), fixture(i), {}, context);
         const QJsonObject observed{{"error", result.error}, {"sha256", hash(result.image)}};

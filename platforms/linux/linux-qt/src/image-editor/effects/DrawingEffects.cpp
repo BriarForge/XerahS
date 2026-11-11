@@ -557,7 +557,7 @@ EffectResult snowflakes(const QImage &source, const ParamValues &params, const E
   const int minSize = std::max(2, std::min(intOf(params, "min_size"), intOf(params, "max_size")));
   const int maxSize = std::max(minSize, intOf(params, "max_size"));
   const bool randomAngle = boolOf(params, "random_angle"), background = boolOf(params, "background");
-  QImage canvas = startCanvas(source, background);
+  QImage canvas = startCanvas(source, background).convertToFormat(QImage::Format_ARGB32_Premultiplied);
   if (canvas.isNull()) return {{}, kFailed};
   SplitMix64 rng(context.seed);
   {
@@ -576,7 +576,8 @@ EffectResult snowflakes(const QImage &source, const ParamValues &params, const E
   }
   finishCanvas(canvas, source, background);
   context.progress(100);
-  return {canvas, {}};
+  auto straight = straightFromPremultiplied(canvas, context, &source);
+  return {straight, straight.isNull() ? (context.cancelled() ? kCancelled : kFailed) : QString{}};
 }
 
 EffectResult fakeHair(const QImage &source, const ParamValues &params, const EffectContext &context) {
@@ -637,7 +638,7 @@ EffectResult fakeCursor(const QImage &source, const ParamValues &params, const E
   const int angleMin = std::min(intOf(params, "random_angle_min"), intOf(params, "random_angle_max"));
   const int angleMax = std::max(intOf(params, "random_angle_min"), intOf(params, "random_angle_max"));
   const QColor fill = colorOf(params, "fill_color"), borderColor = colorOf(params, "border_color");
-  QImage result = copyOf(source);
+  QImage result = source.convertToFormat(QImage::Format_ARGB32_Premultiplied);
   SplitMix64 rng(context.seed);
   QPainter painter(&result);
   initPainter(painter);
@@ -665,7 +666,9 @@ EffectResult fakeCursor(const QImage &source, const ParamValues &params, const E
     painter.drawPolygon(outline, 7);
     painter.restore();
   }
-  return {result, {}};
+  painter.end();
+  auto straight = straightFromPremultiplied(result, context, &source);
+  return {straight, straight.isNull() ? (context.cancelled() ? kCancelled : kFailed) : QString{}};
 }
 
 // ---- particles ------------------------------------------------------------------

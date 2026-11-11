@@ -2816,5 +2816,122 @@
             "font": "Arial if installed, otherwise native application font; 15 pixels",
             "pixel_oracle": "Fixed default Qt drawing instructions in EffectGoldenHashTest; historical sha256 values retained as unrecorded-workstation provenance."
         }
+    },
+    "canonical_precision_oracles": {
+        "provenance": "Independent fixed default drawing plans in tests/EffectPrecisionReference.h; generated only by generate-precision-reference.cpp. Integer public Qt qUnpremultiply defines canonical straight-alpha export; original effects hashes are retained above as historical provenance. No product renderer output is used to generate these corrected expectations. The standalone generator matches on Qt 6.4.2 and Qt 6.12.0; the same frozen hashes are required on every host.",
+        "effects": {
+            "fake_cursor": [
+                {
+                    "error": "",
+                    "sha256": "c01e3d0a84ec45df14f087541aa3b97b31324d1c5a0ef41956767d6cf53c4f58"
+                },
+                {
+                    "error": "",
+                    "sha256": "18c15fa9d8230b6a7615b959ce3677eb7efb2d158cdaf6381175f5035102a189"
+                },
+                {
+                    "error": "",
+                    "sha256": "0d1b6440f3bfae05ab9827c1a71610e6c53d30fa9f92800767c7e0b48db4a757"
+                }
+            ],
+            "film_strip_frame": [
+                {
+                    "error": "",
+                    "sha256": "f3221ca19b2f6b9016bbde55bd82a080f652ec323e47bc5c50c9a51bf9940834"
+                },
+                {
+                    "error": "",
+                    "sha256": "52932f0037491ef4fbad13507c14027ab37d8e8ab741b2f2becaf1a2ed102b20"
+                },
+                {
+                    "error": "",
+                    "sha256": "d4724bf23d41f2f0ea03f5c980096580b79db4cca9c775f1766a3e423ac8d325"
+                }
+            ],
+            "gradient_fade_border": [
+                {
+                    "error": "",
+                    "sha256": "caa9d07fe947475308ae8f6b58adde6c3abad201cd9706000fecf86745a149d4"
+                },
+                {
+                    "error": "",
+                    "sha256": "96d52b438bed5d8e77758449b90eeae3806c943ab1ab5e7f9a2cf9d507b25b83"
+                },
+                {
+                    "error": "",
+                    "sha256": "cd7e1cf3f3afa9b79692814f82a839d26f83b2a3970e29179897be17e7620369"
+                }
+            ],
+            "pointillism": [
+                {
+                    "error": "",
+                    "sha256": "facff17af098e21030c415a584db3efafe1eaf49b74362ab5634386e533d6586"
+                },
+                {
+                    "error": "",
+                    "sha256": "6cfb7ca910fe8e51262370c2a96dff60ed0e47398c8b418c7429c0f10d9ce4ff"
+                },
+                {
+                    "error": "",
+                    "sha256": "7e3e2e4721dd70ecd38ce0bc1c1cd7ca22ee5d5ebcf6b2f25f4c09fb07659ece"
+                }
+            ],
+            "polaroid_frame": [
+                {
+                    "error": "",
+                    "sha256": "52e1dee4c434312628336cfd9ee3882d5d814f2c049b68c8eb1ec94234f1fbe4"
+                },
+                {
+                    "error": "",
+                    "sha256": "57c6d5e13f94eea2b4a291b88ebe6ca6d63fffb324559c0da5f5150cc475b73b"
+                },
+                {
+                    "error": "",
+                    "sha256": "99ca307ce6cc524870104cfc3907fdf2b7c402532eb7f9dc0df506e8cfe00f1f"
+                }
+            ],
+            "snowflakes": [
+                {
+                    "error": "",
+                    "sha256": "65ca573b4824f2b04f4d44c9c3390e91a0e296e99cf91a93df0d6b83e0c5ed44"
+                },
+                {
+                    "error": "",
+                    "sha256": "b99f007cb6e663d121b09cf2aab03eb8bcac8ed9caca663bf44e6d7d788415fb"
+                },
+                {
+                    "error": "",
+                    "sha256": "659f41d158f708e073928ad3cf801be4c7ac153ef35a3f4d3c5d411be9b4b084"
+                }
+            ],
+            "starfield_border": [
+                {
+                    "error": "",
+                    "sha256": "3837a57862f7f4d8b23129b692052672a7ab294c2df02ceb5e83fa311307a8b5"
+                },
+                {
+                    "error": "",
+                    "sha256": "c3b04747ef17c8293d635ab97cc139d675a72de4e7f55ab170a3875cb3113481"
+                },
+                {
+                    "error": "",
+                    "sha256": "5a687bb5aec0c2529b398ec54b3208222eb7e1ebc32960d5bf9dbe80a9c4f23f"
+                }
+            ],
+            "wave_edge": [
+                {
+                    "error": "",
+                    "sha256": "9603921e8da4e13748d77d4f6cd042c38a153c784dea813a569666ecaf9e2c84"
+                },
+                {
+                    "error": "",
+                    "sha256": "0e64cdbfe58b19b78950a1419393b246e84085366b4217ae5b01907351c93363"
+                },
+                {
+                    "error": "",
+                    "sha256": "45ffc02216dc9ac4d5f9e5a6b702a41c7531b70d6c2341180d3235e885457572"
+                }
+            ]
+        }
     }
 }

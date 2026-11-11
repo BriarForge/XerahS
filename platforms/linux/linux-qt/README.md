@@ -326,3 +326,13 @@ the completed copy and cancelled source removal as a partial result; the
 notification also reports partial completion. `WatchFolderServiceTest` covers
 this worker boundary with actual files. Broader retry/restart qualification
 remains under the workflow contract.
+
+**Deterministic effect pixels:** Native painting exports premultiplied pixels
+through Qt's public integer conversion, avoiding CPU-dependent rounding at the
+repaired drawing, frame and blur boundaries. Untouched source RGB is retained,
+including hidden RGB under zero alpha. Eight default effects have frozen hashes
+from independent drawing plans in `tests/EffectPrecisionReference.h`; the
+standalone generator links only QtGui. Tests verify both those plans and the
+product against the same exact hashes. All 200 historical effect hash entries
+remain recorded. Qt 6.4.2 and Qt 6.12 pass locally; whole-catalogue parameter,
+profile and cross-platform qualification remains incomplete.

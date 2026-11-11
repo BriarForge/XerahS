@@ -55,9 +55,10 @@ QImage paintSurface(QSize size, QRgb fill) {
   surface.fill(QColor::fromRgba(fill));
   return surface;
 }
-EffectResult finishSurface(const QImage &surface, const QImage &like) {
-  QImage out = surface.convertToFormat(QImage::Format_ARGB32);
-  if (out.isNull()) return {{}, kFailed};
+EffectResult finishSurface(const QImage &surface, const QImage &like, const EffectContext &context) {
+  QImage out = surface.format() == QImage::Format_ARGB32_Premultiplied
+      ? straightFromPremultiplied(surface, context) : surface.convertToFormat(QImage::Format_ARGB32);
+  if (out.isNull()) return {{}, context.cancelled() ? kCancelled : kFailed};
   out.setColorSpace(like.colorSpace());
   return {out, {}};
 }
@@ -193,7 +194,7 @@ EffectResult dotMatrix(const QImage &source, const ParamValues &params, const Ef
     }
   }
   painter.end();
-  return finishSurface(surface, source);
+  return finishSurface(surface, source, context);
 }
 
 // ---- edge_feather ---------------------------------------------------------------------------------
@@ -681,7 +682,7 @@ EffectResult pointillism(const QImage &source, const ParamValues &params, const 
     }
   }
   painter.end();
-  return finishSurface(surface, source);
+  return finishSurface(surface, source, context);
 }
 
 // ---- chromatic_aberration -------------------------------------------------------------------------
@@ -914,7 +915,7 @@ EffectResult neonGlowBorder(const QImage &source, const ParamValues &params, con
         !drawStrokedRect(canvas, innerRect, double(tube * 0.8f), withAlpha(neon, int(200.f * glow)), 0.f, context))
       return {{}, kCancelled};
   }
-  return finishSurface(canvas, source);
+  return finishSurface(canvas, source, context);
 }
 
 // ---- film_strip_frame (changes size) --------------------------------------------------------------
@@ -977,7 +978,7 @@ EffectResult filmStripFrame(const QImage &source, const ParamValues &params, con
   painter.setBrush(Qt::NoBrush);
   painter.drawRect(QRectF(double(border) - 0.6, double(border) - 0.6, double(sw) + 1.2, double(sh) + 1.2));
   painter.end();
-  return finishSurface(canvas, source);
+  return finishSurface(canvas, source, context);
 }
 
 // ---- gradient_fade_border (changes size) ----------------------------------------------------------
@@ -1019,7 +1020,7 @@ EffectResult gradientFadeBorder(const QImage &source, const ParamValues &params,
       !drawStrokedRect(canvas, QRectF(double(border), double(border), double(sw), double(sh)), 3.0,
                        QColor(qRed(inner), qGreen(inner), qBlue(inner), 120), 4.f, context))
     return {{}, kCancelled};
-  return finishSurface(canvas, source);
+  return finishSurface(canvas, source, context);
 }
 
 // ---- engraving ------------------------------------------------------------------------------------
@@ -1069,7 +1070,7 @@ EffectResult engraving(const QImage &source, const ParamValues &params, const Ef
     }
   }
   painter.end();
-  return finishSurface(surface, source);
+  return finishSurface(surface, source, context);
 }
 
 // ---- vhs_tape_damage ------------------------------------------------------------------------------
@@ -1306,7 +1307,7 @@ EffectResult polaroidFrame(const QImage &source, const ParamValues &params, cons
     painter.drawText(QPointF(textX - textWidth / 2.0, textY), caption);
   }
   painter.end();
-  return finishSurface(canvas, source);
+  return finishSurface(canvas, source, context);
 }
 
 // ---- embroidery -----------------------------------------------------------------------------------
@@ -1370,7 +1371,7 @@ EffectResult embroidery(const QImage &source, const ParamValues &params, const E
     }
   }
   painter.end();
-  return finishSurface(surface, source);
+  return finishSurface(surface, source, context);
 }
 
 // ---- wave_edge ------------------------------------------------------------------------------------
@@ -1430,7 +1431,7 @@ EffectResult waveEdge(const QImage &source, const ParamValues &params, const Eff
   painter.drawPath(path);
   painter.end();
   if (context.cancelled()) return {{}, kCancelled};
-  return finishSurface(surface, source);
+  return finishSurface(surface, source, context);
 }
 
 // ---- crystal_prism --------------------------------------------------------------------------------
@@ -1735,7 +1736,7 @@ EffectResult zigzagBorder(const QImage &source, const ParamValues &params, const
     painter.drawPath(path);
   }
   painter.end();
-  return finishSurface(canvas, source);
+  return finishSurface(canvas, source, context);
 }
 
 // ---- mosaic_tile_border (changes size) ------------------------------------------------------------
