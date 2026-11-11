@@ -1642,7 +1642,7 @@ target_link_libraries(destination-connection-test-test PRIVATE xerahs_upload_des
 add_test(NAME destination-connection-test COMMAND destination-connection-test-test)
 set_tests_properties(destination-connection-test PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=" TIMEOUT 30)
 
-target_link_libraries(portal-screenshot-test PRIVATE xerahs_color_picker)
+target_link_libraries(portal-screenshot-test PRIVATE xerahs_color_picker xerahs_image_recognition xerahs_qr_code)
 
 add_executable(native-surface-accessibility-test tests/NativeSurfaceAccessibilityTest.cpp)
 set_target_properties(native-surface-accessibility-test PROPERTIES AUTOMOC ON)

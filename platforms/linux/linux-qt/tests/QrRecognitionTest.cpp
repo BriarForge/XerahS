@@ -1,5 +1,6 @@
 #include "ImageRecognition.h"
 #include "QrRender.h"
+#include "image-editor/AnnotationDocument.h"
 #include <QPainter>
 #include <QTest>
 using namespace xerahs::app;
@@ -14,6 +15,8 @@ class QrRecognitionTest final : public QObject {
 private slots:
   void invalidAndCancelled() {
     QCOMPARE(scanQrImage({}).diagnostic, QString("recognition-input-invalid"));
+    QImage tooWide(int(xerahs::editor::kMaxDimension + 1), 1, QImage::Format_RGB32);
+    QCOMPARE(scanQrImage(tooWide).diagnostic, QString("recognition-input-too-large"));
     const auto result = scanQrImage(code("private"), {[] { return true; }, {}});
     QVERIFY(result.cancelled); QVERIFY(result.values.isEmpty());
   }

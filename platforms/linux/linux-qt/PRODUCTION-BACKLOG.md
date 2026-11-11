@@ -8,6 +8,11 @@ The per-row reasons and exact current source/test method hashes are in [traceabi
 
 Trace files retain the established native status enum. Blocked rows additionally carry `audit.classification: blocked` and `blocked_reason`; the counts below use that audit classification, so implemented coverage never includes blocked work.
 
+This is a dated audit snapshot. Current requirement status is in traceability and
+PROGRESS.md. The November 11 verification reconciled the stale QR dependency
+blocker with Mike's November 2 approval in DEPENDENCIES.md; the old inventory
+counts below are retained as historical audit evidence.
+
 ## Capability inventory
 
 | Capability | Desktop IDs | Implemented | Partial | Not started | Blocked | Mobile only |
@@ -48,7 +53,7 @@ Trace files retain the established native status enum. Blocked rows additionally
 
 ## Blocked product and qualification decisions
 
-The machine inventory lists every blocked requirement and its reason. Existing local implementations do not approve human authority or settle missing semantics. Preserve the scheduler gates for remove_background model approval; QR/OCR dependencies; scroll alignment threshold; human SXIE/Secret Service review; release/signing/contract/security-posture changes. Reconcile dependency approval records with the still-explicit scheduler gate before recognition qualification. Existing exact questions in the shared loop state remain pending.
+The machine inventory lists every blocked requirement and its reason. Existing local implementations do not approve human authority or settle missing semantics. Preserve the scheduler gates for remove_background model approval; scroll alignment threshold; human SXIE/Secret Service review; release/signing/contract/security-posture changes. Mike explicitly approved installed zxing-cpp 3.1.1 and Tesseract 5.5.3 for local processing on November 2, with explicit missing-dependency messages (DEPENDENCIES.md). Do not reopen that same dependency question. Native recognition verification and wider target/privacy/release qualification remain distinct obligations. Existing exact questions in the shared loop state remain pending.
 
 ## Verification and limits
 

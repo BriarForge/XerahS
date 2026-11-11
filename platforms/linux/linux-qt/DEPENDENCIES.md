@@ -23,3 +23,9 @@ unavailable build is not an accepted platform waiver or full conformance.
 Recognition keeps pixels and text in the utility session. Copy is explicit.
 Capture uses the existing desktop permission transport; utility inputs are not
 handed to capture save/upload workflows or diagnostic history.
+
+This explicit approval supersedes the older loop/audit question requesting the
+same dependency approval. The QR implementation has real decoder, native
+Screen/Region portal, file-input, permission-denial and cancellation evidence in
+`QrRecognitionTest`, `ImageRecognitionDialogTest` and `PortalScreenshotTest`.
+It does not approve unrelated model, credential-store, privacy or release gates.

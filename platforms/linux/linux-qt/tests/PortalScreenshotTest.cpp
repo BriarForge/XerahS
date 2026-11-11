@@ -1,5 +1,9 @@
 #include "ColorPickerDialog.h"
 #include "ScreenColorSampler.h"
+#include "ImageRecognitionDialog.h"
+#include "QrRender.h"
+#include <QPainter>
+#include <QSpinBox>
 // Actual native transport and capture controller on a private, non-activating
 // bus. Every image, output directory and clipboard belongs to this fixture.
 #include "PortalScreenshot.h"
@@ -174,6 +178,58 @@ class PortalScreenshotTest final : public QObject {
   static Outcome outcome(const QSignalSpy &spy) { return spy.at(0).at(0).value<Outcome>(); }
   static QImage resultImage(const QSignalSpy &spy) { return spy.at(0).at(1).value<QImage>(); }
 private slots:
+  void qrUtilityUsesNativePermissionPortalWithoutSavingOrCopying_data() {
+    QTest::addColumn<QString>("mode");
+    for (const auto *mode : {"screen", "region", "denied", "cancelled"}) QTest::newRow(mode) << QString::fromLatin1(mode);
+  }
+  void qrUtilityUsesNativePermissionPortalWithoutSavingOrCopying() {
+    QFETCH(QString, mode);
+    QTemporaryDir dir; const auto path = dir.filePath("private-screen.png");
+    const QString first = QString::fromUtf8("private QR café"), second = "second private QR";
+    const auto firstQr = renderQr(xerahs::tools::encodeQr(first, xerahs::tools::QrEcc::M).matrix, 300).image;
+    const auto secondQr = renderQr(xerahs::tools::encodeQr(second, xerahs::tools::QrEcc::M).matrix, 300).image;
+    QImage image(800, 320, QImage::Format_RGB32); image.fill(Qt::white);
+    { QPainter painter(&image); painter.drawImage(20, 10, firstQr); painter.drawImage(430, 10, secondQr); }
+    QVERIFY(image.save(path)); const auto original = bytes(path);
+    FakeScreenshotPortal portal(server); portal.uri = QUrl::fromLocalFile(path).toString();
+    portal.early = mode != "cancelled";
+    if (mode == "denied") portal.error = "org.freedesktop.portal.Error.NotAllowed";
+    ImageRecognitionDialog dialog(ImageRecognitionKind::QrCode); dialog.show();
+    QApplication::clipboard()->setText("private QR sentinel");
+    QSignalSpy done(&dialog, &ImageRecognitionDialog::recognitionFinished);
+#ifndef XERAHS_ZXING
+    dialog.scanScreen(); dialog.scanRegion();
+    QVERIFY(dialog.findChild<QLabel *>("recognitionStatus")->text().contains("unavailable"));
+    QVERIFY(!dialog.findChild<QPushButton *>("recognitionScreen")->isEnabled());
+    QCOMPARE(portal.calls, 0); QCOMPARE(done.count(), 0);
+#else
+    QTimer crop;
+    connect(&crop, &QTimer::timeout, this, [&] {
+      auto *region = dialog.findChild<QDialog *>("recognitionRegionDialog"); if (!region) return;
+      region->findChild<QSpinBox *>("cropLeft")->setValue(0); region->findChild<QSpinBox *>("cropTop")->setValue(0);
+      region->findChild<QSpinBox *>("cropWidth")->setValue(350); region->findChild<QSpinBox *>("cropHeight")->setValue(320);
+      auto *apply = region->findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply);
+      if (apply->isEnabled()) apply->click();
+    });
+    crop.start(2);
+    if (mode == "region") dialog.scanRegion(); else dialog.scanScreen();
+    QTRY_COMPARE(portal.calls, 1); QVERIFY(portal.options.contains("handle_token"));
+    if (mode == "cancelled") {
+      dialog.cancel(); QTRY_VERIFY(portal.closed.contains(portal.handle)); portal.respond();
+      QTRY_COMPARE(done.count(), 1); QVERIFY(done[0][2].toBool()); QVERIFY(dialog.values().isEmpty());
+    } else {
+      QTRY_COMPARE(done.count(), 1);
+      if (mode == "denied") { QCOMPARE(done[0][1].toString(), QString("capture-permission-denied")); QVERIFY(dialog.values().isEmpty()); }
+      else {
+        auto values = dialog.values(); values.sort(); auto expected = mode == "region" ? QStringList{first} : QStringList{first, second}; expected.sort();
+        QCOMPARE(values, expected);
+      }
+    }
+    crop.stop();
+#endif
+    QCOMPARE(QApplication::clipboard()->text(), QString("private QR sentinel"));
+    QCOMPARE(bytes(path), original); QCOMPARE(QDir(dir.path()).entryList(QDir::Files), QStringList{"private-screen.png"});
+  }
   void partialFailureAllFourTerminalSurfaces() {
     using namespace xerahs::actions;
     using namespace xerahs::workflows;

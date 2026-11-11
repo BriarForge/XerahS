@@ -240,23 +240,24 @@
     },
     "EU-004": {
       "disposition": "Required",
-      "status": "partial",
+      "status": "implemented",
       "vectors": [],
-      "note": "Native screen/region/file QR recognition and tests now exist, but the loop explicitly retains zxing-cpp dependency approval as a Mike gate; code presence does not supersede this instruction.",
+      "note": "Native Screen, Region and Image File QR scanning is implemented in the Linux reference edition. Mike approved zxing-cpp 3.1.1 on 2026-11-02 (DEPENDENCIES.md); the older dependency-approval blocker was stale. The installed decoder returns distinct zero, single Unicode and multiple/repeated values without changing source pixels. File selection uses the native consent picker and bounded raster loader; native region selection crops the retained portal image. The default desktop portal path is driven over a private D-Bus fixture with the real decoder for Screen/Region, NotAllowed permission denial and cancellation/Close; results do not save/upload sampled pixels or alter clipboard without explicit Copy. Input dimensions are bounded. Missing-library builds explicitly report unavailable and do not request capture. Full supported-target, privacy/security and release qualification remain separate obligations.",
       "evidence": [
-        "platforms/linux/linux-qt/src/actions/PostCapturePipeline.cpp",
+        "platforms/linux/linux-qt/app/QrRecognition.cpp",
+        "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
+        "platforms/linux/linux-qt/app/PortalScreenshot.cpp",
+        "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
         "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
-        "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
         "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-        "platforms/linux/linux-qt/tests/VideoConversionTest.cpp"
+        "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+        "platforms/linux/linux-qt/DEPENDENCIES.md"
       ],
       "audit": {
-        "classification": "blocked",
+        "classification": "implemented",
         "spec_line": 18,
-        "blocker": "Approve zxing-cpp (QR scanning dependency) before implementation.",
-        "coverage": "Native screen/region/file QR recognition and tests now exist, but the loop explicitly retains zxing-cpp dependency approval as a Mike gate; code presence does not supersede this instruction.",
-        "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
+        "coverage": "Native Screen, Region and Image File QR scanning is implemented in the Linux reference edition. Mike approved zxing-cpp 3.1.1 on 2026-11-02 (DEPENDENCIES.md); the older dependency-approval blocker was stale. The installed decoder returns distinct zero, single Unicode and multiple/repeated values without changing source pixels. File selection uses the native consent picker and bounded raster loader; native region selection crops the retained portal image. The default desktop portal path is driven over a private D-Bus fixture with the real decoder for Screen/Region, NotAllowed permission denial and cancellation/Close; results do not save/upload sampled pixels or alter clipboard without explicit Copy. Input dimensions are bounded. Missing-library builds explicitly report unavailable and do not request capture. Full supported-target, privacy/security and release qualification remain separate obligations.",
+        "reviewed_at_revision": "db1a3dfb46f1de6b5fd7ae8a82b8127f0d542c66",
         "incremental_evidence": [
           "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
           "platforms/linux/linux-qt/tests/OcrRecognitionTest.cpp",
@@ -265,40 +266,83 @@
         "incremental_base_revision": "ccde2b1",
         "production_anchors": [
           {
-            "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
-            "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/ColorPickerDialog.cpp",
-            "sha256": "a9c05e6c498f0753080b0408c0801c0b36e97514cf540de9da4723595e12e1bd"
-          },
-          {
-            "path": "platforms/linux/linux-qt/app/VideoConverter.cpp",
-            "sha256": "152804eb7d82f97cfc1db7d06a07b1b62c3476ed79ef9069d9be82fed89b897e"
+            "path": "platforms/linux/linux-qt/app/QrRecognition.cpp",
+            "sha256": "8858b7a9be26e457198a09695731cf60ecfe4607d3ead5b33742cb884b91b028"
           },
           {
             "path": "platforms/linux/linux-qt/app/ImageRecognitionDialog.cpp",
             "sha256": "b27b40014395be5465328290f1d8f63babac3f5bdeb6d3075691a2dbaf748f90"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/PortalScreenshot.cpp",
+            "sha256": "29063baa6973959b21a8a73ace84e2cb8d8275936256fe599897c3da0da84847"
+          },
+          {
+            "path": "platforms/linux/linux-qt/app/features/ToolsFeature.cpp",
+            "sha256": "982e32f349491a481bf736b93a182221b4b092180d53af1a1ed33ac2f8f770b4"
           }
         ],
         "test_anchors": [
           {
-            "path": "platforms/linux/linux-qt/tests/ColorPickerDialogTest.cpp",
-            "sha256": "42e9ed96014811df930c879a838e7ab597fb3d190e3dc462f3e965fc82ad9fab",
-            "method": "screenshotSamplingMagnifiesTracksCoordinatesAndCopiesOnlyExplicitly",
-            "line": 40
+            "path": "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
+            "sha256": "8822a1f98c7e7155aa0899d759c62789d7c32fdf41a0857fd10ae71e159e5125",
+            "method": "invalidAndCancelled",
+            "line": 16
           },
           {
-            "path": "platforms/linux/linux-qt/tests/VideoConversionTest.cpp",
-            "sha256": "05475981dee03d954e2f952aa8c037c2f9d66a2ef2548451ab37f4139424b6e2",
-            "method": "catalogueMatchesContract",
-            "line": 22
+            "path": "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
+            "sha256": "8822a1f98c7e7155aa0899d759c62789d7c32fdf41a0857fd10ae71e159e5125",
+            "method": "realSingleUnicodeAndZero",
+            "line": 23
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/QrRecognitionTest.cpp",
+            "sha256": "8822a1f98c7e7155aa0899d759c62789d7c32fdf41a0857fd10ae71e159e5125",
+            "method": "multipleAndInvisiblePixels",
+            "line": 36
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp",
+            "sha256": "47c23ec87ddeb622b12e32da1b2090db65e03313940806bf4d1101b89b2add23",
+            "method": "fileAndExplicitCopyLeaveSourceAlone",
+            "line": 27
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp",
+            "sha256": "47c23ec87ddeb622b12e32da1b2090db65e03313940806bf4d1101b89b2add23",
+            "method": "nativeRegionChooserScansOnlyTheChosenRectangle",
+            "line": 63
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp",
+            "sha256": "47c23ec87ddeb622b12e32da1b2090db65e03313940806bf4d1101b89b2add23",
+            "method": "failureAndNoResultsAreDifferent",
+            "line": 88
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/ImageRecognitionDialogTest.cpp",
+            "sha256": "47c23ec87ddeb622b12e32da1b2090db65e03313940806bf4d1101b89b2add23",
+            "method": "closeAbandonsWorkerAndLateCapture",
+            "line": 97
+          },
+          {
+            "path": "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
+            "sha256": "a81ffc961260975e2ad0d6e3dbea59b9cc7cebeebc43ccba9f440782032ca1f0",
+            "method": "qrUtilityUsesNativePermissionPortalWithoutSavingOrCopying",
+            "line": 185
           }
         ]
       },
       "dependency_approval": "platforms/linux/linux-qt/DEPENDENCIES.md",
       "previous_note": "Native Scan QR codes supports Image File, Screen and Region. File input uses the native picker and bounded raster loader; screen capture reuses the desktop permission transport; region selection uses the actual native retained-image crop dialog. Local ZXing returns zero, one or multiple decoded values, including Unicode and repeated values, without changing source pixels or uploading. Native decoder and actual dialog/crop tests cover file integrity, explicit Copy, permission failure, cancellation, source bounds and late-result/close behavior. zxing-cpp 3.1.1 approval is recorded in DEPENDENCIES.md; supported-target and required human qualification remain separate.",
-      "blocked_reason": "Native screen/region/file QR recognition and tests now exist, but the loop explicitly retains zxing-cpp dependency approval as a Mike gate; code presence does not supersede this instruction."
+      "dependency_approval_record": {
+        "owner": "Mike",
+        "date": "2026-11-02",
+        "answer": "Approve both",
+        "scope": "Installed zxing-cpp 3.1.1 and Tesseract 5.5.3 for local processing, explicit unavailable messages when missing",
+        "evidence": "platforms/linux/linux-qt/DEPENDENCIES.md",
+        "supersedes": "Older loop/audit question requesting the same dependency approval; no new approval inferred."
+      }
     },
     "EU-005": {
       "disposition": "Required",
