@@ -101,3 +101,27 @@ the original execution reference and their own existing pipeline attempt lineage
 they do not rewrite the original execution outcome. Next add reviewed metadata
 retention controls and atomic filename-counter reservation, then remaining
 capture families and the rest of the full contracted application.
+
+## Consistent terminal surfaces
+
+Capture acquisition outcomes (including denied, cancelled, failed and unconfirmed
+storage), capture-action results, recordings, file uploads and watch-folder
+copy/move/upload now publish the same terminal state and opaque output references
+to logs, native shell activity, notifications and durable workflow history.
+Partial results never announce completion. Private result windows retain the
+usable files or upload URLs; ordinary observations contain no filenames, paths,
+URLs, credentials or payload text. Fixed diagnostic guidance remains available.
+File operations read the last successfully saved execution snapshot for this
+projection, so a failed step/terminal write cannot publish an absent output
+reference or announce success. Actual completed effects stay retained and watch
+uploads remain checkpointed against replay even if terminal storage failed.
+
+Real native tests compare all four projections: PortalScreenshotTest covers
+pre-pipeline cancellation/denial/failure and partial action results;
+RecordingWorkflowTest covers Stop, Abort, denial, encoder failure and unconfirmed
+storage; FileUploadTest covers successful/failed/cancelled uploads, real shell
+activity and terminal-write failure; WatchFolderServiceTest covers copy/move,
+partial removal, cancellation, upload and admission/start/step/terminal faults.
+This closes the former file-operation log/progress omission. WFCAT-017 remains
+partial for the full catalogue: utility/application-control families and
+unimplemented admitted workflow families still need the same lifecycle coverage.

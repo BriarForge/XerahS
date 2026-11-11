@@ -31,6 +31,7 @@ public:
   bool processing(const QString &pipelineId);
   bool finish(const QString &state, const QString &diagnostic = {}, const QStringList &outputs = {});
   bool complete(const xerahs::actions::PipelineResult &pipeline);
+  QJsonObject recordedObservation() const;
   const WorkflowExecutionRecord &record() const { return m_record; }
 private:
   bool persist();

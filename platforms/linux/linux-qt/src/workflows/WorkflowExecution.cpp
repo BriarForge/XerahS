@@ -165,6 +165,12 @@ WorkflowExecution::WorkflowExecution(QString id, QString origin, QJsonObject eff
   m_record.id = std::move(id); m_record.origin = std::move(origin); m_record.startedAt = QDateTime::currentDateTimeUtc();
   m_record.settings = std::move(effectiveSettings);
 }
+QJsonObject WorkflowExecution::recordedObservation() const {
+  const auto saved = m_expected ? parseWorkflowExecution(*m_expected, m_record.id) : std::nullopt;
+  const auto result = saved ? workflowExecutionResult(*saved) : QJsonObject{};
+  return {{"task_id", m_record.id}, {"state", result.value("state").toString("outcome-unconfirmed")},
+      {"outputs", result.value("outputs").toArray()}, {"diagnostic", result.value("diagnostic").toString()}};
+}
 bool WorkflowExecution::step(const QString &action, const QString &state, const QString &diagnostic, std::optional<xerahs::actions::FailureClass> failure) {
   if (!m_expected || terminal(m_record.state) || !(recordingSnapshot(m_record.settings) || fileOperationSnapshot(m_record.settings))) return false;
   QJsonObject fact{{"action", action}, {"state", state}};

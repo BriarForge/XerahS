@@ -1,3 +1,5 @@
+#include "TerminalLogCapture.h"
+#include "actions/PipelineResultJson.h"
 // CORE-024, CORE-025: native watch actions, restart checkpoints and consent UI.
 #include "FileUploadController.h"
 #include "WatchFolderService.h"
@@ -110,6 +112,8 @@ private slots:
     watch::Rule rule; rule.path = dir.filePath("input"); rule.recursive = true; rule.filters = {"*.png"};
     rule.action = move ? watch::Action::Move : watch::Action::Copy;
     QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy observed(&service, &WatchFolderService::terminalObserved), activity(&service, &WatchFolderService::activityChanged);
+    TerminalLogCapture logs;
     QSignalSpy notified(&service, &WatchFolderService::notify);
     QSignalSpy processed(&service, &WatchFolderService::processed);
     service.start();
@@ -144,7 +148,13 @@ private slots:
     QCOMPARE(notified.first().at(1).toBool(), !removalFails);
     const auto message = notified.first().at(0).toString();
     if (removalFails) { QVERIFY(message.contains("partial")); QVERIFY(!message.startsWith("Processed")); }
-    else QCOMPARE(message, QString("Processed new.png"));
+    else QVERIFY(message.contains("Workflow: succeeded"));
+    QCOMPARE(observed.size(), 1); const auto observation = observed.first().first().toJsonObject();
+    QCOMPARE(observation.value("state"), entry.result.value("state")); QCOMPARE(observation.value("outputs"), entry.result.value("outputs"));
+    const auto text = actions::pipelineObservationText(observation);
+    QCOMPARE(activity.first().first().toString(), text); QVERIFY(message.startsWith(text));
+    QCOMPARE(logs.lines, QStringList{"Workflow terminal " + text});
+    QVERIFY(!text.contains("new.png")); QVERIFY(!text.contains("new complete file content"));
     QVERIFY(!entry.snapshot.contains(dir.path().toUtf8()));
     service.stop();
   }
@@ -192,7 +202,7 @@ private slots:
     if (QFileInfo::exists(source)) QCOMPARE(readFile(source), QByteArray("retain actual file contents"));
     if (dispatched) {
       QCOMPARE(readFile(QDir(captures).filePath(outputs.first())), QByteArray("retain actual file contents"));
-      QVERIFY(message.contains("partial"));
+      QVERIFY(message.contains("outcome-unconfirmed"));
       QVERIFY(store.processed(key)); // completed side effects must not be replayed after restart
     } else QVERIFY(!store.processed(key));
     const auto writesAfterAttempt = writes;
@@ -213,6 +223,8 @@ private slots:
     service.setFileOperationHook([](const QString &path) { QFile::remove(path); });  // vanishes mid-copy
     watch::Rule rule; rule.path = dir.filePath("input"); rule.action = watch::Action::Move;
     QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy observed(&service, &WatchFolderService::terminalObserved), activity(&service, &WatchFolderService::activityChanged);
+    TerminalLogCapture logs;
     QSignalSpy notified(&service, &WatchFolderService::notify); QSignalSpy processed(&service, &WatchFolderService::processed);
     service.start();
     QVERIFY(writeFile(source)); service.rescan(); now = 2000; service.rescan(); now += 2000; service.rescan();
@@ -245,6 +257,8 @@ private slots:
     WatchFolderService service(store, uploads, [&] { return dir.filePath("captures"); }, [&] { return now; });
     watch::Rule rule; rule.path = dir.filePath("input");
     QCOMPARE(service.setRules({rule}), QString());
+    QSignalSpy observed(&service, &WatchFolderService::terminalObserved), activity(&service, &WatchFolderService::activityChanged);
+    TerminalLogCapture logs;
     QSignalSpy notified(&service, &WatchFolderService::notify); QSignalSpy processed(&service, &WatchFolderService::processed);
     service.start();
     QVERIFY(writeFile(source)); service.rescan(); now = 2000; service.rescan(); now += 2000; service.rescan();
@@ -255,7 +269,12 @@ private slots:
     QCOMPARE(record->settings.value("operation").toString(), QString("upload"));
     QCOMPARE(record->settings.value("rule").toObject().value("action").toString(), QString("upload"));
     QCOMPARE(record->settings.value("destination").toObject().value("name").toString(), QString("Watch fixture"));
-    QCOMPARE(notified.last().at(0).toString(), QString("Processed new.png"));
+    QCOMPARE(observed.size(), 1); const auto observation = observed.first().first().toJsonObject();
+    QCOMPARE(observation.value("state"), listing.entries.front().result.value("state"));
+    QCOMPARE(observation.value("outputs"), listing.entries.front().result.value("outputs"));
+    const auto text = actions::pipelineObservationText(observation);
+    QCOMPARE(notified.last().at(0).toString(), text); QCOMPARE(activity.first().first().toString(), text);
+    QCOMPARE(logs.lines, QStringList{"Workflow terminal " + text});
     service.stop();
   }
 

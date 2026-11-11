@@ -130,6 +130,7 @@ private:
   void publishPipeline(const CapturePipelineReceipt &result, bool executionConfirmed = true);
   void closeOverlays();
   void finish();
+  void presentCaptureObservation(const QJsonObject &observation);
   void recordCaptureOutcome(const QString &state, const QString &diagnostic = {});
   void repaint();
   void announce();
@@ -158,6 +159,7 @@ private:
   std::function<xerahs::capture::SessionSettings()> m_regionSettingsResolver;
   xerahs::capture::SessionSettings m_regionSettings;
   QJsonObject m_workflowSnapshot;
+  QJsonObject m_earlyObservation;
   std::shared_ptr<xerahs::workflows::WorkflowExecution> m_execution;
   xerahs::workflows::CaptureOutput m_captureOutput;
   QPointer<QWidget> m_selectionParent;

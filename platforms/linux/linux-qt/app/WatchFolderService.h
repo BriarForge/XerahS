@@ -32,6 +32,8 @@ public:
   QString capturesFolder() const { return m_captures(); }
 signals:
   void notify(const QString &message, bool success);
+  void activityChanged(const QString &text);
+  void terminalObserved(const QJsonObject &observation);
   void processed(const QString &path, bool success);
   void progress(const QString &path, qint64 done, qint64 total);
 private:
@@ -49,6 +51,7 @@ private:
   QString m_pendingPath, m_pendingKey;
   std::unique_ptr<workflows::WorkflowExecution> m_execution;
   workflows::WorkflowExecution::Writer m_executionWriter;
+  QJsonObject m_terminalObservation;
   QString m_terminalState;  // shared terminal projection of the pending operation
   OwnedWork m_work;
   std::function<void(const QString &)> m_fileHook, m_removeHook;

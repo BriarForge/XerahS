@@ -1,3 +1,5 @@
+#include "TerminalLogCapture.h"
+#include "actions/PipelineResultJson.h"
 // CORE-020, CORE-023: upload an existing file from the window or a dropped path.
 #include "ApplicationWindow.h"
 #include "FileUploadController.h"
@@ -15,6 +17,7 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QLabel>
+#include <QJsonDocument>
 #include <QLineEdit>
 #include <QMimeData>
 #include <QMimeDatabase>
@@ -346,15 +349,26 @@ private slots:
     const auto path = writeFile(dir, "note.txt", "hello upload"); QVERIFY(!path.isEmpty());
     NativeWorkflowExecutions store(dir.filePath("executions"));
     auto ports = portsFor(dir.filePath("destinations.json"), credentials); ports.executions = store.writer();
-    QWidget parent; parent.show();
+    ApplicationWindow parent(QMap<QString, QAction *>{}); parent.show();
     FileUploadController controller(ports, &parent);
+    connect(&controller, &FileUploadController::activityChanged, &parent, [&](const QString &text) { parent.showActivity("File upload", text); });
     QSignalSpy terminal(&controller, &FileUploadController::executionFinished);
+    QSignalSpy observation(&controller, &FileUploadController::terminalObserved), activity(&controller, &FileUploadController::activityChanged), notices(&controller, &FileUploadController::notify);
+    TerminalLogCapture logs;
     QSignalSpy idle(&controller, &FileUploadController::finished);
     controller.upload({path});
     QTRY_COMPARE_WITH_TIMEOUT(idle.count(), 1, 7000);
     const auto listing = store.list(); QCOMPARE(listing.entries.size(), size_t(1));
     const auto &entry = listing.entries.front();
     const auto record = xerahs::workflows::parseWorkflowExecution(entry.snapshot, entry.id); QVERIFY(record);
+    QCOMPARE(observation.size(), 1); const auto observed = observation.first().first().toJsonObject();
+    QCOMPARE(observed.value("state"), entry.result.value("state")); QCOMPARE(observed.value("outputs"), entry.result.value("outputs"));
+    const auto terminalText = xerahs::actions::pipelineObservationText(observed);
+    QCOMPARE(activity.size(), 1); QCOMPARE(activity.first().first().toString(), terminalText);
+    QVERIFY(parent.findChild<QLabel *>("operationStatus")->text().contains(terminalText));
+    QCOMPARE(notices.size(), 1); QCOMPARE(notices.first()[1].toString(), terminalText); QVERIFY(notices.first()[2].toBool());
+    QCOMPARE(logs.lines, QStringList{"Workflow terminal " + terminalText});
+    QVERIFY(!terminalText.contains("note.txt")); QVERIFY(!terminalText.contains("hello upload"));
     QCOMPARE(record->origin, QString("file-upload")); QCOMPARE(record->state, QString("succeeded"));
     QVERIFY(record->startedAt.isValid() && record->finishedAt.isValid()); QVERIFY(record->diagnostic.isEmpty());
     QCOMPARE(record->steps.size(), 2);
@@ -375,7 +389,7 @@ private slots:
     QCOMPARE(terminal.first().at(1).toString(), entry.id); QCOMPARE(terminal.first().at(2).toString(), record->state);
     QCOMPARE(terminal.first().at(3).toStringList(), record->outputs);
     QCOMPARE(dialogs().size(), 1);
-    QCOMPARE(dialogs().first()->findChild<QLabel *>("uploadTerminalState")->text(), xerahs::workflows::fileOperationNotice(*record, "note.txt").headline);
+    QCOMPARE(dialogs().first()->findChild<QLabel *>("uploadTerminalState")->text(), xerahs::workflows::fileOperationNotice(*record, "note.txt").headline + QLatin1Char('\n') + terminalText);
     // Secrets, URLs and paths never enter the record.
     for (const auto &needle : {QByteArray("fixture-secret"), QByteArray("example.test"), dir.path().toUtf8(), QByteArray("hello upload")})
       QVERIFY2(!entry.snapshot.contains(needle), needle.constData());
@@ -404,9 +418,12 @@ private slots:
     if (kind == "directory") path = dir.path();
     NativeWorkflowExecutions store(dir.filePath("executions"));
     auto ports = portsFor(dir.filePath("destinations.json"), credentials); ports.executions = store.writer();
-    QWidget parent; parent.show();
+    ApplicationWindow parent(QMap<QString, QAction *>{}); parent.show();
     FileUploadController controller(ports, &parent);
+    connect(&controller, &FileUploadController::activityChanged, &parent, [&](const QString &text) { parent.showActivity("File upload", text); });
     QSignalSpy terminal(&controller, &FileUploadController::executionFinished);
+    QSignalSpy observation(&controller, &FileUploadController::terminalObserved), activity(&controller, &FileUploadController::activityChanged), notices(&controller, &FileUploadController::notify);
+    TerminalLogCapture logs;
     QSignalSpy completed(&controller, &FileUploadController::fileCompleted);
     QSignalSpy idle(&controller, &FileUploadController::finished);
     controller.upload({path});
@@ -414,6 +431,13 @@ private slots:
     const auto listing = store.list(); QCOMPARE(listing.entries.size(), size_t(1));
     const auto record = xerahs::workflows::parseWorkflowExecution(listing.entries.front().snapshot, listing.entries.front().id); QVERIFY(record);
     QCOMPARE(record->state, state); QCOMPARE(record->diagnostic, diagnostic); QVERIFY(record->outputs.isEmpty());
+    const auto observed = observation.first().first().toJsonObject();
+    QCOMPARE(observed.value("state"), listing.entries.front().result.value("state"));
+    QCOMPARE(observed.value("outputs"), listing.entries.front().result.value("outputs"));
+    const auto text = xerahs::actions::pipelineObservationText(observed);
+    QCOMPARE(activity.first().first().toString(), text); QCOMPARE(notices.first()[1].toString(), text); QVERIFY(!notices.first()[2].toBool());
+    QCOMPARE(logs.lines, QStringList{"Workflow terminal " + text});
+
     const auto last = record->steps.last().toObject();
     QCOMPARE(last.value("state").toString(), QString("failed"));
     QCOMPARE(last.value("action").toString(), http.received ? QString("upload-file") : QString("read-file"));
@@ -425,6 +449,30 @@ private slots:
     QVERIFY(label.contains(state)); QVERIFY(!label.startsWith("Uploaded"));
     QVERIFY(!listing.entries.front().snapshot.contains("fixture-secret"));
     QVERIFY(!dialogs().first()->findChild<QLineEdit *>("uploadUrl"));
+  }
+
+  void terminalStorageFailureAgreesWithDurableHistoryWithoutReplayingUpload() {
+    QTemporaryDir dir; HttpFixture http; QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    const auto destination = http.destination(); DestinationCatalog catalog(dir.filePath("destinations.json")); QVERIFY(catalog.add(destination).isEmpty());
+    auto credentials = std::make_shared<MemoryCredentialStore>(); QVERIFY(credentials->store(destination.id, "token", "fixture-secret").ok());
+    NativeWorkflowExecutions store(dir.filePath("executions")); const auto writer = store.writer();
+    auto ports = portsFor(dir.filePath("destinations.json"), credentials);
+    ports.executions = [writer](const QString &id, const std::optional<QByteArray> &expected, const QByteArray &bytes) {
+      if (!QJsonDocument::fromJson(bytes).object().value("finishedAt").toString().isEmpty()) return xerahs::actions::JournalWrite{false, "pipeline-journal-write-failed"};
+      return writer(id, expected, bytes);
+    };
+    QWidget parent; FileUploadController controller(ports, &parent);
+    QSignalSpy observed(&controller, &FileUploadController::terminalObserved), notices(&controller, &FileUploadController::notify), activity(&controller, &FileUploadController::activityChanged);
+    QSignalSpy idle(&controller, &FileUploadController::finished), effect(&controller, &FileUploadController::fileCompleted); TerminalLogCapture logs;
+    controller.upload({writeFile(dir, "PRIVATE-file.txt", "PRIVATE-content")}); QTRY_COMPARE_WITH_TIMEOUT(idle.size(), 1, 7000);
+    const auto listing = store.list(); QCOMPARE(listing.entries.size(), size_t(1));
+    const auto observation = observed.first().first().toJsonObject();
+    QCOMPARE(observation.value("state"), listing.entries.front().result.value("state")); QCOMPARE(observation.value("state"), QJsonValue("outcome-unconfirmed"));
+    QCOMPARE(observation.value("outputs"), listing.entries.front().result.value("outputs")); QVERIFY(observation.value("outputs").toArray().isEmpty());
+    const auto text = xerahs::actions::pipelineObservationText(observation);
+    QCOMPARE(activity.first().first().toString(), text); QCOMPARE(notices.first()[1].toString(), text); QVERIFY(!notices.first()[2].toBool());
+    QCOMPARE(logs.lines, QStringList{"Workflow terminal " + text}); QVERIFY(!text.contains("PRIVATE"));
+    QVERIFY(effect.first()[1].toBool()); QCOMPARE(http.received, 1);
   }
 
   void cancellationIsTerminalCancelledWithoutOutputs() {

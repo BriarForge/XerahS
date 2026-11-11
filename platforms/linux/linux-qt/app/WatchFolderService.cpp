@@ -1,5 +1,7 @@
 // CORE-024, CORE-025.
 #include "WatchFolderService.h"
+#include "actions/PipelineResultJson.h"
+#include <QDebug>
 #include "FileUploadController.h"
 #include "OwnedWork.h"
 #include "NativeWorkflowExecutions.h"
@@ -15,8 +17,11 @@ WatchFolderService::WatchFolderService(watch::WatchFolders &store, FileUploadCon
   m_timer.setInterval(500);
   connect(&m_timer, &QTimer::timeout, this, &WatchFolderService::rescan);
   connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this, [this] { rescan(); });
-  connect(&m_uploads, &FileUploadController::executionFinished, this, [this](const QString &path, const QString &, const QString &state, const QStringList &) {
-    if (path == m_pendingPath) m_terminalState = state;
+  connect(&m_uploads, &FileUploadController::executionFinished, this, [this](const QString &path, const QString &id, const QString &state, const QStringList &outputs) {
+    if (path == m_pendingPath) {
+      m_terminalState = state;
+      m_terminalObservation = {{"task_id", id}, {"state", state}, {"outputs", QJsonArray::fromStringList(outputs)}};
+    }
   });
   connect(&m_uploads, &FileUploadController::fileCompleted, this, &WatchFolderService::complete);
 }
@@ -55,9 +60,11 @@ void WatchFolderService::startFileWork(const QString &sourcePath, const QString 
       workflows::fileOperationSnapshot(move ? "move" : "copy", {}, {}, ruleSnapshot(rule)),
       m_executionWriter ? m_executionWriter : NativeWorkflowExecutions(NativeWorkflowExecutions::defaultDirectory()).writer());
   if (!m_execution->admit() || !m_execution->start()) {
+    m_terminalObservation = m_execution->recordedObservation();
     m_execution.reset();
     m_blocked = true;
     m_terminalState = QStringLiteral("permanent-failure");
+    qInfo().noquote() << "Workflow terminal" << actions::pipelineObservationText(m_terminalObservation);
     complete(sourcePath, false, QStringLiteral("workflow-storage-unavailable: Watching stopped before file work; could not save the execution record."));
     return;
   }
@@ -114,7 +121,7 @@ void WatchFolderService::finishFileWork(const QString &path, const FileResult &r
   const auto steps = m_execution ? m_execution->record().steps : QJsonArray{};
   const auto terminal = fileOperationTerminal(m_execution ? m_execution->record().id : QString{}, operation, steps, result.error.isEmpty() ? QString{} : code);
   m_terminalState = m_execution ? terminal.state : (result.error.isEmpty() ? QStringLiteral("succeeded") : (result.copied ? QStringLiteral("partial") : cancelled ? QStringLiteral("cancelled") : QStringLiteral("permanent-failure")));
-  if (m_execution) { stored = m_execution->finish(terminal.state, terminal.diagnostic, terminal.outputs) && stored; m_execution.reset(); }
+  if (m_execution) { stored = m_execution->finish(terminal.state, terminal.diagnostic, terminal.outputs) && stored; m_terminalObservation = m_execution->recordedObservation(); m_execution.reset(); }
   QString error = result.error;
   if (!stored) {
     m_blocked = true;
@@ -122,6 +129,7 @@ void WatchFolderService::finishFileWork(const QString &path, const FileResult &r
     if (!error.isEmpty()) error += QLatin1Char('\n');
     error += QStringLiteral("workflow-storage-unavailable: Watching stopped; could not save the execution record. Completed file work was retained.");
   }
+  qInfo().noquote() << "Workflow terminal" << actions::pipelineObservationText(m_terminalObservation);
   complete(path, result.error.isEmpty(), error);
 }
 void WatchFolderService::complete(const QString &path, bool success, const QString &error) {
@@ -132,12 +140,20 @@ void WatchFolderService::complete(const QString &path, bool success, const QStri
   }
   // A cancelled action (stop mid-processing) is not a verdict on the file: forget the attempt so it is discovered again.
   if (!success && (!m_running || error == QLatin1String("cancelled"))) m_attempted.remove(m_pendingKey);
+  const QPointer<WatchFolderService> guard(this);
   emit processed(path, success && (m_terminalState.isEmpty() || m_terminalState == QLatin1String("succeeded")));
+  if (!guard) return;
   // WFCAT-017: the notification reads the terminal state, so a partial or failed
   // outcome can never be announced as processed.
   const auto notice = workflows::fileOperationNotice(QStringLiteral("watch"), m_terminalState.isEmpty() ? (success ? QStringLiteral("succeeded") : QStringLiteral("permanent-failure")) : m_terminalState, QFileInfo(path).fileName());
-  emit notify(notice.completed ? notice.headline : (error.isEmpty() ? notice.headline : error + QLatin1Char('\n') + notice.headline), notice.completed);
-  m_pendingPath.clear(); m_pendingKey.clear(); m_terminalState.clear();
+  if (!m_terminalObservation.isEmpty()) {
+    const auto text = actions::pipelineObservationText(m_terminalObservation);
+    emit activityChanged(text); if (!guard) return;
+    emit terminalObserved(m_terminalObservation); if (!guard) return;
+    emit notify(error.isEmpty() ? text : text + QLatin1Char('\n') + error, error.isEmpty() && m_terminalObservation.value("state") == "succeeded");
+  } else emit notify(notice.completed ? notice.headline : (error.isEmpty() ? notice.headline : error + QLatin1Char('\n') + notice.headline), notice.completed);
+  if (!guard) return;
+  m_pendingPath.clear(); m_pendingKey.clear(); m_terminalState.clear(); m_terminalObservation = {};
 }
 void WatchFolderService::rescan() {
   if (!m_running || m_blocked) return;

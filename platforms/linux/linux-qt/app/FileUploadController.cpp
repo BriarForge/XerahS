@@ -1,5 +1,7 @@
 // CORE-020, CORE-023.
 #include "FileUploadController.h"
+#include "actions/PipelineResultJson.h"
+#include <QDebug>
 #include "OwnedWork.h"
 
 #include "FileUploadResultDialog.h"
@@ -210,37 +212,52 @@ workflows::FileOperationNotice FileUploadController::settle(bool uploaded) {
     terminal = fileOperationTerminal(m_historyRecord.taskId, QStringLiteral("upload"), m_execution->record().steps, uploaded ? QString{} : code);
     m_executionStored = m_execution->finish(terminal->state, terminal->diagnostic, terminal->outputs) && m_executionStored;
   }
-  const auto state = terminal ? terminal->state : (uploaded ? QStringLiteral("succeeded") : QStringLiteral("permanent-failure"));
-  m_executionOutputs = terminal ? terminal->outputs : QStringList{};
+  m_terminalObservation = m_execution ? m_execution->recordedObservation() : QJsonObject{{"task_id", m_historyRecord.taskId}, {"state", "outcome-unconfirmed"}, {"outputs", QJsonArray{}}};
+  const auto state = m_terminalObservation.value("state").toString();
+  m_executionOutputs.clear();
+  for (const auto &output : m_terminalObservation.value("outputs").toArray()) m_executionOutputs.append(output.toString());
+  const auto text = actions::pipelineObservationText(m_terminalObservation);
+  const auto notice = workflows::fileOperationNotice(QStringLiteral("upload"), state, m_currentName);
+  const auto path = m_currentPath, id = m_historyRecord.taskId; const auto outputs = m_executionOutputs;
+  const auto observation = m_terminalObservation;
   m_execution.reset();
-  emit executionFinished(m_currentPath, m_historyRecord.taskId, state, m_executionOutputs);
-  return workflows::fileOperationNotice(QStringLiteral("upload"), state, m_currentName);
+  qInfo().noquote() << "Workflow terminal" << text;
+  const QPointer<FileUploadController> guard(this);
+  emit activityChanged(text); if (!guard) return notice;
+  emit terminalObserved(observation); if (!guard) return notice;
+  emit notify(state == "succeeded" ? QStringLiteral("File upload completed") : QStringLiteral("File upload needs review"), text, state == "succeeded");
+  if (guard) emit executionFinished(path, id, state, outputs);
+  return notice;
 }
 
 void FileUploadController::showFailure(const QString &fileName, const QString &message, bool missingDestination, const QString &detail) {
   uploads::UploadOutcome outcome; outcome.errorMessage = detail.isEmpty() ? message : message + ": " + detail;
   outcome.attempts = m_historyRecord.result.attempts;
   if (m_historyRecord.failureCode.isEmpty()) m_historyRecord.failureCode = "upload-failed";
+  const QPointer<FileUploadController> guard(this);
   const auto notice = settle(false);
+  if (!guard) return;
   const auto storage = m_executionStored ? QString{} : QStringLiteral("workflow-storage-unavailable: Could not save the upload execution record.");
   recordCompletion(outcome, [this, fileName, message, missingDestination, detail, notice, storage](const QString &historyError) {
     emit fileCompleted(m_currentPath, false, message);
     closeProgress();
     QStringList text{message}; if (!historyError.isEmpty()) text.append(historyError); if (!storage.isEmpty()) text.append(storage);
     auto *dialog = new FileUploadResultDialog(fileName, text.join('\n'),
-        missingDestination ? m_ports.openDestinations : std::function<void()>{}, m_dialogParent, notice.headline, detail);
+        missingDestination ? m_ports.openDestinations : std::function<void()>{}, m_dialogParent, notice.headline + QLatin1Char('\n') + actions::pipelineObservationText(m_terminalObservation), detail);
     dialog->show(); scheduleNext();
   });
 }
 
 void FileUploadController::showSuccess(const QString &fileName, const uploads::UploadOutcome &outcome) {
   m_historyRecord.failureCode.clear();
+  const QPointer<FileUploadController> guard(this);
   const auto notice = settle(true);
+  if (!guard) return;
   const auto storage = m_executionStored ? QString{} : QStringLiteral("workflow-storage-unavailable: Could not save the upload execution record.");
   recordCompletion(outcome, [this, fileName, outcome, notice, storage](const QString &historyError) {
-    emit fileCompleted(m_currentPath, notice.completed, {});
+    emit fileCompleted(m_currentPath, true, {});
     closeProgress();
-    auto *dialog = new FileUploadResultDialog(fileName, outcome, m_dialogParent, notice.headline);
+    auto *dialog = new FileUploadResultDialog(fileName, outcome, m_dialogParent, notice.headline + QLatin1Char('\n') + actions::pipelineObservationText(m_terminalObservation));
     dialog->show();
     if (!historyError.isEmpty() || !storage.isEmpty()) {
       auto *error = new FileUploadResultDialog(fileName, QStringList{historyError, storage}.join('\n').trimmed(), {}, m_dialogParent); error->show();

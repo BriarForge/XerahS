@@ -81,6 +81,9 @@ void attachUploadWindow(AppContext &ctx, ApplicationWindow &window) {
   ctx.uploadFiles = [files = QPointer<FileUploadController>(state.files)](const QStringList &paths) { if (files) files->upload(paths); };
   QObject::connect(&window, &ApplicationWindow::filesDropped, state.files, &FileUploadController::upload);
 
+  QObject::connect(state.files, &FileUploadController::activityChanged, &window, [&window](const QString &text) { window.showActivity(QStringLiteral("File upload"), text); });
+  QObject::connect(state.files, &FileUploadController::notify, &window, [&ctx](const QString &title, const QString &body, bool success) { postTrayMessage(ctx, title, body, success); });
+
   state.store = std::make_unique<xerahs::watch::WatchFolders>(
       QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath(QStringLiteral("watch")));
   state.watchUploads = new FileUploadController(FileUploadPorts{ctx.uploadCatalogPath, ctx.uploadCredentials,
@@ -88,6 +91,7 @@ void attachUploadWindow(AppContext &ctx, ApplicationWindow &window) {
   state.service = new WatchFolderService(*state.store, *state.watchUploads, [&ctx] {
     return ctx.settings.current().values.value(QStringLiteral("saveFolder")).toString();
   }, {}, &ctx.app);
+  QObject::connect(state.service, &WatchFolderService::activityChanged, &window, [&window](const QString &text) { window.showActivity(QStringLiteral("Watch folders"), text); });
   QObject::connect(state.service, &WatchFolderService::notify, &window, [&ctx](const QString &message, bool success) {
     postTrayMessage(ctx, QStringLiteral("Watch folders"), message, success);
   });

@@ -131,7 +131,7 @@
       "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Capture, recording, file upload and watch-folder copy/move/upload each create one WorkflowExecution with stable ID, start time, origin (file-upload/watch-folder), redacted effective-settings snapshot (operation, destination id/name, rule action/recursive/filters; no paths/URLs/secrets), ordered read-file/upload-file/copy-file/remove-source steps, terminal state and fixed diagnostics. FileUploadHistoryRecord shares the execution ID and stays readable. MCP and automation entry points remain absent (WFCAT-003). Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports partial completion with workflow-storage-unavailable instead of Processed. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
+      "note": "Capture, recording, file upload and watch-folder copy/move/upload each create one WorkflowExecution with stable ID, start time, origin (file-upload/watch-folder), redacted effective-settings snapshot (operation, destination id/name, rule action/recursive/filters; no paths/URLs/secrets), ordered read-file/upload-file/copy-file/remove-source steps, terminal state and fixed diagnostics. FileUploadHistoryRecord shares the execution ID and stays readable. MCP and automation entry points remain absent (WFCAT-003). Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports outcome-unconfirmed with workflow-storage-unavailable on ordinary terminal surfaces, retaining actual completed effects privately. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
@@ -155,7 +155,7 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 13,
-        "coverage": "Every clause is proven for capture/recording and for file upload and watch-folder operations by WorkflowExecutionTest::fileOperationExecutionHasTheSharedRecordFields, fileOperationSnapshotsRejectSecretsPathsAndUnknownFields, FileUploadTest::uploadWritesAnExecutionThatAgreesWithHistoryAndDialog and WatchFolderServiceTest::copyAndMoveWriteExecutionsAndNotifyFromTerminalState/watchUploadRecordsTheRuleAndNotifiesFromItsTerminalState. Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports partial completion with workflow-storage-unavailable instead of Processed. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
+        "coverage": "Every clause is proven for capture/recording and for file upload and watch-folder operations by WorkflowExecutionTest::fileOperationExecutionHasTheSharedRecordFields, fileOperationSnapshotsRejectSecretsPathsAndUnknownFields, FileUploadTest::uploadWritesAnExecutionThatAgreesWithHistoryAndDialog and WatchFolderServiceTest::copyAndMoveWriteExecutionsAndNotifyFromTerminalState/watchUploadRecordsTheRuleAndNotifiesFromItsTerminalState. Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports outcome-unconfirmed with workflow-storage-unavailable on ordinary terminal surfaces, retaining actual completed effects privately. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
         "incremental_evidence": "platforms/linux/linux-qt/app/WORKFLOW-TAXONOMY.md",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
@@ -268,7 +268,7 @@
       "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "File upload and watch operations map to the shared taxonomy: HTTP 4xx and missing file permanent, 5xx/timeout/network transient, not-a-file/too-large validation, unreadable permission-denied, missing destination unavailable-dependency, cancellation cancelled. Steps record success only after the effect committed (upload response parsed, copy committed); a move whose source removal fails is partial and keeps the copy reference. Watch-folder Move now checks cooperative cancellation again after the destination copy commits and before source removal. Stop at that boundary preserves both files, records copy-file succeeded and remove-source cancelled, and reports partial with its completed-output reference. WatchFolderServiceTest::stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial reproduces the prior source deletion and verifies the repaired real worker/filesystem/history/notification path. Broader retry/restart and action-family qualification remain incomplete. Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports partial completion with workflow-storage-unavailable instead of Processed. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
+      "note": "File upload and watch operations map to the shared taxonomy: HTTP 4xx and missing file permanent, 5xx/timeout/network transient, not-a-file/too-large validation, unreadable permission-denied, missing destination unavailable-dependency, cancellation cancelled. Steps record success only after the effect committed (upload response parsed, copy committed); a move whose source removal fails is partial and keeps the copy reference. Watch-folder Move now checks cooperative cancellation again after the destination copy commits and before source removal. Stop at that boundary preserves both files, records copy-file succeeded and remove-source cancelled, and reports partial with its completed-output reference. WatchFolderServiceTest::stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial reproduces the prior source deletion and verifies the repaired real worker/filesystem/history/notification path. Broader retry/restart and action-family qualification remain incomplete. Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports outcome-unconfirmed with workflow-storage-unavailable on ordinary terminal surfaces, retaining actual completed effects privately. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
       "evidence": [
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md",
@@ -283,7 +283,7 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 19,
-        "coverage": "Taxonomy rows and no-success-before-commit proven by WorkflowExecutionTest::fileOperationFailureTaxonomy and cancellationAndPartialStatesAndNoSuccessBeforeCommit, FileUploadTest::failuresMapToTheSharedTaxonomyAndNeverReadAsCompleted (real HTTP 404/500, missing file, directory, no destination) and cancellationIsTerminalCancelledWithoutOutputs, WatchFolderServiceTest::copyAndMoveWriteExecutionsAndNotifyFromTerminalState (partial) and copyFailureIsAFailedExecutionNeverSucceeded. Timeout and network error are covered at the classifier, not through a live socket. Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports partial completion with workflow-storage-unavailable instead of Processed. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
+        "coverage": "Taxonomy rows and no-success-before-commit proven by WorkflowExecutionTest::fileOperationFailureTaxonomy and cancellationAndPartialStatesAndNoSuccessBeforeCommit, FileUploadTest::failuresMapToTheSharedTaxonomyAndNeverReadAsCompleted (real HTTP 404/500, missing file, directory, no destination) and cancellationIsTerminalCancelledWithoutOutputs, WatchFolderServiceTest::copyAndMoveWriteExecutionsAndNotifyFromTerminalState (partial) and copyFailureIsAFailedExecutionNeverSucceeded. Timeout and network error are covered at the classifier, not through a live socket. Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports outcome-unconfirmed with workflow-storage-unavailable on ordinary terminal surfaces, retaining actual completed effects privately. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
         "reviewed_at_revision": "72a143d9d3f01f26349af2325e3014a686de0b5b",
         "incremental_evidence": "platforms/linux/linux-qt/app/WORKFLOW-TAXONOMY.md",
         "production_anchors": [
@@ -937,7 +937,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Capture, recording, file upload and watch-folder operations expose the same terminal state and opaque output references through the execution record, history, result dialog and notification, and partial/failed outcomes never read as completed. Gap: file operations have no log line and the progress dialog is pre-terminal only, so the four-surface (log, history, notification, progress) set is not complete for them. Watch-folder Move now checks cooperative cancellation again after the destination copy commits and before source removal. Stop at that boundary preserves both files, records copy-file succeeded and remove-source cancelled, and reports partial with its completed-output reference. WatchFolderServiceTest::stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial reproduces the prior source deletion and verifies the repaired real worker/filesystem/history/notification path. Broader retry/restart and action-family qualification remain incomplete. Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports partial completion with workflow-storage-unavailable instead of Processed. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
+      "note": "Capture acquisition, capture-action pipelines, recording, file upload and watch-folder copy/move/upload now expose consistent terminal states and opaque output references in qInfo logs, native shell activity, notifications and durable workflow history. Real native tests compare the projections for success, partial failure, cancellation, denial and storage faults; no private filename, path, URL, credential or payload is published in ordinary terminal text. File-operation observations read the last successfully stored execution snapshot, so failed publication reports outcome-unconfirmed and suppresses references absent from history while private results retain actual effects. Watch upload completion still checkpoints the actual remote effect against replay. The former file-operation log/progress gap and pre-pipeline capture reporting omissions are fixed. Full catalogue coverage, including utility/application-control and other unimplemented admitted workflow families, remains partial.",
       "evidence": [
         "platforms/linux/linux-qt/app/WORKFLOW-OUTPUTS.md",
         "platforms/linux/linux-qt/tests/CaptureWorkflowsTest.cpp",
@@ -960,18 +960,22 @@
         "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
         "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
         "platforms/linux/linux-qt/src/workflows/FileOperationExecution.cpp",
-        "platforms/linux/linux-qt/app/WatchFolderService.cpp"
+        "platforms/linux/linux-qt/app/WatchFolderService.cpp",
+        "platforms/linux/linux-qt/app/CaptureController.cpp",
+        "platforms/linux/linux-qt/app/FileUploadController.cpp",
+        "platforms/linux/linux-qt/app/features/UploadFeature.cpp",
+        "platforms/linux/linux-qt/tests/TerminalLogCapture.h"
       ],
       "audit": {
         "classification": "partial",
         "spec_line": 63,
-        "coverage": "Dialog (uploadTerminalState), executionFinished signal, watch notify text, execution record and upload history agree: FileUploadTest::uploadWritesAnExecutionThatAgreesWithHistoryAndDialog, failuresMapToTheSharedTaxonomyAndNeverReadAsCompleted, WatchFolderServiceTest::copyAndMoveWriteExecutionsAndNotifyFromTerminalState. No log surface for file operations yet. Watch-folder copy/move now refuses file work when admission/start cannot be persisted. A step/terminal persistence failure after completed file work stops further watching, retains actual files, checkpoints completed actions against replay and reports partial completion with workflow-storage-unavailable instead of Processed. WatchFolderServiceTest::storageFailuresNeverSilentlyCompleteFileWork covers copy/move admission, start, step and terminal failures with real files and confirms no later dispatch. Failed storage cannot supply a durable terminal record; the warning explicitly reports that limitation.",
+        "coverage": "Capture acquisition, capture-action pipelines, recording, file upload and watch-folder copy/move/upload now expose consistent terminal states and opaque output references in qInfo logs, native shell activity, notifications and durable workflow history. Real native tests compare the projections for success, partial failure, cancellation, denial and storage faults; no private filename, path, URL, credential or payload is published in ordinary terminal text. File-operation observations read the last successfully stored execution snapshot, so failed publication reports outcome-unconfirmed and suppresses references absent from history while private results retain actual effects. Watch upload completion still checkpoints the actual remote effect against replay. The former file-operation log/progress gap and pre-pipeline capture reporting omissions are fixed. Full catalogue coverage, including utility/application-control and other unimplemented admitted workflow families, remains partial.",
         "incremental_evidence": "platforms/linux/linux-qt/app/WORKFLOW-TAXONOMY.md",
         "reviewed_at_revision": "72a143d9d3f01f26349af2325e3014a686de0b5b",
         "production_anchors": [
           {
             "path": "platforms/linux/linux-qt/src/workflows/WorkflowExecution.cpp",
-            "sha256": "3701b13582b0273d5c63826a2e2245c69f0f670402dc9ea6efdbc82c86bd1da2"
+            "sha256": "e76358e69482c9e32779fd8ceca40d85d8c0b6befa44e26af9d8840809f3dfeb"
           },
           {
             "path": "platforms/linux/linux-qt/src/workflows/FileOperationExecution.cpp",
@@ -979,11 +983,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/app/FileUploadController.cpp",
-            "sha256": "d3aca85fd5380a7e88b06bab1a809ca0f2a30e93ebf68860a6294b3cfaa625b9"
+            "sha256": "7adb53ee1c6f38bb7891446543cd2660b9d468d51c184e68e4383160f52c2ae2"
           },
           {
             "path": "platforms/linux/linux-qt/app/WatchFolderService.cpp",
-            "sha256": "aa3e0fc87879c0e7ff868a76c8dd99915e474ac5d2636c520daab3c9fae3d628"
+            "sha256": "4cb414003a5293da0de36061aa804f022ff37bbbd680a595c77df01938d95968"
           }
         ],
         "test_anchors": [
@@ -995,27 +999,27 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/FileUploadTest.cpp",
-            "sha256": "803dd719676607daba679a753cbd9a8065a8d05e997112d67c3335d1735a89bf",
+            "sha256": "c1409dc09f153cc28d51b6ed9de519a24b915c4336610da7b81caf6930a24fba",
             "method": "uploadWritesAnExecutionThatAgreesWithHistoryAndDialog",
-            "line": 339
+            "line": 342
           },
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-            "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
+            "sha256": "0f53d3623a656cd830e358075862adbd9756da68b738b2397796d833fed81759",
             "method": "copyAndMoveWriteExecutionsAndNotifyFromTerminalState",
-            "line": 99
+            "line": 101
           },
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-            "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
+            "sha256": "0f53d3623a656cd830e358075862adbd9756da68b738b2397796d833fed81759",
             "method": "stoppingAfterMoveCopyCommitsPreservesTheSourceAndReportsPartial",
-            "line": 262
+            "line": 281
           },
           {
             "path": "platforms/linux/linux-qt/tests/WatchFolderServiceTest.cpp",
-            "sha256": "36630c3755c27b4c105b9116cc05907cb9ba95d325c6a16d373d0272b1b543da",
+            "sha256": "0f53d3623a656cd830e358075862adbd9756da68b738b2397796d833fed81759",
             "method": "storageFailuresNeverSilentlyCompleteFileWork",
-            "line": 162
+            "line": 172
           }
         ]
       },

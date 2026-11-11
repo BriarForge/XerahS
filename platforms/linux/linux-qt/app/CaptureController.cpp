@@ -119,14 +119,27 @@ std::function<void()> CaptureController::prepareWorkflowCapture(const xerahs::wo
   } // No capture/ACK without durable admission.
   return [guard = QPointer<CaptureController>(this), effective, execution] {
     if (!guard || guard->busy()) return; // RAII records not-started on release.
-    if (!execution->start()) { emit guard->notify("Capture not started", "Workflow execution storage is unavailable. No capture was started.", false); return; }
+    if (!execution->start()) { guard->presentCaptureObservation(execution->recordedObservation()); return; }
     guard->m_execution = execution;
     guard->captureWorkflow(effective);
   };
 }
+void CaptureController::presentCaptureObservation(const QJsonObject &observation) {
+  const auto text = xerahs::actions::pipelineObservationText(observation);
+  qInfo().noquote() << "Workflow terminal" << text;
+  const QPointer<CaptureController> guard(this);
+  emit pipelineActivityChanged(text);
+  QString body = text;
+  if (observation.value("state") == "outcome-unconfirmed") body += QStringLiteral("\nworkflow-storage-unavailable: The execution outcome could not be confirmed.");
+  if (!observation.value("diagnostic").toString().isEmpty()) body += QLatin1Char('\n') + observation.value("diagnostic").toString();
+  if (!observation.value("detail").toString().isEmpty()) body += QLatin1Char('\n') + observation.value("detail").toString();
+  if (guard) emit notify(QStringLiteral("Capture needs review"), body, false);
+}
 void CaptureController::recordCaptureOutcome(const QString &state, const QString &diagnostic) {
-  if (m_execution && !m_execution->finish(state, diagnostic))
-    emit notify("Execution result not recorded", "Workflow storage could not confirm the outcome. Check capture result history before retrying.", false);
+  if (m_execution) {
+    m_execution->finish(state, diagnostic);
+    m_earlyObservation = m_execution->recordedObservation();
+  }
 }
 void CaptureController::captureWorkflow(const xerahs::workflows::CaptureWorkflow &workflow) {
   if (m_busy) return;
@@ -181,7 +194,9 @@ void CaptureController::beginCapture(QStringList selected) {
     emit busyChanged(true);
     if (!guard) return;
     recordCaptureOutcome("failed", diagnostic::captureSourceFailed); if (!guard) return;
-    emit notify(sourceTitle("capture failed"), diagnostic::captureSourceFailed, false); if (guard) finish(); return;
+    if (!m_execution) emit notify(sourceTitle("capture failed"), diagnostic::captureSourceFailed, false);
+    if (guard) finish();
+    return;
   }
   auto *portal = m_portal.data();
   connect(portal, &PortalScreenshot::finished, this,
@@ -204,7 +219,7 @@ void CaptureController::onSnapshot(int outcome, const QImage &image, const QStri
   if (result == PortalScreenshot::Outcome::Failed) {
     recordCaptureOutcome("failed", diagnostic::captureSourceFailed);
     if (!guard) return;
-    emit notify(sourceTitle("capture failed"),
+    if (!m_execution) emit notify(sourceTitle("capture failed"),
                 detail.isEmpty() ? diagnostic::captureSourceFailed : detail, false);
     if (guard) finish();
     return;
@@ -222,7 +237,7 @@ void CaptureController::onSnapshot(int outcome, const QImage &image, const QStri
   if (m_source != QStringLiteral("region") && m_source != QStringLiteral("last-region")) {
     if (result == PortalScreenshot::Outcome::Denied) {
       recordCaptureOutcome("permission-denied", diagnostic::capturePermissionDenied); if (!guard) return;
-      emit notify(sourceTitle("capture denied"), diagnostic::capturePermissionDenied, false);
+      if (!m_execution) emit notify(sourceTitle("capture denied"), diagnostic::capturePermissionDenied, false);
       if (guard) emit capturePermissionDenied();
       if (guard) finish();
       return;
@@ -273,7 +288,7 @@ void CaptureController::failCapture(const QString &code) {
   const QPointer<CaptureController> guard(this);
   recordCaptureOutcome("failed", code);
   if (!guard) return;
-  emit notify(sourceTitle("capture failed"), code, false);
+  if (!m_execution) emit notify(sourceTitle("capture failed"), code, false);
   if (guard) finish();
 }
 
@@ -322,7 +337,8 @@ void CaptureController::captureWholeSource(const Topology &topology) {
   const QPointer<CaptureController> guard(this);
   const auto fail = [&](const QString &detail) {
     recordCaptureOutcome("failed", diagnostic::captureSourceFailed); if (!guard) return;
-    emit notify(sourceTitle("capture failed"), detail, false);
+    if (m_execution) m_earlyObservation.insert("detail", detail);
+    else emit notify(sourceTitle("capture failed"), detail, false);
     if (guard) finish();
   };
   QRect source = m_desktop.rect();
@@ -626,11 +642,11 @@ void CaptureController::onOutcome(const SessionOutcome &outcome) {
     if (!guard) return;
     if (outcome.diagnostic) {
       const QString title = sourceTitle(outcome.state == SessionState::Failed ? QStringLiteral("capture failed") : QStringLiteral("capture cancelled"));
-      emit notify(title, *outcome.diagnostic, false);
+      if (!m_execution) emit notify(title, *outcome.diagnostic, false);
       if (guard && *outcome.diagnostic == diagnostic::capturePermissionDenied) emit capturePermissionDenied();
     }
     if (!guard) return;
-    // RC-008: a plain cancel shows nothing and starts no actions.
+    // RC-008: cancellation starts no post-capture actions.
     closeOverlays();
     finish();
   });
@@ -659,9 +675,10 @@ void CaptureController::runPipeline() {
   if (m_execution && !m_execution->processing(pipeline->taskId())) {
     delete pipeline;
     const QPointer<CaptureController> guard(this);
-    QString message = QStringLiteral("Workflow execution storage is unavailable. No post-capture action was started.");
-    if (!m_lastRegionDiagnostic.isEmpty()) message += QStringLiteral(" ") + m_lastRegionDiagnostic;
-    emit notify("Capture actions not started", message, false);
+    m_earlyObservation = m_execution->recordedObservation();
+    auto detail = QStringLiteral("No post-capture action was started.");
+    if (!m_lastRegionDiagnostic.isEmpty()) detail += QLatin1Char('\n') + m_lastRegionDiagnostic;
+    m_earlyObservation.insert("detail", detail);
     if (guard) { closeOverlays(); finish(); } return;
   }
   connectPipeline(pipeline);
@@ -749,10 +766,13 @@ void CaptureController::finish() {
   m_keyboardCursor.reset();
   m_keyboardSelecting = false;
   m_resizeCorner.reset();
+  const auto earlyObservation = std::exchange(m_earlyObservation, {});
   m_execution.reset();
   m_captureLastRegionWriter = {}; m_lastRegionDiagnostic.clear();
   m_busy = false;
-  emit busyChanged(false);
+  const QPointer<CaptureController> guard(this);
+  if (!earlyObservation.isEmpty()) presentCaptureObservation(earlyObservation);
+  if (guard) emit busyChanged(false);
 }
 
 }  // namespace xerahs::app

@@ -58,6 +58,9 @@ signals:
   void finished();
   void fileCompleted(const QString &path, bool success, const QString &error);
   // WFCAT-017: the terminal projection shared by dialog, notification and history.
+  void activityChanged(const QString &text);
+  void notify(const QString &title, const QString &body, bool success);
+  void terminalObserved(const QJsonObject &observation);
   void executionFinished(const QString &path, const QString &executionId, const QString &state, const QStringList &outputs);
 
 private:
@@ -87,6 +90,7 @@ private:
   bool m_requestBuilt = false, m_executionStored = true;
   int m_httpStatus = 0;
   QStringList m_executionOutputs;
+  QJsonObject m_terminalObservation;
   QString m_currentName;
   QString m_currentPath;
   bool m_busy = false;

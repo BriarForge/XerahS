@@ -64,7 +64,8 @@ private slots:
     QVERIFY(shell.capture.acquireExternal([] {})); QVERIFY(!action->isEnabled());
     shell.capture.releaseExternal(); QVERIFY(action->isEnabled());
     action->trigger(); QVERIFY(!shell.capture.busy()); QCOMPARE(notices.size(), 1);
-    QCOMPARE(notices[0][1].toString(), QString("last-region-invalid")); QVERIFY(!shell.capture.lastPipelineResult());
+    QVERIFY(notices[0][1].toString().contains("last-region-invalid"));
+    QVERIFY(notices[0][1].toString().startsWith("Workflow: failed. Output references: none")); QVERIFY(!shell.capture.lastPipelineResult());
   }
   void automaticCaptureChecksTheEffectiveWorkflowFolderAndRefusesAnUnresolvedDefault() {
     QTemporaryDir profile;

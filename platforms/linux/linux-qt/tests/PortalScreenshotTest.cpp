@@ -624,6 +624,9 @@ private slots:
     auto controller = std::make_unique<CaptureController>(dir.filePath("outputs"), nullptr, [&](QObject *parent) { return new PortalScreenshot(client, {}, parent); }, composer, CaptureActionPorts{}, journal);
     QApplication::clipboard()->setText("untouched execution fixture clipboard");
     if (mode == "cancel-before-acquisition") connect(controller.get(), &CaptureController::busyChanged, controller.get(), [&](bool busy) { if (busy) controller->cancel(); });
+    QSignalSpy notices(controller.get(), &CaptureController::notify), activity(controller.get(), &CaptureController::pipelineActivityChanged);
+    QStringList logs; terminalLogCapture = &logs; priorTerminalHandler = qInstallMessageHandler(captureTerminalLog);
+    const auto restore = qScopeGuard([] { qInstallMessageHandler(priorTerminalHandler); terminalLogCapture = nullptr; priorTerminalHandler = nullptr; });
     const auto id = QUuid::createUuid().toString(QUuid::WithoutBraces); auto run = controller->prepareWorkflowCapture(workflow, id, "native-shell", executions.writer()); QVERIFY(run); run(); run = {};
     if (mode == "cancel-pending" || mode == "destroy-pending") {
       QTRY_COMPARE(portal.calls, 1);
@@ -636,6 +639,13 @@ private slots:
     const auto query = NativeWorkflowExecutions(dir.filePath("executions")).result(id);
     QCOMPARE(query.value("state"), QJsonValue(mode == "denied" ? "permission-denied" : mode == "source-failure" || mode == "composition-failure" ? "failed" : mode == "destroy-pending" ? "outcome-unconfirmed" : "cancelled"));
     QVERIFY(!query.contains("pipelineTaskId")); QCOMPARE(query.value("terminal").toBool(), mode != "destroy-pending");
+    if (mode != "destroy-pending") {
+      const QJsonObject observation{{"state", query.value("state")}, {"outputs", QJsonArray{}}};
+      const auto text = xerahs::actions::pipelineObservationText(observation);
+      QCOMPARE(logs, QStringList{text}); QCOMPARE(activity.last().first().toString(), text);
+      QCOMPARE(notices.size(), 1); QVERIFY(notices.first()[1].toString().startsWith(text)); QVERIFY(!notices.first()[2].toBool());
+    }
+
     QVERIFY(!QFile::exists(dir.filePath("outputs"))); QVERIFY(!QFile::exists(dir.filePath("pipelines"))); QVERIFY(!overlayExists()); QCOMPARE(bytes(path), source);
     QCOMPARE(QApplication::clipboard()->text(), QString("untouched execution fixture clipboard"));
     if (mode == "cancel-before-acquisition") QCOMPARE(portal.calls, 0);
@@ -1336,7 +1346,8 @@ private slots:
     QCOMPARE(query.value("state"), QJsonValue("failed"));
     QVERIFY(!controller.lastPipelineResult()); QVERIFY(QDir(dir.filePath("whole")).entryList(QDir::Files).isEmpty());
     QCOMPARE(notify.count(), 1); QVERIFY(!notify[0][2].toBool());
-    QCOMPARE(notify[0][1].toString(), QString("No active window to capture"));
+    QVERIFY(notify[0][1].toString().contains("No active window to capture"));
+    QVERIFY(notify[0][1].toString().contains("Workflow: failed. Output references: none"));
   }
   void unsupportedConfiguredWorkflowIsRejectedBeforePortalAcquisition() {
     QTemporaryDir dir; int acquisitions = 0; CaptureController controller(dir.filePath("outputs"), nullptr, [&](QObject *) -> PortalScreenshot * { ++acquisitions; return nullptr; });
