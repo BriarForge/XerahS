@@ -9,6 +9,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Widgets DBus Network Test PrintSupport)
 # .xann gzip container (ES-013); zlib licence is GPL-compatible.
 find_package(ZLIB REQUIRED)
+find_package(SQLite3 3.36 REQUIRED)
 
 set(XERAHS_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." CACHE PATH "BriarForge/XerahS repository root")
 
@@ -54,6 +55,7 @@ add_library(xerahs_core STATIC
   src/history/CaptureHistory.cpp
   src/history/CaptureHistory.h
   src/history/LegacyHistory.cpp src/history/LegacyHistory.h
+  src/history/LegacyHistoryXml.cpp
   src/history/LegacyHistoryArchive.cpp src/history/LegacyHistoryArchive.h
   src/capture/ScrollStitch.cpp
   src/capture/ScrollStitch.h
@@ -179,6 +181,11 @@ add_library(xerahs_pipeline_journal STATIC app/NativePipelineJournal.cpp app/Nat
 target_include_directories(xerahs_pipeline_journal PUBLIC app)
 target_link_libraries(xerahs_pipeline_journal PUBLIC xerahs_core)
 target_compile_options(xerahs_pipeline_journal PRIVATE -Wall -Wextra -Wpedantic)
+add_library(xerahs_legacy_history_source STATIC app/LegacyHistorySource.cpp app/LegacyHistorySource.h
+  app/LegacyHistorySqlite.cpp app/LegacyHistorySqlite.h)
+target_include_directories(xerahs_legacy_history_source PUBLIC app)
+target_link_libraries(xerahs_legacy_history_source PUBLIC xerahs_core PRIVATE SQLite::SQLite3)
+target_compile_options(xerahs_legacy_history_source PRIVATE -Wall -Wextra -Wpedantic)
 add_library(xerahs_file_output STATIC app/CaptureFileIdentity.cpp app/CaptureFileOutput.cpp app/CaptureFileOutput.h
   app/CaptureDelete.cpp app/CaptureDelete.h)
 target_include_directories(xerahs_file_output PUBLIC app)
@@ -351,7 +358,7 @@ add_library(xerahs_app OBJECT
 )
 set_target_properties(xerahs_app PROPERTIES AUTOMOC ON)
 target_include_directories(xerahs_app PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/app)
-target_link_libraries(xerahs_app PUBLIC xerahs_window_discovery xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_native_instance xerahs_workflow_shortcuts xerahs_workflow_discovery xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus)
+target_link_libraries(xerahs_app PUBLIC xerahs_window_discovery xerahs_file_output xerahs_action_selection xerahs_pipeline_journal xerahs_legacy_history_source xerahs_native_instance xerahs_workflow_shortcuts xerahs_workflow_discovery xerahs_editor_codecs Qt6::Gui Qt6::Widgets Qt6::DBus)
 target_compile_options(xerahs_app PRIVATE -Wall -Wextra -Wpedantic)
 add_executable(xerahs app/main.cpp)
 set_target_properties(xerahs PROPERTIES AUTOMOC ON)
@@ -404,13 +411,13 @@ add_executable(capture-history-window-test tests/CaptureHistoryWindowTest.cpp ap
   app/LegacyHistoryWindow.cpp app/LegacyHistoryWindow.h
   app/PipelineResultDialog.cpp app/PipelineResultDialog.h)
 set_target_properties(capture-history-window-test PROPERTIES AUTOMOC ON)
-target_link_libraries(capture-history-window-test PRIVATE xerahs_pipeline_journal Qt6::Widgets Qt6::DBus Qt6::Test)
+target_link_libraries(capture-history-window-test PRIVATE xerahs_pipeline_journal xerahs_legacy_history_source Qt6::Widgets Qt6::DBus Qt6::Test)
 add_test(NAME capture-history-window COMMAND ${XERAHS_DBUS_RUN_SESSION}
   --config-file=${CMAKE_CURRENT_SOURCE_DIR}/tests/appearance-test-bus.conf -- $<TARGET_FILE:capture-history-window-test>)
 set_tests_properties(capture-history-window PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
 add_executable(legacy-history-test tests/LegacyHistoryTest.cpp app/LegacyHistoryWindow.cpp app/LegacyHistoryWindow.h)
 set_target_properties(legacy-history-test PROPERTIES AUTOMOC ON)
-target_link_libraries(legacy-history-test PRIVATE xerahs_pipeline_journal Qt6::Widgets Qt6::Test)
+target_link_libraries(legacy-history-test PRIVATE xerahs_pipeline_journal xerahs_legacy_history_source SQLite::SQLite3 Qt6::Widgets Qt6::Test)
 target_compile_definitions(legacy-history-test PRIVATE LEGACY_HISTORY_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/legacy-history/History.json")
 add_test(NAME legacy-history COMMAND legacy-history-test)
 set_tests_properties(legacy-history PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
@@ -418,6 +425,14 @@ add_executable(legacy-history-archive-test tests/LegacyHistoryArchiveTest.cpp)
 set_target_properties(legacy-history-archive-test PROPERTIES AUTOMOC ON)
 target_link_libraries(legacy-history-archive-test PRIVATE xerahs_core Qt6::Test)
 add_test(NAME legacy-history-archive COMMAND legacy-history-archive-test)
+add_executable(legacy-history-xml-test tests/LegacyHistoryXmlTest.cpp)
+set_target_properties(legacy-history-xml-test PROPERTIES AUTOMOC ON)
+target_link_libraries(legacy-history-xml-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME legacy-history-xml COMMAND legacy-history-xml-test)
+add_executable(legacy-history-sqlite-test tests/LegacyHistorySqliteTest.cpp)
+set_target_properties(legacy-history-sqlite-test PROPERTIES AUTOMOC ON)
+target_link_libraries(legacy-history-sqlite-test PRIVATE xerahs_legacy_history_source SQLite::SQLite3 Qt6::Test)
+add_test(NAME legacy-history-sqlite COMMAND legacy-history-sqlite-test)
 add_executable(pipeline-history-dialog-test tests/PipelineHistoryDialogTest.cpp app/PipelineHistoryDialog.cpp app/PipelineHistoryDialog.h
   app/PipelineResultDialog.cpp app/PipelineResultDialog.h)
 set_target_properties(pipeline-history-dialog-test PROPERTIES AUTOMOC ON)

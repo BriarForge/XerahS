@@ -70,15 +70,35 @@ private slots:
     auto state = store.read(); const auto id = state.lastImportId;
     QCOMPARE(store.removeRecovery(id, state.snapshot, true), QString("legacy-history-recovery-not-available"));
     QCOMPARE(store.read().snapshot, state.snapshot);
-    QCOMPARE(store.undo(id, state.snapshot, true), QString()); state = store.read(); QCOMPARE(state.recoverySource, bytes);
+    QCOMPARE(store.undo(id, state.snapshot, true), QString()); state = store.read(); QVERIFY(state.recoverySource); QCOMPARE(history::legacyHistorySnapshotBytes(*state.recoverySource), bytes);
     QCOMPARE(store.removeRecovery(id, state.snapshot, false), QString("cancelled")); QCOMPARE(store.read().snapshot, state.snapshot);
     QCOMPARE(store.removeRecovery(id, state.snapshot, true), QString()); state = store.read();
-    QVERIFY(state.preview.records.empty()); QVERIFY(state.recoverySource.isEmpty()); QVERIFY(state.recoveryImportId.isEmpty());
+    QVERIFY(state.preview.records.empty()); QVERIFY(!state.recoverySource); QVERIFY(state.recoveryImportId.isEmpty());
     QCOMPARE(QJsonDocument::fromJson(state.snapshot).object().value("imports").toArray().size(), 0);
+  }
+  void versionOneUpgradesOnlyOnExplicitXmlImportAndRecoveryKeepsBothFormats() {
+    QTemporaryDir dir; const auto path = dir.filePath("history.json"); history::LegacyHistoryArchive store(path);
+    const auto json = source({record("json.png")});
+    const QByteArray xml = "<HistoryItem><Filename>xml.png</Filename><Filepath>/missing/xml.png</Filepath><DateTimeUtc>2026-08-30T12:34:56Z</DateTimeUtc></HistoryItem>";
+    QCOMPARE(store.importSnapshot(json, {}, true), QString()); auto state = store.read(); const auto v1 = state.snapshot;
+    QCOMPARE(QJsonDocument::fromJson(v1).object().value("version").toInt(), 1);
+    QCOMPARE(history::LegacyHistoryArchive(path).read().snapshot, v1);
+    QCOMPARE(store.importSnapshot(xml, v1, false), QString("cancelled")); QCOMPARE(read(path), v1);
+    QCOMPARE(store.importSnapshot(xml, v1, true), QString()); state = history::LegacyHistoryArchive(path).read();
+    QVERIFY2(state.code.isEmpty(), qPrintable(state.code)); QCOMPARE(state.preview.records.size(), size_t(2));
+    QCOMPARE(state.preview.format, history::LegacyHistoryFormat::Mixed);
+    QCOMPARE(QJsonDocument::fromJson(state.snapshot).object().value("version").toInt(), 2);
+    QCOMPARE(state.preview.records.front().fields, record("json.png"));
+    const auto id = state.lastImportId;
+    QCOMPARE(store.undo(id, state.snapshot, true), QString()); state = store.read();
+    QVERIFY(state.recoverySource); QCOMPARE(history::legacyHistorySnapshotBytes(*state.recoverySource), xml);
+    QCOMPARE(state.preview.records.size(), size_t(1));
+    QCOMPARE(store.importSnapshot(*state.recoverySource, state.snapshot, true), QString());
+    QCOMPARE(store.read().preview.records.size(), size_t(2));
   }
   void corruptOrFutureArchivesAreNeverReplaced() {
     QTemporaryDir dir; const auto path = dir.filePath("history.json"); history::LegacyHistoryArchive store(path);
-    for (const auto &bytes : {QByteArray("{broken}"), QByteArray("{\"format\":\"com.xerahs.app/linux-qt/legacy-history\",\"version\":2,\"imports\":[]}"),
+    for (const auto &bytes : {QByteArray("{broken}"), QByteArray("{\"format\":\"com.xerahs.app/linux-qt/legacy-history\",\"version\":3,\"imports\":[]}"),
           QByteArray("{\"format\":\"com.xerahs.app/linux-qt/legacy-history\",\"version\":1,\"imports\":[{}]}")}) {
       QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); QCOMPARE(file.write(bytes), bytes.size()); QVERIFY(file.setPermissions(QFile::ReadOwner | QFile::WriteOwner)); file.close();
       QVERIFY(!store.read().code.isEmpty()); QVERIFY(!store.importSnapshot(source({record("new.png")}), bytes, true).isEmpty()); QCOMPARE(read(path), bytes);

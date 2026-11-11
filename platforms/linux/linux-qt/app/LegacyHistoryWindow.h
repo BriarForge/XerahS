@@ -29,7 +29,7 @@ private:
   Picker m_picker;
   QString m_archivePath;
   history::LegacyHistoryArchiveRead m_archive;
-  QByteArray m_source;
+  std::optional<history::LegacyHistorySnapshot> m_source;
   history::LegacyHistoryPreview m_preview;
   bool m_savedView = true;
   qsizetype m_page = 0;

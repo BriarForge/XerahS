@@ -16,7 +16,20 @@
       "git_blob": "baff7a8d37478a7f1c6a3dd534f998e449f8d9f1",
       "relationship": "EXTRACTED",
       "url": "https://github.com/KovaForge/XerahS/blob/5c7e36dea77ab131fe0f5e2101e5d578ccde0306/src/desktop/core/XerahS.History/HistoryItem.cs"
+    },
+    {
+      "path": "src/desktop/core/XerahS.History/HistoryManagerXML.cs",
+      "git_blob": "56d7249f4f8ba774322d798301787df7eb1ca28a",
+      "relationship": "EXTRACTED",
+      "url": "https://github.com/KovaForge/XerahS/blob/5c7e36dea77ab131fe0f5e2101e5d578ccde0306/src/desktop/core/XerahS.History/HistoryManagerXML.cs"
+    },
+    {
+      "path": "src/desktop/core/XerahS.History/HistoryManagerSQLite.cs",
+      "git_blob": "bc74868ff6885fa36501d4f2d8ad47ce9f32fc88",
+      "relationship": "EXTRACTED",
+      "url": "https://github.com/KovaForge/XerahS/blob/5c7e36dea77ab131fe0f5e2101e5d578ccde0306/src/desktop/core/XerahS.History/HistoryManagerSQLite.cs"
     }
   ],
-  "limits": "Source observations only; no full baseline runtime or cross-platform acceptance."
+  "limits": "Source observations only; no full baseline runtime or cross-platform acceptance.",
+  "additional_fixtures": "LegacyHistoryXmlTest and LegacyHistorySqliteTest construct sanitized source-shaped fragments/databases; these are not runtime goldens."
 }

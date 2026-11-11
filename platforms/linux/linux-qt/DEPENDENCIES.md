@@ -1,4 +1,4 @@
-# Local recognition dependencies
+# Native dependencies
 
 On 2026-11-02 Mike explicitly approved integrating the installed zxing-cpp 3.1.1
 and Tesseract 5.5.3 for local QR scanning and OCR, with explicit unavailable
@@ -29,3 +29,18 @@ same dependency approval. The QR implementation has real decoder, native
 Screen/Region portal, file-input, permission-denial and cancellation evidence in
 `QrRecognitionTest`, `ImageRecognitionDialogTest` and `PortalScreenshotTest`.
 It does not approve unrelated model, credential-store, privacy or release gates.
+
+## Legacy SQLite history
+
+The history chooser dynamically links SQLite (minimum 3.36; checked locally:
+3.54.0) to read user-selected legacy history. SQLite is
+[public domain](https://sqlite.org/copyright.html), compatible with GPLv3.
+`libsqlite3-dev` is required for builds; the packaged application depends on the
+shared library. No database engine is downloaded at runtime.
+
+The reader uses a read-only connection and a held read transaction, then the
+[online backup API](https://sqlite.org/backup.html) to retain a consistent database
+snapshot, including committed WAL data. The original source is never migrated
+in place. Extension loading, views and triggers are disabled, and only fixed
+queries execute. The native migration candidate still requires the existing
+human privacy/security review and shared compatibility qualification.

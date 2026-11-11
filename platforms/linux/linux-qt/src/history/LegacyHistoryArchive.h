@@ -1,12 +1,13 @@
 #pragma once
 #include "LegacyHistory.h"
 #include <functional>
+#include <optional>
 
 namespace xerahs::history {
 struct LegacyHistoryArchiveRead {
   LegacyHistoryPreview preview;
   QByteArray snapshot;
-  QByteArray recoverySource;
+  std::optional<LegacyHistorySnapshot> recoverySource;
   QString lastImportId;
   QString recoveryImportId;
   QString code;
@@ -17,7 +18,7 @@ class LegacyHistoryArchive final {
 public:
   explicit LegacyHistoryArchive(QString path) : m_path(std::move(path)) {}
   LegacyHistoryArchiveRead read() const;
-  QString importSnapshot(const QByteArray &source, const QByteArray &expected, bool confirmed,
+  QString importSnapshot(const LegacyHistorySnapshot &source, const QByteArray &expected, bool confirmed,
       const std::function<bool()> &cancelled = {}) const;
   QString undo(const QString &importId, const QByteArray &expected, bool confirmed,
       const std::function<bool()> &cancelled = {}) const;

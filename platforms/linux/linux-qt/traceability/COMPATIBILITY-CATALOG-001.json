@@ -141,11 +141,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
-            "sha256": "b9064d8dfd6ee43dd0cbdc25e1f71a11b111480a25d333ca29fe0830b3b44b5a"
+            "sha256": "577ec3c00b1c70a4e982f1a873728e3fce55e7ae20313207b832e4219e097bfc"
           },
           {
             "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
-            "sha256": "604de58dba5f67496217ed34ef879b2be4addb9e8018438d73bcbda973a77b6d"
+            "sha256": "29e0f74700351a3fddce50bd203211d432cc2f48a589b427fac4db89f10d05e0"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
@@ -173,9 +173,9 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
-            "sha256": "db46f638f06d0c2448d91f7092027499438b8f2795a26304afd897f6a2e02475",
+            "sha256": "fb52bf76268afc6374063a8510902e6481c047067dd39d0b365d1391e9efec51",
             "method": "pinnedSourceFixtureKeepsAllFieldsAndMissingReferences",
-            "line": 30
+            "line": 48
           },
           {
             "path": "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
@@ -191,7 +191,7 @@
       "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Supported native readers (XANN, SXCU, SXIE, application/editor settings, configuration transfer) parse into isolated candidates and failures preserve live state. Failures now identify the affected record through ImportReport.records (index, stable kind, validated id or setting key, disposition, stable reason code; never payload, paths or secrets), surfaced value-free in the editor/preset/settings import summaries. Scope is the readers that exist; a future importer for another compatibility-ledger format must populate the same locators. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. XML/SQLite, cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
+      "note": "Supported native readers (XANN, SXCU, SXIE, application/editor settings, configuration transfer) parse into isolated candidates and failures preserve live state. Failures now identify the affected record through ImportReport.records (index, stable kind, validated id or setting key, disposition, stable reason code; never payload, paths or secrets), surfaced value-free in the editor/preset/settings import summaries. Scope is the readers that exist; a future importer for another compatibility-ledger format must populate the same locators. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. Cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -224,7 +224,7 @@
       "audit": {
         "classification": "implemented",
         "spec_line": 16,
-        "coverage": "Supported native readers (XANN, SXCU, SXIE, application/editor settings, configuration transfer) parse into isolated candidates and failures preserve live state. Failures now identify the affected record through ImportReport.records (index, stable kind, validated id or setting key, disposition, stable reason code; never payload, paths or secrets), surfaced value-free in the editor/preset/settings import summaries. Scope is the readers that exist; a future importer for another compatibility-ledger format must populate the same locators. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. XML/SQLite, cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
+        "coverage": "Supported native readers (XANN, SXCU, SXIE, application/editor settings, configuration transfer) parse into isolated candidates and failures preserve live state. Failures now identify the affected record through ImportReport.records (index, stable kind, validated id or setting key, disposition, stable reason code; never payload, paths or secrets), surfaced value-free in the editor/preset/settings import summaries. Scope is the readers that exist; a future importer for another compatibility-ledger format must populate the same locators. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. Cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -257,11 +257,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
-            "sha256": "b9064d8dfd6ee43dd0cbdc25e1f71a11b111480a25d333ca29fe0830b3b44b5a"
+            "sha256": "577ec3c00b1c70a4e982f1a873728e3fce55e7ae20313207b832e4219e097bfc"
           },
           {
             "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
-            "sha256": "4aa37e6a7729b04996dd0878bf9ec27976c236e6afd2b22d63bf191f8cbe46b8"
+            "sha256": "29e0f74700351a3fddce50bd203211d432cc2f48a589b427fac4db89f10d05e0"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
@@ -269,15 +269,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistoryArchive.h",
-            "sha256": "f08f518799406a833cefc6750de0e775c55cd7e3edd7488529559385ced0401e"
+            "sha256": "059a1fa691cb7cd90e2cae49e8704449db2c9c71d2c3ba33c6a94cc15489fb26"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistoryArchive.cpp",
-            "sha256": "a2de641eff83ff131f271f75102ac23a8a267d8379653e91a1f22078945952bf"
+            "sha256": "dac89b879c080e5d246f72793bf4e29cc0a6d763f07d8d9c2332e57f287d24a7"
           },
           {
             "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.h",
-            "sha256": "2781286d18bfbd505c56ad4bcf1a85d411599c00ec3662bd152fa001d7bc086d"
+            "sha256": "431c049976a48be3b38e2195863bc20433fc42995ab2412f4fc1d157a27efd5d"
           }
         ],
         "test_anchors": [
@@ -319,9 +319,9 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
-            "sha256": "c7f52df8c3e5e9a99905a2f01b19c4e207753639de6b58ef4e40977d85714634",
+            "sha256": "fb52bf76268afc6374063a8510902e6481c047067dd39d0b365d1391e9efec51",
             "method": "nativeChoosePagesRealRecordsAndNeverChangesFilesOrOpensReferences",
-            "line": 84
+            "line": 85
           },
           {
             "path": "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
@@ -331,7 +331,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/LegacyHistoryArchiveTest.cpp",
-            "sha256": "38cf244dcfa6e3a8547f405db5362aea600f80dd8f6e3a2294f5b102baad1382",
+            "sha256": "0a40d521b638276f8fa46df4161beb71ce95770c741ad0e8dcdcc5184b5018ee",
             "method": "explicitImportSurvivesRestartAndRetainsExactSourceAndQuarantine",
             "line": 17
           }
@@ -343,7 +343,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Typed six-category import reports are implemented for supported XANN/SXCU/SXIE/settings readers and surfaced value-free. Complete compatibility format/record inventory, unsupported critical behavior classification and human review remain incomplete. Record locators (COMPCAT-003) now also give reject/quarantine reasons per record; per-reader critical blocking exists (SXCU acceptanceBlocked, unsafe XANN/SXIE content rejected) but no catalogue-wide critical-behavior classification or human review, so this row stays partial. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. XML/SQLite, cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
+      "note": "Typed six-category import reports are implemented for supported XANN/SXCU/SXIE/settings readers and surfaced value-free. Complete compatibility format/record inventory, unsupported critical behavior classification and human review remain incomplete. Record locators (COMPCAT-003) now also give reject/quarantine reasons per record; per-reader critical blocking exists (SXCU acceptanceBlocked, unsafe XANN/SXIE content rejected) but no catalogue-wide critical-behavior classification or human review, so this row stays partial. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. Cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -374,7 +374,7 @@
       "audit": {
         "classification": "partial",
         "spec_line": 20,
-        "coverage": "Typed six-category import reports are implemented for supported XANN/SXCU/SXIE/settings readers and surfaced value-free. Complete compatibility format/record inventory, unsupported critical behavior classification and human review remain incomplete. Record locators (COMPCAT-003) now also give reject/quarantine reasons per record; per-reader critical blocking exists (SXCU acceptanceBlocked, unsafe XANN/SXIE content rejected) but no catalogue-wide critical-behavior classification or human review, so this row stays partial. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. XML/SQLite, cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
+        "coverage": "Typed six-category import reports are implemented for supported XANN/SXCU/SXIE/settings readers and surfaced value-free. Complete compatibility format/record inventory, unsupported critical behavior classification and human review remain incomplete. Record locators (COMPCAT-003) now also give reject/quarantine reasons per record; per-reader critical blocking exists (SXCU acceptanceBlocked, unsafe XANN/SXIE content rejected) but no catalogue-wide critical-behavior classification or human review, so this row stays partial. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. Cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -399,11 +399,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
-            "sha256": "b9064d8dfd6ee43dd0cbdc25e1f71a11b111480a25d333ca29fe0830b3b44b5a"
+            "sha256": "577ec3c00b1c70a4e982f1a873728e3fce55e7ae20313207b832e4219e097bfc"
           },
           {
             "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
-            "sha256": "4aa37e6a7729b04996dd0878bf9ec27976c236e6afd2b22d63bf191f8cbe46b8"
+            "sha256": "29e0f74700351a3fddce50bd203211d432cc2f48a589b427fac4db89f10d05e0"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
@@ -411,15 +411,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistoryArchive.h",
-            "sha256": "f08f518799406a833cefc6750de0e775c55cd7e3edd7488529559385ced0401e"
+            "sha256": "059a1fa691cb7cd90e2cae49e8704449db2c9c71d2c3ba33c6a94cc15489fb26"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistoryArchive.cpp",
-            "sha256": "a2de641eff83ff131f271f75102ac23a8a267d8379653e91a1f22078945952bf"
+            "sha256": "dac89b879c080e5d246f72793bf4e29cc0a6d763f07d8d9c2332e57f287d24a7"
           },
           {
             "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.h",
-            "sha256": "2781286d18bfbd505c56ad4bcf1a85d411599c00ec3662bd152fa001d7bc086d"
+            "sha256": "431c049976a48be3b38e2195863bc20433fc42995ab2412f4fc1d157a27efd5d"
           }
         ],
         "test_anchors": [
@@ -443,9 +443,9 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
-            "sha256": "c7f52df8c3e5e9a99905a2f01b19c4e207753639de6b58ef4e40977d85714634",
+            "sha256": "fb52bf76268afc6374063a8510902e6481c047067dd39d0b365d1391e9efec51",
             "method": "corruptAndAuthorityRecordsStayQuarantinedWithoutLosingNeighbours",
-            "line": 57
+            "line": 58
           },
           {
             "path": "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
@@ -455,7 +455,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/LegacyHistoryArchiveTest.cpp",
-            "sha256": "38cf244dcfa6e3a8547f405db5362aea600f80dd8f6e3a2294f5b102baad1382",
+            "sha256": "0a40d521b638276f8fa46df4161beb71ce95770c741ad0e8dcdcc5184b5018ee",
             "method": "explicitImportSurvivesRestartAndRetainsExactSourceAndQuarantine",
             "line": 17
           }
@@ -740,11 +740,11 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. XML/SQLite, cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
+      "note": "Native JSON, XML and SQLite history now support explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because cross-format task equivalence is not established. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. Cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete. XML fragment and read-only SQLite snapshot candidates share import/restart/undo/recovery; SQLite IDs retain exact signed 64-bit text, WAL backups and normalized rows describe one read transaction, and source files stay unchanged. All 174 native CTest targets pass for this checkpoint. Human security review and shared compatibility qualification are still required.",
       "audit": {
         "classification": "partial",
         "spec_line": 37,
-        "coverage": "Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. XML/SQLite, cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
+        "coverage": "Native JSON, XML and SQLite history now support explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because cross-format task equivalence is not established. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. Cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete. XML fragment and read-only SQLite snapshot candidates share import/restart/undo/recovery; SQLite IDs retain exact signed 64-bit text, WAL backups and normalized rows describe one read transaction, and source files stay unchanged. All 174 native CTest targets pass for this checkpoint. Human security review and shared compatibility qualification are still required.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -769,11 +769,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
-            "sha256": "b9064d8dfd6ee43dd0cbdc25e1f71a11b111480a25d333ca29fe0830b3b44b5a"
+            "sha256": "577ec3c00b1c70a4e982f1a873728e3fce55e7ae20313207b832e4219e097bfc"
           },
           {
             "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
-            "sha256": "4aa37e6a7729b04996dd0878bf9ec27976c236e6afd2b22d63bf191f8cbe46b8"
+            "sha256": "29e0f74700351a3fddce50bd203211d432cc2f48a589b427fac4db89f10d05e0"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
@@ -781,15 +781,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistoryArchive.h",
-            "sha256": "f08f518799406a833cefc6750de0e775c55cd7e3edd7488529559385ced0401e"
+            "sha256": "059a1fa691cb7cd90e2cae49e8704449db2c9c71d2c3ba33c6a94cc15489fb26"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistoryArchive.cpp",
-            "sha256": "a2de641eff83ff131f271f75102ac23a8a267d8379653e91a1f22078945952bf"
+            "sha256": "dac89b879c080e5d246f72793bf4e29cc0a6d763f07d8d9c2332e57f287d24a7"
           },
           {
             "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.h",
-            "sha256": "2781286d18bfbd505c56ad4bcf1a85d411599c00ec3662bd152fa001d7bc086d"
+            "sha256": "431c049976a48be3b38e2195863bc20433fc42995ab2412f4fc1d157a27efd5d"
           }
         ],
         "test_anchors": [
@@ -813,9 +813,9 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
-            "sha256": "c7f52df8c3e5e9a99905a2f01b19c4e207753639de6b58ef4e40977d85714634",
+            "sha256": "fb52bf76268afc6374063a8510902e6481c047067dd39d0b365d1391e9efec51",
             "method": "nativeChoosePagesRealRecordsAndNeverChangesFilesOrOpensReferences",
-            "line": 84
+            "line": 85
           },
           {
             "path": "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
@@ -825,7 +825,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/LegacyHistoryArchiveTest.cpp",
-            "sha256": "38cf244dcfa6e3a8547f405db5362aea600f80dd8f6e3a2294f5b102baad1382",
+            "sha256": "0a40d521b638276f8fa46df4161beb71ce95770c741ad0e8dcdcc5184b5018ee",
             "method": "explicitImportSurvivesRestartAndRetainsExactSourceAndQuarantine",
             "line": 17
           }
@@ -846,18 +846,23 @@
         "platforms/linux/linux-qt/src/history/LegacyHistoryArchive.h",
         "platforms/linux/linux-qt/src/history/LegacyHistoryArchive.cpp",
         "platforms/linux/linux-qt/app/LegacyHistoryWindow.h",
-        "platforms/linux/linux-qt/tests/LegacyHistoryArchiveTest.cpp"
+        "platforms/linux/linux-qt/tests/LegacyHistoryArchiveTest.cpp",
+        "platforms/linux/linux-qt/app/LegacyHistorySource.cpp",
+        "platforms/linux/linux-qt/app/LegacyHistorySqlite.cpp",
+        "platforms/linux/linux-qt/src/history/LegacyHistoryXml.cpp",
+        "platforms/linux/linux-qt/tests/LegacyHistoryXmlTest.cpp",
+        "platforms/linux/linux-qt/tests/LegacyHistorySqliteTest.cpp"
       ]
     },
     "COMPCAT-010": {
-      "status": "not-started",
+      "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "No supported SQLite compatibility snapshot/schema/integrity importer exists; native JSON journals do not exercise untrusted SQLite triggers/extensions or transactions.",
+      "note": "Native SQLite history candidate opens a read-only transaction, checks integrity and the pinned ordinary-table schema, disables extensions/views/triggers and retains a bounded consistent backup plus normalized rows. Real databases cover concurrent WAL writes, exact IDs, malformed rows, source preservation, cancellation and schema refusal; the native chooser covers import/restart/undo/recovery. Full legacy/runtime/shared-platform qualification and human security review remain Required.",
       "audit": {
-        "classification": "not-started",
+        "classification": "partial",
         "spec_line": 41,
-        "coverage": "No supported SQLite compatibility snapshot/schema/integrity importer exists; native JSON journals do not exercise untrusted SQLite triggers/extensions or transactions.",
+        "coverage": "Native SQLite history candidate opens a read-only transaction, checks integrity and the pinned ordinary-table schema, disables extensions/views/triggers and retains a bounded consistent backup plus normalized rows. Real databases cover concurrent WAL writes, exact IDs, malformed rows, source preservation, cancellation and schema refusal; the native chooser covers import/restart/undo/recovery. Full legacy/runtime/shared-platform qualification and human security review remain Required.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -904,9 +909,9 @@
       },
       "previous_note": "No untrusted legacy SQLite snapshot/schema/integrity import is implemented.",
       "evidence": [
-        "platforms/linux/linux-qt/tests/XannCompatibilityTest.cpp",
-        "platforms/linux/linux-qt/tests/SettingsCompatibilityTest.cpp",
-        "platforms/linux/linux-qt/tests/SxcuImportTest.cpp"
+        "platforms/linux/linux-qt/app/LegacyHistorySqlite.cpp",
+        "platforms/linux/linux-qt/tests/LegacyHistorySqliteTest.cpp",
+        "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp"
       ]
     },
     "COMPCAT-011": {
@@ -1175,7 +1180,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Strict duplicate-key/UTF-8/depth/size/element boundaries and bounded gzip/ZIP plus traversal tests protect current readers. Entire format/reader catalogue and complete resource/security/platform matrix remain unqualified. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. XML/SQLite, cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
+      "note": "Strict duplicate-key/UTF-8/depth/size/element boundaries and bounded gzip/ZIP plus traversal tests protect current readers. Entire format/reader catalogue and complete resource/security/platform matrix remain unqualified. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. Cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -1203,7 +1208,7 @@
       "audit": {
         "classification": "partial",
         "spec_line": 61,
-        "coverage": "Strict duplicate-key/UTF-8/depth/size/element boundaries and bounded gzip/ZIP plus traversal tests protect current readers. Entire format/reader catalogue and complete resource/security/platform matrix remain unqualified. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. XML/SQLite, cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
+        "coverage": "Strict duplicate-key/UTF-8/depth/size/element boundaries and bounded gzip/ZIP plus traversal tests protect current readers. Entire format/reader catalogue and complete resource/security/platform matrix remain unqualified. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. Cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -1228,11 +1233,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
-            "sha256": "b9064d8dfd6ee43dd0cbdc25e1f71a11b111480a25d333ca29fe0830b3b44b5a"
+            "sha256": "577ec3c00b1c70a4e982f1a873728e3fce55e7ae20313207b832e4219e097bfc"
           },
           {
             "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
-            "sha256": "4aa37e6a7729b04996dd0878bf9ec27976c236e6afd2b22d63bf191f8cbe46b8"
+            "sha256": "29e0f74700351a3fddce50bd203211d432cc2f48a589b427fac4db89f10d05e0"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
@@ -1240,15 +1245,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistoryArchive.h",
-            "sha256": "f08f518799406a833cefc6750de0e775c55cd7e3edd7488529559385ced0401e"
+            "sha256": "059a1fa691cb7cd90e2cae49e8704449db2c9c71d2c3ba33c6a94cc15489fb26"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistoryArchive.cpp",
-            "sha256": "a2de641eff83ff131f271f75102ac23a8a267d8379653e91a1f22078945952bf"
+            "sha256": "dac89b879c080e5d246f72793bf4e29cc0a6d763f07d8d9c2332e57f287d24a7"
           },
           {
             "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.h",
-            "sha256": "2781286d18bfbd505c56ad4bcf1a85d411599c00ec3662bd152fa001d7bc086d"
+            "sha256": "431c049976a48be3b38e2195863bc20433fc42995ab2412f4fc1d157a27efd5d"
           }
         ],
         "test_anchors": [
@@ -1272,9 +1277,9 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
-            "sha256": "c7f52df8c3e5e9a99905a2f01b19c4e207753639de6b58ef4e40977d85714634",
+            "sha256": "fb52bf76268afc6374063a8510902e6481c047067dd39d0b365d1391e9efec51",
             "method": "malformedAndBoundedInputsFailWithoutPreviewingRecords",
-            "line": 79
+            "line": 80
           },
           {
             "path": "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
@@ -1284,7 +1289,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/LegacyHistoryArchiveTest.cpp",
-            "sha256": "38cf244dcfa6e3a8547f405db5362aea600f80dd8f6e3a2294f5b102baad1382",
+            "sha256": "0a40d521b638276f8fa46df4161beb71ce95770c741ad0e8dcdcc5184b5018ee",
             "method": "explicitImportSurvivesRestartAndRetainsExactSourceAndQuarantine",
             "line": 17
           }
@@ -1352,11 +1357,11 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Explicit reference-settings migration backs up/reviews/preserves source and native retry tests exist. Complete idempotent migration/rollback across accounts/workflows/history/annotations/uploads remains incomplete. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. XML/SQLite, cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
+      "note": "Explicit reference-settings migration backs up/reviews/preserves source and native retry tests exist. Complete idempotent migration/rollback across accounts/workflows/history/annotations/uploads remains incomplete. Native JSON, XML and SQLite history now support explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because cross-format task equivalence is not established. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. Cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete. XML fragment and read-only SQLite snapshot candidates share import/restart/undo/recovery; SQLite IDs retain exact signed 64-bit text, WAL backups and normalized rows describe one read transaction, and source files stay unchanged. All 174 native CTest targets pass for this checkpoint. Human security review and shared compatibility qualification are still required.",
       "audit": {
         "classification": "partial",
         "spec_line": 69,
-        "coverage": "Explicit reference-settings migration backs up/reviews/preserves source and native retry tests exist. Complete idempotent migration/rollback across accounts/workflows/history/annotations/uploads remains incomplete. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. XML/SQLite, cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
+        "coverage": "Explicit reference-settings migration backs up/reviews/preserves source and native retry tests exist. Complete idempotent migration/rollback across accounts/workflows/history/annotations/uploads remains incomplete. Native JSON, XML and SQLite history now support explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because cross-format task equivalence is not established. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. Cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete. XML fragment and read-only SQLite snapshot candidates share import/restart/undo/recovery; SQLite IDs retain exact signed 64-bit text, WAL backups and normalized rows describe one read transaction, and source files stay unchanged. All 174 native CTest targets pass for this checkpoint. Human security review and shared compatibility qualification are still required.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -1381,23 +1386,23 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
-            "sha256": "b9064d8dfd6ee43dd0cbdc25e1f71a11b111480a25d333ca29fe0830b3b44b5a"
+            "sha256": "577ec3c00b1c70a4e982f1a873728e3fce55e7ae20313207b832e4219e097bfc"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistoryArchive.h",
-            "sha256": "f08f518799406a833cefc6750de0e775c55cd7e3edd7488529559385ced0401e"
+            "sha256": "059a1fa691cb7cd90e2cae49e8704449db2c9c71d2c3ba33c6a94cc15489fb26"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistoryArchive.cpp",
-            "sha256": "a2de641eff83ff131f271f75102ac23a8a267d8379653e91a1f22078945952bf"
+            "sha256": "dac89b879c080e5d246f72793bf4e29cc0a6d763f07d8d9c2332e57f287d24a7"
           },
           {
             "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
-            "sha256": "4aa37e6a7729b04996dd0878bf9ec27976c236e6afd2b22d63bf191f8cbe46b8"
+            "sha256": "29e0f74700351a3fddce50bd203211d432cc2f48a589b427fac4db89f10d05e0"
           },
           {
             "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.h",
-            "sha256": "2781286d18bfbd505c56ad4bcf1a85d411599c00ec3662bd152fa001d7bc086d"
+            "sha256": "431c049976a48be3b38e2195863bc20433fc42995ab2412f4fc1d157a27efd5d"
           }
         ],
         "test_anchors": [
@@ -1421,15 +1426,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/LegacyHistoryArchiveTest.cpp",
-            "sha256": "38cf244dcfa6e3a8547f405db5362aea600f80dd8f6e3a2294f5b102baad1382",
+            "sha256": "0a40d521b638276f8fa46df4161beb71ce95770c741ad0e8dcdcc5184b5018ee",
             "method": "explicitImportSurvivesRestartAndRetainsExactSourceAndQuarantine",
             "line": 17
           },
           {
             "path": "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
-            "sha256": "c7f52df8c3e5e9a99905a2f01b19c4e207753639de6b58ef4e40977d85714634",
+            "sha256": "fb52bf76268afc6374063a8510902e6481c047067dd39d0b365d1391e9efec51",
             "method": "nativeImportCancelRestartUndoAndRecoveryKeepTheReviewedSnapshot",
-            "line": 119
+            "line": 154
           },
           {
             "path": "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
@@ -1458,7 +1463,12 @@
         "platforms/linux/linux-qt/tests/LegacyHistoryArchiveTest.cpp",
         "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
         "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
-        "platforms/linux/linux-qt/app/LEGACY-HISTORY.md"
+        "platforms/linux/linux-qt/app/LEGACY-HISTORY.md",
+        "platforms/linux/linux-qt/app/LegacyHistorySource.cpp",
+        "platforms/linux/linux-qt/app/LegacyHistorySqlite.cpp",
+        "platforms/linux/linux-qt/src/history/LegacyHistoryXml.cpp",
+        "platforms/linux/linux-qt/tests/LegacyHistoryXmlTest.cpp",
+        "platforms/linux/linux-qt/tests/LegacyHistorySqliteTest.cpp"
       ],
       "previous_note": "Explicit previous-app migration now writes a private recoverable native backup before publication, records source/target/converter versions, a SHA-256 source fingerprint and value-free outcome, detects completed retries, merges stable UUIDv5 workflow/destination IDs, and offers confirmed restore/dismiss controls. Tests cover dry run, confirmation, middle failure, stale source/native snapshots, retry without duplicates, exact restore and backup dismissal. Reference history/provider-plugin/credential conversion remains unsupported and reported; no such records are imported or duplicated. Runtime-observed legacy/cross-platform qualification and human review remain Required. Rationale: source named-enum behavior is followed only where equivalent; unsupported records stay in the source instead of acquiring partial execution behavior."
     },
@@ -1466,7 +1476,7 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Local malformed/unknown/native round-trip fixtures exist. Every supported legacy format/version, golden runtime observations, cross-platform round-trip and migration activation evidence remain incomplete. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. XML/SQLite, cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
+      "note": "Local malformed/unknown/native round-trip fixtures exist. Every supported legacy format/version, golden runtime observations, cross-platform round-trip and migration activation evidence remain incomplete. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. Cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
       "evidence": [
         "platforms/linux/linux-qt/tests/EditorSessionTest.cpp",
         "platforms/linux/linux-qt/tests/EditorSourceTest.cpp",
@@ -1492,7 +1502,7 @@
       "audit": {
         "classification": "partial",
         "spec_line": 73,
-        "coverage": "Local malformed/unknown/native round-trip fixtures exist. Every supported legacy format/version, golden runtime observations, cross-platform round-trip and migration activation evidence remain incomplete. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. XML/SQLite, cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
+        "coverage": "Local malformed/unknown/native round-trip fixtures exist. Every supported legacy format/version, golden runtime observations, cross-platform round-trip and migration activation evidence remain incomplete. Native JSON history now supports explicit reviewed-snapshot import into a separate private versioned archive, restart, exact-byte idempotent retry, undo, recovery without the source file and explicit removal of undone backups. Exact original bytes, unknown metadata and quarantine are retained; distinct snapshots preserve every record because JSON lacks task IDs. Expected-byte atomic publication refuses concurrent/stale or locked writes, while source replacements and native capture history remain unchanged. The native chooser uses nonblocking opened-descriptor regular-file validation. Real core/native tests cover confirmation Cancel/Yes, restart, concurrency, recovery/removal, cancellation and corrupt/future archives. Cross-format task identity, complete migration families and baseline/shared-platform acceptance remain incomplete.",
         "reviewed_at_revision": "5b5b70d4fac6f09ebdf096b8044e5403004d7e11",
         "production_anchors": [
           {
@@ -1517,11 +1527,11 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistory.cpp",
-            "sha256": "b9064d8dfd6ee43dd0cbdc25e1f71a11b111480a25d333ca29fe0830b3b44b5a"
+            "sha256": "577ec3c00b1c70a4e982f1a873728e3fce55e7ae20313207b832e4219e097bfc"
           },
           {
             "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.cpp",
-            "sha256": "4aa37e6a7729b04996dd0878bf9ec27976c236e6afd2b22d63bf191f8cbe46b8"
+            "sha256": "29e0f74700351a3fddce50bd203211d432cc2f48a589b427fac4db89f10d05e0"
           },
           {
             "path": "platforms/linux/linux-qt/app/CaptureHistoryWindow.cpp",
@@ -1529,15 +1539,15 @@
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistoryArchive.h",
-            "sha256": "f08f518799406a833cefc6750de0e775c55cd7e3edd7488529559385ced0401e"
+            "sha256": "059a1fa691cb7cd90e2cae49e8704449db2c9c71d2c3ba33c6a94cc15489fb26"
           },
           {
             "path": "platforms/linux/linux-qt/src/history/LegacyHistoryArchive.cpp",
-            "sha256": "a2de641eff83ff131f271f75102ac23a8a267d8379653e91a1f22078945952bf"
+            "sha256": "dac89b879c080e5d246f72793bf4e29cc0a6d763f07d8d9c2332e57f287d24a7"
           },
           {
             "path": "platforms/linux/linux-qt/app/LegacyHistoryWindow.h",
-            "sha256": "2781286d18bfbd505c56ad4bcf1a85d411599c00ec3662bd152fa001d7bc086d"
+            "sha256": "431c049976a48be3b38e2195863bc20433fc42995ab2412f4fc1d157a27efd5d"
           }
         ],
         "test_anchors": [
@@ -1561,9 +1571,9 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/LegacyHistoryTest.cpp",
-            "sha256": "c7f52df8c3e5e9a99905a2f01b19c4e207753639de6b58ef4e40977d85714634",
+            "sha256": "fb52bf76268afc6374063a8510902e6481c047067dd39d0b365d1391e9efec51",
             "method": "nativeChoosePagesRealRecordsAndNeverChangesFilesOrOpensReferences",
-            "line": 84
+            "line": 85
           },
           {
             "path": "platforms/linux/linux-qt/tests/CaptureHistoryWindowTest.cpp",
@@ -1573,7 +1583,7 @@
           },
           {
             "path": "platforms/linux/linux-qt/tests/LegacyHistoryArchiveTest.cpp",
-            "sha256": "38cf244dcfa6e3a8547f405db5362aea600f80dd8f6e3a2294f5b102baad1382",
+            "sha256": "0a40d521b638276f8fa46df4161beb71ce95770c741ad0e8dcdcc5184b5018ee",
             "method": "explicitImportSurvivesRestartAndRetainsExactSourceAndQuarantine",
             "line": 17
           }
@@ -2091,6 +2101,18 @@
     "platforms/linux/linux-qt/app/LEGACY-HISTORY.md",
     "platforms/linux/linux-qt/tests/fixtures/legacy-history/History.json",
     "platforms/linux/linux-qt/tests/fixtures/legacy-history/provenance.json",
-    "platforms/linux/linux-qt/tests/LegacyHistoryArchiveTest.cpp"
-  ]
+    "platforms/linux/linux-qt/tests/LegacyHistoryArchiveTest.cpp",
+    "platforms/linux/linux-qt/tests/LegacyHistoryXmlTest.cpp",
+    "platforms/linux/linux-qt/tests/LegacyHistorySqliteTest.cpp"
+  ],
+  "legacy_history_formats_checkpoint": {
+    "status": "partial",
+    "candidate": "Native chooser now imports JSON, XML fragments and consistent SQLite snapshots through explicit review, private persistence, undo and recovery. SQLite source IDs retain exact signed 64-bit decimal text. JSON-only v1 archives remain unchanged until explicit XML/SQLite v2 import.",
+    "implementation": [
+      "platforms/linux/linux-qt/app/LegacyHistorySource.cpp",
+      "platforms/linux/linux-qt/app/LegacyHistorySqlite.cpp",
+      "platforms/linux/linux-qt/src/history/LegacyHistoryXml.cpp"
+    ],
+    "remaining": "Cross-format task identity resolution, full state/privacy mappings, other migration families, baseline runtime observation, human security review and shared cross-platform acceptance."
+  }
 }

@@ -12,6 +12,7 @@
 #include <QTest>
 #include <QTimer>
 #include <sys/stat.h>
+#include <sqlite3.h>
 using namespace xerahs;
 namespace {
 QJsonObject record(int index = 0) {
@@ -115,6 +116,40 @@ private slots:
     QTRY_VERIFY(closed->findChild<QPushButton *>("chooseLegacyHistory")->isEnabled());
     closed->findChild<QPushButton *>("chooseLegacyHistory")->click(); closed->close();
     QTRY_VERIFY(closed.isNull()); QTest::qWait(30); QCOMPARE(read(source), fragment({record()}));
+  }
+  void nativeXmlAndSqliteImportRestartUndoAndRecovery_data() {
+    QTest::addColumn<bool>("sqlite"); QTest::newRow("xml") << false; QTest::newRow("sqlite") << true;
+  }
+  void nativeXmlAndSqliteImportRestartUndoAndRecovery() {
+    QFETCH(bool, sqlite); QTemporaryDir dir; const auto source = dir.filePath(sqlite ? "History.db" : "History.xml");
+    const auto archive = dir.filePath("archive.json");
+    if (sqlite) {
+      sqlite3 *db = nullptr; QCOMPARE(sqlite3_open(QFile::encodeName(source).constData(), &db), SQLITE_OK);
+      const int status = sqlite3_exec(db,
+          "CREATE TABLE History(Id INTEGER PRIMARY KEY AUTOINCREMENT,FileName TEXT,FilePath TEXT,DateTime TEXT,Type TEXT,Host TEXT,URL TEXT,ThumbnailURL TEXT,DeletionURL TEXT,ShortenedURL TEXT,Tags TEXT);"
+          "INSERT INTO History VALUES(9007199254740993,'reviewed.png','/missing/reviewed.png','2026-08-30T12:34:56.1234567Z','Image',NULL,'javascript:inert',NULL,NULL,NULL,'{}')", nullptr, nullptr, nullptr);
+      sqlite3_close(db); QCOMPARE(status, SQLITE_OK);
+    } else save(source, "<HistoryItem><Filename>reviewed.png</Filename><Filepath>/missing/reviewed.png</Filepath><DateTimeUtc>2026-08-30T12:34:56.1234567Z</DateTimeUtc><URL>javascript:inert</URL></HistoryItem>");
+    const auto original = read(source);
+    const auto open = [&] { return new app::LegacyHistoryWindow(nullptr, [&](QWidget *) { return source; }, archive); };
+    QPointer<app::LegacyHistoryWindow> window = open(); window->show();
+    auto *choose = window->findChild<QPushButton *>("chooseLegacyHistory"); QTRY_VERIFY(choose->isEnabled()); choose->click();
+    auto *table = window->findChild<QTableWidget *>("legacyHistoryRecords"); QTRY_COMPARE(table->rowCount(), 1);
+    QCOMPARE(table->item(0, 6)->text(), QString("javascript:inert"));
+    if (sqlite) QCOMPARE(table->item(0, 7)->text(), QString("9007199254740993"));
+    auto *accept = window->findChild<QPushButton *>("importLegacyHistory");
+    confirm(accept, QMessageBox::Cancel); QVERIFY(!QFileInfo::exists(archive));
+    confirm(accept, QMessageBox::Yes); QTRY_VERIFY(choose->isEnabled()); QCOMPARE(read(source), original);
+    window->close(); QTRY_VERIFY(window.isNull());
+    window = open(); window->show(); choose = window->findChild<QPushButton *>("chooseLegacyHistory"); QTRY_VERIFY(choose->isEnabled());
+    table = window->findChild<QTableWidget *>("legacyHistoryRecords"); QCOMPARE(table->rowCount(), 1);
+    if (sqlite) QCOMPARE(table->item(0, 7)->text(), QString("9007199254740993"));
+    confirm(window->findChild<QPushButton *>("undoLegacyHistory"), QMessageBox::Yes); QTRY_VERIFY(choose->isEnabled()); QCOMPARE(table->rowCount(), 0);
+    QVERIFY(QFile::remove(source));
+    window->findChild<QPushButton *>("recoverLegacyHistory")->click(); QTRY_VERIFY(choose->isEnabled()); QTRY_COMPARE(table->rowCount(), 1);
+    confirm(window->findChild<QPushButton *>("importLegacyHistory"), QMessageBox::Yes); QTRY_VERIFY(choose->isEnabled());
+    QCOMPARE(table->rowCount(), 1); QVERIFY(!QFileInfo::exists(source));
+    window->close(); QTRY_VERIFY(window.isNull());
   }
   void nativeImportCancelRestartUndoAndRecoveryKeepTheReviewedSnapshot() {
     QTemporaryDir dir; const auto source = dir.filePath("History.json"), archive = dir.filePath("imported.json"), live = dir.filePath("live-history.json");

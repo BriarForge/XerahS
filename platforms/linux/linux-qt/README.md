@@ -282,7 +282,7 @@ Recognition retry is not available from retained journal metadata.
 See [`../AGENTS.md`](../AGENTS.md) for the toolchain. On Ubuntu 24.04:
 
 ```bash
-pkexec apt install cmake ninja-build g++ qt6-base-dev zlib1g-dev python3 poppler-utils
+pkexec apt install cmake ninja-build g++ qt6-base-dev zlib1g-dev libsqlite3-dev python3 poppler-utils
 cmake -S . -B build -G Ninja
 cmake --build build
 ctest --test-dir build --output-on-failure

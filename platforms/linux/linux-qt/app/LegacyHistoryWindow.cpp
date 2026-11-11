@@ -1,6 +1,7 @@
 #include "LegacyHistoryWindow.h"
 #include "NativeAccessibility.h"
 #include "NativePipelineJournal.h"
+#include "LegacyHistorySource.h"
 #include <QCloseEvent>
 #include <QFile>
 #include <QFileDialog>
@@ -13,35 +14,31 @@
 #include <QTableWidget>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <unistd.h>
 namespace xerahs::app {
 namespace {
 QString text(const char *source) { return QCoreApplication::translate("LegacyHistoryWindow", source); }
 constexpr qsizetype pageSize = 200;
-struct SelectedHistory { history::LegacyHistoryPreview preview; QByteArray source; };
 }
 LegacyHistoryWindow::LegacyHistoryWindow(QWidget *parent, Picker picker, QString archivePath)
     : QDialog(parent, Qt::Window), m_picker(std::move(picker)), m_archivePath(std::move(archivePath)) {
   if (m_archivePath.isEmpty()) m_archivePath = QDir::cleanPath(NativePipelineJournal::defaultDirectory() + "/../legacy-history.json");
   setObjectName("legacyHistoryWindow"); setWindowTitle(text("Legacy history"));
   setAttribute(Qt::WA_DeleteOnClose); resize(900, 560);
-  new NativeAccessibility(*this, text("Review and import legacy JSON history privately. Source files remain unchanged. File references and URLs are text only."), false);
+  new NativeAccessibility(*this, text("Review and import legacy history privately. Source history remains unchanged. File references and URLs are text only."), false);
   if (!m_picker) m_picker = [](QWidget *owner) {
-    return QFileDialog::getOpenFileName(owner, text("Choose legacy JSON history"), {}, text("JSON history (*.json);;All files (*)"));
+    return QFileDialog::getOpenFileName(owner, text("Choose legacy history"), {}, text("History files (*.json *.xml *.db *.sqlite *.sqlite3);;All files (*)"));
   };
   auto *layout = new QVBoxLayout(this);
   auto *note = new QLabel(text("Review a private snapshot before importing. Source files stay unchanged; imports are separate from capture results. File references and URLs are text only."), this);
   note->setWordWrap(true); note->setTextFormat(Qt::PlainText); layout->addWidget(note);
   m_table = new QTableWidget(this); m_table->setObjectName("legacyHistoryRecords"); m_table->setAccessibleName(text("Legacy history records"));
-  m_table->setColumnCount(7); m_table->setHorizontalHeaderLabels({text("Snapshot / Record"), text("File name"), text("Date as recorded"), text("Type"), text("Host"), text("Local reference"), text("URL")});
+  m_table->setColumnCount(8); m_table->setHorizontalHeaderLabels({text("Snapshot / Record"), text("File name"), text("Date as recorded"), text("Type"), text("Host"), text("Local reference"), text("URL"), text("Source task ID")});
   m_table->setEditTriggers(QAbstractItemView::NoEditTriggers); m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
   m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents); layout->addWidget(m_table, 1);
   m_status = new QLabel(this);
   m_status->setObjectName("legacyHistoryStatus"); m_status->setWordWrap(true); m_status->setTextFormat(Qt::PlainText); layout->addWidget(m_status);
   auto *row = new QHBoxLayout;
-  m_choose = new QPushButton(text("&Choose JSON history…"), this); m_choose->setObjectName("chooseLegacyHistory"); row->addWidget(m_choose);
+  m_choose = new QPushButton(text("&Choose history…"), this); m_choose->setObjectName("chooseLegacyHistory"); row->addWidget(m_choose);
   m_saved = new QPushButton(text("&Saved history"), this); m_saved->setObjectName("savedLegacyHistory"); row->addWidget(m_saved);
   row->addStretch(); layout->addLayout(row);
   auto *importRow = new QHBoxLayout;
@@ -75,30 +72,18 @@ void LegacyHistoryWindow::choose() {
   if (path.isEmpty()) return;
   setBusy(true);
   m_status->setText(text("Reading legacy history…"));
-  m_work = OwnedWork::run<SelectedHistory>(this, [path](const OwnedWork::Context &context) {
-    SelectedHistory result;
-    const int fd = ::open(QFile::encodeName(path).constData(), O_RDONLY | O_CLOEXEC | O_NONBLOCK);
-    if (fd < 0) { result.preview.code = "legacy-history-unreadable"; return result; }
-    struct stat info{};
-    if (::fstat(fd, &info) != 0 || !S_ISREG(info.st_mode)) { ::close(fd); result.preview.code = "legacy-history-unreadable"; return result; }
-    QFile file;
-    if (!file.open(fd, QIODevice::ReadOnly, QFileDevice::AutoCloseHandle)) { ::close(fd); result.preview.code = "legacy-history-unreadable"; return result; }
-    const auto bytes = file.read(history::kLegacyHistoryMaxBytes + 1);
-    if (file.error() != QFileDevice::NoError) { result.preview.code = "legacy-history-unreadable"; return result; }
-    if (context.cancelled()) { result.preview.code = "cancelled"; return result; }
-    result.preview = history::previewLegacyHistory(bytes);
-    if (result.preview.ok()) result.source = bytes;
-    return result;
-  }, [this](SelectedHistory result) {
+  m_work = OwnedWork::run<LegacyHistorySourceRead>(this, [path](const OwnedWork::Context &context) {
+    return readLegacyHistorySource(path, [&] { return context.cancelled(); }, [&](int percent) { context.progress(percent, 100); });
+  }, [this](LegacyHistorySourceRead result) {
     m_preview = std::move(result.preview); m_source = std::move(result.source); m_savedView = false;
     m_page = 0; setBusy(false); rebuild();
-  });
+  }, [this](qint64 done, qint64) { m_status->setText(text("Reading legacy history… %1%").arg(done)); });
 }
 void LegacyHistoryWindow::setBusy(bool busy) {
   m_choose->setEnabled(!busy); m_saved->setEnabled(!busy);
-  m_import->setEnabled(!busy && !m_source.isEmpty() && m_preview.ok() && m_archive.code.isEmpty());
+  m_import->setEnabled(!busy && m_source.has_value() && (!m_preview.records.empty() || !m_preview.quarantine.isEmpty()) && m_preview.ok() && m_archive.code.isEmpty());
   m_undo->setEnabled(!busy && !m_archive.lastImportId.isEmpty() && m_archive.code.isEmpty());
-  m_recover->setEnabled(!busy && !m_archive.recoverySource.isEmpty() && m_archive.code.isEmpty());
+  m_recover->setEnabled(!busy && m_archive.recoverySource.has_value() && m_archive.code.isEmpty());
   m_removeRecovery->setEnabled(!busy && !m_archive.recoveryImportId.isEmpty() && m_archive.code.isEmpty());
   m_previous->setEnabled(!busy && m_page > 0);
   m_next->setEnabled(!busy && (m_page + 1) * pageSize < qsizetype(m_preview.records.size()));
@@ -110,7 +95,7 @@ void LegacyHistoryWindow::loadArchive() {
       [path](const OwnedWork::Context &) { return history::LegacyHistoryArchive(path).read(); },
       [this](history::LegacyHistoryArchiveRead result) {
     m_archive = std::move(result); m_preview = m_archive.preview; m_preview.code = m_archive.code;
-    m_source.clear(); m_savedView = true; m_page = 0; setBusy(false); rebuild();
+    m_source.reset(); m_savedView = true; m_page = 0; setBusy(false); rebuild();
   });
 }
 void LegacyHistoryWindow::importSelected() {
@@ -120,7 +105,7 @@ void LegacyHistoryWindow::importSelected() {
           .arg(m_preview.records.size()).arg(m_preview.quarantine.size()), QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
   if (!alive || answer != QMessageBox::Yes) return;
   setBusy(true); m_status->setText(text("Saving reviewed history…"));
-  const auto source = m_source; const auto expected = m_archive.snapshot;
+  const auto source = *m_source; const auto expected = m_archive.snapshot;
   writeArchive([source, expected](const history::LegacyHistoryArchive &store, const OwnedWork::Context &context) {
     return store.importSnapshot(source, expected, true, [&] { return context.cancelled(); });
   });
@@ -138,11 +123,11 @@ void LegacyHistoryWindow::undoImport() {
   });
 }
 void LegacyHistoryWindow::reviewRecovery() {
-  const auto source = m_archive.recoverySource;
+  const auto source = *m_archive.recoverySource;
   setBusy(true); m_status->setText(text("Reviewing the private recovery snapshot…"));
-  m_work = OwnedWork::run<SelectedHistory>(this, [source](const OwnedWork::Context &) {
-    return SelectedHistory{history::previewLegacyHistory(source), source};
-  }, [this](SelectedHistory result) {
+  m_work = OwnedWork::run<LegacyHistorySourceRead>(this, [source](const OwnedWork::Context &) {
+    return LegacyHistorySourceRead{history::previewLegacyHistorySnapshot(source), source};
+  }, [this](LegacyHistorySourceRead result) {
     m_source = std::move(result.source); m_preview = std::move(result.preview); m_savedView = false;
     m_page = 0; setBusy(false); rebuild();
   });
@@ -167,7 +152,7 @@ void LegacyHistoryWindow::writeArchive(std::function<QString(const history::Lega
     return store.read();
   }, [this](history::LegacyHistoryArchiveRead result) {
     if (!result.code.isEmpty()) { setBusy(false); m_status->setText(text("Could not finish or verify the history change. Reload Saved history before retrying: ") + result.code); return; }
-    m_archive = std::move(result); m_preview = m_archive.preview; m_source.clear(); m_savedView = true; m_page = 0; setBusy(false); rebuild();
+    m_archive = std::move(result); m_preview = m_archive.preview; m_source.reset(); m_savedView = true; m_page = 0; setBusy(false); rebuild();
   });
 }
 void LegacyHistoryWindow::rebuild() {
@@ -181,13 +166,17 @@ void LegacyHistoryWindow::rebuild() {
         : record.archiveImportId.left(8) + " / " + QString::number(record.index + 1));
     identity->setToolTip(record.archiveImportId); m_table->setItem(int(row), 0, identity);
     for (int col = 0; col < keys.size(); ++col) m_table->setItem(int(row), col + 1, new QTableWidgetItem(record.fields.value(keys[col]).toString()));
+    m_table->setItem(int(row), 7, new QTableWidgetItem(record.format == history::LegacyHistoryFormat::Sqlite ? record.fields.value("Id").toString() : text("Not recorded")));
   }
   m_previous->setEnabled(m_page > 0); m_next->setEnabled(first + count < qsizetype(m_preview.records.size()));
   if (!m_preview.code.isEmpty()) m_status->setText(text("Could not preview history: ") + m_preview.code);
   else if (!m_preview.records.empty() || !m_preview.quarantine.isEmpty()) {
     auto summary = m_preview.report;
     if (summary.records.size() > 10) summary.records.resize(10);
-    auto message = (m_savedView ? text("Saved imported history. Source backups are retained privately. ") : text("Reviewed snapshot; nothing saved until you explicitly import. ")) + text("Legacy JSON has no task IDs or operation states. ") + summary.detailedSummary();
+    const auto identity = m_preview.format == history::LegacyHistoryFormat::Json ? text("Legacy JSON has no task IDs or operation states. ")
+        : m_preview.format == history::LegacyHistoryFormat::Xml ? text("Legacy XML has no task IDs or operation states. ")
+        : text("Supplied source task IDs are retained; missing operation states are not inferred. ");
+    auto message = (m_savedView ? text("Saved imported history. Source backups are retained privately. ") : text("Reviewed snapshot; nothing saved until you explicitly import. ")) + identity + summary.detailedSummary();
     if (m_preview.report.records.size() > 10) message += text("\nShowing the first 10 record findings.");
     m_status->setText(message);
   } else m_status->setText(text("No legacy history records. Source unchanged."));
