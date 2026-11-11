@@ -3,11 +3,15 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QLabel>
+#include <QMessageBox>
+#include <QAbstractButton>
 #include <QPointer>
 #include <QPushButton>
 #include <QTableWidget>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QTimer>
+#include <sys/stat.h>
 using namespace xerahs;
 namespace {
 QJsonObject record(int index = 0) {
@@ -23,10 +27,23 @@ void save(const QString &path, const QByteArray &bytes) {
   QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); QCOMPARE(file.write(bytes), bytes.size());
 }
 QByteArray read(const QString &path) { QFile file(path); return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray{}; }
+void confirm(QPushButton *action, QMessageBox::StandardButton answer) {
+  bool shown = false; QTimer timer;
+  QObject::connect(&timer, &QTimer::timeout, [&] {
+    auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
+    if (!box) return;
+    shown = true; QCOMPARE(box->defaultButton(), box->button(QMessageBox::Cancel)); box->button(answer)->click();
+  });
+  timer.start(2); action->click(); timer.stop(); QVERIFY(shown);
+}
 }
 class LegacyHistoryTest final : public QObject {
   Q_OBJECT
 private slots:
+  void initTestCase() {
+    static QTemporaryDir state;
+    qputenv("XDG_STATE_HOME", state.path().toUtf8());
+  }
   void pinnedSourceFixtureKeepsAllFieldsAndMissingReferences() {
     QFile fixture(QStringLiteral(LEGACY_HISTORY_FIXTURE)); QVERIFY(fixture.open(QIODevice::ReadOnly));
     const auto bytes = fixture.readAll(); const auto result = history::previewLegacyHistory(bytes);
@@ -75,6 +92,7 @@ private slots:
     window->show(); auto *choose = window->findChild<QPushButton *>("chooseLegacyHistory");
     auto *table = window->findChild<QTableWidget *>("legacyHistoryRecords");
     auto *status = window->findChild<QLabel *>("legacyHistoryStatus"); QVERIFY(choose && table && status);
+    QTRY_VERIFY(choose->isEnabled());
     QTest::mouseClick(choose, Qt::LeftButton); QTRY_VERIFY_WITH_TIMEOUT(choose->isEnabled(), 5000);
     QTRY_VERIFY2_WITH_TIMEOUT(table->rowCount() == 200, qPrintable(status->text()), 5000);
     QCOMPARE(table->item(0, 0)->text(), QString("1"));
@@ -91,11 +109,70 @@ private slots:
   void chooserCanDestroyItsOwnerAndCloseAbandonsPendingRead() {
     QPointer<app::LegacyHistoryWindow> destroyed;
     destroyed = new app::LegacyHistoryWindow(nullptr, [&](QWidget *) { delete destroyed.data(); return QString("ignored"); });
-    auto *choose = destroyed->findChild<QPushButton *>("chooseLegacyHistory"); choose->click(); QVERIFY(destroyed.isNull());
+    auto *choose = destroyed->findChild<QPushButton *>("chooseLegacyHistory"); QTRY_VERIFY(choose->isEnabled()); choose->click(); QVERIFY(destroyed.isNull());
     QTemporaryDir dir; const auto source = dir.filePath("History.json"); save(source, fragment({record()}));
     QPointer<app::LegacyHistoryWindow> closed = new app::LegacyHistoryWindow(nullptr, [&](QWidget *) { return source; });
+    QTRY_VERIFY(closed->findChild<QPushButton *>("chooseLegacyHistory")->isEnabled());
     closed->findChild<QPushButton *>("chooseLegacyHistory")->click(); closed->close();
     QTRY_VERIFY(closed.isNull()); QTest::qWait(30); QCOMPARE(read(source), fragment({record()}));
+  }
+  void nativeImportCancelRestartUndoAndRecoveryKeepTheReviewedSnapshot() {
+    QTemporaryDir dir; const auto source = dir.filePath("History.json"), archive = dir.filePath("imported.json"), live = dir.filePath("live-history.json");
+    const auto original = fragment({record(1), 17, record(2)}); save(source, original); save(live, "native history unchanged");
+    const auto open = [&] { return new app::LegacyHistoryWindow(nullptr, [&](QWidget *) { return source; }, archive); };
+    QPointer<app::LegacyHistoryWindow> window = open(); window->show();
+    auto *choose = window->findChild<QPushButton *>("chooseLegacyHistory"); QTRY_VERIFY(choose->isEnabled()); choose->click();
+    auto *table = window->findChild<QTableWidget *>("legacyHistoryRecords"); QTRY_COMPARE(table->rowCount(), 2);
+    auto *accept = window->findChild<QPushButton *>("importLegacyHistory"); QVERIFY(accept->isEnabled());
+    confirm(accept, QMessageBox::Cancel); QVERIFY(!QFileInfo::exists(archive)); QCOMPARE(read(source), original);
+    // A concurrent source replacement is left untouched: Import saves exactly what was reviewed.
+    const auto replacement = fragment({record(3)}); save(source, replacement);
+    confirm(accept, QMessageBox::Yes); QTRY_VERIFY(choose->isEnabled());
+    QCOMPARE(table->rowCount(), 2); QCOMPARE(read(source), replacement); QCOMPARE(read(live), QByteArray("native history unchanged"));
+    const auto stored = QJsonDocument::fromJson(read(archive)).object().value("imports").toArray().first().toObject();
+    QCOMPARE(QByteArray::fromBase64(stored.value("source").toString().toLatin1()), original);
+    window->close(); QTRY_VERIFY(window.isNull());
+    window = open(); window->show(); choose = window->findChild<QPushButton *>("chooseLegacyHistory"); QTRY_VERIFY(choose->isEnabled());
+    table = window->findChild<QTableWidget *>("legacyHistoryRecords"); QCOMPARE(table->rowCount(), 2);
+    QVERIFY(!window->findChild<QPushButton *>("importLegacyHistory")->isEnabled());
+    choose->click(); QTRY_COMPARE(table->rowCount(), 1);
+    confirm(window->findChild<QPushButton *>("importLegacyHistory"), QMessageBox::Yes); QTRY_VERIFY(choose->isEnabled()); QCOMPARE(table->rowCount(), 3);
+    confirm(window->findChild<QPushButton *>("undoLegacyHistory"), QMessageBox::Yes); QTRY_VERIFY(choose->isEnabled()); QCOMPARE(table->rowCount(), 2);
+    confirm(window->findChild<QPushButton *>("undoLegacyHistory"), QMessageBox::Yes); QTRY_VERIFY(choose->isEnabled()); QCOMPARE(table->rowCount(), 0);
+    QVERIFY(QFile::remove(source));
+    auto *recover = window->findChild<QPushButton *>("recoverLegacyHistory"); QVERIFY(recover->isEnabled()); recover->click();
+    QTRY_VERIFY(choose->isEnabled()); QCOMPARE(table->rowCount(), 2);
+    confirm(window->findChild<QPushButton *>("importLegacyHistory"), QMessageBox::Yes); QTRY_VERIFY(choose->isEnabled()); QCOMPARE(table->rowCount(), 2);
+    QVERIFY(!QFileInfo::exists(source)); QCOMPARE(read(live), QByteArray("native history unchanged"));
+    auto *remove = window->findChild<QPushButton *>("removeLegacyHistoryRecovery"); QVERIFY(remove->isEnabled());
+    const auto beforeRemoval = read(archive); confirm(remove, QMessageBox::Cancel); QCOMPARE(read(archive), beforeRemoval);
+    confirm(remove, QMessageBox::Yes); QTRY_VERIFY(choose->isEnabled()); QCOMPARE(table->rowCount(), 2);
+    QVERIFY(!window->findChild<QPushButton *>("recoverLegacyHistory")->isEnabled());
+    QCOMPARE(QJsonDocument::fromJson(read(archive)).object().value("imports").toArray().size(), 1);
+    window->close(); QTRY_VERIFY(window.isNull());
+    QCOMPARE(history::LegacyHistoryArchive(archive).read().preview.records.size(), size_t(2));
+  }
+  void nativeImportRefusesAnArchiveChangedSinceReviewThenReloadsAndRetries() {
+    QTemporaryDir dir; const auto source = dir.filePath("History.json"), archive = dir.filePath("imported.json");
+    save(source, fragment({record(1)}));
+    QPointer<app::LegacyHistoryWindow> window = new app::LegacyHistoryWindow(nullptr, [&](QWidget *) { return source; }, archive);
+    window->show(); auto *choose = window->findChild<QPushButton *>("chooseLegacyHistory"); QTRY_VERIFY(choose->isEnabled()); choose->click();
+    auto *accept = window->findChild<QPushButton *>("importLegacyHistory"); QTRY_VERIFY(accept->isEnabled());
+    history::LegacyHistoryArchive other(archive); QCOMPARE(other.importSnapshot(fragment({record(2)}), {}, true), QString());
+    const auto concurrent = read(archive);
+    confirm(accept, QMessageBox::Yes); QTRY_VERIFY(choose->isEnabled());
+    QVERIFY(window->findChild<QLabel *>("legacyHistoryStatus")->text().contains("legacy-history-storage-changed")); QCOMPARE(read(archive), concurrent);
+    window->findChild<QPushButton *>("savedLegacyHistory")->click(); QTRY_VERIFY(choose->isEnabled());
+    choose->click(); QTRY_VERIFY(accept->isEnabled()); confirm(accept, QMessageBox::Yes); QTRY_VERIFY(choose->isEnabled());
+    QCOMPARE(other.read().preview.records.size(), size_t(2)); window->close(); QTRY_VERIFY(window.isNull());
+  }
+  void selectedSpecialFileCannotStallTheReader() {
+    QTemporaryDir dir; const auto path = dir.filePath("History.json"), archive = dir.filePath("archive.json");
+    QCOMPARE(::mkfifo(QFile::encodeName(path).constData(), 0600), 0);
+    QPointer<app::LegacyHistoryWindow> window = new app::LegacyHistoryWindow(nullptr, [&](QWidget *) { return path; }, archive);
+    auto *choose = window->findChild<QPushButton *>("chooseLegacyHistory"); QTRY_VERIFY(choose->isEnabled()); choose->click();
+    QTRY_VERIFY(choose->isEnabled()); QVERIFY(window->findChild<QLabel *>("legacyHistoryStatus")->text().contains("legacy-history-unreadable"));
+    QVERIFY(!QFileInfo::exists(archive)); window->close(); QTRY_VERIFY(window.isNull());
   }
 };
 QTEST_MAIN(LegacyHistoryTest)

@@ -54,6 +54,7 @@ add_library(xerahs_core STATIC
   src/history/CaptureHistory.cpp
   src/history/CaptureHistory.h
   src/history/LegacyHistory.cpp src/history/LegacyHistory.h
+  src/history/LegacyHistoryArchive.cpp src/history/LegacyHistoryArchive.h
   src/capture/ScrollStitch.cpp
   src/capture/ScrollStitch.h
   src/capture/CaptureSchedule.cpp
@@ -413,6 +414,10 @@ target_link_libraries(legacy-history-test PRIVATE xerahs_pipeline_journal Qt6::W
 target_compile_definitions(legacy-history-test PRIVATE LEGACY_HISTORY_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/legacy-history/History.json")
 add_test(NAME legacy-history COMMAND legacy-history-test)
 set_tests_properties(legacy-history PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen TIMEOUT 30)
+add_executable(legacy-history-archive-test tests/LegacyHistoryArchiveTest.cpp)
+set_target_properties(legacy-history-archive-test PROPERTIES AUTOMOC ON)
+target_link_libraries(legacy-history-archive-test PRIVATE xerahs_core Qt6::Test)
+add_test(NAME legacy-history-archive COMMAND legacy-history-archive-test)
 add_executable(pipeline-history-dialog-test tests/PipelineHistoryDialogTest.cpp app/PipelineHistoryDialog.cpp app/PipelineHistoryDialog.h
   app/PipelineResultDialog.cpp app/PipelineResultDialog.h)
 set_target_properties(pipeline-history-dialog-test PROPERTIES AUTOMOC ON)

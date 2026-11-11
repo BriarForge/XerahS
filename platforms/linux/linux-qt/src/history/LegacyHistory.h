@@ -9,6 +9,7 @@ namespace xerahs::history {
 struct LegacyHistoryRecord {
   qsizetype index;
   QJsonObject fields;
+  QString archiveImportId = {}; // snapshot provenance, never a legacy task ID
 };
 struct LegacyHistoryPreview {
   std::vector<LegacyHistoryRecord> records;

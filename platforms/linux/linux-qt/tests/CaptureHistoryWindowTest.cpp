@@ -51,6 +51,10 @@ QListWidgetItem *find(QListWidget *list, const QString &fileName) {
 class CaptureHistoryWindowTest final : public QObject {
   Q_OBJECT
 private slots:
+  void initTestCase() {
+    static QTemporaryDir state;
+    qputenv("XDG_STATE_HOME", state.path().toUtf8());
+  }
   void legacyHistoryPreviewIsReachableAndClosesWithHistory() {
     QTemporaryDir dir;
     QPointer<CaptureHistoryWindow> window = new CaptureHistoryWindow(
@@ -60,7 +64,7 @@ private slots:
     QTest::mouseClick(open, Qt::LeftButton);
     QPointer<QWidget> preview = window->findChild<QWidget *>("legacyHistoryWindow");
     QVERIFY(preview && preview->isVisible());
-    QVERIFY(preview->findChild<QPushButton *>("chooseLegacyHistory")->isEnabled());
+    QTRY_VERIFY(preview->findChild<QPushButton *>("chooseLegacyHistory")->isEnabled());
     window->close(); QTRY_VERIFY(window.isNull()); QVERIFY(preview.isNull());
   }
   void uploadOnlyRowsRetainUrlsAndProtectSourceFiles_data() {
