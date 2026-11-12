@@ -35,6 +35,7 @@ class RecordingTranslator final : public QTranslator {
 public:
   mutable QStringList contexts;
   mutable QStringList sources;
+  bool isEmpty() const override { return false; }
   QString translate(const char *context, const char *sourceText, const char *, int) const override {
     contexts << QString::fromUtf8(context);
     sources << QString::fromUtf8(sourceText);
