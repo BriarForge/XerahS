@@ -20,7 +20,7 @@ Both commands in Required Workflow MUST pass.
 Shipping a linter that cannot resolve effective root-to-leaf rules for a path.
 
 # Escalation
-Schema questions go to the contract steward; hierarchy questions go to the governance owner.
+Schema questions go to the contract steward; hierarchy questions go to the maintainer.
 
 # Child Scopes
 None.

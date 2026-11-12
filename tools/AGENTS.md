@@ -11,7 +11,7 @@ Owns tooling that validates the governance system and Product Contract structure
 - **TOOL-NO-POLICY-001** Tooling reports violations. It does not change contracts or waive platforms.
 
 # Required Workflow
-Keep linter rules aligned with ROOT-* and D-AGT-001. A linter change that weakens a protected root check requires the governance owner.
+Keep linter rules aligned with ROOT-* and D-AGT-001. A linter change that weakens a protected root check requires the maintainer.
 
 # Verification
 Linter self-tests and a fixture repository path that is known-good and known-bad.
@@ -21,7 +21,7 @@ Linter self-tests and a fixture repository path that is known-good and known-bad
 - Encoding product behavior in the linter that belongs in `product-contract/`.
 
 # Escalation
-Ambiguous rule-ID conflicts go to the governance owner.
+Ambiguous rule-ID conflicts go to the maintainer.
 
 # Child Scopes
 - [contract-linter/AGENTS.md](contract-linter/AGENTS.md)

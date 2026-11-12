@@ -15,7 +15,7 @@ Owns normative product behavior: capability contracts, requirement IDs, schemas,
 # Required Workflow
 1. Write or update SPEC.md and acceptance evidence before platform work.
 2. Record impact on formats, integrations, and all three platforms.
-3. User-visible MUST/MUST NOT changes require the human product owner.
+3. User-visible MUST/MUST NOT changes are the maintainer's decision (ROOT-REVIEW-001).
 
 # Verification
 - `python tools/contract-linter/lint.py` and `python tools/contract-backlog/tracker.py --check` pass.
