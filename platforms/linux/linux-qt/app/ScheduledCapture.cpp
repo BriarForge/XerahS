@@ -64,6 +64,7 @@ void ScheduledCapture::wire() {
   connect(m_automatic, &AutoCaptureSession::captureRequested, this, &ScheduledCapture::onAutoRequested);
   connect(m_delay, &DelayedCapture::captureRequested, this, &ScheduledCapture::onDelayRequested);
   connect(m_automatic, &AutoCaptureSession::finished, this, [this](const xerahs::capture::AutoSummary &summary) {
+    if (m_storageStopNotified) return;
     notify(xerahs::capture::autoCaptureFinishedTitle(summary), xerahs::capture::autoCaptureSummaryText(summary), summary.failed == 0, false);
   });
   const auto notSaved = [this](const QString &title, const QString &code) {
@@ -167,7 +168,11 @@ void ScheduledCapture::onAutoRequested(xerahs::capture::CaptureSource source) {
   if (condition == xerahs::capture::AutoCondition::StorageLow) {
     m_automatic->finishAttempt(xerahs::capture::AttemptDisposition::Skipped);
     notify(ScheduledCapture::tr("Auto capture stopped"), storageLowBody(), false, true);
+    // stop() emits finished synchronously. Keep the refusal as the result:
+    // the summary's captured count would be reported as success and replace it.
+    m_storageStopNotified = true;
     m_automatic->stop();
+    m_storageStopNotified = false;
     return;
   }
   if (m_ports.blocked && m_ports.blocked()) {

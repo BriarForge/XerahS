@@ -244,6 +244,58 @@ private slots:
     fixture.schedule.captureBusyChanged(false);
   }
 
+  void storageStopStaysARefusalAndDoesNotAnnounceSuccess_data() {
+    QTest::addColumn<int>("limit");
+    QTest::newRow("final-attempt") << 1;
+    QTest::newRow("more-attempts-remaining") << 3;
+  }
+  void storageStopStaysARefusalAndDoesNotAnnounceSuccess() {
+    QFETCH(int, limit);
+    Fixture duringDialog;
+    QTimer::singleShot(0, [&duringDialog, limit] {
+      duringDialog.condition = AutoCondition::StorageLow;
+      acceptAuto(limit);
+    });
+    duringDialog.schedule.autoAction()->trigger();
+    QCOMPARE(duringDialog.starts, 0);
+    QVERIFY(!duringDialog.schedule.stopAction()->isEnabled());
+    QVERIFY(!duringDialog.timer.armed);
+    QCOMPARE(duringDialog.notes.size(), 1);
+    QCOMPARE(duringDialog.notes.first().title, QStringLiteral("Auto capture stopped"));
+    QVERIFY(duringDialog.notes.first().body.startsWith(QStringLiteral("storage-low: ")));
+    QVERIFY(!duringDialog.notes.first().ok);
+    QVERIFY(duringDialog.notes.first().raise);
+    duringDialog.condition = AutoCondition::Clear;
+    duringDialog.clock.advance(10000);
+    duringDialog.schedule.onTimer();
+    QCOMPARE(duringDialog.starts, 0);
+    QCOMPARE(duringDialog.notes.size(), 1);
+
+    Fixture running;
+    QTimer::singleShot(0, [limit] { acceptAuto(limit + 1); });
+    running.schedule.autoAction()->trigger();
+    QCOMPARE(running.starts, 1);
+    running.schedule.captureBusyChanged(true);
+    running.schedule.captureFinished(true);
+    running.schedule.captureBusyChanged(false);
+    QCOMPARE(running.notes.size(), 0);
+    running.condition = AutoCondition::StorageLow;
+    running.clock.advance(1000);
+    running.schedule.onTimer();
+    QCOMPARE(running.starts, 1);
+    QVERIFY(!running.schedule.stopAction()->isEnabled());
+    QVERIFY(!running.timer.armed);
+    QCOMPARE(running.notes.size(), 1);
+    QVERIFY(running.notes.first().body.startsWith(QStringLiteral("storage-low: ")));
+    QVERIFY(!running.notes.first().ok);
+    running.condition = AutoCondition::Clear;
+    running.clock.advance(10000);
+    running.schedule.onTimer();
+    QCOMPARE(running.starts, 1);
+    QCOMPARE(running.notes.size(), 1);
+    QCOMPARE(running.tips.last(), QStringLiteral("XerahS"));
+  }
+
   void unresolvedWorkflowRefusesAndStopsWithoutStartingAnotherCapture() {
     Fixture refused;
     refused.condition = AutoCondition::WorkflowUnavailable;

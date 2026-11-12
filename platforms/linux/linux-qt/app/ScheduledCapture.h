@@ -71,6 +71,9 @@ private:
   bool m_attempt = false;
   bool m_success = false;
   bool m_revoked = false;
+  // A storage refusal already told the user why the run stopped. The generic
+  // finished summary would otherwise follow it and report that stop as success.
+  bool m_storageStopNotified = false;
 };
 
 }  // namespace xerahs::app
