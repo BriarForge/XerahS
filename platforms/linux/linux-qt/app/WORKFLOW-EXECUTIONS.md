@@ -57,6 +57,11 @@ pipelines with failed/skipped actions report partial; completed actions alone
 report succeeded. No new action ordering or failure policy is introduced.
 
 A failed admission/start/link write prevents the next capture/action boundary.
+File uploads also stop before HTTP when admission, start or the read-file step
+cannot be persisted. FileUploadTest injects each of those three failures and
+checks zero requests, no receipt and agreement with the last durable execution
+observation. A failed terminal write after an acknowledged upload still keeps
+the known remote result and never replays it.
 Failed terminal persistence preserves completed files and retained pixels and
 reports that the execution result was not confirmed. No write error silently
 turns into success or replays an action. Normal early outcomes are persisted

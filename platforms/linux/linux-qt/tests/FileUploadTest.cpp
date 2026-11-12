@@ -455,6 +455,47 @@ private slots:
     QVERIFY(!dialogs().first()->findChild<QLineEdit *>("uploadUrl"));
   }
 
+  void executionStorageFailurePreventsUpload_data() {
+    QTest::addColumn<int>("failWrite");
+    QTest::newRow("admission") << 1;
+    QTest::newRow("start") << 2;
+    QTest::newRow("read-file") << 3;
+  }
+  void executionStorageFailurePreventsUpload() {
+    QFETCH(int, failWrite);
+    QTemporaryDir dir; HttpFixture http; QVERIFY(http.server.listen(QHostAddress::LocalHost));
+    const auto destination = http.destination();
+    DestinationCatalog catalog(dir.filePath("destinations.json")); QVERIFY(catalog.add(destination).isEmpty());
+    auto credentials = std::make_shared<MemoryCredentialStore>();
+    QVERIFY(credentials->store(destination.id, "token", "fixture-secret").ok());
+    NativeWorkflowExecutions store(dir.filePath("executions")); const auto writer = store.writer();
+    auto ports = portsFor(dir.filePath("destinations.json"), credentials);
+    int writes = 0;
+    ports.executions = [writer, &writes, failWrite](const QString &id, const std::optional<QByteArray> &expected, const QByteArray &bytes) {
+      if (++writes == failWrite) return xerahs::actions::JournalWrite{false, "pipeline-journal-write-failed"};
+      return writer(id, expected, bytes);
+    };
+    QWidget parent; FileUploadController controller(ports, &parent);
+    QSignalSpy idle(&controller, &FileUploadController::finished), completed(&controller, &FileUploadController::fileCompleted);
+    QSignalSpy observed(&controller, &FileUploadController::terminalObserved);
+    controller.upload({writeFile(dir, "private.txt", "private content")});
+    QTRY_COMPARE_WITH_TIMEOUT(idle.size(), 1, 7000);
+    QCOMPARE(http.received, 0);
+    QCOMPARE(completed.size(), 1); QVERIFY(!completed.first()[1].toBool());
+    QVERIFY(completed.first()[2].toString().contains("workflow-storage-unavailable"));
+    QCOMPARE(observed.size(), 1);
+    QVERIFY(observed.first().first().toJsonObject().value("outputs").toArray().isEmpty());
+    const auto records = store.list();
+    QCOMPARE(records.entries.size(), failWrite == 1 ? size_t(0) : size_t(1));
+    if (!records.entries.empty()) {
+      const auto observation = observed.first().first().toJsonObject();
+      QCOMPARE(observation.value("state"), records.entries.front().result.value("state"));
+      QCOMPARE(observation.value("outputs"), records.entries.front().result.value("outputs"));
+    }
+    QCOMPARE(dialogs().size(), 1);
+    QVERIFY(!dialogs().first()->findChild<QLineEdit *>("uploadUrl"));
+  }
+
   void terminalStorageFailureAgreesWithDurableHistoryWithoutReplayingUpload() {
     QTemporaryDir dir; HttpFixture http; QVERIFY(http.server.listen(QHostAddress::LocalHost));
     const auto destination = http.destination(); DestinationCatalog catalog(dir.filePath("destinations.json")); QVERIFY(catalog.add(destination).isEmpty());

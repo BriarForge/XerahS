@@ -704,6 +704,17 @@
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp"
       ]
+    },
+    {
+      "date": "2026-11-13",
+      "requirements": [
+        "WFCAT-002"
+      ],
+      "outcome": "FileUploadController stops before HTTP if execution admission, start or read-file persistence fails. executionStorageFailurePreventsUpload reproduced one POST per failed write before the fix and zero afterward. Existing acknowledged-upload terminal-storage failure behavior is retained. The earlier source-extracted finding is resolved for this boundary; the historical audit is retained and the requirement stays partial pending complete qualification.",
+      "evidence": [
+        "platforms/linux/linux-qt/app/FileUploadController.cpp",
+        "platforms/linux/linux-qt/tests/FileUploadTest.cpp"
+      ]
     }
   ],
   "audit_method": "All 16 manifest capabilities / 345 IDs reviewed against current production and meaningful named automated test bodies. 325 desktop rows classified; 20 mobile-only requirements explicitly outside Linux scope.",

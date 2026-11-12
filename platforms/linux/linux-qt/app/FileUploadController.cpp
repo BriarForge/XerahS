@@ -143,6 +143,11 @@ void FileUploadController::startNext() {
             m_rule.isEmpty() ? std::nullopt : std::optional<QJsonObject>(m_rule)),
         m_ports.executions ? m_ports.executions : NativeWorkflowExecutions(NativeWorkflowExecutions::defaultDirectory()).writer());
     m_executionStored = m_execution->admit() && m_execution->start();
+    if (!m_executionStored) {
+      m_historyRecord.failureCode = QStringLiteral("workflow-storage-unavailable");
+      showFailure(m_currentName, QStringLiteral("workflow-storage-unavailable: The upload was not sent because its execution record could not be saved."));
+      return;
+    }
     m_historyRecord.failureCode = result.request.code;
     if (m_stop) { m_historyRecord.failureCode = "cancelled"; showFailure(m_currentName, QStringLiteral("cancelled")); return; }
     if (!result.request.request) {
@@ -151,8 +156,13 @@ void FileUploadController::startNext() {
       return;
     }
     m_sensitiveValues = result.request.request->sensitiveValues;
+    if (!m_execution->step(QStringLiteral("read-file"), QStringLiteral("succeeded"))) {
+      m_executionStored = false;
+      m_historyRecord.failureCode = QStringLiteral("workflow-storage-unavailable");
+      showFailure(m_currentName, QStringLiteral("workflow-storage-unavailable: The upload was not sent because its execution record could not be saved."));
+      return;
+    }
     m_requestBuilt = true;
-    if (m_execution && !m_execution->step(QStringLiteral("read-file"), QStringLiteral("succeeded"))) m_executionStored = false;
     m_transferring = true;
     m_executor->start(*result.request.request);
   });
