@@ -39,9 +39,9 @@ RecordingActions::RecordingActions(RecordingController &controller, QSystemTrayI
   for (const auto &entry : QList<QPair<QString, QString>>{{"start-region-recording", "Record region…"}, {"start-recording", "Start screen recording…"}, {"start-gif-recording", "Start GIF recording…"}, {"pause-recording", "Pause recording"}, {"stop-recording", "Stop recording"}, {"abort-recording", "Abort recording"}, {"review-recording", "Review recording result…"}}) {
     auto *action = new QAction(entry.second, this); action->setObjectName(entry.first); m_actions.insert(entry.first, action); m_ordered.append(action);
   }
-  connect(m_actions["start-region-recording"], &QAction::triggered, this, [this] { start(Format::Mp4, true); });
-  connect(m_actions["start-recording"], &QAction::triggered, this, [this] { start(Format::Mp4); });
-  connect(m_actions["start-gif-recording"], &QAction::triggered, this, [this] { start(Format::Gif); });
+  connect(m_actions["start-region-recording"], &QAction::triggered, this, [this] { requestStart(Format::Mp4, true); });
+  connect(m_actions["start-recording"], &QAction::triggered, this, [this] { requestStart(Format::Mp4); });
+  connect(m_actions["start-gif-recording"], &QAction::triggered, this, [this] { requestStart(Format::Gif); });
   connect(m_actions["pause-recording"], &QAction::triggered, &controller, &RecordingController::pauseResume);
   connect(m_actions["stop-recording"], &QAction::triggered, &controller, &RecordingController::stop);
   connect(m_actions["abort-recording"], &QAction::triggered, &controller, &RecordingController::abort);
@@ -69,8 +69,25 @@ void RecordingActions::refresh() {
     QPixmap pixmap = m_icon.pixmap(32, 32); QPainter painter(&pixmap); painter.setPen(Qt::white); painter.setBrush(Qt::red); painter.drawEllipse(20, 20, 11, 11); painter.end(); m_tray.setIcon(QIcon(pixmap));
   } else m_tray.setIcon(m_icon);
 }
+bool RecordingActions::blockedByForeignAdmission() const {
+  return m_admittedDepth == 0 && m_foreignAdmission && m_foreignAdmission();
+}
+bool RecordingActions::refuseForeignAdmission() {
+  if (!blockedByForeignAdmission()) return false;
+  if (m_refuse) m_refuse();
+  return true;
+}
+void RecordingActions::requestStart(Format format, bool region) {
+  if (m_route) m_route(format, region);
+  else start(format, region);
+}
+void RecordingActions::beginAdmittedStart(Format format, bool region, QString origin) {
+  ++m_admittedDepth;
+  struct Reset { int &depth; ~Reset() { --depth; } } reset{m_admittedDepth};
+  start(format, region, std::move(origin));
+}
 void RecordingActions::start(Format format, bool region, QString origin) {
-  if (m_controller.busy()) return;
+  if (m_controller.busy() || refuseForeignAdmission()) return;
   QDialog dialog; dialog.setWindowTitle(region ? "Record region" : "Screen recording"); QFormLayout layout(&dialog);
   QComboBox target; target.addItems({"Monitor (choose in portal)", "Window (choose in portal)"}); layout.addRow("Target", &target); target.setEnabled(!region);
   QComboBox formats;
@@ -95,7 +112,7 @@ void RecordingActions::start(Format format, bool region, QString origin) {
   request.frameRate = fps.value(); request.quality = quality.value(); request.cursor = cursor.isChecked(); request.folder = folder.text(); request.filename = filename.text();
   audio.apply(request);
   if (region) {
-    if (!m_selectRegion) return;
+    if (!m_selectRegion || refuseForeignAdmission()) return;
     m_selectRegion([guard = QPointer<RecordingActions>(this), request, origin](QRectF rectangle) mutable {
       if (!guard) return;
       request.region = rectangle; guard->m_controller.start(request, origin);

@@ -338,7 +338,7 @@
       "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Real-process per-profile lock/socket election, authenticated activation and failure handling are automated; concurrent repeated launches do not create a second primary. Admission reservations are now observable until dispatch and during handlers. Native last-region and scrolling actions refuse with the existing busy presentation while an admitted request is pending, instead of replacing that request while the controller is still idle. Core reservation tests and real-shell QAction tests cover refusal, release and subsequent use. Recording entry-point reservation integration remains separate work.",
+      "note": "Real-process per-profile lock/socket election, authenticated activation and failure handling are automated; concurrent repeated launches do not create a second primary. Admission reservations are now observable until dispatch and during handlers. Native last-region and scrolling actions refuse with the existing busy presentation while an admitted request is pending, instead of replacing that request while the controller is still idle. Core reservation tests and real-shell QAction tests cover refusal, release and subsequent use. Recording entry-point reservation integration remains separate work. Recording start actions now honor a foreign admitted capture reservation before opening setup or selecting a region. Admitted recording dispatch enters its own setup while its reservation remains visible. RecordingAdmissionTest covers screen, region and GIF action refusal plus real dispatcher invocation of the two production recording handlers; setup is cancelled and no physical recording or portal consent is exercised.",
       "evidence": [
         "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
         "platforms/linux/linux-qt/src/shell/ActivationDispatcher.cpp",
@@ -353,7 +353,10 @@
         "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
         "platforms/linux/linux-qt/src/shell/ActivationDispatcher.h",
         "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/app/RecordingActions.cpp",
+        "platforms/linux/linux-qt/app/features/RecordingFeature.cpp",
+        "platforms/linux/linux-qt/tests/RecordingAdmissionTest.cpp"
       ],
       "audit": {
         "classification": "implemented",
