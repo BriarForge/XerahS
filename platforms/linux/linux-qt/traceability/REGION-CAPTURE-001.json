@@ -687,7 +687,7 @@
     "RC-013": {
       "status": "partial",
       "vectors": [],
-      "note": "Owner-approved, default-off compositor capture is wired through the native controller before any overlay. The profile setting stays local during configuration transfer. The worker prefers ext-image-copy-capture paint_cursors and falls back to wlr screencopy overlay_cursor, retains premultiplied alpha, honors advertised padded rows, and supports cancellation. Captured output identity, logical origin, integer scale, normal Wayland transform and physical extent must match the frozen single Qt output; failures do not retry through the Screenshot portal. CompositorFrameTest exercises the real client against a private protocol server, including cancellation, format and stride cases. CompositorCaptureIntegrationTest drives the real controller, physical crop and PNG save with injected owned frames: default portal routing, cursor pixels once, frozen preferences, unsupported/mismatched refusal, cancellation and owner/stale-result handling. These are candidate/mock and controller results, not live compositor qualification. Multi-output, rotated, fractional-scale, dmabuf-only and unsupported sources are refused. Software-cursor exclusion for the off path and complete supported-desktop/physical/privacy/accessibility qualification remain open. The existing audit below records the earlier pre-implementation revision.",
+      "note": "Owner-approved, default-off compositor capture is wired through the native controller before any overlay. The profile setting stays local during configuration transfer. The worker prefers ext-image-copy-capture paint_cursors and falls back to wlr screencopy overlay_cursor, retains premultiplied alpha, honors advertised padded rows, and supports cancellation. Captured output identity, logical origin, integer scale, normal Wayland transform and physical extent must match the frozen single Qt output; failures do not retry through the Screenshot portal. CompositorFrameTest exercises the real client against a private protocol server, including cancellation, format and stride cases. CompositorCaptureIntegrationTest drives the real controller, physical crop and PNG save with injected owned frames: default portal routing, cursor pixels once, frozen preferences, unsupported/mismatched refusal, cancellation and owner/stale-result handling. These are candidate/mock and controller results, not live compositor qualification. Multi-output, rotated, fractional-scale, dmabuf-only and unsupported sources are refused. Software-cursor exclusion for the off path and complete supported-desktop/physical/privacy/accessibility qualification remain open. The existing audit below records the earlier pre-implementation revision. Compositor refusals show translated recovery guidance; arbitrary diagnostic values, paths and output names are excluded from that message. Stable capture failure codes remain separate from the user-facing text.",
       "disposition": "Required",
       "audit": {
         "classification": "not-started",
@@ -732,7 +732,9 @@
         "platforms/linux/linux-qt/tests/CompositorCaptureIntegrationTest.cpp",
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
         "platforms/linux/linux-qt/tests/ConfigurationTransferTest.cpp",
-        "platforms/linux/linux-qt/app/CAPTURE-POLICY.md"
+        "platforms/linux/linux-qt/app/CAPTURE-POLICY.md",
+        "platforms/linux/linux-qt/app/capture/CompositorErrors.cpp",
+        "platforms/linux/linux-qt/tests/CompositorErrorsTest.cpp"
       ]
     },
     "RC-014": {

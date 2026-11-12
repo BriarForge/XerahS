@@ -1,5 +1,6 @@
 #include "CaptureController.h"
 #include "OwnedWork.h"
+#include "capture/CompositorErrors.h"
 
 #include "CaptureActions.h"
 #include "PortalScreenshot.h"
@@ -216,7 +217,7 @@ void CaptureController::beginCapture(QStringList selected) {
 
 void CaptureController::beginCompositorCapture() {
   if (m_displays.size() != 1 || m_displays.front().outputName.isEmpty()) {
-    onSnapshot(int(PortalScreenshot::Outcome::Failed), {}, kCompositorLayoutUnproven); return;
+    onSnapshot(int(PortalScreenshot::Outcome::Failed), {}, compositorCaptureFailureMessage(kCompositorLayoutUnproven)); return;
   }
   const auto display = m_displays.front();
   const auto generation = m_generation;
@@ -239,7 +240,7 @@ void CaptureController::beginCompositorCapture() {
           onSnapshot(int(PortalScreenshot::Outcome::Cancelled), {}, {}); return;
         }
         if (frame.status != CompositorFrame::Status::Captured) {
-          onSnapshot(int(PortalScreenshot::Outcome::Failed), {}, frame.diagnostic); return;
+          onSnapshot(int(PortalScreenshot::Outcome::Failed), {}, compositorCaptureFailureMessage(frame.diagnostic)); return;
         }
         const auto &mapping = display.mapping;
         if (!frame.singleOutputBufferOriginProven || !frame.cursorPaintRequested || !frame.cursorPaintedIntoFrame ||
@@ -247,7 +248,7 @@ void CaptureController::beginCompositorCapture() {
             frame.scale != mapping.scale || frame.logicalX != mapping.logical.left || frame.logicalY != mapping.logical.top ||
             frame.bufferWidth != mapping.physical.width() || frame.bufferHeight != mapping.physical.height() ||
             frame.image.width() != mapping.physical.width() || frame.image.height() != mapping.physical.height()) {
-          failCapture(diagnostic::captureTopologyMismatch); return;
+          failCapture(diagnostic::captureTopologyMismatch, compositorCaptureFailureMessage(kCompositorSourceMismatch)); return;
         }
         onSnapshot(int(PortalScreenshot::Outcome::Captured), frame.image, {});
       });
@@ -325,11 +326,11 @@ void CaptureController::onSnapshot(int outcome, const QImage &image, const QStri
   }
 }
 
-void CaptureController::failCapture(const QString &code) {
+void CaptureController::failCapture(const QString &code, const QString &message) {
   const QPointer<CaptureController> guard(this);
   recordCaptureOutcome("failed", code);
   if (!guard) return;
-  if (!m_execution) emit notify(sourceTitle("capture failed"), code, false);
+  if (!m_execution) emit notify(sourceTitle("capture failed"), message.isEmpty() ? code : message, false);
   if (guard) finish();
 }
 

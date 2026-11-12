@@ -15,12 +15,19 @@ pkg_check_modules(WAYLAND_CAPTURE REQUIRED IMPORTED_TARGET wayland-client>=1.20)
 
 add_library(xerahs_compositor_capture STATIC
   app/capture/CompositorFrame.cpp app/capture/CompositorFrame.h
+  app/capture/CompositorErrors.cpp app/capture/CompositorErrors.h
   app/capture/protocol/ext-image-capture-source-v1-protocol.c
   app/capture/protocol/ext-image-copy-capture-v1-protocol.c
   app/capture/protocol/wlr-screencopy-unstable-v1-protocol.c)
 target_include_directories(xerahs_compositor_capture PUBLIC app PRIVATE app/capture/protocol)
 target_link_libraries(xerahs_compositor_capture PUBLIC Qt6::Core Qt6::Gui PRIVATE PkgConfig::WAYLAND_CAPTURE)
 target_compile_options(xerahs_compositor_capture PRIVATE -Wall -Wextra -Wpedantic)
+
+add_executable(compositor-errors-test tests/CompositorErrorsTest.cpp)
+set_target_properties(compositor-errors-test PROPERTIES AUTOMOC ON)
+target_link_libraries(compositor-errors-test PRIVATE xerahs_compositor_capture Qt6::Test)
+add_test(NAME compositor-errors COMMAND compositor-errors-test)
+set_tests_properties(compositor-errors PROPERTIES TIMEOUT 30)
 
 pkg_check_modules(WAYLAND_SERVER QUIET IMPORTED_TARGET wayland-server>=1.20)
 if(TARGET PkgConfig::WAYLAND_SERVER)

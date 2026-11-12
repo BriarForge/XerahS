@@ -119,7 +119,7 @@ private:
   void beginCompositorCapture();
   void topologyChanged();
   bool topologyMatches() const;
-  void failCapture(const QString &diagnostic);
+  void failCapture(const QString &diagnostic, const QString &message = {});
   void beginConfiguredCapture(bool chooseActions);
   void onSnapshot(int outcome, const QImage &image, const QString &detail);
   void onOutcome(const xerahs::capture::SessionOutcome &outcome);

@@ -6,6 +6,7 @@
 #include "RegionOverlay.h"
 #include "WindowDiscovery.h"
 #include "capture/ScreenTopology.h"
+#include "capture/CompositorErrors.h"
 #include "settings/ApplicationSettings.h"
 
 #include <QApplication>
@@ -273,7 +274,8 @@ private slots:
     QVERIFY(!harness.controller->lastPipelineResult());
     QCOMPARE(QDir(harness.outputs).entryList(QDir::Files).size(), 0);
     QCOMPARE(notices.size(), 1);
-    QCOMPARE(notices[0][1].toString(), diagnostic);
+    const bool sourceRefusal = layout || kind == QLatin1String("unsupported") || kind == QLatin1String("source-mismatch");
+    QCOMPARE(notices[0][1].toString(), compositorCaptureFailureMessage(sourceRefusal ? diagnostic : kCompositorSourceMismatch));
   }
 
   void frozenProfileSettingsSurviveChangesUntilTheNextCapture() {
