@@ -27,6 +27,9 @@ public:
   // Empty means the operation was invoked, not that asynchronous work succeeded.
   // Non-activate requests must have an admission reservation first.
   QString dispatch(const ActivationRequest &request);
+  // True while a non-activate request is reserved or a handler is running.
+  // Capture starters that do not admit here must not begin a second capture.
+  bool reserved() const;
 private:
   bool available(const ActivationRequest &request) const;
   bool blocked(const ActivationRequest &request) const;

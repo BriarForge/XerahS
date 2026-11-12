@@ -4,6 +4,7 @@
 
 namespace xerahs::shell {
 ActivationDispatcher::ActivationDispatcher(ActivationOperations operations) : m_operations(std::move(operations)) {}
+bool ActivationDispatcher::reserved() const { return m_pending.has_value() || m_dispatching; }
 bool ActivationDispatcher::available(const ActivationRequest &request) const {
   switch (request.action) {
     case ActivationAction::StartRegionRecording: return bool(m_operations.startRegionRecording) && (!m_operations.canStartRecording || m_operations.canStartRecording());

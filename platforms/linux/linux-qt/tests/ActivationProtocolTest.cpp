@@ -156,6 +156,38 @@ private slots:
     const auto choose = makeActivationRequest(ActivationAction::CaptureRegionChooseActions); QCOMPARE(dispatcher.admit(choose), ActivationReplyState::Accepted); QVERIFY(dispatcher.dispatch(choose).isEmpty()); QCOMPARE(chooser, 1);
     QCOMPARE(dispatcher.admit(request), ActivationReplyState::Accepted); QVERIFY(dispatcher.dispatch(request).isEmpty()); QCOMPARE(used, QString("later"));
   }
+  void reservationStaysVisibleUntilDispatchSoAnOutsideCaptureCannotReplaceIt() {
+    int admitted = 0, outside = 0; bool controllerBusy = false, reservedDuringPrepare = false;
+    ActivationDispatcher *active = nullptr; ActivationOperations ops;
+    ops.activate = [] {}; ops.captureBusy = [&] { return controllerBusy; };
+    ops.prepareCapture = [&](const ActivationRequest &) -> std::function<void()> {
+      reservedDuringPrepare = active->reserved();
+      return [&] { ++admitted; controllerBusy = true; };
+    };
+    ActivationDispatcher dispatcher(std::move(ops)); active = &dispatcher;
+    QVERIFY(!dispatcher.reserved());
+    const auto request = makeActivationRequest(ActivationAction::CaptureRegion);
+    QCOMPARE(dispatcher.admit(request), ActivationReplyState::Accepted);
+    QVERIFY(reservedDuringPrepare); QVERIFY(dispatcher.reserved()); QVERIFY(!controllerBusy);
+    if (!controllerBusy && !dispatcher.reserved()) { ++outside; controllerBusy = true; }
+    QCOMPARE(outside, 0);
+    const auto activate = makeActivationRequest(ActivationAction::Activate);
+    QCOMPARE(dispatcher.admit(activate), ActivationReplyState::Accepted); QVERIFY(dispatcher.reserved());
+    QVERIFY(dispatcher.dispatch(activate).isEmpty()); QVERIFY(dispatcher.reserved());
+    QVERIFY(dispatcher.dispatch(request).isEmpty());
+    QCOMPARE(admitted, 1); QCOMPARE(outside, 0); QVERIFY(controllerBusy); QVERIFY(!dispatcher.reserved());
+    QCOMPARE(dispatcher.dispatch(request), QString("activation-invalid")); QCOMPARE(admitted, 1);
+
+    controllerBusy = false; admitted = 0; bool lateBusy = false; ActivationOperations late;
+    late.captureBusy = [&] { return lateBusy; };
+    late.prepareCapture = [&](const ActivationRequest &) -> std::function<void()> { return [&] { ++admitted; }; };
+    ActivationDispatcher second(std::move(late));
+    const auto again = makeActivationRequest(ActivationAction::CaptureRegion);
+    QCOMPARE(second.admit(again), ActivationReplyState::Accepted); QVERIFY(second.reserved());
+    lateBusy = true; QCOMPARE(second.dispatch(again), QString("activation-busy")); QCOMPARE(admitted, 0); QVERIFY(!second.reserved());
+    lateBusy = false; QCOMPARE(second.admit(again), ActivationReplyState::Accepted);
+    QVERIFY(second.dispatch(again).isEmpty()); QCOMPARE(admitted, 1); QVERIFY(!second.reserved());
+  }
   void rejectedOrThrowingWorkflowPreparationDoesNotLeaveAReservation() {
     int calls = 0; bool throwing = false; ActivationOperations operations;
     operations.prepareWorkflow = [&](const QString &) -> std::function<void()> { ++calls; if (throwing) throw std::runtime_error("private"); return {}; };

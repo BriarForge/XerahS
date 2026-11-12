@@ -7,6 +7,7 @@
 #include "ApplicationControl.h"
 #include "RecordingActions.h"
 #include "features/ScheduleFeature.h"
+#include "features/CaptureFeature.h"
 #include <QLabel>
 #include "UploadDestinationsDialog.h"
 #include <QJsonDocument>
@@ -94,6 +95,28 @@ private slots:
       QVERIFY2(!action->toolTip().trimmed().isEmpty() && action->toolTip() != action->text() && !shell.commands.spec(id)->accessibleDescription.isEmpty(), qPrintable(id + " is inert without an explanation"));
     }
     QVERIFY2(explained <= 2, qPrintable(QString::number(explained)));  // Only genuinely unavailable integrations.
+  }
+  void admittedCaptureBlocksLastRegionAndScrollingUntilDispatchReleasesIt() {
+    Shell shell(root.path()); shell.attach();
+    const auto request = xerahs::shell::makeActivationRequest(xerahs::shell::ActivationAction::CaptureRegion);
+    QCOMPARE(shell.dispatcher->admit(request), xerahs::shell::ActivationReplyState::Accepted);
+    QVERIFY(shell.dispatcher->reserved()); QVERIFY(!shell.capture.busy());
+    QSignalSpy notices(&shell.capture, &CaptureController::notify);
+    for (const auto *id : {"capture-last-region", "capture-scrolling"}) {
+      auto *action = shell.commands.action(QString::fromLatin1(id)); QVERIFY(action);
+      action->trigger();
+      QVERIFY(!shell.capture.busy()); QVERIFY(shell.dispatcher->reserved());
+      QCOMPARE(notices.size(), 0);
+      auto *status = shell.window().findChild<QLabel *>(QStringLiteral("operationStatus")); QVERIFY(status);
+      QCOMPARE(status->text(), QStringLiteral("Activation: ") + activationFailureMessage(QStringLiteral("activation-busy")));
+    }
+    QVERIFY(shell.capture.acquireExternal([] {}));
+    QCOMPARE(shell.dispatcher->dispatch(request), QStringLiteral("activation-busy"));
+    QVERIFY(!shell.dispatcher->reserved());
+    shell.capture.releaseExternal();
+    shell.commands.action(QStringLiteral("capture-last-region"))->trigger();
+    QCOMPARE(notices.size(), 1);
+    QVERIFY(notices.first().at(1).toString().contains(QStringLiteral("last-region-invalid")));
   }
   void lastRegionCommandIsSharedAndRefusesStaleGeometryBeforeAcquisition() {
     Shell shell(root.path()); shell.attach();

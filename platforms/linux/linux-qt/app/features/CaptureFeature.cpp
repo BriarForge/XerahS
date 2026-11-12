@@ -57,6 +57,22 @@ ApplicationWindow *commandWindow(AppContext &ctx) {
   return qobject_cast<ApplicationWindow *>(ctx.dialogParent ? ctx.dialogParent() : nullptr);
 }
 
+// Last-region and scrolling do not admit through the dispatcher. Between socket
+// admission and deferred dispatch the controller is still idle, so they must
+// observe the reservation or they replace the accepted capture.
+bool shellCaptureBlocked(const AppContext &ctx) {
+  return ctx.capture.busy() || ctx.recording.busy() || QApplication::activeModalWidget()
+      || (ctx.shortcuts && ctx.shortcuts->pending())
+      || (ctx.activation && ctx.activation->reserved());
+}
+
+void reportBlockedCapture(AppContext &ctx) {
+  if (auto *window = commandWindow(ctx)) {
+    window->showResult(QStringLiteral("Activation"), activationFailureMessage(QStringLiteral("activation-busy")), false);
+    window->activate();
+  }
+}
+
 // CORE-015: target, strategy, progress and partial handling live in ScrollCapture;
 // this wires it to the controller's admission and the command registry.
 void installScrollingCapture(AppContext &ctx) {
@@ -71,10 +87,7 @@ void installScrollingCapture(AppContext &ctx) {
   auto *scrolling = new ScrollCapture(std::move(ports), {}, &ctx.app);
   scrolling->setPreferences(settings::capturePreferencesPort(ctx.settings));  // CORE-015 settings
   addCapture(ctx, QStringLiteral("capture-scrolling"), QStringLiteral("Capture scrolling…"), [&ctx, scrolling] {
-    if (ctx.capture.busy() || ctx.recording.busy() || QApplication::activeModalWidget()) {
-      if (auto *window = commandWindow(ctx)) window->showResult(QStringLiteral("Activation"), activationFailureMessage(QStringLiteral("activation-busy")), false);
-      return;
-    }
+    if (shellCaptureBlocked(ctx)) { reportBlockedCapture(ctx); return; }
     scrolling->start();
   });
 }
@@ -156,7 +169,7 @@ void installCapture(AppContext &ctx) {
   addCapture(ctx, QStringLiteral("capture-active-window"), QStringLiteral("Capture active window"),
       [&ctx] { ctx.invoke(ActivationAction::CaptureActiveWindow, {}, false, {}, QStringLiteral("native-shell")); });
   addCapture(ctx, QStringLiteral("capture-last-region"), QStringLiteral("Capture last region"), [&ctx] {
-    if (ctx.capture.busy() || ctx.recording.busy() || QApplication::activeModalWidget() || (ctx.shortcuts && ctx.shortcuts->pending())) return;
+    if (shellCaptureBlocked(ctx)) { reportBlockedCapture(ctx); return; }
     auto choice = resolveShellWorkflow(ctx);
     if (!choice.workflow) { emit ctx.capture.notify("Capture workflow unavailable", choice.diagnostic, false); return; }
     choice.workflow->capture = QStringLiteral("last-region");

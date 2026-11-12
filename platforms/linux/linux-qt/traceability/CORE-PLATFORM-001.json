@@ -338,7 +338,7 @@
       "status": "implemented",
       "disposition": "Required",
       "vectors": [],
-      "note": "Real-process per-profile lock/socket election, authenticated activation and failure handling are automated; concurrent repeated launches do not create a second primary.",
+      "note": "Real-process per-profile lock/socket election, authenticated activation and failure handling are automated; concurrent repeated launches do not create a second primary. Admission reservations are now observable until dispatch and during handlers. Native last-region and scrolling actions refuse with the existing busy presentation while an admitted request is pending, instead of replacing that request while the controller is still idle. Core reservation tests and real-shell QAction tests cover refusal, release and subsequent use. Recording entry-point reservation integration remains separate work.",
       "evidence": [
         "platforms/linux/linux-qt/src/shell/ActivationProtocol.cpp",
         "platforms/linux/linux-qt/src/shell/ActivationDispatcher.cpp",
@@ -350,7 +350,10 @@
         "platforms/linux/linux-qt/tests/PortalScreenshotTest.cpp",
         "platforms/linux/linux-qt/tests/NativeCaptureWorkflowsTest.cpp",
         "platforms/linux/linux-qt/app/WORKFLOW-EXECUTIONS.md",
-        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp"
+        "platforms/linux/linux-qt/tests/WorkflowExecutionTest.cpp",
+        "platforms/linux/linux-qt/src/shell/ActivationDispatcher.h",
+        "platforms/linux/linux-qt/app/features/CaptureFeature.cpp",
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
       ],
       "audit": {
         "classification": "implemented",
