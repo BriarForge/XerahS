@@ -22,7 +22,9 @@ std::vector<CaptureHistoryItem> captureHistoryItems(const std::vector<xerahs::ac
     if ((origin == "file-upload" || origin == "watch-folder") && QFileInfo(path).isAbsolute()) {
       item.origin = origin;
       item.destinationName = upload.value("destination_name").toString();
-      if (!upload.value("failure_code").toString().isEmpty()) item.state = "failed";
+      const auto failureCode = upload.value("failure_code").toString();
+      if (failureCode == QLatin1String("cancelled") && item.outcome == QLatin1String("cancelled")) item.state = QStringLiteral("cancelled");
+      else if (!failureCode.isEmpty()) item.state = "failed";
       item.files.push_back({path});
     }
     const auto uploadResult = native.value("upload_result").toObject();

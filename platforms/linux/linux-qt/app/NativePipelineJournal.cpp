@@ -1,5 +1,6 @@
 #include "NativePipelineJournal.h"
 #include "NativePrivateRecords.h"
+#include "workflows/FileOperationExecution.h"
 #include <QDir>
 #include <QJsonDocument>
 #include <algorithm>
@@ -32,8 +33,13 @@ JournalWrite NativePipelineJournal::recordFileUpload(const FileUploadHistoryReco
   if (interrupted) snapshot.pendingAction = QStringLiteral("upload");
   else {
     ActionResult action; action.action = "upload";
-    action.state = upload.failureCode.isEmpty() ? ActionState::Succeeded : ActionState::Failed;
+    const bool cancelled = upload.failureCode == QLatin1String("cancelled");
+    action.state = cancelled ? ActionState::Cancelled : upload.failureCode.isEmpty() ? ActionState::Succeeded : ActionState::Failed;
     if (!upload.failureCode.isEmpty()) action.diagnostic = upload.failureCode;
+    if (action.state == ActionState::Failed)
+      action.failureClass = upload.failureClass.value_or(xerahs::workflows::classifyFileOperationFailure(upload.failureCode));
+    action.cancellationArrivedDuring = cancelled && upload.result.attempts > 0;
+    if (cancelled && upload.result.attempts == 0) snapshot.result.state = PipelineState::Cancelled;
     snapshot.result.orderedResults = {action};
   }
   snapshot.result.upload = upload.result;

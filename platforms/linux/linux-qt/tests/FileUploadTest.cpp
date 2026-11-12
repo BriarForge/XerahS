@@ -193,6 +193,7 @@ private slots:
       QVERIFY(item.failureMessage.isEmpty());
     } else {
       QCOMPARE(item.state, QString("failed"));
+      if (status == 500) QCOMPARE(item.outcome, QString("transient-failure"));
       if (status == 0) {
         QVERIFY(item.failureMessage.startsWith("input-too-large: ")); QCOMPARE(http.received, 0);
       } else {
@@ -564,6 +565,7 @@ private slots:
     QVERIFY(upload.value("url").toString().isEmpty());
     QCOMPARE(upload.value("attempts").toInt(), 1);
     QVERIFY(upload.value("error_message").toString().contains("publication is unconfirmed"));
+    QCOMPARE(upload.value("error_message").toString().count(QStringLiteral("cancelled:")), 1);
     QVERIFY(QFileInfo::exists(path)); QCOMPARE(http.received, 1);
   }
 
@@ -817,6 +819,47 @@ private slots:
     QTest::qWait(200);
     QCOMPARE(http.received, 1);
     for (auto *dialog : dialogs()) QVERIFY(before.contains(dialog));
+  }
+
+  void journalKeepsCancellationAndKnownFailureClasses_data() {
+    QTest::addColumn<QString>("code"); QTest::addColumn<int>("attempts"); QTest::addColumn<QString>("expected");
+    QTest::newRow("cancel-before-send") << QString("cancelled") << 0 << QString("cancelled");
+    QTest::newRow("cancel-after-send") << QString("cancelled") << 1 << QString("cancelled");
+    QTest::newRow("http-503") << QString("http-error") << 1 << QString("transient-failure");
+    QTest::newRow("unreadable") << QString("input-unreadable") << 0 << QString("permission-denied");
+    QTest::newRow("no-destination") << QString("destination-missing") << 0 << QString("unavailable-dependency");
+  }
+  void journalKeepsCancellationAndKnownFailureClasses() {
+    QFETCH(QString, code); QFETCH(int, attempts); QFETCH(QString, expected);
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    NativePipelineJournal store(dir.filePath(QStringLiteral("history")));
+    FileUploadHistoryRecord record;
+    record.taskId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    record.path = writeFile(dir, QStringLiteral("source.txt"), QByteArray("source"));
+    record.origin = QStringLiteral("file-upload"); record.destinationName = QStringLiteral("Fixture");
+    record.createdAt = QDateTime::currentDateTimeUtc(); record.failureCode = code;
+    record.result.errorMessage = code; record.result.attempts = attempts;
+    if (code == QLatin1String("http-error")) record.failureClass = xerahs::actions::FailureClass::TransientFailure;
+    QVERIFY(store.recordFileUpload(record).stored);
+    const auto listing = store.list(); QCOMPARE(listing.entries.size(), std::size_t(1));
+    QVERIFY(listing.entries.front().parsed.record);
+    const auto &recovered = *listing.entries.front().parsed.record;
+    const auto native = recovered.report.value("extensions").toObject().value("com.xerahs.app").toObject();
+    QCOMPARE(native.value("terminal_observation").toObject().value("state").toString(), expected);
+    const auto items = xerahs::history::captureHistoryItems({recovered}); QCOMPARE(items.size(), std::size_t(1));
+    QCOMPARE(items.front().outcome, expected);
+    const auto action = recovered.report.value("ordered_results").toArray().first().toObject();
+    if (code == QLatin1String("cancelled")) {
+      QCOMPARE(action.value("state").toString(), QString("cancelled"));
+      QCOMPARE(action.value("cancellation_arrived_during").toBool(), attempts > 0);
+      QCOMPARE(recovered.report.value("pipeline_state").toString(), attempts == 0 ? QString("cancelled") : QString("completed"));
+      QVERIFY(action.value("failure_class").toString().isEmpty());
+      QCOMPARE(items.front().state, QString("cancelled"));
+    } else {
+      QCOMPARE(action.value("state").toString(), QString("failed"));
+      QCOMPARE(action.value("failure_class").toString(), expected);
+      QCOMPARE(items.front().state, QString("failed"));
+    }
   }
 
   void sentRequestWithoutAResponseIsInterruptedNotAFailure() {

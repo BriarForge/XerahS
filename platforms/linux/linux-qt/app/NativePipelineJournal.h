@@ -16,6 +16,7 @@ struct FileUploadHistoryRecord {
   QString taskId, path, origin, destinationName, failureCode;
   QDateTime createdAt;
   xerahs::actions::UploadResult result;
+  std::optional<xerahs::actions::FailureClass> failureClass = {};
 };
 struct JournalListing { std::vector<JournalEntry> entries; QString diagnostic; int quarantined = 0; };
 // Linux I/O boundary. Independent descriptor locks serialize writers; snapshots

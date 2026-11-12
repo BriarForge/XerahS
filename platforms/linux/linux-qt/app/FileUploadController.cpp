@@ -171,9 +171,11 @@ void FileUploadController::recordCompletion(const uploads::UploadOutcome &outcom
   // A sent request without an acknowledgement is not a failed publication.
   // Keep the stable code on the execution; the journal stays interrupted.
   const bool publicationUnknown = m_requestBuilt && workflows::uploadRemoteOutcomeUnknown(record.failureCode, record.result.attempts);
+  if (!publicationUnknown && !record.failureCode.isEmpty() && record.failureCode != QLatin1String("cancelled"))
+    record.failureClass = workflows::classifyFileOperationFailure(record.failureCode, m_httpStatus);
   if (!record.failureCode.isEmpty()) {
     const auto message = record.result.errorMessage;
-    if (!publicationUnknown)
+    if (!publicationUnknown && !message.startsWith(record.failureCode + QStringLiteral(": ")))
       record.result.errorMessage = record.failureCode + QStringLiteral(": ") +
           (message.isEmpty() || message == record.failureCode ? QStringLiteral("The file upload did not complete.") : message);
     else if (message.isEmpty())
