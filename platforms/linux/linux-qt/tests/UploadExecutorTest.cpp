@@ -4,6 +4,7 @@
 #include <QElapsedTimer>
 #include <QJsonArray>
 #include <functional>
+#include <memory>
 #include <QSet>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -140,6 +141,7 @@ private slots:
     QCOMPARE(manager.publishedKeys.size(), 1); QVERIFY(progress.size() >= 2);
     for (int i = 0; i < 2; ++i) {
       QCOMPARE(manager.bodies[i], frozen.body); QCOMPARE(manager.requests[i].url(), frozen.url);
+      QVERIFY(!manager.requests[i].attribute(QNetworkRequest::Http2AllowedAttribute).isValid());
       QCOMPARE(manager.requests[i].rawHeader("Idempotency-Key"), QByteArray("stable-operation-key"));
       QCOMPARE(manager.requests[i].rawHeader("Authorization"), QByteArray("private-token"));
     }
@@ -179,6 +181,10 @@ private slots:
     QSignalSpy done(&executor, &UploadExecutor::finished), retries(&executor, &UploadExecutor::retryScheduled); executor.start(request);
     QTRY_COMPARE(done.size(), 1); QVERIFY(!done.first().first().value<UploadOutcome>().code.isEmpty());
     QCOMPARE(done.first().first().value<UploadOutcome>().attempts, 1); QVERIFY(retries.isEmpty()); QCOMPARE(manager.requests.size(), 1);
+    const bool unsafe = method == "POST" || method == "PATCH";
+    const auto http2 = manager.requests.first().attribute(QNetworkRequest::Http2AllowedAttribute);
+    if (unsafe) { QVERIFY(http2.isValid()); QVERIFY(!http2.toBool()); }
+    else QVERIFY(!http2.isValid());
   }
   void cancellationDuringBackoffCannotRestartOrCompleteANewerRun() {
     FixtureManager manager; manager.mode = "network"; UploadExecutor executor(&manager);
@@ -294,6 +300,87 @@ private slots:
     QVERIFY(!progress.isEmpty());
     executor.cancel(); QTest::qWait(30); QCOMPARE(done.size(), 1);
     if (peer) { peer->disconnect(this); peer->deleteLater(); }
+  }
+  void closedBeforeStatusDoesNotReplayUnsafeBody_data() {
+    QTest::addColumn<QString>("shape"); QTest::addColumn<QByteArray>("bytes");
+    QTest::addColumn<int>("replyStatus"); QTest::addColumn<QByteArray>("method");
+    QTest::newRow("multipart") << QStringLiteral("multipart") << QByteArray("dropped-body") << 0 << QByteArray("POST");
+    QTest::newRow("raw") << QStringLiteral("raw") << QByteArray("raw-bytes") << 0 << QByteArray("POST");
+    QTest::newRow("raw-empty") << QStringLiteral("raw") << QByteArray() << 0 << QByteArray("POST");
+    QTest::newRow("raw-acknowledged") << QStringLiteral("raw") << QByteArray("raw-bytes") << 200 << QByteArray("POST");
+    QTest::newRow("raw-patch") << QStringLiteral("raw") << QByteArray("patch-bytes") << 0 << QByteArray("PATCH");
+    QTest::newRow("raw-307") << QStringLiteral("raw") << QByteArray("redirect-body") << 307 << QByteArray("POST");
+    QTest::newRow("empty-308") << QStringLiteral("raw") << QByteArray() << 308 << QByteArray("POST");
+    QByteArray buffered(65537, '\0');
+    for (int i = 0; i < buffered.size(); ++i) buffered[i] = char(i % 251);
+    QTest::newRow("raw-buffered") << QStringLiteral("raw") << buffered << 200 << QByteArray("POST");
+  }
+
+  void closedBeforeStatusDoesNotReplayUnsafeBody() {
+    QFETCH(QString, shape); QFETCH(QByteArray, bytes); QFETCH(int, replyStatus); QFETCH(QByteArray, method);
+    QTcpServer server; QVERIFY2(server.listen(QHostAddress::LocalHost), qPrintable(server.errorString()));
+    struct Peer { QByteArray wire; bool done = false; };
+    QVector<std::shared_ptr<Peer>> peers;
+    QVector<QByteArray> bodies;
+    connect(&server, &QTcpServer::newConnection, this, [&] {
+      auto *peer = server.nextPendingConnection();
+      auto state = std::make_shared<Peer>(); peers.append(state);
+      connect(peer, &QTcpSocket::disconnected, peer, &QObject::deleteLater);
+      connect(peer, &QTcpSocket::readyRead, peer, [peer, state, &bodies, replyStatus] {
+        if (state->done) return;
+        state->wire += peer->readAll();
+        const auto split = state->wire.indexOf("\r\n\r\n");
+        if (split < 0) return;
+        const QRegularExpression length(QStringLiteral("Content-Length: (\\d+)"), QRegularExpression::CaseInsensitiveOption);
+        const auto match = length.match(QString::fromLatin1(state->wire.left(split)));
+        if (!match.hasMatch() || state->wire.size() < split + 4 + match.captured(1).toInt()) return;
+        state->done = true;
+        bodies.append(state->wire.mid(split + 4, match.captured(1).toInt()));
+        if (!replyStatus) { peer->disconnectFromHost(); return; }
+        const QByteArray response("https://example.com/result");
+        const QByteArray status = replyStatus == 200 ? "200 OK" : QByteArray::number(replyStatus) + " Redirect\r\nLocation: /next";
+        peer->write("HTTP/1.1 " + status + "\r\nContent-Length: " + QByteArray::number(response.size()) +
+                    "\r\nConnection: close\r\n\r\n" + response);
+        peer->disconnectFromHost();
+      });
+    });
+    UploadDestination destination; destination.id = QUuid::createUuid(); destination.name = QStringLiteral("local");
+    destination.requestUrl = QStringLiteral("http://127.0.0.1:%1/upload").arg(server.serverPort());
+    destination.body = shape == QLatin1String("raw") ? BodyType::Binary : BodyType::MultipartFormData;
+    destination.fileFormName = QStringLiteral("file"); destination.method = method == QByteArray("PATCH") ? RequestMethod::Patch : RequestMethod::Post;
+    UploadInput input; input.fileName = QStringLiteral("dropped.txt"); input.fileBytes = bytes;
+    input.mimeType = QStringLiteral("application/octet-stream");
+    MemoryCredentialStore credentials;
+    const auto built = buildUploadRequest(destination, input, credentials);
+    QVERIFY(built.request);
+    QCOMPARE(built.request->method, method);
+    QNetworkAccessManager manager;
+    UploadExecutor executor(&manager, nullptr, 5000);
+    QSignalSpy done(&executor, &UploadExecutor::finished);
+    executor.start(*built.request);
+    QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 7000);
+    const auto out = qvariant_cast<UploadOutcome>(done.first().first());
+    QCOMPARE(out.attempts, 1);
+    // Qt 6.12 calls ensureConnection() before resetUploadData(), so a refused
+    // rewind still accepts a second socket. That socket carries no request.
+    int requests = 0;
+    for (const auto &state : peers) if (!state->wire.isEmpty()) ++requests;
+    QCOMPARE(requests, 1);
+    QCOMPARE(bodies.size(), 1);
+    QCOMPARE(bodies.at(0), built.request->body);
+    if (replyStatus == 200) {
+      QVERIFY(out.code.isEmpty());
+      QCOMPARE(out.url, QStringLiteral("https://example.com/result"));
+    } else {
+      QCOMPARE(out.code, QStringLiteral("network-error"));
+      QVERIFY(out.url.isEmpty());
+    }
+    QTest::qWait(300);
+    requests = 0;
+    for (const auto &state : peers) if (!state->wire.isEmpty()) ++requests;
+    QCOMPARE(requests, 1);
+    QCOMPARE(bodies.size(), 1);
+    QCOMPARE(done.size(), 1);
   }
 };
 QTEST_GUILESS_MAIN(UploadExecutorTest)

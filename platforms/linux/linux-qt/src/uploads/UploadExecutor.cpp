@@ -1,8 +1,10 @@
 // CORE-020, CORE-021, COMPCAT-011.
 #include "UploadExecutor.h"
+#include <QIODevice>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <cstring>
 namespace xerahs::uploads {
 namespace {
 bool transientNetworkError(QNetworkReply::NetworkError error) {
@@ -10,6 +12,29 @@ bool transientNetworkError(QNetworkReply::NetworkError error) {
       error == QNetworkReply::TemporaryNetworkFailureError || error == QNetworkReply::NetworkSessionFailedError ||
       error == QNetworkReply::ConnectionRefusedError;
 }
+// Qt 6.4's HTTP channel calls uploadByteDevice->reset() and sends the same
+// request again when the peer closes after the body and before a status line
+// (QHttpNetworkConnectionPrivate::_q_startNextRequest). QByteArray uploads
+// rewind. A non-idempotent body must not. Position stays valid so the first
+// transmission still matches Content-Length; only rewind is refused.
+class NonRewindableBody final : public QIODevice {
+public:
+  explicit NonRewindableBody(QByteArray bytes) : m_bytes(std::move(bytes)) { open(QIODevice::ReadOnly); }
+  bool isSequential() const override { return false; }
+  qint64 size() const override { return m_bytes.size(); }
+  bool reset() override { return false; }
+  bool seek(qint64 offset) override { return offset == pos() && QIODevice::seek(offset); }
+protected:
+  qint64 readData(char *out, qint64 max) override {
+    const qint64 n = qMin(max, qint64(m_bytes.size()) - pos());
+    if (n <= 0) return 0;
+    std::memcpy(out, m_bytes.constData() + pos(), size_t(n));
+    return n;
+  }
+  qint64 writeData(const char *, qint64) override { return -1; }
+private:
+  QByteArray m_bytes;
+};
 }
 UploadExecutor::UploadExecutor(QNetworkAccessManager *manager, QObject *parent, int timeoutMs)
     : QObject(parent), m_manager(manager), m_timeoutMs(timeoutMs) {
@@ -46,7 +71,19 @@ void UploadExecutor::sendAttempt() {
   network.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
   for (const auto &h : request.headers) network.setRawHeader(h.name.toUtf8(), h.value.toUtf8());
   if (!request.contentType.isEmpty()) network.setRawHeader("Content-Type", request.contentType);
-  m_reply = m_manager->sendCustomRequest(network, request.method, request.body);
+  if (retrySafe()) {
+    m_reply = m_manager->sendCustomRequest(network, request.method, request.body);
+  } else {
+    // Qt's HTTP/2 redirect handler ignores a failed body reset (6.4 and 6.12).
+    // Use the HTTP/1 channel, which refuses the follow-up before sending it.
+    network.setAttribute(QNetworkRequest::Http2AllowedAttribute, false);
+    auto *body = new NonRewindableBody(request.body);
+    network.setHeader(QNetworkRequest::ContentLengthHeader, qint64(request.body.size()));
+    network.setAttribute(QNetworkRequest::DoNotBufferUploadDataAttribute, true);
+    m_reply = m_manager->sendCustomRequest(network, request.method, body);
+    if (m_reply) body->setParent(m_reply);
+    else delete body;
+  }
   m_reply->setReadBufferSize(kMaximumUploadResponseBytes + 1);
   connect(m_reply, &QNetworkReply::uploadProgress, this, &UploadExecutor::progress);
   connect(m_reply, &QNetworkReply::readyRead, this, &UploadExecutor::drain);
