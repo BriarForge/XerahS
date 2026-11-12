@@ -33,6 +33,11 @@ using namespace xerahs::settings;
 namespace {
 // CORE-009: every user-visible Preferences string goes through the translator under one context.
 QString text(const char *source) { return QCoreApplication::translate("SettingsDialog", source); }
+QString describeSettingsDiagnostic(const QString &code) {
+  if (code == recoveredPreviousSettingsCode())
+    return text("The saved settings record is damaged. These are the previous saved settings. Apply writes them to the file; Cancel discards unapplied edits and leaves the file unchanged.");
+  return code;
+}
 }  // namespace
 namespace {
 // Keyboard-only Hotkeys use (SETCAT-011): a QDialog would treat a bare Enter as OK.
@@ -160,7 +165,10 @@ SettingsDialog::SettingsDialog(ApplicationSettingsStore &store, QString defaultF
   hotkeyLayout->addWidget(replace);
   auto *desktop = new QPushButton(text("Change in &desktop settings… (closes unapplied draft)"), hotkeyPage); hotkeyLayout->addWidget(desktop);
   auto *status = new QLabel(this); status->setTextFormat(Qt::PlainText); status->setWordWrap(true); status->setAccessibleName(text("Settings validation and conflicts"));
-  status->setText((store.current().diagnostics + (plan.diagnostic.isEmpty() ? QStringList{} : QStringList{plan.diagnostic + text(": reload Capture workflows before enabling shortcuts")})).join('\n')); layout->addWidget(status);
+  QStringList diagnostics;
+  for (const auto &code : store.current().diagnostics) diagnostics.append(describeSettingsDiagnostic(code));
+  if (!plan.diagnostic.isEmpty()) diagnostics.append(plan.diagnostic + text(": reload Capture workflows before enabling shortcuts"));
+  status->setText(diagnostics.join('\n')); layout->addWidget(status);
   auto refresh = [=, &shortcuts] {
     const QSignalBlocker blocker(table);
     folder->setText(draft->value("saveFolder").toString()); pattern->setText(draft->value("filenamePattern").toString());

@@ -561,6 +561,80 @@ private slots:
     QVERIFY(reopened.save(reopened.previousValues()).isEmpty()); QCOMPARE(reopened.current().values.value("delayedCapture.seconds").toInt(), 12);
     QCOMPARE(reopened.previousValues(), generations[3]);
   }
+  // A damaged current record is previewed from previous and is not written back until an explicit save.
+  void damagedCurrentRecordRecoversCompatiblePreviousWithoutWriting() {
+    QTemporaryDir dir; const auto path = dir.filePath("settings.json");
+    auto previous = defaultSettings(dir.path());
+    previous.insert("showTrayIcon", false); previous.insert("startAtLogin", true); previous.insert("future.keep", 7);
+    const QJsonObject envelope{{"format", "com.xerahs.app/linux-qt/application-settings"}, {"version", 1},
+      {"values", "DAMAGED-MARKER"}, {"previous", previous}, {"extension", 1}};
+    const auto bytes = QJsonDocument(envelope).toJson();
+    QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(bytes); file.close();
+    ApplicationSettingsStore store(path, dir.path());
+    QVERIFY(store.current().writable);
+    QCOMPARE(store.current().diagnostics, QStringList{recoveredPreviousSettingsCode()});
+    QVERIFY(!store.current().diagnostics.join('\n').contains("DAMAGED"));
+    QCOMPARE(store.current().values, repairSettings(previous, dir.path()).values);
+    QCOMPARE(store.current().values.value("showTrayIcon"), QJsonValue(false));
+    QCOMPARE(store.current().values.value("future.keep"), QJsonValue(7));
+    QCOMPARE(store.current().fields.value("values"), FieldState::Invalid);
+    QCOMPARE(store.current().fields.value("future.keep"), FieldState::Unknown);
+    QCOMPARE(store.previousValues(), previous);
+    QVERIFY(store.current().report.count(xerahs::compatibility::ImportDisposition::Rejected) >= 1);
+    QVERIFY(store.current().report.count(xerahs::compatibility::ImportDisposition::Transformed) >= 1);
+    QVERIFY(file.open(QIODevice::ReadOnly)); QCOMPARE(file.readAll(), bytes); file.close();
+    // Another writer wins. Recovery must not overwrite their file.
+    const QJsonObject other{{"format", "com.xerahs.app/linux-qt/application-settings"}, {"version", 1},
+      {"values", store.current().values}, {"previous", previous}};
+    auto replaced = other; replaced["values"] = [&] { auto values = store.current().values; values.insert("showTrayIcon", true); return values; }();
+    const auto otherBytes = QJsonDocument(replaced).toJson();
+    QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate)); file.write(otherBytes); file.close();
+    QCOMPARE(store.save(store.current().values), QString("settings-changed-reopen-settings"));
+    QVERIFY(file.open(QIODevice::ReadOnly)); QCOMPARE(file.readAll(), otherBytes); file.close();
+    // An unchanged damaged file can be replaced explicitly. The damaged payload does not become previous.
+    QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate)); file.write(bytes); file.close();
+    ApplicationSettingsStore fresh(path, dir.path());
+    auto edited = fresh.current().values; edited.insert("playCaptureSound", true);
+    QVERIFY(fresh.save(edited).isEmpty());
+    QVERIFY(file.open(QIODevice::ReadOnly)); const auto savedBytes = file.readAll(); file.close();
+    QVERIFY(!savedBytes.contains("DAMAGED-MARKER"));
+    const auto saved = QJsonDocument::fromJson(savedBytes).object();
+    QCOMPARE(saved.value("extension"), QJsonValue(1));
+    QCOMPARE(saved.value("values").toObject().value("showTrayIcon"), QJsonValue(false));
+    QCOMPARE(saved.value("values").toObject().value("playCaptureSound"), QJsonValue(true));
+    QCOMPARE(saved.value("values").toObject().value("future.keep"), QJsonValue(7));
+    QCOMPARE(saved.value("previous").toObject().value("showTrayIcon"), QJsonValue(false));
+    QCOMPARE(saved.value("previous").toObject().value("playCaptureSound"), QJsonValue(false));
+    ApplicationSettingsStore reopened(path, dir.path());
+    QVERIFY(!reopened.current().diagnostics.contains(recoveredPreviousSettingsCode()));
+    QCOMPARE(reopened.current().values.value("playCaptureSound"), QJsonValue(true));
+  }
+  void damagedCurrentRecordDoesNotRecoverForeignNewerOrUnsafePrevious() {
+    QTemporaryDir dir;
+    auto previous = defaultSettings(dir.path()); previous.insert("showTrayIcon", false);
+    auto unsafePrevious = previous; unsafePrevious.insert("apiKey", "secret-value-SHOULD-NOT-LOAD");
+    const QList<QPair<QString, QJsonObject>> cases{
+      {"foreign.json", {{"format", "other-app"}, {"version", 1}, {"values", "DAMAGED-MARKER"}, {"previous", previous}}},
+      {"newer.json", {{"format", "com.xerahs.app/linux-qt/application-settings"}, {"version", 2}, {"values", QJsonValue::Null}, {"previous", previous}}},
+      {"missing-previous.json", {{"format", "com.xerahs.app/linux-qt/application-settings"}, {"version", 1}, {"values", "DAMAGED-MARKER"}, {"extension", 1}}},
+      {"unsafe-previous.json", {{"format", "com.xerahs.app/linux-qt/application-settings"}, {"version", 1}, {"values", "DAMAGED-MARKER"}, {"previous", unsafePrevious}}},
+      {"unsafe-envelope.json", {{"format", "com.xerahs.app/linux-qt/application-settings"}, {"version", 1}, {"values", "DAMAGED-MARKER"}, {"previous", previous}, {"apiKey", "secret-envelope"}}},
+    };
+    for (const auto &entry : cases) {
+      const auto path = dir.filePath(entry.first);
+      const auto bytes = QJsonDocument(entry.second).toJson();
+      QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); QVERIFY(file.write(bytes) == bytes.size()); file.close();
+      ApplicationSettingsStore store(path, dir.path());
+      QVERIFY2(!store.current().writable, qPrintable(entry.first));
+      const auto diagnostic = entry.first.startsWith("unsafe") ? QString("settings-unsafe-unknown") : QString("settings-invalid-restore-previous-or-repair-file");
+      QCOMPARE(store.current().diagnostics, QStringList{diagnostic});
+      QVERIFY(store.current().values.value("showTrayIcon").toBool());
+      QVERIFY(!store.current().values.contains("apiKey"));
+      QVERIFY(!store.current().diagnostics.join('\n').contains("secret"));
+      QVERIFY(!store.current().diagnostics.contains(recoveredPreviousSettingsCode()));
+      QVERIFY(file.open(QIODevice::ReadOnly)); QCOMPARE(file.readAll(), bytes); file.close();
+    }
+  }
   // SETCAT-005: boundary and malformed-value matrix for every declared field.
   void valueMatrixCoversEveryDeclaredFieldFamily() {
     QTemporaryDir dir; const auto path = dir.filePath("settings.json");
@@ -956,6 +1030,55 @@ private slots:
     QCOMPARE(store.current().values.value("saveFolder").toString(), dir.path());
     QCOMPARE(table->rowCount(), plan.entries.size());
     for (auto *field : fields) QVERIFY(!field->accessibleName().isEmpty());
+  }
+  void dialogPreviewsRecoveredPreviousUntilApplyAndCancelLeavesTheFile() {
+    QTemporaryDir dir;
+    struct ConfigHome { QByteArray old = qgetenv("XDG_CONFIG_HOME"); bool had = qEnvironmentVariableIsSet("XDG_CONFIG_HOME");
+      explicit ConfigHome(const QString &path) { qputenv("XDG_CONFIG_HOME", path.toUtf8()); }
+      ~ConfigHome() { if (had) qputenv("XDG_CONFIG_HOME", old); else qunsetenv("XDG_CONFIG_HOME"); }
+    } home(dir.path());
+    const auto path = dir.filePath("settings.json");
+    auto previous = defaultSettings(dir.path());
+    previous.insert("showTrayIcon", false); previous.insert("startAtLogin", true); previous.insert("future.keep", 7);
+    const QJsonObject envelope{{"format", "com.xerahs.app/linux-qt/application-settings"}, {"version", 1},
+      {"values", "DAMAGED-MARKER"}, {"previous", previous}, {"extension", 1}};
+    const auto bytes = QJsonDocument(envelope).toJson();
+    QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); QVERIFY(file.write(bytes) == bytes.size()); file.close();
+    ApplicationSettingsStore store(path, dir.path());
+    xerahs::app::WorkflowShortcutActions shortcuts([] { return xerahs::workflows::WorkflowShortcutPlan{}; }, [] { return true; });
+    auto checkbox = [](QDialog &dialog, const QString &name) { for (auto *box : dialog.findChildren<QCheckBox *>()) if (box->accessibleName() == name) return box; return static_cast<QCheckBox *>(nullptr); };
+    const QString sentence = "The saved settings record is damaged. These are the previous saved settings. Apply writes them to the file; Cancel discards unapplied edits and leaves the file unchanged.";
+    {
+      xerahs::app::SettingsDialog dialog(store, dir.path(), {}, shortcuts, [] {}); dialog.show();
+      auto *tray = checkbox(dialog, "Show tray icon"); auto *login = checkbox(dialog, "Start XerahS at login");
+      QVERIFY(tray && login); QVERIFY(!tray->isChecked()); QVERIFY(login->isChecked());
+      QLabel *status = nullptr;
+      for (auto *label : dialog.findChildren<QLabel *>()) if (label->accessibleName() == "Settings validation and conflicts") status = label;
+      QVERIFY(status); QCOMPARE(status->text(), sentence);
+      tray->setChecked(true);
+      dialog.reject();
+    }
+    QVERIFY(file.open(QIODevice::ReadOnly)); QCOMPARE(file.readAll(), bytes); file.close();
+    QCOMPARE(store.current().values.value("showTrayIcon"), QJsonValue(false));
+    QVERIFY(!QFile::exists(dir.filePath("autostart/com.xerahs.app.desktop")));
+    {
+      xerahs::app::SettingsDialog dialog(store, dir.path(), {}, shortcuts, [] {});
+      auto *tray = checkbox(dialog, "Show tray icon"); auto *sound = checkbox(dialog, "Play capture sound");
+      QVERIFY(tray && sound); QVERIFY(!tray->isChecked()); QVERIFY(!sound->isChecked());
+      sound->setChecked(true);
+      dialog.findChild<QDialogButtonBox *>()->button(QDialogButtonBox::Apply)->click();
+    }
+    QVERIFY(!QFile::exists(dir.filePath("autostart/com.xerahs.app.desktop")));
+    QCOMPARE(store.current().values.value("showTrayIcon"), QJsonValue(false));
+    QCOMPARE(store.current().values.value("startAtLogin"), QJsonValue(true));
+    QCOMPARE(store.current().values.value("playCaptureSound"), QJsonValue(true));
+    QCOMPARE(store.current().values.value("future.keep"), QJsonValue(7));
+    QVERIFY(file.open(QIODevice::ReadOnly)); const auto saved = file.readAll(); file.close();
+    QVERIFY(!saved.contains("DAMAGED-MARKER"));
+    const auto envelopeOut = QJsonDocument::fromJson(saved).object();
+    QCOMPARE(envelopeOut.value("extension"), QJsonValue(1));
+    QCOMPARE(envelopeOut.value("previous").toObject().value("playCaptureSound"), QJsonValue(false));
+    QCOMPARE(envelopeOut.value("values").toObject().value("playCaptureSound"), QJsonValue(true));
   }
 };
 QTEST_MAIN(ApplicationSettingsTest)

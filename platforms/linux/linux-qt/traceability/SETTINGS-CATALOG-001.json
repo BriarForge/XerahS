@@ -70,10 +70,12 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Private atomic replacement, conflict protection, locale-independent bytes and one previous snapshot are tested. The complete approved retention/crash-power-loss qualification remains open.",
+      "note": "Private atomic replacement, conflict protection, locale-independent bytes and one previous snapshot are tested. The complete approved retention/crash-power-loss qualification remains open. A readable version-1 envelope with a damaged non-object current values record now previews a compatible previous record without rewriting the file. Apply explicitly saves that preview and retains the last good previous record; Cancel leaves the original bytes intact. Unknown safe fields and concurrent-write conflict protection remain intact; recovered start-at-login data does not activate autostart. Torn-file/power-loss and retention qualification remain open.",
       "evidence": [
         "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp",
-        "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp"
+        "platforms/linux/linux-qt/tests/WorkflowShortcutsTest.cpp",
+        "platforms/linux/linux-qt/app/SettingsDialog.cpp",
+        "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp"
       ],
       "audit": {
         "classification": "partial",

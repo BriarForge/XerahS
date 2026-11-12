@@ -206,34 +206,57 @@ QStringList resetAllPreview(const QJsonObject &values, const QString &saveFolder
 }
 ApplicationSettingsStore::ApplicationSettingsStore(QString path, QString saveFolder) : m_path(std::move(path)), m_saveFolder(std::move(saveFolder)) {
   const auto read = settingsFile(m_path).read();
+  const auto refuse = [&](QString diagnostic, FieldState versionState, qsizetype rejected = 1) {
+    m_current = {defaultSettings(m_saveFolder), {std::move(diagnostic)}, false, {}};
+    m_current.report.add(compatibility::ImportDisposition::Rejected, rejected);
+    m_current.fields.insert(QStringLiteral("version"), versionState);
+    if (versionState == FieldState::NewerVersion) for (const auto &field : settingFields()) m_current.fields.insert(field.key, FieldState::NewerVersion);
+  };
   if (read.status != storage::StoreStatus::Missing) {
     QString diagnostic;
     if (!read.diagnostic.isEmpty()) diagnostic = "settings-" + read.diagnostic;
+    bool valuesDamaged = false;
     if (diagnostic.isEmpty() && (read.status == storage::StoreStatus::Ok || read.status == storage::StoreStatus::Invalid || read.status == storage::StoreStatus::NewerVersion)) {
       const auto format = read.document.value("format");
-      if (!read.document.value("values").isObject() || (!format.isUndefined() && format != QJsonValue(QStringLiteral("com.xerahs.app/linux-qt/application-settings"))))
+      const bool formatOk = format.isUndefined() || format == QJsonValue(QStringLiteral("com.xerahs.app/linux-qt/application-settings"));
+      if (!formatOk || !read.document.value("values").isObject())
         diagnostic = "settings-invalid-restore-previous-or-repair-file";
       else if (read.document.value("version") != QJsonValue(1)) diagnostic = "settings-version-unsupported";
+      // Only a readable version-1 envelope may substitute previous for a non-object values record.
+      valuesDamaged = formatOk && read.document.value("version") == QJsonValue(1) && !read.document.value("values").isObject();
     } else if (diagnostic.isEmpty()) diagnostic = read.status == storage::StoreStatus::TooLarge ? "settings-too-large" : "settings-read-failed";
-    if (!diagnostic.isEmpty()) {
-      m_current = {defaultSettings(m_saveFolder), {diagnostic}, false, {}};
-      m_current.report.add(compatibility::ImportDisposition::Rejected);
-      // A future envelope is read-only: its fields are not interpreted, never downgraded.
+    if (!diagnostic.isEmpty() && !valuesDamaged) {
       const auto version = read.document.value("version");
-      m_current.fields.insert("version", diagnostic == "settings-version-unsupported" && version.isDouble() && version.toDouble() > 1 ? FieldState::NewerVersion : FieldState::Invalid);
-      if (m_current.fields.value("version") == FieldState::NewerVersion) for (const auto &field : settingFields()) m_current.fields.insert(field.key, FieldState::NewerVersion);
+      // A future envelope is read-only: its fields are not interpreted, never downgraded.
+      const auto state = diagnostic == "settings-version-unsupported" && version.isDouble() && version.toDouble() > 1 ? FieldState::NewerVersion : FieldState::Invalid;
+      refuse(diagnostic, state);
       return;
     }
     auto unknownEnvelope = read.document;
     for (const auto *key : {"format", "version", "values", "previous"}) unknownEnvelope.remove(QLatin1String(key));
+    const auto previous = read.document.value(QStringLiteral("previous"));
+    const auto previousRead = previous.isObject() ? repairSettings(previous.toObject(), m_saveFolder) : SettingsRead{};
     if (compatibility::containsUnsafeUnknown(unknownEnvelope) || compatibility::containsTraversal(unknownEnvelope)) {
       m_current = {defaultSettings(m_saveFolder), {"settings-unsafe-unknown"}, false, {}};
       m_current.report.add(compatibility::ImportDisposition::Rejected, unknownEnvelope.size()); return;
     }
-    if ((read.document.contains("previous") && !read.document.value("previous").isObject()) ||
-        (read.document.value("previous").isObject() && !repairSettings(read.document.value("previous").toObject(), m_saveFolder).writable)) {
+    if ((read.document.contains("previous") && !previous.isObject()) || (previous.isObject() && !previousRead.writable)) {
       m_current = {defaultSettings(m_saveFolder), {"settings-unsafe-unknown"}, false, {}};
       m_current.report.add(compatibility::ImportDisposition::Rejected); return;
+    }
+    if (valuesDamaged) {
+      if (!previous.isObject()) { refuse("settings-invalid-restore-previous-or-repair-file", FieldState::Invalid); return; }
+      // Preview the previous record in memory. Leave the damaged file untouched until an explicit save.
+      m_snapshot = read.snapshot;
+      m_envelope = read.document;
+      m_current = previousRead;
+      m_current.diagnostics.prepend(recoveredPreviousSettingsCode());
+      m_current.fields.insert(QStringLiteral("values"), FieldState::Invalid);
+      m_current.report.add(compatibility::ImportDisposition::Rejected);
+      m_current.report.add(compatibility::ImportDisposition::Transformed);
+      auto retainedEnvelope = m_envelope; retainedEnvelope.remove("values"); retainedEnvelope.remove("previous");
+      m_current.report.add(compatibility::ImportDisposition::Retained, retainedEnvelope.size());
+      return;
     }
     m_snapshot = read.snapshot;
     m_envelope = read.document;
@@ -253,8 +276,12 @@ QString ApplicationSettingsStore::save(const QJsonObject &values, compatibility:
   if (!repaired.writable || !repaired.diagnostics.isEmpty()) return repaired.diagnostics.join('\n');
   if (!QDir().mkpath(QFileInfo(m_path).absolutePath())) return "settings-directory-failed";
   auto envelope = m_envelope; envelope.insert("version", 1); envelope.insert("values", repaired.values);
-  // Keep the previous version inside the same atomic artifact.
-  if (m_envelope.contains("values")) envelope.insert("previous", m_envelope.value("values"));
+  // Keep one previous good record in the same atomic artifact. A damaged non-object
+  // values payload is not promoted into previous; the record recovery already used stays.
+  const auto priorValues = m_envelope.value(QStringLiteral("values"));
+  if (priorValues.isObject()) envelope.insert(QStringLiteral("previous"), priorValues);
+  else if (m_envelope.value(QStringLiteral("previous")).isObject())
+    envelope.insert(QStringLiteral("previous"), m_envelope.value(QStringLiteral("previous")));
   const auto status = settingsFile(m_path).write(envelope, 1, m_snapshot, &m_snapshot);
   switch (status) {
     case storage::StoreStatus::Ok: break;

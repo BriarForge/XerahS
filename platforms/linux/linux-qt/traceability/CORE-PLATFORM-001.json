@@ -660,11 +660,14 @@
       "status": "partial",
       "disposition": "Required",
       "vectors": [],
-      "note": "Private atomic current/previous settings and previewed reset exist; full profile isolation/import/export/reference migration obligations remain incomplete.",
+      "note": "Private atomic current/previous settings and previewed reset exist; full profile isolation/import/export/reference migration obligations remain incomplete. A readable version-1 envelope with a damaged non-object current values record now previews a compatible previous record without rewriting the file. Apply explicitly saves that preview and retains the last good previous record; Cancel leaves the original bytes intact. Unknown safe fields and concurrent-write conflict protection remain intact; recovered start-at-login data does not activate autostart. Torn-file/power-loss and retention qualification remain open.",
       "evidence": [
         "platforms/linux/linux-qt/src/image-editor/EditorPreferenceStore.cpp",
         "platforms/linux/linux-qt/tests/NativeEditorPreferencesTest.cpp",
-        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp"
+        "platforms/linux/linux-qt/tests/ShellCommandsTest.cpp",
+        "platforms/linux/linux-qt/app/SettingsDialog.cpp",
+        "platforms/linux/linux-qt/src/settings/ApplicationSettings.cpp",
+        "platforms/linux/linux-qt/tests/ApplicationSettingsTest.cpp"
       ],
       "audit": {
         "classification": "partial",

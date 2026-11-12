@@ -20,6 +20,9 @@ QStringList precedenceOrder(const QString &key);  // most specific first, ending
 // informational and never block saving; only Invalid repairs add a diagnostic.
 enum class FieldState { Missing, Valid, Invalid, Unknown, Deprecated, NewerVersion };
 QString fieldStateName(FieldState state);
+// Load diagnostic when the current values record is not an object and a compatible
+// previous record was adopted in memory. The file is not rewritten by that load.
+inline QString recoveredPreviousSettingsCode() { return QStringLiteral("recovered-previous-settings"); }
 // Keys an earlier build wrote that no longer have an effect. They are kept for round-trip.
 QStringList deprecatedSettingKeys();
 // SETCAT-004: one previous version is retained inside the same atomic file. ShareX keeps
