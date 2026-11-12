@@ -426,6 +426,8 @@
         "platforms/linux/linux-qt/app/COMMAND-PALETTE.md",
         "platforms/linux/linux-qt/app/CommandRegistry.cpp",
         "platforms/linux/linux-qt/app/features/ApplicationFeature.cpp",
+        "platforms/linux/linux-qt/tests/CommandPaletteTest.cpp",
+        "platforms/linux/linux-qt/tests/CommandPaletteIntegrationTest.cpp",
         "platforms/linux/linux-qt/tests/CommandRegistryTest.cpp"
       ],
       "audit": {
